@@ -39,12 +39,23 @@ class GitShaObject(HasTraits):
     blob = Str
     name = Str
     hexsha = Str
+    author = Str
+    email = Str
     active = Bool
 
     def traits_view(self):
         return View(UItem('blob',
                           style='custom',
                           editor=TextEditor(read_only=True)))
+
+
+def from_gitlog(obj):
+    actor = obj.actor
+    g = GitShaObject(message=obj.message,
+                     date=datetime.fromtimestamp(obj.time[0]),
+                     author=actor.name,
+                     email=actor.email)
+    return g
 
 
 class BaseGitHistory(HasTraits):
@@ -94,7 +105,8 @@ class GitArchiveHistory(BaseGitHistory):
             self._path = path
 
     def close(self):
-        self.repo_man.close()
+        pass
+        # self.repo_man.close()
 
     def load_history(self, p=None):
         if p is None:
@@ -178,27 +190,23 @@ class GitArchiveHistoryView(Controller):
         self.model.close()
 
     def traits_view(self):
-        v = View(VGroup(
-            HGroup(spring, Item('limit')),
-            VSplit(UItem('items',
-                         height=0.75,
-                         editor=TabularEditor(adapter=CommitAdapter(),
-                                              multi_select=True,
-                                              selected='selected')),
-                   UItem('selected_commit',
-                         editor=InstanceEditor(),
-                         height=0.25,
-                         style='custom')),
-            HGroup(spring, icon_button_editor('diff_button', 'edit_diff',
-                                              enabled_when='diffable'),
-                   UItem('checkout_button', enabled_when='checkoutable'))),
-
-                 width=400,
-                 height=400,
+        v = View(VGroup(HGroup(spring, Item('limit')),
+                        VSplit(UItem('items',
+                                     height=0.75,
+                                     editor=TabularEditor(adapter=CommitAdapter(),
+                                                          multi_select=True,
+                                                          selected='selected')),
+                               UItem('selected_commit',
+                                     editor=InstanceEditor(),
+                                     height=0.25,
+                                     style='custom')),
+                        HGroup(spring, icon_button_editor('diff_button', 'edit_diff',
+                                                          enabled_when='diffable'),
+                               UItem('checkout_button', enabled_when='checkoutable'))),
+                 width=400, height=400,
                  title=self.title,
                  resizable=True)
         return v
-
 
 # if __name__ == '__main__':
 # r = '/Users/ross/Sandbox/gitarchive'
@@ -208,4 +216,3 @@ class GitArchiveHistoryView(Controller):
 # ghv = GitArchiveHistoryView(model=gh)
 #     ghv.configure_traits(kind='livemodal')
 # ============= EOF =============================================
-

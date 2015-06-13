@@ -341,7 +341,7 @@ class DVCDatabase(DatabaseAdapter):
                     q = q.filter(AnalysisTbl.mass_spectrometer.in_(mass_spectrometers))
 
                 if analysis_types:
-                    q = q.filter(AnalysisTbl.analysistype.in_(analysis_types))
+                    q = q.filter(AnalysisTbl.analysis_type.in_(analysis_types))
                     project_names.append('references')
 
                 q = q.group_by(IrradiationPositionTbl.identifier)

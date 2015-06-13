@@ -33,7 +33,6 @@ from pychron.database.orms.isotope.meas import meas_AnalysisTable
 from pychron.experiment.utilities.identifier import make_runid
 from pychron.processing.analyses.dbanalysis import DBAnalysis
 
-
 ANALYSIS_CACHE = {}
 ANALYSIS_CACHE_COUNT = {}
 CACHE_LIMIT = 1000
@@ -117,8 +116,8 @@ class BaseIsotopeDatabaseManager(Loggable):
 
     def _open_progress(self, n, close_at_end=True):
         from pychron.core.ui.progress_dialog import myProgressDialog
+
         pd = myProgressDialog(max=n - 1,
-                              #dialog_size=(0,0, 550, 15),
                               close_at_end=close_at_end,
                               can_cancel=True,
                               can_ok=True)
@@ -158,48 +157,11 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
     saved = Event
     updated = Event
 
-    # use_vcs = Bool
-    # use_offline_database = Bool
-    # vcs = Any
-    # offline_bridge = Any
-
-    # def bind_preferences(self):
-    #     super(IsotopeDatabaseManager, self).bind_preferences()
-
-        # prefid = 'pychron.vcs'
-        # bind_preference(self, 'use_vcs', '{}.use_vcs'.format(prefid))
-        # self._use_vcs_changed()
-
-        # prefid = 'pychron.offline'
-        # bind_preference(self, 'use_offline_database', '{}.use_offline_database'.format(prefid))
-        # self._use_offline_database_changed()
-
-    # def _use_offline_database_changed(self):
-    #     if self.use_offline_database:
-    #         from pychron.database.offline_bridge import OfflineBridge
-    #
-    #         if not self.offline_bridge:
-    #             self.offline_bridge = OfflineBridge()
-    #             self.offline_bridge.init()
-    # def _use_vcs_changed(self):
-    #     if self.use_vcs:
-    #         from pychron.processing.vcs_data.vcs_manager import IsotopeVCSManager
-    #
-    #         if not self.vcs:
-    #             self.vcs = IsotopeVCSManager()
-    # def update_vcs_analysis(self, an, msg):
-    #     if self.use_vcs:
-    #         self.vcs.update_analysis(an, msg)
-    #
-    # def update_vcs_analyses(self, ans, msg):
-    #     if self.use_vcs:
-    #         self.vcs.update_analyses(ans, msg)
-
     def filter_analysis_tag(self, ans, exclude):
         if not isinstance(exclude, (list, tuple)):
             exclude = (exclude,)
 
-        return filter(lambda x: not x.tag in exclude, ans)
+        return filter(lambda x: x.tag not in exclude, ans)
 
     def load_raw_data(self, ai):
         if not ai.has_raw_data:
@@ -395,12 +357,12 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                     # if self.use_offline_database:
                     #     if progress:
                     #         progress.increase_max(len(new_ans) + 1)
-                    #         progress.change_message('Transfering analyses for offline usage')
+                    #         progress.change_message('Transferring analyses for offline usage')
                     #     self.offline_bridge.add_analyses(db, new_ans, progress=progress)
 
             if progress:
                 progress.soft_close()
-        
+
             return db_ans
 
     def get_level(self, level, irradiation=None):
@@ -429,6 +391,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                 # self.db.reset()
         elif inform:
             self.warning_dialog('Not Database available')
+
     # ===============================================================================
     # private
     # ===============================================================================
@@ -491,7 +454,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
             atype = rec.analysis_type
 
         if prog:
-            m=''
+            m = ''
             if calculate_age:
                 show_age = atype in ('unknown', 'cocktail')
                 m = 'calculating age' if show_age else ''
@@ -516,8 +479,8 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
             # ai = klass(group_id=group_id,
             #        graph_id=graph_id)
 
-        ai.trait_set(group_id=group_id,
-                     graph_id=graph_id)
+        # ai.trait_set(group_id=group_id,
+        #              graph_id=graph_id)
 
         # if not self.use_vcs:
         #
@@ -529,7 +492,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                 # timethis(ai.sync, args=(meas_analysis, ),
                 #          kwargs=dict(unpack=unpack, load_aux=load_aux))
                 # timethis(ai.calculate_age, kwargs=dict(force=not self.use_vcs))
-                ai.calculate_age()  #force=not self.use_vcs)
+                ai.calculate_age()
                 # timethis(ai.sync, args=(meas_analysis,),
                 #          kwargs=dict(unpack=unpack, load_aux=load_aux))
                 # timethis(ai.calculate_age)
@@ -547,7 +510,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
         if rec is None:
             self.debug('cannot add None to cache')
 
-        if not rec.uuid in ANALYSIS_CACHE:
+        if rec.uuid not in ANALYSIS_CACHE:
             # self.debug('Adding {} to cache'.format(rec.record_id))
             ANALYSIS_CACHE[rec.uuid] = weakref.ref(rec)()
             ANALYSIS_CACHE_COUNT[rec.uuid] = 1
@@ -599,33 +562,5 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
     # ===============================================================================
     def _irradiation_changed(self):
         self.level = ''
+
 # ============= EOF =============================================
-# def _add_arar(self, meas_analysis, analysis):
-#
-#         db = self.db
-#         with db.session_ctx() as sess:
-#             hist = db.add_arar_history(meas_analysis)
-#             #a, e=age.nominal_value, age.std_dev
-#             d = dict()
-#             attrs = ['k39', 'ca37', 'cl36', 'rad40',
-#                      'Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36']
-#
-#             for a in attrs:
-#                 v = getattr(analysis, a)
-#                 ek = '{}_err'.format(a)
-#                 d[a] = float(v.nominal_value)
-#                 d[ek] = float(v.std_dev)
-#
-#             age_scalar = analysis.arar_constants.age_scalar
-#             d['age_err_wo_j'] = analysis.age_error_wo_j * age_scalar
-#
-#             age = analysis.age
-#             d['age'] = age.nominal_value * age_scalar
-#             d['age_err'] = age.std_dev * age_scalar
-#
-#             db.add_arar(hist, **d)
-#
-#             meas_analysis.selected_histories.selected_arar = hist
-#             sess.commit()
-#             #hist.selected=analysis.selected_histories
-#             #analysis.selected_histories.selected_arar=hist

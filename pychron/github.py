@@ -43,10 +43,11 @@ def get_organization_repositiories(name):
     return [repo['name'] for repo in json.loads(doc.text)]
 
 
-def create_organization_repository(org, name, usr, pwd):
+def create_organization_repository(org, name, usr, pwd, **kw):
     cmd = '/orgs/{}/repos'.format(org)
     cmd = make_request(cmd)
     payload = {'name': name}
+    payload.update(**kw)
     auth = base64.encodestring('{}:{}'.format(usr, pwd)).replace('\n', '')
     headers = {"Authorization": "Basic {}".format(auth)}
     r = requests.post(cmd, data=json.dumps(payload), headers=headers)
@@ -86,13 +87,17 @@ class Organization(GithubObject):
 
         return [repo['name'] for repo in json.loads(doc.text)]
 
-    def create_repo(self, name, **payload):
-        cmd = make_request(self.base_cmd)
-        payload['name'] = name
+    def has_repo(self, name):
+        return name in self.repos
 
-        headers = self._make_headers(auth=True)
-        r = requests.post(cmd, data=json.dumps(payload), headers=headers)
-        self._process_post(r)
+    def create_repo(self, name, usr, pwd, **payload):
+        create_organization_repository(self._name, name, usr, pwd)
+        # cmd = make_request(self.base_cmd)
+        # payload['name'] = name
+        #
+        # headers = self._make_headers(auth=True)
+        # r = requests.post(cmd, data=json.dumps(payload), headers=headers)
+        # self._process_post(r)
 
 
 if __name__ == '__main__':
@@ -103,6 +108,3 @@ if __name__ == '__main__':
     # print org.create_repo('test2', auto_init=True)
     # print org.repos, len(org.repos)
 # ============= EOF =============================================
-
-
-

@@ -36,7 +36,8 @@ from pychron.paths import paths
 from pychron.pychron_constants import ARGON_KEYS
 
 logger = new_logger('ArArAge')
-# arar_constants = None
+
+
 class MLoggable(object):
     def info(self, msg):
         logger.info(msg)
@@ -575,10 +576,11 @@ class ArArAge(MLoggable):
         k_ca_pr = 1
         if prs:
             cak = prs.get('Ca_K', 1)
-            if cak is None:
+            if not cak:
                 cak = 1.0
 
             k_ca_pr = 1 / cak
+
         try:
             self.kca = k / ca * k_ca_pr
         except ZeroDivisionError:
@@ -595,7 +597,7 @@ class ArArAge(MLoggable):
         k_cl_pr = 1
         if prs:
             clk = prs.get('Cl_K', 1)
-            if clk is None:
+            if not clk:
                 clk = 1.0
 
             k_cl_pr = 1 / clk

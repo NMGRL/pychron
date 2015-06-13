@@ -177,7 +177,7 @@ class DVCPersister(BasePersister):
 
         for p in paths:
             if os.path.isfile(p):
-                self.experiment_repo.add(p, msg_prefix=msg_prefix)
+                self.experiment_repo.add(p, commit=commit, msg_prefix=msg_prefix)
             else:
                 self.debug('not at valid file {}'.format(p))
 

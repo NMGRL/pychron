@@ -17,11 +17,11 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pyface.tasks.action.task_action import TaskAction
 
 
-
-
+class CloneAction(TaskAction):
+    method = 'clone'
+    name = 'Clone'
+    enabled_name = 'selected_repository_name'
 # ============= EOF =============================================
-
-
-

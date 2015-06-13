@@ -13,21 +13,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-import struct
 import os
 import traceback
 
+from pychron.canvas.utils import make_geom
 from pychron.spectrometer.molecular_weights import MOLECULAR_WEIGHTS
 from pychron.paths import paths
 
 
 def iterdir(d, exclude=None):
-    #if exclude is None:
+    # if exclude is None:
     #    exclude =tuple()
 
     for t in os.listdir(d):
         p = os.path.join(d, t)
-        #print os.path.isfile(p), p
+        # print os.path.isfile(p), p
 
         if t.startswith('.'):
             continue
@@ -68,16 +68,16 @@ def load_isotopedb_defaults(db):
             db.add_mass_spectrometer(mi)
 
         project = db.add_project('REFERENCES')
-        #print project
+        # print project
         for i, di in enumerate(['blank_air',
                                 'blank_cocktail',
                                 'blank_unknown',
                                 'background', 'air', 'cocktail']):
             samp = db.add_sample(di, project=project)
-            #print samp.id, samp, project.id
+            # print samp.id, samp, project.id
             #            samp.project = project
-            #samp.project_id=project.id
-            #print samp.project_id
+            # samp.project_id=project.id
+            # print samp.project_id
             db.add_labnumber(i + 1, sample=samp)
         sess.commit()
 
@@ -107,8 +107,12 @@ def _load_tray_map(db, p, name):
     sm = StageMap(file_path=p)
 
     r = sm.g_dimension
-    blob = ''.join([struct.pack('>fff', si.x, si.y, r)
-                    for si in sm.sample_holes])
+    # blob = ''.join([struct.pack('>fff', si.x, si.y, r)
+    #                 for si in sm.sample_holes])
+    # from pychron.canvas.utils import make_geom
+
+    blob = make_geom(((si.x, si.y, r) for si in sm.sample_holes))
+
     db.add_load_holder(name, geometry=blob)
 
 
@@ -144,7 +148,8 @@ def load_irradiation_map(db, p, name, overwrite_geometry=False):
     holes = parse_irradiation_tray_map(p)
     if holes is not None:
         try:
-            blob = ''.join([struct.pack('>fff', x, y, r) for x, y, r in holes])
+            # blob = ''.join([struct.pack('>fff', x, y, r) for x, y, r in holes])
+            blob = make_geom(holes)
             name, _ = os.path.splitext(name)
 
             h = db.add_irradiation_holder(name)
@@ -153,5 +158,3 @@ def load_irradiation_map(db, p, name, overwrite_geometry=False):
         except Exception, e:
             print p, name, e
             db.sess.rollback()
-
-            

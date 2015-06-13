@@ -17,13 +17,19 @@
 # ============= enthought library imports =======================
 import os
 
+from git import Repo
+from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem
 from traits.api import List, Str
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.progress import open_progress
+from pychron.dvc.tasks.actions import CloneAction
 from pychron.dvc.tasks.panes import RepoCentralPane, SelectionPane
 from pychron.envisage.tasks.base_task import BaseTask
+from pychron.git_archive.history import from_gitlog
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.github import Organization
 from pychron.paths import paths
@@ -33,16 +39,23 @@ class ExperimentRepoTask(BaseTask):
     name = 'Experiment Repositories'
 
     selected_repository_name = Str
+    selected_local_repository_name = Str
+
     repository_names = List
     organization = Str
 
     local_names = List
+    tool_bars = [SToolBar(CloneAction())]
+
+    commits = List
 
     def activated(self):
         self._preference_binder('pychron.dvc', ('organization',))
         org = Organization(self.organization)
         self.repository_names = org.repos
+        self.refresh_local_names()
 
+    def refresh_local_names(self):
         ns = []
         for i in os.listdir(paths.experiment_dataset_dir):
             if i.startswith('.'):
@@ -54,12 +67,18 @@ class ExperimentRepoTask(BaseTask):
 
         self.local_names = ns
 
-    def _selected_repository_name_changed(self, new):
-        if new:
-            root = os.path.join(paths.experiment_dataset_dir, new)
-            if os.path.isdir(root):
-                repo = GitRepoManager()
-                repo.open_repo(root)
+    def clone(self):
+        name = self.selected_repository_name
+        path = os.path.join(paths.experiment_dataset_dir, name)
+        if not os.path.isdir(path):
+            self.debug('cloning repository {}'.format(name))
+            url = 'https://github.com/{}/{}.git'.format(self.organization, name)
+            prog = open_progress(n=3)
+            prog.change_message('Cloning repository {}'.format(url))
+            Repo.clone_from(url, path)
+            prog.change_message('Cloning Complete')
+            prog.close()
+            self.refresh_local_names()
 
     def create_central_pane(self):
         return RepoCentralPane(model=self)
@@ -67,9 +86,16 @@ class ExperimentRepoTask(BaseTask):
     def create_dock_panes(self):
         return [SelectionPane(model=self)]
 
+    def _selected_local_repository_name_changed(self, new):
+        if new:
+            root = os.path.join(paths.experiment_dataset_dir, new)
+            if os.path.isdir(root):
+                repo = GitRepoManager()
+                repo.open_repo(root)
+
+                self.commits = [from_gitlog(l) for l in repo.get_log()]
+
     def _default_layout_default(self):
         return TaskLayout(left=PaneItem('pychron.repo.selection'))
+
 # ============= EOF =============================================
-
-
-

@@ -191,6 +191,9 @@ class DVC(Loggable):
             self.pulled_experiments = exps
 
         if exps:
+            org = Organization(self.organization)
+            exps = filter(lambda x: org.has_repo(x), exps)
+
             progress_iterator(exps, self._load_repository, threshold=1)
 
         st = time.time()
@@ -302,6 +305,7 @@ class DVC(Loggable):
 
         """
         url = 'https://github.com/{}/{}.git'.format(self.organization, name)
+
         repo = self._get_experiment_repo(name)
         root = os.path.join(paths.experiment_dataset_dir, name)
         if os.path.isdir(os.path.join(root, '.git')):

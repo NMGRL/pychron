@@ -155,11 +155,11 @@ class Cached(object):
             clear = False
             if self.clear:
                 clear = getattr(obj, self.clear)
-
+            key = (func, name)
             force = kw.get('force', None)
             if not force and not clear:
-                if name in obj.__cache__:
-                    ret = obj.__cache__[name]
+                if key in obj.__cache__:
+                    ret = obj.__cache__[key]
 
             if ret is None:
                 ret = func(obj, name, *args, **kw)
@@ -167,7 +167,7 @@ class Cached(object):
             if clear:
                 setattr(obj, self.clear, False)
 
-            obj.__cache__[name] = ret
+            obj.__cache__[key] = ret
 
             return ret
 
@@ -195,13 +195,20 @@ class MetaRepo(GitRepoManager):
 
     def add_production(self, name, obj, commit=False):
         p = self.get_production(name, force=True)
-        p.attrs = []
-        for k in INTERFERENCE_KEYS + RATIO_KEYS:
-            v = getattr(obj, k)
-            e = getattr(obj, '{}_err'.format(k))
+
+        p.attrs = attrs = INTERFERENCE_KEYS + RATIO_KEYS
+        kef = lambda x: '{}_err'.format(x)
+
+        if obj:
+            def values():
+                return ((k, getattr(obj, k), kef(k), getattr(obj, kef(k))) for k in attrs)
+        else:
+            def values():
+                return ((k, 0, kef(k), 0) for k in attrs)
+
+        for k, v, ke, e in values():
             setattr(p, k, v)
-            setattr(p, '{}_err'.format(k), e)
-            p.attrs.append(k)
+            setattr(p, ke, e)
 
         p.dump()
         self.add(p.path, commit=commit)

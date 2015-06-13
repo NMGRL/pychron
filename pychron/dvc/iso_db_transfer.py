@@ -23,6 +23,7 @@ import os
 import json
 # ============= local library imports  ==========================
 # import yaml
+from pychron.canvas.utils import make_geom
 
 from pychron.database.adapters.isotope_adapter import IsotopeAdapter
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
@@ -34,6 +35,7 @@ from pychron.dvc.meta_repo import MetaRepo
 from pychron.experiment.automated_run.persistence_spec import PersistenceSpec
 from pychron.experiment.automated_run.spec import AutomatedRunSpec
 from pychron.git_archive.repo_manager import GitRepoManager
+from pychron.github import Organization
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.pychron_constants import ALPHAS
@@ -61,6 +63,17 @@ J-Curve:
 #   - 61666,09
 #   - 61666,19
 # '''
+ORG = 'NMGRLData'
+
+
+def create_github_repo(name):
+    org = Organization(ORG)
+    if not org.has_repo(name):
+        with open('/Users/ross/Programming/githubauth.txt') as rfile:
+            usr = rfile.readline().strip()
+            pwd = rfile.readline().strip()
+
+        org.create_repo(name, usr, pwd)
 
 
 class IsoDBTransfer(Loggable):
@@ -94,7 +107,7 @@ class IsoDBTransfer(Loggable):
                 self.meta_repo.add_production(prodname, dbprod)
                 self.meta_repo.commit('added production {}'.format(prodname))
 
-    def do_export(self):
+    def do_export(self, create_repo=False):
         self.root = os.path.join(os.path.expanduser('~'), 'Pychron_dev', 'data', '.dvc')
         self.meta_repo = MetaRepo()
         self.meta_repo.open_repo(os.path.join(self.root, 'meta'))
@@ -148,19 +161,19 @@ class IsoDBTransfer(Loggable):
                     continue
 
                 with dest.session_ctx():
-                    repo = self._transfer_labnumber(ln, src, dest, exp='J-Curve')
+                    repo = self._transfer_labnumber(ln, src, dest, exp='J-Curve', create_repo=create_repo)
                     if repo:
                         # repo = self._export_project(pr, src, dest)
                         self.persister.experiment_repo = repo
                         self.dvc.experiment_repo = repo
+                        ans = list(ans)[:4]
                         for a in ans:
                             st = time.time()
                             self._transfer_analysis(proc, src, dest, a, exp='J-Curve')
                             print 'transfer time {:0.3f}'.format(time.time() - st)
-                            # break
-                # for rec in yd[pr]:
+                        repo.commit('src import src= {}'.format(src.url))
+                        break
 
-                # repo.commit('src import src= {}'.format(src.url))
     def transfer_holder(self, name):
         self.root = os.path.join(os.path.expanduser('~'), 'Pychron_dev', 'data', '.dvc')
 
@@ -185,7 +198,7 @@ class IsoDBTransfer(Loggable):
 
             self.meta_repo.add_irradiation_holder(name, holder.geometry)
 
-    def _transfer_labnumber(self, ln, src, dest, exp=None):
+    def _transfer_labnumber(self, ln, src, dest, exp=None, create_repo=False):
         if exp is None:
             dbln = src.get_labnumber(ln)
             exp = dbln.sample.project.name
@@ -205,6 +218,11 @@ class IsoDBTransfer(Loggable):
 
             repo.add_ignore('.DS_Store')
             self.repo_man = repo
+            if create_repo:
+                create_github_repo(exp)
+
+            url = 'https://github.com/{}/{}.git'.format(ORG, exp)
+            repo.create_remote(url)
 
         if not dest.get_experiment(exp):
             dest.add_experiment(name=exp)
@@ -249,7 +267,47 @@ class IsoDBTransfer(Loggable):
             dest.flush()
 
         dbirradpos = dblab.irradiation_position
-        if dbirradpos:
+        if not dbirradpos:
+            irradname = 'NoIrradiation'
+            levelname = 'A'
+            holder = 'Grid'
+            pos = None
+            identifier = dblab.identifier
+            doses = []
+            prod = None
+            prodname = 'NoIrradiation'
+
+            geom = make_geom([(0, 0, 0.0175),
+                              (1, 0, 0.0175),
+                              (2, 0, 0.0175),
+                              (3, 0, 0.0175),
+                              (4, 0, 0.0175),
+
+                              (0, 1, 0.0175),
+                              (1, 1, 0.0175),
+                              (2, 1, 0.0175),
+                              (3, 1, 0.0175),
+                              (4, 1, 0.0175),
+
+                              (0, 2, 0.0175),
+                              (1, 2, 0.0175),
+                              (2, 2, 0.0175),
+                              (3, 2, 0.0175),
+                              (4, 2, 0.0175),
+
+                              (0, 3, 0.0175),
+                              (1, 3, 0.0175),
+                              (2, 3, 0.0175),
+                              (3, 3, 0.0175),
+                              (4, 3, 0.0175),
+
+                              (0, 4, 0.0175),
+                              (1, 4, 0.0175),
+                              (2, 4, 0.0175),
+                              (3, 4, 0.0175),
+                              (4, 4, 0.0175)
+                              ])
+        else:
             dblevel = dbirradpos.level
             dbirrad = dblevel.irradiation
             dbchron = dbirrad.chronology
@@ -259,68 +317,59 @@ class IsoDBTransfer(Loggable):
             holder = dblevel.holder.name
             prodname = dblevel.production.name
             pos = dbirradpos.position
+            doses = dbchron.get_doses()
+            prod = dblevel.production
+            geom = dblevel.holder.geometry
 
-            # save db irradiation
-            if not dest.get_irradiation(irradname):
-                dest.add_irradiation(irradname)
-                dest.flush()
+        # save db irradiation
+        if not dest.get_irradiation(irradname):
+            dest.add_irradiation(irradname)
+            dest.flush()
 
-                self.meta_repo.add_irradiation(irradname)
-                self.meta_repo.add_chronology(irradname, dbchron.get_doses())
-                self.meta_repo.commit('added irradiation {}'.format(irradname))
+            self.meta_repo.add_irradiation(irradname)
+            self.meta_repo.add_chronology(irradname, doses)
+            self.meta_repo.commit('added irradiation {}'.format(irradname))
 
-            # save production name to db
-            if not dest.get_production(prodname):
-                dest.add_production(prodname)
-                dest.flush()
+        # save production name to db
+        if not dest.get_production(prodname):
+            dest.add_production(prodname)
+            dest.flush()
 
-                self.meta_repo.add_production(prodname, dblevel.production)
-                self.meta_repo.commit('added production {}'.format(prodname))
+            self.meta_repo.add_production(prodname, prod)
+            self.meta_repo.commit('added production {}'.format(prodname))
 
-            # save db level
-            if not dest.get_irradiation_level(irradname, levelname):
-                dest.add_irradiation_level(levelname, irradname, holder, prodname)
-                dest.flush()
+        # save db level
+        if not dest.get_irradiation_level(irradname, levelname):
+            dest.add_irradiation_level(levelname, irradname, holder, prodname)
+            dest.flush()
 
-                self.meta_repo.add_irradiation_holder(holder, dblevel.holder.geometry)
-                self.meta_repo.add_level(irradname, levelname)
-                self.meta_repo.commit('added empty level {}{}'.format(irradname, levelname))
+            self.meta_repo.add_irradiation_holder(holder, geom)
+            self.meta_repo.add_level(irradname, levelname)
+            self.meta_repo.commit('added empty level {}{}'.format(irradname, levelname))
 
-            # save db irradiation position
-            if not dest.get_irradiation_position(irradname, levelname, pos):
-                p = self.meta_repo.get_level_path(irradname, levelname)
-                with open(p, 'r') as rfile:
-                    yd = json.load(rfile)
+        if pos is None:
+            pos = self._get_irradpos(dest, irradname, levelname, identifier)
 
-                # dbsam = dblab.sample
-                # project = dbsam.project.name
-                # project = project.replace('/', '_').replace('\\', '_')
-                #
-                # sam = dest.get_sample(dbsam.name, project)
-                # if not sam:
-                #     mat = dbsam.material.name
-                #     if not dest.get_material(mat):
-                #         dest.add_material(mat)
-                #         dest.flush()
-                #
-                #     if not dest.get_project(project):
-                #         dest.add_project(project)
-                #         dest.flush()
-                #
-                #     sam = dest.add_sample(dbsam.name, project, mat)
-                #     dest.flush()
+        # save db irradiation position
+        if not dest.get_irradiation_position(irradname, levelname, pos):
+            p = self.meta_repo.get_level_path(irradname, levelname)
+            with open(p, 'r') as rfile:
+                yd = json.load(rfile)
 
-                dd = dest.add_irradiation_position(irradname, levelname, pos)
-                dd.identifier = dblab.identifier
-                dd.sample = sam
+            dd = dest.add_irradiation_position(irradname, levelname, pos)
+            dd.identifier = dblab.identifier
+            dd.sample = sam
 
-                dest.flush()
-
+            dest.flush()
+            try:
                 f = dban.labnumber.selected_flux_history.flux
+                j, e = f.j, f.j_err
+            except AttributeError:
+                j, e = 0, 0
 
-                yd.append({'j': f.j, 'j_err': f.j_err, 'position': dban.labnumber.irradiation_position.position})
-                with open(p, 'w') as wfile:
-                    json.dump(yd, wfile, indent=4)
+            yd.append({'j': j, 'j_err': e, 'position': pos})
+            with open(p, 'w') as wfile:
+                json.dump(yd, wfile, indent=4)
 
     def _transfer_analysis(self, proc, src, dest, rec, exp=None, overwrite=True):
         # args = rec.split(',')
@@ -365,7 +414,10 @@ class IsoDBTransfer(Loggable):
             level = dblab.irradiation_position.level.name
             irradpos = dblab.irradiation_position.position
         else:
-            irrad, level, irradpos = '', '', 0
+            irrad = 'NoIrradiation'
+            level = 'A'
+            irradpos = self._get_irradpos(dest, irrad, level, dblab.identifier)
+            # irrad, level, irradpos = '', '', 0
 
         sample = dbsam.name
         mat = dbsam.material.name
@@ -511,16 +563,30 @@ class IsoDBTransfer(Loggable):
         #     # def _pack_data(self, xs, ys):
         #     #     return base64.b64encode(''.join((struct.pack('>ff', x, y) for x, y in zip(xs, ys))))
 
+    def _get_irradpos(self, dest, irradname, levelname, identifier):
+        dl = dest.get_irradiation_level(irradname, levelname)
+        pos = 1
+        if dl.positions:
+            for p in dl.positions:
+                if p.identifier == identifier:
+                    pos = p.position
+                    break
+            else:
+                pos = dl.positions[-1].position + 1
+
+        return pos
 
 if __name__ == '__main__':
     from pychron.core.helpers.logger_setup import logging_setup
 
     paths.build('_dev')
     logging_setup('de', root=os.path.join(os.path.expanduser('~'), 'Desktop', 'logs'))
+    # exp = 'J-Curve'
+    # url = 'https://github.com/{}/{}.git'.format(org.name, exp)
     e = IsoDBTransfer()
     # e.transfer_holder('40_no_spokes')
     # e.transfer_holder('40_hole')
     # e.transfer_holder('24_hole')
-    e.do_export()
+    e.do_export(create_repo=False)
     # e.export_production('Triga PR 275', db=False)
 # ============= EOF =============================================

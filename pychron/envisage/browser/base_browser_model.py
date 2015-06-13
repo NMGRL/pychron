@@ -157,6 +157,8 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
                    'use_named_date_range', 'named_date_range',
                    'low_post', 'high_post')
 
+    _suppress_post_update = False
+
     def make_records(self, ans):
         return self._make_records(ans)
 
@@ -259,9 +261,13 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
         self.use_low_post, self.use_high_post = True, True
         ol, oh = self.use_low_post, self.use_high_post
+        print 'project range', lp, hp
         self.low_post, self.high_post = lp, hp
+
+        self._suppress_post_update = True
         self.trait_property_changed('low_post', None)
         self.trait_property_changed('high_post', None)
+        self._suppress_post_update = False
 
         self.use_low_post, self.use_high_post = ol, oh
 
@@ -353,7 +359,8 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
         lp, hp = self.low_post, self.high_post
         if atypes and projects:
-            tlp, thp = db.get_min_max_analysis_timestamp(projects=projects, delta=1)
+            tlp, thp = db.get_project_date_range(projects)
+            # tlp, thp = db.get_min_max_analysis_timestamp(projects=projects, delta=1)
             if not lp:
                 lp = tlp
             if not hp:
@@ -580,10 +587,12 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
     # property get/set
     def _set_low_post(self, v):
-        self._low_post = v
+        if not self._suppress_post_update:
+            self._low_post = v
 
     def _set_high_post(self, v):
-        self._high_post = v
+        if not self._suppress_post_update:
+            self._high_post = v
 
     def _get_high_post(self):
         hp = None

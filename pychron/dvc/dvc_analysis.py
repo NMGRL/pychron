@@ -110,9 +110,6 @@ class TIsotope:
         self.blank = Blank()
         self.baseline = Baseline()
 
-    def get_intensity(self):
-        return ufloat((1, 0))
-
     def set_fit(self, *args, **kw):
         pass
 
@@ -254,8 +251,9 @@ class DVCAnalysis(Analysis):
         segments = [(pwr, convert_days(en - st), convert_days(analts - st))
                     for pwr, st, en in doses
                     if st is not None and en is not None]
-
-        d_o = doses[0][1]
+        d_o = 0
+        if doses:
+            d_o = doses[0][1]
         self.irradiation_time = time.mktime(d_o.timetuple()) if d_o else 0
         self.chron_segments = segments
         self.chron_dosages = doses

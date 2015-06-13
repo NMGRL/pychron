@@ -15,14 +15,29 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from traits.api import Int
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
-from traitsui.api import View, UItem, VGroup, ListStrEditor
+from traitsui.api import View, UItem, VGroup, ListStrEditor, TabularEditor
+from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+
+
+class CommitAdapter(TabularAdapter):
+    columns = [('Message', 'message'),
+               ('Date', 'date'),
+               ('Author', 'author'),
+               ('Email', 'email'),
+               ]
+    message_width = Int(300)
+    font = '10'
+
+
 class RepoCentralPane(TraitsTaskPane):
     def traits_view(self):
-        v = View(UItem('selected_repository_name'))
+        v = View(VGroup(UItem('selected_repository_name', style='readonly'),
+                        UItem('commits', editor=TabularEditor(adapter=CommitAdapter()))))
         return v
 
 
@@ -32,14 +47,11 @@ class SelectionPane(TraitsDockPane):
 
     def traits_view(self):
         v = View(VGroup(UItem('repository_names',
-                       editor=ListStrEditor(selected='selected_repository_name',
-                                            editable=False)),
-                 UItem('local_names',
-                       editor=ListStrEditor(selected='selected_repository_name',
-                                            editable=False))),
-                 )
+                              editor=ListStrEditor(selected='selected_repository_name',
+                                                   editable=False)),
+                        UItem('local_names',
+                              editor=ListStrEditor(selected='selected_local_repository_name',
+                                                   editable=False))))
         return v
+
 # ============= EOF =============================================
-
-
-

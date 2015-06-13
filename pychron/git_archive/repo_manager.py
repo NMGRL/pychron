@@ -107,6 +107,7 @@ class GitRepoManager(Loggable):
             with open(p, 'a') as afile:
                 for a in args:
                     afile.write('{}\n'.format(a))
+        self.add(p, commit=False)
 
     def out_of_date(self, branchname='master'):
         pd = open_progress(2)
@@ -438,7 +439,9 @@ class GitRepoManager(Loggable):
 
     def get_log(self, *args):
         repo = self._repo
-        return repo.active_branch.log(*args)
+        l = repo.active_branch.log(*args)
+
+        return l
 
     # action handlers
     def diff_selected(self):
