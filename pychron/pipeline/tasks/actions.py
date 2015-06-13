@@ -92,4 +92,14 @@ class IsochronAction(PlotAction):
     action = 'set_isochron_template'
     # image = icon('histogram')
 
+
+# ============= tag =============================================
+class TagAction(TaskAction):
+    name = 'Tag...'
+    dname = 'Tag'
+    # accelerator = 'Ctrl+Shift+t'
+    method = 'set_tag'
+    image = icon('tag-blue-add')
+    id = 'pychron.tag'
+
 # ============= EOF =============================================

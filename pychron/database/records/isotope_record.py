@@ -74,6 +74,7 @@ class IsotopeRecordView(object):
                  '_increment',
                  'uuid', 'rundate',
                  'timestamp', 'tag',
+                 'tag_dict',
                  'irradiation_position_position',
                  'irradiation', 'irradiation_level',
                  'irradiation_info', 'mass_spectrometer', 'analysis_type',
@@ -99,6 +100,7 @@ class IsotopeRecordView(object):
         self._increment = -1
         self.step = ''
         self.tag = ''
+        self.tag_dict = None
         self.uuid = ''
         self.experiment_id = ''
         self.experiment_ids = None

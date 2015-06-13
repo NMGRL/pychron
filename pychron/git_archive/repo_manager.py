@@ -269,6 +269,26 @@ class GitRepoManager(Loggable):
     def is_dirty(self):
         return self._repo.is_dirty()
 
+    def untracked_files(self):
+        lines = self._repo.git.status(porcelain=True,
+                                      untracked_files=True)
+
+        # Untracked files preffix in porcelain mode
+        prefix = "?? "
+        untracked_files = list()
+        for line in lines.split('\n'):
+            print 'ffff', line
+            if not line.startswith(prefix):
+                continue
+            filename = line[len(prefix):].rstrip('\n')
+            # Special characters are escaped
+            if filename[0] == filename[-1] == '"':
+                filename = filename[1:-1].decode('string_escape')
+            print 'ffasdfsdf', filename
+            untracked_files.append(os.path.join(self.path, filename))
+        # finalize_process(proc)
+        return untracked_files
+
     def has_staged(self):
         return self._repo.git.diff('--cached', '--name-only')
         # return self._repo.is_dirty()

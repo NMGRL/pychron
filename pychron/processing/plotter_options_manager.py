@@ -209,33 +209,33 @@ class PlotterOptionsManager(HasTraits):
             kind='livemodal')
         return v
 
+    @property
     def traits_view(self):
-        v = View(
-            VGroup(HGroup(
-                Item('plotter_options', show_label=False,
-                     editor=EnumEditor(name='plotter_options_list'),
-                     tooltip='List of available plot options'),
-                icon_button_editor('add_options',
-                                   'add',
-                                   tooltip='Add new plot options', ),
-                icon_button_editor('delete_options',
-                                   'delete',
-                                   tooltip='Delete current plot options',
-                                   enabled_when='object.plotter_options.name!="Default"', ),
-                icon_button_editor('save_options', 'disk',
-                                   tooltip='Save changes to options'),
-                icon_button_editor('factory_default', 'edit-bomb',
-                                   tooltip='Apply factory defaults')),
-                HGroup(UItem('use_formatting_options'),
-                       UItem('formatting_option', enabled_when='use_formatting_options')),
+        v = View(VGroup(HGroup(Item('plotter_options', show_label=False,
+                                    editor=EnumEditor(name='plotter_options_list'),
+                                    tooltip='List of available plot options'),
+                               icon_button_editor('add_options',
+                                                  'add',
+                                                  tooltip='Add new plot options', ),
+                               icon_button_editor('delete_options',
+                                                  'delete',
+                                                  tooltip='Delete current plot options',
+                                                  enabled_when='object.plotter_options.name!="Default"', ),
+                               icon_button_editor('save_options', 'disk',
+                                                  tooltip='Save changes to options'),
+                               icon_button_editor('factory_default', 'edit-bomb',
+                                                  tooltip='Apply factory defaults')),
+                        HGroup(UItem('use_formatting_options'),
+                               UItem('formatting_option', enabled_when='use_formatting_options')),
 
-                Item('plotter_options',
-                     show_label=False,
-                     style='custom')),
-            height=700,
-            buttons=['OK', 'Cancel'],
-            title='Edit {}'.format(self.plotter_options_klass.__name__),
-            resizable=True)
+                        Item('plotter_options',
+                             show_label=False,
+                             style='custom')),
+                 height=700,
+                 width=600,
+                 buttons=['OK', 'Cancel'],
+                 title='Edit {}'.format(self.plotter_options_klass.__name__),
+                 resizable=True)
         return v
 
     @cached_property
@@ -341,6 +341,7 @@ class ICFactorOptionsManager(PlotterOptionsManager):
     def _plotter_options_changed_hook(self, new):
         new.set_detectors(self.detectors)
 
+
 class BlanksOptionsManager(PlotterOptionsManager):
     plotter_options_klass = BlanksOptions
     persistence_name = 'blanks'
@@ -349,4 +350,5 @@ class BlanksOptionsManager(PlotterOptionsManager):
 class FluxOptionsManager(PlotterOptionsManager):
     plotter_options_klass = FluxOptions
     persistence_name = 'flux'
+
 # ============= EOF =============================================

@@ -18,6 +18,9 @@ from traits.etsconfig.api import ETSConfig
 
 ETSConfig.toolkit = "qt4"
 
+from traitsui.qt4.table_editor import TableDelegate
+from traitsui.qt4.extra import checkbox_renderer
+
 from PySide import QtCore
 from pyface.qt import QtGui
 from traits.trait_base import Undefined
@@ -530,7 +533,6 @@ class _GroupPanel(object):
 
         return outer
 
-
     def _set_item_size_policy(self, editor, item, label, stretch):
         """ Set size policy of an item and its label (if any).
 
@@ -552,21 +554,17 @@ class _GroupPanel(object):
 
         is_item_resizable = (
             (item.resizable is True) or
-            ((item.resizable is Undefined) and editor.scrollable)
-        )
+            ((item.resizable is Undefined) and editor.scrollable))
         is_item_springy = item.springy
 
         # handle exceptional case 2)
         item_policy = editor.control.sizePolicy().horizontalPolicy()
 
-        if (label is not None
-            and not is_label_left
-            and item_policy == QtGui.QSizePolicy.Minimum):
+        if label is not None and not is_label_left and item_policy == QtGui.QSizePolicy.Minimum:
             # this item cannot be stretched horizontally, and the label
             # exists and is on the right -> make label stretchable if necessary
 
-            if (self.direction == QtGui.QBoxLayout.LeftToRight
-                and is_item_springy):
+            if self.direction == QtGui.QBoxLayout.LeftToRight and is_item_springy:
                 is_item_springy = False
                 self._make_label_h_stretchable(label, stretch or 50)
 
@@ -586,7 +584,6 @@ class _GroupPanel(object):
                                is_item_resizable, is_item_springy, stretch)
         return stretch
 
-
     def _make_label_h_stretchable(self, label, stretch):
         """ Set size policies of a QLabel to be stretchable horizontally.
 
@@ -598,7 +595,6 @@ class _GroupPanel(object):
         label_policy.setHorizontalPolicy(
             QtGui.QSizePolicy.Expanding)
         label.setSizePolicy(label_policy)
-
 
     def _add_widget(self, layout, w, row, column, show_labels,
                     label_alignment=QtCore.Qt.AlignmentFlag(0)):
@@ -643,7 +639,6 @@ class _GroupPanel(object):
             else:
                 layout.addItem(w, row, column, 1, 1, label_alignment)
 
-
     def _create_label(self, item, ui, desc, suffix=':'):
         """Creates an item label.
 
@@ -678,10 +673,8 @@ class _GroupPanel(object):
 
         # append a suffix if the label is on the left and it does
         # not already end with a punctuation character
-        if (label != ''
-            and label[-1] not in ui_panel.LABEL_PUNCTUATION_CHARS
-            and self.group.show_left):
-            label = label + suffix
+        if not (not (label != '') or not (label[-1] not in ui_panel.LABEL_PUNCTUATION_CHARS)) and self.group.show_left:
+            label += suffix
 
         # create label controller
         label_control = QtGui.QLabel(label)
@@ -701,7 +694,6 @@ class _GroupPanel(object):
 
         return label_control
 
-
     def _add_emphasis(self, control):
         """Adds emphasis to a specified control's font.
         """
@@ -716,9 +708,91 @@ class _GroupPanel(object):
         font.setPointSize(font.pointSize())
         control.setFont(font)
 
-# # monkey patch ui_panel
-ui_panel._GroupPanel = _GroupPanel
 
+# # monkey patch ui_panel
+# ui_panel._GroupPanel = _GroupPanel
+class CheckboxRenderer(TableDelegate):
+    """ A renderer which displays a checked-box for a True value and an
+        unchecked box for a false value.
+    """
+
+    # ---------------------------------------------------------------------------
+    #  QAbstractItemDelegate interface
+    # ---------------------------------------------------------------------------
+
+    def editorEvent(self, event, model, option, index):
+        """ Reimplemented to handle mouse button clicks.
+        """
+        if event.type() == QtCore.QEvent.MouseButtonRelease and event.button() == QtCore.Qt.LeftButton:
+            column = index.model()._editor.columns[index.column()]
+            obj = index.data(QtCore.Qt.UserRole)
+            checked = bool(column.get_raw_value(obj))
+            column.set_value(obj, not checked)
+            return True
+        else:
+            return False
+
+    def paint(self, painter, option, index):
+        """ Reimplemented to paint the checkbox.
+        """
+        # Determine whether the checkbox is check or unchecked
+        column = index.model()._editor.columns[index.column()]
+        obj = index.data(QtCore.Qt.UserRole)
+        checked = column.get_raw_value(obj)
+
+        # First draw the background
+        painter.save()
+        row_brushes = [option.palette.base(), option.palette.alternateBase()]
+        if option.state & QtGui.QStyle.State_Selected:
+            bg_brush = option.palette.highlight()
+        else:
+            bg_brush = index.data(QtCore.Qt.BackgroundRole)
+            if bg_brush == NotImplemented or bg_brush is None:
+                if index.model()._editor.factory.alternate_bg_color:
+                    bg_brush = row_brushes[index.row() % 2]
+                else:
+                    bg_brush = row_brushes[0]
+        painter.fillRect(option.rect, bg_brush)
+
+        # Then draw the checkbox
+        style = QtGui.QApplication.instance().style()
+        box = QtGui.QStyleOptionButton()
+        box.palette = option.palette
+
+        # Align the checkbox appropriately.
+        box.rect = option.rect
+        size = style.sizeFromContents(QtGui.QStyle.CT_CheckBox, box,
+                                      QtCore.QSize(), None)
+        box.rect.setWidth(size.width())
+        margin = style.pixelMetric(QtGui.QStyle.PM_ButtonMargin, box)
+        alignment = column.horizontal_alignment
+        if alignment == 'left':
+            box.rect.setLeft(option.rect.left() + margin)
+        elif alignment == 'right':
+            box.rect.setLeft(option.rect.right() - size.width() - margin)
+        else:
+            # FIXME: I don't know why I need the 2 pixels, but I do.
+            box.rect.setLeft(option.rect.left() + option.rect.width() // 2 -
+                             size.width() // 2 + margin - 2)
+
+        box.state = QtGui.QStyle.State_Enabled | QtGui.QStyle.State_Active
+        if checked:
+            box.state |= QtGui.QStyle.State_On
+        else:
+            box.state |= QtGui.QStyle.State_Off
+        style.drawControl(QtGui.QStyle.CE_CheckBox, box, painter)
+        painter.restore()
+
+    def sizeHint(self, option, index):
+        """ Reimplemented to provide size hint based on a checkbox
+        """
+        box = QtGui.QStyleOptionButton()
+        style = QtGui.QApplication.instance().style()
+        return style.sizeFromContents(QtGui.QStyle.CT_CheckBox, box,
+                                      QtCore.QSize(), None)
+
+# monkey patch CheckboxColumn
+checkbox_renderer.CheckboxRenderer = CheckboxRenderer
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
@@ -769,7 +843,7 @@ def check_dependencies(debug):
     for npkg, req in (('uncertainties', '2.1'),
                       ('pint', '0.5'),
                       # ('fant', '0.1')
-    ):
+                      ):
         try:
             pkg = __import__(npkg)
             ver = pkg.__version__
@@ -943,6 +1017,5 @@ def build_globals(debug):
 
     globalv.build(ip)
     globalv.debug = debug
-
 
 # ============= EOF =============================================

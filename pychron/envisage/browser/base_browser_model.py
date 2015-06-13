@@ -472,7 +472,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         def func(xi, prog, i, n):
             if prog:
                 prog.change_message('Loading {}'.format(xi.record_id))
-            return xi.record_view()
+            return xi.record_view
 
         return progress_loader(ans, func, threshold=25)
 

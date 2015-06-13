@@ -30,8 +30,8 @@ from pychron.core.stats.core import calculate_mswd, calculate_weighted_mean, val
 
 
 def AGProperty(*depends):
-    # d = 'dirty,analyses:[status,temp_status]'
-    d = 'dirty'  # ,analyses:[status,temp_status]'
+    d = 'dirty,analyses:[status,temp_status]'
+    # d = 'dirty'  # ,analyses:[status,temp_status]'
     if depends:
         d = '{},{}'.format(','.join(depends), d)
 
@@ -50,7 +50,7 @@ class AnalysisGroup(HasTraits):
 
     weighted_age = AGProperty()
     # weighted_age_error_kind = Enum(*ERROR_TYPES)
-    weighted_age_error_kind = Str  #Enum(*ERROR_TYPES)
+    weighted_age_error_kind = Str  # Enum(*ERROR_TYPES)
 
     weighted_kca = AGProperty()
     arith_kca = AGProperty()
@@ -140,7 +140,7 @@ class AnalysisGroup(HasTraits):
         attr = self.attribute
         if attr.startswith('uage'):
             attr = 'uage_w_j_err' if self.include_j_error_in_individual_analyses else 'uage'
-        #     if self.include_j_error_in_individual_analyses:
+        # if self.include_j_error_in_individual_analyses:
         #         v, e = self._calculate_weighted_mean('uage', self.weighted_age_error_kind)
         #     else:
         #         v, e = self._calculate_weighted_mean('uage_wo_j_err', self.weighted_age_error_kind)
@@ -158,16 +158,17 @@ class AnalysisGroup(HasTraits):
             mswd = self.mswd
 
         if kind == 'SEM, but if MSWD>1 use SEM * sqrt(MSWD)':
-            e = e * (mswd ** 0.5 if mswd > 1 else 1)
+            e *= mswd ** 0.5 if mswd > 1 else 1
 
-        if include_j_error is None:
-            include_j_error = self.include_j_error_in_mean
+        if 'age' in self.attribute:
+            if include_j_error is None:
+                include_j_error = self.include_j_error_in_mean
 
-        if include_j_error:
-            try:
-                e = ((e / v) ** 2 + self.j_err ** 2) ** 0.5 * v
-            except ZeroDivisionError:
-                return nan
+            if include_j_error:
+                try:
+                    e = ((e / v) ** 2 + self.j_err ** 2) ** 0.5 * v
+                except ZeroDivisionError:
+                    return nan
         return e
 
     # @cached_property
@@ -305,7 +306,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
         args = calculate_plateau_age(ages, errors, k39, options=options)
         if args:
             v, e, pidx = args
-            if pidx[0]==pidx[1]:
+            if pidx[0] == pidx[1]:
                 return
 
             self.plateau_steps = pidx
@@ -343,7 +344,7 @@ class InterpretedAge(StepHeatAnalysisGroup):
     preferred_age_kind = Str('Weighted Mean')
     preferred_kca_kind = Str('Weighted Mean')
 
-    preferred_age_error_kind = Str  #('SD')
+    preferred_age_error_kind = Str  # ('SD')
     preferred_ages = Property(depends_on='analyses')
 
     use = Bool
@@ -439,7 +440,7 @@ class InterpretedAge(StepHeatAnalysisGroup):
 
 # ============= EOF =============================================
 
-#class AnalysisRatioMean(AnalysisGroup):
+# class AnalysisRatioMean(AnalysisGroup):
 #    Ar40_39 = Property
 #    Ar37_39 = Property
 #    Ar36_39 = Property
@@ -467,7 +468,7 @@ class InterpretedAge(StepHeatAnalysisGroup):
 #    def _get_kcl(self):
 #        return self._calculate_weighted_mean('kcl')
 #
-#class AnalysisIntensityMean(AnalysisGroup):
+# class AnalysisIntensityMean(AnalysisGroup):
 #    Ar40 = Property
 #    Ar39 = Property
 #    Ar38 = Property
@@ -488,4 +489,3 @@ class InterpretedAge(StepHeatAnalysisGroup):
 #
 #    def _get_Ar36(self):
 #        return self._calculate_weighted_mean('Ar36')
-

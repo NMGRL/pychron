@@ -37,7 +37,7 @@ from pychron.processing.tagging.data_reduction_tags import DataReductionTagModel
 class DataReductionItemAdapter(TabularAdapter):
     columns = [('Name', 'name'),
                ('Date', 'create_date'),
-               ('User','user'),
+               ('User', 'user'),
                ('Comment', 'comment')]
 
 
@@ -51,7 +51,7 @@ class SelectDataReductionTagView(Controller):
                        editor=TabularEditor(adapter=DataReductionItemAdapter(),
                                             editable=False,
                                             selected='selected')),
-                 buttons=['OK','Cancel'],
+                 buttons=['OK', 'Cancel'],
                  width=500,
                  kind='livemodal',
                  resizable=True,
@@ -94,7 +94,7 @@ class AnalysisTagView(Controller):
 
     def traits_view(self):
         cols = [ObjectColumn(name='name', editable=False),
-                ObjectColumn(name='user', editable=False),
+                # ObjectColumn(name='user', editable=False),
                 CheckboxColumn(name='omit_ideo'),
                 CheckboxColumn(name='omit_spec'),
                 CheckboxColumn(name='omit_iso'),
@@ -113,8 +113,10 @@ class AnalysisTagView(Controller):
                                         tooltip='Save changes from the "Tag" table to the database')),
                  UItem('items', editor=TabularEditor(adapter=ItemAdapter(),
                                                      multi_select=True,
-                                                     operations=['delete'])),
-                 HGroup(Item('use_filter', label='Remove "Invalid" analyses from figure')),
+                                                     operations=['delete']),
+                       defined_when='items'),
+                 HGroup(Item('use_filter', label='Remove "Invalid" analyses from figure'),
+                        defined_when='items'),
 
                  resizable=True,
                  width=500,

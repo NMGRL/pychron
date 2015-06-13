@@ -15,8 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import json
+
 from traits.api import Instance, Str, Set, List
 from apptools.preferences.preference_binding import bind_preference
+
 # ============= standard library imports ========================
 import shutil
 import time
@@ -25,7 +28,7 @@ from itertools import groupby
 import os
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import remove_extension
-from pychron.core.progress import progress_loader, progress_iterator
+from pychron.core.progress import progress_loader
 from pychron.dvc.defaults import TRIGA, HOLDER_24_SPOKES, LASER221, LASER65
 from pychron.dvc.dvc_analysis import DVCAnalysis, experiment_path, analysis_path, PATH_MODIFIERS
 from pychron.dvc.dvc_database import DVCDatabase
@@ -34,6 +37,7 @@ from pychron.git_archive.repo_manager import GitRepoManager, format_date
 from pychron.github import Organization
 from pychron.loggable import Loggable
 from pychron.paths import paths
+from pychron.pychron_constants import OMIT_KEYS
 
 TESTSTR = {'blanks': 'auto update blanks', 'iso_evo': 'auto update iso_evo'}
 
@@ -70,6 +74,47 @@ def push_experiments(ps):
         pp = os.path.join(paths.experiment_dataset_dir, p)
         repo.open_repo(pp)
         repo.push()
+
+
+class Tag(object):
+    omit_dict = None
+    name = None
+    path = None
+
+    @classmethod
+    def from_analysis(cls, an):
+        tag = cls()
+        tag.omit_dict = {k: getattr(an, k) for k in OMIT_KEYS}
+        tag.name = an.tag
+        tag.record_id = an.record_id
+        tag.experiment_id = an.experiment_id
+        tag.path = analysis_path(an.record_id, an.experiment_id, modifier='tag')
+
+        return tag
+
+    def dump(self):
+        obj = {'name': self.name, 'omit_dict': self.omit_dict}
+        if not self.path:
+            self.path = analysis_path(self.record_id, self.experiment_id, modifier='tag', mode='w')
+
+        with open(self.path, 'w') as wfile:
+            json.dump(obj, wfile, indent=4)
+
+
+class GitSessionCTX(object):
+    def __init__(self, parent, experiment_id, message):
+        self._parent = parent
+        self._experiment_id = experiment_id
+        self._message = message
+        self._parent.get_experiment_repo(experiment_id)
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type is None:
+            if self._parent.is_dirty():
+                self._parent.experiment_commit(self._experiment_id, self._message)
 
 
 class DVC(Loggable):
@@ -109,6 +154,12 @@ class DVC(Loggable):
             self._defaults()
             return True
 
+    def git_session_ctx(self, experiment_id, message):
+        return GitSessionCTX(self, experiment_id, message)
+
+    def get_experiment_repo(self, exp):
+        return self._get_experiment_repo(exp)
+
     # database
 
     # analysis processing
@@ -127,8 +178,8 @@ class DVC(Loggable):
         ans = sorted(ans, key=key)
         mod_experiments = []
         for expid, ais in groupby(ans, key=key):
-            ais = map(lambda x: analysis_path(x.record_id, x.experiment_id, modifier='changeable'), ais)
-            if self.experiment_add_analyses(expid, ais):
+            paths = map(lambda x: analysis_path(x.record_id, x.experiment_id, modifier='changeable'), ais)
+            if self.experiment_add_paths(expid, paths):
                 self.experiment_commit(expid, msg)
                 mod_experiments.append(expid)
 
@@ -138,7 +189,14 @@ class DVC(Loggable):
         #         mod_experiments.append(exp)
         return mod_experiments
 
-    def experiment_add_analyses(self, experiment_id, paths):
+    def update_tag(self, an):
+        tag = Tag.from_analysis(an)
+        tag.dump()
+
+        expid = an.experiment_id
+        return self.experiment_add_paths(expid, tag.path)
+
+    def experiment_add_paths(self, experiment_id, paths):
         if not hasattr(paths, '__iter__'):
             paths = (paths,)
 
@@ -146,16 +204,22 @@ class DVC(Loggable):
 
         changes = repo.get_local_changes()
         changed = False
+        if not changes:
+            changes = repo.untracked_files()
+        else:
+            changes = [os.path.join(repo.path, c) for c in changes]
+
+        # print changes
         for p in paths:
-            if os.path.basename(p) in changes:
+            if p in changes:
                 self.debug('Change Index adding: {}'.format(p))
                 repo.add(p, commit=False, verbose=False)
                 changed = True
         return changed
 
-    def experiment_commit(self, project, msg):
-        self.debug('Project commit: {} msg: {}'.format(project, msg))
-        repo = self._get_experiment_repo(project)
+    def experiment_commit(self, experiment, msg):
+        self.debug('Experiment commit: {} msg: {}'.format(experiment, msg))
+        repo = self._get_experiment_repo(experiment)
         repo.commit(msg)
 
     def save_icfactors(self, ai, dets, fits, refs):
@@ -190,11 +254,11 @@ class DVC(Loggable):
         else:
             self.pulled_experiments = exps
 
-        if exps:
-            org = Organization(self.organization)
-            exps = filter(lambda x: org.has_repo(x), exps)
-
-            progress_iterator(exps, self._load_repository, threshold=1)
+        # if exps:
+        #     org = Organization(self.organization)
+        #     exps = filter(lambda x: org.has_repo(x), exps)
+        #
+        #     progress_iterator(exps, self._load_repository, threshold=1)
 
         st = time.time()
         wrapper = lambda *args: self._make_record(calculate_f_only=calculate_f_only, *args)
@@ -304,6 +368,8 @@ class DVC(Loggable):
         3. pull changes from origin
 
         """
+        return True
+
         url = 'https://github.com/{}/{}.git'.format(self.organization, name)
 
         repo = self._get_experiment_repo(name)
@@ -429,6 +495,7 @@ class DVC(Loggable):
                 a.j = meta_repo.get_flux(record.irradiation, record.irradiation_level,
                                          record.irradiation_position_position)
 
+                a.set_tag(record.tag)
                 if calculate_f_only:
                     a.calculate_F()
                 else:
@@ -472,6 +539,7 @@ class DVC(Loggable):
         self.debug('writing defaults')
         # self.db.create_all(Base.metadata)
         with self.db.session_ctx():
+            self.db.add_save_user()
             for tag, func in (('irradiation holders', self._add_default_irradiation_holders),
                               ('productions', self._add_default_irradiation_productions),
                               ('load holders', self._add_default_load_holders)):

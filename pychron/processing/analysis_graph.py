@@ -43,9 +43,15 @@ class AnalysisGraph(Graph):
         self.save_db_figure = True
 
     def _set_tag(self):
+        """
+        open the tag dialog
+        :return:
+        """
+        print 'set tag'
         self.tag = True
 
     def _set_invalid(self):
+        print 'set invalid'
         self.invalid = True
 
 
@@ -57,4 +63,3 @@ class AnalysisStackedRegressionGraph(AnalysisGraph, StackedRegressionGraph):
     pass
 
 # ============= EOF =============================================
-

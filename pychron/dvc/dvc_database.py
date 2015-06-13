@@ -29,7 +29,7 @@ from pychron.database.core.database_adapter import DatabaseAdapter
 from pychron.database.core.query import compile_query
 from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, IrradiationTbl, LevelTbl, SampleTbl, \
     MaterialTbl, IrradiationPositionTbl, UserTbl, ExtractDeviceTbl, LoadTbl, LoadHolderTbl, LoadPositionTbl, \
-    MeasuredPositionTbl, ProductionTbl, VersionTbl, ExperimentAssociationTbl, ExperimentTbl
+    MeasuredPositionTbl, ProductionTbl, VersionTbl, ExperimentAssociationTbl, ExperimentTbl, TagTbl, AnalysisChangeTbl
 
 
 class NewMassSpectrometerView(HasTraits):
@@ -111,6 +111,13 @@ class DVCDatabase(DatabaseAdapter):
                     if not self.get_users():
                         self.add_user('root')
 
+    def set_analysis_tag(self, uuid, tagname):
+        with self.session_ctx():
+            an = self.get_analysis_uuid(uuid)
+            change = an.change
+            change.tag = tagname
+            change.user = self.save_username
+
     def find_references(self, times, atypes, hours=10):
         with self.session_ctx() as sess:
             # delta = 60 * 60 * hours  # seconds
@@ -126,7 +133,7 @@ class DVCDatabase(DatabaseAdapter):
                 # print rs
                 # print ti, low, high, rs, refs
             # print 'refs', refs
-            return [ri.record_view() for ri in refs]
+            return [ri.record_view for ri in refs]
 
     def get_analyses_data_range(self, low, high, atypes, exclude=None):
         with self.session_ctx() as sess:
@@ -152,6 +159,16 @@ class DVCDatabase(DatabaseAdapter):
             dblevel = self.get_irradiation_level(irrad, level)
             # print dblevel, dblevel.productionID, dblevel.production, dblevel.idlevelTbl
             return dblevel.production.name
+
+    def add_save_user(self):
+        with self.session_ctx():
+            obj = UserTbl(name=self.save_username)
+            self._add_item(obj)
+
+    def add_tag(self, **kw):
+        with self.session_ctx():
+            obj = TagTbl(**kw)
+            return self._add_item(obj)
 
     def add_production(self, name):
         with self.session_ctx():
@@ -283,10 +300,19 @@ class DVCDatabase(DatabaseAdapter):
     def get_labnumber_analyses(self, lns,
                                low_post=None, high_post=None,
                                omit_key=None, exclude_uuids=None,
-                               mass_spectrometers=None, order='asc', **kw):
+                               include_invalid=False,
+                               mass_spectrometers=None, order='asc',
+                               **kw):
         with self.session_ctx() as sess:
             q = sess.query(AnalysisTbl)
             q = q.join(IrradiationPositionTbl)
+            if omit_key or not include_invalid:
+                q = q.join(AnalysisChangeTbl)
+
+            if mass_spectrometers:
+                if not hasattr(mass_spectrometers, '__iter__'):
+                    mass_spectrometers = (mass_spectrometers,)
+                q = q.filter(AnalysisTbl.mass_spectrometer.in_(mass_spectrometers))
 
             if not hasattr(lns, '__iter__'):
                 lns = (lns,)
@@ -298,16 +324,15 @@ class DVCDatabase(DatabaseAdapter):
             if high_post:
                 q = q.filter(AnalysisTbl.timestamp <= str(high_post))
 
-            if omit_key:
-                q = q.filter(AnalysisTbl.tag != omit_key)
-
             if exclude_uuids:
                 q = q.filter(not_(AnalysisTbl.uuid.in_(exclude_uuids)))
 
-            if mass_spectrometers:
-                if not hasattr(mass_spectrometers, '__iter__'):
-                    mass_spectrometers = (mass_spectrometers,)
-                q = q.filter(AnalysisTbl.mass_spectrometer.in_(mass_spectrometers))
+            if not include_invalid:
+                q = q.filter(AnalysisChangeTbl.tag != 'invalid')
+
+            if omit_key:
+                q = q.filter(AnalysisChangeTbl.tag != omit_key)
+
             if order:
                 q = q.order_by(getattr(AnalysisTbl.timestamp, order)())
 
@@ -546,6 +571,12 @@ class DVCDatabase(DatabaseAdapter):
             ps = self._retrieve_items(ProjectTbl, order=order)
         return ps
 
+    def get_tag(self, name):
+        return self._retrieve_item(TagTbl, name)
+
+    def get_tags(self):
+        return self._retrieve_items(TagTbl)
+
     def get_mass_spectrometers(self):
         return self._retrieve_items(MassSpectrometerTbl)
 
@@ -575,6 +606,22 @@ class DVCDatabase(DatabaseAdapter):
             # q = q.filter(SampleTbl.name.in_(('BW-2014-3', 'BW-2014-4')))
 
             return self._query_all(q, verbose_query=True)
+
+    def delete_tag(self, name):
+        with self.session_ctx() as sess:
+            q = sess.query(AnalysisTbl.idanalysisTbl)
+            q = q.join(AnalysisChangeTbl)
+            q = q.filter(AnalysisChangeTbl.tag == name)
+            n = q.count()
+            if n:
+                a = 'analyses' if n > 1 else 'analysis'
+
+                if not self.confirmation_dialog('The Tag "{}" is applied to {} {}. '
+                                                'Are you sure to want to delete it?'.format(name, n, a)):
+                    return
+
+            self._delete_item(name, name='tag')
+            return True
 
     # private
     def _get_table_names(self, tbl):

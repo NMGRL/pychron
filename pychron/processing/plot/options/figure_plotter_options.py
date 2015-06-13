@@ -26,6 +26,7 @@ from traitsui.api import View, Item, HGroup, VGroup, Spring, Group, EnumEditor, 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.extras.checkbox_column import CheckboxColumn
+from traitsui.group import VFold
 from traitsui.table_column import ObjectColumn
 import yaml
 from pychron.core.ui.table_editor import myTableEditor
@@ -473,17 +474,18 @@ class FigurePlotterOptions(BasePlotterOptions):
                            a_grp,
                            label='Appearance',
                            show_border=True)
-            g = Group(main_grp,
+            g = Group(VFold(main_grp, *grps),
                       a_grp,
                       # bg_grp,
                       # self._get_padding_group(),
-                      layout='fold', *grps)
+                      layout='tabbed')
         else:
             g = Group(main_grp, bg_grp, pd_grp)
 
-        v = View(VGroup(self._get_refresh_group(), g),
-                 scrollable=True)
+        # v = View(VGroup(self._get_refresh_group(), g),
+        #          scrollable=True)
         # v = View(VGroup(self._get_refresh_group(),g))
+        v = View(g)
         return v
 
 # ============= EOF =============================================

@@ -19,7 +19,7 @@ from numpy import Inf
 from pyface.message_dialog import information
 from pyface.qt import QtCore
 
-from traits.api import Date
+from traits.api import Event
 
 # ============= standard library imports ========================
 from collections import namedtuple
@@ -33,7 +33,7 @@ from pychron.processing.arar_age import ArArAge
 # from pychron.processing.analyses.db_summary import DBAnalysisSummary
 from pychron.experiment.utilities.identifier import make_aliquot_step, make_runid
 from pychron.processing.isotope import Isotope
-from pychron.pychron_constants import PLUSMINUS
+from pychron.pychron_constants import PLUSMINUS, OMIT_KEYS
 
 Fit = namedtuple('Fit', 'fit '
                         'filter_outliers filter_outlier_iterations filter_outlier_std_devs '
@@ -157,7 +157,7 @@ class Analysis(ArArAge):
     extract_duration = 0
     extract_device = ''
     position = ''
-    rundate = Date
+    rundate = None
     experiment_txt = ''
     extraction_script_blob = ''
     measurement_script_blob = ''
@@ -199,9 +199,9 @@ class Analysis(ArArAge):
     has_raw_data = False
     has_changes = False
 
-    # recall_event = Event
-    # tag_event = Event
-    # invalid_event = Event
+    recall_event = Event
+    tag_event = Event
+    invalid_event = Event
 
     def __init__(self, *args, **kw):
         super(Analysis, self).__init__(*args, **kw)
@@ -210,6 +210,23 @@ class Analysis(ArArAge):
         self.deflections = {}
         self.blank_changes = []
         self.fit_changes = []
+
+    def set_tag(self, tag):
+        if isinstance(tag, str):
+            self.tag = tag
+            omit = tag == 'invalid'
+        else:
+            name = tag.name
+            self.tag = name
+
+            omit = name == 'omit'
+            for a in OMIT_KEYS:
+                v = getattr(tag, a)
+                setattr(self, a, v)
+                if v:
+                    omit = True
+
+        self.temp_status = 1 if omit else 0
 
     def show_isotope_evolutions(self, isotopes, **kw):
         if isotopes and isinstance(isotopes[0], (str, unicode)):
@@ -228,7 +245,7 @@ class Analysis(ArArAge):
             return g
 
     def trigger_recall(self):
-        self.recall_event = self
+        pass
 
     def trigger_tag(self, analyses=None):
         if analyses is None:

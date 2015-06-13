@@ -23,6 +23,7 @@ from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy import Column, Integer, String, TIMESTAMP, Float, BLOB, func, Boolean
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.experiment.utilities.identifier import make_runid
+from pychron.pychron_constants import OMIT_KEYS
 
 Base = declarative_base()
 
@@ -56,6 +57,14 @@ class ExperimentAssociationTbl(Base, BaseMixin):
     # analyses = relationship('AnalysisTbl', backref='experiment_associations')
 
 
+class AnalysisChangeTbl(Base, BaseMixin):
+    idanalysischangeTbl = Column(Integer, primary_key=True)
+    tag = Column(String(40), ForeignKey('TagTbl.name'))
+    timestamp = Column(TIMESTAMP)
+    user = Column(String(40))
+    analysisID = Column(Integer, ForeignKey('AnalysisTbl.idanalysisTbl'))
+
+
 class AnalysisTbl(Base, BaseMixin):
     idanalysisTbl = Column(Integer, primary_key=True)
     timestamp = Column(TIMESTAMP)
@@ -82,6 +91,7 @@ class AnalysisTbl(Base, BaseMixin):
     weight = Column(Float)
     comment = Column(String(80))
     experiment_associations = relationship('ExperimentAssociationTbl', backref='analysis')
+    change = relationship('AnalysisChangeTbl', uselist=False, backref='analysis')
 
     @property
     def irradiation(self):
@@ -117,6 +127,7 @@ class AnalysisTbl(Base, BaseMixin):
     def record_id(self):
         return make_runid(self.irradiation_position.identifier, self.aliquot, self.increment)
 
+    @property
     def record_view(self):
         iv = IsotopeRecordView()
         iv.extract_script_name = self.extractionName
@@ -146,6 +157,9 @@ class AnalysisTbl(Base, BaseMixin):
             if irradpos.sample.project:
                 iv.project = irradpos.sample.project.name
 
+        tag = self.change.tag_item
+        iv.tag = tag.name
+        iv.tag_dict = {k: getattr(tag, k) for k in ('name',) + OMIT_KEYS}
         return iv
 
 
@@ -204,6 +218,16 @@ class IrradiationPositionTbl(Base, BaseMixin):
     # @property
     # def irradiation_position(self):
     #     return self
+
+
+class TagTbl(Base, BaseMixin):
+    name = Column(String(40), primary_key=True)
+    omit_ideo = Column(Boolean)
+    omit_spec = Column(Boolean)
+    omit_iso = Column(Boolean)
+    omit_series = Column(Boolean)
+
+    analyses = relationship('AnalysisChangeTbl', backref='tag_item')
 
 
 class MassSpectrometerTbl(Base, BaseMixin):

@@ -41,6 +41,9 @@ class FigureNode(BaseNode):
             self.editor.refresh_needed = True
 
     def run(self, state):
+        self._configured = True
+        self.plotter_options = self.plotter_options_manager.plotter_options
+
         if not self.plotter_options or not self._configured:
             if not self.configure(refresh=False):
                 state.canceled = True

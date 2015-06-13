@@ -214,9 +214,9 @@ def launch(klass, user):
 
         root = os.path.dirname(__file__)
         r = QtGui.QApplication.instance()
-        p = os.path.join(root, 'stylesheets', 'dark.css')
-        with open(p) as rfile:
-            r.setStyleSheet(rfile.read())
+        # p = os.path.join(root, 'stylesheets', 'qdark.css')
+        # with open(p) as rfile:
+        #     r.setStyleSheet(rfile.read())
 
         app.run()
 

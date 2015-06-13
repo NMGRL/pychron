@@ -19,6 +19,7 @@
 import random
 
 # ============= standard library imports ========================
+from traits.has_traits import HasTraits
 from uncertainties import ufloat
 from numpy import hstack
 from ConfigParser import ConfigParser
@@ -38,7 +39,7 @@ from pychron.pychron_constants import ARGON_KEYS
 logger = new_logger('ArArAge')
 
 
-class MLoggable(object):
+class MLoggable(HasTraits):
     def info(self, msg):
         logger.info(msg)
 

@@ -496,8 +496,8 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
             else:
                 item = value
 
-            self.debug('deleting value={},name={},item={}'.format(value, name, item))
             if item:
+                self.debug('deleting value={},name={},item={}'.format(value, name, item))
                 sess.delete(item)
 
     def _retrieve_items(self, table,

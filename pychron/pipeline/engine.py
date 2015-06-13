@@ -401,6 +401,8 @@ class PipelineEngine(Loggable):
         pt = PipelineTemplate(name, path)
         pt.render(self.pipeline, self.browser_model, self.dvc)
         self.update_detectors()
+        if self.pipeline.nodes:
+            self.selected = self.pipeline.nodes[0]
         # self.update_unknowns()
         # self.update_references()
 
@@ -495,7 +497,7 @@ class PipelineEngine(Loggable):
     def _dclicked_changed(self, new):
         # if isinstance(new, DataNode):
         self.configure(new)
-            # self.update_needed = True
+        # self.update_needed = True
 
 # if __name__ == '__main__':
 # from traitsui.api import TreeNode, Handler

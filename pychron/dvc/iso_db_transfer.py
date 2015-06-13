@@ -455,7 +455,6 @@ class IsoDBTransfer(Loggable):
                               _step=inc,
                               comment=dban.comment,
                               aliquot=int(aliquot),
-
                               extract_device=extraction.extraction_device.name,
                               duration=extraction.extract_duration,
                               cleanup=extraction.cleanup_duration,
@@ -472,6 +471,7 @@ class IsoDBTransfer(Loggable):
                               tray='')
 
         ps = PersistenceSpec(run_spec=rs,
+                             tag=an.tag,
                              arar_age=an,
                              timestamp=dban.analysis_timestamp,
                              use_experiment_association=True,
@@ -575,6 +575,7 @@ class IsoDBTransfer(Loggable):
                 pos = dl.positions[-1].position + 1
 
         return pos
+
 
 if __name__ == '__main__':
     from pychron.core.helpers.logger_setup import logging_setup

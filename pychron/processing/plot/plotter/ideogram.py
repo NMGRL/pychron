@@ -432,7 +432,7 @@ class Ideogram(BaseArArFigure):
 
     def _add_mean_indicator(self, g, line, po, bins, probs, pid):
         wm, we, mswd, valid_mswd = self._calculate_stats(bins, probs)
-
+        print wm, we
         ogid = self.group_id
         gid = ogid + 1
 
@@ -771,53 +771,4 @@ class Ideogram(BaseArArFigure):
         # a = mswd ** 0.5
         # return we * a * n
 
-        # ============= EOF =============================================
-        # def _add_mean_indicator2(self, g, scatter, bins, probs, pid):
-        # offset = 0
-        # percentH = 1 - 0.954  # 2sigma
-        #
-        # maxp = max(probs)
-        # wm, we, mswd, valid_mswd = self._calculate_stats(self.xs, self.xes,
-        #                                                         bins, probs)
-        #        #ym = maxp * percentH + offset
-        #        #set ym in screen space
-        #        #convert to data space
-        #        ogid = self.group_id
-        #        gid = ogid + 1
-        #        sgid = ogid * 3
-        #
-        #        ym = maxp * 0.1 * gid
-        #
-        #        s, p = g.new_series(
-        #            [wm], [ym],
-        #            type='scatter',
-        #                            marker='circle',
-        #                            #selection_marker_size=3,
-        #                            marker_size=3,
-        #                            #selection_marker='circle',
-        #                            #selection_color=scatter.color,
-        #                            #selection_outline_color=scatter.color,
-        #                            color=scatter.color,
-        #                            plotid=0
-        #        )
-        #
-        #        g.set_series_label('Mean-{}'.format(gid), series=sgid + 2, plotid=pid)
-        #
-        #        self._add_error_bars(s, [we], 'x', self.options.nsigma)
-        # #         display_mean_indicator = self._get_plot_option(self.options,
-        # 'display_mean_indicator', default=True)
-        #        if not self.options.display_mean_indicator:
-        #            s.visible = False
-        #
-        #        label = None
-        #        #         display_mean = self._get_plot_option(self.options, 'display_mean_text', default=True)
-        #        if self.options.display_mean:
-        #            text = self._build_label_text(wm, we, mswd, valid_mswd, len(self.xs))
-        #            #             font = self._get_plot_option(self.options, 'data_label_font', default='modern 12')
-        #            self._add_data_label(s, text, (wm, ym),
-        #                                 #                                 font=font
-        #            )
-        #            # add a tool to move the mean age point
-        #        s.tools.append(PointMoveTool(component=s,
-        #                                     label=label,
-        #                                     constrain='y'))
+# ============= EOF =============================================

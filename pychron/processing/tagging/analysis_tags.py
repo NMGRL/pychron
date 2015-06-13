@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, List, Any, Button, Date, Bool
+from traits.api import HasTraits, Str, List, Any, Button, Bool
 from traitsui.api import View, Item, HGroup, VGroup
 
 # ============= standard library imports ========================
@@ -25,8 +25,8 @@ from pychron.processing.tagging.base_tags import BaseTagModel
 
 class Tag(HasTraits):
     name = Str
-    user = Str
-    date = Date
+    # user = Str
+    # date = Date
     omit_ideo = Bool
     omit_spec = Bool
     omit_iso = Bool
@@ -48,7 +48,7 @@ class AnalysisTagModel(BaseTagModel):
         with db.session_ctx():
             dbtags = db.get_tags()
 
-            #make invalid and ok first in tag list
+            # make invalid and ok first in tag list
 
             invalid_tag = next((t for t in dbtags
                                 if t.name == 'invalid'), None)
@@ -66,8 +66,8 @@ class AnalysisTagModel(BaseTagModel):
             tags = f + dbtags
 
             ts = [Tag(name=di.name,
-                      user=di.user,
-                      date=di.create_date,
+                      # user=di.user,
+                      # date=di.create_date,
                       omit_ideo=di.omit_ideo or False,
                       omit_iso=di.omit_iso or False,
                       omit_spec=di.omit_spec or False,
@@ -77,10 +77,9 @@ class AnalysisTagModel(BaseTagModel):
             self.tags = ts
 
     def _add_tag(self, tag):
-        name, user = tag.name, tag.user
         db = self.db
         with db.session_ctx():
-            return db.add_tag(name=name, user=user,
+            return db.add_tag(name=tag.name,
                               omit_ideo=tag.omit_ideo,
                               omit_spec=tag.omit_spec,
                               omit_iso=tag.omit_iso,
@@ -95,10 +94,10 @@ class AnalysisTagModel(BaseTagModel):
             tag = next((ta for ta in self.tags if ta.name == tag), None)
 
         if tag:
-            self.tags.remove(tag)
             db = self.db
             with db.session_ctx():
-                db.delete_tag(tag.name)
+                if db.delete_tag(tag.name):
+                    self.tags.remove(tag)
 
     def save(self):
         db = self.db
@@ -122,7 +121,8 @@ class AnalysisTagModel(BaseTagModel):
             VGroup(
                 HGroup(Item('name'),
                        # Label('optional'),
-                       Item('user')),
+                       # Item('user')
+                       ),
                 HGroup(
                     Item('omit_ideo',
                          label='Ideogram'),
