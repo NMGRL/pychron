@@ -50,11 +50,15 @@ class GitShaObject(HasTraits):
 
 
 def from_gitlog(obj):
-    actor = obj.actor
-    g = GitShaObject(message=obj.message,
-                     date=datetime.fromtimestamp(obj.time[0]),
-                     author=actor.name,
-                     email=actor.email)
+    hexsha, author, email, ct, message = obj[1:-1].split('|')
+
+    date = datetime.fromtimestamp(float(ct))
+    g = GitShaObject(hexsha=hexsha,
+                     message=message,
+                     date=date,
+                     author=author,
+                     email=email)
+    # g = GitShaObject()
     return g
 
 

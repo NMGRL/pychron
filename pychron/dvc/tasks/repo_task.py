@@ -15,18 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import os
 
-from git import Repo
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem
-from traits.api import List, Str
-
+from traits.api import List, Str, Any
 
 # ============= standard library imports ========================
+from git import Repo
+import os
 # ============= local library imports  ==========================
 from pychron.core.progress import open_progress
-from pychron.dvc.tasks.actions import CloneAction
+from pychron.dvc.tasks.actions import CloneAction, AddBranchAction, CheckoutBranchAction
 from pychron.dvc.tasks.panes import RepoCentralPane, SelectionPane
 from pychron.envisage.tasks.base_task import BaseTask
 from pychron.git_archive.history import from_gitlog
@@ -45,9 +44,16 @@ class ExperimentRepoTask(BaseTask):
     organization = Str
 
     local_names = List
-    tool_bars = [SToolBar(CloneAction())]
+    tool_bars = [SToolBar(CloneAction(),
+                          AddBranchAction(),
+                          CheckoutBranchAction()
+                          )]
 
     commits = List
+    _repo = None
+    selected_commit = Any
+    branch = Str
+    branches = List
 
     def activated(self):
         self._preference_binder('pychron.dvc', ('organization',))
@@ -80,11 +86,27 @@ class ExperimentRepoTask(BaseTask):
             prog.close()
             self.refresh_local_names()
 
+    def add_branch(self):
+        self.info('add branch')
+        commit = self.selected_commit
+
+        self._repo.create_branch(commit=commit.hexsha if commit else 'HEAD')
+
+        self._refresh_branches()
+
+    def checkout_branch(self):
+        self.info('checkout branch {}'.format(self.branch))
+        self._repo.checkout_branch(self.branch)
+
     def create_central_pane(self):
         return RepoCentralPane(model=self)
 
     def create_dock_panes(self):
         return [SelectionPane(model=self)]
+
+    def _refresh_branches(self):
+        self.branches = self._repo.get_branch_names()
+        self.branch = self._repo.get_active_branch()
 
     def _selected_local_repository_name_changed(self, new):
         if new:
@@ -92,8 +114,15 @@ class ExperimentRepoTask(BaseTask):
             if os.path.isdir(root):
                 repo = GitRepoManager()
                 repo.open_repo(root)
+                self._repo = repo
+                self._refresh_branches()
 
-                self.commits = [from_gitlog(l) for l in repo.get_log()]
+    def _branch_changed(self, new):
+        if new:
+            fmt = 'format:"%H|%cn|%ce|%ct|%s"'
+            self.commits = [from_gitlog(l) for l in self._repo.get_log(new, '--pretty={}'.format(fmt))]
+        else:
+            self.commits = []
 
     def _default_layout_default(self):
         return TaskLayout(left=PaneItem('pychron.repo.selection'))

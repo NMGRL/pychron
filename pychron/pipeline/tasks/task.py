@@ -224,7 +224,8 @@ class PipelineTask(BaseBrowserTask):
 
     def _prompt_for_save(self):
         ret = True
-        ps = self.engine.get_projects()
+        ps = self.engine.get_experiment_ids()
+        print ps
         if ps:
             changed = experiment_has_staged(ps)
             if changed:

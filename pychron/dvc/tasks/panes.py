@@ -18,7 +18,7 @@
 from traits.api import Int
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
-from traitsui.api import View, UItem, VGroup, ListStrEditor, TabularEditor
+from traitsui.api import View, UItem, VGroup, ListStrEditor, TabularEditor, EnumEditor
 from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -37,7 +37,11 @@ class CommitAdapter(TabularAdapter):
 class RepoCentralPane(TraitsTaskPane):
     def traits_view(self):
         v = View(VGroup(UItem('selected_repository_name', style='readonly'),
-                        UItem('commits', editor=TabularEditor(adapter=CommitAdapter()))))
+                        UItem('branch',
+                              editor=EnumEditor(name='branches')),
+                        UItem('commits',
+                              editor=TabularEditor(adapter=CommitAdapter(),
+                                                   selected='selected_commit'))))
         return v
 
 

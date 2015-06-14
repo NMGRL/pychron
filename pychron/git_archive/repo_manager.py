@@ -30,6 +30,7 @@ from pychron.core.codetools.inspection import caller
 from pychron.core.helpers.filetools import fileiter
 from pychron.core.progress import open_progress
 from pychron.git_archive.diff_view import DiffView, DiffModel
+from pychron.git_archive.views import NewBranchView
 from pychron.loggable import Loggable
 from pychron.git_archive.commit import Commit
 
@@ -294,6 +295,7 @@ class GitRepoManager(Loggable):
         # return self._repo.is_dirty()
 
     def has_unpushed_commits(self):
+        print self.path
         return self._repo.git.log('--not', '--remotes', '--oneline')
 
     def add_unstaged(self, root, extension=None, use_diff=False):
@@ -357,12 +359,24 @@ class GitRepoManager(Loggable):
         self.selected_branch = name
         self._load_branch_history()
 
-    def create_branch(self, name):
+    def create_branch(self, name=None, commit='HEAD'):
+        if name is None:
+            nb = NewBranchView()
+            info = nb.edit_traits()
+            if info.result:
+                name = nb.name
+            else:
+                return
+
         repo = self._repo
         if name not in repo.branches:
-            branch = repo.create_head(name)
-            branch.commit = repo.head.commit
-            self.checkout_branch(name)
+            branch = repo.create_head(name, commit=commit)
+            branch.checkout()
+            self.information_dialog('Data set not on branch "{}"'.format(name))
+        else:
+            self.information_dialog('Branch "{}" already exists. Choose a different name'.format(name))
+            # branch.commit = repo.head.commit
+            # self.checkout_branch(name)
 
     def create_remote(self, url, name='origin', force=False):
         repo = self._repo
@@ -381,6 +395,9 @@ class GitRepoManager(Loggable):
         if repo:
             if hasattr(repo.remotes, name):
                 repo.delete_remote(name)
+
+    def get_branch_names(self):
+        return [b.name for b in self._repo.branches]
 
     @caller
     def pull(self, branch='master', remote='origin', handled=True):
@@ -457,11 +474,17 @@ class GitRepoManager(Loggable):
 
         self._add_to_repo(dest, msg, **kw)
 
-    def get_log(self, *args):
-        repo = self._repo
-        l = repo.active_branch.log(*args)
+    def get_log(self, branch, *args):
+        if branch is None:
+            branch = self._repo.active_branch
 
-        return l
+        # repo = self._repo
+        # l = repo.active_branch.log(*args)
+        l = self.cmd('log', branch, '--oneline', *args)
+        return l.split('\n')
+
+    def get_active_branch(self):
+        return self._repo.active_branch.name
 
     # action handlers
     def diff_selected(self):

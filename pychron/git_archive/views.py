@@ -15,34 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from traits.api import HasTraits, Str
+from traitsui.api import View, UItem
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pyface.tasks.action.task_action import TaskAction
+class NewBranchView(HasTraits):
+    name = Str
 
-from pychron.envisage.resources import icon
+    def traits_view(self):
+        v = View(UItem('name'),
+                 kind='livemodal',
+                 buttons=['OK', 'Cancel'], title='New Branch')
+        return v
 
-
-class LocalRepositoryAction(TaskAction):
-    enabled_name = 'selected_local_repository_name'
-
-
-class RemoteRepositoryAction(TaskAction):
-    enabled_name = 'selected_repository_name'
-
-
-class CloneAction(RemoteRepositoryAction):
-    method = 'clone'
-    name = 'Clone'
-
-
-class AddBranchAction(LocalRepositoryAction):
-    name = 'Add Branch'
-    method = 'add_branch'
-    image = icon('add')
-
-
-class CheckoutBranchAction(LocalRepositoryAction):
-    name = 'Checkout Branch'
-    method = 'checkout_branch'
-    image = icon('checkout')
 # ============= EOF =============================================

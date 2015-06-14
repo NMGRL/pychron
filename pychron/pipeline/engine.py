@@ -52,11 +52,11 @@ class Pipeline(HasTraits):
                         if isinstance(nj, nb):
                             ni.has_save_node = True
 
-    def get_projects(self):
+    def get_experiment_ids(self):
         ps = set()
         for node in self.nodes:
             if isinstance(node, UnknownNode):
-                ps = ps.union({ai.project for ai in node.analyses})
+                ps = ps.union({ai.experiment_id for ai in node.analyses})
         return ps
 
     def move_up(self, node):
@@ -190,8 +190,8 @@ class PipelineEngine(Loggable):
     def set_template(self, name):
         self._set_template(name)
 
-    def get_projects(self):
-        return self.pipeline.get_projects()
+    def get_experiment_ids(self):
+        return self.pipeline.get_experiment_ids()
 
     # debugging
     def select_default(self):
