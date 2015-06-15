@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Int
+from traits.api import Int, Property
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traitsui.api import View, UItem, VGroup, ListStrEditor, TabularEditor, EnumEditor
@@ -25,14 +25,19 @@ from traitsui.tabular_adapter import TabularAdapter
 
 
 class CommitAdapter(TabularAdapter):
-    columns = [('Message', 'message'),
+    columns = [('ID', 'hexsha'),
+               ('Message', 'message'),
                ('Date', 'date'),
                ('Author', 'author'),
                ('Email', 'email'),
                ]
+    hexsha_width = Int(80)
     message_width = Int(300)
     font = '10'
+    hexsha_text = Property
 
+    def _get_hexsha_text(self):
+        return self.item.hexsha[:8]
 
 class RepoCentralPane(TraitsTaskPane):
     def traits_view(self):

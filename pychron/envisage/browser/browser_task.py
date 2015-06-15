@@ -298,7 +298,7 @@ class BaseBrowserTask(BaseEditorTask):
                 self.recall_configurer.set_fonts(av)
 
                 editor = RecallEditor()
-                editor.analysis_view = rec.analysis_view
+                editor.analysis_view = av
                 editor.basename = rec.record_id
                 if existing and editor.basename in existing:
                     editor.instance_id = existing.count(editor.basename)

@@ -15,16 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, List, Str, Date, Int, Button, Property, Instance, \
-    Event, Bool
-from traitsui.api import View, Item, Controller, TextEditor, \
-    TabularEditor, UItem, spring, HGroup, VSplit, VGroup, InstanceEditor
+from traits.api import HasTraits, List, Str, Int, Button, Property, Instance, \
+    Event
+from traitsui.api import View, Item, Controller, TabularEditor, UItem, spring, HGroup, VSplit, VGroup, InstanceEditor
 from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
 from datetime import datetime
 # ============= local library imports  ==========================
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.git_archive.diff_view import DiffView
+from pychron.git_archive.utils import GitShaObject
 
 
 class CommitAdapter(TabularAdapter):
@@ -33,33 +33,22 @@ class CommitAdapter(TabularAdapter):
     message_width = Int(300)
 
 
-class GitShaObject(HasTraits):
-    message = Str
-    date = Date
-    blob = Str
-    name = Str
-    hexsha = Str
-    author = Str
-    email = Str
-    active = Bool
+# class GitShaObject(HasTraits):
+#     message = Str
+#     date = Date
+#     blob = Str
+#     name = Str
+#     hexsha = Str
+#     author = Str
+#     email = Str
+#     active = Bool
+#
+#     def traits_view(self):
+#         return View(UItem('blob',
+#                           style='custom',
+#                           editor=TextEditor(read_only=True)))
 
-    def traits_view(self):
-        return View(UItem('blob',
-                          style='custom',
-                          editor=TextEditor(read_only=True)))
 
-
-def from_gitlog(obj):
-    hexsha, author, email, ct, message = obj[1:-1].split('|')
-
-    date = datetime.fromtimestamp(float(ct))
-    g = GitShaObject(hexsha=hexsha,
-                     message=message,
-                     date=date,
-                     author=author,
-                     email=email)
-    # g = GitShaObject()
-    return g
 
 
 class BaseGitHistory(HasTraits):

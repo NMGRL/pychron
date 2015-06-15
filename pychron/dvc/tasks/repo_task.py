@@ -28,8 +28,9 @@ from pychron.core.progress import open_progress
 from pychron.dvc.tasks.actions import CloneAction, AddBranchAction, CheckoutBranchAction
 from pychron.dvc.tasks.panes import RepoCentralPane, SelectionPane
 from pychron.envisage.tasks.base_task import BaseTask
-from pychron.git_archive.history import from_gitlog
+# from pychron.git_archive.history import from_gitlog
 from pychron.git_archive.repo_manager import GitRepoManager
+from pychron.git_archive.utils import get_commits
 from pychron.github import Organization
 from pychron.paths import paths
 
@@ -119,8 +120,9 @@ class ExperimentRepoTask(BaseTask):
 
     def _branch_changed(self, new):
         if new:
-            fmt = 'format:"%H|%cn|%ce|%ct|%s"'
-            self.commits = [from_gitlog(l) for l in self._repo.get_log(new, '--pretty={}'.format(fmt))]
+            # fmt = 'format:"%H|%cn|%ce|%ct|%s"'
+            self.commits = get_commits(self._repo.active_repo, new)
+            # self.commits = [from_gitlog(l) for l in self._repo.get_log(new, '--pretty={}'.format(fmt))]
         else:
             self.commits = []
 

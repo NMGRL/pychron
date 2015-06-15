@@ -315,6 +315,15 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
             url = '{}:{}'.format(self.host, self.name)
         return url
 
+    @property
+    def public_url(self):
+        kind = self.kind
+        user = self.username
+        host = self.host
+        name = self.name
+
+        return '{}://{}@{}/{}'.format(kind, user, host, name)
+
     @cached_property
     def _get_url(self):
         kind = self.kind

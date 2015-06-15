@@ -63,9 +63,10 @@ class PDFFigureNode(PDFNode):
 class DVCPersistNode(PersistNode):
     dvc = Instance('pychron.dvc.dvc.DVC')
     commit_message = Str
+    commit_tag = Str
 
     def _persist(self, state, msg):
-        modp = self.dvc.update_analyses(state.unknowns, msg)
+        modp = self.dvc.update_analyses(state.unknowns, '<{}> {}'.format(self.commit_tag, msg))
         if modp:
             state.modified = True
             state.modified_projects = state.modified_projects.union(modp)
@@ -73,6 +74,7 @@ class DVCPersistNode(PersistNode):
 
 class IsotopeEvolutionPersistNode(DVCPersistNode):
     name = 'Save Iso Evo'
+    commit_tag = 'ISOEVO'
 
     def configure(self):
         return True
@@ -86,13 +88,14 @@ class IsotopeEvolutionPersistNode(DVCPersistNode):
         msg = self.commit_message
         if not msg:
             f = ','.join('{}({})'.format(x, y) for x, y in zip(state.saveable_keys, state.saveable_fits))
-            msg = 'auto update iso evo, fits={}'.format(f)
+            msg = 'fits={}'.format(f)
 
         self._persist(state, msg)
 
 
 class BlanksPersistNode(DVCPersistNode):
     name = 'Save Blanks'
+    commit_tag = 'BLANKS'
 
     def configure(self):
         return True
@@ -119,6 +122,7 @@ class BlanksPersistNode(DVCPersistNode):
 
 class ICFactorPersistNode(DVCPersistNode):
     name = 'Save ICFactor'
+    commit_tag = 'ICFactor'
 
     def configure(self):
         return True
@@ -151,6 +155,7 @@ class ICFactorPersistNode(DVCPersistNode):
 
 class FluxPersistNode(DVCPersistNode):
     name = 'Save Flux'
+    commit_tag = 'FLUX'
 
     def run(self, state):
         if state.saveable_irradiation_positions:

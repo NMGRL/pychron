@@ -171,7 +171,7 @@ class IsoDBTransfer(Loggable):
                             st = time.time()
                             self._transfer_analysis(proc, src, dest, a, exp='J-Curve')
                             print 'transfer time {:0.3f}'.format(time.time() - st)
-                        repo.commit('src import src= {}'.format(src.url))
+                        repo.commit('<IMPORT> src= {}'.format(src.public_url))
                         break
 
     def transfer_holder(self, name):

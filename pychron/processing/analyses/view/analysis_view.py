@@ -27,8 +27,8 @@ from pychron.processing.analyses.view.error_components_view import ErrorComponen
 from pychron.processing.analyses.view.peak_center_view import PeakCenterView
 from pychron.processing.analyses.view.snapshot_view import SnapshotView
 from pychron.processing.analyses.view.spectrometer_view import SpectrometerView
+from pychron.processing.analyses.view.dvc_commit_view import HistoryView
 from pychron.processing.analyses.view.text_view import ExperimentView, ExtractionView, MeasurementView
-from pychron.processing.analyses.view.history_view import HistoryView
 from pychron.processing.analyses.view.interferences_view import InterferencesView
 from pychron.processing.analyses.view.main_view import MainView
 
@@ -63,8 +63,9 @@ class AnalysisView(HasTraits):
     dclicked = Event
 
     main_view = Instance('pychron.processing.analyses.view.main_view.MainView')
-    history_view = Instance('pychron.processing.analyses.view.history_view.HistoryView')
+    history_view = Instance(HistoryView)
     # isotopes_view = Instance(IsotopeView)
+
     experiment_view = Instance(ExperimentView)
     interference_view = Instance(InterferencesView)
     measurement_view = Instance(MeasurementView)
@@ -111,6 +112,8 @@ class AnalysisView(HasTraits):
     def _make_subviews(self, an):
         for args in (
                 ('history', HistoryView),
+                # ('blanks', BlanksView),
+                # ('fits', FitsView),
                 ('experiment', ExperimentView, 'experiment_txt'),
                 ('extraction', ExtractionView, 'extraction_script_blob'),
                 ('measurement', MeasurementView, 'measurement_script_blob'),

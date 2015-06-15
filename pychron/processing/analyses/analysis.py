@@ -130,7 +130,7 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_sniff=False
 
 
 class Analysis(ArArAge):
-    analysis_view_klass = ('pychron.processing.analyses.analysis_view', 'AnalysisView')
+    analysis_view_klass = ('pychron.processing.analyses.view.analysis_view', 'AnalysisView')
     _analysis_view = None  # Instance('pychron.processing.analyses.analysis_view.AnalysisView')
 
     # ids
@@ -295,8 +295,13 @@ class Analysis(ArArAge):
     # return self.analysis_summary_klass(model=self)
 
     # def _analysis_view_default(self):
+    def refresh_view(self):
+        if self._analysis_view:
+            self._sync_view(self._analysis_view)
+
     @property
     def analysis_view(self):
+        print 'call analyis va'
         v = self._analysis_view
         if v is None:
             mod, klass = self.analysis_view_klass
@@ -304,8 +309,8 @@ class Analysis(ArArAge):
             klass = getattr(mod, klass)
             # v = self.analysis_view_klass()
             v = klass()
-            self._sync_view(v)
             self._analysis_view = v
+        self._sync_view(v)
 
         return v
 

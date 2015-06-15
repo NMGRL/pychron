@@ -24,7 +24,7 @@ from pychron.processing.analyses.view.adapters import MeasurementTabularAdapter,
 
 
 class RecallEditor(BaseTraitsEditor):
-    analysis_view = Instance('pychron.processing.analyses.analysis_view.AnalysisView')
+    analysis_view = Instance('pychron.processing.analyses.view.analysis_view.AnalysisView')
 
     measurement_adapter = Instance(MeasurementTabularAdapter, ())
     extraction_adapter = Instance(ExtractionTabularAdapter, ())

@@ -162,8 +162,9 @@ class DVCDatabase(DatabaseAdapter):
 
     def add_save_user(self):
         with self.session_ctx():
-            obj = UserTbl(name=self.save_username)
-            self._add_item(obj)
+            if not self.get_user(self.save_username):
+                obj = UserTbl(name=self.save_username)
+                self._add_item(obj)
 
     def add_tag(self, **kw):
         with self.session_ctx():

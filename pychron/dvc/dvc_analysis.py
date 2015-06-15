@@ -335,7 +335,30 @@ class DVCAnalysis(Analysis):
         yd['detectors'] = dets
         self._dump(yd, path)
 
+    def make_path(self, modifier):
+        return self._analysis_path(modifier=modifier)
+
+    # def get_commits(self, tag, path):
+    #     from pychron.git_archive.utils import get_commits
+    #     repo = Repo(os.path.join(paths.experiment_dataset_dir, self.experiment_id))
+    #
+    #     return get_commits(repo, repo.active_branch.name, path,
+    #                        '--grep={}'.format(tag))
+    #
+    # def get_tag_commits(self, tag):
+    #     path = self._analysis_path(modifier='tag')
+    #     return self.get_commits(tag, path)
+    #
+    # def get_tag_diff(self):
+    #     path = self._analysis_path(modifier='tag')
+
     # private
+    # def _get_repo(self,):
+    #     if not repo:
+    #         repo = Repo(os.path.join(paths.experiment_dataset_dir, self.experiment_id))
+    #         self._repo = repo
+    #     return repo
+
     def _set_changeables(self, yd):
         isos = yd.get('isotopes')
         if not isos:

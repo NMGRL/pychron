@@ -275,8 +275,8 @@ class PipelineTask(BaseBrowserTask):
 
                 for expid, ans in groupby(sorted(items, key=key), key=key):
                     # repo = dvc.get_experiment_repo(expid)
-                    changed = False
                     # with dvc.git_session_ctx(expid, 'Updated tags'):
+                    cs = []
                     with db.session_ctx():
                         for it in ans:
                             self.debug('setting {} tag= {}'.format(it.record_id, name))
@@ -284,9 +284,17 @@ class PipelineTask(BaseBrowserTask):
 
                             it.set_tag(tag)
                             if dvc.update_tag(it):
-                                changed = True
-                    if changed:
-                        dvc.experiment_commit(expid, 'Updated tags')
+                                cs.append(it)
+                                # it.refresh_view()
+                    if cs:
+                        cc = [c.record_id for c in cs]
+                        if len(cc) > 1:
+                            cstr = '{} - {}'.format(cc[0], cc[-1])
+                        else:
+                            cstr = cc[0]
+                        dvc.experiment_commit(expid, '<TAG> {:<6s} {}'.format(name, cstr))
+                        for ci in cs:
+                            ci.refresh_view()
 
                 if use_filter:
                     for e in self.editor_area.editors:

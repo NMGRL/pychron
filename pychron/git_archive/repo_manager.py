@@ -601,6 +601,9 @@ class GitRepoManager(Loggable):
     def index(self):
         return self._repo.index
 
+    @property
+    def active_repo(self):
+        return self._repo
 
 if __name__ == '__main__':
     rp = GitRepoManager()
