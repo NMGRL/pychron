@@ -319,7 +319,7 @@ class ScanManager(Manager):
 
         if self._prev_signals is not None:
 
-            if all(signals == self._prev_signals):
+            if (signals == self._prev_signals).all():
                 self._no_intensity_change_cnt += 1
             else:
                 self._no_intensity_change_cnt = 0
