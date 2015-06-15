@@ -191,11 +191,14 @@ class ExtractionLineCanvas2D(SceneCanvas):
             state = item.state
             state = not state
             mode = 'normal'
+            try:
+                if state:
+                    ok, change = self.manager.open_valve(item.name, mode=mode)
+                else:
+                    ok, change = self.manager.close_valve(item.name, mode=mode)
+            except TypeError:
+                ok, change=True, True
 
-            if state:
-                ok, change = self.manager.open_valve(item.name, mode=mode)
-            else:
-                ok, change = self.manager.close_valve(item.name, mode=mode)
         else:
             if not isinstance(item, BaseValve):
                 return
@@ -228,10 +231,14 @@ class ExtractionLineCanvas2D(SceneCanvas):
                 mode = 'normal'
                 if event.shift_down:
                     mode = 'shift_select'
-                if state:
-                    ok, change = self.manager.open_valve(item.name, mode=mode)
-                else:
-                    ok, change = self.manager.close_valve(item.name, mode=mode)
+
+                try:
+                    if state:
+                        ok, change = self.manager.open_valve(item.name, mode=mode)
+                    else:
+                        ok, change = self.manager.close_valve(item.name, mode=mode)
+                except TypeError:
+                    ok, change=True, True
 
         # print 'change, ok, state'
         # print item, change, ok, state
