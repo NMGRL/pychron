@@ -352,7 +352,7 @@ class MassSpecDatabaseImporter(Loggable):
             if det == 'CDD':
                 dbdet.ICFactor = spec.ic_factor_v
                 dbdet.ICFactorEr = spec.ic_factor_e
-
+        db.flush()
         n = spec.get_ncounts(iso)
         return db.add_isotope(analysis, dbdet, iso, NumCnts=n), dbdet
 
