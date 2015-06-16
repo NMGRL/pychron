@@ -527,18 +527,17 @@ class ExtractionPyScript(ValvePyScript):
             if r.isSet():
                 self.console_info('waiting for access')
 
-        if r.isSet():
-            if self.manager:
-                self.manager.set_extract_state('Waiting for Resource Access. "{}"'.format(name), color='red')
+                if self.manager:
+                    self.manager.set_extract_state('Waiting for Resource Access. "{}"'.format(name), color='red')
 
-            while r.isSet():
-                if self._cancel:
-                    break
-                self._sleep(1)
+                while r.isSet():
+                    if self._cancel:
+                        break
+                    self._sleep(1)
 
-                if not self.runner.reset_connection():
-                    self.cancel()
-                    break
+                    if not self.runner.reset_connection():
+                        self.cancel()
+                        break
 
         if not self._cancel:
             self._resource_flag = r

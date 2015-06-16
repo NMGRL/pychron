@@ -52,7 +52,7 @@ class BaseSwitch(Loggable):
     def unlock(self):
         self.software_lock = False
 
-    def get_hardware_state(self):
+    def get_hardware_state(self, **kw):
         pass
 
 

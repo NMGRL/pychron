@@ -42,11 +42,12 @@ class ExperimentPlugin(BaseTaskPlugin):
     id = 'pychron.experiment.plugin'
     experimentor = Instance(Experimentor)
 
-
     def start(self):
         super(ExperimentPlugin, self).start()
         manager = self.application.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
-        self.experimentor.manager = manager
+        dvc = self.application.get_service('pychron.dvc.dvc.DVC')
+        self.experimentor.dvc = dvc
+        self.experimentor.iso_db_manager = manager
         self.experimentor.executor.set_managers()
         self.experimentor.executor.bind_preferences()
 
@@ -67,7 +68,8 @@ class ExperimentPlugin(BaseTaskPlugin):
                             task_group='experiment')]
 
     def _task_factory(self):
-        return ExperimentEditorTask(manager=self.experimentor)
+        e = ExperimentEditorTask(manager=self.experimentor)
+        return e
 
     def _preferences_panes_default(self):
         return [ExperimentPreferencesPane,
@@ -153,6 +155,9 @@ class ExperimentPlugin(BaseTaskPlugin):
                 so_sens_selector]
 
     def _experimentor_default(self):
+        return self._experimentor_factory()
+
+    def _experimentor_factory(self):
         # from pychron.experiment.experimentor import Experimentor
         # from pychron.initialization_parser import InitializationParser
         from pychron.envisage.initialization.initialization_parser import InitializationParser
@@ -163,10 +168,8 @@ class ExperimentPlugin(BaseTaskPlugin):
 # from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 
         # manager = self.application.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
-        dvc = self.application.get_service('pychron.dvc.dvc.DVC')
-
+        
         exp = Experimentor(application=self.application,
-                           dvc=dvc,
                            # manager=manager,
                            mode=mode)
 

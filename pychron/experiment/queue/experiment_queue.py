@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from traits.api import Any, on_trait_change, Int, List, Bool, \
-    Instance, Property, Str, HasTraits, Event
+    Instance, Property, Str, HasTraits, Event, Long
 from traits.trait_types import Date
 from traitsui.api import View, Item
 from pyface.timer.do_later import do_later
@@ -65,7 +65,7 @@ class NewRunBlockView(HasTraits):
 class ExperimentQueue(BaseExperimentQueue):
     executed_selected = Any
     dclicked = Any
-    database_identifier = Int
+    database_identifier = Long
     executed_runs = List
     executed_runs_scroll_to_row = Int
     automated_runs_scroll_to_row = Int

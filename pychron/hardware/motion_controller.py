@@ -150,6 +150,9 @@ class MotionController(CoreDevice):
     def get_xyz(self):
         return 0, 0, 0
 
+    def get_current_positions(self, keys):
+        return 0 *len(keys)
+
     def get_current_position(self, *args, **kw):
         return 0
 

@@ -171,8 +171,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     def set_managers(self):
         p1 = 'pychron.extraction_line.extraction_line_manager.ExtractionLineManager'
         p2 = 'pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager'
-        p3 = 'pychron.spectrometer.ion_optics_manager.IonOpticsManager'
-
+        p3 = 'pychron.spectrometer.ion_optics.ion_optics_manager.IonOpticsManager'
         if self.application:
             self.spectrometer_manager = self.application.get_service(p2)
             self.extraction_line_manager = self.application.get_service(p1)
@@ -406,6 +405,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.labspy_client.add_experiment(exp)
 
         self.datahub.add_experiment(exp)
+
 
         # reset conditionals result file
         reset_conditional_results()
@@ -948,6 +948,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         arun.persister.datahub = self.datahub
         arun.persister.load_name = exp.load_name
+        arun.persister.experiment_identifier = exp.database_identifier
 
         arun.use_syn_extraction = False
 

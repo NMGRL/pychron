@@ -97,7 +97,7 @@ class ManualSwitch(BaseValve, RoundedRectangle):
     use_border_gaps = False
 
     def _render_(self, gc):
-        self._rotate(gc, 45)
+        # self._rotate(gc, 45)
         super(ManualSwitch, self)._render_(gc)
 
     def _rotate(self, gc, angle):
@@ -111,7 +111,7 @@ class ManualSwitch(BaseValve, RoundedRectangle):
 
     def _render_textbox(self, gc, *args, **kw):
         with gc:
-            self._rotate(gc, -45)
+            #self._rotate(gc, -45)
             gc.translate_ctm(0, 25)
             super(ManualSwitch, self)._render_textbox(gc, *args, **kw)
     # def _render_name(self, gc, x, y, w, h):

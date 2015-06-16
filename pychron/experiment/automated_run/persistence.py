@@ -54,7 +54,7 @@ class BasePersister(Loggable):
 
     save_as_peak_hop = Bool(False)
     save_enabled = Bool(False)
-    experiment_identifier = Int
+    experiment_identifier = Long
     sensitivity_multiplier = Float
     experiment_queue_name = Str
     experiment_queue_blob = Str
@@ -428,7 +428,7 @@ class AutomatedRunPersister(BasePersister):
         dm = self.data_manager
         # make a new frame for saving data
 
-        name = self.run_spec.uuid
+        name = self.uuid
         path = os.path.join(paths.isotope_dir, '{}.h5'.format(name))
 
         self._current_data_frame = path
@@ -497,7 +497,7 @@ class AutomatedRunPersister(BasePersister):
                                                           self.run_spec.increment))
                 a = db.add_analysis(lab,
                                     user=dbuser,
-                                    uuid=self.run_spec.uuid,
+                                    uuid=self.uuid,
                                     endtime=endtime,
                                     aliquot=aliquot,
                                     step=self.run_spec.step,
@@ -989,7 +989,7 @@ class AutomatedRunPersister(BasePersister):
             ln = self.run_spec.labnumber
             aliquot = self.run_spec.aliquot
             step = self.run_spec.step
-            uuid = self.run_spec.uuid
+            uuid = self.uuid
             cp = self._current_data_frame
 
             ldb.add_analysis(labnumber=ln,
