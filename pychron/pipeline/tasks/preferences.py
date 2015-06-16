@@ -33,7 +33,5 @@ class PipelinePreferencesPane(PreferencesPane):
     def traits_view(self):
         v = View()
         return v
+
 # ============= EOF =============================================
-
-
-

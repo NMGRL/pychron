@@ -274,8 +274,12 @@ class DVCPersister(BasePersister):
         signals = []
         baselines = []
         sniffs = []
-        cisos = {}
-        cdets = {}
+        # cisos = {}
+        blanks = {}
+        intercepts = {}
+        cbaselines = {}
+        icfactors = {}
+
         endianness = '>'
         for iso in self.per_spec.arar_age.isotopes.values():
 
@@ -291,23 +295,37 @@ class DVCPersister(BasePersister):
                 baselines.append({'detector': iso.detector, 'blob': bblob})
                 # baselines[iso.detector] = bblob
                 dets[iso.detector] = {'deflection': self.per_spec.defl_dict.get(iso.detector),
-                                      'gain': self.per_spec.gains.get(iso.detector),
-                                      }
-                cdets[iso.detector] = {'baseline': {'fit': iso.baseline.fit,
-                                                    'value': float(iso.baseline.value),
-                                                    'error': float(iso.baseline.error)},
-                                       'ic_factor': {'value': float(nominal_value(iso.ic_factor)),
-                                                     'error': float(std_dev(iso.ic_factor)),
-                                                     'fit': 'default',
-                                                     'references': []}}
+                                      'gain': self.per_spec.gains.get(iso.detector)}
 
-            cisos[iso.name] = {'fit': iso.fit,
-                               'raw_intercept': {'value': iso.value, 'error': iso.error},
-                               'blank': {'fit': 'previous',
-                                         'references': [{'runid': self.per_spec.previous_blank_runid,
-                                                         'exclude': False}],
-                                         'value': float(iso.blank.value),
-                                         'error': float(iso.blank.error)}}
+                icfactors[iso.detector] = {'value': float(nominal_value(iso.ic_factor)),
+                                           'error': float(std_dev(iso.ic_factor)),
+                                           'fit': 'default',
+                                           'references': []}
+                cbaselines[iso.detector] = {'fit': iso.baseline.fit,
+                                            'value': float(iso.baseline.value),
+                                            'error': float(iso.baseline.error)}
+
+                # cdets[iso.detector] = {'baseline': {'fit': iso.baseline.fit,
+                #                                     'value': float(iso.baseline.value),
+                #                                     'error': float(iso.baseline.error)},
+                #                        'ic_factor': {'value': float(nominal_value(iso.ic_factor)),
+                #                                      'error': float(std_dev(iso.ic_factor)),
+                #                                      'fit': 'default',
+                #                                      'references': []}}
+            intercepts[iso.name] = {'fit': iso.fit,
+                                    'value': iso.value, 'error': iso.error}
+            blanks[iso.name] = {'fit': 'previous',
+                                'references': [{'runid': self.per_spec.previous_blank_runid,
+                                                'exclude': False}],
+                                'value': float(iso.blank.value),
+                                'error': float(iso.blank.error)}
+            # cisos[iso.name] = {'fit': iso.fit,
+            #                    'raw_intercept': {'value': iso.value, 'error': iso.error},
+            #                    'blank': {'fit': 'previous',
+            #                              'references': [{'runid': self.per_spec.previous_blank_runid,
+            #                                              'exclude': False}],
+            #                              'value': float(iso.blank.value),
+            #                              'error': float(iso.blank.error)}}
 
         obj = self._make_analysis_dict()
 
@@ -341,9 +359,19 @@ class DVCPersister(BasePersister):
         p = self._make_path()
         jdump(obj, p)
 
-        # dump runid.changeable.json
-        p = self._make_path(modifier='changeable')
-        jdump({'commit': hexsha, 'isotopes': cisos, 'detectors': cdets}, p)
+        # dump runid.blank.json
+        p = self._make_path(modifier='intercepts')
+        jdump(intercepts, p)
+        # jdump({'commit': hexsha, '': intercepts, 'detectors': cdets}, p)
+
+        p = self._make_path(modifier='blanks')
+        jdump(blanks, p)
+
+        p = self._make_path(modifier='baselines')
+        jdump(cbaselines, p)
+
+        p = self._make_path(modifier='icfactors')
+        jdump(icfactors, p)
 
         # dump runid.data.json
         p = self._make_path(modifier='.data')

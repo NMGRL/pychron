@@ -186,7 +186,7 @@ class ArArAge(MLoggable):
 
     def set_ic_factor(self, det, v, e):
         for iso in self.get_isotopes(det):
-            iso.ic_factor = ufloat(v, e)
+            iso.ic_factor = ufloat(v, e, tag='icfactor')
 
     def set_temporary_ic_factor(self, k, v, e):
         self.temporary_ic_factors[k] = ufloat(v, e)

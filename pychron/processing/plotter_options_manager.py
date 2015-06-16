@@ -26,22 +26,22 @@ import os
 # ============= local library imports  ==========================
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.globals import globalv
-from pychron.processing.plot.formatting_options import FormattingOptions
-from pychron.processing.plot.options.base import BasePlotterOptions
-from pychron.processing.plot.options.blanks import BlanksOptions
-from pychron.processing.plot.options.composite import CompositeOptions
-from pychron.processing.plot.options.dashboard import DashboardOptions
-from pychron.processing.plot.options.flux import FluxOptions
-from pychron.processing.plot.options.ic_factor import ICFactorOptions
-from pychron.processing.plot.options.ideogram import IdeogramOptions
-from pychron.processing.plot.options.iso_evo import IsotopeEvolutionOptions
-from pychron.processing.plot.options.isochron import InverseIsochronOptions
+from pychron.pipeline.plot.formatting_options import FormattingOptions
+from pychron.pipeline.plot.options.base import BasePlotterOptions
+from pychron.pipeline.plot.options.blanks import BlanksOptions
+from pychron.pipeline.plot.options.composite import CompositeOptions
+from pychron.pipeline.plot.options.dashboard import DashboardOptions
+from pychron.pipeline.plot.options.flux import FluxOptions
+from pychron.pipeline.plot.options.ic_factor import ICFactorOptions
+from pychron.pipeline.plot.options.ideogram import IdeogramOptions
+from pychron.pipeline.plot.options.iso_evo import IsotopeEvolutionOptions
+from pychron.pipeline.plot.options.isochron import InverseIsochronOptions
 # from pychron.processing.plotters.options.plotter import PlotterOptions
-from pychron.processing.plot.options.series import SeriesOptions
-from pychron.processing.plot.options.spectrum import SpectrumOptions
-from pychron.processing.plot.options.system_monitor import SystemMonitorOptions
+from pychron.pipeline.plot.options.series import SeriesOptions
+from pychron.pipeline.plot.options.spectrum import SpectrumOptions
+from pychron.pipeline.plot.options.system_monitor import SystemMonitorOptions
 from pychron.paths import paths
-from pychron.processing.plot.options.xy_scatter import XYScatterOptions
+from pychron.pipeline.plot.options.xy_scatter import XYScatterOptions
 from pychron.pychron_constants import NULL_STR
 
 

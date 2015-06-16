@@ -58,7 +58,5 @@ class GroupingNode(BaseNode):
                  kind='livemodal'
                  )
         return v
+
 # ============= EOF =============================================
-
-
-

@@ -15,19 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from datetime import datetime
-import time
 
 from traits.api import Instance, List, on_trait_change, Bool
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Tabbed, VSplitter
-
-
-
-
-
-
 # ============= standard library imports ========================
+from datetime import datetime
+import time
 # ============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.dashboard.client import DashboardClient
@@ -36,7 +30,7 @@ from pychron.experiment.utilities.identifier import ANALYSIS_MAPPING, SPECIAL_MA
 from pychron.globals import globalv
 from pychron.processing.tasks.analysis_edit.panes import ControlsPane
 from pychron.processing.tasks.analysis_edit.plot_editor_pane import PlotEditorPane
-from pychron.processing.plot.editors.figure_editor import FigureEditor
+from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.processing.tasks.figures.figure_task import FigureTask
 from pychron.processing.tasks.figures.panes import PlotterOptionsPane
 from pychron.system_monitor.tasks.actions import AddSystemMonitorAction, ClearFigureAction, PauseAction, PlayAction, \
@@ -121,7 +115,6 @@ class SystemMonitorTask(FigureTask):
 
     def new_analysis_series(self):
         from pychron.system_monitor.tasks.series_search_criteria import SearchCriteria
-
 
         kw = {'mass_spectrometer': self.connection.system_name,
               'mass_spectrometers': [ci.system_name for ci in self.connections],

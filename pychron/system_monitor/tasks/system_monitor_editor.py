@@ -31,8 +31,8 @@ from pychron.globals import globalv
 from pychron.messaging.notify.subscriber import Subscriber
 from pychron.processing.analyses.file_analysis import FileAnalysis
 from pychron.processing.plotter_options_manager import SystemMonitorOptionsManager, SysMonIdeogramOptionsManager
-from pychron.processing.plot.editors.ideogram_editor import IdeogramEditor
-from pychron.processing.plot.editors.series_editor import SeriesEditor
+from pychron.pipeline.plot.editors.ideogram_editor import IdeogramEditor
+from pychron.pipeline.plot.editors.series_editor import SeriesEditor
 from pychron.pychron_constants import ALPHAS
 from pychron.system_monitor.tasks.connection_spec import ConnectionSpec
 from pychron.system_monitor.tasks.controls import SystemMonitorControls
@@ -506,4 +506,5 @@ class SystemMonitorEditor(SeriesEditor):
                          port=self.conn_spec.port,
                          verbose=False)
         return sub
-        # ============= EOF =============================================
+
+# ============= EOF =============================================

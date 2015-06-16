@@ -41,7 +41,7 @@ from pychron.processing.tasks.analysis_edit.panes import UnknownsPane, ControlsP
     TablePane
 
 from pychron.envisage.browser.browser_task import BaseBrowserTask
-from pychron.processing.plot.editors.figure_editor import FigureEditor
+from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.processing.tasks.recall.recall_editor import RecallEditor
 from pychron.processing.tasks.analysis_edit.adapters import UnknownsAdapter
 
@@ -132,7 +132,7 @@ class AnalysisEditTask(BaseBrowserTask):
         if editor:
             self.activate_editor(editor)
         else:
-            from pychron.processing.plot.editors.isotope_evolution_editor import IsotopeEvolutionEditor
+            from pychron.pipeline.plot.editors.isotope_evolution_editor import IsotopeEvolutionEditor
 
             ieditor = IsotopeEvolutionEditor(name=name, processor=self.manager)
             ieditor.set_items([rec])

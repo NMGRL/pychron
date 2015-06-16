@@ -23,7 +23,7 @@ from enable.colors import ColorTrait
 import string
 # ============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
-from pychron.processing.plot.overlays.mean_indicator_overlay import XYPlotLabel
+from pychron.pipeline.plot.overlays.mean_indicator_overlay import XYPlotLabel
 
 
 class LimitsTool(BaseTool):
@@ -68,11 +68,9 @@ class LimitsTool(BaseTool):
     def is_draggable(self, event):
         tol = 5
         if self.orientation == 'x':
-            return abs(event.x - self.component.x) < tol or \
-                   abs(event.x - self.component.x2) < tol
+            return abs(event.x - self.component.x) < tol or abs(event.x - self.component.x2) < tol
         else:
-            return abs(event.y - self.component.y) < tol or \
-                   abs(event.y - self.component.y2) < tol
+            return abs(event.y - self.component.y) < tol or abs(event.y - self.component.y2) < tol
 
     def normal_left_down(self, event):
         if self.is_draggable(event):
@@ -170,9 +168,9 @@ class LimitOverlay(AbstractOverlay):
     def _label_default(self):
         return XYPlotLabel(component=self.component,
                            bgcolor=self.label_bgcolor,
-                           #border_width = LabelDelegate
+                           # border_width = LabelDelegate
                            border_color='black',
-                           #border_visible = LabelDelegate
+                           # border_visible = LabelDelegate
                            border_visible=True)
 
     def overlay(self, other_component, gc, view_bounds=None, mode="normal"):

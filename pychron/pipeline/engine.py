@@ -31,10 +31,10 @@ from pychron.pipeline.nodes.data import UnknownNode, ReferenceNode, FluxMonitors
 from pychron.loggable import Loggable
 from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, FigureNode, SeriesNode
 from pychron.pipeline.nodes.filter import FilterNode
-from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode, FitICFactorNode
+from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode, FitICFactorNode, FitFluxNode
 from pychron.pipeline.nodes.grouping import GroupingNode
 from pychron.pipeline.nodes.persist import PDFFigureNode, IsotopeEvolutionPersistNode, \
-    BlanksPersistNode, ICFactorPersistNode
+    BlanksPersistNode, ICFactorPersistNode, FluxPersistNode
 from pychron.pipeline.template import PipelineTemplate
 
 
@@ -46,7 +46,9 @@ class Pipeline(HasTraits):
     def _handle_nodes_changed(self):
         for i, ni in enumerate(self.nodes):
             for na, nb in ((FitICFactorNode, ICFactorPersistNode),
-                           (FitBlanksNode, BlanksPersistNode)):
+                           (FitBlanksNode, BlanksPersistNode),
+                           (FitIsotopeEvolutionNode, IsotopeEvolutionPersistNode),
+                           (FitFluxNode, FluxPersistNode)):
                 if isinstance(ni, na):
                     for nj in self.nodes[i + 1:]:
                         if isinstance(nj, nb):
@@ -123,6 +125,7 @@ class PipelineEngine(Loggable):
     dclicked_references = Event
 
     recall_analyses_needed = Event
+    reset_event = Event
 
     def __init__(self, *args, **kw):
         super(PipelineEngine, self).__init__(*args, **kw)
@@ -188,6 +191,7 @@ class PipelineEngine(Loggable):
         self.run_needed = True
 
     def set_template(self, name):
+        self.reset_event = True
         self._set_template(name)
 
     def get_experiment_ids(self):
@@ -403,8 +407,8 @@ class PipelineEngine(Loggable):
         self.update_detectors()
         if self.pipeline.nodes:
             self.selected = self.pipeline.nodes[0]
-        # self.update_unknowns()
-        # self.update_references()
+            # self.update_unknowns()
+            # self.update_references()
 
     def _load_predefined_templates(self):
         templates = []

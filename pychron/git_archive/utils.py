@@ -21,8 +21,12 @@ import os
 from git import Repo
 from traits.api import HasTraits, Str, Bool, Date
 
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+
+
 class GitShaObject(HasTraits):
     message = Str
     date = Date
@@ -41,15 +45,16 @@ class GitShaObject(HasTraits):
     #
 
 
-def from_gitlog(obj, tag):
+def from_gitlog(obj, path, tag):
     hexsha, author, email, ct, message = obj.split('|')
-
     date = datetime.fromtimestamp(float(ct))
     g = GitShaObject(hexsha=hexsha,
                      message=message,
                      date=date,
                      author=author,
-                     email=email, tag=tag)
+                     email=email,
+                     path=path,
+                     tag=tag)
     return g
 
 
@@ -65,11 +70,10 @@ def get_commits(repo, branch, path, tag, *args):
     cmd.extend(args)
     if path:
         cmd.extend(['--', path])
-    print cmd
     proc = repo.git.execute(cmd, as_process=True)
     proc.wait()
     if not proc.returncode:
-        return [from_gitlog(l.strip(), tag) for l in proc.stdout]
+        return [from_gitlog(l.strip(), path, tag) for l in proc.stdout]
 
 
 def get_diff(repo, a, b, path, change_type='M'):

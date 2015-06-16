@@ -35,6 +35,7 @@ from pychron.dvc.dvc_persister import DVCPersister, format_project
 from pychron.dvc.meta_repo import MetaRepo
 from pychron.experiment.automated_run.persistence_spec import PersistenceSpec
 from pychron.experiment.automated_run.spec import AutomatedRunSpec
+from pychron.experiment.utilities.identifier import make_runid
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.github import Organization
 from pychron.loggable import Loggable
@@ -167,12 +168,16 @@ class IsoDBTransfer(Loggable):
                         # repo = self._export_project(pr, src, dest)
                         self.persister.experiment_repo = repo
                         self.dvc.experiment_repo = repo
-                        ans = list(ans)[:4]
+                        # ans = list(ans)[:4]
+                        commit = False
                         for a in ans:
                             st = time.time()
-                            self._transfer_analysis(proc, src, dest, a, exp='J-Curve')
-                            print 'transfer time {:0.3f}'.format(time.time() - st)
-                        repo.commit('<IMPORT> src= {}'.format(src.public_url))
+                            if self._transfer_analysis(proc, src, dest, a, exp='J-Curve'):
+                                commit = True
+                                print 'transfer time {:0.3f}'.format(time.time() - st)
+                                # break
+                        if commit:
+                            repo.commit('<IMPORT> identifier={} src= {}'.format(ln, src.public_url))
                         # break
 
     def transfer_holder(self, name):
@@ -390,8 +395,9 @@ class IsoDBTransfer(Loggable):
             aliquot = int(t[:-1])
             step = t[-1]
 
-        # if dest.get_analysis_runid(idn, aliquot, step):
-        #     return
+        if dest.get_analysis_runid(idn, aliquot, step):
+            self.warning('{} already exists'.format(make_runid(idn, aliquot, step)))
+            return
         # st = time.time()
         dban = src.get_analysis_runid(idn, aliquot, step)
         iv = IsotopeRecordView()
@@ -480,7 +486,7 @@ class IsoDBTransfer(Loggable):
                              positions=[p.position for p in extraction.positions])
 
         self.persister.per_spec_save(ps, commit=False, msg_prefix='Database Transfer')
-
+        return True
         # self._save_an_to_db(dest, dban, obj)
         # # op = os.path.join(proot, add_extension(dban.record_id, '.yaml'))
         # with open(op, 'w') as wfile:

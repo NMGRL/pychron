@@ -34,7 +34,7 @@ from pychron.graph.error_bar_overlay import ErrorBarOverlay
 from pychron.graph.graph import Graph
 from pychron.core.helpers.formatting import floatfmt, calc_percent_error
 from pychron.core.helpers.iterfuncs import partition
-from pychron.processing.plot.editors.graph_editor import GraphEditor
+from pychron.pipeline.plot.editors.graph_editor import GraphEditor
 from pychron.pipeline.editors.irradiation_tray_overlay import IrradiationTrayOverlay
 
 # st=time.time()

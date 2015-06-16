@@ -27,9 +27,8 @@ from uncertainties import ufloat
 from numpy import array, Inf, polyfit
 
 
-
 # ============= local library imports  ==========================
-from pychron.core.helpers.fits import natural_name_fit
+from pychron.core.helpers.fits import natural_name_fit, fit_to_degree
 from pychron.core.regression.mean_regressor import MeanRegressor
 
 
@@ -103,7 +102,7 @@ class BaseMeasurement(object):
 
         self.xs = array(xs)
         self.ys = array(ys)
-        print self.name, self.xs.shape, self.ys.shape
+        # print self.name, self.xs.shape, self.ys.shape
         # print self.name, self.ys
 
     def _unpack_blob(self, blob, endianness=None):
@@ -370,6 +369,7 @@ class IsotopicMeasurement(BaseMeasurement):
 
     @property
     def regressor(self):
+        # print self.name, self.fit, self.__class__.__name__
         is_mean = 'average' in self.fit.lower()
         reg = self._regressor
         if reg is None:
@@ -391,9 +391,9 @@ class IsotopicMeasurement(BaseMeasurement):
             reg = self._mean_regressor_factory()
 
         if not is_mean:
-            reg.set_degree(self.fit, refresh=False)
+            reg.set_degree(fit_to_degree(self.fit), refresh=False)
         reg.filter_outliers_dict = self.filter_outliers_dict
-
+        self._regressor = reg
         reg.calculate()
         return reg
 

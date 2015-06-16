@@ -23,9 +23,9 @@ from traits.api import Instance, Int, Dict
 from numpy import array, vstack
 # ============= local library imports  ==========================
 from pychron.processing.plotter_options_manager import DashboardOptionsManager
-from pychron.processing.plot.figure_container import FigureContainer
-from pychron.processing.plot.models.series_model import DashboardSeriesModel
-from pychron.processing.plot.editors.series_editor import SeriesEditor
+from pychron.pipeline.plot.figure_container import FigureContainer
+from pychron.pipeline.plot.models.series_model import DashboardSeriesModel
+from pychron.pipeline.plot.editors.series_editor import SeriesEditor
 from pychron.system_monitor.tasks.controls import SystemMonitorControls
 
 """
@@ -82,7 +82,7 @@ class DashboardEditor(SeriesEditor):
 
     def update_measurements(self, name, value):
         t = time.time()
-        #if name in self.measurements:
+        # if name in self.measurements:
         meas = self.measurements[name]
         if meas is None:
             ms = array([(t, value)])
@@ -102,5 +102,4 @@ class DashboardEditor(SeriesEditor):
         tool = SystemMonitorControls()
         return tool
 
-
-        # ============= EOF =============================================
+# ============= EOF =============================================

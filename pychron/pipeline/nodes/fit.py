@@ -35,7 +35,7 @@ class FitNode(FigureNode):
     use_save_node = Bool(True)
 
     def _set_saveable(self, state):
-        ps = self.plotter_options.get_saveable_plots()
+        ps = self.plotter_options.get_saveable_aux_plots()
         state.saveable_keys = [p.name for p in ps]
         state.saveable_fits = [p.fit for p in ps]
 
@@ -58,8 +58,11 @@ class FitReferencesNode(FitNode):
         self._set_saveable(state)
 
         if self.has_save_node:
-            if confirmation_dialog('Would you like to review the {} before saving?'.format(self.basename)):
-                state.veto = self
+            if self.plotter_options.confirm_save:
+                if confirmation_dialog('Would you like to review the {} before saving?'.format(self.basename)):
+                    state.veto = self
+                else:
+                    self.editor.force_update(force=True)
             else:
                 self.editor.force_update(force=True)
 
@@ -90,7 +93,7 @@ class FitICFactorNode(FitReferencesNode):
 
     def _set_saveable(self, state):
         super(FitICFactorNode, self)._set_saveable(state)
-        ps = self.plotter_options.get_saveable_plots()
+        ps = self.plotter_options.get_saveable_aux_plots()
         state.saveable_keys = [p.denominator for p in ps]
 
     # def run(self, state):
@@ -154,7 +157,7 @@ class FitIsotopeEvolutionNode(FitNode):
 
         self._set_saveable(state)
         # self.name = '{} Fit IsoEvo'.format(self.name)
-        if po.confirm_save:
+        if self.has_save_node and po.confirm_save:
             if confirmation_dialog('Would you like to review the iso fits before saving?'):
                 state.veto = self
 
@@ -174,7 +177,6 @@ class FitIsotopeEvolutionNode(FitNode):
 
         fits = self._fits
         keys = [fi.name for fi in fits]
-        print keys
         xi.load_raw_data(keys)
 
         xi.set_fits(fits)
@@ -252,7 +254,7 @@ class FitFluxNode(FitNode):
             editor.set_positions(poss, [])
             editor.predict_values()
 
-            if self.plotter_options.confirm_save:
+            if self.has_save_node and self.plotter_options.confirm_save:
                 if confirmation_dialog('Would you like to review the flux fits before saving?'):
                     state.veto = self
 

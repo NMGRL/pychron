@@ -33,7 +33,7 @@ from pychron.pipeline.tasks.actions import RunAction, SavePipelineTemplateAction
     ConfigureRecallAction, GitRollbackAction, TagAction
 from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane
 from pychron.envisage.browser.browser_task import BaseBrowserTask
-from pychron.processing.plot.editors.figure_editor import FigureEditor
+from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 
 DEBUG = True
 
@@ -81,7 +81,8 @@ class PipelineTask(BaseBrowserTask):
         pass
         # self.engine.add_data()
         self.engine.select_default()
-        self.engine.set_template('ideogram')
+        self.engine.set_template('table')
+        # self.engine.set_template('ideogram')
         # self.engine.set_template('blanks')
         # self.engine.add_is
         # self.engine.add_grouping(run=False)
@@ -183,6 +184,10 @@ class PipelineTask(BaseBrowserTask):
         return SchemaAddition(path=path, factory=factory, **kw)
 
     # handlers
+    @on_trait_change('engine:reset_event')
+    def _handle_reset(self):
+        self.reset()
+
     @on_trait_change('engine:unknowns[]')
     def _handle_unknowns(self, name, old, new):
         if self.active_editor:

@@ -30,6 +30,7 @@ from pychron.database.core.query import compile_query
 from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, IrradiationTbl, LevelTbl, SampleTbl, \
     MaterialTbl, IrradiationPositionTbl, UserTbl, ExtractDeviceTbl, LoadTbl, LoadHolderTbl, LoadPositionTbl, \
     MeasuredPositionTbl, ProductionTbl, VersionTbl, ExperimentAssociationTbl, ExperimentTbl, TagTbl, AnalysisChangeTbl
+from pychron.pychron_constants import ALPHAS
 
 
 class NewMassSpectrometerView(HasTraits):
@@ -284,7 +285,10 @@ class DVCDatabase(DatabaseAdapter):
             q = sess.query(AnalysisTbl)
             q = q.join(IrradiationPositionTbl)
             if step:
-                q = q.filter(AnalysisTbl.step == step)
+                if isinstance(step, (str, unicode)):
+                    step = ALPHAS.index(step)
+
+                q = q.filter(AnalysisTbl.increment == step)
             if aliquot:
                 q = q.filter(AnalysisTbl.aliquot == aliquot)
 

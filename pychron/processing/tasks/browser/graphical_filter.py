@@ -33,7 +33,7 @@ from numpy import array
 import math
 # ============= local library imports  ==========================
 from pychron.graph.graph import Graph
-from pychron.processing.plot.plotter.ticks import tick_formatter, StaticTickGenerator, TICKS
+from pychron.pipeline.plot.plotter.ticks import tick_formatter, StaticTickGenerator, TICKS
 from pychron.experiment.utilities.identifier import ANALYSIS_MAPPING_INTS
 from pychron.graph.tools.analysis_inspector import AnalysisPointInspector
 from pychron.graph.tools.point_inspector import PointInspectorOverlay

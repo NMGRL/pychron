@@ -45,7 +45,8 @@ META_ATTRS = ('analysis_type', 'uuid', 'sample', 'project', 'material', 'aliquot
               'username', 'queue_conditionals_name', 'identifier',
               'experiment_id')
 
-PATH_MODIFIERS = (None, '.data', 'changeable', 'peakcenter', 'extraction', 'monitor')
+PATH_MODIFIERS = (
+    None, '.data', 'blanks', 'intercepts', 'icfactors', 'baselines', 'tags', 'peakcenter', 'extraction', 'monitor')
 
 
 def analysis_path(runid, experiment, modifier=None, extension='.json', mode='r'):
@@ -182,15 +183,56 @@ class DVCAnalysis(Analysis):
             #     self.source_parameters = yd['source']
             # except KeyError:
             #     pass
-        # print '  meta {}'.format(time.time()-st)
+            # print '  meta {}'.format(time.time()-st)
 
-        # st=time.time()
-        with open(analysis_path(record_id, experiment_id, modifier='changeable', extension='.json')) as rfile:
+            # st=time.time()
+            # with open(analysis_path(record_id, experiment_id, modifier='changeable', extension='.json')) as rfile:
             # sst=time.time()
-            yd = json.load(rfile)
+            # yd = json.load(rfile)
             # print '    load time {}'.format(time.time()-sst)
-            self._set_changeables(yd)
+            # self._set_changeables(yd)
             # print '  changeables {}'.format(time.time()-st)
+        # for tag in ('intercepts','blanks', 'baselines', 'icfactors'):
+        for tag in ('intercepts', 'baselines', 'blanks', 'icfactors'):  # 'blanks', 'baselines', 'icfactors'):
+            with open(self._analysis_path(modifier=tag), 'r') as rfile:
+                jd = json.load(rfile)
+                func = getattr(self, '_load_{}'.format(tag))
+                func(jd)
+
+    def _load_blanks(self, jd):
+        for iso, v in jd.iteritems():
+            if iso in self.isotopes:
+                i = self.isotopes[iso]
+                i.blank.value = v['value']
+                i.blank.error = v['error']
+                i.blank.fit = v['fit']
+
+    def _load_intercepts(self, jd):
+        for iso, v in jd.iteritems():
+            if iso in self.isotopes:
+                i = self.isotopes[iso]
+                i.value = v['value']
+                i.error = v['error']
+                i.set_fit(v['fit'])
+
+    def _load_baselines(self, jd):
+        for det, v in jd.iteritems():
+            for iso in self.isotopes.itervalues():
+                if iso.detector == det:
+                    iso.baseline.value = v['value']
+                    iso.baseline.error = v['error']
+                    iso.baseline.set_fit(v['fit'])
+
+                    # self.set_ic_factor(det, v['value'], v['error'])
+                    # if iso in self.isotopes:
+                    #     i = self.isotopes[iso]
+                    #     i.baseline.value = v['value']
+                    #     i.baseline.error = v['error']
+                    #     i.baseline.set_fit(v['fit'])
+
+    def _load_icfactors(self, jd):
+        for det, v in jd.iteritems():
+            self.set_ic_factor(det, v['value'], v['error'])
 
     def load_raw_data(self, keys):
         def format_blob(blob):
@@ -229,7 +271,7 @@ class DVCAnalysis(Analysis):
 
             for sn in sniffs:
                 isok = sn['isotope']
-                print isok, keys
+                # print isok, keys
                 if isok not in keys:
                     continue
 
@@ -278,7 +320,7 @@ class DVCAnalysis(Analysis):
             iso.set_fit(fi)
 
     def dump_fits(self, keys):
-        yd, path = self._get_yd('changeable')
+        yd, path = self._get_yd('intercepts')
 
         sisos = self.isotopes
         isos = yd['isotopes']
@@ -287,12 +329,13 @@ class DVCAnalysis(Analysis):
                 iso = isos[k]
                 siso = sisos[k]
                 iso['fit'] = siso.fit
+                iso['value'] = float(siso.value)
+                iso['error'] = float(siso.error)
 
-                iso['raw_intercept'] = dict(value=float(siso.value), error=float(siso.error))
         self._dump(yd, path)
 
     def dump_blanks(self, keys, refs):
-        yd, path = self._get_yd('changeable')
+        yd, path = self._get_yd('blanks')
         sisos = self.isotopes
         isos = yd['isotopes']
         # print keys
@@ -313,9 +356,9 @@ class DVCAnalysis(Analysis):
         self._dump(yd, path)
 
     def dump_icfactors(self, dkeys, fits, refs):
-        yd, path = self._get_yd('changeable')
+        yd, path = self._get_yd('icfactors')
 
-        dets = yd.get('detectors', {})
+        # dets = yd.get('detectors', {})
         for dk, fi in zip(dkeys, fits):
             v = self.temporary_ic_factors.get(dk)
             if v is None:
@@ -323,17 +366,20 @@ class DVCAnalysis(Analysis):
             else:
                 v, e = nominal_value(v), std_dev(v)
 
-            det = dets.get(dk, {})
-            icf = det.get('ic_factor', {})
-            icf['ic_factor'] = float(v)
-            icf['ic_factor_err'] = float(e)
-            icf['fit'] = fi
-            icf['references'] = make_ref_list(refs)
-            det['ic_factor'] = icf
+            yd[dk] = {'value': float(v), 'error': float(e),
+                      'fit': fi,
+                      'references': make_ref_list(refs)}
+            # det = dets.get(dk, {})
+            # icf = det.get('ic_factor', {})
+            # icf['ic_factor'] = float(v)
+            # icf['ic_factor_err'] = float(e)
+            # icf['fit'] = fi
+            # icf['references'] = make_ref_list(refs)
+            # det['ic_factor'] = icf
 
-            dets[dk] = det
+            # dets[dk] = det
 
-        yd['detectors'] = dets
+        # yd['detectors'] = dets
         self._dump(yd, path)
 
     def make_path(self, modifier):
@@ -360,46 +406,46 @@ class DVCAnalysis(Analysis):
     #         self._repo = repo
     #     return repo
 
-    def _set_changeables(self, yd):
-        isos = yd.get('isotopes')
-        if not isos:
-            return
-
-        dets = yd.get('detectors')
-        if not dets:
-            return
-
-        isotopes = self.isotopes
-        for k, v in isos.iteritems():
-            try:
-                iso = isotopes[k]
-            except KeyError, e:
-                print e
-                continue
-
-            if iso:
-                iso.set_fit(v.get('fit'))
-                b = v.get('blank')
-                if b:
-                    iso.blank.value = b['value']
-                    iso.blank.error = b['error']
-
-                r = v.get('raw_intercept')
-                if r:
-                    iso.value = r['value']
-                    iso.error = r['error']
-
-                det = dets.get(iso.detector)
-                if det:
-                    bs = det['baseline']
-                    if bs:
-                        iso.baseline.value = bs['value']
-                        iso.baseline.error = bs['error']
-                        iso.baseline.set_fit(bs['fit'])
-
-                    ic = det['ic_factor']
-                    if ic:
-                        self.set_ic_factor(iso.detector, ic['value'], ic['error'])
+    # def _set_changeables(self, yd):
+    #     isos = yd.get('isotopes')
+    #     if not isos:
+    #         return
+    #
+    #     dets = yd.get('detectors')
+    #     if not dets:
+    #         return
+    #
+    #     isotopes = self.isotopes
+    #     for k, v in isos.iteritems():
+    #         try:
+    #             iso = isotopes[k]
+    #         except KeyError, e:
+    #             print e
+    #             continue
+    #
+    #         if iso:
+    #             iso.set_fit(v.get('fit'))
+    #             b = v.get('blank')
+    #             if b:
+    #                 iso.blank.value = b['value']
+    #                 iso.blank.error = b['error']
+    #
+    #             r = v.get('raw_intercept')
+    #             if r:
+    #                 iso.value = r['value']
+    #                 iso.error = r['error']
+    #
+    #             det = dets.get(iso.detector)
+    #             if det:
+    #                 bs = det['baseline']
+    #                 if bs:
+    #                     iso.baseline.value = bs['value']
+    #                     iso.baseline.error = bs['error']
+    #                     iso.baseline.set_fit(bs['fit'])
+    #
+    #                 ic = det['ic_factor']
+    #                 if ic:
+    #                     self.set_ic_factor(iso.detector, ic['value'], ic['error'])
 
     def _get_yd(self, modifier):
         path = self._analysis_path(modifier=modifier)
@@ -444,4 +490,4 @@ class DVCAnalysis(Analysis):
 
         return analysis_path(self.record_id, experiment_id, modifier=modifier, mode=mode, extension=extension)
 
-# ============= EOF =============================================
+# ============= EOF ============================================

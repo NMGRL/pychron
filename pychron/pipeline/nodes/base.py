@@ -69,4 +69,5 @@ class BaseNode(HasTraits):
 
     def __str__(self):
         return '{}<{}>'.format(self.name, self.__class__.__name__)
+
 # ============= EOF =============================================

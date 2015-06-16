@@ -20,15 +20,14 @@
 from itertools import groupby
 import os
 # ============= local library imports  ==========================
-#from pychron.experiment.easy_parser import EasyParser
 from pychron.core.helpers.filetools import unique_path
 from pychron.core.helpers.iterfuncs import partition
 from pychron.experiment.utilities.identifier import make_runid
 from pychron.paths import r_mkdir
 from pychron.processing.easy.base_easy import BaseEasy
-from pychron.processing.plot.editors.ideogram_editor import IdeogramEditor
-from pychron.processing.plot.editors.isochron_editor import InverseIsochronEditor
-from pychron.processing.plot.editors.spectrum_editor import SpectrumEditor
+from pychron.pipeline.plot.editors.ideogram_editor import IdeogramEditor
+from pychron.pipeline.plot.editors.isochron_editor import InverseIsochronEditor
+from pychron.pipeline.plot.editors.spectrum_editor import SpectrumEditor
 from pychron.processing.utils.grouping import group_analyses_by_key
 
 

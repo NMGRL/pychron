@@ -24,6 +24,8 @@ from traits.api import HasTraits, Str, Int, Bool, List, Event
 from traitsui.api import View, UItem, VGroup, TabularEditor
 
 
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
@@ -81,7 +83,7 @@ class TagDiffView(DiffView):
         self.record_id = record_id
         aj = json.load(d.a_blob.data_stream)
         bj = json.load(d.b_blob.data_stream)
-        print d.diff
+        # print d.diff
         self.values = [DiffValue('ID', lh, rh, matchable=False)] + [DiffValue(name, aj[name], bj[name]) for name in
                                                                     ('name',)]
 
@@ -129,7 +131,6 @@ class DVCCommitView(HasTraits):
         return get_commits(*args)
 
     def _do_diff_fired(self):
-        print 'asfasfd'
         print self.selected_commits
         if self.selected_commits:
             n = len(self.selected_commits)
@@ -172,16 +173,17 @@ class HistoryView(DVCCommitView):
         repo = self.repo
 
         cs = []
-        for a, b in (('TAG', 'tag'), ('ISOEVO', 'changeable'), ('IMPORT', '')):
+        for a, b in (('TAG', 'tag'), ('ISOEVO', 'intercepts'), ('IMPORT', '')):
             path = an.make_path(b)
-            args = [repo, repo.active_branch.name, path, a]
-            if a:
-                args.append('--grep=^<{}>'.format(a))
+            if path:
+                args = [repo, repo.active_branch.name, path, a]
+                if a:
+                    args.append('--grep=^<{}>'.format(a))
 
-            css = get_commits(*args)
-            for ci in css:
-                ci.path = path
-            cs.extend(css)
+                css = get_commits(*args)
+                for ci in css:
+                    ci.path = path
+                cs.extend(css)
 
         self.commits = sorted(cs, key=lambda x: x.date, reverse=True)
 

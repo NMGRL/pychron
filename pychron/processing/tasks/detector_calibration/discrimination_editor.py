@@ -17,11 +17,12 @@
 # ============= enthought library imports =======================
 from traits.api import on_trait_change
 
-from pychron.processing.plot.editors.interpolation_editor import InterpolationEditor
 
 # ============= standard library imports ========================
-from pychron.core.helpers.isotope_utils import sort_isotopes
 # ============= local library imports  ==========================
+from pychron.core.helpers.isotope_utils import sort_isotopes
+from pychron.pipeline.plot.editors.interpolation_editor import InterpolationEditor
+
 
 class DiscriminationEditor(InterpolationEditor):
 

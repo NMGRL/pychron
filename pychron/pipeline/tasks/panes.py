@@ -142,6 +142,7 @@ class PipelineHandler(Handler):
     def add_icfactor(self, info, obj):
         pass
 
+
 class PipelinePane(TraitsDockPane):
     name = 'Pipeline'
     id = 'pychron.pipeline.pane'
@@ -225,12 +226,12 @@ class PipelinePane(TraitsDockPane):
                                 add_menu_factory(), fit_menu_factory())
 
         nodes = [PipelineTreeNode(node_for=[Pipeline],
-                          children='nodes',
-                          icon_open='',
-                          label='name',
-                          auto_open=True,
-                          menu=MenuManager(Action(name='Add Data',
-                                                  action='add_data'))),
+                                  children='nodes',
+                                  icon_open='',
+                                  label='name',
+                                  auto_open=True,
+                                  menu=MenuManager(Action(name='Add Data',
+                                                          action='add_data'))),
                  DataTreeNode(node_for=[DataNode], menu=data_menu_factory()),
                  FilterTreeNode(node_for=[FilterNode], menu=filter_menu_factory()),
                  IdeogramTreeNode(node_for=[IdeogramNode], menu=figure_menu_factory()),
@@ -248,16 +249,16 @@ class PipelinePane(TraitsDockPane):
 
         # editor = TreeEditor(nodes=nodes,
         editor = PipelineEditor(nodes=nodes,
-                            editable=False,
-                            # selection_mode='extended',
-                            selected='selected',
-                            dclick='dclicked',
-                            hide_root=True,
+                                editable=False,
+                                # selection_mode='extended',
+                                selected='selected',
+                                dclick='dclicked',
+                                hide_root=True,
                                 lines_mode='off',
-                            # word_wrap=True,
-                            show_disabled=True,
-                            refresh_all_icons='refresh_all_needed',
-                            update='update_needed')
+                                # word_wrap=True,
+                                show_disabled=True,
+                                refresh_all_icons='refresh_all_needed',
+                                update='update_needed')
         v = View(VGroup(
             UItem('selected_pipeline_template',
                   editor=EnumEditor(name='available_pipeline_templates')),
@@ -294,6 +295,7 @@ class UnknownsAdapter(TabularAdapter):
 
     def get_menu(self, object, trait, row, column):
         return MenuManager(Action(name='Recall', action='recall_unknowns'))
+
     # return MenuManager(Action(name='Group Selected', action='group_by_selected'),
     # Action(name='Group by Labnumber', action='group_by_labnumber'),
     # Action(name='Group by Aliquot', action='group_by_aliquot'),
@@ -383,6 +385,3 @@ class AnalysesPane(TraitsDockPane):
         return v
 
         # ============= EOF =============================================
-
-
-

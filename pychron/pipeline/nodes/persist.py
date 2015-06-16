@@ -98,6 +98,7 @@ class IsotopeEvolutionPersistNode(DVCPersistNode):
 
         self.dvc.save_fits(x, keys)
 
+
 class BlanksPersistNode(DVCPersistNode):
     name = 'Save Blanks'
     commit_tag = 'BLANKS'

@@ -106,6 +106,9 @@ class AnalysisTbl(Base, BaseMixin):
     def irradiation_position_position(self):
         return self.irradiation_position.position
 
+    @property
+    def tag(self):
+        return self.change.tag_item
     # @property
     # def labnumber(self):
     #     return self.irradiation_position

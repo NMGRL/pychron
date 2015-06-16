@@ -95,7 +95,5 @@ class FindTreeNode(PipelineTreeNode):
 
 class FitTreeNode(PipelineTreeNode):
     icon_name = 'lightning'
+
 # ============= EOF =============================================
-
-
-

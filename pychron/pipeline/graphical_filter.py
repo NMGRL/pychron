@@ -77,7 +77,8 @@ class SelectionGraph(Graph):
     scatter = None
 
     def setup(self, x, y, ans):
-        from pychron.processing.plot.plotter.ticks import tick_formatter, StaticTickGenerator, TICKS
+        from pychron.pipeline.plot.plotter.ticks import tick_formatter, StaticTickGenerator, TICKS
+
         p = self.new_plot()
         p.padding_left = 60
         p.y_axis.tick_label_formatter = tick_formatter
@@ -367,4 +368,3 @@ if __name__ == '__main__':
     # for si in s:
     # print si, si.analysis_type
 # ============= EOF =============================================
-

@@ -15,23 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from itertools import groupby
-import traceback
-from datetime import timedelta
 
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import PaneItem, TaskLayout, Tabbed, HSplitter, \
     VSplitter
-
-
-
-
-
-
-
-
-#from pychron.pychron_constants import MINNA_BLUFF_IRRADIATIONS
 # ============= standard library imports ========================
+from itertools import groupby
+import traceback
+from datetime import timedelta
 # ============= local library imports  ==========================
 from pychron.core.helpers.datetime_tools import get_datetime
 from pychron.database.records.isotope_record import IsotopeRecordView
@@ -42,7 +33,7 @@ from pychron.processing.tasks.actions.edit_actions import DatabaseSaveAction, Fi
 from pychron.processing.tasks.browser.util import browser_pane_item
 from pychron.processing.tasks.figures.actions import SavePDFFigureAction
 from pychron.processing.tasks.isotope_evolution.find_associated_parameters import FindAssociatedParametersDialog
-from pychron.processing.plot.editors.isotope_evolution_editor import IsotopeEvolutionEditor
+from pychron.pipeline.plot.editors.isotope_evolution_editor import IsotopeEvolutionEditor
 
 
 class IsotopeEvolutionTask(AnalysisEditTask):
@@ -56,8 +47,7 @@ class IsotopeEvolutionTask(AnalysisEditTask):
                           FindAssociatedAction(),
                           image_size=(16, 16)),
                  SToolBar(
-                     SavePDFFigureAction())
-    ]
+                     SavePDFFigureAction())]
 
     def _default_layout_default(self):
         return TaskLayout(
