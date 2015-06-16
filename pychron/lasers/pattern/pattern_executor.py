@@ -105,13 +105,14 @@ class PatternExecutor(Patternable):
                 return p
 
     def stop(self):
-        self.info('User requested stop')
         self._alive = False
         if self.controller:
+            self.info('User requested stop')
             self.controller.stop()
 
         if self.pattern is not None:
-            self.controller.linear_move(self.pattern.cx, self.pattern.cy)
+            if self.controller:
+                self.controller.linear_move(self.pattern.cx, self.pattern.cy)
             # self.pattern.close_ui()
             self.info('Pattern {} stopped'.format(self.pattern_name))
 

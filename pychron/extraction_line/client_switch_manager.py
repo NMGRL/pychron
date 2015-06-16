@@ -203,13 +203,18 @@ class ClientSwitchManager(SwitchManager):
                 for vi in vkeys:
                     v = valves[vi]
                     rvstate = act.get_channel_state(v)
-                    print v.state, rvstate, state_word.get(vi,-1)
-                    s1, s2, s3 = int(v.state), int(rvstate), int(state_word.get(vi, -1))
+                    if rvstate is not None:
+                        rvstate = int(rvstate)
+
+                    s1, s2, s3 = int(v.state), rvstate, int(state_word.get(vi, -1))
                     state = '{}{}'.format(s1, s2)
                     statew = '{}{}'.format(s1, s3)
 
                     rvlock = act.get_lock_state(v)
-                    l1, l2, l3 = int(v.software_lock), int(rvlock), int(lock_word.get(vi, -1))
+                    if rvlock is not None:
+                        rvlock = int(rvlock)
+
+                    l1, l2, l3 = int(v.software_lock), rvlock, int(lock_word.get(vi, -1))
                     lock = '{}{}'.format(l1, l2)
                     lockw = '{}{}'.format(l1, l3)
 

@@ -719,8 +719,9 @@ class ExtractionLineManager(Manager, Consoleable):
                         item.active_color = item.oactive_color
         else:
             net = self.network
-            for k, vi in self.switch_manager.switches.iteritems():
-                net.set_valve_state(k, vi.state)
+            if self.switch_manager:
+                for k, vi in self.switch_manager.switches.iteritems():
+                    net.set_valve_state(k, vi.state)
             self.reload_canvas()
 
     @on_trait_change('display_volume,volume_key')

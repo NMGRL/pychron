@@ -200,7 +200,7 @@ class Experimentor(Loggable):
                 ai.trait_set(**cache[ln])
 
     def execute_queues(self, queues):
-        self.debug('setup executor')
+        self.debug('<{}> setup executor'.format(id(self)))
 
         names = ','.join([e.name for e in queues])
         self.debug('queues: n={}, names={}'.format(len(queues), names))

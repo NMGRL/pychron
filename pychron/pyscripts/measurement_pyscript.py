@@ -20,7 +20,9 @@ import ast
 import time
 import os
 from ConfigParser import ConfigParser
+
 import yaml
+
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import fileiter
 from pychron.paths import paths
@@ -36,7 +38,7 @@ command_register = makeRegistry()
 
 class MeasurementCTXObject(object):
     def create(self, yd):
-        for k in ('baseline', 'multicollect', 'peakcenter', 'equilibration', 'whiff'):
+        for k in ('baseline', 'multicollect', 'peakcenter', 'equilibration', 'whiff', 'peakhop'):
             try:
                 c = CTXObject()
                 c.update(yd[k])

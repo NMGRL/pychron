@@ -59,6 +59,7 @@ class IPersiter(Interface):
     def set_persistence_spec(self, **kw):
         pass
 
+
 @provides(IPersiter)
 class BasePersister(Loggable):
     per_spec = Instance('pychron.experiment.automated_run.persistence_spec.PersistenceSpec', ())

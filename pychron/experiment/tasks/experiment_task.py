@@ -165,6 +165,10 @@ class ExperimentEditorTask(EditorTask):
         if self.use_notifications:
             self.notifier.close()
 
+        # del manager. fixes problem of multiple experiments being started
+        # closes tasks were still receiving execute_event(s)
+        del self.manager
+
     def bind_preferences(self):
         # notifications
 
@@ -560,7 +564,10 @@ class ExperimentEditorTask(EditorTask):
                 break
 
     @on_trait_change('manager:execute_event')
-    def _execute(self):
+    def _execute(self, obj, name, old, new):
+        print obj, name, old, new
+        self.debug('execute event {} {}'.format(id(self), id(obj)))
+
         if self.editor_area.editors:
             try:
                 # this method is error prone. just wrap in a try statement for now
