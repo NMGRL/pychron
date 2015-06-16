@@ -19,7 +19,6 @@ from envisage.ui.tasks.task_factory import TaskFactory
 from pyface.tasks.action.schema import SGroup
 from pyface.tasks.action.schema_addition import SchemaAddition
 from envisage.ui.tasks.task_extension import TaskExtension
-from pyface.action.group import Group
 from traits.api import Instance
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -37,14 +36,11 @@ from pychron.experiment.tasks.experiment_actions import NewExperimentQueueAction
     DeselectAction, SendTestNotificationAction, \
     NewPatternAction, OpenPatternAction, ResetQueuesAction, OpenLastExperimentQueueAction, UndoAction, \
     QueueConditionalsAction, ConfigureEditorTableAction, SystemConditionalsAction, ResetSystemHealthAction
-from pychron.file_defaults import EXPERIMENT_DEFAULTS
-from pychron.paths import paths
 
 
 class ExperimentPlugin(BaseTaskPlugin):
     id = 'pychron.experiment.plugin'
     experimentor = Instance(Experimentor)
-
 
     def start(self):
         super(ExperimentPlugin, self).start()
@@ -70,7 +66,8 @@ class ExperimentPlugin(BaseTaskPlugin):
                             task_group='experiment')]
 
     def _task_factory(self):
-        return ExperimentEditorTask(manager=self.experimentor)
+        e = ExperimentEditorTask(manager=self.experimentor)
+        return e
 
     def _preferences_panes_default(self):
         return [ExperimentPreferencesPane,
@@ -156,6 +153,9 @@ class ExperimentPlugin(BaseTaskPlugin):
                 so_sens_selector]
 
     def _experimentor_default(self):
+        return self._experimentor_factory()
+
+    def _experimentor_factory(self):
         # from pychron.experiment.experimentor import Experimentor
         # from pychron.initialization_parser import InitializationParser
         from pychron.envisage.initialization.initialization_parser import InitializationParser
