@@ -139,6 +139,10 @@ class FigurePlotterOptions(BasePlotterOptions):
             except TraitError, e:
                 print 'exception', e
 
+    def get_loadable_aux_plots(self):
+        return reversed([pi for pi in self.aux_plots
+                         if pi.name and pi.name != NULL_STR and (pi.save_enabled or pi.plot_enabled)])
+
     def get_saveable_aux_plots(self):
         return reversed([pi for pi in self.aux_plots
                          if pi.name and pi.name != NULL_STR and pi.save_enabled])

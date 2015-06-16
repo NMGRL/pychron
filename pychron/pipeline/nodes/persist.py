@@ -80,7 +80,7 @@ class IsotopeEvolutionPersistNode(DVCPersistNode):
         return True
 
     def run(self, state):
-        wrapper = lambda x, prog, i, n: self._save_fit(x, prog, i, n)
+        wrapper = lambda x, prog, i, n: self._save_fit(x, prog, i, n, state.saveable_keys)
         progress_iterator(state.unknowns, wrapper)
         # for ai in state.unknowns:
         #     self.dvc.save_fits(ai, state.saveable_keys)
@@ -92,6 +92,11 @@ class IsotopeEvolutionPersistNode(DVCPersistNode):
 
         self._persist(state, msg)
 
+    def _save_fit(self, x, prog, i, n, keys):
+        if prog:
+            prog.change_message('Save Fits {} {}/{}'.format(x.record_id, i, n))
+
+        self.dvc.save_fits(x, keys)
 
 class BlanksPersistNode(DVCPersistNode):
     name = 'Save Blanks'

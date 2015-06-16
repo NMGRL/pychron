@@ -22,15 +22,14 @@ from traitsui.editors import TabularEditor
 from traitsui.handler import Handler
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
-from traitsui.tree_node import TreeNode
 from traitsui.api import View, UItem, VGroup, EnumEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from uncertainties import nominal_value, std_dev
 from pychron.core.helpers.color_generators import colornames
 from pychron.core.helpers.formatting import floatfmt
+from pychron.core.ui.qt.tree_editor import PipelineEditor
 
-from pychron.core.ui.tree_editor import TreeEditor
 from pychron.pipeline.engine import Pipeline
 from pychron.pipeline.nodes import FindReferencesNode
 from pychron.pipeline.nodes.base import BaseNode
@@ -42,7 +41,7 @@ from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode, F
 from pychron.pipeline.nodes.grouping import GroupingNode
 from pychron.pipeline.nodes.persist import PDFNode, DVCPersistNode
 from pychron.pipeline.tasks.tree_node import SeriesTreeNode, PDFTreeNode, GroupingTreeNode, SpectrumTreeNode, \
-    IdeogramTreeNode, FilterTreeNode, DataTreeNode, DBSaveTreeNode, FindTreeNode, FitTreeNode
+    IdeogramTreeNode, FilterTreeNode, DataTreeNode, DBSaveTreeNode, FindTreeNode, FitTreeNode, PipelineTreeNode
 
 
 def node_adder(func):
@@ -225,7 +224,7 @@ class PipelinePane(TraitsDockPane):
                                        action='review_node'),
                                 add_menu_factory(), fit_menu_factory())
 
-        nodes = [TreeNode(node_for=[Pipeline],
+        nodes = [PipelineTreeNode(node_for=[Pipeline],
                           children='nodes',
                           icon_open='',
                           label='name',
@@ -245,15 +244,16 @@ class PipelinePane(TraitsDockPane):
                                        FitICFactorNode,
                                        FitBlanksNode,
                                        FitFluxNode], menu=ffind_menu_factory()),
-                 TreeNode(node_for=[BaseNode], label='name')]
+                 PipelineTreeNode(node_for=[BaseNode], label='name')]
 
-        editor = TreeEditor(nodes=nodes,
+        # editor = TreeEditor(nodes=nodes,
+        editor = PipelineEditor(nodes=nodes,
                             editable=False,
                             # selection_mode='extended',
                             selected='selected',
                             dclick='dclicked',
                             hide_root=True,
-                            lines_mode='on',
+                                lines_mode='off',
                             # word_wrap=True,
                             show_disabled=True,
                             refresh_all_icons='refresh_all_needed',

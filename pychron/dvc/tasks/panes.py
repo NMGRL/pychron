@@ -26,13 +26,16 @@ from traitsui.tabular_adapter import TabularAdapter
 
 class CommitAdapter(TabularAdapter):
     columns = [('ID', 'hexsha'),
-               ('Message', 'message'),
                ('Date', 'date'),
+               ('Message', 'message'),
                ('Author', 'author'),
                ('Email', 'email'),
                ]
     hexsha_width = Int(80)
     message_width = Int(300)
+    date_width = Int(120)
+    author_width = Int(100)
+
     font = '10'
     hexsha_text = Property
 

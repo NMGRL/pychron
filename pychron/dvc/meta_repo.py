@@ -28,6 +28,7 @@ from uncertainties import ufloat
 from pychron.canvas.utils import iter_geom
 from pychron.core.helpers.datetime_tools import ISO_FORMAT_STR
 from pychron.core.helpers.filetools import list_directory2, ilist_directory2, add_extension
+from pychron.dvc import jdump
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.pychron_constants import INTERFERENCE_KEYS, RATIO_KEYS
 
@@ -237,9 +238,9 @@ class MetaRepo(GitRepoManager):
 
     def add_level(self, irrad, level):
         p = self.get_level_path(irrad, level)
-        with open(p, 'w') as wfile:
-            json.dump([], wfile)
-
+        # with open(p, 'w') as wfile:
+        #     json.dump([], wfile)
+        jdump([], p)
         self.add(p, commit=False)
 
     def get_level_path(self, irrad, level):
@@ -282,8 +283,9 @@ class MetaRepo(GitRepoManager):
             jd = json.load(rfile)
 
         njd = [ji if ji['position'] != pos else {'position': pos, 'j': j, 'j_err': e} for ji in jd]
-        with open(p, 'w') as wfile:
-            json.dump(njd, wfile, indent=4)
+        # with open(p, 'w') as wfile:
+        #     json.dump(njd, wfile, indent=4)
+        jdump(njd, p)
         if add:
             self.add(p, commit=False)
 

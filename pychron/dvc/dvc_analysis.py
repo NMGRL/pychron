@@ -17,7 +17,6 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 import base64
-from binascii import unhexlify
 import os
 import time
 # ============= local library imports  ==========================
@@ -26,6 +25,7 @@ from uncertainties import ufloat, std_dev, nominal_value
 # import yaml
 import json
 from pychron.core.helpers.filetools import add_extension, subdirize
+from pychron.dvc import jdump
 from pychron.paths import paths
 from pychron.processing.analyses.analysis import Analysis
 from pychron.processing.isotope import Isotope
@@ -194,8 +194,8 @@ class DVCAnalysis(Analysis):
 
     def load_raw_data(self, keys):
         def format_blob(blob):
-            # return base64.b64decode(blob)
-            return unhexlify(base64.b64decode(blob))
+            return base64.b64decode(blob)
+            # return unhexlify(base64.b64decode(blob))
 
         path = self._analysis_path(modifier='.data')
         isotopes = self.isotopes
@@ -229,6 +229,7 @@ class DVCAnalysis(Analysis):
 
             for sn in sniffs:
                 isok = sn['isotope']
+                print isok, keys
                 if isok not in keys:
                     continue
 
@@ -433,8 +434,9 @@ class DVCAnalysis(Analysis):
         if path is None:
             path = self._analysis_path(modifier)
 
-        with open(path, 'w') as wfile:
-            json.dump(obj, wfile, indent=4)
+        jdump(obj, path)
+        # with open(path, 'w') as wfile:
+        #     json.dump(obj, wfile, indent=4)
 
     def _analysis_path(self, experiment_id=None, modifier=None, mode='r', extension='.json'):
         if experiment_id is None:

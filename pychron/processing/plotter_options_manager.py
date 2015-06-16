@@ -209,7 +209,6 @@ class PlotterOptionsManager(HasTraits):
             kind='livemodal')
         return v
 
-    @property
     def traits_view(self):
         v = View(VGroup(HGroup(Item('plotter_options', show_label=False,
                                     editor=EnumEditor(name='plotter_options_list'),

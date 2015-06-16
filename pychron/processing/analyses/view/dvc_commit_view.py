@@ -23,6 +23,7 @@ from pyface.message_dialog import warning, information
 from traits.api import HasTraits, Str, Int, Bool, List, Event
 from traitsui.api import View, UItem, VGroup, TabularEditor
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
@@ -32,7 +33,7 @@ from pychron.git_archive.utils import get_commits, get_diff
 from pychron.paths import paths
 
 TAGS = 'TAG', 'BLANK', 'ISOEVO'
-TAG_COLORS = {'TAG': '#f5f7c8', 'BLANK': '#cac8f7', 'ISOEVO': '#c8f7e2'}
+TAG_COLORS = {'TAG': '#f5f7c8', 'BLANK': '#cac8f7', 'ISOEVO': '#c8f7e2', 'IMPORT': '#FAE8F0'}
 
 
 class HistoryCommitAdapter(CommitAdapter):
@@ -171,7 +172,7 @@ class HistoryView(DVCCommitView):
         repo = self.repo
 
         cs = []
-        for a, b in (('TAG', 'tag'), ('ISOEVO', 'changeable')):
+        for a, b in (('TAG', 'tag'), ('ISOEVO', 'changeable'), ('IMPORT', '')):
             path = an.make_path(b)
             args = [repo, repo.active_branch.name, path, a]
             if a:

@@ -206,8 +206,8 @@ class Analysis(ArArAge):
     def __init__(self, *args, **kw):
         super(Analysis, self).__init__(*args, **kw)
         self.snapshots = []
-        self.source_parameters = {}
-        self.deflections = {}
+        self.source_parameters = []
+        self.deflections = []
         self.blank_changes = []
         self.fit_changes = []
 

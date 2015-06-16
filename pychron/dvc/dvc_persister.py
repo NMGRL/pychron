@@ -24,21 +24,21 @@ import hashlib
 import os
 import struct
 # import yaml
-import json
 
 from datetime import datetime
 from uncertainties import std_dev
 from uncertainties import nominal_value
 # ============= local library imports  ==========================
+from pychron.dvc import jdump
 from pychron.dvc.dvc_analysis import META_ATTRS, EXTRACTION_ATTRS, analysis_path, PATH_MODIFIERS
 from pychron.experiment.automated_run.persistence import BasePersister
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths
 
 
-def jdump(obj, p):
-    with open(p, 'w') as wfile:
-        json.dump(obj, wfile, indent=4)
+# def jdump(obj, p):
+#     with open(p, 'w') as wfile:
+#         json.dump(obj, wfile, indent=4)
 
 
 def format_project(project):
@@ -222,6 +222,7 @@ class DVCPersister(BasePersister):
                 if not dbtag:
                     dbtag = db.add_tag(t)
 
+            db.flush()
             an.change.tag_item = dbtag
             # self._save_measured_positions()
 

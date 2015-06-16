@@ -27,6 +27,7 @@ from uncertainties import ufloat
 from numpy import array, Inf, polyfit
 
 
+
 # ============= local library imports  ==========================
 from pychron.core.helpers.fits import natural_name_fit
 from pychron.core.regression.mean_regressor import MeanRegressor
@@ -102,6 +103,7 @@ class BaseMeasurement(object):
 
         self.xs = array(xs)
         self.ys = array(ys)
+        print self.name, self.xs.shape, self.ys.shape
         # print self.name, self.ys
 
     def _unpack_blob(self, blob, endianness=None):

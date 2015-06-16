@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import json
 
 from traits.api import Instance, Str, Set, List
 from apptools.preferences.preference_binding import bind_preference
@@ -29,6 +28,7 @@ import os
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import remove_extension
 from pychron.core.progress import progress_loader
+from pychron.dvc import jdump
 from pychron.dvc.defaults import TRIGA, HOLDER_24_SPOKES, LASER221, LASER65
 from pychron.dvc.dvc_analysis import DVCAnalysis, experiment_path, analysis_path, PATH_MODIFIERS
 from pychron.dvc.dvc_database import DVCDatabase
@@ -40,6 +40,7 @@ from pychron.paths import paths
 from pychron.pychron_constants import OMIT_KEYS
 
 TESTSTR = {'blanks': 'auto update blanks', 'iso_evo': 'auto update iso_evo'}
+
 
 
 class DVCException(BaseException):
@@ -97,9 +98,9 @@ class Tag(object):
         if not self.path:
             self.path = analysis_path(self.record_id, self.experiment_id, modifier='tag', mode='w')
 
-        with open(self.path, 'w') as wfile:
-            json.dump(obj, wfile, indent=4)
-
+        # with open(self.path, 'w') as wfile:
+        #     json.dump(obj, wfile, indent=4)
+        jdump(obj, self.path)
 
 class GitSessionCTX(object):
     def __init__(self, parent, experiment_id, message):
@@ -210,7 +211,7 @@ class DVC(Loggable):
         else:
             changes = [os.path.join(repo.path, c) for c in changes]
 
-        # print changes
+        print 'chanages', changes
         for p in paths:
             if p in changes:
                 self.debug('Change Index adding: {}'.format(p))

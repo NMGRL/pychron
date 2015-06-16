@@ -121,7 +121,7 @@ class ExperimentRepoTask(BaseTask):
     def _branch_changed(self, new):
         if new:
             # fmt = 'format:"%H|%cn|%ce|%ct|%s"'
-            self.commits = get_commits(self._repo.active_repo, new)
+            self.commits = get_commits(self._repo.active_repo, new, None, '')
             # self.commits = [from_gitlog(l) for l in self._repo.get_log(new, '--pretty={}'.format(fmt))]
         else:
             self.commits = []

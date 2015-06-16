@@ -28,6 +28,7 @@ from pychron.canvas.utils import make_geom
 from pychron.database.adapters.isotope_adapter import IsotopeAdapter
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.database.records.isotope_record import IsotopeRecordView
+from pychron.dvc import jdump
 from pychron.dvc.dvc import DVC
 from pychron.dvc.dvc_database import DVCDatabase
 from pychron.dvc.dvc_persister import DVCPersister, format_project
@@ -148,17 +149,17 @@ class IsoDBTransfer(Loggable):
 
             for ln, ans in groupby(runs, key=key):
                 # print ln, len(list(ans))
-                # try:
-                #     int(ln)
-                # except ValueError:
-                #     self.debug('skipping {}'.format(ln))
-                #     continue
-                #
-                # if ln in ('4359',):
-                #     continue
-
-                if ln not in ('bu', 'a', 'ba', 'c'):
+                # # try:
+                # #     int(ln)
+                # # except ValueError:
+                # #     self.debug('skipping {}'.format(ln))
+                # #     continue
+                # #
+                if ln in ('4359',):
                     continue
+                #
+                # if ln not in ('bu', 'a', 'ba', 'c'):
+                #     continue
 
                 with dest.session_ctx():
                     repo = self._transfer_labnumber(ln, src, dest, exp='J-Curve', create_repo=create_repo)
@@ -172,7 +173,7 @@ class IsoDBTransfer(Loggable):
                             self._transfer_analysis(proc, src, dest, a, exp='J-Curve')
                             print 'transfer time {:0.3f}'.format(time.time() - st)
                         repo.commit('<IMPORT> src= {}'.format(src.public_url))
-                        break
+                        # break
 
     def transfer_holder(self, name):
         self.root = os.path.join(os.path.expanduser('~'), 'Pychron_dev', 'data', '.dvc')
@@ -368,8 +369,9 @@ class IsoDBTransfer(Loggable):
                 j, e = 0, 0
 
             yd.append({'j': j, 'j_err': e, 'position': pos})
-            with open(p, 'w') as wfile:
-                json.dump(yd, wfile, indent=4)
+            jdump(yd, p)
+            # with open(p, 'w') as wfile:
+            #     json.dump(yd, wfile, indent=4)
 
     def _transfer_analysis(self, proc, src, dest, rec, exp=None, overwrite=True):
         # args = rec.split(',')

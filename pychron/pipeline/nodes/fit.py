@@ -143,7 +143,7 @@ class FitIsotopeEvolutionNode(FitNode):
         super(FitIsotopeEvolutionNode, self).run(state)
 
         po = self.plotter_options
-        self._fits = [pi for pi in po.get_saveable_aux_plots()]
+        self._fits = [pi for pi in po.get_loadable_aux_plots()]
         fs = progress_loader(state.unknowns, self._assemble_result)
 
         if self.editor:
@@ -153,7 +153,7 @@ class FitIsotopeEvolutionNode(FitNode):
             ai.graph_id = 0
 
         self._set_saveable(state)
-        self.name = '{} Fit IsoEvo'.format(self.name)
+        # self.name = '{} Fit IsoEvo'.format(self.name)
         if po.confirm_save:
             if confirmation_dialog('Would you like to review the iso fits before saving?'):
                 state.veto = self
@@ -174,6 +174,7 @@ class FitIsotopeEvolutionNode(FitNode):
 
         fits = self._fits
         keys = [fi.name for fi in fits]
+        print keys
         xi.load_raw_data(keys)
 
         xi.set_fits(fits)

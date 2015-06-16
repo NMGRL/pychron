@@ -15,15 +15,35 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from PySide.QtCore import Qt
+from PySide.QtGui import QColor
 from traitsui.tree_node import TreeNode
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.resources import icon
+#
+# class PipelineTreeNode(TreeNode):
+#     def get_status_color(self, obj):
+#         c = QColor('black')
+#         if obj.status == 'ran':
+#             c = QColor('green')
+#         elif obj.status == 'paused':
+#             c = QColor('orange')
+#         return c
 
-
-class _TreeNode(TreeNode):
+class PipelineTreeNode(TreeNode):
     icon_name = ''
     label = 'name'
+
+    def get_status_color(self, obj):
+        c = QColor(Qt.lightGray)
+        if obj.visited:
+            c = QColor(Qt.green)
+        # if obj.status == 'ran':
+        #     c = QColor('green')
+        # elif obj.status == 'paused':
+        #     c = QColor('orange')
+        return c
 
     def get_icon(self, object, is_expanded):
         name = self.icon_name
@@ -32,48 +52,48 @@ class _TreeNode(TreeNode):
 
         return icon(name)
 
-    def get_background(self, obj):
-        # print 'get', obj, obj.visited
-        return 'green' if obj.visited else 'white'
+        # def get_background(self, obj):
+        #     # print 'get', obj, obj.visited
+        #     return 'green' if obj.visited else 'white'
 
 
-class DataTreeNode(_TreeNode):
+class DataTreeNode(PipelineTreeNode):
     icon_name = 'table'
 
 
-class FilterTreeNode(_TreeNode):
+class FilterTreeNode(PipelineTreeNode):
     icon_name = 'table_filter'
 
 
-class IdeogramTreeNode(_TreeNode):
+class IdeogramTreeNode(PipelineTreeNode):
     icon_name = 'histogram'
 
 
-class SpectrumTreeNode(_TreeNode):
+class SpectrumTreeNode(PipelineTreeNode):
     icon_name = ''
 
 
-class SeriesTreeNode(_TreeNode):
+class SeriesTreeNode(PipelineTreeNode):
     icon_name = ''
 
 
-class PDFTreeNode(_TreeNode):
+class PDFTreeNode(PipelineTreeNode):
     icon_name = 'file_pdf'
 
 
-class GroupingTreeNode(_TreeNode):
+class GroupingTreeNode(PipelineTreeNode):
     pass
 
 
-class DBSaveTreeNode(_TreeNode):
+class DBSaveTreeNode(PipelineTreeNode):
     icon_name = 'database_save'
 
 
-class FindTreeNode(_TreeNode):
+class FindTreeNode(PipelineTreeNode):
     icon_name = 'find'
 
 
-class FitTreeNode(_TreeNode):
+class FitTreeNode(PipelineTreeNode):
     icon_name = 'lightning'
 # ============= EOF =============================================
 
