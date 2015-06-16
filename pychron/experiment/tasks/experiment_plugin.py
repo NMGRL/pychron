@@ -68,8 +68,7 @@ class ExperimentPlugin(BaseTaskPlugin):
                             task_group='experiment')]
 
     def _task_factory(self):
-        e = ExperimentEditorTask(manager=self.experimentor)
-        return e
+        return ExperimentEditorTask(manager=self.experimentor)
 
     def _preferences_panes_default(self):
         return [ExperimentPreferencesPane,
@@ -170,7 +169,6 @@ class ExperimentPlugin(BaseTaskPlugin):
         # manager = self.application.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
         
         exp = Experimentor(application=self.application,
-                           # manager=manager,
                            mode=mode)
 
         return exp
