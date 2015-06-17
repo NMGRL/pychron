@@ -10,7 +10,7 @@ from pychron.core.ui import set_toolkit
 set_toolkit('qt4')
 
 from test.database import isotope_manager_factory
-from pychron.processing.tasks.tables.editors.step_heat.step_heat_table_editor import StepHeatTableEditor
+from pychron.pipeline.editors.step_heat.step_heat_table_editor import StepHeatTableEditor
 
 from logging import getLogger
 

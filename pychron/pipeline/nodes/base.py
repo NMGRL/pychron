@@ -36,7 +36,7 @@ class BaseNode(HasTraits):
         self.enabled = False
 
     def run(self, state):
-        raise NotImplementedError
+        raise NotImplementedError(self.__class__.__name__)
 
     def post_run(self, state):
         pass
@@ -45,7 +45,13 @@ class BaseNode(HasTraits):
         pass
 
     def configure(self):
-        info = self.edit_traits()
+        return self._configure()
+
+    def _configure(self, obj=None):
+        if obj is None:
+            obj = self
+
+        info = obj.edit_traits()
         if info.result:
             self.refresh()
             return True

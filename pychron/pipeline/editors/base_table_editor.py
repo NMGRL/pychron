@@ -20,10 +20,13 @@ from pyface.file_dialog import FileDialog
 
 from pychron.envisage.tasks.base_editor import grouped_name
 from pychron.processing.tasks.editor import BaseUnknownsEditor
-from pychron.processing.tasks.tables.editors.base_adapter import TableBlank, \
+from pychron.pipeline.editors.base_adapter import TableBlank, \
     TableSeparator
 from pychron.core.helpers.filetools import add_extension
 from pychron.paths import paths
+
+
+
 
 
 

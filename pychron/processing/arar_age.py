@@ -114,7 +114,7 @@ class ArArAge(MLoggable):
     j = None
     irradiation = None
     irradiation_level = None
-    irradiation_pos = None
+    irradiation_position = None
     irradiation_time = None
     production_name = None
 
@@ -161,12 +161,14 @@ class ArArAge(MLoggable):
     Ar39_decay_corrected = None
     Ar37_decay_corrected = None
 
-    sensitivity = None
+    sensitivity = 1e-12  # fA/torr
     # temporary_ic_factors =None
 
     _missing_isotope_warned = False
     _kca_warning = False
     _kcl_warning = False
+
+    discrimination = None
 
     # moles_Ar40 = Property
     # irradiation_label = Property(depends_on='irradiation, irradiation_level,irradiation_pos')
@@ -183,6 +185,7 @@ class ArArAge(MLoggable):
         self.interference_corrections = {}
         self.production_ratios = {}
         self.temporary_ic_factors = {}
+        self.discrimination = ufloat(1, 0)
 
     def set_ic_factor(self, det, v, e):
         for iso in self.get_isotopes(det):
@@ -762,7 +765,7 @@ class ArArAge(MLoggable):
     def irradiation_label(self):
         return '{}{} {}'.format(self.irradiation,
                                 self.irradiation_level,
-                                self.irradiation_pos)
+                                self.irradiation_position)
 
     @property
     def decay_days(self):

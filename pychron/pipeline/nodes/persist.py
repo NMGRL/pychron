@@ -21,9 +21,10 @@ from traitsui.api import Item
 import os
 # ============= local library imports  ==========================
 from traitsui.editors import DirectoryEditor
-from pychron.core.helpers.filetools import add_extension
+from pychron.core.helpers.filetools import add_extension, unique_path2, view_file
 from pychron.core.progress import progress_iterator
 from pychron.paths import paths
+from pychron.pipeline.editors.arar_table_editor import ArArTableEditor
 from pychron.pipeline.nodes.base import BaseNode
 
 
@@ -181,5 +182,23 @@ class FluxPersistNode(DVCPersistNode):
 
         self.dvc.save_j(irp.irradiation, irp.level, irp.hole_id, irp.identifier,
                         irp.j, irp.jerr, add=False)
+
+
+class TablePersistNode(FileNode):
+    pass
+
+
+class XLSTablePersistNode(TablePersistNode):
+    name = 'Save Excel Table'
+
+    def run(self, state):
+        for editor in state.editors:
+            if isinstance(editor, ArArTableEditor):
+                print editor
+                basename = 'test_xls_table'
+                path, _ = unique_path2(paths.data_dir, basename, extension='.xls')
+                editor.make_xls_table('FooBar', path)
+                view_file(path)
+
 
 # ============= EOF =============================================

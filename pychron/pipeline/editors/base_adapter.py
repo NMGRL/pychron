@@ -21,6 +21,8 @@ from uncertainties import std_dev, nominal_value
 
 from pychron.core.helpers.formatting import floatfmt
 
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 class TableBlank(HasTraits):
@@ -97,6 +99,8 @@ class BaseAdapter(TabularAdapter):
 
     font = 'Arial 10'
 
+    sensitivity_scalar = 1e9
+
     def _get_value(self, attr, n=3, **kw):
         return self._get_attribute_value(nominal_value, attr, n, **kw)
 
@@ -123,11 +127,11 @@ class BaseAdapter(TabularAdapter):
 
     def get_bg_color(self, obj, trait, row, column):
         c = 'white'
-        if not isinstance(self.item, TableSeparator):
-            if row % 2 == 0:
-                c = 'lightgray'
-            if self.item.temp_status != 0 or self.item.tag:
-                c = '#FF9999'
+        # if not isinstance(self.item, TableSeparator):
+        #     if row % 2 == 0:
+        #         c = 'lightgray'
+        # if self.item.temp_status != 0 or self.item.tag:
+        #     c = '#FF9999'
         return c
 
     def _get_aliquot_step_str_text(self):
@@ -145,7 +149,9 @@ class BaseAdapter(TabularAdapter):
         return v
 
     def _get_moles_Ar40_text(self):
-        return self._get_text_value('moles_Ar40')
+        v = self._get_text_value('moles_Ar40')
+        v = nominal_value(v) * self.sensitivity_scalar
+        return floatfmt(v)
 
     def _get_text_value(self, attr):
         v = ''

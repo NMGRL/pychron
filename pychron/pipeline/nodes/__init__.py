@@ -25,6 +25,7 @@ from pychron.pipeline.nodes.find import FindReferencesNode, FindFluxMonitorsNode
 from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode, FitICFactorNode, FitFluxNode
 from pychron.pipeline.nodes.grouping import GroupingNode
 from pychron.pipeline.nodes.persist import DVCPersistNode, PDFFigureNode, \
-    BlanksPersistNode, IsotopeEvolutionPersistNode, ICFactorPersistNode, FluxPersistNode
+    BlanksPersistNode, IsotopeEvolutionPersistNode, ICFactorPersistNode, FluxPersistNode, XLSTablePersistNode
+from pychron.pipeline.nodes.table import TableNode
 
 # ============= EOF =============================================

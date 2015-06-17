@@ -15,30 +15,44 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits
+from traits.api import HasTraits, Instance, Bool
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.pipeline.editors.fusion.fusion_table_editor import FusionTableEditor
 from pychron.pipeline.nodes.base import BaseNode
 
 
 class TableOptions(HasTraits):
-    pass
+    references_enabled = Bool(False)
 
 
 class TableNode(BaseNode):
-    options = None
+    options = Instance(TableOptions)
+    name = 'Analysis Table'
+    options_klass = TableOptions
+
+    def configure(self):
+        return self._configure(self.options)
 
     def run(self, state):
         if state.unknowns:
-            self._make_unknowns_table(state.unknowns)
+            self._make_unknowns_table(state)
 
         if self.options.references_enabled and state.references:
             self._make_references_table(state.references)
 
-    def _make_unknowns_table(self, items):
-        pass
+    def _make_unknowns_table(self, state):
+        items = state.unknowns
+
+        editor_klass = FusionTableEditor
+        editor = editor_klass()
+        editor.items = items
+        state.editors.append(editor)
 
     def _make_references_table(self, items):
         pass
+
+    def _options_default(self):
+        return self.options_klass()
 
 # ============= EOF =============================================

@@ -26,6 +26,7 @@ from uncertainties import ufloat, std_dev, nominal_value
 import json
 from pychron.core.helpers.filetools import add_extension, subdirize
 from pychron.dvc import jdump
+from pychron.experiment.utilities.identifier import make_aliquot_step
 from pychron.paths import paths
 from pychron.processing.analyses.analysis import Analysis
 from pychron.processing.isotope import Isotope
@@ -198,6 +199,8 @@ class DVCAnalysis(Analysis):
                 jd = json.load(rfile)
                 func = getattr(self, '_load_{}'.format(tag))
                 func(jd)
+
+        self.aliquot_step_str = make_aliquot_step(self.aliquot, self.step)
 
     def _load_blanks(self, jd):
         for iso, v in jd.iteritems():

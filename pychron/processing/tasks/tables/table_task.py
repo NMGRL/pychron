@@ -20,6 +20,9 @@ from itertools import groupby
 from traits.api import Instance
 from pyface.tasks.action.schema import SToolBar, SGroup
 
+
+
+
 # from pyface.action.action import Action
 # from pyface.tasks.action.task_action import TaskAction
 # from pyface.tasks.task_layout import TaskLayout, PaneItem
@@ -28,17 +31,18 @@ from pyface.tasks.action.schema import SToolBar, SGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.browser.browser_task import BaseBrowserTask
-from pychron.processing.tasks.tables.editors.base_adapter import TableSeparator
-from pychron.processing.tasks.tables.editors.step_heat.step_heat_table_editor import StepHeatTableEditor
+from pychron.pipeline.editors.base_adapter import TableSeparator
+from pychron.pipeline.editors.fusion.fusion_table_editor import FusionTableEditor
+from pychron.pipeline.editors.step_heat.step_heat_table_editor import StepHeatTableEditor
 from pychron.processing.tasks.tables.table_actions import ToggleStatusAction, \
     SummaryTableAction, AppendSummaryTableAction, MakePDFTableAction, \
     AppendTableAction, MakeXLSTableAction, MakeCSVTableAction
 # from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
 from pychron.processing.tasks.tables.panes import TableEditorPane
 #from pychron.processing.tasks.browser.browser_task import BrowserTask
-from pychron.processing.tasks.tables.editors.fusion.fusion_table_editor import FusionTableEditor
+# from pychron.pipeline.editors.fusion import FusionTableEditor
 from pychron.processing.tasks.tables.table_task_editor import TableTaskEditor
-from pychron.processing.tasks.tables.editors.summary_table_editor import SummaryTableEditor
+from pychron.pipeline.editors.summary_table_editor import SummaryTableEditor
 
 from traits.api import Str, List
 from pyface.timer.do_later import do_later

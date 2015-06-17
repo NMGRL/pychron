@@ -15,17 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.processing.tasks.tables.editors.base_adapter import BaseAdapter, PM, BaseGroupAdapter
+from pychron.pipeline.editors.base_adapter import BaseAdapter, PM, BaseGroupAdapter
 
 
-class StepHeatTableAdapter(BaseAdapter):
+class FusionTableAdapter(BaseAdapter):
     columns = [
         ('Identifier', 'labnumber'),
         ('N', 'aliquot_step_str'),
-        ('Temp', 'extract_value'),
+        ('Power', 'extract_value'),
         ('Mol. Ar40', 'moles_Ar40'),
         ('Ar40', 'ar40'),
         (PM, 'ar40_err'),
@@ -51,10 +50,8 @@ class StepHeatTableAdapter(BaseAdapter):
         ('', 'blank_column')
     ]
 
-    def get_bg_color(self, obj, trait, row, column):
-        return 'white'
 
-class StepHeatGroupTableAdapter(BaseGroupAdapter):
+class FusionGroupTableAdapter(BaseGroupAdapter):
     pass
 
 # ============= EOF =============================================

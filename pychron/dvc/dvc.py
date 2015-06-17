@@ -211,7 +211,6 @@ class DVC(Loggable):
         else:
             changes = [os.path.join(repo.path, c) for c in changes]
 
-        print 'chanages', changes
         for p in paths:
             if p in changes:
                 self.debug('Change Index adding: {}'.format(p))
@@ -478,25 +477,33 @@ class DVC(Loggable):
         if isinstance(record, DVCAnalysis):
             a = record
         else:
+            st = time.time()
             a = DVCAnalysis(record.record_id, expid)
+            cot = time.time() - st
             # cot = time.time() - st
             # if cot>0.1:
             #     print 'constructor {}'.format(cot)
 
             # load irradiation
             if a.irradiation:
+                st = time.time()
                 meta_repo = self.meta_repo
+
                 chronology = meta_repo.get_chronology(a.irradiation)
                 a.set_chronology(chronology)
+                ct = time.time() - st
 
+                st = time.time()
                 pname = self.db.get_production_name(a.irradiation, a.irradiation_level)
 
                 prod = meta_repo.get_production(pname)
                 a.set_production(pname, prod)
+                pt = time.time() - st
 
+                st = time.time()
                 a.j = meta_repo.get_flux(record.irradiation, record.irradiation_level,
                                          record.irradiation_position_position)
-
+                ft = time.time() - st
                 a.set_tag(record.tag)
                 if calculate_f_only:
                     a.calculate_F()
@@ -508,10 +515,10 @@ class DVC(Loggable):
                 f = '-------'
 
                 print '{} make run {} {} {}'.format(f, i, record.record_id, et)
-                # print 'constructor {}'.format(cot)
-                # print 'chronology {}'.format(ct)
-                # print 'production {}'.format(pt)
-                # print 'flux {}'.format(ft)
+                print 'constructor {}'.format(cot)
+                print 'chronology {}'.format(ct)
+                print 'production {}'.format(pt)
+                print 'flux {}'.format(ft)
         return a
 
     def _get_experiment_repo(self, experiment_id):

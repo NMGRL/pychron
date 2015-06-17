@@ -31,7 +31,7 @@ from pychron.processing.arar_age import ArArAge
 # from pychron.processing.analyses.analysis_view import AnalysisView
 # from pychron.processing.analyses.summary import AnalysisSummary
 # from pychron.processing.analyses.db_summary import DBAnalysisSummary
-from pychron.experiment.utilities.identifier import make_aliquot_step, make_runid
+from pychron.experiment.utilities.identifier import make_runid
 from pychron.processing.isotope import Isotope
 from pychron.pychron_constants import PLUSMINUS, OMIT_KEYS
 
@@ -272,24 +272,24 @@ class Analysis(ArArAge):
 
         return self.is_temp_omitted(include_value_filtered) or omit
 
-    def flush(self, *args, **kw):
-        """
-        """
-        return
-
-    def commit(self, *args, **kw):
-        """
-        """
-        return
-
-    def sync(self, obj, **kw):
-        self._sync(obj, **kw)
-        self.aliquot_step_str = make_aliquot_step(self.aliquot, self.step)
-
-    def _sync(self, *args, **kw):
-        """
-        """
-        return
+    # def flush(self, *args, **kw):
+    #     """
+    #     """
+    #     return
+    #
+    # def commit(self, *args, **kw):
+    #     """
+    #     """
+    #     return
+    #
+    # def sync(self, obj, **kw):
+    #     self._sync(obj, **kw)
+    #     self.aliquot_step_str = make_aliquot_step(self.aliquot, self.step)
+    #
+    # def _sync(self, *args, **kw):
+    #     """
+    #     """
+    #     return
 
     # def _analysis_summary_default(self):
     # return self.analysis_summary_klass(model=self)

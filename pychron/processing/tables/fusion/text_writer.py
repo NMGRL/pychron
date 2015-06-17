@@ -25,6 +25,8 @@ from pychron.loggable import Loggable
 
 
 
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -203,7 +205,7 @@ class LaserTableTextWriter(Loggable):
     )
     default_style = None
 
-    def build(self, p, iagroups, groups, use_summary_sheet=False, title=None):
+    def build(self, p, groups, use_summary_sheet=False, title=None):
         self.info('saving table to {}'.format(p))
         wb = self._new_workbook()
         options = self.options
@@ -217,8 +219,8 @@ class LaserTableTextWriter(Loggable):
                 self._add_header_row(sh, 0)
                 self._add_analyses(sh, gi.analyses, start=2)
         else:
-            if use_summary_sheet:
-                self._write_summary_sheet(wb, iagroups)
+            # if use_summary_sheet:
+            # self._write_summary_sheet(wb, groups)
 
             sh = wb.add_sheet('ArArData')
             start = 2
@@ -226,8 +228,8 @@ class LaserTableTextWriter(Loggable):
                 if i == 0:
                     self._add_header_row(sh, 0)
 
-                self._add_analyses(sh, gi.all_analyses, start=start)
-                start += len(gi.all_analyses) + 1
+                self._add_analyses(sh, gi.analyses, start=start)
+                start += len(gi.analyses) + 1
 
         wb.save(p)
 

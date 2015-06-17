@@ -223,7 +223,7 @@ class FigureTask(AnalysisEditTask):
             klass = IdeogramEditor
 
         if tklass is None:
-            from pychron.processing.tasks.tables.editors.fusion.fusion_table_editor import \
+            from pychron.pipeline.editors.fusion import \
                 FusionTableEditor as tklass
             # from pychron.processing.tasks.tables.editors.fusion_table_editor \
         # import FusionTableEditor as tklass
@@ -244,7 +244,7 @@ class FigureTask(AnalysisEditTask):
             klass = CompositeEditor
 
         if tklass is None:
-            from pychron.processing.tasks.tables.editors.step_heat.step_heat_table_editor import \
+            from pychron.pipeline.editors.step_heat.step_heat_table_editor import \
                 StepHeatTableEditor as tklass
 
         return self._new_figure(ans, name, klass, tklass,
@@ -259,7 +259,7 @@ class FigureTask(AnalysisEditTask):
             klass = SpectrumEditor
 
         if tklass is None:
-            from pychron.processing.tasks.tables.editors.step_heat.step_heat_table_editor import \
+            from pychron.pipeline.editors.step_heat.step_heat_table_editor import \
                 StepHeatTableEditor as tklass
 
         editor = self._new_figure(ans, name, klass, tklass,
@@ -274,7 +274,7 @@ class FigureTask(AnalysisEditTask):
             klass = InverseIsochronEditor
 
         if tklass is None:
-            from pychron.processing.tasks.tables.editors.fusion.fusion_table_editor import \
+            from pychron.pipeline.editors.fusion import \
                 FusionTableEditor as tklass
 
         feditor = self._new_figure(ans, name, klass, tklass,
@@ -294,7 +294,7 @@ class FigureTask(AnalysisEditTask):
             klass = SeriesEditor
 
         if tklass is None:
-            from pychron.processing.tasks.tables.editors.fusion.fusion_table_editor import \
+            from pychron.pipeline.editors.fusion import \
                 FusionTableEditor as tklass
 
         return self._new_figure(ans, name, klass, tklass,
@@ -339,11 +339,11 @@ class FigureTask(AnalysisEditTask):
     def new_table(self, ans=None):
         if self.has_active_editor():
             if isinstance(self.active_editor, IdeogramEditor):
-                from pychron.processing.tasks.tables.editors.fusion.fusion_table_editor import FusionTableEditor
+                from pychron.pipeline.editors.fusion import FusionTableEditor
 
                 klass = FusionTableEditor
             elif isinstance(self.active_editor, SpectrumEditor):
-                from pychron.processing.tasks.tables.editors.step_heat.step_heat_table_editor import StepHeatTableEditor
+                from pychron.pipeline.editors.step_heat.step_heat_table_editor import StepHeatTableEditor
 
                 klass = StepHeatTableEditor
             else:

@@ -60,8 +60,10 @@ class AnalysisGroup(HasTraits):
     isochron_age = AGProperty()
     isochron_age_error_kind = Str
     identifier = Property
+    irradiation = Property
     sample = Property
     aliquot = Property
+    material = Property
 
     _sample = Str
     age_scalar = Property
@@ -124,6 +126,14 @@ class AnalysisGroup(HasTraits):
     @cached_property
     def _get_identifier(self):
         return self.analyses[0].labnumber
+
+    @cached_property
+    def _get_irradiation(self):
+        return self.analyses[0].irradiation
+
+    @cached_property
+    def _get_material(self):
+        return self.analyses[0].material
 
     @cached_property
     def _get_sample(self):

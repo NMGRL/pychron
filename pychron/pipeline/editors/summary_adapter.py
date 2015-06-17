@@ -20,6 +20,8 @@ from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.core.helpers.formatting import floatfmt
 
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 class SummaryTabularAdapter(TabularAdapter):

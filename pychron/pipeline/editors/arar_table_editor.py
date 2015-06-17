@@ -25,7 +25,7 @@ from traitsui.api import View, UItem
 # ============= local library imports  ==========================
 from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.processing.analyses.analysis_group import AnalysisGroup
-from pychron.processing.tasks.tables.editors.base_table_editor import BaseTableEditor
+from pychron.pipeline.editors.base_table_editor import BaseTableEditor
 from pychron.core.ui.tabular_editor import myTabularEditor
 
 
@@ -50,18 +50,18 @@ class ArArTableEditor(BaseTableEditor, ColumnSorterMixin):
 
         return klass(**kw)
 
-    def make_pdf_table(self, title, path=None):
+    def make_pdf_table(self, title, path):
 
         ans = self._clean_items()
         t = self._writer_factory(self.pdf_writer_klass,
-                                 #orientation='landscape',
+                                 # orientation='landscape',
                                  use_alternating_background=self.use_alternating_background)
 
         t.col_widths = self._get_column_widths()
         groups = self.analysis_groups
 
-        path = '/Users/ross/Sandbox/aaaatable.pdf'
-        #path = self._get_save_path(path)
+        # path = '/Users/ross/Sandbox/aaaatable.pdf'
+        # path = self._get_save_path(path)
 
         if path:
             key = lambda x: x.sample
@@ -69,25 +69,25 @@ class ArArTableEditor(BaseTableEditor, ColumnSorterMixin):
             t.build(path, ans, groups, title=title)
             return path
 
-    def make_xls_table(self, title, path=None):
-        ans = self._clean_items()
+    def make_xls_table(self, title, path):
+        # ans = self._clean_items()
         means = self.analysis_groups
 
         t = self._writer_factory(self.xls_writer_klass)
-        path = self._get_save_path(path, ext='.xls')
+        # path = self._get_save_path(path, ext='.xls')
         #         p = '/Users/ross/Sandbox/aaaatable.xls'
         if path:
-            t.build(path, ans, means, title)
+            t.build(path, means, title)
             return path
 
-    def make_csv_table(self, title, path=None):
+    def make_csv_table(self, title, path):
         ans = self._clean_items()
         means = self.analysis_groups
 
         t = self._writer_factory(self.csv_writer_klass)
 
         #         p = '/Users/ross/Sandbox/aaaatable.csv'
-        path = self._get_save_path(path, ext='.csv')
+        # path = self._get_save_path(path, ext='.csv')
         if path:
             t.build(path, ans, means, title)
             return path
