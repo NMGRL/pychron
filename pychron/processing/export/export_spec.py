@@ -221,7 +221,7 @@ class MassSpecExportSpec(Loggable):
 
     def get_filtered_baseline_uvalue(self, iso, nsigma=2, niter=1):
         m, s = 0, 0
-        n_filtered_pts = 0
+        # n_filtered_pts = 0
         if iso in self.isotopes:
             iso = self.isotopes[iso]
             xs, ys = iso.baseline.xs, iso.baseline.ys
@@ -231,7 +231,7 @@ class MassSpecExportSpec(Loggable):
 
                 outliers = where(res > (s * nsigma))[0]
                 ys = delete(ys, outliers)
-                n_filtered_pts += len(outliers)
+                # n_filtered_pts += len(outliers)
 
             m, s = mean(ys), std(ys)
 

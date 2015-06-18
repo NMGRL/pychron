@@ -416,7 +416,7 @@ class MassSpecDatabaseImporter(Loggable):
         label = '{} Baseline'.format(det.upper())
         ncnts = len(tb)
         db_baseline = db.add_baseline(blob, label, ncnts, dbiso)
-
+        db.flush()
         # if spec.is_peak_hop:
         #     det = spec.peak_hop_detector
 
@@ -434,6 +434,7 @@ class MassSpecDatabaseImporter(Loggable):
 
         # baseline and baseline changeable items need matching BslnID
         db_changeable.BslnID = db_baseline.BslnID
+        db.flush()
 
     def _make_pipetted_isotopes(self, runtype):
         blob = ''
