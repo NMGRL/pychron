@@ -15,18 +15,29 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from traits.api import HasTraits
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.pipeline.editors.gain_calibration_editor import GainCalibrationEditor
+from pychron.pipeline.nodes.base import BaseNode
 
-from pychron.pipeline.nodes.data import UnknownNode, ReferenceNode, FluxMonitorsNode
-from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, SeriesNode
-from pychron.pipeline.nodes.filter import FilterNode
-from pychron.pipeline.nodes.find import FindReferencesNode, FindFluxMonitorsNode
-from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode, FitICFactorNode, FitFluxNode
-from pychron.pipeline.nodes.gain import GainCalibrationNode
-from pychron.pipeline.nodes.grouping import GroupingNode
-from pychron.pipeline.nodes.persist import DVCPersistNode, PDFFigureNode, \
-    BlanksPersistNode, IsotopeEvolutionPersistNode, ICFactorPersistNode, FluxPersistNode, XLSTablePersistNode
-from pychron.pipeline.nodes.table import TableNode
+
+class GainCalibrationOption(HasTraits):
+    pass
+
+
+class GainCalibrationNode(BaseNode):
+    options_klass = GainCalibrationOption
+    name = 'Gain Calibration'
+    # def configure(self):
+    #     ms = ['jan', 'obama']
+    #     self.options.set_mass_spectrometers(ms)
+    #
+    #     self._configure(obj=self.options)
+
+    def run(self, state):
+        editor = GainCalibrationEditor(dvc=self.dvc)
+        editor.initialize()
+        state.editors.append(editor)
 
 # ============= EOF =============================================

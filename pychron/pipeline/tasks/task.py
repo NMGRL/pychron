@@ -81,7 +81,7 @@ class PipelineTask(BaseBrowserTask):
         pass
         # self.engine.add_data()
         self.engine.select_default()
-        self.engine.set_template('table')
+        self.engine.set_template('gain')
         # self.engine.set_template('ideogram')
         # self.engine.set_template('blanks')
         # self.engine.add_is

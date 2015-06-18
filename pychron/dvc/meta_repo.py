@@ -44,6 +44,17 @@ class MetaObject(object):
         pass
 
 
+class Gains(MetaObject):
+    gains = None
+
+    def __init__(self, *args, **kw):
+        self.gains = {}
+        super(Gains, self).__init__(*args, **kw)
+
+    def _load_hook(self, path, rfile):
+        self.gains = json.load(rfile)
+
+
 class Chronology(MetaObject):
     _doses = None
 
@@ -104,7 +115,6 @@ class Production(MetaObject):
         # return {t: getattr(self, t) for a in keys for t in (a, '{}_err'.format(a))}
 
     def dump(self):
-        attrs = self.attrs
         with open(self.path, 'w') as wfile:
             for a in self.attrs:
                 row = ','.join(map(str, (a, getattr(self, a), getattr(self, '{}_err'.format(a)))))
@@ -187,6 +197,14 @@ class MetaRepo(GitRepoManager):
     #         path = paths.meta_dir
     #
     #     self.path = path
+
+    def save_gains(self, ms, gains_dict):
+        p = self._gain_paths(ms)
+        with open(p, 'w') as wfile:
+            jdump(gains_dict, wfile)
+
+        if self.add_paths(p):
+            self.commit('Updated gains')
 
     def update_script(self, name, path_or_blob):
         self._update_text('scripts', name, path_or_blob)
@@ -323,6 +341,20 @@ class MetaRepo(GitRepoManager):
                 j, e = pos['j'], pos['j_err']
 
         return ufloat(j, e)
+
+    def get_gains(self, name):
+        g = self.get_gain_obj(name)
+        return g.gains
+
+    def _gain_path(self, name):
+        root = os.path.join(self.path, 'spectrometers')
+        p = os.path.join(root, add_extension('{}.gain'.format(name), '.json'))
+        return p
+
+    @cached('clear_cache')
+    def get_gain_obj(self, name):
+        p = self._gain_path(name)
+        return Gains(p)
 
     @cached('clear_cache')
     def get_production(self, pname, **kw):

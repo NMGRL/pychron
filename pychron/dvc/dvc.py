@@ -199,24 +199,8 @@ class DVC(Loggable):
         return self.experiment_add_paths(expid, tag.path)
 
     def experiment_add_paths(self, experiment_id, paths):
-        if not hasattr(paths, '__iter__'):
-            paths = (paths,)
-
         repo = self._get_experiment_repo(experiment_id)
-
-        changes = repo.get_local_changes()
-        changed = False
-        if not changes:
-            changes = repo.untracked_files()
-        else:
-            changes = [os.path.join(repo.path, c) for c in changes]
-
-        for p in paths:
-            if p in changes:
-                self.debug('Change Index adding: {}'.format(p))
-                repo.add(p, commit=False, verbose=False)
-                changed = True
-        return changed
+        return repo.add_paths(paths)
 
     def experiment_commit(self, experiment, msg):
         self.debug('Experiment commit: {} msg: {}'.format(experiment, msg))

@@ -20,6 +20,7 @@ import os
 
 from traits.api import HasTraits, Str, Float
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from uncertainties import nominal_value, std_dev
@@ -69,6 +70,7 @@ def make_items(isotopes):
             items.append(r)
     return items
 
+
 def save_csv(record_id, items):
     path = os.path.join(paths.data_det_ic_dir, add_extension(record_id, '.csv'))
     with open(path, 'w') as wfile:
@@ -77,7 +79,14 @@ def save_csv(record_id, items):
         for i in items:
             wrt.writerow(i.to_row())
 
+
+def get_columns(isos):
+    def closure():
+        for det in DETECTOR_ORDER:
+            iso = next((iso for iso in isos if iso.detector.upper() == det), None)
+            if iso:
+                yield det, iso.detector
+
+    return list(closure())
+
 # ============= EOF =============================================
-
-
-

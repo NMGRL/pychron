@@ -112,8 +112,6 @@ class ExperimentQueueFactory(PersistenceLoggable):
         cs = list_directory2(root, remove_extension=True)
         self.available_conditionals = [NULL_STR] + cs
 
-
-
     # ===============================================================================
     # property get/set
     # ===============================================================================
@@ -159,10 +157,8 @@ class ExperimentQueueFactory(PersistenceLoggable):
 
         with db.session_ctx():
             dbus = db.get_users()
-            us=dbus
-            # us = [ui.name for ui in dbus]
-            # self._emails = dict([(ui.name, ui.email or '') for ui in dbus])
-            # self._emails = {ui.name: ui.email or '' for ui in dbus}
+            us = [ui.name for ui in dbus]
+            self._emails = {ui.name: ui.email or '' for ui in dbus}
 
             return [''] + us
 

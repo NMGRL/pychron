@@ -23,6 +23,7 @@ import yaml
 # ============= local library imports  ==========================
 from pychron.pipeline.nodes.data import DataNode
 from pychron.pipeline.nodes.find import FindNode
+from pychron.pipeline.nodes.gain import GainCalibrationNode
 from pychron.pipeline.nodes.persist import PersistNode
 
 
@@ -62,7 +63,7 @@ class PipelineTemplate(HasTraits):
             node = self._node_factory(klass, ni)
             if isinstance(node, DataNode):
                 node.trait_set(browser_model=bmodel, dvc=dvc)
-            elif isinstance(node, (FindNode, PersistNode)):
+            elif isinstance(node, (FindNode, PersistNode, GainCalibrationNode)):
                 node.trait_set(dvc=dvc)
 
             # elif isinstance(node, FitICFactorNode):

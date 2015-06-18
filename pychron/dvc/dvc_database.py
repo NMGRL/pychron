@@ -471,6 +471,17 @@ class DVCDatabase(DatabaseAdapter):
         return self._retrieve_first(LoadTbl, order_by=LoadTbl.create_date.desc())
 
     # multi getters
+    def get_analyses(self, analysis_type=None, mass_spectrometer=None, reverse_order=False):
+        with self.session_ctx() as sess:
+            q = sess.query(AnalysisTbl)
+            if mass_spectrometer:
+                q = q.filter(AnalysisTbl.mass_spectrometer == mass_spectrometer)
+            if analysis_type:
+                q = q.filter(AnalysisTbl.analysis_type == analysis_type)
+
+            q = q.order_by(getattr(AnalysisTbl.timestamp, 'desc' if reverse_order else 'asc')())
+            return self._query_all(q)
+
     def get_analysis_types(self):
         return []
 
@@ -505,9 +516,11 @@ class DVCDatabase(DatabaseAdapter):
             return [ui.name for ui in eds]
 
     def get_users(self):
+        return self._retrieve_items(UserTbl)
+
+    def get_usernames(self):
         with self.session_ctx():
-            users = self._retrieve_items(UserTbl)
-            return [ui.name for ui in users]
+            return [ui.name for ui in self.get_users()]
 
     def get_project_names(self):
         return self._get_table_names(ProjectTbl)
@@ -581,6 +594,11 @@ class DVCDatabase(DatabaseAdapter):
 
     def get_tags(self):
         return self._retrieve_items(TagTbl)
+
+    def get_mass_spectrometer_names(self):
+        with self.session_ctx():
+            ms = self.get_mass_spectrometers()
+            return [mi.name for mi in ms]
 
     def get_mass_spectrometers(self):
         return self._retrieve_items(MassSpectrometerTbl)

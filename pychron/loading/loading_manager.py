@@ -297,7 +297,7 @@ class LoadingManager(DVCIrradiationable):
             if ts:
                 self.trays = ts
 
-            us = self.dvc.db.get_users()
+            us = self.dvc.db.get_user_names()
             if us:
                 self.available_user_names = us
 

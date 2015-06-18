@@ -15,23 +15,20 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import csv
-import os
-from traits.api import HasTraits, List, Float, Str, Button
+from traits.api import HasTraits, List, Button, Int
 from traitsui.api import View, UItem, TabularEditor, VGroup, HGroup, spring
 from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from uncertainties import std_dev, nominal_value, ufloat
-from pychron.core.helpers.filetools import unique_path2, add_extension
-from pychron.core.helpers.formatting import floatfmt
-from pychron.experiment.utilities.detector_ic import make_items
-from pychron.paths import paths
-from pychron.pychron_constants import PLUSMINUS_SIGMA, DETECTOR_ORDER
+from uncertainties import ufloat
+from pychron.experiment.utilities.detector_ic import make_items, get_columns
+from pychron.pychron_constants import PLUSMINUS_SIGMA
 
 
 class DetectorICTabularAdapter(TabularAdapter):
+    columns = [('', 'name')]
     font = 'arial 12'
+    name_width = Int(40)
 
 
 class DetectorICView(HasTraits):
@@ -46,7 +43,7 @@ class DetectorICView(HasTraits):
         self.record_id = an.record_id
         isotopes = [an.isotopes[k] for k in an.isotope_keys if k.startswith(self._isotope_key)]
 
-        detcols = list(self._get_columns(isotopes))
+        detcols = get_columns(isotopes)
 
         self.tabular_adapter.columns = [('', 'name'),
                                         ('Intensity', 'intensity'),
@@ -54,17 +51,6 @@ class DetectorICView(HasTraits):
 
         # self.items = items
         self.items = make_items(an.isotopes)
-
-    def _get_columns(self, isos):
-
-        for det in DETECTOR_ORDER:
-            iso = next((iso for iso in isos if iso.detector.upper() == det), None)
-            if iso:
-                yield det, iso.detector
-                # for iso in isos:
-                # det=iso.detector.upper()
-                # yield det, iso.detector
-                # yield PLUSMINUS_SIGMA, '{}_err'.format(iso.detector)
 
     def _export_button_fired(self):
         from pychron.experiment.utilities.detector_ic import save_csv

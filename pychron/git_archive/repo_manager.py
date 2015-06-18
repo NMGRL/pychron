@@ -96,6 +96,24 @@ class GitRepoManager(Loggable):
                 self.debug('{} is not a valid repo. Initializing now'.format(path))
                 self._repo = Repo.init(path)
 
+    def add_paths(self, paths):
+        if not hasattr(paths, '__iter__'):
+            paths = (paths,)
+
+        changes = self.get_local_changes()
+        changed = False
+        if not changes:
+            changes = self.untracked_files()
+        else:
+            changes = [os.path.join(self.path, c) for c in changes]
+
+        for p in paths:
+            if p in changes:
+                self.debug('Change Index adding: {}'.format(p))
+                self.add(p, commit=False, verbose=False)
+                changed = True
+        return changed
+
     def add_ignore(self, *args):
         ignores = []
         p = os.path.join(self.path, '.gitignore')

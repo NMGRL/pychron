@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Bool
+from traits.api import HasTraits, Bool, Any
 from traitsui.api import View
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -25,6 +25,8 @@ class BaseNode(HasTraits):
     name = 'Base'
     enabled = Bool(True)
     visited = Bool(False)
+    options_klass = None
+    options = Any
 
     def load(self, nodedict):
         pass
@@ -61,6 +63,9 @@ class BaseNode(HasTraits):
         self._to_template(d)
 
         return d
+
+    def _options_default(self):
+        return self.options_klass()
 
     def _to_template(self, d):
         pass

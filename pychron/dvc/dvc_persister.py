@@ -163,6 +163,9 @@ class DVCPersister(BasePersister):
         if not os.path.isfile(spec_path):
             self._save_spectrometer_file(spec_path)
 
+        self.dvc.meta_repo.save_gains(self.per_spec.run_spec.mass_spectrometer,
+                                      self.per_spec.gains)
+
         # save analysis
         t = datetime.now()
         self._save_analysis(timestamp=t, spec_sha=spec_sha)
