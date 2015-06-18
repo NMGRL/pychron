@@ -24,6 +24,7 @@ from traits.has_traits import provides
 import struct
 from numpy import array
 # ============= local library imports  ==========================
+from uncertainties import nominal_value, std_dev
 from pychron.core.i_datastore import IDatastore
 from pychron.core.helpers.isotope_utils import sort_isotopes
 from pychron.experiment.utilities.identifier import make_runid
@@ -392,8 +393,9 @@ class MassSpecDatabaseImporter(Loggable):
         signal = spec.get_signal_uvalue(iso, det)
         sfit = spec.get_signal_fit(iso)
 
-        if runtype == 'Blank':
-            ublank = signal - baseline
+        is_blank = runtype == 'Blank'
+        if is_blank:
+            ublank = signal - nominal_value(baseline)
         else:
             ublank = spec.get_blank_uvalue(iso)
 
@@ -402,7 +404,8 @@ class MassSpecDatabaseImporter(Loggable):
                               baseline,
                               ublank,
                               sfit,
-                              dbdet)
+                              dbdet,
+                              is_blank=is_blank)
 
     def _add_baseline(self, spec, dbiso, dbdet, odet):
         iso = dbiso.Label
@@ -423,11 +426,11 @@ class MassSpecDatabaseImporter(Loggable):
         # bs = spec.get_baseline_uvalue(iso)
         bs, fncnts = spec.get_filtered_baseline_uvalue(iso)
 
-        sem = bs.std_dev / (fncnts) ** 0.5 if fncnts else 0
+        # sem = bs.std_dev / (fncnts) ** 0.5 if fncnts else 0
 
         bfit = spec.get_baseline_fit(iso)
 
-        infoblob = self._make_infoblob(bs.nominal_value, sem, fncnts, pos)
+        infoblob = self._make_infoblob(nominal_value(bs), std_dev(bs), fncnts, pos)
         db_changeable = db.add_baseline_changeable_item(self.data_reduction_session_id,
                                                         bfit,
                                                         infoblob)
