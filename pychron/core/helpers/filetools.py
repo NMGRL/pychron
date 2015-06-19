@@ -120,6 +120,17 @@ def list_directory2(root, extension=None, filtername=None, remove_extension=Fals
     return list(ilist_directory2(root, extension, filtername, remove_extension))
 
 
+def ilist_gits(root):
+    for p in os.listdir(root):
+        pp = os.path.join(root, p, '.git')
+        if os.path.isdir(pp):
+            yield p
+
+
+def list_gits(root):
+    return list(ilist_gits(root))
+
+
 def list_directory(p, extension=None, filtername=None, remove_extension=False):
     ds = []
     # if extension:

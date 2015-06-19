@@ -21,9 +21,9 @@ from traits.api import Instance
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.pipeline.plot.editors.interpreted_age_editor import InterpretedAgeEditor
 from pychron.processing.analyses.file_analysis import InterpretedAgeAnalysis, FileAnalysis
 from pychron.pipeline.plot.models.ideogram_model import IdeogramModel
-from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 
 
 class Caption(AbstractOverlay):
@@ -48,7 +48,7 @@ class Caption(AbstractOverlay):
             self.label.draw()
 
 
-class IdeogramEditor(FigureEditor):
+class IdeogramEditor(InterpretedAgeEditor):
     # plotter_options_manager = Instance(IdeogramOptionsManager, ())
     figure_model_klass = IdeogramModel
     basename = 'ideo'

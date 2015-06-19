@@ -24,16 +24,20 @@ from traits.api import Instance, Bool, on_trait_change
 from itertools import groupby
 import os
 # ============= local library imports  ==========================
+from pychron.core.helpers.filetools import list_gits
 from pychron.dvc.dvc import experiment_has_staged, push_experiments
 from pychron.globals import globalv
 from pychron.paths import paths
 from pychron.pipeline.engine import PipelineEngine
+from pychron.pipeline.plot.editors.interpreted_age_editor import InterpretedAgeEditor
 from pychron.pipeline.state import EngineState
 from pychron.pipeline.tasks.actions import RunAction, SavePipelineTemplateAction, ResumeAction, ResetAction, \
-    ConfigureRecallAction, GitRollbackAction, TagAction
+    ConfigureRecallAction, GitRollbackAction, TagAction, SetInterpretedAgeAction
 from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane
 from pychron.envisage.browser.browser_task import BaseBrowserTask
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
+from pychron.pipeline.tasks.select_repo import SelectExperimentIDView
+from pychron.processing.tasks.figures.interpreted_age_factory import InterpretedAgeFactory
 
 DEBUG = True
 
@@ -52,11 +56,14 @@ class PipelineTask(BaseBrowserTask):
                           ConfigureRecallAction(),
                           SavePipelineTemplateAction()),
                  SToolBar(GitRollbackAction()),
-                 SToolBar(TagAction())
+                 SToolBar(TagAction(),
+                          SetInterpretedAgeAction())
                  ]
+
     state = Instance(EngineState)
     resume_enabled = Bool(False)
     run_enabled = Bool(True)
+    set_interpreted_enabled = Bool(False)
     # reset_enabled = Bool(False)
     run_to = None
     # def switch_to_browser(self):
@@ -81,7 +88,7 @@ class PipelineTask(BaseBrowserTask):
         pass
         # self.engine.add_data()
         self.engine.select_default()
-        self.engine.set_template('gain')
+        self.engine.set_template('ideogram')
         # self.engine.set_template('ideogram')
         # self.engine.set_template('blanks')
         # self.engine.add_is
@@ -106,11 +113,19 @@ class PipelineTask(BaseBrowserTask):
         return panes
 
     # toolbar actions
+    def set_interpreted_age(self):
+        ias = self.active_editor.get_interpreted_ages()
+        iaf = InterpretedAgeFactory(groups=ias)
+        info = iaf.edit_traits()
+        if info.result:
+            self._add_interpreted_ages(ias)
+
     def git_rollback(self):
         # select experiment
-        expid = 'Cather_McIntosh'
-
-        self.dvc.rollback_experiment_repo(expid)
+        # expid = 'Cather_McIntosh'
+        expid = self._select_experiment_repo()
+        if expid:
+            self.dvc.rollback_experiment_repo(expid)
 
     def reset(self):
         self.state = None
@@ -134,6 +149,21 @@ class PipelineTask(BaseBrowserTask):
         self.engine.set_template('isochron')
 
     # private
+    def _add_interpreted_ages(self, ias):
+        dvc = self.dvc
+        db = dvc.db
+        with db.session_ctx():
+            for ia in ias:
+                if ia.use:
+                    dvc.add_interpreted_age(ia)
+
+    def _select_experiment_repo(self):
+        a = list_gits(paths.experiment_dataset_dir)
+        v = SelectExperimentIDView(available=a)
+        info = v.edit_traits()
+        if info.result:
+            return self.selected_e
+
     def _close_editor(self, editor):
         for e in self.editor_area.editors:
             if e.name == editor.name:
@@ -208,6 +238,8 @@ class PipelineTask(BaseBrowserTask):
     def _active_editor_changed(self, new):
         if new:
             self.engine.select_node_by_editor(new)
+
+        self.set_interpreted_enabled = isinstance(new, InterpretedAgeEditor)
 
     @on_trait_change('engine:unknowns:[tag_event, invalid_event]')
     def _handle_analysis_tagging(self, name, new):

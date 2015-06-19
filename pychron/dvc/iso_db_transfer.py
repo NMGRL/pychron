@@ -137,17 +137,21 @@ class IsoDBTransfer(Loggable):
         # src.trait_set()
         src.connect()
         with src.session_ctx():
-            # with open(p, '') as rfile:
-            # yd = yaml.load(rfile)
-
             # for pr in yd:
             p = '/Users/ross/Sandbox/bustoswell_transfer.txt'
+            experiment_id = 'J-Curve'
+            experiment_id = 'Bustoswell'
+
             with open(p, 'r') as rfile:
                 runs = [line.strip() for line in rfile if line.strip()]
 
             key = lambda x: x.split('-')[0]
             runs = sorted(runs, key=key)
 
+            repo = self._add_experiment(dest, experiment_id, create_repo)
+            self.persister.experiment_repo = repo
+            self.dvc.experiment_repo = repo
+            commit = False
             for ln, ans in groupby(runs, key=key):
                 # print ln, len(list(ans))
                 # # try:
@@ -163,22 +167,15 @@ class IsoDBTransfer(Loggable):
                 #     continue
 
                 with dest.session_ctx():
-                    repo = self._transfer_labnumber(ln, src, dest, exp='J-Curve', create_repo=create_repo)
-                    if repo:
-                        # repo = self._export_project(pr, src, dest)
-                        self.persister.experiment_repo = repo
-                        self.dvc.experiment_repo = repo
-                        # ans = list(ans)[:4]
-                        commit = False
-                        for a in ans:
-                            st = time.time()
-                            if self._transfer_analysis(proc, src, dest, a, exp='J-Curve'):
-                                commit = True
-                                print 'transfer time {:0.3f}'.format(time.time() - st)
-                                # break
-                        if commit:
-                            repo.commit('<IMPORT> identifier={} src= {}'.format(ln, src.public_url))
-                        # break
+
+                    for a in ans:
+                        st = time.time()
+                        if self._transfer_analysis(proc, src, dest, a, exp=experiment_id):
+                            commit = True
+                            print 'transfer time {:0.3f}'.format(time.time() - st)
+                            # break
+            if commit:
+                repo.commit('<IMPORT> src= {}'.format(src.public_url))
 
     def transfer_holder(self, name):
         self.root = os.path.join(os.path.expanduser('~'), 'Pychron_dev', 'data', '.dvc')
@@ -204,17 +201,10 @@ class IsoDBTransfer(Loggable):
 
             self.meta_repo.add_irradiation_holder(name, holder.geometry)
 
-    def _transfer_labnumber(self, ln, src, dest, exp=None, create_repo=False):
-        if exp is None:
-            dbln = src.get_labnumber(ln)
-            exp = dbln.sample.project.name
-            # if exp in ('Chevron', 'J-Curve'):
-            if exp in ('Chevron',):  # 'J-Curve'):
-                return
+    def _add_experiment(self, dest, experiment_id, create_repo):
+        experiment_id = format_project(experiment_id)
 
-        exp = format_project(exp)
-
-        proot = os.path.join(paths.experiment_dataset_dir, exp)
+        proot = os.path.join(paths.experiment_dataset_dir, experiment_id)
         if not os.path.isdir(proot):
             os.mkdir(proot)
 
@@ -225,18 +215,32 @@ class IsoDBTransfer(Loggable):
             repo.add_ignore('.DS_Store')
             self.repo_man = repo
             if create_repo:
-                create_github_repo(exp)
+                create_github_repo(experiment_id)
 
-            url = 'https://github.com/{}/{}.git'.format(ORG, exp)
+            url = 'https://github.com/{}/{}.git'.format(ORG, experiment_id)
             repo.create_remote(url)
 
-        if not dest.get_experiment(exp):
-            dest.add_experiment(name=exp)
+        if not dest.get_experiment(experiment_id):
+            dest.add_experiment(name=experiment_id)
             dest.flush()
+
+        return self.repo_man
+        # def _transfer_labnumber(self, ln, src, dest, exp=None, create_repo=False):
+        # if exp is None:
+        #     dbln = src.get_labnumber(ln)
+        #     exp = dbln.sample.project.name
+        #     # if exp in ('Chevron', 'J-Curve'):
+        #     if exp in ('Chevron',):  # 'J-Curve'):
+        #         return
+        #
+
+        # if not dest.get_experiment(exp):
+        #     dest.add_experiment(name=exp)
+        #     dest.flush()
         # if not dest.get_project(project):
         #     dest.add_project(project)
 
-        return self.repo_man
+        # return self.repo_man
 
     # def _export_project(self, project, src, dest):
     #     proot = os.path.join(self.root, 'projects', project)

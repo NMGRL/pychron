@@ -102,4 +102,11 @@ class TagAction(TaskAction):
     image = icon('tag-blue-add')
     id = 'pychron.tag'
 
+
+# ============= Interperted Age =================================
+class SetInterpretedAgeAction(TaskAction):
+    name = 'Set Interpreted Age'
+    method = 'set_interpreted_age'
+    enabled_name = 'set_interpreted_enabled'
+
 # ============= EOF =============================================

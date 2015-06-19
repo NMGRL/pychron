@@ -60,6 +60,7 @@ class AnalysisGroup(HasTraits):
     isochron_age = AGProperty()
     isochron_age_error_kind = Str
     identifier = Property
+    experiment_id = Property
     irradiation = Property
     sample = Property
     aliquot = Property
@@ -126,6 +127,10 @@ class AnalysisGroup(HasTraits):
     @cached_property
     def _get_identifier(self):
         return self.analyses[0].labnumber
+
+    @cached_property
+    def _get_experiment_id(self):
+        return self.analyses[0].experiment_id
 
     @cached_property
     def _get_irradiation(self):
@@ -340,7 +345,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
             return ufloat(v, max(0, e))
 
 
-class InterpretedAge(StepHeatAnalysisGroup):
+class InterpretedAgeGroup(StepHeatAnalysisGroup):
     all_analyses = List
     preferred_age = Property(depends_on='preferred_age_kind')
     preferred_age_value = Property(depends_on='preferred_age_kind')

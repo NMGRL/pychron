@@ -29,7 +29,8 @@ from pychron.database.core.database_adapter import DatabaseAdapter
 from pychron.database.core.query import compile_query
 from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, IrradiationTbl, LevelTbl, SampleTbl, \
     MaterialTbl, IrradiationPositionTbl, UserTbl, ExtractDeviceTbl, LoadTbl, LoadHolderTbl, LoadPositionTbl, \
-    MeasuredPositionTbl, ProductionTbl, VersionTbl, ExperimentAssociationTbl, ExperimentTbl, TagTbl, AnalysisChangeTbl
+    MeasuredPositionTbl, ProductionTbl, VersionTbl, ExperimentAssociationTbl, ExperimentTbl, TagTbl, AnalysisChangeTbl, \
+    InterpretedAgeTbl, InterpretedAgeSetTbl
 from pychron.pychron_constants import ALPHAS
 
 
@@ -265,6 +266,16 @@ class DVCDatabase(DatabaseAdapter):
 
     def add_experiment(self, **kw):
         a = ExperimentTbl(**kw)
+        return self._add_item(a)
+
+    def add_interpreted_age(self, **kw):
+        a = InterpretedAgeTbl(**kw)
+        return self._add_item(a)
+
+    def add_interpreted_age_set(self, interpreted_age, analysis, **kw):
+        a = InterpretedAgeSetTbl(**kw)
+        a.interpreted_age = interpreted_age
+        a.analysis = analysis
         return self._add_item(a)
 
     # special getters

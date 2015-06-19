@@ -41,6 +41,38 @@ class NameMixin(BaseMixin):
         return '{}<{}>'.format(self.__class__.__name__, self.name)
 
 
+class InterpretedAgeTbl(Base, BaseMixin):
+    idinterpretedagetbl = Column(Integer, primary_key=True)
+    age_kind = Column(String(32))
+    kca_kind = Column(String(32))
+
+    age = Column(Float)
+    age_err = Column(Float)
+    display_age_units = Column(String(2))
+
+    kca = Column(Float)
+    kca_err = Column(Float)
+    mswd = Column(Float)
+
+    age_error_kind = Column(String(80))
+    include_j_error_in_mean = Column(Boolean)
+    include_j_error_in_plateau = Column(Boolean)
+    include_j_error_in_individual_analyses = Column(Boolean)
+
+    analyses = relationship('InterpretedAgeSetTbl', backref='interpreted_age')
+
+
+class InterpretedAgeSetTbl(Base, BaseMixin):
+    idinterpretedagesettbl = Column(Integer, primary_key=True)
+    interpreted_ageID = Column(Integer, ForeignKey('InterpretedAgeTbl.idinterpretedagetbl'))
+    analysisID = Column(Integer, ForeignKey('AnalysisTbl.idanalysisTbl'))
+    forced_plateau_step = Column(Boolean)
+    plateau_step = Column(Boolean)
+    tag = Column(String(80))
+
+    analysis = relationship('AnalysisTbl', uselist=False)
+
+
 class ExperimentTbl(Base, BaseMixin):
     name = Column(String(80), primary_key=True)
     timestamp = Column(TIMESTAMP, default=func.now())

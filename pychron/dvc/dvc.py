@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from math import isnan
 
 from traits.api import Instance, Str, Set, List
 from apptools.preferences.preference_binding import bind_preference
@@ -26,6 +27,8 @@ from git import Repo
 from itertools import groupby
 import os
 # ============= local library imports  ==========================
+from uncertainties import nominal_value
+from uncertainties import std_dev
 from pychron.core.helpers.filetools import remove_extension
 from pychron.core.progress import progress_loader
 from pychron.dvc import jdump
@@ -40,7 +43,6 @@ from pychron.paths import paths
 from pychron.pychron_constants import OMIT_KEYS
 
 TESTSTR = {'blanks': 'auto update blanks', 'iso_evo': 'auto update iso_evo'}
-
 
 
 class DVCException(BaseException):
@@ -101,6 +103,7 @@ class Tag(object):
         # with open(self.path, 'w') as wfile:
         #     json.dump(obj, wfile, indent=4)
         jdump(obj, self.path)
+
 
 class GitSessionCTX(object):
     def __init__(self, parent, experiment_id, message):
@@ -164,6 +167,44 @@ class DVC(Loggable):
     # database
 
     # analysis processing
+    def add_interpreted_age(self, ia):
+        db = self.db
+        a = ia.get_ma_scaled_age()
+        mswd = ia.preferred_mswd
+
+        if isnan(mswd):
+            mswd = 0
+
+        d = dict(age=float(nominal_value(a)),
+                 age_err=float(std_dev(a)),
+                 display_age_units=ia.age_units,
+                 age_kind=ia.preferred_age_kind,
+                 kca_kind=ia.preferred_kca_kind,
+                 kca=float(ia.preferred_kca_value),
+                 kca_err=float(ia.preferred_kca_error),
+                 mswd=float(mswd),
+                 include_j_error_in_mean=ia.include_j_error_in_mean,
+                 include_j_error_in_plateau=ia.include_j_error_in_plateau,
+                 include_j_error_in_individual_analyses=ia.include_j_error_in_individual_analyses)
+
+        db_ia = db.add_interpreted_age(**d)
+
+        d['analyses'] = [dict(uuid=ai.uuid, tag=ai.tag, plateau_step=ia.get_is_plateau_step(ai))
+                         for ai in ia.all_analyses]
+        self._add_interpreted_age(ia, d)
+
+        for ai in ia.all_analyses:
+            plateau_step = ia.get_is_plateau_step(ai)
+
+            db_ai = db.get_analysis_uuid(ai.uuid)
+            db.add_interpreted_age_set(db_ia, db_ai,
+                                       tag=ai.tag,
+                                       plateau_step=plateau_step)
+
+    def _add_interpreted_age(self, ia, d):
+        p = analysis_path('{}.ia'.format(ia.identifier), ia.experiment_id)
+        jdump(d, p)
+
     def analysis_has_review(self, ai, attr):
         return True
         # test_str = TESTSTR[attr]

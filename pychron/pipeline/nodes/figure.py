@@ -116,20 +116,20 @@ class FigureNode(BaseNode):
 
 class IdeogramNode(FigureNode):
     name = 'Ideogram'
-    editor_klass = 'pychron.processing.plot.editors.ideogram_editor,IdeogramEditor'
+    editor_klass = 'pychron.pipeline.plot.editors.ideogram_editor,IdeogramEditor'
     plotter_options_manager_klass = IdeogramOptionsManager
 
 
 class SpectrumNode(FigureNode):
     name = 'Spectrum'
 
-    editor_klass = 'pychron.processing.plot.editors.spectrum_editor,SpectrumEditor'
+    editor_klass = 'pychron.pipeline.plot.editors.spectrum_editor,SpectrumEditor'
     plotter_options_manager_klass = SpectrumOptionsManager
 
 
 class SeriesNode(FigureNode):
     name = 'Series'
-    editor_klass = 'pychron.processing.plot.editors.series_editor,SeriesEditor'
+    editor_klass = 'pychron.pipeline.plot.editors.series_editor,SeriesEditor'
     plotter_options_manager_klass = SeriesOptionsManager
 
 # ============= EOF =============================================
