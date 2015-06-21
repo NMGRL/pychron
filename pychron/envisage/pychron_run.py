@@ -18,10 +18,8 @@
 from envisage.core_plugin import CorePlugin
 from pyface.message_dialog import warning
 # ============= standard library imports ========================
-import os
 import logging
 # ============= local library imports  ==========================
-from pyface.qt import QtGui
 from pychron.displays.gdisplays import gTraceDisplay
 from pychron.envisage.key_bindings import update_key_bindings
 from pychron.envisage.tasks.base_plugin import BasePlugin
@@ -212,16 +210,16 @@ def launch(klass, user):
 
     try:
 
-        root = os.path.dirname(__file__)
-        r = QtGui.QApplication.instance()
+        # root = os.path.dirname(__file__)
+        # r = QtGui.QApplication.instance()
         # p = os.path.join(root, 'stylesheets', 'qdark.css')
         # with open(p) as rfile:
         #     r.setStyleSheet(rfile.read())
 
         app.run()
 
-        logger.info('Quitting {}'.format(app.name), extra={'threadName_': 'Launcher'})
     except Exception:
+        logger.info('Quitting {}'.format(app.name), extra={'threadName_': 'Launcher'})
         logger.exception('Launching error')
         import traceback
 
@@ -229,10 +227,10 @@ def launch(klass, user):
         gTraceDisplay.add_text(tb)
         gTraceDisplay.edit_traits(kind='livemodal')
 
-    finally:
-        app.exit()
-        os._exit(0)
+        # finally:
 
-    return
+        # os._exit(0)
+
+        # return
 
 # ============= EOF ====================================

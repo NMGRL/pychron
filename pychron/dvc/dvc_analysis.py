@@ -338,29 +338,31 @@ class DVCAnalysis(Analysis):
         self._dump(yd, path)
 
     def dump_blanks(self, keys, refs):
-        yd, path = self._get_yd('blanks')
+        isos, path = self._get_yd('blanks')
         sisos = self.isotopes
-        isos = yd['isotopes']
+        # isos = yd['isotopes']
         # print keys
         for k in keys:
+            # print k, k in isos,  k in sisos
             if k in isos and k in sisos:
-                iso = isos[k]
+                blank = isos[k]
                 siso = sisos[k]
-
+                # print siso.temporary_blank
                 if siso.temporary_blank is not None:
-                    blank = iso.get('blank', {})
+                    # blank = iso.get('blank', {})
                     # print blank, float(siso.temporary_blank.value)
                     blank['value'] = float(siso.temporary_blank.value)
                     blank['error'] = float(siso.temporary_blank.error)
                     blank['fit'] = siso.temporary_blank.fit
                     blank['references'] = make_ref_list(refs)
-                    iso['blank'] = blank
+                    isos[k] = blank
+                    # iso['blank'] = blank
 
-        self._dump(yd, path)
+        self._dump(isos, path)
 
     def dump_icfactors(self, dkeys, fits, refs):
         yd, path = self._get_yd('icfactors')
-
+        print 'fasf', dkeys, fits
         # dets = yd.get('detectors', {})
         for dk, fi in zip(dkeys, fits):
             v = self.temporary_ic_factors.get(dk)
@@ -368,7 +370,7 @@ class DVCAnalysis(Analysis):
                 v, e = 1, 0
             else:
                 v, e = nominal_value(v), std_dev(v)
-
+            print dk, fi
             yd[dk] = {'value': float(v), 'error': float(e),
                       'fit': fi,
                       'references': make_ref_list(refs)}

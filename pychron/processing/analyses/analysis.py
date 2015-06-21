@@ -27,6 +27,7 @@ from collections import namedtuple
 from traitsui.handler import Handler
 from pychron.core.helpers.formatting import format_percent_error, floatfmt
 from pychron.core.helpers.logger_setup import new_logger
+from pychron.envisage.view_util import open_view
 from pychron.processing.arar_age import ArArAge
 # from pychron.processing.analyses.analysis_view import AnalysisView
 # from pychron.processing.analyses.summary import AnalysisSummary
@@ -237,10 +238,7 @@ class Analysis(ArArAge):
         self.load_raw_data(keys)
         g = show_evolutions_factory(self.record_id, isotopes, **kw)
         if g:
-            if self.application:
-                self.application.open_view(g, handler=CloseHandler())
-            else:
-                g.edit_traits(handler=CloseHandler())
+            open_view(g, handler=CloseHandler())
 
             return g
 

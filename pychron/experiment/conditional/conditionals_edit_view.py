@@ -15,7 +15,8 @@
 # ===============================================================================
 from pychron.core.ui import set_qt
 from pychron.envisage.icon_button_editor import icon_button_editor
-from pychron.envisage.resources import icon, image
+from pychron.envisage.resources import icon
+from pychron.envisage.view_util import open_view
 from pychron.experiment.conditional.conditional import conditional_from_dict, ActionConditional, TruncationConditional, \
     CancelationConditional, TerminationConditional, BaseConditional
 from pychron.experiment.conditional.regexes import CP_REGEX, STD_REGEX, ACTIVE_REGEX, BASELINECOR_REGEX, BASELINE_REGEX, \
@@ -29,8 +30,8 @@ from traits.api import HasTraits, List, Instance, Any, \
     Enum, Float, on_trait_change, Str, Int, Property, Button, Bool, CStr
 
 from pyface.file_dialog import FileDialog
-from traitsui.api import View, Tabbed, Group, UItem, \
-    TabularEditor, VGroup, EnumEditor, Item, HGroup, spring, Label, Handler, HSplit, ListEditor
+from traitsui.api import View, UItem, \
+    TabularEditor, VGroup, EnumEditor, Item, HGroup, Handler, HSplit, ListEditor
 from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
 import os
@@ -533,7 +534,6 @@ class ConditionalsViewable(HasTraits):
                                        selected='selected_group',
                                        page_name='.label'))
 
-
     # def _view_tabs2(self):
     # vs = []
     # for name in self.group_names:
@@ -686,10 +686,7 @@ def edit_conditionals(name, detectors=None, app=None, root=None, save_as=False,
     if kinds:
         cev.group_names = kinds
 
-    if app:
-        info = app.open_view(cev, kind='livemodal')
-    else:
-        info = cev.edit_traits(kind='livemodal')
+    info = open_view(cev, kind='livemodal')
 
     if info.result:
         cev.dump()
@@ -709,5 +706,3 @@ if __name__ == '__main__':
 
     D().configure_traits(view=View('test'))
 # ============= EOF =============================================
-
-

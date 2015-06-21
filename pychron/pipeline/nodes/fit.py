@@ -68,7 +68,7 @@ class FitReferencesNode(FitNode):
 
 
 class FitBlanksNode(FitReferencesNode):
-    editor_klass = 'pychron.processing.plot.editors.blanks_editor,BlanksEditor'
+    editor_klass = 'pychron.pipeline.plot.editors.blanks_editor,BlanksEditor'
     plotter_options_manager_klass = BlanksOptionsManager
     name = 'Fit Blanks'
     basename = 'Blanks'
@@ -80,7 +80,7 @@ ATTRS = ('numerator', 'denominator', 'standard_ratio', 'analysis_type')
 
 
 class FitICFactorNode(FitReferencesNode):
-    editor_klass = 'pychron.processing.plot.editors.intercalibration_factor_editor,' \
+    editor_klass = 'pychron.pipeline.plot.editors.intercalibration_factor_editor,' \
                    'IntercalibrationFactorEditor'
     plotter_options_manager_klass = ICFactorOptionsManager
     name = 'Fit ICFactor'

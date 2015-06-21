@@ -65,9 +65,14 @@ class DVCPersistNode(PersistNode):
     dvc = Instance('pychron.dvc.dvc.DVC')
     commit_message = Str
     commit_tag = Str
+    modifier = Str
+    # def __init__(self, *args, **kwargs):
+    #     super(DVCPersistNode, self).__init__(*args, **kwargs)
 
     def _persist(self, state, msg):
-        modp = self.dvc.update_analyses(state.unknowns, '<{}> {}'.format(self.commit_tag, msg))
+        modp = self.dvc.update_analyses(state.unknowns,
+                                        self.modifier,
+                                        '<{}> {}'.format(self.commit_tag, msg))
         if modp:
             state.modified = True
             state.modified_projects = state.modified_projects.union(modp)
@@ -76,6 +81,7 @@ class DVCPersistNode(PersistNode):
 class IsotopeEvolutionPersistNode(DVCPersistNode):
     name = 'Save Iso Evo'
     commit_tag = 'ISOEVO'
+    modifier = 'intercepts'
 
     def configure(self):
         return True
@@ -103,6 +109,7 @@ class IsotopeEvolutionPersistNode(DVCPersistNode):
 class BlanksPersistNode(DVCPersistNode):
     name = 'Save Blanks'
     commit_tag = 'BLANKS'
+    modifier = 'blanks'
 
     def configure(self):
         return True
@@ -111,7 +118,8 @@ class BlanksPersistNode(DVCPersistNode):
         # if not state.user_review:
         # for ai in state.unknowns:
         #     self.dvc.save_blanks(ai, state.saveable_keys, state.references)
-        wrapper = lambda x, prog, i, n: self._save_blanks(x, prog, i, n, state.saveable_keys, state.saveable_fits)
+        wrapper = lambda x, prog, i, n: self._save_blanks(x, prog, i, n,
+                                                          state.saveable_keys, state.references)
         progress_iterator(state.unknowns, wrapper, threshold=1)
         msg = self.commit_message
         if not msg:
@@ -120,16 +128,17 @@ class BlanksPersistNode(DVCPersistNode):
 
         self._persist(state, msg)
 
-    def _save_blanks(self, ai, prog, i, n, saveable_keys, saveable_fits, reference):
+    def _save_blanks(self, ai, prog, i, n, saveable_keys, references):
         if prog:
-            prog.change_message('Save IC Factor {} {}/{}'.format(ai.record_id, i, n))
-
-        self.dvc.save_blanks(ai, saveable_keys, saveable_fits, reference)
+            prog.change_message('Save Blanks {} {}/{}'.format(ai.record_id, i, n))
+        # print 'sssss', saveable_keys
+        self.dvc.save_blanks(ai, saveable_keys, references)
 
 
 class ICFactorPersistNode(DVCPersistNode):
     name = 'Save ICFactor'
     commit_tag = 'ICFactor'
+    modifier = 'icfactors'
 
     def configure(self):
         return True
@@ -157,6 +166,7 @@ class ICFactorPersistNode(DVCPersistNode):
         if prog:
             prog.change_message('Save IC Factor for {} {}/{}'.format(ai.record_id, i, n))
 
+        print 'asdfasdf', saveable_keys, saveable_fits
         self.dvc.save_icfactors(ai, saveable_keys, saveable_fits, reference)
 
 
@@ -199,6 +209,5 @@ class XLSTablePersistNode(TablePersistNode):
                 path, _ = unique_path2(paths.data_dir, basename, extension='.xls')
                 editor.make_xls_table('FooBar', path)
                 view_file(path)
-
 
 # ============= EOF =============================================

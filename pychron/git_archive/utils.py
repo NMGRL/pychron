@@ -15,15 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from traits.api import HasTraits, Str, Bool, Date
+# ============= standard library imports ========================
 from datetime import datetime
 import os
-
 from git import Repo
-from traits.api import HasTraits, Str, Bool, Date
-
-
-
-# ============= standard library imports ========================
 # ============= local library imports  ==========================
 
 
@@ -91,6 +87,7 @@ def get_diff(repo, a, b, path, change_type='M'):
     rpath = os.path.relpath(path, repo.working_dir)
 
     for d in gen:
+        # print d.a_blob.path, rpath
         if d.a_blob.path == rpath:
             return d
             # print 'sadf', d.a_blob.path

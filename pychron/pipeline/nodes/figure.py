@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.confirmation_dialog import confirm
 from traits.api import Any, Bool
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -39,6 +40,9 @@ class FigureNode(BaseNode):
             # self.editor.force_update()
             print 'editor refres'
             self.editor.refresh_needed = True
+            if confirm(None, 'Save Changes'):
+                print 'save schangsace'
+                self.editor.save_needed = True
 
     def run(self, state):
         self._configured = True
@@ -108,6 +112,7 @@ class FigureNode(BaseNode):
             self.plotter_options = pom.plotter_options
             if refresh:
                 self.refresh()
+
             return True
 
     def _plotter_options_manager_default(self):

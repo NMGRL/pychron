@@ -14,6 +14,9 @@
 # limitations under the License.
 # ===============================================================================
 from traits.etsconfig.etsconfig import ETSConfig
+
+from pychron.envisage.view_util import open_view
+
 ETSConfig.toolkit = 'qt4'
 
 
@@ -36,7 +39,7 @@ from pychron.mv.co2_locator import CO2Locator
 
 class MachineVisionManager(Manager):
     video = Instance(Video)
-#     target_image = Instance(StandAloneImage)
+    #     target_image = Instance(StandAloneImage)
     pxpermm = Float(23)
     laser_manager = Any
 
@@ -49,9 +52,10 @@ class MachineVisionManager(Manager):
             src = self.video.get_frame()
             return src
 
-# ===============================================================================
-# image manipulation
-# ===============================================================================
+            # ===============================================================================
+            # image manipulation
+            # ===============================================================================
+
     def _crop_image(self, src, cw, ch):
         CX, CY = 0, 0
         cw_px = int(cw * self.pxpermm)
@@ -61,20 +65,20 @@ class MachineVisionManager(Manager):
         x = int((w - cw_px) / 2 + CX)
         y = int((h - ch_px) / 2 + CY)
 
-#        print w / self.pxpermm, cw_px / self.pxpermm
-#        ra = 1
-#        print self.pxpermm * ra
-#        print w / float(cw)
-#        self.cpxpermm = w / float(cw) / 2.
-#        print h / float(ch), w / float(cw)
-#        print self.pxpermm * float(w) / cw_px
-#        self.cpxpermm = self.pxpermm * w / cw
-#        print self.cpxpermm, w / cw
-#        print w, cw_px
-#        print cw, w / (cw * self.pxpermm)
-#        self.croppixels = (cw_px, ch_px)
-#        self.croprect = (x, y, cw_px, ch_px)
-#        cw_px = ch_px = 107
+        #        print w / self.pxpermm, cw_px / self.pxpermm
+        #        ra = 1
+        #        print self.pxpermm * ra
+        #        print w / float(cw)
+        #        self.cpxpermm = w / float(cw) / 2.
+        #        print h / float(ch), w / float(cw)
+        #        print self.pxpermm * float(w) / cw_px
+        #        self.cpxpermm = self.pxpermm * w / cw
+        #        print self.cpxpermm, w / cw
+        #        print w, cw_px
+        #        print cw, w / (cw * self.pxpermm)
+        #        self.croppixels = (cw_px, ch_px)
+        #        self.croprect = (x, y, cw_px, ch_px)
+        #        cw_px = ch_px = 107
 
         r = 4 - cw_px % 4
         cw_px = ch_px = cw_px + r
@@ -86,7 +90,7 @@ class MachineVisionManager(Manager):
 
     def view_image(self, im, auto_close=True):
         # use a manager to open so will auto close on quit
-        self.open_view(im)
+        open_view(im)
         if auto_close:
             minutes = 2
             t = Timer(60 * minutes, im.close_ui)
@@ -95,24 +99,12 @@ class MachineVisionManager(Manager):
     def new_image(self, frame=None, title='AutoCenter',
                   view_id='target'):
 
-#         if self.target_image is not None:
-#             self.target_image.close_ui()
-        im = StandAloneImage(
-                             title=title,
-                             id='pychron.machine_vision.{}'.format(view_id)
+        im = StandAloneImage(title=title,
+                             id='pychron.machine_vision.{}'.format(view_id))
 
-                             )
-
-#         self.target_image = im
         if frame is not None:
             im.load(frame, swap_rb=True)
 
         return im
-
-#         from threading import Thread
-#         t = Thread(target=self._test)
-#         t.start()
-
-
 
 # ============= EOF =============================================

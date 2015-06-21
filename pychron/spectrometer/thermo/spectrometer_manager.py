@@ -19,6 +19,7 @@ from traits.api import Any, Property
 # ============= standard library imports ========================
 import os
 # ============= local library imports  ==========================
+from pychron.envisage.view_util import open_view
 from pychron.spectrometer.base_spectrometer_manager import BaseSpectrometerManager
 from pychron.spectrometer.thermo.spectrometer import Spectrometer
 from pychron.paths import paths
@@ -59,9 +60,9 @@ class ArgusSpectrometerManager(BaseSpectrometerManager):
         return {di.name: di.get_gain() for di in spec.detectors}
 
     def set_gains(self, *args, **kw):
-        spec=self.spectrometer
+        spec = self.spectrometer
 
-        diff=any([di.gain_outdated for di in spec.detectors])
+        diff = any([di.gain_outdated for di in spec.detectors])
         if diff:
             return spec.set_gains(*args, **kw)
 
@@ -132,7 +133,7 @@ class ArgusSpectrometerManager(BaseSpectrometerManager):
         return True
 
     def finish_loading(self):
-        #integration_time = 1.048576
+        # integration_time = 1.048576
 
         # set device microcontrollers
         self.spectrometer.set_microcontroller(self.spectrometer_microcontroller)
@@ -142,8 +143,8 @@ class ArgusSpectrometerManager(BaseSpectrometerManager):
 
         # set integration time
         self.spectrometer.get_integration_time()
-        #integration_time = self.spectrometer.get_integration_time()
-        #self.integration_time = integration_time
+        # integration_time = self.spectrometer.get_integration_time()
+        # self.integration_time = integration_time
 
         # self.integration_time = 0.065536
 
@@ -163,13 +164,13 @@ class ArgusSpectrometerManager(BaseSpectrometerManager):
     def relative_detector_positions_task_factory(self):
         return self._factory(RelativeDetectorPositions)
 
-    # def do_coincidence_scan(self):
-    #     obj = self._factory(CoincidenceScan)
-    #     obj.inform = False
-    #     self.open_view(obj.graph)
-    #     t = obj.execute()
-    #     return obj, t
-    # def coincidence_scan_task_factory(self):
+        # def do_coincidence_scan(self):
+        #     obj = self._factory(CoincidenceScan)
+        #     obj.inform = False
+        #     self.open_view(obj.graph)
+        #     t = obj.execute()
+        #     return obj, t
+        # def coincidence_scan_task_factory(self):
         # obj = self._factory(CoincidenceScan)
         # info = obj.edit_traits(view='edit_view',
         #                        kind='livemodal')
@@ -181,7 +182,7 @@ class ArgusSpectrometerManager(BaseSpectrometerManager):
         obj = CDDOperatingVoltageScan(spectrometer=self.spectrometer)
         info = obj.edit_traits(kind='livemodal')
         if info.result:
-            self.open_view(obj.graph)
+            open_view(obj.graph)
             obj.execute()
 
     def _factory(self, klass):
@@ -196,7 +197,7 @@ class ArgusSpectrometerManager(BaseSpectrometerManager):
 
         #    def _spectrometer_microcontroller_default(self):
 
-#        return ArgusController()
+# return ArgusController()
 
 if __name__ == '__main__':
     from pychron.core.helpers.logger_setup import logging_setup

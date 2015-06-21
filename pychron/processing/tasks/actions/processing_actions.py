@@ -26,6 +26,7 @@ from traits.api import Str, List
 from pychron.envisage.resources import icon
 from pychron.envisage.tasks.actions import myTaskAction
 from pychron.envisage.tasks.actions import PAction as Action
+from pychron.envisage.view_util import open_view
 
 
 class ActivateBlankAction(myTaskAction):
@@ -141,8 +142,7 @@ class EquilibrationInspectorAction(Action):
 
         eq = EquilibrationInspector()
         eq.refresh()
-        app = event.task.window.application
-        app.open_view(eq)
+        open_view(eq)
 
 
 # ===============================================================================
@@ -292,7 +292,7 @@ class TimeViewAction(Action):
                           context_menu_enabled=False)
         m.load()
         v = TimeView(model=m)
-        app.open_view(v)
+        open_view(v)
 
 
 class RecallAction(Action):
@@ -384,6 +384,7 @@ class SetSQLiteAction(Action):
 class SetXMLAction(Action):
     name = 'Set XML Dataset...'
     accelerator = 'Ctrl+3'
+
     def perform(self, event):
         app = event.task.window.application
         man = app.get_service('pychron.processing.processor.Processor')
@@ -416,6 +417,4 @@ class SplitEditorActionVert(myTaskAction):
     method = 'split_editor_area_vert'
     image = icon('split_vertical')
 
-
 # ============= EOF =============================================
-

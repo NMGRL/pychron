@@ -144,12 +144,15 @@ class FigurePlotterOptions(BasePlotterOptions):
                          if pi.name and pi.name != NULL_STR and (pi.save_enabled or pi.plot_enabled)])
 
     def get_saveable_aux_plots(self):
-        return reversed([pi for pi in self.aux_plots
-                         if pi.name and pi.name != NULL_STR and pi.save_enabled])
+        # for a in self.aux_plots:
+        # print a.name, a.save_enabled
+
+        return list(reversed([pi for pi in self.aux_plots
+                              if pi.name and pi.name != NULL_STR and pi.save_enabled]))
 
     def get_plotable_aux_plots(self):
-        return reversed([pi for pi in self.aux_plots
-                         if pi.name and pi.name != NULL_STR and pi.plot_enabled])
+        return list(reversed([pi for pi in self.aux_plots
+                              if pi.name and pi.name != NULL_STR and pi.plot_enabled]))
         # def get_aux_plots(self, save=False):
         #     if
 

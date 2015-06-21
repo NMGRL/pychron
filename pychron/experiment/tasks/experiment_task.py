@@ -27,6 +27,7 @@ from pychron.core.helpers.filetools import add_extension, backup
 from pychron.core.ui.preference_binding import color_bind_preference
 from pychron.envisage.tasks.editor_task import EditorTask
 from pychron.envisage.tasks.pane_helpers import ConsolePane
+from pychron.envisage.view_util import open_view
 from pychron.experiment.queue.base_queue import extract_meta
 from pychron.experiment.tasks.experiment_editor import ExperimentEditor, UVExperimentEditor
 from pychron.experiment.tasks.experiment_panes import LoggerPane
@@ -77,12 +78,12 @@ class ExperimentEditorTask(EditorTask):
 
     def new_pattern(self):
         pm = self._pattern_maker_view_factory()
-        self.window.application.open_view(pm)
+        open_view(pm)
 
     def open_pattern(self):
         pm = self._pattern_maker_view_factory()
         if pm.load_pattern():
-            self.window.application.open_view(pm)
+            open_view(pm)
 
     def send_test_notification(self):
         self.debug('sending test notification')
@@ -257,7 +258,7 @@ class ExperimentEditorTask(EditorTask):
 
     def _open_file(self, path, **kw):
         if not isinstance(path, (tuple, list)):
-            path = (path, )
+            path = (path,)
 
         manager = self.manager
         if manager.verify_database_connection(inform=True):
@@ -334,8 +335,8 @@ class ExperimentEditorTask(EditorTask):
             f = (l for l in txt.split('\n'))
             meta, metastr = extract_meta(f)
             is_uv = False
-            if meta.has_key('extract_device'):
-                is_uv = meta['extract_device'] in ('Fusions UV', )
+            if 'extract_device' in meta:
+                is_uv = meta['extract_device'] in ('Fusions UV',)
 
         return txt, is_uv
 

@@ -216,12 +216,13 @@ class DVC(Loggable):
         # else:
         #     self.debug('{} {} not reviewed'.format(ai, attr))
 
-    def update_analyses(self, ans, msg):
+    def update_analyses(self, ans, modifier, msg):
         key = lambda x: x.experiment_id
         ans = sorted(ans, key=key)
         mod_experiments = []
         for expid, ais in groupby(ans, key=key):
-            paths = map(lambda x: analysis_path(x.record_id, x.experiment_id, modifier='changeable'), ais)
+            paths = map(lambda x: analysis_path(x.record_id, x.experiment_id, modifier=modifier), ais)
+            # print expid, modifier, paths
             if self.experiment_add_paths(expid, paths):
                 self.experiment_commit(expid, msg)
                 mod_experiments.append(expid)

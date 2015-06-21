@@ -25,6 +25,7 @@ import time
 import os
 from threading import Thread
 # ============= local library imports  ==========================
+from pychron.envisage.view_util import open_view
 from pychron.globals import globalv
 from pychron.hardware.pychron_device import EthernetDeviceMixin
 from pychron.lasers.laser_managers.client import UVLaserOpticsClient, UVLaserControlsClient, \
@@ -113,8 +114,8 @@ class PychronLaserManager(BaseLaserManager, EthernetDeviceMixin):
             self.trait_set(**dict(zip(('_x', '_y', '_z'), pos)))
             return True
 
-        # self.trait_set(**dict(zip(('_x', '_y', '_z'),
-        #                           self.get_position())))
+            # self.trait_set(**dict(zip(('_x', '_y', '_z'),
+            #                           self.get_position())))
 
     def get_tray(self):
         return self._ask('GetSampleHolder')
@@ -334,12 +335,12 @@ class PychronLaserManager(BaseLaserManager, EthernetDeviceMixin):
     def _view_snapshot(self, local_path, remote_path, image):
         from pychron.lasers.laser_managers.snapshot_view import SnapshotView
 
-        open_required=False
+        open_required = False
         try:
             sv = self.application.snapshot_view
         except AttributeError:
             sv = None
-            open_required=True
+            open_required = True
 
         if sv is None:
             sv = SnapshotView()
@@ -347,14 +348,14 @@ class PychronLaserManager(BaseLaserManager, EthernetDeviceMixin):
 
         sv.set_image(local_path, remote_path, image)
         if open_required:
-            info = self.application.open_view(sv)
-            self.application.snapshot_view_info=info
+            info = open_view(sv)
+            self.application.snapshot_view_info = info
         else:
             if self.application.snapshot_view_info.control:
                 self.application.snapshot_view_info.control.raise_()
             else:
-                info = self.application.open_view(sv)
-                self.application.snapshot_view_info=info
+                info = open_view(sv)
+                self.application.snapshot_view_info = info
 
     def _convert_snapshot_response(self, ps):
         """
@@ -584,7 +585,7 @@ class PychronUVLaserManager(PychronLaserManager):
 
         cmd = 'GoToPoint'
 
-        #if pos.startswith('t'):
+        # if pos.startswith('t'):
         #    if not TRANSECT_REGEX[0].match(pos):
         #        cmd = None
 
@@ -650,8 +651,8 @@ class PychronUVLaserManager(PychronLaserManager):
     def _get_masks(self):
         return self._get_motor_values('mask_names')
 
-    #@cached_property
-    #def _get_attenuators(self):
+    # @cached_property
+    # def _get_attenuators(self):
     #    return self._get_motor_values('attenuators')
 
     def _get_motor_values(self, name):

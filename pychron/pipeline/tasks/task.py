@@ -47,6 +47,14 @@ class DataMenu(SMenu):
     name = 'Data'
 
 
+def select_experiment_repo():
+    a = list_gits(paths.experiment_dataset_dir)
+    v = SelectExperimentIDView(available=a)
+    info = v.edit_traits()
+    if info.result:
+        return v.selected
+
+
 class PipelineTask(BaseBrowserTask):
     name = 'Pipeline Processing'
     engine = Instance(PipelineEngine, ())
@@ -88,9 +96,10 @@ class PipelineTask(BaseBrowserTask):
         pass
         # self.engine.add_data()
         self.engine.select_default()
-        self.engine.set_template('ideogram')
         # self.engine.set_template('ideogram')
-        # self.engine.set_template('blanks')
+        # self.engine.set_template('gain')
+        # self.engine.set_template('ideogram')
+        self.engine.set_template('blanks')
         # self.engine.add_is
         # self.engine.add_grouping(run=False)
         # self.engine.add_test_filter()
@@ -123,7 +132,7 @@ class PipelineTask(BaseBrowserTask):
     def git_rollback(self):
         # select experiment
         # expid = 'Cather_McIntosh'
-        expid = self._select_experiment_repo()
+        expid = select_experiment_repo()
         if expid:
             self.dvc.rollback_experiment_repo(expid)
 
@@ -157,13 +166,6 @@ class PipelineTask(BaseBrowserTask):
                 if ia.use:
                     dvc.add_interpreted_age(ia)
 
-    def _select_experiment_repo(self):
-        a = list_gits(paths.experiment_dataset_dir)
-        v = SelectExperimentIDView(available=a)
-        info = v.edit_traits()
-        if info.result:
-            return self.selected_e
-
     def _close_editor(self, editor):
         for e in self.editor_area.editors:
             if e.name == editor.name:
@@ -179,7 +181,6 @@ class PipelineTask(BaseBrowserTask):
             state = EngineState()
 
         if not self.engine.run(state, self.run_to):
-            self.state = state
             self._toggle_run(True)
         else:
             self._toggle_run(False)
@@ -240,6 +241,11 @@ class PipelineTask(BaseBrowserTask):
             self.engine.select_node_by_editor(new)
 
         self.set_interpreted_enabled = isinstance(new, InterpretedAgeEditor)
+
+    @on_trait_change('active_editor:save_needed')
+    def _handle_save_needed(self, new):
+        state = EngineState()
+        print 'save needed', self.engine.run_persist(state)
 
     @on_trait_change('engine:unknowns:[tag_event, invalid_event]')
     def _handle_analysis_tagging(self, name, new):

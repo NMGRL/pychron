@@ -15,10 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import hashlib
 
 from traits.api import Any, Str, List, Event
 # ============= standard library imports ========================
+import hashlib
+from datetime import datetime
 import os
 import shutil
 from cStringIO import StringIO
@@ -29,6 +30,7 @@ from git import Repo, Diff
 from pychron.core.codetools.inspection import caller
 from pychron.core.helpers.filetools import fileiter
 from pychron.core.progress import open_progress
+from pychron.envisage.view_util import open_view
 from pychron.git_archive.diff_view import DiffView, DiffModel
 from pychron.git_archive.views import NewBranchView
 from pychron.loggable import Loggable
@@ -37,6 +39,14 @@ from pychron.git_archive.commit import Commit
 
 def format_date(d):
     return time.strftime("%m/%d/%Y %H:%M", time.gmtime(d))
+
+
+def isoformat_date(d):
+    if isinstance(d, (float, int)):
+        d = datetime.fromtimestamp(d)
+
+    return d.strftime('%Y-%m-%d %H:%M:%S')
+    # return time.mktime(time.gmtime(d))
 
 
 class GitRepoManager(Loggable):
@@ -96,22 +106,21 @@ class GitRepoManager(Loggable):
                 self.debug('{} is not a valid repo. Initializing now'.format(path))
                 self._repo = Repo.init(path)
 
-    def add_paths(self, paths):
-        if not hasattr(paths, '__iter__'):
-            paths = (paths,)
+    def add_paths(self, apaths):
+        if not hasattr(apaths, '__iter__'):
+            apaths = (apaths,)
 
         changes = self.get_local_changes()
-        changed = False
         if not changes:
             changes = self.untracked_files()
         else:
             changes = [os.path.join(self.path, c) for c in changes]
 
-        for p in paths:
-            if p in changes:
-                self.debug('Change Index adding: {}'.format(p))
-                self.add(p, commit=False, verbose=False)
-                changed = True
+        ps = [p for p in apaths if p in changes]
+        changed = bool(ps)
+        for p in ps:
+            self.debug('adding to index: {}'.format(os.path.relpath(p, self.path)))
+        self.index.add(ps)
         return changed
 
     def add_ignore(self, *args):
@@ -296,14 +305,14 @@ class GitRepoManager(Loggable):
         prefix = "?? "
         untracked_files = list()
         for line in lines.split('\n'):
-            print 'ffff', line
+            # print 'ffff', line
             if not line.startswith(prefix):
                 continue
             filename = line[len(prefix):].rstrip('\n')
             # Special characters are escaped
             if filename[0] == filename[-1] == '"':
                 filename = filename[1:-1].decode('string_escape')
-            print 'ffasdfsdf', filename
+            # print 'ffasdfsdf', filename
             untracked_files.append(os.path.join(self.path, filename))
         # finalize_process(proc)
         return untracked_files
@@ -510,7 +519,7 @@ class GitRepoManager(Loggable):
             if len(self.selected_commits) == 2:
                 l, r = self.selected_commits
                 dv = self._diff_view_factory(l, r)
-                self.application.open_view(dv)
+                open_view(dv)
 
     def revert_to_selected(self):
         # check for uncommitted changes

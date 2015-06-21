@@ -23,6 +23,7 @@ import cPickle as pickle
 import os
 import time
 # ============= local library imports  ==========================
+from pychron.envisage.view_util import open_view
 from pychron.managers.manager import Manager
 from pychron.graph.graph import Graph
 from pychron.spectrometer.ion_optics.coincidence_config import CoincidenceConfig
@@ -109,7 +110,7 @@ class IonOpticsManager(Manager):
         return dac
 
     def get_position(self, *args, **kw):
-        kw['update_isotopes']=False
+        kw['update_isotopes'] = False
         return self._get_position(*args, **kw)
 
     def position(self, pos, detector, *args, **kw):
@@ -246,7 +247,6 @@ class IonOpticsManager(Manager):
                            center_dac, directions, plot_panel, new,
                            standalone_graph, name, show_label):
 
-
         spec = self.spectrometer
 
         ref = detectors[0]
@@ -286,7 +286,7 @@ class IonOpticsManager(Manager):
                 graph.window_title = 'Peak Center {}({}) @ {:0.3f}'.format(ref, isotope, center_dac)
                 graph.window_width = 300
                 graph.window_height = 250
-                self.open_view(graph)
+                open_view(graph)
 
     def _timeout_func(self, timeout, evt):
         st = time.time()
@@ -310,7 +310,7 @@ class IonOpticsManager(Manager):
 
         if timeout:
             evt = Event()
-            self.timeout_thread = Thread(target=self._timeout_func, args=(timeout,evt))
+            self.timeout_thread = Thread(target=self._timeout_func, args=(timeout, evt))
             self.timeout_thread.start()
 
         dac_d = pc.get_peak_center()

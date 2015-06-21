@@ -31,10 +31,12 @@ class ErrorBarOverlay(AbstractOverlay):
     use_end_caps = Bool(True)
     line_width = Float(1)
     _cached_points = None
+    _cache_valid = False
 
     def _get_cached_points(self):
+        # print 'laa', self.layout_needed, self._layout_needed, self._cache_valid
         pts = self._cached_points
-        if pts is None or self.layout_needed:
+        if pts is None or not self._cache_valid:
             comp = self.component
             x = comp.index.get_data()
             y = comp.value.get_data()
@@ -56,7 +58,7 @@ class ErrorBarOverlay(AbstractOverlay):
                 x = comp.index_mapper.map_screen(x)
                 err = comp.yerror.get_data()
                 # print 'fff', len(x), len(err), comp.color
-                err = err * self.nsigma
+                err *= self.nsigma
                 ylow, yhigh = y - err, y + err
                 ylow = comp.value_mapper.map_screen(ylow)
                 yhigh = comp.value_mapper.map_screen(yhigh)
@@ -67,6 +69,7 @@ class ErrorBarOverlay(AbstractOverlay):
 
             pts = start, end, lstart, lend, ustart, uend
             self._cached_points = pts
+            self._cache_valid = True
 
         return pts
 
@@ -93,9 +96,9 @@ class ErrorBarOverlay(AbstractOverlay):
 
             gc.draw_path()
 
-    @on_trait_change('component.+')
+    @on_trait_change('component:bounds')
     def _handle_component_change(self, name, new):
-        self._layout_needed = True
-        self.request_redraw()
+        self._cache_valid = False
+        self.invalidate_and_redraw()
 
 # ============= EOF =====================================

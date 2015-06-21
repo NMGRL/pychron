@@ -41,6 +41,7 @@ from pychron.database.selectors.isotope_selector import IsotopeAnalysisSelector
 from pychron.envisage.consoleable import Consoleable
 from pychron.envisage.preference_mixin import PreferenceMixin
 # from pychron.experiment.conditional.conditionals_edit_view import TAGS
+from pychron.envisage.view_util import open_view
 from pychron.experiment.automated_run.persistence import ExcelPersister
 from pychron.experiment.conditional.conditional import conditionals_from_file
 from pychron.experiment.conflict_resolver import ConflictResolver
@@ -58,6 +59,18 @@ from pychron.globals import globalv
 from pychron.paths import paths
 from pychron.pychron_constants import DEFAULT_INTEGRATION_TIME, LINE_STR
 from pychron.wait.wait_group import WaitGroup
+
+
+def remove_backup(uuid_str):
+    """
+        remove uuid from backup recovery file
+    """
+    with open(paths.backup_recovery_file, 'r') as rfile:
+        r = rfile.read()
+
+    r = r.replace('{}\n'.format(uuid_str), '')
+    with open(paths.backup_recovery_file, 'w') as wfile:
+        wfile.write(r)
 
 
 class ExperimentExecutor(Consoleable, PreferenceMixin):
@@ -96,7 +109,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         quick     1= measure_iteration stopped at current step, script continues using 0.25*counts
         
         old-style
-            immediate 0= is the standard truncation, measure_iteration stopped at current step and measurement_script truncated
+            immediate 0= is the standard truncation, measure_iteration stopped at current step and measurement_script
+                         truncated
             quick     1= the current measure_iteration is truncated and a quick baseline is collected, peak center?
             next_int. 2= same as setting ncounts to < current step. measure_iteration is truncated but script continues
     '''
@@ -222,7 +236,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self._preference_binder(prefid, attrs, mod='color')
 
         # user_notifier
-        attrs = ('include_log', )
+        attrs = ('include_log',)
         self._preference_binder(prefid, attrs, obj=self.user_notifier)
 
         emailer = self.application.get_service('pychron.social.email.emailer.Emailer')
@@ -418,7 +432,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         self.datahub.add_experiment(exp)
 
-
         # reset conditionals result file
         reset_conditional_results()
 
@@ -470,7 +483,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                         self.debug('not delaying between runs isAlive={}, '
                                    'cnts<nruns={}, is_first_analysis={}'.format(self.is_alive(),
                                                                                 cnt < nruns, is_first_analysis))
-
 
                 run = self._make_run(spec)
                 if run is None:
@@ -641,7 +653,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 break
         else:
             self.debug('$$$$$$$$$$$$$$$$$$$$ state at run end {}'.format(run.state))
-            if not run.state in ('truncated', 'canceled', 'failed'):
+            if run.state not in ('truncated', 'canceled', 'failed'):
                 run.state = 'success'
 
         if self.stats:
@@ -651,10 +663,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if run.state in ('success', 'truncated'):
             self.run_completed = run
 
-        self._remove_backup(run.uuid)
+        remove_backup(run.uuid)
 
         # check to see if action should be taken
-        if not run.state in ('canceled', 'failed'):
+        if run.state not in ('canceled', 'failed'):
             if self._post_run_check(run):
                 self._err_message = 'Post Run Check Failed'
                 self.warning('post run check failed')
@@ -815,7 +827,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if tripped:
                 v.select_conditional(tripped, tripped=True)
 
-            self._cv_info = self.application.open_view(v, kind=kind)
+            self._cv_info = open_view(v, kind=kind)
 
         except BaseException:
             import traceback
@@ -1182,17 +1194,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         with open(paths.backup_recovery_file, 'a') as rfile:
             rfile.write('{}\n'.format(uuid_str))
 
-    def _remove_backup(self, uuid_str):
-        """
-            remove uuid from backup recovery file
-        """
-        with open(paths.backup_recovery_file, 'r') as rfile:
-            r = rfile.read()
-
-        r = r.replace('{}\n'.format(uuid_str), '')
-        with open(paths.backup_recovery_file, 'w') as wfile:
-            wfile.write(r)
-
     # ===============================================================================
     # checks
     # ===============================================================================
@@ -1324,17 +1325,17 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             for c in self._cached_runs:
                 db.add_experiment_association(expid, c.runid)
             self._cached_runs = []
-        # if is_special(spec.identifier):
-        #     self._cached_runs.append(spec)
-        #     if self._active_experiment_identifier:
-        #         spec.experiment_identifier = self._active_experiment_identifier
-        # else:
-        #     exp_id = spec.experiment_identifier
-        #     if self._cached_runs:
-        #         for c in self._cached_runs:
-        #             self.datahub.maintstore.add_experiment_association(c, exp_id)
-        #         self._cached_runs = []
-        #     self._active_experiment_identifier = exp_id
+            # if is_special(spec.identifier):
+            #     self._cached_runs.append(spec)
+            #     if self._active_experiment_identifier:
+            #         spec.experiment_identifier = self._active_experiment_identifier
+            # else:
+            #     exp_id = spec.experiment_identifier
+            #     if self._cached_runs:
+            #         for c in self._cached_runs:
+            #             self.datahub.maintstore.add_experiment_association(c, exp_id)
+            #         self._cached_runs = []
+            #     self._active_experiment_identifier = exp_id
 
     def _check_experiment_identifiers(self):
         db = self.datahub.mainstore.db
@@ -1470,7 +1471,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             prog.change_message('Get preceding blank')
 
         an = self._get_preceding_blank_or_background(inform=inform)
-        if not an is True:
+        if an is not True:
             if an is None:
                 return
             else:
@@ -1768,7 +1769,7 @@ Use Last "blank_{}"= {}
             if prog:
                 prog.change_message('Checking for Extraction Device Manager')
             # extract_device = convert_extract_device(exp.extract_device)
-            extract_device = exp.extract_device.replace(' ','')
+            extract_device = exp.extract_device.replace(' ', '')
             ed_connectable = Connectable(name=extract_device)
             man = None
             if self.application:
@@ -1911,7 +1912,7 @@ Use Last "blank_{}"= {}
             if isok:
                 return mon
             else:
-                self.warning('no automated run monitor avaliable. '
+                self.warning('no automated run monitor available. '
                              'Make sure config file is located at setupfiles/monitors/automated_run_monitor.cfg')
 
     @property

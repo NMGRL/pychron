@@ -31,10 +31,10 @@ from pychron.pipeline.nodes.data import UnknownNode, ReferenceNode, FluxMonitors
 from pychron.loggable import Loggable
 from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, FigureNode, SeriesNode
 from pychron.pipeline.nodes.filter import FilterNode
-from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode, FitICFactorNode, FitFluxNode
+from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode, FitICFactorNode, FitFluxNode, FitNode
 from pychron.pipeline.nodes.grouping import GroupingNode
 from pychron.pipeline.nodes.persist import PDFFigureNode, IsotopeEvolutionPersistNode, \
-    BlanksPersistNode, ICFactorPersistNode, FluxPersistNode
+    BlanksPersistNode, ICFactorPersistNode, FluxPersistNode, PersistNode
 from pychron.pipeline.template import PipelineTemplate
 
 
@@ -328,6 +328,17 @@ class PipelineEngine(Loggable):
         with open(path, 'w') as wfile:
             obj = self.pipeline.to_template()
             yaml.dump(obj, wfile, default_flow_style=False)
+
+    def run_persist(self, state):
+        for node in self.pipeline.iternodes():
+            if not isinstance(node, (FitNode, PersistNode)):
+                continue
+
+            node.run(state)
+            if state.canceled:
+                self.debug('pipeline canceled by {}'.format(node))
+                self.refresh_analyses()
+                return True
 
     def run(self, state, run_to):
         ost = time.time()

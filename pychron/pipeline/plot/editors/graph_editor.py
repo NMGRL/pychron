@@ -30,6 +30,7 @@ from pychron.processing.tasks.editor import BaseUnknownsEditor
 class GraphEditor(BaseUnknownsEditor):
     analyses = List
     refresh_needed = Event
+    save_needed = Event
     component = Property(depends_on='refresh_needed')
     basename = ''
     figure_model = Any
