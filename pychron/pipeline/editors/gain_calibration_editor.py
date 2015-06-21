@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Float, Property, List, Instance
+from traits.api import HasTraits, Str, Float, Property, List, Instance, Dict
 from traitsui.api import View, UItem, Item, HGroup, VGroup, EnumEditor, TabularEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -61,6 +61,7 @@ class GainCalibrationEditor(BaseTraitsEditor):
     rhs_items = List
     _isotope_key = 'Ar40'
     tabular_adapter = Instance(DetectorICTabularAdapter, ())
+    gains_dict = Dict
 
     def initialize(self):
         ms = self.dvc.get_mass_spectrometer_names()
@@ -101,12 +102,31 @@ class GainCalibrationEditor(BaseTraitsEditor):
             detcols = get_columns(isotopes)
 
             self.tabular_adapter.columns = [('', 'name'), ('Intensity', 'intensity')] + detcols
+        self._make_results()
 
     def _get_current_gains(self, ms):
-        gains_dict = self.dvc.meta_repo.get_gains(ms)
-        print gains_dict
+        # print gains_dict
         # self.current_gains = [gains_dict[k] for k in DETECTOR_ORDER]
-        self.results = [GainCalibrationResult(current_gain=gains_dict[k]) for k in DETECTOR_ORDER]
+        self.gains_dict = self.dvc.meta_repo.get_gains(ms)
+
+    def _make_results(self):
+        refdet = 'H1'
+        results = [GainCalibrationResult(current_gain=self.gains_dict.get(k, 1), detector=k) for k in DETECTOR_ORDER]
+
+        """
+            lv_i = (AX/H1)o
+            rv_i = (AX/H1)j
+
+        """
+        for i, r in enumerate(results):
+            li = self.lhs_items[i]
+            ri = self.rhs_items[i]
+            lv = getattr(li, refdet)
+            rv = getattr(ri, refdet)
+
+            r.gfactor = rv / lv
+
+        self.results = results
 
     # handlers
     def _lhs_ms_changed(self, new):
