@@ -22,7 +22,7 @@ from traitsui.api import View, UItem, InstanceEditor
 # ============= standard library imports ========================
 # ============= local library imports  ===========================
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
-from pychron.processing.plotter_options_manager import IdeogramOptionsManager
+from pychron.pipeline.options.plotter_options_manager import IdeogramOptionsManager
 from pychron.pipeline.plot.models.ideogram_model import IdeogramModel
 from pychron.pipeline.plot.panels.ideogram_panel import IdeogramPanel
 

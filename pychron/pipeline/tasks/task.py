@@ -99,7 +99,7 @@ class PipelineTask(BaseBrowserTask):
         # self.engine.set_template('ideogram')
         # self.engine.set_template('gain')
         # self.engine.set_template('ideogram')
-        self.engine.set_template('blanks')
+        self.engine.set_template('iso_evo')
         # self.engine.add_is
         # self.engine.add_grouping(run=False)
         # self.engine.add_test_filter()
@@ -180,6 +180,7 @@ class PipelineTask(BaseBrowserTask):
         else:
             state = EngineState()
 
+        self._temp_state = state
         if not self.engine.run(state, self.run_to):
             self._toggle_run(True)
         else:
@@ -223,8 +224,9 @@ class PipelineTask(BaseBrowserTask):
     def _handle_unknowns(self, name, old, new):
         if self.active_editor:
             if not new:
-                self.active_editor.set_items(self.engine.unknowns)
-                self.active_editor.refresh_needed = True
+                if hasattr(self.active_editor, 'set_items'):
+                    self.active_editor.set_items(self.engine.unknowns)
+                    self.active_editor.refresh_needed = True
         self.engine.update_detectors()
 
     @on_trait_change('engine:references[]')
@@ -243,9 +245,8 @@ class PipelineTask(BaseBrowserTask):
         self.set_interpreted_enabled = isinstance(new, InterpretedAgeEditor)
 
     @on_trait_change('active_editor:save_needed')
-    def _handle_save_needed(self, new):
-        state = EngineState()
-        print 'save needed', self.engine.run_persist(state)
+    def _handle_save_needed(self):
+        self.engine.run_persist(self._temp_state)
 
     @on_trait_change('engine:unknowns:[tag_event, invalid_event]')
     def _handle_analysis_tagging(self, name, new):

@@ -29,7 +29,7 @@ class FigureModel(HasTraits):
     analyses = List
     references = List
     plot_options = Any
-    _panel_klass = Instance('pychron.processing.plotters.figure_panel.FigurePanel')
+    _panel_klass = Instance('pychron.pipeline.plotters.figure_panel.FigurePanel')
     titles = List
 
     layout = Instance(FigureLayout, ())

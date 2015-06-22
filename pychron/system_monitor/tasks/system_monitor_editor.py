@@ -30,7 +30,7 @@ from pychron.displays.display import DisplayController
 from pychron.globals import globalv
 from pychron.messaging.notify.subscriber import Subscriber
 from pychron.processing.analyses.file_analysis import FileAnalysis
-from pychron.processing.plotter_options_manager import SystemMonitorOptionsManager, SysMonIdeogramOptionsManager
+from pychron.pipeline.options.plotter_options_manager import SystemMonitorOptionsManager, SysMonIdeogramOptionsManager
 from pychron.pipeline.plot.editors.ideogram_editor import IdeogramEditor
 from pychron.pipeline.plot.editors.series_editor import SeriesEditor
 from pychron.pychron_constants import ALPHAS

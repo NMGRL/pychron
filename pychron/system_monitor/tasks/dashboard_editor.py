@@ -22,7 +22,7 @@ from traits.api import Instance, Int, Dict
 # ============= standard library imports ========================
 from numpy import array, vstack
 # ============= local library imports  ==========================
-from pychron.processing.plotter_options_manager import DashboardOptionsManager
+from pychron.pipeline.options.plotter_options_manager import DashboardOptionsManager
 from pychron.pipeline.plot.figure_container import FigureContainer
 from pychron.pipeline.plot.models.series_model import DashboardSeriesModel
 from pychron.pipeline.plot.editors.series_editor import SeriesEditor

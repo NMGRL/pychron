@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from enable.markers import marker_names
-from traits.api import List
+from traits.api import List, on_trait_change
 from traitsui.api import View, Item, Group, VGroup, HGroup, EnumEditor, Tabbed
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -34,6 +34,7 @@ from pychron.pipeline.plot.options.option import AuxPlotOptions
 class IsoFilterFitAuxPlot(AuxPlotOptions, IsoFilterFit):
     names = List(['Ar40', 'Ar39'])
     height = 0
+    ofit = None
 
     # @property
     # def enabled(self):
@@ -52,6 +53,14 @@ class IsotopeEvolutionOptions(SaveableFigurePlotterOptions):
 
     # def get_saveable_plots(self):
     #     return [p for p in self.aux_plots if p.use]
+
+    @on_trait_change('aux_plots:fit')
+    def _handle_fit(self, obj, name, old, new):
+        if obj.save_enabled:
+            if new != obj.ofit:
+                self.save_required = True
+
+            obj.ofit = old
 
     def traits_view(self):
         bg_grp = self._get_bg_group()

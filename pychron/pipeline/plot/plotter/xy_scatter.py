@@ -29,7 +29,7 @@ from pychron.graph.error_bar_overlay import ErrorBarOverlay
 from pychron.graph.tools.analysis_inspector import AnalysisPointInspector
 from pychron.graph.tools.point_inspector import PointInspectorOverlay
 from pychron.graph.tools.rect_selection_tool import RectSelectionTool, RectSelectionOverlay
-from pychron.processing.plotter_options_manager import XYScatterOptionsManager
+from pychron.pipeline.options.plotter_options_manager import XYScatterOptionsManager
 from pychron.pipeline.plot.editors.graph_editor import GraphEditor
 from pychron.pychron_constants import NULL_STR
 

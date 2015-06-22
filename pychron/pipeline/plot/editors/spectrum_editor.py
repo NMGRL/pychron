@@ -23,7 +23,7 @@ from traits.api import Instance
 from pychron.processing.analyses.file_analysis import SpectrumFileAnalysis
 from pychron.pipeline.plot.models.spectrum_model import SpectrumModel
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
-from pychron.processing.plotter_options_manager import SpectrumOptionsManager
+from pychron.pipeline.options.plotter_options_manager import SpectrumOptionsManager
 
 
 class SpectrumEditor(FigureEditor):

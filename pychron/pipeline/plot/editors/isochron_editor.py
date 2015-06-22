@@ -20,7 +20,7 @@ from traits.api import Instance
 # ============= local library imports  ==========================
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.plot.models.isochron_model import InverseIsochronModel
-from pychron.processing.plotter_options_manager import InverseIsochronOptionsManager
+from pychron.pipeline.options.plotter_options_manager import InverseIsochronOptionsManager
 
 
 class InverseIsochronEditor(FigureEditor):

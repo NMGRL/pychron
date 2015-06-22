@@ -15,11 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from gitdb.util import hex_to_bin
 from traits.api import HasTraits, Str, Bool, Date
 # ============= standard library imports ========================
 from datetime import datetime
 import os
-from git import Repo
+from git import Repo, Blob, Diff
 # ============= local library imports  ==========================
 
 
@@ -78,32 +79,84 @@ def get_diff(repo, a, b, path, change_type='M'):
             return
         repo = Repo(repo)
 
-    a = repo.commit(a)
-    if change_type:
-        gen = a.diff(b).iter_change_type(change_type)
-    else:
-        gen = a.diff(b)
+    # a = repo.commit(a)
+    diff = repo.git.diff(a, b, '--full-index', '--', path)
+    if diff:
+        return fu(repo, diff)
+        # ablob = Blob(repo, hex_to_bin(a_blob_id), mode=self.a_mode, path=a_path)
+        # bblob = ''
+        # return ablob, bblob
 
-    rpath = os.path.relpath(path, repo.working_dir)
 
-    for d in gen:
-        # print d.a_blob.path, rpath
-        if d.a_blob.path == rpath:
-            return d
-            # print 'sadf', d.a_blob.path
+def fu(repo, text):
+    for header in Diff.re_header.finditer(text):
+        a_path, b_path, similarity_index, rename_from, rename_to, \
+        old_mode, new_mode, new_file_mode, deleted_file_mode, \
+        a_blob_id, b_blob_id, b_mode = header.groups()
+        # new_file, deleted_file = bool(new_file_mode), bool(deleted_file_mode)
 
-            # if d.
-            # print d
-            # print d.a_blob, d.b_blob
+        # Our only means to find the actual text is to see what has not been matched by our regex,
+        # and then retro-actively assin it to our index
+        # if previous_header is not None:
+        #     index[-1].diff = text[previous_header.end():header.start()]
+        # end assign actual diff
 
-            # print '------------aa'
-            # print d.a_blob.data_stream.read()
-            # print '-----------bb'
-            # if d.b_blob:
-            # print d.b_blob.data_stream.read()
+        # Make sure the mode is set if the path is set. Otherwise the resulting blob is invalid
+        # We just use the one mode we should have parsed
+        a_mode = old_mode or deleted_file_mode or (a_path and (b_mode or new_mode or new_file_mode))
+        b_mode = b_mode or new_mode or new_file_mode or (b_path and a_mode)
+        ablob = Blob(repo, hex_to_bin(a_blob_id), mode=a_mode, path=a_path)
+        bblob = Blob(repo, hex_to_bin(b_blob_id), mode=b_mode, path=a_path)
+        return ablob, bblob
 
-            # print repo.diff(a,b)
-            # return []
+        # index.append(Diff(repo,
+        #                   a_path and a_path.decode(defenc),
+        #                   b_path and b_path.decode(defenc),
+        #                   a_blob_id and a_blob_id.decode(defenc),
+        #                   b_blob_id and b_blob_id.decode(defenc),
+        #                   a_mode and a_mode.decode(defenc),
+        #                   b_mode and b_mode.decode(defenc),
+        #                   new_file, deleted_file,
+        #                   rename_from and rename_from.decode(defenc),
+        #                   rename_to and rename_to.decode(defenc),
+        #                   None))
+        #
+        # previous_header = header
+
+        # print 'diff', len(diff), diff
+
+        # if change_type:
+        #     # st = time.time()
+        #     repo.git.diff(a,b,'--', '--names-only', path)
+        #     # print 'gen time1 {}'.format(time.time()-st)
+        #
+        #     # direct git command is 10x faster than a.diff(b)
+        #     st = time.time()
+        #     gen = a.diff(b).iter_change_type(change_type)
+        #     print 'gen time2 {}'.format(time.time()-st)
+        # else:
+        #     gen = a.diff(b)
+
+        # rpath = os.path.relpath(path, repo.working_dir)
+
+        # for d in gen:
+        #     print d.a_blob.path, rpath
+        #     if d.a_blob and d.a_blob.path == rpath:
+        #         return d
+        # print 'sadf', d.a_blob.path
+
+        # if d.
+        # print d
+        # print d.a_blob, d.b_blob
+
+        # print '------------aa'
+        # print d.a_blob.data_stream.read()
+        # print '-----------bb'
+        # if d.b_blob:
+        # print d.b_blob.data_stream.read()
+
+        # print repo.diff(a,b)
+        # return []
 
 
 if __name__ == '__main__':

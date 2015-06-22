@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from pyface.confirmation_dialog import confirm
+from pyface.constant import YES
 from traits.api import Any, Bool
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -23,7 +24,7 @@ from pychron.envisage.tasks.base_editor import grouped_name
 from pychron.pipeline.nodes.base import BaseNode
 # from pychron.processing.plot.editors.ideogram_editor import IdeogramEditor
 
-from pychron.processing.plotter_options_manager import IdeogramOptionsManager, SpectrumOptionsManager, \
+from pychron.pipeline.options.plotter_options_manager import IdeogramOptionsManager, SpectrumOptionsManager, \
     SeriesOptionsManager
 
 
@@ -38,11 +39,11 @@ class FigureNode(BaseNode):
     def refresh(self):
         if self.editor:
             # self.editor.force_update()
-            print 'editor refres'
+            # print 'editor refres'
             self.editor.refresh_needed = True
-            if confirm(None, 'Save Changes'):
-                print 'save schangsace'
-                self.editor.save_needed = True
+            if self.editor.save_required:
+                if confirm(None, 'Save Changes') == YES:
+                    self.editor.save_needed = True
 
     def run(self, state):
         self._configured = True
@@ -64,23 +65,25 @@ class FigureNode(BaseNode):
             use_plotting = True
 
         if use_plotting:
-            klass = self.editor_klass
-            if isinstance(klass, (str, unicode)):
-                pkg, klass = klass.split(',')
-                mod = __import__(pkg, fromlist=[klass])
-                klass = getattr(mod, klass)
+            editor = self.editor
+            if not editor:
+                klass = self.editor_klass
+                if isinstance(klass, (str, unicode)):
+                    pkg, klass = klass.split(',')
+                    mod = __import__(pkg, fromlist=[klass])
+                    klass = getattr(mod, klass)
 
-            editor = klass()
+                editor = klass()
 
-            editor.plotter_options = po
+                editor.plotter_options = po
 
-            self.editor = editor
+                self.editor = editor
+                state.editors.append(editor)
+
             editor.set_items(state.unknowns)
-
             oname = editor.name
 
             # self.name = editor.name
-            state.editors.append(editor)
         else:
             a = list(set([ni.labnumber for ni in state.unknowns]))
             oname = '{} {}'.format(grouped_name(a), self.name)
@@ -93,9 +96,9 @@ class FigureNode(BaseNode):
                 new_name = '{} {:02n}'.format(oname, cnt)
                 cnt += 1
 
-        self.name = new_name
+        # self.name = new_name
         if use_plotting:
-            self.editor.name = self.name
+            self.editor.name = new_name
 
         return editor
 

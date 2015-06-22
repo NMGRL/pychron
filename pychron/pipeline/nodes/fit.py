@@ -27,7 +27,7 @@ from pychron.pipeline.editors.flux_results_editor import FluxResultsEditor, Flux
 from pychron.pipeline.editors.results_editor import IsoEvolutionResultsEditor
 from pychron.pipeline.nodes.figure import FigureNode
 from pychron.processing.flux.utilities import mean_j
-from pychron.processing.plotter_options_manager import IsotopeEvolutionOptionsManager, BlanksOptionsManager, \
+from pychron.pipeline.options.plotter_options_manager import IsotopeEvolutionOptionsManager, BlanksOptionsManager, \
     ICFactorOptionsManager, FluxOptionsManager
 
 
@@ -136,7 +136,7 @@ class IsoEvoResult(HasTraits):
 
 
 class FitIsotopeEvolutionNode(FitNode):
-    editor_klass = 'pychron.processing.plot.editors.isotope_evolution_editor,' \
+    editor_klass = 'pychron.pipeline.plot.editors.isotope_evolution_editor,' \
                    'IsotopeEvolutionEditor'
     plotter_options_manager_klass = IsotopeEvolutionOptionsManager
     name = 'Fit IsoEvo'

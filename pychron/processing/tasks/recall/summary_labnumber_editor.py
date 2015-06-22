@@ -26,7 +26,7 @@ from enable.component_editor import ComponentEditor
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.stats.core import calculate_weighted_mean, calculate_mswd, get_mswd_limits
 from pychron.envisage.icon_button_editor import icon_button_editor
-from pychron.processing.plotter_options_manager import SpectrumOptionsManager
+from pychron.pipeline.options.plotter_options_manager import SpectrumOptionsManager
 from pychron.pipeline.plot.models.spectrum_model import SpectrumModel
 from pychron.processing.tasks.recall.base_summary_editor import BaseSummaryEditor, OptionsView
 

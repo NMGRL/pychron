@@ -26,6 +26,7 @@ from git import Repo
 # ============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.ui.tabular_editor import myTabularEditor
+from pychron.dvc.dvc_analysis import analysis_path
 from pychron.dvc.tasks.panes import CommitAdapter
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.view_util import open_view
@@ -53,9 +54,10 @@ class DiffAdapter(TabularAdapter):
     name_width = Int(50)
     lhs_width = Int(150)
     rhs_width = Int(150)
+    color_first = Bool(True)
 
     def get_bg_color(self, obj, trait, row, column=0):
-        if row in (0, 1):
+        if self.color_first and row in (0, 1):
             return LIGHT_YELLOW
 
         if not obj.only_show_diff:
@@ -101,13 +103,16 @@ class DiffView(HasTraits):
         super(DiffView, self).__init__(*args, **kw)
 
         self.record_id = record_id
-        aj = json.load(d.a_blob.data_stream)
-        bj = json.load(d.b_blob.data_stream)
+        aj = json.load(d[0].data_stream)
+        bj = json.load(d[1].data_stream)
         # print 'dddd', d.diff
         self._load_values(lh, rh, ld, rd, aj, bj)
         self._filter_values()
 
     @on_trait_change('only_show_diff')
+    def _handle_filter_values(self):
+        self._filter_values()
+
     def _filter_values(self):
         if self.only_show_diff:
             self.values = [v for v in self.ovalues if not v.match or v.name in ('ID', 'Date')]
@@ -152,7 +157,107 @@ class ICFactorDiffView(BlanksDiffView):
     base_title = 'ICFactor'
 
 
-VIEWS = {'TAG': TagDiffView, 'BLANKS': BlanksDiffView, 'ICFactor': ICFactorDiffView}
+class IsoEvoDiffView(BlanksDiffView):
+    base_title = 'Iso Evo'
+
+
+class ImportDiffView(DiffView):
+    base_title = 'Import'
+
+    blanks = List
+    icfactors = List
+    tags = List
+    isoevos = List
+
+    oblanks = List
+    oicfactors = List
+    otags = List
+    oisoevos = List
+
+    def __init__(self, record_id, lh, rh, ld, rd, *args, **kw):
+        super(DiffView, self).__init__(*args, **kw)
+
+        self.record_id = record_id
+        # aj = json.load(d.a_blob.data_stream)
+        # bj = json.load(d.b_blob.data_stream)
+        # print 'dddd', d.diff
+
+        # self._filter_values()
+
+        vs = [DiffValue('ID', lh, rh, matchable=False),
+              DiffValue('Date', ld, rd, matchable=False)]
+        self.ovalues = vs
+
+    def finish(self):
+        self._filter_values()
+
+    def _filter_values(self):
+        if self.only_show_diff:
+            self.values = [v for v in self.ovalues if not v.match or v.name in ('ID', 'Date')]
+            self.blanks = [v for v in self.oblanks if not v.match]
+            self.icfactors = [v for v in self.oicfactors if not v.match]
+            self.tags = [v for v in self.otags if not v.match]
+            self.isoevos = [v for v in self.oisoevos if not v.match]
+        else:
+            self.values = self.ovalues[:]
+            self.blanks = self.oblanks[:]
+            self.icfactors = self.oicfactors[:]
+            self.tags = self.otags[:]
+            self.isoevos = self.oisoevos[:]
+
+    def set_intercepts(self, aj, bj):
+        self.oisoevos = [DiffValue(t, aj[name][k], bj[name][k])
+                         for name in aj.keys()
+                         for t, k in ((name, 'value'), (PLUSMINUS_SIGMA, 'error'), ('Fit', 'fit'))]
+
+    def set_blanks(self, aj, bj):
+        self.oblanks = [DiffValue(t, aj[name][k], bj[name][k])
+                        for name in aj.keys()
+                        for t, k in ((name, 'value'), (PLUSMINUS_SIGMA, 'error'), ('Fit', 'fit'))]
+
+    def set_icfactors(self, aj, bj):
+        self.oicfactors = [DiffValue(t, aj[name][k], bj[name][k])
+                           for name in aj.keys()
+                           for t, k in ((name, 'value'), (PLUSMINUS_SIGMA, 'error'), ('Fit', 'fit'))]
+
+    def set_tags(self, aj, bj):
+        self.otags = [DiffValue(name, aj[name], bj[name]) for name in ('name',)]
+
+    def traits_view(self):
+        v = View(VGroup(HGroup(Item('only_show_diff')),
+                        VGroup(UItem('values', editor=TabularEditor(adapter=DiffAdapter(),
+                                                                    editable=False),
+                                     height=-100)),
+                        VGroup(UItem('isoevos', editor=TabularEditor(adapter=DiffAdapter(color_first=False),
+                                                                     editable=False),
+                                     height=-100),
+                               show_border=True, label='Iso Evo',
+                               visible_when='isoevos'),
+                        VGroup(UItem('blanks', editor=TabularEditor(adapter=DiffAdapter(color_first=False),
+                                                                    editable=False),
+                                     height=-100),
+                               show_border=True, label='Blanks',
+                               visible_when='blanks'),
+                        VGroup(UItem('icfactors', editor=TabularEditor(adapter=DiffAdapter(color_first=False),
+                                                                       editable=False),
+                                     height=-100),
+                               show_border=True, label='ICFactors',
+                               visible_when='icfactors'),
+                        VGroup(UItem('tags', editor=TabularEditor(adapter=DiffAdapter(color_first=False),
+                                                                  editable=False),
+                                     height=-100),
+                               show_border=True, label='Tags',
+                               visible_when='tags')),
+
+                 title='{} Diff {}'.format(self.base_title, self.record_id),
+                 resizable=True,
+                 width=500)
+        return v
+
+
+VIEWS = {'TAG': TagDiffView, 'BLANKS': BlanksDiffView,
+         'ISOEVO': IsoEvoDiffView,
+         'ICFactor': ICFactorDiffView}
 
 
 class DVCCommitView(HasTraits):
@@ -170,6 +275,7 @@ class DVCCommitView(HasTraits):
         self.repo = Repo(os.path.join(paths.experiment_dataset_dir, an.experiment_id))
         self.initialize(an)
         self.record_id = an.record_id
+        self.experiment_id = an.experiment_id
 
     # def initialize(self, an):
     #     path = self._make_path(an)
@@ -204,12 +310,32 @@ class DVCCommitView(HasTraits):
             n = len(self.selected_commits)
 
             lhs = self.selected_lhs
+
+            lhsid = lhs.hexsha[:8]
             lhsdate = isoformat_date(lhs.date)
             if n == 1:
-                d = get_diff(self.repo, lhs.hexsha, 'HEAD', lhs.path)
                 rhsid = 'HEAD'
                 obj = self.repo.head.commit
                 rhsdate = isoformat_date(obj.committed_date)
+                if lhs.tag == 'IMPORT':
+                    diffs = []
+                    for a in ('blanks', 'icfactors', 'tags', 'intercepts'):
+                        p = analysis_path(self.record_id, self.experiment_id, modifier=a)
+                        dd = get_diff(self.repo, lhs.hexsha, 'HEAD', p)
+                        if dd:
+                            diffs.append((a, dd))
+                    if diffs:
+                        v = ImportDiffView(self.record_id, lhsid, rhsid, lhsdate, rhsdate)
+                        for a, (aa, bb) in diffs:
+                            func = getattr(v, 'set_{}'.format(a))
+                            func(json.load(aa.data_stream),
+                                 json.load(bb.data_stream))
+                        v.finish()
+                        open_view(v)
+
+                    return
+                else:
+                    d = get_diff(self.repo, lhs.hexsha, 'HEAD', lhs.path)
 
             elif n == 2:
                 lhs = self.selected_lhs
@@ -227,7 +353,6 @@ class DVCCommitView(HasTraits):
                 warning(None, 'Can only diff max of 2')
                 return
 
-            lhsid = lhs.hexsha[:8]
             if d:
                 # if lhs.tag=='TAG':
                 klass = VIEWS[lhs.tag]
@@ -243,6 +368,7 @@ class DVCCommitView(HasTraits):
             icon_button_editor('do_diff', 'edit_diff', tooltip='Make Diff between two commits'),
             UItem('commits', editor=myTabularEditor(adapter=HistoryCommitAdapter(),
                                                     multi_select=True,
+                                                    editable=False,
                                                     selected='selected_commits'))))
         return v
 

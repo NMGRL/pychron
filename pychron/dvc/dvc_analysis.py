@@ -323,10 +323,9 @@ class DVCAnalysis(Analysis):
             iso.set_fit(fi)
 
     def dump_fits(self, keys):
-        yd, path = self._get_yd('intercepts')
+        isos, path = self._get_yd('intercepts')
 
         sisos = self.isotopes
-        isos = yd['isotopes']
         for k in keys:
             if k in isos and k in sisos:
                 iso = isos[k]
@@ -334,8 +333,9 @@ class DVCAnalysis(Analysis):
                 iso['fit'] = siso.fit
                 iso['value'] = float(siso.value)
                 iso['error'] = float(siso.error)
+                isos[k] = iso
 
-        self._dump(yd, path)
+        self._dump(isos, path)
 
     def dump_blanks(self, keys, refs):
         isos, path = self._get_yd('blanks')
@@ -362,7 +362,7 @@ class DVCAnalysis(Analysis):
 
     def dump_icfactors(self, dkeys, fits, refs):
         yd, path = self._get_yd('icfactors')
-        print 'fasf', dkeys, fits
+        # print 'fasf', dkeys, fits
         # dets = yd.get('detectors', {})
         for dk, fi in zip(dkeys, fits):
             v = self.temporary_ic_factors.get(dk)
@@ -370,7 +370,7 @@ class DVCAnalysis(Analysis):
                 v, e = 1, 0
             else:
                 v, e = nominal_value(v), std_dev(v)
-            print dk, fi
+            # print dk, fi
             yd[dk] = {'value': float(v), 'error': float(e),
                       'fit': fi,
                       'references': make_ref_list(refs)}
