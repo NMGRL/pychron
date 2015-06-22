@@ -376,6 +376,7 @@ class ExtractionLineScene(Scene):
                 v.set_label(label, x, y)
 
             self.add_item(v, layer=1)
+            ndict[key] = v
 
         for v in cp.get_elements('valve'):
             key = v.text.strip()

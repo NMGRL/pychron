@@ -449,7 +449,7 @@ class SwitchManager(Manager):
     def load_hardware_states(self):
         for k, v in self.switches.iteritems():
             if v.query_state:
-                s = v.get_hardware_state(verbose=False)
+                s = v.get_hardware_state(verbose=True)
                 self.refresh_state = (k, s, False)
 
     def _load_states(self):
@@ -646,6 +646,7 @@ class SwitchManager(Manager):
         if vqs:
             qs = vqs == 'true'
 
+        # print name, description, qs, vqs
         parent = v_elem.find('parent')
 
         parent_name = ''

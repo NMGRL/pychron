@@ -34,6 +34,11 @@ class BaseSpectrometerPlugin(BaseTaskPlugin):
     scan_manager = Any
     ion_optics_manager = Any
 
+    def start(self):
+        super(BaseSpectrometerPlugin, self).start()
+        if self.spectrometer_manager:
+            self.spectrometer_manager.spectrometer.start()
+
     def _inspector_task_factory(self):
         from pychron.spectrometer.tasks.inspector.scan_inspector_task import ScanInspectorTask
 

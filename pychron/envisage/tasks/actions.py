@@ -115,13 +115,14 @@ class StartupTestsAction(Action):
         ov = globalv.use_startup_tests
         globalv.use_startup_tests = True
 
+        st = app.startup_tester
+        st.results = []
         for plugin in app.plugin_manager:
             if hasattr(plugin, 'startup_test'):
                 plugin.startup_test()
 
         globalv.use_startup_tests = ov
 
-        st = app.startup_tester
         if st.results:
             from pychron.startup_test.results_view import ResultsView
 
