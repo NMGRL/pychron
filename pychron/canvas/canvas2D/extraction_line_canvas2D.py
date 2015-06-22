@@ -92,15 +92,18 @@ class ExtractionLineCanvas2D(SceneCanvas):
         """
         """
         switch = self._get_switch_by_name(name)
+        # print 'update state {} {}'.format(name, switch)
         if switch is not None:
             switch.state = nstate
         self.draw_valid = False
+        self.request_redraw()
 
     def update_switch_owned_state(self, name, owned):
         switch = self._get_switch_by_name(name)
         if switch is not None:
             switch.owned = owned
         self.draw_valid = False
+        self.request_redraw()
 
     def update_switch_lock_state(self, name, lockstate):
         switch = self._get_switch_by_name(name)
@@ -108,6 +111,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
             switch.soft_lock = lockstate
             # self.request_redraw()
         self.draw_valid = False
+        self.request_redraw()
 
     # def load_canvas_file(self, cname, setup_name='canvas', valve_name='valves'):
     #
@@ -265,7 +269,8 @@ class ExtractionLineCanvas2D(SceneCanvas):
     #     self.manager.show_valve_properties(self.active_item.name)
 
     def iter_valves(self):
-        return (i for i in self.scene.valves.itervalues() if isinstance(i, BaseValve))
+        # return (i for i in self.scene.valves.itervalues() if isinstance(i, Switch))
+        return (i for i in self.scene.valves.itervalues())
 
     # private
     def _toggle_laser_state(self, item):
