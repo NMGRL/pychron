@@ -76,7 +76,12 @@ class ExperimentRepoTask(BaseTask):
 
     def clone(self):
         name = self.selected_repository_name
-        path = os.path.join(paths.experiment_dataset_dir, name)
+        if name == 'meta':
+            root = paths.dvc_dir
+        else:
+            root = paths.experiment_dataset_dir
+
+        path = os.path.join(root, name)
         if not os.path.isdir(path):
             self.debug('cloning repository {}'.format(name))
             url = 'https://github.com/{}/{}.git'.format(self.organization, name)
