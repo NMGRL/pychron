@@ -81,6 +81,7 @@ class Baseline(YamlObject):
     counts = Int(enter_set=True, auto_set=False)
     before = Bool
     after = Bool
+    settling_time = Float(enter_set=True, auto_set=False)
 
 
 class PeakCenter(IsotopeDetectorObject):
@@ -222,6 +223,7 @@ class MeasurementContextEditor(ContextEditor):
                         Item('object.baseline.counts')),
                         HGroup(Item('object.baseline.before'),
                                Item('object.baseline.after')),
+                        Item('object.baseline.settling_time',),
                         show_border=True, label='Baseline')
 
         pc_grp = VGroup(
