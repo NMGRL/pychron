@@ -85,7 +85,8 @@ sem={}
     def sem(self):
         ys = self.clean_ys
         if self._check_integrity(ys, ys):
-            n = len(ys) - self.ddof
+            # n = len(ys) - self.ddof
+            n = ys.shape[0]
             if n > 0:
                 return self.std * n ** -0.5
             else:
@@ -150,7 +151,7 @@ sem={}
         return self.std
 
     def _check_integrity(self, x, y):
-        nx, ny = len(x), len(y)
+        nx, ny = x.shape[0], y.shape[0]
         if not nx or not ny:
             return
         if nx != ny:
