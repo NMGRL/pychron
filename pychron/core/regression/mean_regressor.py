@@ -77,7 +77,7 @@ sem={}
         ys = self.clean_ys
         if len(ys) > self.ddof:
             # ys = asarray(self.ys, dtype=float64)
-            return ys.std(ddof=self.ddof)
+            return ys.std(ddof=1)
         else:
             return 0
 
