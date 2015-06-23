@@ -962,8 +962,15 @@ def initialize_version(appname, debug):
 
     logger.debug('using Pychron root: {}'.format(proot))
     paths.build(proot)
+    try:
+        cp.set('pychron.general', 'root_dir', proot)
+    except NoSectionError:
+        cp.add_section('pychron.general')
 
-    cp.set('pychron.general', 'root_dir', proot)
+    root = os.path.dirname(pref_path)
+    if not os.path.isdir(root):
+        os.mkdir(root)
+
     with open(pref_path, 'w') as wfile:
         cp.write(wfile)
 

@@ -334,7 +334,8 @@ class BaseBrowserTask(BaseEditorTask):
 
     @on_trait_change('browser_model:[analysis_table:dclicked]')
     def _handle_dclicked(self, new):
-        self._recall_item(new.item)
+        if new:
+            self._recall_item(new.item)
 
     # @on_trait_change('analysis_table:selected')
     # def _selected_analysis_changed(self, new):
