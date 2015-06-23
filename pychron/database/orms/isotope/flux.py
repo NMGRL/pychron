@@ -42,6 +42,7 @@ class flux_MonitorTable(Base, NameMixin):
 
 class flux_HistoryTable(Base, BaseMixin):
     irradiation_position_id = foreignkey('irrad_PositionTable')
+    note = Column(BLOB)
     create_date = Column(DateTime, default=func.now())
     source = stringcolumn(140)
     selected = relationship('gen_LabTable',

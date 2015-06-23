@@ -21,6 +21,7 @@ from collections import namedtuple
 import time
 
 # ============= local library imports  ==========================
+from pychron.core.progress import open_progress
 from pychron.experiment.importer.mass_spec_extractor import Extractor, \
     MassSpecExtractor
 from pychron.loggable import Loggable
@@ -170,7 +171,7 @@ class ImporterModel(Loggable):
                     # get import func from extractor
 
                     n = len(selected) * 2
-                    pd = self.open_progress(n=n)
+                    pd = open_progress(n=n)
 
                     if new_thread:
                         t = Thread(target=self._do_import, args=(selected, pd))

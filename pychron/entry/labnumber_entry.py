@@ -28,6 +28,7 @@ import os
 from pychron.canvas.canvas2D.irradiation_canvas import IrradiationCanvas
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.core.helpers.formatting import floatfmt
+from pychron.core.progress import open_progress
 from pychron.database.defaults import load_irradiation_map
 from pychron.entry.editors.irradiation_editor import IrradiationEditor
 from pychron.entry.editors.level_editor import LevelEditor, load_holder_canvas, iter_geom
@@ -223,7 +224,7 @@ class LabnumberEntry(IsotopeDatabaseManager):
                                                  order_func='asc')
 
                     n = sum([len(irrad.levels) for irrad in irrads])
-                    prog = self.open_progress(n=n)
+                    prog = open_progress(n=n)
 
                     w.build(out, irrads, progress=prog)
 
@@ -261,7 +262,7 @@ class LabnumberEntry(IsotopeDatabaseManager):
                                          overwrite=overwrite,
                                          db=self.db)
                 if lg.setup():
-                    prog = self.open_progress()
+                    prog = open_progress()
                     lg.generate_identifiers(prog, overwrite)
                     self._update_level()
 
@@ -273,7 +274,7 @@ class LabnumberEntry(IsotopeDatabaseManager):
                                  overwrite=True,
                                  db=self.db)
         if lg.setup():
-            prog = self.open_progress()
+            prog = open_progress()
             lg.preview(prog, self.irradiated_positions, self.irradiation, self.level)
             self.refresh_table = True
 
@@ -291,7 +292,7 @@ class LabnumberEntry(IsotopeDatabaseManager):
     def import_irradiation_load_xls(self, p):
         loader = XLSIrradiationLoader(db=self.db,
                                       monitor_name=self.monitor_name)
-        prog = self.open_progress()
+        prog = open_progress()
         loader.progress = prog
         loader.canvas = self.canvas
 
@@ -373,7 +374,7 @@ class LabnumberEntry(IsotopeDatabaseManager):
 
         with db.session_ctx():
             n = len(self.irradiated_positions)
-            prog = self.open_progress(n)
+            prog = open_progress(n)
 
             for irs in self.irradiated_positions:
                 ln = irs.labnumber
