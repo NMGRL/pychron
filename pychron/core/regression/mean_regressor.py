@@ -23,13 +23,13 @@ from pychron.core.helpers.formatting import floatfmt
 
 
 class MeanRegressor(BaseRegressor):
-    ddof = 1
+    ddof = 0
     _fit = 'average'
 
     def calculate(self, filtering=False, **kw):
         # cxs, cys = self.pre_clean_ys, self.pre_clean_ys
         if not filtering:
-            #prevent infinite recursion
+            # prevent infinite recursion
             self.calculate_filtered_data()
 
     def calculate_outliers(self, nsigma=2):
@@ -101,8 +101,8 @@ sem={}
 
     def calculate_ci(self, fx, fy):
         #         c = self.predict(fx)
-        #fit = self.fit.lower()
-        #ec = 'sem' if fit.endswith('sem') else 'sd'
+        # fit = self.fit.lower()
+        # ec = 'sem' if fit.endswith('sem') else 'sd'
         e = self.predict_error(fx)
         ly = fy - e
         uy = fy + e
@@ -114,14 +114,16 @@ sem={}
         std = self.std
         sem = self.sem
 
-        sm = floatfmt(m, n=3)
-        sstd = floatfmt(std, n=4)
-        ssem = floatfmt(sem, n=4)
+        sm = floatfmt(m, n=9)
+        sstd = floatfmt(std, n=9)
+        ssem = floatfmt(sem, n=9)
 
         pstd = self.format_percent_error(m, std)
         psem = self.format_percent_error(m, sem)
 
-        s = 'mean={}, std={} ({}), sem={} ({})'.format(sm, sstd, pstd, ssem, psem)
+        n = self.n
+        tn = self.xs.shape[0]
+        s = 'mean={}, n={}({}), std={} ({}), sem={} ({})'.format(sm, n, tn, sstd, pstd, ssem, psem)
         # s = fmt.format(m, std, self.percent_error(m, std),
         #                sem, self.percent_error(m, sem))
         return s
