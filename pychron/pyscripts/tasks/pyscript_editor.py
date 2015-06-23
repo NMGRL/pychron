@@ -405,7 +405,7 @@ class MeasurementEditor(PyScriptEditor):
     kind = 'Measurement'
 
     def _context_editor_default(self):
-        return MeasurementContextEditor(detectors=self.detectors,
+        return MeasurementContextEditor(available_detectors=self.detectors,
                                         isotopes=self.isotopes,
                                         valves=self.valves)
 

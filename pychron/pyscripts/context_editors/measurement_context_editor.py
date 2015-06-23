@@ -21,6 +21,7 @@ from traitsui.api import View, Item, EnumEditor, VGroup, HGroup
 # ============= standard library imports ========================
 import os
 import ast
+from traitsui.editors import ListEditor, CheckListEditor
 import yaml
 # ============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
@@ -48,6 +49,8 @@ class YamlObject(HasTraits):
             v = getattr(self, k)
             if isinstance(v, unicode):
                 v = str(v)
+            elif hasattr(v, '__iter__'):
+                v = list(v)
             return v
 
         excludes = ['trait_added', 'trait_modified', 'name']
@@ -61,13 +64,15 @@ class YamlObject(HasTraits):
 class IsotopeDetectorObject(YamlObject):
     isotope = Str(enter_set=True, auto_set=False)
     detector = Str(enter_set=True, auto_set=False)
-    detectors = List
-    isotopes = List
-    excludes = ['detectors','isotopes']
+    # available_detectors = List
+    # isotopes = List
+    # excludes = ['detectors','isotopes']
+
 
 class Multicollect(IsotopeDetectorObject):
     name = 'multicollect'
     counts = Int(enter_set=True, auto_set=False)
+
 
 class Baseline(YamlObject):
     name = 'baseline'
@@ -82,6 +87,7 @@ class PeakCenter(IsotopeDetectorObject):
     name = 'peakcenter'
     before = Bool
     after = Bool
+    detectors = List
 
 
 class Equilibration(YamlObject):
@@ -116,7 +122,7 @@ class MeasurementContextEditor(ContextEditor):
     edit_peakhop_button = Button
 
     valves = List
-    detectors = List
+    available_detectors = List
     isotopes = List
 
     # persistence
@@ -131,7 +137,7 @@ class MeasurementContextEditor(ContextEditor):
             if s:
                 try:
                     ctx = yaml.load(s)
-                except yaml.ScannerError:
+                except yaml.YAMLError:
                     return
 
                 self.multicollect.load(ctx)
@@ -208,7 +214,7 @@ class MeasurementContextEditor(ContextEditor):
         mc_grp = VGroup(HGroup(Item('object.multicollect.isotope',
                                     editor=ComboboxEditor(name='isotopes')),
             Item('object.multicollect.detector',
-                 editor=ComboboxEditor(name='detectors'))),
+                 editor=ComboboxEditor(name='available_detectors'))),
             Item('object.multicollect.counts'),
             show_border=True, label='Multicollect')
 
@@ -224,9 +230,11 @@ class MeasurementContextEditor(ContextEditor):
                         label='Iso.'),
             Item('object.peakcenter.detector',
                  label='Det.',
-                 editor=ComboboxEditor(name='detectors'))),
+                 editor=ComboboxEditor(name='available_detectors'))),
             HGroup(Item('object.peakcenter.before'),
                    Item('object.peakcenter.after')),
+            Item('object.peakcenter.detectors', style='custom',
+                 editor=CheckListEditor(name='available_detectors', cols=len(self.available_detectors))),
             show_border=True, label='PeakCenter')
 
         eq_grp = VGroup(HGroup(Item('object.equilibration.inlet',
