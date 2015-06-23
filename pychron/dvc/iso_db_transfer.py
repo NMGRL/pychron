@@ -138,9 +138,13 @@ class IsoDBTransfer(Loggable):
         src.connect()
         with src.session_ctx():
             # for pr in yd:
-            p = '/Users/ross/Sandbox/bustoswell_transfer.txt'
-            experiment_id = 'J-Curve'
-            experiment_id = 'Bustoswell'
+            # p = '/Users/ross/Sandbox/bustoswell_transfer.txt'
+            # experiment_id = 'J-Curve'
+            # experiment_id = 'Bustoswell'
+
+            # p = '/Users/ross/Sandbox/bustosJ.txt'
+            p = '/Users/ross/Sandbox/bustosunknowns.txt'
+            experiment_id = 'BustosWell'
 
             with open(p, 'r') as rfile:
                 runs = [line.strip() for line in rfile if line.strip()]
@@ -160,7 +164,7 @@ class IsoDBTransfer(Loggable):
                 # #     self.debug('skipping {}'.format(ln))
                 # #     continue
                 # #
-                if ln in ('4359',):
+                if ln not in ('4359',):
                     continue
                 #
                 # if ln not in ('bu', 'a', 'ba', 'c'):
@@ -399,10 +403,14 @@ class IsoDBTransfer(Loggable):
             aliquot = int(t[:-1])
             step = t[-1]
 
+        if idn == '4359':
+            idn = 'c-01-j'
+
         if dest.get_analysis_runid(idn, aliquot, step):
             self.warning('{} already exists'.format(make_runid(idn, aliquot, step)))
             return
         # st = time.time()
+
         dban = src.get_analysis_runid(idn, aliquot, step)
         iv = IsotopeRecordView()
         iv.uuid = dban.uuid
@@ -589,17 +597,47 @@ class IsoDBTransfer(Loggable):
         return pos
 
 
+def experiment_id_modifier(root, expid):
+    for r, ds, fs in os.walk(root, topdown=True):
+        fs = [f for f in fs if not f[0] == '.']
+        ds[:] = [d for d in ds if not d[0] == '.']
+
+        # print 'fff',r, os.path.basename(r)
+        if os.path.basename(r) in ('intercepts', 'blanks', '.git',
+                                   'baselines', 'icfactors', 'extraction', 'tags', '.data', 'monitor', 'peakcenter'):
+            continue
+        # dcnt+=1
+        for fi in fs:
+            # if not fi.endswith('.py') or fi == '__init__.py':
+            #     continue
+            # cnt+=1
+            p = os.path.join(r, fi)
+            # if os.path.basename(os.path.dirname(p)) =
+            print p
+            write = False
+            with open(p, 'r') as rfile:
+                jd = json.load(rfile)
+                if 'experiment_id' in jd:
+                    jd['experiment_id'] = expid
+                    write = True
+
+            if write:
+                jdump(jd, p)
+
 if __name__ == '__main__':
     from pychron.core.helpers.logger_setup import logging_setup
 
     paths.build('_dev')
     logging_setup('de', root=os.path.join(os.path.expanduser('~'), 'Desktop', 'logs'))
+    experiment_id_modifier('/Users/ross/Pychron_dev/data/.dvc/experiments/Irradiation-NM-272', 'Irradiation-NM-272')
+
+    # create_github_repo('Irradiation-NM-272')
     # exp = 'J-Curve'
     # url = 'https://github.com/{}/{}.git'.format(org.name, exp)
-    e = IsoDBTransfer()
+    # e = IsoDBTransfer()
     # e.transfer_holder('40_no_spokes')
     # e.transfer_holder('40_hole')
     # e.transfer_holder('24_hole')
-    e.do_export(create_repo=False)
+    # e.do_export(create_repo=False)
     # e.export_production('Triga PR 275', db=False)
 # ============= EOF =============================================

@@ -199,9 +199,9 @@ class MetaRepo(GitRepoManager):
     #     self.path = path
 
     def save_gains(self, ms, gains_dict):
-        p = self._gain_paths(ms)
-        with open(p, 'w') as wfile:
-            jdump(gains_dict, wfile)
+        p = self._gain_path(ms)
+        # with open(p, 'w') as wfile:
+        jdump(gains_dict, p)
 
         if self.add_paths(p):
             self.commit('Updated gains')
@@ -276,15 +276,16 @@ class MetaRepo(GitRepoManager):
             os.mkdir(p)
             # self.add(p, commit=False)
 
-    def add_irradiation_holder(self, name, blob, commit=False):
+    def add_irradiation_holder(self, name, blob, commit=False, overwrite=False):
         p = os.path.join(self.path, 'irradiation_holders', add_extension(name))
-        with open(p, 'w') as wfile:
-            holes = list(iter_geom(blob))
-            n = len(holes)
-            wfile.write('{},0.0175\n'.format(n))
-            for idx, (x, y, r) in holes:
-                wfile.write('{:0.4f},{:0.4f},{:0.4f}\n'.format(x, y, r))
-        self.add(p, commit=commit)
+        if not os.path.isfile(p) or overwrite:
+            with open(p, 'w') as wfile:
+                holes = list(iter_geom(blob))
+                n = len(holes)
+                wfile.write('{},0.0175\n'.format(n))
+                for idx, (x, y, r) in holes:
+                    wfile.write('{:0.4f},{:0.4f},{:0.4f}\n'.format(x, y, r))
+            self.add(p, commit=commit)
 
     def add_load_holder(self, name, path_or_txt, commit=False):
         p = os.path.join(self.path, 'load_holders', name)
@@ -348,6 +349,9 @@ class MetaRepo(GitRepoManager):
 
     def _gain_path(self, name):
         root = os.path.join(self.path, 'spectrometers')
+        if not os.path.isdir(root):
+            os.mkdir(root)
+
         p = os.path.join(root, add_extension('{}.gain'.format(name), '.json'))
         return p
 

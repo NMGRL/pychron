@@ -52,6 +52,7 @@ class BrowserSampleView(PaneModelView):
                      height=-150,
                      editor=FilterTabularEditor(editable=False,
                                                 enabled_cb='project_enabled',
+                                                use_fuzzy=True,
                                                 refresh='refresh_needed',
                                                 selected='selected_projects',
                                                 adapter=ProjectAdapter(),

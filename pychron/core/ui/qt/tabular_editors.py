@@ -16,12 +16,10 @@
 
 # ============= enthought library imports =======================
 from PySide.QtCore import QRegExp, Qt
-from PySide.QtGui import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QSizePolicy, QLineEdit, QCheckBox, \
+from PySide.QtGui import QHBoxLayout, QPushButton, QSizePolicy, QLineEdit, QCheckBox, \
     QSortFilterProxyModel, QItemSelectionModel
 from pyface.qt import QtCore
-from traits.api import HasTraits, Button
 from traits.trait_types import Str, Bool, Any
-from traitsui.api import View, Item
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.ui.qt.tabular_editor import myTabularEditor, _TableView, _TabularEditor
@@ -134,6 +132,7 @@ class _EnableFilterTableView(_FilterTableView):
 class _FilterTabularEditor(_TabularEditor):
     widget_factory = _FilterTableView
     proxyModel = Any
+    use_fuzzy = Bool
 
     def init(self, parent):
         super(_FilterTabularEditor, self).init(parent)
@@ -144,7 +143,7 @@ class _FilterTabularEditor(_TabularEditor):
         proxyModel.setSourceModel(self.model)
 
         self.control.setModel(proxyModel)
-
+        self.use_fuzzy = self.factory.use_fuzzy
         if self.factory.multi_select:
             slot = self._on_rows_selection
         else:
@@ -163,7 +162,11 @@ class _FilterTabularEditor(_TabularEditor):
 
     def on_text_change(self):
         ft = self.control.get_text()
-        reg = QRegExp('^{}'.format(ft), Qt.CaseInsensitive)
+        if self.use_fuzzy:
+            reg = QRegExp('.*?'.join(ft), Qt.CaseInsensitive)
+        else:
+            reg = QRegExp('^{}'.format(ft), Qt.CaseInsensitive)
+
         self.proxyModel.setFilterRegExp(reg)
         self.control.button.setEnabled(bool(ft))
 
@@ -234,7 +237,7 @@ class _EnableFilterTabularEditor(_FilterTabularEditor):
 
 class FilterTabularEditor(myTabularEditor):
     enabled_cb = Str
-
+    use_fuzzy = Bool
     def _get_klass(self):
         if self.enabled_cb:
             return _EnableFilterTabularEditor

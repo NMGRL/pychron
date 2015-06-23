@@ -122,7 +122,7 @@ class TIsotope:
 class DVCAnalysis(Analysis):
     def __init__(self, record_id, experiment_id, *args, **kw):
         super(DVCAnalysis, self).__init__(*args, **kw)
-
+        # print record_id, experiment_id
         path = analysis_path(record_id, experiment_id)
         self.experiment_id = experiment_id
         # self.irradiation='NM-272'
@@ -195,6 +195,7 @@ class DVCAnalysis(Analysis):
             # print '  changeables {}'.format(time.time()-st)
         # for tag in ('intercepts','blanks', 'baselines', 'icfactors'):
         for tag in ('intercepts', 'baselines', 'blanks', 'icfactors'):  # 'blanks', 'baselines', 'icfactors'):
+            # print tag
             with open(self._analysis_path(modifier=tag), 'r') as rfile:
                 jd = json.load(rfile)
                 func = getattr(self, '_load_{}'.format(tag))
