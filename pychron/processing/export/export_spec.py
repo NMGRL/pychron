@@ -19,6 +19,7 @@ from numpy import std, mean, where, delete
 from traits.api import CStr, Str, CInt, Float, \
     TraitError, Property, Any, Either, Dict, Bool, List
 from uncertainties import ufloat
+from pychron.core.regression.mean_regressor import MeanRegressor
 
 from pychron.loggable import Loggable
 
@@ -225,19 +226,29 @@ class MassSpecExportSpec(Loggable):
         if iso in self.isotopes:
             iso = self.isotopes[iso]
             xs, ys = iso.baseline.xs, iso.baseline.ys
+# s_dict={'filter_outliers':filter_outliers,
+#                                    'iterations':iterations,
+#                                    'std_devs':std_devs}
+#         self.dirty=notify
+            fod = iso.baseline.filter_outliers_dict
+            niter = fod.get('iterations', niter)
+            nsigma = fod.get('std_devs', nsigma)
+            # reg = MeanRegressor(xs=xs, ys=ys)
+            # reg.calculate()
+            # reg.
             for i in range(niter):
-                m, s = mean(ys), std(ys)
+                m, s = mean(ys), std(ys, ddof=1)
                 res = abs(ys - m)
 
                 outliers = where(res > (s * nsigma))[0]
                 ys = delete(ys, outliers)
                 # n_filtered_pts += len(outliers)
 
-            m, s = mean(ys), std(ys)
+            m, s = mean(ys), std(ys, ddof=1)
             fncnts = ys.shape[0]
 
         if error == 'sem':
-            s = s / fncnts ** 0.5 if fncnts else 0
+            s = (s / fncnts ** 0.5) if fncnts else 0
 
         return ufloat(m, s), fncnts
 
