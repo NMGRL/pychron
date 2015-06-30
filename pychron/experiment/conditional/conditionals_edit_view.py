@@ -592,16 +592,16 @@ class ConditionalsEditView(ConditionalsViewable):
         self.load(path, save_as)
 
     def load(self, path, save_as):
-
-        root, name = os.path.split(path)
-        p = get_path(root, name, ('.yaml', '.yml'))
         yd = None
-        if p:
-            if not save_as:
-                self.path = p
+        if path:
+            root, name = os.path.split(path)
+            p = get_path(root, name, ('.yaml', '.yml'))
+            if p:
+                if not save_as:
+                    self.path = p
 
-            with open(p, 'r') as rfile:
-                yd = yaml.load(rfile)
+                with open(p, 'r') as rfile:
+                    yd = yaml.load(rfile)
 
         if 'pre_run_terminations' in self.group_names:
             grp = self._group_factory(yd, EPreRunGroup, name='pre_run_terminations',

@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.message_dialog import information
 
 from pyface.tasks.task_window_layout import TaskWindowLayout
 from traits.api import Any, List
@@ -228,6 +229,9 @@ class IssueAction(WebAction):
 
         app = event.task.window.application
         name = app.preferences.get('pychron.general.organization')
+        if not name:
+            information(event.task.window, 'Please set an "Organziation" in General Preferences')
+            return
 
         url = 'https://github.com/{}/pychron/issues/new'.format(name)
         self._open_url(url)
@@ -244,7 +248,8 @@ class NoteAction(WebAction):
         app = event.task.window.application
         name = app.preferences.get('pychron.general.remote')
         if not name:
-            name = 'NMGRL/Laboratory'
+            information(event.task.window, 'Please set an "Laboratory Repo" in General Preferences')
+            return
 
         url = 'https://github.com/{}/issues/new'.format(name)
         self._open_url(url)
