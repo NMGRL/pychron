@@ -115,7 +115,7 @@ class IonOpticsManager(Manager):
         return dac
 
     def get_position(self, *args, **kw):
-        kw['update_isotopes']=False
+        kw['update_isotopes'] = False
         return self._get_position(*args, **kw)
 
     def position(self, pos, detector, *args, **kw):
@@ -316,7 +316,7 @@ class IonOpticsManager(Manager):
 
         if timeout:
             evt = Event()
-            self.timeout_thread = Thread(target=self._timeout_func, args=(timeout,evt))
+            self.timeout_thread = Thread(target=self._timeout_func, args=(timeout, evt))
             self.timeout_thread.start()
 
         dac_d = pc.get_peak_center()
@@ -348,7 +348,7 @@ class IonOpticsManager(Manager):
 
             # needs to be called on the main thread to properly update
             # the menubar actions. alive=False enables IonOptics>Peak Center
-        #        d = lambda:self.trait_set(alive=False)
+        # d = lambda:self.trait_set(alive=False)
         # still necessary with qt? and tasks
 
         if on_end:
@@ -428,7 +428,7 @@ if __name__ == '__main__':
 # ============= EOF =============================================
 # def _graph_factory(self):
 # g = Graph(
-#                  container_dict=dict(padding=5, bgcolor='gray'))
+# container_dict=dict(padding=5, bgcolor='gray'))
 #        g.new_plot()
 #        return g
 #

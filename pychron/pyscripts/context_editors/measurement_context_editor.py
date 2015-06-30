@@ -220,6 +220,8 @@ class MeasurementContextEditor(ContextEditor):
             show_border=True, label='Multicollect')
 
         bs_grp = VGroup(HGroup(Item('object.baseline.mass'),
+                               Item('object.baseline.detector',
+                                    editor=ComboboxEditor(name='available_detectors')),
                         Item('object.baseline.counts')),
                         HGroup(Item('object.baseline.before'),
                                Item('object.baseline.after')),
