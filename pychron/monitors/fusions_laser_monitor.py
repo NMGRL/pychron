@@ -90,6 +90,10 @@ class FusionsLaserMonitor(LaserMonitor):
             else:
                 self._coolant_check_cnt = 0
 
+    def reset(self):
+        self._coolant_check_status_cnt = 0
+        self._coolant_check_cnt = 0
+
     def _fcheck_coolant_status(self):
         manager = self.manager
         self.info('Check laser coolant status')
@@ -100,7 +104,7 @@ class FusionsLaserMonitor(LaserMonitor):
             self._chiller_unavailable()
         else:
             self._unavailable_cnt = 0
-            if status:
+            if status and all(status):
                 if self._coolant_check_status_cnt > self.max_coolant_temp_tries:
                     status = ','.join(status) if isinstance(status, list) else status
                     reason = 'Laser coolant error {}'.format(status)
