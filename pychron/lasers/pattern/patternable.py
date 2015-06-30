@@ -38,5 +38,7 @@ class Patternable(Manager):
             import traceback
             traceback.print_exc()
             self.debug('load pattern:{}'.format(e))
+        finally:
+            fileobj.close()
 
 # ============= EOF =============================================

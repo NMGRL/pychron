@@ -182,6 +182,8 @@ class MotionController(CoreDevice):
     def set_single_axis_motion_parameters(self, *args, **kw):
         pass
 
+    def get_current_xy(self):
+        return
 # ===============================================================================
 # private
 # ===============================================================================
@@ -233,9 +235,10 @@ class MotionController(CoreDevice):
             self.parent.canvas.clear_desired_position()
             self.update_axes()
         else:
-            x = self.get_current_position('x')
-            y = self.get_current_position('y')
-            self.parent.canvas.set_stage_position(x, y)
+
+            xy = self.get_current_xy()
+            if xy:
+                self.parent.canvas.set_stage_position(*xy)
 
     def _sign_correct(self, val, key, ratio=True):
         """
