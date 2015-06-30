@@ -106,24 +106,24 @@ class BaseMeasurement(HasTraits):
             return self._n
 
     def _set_n(self, v):
-        self._n=v
+        self._n = v
 
     def _get_offset_xs(self):
         return self.xs - self.time_zero_offset
 
     def get_slope(self, n):
-        if len(self.xs) and len(self.ys) and len(self.xs)==len(self.ys):
-            xs=self.xs
-            ys=self.ys
-            if n!=-1:
-                xs=xs[-n:]
-                ys=ys[-n:]
+        if len(self.xs) and len(self.ys) and len(self.xs) == len(self.ys):
+            xs = self.xs
+            ys = self.ys
+            if n != -1:
+                xs = xs[-n:]
+                ys = ys[-n:]
 
             return polyfit(xs, ys, 1)[0]
 
 
 class IsotopicMeasurement(BaseMeasurement):
-    uvalue = Property(depends_on='dirty')  #depends_on='value, error, _value, _error, dirty')
+    uvalue = Property(depends_on='dirty')  # depends_on='value, error, _value, _error, dirty')
 
     # value = Property(depends_on='_value, dirty')
     # error = Property(depends_on='_error, dirty')
@@ -156,7 +156,7 @@ class IsotopicMeasurement(BaseMeasurement):
 
     # __slots__ = ['_fit', '_value', '_error', 'filter_outliers_dict',
     # 'include_baseline_error',
-    #              '_ovalue', '_oerror',
+    # '_ovalue', '_oerror',
     #              'include_baseline_error', 'use_static',
     #              'user_defined_value',
     #              'user_defined_error', 'fit_blocks', 'error_type']
@@ -232,10 +232,10 @@ class IsotopicMeasurement(BaseMeasurement):
                         return f
 
     def set_filter_outliers_dict(self, filter_outliers=True, iterations=1, std_devs=2, notify=True):
-        self.filter_outliers_dict={'filter_outliers':filter_outliers,
-                                   'iterations':iterations,
-                                   'std_devs':std_devs}
-        self.dirty=notify
+        self.filter_outliers_dict = {'filter_outliers': filter_outliers,
+                                     'iterations': iterations,
+                                     'std_devs': std_devs}
+        self.dirty = notify
 
     def set_fit(self, fit, notify=True):
         if fit is not None:
@@ -411,6 +411,10 @@ class Sniff(BaseMeasurement):
     pass
 
 
+class Whiff(BaseMeasurement):
+    pass
+
+
 class BaseIsotope(IsotopicMeasurement):
     baseline = Instance(Baseline, ())
     baseline_fit_abbreviation = Property(depends_on='baseline:fit')
@@ -438,6 +442,7 @@ class Isotope(BaseIsotope):
     blank = Instance(Blank, ())
     background = Instance(Background)
     sniff = Instance(Sniff)
+    whiff = Instance(Whiff)
 
     correct_for_blank = True
     ic_factor = Either(Variable, AffineScalarFunc)
@@ -452,7 +457,7 @@ class Isotope(BaseIsotope):
 
     # __slots__ = ['interference_corrected_value',
     # 'discrimination', 'ic_factor',
-    #              'sniff', 'blank', 'background'
+    # 'sniff', 'blank', 'background'
     #                                'age_error_component']
 
     def get_filtered_data(self):
@@ -517,6 +522,9 @@ class Isotope(BaseIsotope):
 
     def set_baseline(self, v, e):
         self.baseline = Baseline(_value=v, _error=e)
+
+    def _whiff_default(self):
+        return Whiff()
 
     def _sniff_default(self):
         return Sniff()

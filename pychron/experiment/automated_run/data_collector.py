@@ -66,7 +66,7 @@ class DataCollector(Consoleable):
     _warned_no_fit = None
     _warned_no_det = None
 
-    collection_kind = Enum(('sniff', 'signal', 'baseline'))
+    collection_kind = Enum(('sniff', 'signal', 'baseline','whiff'))
     refresh_age = False
     _data = None
     _temp_conds = None
@@ -122,7 +122,6 @@ class DataCollector(Consoleable):
 
         tt = time.time() - st
         self.debug('estimated time: {:0.3f} actual time: :{:0.3f}'.format(et, tt))
-
 
     def plot_data(self, *args, **kw):
         from pychron.core.ui.gui import invoke_in_main_thread

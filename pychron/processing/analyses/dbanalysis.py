@@ -146,7 +146,7 @@ class DBAnalysis(Analysis):
             r = ufloat(1, 0)
 
         # if det in self.ic_factors:
-        #     r = self.ic_factors[det]
+        # r = self.ic_factors[det]
         # else:
         #     r = ufloat(1, 1e-20)
 
@@ -197,7 +197,7 @@ class DBAnalysis(Analysis):
         self._sync_detector_info(meas_analysis, **kw)
 
     # def sync_arar(self, meas_analysis):
-    #     # self.debug('not using db arar')
+    # # self.debug('not using db arar')
     #     return
     #
     #     hist = meas_analysis.selected_histories.selected_arar
@@ -218,7 +218,7 @@ class DBAnalysis(Analysis):
     #         self.arar_result.update(d)
     def sync_peak_center(self, meas_analysis):
         pc, data = self._get_peak_center(meas_analysis)
-        self.peak_center = ufloat(pc,0)
+        self.peak_center = ufloat(pc, 0)
         self.peak_center_data = data
 
     def sync_aux(self, dbrecord_tuple, load_changes=True):

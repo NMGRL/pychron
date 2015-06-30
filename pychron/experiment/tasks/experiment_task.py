@@ -614,10 +614,13 @@ class ExperimentEditorTask(EditorTask):
         self.save()
 
     @on_trait_change('active_editor:dirty')
-    def _update_active_editor_dirty(self):
-        if self.active_editor:
-            if self.active_editor.dirty:
-                self.manager.executor.executable = False
+    def _update_active_editor_dirty(self, new):
+        if new and self.manager:
+            self.manager.executor.executable = False
+        # if self.active_editor:
+        #     if self.active_editor.dirty:
+        #         if self.manager:
+        #             self.manager.executor.executable = False
 
     # ===============================================================================
     # default/factory
