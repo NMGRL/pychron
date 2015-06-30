@@ -135,7 +135,7 @@ class FusionsCO2LogicBoard(FusionsLogicBoard):
             self.warning(msg)
             return msg
 
-    def _enable_laser(self):
+    def _enable_laser(self, **kw):
         '''
         '''
         cmd = self._build_command('PWE', '1')

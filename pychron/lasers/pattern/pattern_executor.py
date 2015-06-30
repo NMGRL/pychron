@@ -149,8 +149,8 @@ class PatternExecutor(Patternable):
     def _execute(self):
         pat = self.pattern
         if pat:
-            self.info('enabling laser')
-            self.laser_manager.enable_device(clear_setpoint=False)
+            #self.info('enabling laser')
+            #self.laser_manager.enable_device(clear_setpoint=False)
 
             self.info('starting pattern {}'.format(pat.name))
             st = time.time()
