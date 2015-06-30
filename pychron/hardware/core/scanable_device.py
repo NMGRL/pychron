@@ -107,6 +107,9 @@ class ScanableDevice(ViewableDevice):
 
             if v is not None:
                 self.current_scan_value = str(v)
+
+                self.debug('current scan func={}, value ={}'.format(self.scan_func, v))
+
                 x = None
                 if self.graph_scan_data:
                     if isinstance(v, tuple):
@@ -150,7 +153,7 @@ class ScanableDevice(ViewableDevice):
                 '''
                 if self._no_response_counter > 3:
                     self.timer.Stop()
-                    self.info('no response. stopping scan')
+                    self.info('no response. stopping scan func={}'.format(self.scan_func))
                     self._scanning = False
                     self._no_response_counter = 0
 

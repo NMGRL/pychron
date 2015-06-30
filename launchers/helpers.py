@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from ConfigParser import NoSectionError
 from pyface.constant import OK
 from traits.etsconfig.api import ETSConfig
 
@@ -884,8 +885,16 @@ def initialize_version(appname, debug):
 
     logger.debug('using Pychron root: {}'.format(proot))
     paths.build(proot)
+    try:
+        cp.set('pychron.general', 'root_dir', proot)
+    except NoSectionError:
+        cp.add_section('pychron.general')
+        cp.set('pychron.general', 'root_dir', proot)
 
-    cp.set('pychron.general', 'root_dir', proot)
+    root = os.path.dirname(pref_path)
+    if not os.path.isdir(root):
+        os.mkdir(root)
+
     with open(pref_path, 'w') as wfile:
         cp.write(wfile)
 
