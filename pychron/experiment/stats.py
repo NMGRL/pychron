@@ -42,7 +42,7 @@ class AutomatedRunDurationTracker(Loggable):
                     line = line.strip()
                     if line:
                         h, d = line.split(',')
-                        items.append((h, d))
+                        items.append((h, float(d)))
         self.items = items
 
     def update(self, rh, t):
@@ -57,9 +57,10 @@ class AutomatedRunDurationTracker(Loggable):
                     line = line.strip()
                     if line:
                         h, d = line.split(',')
+
                         # update the runs duration by taking average of current (t) and previous (d) durations
                         if h == rh:
-                            o = (h, (d + t) * 0.5)
+                            o = (h, (float(d) + t) * 0.5)
                             exists = True
                         else:
                             o = (h, d)
