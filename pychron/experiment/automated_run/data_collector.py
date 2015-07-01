@@ -315,6 +315,7 @@ class DataCollector(Consoleable):
     def _check_conditionals(self, conditionals, cnt):
         for ti in conditionals:
             if ti.check(self.automated_run, self._data, cnt):
+                self.info('Conditional tripped: {}'.format(ti.to_string()))
                 return ti
 
     def _check_iteration(self, evt, i):
