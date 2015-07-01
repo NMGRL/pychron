@@ -51,19 +51,19 @@ class AutomatedRunDurationTracker(Loggable):
 
         out = []
         exists = False
-        with open(p, 'r') as rfile:
-            for line in rfile:
-                line = line.strip()
-                if line:
-                    h, d = line.split(',')
-                    # update the runs duration by taking average of current (t) and previous (d) durations
-                    if h == rh:
-                        o = (h, (d + t) * 0.5)
-                        exists = True
-                    else:
-                        o = (h, d)
-
-                    out.append(o)
+        if os.path.isfile(p):
+            with open(p, 'r') as rfile:
+                for line in rfile:
+                    line = line.strip()
+                    if line:
+                        h, d = line.split(',')
+                        # update the runs duration by taking average of current (t) and previous (d) durations
+                        if h == rh:
+                            o = (h, (d + t) * 0.5)
+                            exists = True
+                        else:
+                            o = (h, d)
+                        out.append(o)
         if not exists:
             out.append((rh, t))
 
@@ -197,7 +197,7 @@ class ExperimentStats(Loggable):
 
     def update_run_duration(self, run, t):
         a = self.duration_tracker
-        a.update(run.script_hash, t)
+        a.update(run.spec.script_hash, t)
 
     def finish_run(self):
 

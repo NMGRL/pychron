@@ -24,7 +24,7 @@ import os
 import xlrd
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import add_extension, backup
-from pychron.core.ui.preference_binding import color_bind_preference
+from pychron.core.ui.preference_binding import color_bind_preference, extract_color, toTuple
 from pychron.envisage.tasks.editor_task import EditorTask
 from pychron.envisage.tasks.pane_helpers import ConsolePane
 from pychron.experiment.experiment_launch_history import update_launch_history
@@ -137,7 +137,9 @@ class ExperimentEditorTask(EditorTask):
         for c in ('success', 'extraction', 'measurement', 'canceled', 'truncated',
                   'failed', 'end_after', 'invalid'):
             v = self.application.preferences.get('pychron.experiment.{}_color'.format(c))
-            colors[c] = v
+            tt = toTuple(v)
+            # print 'fff',v, tt, type(tt[0]), type(tt[1]), type(tt[2])
+            colors[c] = '#{:02X}{:02X}{:02X}'.format(*toTuple(v)[:3])
         return colors
 
     def new(self):
