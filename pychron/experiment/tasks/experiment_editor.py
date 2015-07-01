@@ -80,11 +80,12 @@ class ExperimentEditor(BaseTraitsEditor):
     def refresh(self):
         self.queue.refresh_table_needed = True
 
-    def setup_tabular_adapters(self, c, ec):
+    def setup_tabular_adapters(self, c, ec, colors):
         self.bgcolor = c
         self.tabular_adapter = self.tabular_adapter_klass()
         self.executed_tabular_adapter = self.executed_tabular_adapter_klass()
 
+        self.executed_tabular_adapter.colors = colors
         self.tabular_adapter.odd_bg_color = c
         self.executed_tabular_adapter.odd_bg_color = c
         self.tabular_adapter.even_bg_color = ec

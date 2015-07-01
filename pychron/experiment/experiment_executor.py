@@ -222,6 +222,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.dashboard_client = self.application.get_service('pychron.dashboard.client.DashboardClient')
 
     def execute(self):
+
         if self.user_notifier.emailer is None:
             if any((eq.use_email or eq.use_group_email for eq in self.experiment_queues)):
                 if not self.confirmation_dialog('Email Plugin not initialized. '

@@ -132,14 +132,23 @@ class ExperimentEditorTask(EditorTask):
         ex.end_at_run_completion = False
         ex.set_extract_state('')
 
+    def _assemble_state_colors(self):
+        colors = {}
+        for c in ('success', 'extraction', 'measurement', 'canceled', 'truncated',
+                  'failed', 'end_after', 'invalid'):
+            v = self.application.preferences.get('pychron.experiment.{}_color'.format(c))
+            colors[c] = v
+        return colors
+
     def new(self):
         manager = self.manager
         if manager.verify_database_connection(inform=True):
+
             if manager.load():
                 self.manager.experiment_factory.activate(load_persistence=True)
 
                 editor = ExperimentEditor()
-                editor.setup_tabular_adapters(self.bgcolor, self.even_bgcolor)
+                editor.setup_tabular_adapters(self.bgcolor, self.even_bgcolor, self._assemble_state_colors())
                 editor.new_queue()
 
                 self._open_editor(editor)
@@ -167,7 +176,7 @@ class ExperimentEditorTask(EditorTask):
             self.notifier.close()
 
         # del manager. fixes problem of multiple experiments being started
-        # closes tasks were still receiving execute_event(s)
+        # closed tasks were still receiving execute_event(s)
         del self.manager
 
     def bind_preferences(self):
@@ -205,7 +214,7 @@ class ExperimentEditorTask(EditorTask):
         self.isotope_evolution_pane = IsotopeEvolutionPane(name=name)
 
         self.experiment_factory_pane = ExperimentFactoryPane(model=self.manager.experiment_factory)
-        self.wait_pane = WaitPane(model=self.manager.executor)
+        self.wait_pane = WaitPane(model=self.manager.executor.wait_group)
 
         ex = self.manager.executor
         panes = [StatsPane(model=self.manager),
@@ -286,7 +295,7 @@ class ExperimentEditorTask(EditorTask):
             klass = UVExperimentEditor if is_uv else ExperimentEditor
             editor = klass(path=path,
                            automated_runs_editable=self.automated_runs_editable)
-            editor.setup_tabular_adapters(self.bgcolor, self.even_bgcolor)
+            editor.setup_tabular_adapters(self.bgcolor, self.even_bgcolor, self._assemble_state_colors())
             editor.new_queue(txt)
             self._open_editor(editor)
         else:
@@ -568,7 +577,6 @@ class ExperimentEditorTask(EditorTask):
 
     @on_trait_change('manager:execute_event')
     def _execute(self, obj, name, old, new):
-        print obj, name, old, new
         self.debug('execute event {} {}'.format(id(self), id(obj)))
 
         if self.editor_area.editors:

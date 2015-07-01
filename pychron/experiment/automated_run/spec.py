@@ -487,7 +487,7 @@ class AutomatedRunSpec(HasTraits):
         ctx['extraction'] = self.measurement_script
 
         md5 = hashlib.md5()
-        for k, v in sorted(ctx.values()):
+        for k, v in sorted(ctx.items()):
             md5.update(str(k))
             md5.update(str(v))
         return md5.hexdigest()

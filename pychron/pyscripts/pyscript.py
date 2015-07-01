@@ -774,7 +774,7 @@ class PyScript(Loggable):
         else:
             time.sleep(v)
 
-    def _setup_wait_control(self, timeout, message):
+    def _setup_wait_control(self):
         from pychron.wait.wait_control import WaitControl
 
         if self.manager:
@@ -787,11 +787,9 @@ class PyScript(Loggable):
 
         self._wait_control = wd
         if self.manager:
+            if wd not in self.manager.wait_group.controls:
+                self.manager.wait_group.controls.append(wd)
             self.manager.wait_group.active_control = wd
-
-        msg = 'WaitControl setup for {:0.1f}  {}'.format(timeout, message)
-        wd.trait_set(message=msg, duration=timeout)
-        self.debug(msg)
 
         return wd
 
@@ -811,9 +809,12 @@ class PyScript(Loggable):
             """
             with BLOCK_LOCK:
                 # with self._block_lock:
-                wd = self._setup_wait_control(timeout, message)
+                wd = self._setup_wait_control()
 
-            wd.start(duration=timeout)
+            msg = 'WaitControl setup for {:0.1f}  {}'.format(timeout, message)
+
+            self.debug(msg)
+            wd.start(duration=timeout, message=msg)
             # wd.join()
 
             if self.manager:

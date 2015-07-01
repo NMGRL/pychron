@@ -35,12 +35,13 @@ from pychron.pyscripts.hops_editor import HopEditorModel, HopEditorView
 
 class YamlObject(HasTraits):
     name = ''
-    excludes=None
+    excludes = None
 
     def load(self, ctx):
         try:
             for k, v in ctx[self.name].items():
                 setattr(self, k, v)
+            ctx.pop(self.name)
         except (KeyError, TraitError):
             pass
 
@@ -55,7 +56,7 @@ class YamlObject(HasTraits):
 
         excludes = ['trait_added', 'trait_modified', 'name']
         if self.excludes:
-            excludes+=self.excludes
+            excludes += self.excludes
 
         return {k: get(k)
                 for k in self.trait_names() if not k in excludes}
@@ -126,6 +127,8 @@ class MeasurementContextEditor(ContextEditor):
     available_detectors = List
     isotopes = List
 
+    _octx = None
+
     # persistence
     def load(self, s):
         with no_update(self):
@@ -154,6 +157,7 @@ class MeasurementContextEditor(ContextEditor):
                 self.peakhop.load(ctx)
 
                 self.default_fits = ctx.get('default_fits', '')
+                self._octx = ctx
 
     def dump(self):
         ctx = dict(default_fits=self.default_fits,
@@ -162,7 +166,8 @@ class MeasurementContextEditor(ContextEditor):
                    peakcenter=self.peakcenter.dump(),
                    equilibration=self.equilibration.dump(),
                    peakhop=self.peakhop.dump())
-
+        if self._octx:
+            ctx.update(self._octx)
         return yaml.dump(ctx, default_flow_style=False)
 
     def generate_docstr(self):
@@ -214,27 +219,27 @@ class MeasurementContextEditor(ContextEditor):
     def traits_view(self):
         mc_grp = VGroup(HGroup(Item('object.multicollect.isotope',
                                     editor=ComboboxEditor(name='isotopes')),
-            Item('object.multicollect.detector',
-                 editor=ComboboxEditor(name='available_detectors'))),
-            Item('object.multicollect.counts'),
-            show_border=True, label='Multicollect')
+                               Item('object.multicollect.detector',
+                                    editor=ComboboxEditor(name='available_detectors'))),
+                        Item('object.multicollect.counts'),
+                        show_border=True, label='Multicollect')
 
         bs_grp = VGroup(HGroup(Item('object.baseline.mass'),
                                Item('object.baseline.detector',
                                     editor=ComboboxEditor(name='available_detectors')),
-                        Item('object.baseline.counts')),
+                               Item('object.baseline.counts')),
                         HGroup(Item('object.baseline.before'),
                                Item('object.baseline.after')),
-                        Item('object.baseline.settling_time',),
+                        Item('object.baseline.settling_time', ),
                         show_border=True, label='Baseline')
 
         pc_grp = VGroup(
             HGroup(Item('object.peakcenter.isotope',
                         editor=ComboboxEditor(name='isotopes'),
                         label='Iso.'),
-            Item('object.peakcenter.detector',
-                 label='Det.',
-                 editor=ComboboxEditor(name='available_detectors'))),
+                   Item('object.peakcenter.detector',
+                        label='Det.',
+                        editor=ComboboxEditor(name='available_detectors'))),
             HGroup(Item('object.peakcenter.before'),
                    Item('object.peakcenter.after')),
             Item('object.peakcenter.detectors', style='custom',
@@ -243,8 +248,8 @@ class MeasurementContextEditor(ContextEditor):
 
         eq_grp = VGroup(HGroup(Item('object.equilibration.inlet',
                                     editor=ComboboxEditor(name='valves')),
-                        Item('object.equilibration.outlet',
-                             editor=ComboboxEditor(name='valves'))),
+                               Item('object.equilibration.outlet',
+                                    editor=ComboboxEditor(name='valves'))),
                         Item('object.equilibration.inlet_delay'),
                         Item('object.equilibration.use_extraction_eqtime'),
                         Item('object.equilibration.eqtime',
@@ -264,7 +269,7 @@ class MeasurementContextEditor(ContextEditor):
                               editor=EnumEditor(name='available_default_fits')),
                          show_border=True, label='General')
 
-        #using VFold causing crash. just use VGroup for now
+        # using VFold causing crash. just use VGroup for now
         # v = View(VFold(gen_grp, mc_grp, bs_grp, pc_grp, eq_grp, ph_grp))
         v = View(VGroup(gen_grp, mc_grp, bs_grp, pc_grp, eq_grp, ph_grp))
         return v

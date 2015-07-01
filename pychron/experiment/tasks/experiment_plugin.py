@@ -35,7 +35,8 @@ from pychron.experiment.tasks.experiment_actions import NewExperimentQueueAction
     OpenExperimentQueueAction, SignalCalculatorAction, \
     DeselectAction, SendTestNotificationAction, \
     NewPatternAction, OpenPatternAction, ResetQueuesAction, OpenLastExperimentQueueAction, UndoAction, \
-    QueueConditionalsAction, ConfigureEditorTableAction, SystemConditionalsAction, ResetSystemHealthAction
+    QueueConditionalsAction, ConfigureEditorTableAction, SystemConditionalsAction, ResetSystemHealthAction, \
+    OpenExperimentHistoryAction
 
 
 class ExperimentPlugin(BaseTaskPlugin):
@@ -93,14 +94,13 @@ class ExperimentPlugin(BaseTaskPlugin):
         for eid, actions in self._get_extensions():
             # print 'b', eid, len(actions)
             for ai in actions:
-                # print 'c',ai,ai.id
                 if not eflag and ai.id.startswith('pychron.experiment.edit'):
                     eflag = True
                     additions.append(SchemaAddition(id='experiment.edit',
                                                     factory=lambda: SGroup(id='experiment.group'),
                                                     path='MenuBar/Edit'), )
-
-        extensions.append(TaskExtension(actions=additions))
+        if additions:
+            extensions.append(TaskExtension(actions=additions, task_id=''))
         return extensions
 
     def _available_task_extensions_default(self):
@@ -114,6 +114,8 @@ class ExperimentPlugin(BaseTaskPlugin):
                   SchemaAddition(id='pychron.experiment.open_experiment', factory=OpenExperimentQueueAction,
                                  path='MenuBar/file.menu/Open'),
                   SchemaAddition(id='pychron.experiment.open_last_experiment', factory=OpenLastExperimentQueueAction,
+                                 path='MenuBar/file.menu/Open'),
+                  SchemaAddition(id='pychron.experiment.launch_history', factory=OpenExperimentHistoryAction,
                                  path='MenuBar/file.menu/Open'),
                   SchemaAddition(id='pychron.experiment.test_notify', factory=SendTestNotificationAction,
                                  path='MenuBar/file.menu'),

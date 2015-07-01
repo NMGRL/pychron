@@ -209,11 +209,13 @@ class NewExperimentQueueAction(ExperimentAction):
 
 class OpenExperimentHistoryAction(Action):
     name = 'Experiment Launch History'
+    dname = 'Experiment Launch History'
 
     def perform(self, event):
         from pychron.experiment.experiment_launch_history import ExperimentLaunchHistory
 
         elh = ExperimentLaunchHistory()
+        elh.load()
         info = elh.edit_traits()
         if info.result:
             if elh.selected:

@@ -15,31 +15,39 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import os
-import time
 
-from traits.api import HasTraits, Str, Int, List, Event
+from traits.api import HasTraits, Str, Int, List, Event, Instance
 from traitsui.api import View, UItem
+from traitsui.tabular_adapter import TabularAdapter
 
 # ============= standard library imports ========================
+import os
+import time
 # ============= local library imports  ==========================
-from traitsui.tabular_adapter import TabularAdapter
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.paths import paths
 
 
 def update_launch_history(path):
     out = []
-    with open(paths.experiment_launch_history, 'r') as rfile:
-        for line in rfile:
-            l, t, p = line.split(',')
-            if p == path:
-                t += 1
-                l = time.time()
-            out.append((t, l, p))
+    exists = False
+    if os.path.isfile(paths.experiment_launch_history):
+        with open(paths.experiment_launch_history, 'r') as rfile:
+            for line in rfile:
+                line = line.strip()
+                if line:
+                    l, t, p = line.split(',')
+                    t = int(t)
+                    if p == path:
+                        t += 1
+                        l = time.time()
+                        exists = True
+                    out.append((l, t, p))
 
-        else:
-            out.append((time.time(), 1, p))
+    if not exists:
+        out.append((time.time(), 1, path))
+        # else:
+        # out.append((time.time(), 1, p))
 
     with open(paths.experiment_launch_history, 'w') as wfile:
 
@@ -60,7 +68,7 @@ class LaunchItem(HasTraits):
 
 class ExperimentLaunchHistory(HasTraits):
     items = List
-    selected = LaunchItem
+    selected = Instance(LaunchItem)
     dclicked = Event
 
     def load(self):
@@ -81,6 +89,7 @@ class ExperimentLaunchHistory(HasTraits):
                                                        selected='selected',
                                                        dclicked='dclicked',
                                                        editable=False)),
+                 width=700,
                  title='Experiment Launch History',
                  buttons=['OK', 'Cancel'],
                  resizable=True, kind='livemodal')

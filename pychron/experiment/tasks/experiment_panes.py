@@ -18,7 +18,7 @@
 from traits.api import Color, Instance, DelegatesTo, List, Any, Property
 from traitsui.api import View, Item, UItem, VGroup, HGroup, spring, \
     EnumEditor, Group, Spring, VFold, Label, InstanceEditor, \
-    VSplit, TabularEditor, UReadonly, ListEditor
+    VSplit, TabularEditor, UReadonly, ListEditor, RangeEditor
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traitsui.editors import TableEditor, CheckListEditor
 from traitsui.table_column import ObjectColumn
@@ -67,7 +67,7 @@ class ExperimentFactoryPane(TraitsDockPane):
         return '<font size="12" color="green"><b>{}</b></font>'.format(self.model.run_factory.info_label)
 
     def traits_view(self):
-# QLabel {font-size: 10px}
+        # QLabel {font-size: 10px}
 
         ss = '''
 QLineEdit {font-size: 10px}
@@ -209,8 +209,8 @@ QComboBox {font-size: 10px}
                    spring),
 
             # HGroup(run_factory_item('labnumber',
-            #                         tooltip='Enter a Labnumber',
-            #                         width=100, ),
+            # tooltip='Enter a Labnumber',
+            # width=100, ),
             #        run_factory_item('_labnumber', show_label=False,
             #                         editor=CheckListEditor(name=run_factory_name('labnumbers')),
             #                         width=-20),
@@ -261,7 +261,7 @@ QComboBox {font-size: 10px}
                                       'delete',
                                       tooltip='Clear Conditionals from selected runs'
                                       # enabled_when=run_factory_name('edit_mode')
-                                      )),
+                   )),
             HGroup(
                 run_factory_item('trunc_attr',
                                  editor=EnumEditor(name=run_factory_name('trunc_attrs')),
@@ -321,10 +321,42 @@ class WaitPane(TraitsDockPane):
     name = 'Wait'
 
     def traits_view(self):
-        v = View(
-            UItem('wait_group',
-                  style='custom'))
+        cview = View(VGroup(
+            CustomLabel('message',
+                        size=14,
+                        weight='bold',
+                        color_name='message_color'),
+
+            HGroup(Spring(width=-5, springy=False),
+                   Item('high', label='Set Max. Seconds'),
+                   spring,
+                   CustomLabel('current_time',
+                               size=14,
+                               weight='bold'),
+                   UItem('continue_button')),
+            HGroup(Spring(width=-5, springy=False),
+                   Item('current_time', show_label=False,
+                        editor=RangeEditor(mode='slider', low=1, high_name='duration')))))
+
+        v = View(UItem('active_control',
+                       style='custom',
+                       visible_when='single',
+                       editor=InstanceEditor(view=cview)),
+                 UItem('controls',
+                       editor=ListEditor(
+                           use_notebook=True,
+                           selected='active_control',
+                           page_name='.page_name',
+                           view=cview),
+                       style='custom',
+                       visible_when='not single'))
         return v
+
+        # def traits_view(self):
+        # v = View(
+        # UItem('wait_group',
+        #               style='custom'))
+        #     return v
 
 
 class ConnectionStatusPane(TraitsDockPane):
@@ -401,7 +433,7 @@ Quick=   measure_iteration stopped at current step
                       tooltip=truncate_style_tt),
                 UItem('show_conditionals_button',
                       # enabled_when='measuring'
-                      ),
+                ),
                 spacer(-75),
                 CustomLabel('extraction_state_label',
                             color_name='extraction_state_color',

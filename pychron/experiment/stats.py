@@ -15,21 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import datetime
-import time
-
 from traits.api import Property, String, Float, Any, Int, List, Instance, Bool
-
 from traitsui.api import View, Item, VGroup, UItem
-
+# ============= standard library imports ========================
+import datetime
+import os
+import time
+# ============= local library imports  ==========================
 from pychron.core.helpers.timer import Timer
 from pychron.core.ui.pie_clock import PieClockModel
 from pychron.loggable import Loggable
-
-
-
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from pychron.paths import paths
 from pychron.pychron_constants import MEASUREMENT_COLOR, EXTRACTION_COLOR
 
@@ -41,12 +36,13 @@ class AutomatedRunDurationTracker(Loggable):
 
     def load(self):
         items = []
-        with open(paths.duration_tracker, 'r') as rfile:
-            for line in rfile:
-                line = line.strip()
-                if line:
-                    h, d = line.split(',')
-                    items.append((h, d))
+        if os.path.isfile(paths.duration_tracker):
+            with open(paths.duration_tracker, 'r') as rfile:
+                for line in rfile:
+                    line = line.strip()
+                    if line:
+                        h, d = line.split(',')
+                        items.append((h, d))
         self.items = items
 
     def update(self, rh, t):
