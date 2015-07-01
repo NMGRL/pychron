@@ -592,6 +592,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         mem_log('> end join')
 
     def _do_run(self, run):
+        st = time.time()
+
         self.debug('do run')
 
         if self.stats:
@@ -606,7 +608,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         run.is_last = len(q.cleaned_automated_runs) == 1
 
         self.extracting_run = run
-        st = time.time()
+
         for step in ('_start',
                      '_extraction',
                      '_measurement',
@@ -630,17 +632,13 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if not run.state in ('truncated', 'canceled', 'failed'):
                 run.state = 'success'
 
-        if self.stats:
-            # self.stats.nruns_finished += 1
-            self.stats.finish_run()
-
         if run.state in ('success', 'truncated'):
             self.run_completed = run
 
         self._remove_backup(run.uuid)
 
         # check to see if action should be taken
-        if not run.state in ('canceled', 'failed'):
+        if run.state not in ('canceled', 'failed'):
             if self._post_run_check(run):
                 self._err_message = 'Post Run Check Failed'
                 self.warning('post run check failed')
@@ -657,6 +655,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.labspy_client.add_run(run, self.experiment_queue)
 
         mem_log('end run')
+        if self.stats:
+            self.stats.update_run_duration(run, t)
 
     def _overlapped_run(self, v):
         self._overlapping = True
