@@ -127,7 +127,7 @@ class ExperimentPlugin(BaseTaskPlugin):
                                  path='MenuBar/file.menu/New'),
                   SchemaAddition(id='pychron.experiment.open_pattern', factory=OpenPatternAction,
                                  path='MenuBar/file.menu/Open')]),
-                ('{}.edit'.format(self.id), self.id, 'ExperimentEdit',
+                ('{}.edit'.format(self.id), 'pychron.experiment.task', 'ExperimentEdit',
                  [SchemaAddition(id='pychron.experiment.edit.deselect', factory=DeselectAction,
                                  path='MenuBar/Edit/experiment.group'),
                   SchemaAddition(id='pychron.experiment.edit.reset', factory=ResetQueuesAction,

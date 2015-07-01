@@ -202,7 +202,7 @@ QComboBox {font-size: 10px}
                    run_factory_item('run_block', show_label=False,
                                     editor=EnumEditor(name=run_factory_name('run_blocks'))),
                    icon_button_editor(run_factory_name('edit_run_blocks'), 'cog'),
-                   run_factory_item('frequency_model.frequency', width=50),
+                   run_factory_item('frequency_model.frequency_int', width=50),
                    icon_button_editor(run_factory_name('edit_frequency_button'), 'cog'),
                    # run_factory_item('freq_before', label='Before'),
                    # run_factory_item('freq_after', label='After'),
