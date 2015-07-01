@@ -25,6 +25,7 @@ from pychron.envisage.tasks.actions import PAction as Action, PTaskAction as Tas
 
 
 
+
 # ============= standard library imports ========================
 import os
 # ============= local library imports  ==========================
@@ -173,20 +174,23 @@ class SystemConditionalsAction(Action):
             warning(None, 'No system conditionals file at {}'.format(p))
 
 
-class QueueAction(ExperimentAction):
-    def _open_experiment(self, event, path=None):
-
-        app = event.task.window.application
-        task = event.task
-        if task.id == EXP_ID:
-            task.open(path)
-        else:
-            task = app.get_task(EXP_ID, False)
-            if task.open(path):
-                task.window.open()
+def open_experiment(event, path):
+    app = event.task.window.application
+    task = event.task
+    if task.id == EXP_ID:
+        task.open(path)
+    else:
+        task = app.get_task(EXP_ID, False)
+        if task.open(path):
+            task.window.open()
 
 
-class NewExperimentQueueAction(QueueAction):
+# class QueueAction(ExperimentAction):
+#     def _open_experiment(self, event, path=None):
+#         open_experiment(event, path)
+
+
+class NewExperimentQueueAction(ExperimentAction):
     description = 'Create a new experiment queue'
     name = 'New Experiment'
     dname = 'New Experiment'
@@ -203,7 +207,20 @@ class NewExperimentQueueAction(QueueAction):
                 win.open()
 
 
-class OpenLastExperimentQueueAction(QueueAction):
+class OpenExperimentHistoryAction(Action):
+    name = 'Experiment Launch History'
+
+    def perform(self, event):
+        from pychron.experiment.experiment_launch_history import ExperimentLaunchHistory
+
+        elh = ExperimentLaunchHistory()
+        info = elh.edit_traits()
+        if info.result:
+            if elh.selected:
+                open_experiment(event, elh.selected.path)
+
+
+class OpenLastExperimentQueueAction(ExperimentAction):
     description = 'Open last executed experiment'
     name = 'Open Last Experiment...'
     dname = 'Open Last Experiment'
@@ -216,7 +233,7 @@ class OpenLastExperimentQueueAction(QueueAction):
     def perform(self, event):
         path = self._get_last_experiment()
         if path:
-            self._open_experiment(event, path)
+            open_experiment(event, path)
         else:
             warning(None, 'No last experiment available')
             # if os.path.isfile(paths.last_experiment):
@@ -237,7 +254,7 @@ class OpenLastExperimentQueueAction(QueueAction):
                     return path
 
 
-class OpenExperimentQueueAction(QueueAction):
+class OpenExperimentQueueAction(ExperimentAction):
     description = 'Open experiment'
     name = 'Open Experiment...'
     dname = 'Open Experiment'
@@ -247,7 +264,7 @@ class OpenExperimentQueueAction(QueueAction):
     def perform(self, event):
         path = '/Users/ross/Pychron_dev/experiments/Current Experiment.txt'
         # path = '/Users/ross/Pychrondata_dev/experiments/test.txt'
-        self._open_experiment(event, path)
+        open_experiment(event, path)
 
 
 # ===============================================================================

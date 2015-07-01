@@ -27,6 +27,7 @@ from pychron.core.helpers.filetools import add_extension, backup
 from pychron.core.ui.preference_binding import color_bind_preference
 from pychron.envisage.tasks.editor_task import EditorTask
 from pychron.envisage.tasks.pane_helpers import ConsolePane
+from pychron.experiment.experiment_launch_history import update_launch_history
 from pychron.experiment.queue.base_queue import extract_meta
 from pychron.experiment.tasks.experiment_editor import ExperimentEditor, UVExperimentEditor
 from pychron.experiment.tasks.experiment_panes import LoggerPane
@@ -346,6 +347,8 @@ class ExperimentEditorTask(EditorTask):
         with open(paths.last_experiment, 'w') as wfile:
             wfile.write(p)
         self.last_experiment_changed = True
+
+        update_launch_history(p)
 
     def _save_file(self, path):
         if self.active_editor.save(path):

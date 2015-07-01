@@ -19,11 +19,13 @@ import datetime
 import time
 
 from traits.api import Property, String, Float, Any, Int, List, Instance, Bool
+
 from traitsui.api import View, Item, VGroup, UItem
 
 from pychron.core.helpers.timer import Timer
 from pychron.core.ui.pie_clock import PieClockModel
 from pychron.loggable import Loggable
+
 
 
 # ============= standard library imports ========================
@@ -41,8 +43,10 @@ class AutomatedRunDurationTracker(Loggable):
         items = []
         with open(paths.duration_tracker, 'r') as rfile:
             for line in rfile:
-                h, d = line.split(',')
-                items.append((h, d))
+                line = line.strip()
+                if line:
+                    h, d = line.split(',')
+                    items.append((h, d))
         self.items = items
 
     def update(self, rh, t):
@@ -53,15 +57,17 @@ class AutomatedRunDurationTracker(Loggable):
         exists = False
         with open(p, 'r') as rfile:
             for line in rfile:
-                h, d = line.split(',')
-                # update the runs duration by taking average of current (t) and previous (d) durations
-                if h == rh:
-                    o = (h, (d + t) * 0.5)
-                    exists = True
-                else:
-                    o = (h, d)
+                line = line.strip()
+                if line:
+                    h, d = line.split(',')
+                    # update the runs duration by taking average of current (t) and previous (d) durations
+                    if h == rh:
+                        o = (h, (d + t) * 0.5)
+                        exists = True
+                    else:
+                        o = (h, d)
 
-                out.append(o)
+                    out.append(o)
         if not exists:
             out.append((rh, t))
 
