@@ -320,7 +320,9 @@ ABLE TO USE THE HARDWARE JOYSTICK
         try:
             ax = self.axes[key]
         except KeyError:
-            self.debug('No axes key. {} keys={}'.format(key, self.axes.keys))
+            self.debug('No axes key. {} keys={}'.format(key, self.axes.keys()))
+            return
+
         aid = ax.id
         if self.groupobj is not None:
             if aid in map(int, self.groupobj.axes):

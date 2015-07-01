@@ -322,8 +322,13 @@ class MotionController(CoreDevice):
     def _validate(self, v, key, cur):
         """
         """
-        mi = self.axes[key].negative_limit
-        ma = self.axes[key].positive_limit
+        try:
+            ax = self.axes[key]
+        except KeyError:
+            return
+
+        mi = ax.negative_limit
+        ma = ax.positive_limit
         self.debug('validate {} {} {}'.format(v, key, cur))
         try:
             v = float(v)
