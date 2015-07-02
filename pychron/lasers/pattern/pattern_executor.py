@@ -231,18 +231,35 @@ class PatternExecutor(Patternable):
         g.edit_traits()
         g.new_plot()
         s, p = g.new_series()
+
+        g.new_plot()
+        g.new_series(type='line')
+
         cp = CurrentPointOverlay(component=s)
         s.overlays.append(cp)
         w = 2
         g.set_x_limits(-w, w)
         g.set_y_limits(-w, w)
+        om = 60
+        g.set_x_limits(max_=om, plotid=1)
 
         lm = self.laser_manager
         sm = lm.stage_manager
 
-        def update_graph(pt):
-            cp.point = pt
-            g.add_datum(pt)
+        st = time.time()
+
+        def update_graph(zs, zz, xx, yy):
+            cp.point = (xx, yy)
+            g.add_datum((xx, yy), plotid=0)
+            t = time.time() - st
+            g.add_datum((t, zz),
+                        update_y_limits=True,
+                        plotid=1)
+
+            g.add_datum((t,) * len(zs), zs,
+                        update_y_limits=True,
+                        plotid=1, series=1)
+            g.set_x_limits(max_=max(om, t + 10), plotid=1)
             g.redraw()
 
         pp = os.path.join(paths.data_dir, 'seek_pattern.txt')
@@ -250,10 +267,10 @@ class PatternExecutor(Patternable):
             cx, cy = pattern.cx, pattern.cy
             wfile.write('{},{}\n'.format(cx, cy))
             wfile.write('#z,     x,     y,     n\n')
-
+            gen = pattern.point_generator()
             while self._alive:
-
-                x, y = pattern.next_point
+                x, y = gen.next()
+                # x, y = pattern.next_point
                 controller.linear_move(cx + x, cy + y, block=False, velocity=pattern.velocity)
 
                 mt = time.time()
@@ -274,8 +291,7 @@ class PatternExecutor(Patternable):
 
                     wfile.write('{:0.5f},{:0.3f},{:0.3f},{}\n'.format(z, x, y, n))
 
-                    invoke_in_main_thread(update_graph, (x, y))
-
+                    invoke_in_main_thread(update_graph, zs, z, x, y)
         g.close_ui()
         # if len(triangle) < 3:
         #     z = lm.get_brightness()

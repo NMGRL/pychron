@@ -23,49 +23,74 @@ from pychron.lasers.pattern.patterns import Pattern
 
 class SeekPattern(Pattern):
     duration = Float(0.1)
-    _cnt = 0
+    # _cnt = 0
     _points = List
     base = Float(0.5)
     perimeter_radius = Float(2)
 
-    def next_point(self):
-        if len(self._points) < 3:
-            if self._cnt == 0:
-                x, y = 0, 0
-            elif self._cnt == 1:
-                x, y = self.base, 0
-            else:
-                x, y = self.base / 2., self.base
-            self._cnt += 1
-        else:
-            x, y = triangulator(self._points)
+    def point_generator(self):
 
-            st = sorted(pts, reverse=True)
-            st.pop(-1)
-            self._points = st
+        def gen():
+            yield 0, 0
+            yield self.base, 0
+            yield self.base / 2., self.base
 
-        if not self._validate(x, y):
-            if len(self._points) < 3:
-                x, y = 0, 0
-            else:
-                p1, p2, p3 = self._points
-                x, y = calculate_centroid(array([(p1[1], p1[2]),
-                                                 (p2[1], p2[2]),
-                                                 (p3[1], p3[2])]))
+            while 1:
+                x, y = triangulator(self._points)
 
-                # if next point is outside the perimeter go to triangle center point
-                # st = sorted(pts, reverse=True)
-                # pt1 = st[0]
-                # nx, ny = pt1[1], pt1[2]
-        return x, y
-        # nx, ny = self.cx + x, self.cy + y
-        # return nx, ny
+                st = sorted(pts, reverse=True)
+                st.pop(-1)
+                self._points = st
+
+                if not self._validate(x, y):
+                    if len(self._points) < 3:
+                        x, y = 0, 0
+                    else:
+                        p1, p2, p3 = self._points
+                        x, y = calculate_centroid(array([(p1[1], p1[2]),
+                                                         (p2[1], p2[2]),
+                                                         (p3[1], p3[2])]))
+                yield x, y
+
+        return gen
+
+    # def next_point(self):
+    #     if len(self._points) < 3:
+    #         x, y = 0, 0
+    #         if self._cnt == 1:
+    #             x, y = self.base, 0
+    #         elif self._cnt == 2:
+    #             x, y = self.base / 2., self.base
+    #         self._cnt += 1
+    #     else:
+    #         x, y = triangulator(self._points)
+    #
+    #         st = sorted(pts, reverse=True)
+    #         st.pop(-1)
+    #         self._points = st
+    #
+    #     if not self._validate(x, y):
+    #         if len(self._points) < 3:
+    #             x, y = 0, 0
+    #         else:
+    #             p1, p2, p3 = self._points
+    #             x, y = calculate_centroid(array([(p1[1], p1[2]),
+    #                                              (p2[1], p2[2]),
+    #                                              (p3[1], p3[2])]))
+    #
+    #             # if next point is outside the perimeter go to triangle center point
+    #             # st = sorted(pts, reverse=True)
+    #             # pt1 = st[0]
+    #             # nx, ny = pt1[1], pt1[2]
+    #     return x, y
+    #     # nx, ny = self.cx + x, self.cy + y
+    #     # return nx, ny
 
     def _validate(self, x, y):
-        return (x ** 2 + y ** 2) ** 0.5 < self.perimeter_radius
+        return (x ** 2 + y ** 2) ** 0.5 <= self.perimeter_radius
 
     def set_point(self, z, x, y):
-        self._points.append((z, x - self.cx, y - self.cy))
+        self._points.append((z, x, y))
 
     def maker_view(self):
         v = View(Item('duration',
@@ -114,8 +139,9 @@ def triangulator(pts):
 
 
 if __name__ == '__main__':
-    pts = [(0, 0, 0), (20, 10, 0), (10, 5, 10)]
+    pts = [(20, 0, 0), (20, 10, 0), (10, 5, 10)]
     nx, ny = triangulator(pts)
+    print nx, ny
     import matplotlib.pyplot as plt
 
     pts = [(0, 0), (10, 0), (5, 10)]
@@ -123,6 +149,6 @@ if __name__ == '__main__':
     ys = [0, 0, 10, 0]
     plt.plot(xs, ys)
     plt.plot([nx], [ny], 'o')
-    plt.xlim(-1, 25)
-    plt.ylim(-1, 25)
+    plt.xlim(-25, 25)
+    plt.ylim(-25, 25)
     plt.show()
