@@ -341,9 +341,12 @@ class StageManager(Manager):
         if self.stage_controller.timer is not None:
             moving = self.stage_controller.timer.isActive()
         elif force_query:
-            moving = self.stage_controller._moving_(**kw)
+            moving = self.stage_controller.moving(**kw)
 
         return moving
+
+    def get_brightness(self):
+        return 0
 
     def define_home(self, **kw):
         self.stage_controller.define_home(**kw)

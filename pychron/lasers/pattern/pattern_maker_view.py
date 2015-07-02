@@ -40,7 +40,9 @@ class PatternMakerView(Saveable, Patternable):
                          'LineSpiral',
                          'SquareSpiral',
                          'Random',
-                         'CircularContour', 'Trough', 'Rubberband', 'RasterRubberband'),
+                         'CircularContour', 'Trough',
+                         'Rubberband', 'RasterRubberband',
+                         'Seek'),
                     depends_on='_kind')
     _kind = Str('Polygon')
 
@@ -106,22 +108,33 @@ class PatternMakerView(Saveable, Patternable):
 
     def _set_kind(self, v):
         self._kind = v
-        self.pattern = self.pattern_factory(v)
+
+        pat = self.pattern_factory(v)
+        if pat:
+            self.pattern = pat
 
     # ===============================================================================
     # factories
     # ===============================================================================
     def pattern_factory(self, kind):
+        pattern = None
         name = '{}Pattern'.format(kind)
         try:
             factory = __import__('pychron.lasers.pattern.patterns',
                                  fromlist=[name])
             pattern = getattr(factory, name)()
+        except (ImportError, AttributeError), e:
+            try:
+                factory = __import__('pychron.lasers.pattern.seek_pattern',
+                                     fromlist=[name])
+                pattern = getattr(factory, name)()
+            except ImportError, e:
+                print e
+
+        if pattern:
             pattern.replot()
             pattern.calculate_transit_time()
             return pattern
-        except ImportError, e:
-            print e
             # ===============================================================================
             # defaults
             # ===============================================================================

@@ -15,14 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from numpy import invert, percentile, zeros_like
 from skimage.draw import circle
 
 
-class LumenDetector(HasTraits):
+class LumenDetector(object):
     threshold = 100
     mask_radius = 25
 

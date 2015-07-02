@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from numpy import asarray
 from traits.api import Instance, String, Property, Button, \
     Bool, Event, on_trait_change, Str, Int
 from apptools.preferences.preference_binding import bind_preference
@@ -26,6 +27,8 @@ from threading import Thread, Timer
 import os
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import unique_path, unique_path2
+from pychron.image.cv_wrapper import get_size, crop
+from pychron.mv.lumen_detector import LumenDetector
 from pychron.paths import paths
 from pychron.image.video import Video
 from pychron.canvas.canvas2D.camera import Camera
@@ -82,6 +85,8 @@ class VideoStageManager(StageManager):
 
     _auto_correcting = False
     stop_timer = Event
+
+    _lumen_detector = Instance(LumenDetector, ())
 
     def bind_preferences(self, pref_id):
         self.debug('binding preferences')
@@ -194,11 +199,11 @@ class VideoStageManager(StageManager):
                 if name is None:
                     name = 'snapshot'
                 path, _cnt = unique_path2(root=paths.snapshot_dir, base=name,
-                                         extension=pic_format)
+                                          extension=pic_format)
             elif name is not None:
                 if not os.path.isdir(os.path.dirname(name)):
-                    path,_ = unique_path2(root=paths.snapshot_dir, base=name,
-                                          extension=pic_format)
+                    path, _ = unique_path2(root=paths.snapshot_dir, base=name,
+                                           extension=pic_format)
                 else:
                     path = name
 
@@ -218,7 +223,7 @@ class VideoStageManager(StageManager):
             if inform:
                 self.information_dialog('Snapshot save to {}. Uploaded to'.format(path, upath))
 
-            #return path, upath
+            # return path, upath
             if return_blob:
                 with open(path, 'rb') as rfile:
                     im = rfile.read()
@@ -240,7 +245,7 @@ class VideoStageManager(StageManager):
         if self.video:
             self.video.close(force=True)
 
-        #        if self.use_video_server:
+        # if self.use_video_server:
         #            self.video_server.stop()
         if self._stage_maps:
             for s in self._stage_maps:
@@ -256,6 +261,35 @@ class VideoStageManager(StageManager):
     def is_auto_correcting(self):
         return self._auto_correcting
 
+    crop_width = 2
+    crop_height = 2
+
+    def get_brightness(self):
+        ld = self._lumen_detector
+        cw, ch = 2 * self.crop_width * self.pxpermm, 2 * self.crop_height * self.pxpermm
+        src = self.video.get_frame()
+        src = self._crop_image(src, cw, ch)
+        # if src:
+        # else:
+        #     src = random.random((ch, cw)) * 255
+        #     src = src.astype('uint8')
+        #         return random.random()
+        src, v = ld.get_value(src)
+        return v
+
+    def _crop_image(self, src, cw, ch):
+        CX, CY = 0, 0
+        cw_px = int(cw * self.pxpermm)
+        ch_px = int(ch * self.pxpermm)
+        w, h = get_size(src)
+
+        x = int((w - cw_px) / 2 + CX)
+        y = int((h - ch_px) / 2 + CY)
+
+        r = 4 - cw_px % 4
+        cw_px = ch_px = cw_px + r
+
+        return asarray(crop(src, x, y, cw_px, ch_px))
     # def get_video_database(self):
     # from pychron.database.adapters.video_adapter import VideoAdapter
     #
@@ -576,7 +610,6 @@ class VideoStageManager(StageManager):
                                     canvas=self.canvas,
                                     application=self.application)
 
-
 # ===============================================================================
 # calcualte camera params
 # ===============================================================================
@@ -733,4 +766,3 @@ class VideoStageManager(StageManager):
 #        ax = self.stage_controller.axes['y']
 #        ax.drive_ratio = v
 #        ax.save()
-

@@ -418,7 +418,7 @@ ABLE TO USE THE HARDWARE JOYSTICK
             self.tell(cmd)
 
         if block:
-            self._block_()
+            self._block()
 
     def get_load_position(self):
 
@@ -471,12 +471,12 @@ ABLE TO USE THE HARDWARE JOYSTICK
             self.tell(cmd)
 
             if block:
-                self._block_()
+                self._block()
         else:
             for c in cmd.split(';'):
                 self.tell(c)
                 if block:
-                    self._block_()
+                    self._block()
 
     def block_group(self, n=10):
         cmd = '1HQ%i' % n
@@ -787,7 +787,7 @@ ABLE TO USE THE HARDWARE JOYSTICK
 
         if block:
             self.info('moving to {x:0.5f},{y:0.5f}'.format(**kwargs))
-            self._block_()
+            self._block()
             self.info('move to {x:0.5f},{y:0.5f} complete'.format(**kwargs))
             self.update_axes()
 
@@ -804,7 +804,7 @@ ABLE TO USE THE HARDWARE JOYSTICK
 
         if block:
             self.debug('blocking {}'.format(block))
-            self._block_(axis=block)
+            self._block(axis=block)
 
             #    def _block_(self, axis=None, event=None):
             #        '''
@@ -824,18 +824,18 @@ ABLE TO USE THE HARDWARE JOYSTICK
             #        if event is not None:
             #            event.set()
 
-    def _moving_(self, axis=None, verbose=False):
-        '''
+    def _moving(self, axis=None, verbose=False):
+        """
             use TX to read the controllers state.
             see manual 3-141
             return value of P==0101000
-                      bits     7654321 
+                      bits     7654321
             7,6,5=reserved
             4=trajectory executing yes=1
-            
+
             return True if moving
-            
-        '''
+
+        """
         moving = False
         if axis is not None:
             if isinstance(axis, str):

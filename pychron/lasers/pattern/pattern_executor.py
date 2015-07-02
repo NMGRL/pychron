@@ -15,16 +15,28 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Any, Bool
+from chaco.abstract_overlay import AbstractOverlay
+from chaco.scatterplot import render_markers
+from traits.api import Any, Bool, Tuple
 # ============= standard library imports ========================
 import os
 import cStringIO
 # ============= local library imports  ==========================
+from pychron.core.ui.gui import invoke_in_main_thread
+from pychron.graph.graph import Graph
 from pychron.paths import paths
 from pychron.lasers.pattern.patternable import Patternable
 import time
-from threading import Thread, Event
-from Queue import Queue, Empty
+from threading import Thread
+
+
+class CurrentPointOverlay(AbstractOverlay):
+    point = Tuple((0, 0))
+
+    def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
+        with gc:
+            pts = self.component.map_screen([self.point])
+            render_markers(gc, pts, 'circle', 3, 'green', 1, 'green')
 
 
 class PatternExecutor(Patternable):
@@ -149,8 +161,8 @@ class PatternExecutor(Patternable):
     def _execute(self):
         pat = self.pattern
         if pat:
-            #self.info('enabling laser')
-            #self.laser_manager.enable_device(clear_setpoint=False)
+            # self.info('enabling laser')
+            # self.laser_manager.enable_device(clear_setpoint=False)
 
             self.info('starting pattern {}'.format(pat.name))
             st = time.time()
@@ -214,79 +226,146 @@ class PatternExecutor(Patternable):
         controller.arc_move(pattern.cx, pattern.cy, pattern.degrees, block=True)
 
     def _execute_seek(self, controller, pattern):
+        duration = pattern.duration
+        g = Graph()
+        g.edit_traits()
+        g.new_plot()
+        s, p = g.new_series()
+        cp = CurrentPointOverlay(component=s)
+        s.overlays.append(cp)
+        w = 2
+        g.set_x_limits(-w, w)
+        g.set_y_limits(-w, w)
 
-        # =======================================================================
-        # monitor input
-        # =======================================================================
-        def _monitor_input(pevt, fevt, threshold=1, deadband=0.5, period=0.25):
-            """
-                periodically get input value
-                if input value greater than threshold set pause event
-                if input value last than threshold-deadband and was paused, clear paused flag
-            """
-            get_value = lambda: 1
-            flag = False
-            while not fevt.is_set() and self.isPatterning():
-                v = get_value()
-                if v > threshold:
-                    pevt.set()
-                    flag = True
-                elif flag and v < (threshold - deadband):
-                    pevt.clear()
-                    flag = False
-                time.sleep(period)
+        lm = self.laser_manager
+        sm = lm.stage_manager
 
-        # =======================================================================
-        # control motion
-        # =======================================================================
-        """
-            if paused and not already stopped, stop motion
-            if not paused not but was paused move to newt_point
-        """
+        def update_graph(pt):
+            cp.point = pt
+            g.add_datum(pt)
+            g.redraw()
 
-        def _control_motion(self, pevt, fevt, q):
-            flag = False
-            while not fevt.is_set() and self.isPatterning():
-                if pevt.is_set():
-                    if not flag:
-                        flag = True
-                        controller.stop()
-                    time.sleep(0.1)
+        pp = os.path.join(paths.data_dir, 'seek_pattern.txt')
+        with open(pp, 'w') as wfile:
+            cx, cy = pattern.cx, pattern.cy
+            wfile.write('{},{}\n'.format(cx, cy))
+            wfile.write('#z,     x,     y,     n\n')
 
-                else:
-                    if flag:
-                        try:
-                            np = q.get_nowait()
-                            controller.linear_move(*np, block=False,
-                                                   velocity=pattern.velocity)
-                        except Empty:
-                            self.debug('No next point avaliable')
-                        flag = False
+            while self._alive:
 
-                    time.sleep(0.1)
+                x, y = pattern.next_point
+                controller.linear_move(cx + x, cy + y, block=False, velocity=pattern.velocity)
 
-        finished = Event()
-        paused = Event()
-        q = Queue()
-        mt = Thread(target=_monitor_input,
-                    args=(paused, finished),
-                    name='seek.monitor_input')
+                mt = time.time()
+                zs = []
+                while sm.moving():
+                    zs.append(sm.get_brightness())
 
-        ct = Thread(target=_control_motion,
-                    args=(paused, finished, q),
-                    name='seek.monitor_input')
-        mt.start()
-        ct.start()
+                while 1:
+                    if time.time() - mt > duration:
+                        break
+                    zs.append(sm.get_brightness())
 
-        pts = pattern.points_factory()
-        for x, y in pts:
-            if not self.isPatterning():
-                break
+                if zs:
+                    n = len(zs)
+                    z = sum(zs) / float(n)
+                    self.debug('XY:({},{}) Z:{}, N:{}'.format(x, y, z, n))
+                    pattern.set_point(z, x, y)
 
-            q.put((x, y))
-            controller.linear_move(x, y, block=True,
-                                   velocity=pattern.velocity)
+                    wfile.write('{:0.5f},{:0.3f},{:0.3f},{}\n'.format(z, x, y, n))
 
-        finished.set()
+                    invoke_in_main_thread(update_graph, (x, y))
+
+        g.close_ui()
+        # if len(triangle) < 3:
+        #     z = lm.get_brightness()
+        #     triangle.append((z, x, y))
+        # else:
+        #     nx,ny = triangulator(triangle)
+
+
+        # def _execute_seek(self, controller, pattern):
+        #
+        #     # =======================================================================
+        #     # monitor input
+        #     # =======================================================================
+        #     def _monitor_input(pevt, fevt, threshold=1, deadband=0.5, period=0.25):
+        #         """
+        #             periodically get input value
+        #             if input value greater than threshold set pause event
+        #             if input value last than threshold-deadband and was paused, clear paused flag
+        #         """
+        #         get_value = lambda: 1
+        #         flag = False
+        #         while not fevt.is_set() and self.isPatterning():
+        #             v = get_value()
+        #             if v > threshold:
+        #                 pevt.set()
+        #                 flag = True
+        #             elif flag and v < (threshold - deadband):
+        #                 pevt.clear()
+        #                 flag = False
+        #             time.sleep(period)
+        #
+        #     # =======================================================================
+        #     # control motion
+        #     # =======================================================================
+        #     """
+        #         if paused and not already stopped, stop motion
+        #         if not paused not but was paused move to newt_point
+        #     """
+        #
+        #     def _control_motion(self, pevt, fevt, q):
+        #         flag = False
+        #         while not fevt.is_set() and self.isPatterning():
+        #             if pevt.is_set():
+        #                 if not flag:
+        #                     flag = True
+        #                     controller.stop()
+        #                 time.sleep(0.1)
+        #
+        #             else:
+        #                 if flag:
+        #                     try:
+        #                         np = q.get_nowait()
+        #                         controller.linear_move(*np, block=False,
+        #                                                velocity=pattern.velocity)
+        #                     except Empty:
+        #                         self.debug('No next point avaliable')
+        #                     flag = False
+        #
+        #                 time.sleep(0.1)
+        #
+        #     finished = Event()
+        #     paused = Event()
+        #     q = Queue()
+        #     mt = Thread(target=_monitor_input,
+        #                 args=(paused, finished),
+        #                 name='seek.monitor_input')
+        #
+        #     ct = Thread(target=_control_motion,
+        #                 args=(paused, finished, q),
+        #                 name='seek.monitor_input')
+        #     mt.start()
+        #     ct.start()
+        #
+        #     duration = 10
+        #     st = time.time()
+        #     while 1:
+        #
+        #         if time.time() - st > duration:
+        #             break
+        #
+        #         x, y = pattern.next_point()
+        #         # pts = pattern.points_factory()
+        #         # for x, y in pts:
+        #         #     if not self.isPatterning():
+        #         #         break
+        #
+        #         q.put((x, y))
+        #         controller.linear_move(x, y, block=True,
+        #                                velocity=pattern.velocity)
+        #
+        #     finished.set()
 
 # ============= EOF =============================================
