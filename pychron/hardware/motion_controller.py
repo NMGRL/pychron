@@ -202,8 +202,8 @@ class MotionController(CoreDevice):
             self.parent.canvas.clear_desired_position()
 
     def _z_inprogress_update(self):
-        '''
-        '''
+        """
+        """
         stopped = False
         m = self._moving_()
         if not m:
@@ -220,8 +220,8 @@ class MotionController(CoreDevice):
 #         self.debug('z inprogress {}. moving={} stopped={}'.format(z, m, stopped))
 
     def _inprogress_update(self):
-        '''
-        '''
+        """
+        """
 
         m = self._moving_()
         if not m:
@@ -235,10 +235,12 @@ class MotionController(CoreDevice):
             self.parent.canvas.clear_desired_position()
             self.update_axes()
         else:
-
-            xy = self.get_current_xy()
-            if xy:
-                self.parent.canvas.set_stage_position(*xy)
+            x = self.get_current_position('x')
+            y = self.get_current_position('y')
+            self.parent.canvas.set_stage_position(x,y)
+            # xy = self.get_current_xy()
+            # if xy:
+            #     self.parent.canvas.set_stage_position(*xy)
 
     def _sign_correct(self, val, key, ratio=True):
         """
