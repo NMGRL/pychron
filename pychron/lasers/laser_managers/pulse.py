@@ -114,6 +114,7 @@ class Pulse(HasTraits):
     def traits_view(self):
         v = View(
             VGroup(
+            VGroup(
                 HGroup(Item('power', tooltip='Hit Enter for change to take effect'),
                        Item('units', style='readonly', show_label=False),
                        spring,
@@ -139,11 +140,10 @@ class Pulse(HasTraits):
                                                high_name='object.wait_control.duration')),
                        CustomLabel('object.wait_control.current_time',
                                    size=14,
-                                   weight='bold'))),
+                                   weight='bold')))),
             # Item('wait_control', show_label=False, style='custom'),
             id='pulse',
-            handler=PulseHandler()
-        )
+            handler=PulseHandler())
         return v
 
 
