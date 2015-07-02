@@ -16,8 +16,8 @@
 
 # ============= enthought library imports =======================
 
-from traits.api import HasTraits, List, Any, Bool, Int, Instance, Enum, \
-    Event, Str, Callable, Button, Property
+from traits.api import HasTraits, List, Bool, Int, Instance, Enum, \
+    Str, Callable, Button, Property
 from traits.trait_errors import TraitError
 from traitsui.api import View, Item, UItem, CheckListEditor, VGroup, Handler, HGroup, Tabbed
 import apptools.sweet_pickle as pickle
@@ -91,7 +91,11 @@ class TableConfigurer(HasTraits):
 
     def set_font(self):
         if self.adapter:
-            self.adapter.font = 'arial {}'.format(self.font)
+            font = 'arial {}'.format(self.font)
+            self.adapter.font = font
+            for ci in self.children:
+                ci.font = font
+
             if self.refresh_func:
                 self.refresh_func()
 

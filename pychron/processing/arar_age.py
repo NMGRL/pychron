@@ -106,6 +106,7 @@ class ArArAge(Loggable):
     _kca_warning = False
     _kcl_warning = False
 
+    conditional_modifier = None
     # def __init__(self, *args, **kw):
     # HasTraits.__init__(self, *args, **kw)
     #     self.logger = logger
@@ -175,10 +176,20 @@ class ArArAge(Loggable):
 
     def get_current_intensity(self, attr):
         try:
-            r = self.isotopes[attr].ys[-1]
+            iso = self.isotopes[attr]
         except KeyError:
-            r = None
-        return r
+            return
+
+        if self.conditional_modifier:
+            try:
+                iso = getattr(iso, self.conditional_modifier)
+            except AttributeError:
+                return
+        # try:
+        #     r = self.isotopes[attr].ys[-1]
+        # except KeyError:
+        #     r = None
+        return iso.ys[-1]
 
     # def get_detector_active(self, attr):
     #     det = next((i for i in self.isotopes if i.detector == attr), None)
@@ -302,7 +313,7 @@ class ArArAge(Loggable):
         """
 
         def _append(isotope):
-            if kind in ('sniff', 'baseline'):
+            if kind in ('sniff', 'baseline', 'whiff'):
                 if kind == 'sniff':
                     isotope._value = signal
                     isotope.dirty = True

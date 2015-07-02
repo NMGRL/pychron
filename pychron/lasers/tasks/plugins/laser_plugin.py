@@ -23,12 +23,23 @@ from pyface.tasks.action.schema import SMenu
 # ============= standard library imports ========================
 import os
 # ============= local library imports  ==========================
+from pychron.core.helpers.filetools import list_directory2
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
+from pychron.envisage.tasks.list_actions import PatternAction
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.envisage.initialization.initialization_parser import InitializationParser
 from pychron.paths import paths
 from pychron.lasers.tasks.laser_actions import OpenPowerMapAction, OpenPatternAction, NewPatternAction
 from pychron.lasers.tasks.laser_calibration_task import LaserCalibrationTask
+
+
+def pattern_action(name, application, manager_name):
+    a = PatternAction(id='pattern.action.{}'.format(name),
+                      name=name.capitalize(),
+                      application=application,
+                      manager_name=manager_name,
+                      pattern_path=os.path.join(paths.pattern_dir, name))
+    return lambda: a
 
 
 class CoreLaserPlugin(BaseTaskPlugin):
@@ -39,7 +50,7 @@ class CoreLaserPlugin(BaseTaskPlugin):
 
         # if experiment plugin available dont add pattern actions
         ids = [p.id for p in self.application.plugin_manager._plugins]
-        if not 'pychron.experiment.task' in ids:
+        if 'pychron.experiment.task' not in ids:
             actions.extend([
                 SchemaAddition(id='Open Pattern',
                                factory=OpenPatternAction,
@@ -121,16 +132,18 @@ class BaseLaserPlugin(BaseTaskPlugin):
         return d
 
     def _get_manager(self):
-        print 'get manager',self.name
+        print 'get manager', self.name
         return self.application.get_service(ILaserManager, 'name=="{}"'.format(self.name))
 
-    # def _preferences_default(self):
-    #     root = paths.preferences_dir
-    #     path = os.path.join(root, 'preferences.ini')
-    #     if not os.path.isfile(path):
-    #         with open(path, 'w'):
-    #             pass
-    #     return ['file://{}'.format(path)]
+        # def execute_pattern(self, name):
+        #     self._get_manager().execute_pattern(name)
+        # def _preferences_default(self):
+        #     root = paths.preferences_dir
+        #     path = os.path.join(root, 'preferences.ini')
+        #     if not os.path.isfile(path):
+        #         with open(path, 'w'):
+        #             pass
+        #     return ['file://{}'.format(path)]
 
 
 class FusionsPlugin(BaseLaserPlugin):
@@ -172,7 +185,7 @@ class FusionsPlugin(BaseLaserPlugin):
 
     def _task_extensions_default(self):
         def efactory():
-            return SMenu(id='Laser', name='Laser')
+            return SMenu(id='laser.menu', name='Laser')
 
         actions = [SchemaAddition(id='Laser',
                                   factory=efactory,
@@ -182,7 +195,21 @@ class FusionsPlugin(BaseLaserPlugin):
 
         exts = [TaskExtension(actions=actions)]
 
-        return exts
+        actions = []
+        for f in list_directory2(paths.pattern_dir, extension='.lp', remove_extension=True):
+            actions.append(SchemaAddition(id='pattern.{}'.format(f),
+                                          factory=pattern_action(f, self.application, self.name),
+                                          path='MenuBar/laser.menu/patterns.menu'))
 
+        if actions:
+            actions.insert(0, SchemaAddition(id='patterns.menu',
+                                             factory=lambda: SMenu(name='Execute Patterns', id='patterns.menu'),
+                                             path='MenuBar/laser.menu'))
+
+            exts.append(TaskExtension(actions=actions))
+        else:
+            self.warning('no patterns scripts located in "{}"'.format(paths.pattern_dir))
+
+        return exts
 
 # ============= EOF =============================================

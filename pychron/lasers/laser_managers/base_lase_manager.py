@@ -136,6 +136,9 @@ class BaseLaserManager(Manager):
             pm.set_stage_values(self.stage_manager)
             pm.execute(block)
 
+    def get_brightness(self):
+        return 0
+
     def stop_pattern(self):
         if self.pattern_executor:
             self.pattern_executor.stop()

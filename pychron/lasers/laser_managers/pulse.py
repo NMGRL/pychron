@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Any, Instance, Float, Event, \
     Property, Bool, on_trait_change
-from traitsui.api import View, Item, Handler, HGroup, ButtonEditor, spring, VGroup
+from traitsui.api import View, Item, Handler, HGroup, ButtonEditor, spring, VGroup, Spring, UItem, RangeEditor
 # import apptools.sweet_pickle as pickle
 # ============= standard library imports ========================
 # import os
@@ -26,6 +26,7 @@ from threading import Thread
 # from pychron.paths import paths
 # from pychron.pyscripts.wait_dialog import WaitDialog
 # import time
+from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.wait.wait_control import WaitControl
 
 
@@ -49,7 +50,7 @@ class Pulse(HasTraits):
 
     disable_at_end = Bool(False)
 
-    #     def dump(self):
+    # def dump(self):
     #         p = os.path.join(paths.hidden_dir, 'pulse')
     #         with open(p, 'wb') as f:
     #             pickle.dump(self, f)
@@ -119,12 +120,27 @@ class Pulse(HasTraits):
                        Item('pulse_button',
                             editor=ButtonEditor(label_value='pulse_label'),
                             show_label=False,
-                            enabled_when='object.enabled'
-                       )
-                ),
-                Item('duration', label='Duration (s)', tooltip='Set the laser pulse duration in seconds'),
-            ),
-            Item('wait_control', show_label=False, style='custom'),
+                            enabled_when='object.enabled')),
+                Item('duration', label='Duration (s)', tooltip='Set the laser pulse duration in seconds')),
+            VGroup(
+                CustomLabel('object.wait_control.message',
+                            size=14,
+                            weight='bold',
+                            color_name='object.wait_control.message_color'),
+
+                HGroup(Spring(width=-5, springy=False),
+                       Item('object.wait_control.high', label='Set Max. Seconds'),
+                       spring, UItem('object.wait_control.continue_button')),
+                HGroup(Spring(width=-5, springy=False),
+                       Item('object.wait_control.current_time', show_label=False,
+                            editor=RangeEditor(mode='slider',
+                                               low=1,
+                                               # low_name='low_name',
+                                               high_name='object.wait_control.duration')),
+                       CustomLabel('object.wait_control.current_time',
+                                   size=14,
+                                   weight='bold'))),
+            # Item('wait_control', show_label=False, style='custom'),
             id='pulse',
             handler=PulseHandler()
         )
@@ -135,7 +151,7 @@ class Pulse(HasTraits):
 # #    pulse_button = Event
 # #    pulse_label = Property
 # #    pulsing = Bool(False)
-#    pulse = Instance(Pulse)
+# pulse = Instance(Pulse)
 #
 #    def dump_pulse(self):
 #        p = os.path.join(hidden_dir, 'pulse')
