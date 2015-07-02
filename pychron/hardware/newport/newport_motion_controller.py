@@ -200,18 +200,18 @@ ABLE TO USE THE HARDWARE JOYSTICK
             self.axes[axis].position = f
         return f
 
-    def relative_move(self, ax_key, direction):
+    def relative_move(self, ax_key, direction, distance=1):
         # move one pixel in the specified direction
         ax = self.axes[ax_key]
 
         v1 = self.parent.canvas.map_data((0, 0))
-        v2 = self.parent.canvas.map_data((1, 1))
+        v2 = self.parent.canvas.map_data((distance, distance))
 
         if ax_key == 'y':
-            v = (v2[1] - v1[1]) * direction * ax.sign  # + self._y_position
+            v = (v2[1] - v1[1]) * direction #* ax.sign  # + self._y_position
 
         else:
-            v = (v2[0] - v1[0]) * direction * ax.sign  # + self._x_position
+            v = (v2[0] - v1[0]) * direction #* ax.sign  # + self._x_position
 
         self.single_axis_move(ax_key, v, block=False, mode='relative',
                               verbose=False,
@@ -384,7 +384,8 @@ ABLE TO USE THE HARDWARE JOYSTICK
                     self.z_progress = value
 
         self.debug('command={} block={}. kw={}'.format(cmd, block, kw))
-        setattr(self, '_{}_position'.format(key), value)
+
+        # setattr(self, '_{}_position'.format(key), value)
         self._axis_move(cmd, block=block, **kw)
 
     def multiple_axis_move(self, axes_list, block=False):

@@ -473,7 +473,6 @@ class LaserTrayCanvas(MapCanvas):
                                            use_calibration=False)
             event.handled = True
 
-
             #    def normal_mouse_wheel(self, event):
             #        enable_mouse_wheel_zoom = False
             #        if enable_mouse_wheel_zoom:
@@ -487,8 +486,9 @@ class LaserTrayCanvas(MapCanvas):
         c = event.character
         if c in ['Left', 'Right', 'Up', 'Down']:
             ax_key, direction = DIRECTIONS[c]
-            direction = self._calc_relative_move_direction(c, direction)
-            self.stage_manager.relative_move(ax_key, direction)
+            # direction = self._calc_relative_move_direction(c, direction)
+            distance = 5 if event.shift_down else 1
+            self.stage_manager.relative_move(ax_key, direction, distance)
             event.handled = True
         elif c in ('a', 'A'):
             self.stage_manager.accept_point()
