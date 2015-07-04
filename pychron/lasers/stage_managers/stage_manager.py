@@ -810,12 +810,18 @@ class StageManager(Manager):
                 self.stage_controller.set_z(pt.z, block=True)
 
             self.debug('Not setting motors for pt')
-            #self.parent.set_motors_for_point(pt)
+            # self.parent.set_motors_for_point(pt)
 
             self._move_to_point_hook()
 
         self.info('Move complete')
         self.update_axes()
+
+    def get_hole_xy(self, key):
+        pos = self._stage_map.get_hole_pos(key)
+        # map the position to calibrated space
+        pos = self.get_calibrated_position(pos)
+        return pos
 
     def _move_to_hole(self, key, correct_position=True):
         self.info('Move to hole {} type={}'.format(key, str(type(key))))
