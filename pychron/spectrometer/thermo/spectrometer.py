@@ -147,6 +147,7 @@ class Spectrometer(SpectrometerDevice):
 
         :return: bool
         """
+        self.info('testing connnection')
         ret = False
         if not self.simulation:
             if force:
@@ -346,18 +347,18 @@ class Spectrometer(SpectrometerDevice):
         load configurations from Qtegra
         :return:
         """
-        self.sub_cup_configurations = ['A', 'B', 'C']
-        self._sub_cup_configuration = 'B'
-
-        scc = self.ask('GetSubCupConfigurationList Argon', verbose=False)
-        if scc:
-            if 'ERROR' not in scc:
-                self.sub_cup_configurations = scc.split('\r')
-
-        n = self.ask('GetActiveSubCupConfiguration')
-        if n:
-            if 'ERROR' not in n:
-                self._sub_cup_configuration = n
+        # self.sub_cup_configurations = ['A', 'B', 'C']
+        # self._sub_cup_configuration = 'B'
+        #
+        # scc = self.ask('GetSubCupConfigurationList Argon', verbose=False)
+        # if scc:
+        #     if 'ERROR' not in scc:
+        #         self.sub_cup_configurations = scc.split('\r')
+        #
+        # n = self.ask('GetActiveSubCupConfiguration')
+        # if n:
+        #     if 'ERROR' not in n:
+        #         self._sub_cup_configuration = n
 
         self.molecular_weight = 'Ar40'
 
@@ -418,8 +419,12 @@ class Spectrometer(SpectrometerDevice):
 
         self.magnet.finish_loading()
 
-        if self.send_config_on_startup:
+        # if self.send_config_on_startup:
             # write configuration to spectrometer
+            # self._send_configuration()
+
+    def start(self):
+        if self.send_config_on_startup:
             self._send_configuration()
 
     def load_detectors(self):
@@ -637,6 +642,7 @@ class Spectrometer(SpectrometerDevice):
         return keys, signals
 
     def _send_configuration(self):
+        self.debug('Sending configuration')
         command_map = dict(ionrepeller='IonRepeller',
                            electronenergy='ElectronEnergy',
                            ysymmetry='YSymmetry',

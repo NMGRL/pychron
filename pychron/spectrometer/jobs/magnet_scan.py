@@ -96,7 +96,7 @@ class MagnetScan(SpectrometerTask):
     def _iter_dac(self, di, gen, evt, intensities):
         # self.debug('iter dac {}'.format(di))
         mag = self.spectrometer.magnet
-        mag.set_dac(di, verbose=self.verbose)
+        mag.set_dac(di, verbose=self.verbose, settling_time=0.1)
 
         d = self._magnet_step_hook()
 

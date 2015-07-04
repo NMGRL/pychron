@@ -90,6 +90,7 @@ class LaserManager(BaseLaserManager):
 
             self.enabled = True
             self.monitor = self.monitor_factory()
+            self.monitor.reset()
             if not self.monitor.monitor():
                 #                self.enabled_led.state = 'green'
                 #                self.enabled_led.state = 'green'
@@ -97,7 +98,7 @@ class LaserManager(BaseLaserManager):
                 self.disable_laser()
                 self.warning_dialog('Monitor could not be started. Laser disabled', sound='alarm1')
         else:
-            self.warning('Could not enable laser')
+            self.warning_dialog('Could not enable laser. Check coolant and manual interlocks')
 
             if self.set_flag('enable_error_flag'):
                 self.debug('setting enable_error_flag')

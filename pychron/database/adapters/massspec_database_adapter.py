@@ -531,19 +531,13 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         self._add_item(iso, )
         return iso
 
-    def add_isotope_result(self, isotope, data_reduction_session_id,
-                           intercept, baseline, blank,
-                           fit,
-                           detector
-
-                           #                           intercept, intercept_err,
-                           #                           baseline, baseline_err,
-                           #                           blank, blank_err
-                           ):
+    def add_isotope_result(self, isotope, data_reduction_session_id, intercept, baseline, blank, fit, detector,
+                           is_blank=False):
         """
             intercept, baseline and blank should be ufloats
 
             mass spec does not propogate baseline error
+        :param is_blank:
         """
 
         isotope = self.get_isotope(isotope, )
@@ -551,12 +545,14 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         # in mass spec intercept is baseline corrected
         # mass spec does not propagate baseline error
         # convert baseline to scalar
-        baseline = baseline.nominal_value
+        baseline = nominal_value(baseline)
 
         intercept = intercept - baseline
-
-        # isotope is corrected for background (blank in pychron parlance)
-        isotope_value = intercept - blank
+        if is_blank:
+            isotope_value = intercept
+        else:
+            # isotope is corrected for background (blank in pychron parlance)
+            isotope_value = intercept - blank
 
         fit = self.get_fittype(fit, )
 

@@ -55,7 +55,7 @@ class BaseRemoteHardwareHandler(Loggable):
                 if err is None:
                     err, response = eh.check_response(func, manager, args[1:] +
                                                       [sender_addr])
-
+                    # print 'err: {} response: {}'.format(err, response)
                     if err is None:
                         return response
 

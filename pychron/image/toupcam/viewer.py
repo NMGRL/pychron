@@ -20,10 +20,11 @@ from traitsui.api import View, UItem, Item, HGroup, VGroup, spring
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
-from pychron.core.helpers.filetools import view_file
+from pychron.core.helpers.filetools import unique_path2
 from pychron.core.ui.qt.camera_editor import CameraEditor
 
 from pychron.image.toupcam.camera import ToupCamCamera
+from pychron.paths import paths
 
 
 class D(HasTraits):
@@ -53,7 +54,8 @@ class D(HasTraits):
         self.camera.do_awb(self._update_temptint)
 
     def _save_button_fired(self):
-        p = '/Users/ross/Desktop/output_uint8.jpg'
+        # p = '/Users/ross/Desktop/output_uint8.jpg'
+        p, _ = unique_path2(paths.sample_image_dir, 'nosample', extension='.tiff')
         self.camera.save(p)
         # self.save_event = p
 
@@ -115,13 +117,14 @@ class D(HasTraits):
                           hue_grp, c_gamma_grp)
 
         v = View(HGroup(ctrl_grp,
-                        UItem('camera', editor=CameraEditor(save_event='save_event'))),
+                        UItem('camera', editor=CameraEditor())),
                  width=896 + 350, height=680,
                  resizable=True)
         return v
 
 
 if __name__ == '__main__':
+    paths.build('_dev')
     d = D()
     d.activate()
 

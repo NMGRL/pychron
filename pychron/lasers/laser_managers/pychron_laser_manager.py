@@ -81,6 +81,7 @@ class PychronLaserManager(BaseLaserManager, EthernetDeviceMixin):
     # def shutdown(self):
     #     if self.communicator:
     #         self.communicator.close()
+    _patterning = False
 
     def bind_preferences(self, pref_id):
         bind_preference(self, 'use_video', '{}.use_video'.format(pref_id))
@@ -128,10 +129,14 @@ class PychronLaserManager(BaseLaserManager, EthernetDeviceMixin):
             of a pickled pattern obj
         """
         if name:
-            return self._execute_pattern(name)
+            self._patterning = True
+            self._execute_pattern(name, block)
+            if block:
+                self._patterning = False
 
     def stop_pattern(self):
         self._ask('AbortPattern')
+        self._patterning = False
 
     def get_pattern_names(self):
         # get contents of local pattern_dir
@@ -231,6 +236,9 @@ class PychronLaserManager(BaseLaserManager, EthernetDeviceMixin):
         self.info('ending extraction. set laser power to 0')
         self.set_laser_power(0)
 
+        if self._patterning:
+            self.stop_pattern()
+
     def extract(self, value, units=''):
         self.info('set laser output')
         return self._ask('SetLaserOutput {} {}'.format(value, units)) == 'OK'
@@ -307,7 +315,7 @@ class PychronLaserManager(BaseLaserManager, EthernetDeviceMixin):
     def _opened_hook(self):
         pass
 
-    def _execute_pattern(self, pat):
+    def _execute_pattern(self, pat, block):
         self.info('executing pattern {}'.format(pat))
 
         if not pat.endswith('.lp'):
@@ -322,11 +330,11 @@ class PychronLaserManager(BaseLaserManager, EthernetDeviceMixin):
         cmd = 'DoPattern {}'.format(pat)
         self._ask(cmd, verbose=False)
 
-        time.sleep(0.5)
-
-        if not self._block('IsPatterning', period=1):
-            cmd = 'AbortPattern'
-            self._ask(cmd)
+        if block:
+            time.sleep(0.5)
+            if not self._block('IsPatterning', period=1):
+                cmd = 'AbortPattern'
+                self._ask(cmd)
 
     # ===============================================================================
     # pyscript private

@@ -244,7 +244,7 @@ class LabnumberEntry(DVCIrradiationable):
                                                  order_func='asc')
 
                     n = sum([len(irrad.levels) for irrad in irrads])
-                    prog = self.open_progress(n=n)
+                    prog = open_progress(n=n)
 
                     w.build(out, irrads, progress=prog)
 
@@ -282,7 +282,7 @@ class LabnumberEntry(DVCIrradiationable):
                                          overwrite=overwrite,
                                          db=self.dvc.db)
                 if lg.setup():
-                    prog = open_progress(10)
+                    prog = open_progress()
                     lg.generate_identifiers(prog, overwrite)
                     prog.close()
                     self._update_level()
@@ -295,7 +295,7 @@ class LabnumberEntry(DVCIrradiationable):
                                  overwrite=True,
                                  db=self.dvc.db)
         if lg.setup():
-            prog = open_progress(10)
+            prog = open_progress()
             lg.preview(prog, self.irradiated_positions, self.irradiation, self.level)
             prog.close()
             self.refresh_table = True
@@ -314,7 +314,7 @@ class LabnumberEntry(DVCIrradiationable):
     def import_irradiation_load_xls(self, p):
         loader = XLSIrradiationLoader(db=self.dvc.db,
                                       monitor_name=self.monitor_name)
-        prog = self.open_progress()
+        prog = open_progress()
         loader.progress = prog
         loader.canvas = self.canvas
 

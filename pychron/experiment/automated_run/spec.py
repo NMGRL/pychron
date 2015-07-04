@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import imp
+import hashlib
 
 from traits.api import Str, Int, Bool, Float, Property, \
     Enum, on_trait_change, CStr, Long, HasTraits
@@ -33,6 +33,7 @@ from pychron.experiment.utilities.position_regex import XY_REGEX
 from pychron.pychron_constants import SCRIPT_KEYS, SCRIPT_NAMES, ALPHAS
 
 logger = new_logger('AutomatedRunSpec')
+
 
 class AutomatedRunSpec(HasTraits):
     """
@@ -65,7 +66,7 @@ class AutomatedRunSpec(HasTraits):
 
     aliquot = Property
     _aliquot = Int
-    #assigned_aliquot = Int
+    # assigned_aliquot = Int
 
     user_defined_aliquot = Int
 
@@ -267,7 +268,7 @@ class AutomatedRunSpec(HasTraits):
 
             md = __import__(md, fromlist=[klass])
             # md = imp.find_module(md)
-            run =getattr(md,klass)()
+            run = getattr(md, klass)()
 
             # run = self.run_klass()
 
@@ -400,10 +401,10 @@ class AutomatedRunSpec(HasTraits):
         #         # a = self.user_defined_aliquot
         #
         # return a
-        #a = self.assigned_aliquot
-        #if not a:
+        # a = self.assigned_aliquot
+        # if not a:
         #    a = self._aliquot
-        #return a
+        # return a
 
     def _get_analysis_type(self):
         return get_analysis_type(self.labnumber)
@@ -458,7 +459,7 @@ class AutomatedRunSpec(HasTraits):
     def _get_overlap(self):
         return self._overlap, self._min_ms_pumptime
 
-    #mirror labnumber for now. deprecate labnumber and replace with identifier
+    # mirror labnumber for now. deprecate labnumber and replace with identifier
     @property
     def identifier(self):
         return self.labnumber
@@ -478,4 +479,19 @@ class AutomatedRunSpec(HasTraits):
     @property
     def sensitivity(self):
         return 0
+
+    @property
+    def script_hash(self):
+        ctx = self.make_script_context()
+        ctx['measurement'] = self.measurement_script
+        ctx['extraction'] = self.measurement_script
+
+        md5 = hashlib.md5()
+        for k, v in sorted(ctx.items()):
+            md5.update(str(k))
+            md5.update(str(v))
+        return md5.hexdigest()
+
+        # d = script.calculate_estimated_duration(ctx)
+
         # ============= EOF =============================================

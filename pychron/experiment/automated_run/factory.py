@@ -459,12 +459,12 @@ class AutomatedRunFactory(PersistenceLoggable):
     def _new_runs(self, exp_queue, positions):
         _ln, special = self._make_short_labnumber()
         freq = self.frequency_model.frequency if special else None
-
+        self.debug('Frequency={}'.format(freq))
         if not special:
             if not positions:
                 positions = self.position
 
-            template = self._use_template() and not freq
+            template = self._use_template()# and not freq
             arvs = self._new_runs_by_position(exp_queue, positions, template)
         else:
             arvs = [self._new_run()]
@@ -625,10 +625,10 @@ class AutomatedRunFactory(PersistenceLoggable):
     def _new_template(self):
         template = IncrementalHeatTemplate()
         if self._use_template():
-            t = self.template
-            if not t.endswith('.txt'):
-                t = '{}.txt'.format(t)
-            t = os.path.join(paths.incremental_heat_template_dir, t)
+            # t = self.template
+            # if not t.endswith('.txt'):
+                # t = '{}.txt'.format(t)
+            t = os.path.join(paths.incremental_heat_template_dir, add_extension(self.template))
             template.load(t)
 
         return template

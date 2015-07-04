@@ -209,10 +209,8 @@ class Pattern(HasTraits):
             self.calculate_transit_time()
 
     def calculate_transit_time(self):
-        n = self.niterations
-
         try:
-            self.calculated_transit_time = (self._get_path_length() * n) / self.velocity
+            self.calculated_transit_time = (self._get_path_length() * self.niterations) / self.velocity
         except ZeroDivisionError:
             pass
 

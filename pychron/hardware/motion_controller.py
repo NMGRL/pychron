@@ -107,8 +107,11 @@ class MotionController(CoreDevice):
         self._z_position = v
         self.axes['z'].position = v
 
+    def moving(self, *args, **kw):
+        return self._moving(*args, **kw)
+
     def block(self, *args, **kw):
-        self._block_(*args, **kw)
+        self._block(*args, **kw)
 
     def axes_factory(self, config=None):
         if config is None:
@@ -182,6 +185,8 @@ class MotionController(CoreDevice):
     def set_single_axis_motion_parameters(self, *args, **kw):
         pass
 
+    def get_current_xy(self):
+        return
 # ===============================================================================
 # private
 # ===============================================================================
@@ -199,11 +204,14 @@ class MotionController(CoreDevice):
         if disp <= 4:
             self.parent.canvas.clear_desired_position()
 
+    def _moving(self):
+        pass
+
     def _z_inprogress_update(self):
-        '''
-        '''
-        stopped = False
-        m = self._moving_()
+        """
+        """
+        # stopped = False
+        m = self._moving()
         if not m:
             self._not_moving_count += 1
 
@@ -211,17 +219,17 @@ class MotionController(CoreDevice):
             self._not_moving_count = 0
             self.timer.Stop()
             self.debug('stop timer')
-            stopped = True
+            # stopped = True
 
         z = self.get_current_position('z')
         self.z_progress = z
 #         self.debug('z inprogress {}. moving={} stopped={}'.format(z, m, stopped))
 
     def _inprogress_update(self):
-        '''
-        '''
+        """
+        """
 
-        m = self._moving_()
+        m = self._moving()
         if not m:
             self._not_moving_count += 1
 
@@ -235,7 +243,10 @@ class MotionController(CoreDevice):
         else:
             x = self.get_current_position('x')
             y = self.get_current_position('y')
-            self.parent.canvas.set_stage_position(x, y)
+            self.parent.canvas.set_stage_position(x,y)
+            # xy = self.get_current_xy()
+            # if xy:
+            #     self.parent.canvas.set_stage_position(*xy)
 
     def _sign_correct(self, val, key, ratio=True):
         """
@@ -249,9 +260,9 @@ class MotionController(CoreDevice):
 
             return val * axis.sign * r
 
-    def _block_(self, axis=None, event=None):
-        '''
-        '''
+    def _block(self, axis=None, event=None):
+        """
+        """
         if event is not None:
             event.clear()
 
@@ -262,7 +273,7 @@ class MotionController(CoreDevice):
             func = timerActive
         else:
             def moving():
-                return self._moving_(axis=axis)
+                return self._moving(axis=axis)
             func = moving
 
         i = 0
@@ -319,8 +330,13 @@ class MotionController(CoreDevice):
     def _validate(self, v, key, cur):
         """
         """
-        mi = self.axes[key].negative_limit
-        ma = self.axes[key].positive_limit
+        try:
+            ax = self.axes[key]
+        except KeyError:
+            return
+
+        mi = ax.negative_limit
+        ma = ax.positive_limit
         self.debug('validate {} {} {}'.format(v, key, cur))
         try:
             v = float(v)

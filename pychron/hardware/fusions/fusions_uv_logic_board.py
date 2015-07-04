@@ -225,8 +225,8 @@ class NitrogenFlower(KerrDevice):
         return v
 
 class FusionsUVLogicBoard(FusionsLogicBoard):
-    '''
-    '''
+    """
+    """
     has_pointer = False
     _test_comms = False  # dont test comms on startup. UV doesn't really have logic board only kerr motor controllers
 
@@ -234,14 +234,14 @@ class FusionsUVLogicBoard(FusionsLogicBoard):
     def _nitrogen_flower_default(self):
         return NitrogenFlower(parent=self)
 
-    def _enable_laser(self):
-        '''
-        '''
+    def _enable_laser(self, **kw):
+        """
+        """
         return True
 
     def _disable_laser(self):
-        '''
-        '''
+        """
+        """
         return True
 
     def prepare(self):

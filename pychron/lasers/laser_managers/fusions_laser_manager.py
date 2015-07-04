@@ -127,6 +127,7 @@ class FusionsLaserManager(LaserManager):
 
     def end_extract(self):
         self.disable_laser()
+        self.stop_pattern()
 
     def open_motor_configure(self):
         self.laser_controller.open_motor_configure()
@@ -200,8 +201,8 @@ class FusionsLaserManager(LaserManager):
                 pd.close()
 
     def set_beam_diameter(self, bd, force=False, **kw):
-        '''
-        '''
+        """
+        """
         result = False
         motor = self.get_motor('beam')
         if motor is not None:
@@ -213,8 +214,8 @@ class FusionsLaserManager(LaserManager):
         return result
 
     def set_zoom(self, z, **kw):
-        '''
-        '''
+        """
+        """
         self.set_motor('zoom', z, **kw)
 
     def set_motor_lock(self, name, value):
@@ -271,6 +272,12 @@ class FusionsLaserManager(LaserManager):
                 self._degas_thread.start()
             else:
                 func()
+
+    def get_brightness(self):
+        if self.use_video:
+            return self.stage_manager.get_brightness()
+        else:
+            return super(FusionsLaserManager, self).get_brightness()
 
     def is_degassing(self):
         if self._degas_thread:

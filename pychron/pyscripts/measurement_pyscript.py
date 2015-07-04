@@ -23,6 +23,8 @@ from ConfigParser import ConfigParser
 
 import yaml
 
+
+
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import fileiter
 from pychron.paths import paths
@@ -323,7 +325,8 @@ class MeasurementPyScript(ValvePyScript):
         """
 
         if calc_time:
-            self._estimated_duration += 30 * integration_time
+            n = 40
+            self._estimated_duration += n * integration_time
             return
 
         self._automated_run_call('py_peak_center', detector=detector,

@@ -27,6 +27,7 @@ def generate_hops(hops):
         for args in hops:
             if len(args) == 3:
                 hopstr, counts, settle = args
+                pdets = []
             else:
                 hopstr, counts, settle, pdets = args
                 # for hopstr, counts, settle, pdets in hops:

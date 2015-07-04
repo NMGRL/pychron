@@ -15,27 +15,68 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import datetime
-import time
-
 from traits.api import Property, String, Float, Any, Int, List, Instance, Bool
 from traitsui.api import View, Item, VGroup, UItem
-
+# ============= standard library imports ========================
+from datetime import datetime, timedelta
+import os
+import time
+# ============= local library imports  ==========================
 from pychron.core.helpers.timer import Timer
 from pychron.core.ui.pie_clock import PieClockModel
 from pychron.loggable import Loggable
-
-
-
-
-
-
-
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+from pychron.paths import paths
 from pychron.pychron_constants import MEASUREMENT_COLOR, EXTRACTION_COLOR
 
 FUDGE_COEFFS = (0, 0, 0)  # x**n+x**n-1....+c
+
+
+class AutomatedRunDurationTracker(Loggable):
+    items = List
+
+    def load(self):
+        items = []
+        if os.path.isfile(paths.duration_tracker):
+            with open(paths.duration_tracker, 'r') as rfile:
+                for line in rfile:
+                    line = line.strip()
+                    if line:
+                        h, d = line.split(',')
+                        items.append((h, float(d)))
+        self.items = items
+
+    def update(self, rh, t):
+
+        p = paths.duration_tracker
+
+        out = []
+        exists = False
+        if os.path.isfile(p):
+            with open(p, 'r') as rfile:
+                for line in rfile:
+                    line = line.strip()
+                    if line:
+                        h, d = line.split(',')
+
+                        # update the runs duration by taking average of current (t) and previous (d) durations
+                        if h == rh:
+                            o = (h, (float(d) + t) * 0.5)
+                            exists = True
+                        else:
+                            o = (h, d)
+                        out.append(o)
+        if not exists:
+            out.append((rh, t))
+
+        with open(p, 'w') as wfile:
+            for line in out:
+                wfile.write('{},{}\n'.format(*line))
+
+    def __contains__(self, v):
+        return next((True for h, d in self.items if h == v), False)
+
+    def __getitem__(self, item):
+        return next((d for h, d in self.items if h == item), 0)
 
 
 class ExperimentStats(Loggable):
@@ -52,15 +93,19 @@ class ExperimentStats(Loggable):
 
     delay_between_analyses = Float
     delay_before_analyses = Float
-    _start_time = None
+    # _start_time = None
+    _post = None
 
     use_clock = Bool(False)
     clock = Instance(PieClockModel, ())
+    duration_tracker = Instance(AutomatedRunDurationTracker, ())
+
     #    experiment_queue = Any
 
     def calculate_duration(self, runs=None):
         #        if runs is None:
         #            runs = self.experiment_queue.cleaned_automated_runs
+        self.duration_tracker.load()
         dur = self._calculate_duration(runs)
         # add an empirical fudge factor
         #         ff = polyval(FUDGE_COEFFS, len(runs))
@@ -75,17 +120,30 @@ class ExperimentStats(Loggable):
     #        self.etf = self.format_duration(dur)
 
     def format_duration(self, dur):
-        dt = (datetime.datetime.now() + \
-              datetime.timedelta(seconds=int(dur)))
+        post = self._post
+        if not post:
+            post = datetime.now()
+
+        dt = post + timedelta(seconds=int(dur))
         return dt.strftime('%I:%M:%S %p %a %m/%d')
 
     def _calculate_duration(self, runs):
+
         dur = 0
         if runs:
             script_ctx = dict()
             warned = []
             ni = len(runs)
-            run_dur = sum([a.get_estimated_duration(script_ctx, warned, True) for a in runs])
+
+            run_dur = 0
+            for a in runs:
+                sh = a.script_hash
+                if sh in self.duration_tracker:
+                    run_dur += self.duration_tracker[sh]
+                else:
+                    run_dur += a.get_estimated_duration(script_ctx, warned, True)
+
+            # run_dur = sum([a.get_estimated_duration(script_ctx, warned, True) for a in runs])
 
             btw = self.delay_between_analyses * (ni - 1)
             dur = run_dur + btw + self.delay_before_analyses
@@ -95,10 +153,10 @@ class ExperimentStats(Loggable):
         return dur
 
     def _get_elapsed(self):
-        return str(datetime.timedelta(seconds=self._elapsed))
+        return str(timedelta(seconds=self._elapsed))
 
     def _get_total_time(self):
-        dur = datetime.timedelta(seconds=round(self._total_time))
+        dur = timedelta(seconds=round(self._total_time))
         return str(dur)
 
     def traits_view(self):
@@ -115,12 +173,13 @@ class ExperimentStats(Loggable):
             Item('etf', style='readonly', label='Est. finish'),
             Item('elapsed',
                  style='readonly')),
-                 UItem('clock', style='custom', width=100, height=100, defined_when='use_clock'))
+            UItem('clock', style='custom', width=100, height=100, defined_when='use_clock'))
         return v
 
     def start_timer(self):
         st = time.time()
-        self._start_time = st
+        self._post = datetime.now()
+        # self._start_time = st
 
         def update_time():
             e = round(time.time() - st)
@@ -139,11 +198,17 @@ class ExperimentStats(Loggable):
             self._timer.stop()
 
     def reset(self):
-        self._start_time = None
+        # self._start_time = None
+        self._post = None
         self.nruns_finished = 0
         self._elapsed = 0
 
+    def update_run_duration(self, run, t):
+        a = self.duration_tracker
+        a.update(run.spec.script_hash, t)
+
     def finish_run(self):
+
         self.nruns_finished += 1
         if self.clock:
             self.clock.stop()
@@ -183,12 +248,12 @@ class StatsGroup(ExperimentStats):
             calculate the total duration
             calculate the estimated time of finish
         """
-        #runs = [ai
+        # runs = [ai
         #        for ei in self.experiment_queues
         #            for ai in ei.cleaned_automated_runs]
         #
-        #ni = len(runs)
-        #self.nruns = ni
+        # ni = len(runs)
+        # self.nruns = ni
         # for ei in self.experiment_queues:
         #     dur=ei.stats.calculate_duration(ei.cleaned_automated_runs)
         #     if
@@ -198,11 +263,12 @@ class StatsGroup(ExperimentStats):
 
         self.debug('total_time={}'.format(tt))
         self._total_time = tt
-        offset = 0
-        if self._start_time:
-            offset = time.time() - self._start_time
+        # offset = 0
+        # if self._start_time:
+        #     offset = time.time() - self._start_time
 
-        self.etf = self.format_duration(tt - offset)
+        # self.etf = self.format_duration(tt - offset)
+        self.etf = self.format_duration(tt)
 
     def calculate_at(self, sel):
         """
@@ -219,6 +285,5 @@ class StatsGroup(ExperimentStats):
                 tt += ei.stats.calculate_duration()
 
         self.time_at = self.format_duration(tt)
-
 
 # ============= EOF =============================================

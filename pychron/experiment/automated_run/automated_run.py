@@ -279,16 +279,14 @@ class AutomatedRun(Loggable):
         if self.spectrometer_manager:
             self.spectrometer_manager.spectrometer.set_parameter(name, v)
 
-    def py_data_collection(self, obj, ncounts, starttime, starttime_offset, series=0, fit_series=0):
+    def py_data_collection(self, obj, ncounts, starttime, starttime_offset, series=0, fit_series=0, group='signal'):
         if not self._alive:
             return
 
         if self.plot_panel:
             self.plot_panel.is_baseline = False
 
-        gn = 'signal'
-
-        self.persister.build_tables(gn, self._active_detectors)
+        self.persister.build_tables(group, self._active_detectors)
 
         self.multi_collector.is_baseline = False
         self.multi_collector.fit_series_idx = fit_series
@@ -300,8 +298,8 @@ class AutomatedRun(Loggable):
 
         check_conditionals = obj == self.measurement_script
 
-        result = self._measure(gn,
-                               self.persister.get_data_writer(gn),
+        result = self._measure(group,
+                               self.persister.get_data_writer(group),
                                ncounts, starttime, starttime_offset,
                                series,
                                check_conditionals, sc, obj)
@@ -1736,9 +1734,11 @@ anaylsis_type={}
                 ci['start'] = ncounts
 
         conds = [conditional_from_dict(ci, ActionConditional) for ci in conditionals]
+        self.arar_age.conditional_modifier = 'whiff'
         self.collector.set_temporary_conditionals(conds)
-        self.py_data_collection(None, ncounts, starttime, starttime_offset, series, fit_series)
+        self.py_data_collection(None, ncounts, starttime, starttime_offset, series, fit_series, group='whiff')
         self.collector.clear_temporary_conditionals()
+        self.arar_age.conditional_modifier = None
 
         result = self.collector.measurement_result
         # self.persister.whiff_result = result

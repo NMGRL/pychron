@@ -41,7 +41,7 @@ class ArgusMagnet(BaseMagnet, SpectrometerDevice):
     # ===============================================================================
     # ##positioning
     # ===============================================================================
-    def set_dac(self, v, verbose=False):
+    def set_dac(self, v, verbose=False, settling_time=None):
         self.debug('setting magnet DAC')
         self.debug('current  : {:0.6f}'.format(self._dac))
         self.debug('requested: {:0.6f}'.format(v))
@@ -101,8 +101,11 @@ class ArgusMagnet(BaseMagnet, SpectrometerDevice):
 
             et = time.time() - st
             if not self.simulation:
-                st = self.settling_time - et
-                self.debug('Magnet settling time: {:0.3f}, actual time: {:0.3f}'.format(self.settling_time, st))
+                if settling_time is None:
+                    settling_time = self.settling_time
+
+                st = settling_time - et
+                self.debug('Magnet settling time: {:0.3f}, actual time: {:0.3f}'.format(settling_time, st))
                 if st > 0:
                     time.sleep(st)
 
