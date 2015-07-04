@@ -174,7 +174,6 @@ class StreamGraph(Graph):
 
         dl = self.data_limits[plotid]
 
-
         if self.force_track_x_flag or (track_x and (self.track_x_min or self.track_x_max)):
             self._set_xlimits(nx, plotid)
 

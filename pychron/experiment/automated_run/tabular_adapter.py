@@ -120,6 +120,12 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
     use_cdd_warming_text = Property
     colors = Dict(COLORS)
 
+    # def get_tooltip(self, obj, trait, row, column):
+    #     name = self.column_map[column]
+    #     item = getattr(obj, trait)[row]
+    #     # name='_'.join(name.split('_')[:-1])
+    #     return '{}= {}'.format(name, getattr(item, name))
+
     def get_row_label(self, section, obj=None):
         return section + 1
 

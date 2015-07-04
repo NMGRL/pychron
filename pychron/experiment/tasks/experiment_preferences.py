@@ -261,7 +261,6 @@ class ConsolePreferencesPane(BaseConsolePreferencesPane):
                         label=self.label))
         return v
 
-
 # class SysLoggerPreferencesPane(PreferencesPane):
 #     model_factory = SysLoggerPreferences
 #     category = 'Experiment'

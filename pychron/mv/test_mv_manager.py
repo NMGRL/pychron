@@ -21,7 +21,7 @@ from traits.api import Button, Instance
 from traitsui.api import View, Item
 
 from pychron.mv.machine_vision_manager import MachineVisionManager
-from pychron.mv.test_image import TestImage
+from pychron.mv.mv_image import MVImage
 
 
 # ============= standard library imports ========================
@@ -29,7 +29,7 @@ from pychron.mv.test_image import TestImage
 
 class TestMVManager(MachineVisionManager):
     step = Button
-    test_image = Instance(TestImage, ())
+    test_image = Instance(MVImage, ())
 
     def _step_fired(self):
         self.step_signal.set()

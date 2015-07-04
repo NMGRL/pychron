@@ -15,16 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from numpy import asarray
 from traits.api import Instance, String, Property, Button, \
     Bool, Event, on_trait_change, Str, Int
 from apptools.preferences.preference_binding import bind_preference
 
 # ============= standard library imports ========================
 import time
+import os
+from numpy import asarray, copy
 from threading import Thread, Timer
 
-import os
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import unique_path, unique_path2
 from pychron.image.cv_wrapper import get_size, crop
@@ -266,30 +266,37 @@ class VideoStageManager(StageManager):
 
     def get_brightness(self):
         ld = self._lumen_detector
-        cw, ch = 2 * self.crop_width * self.pxpermm, 2 * self.crop_height * self.pxpermm
+        # cw, ch = 2 * self.crop_width * self.pxpermm, 2 * self.crop_height * self.pxpermm
         src = self.video.get_frame()
-        src = self._crop_image(src, cw, ch)
+        src = self._crop_image(src)
         # if src:
         # else:
         #     src = random.random((ch, cw)) * 255
         #     src = src.astype('uint8')
         #         return random.random()
-        src, v = ld.get_value(src)
-        return v
+        csrc = copy(src)
+        src, v = ld.get_value(csrc)
+        return csrc, src, v
 
-    def _crop_image(self, src, cw, ch):
-        CX, CY = 0, 0
-        cw_px = int(cw * self.pxpermm)
-        ch_px = int(ch * self.pxpermm)
+    def get_frame_size(self):
+        cw, ch = 2 * self.crop_width * self.pxpermm, 2 * self.crop_height * self.pxpermm
+        return cw, ch
+
+    def _crop_image(self, src):
+        ccx, ccy = 0, 0
+        cw_px, ch_px = self.get_frame_size()
+        # cw_px = int(cw)# * self.pxpermm)
+        # ch_px = int(ch)# * self.pxpermm)
         w, h = get_size(src)
 
-        x = int((w - cw_px) / 2 + CX)
-        y = int((h - ch_px) / 2 + CY)
+        x = int((w - cw_px) / 2 + ccx)
+        y = int((h - ch_px) / 2 + ccy)
 
         r = 4 - cw_px % 4
-        cw_px = ch_px = cw_px + r
+        cw_px += r
 
-        return asarray(crop(src, x, y, cw_px, ch_px))
+        return asarray(crop(src, x, y, cw_px, cw_px))
+
     # def get_video_database(self):
     # from pychron.database.adapters.video_adapter import VideoAdapter
     #

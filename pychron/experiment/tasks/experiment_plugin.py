@@ -15,11 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
+
 from envisage.ui.tasks.task_factory import TaskFactory
 from pyface.tasks.action.schema import SGroup
 from pyface.tasks.action.schema_addition import SchemaAddition
 from envisage.ui.tasks.task_extension import TaskExtension
 from traits.api import Instance
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.entry.entry_views.sensitivity_entry import SensitivitySelector
@@ -37,6 +40,7 @@ from pychron.experiment.tasks.experiment_actions import NewExperimentQueueAction
     NewPatternAction, OpenPatternAction, ResetQueuesAction, OpenLastExperimentQueueAction, UndoAction, \
     QueueConditionalsAction, ConfigureEditorTableAction, SystemConditionalsAction, ResetSystemHealthAction, \
     OpenExperimentHistoryAction
+from pychron.paths import paths
 
 
 class ExperimentPlugin(BaseTaskPlugin):
@@ -69,6 +73,9 @@ class ExperimentPlugin(BaseTaskPlugin):
     def _task_factory(self):
         e = ExperimentEditorTask(manager=self.experimentor)
         return e
+
+    def _preferences_default(self):
+        return ['file://{}'.format(os.path.join(paths.preferences_dir, 'experiment.ini'))]
 
     def _preferences_panes_default(self):
         return [ExperimentPreferencesPane,

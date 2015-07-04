@@ -17,13 +17,13 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from numpy import invert, percentile, zeros_like
+from numpy import invert, zeros_like
 from skimage.draw import circle
 
 
 class LumenDetector(object):
     threshold = 100
-    mask_radius = 25
+    mask_radius = 70
 
     def get_value(self, src):
         mask = self._mask(src)
@@ -32,8 +32,8 @@ class LumenDetector(object):
         lum = src[mask]
 #         # use mean of the 90th percentile as lumen
 #         # measure. this is adhoc and should/could be modified
-        lumen = percentile(lum.flatten(), 90).mean()
-
+        #         lumen = percentile(lum.flatten(), 90).mean()
+        lumen = lum.sum()
         return src, lumen
 
     def _mask(self, src):

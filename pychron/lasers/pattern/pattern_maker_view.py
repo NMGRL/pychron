@@ -119,17 +119,23 @@ class PatternMakerView(Saveable, Patternable):
     def pattern_factory(self, kind):
         pattern = None
         name = '{}Pattern'.format(kind)
-        try:
-            factory = __import__('pychron.lasers.pattern.patterns',
-                                 fromlist=[name])
-            pattern = getattr(factory, name)()
-        except (ImportError, AttributeError), e:
+        for pkg in ('pychron.lasers.pattern.patterns',
+                    'pychron.lasers.pattern.seek_pattern',
+                    'pychron.lasers.pattern.degas_pattern'):
             try:
-                factory = __import__('pychron.lasers.pattern.seek_pattern',
-                                     fromlist=[name])
+                factory = __import__(pkg, fromlist=[name])
                 pattern = getattr(factory, name)()
-            except ImportError, e:
-                print e
+                break
+            except (ImportError, AttributeError), e:
+                pass
+
+                #
+                # try:
+                #     factory = __import__('pychron.lasers.pattern.seek_pattern',
+                #                          fromlist=[name])
+                #     pattern = getattr(factory, name)()
+                # except ImportError, e:
+                #     print e
 
         if pattern:
             pattern.replot()

@@ -18,7 +18,7 @@
 from traits.api import Property, String, Float, Any, Int, List, Instance, Bool
 from traitsui.api import View, Item, VGroup, UItem
 # ============= standard library imports ========================
-import datetime
+from datetime import datetime, timedelta
 import os
 import time
 # ============= local library imports  ==========================
@@ -93,7 +93,8 @@ class ExperimentStats(Loggable):
 
     delay_between_analyses = Float
     delay_before_analyses = Float
-    _start_time = None
+    # _start_time = None
+    _post = None
 
     use_clock = Bool(False)
     clock = Instance(PieClockModel, ())
@@ -119,8 +120,11 @@ class ExperimentStats(Loggable):
     #        self.etf = self.format_duration(dur)
 
     def format_duration(self, dur):
-        dt = (datetime.datetime.now() + \
-              datetime.timedelta(seconds=int(dur)))
+        post = self._post
+        if not post:
+            post = datetime.now()
+
+        dt = post + timedelta(seconds=int(dur))
         return dt.strftime('%I:%M:%S %p %a %m/%d')
 
     def _calculate_duration(self, runs):
@@ -133,8 +137,9 @@ class ExperimentStats(Loggable):
 
             run_dur = 0
             for a in runs:
-                if a.script_hash in self.duration_tracker:
-                    run_dur += self.duration_tracker[a.script_hash]
+                sh = a.script_hash
+                if sh in self.duration_tracker:
+                    run_dur += self.duration_tracker[sh]
                 else:
                     run_dur += a.get_estimated_duration(script_ctx, warned, True)
 
@@ -148,10 +153,10 @@ class ExperimentStats(Loggable):
         return dur
 
     def _get_elapsed(self):
-        return str(datetime.timedelta(seconds=self._elapsed))
+        return str(timedelta(seconds=self._elapsed))
 
     def _get_total_time(self):
-        dur = datetime.timedelta(seconds=round(self._total_time))
+        dur = timedelta(seconds=round(self._total_time))
         return str(dur)
 
     def traits_view(self):
@@ -173,7 +178,8 @@ class ExperimentStats(Loggable):
 
     def start_timer(self):
         st = time.time()
-        self._start_time = st
+        self._post = datetime.now()
+        # self._start_time = st
 
         def update_time():
             e = round(time.time() - st)
@@ -192,7 +198,8 @@ class ExperimentStats(Loggable):
             self._timer.stop()
 
     def reset(self):
-        self._start_time = None
+        # self._start_time = None
+        self._post = None
         self.nruns_finished = 0
         self._elapsed = 0
 
@@ -256,11 +263,12 @@ class StatsGroup(ExperimentStats):
 
         self.debug('total_time={}'.format(tt))
         self._total_time = tt
-        offset = 0
-        if self._start_time:
-            offset = time.time() - self._start_time
+        # offset = 0
+        # if self._start_time:
+        #     offset = time.time() - self._start_time
 
-        self.etf = self.format_duration(tt - offset)
+        # self.etf = self.format_duration(tt - offset)
+        self.etf = self.format_duration(tt)
 
     def calculate_at(self, sel):
         """
