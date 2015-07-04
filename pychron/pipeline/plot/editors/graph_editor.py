@@ -110,6 +110,7 @@ class GraphEditor(BaseUnknownsEditor):
     def _get_component(self):
         self.figure_model = None
         ans = self.analyses
+        print 'get comp', len(ans)
         if ans:
             return self._component_factory()
 

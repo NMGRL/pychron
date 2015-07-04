@@ -48,22 +48,33 @@ class BrowserSampleView(PaneModelView):
             show_border=True,
             label='Irradiations')
 
-        pgrp = UItem('projects',
-                     height=-150,
-                     editor=FilterTabularEditor(editable=False,
-                                                enabled_cb='project_enabled',
-                                                use_fuzzy=True,
-                                                refresh='refresh_needed',
-                                                selected='selected_projects',
-                                                adapter=ProjectAdapter(),
-                                                multi_select=True))
-
-        project_grp = Group(pgrp,
+        project_grp = Group(UItem('projects',
+                                  height=-150,
+                                  editor=FilterTabularEditor(editable=False,
+                                                             enabled_cb='project_enabled',
+                                                             use_fuzzy=True,
+                                                             refresh='refresh_needed',
+                                                             selected='selected_projects',
+                                                             adapter=ProjectAdapter(),
+                                                             multi_select=True)),
                             springy=False,
                             visible_when='project_visible',
                             show_border=True,
                             label='Projects')
 
+        exp_grp = Group(UItem('experiments',
+                              height=-150,
+                              editor=FilterTabularEditor(editable=False,
+                                                         use_fuzzy=True,
+                                                         enabled_cb='experiment_enabled',
+                                                         refresh='refresh_needed',
+                                                         selected='selected_experiments',
+                                                         adapter=ProjectAdapter(),
+                                                         multi_select=True)),
+                        springy=False,
+                        visible_when='experiment_visible',
+                        show_border=True,
+                        label='Experiments')
         analysis_type_group = HGroup(
             UItem('use_analysis_type_filtering',
                   tooltip='Enable Analysis Type filter',
@@ -110,7 +121,7 @@ class BrowserSampleView(PaneModelView):
                         width=-1.0,
                         visible_when='not filter_focus'),
             HGroup(ms_grp, ln_grp),
-            HGroup(project_grp, irrad_grp),
+            HGroup(project_grp, exp_grp, irrad_grp),
             analysis_type_group,
             date_grp)
 
@@ -121,8 +132,4 @@ class BrowserSampleView(PaneModelView):
     def unselect_projects(self, info, obj):
         obj.selected_projects = []
 
-
 # ============= EOF =============================================
-
-
-

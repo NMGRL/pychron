@@ -80,6 +80,7 @@ class FigureNode(BaseNode):
                 self.editor = editor
                 state.editors.append(editor)
 
+            # print editor, state.unknowns
             editor.set_items(state.unknowns)
             oname = editor.name
 

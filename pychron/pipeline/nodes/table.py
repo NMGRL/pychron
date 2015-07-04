@@ -46,6 +46,7 @@ class TableNode(BaseNode):
 
         editor_klass = FusionTableEditor
         editor = editor_klass()
+
         editor.items = items
         state.editors.append(editor)
 

@@ -31,7 +31,7 @@ def func(regex, item):
 
 def fuzzyfinder(user_input, collection):
     # suggestions = []
-    pattern = '.*?'.join(user_input)  # Converts 'djm' to 'd.*?j.*?m'
+    pattern = '.*'.join(user_input)  # Converts 'djm' to 'd.*?j.*?m'
     regex = re.compile('%s' % pattern)  # Compiles a regex.
     # for item in collection:
     #     match = regex.search(item)   # Checks if the current item matches the regex.

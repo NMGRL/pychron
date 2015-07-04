@@ -168,7 +168,7 @@ class PipelineEngine(Loggable):
 
     def configure(self, node):
         node.configure()
-        self.refresh_analyses()
+        # self.refresh_analyses()
         self.update_needed = True
         # if node.configure():
         # node.refresh()
@@ -208,7 +208,7 @@ class PipelineEngine(Loggable):
             analyses = self.dvc.make_analyses(records)
             # print len(records),len(analyses)
             node.analyses.extend(analyses)
-            self.refresh_analyses()
+            # self.refresh_analyses()
 
     def add_test_filter(self):
         node = self.pipeline.nodes[-1]
@@ -337,7 +337,7 @@ class PipelineEngine(Loggable):
             node.run(state)
             if state.canceled:
                 self.debug('pipeline canceled by {}'.format(node))
-                self.refresh_analyses()
+                # self.refresh_analyses()
                 return True
 
     def run(self, state, run_to):
@@ -349,9 +349,9 @@ class PipelineEngine(Loggable):
         state.veto = None
 
         for idx, node in enumerate(self.pipeline.iternodes(start_node, run_to)):
-            self.selected = node
+            # self.selected = node
             node.visited = True
-            self.update_needed = True
+
             if node.enabled:
                 st = time.time()
                 node.run(state)
@@ -359,19 +359,19 @@ class PipelineEngine(Loggable):
 
                 if state.veto:
                     self.debug('pipeline vetoed by {}'.format(node))
-                    self.refresh_analyses()
+                    # self.refresh_analyses()
                     return
 
                 if state.canceled:
                     self.debug('pipeline canceled by {}'.format(node))
-                    self.refresh_analyses()
+                    # self.refresh_analyses()
                     return True
 
             else:
                 self.debug('Skip node {:02n}: {}'.format(idx, node))
         else:
             self.debug('pipeline run finished')
-            self.refresh_analyses()
+            # self.refresh_analyses()
             self.debug('pipeline runtime {}'.format(time.time() - ost))
             # self.selected = None
             # self.update_needed = True
@@ -397,8 +397,9 @@ class PipelineEngine(Loggable):
         for node in self.pipeline.nodes:
             if hasattr(node, 'editor'):
                 if node.editor == editor:
-                    self.unknowns = editor.analyses
                     self.selected = node
+                    self.unknowns = editor.analyses
+                    self.refresh_table_needed = True
                     break
 
     # private

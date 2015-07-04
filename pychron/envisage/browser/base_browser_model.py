@@ -83,12 +83,16 @@ def extract_mass_spectrometer_name(name):
 
 class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     plot_selected = Event
+
     projects = List
     oprojects = List
-    project_enabled = Bool(True)
-
+    experiments = List
+    oexperiments = List
     samples = List
     osamples = List
+
+    project_enabled = Bool(True)
+    experiment_enabled = Bool(True)
 
     analysis_groups = List
 
@@ -99,6 +103,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     date_configure_button = Button
 
     selected_projects = Any
+    selected_experiments = Any
     selected_samples = Any
     selected_analysis_groups = Any
 
@@ -223,6 +228,14 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         self.samples = s
         self.osamples = s
         self.trait_set(selected_samples=sel)
+
+    def load_experiments(self):
+        db = self.db
+        with db.session_ctx():
+            es = [e.record_view() for e in db.get_experiments()]
+
+            self.experiments = es
+            self.oexperiments = es
 
     def load_projects(self, include_recent=True):
         db = self.db

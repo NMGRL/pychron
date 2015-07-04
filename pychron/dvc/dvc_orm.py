@@ -80,6 +80,12 @@ class ExperimentTbl(Base, BaseMixin):
 
     experiment_associations = relationship('ExperimentAssociationTbl', backref='experiment')
 
+    def record_view(self):
+        from pychron.envisage.browser.record_views import ExperimentRecordView
+
+        v = ExperimentRecordView()
+        v.name = self.name
+        return v
 
 class ExperimentAssociationTbl(Base, BaseMixin):
     idexperimentassociationTbl = Column(Integer, primary_key=True)

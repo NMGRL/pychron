@@ -107,12 +107,11 @@ class ArArTableEditor(BaseTableEditor, ColumnSorterMixin):
 
     @cached_property
     def _get_analysis_groups(self):
-        key = lambda x: x.sample
         ans = self._clean_items()
-        ms = [
-            self.analysis_group_klass(analyses=list(ais),
-                                      sample=sam)
-            for sam, ais in groupby(ans, key=key)]
+        key = lambda x: x.group_id
+        ans = sorted(ans, key=key)
+        ms = [self.analysis_group_klass(analyses=list(ais))
+              for gid, ais in groupby(ans, key=key)]
         return ms
 
     def traits_view(self):

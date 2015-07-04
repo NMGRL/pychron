@@ -28,16 +28,16 @@ from pychron.envisage.resources import icon
 
 # class _myFilterTableView(_TableView):
 #     pass
-    # def sizeHint(self):
-    # sh = QtGui.QTableView.sizeHint(self)
-    # print sh, sh.width(), sh.height()
-    #
-    #     width = 0
-    #     for column in xrange(len(self._editor.adapter.columns)):
-    #         width += self.sizeHintForColumn(column)
-    #     sh.setWidth(width)
-    #
-    #     return sh
+# def sizeHint(self):
+# sh = QtGui.QTableView.sizeHint(self)
+# print sh, sh.width(), sh.height()
+#
+#     width = 0
+#     for column in xrange(len(self._editor.adapter.columns)):
+#         width += self.sizeHintForColumn(column)
+#     sh.setWidth(width)
+#
+#     return sh
 
 
 class _FilterTableView(_TableView):
@@ -129,6 +129,36 @@ class _EnableFilterTableView(_FilterTableView):
         # self.setLayout(layout)
 
 
+class mQSortFilterProxyModel(QSortFilterProxyModel):
+    use_fuzzy = Bool
+
+    def lessThan(self, left, right):
+        if self.use_fuzzy:
+            return self._fuzzy_sort(left, right)
+        else:
+            return super(mQSortFilterProxyModel, self).lessThan(left, right)
+
+    def _fuzzy_sort(self, left, right):
+        sm = self.sourceModel()
+        leftData = sm.data(left)
+        rightData = sm.data(right)
+        regex = self.filterRegExp()
+
+        lp = regex.indexIn(leftData)
+        lg = regex.matchedLength()
+
+        rp = regex.indexIn(rightData)
+        rg = regex.matchedLength()
+
+        if lg == rg:
+            if lp == rp:
+                return leftData < rightData
+            else:
+                return lp < rp
+        else:
+            return lg < rg
+
+
 class _FilterTabularEditor(_TabularEditor):
     widget_factory = _FilterTableView
     proxyModel = Any
@@ -139,11 +169,13 @@ class _FilterTabularEditor(_TabularEditor):
 
         self.control.text.textChanged.connect(self.on_text_change)
         self.control.button.clicked.connect(self.on_action)
-        self.proxyModel = proxyModel = QSortFilterProxyModel()
-        proxyModel.setSourceModel(self.model)
-
-        self.control.setModel(proxyModel)
+        self.proxyModel = proxyModel = mQSortFilterProxyModel()
+        # print 'afasd',self.use_fuzzy
         self.use_fuzzy = self.factory.use_fuzzy
+        proxyModel.use_fuzzy = self.use_fuzzy
+        proxyModel.setSourceModel(self.model)
+        self.control.setSortingEnabled(True)
+        self.control.setModel(proxyModel)
         if self.factory.multi_select:
             slot = self._on_rows_selection
         else:
@@ -163,11 +195,12 @@ class _FilterTabularEditor(_TabularEditor):
     def on_text_change(self):
         ft = self.control.get_text()
         if self.use_fuzzy:
-            reg = QRegExp('.*?'.join(ft), Qt.CaseInsensitive)
+            reg = QRegExp('.*'.join(ft), Qt.CaseInsensitive)
         else:
             reg = QRegExp('^{}'.format(ft), Qt.CaseInsensitive)
 
         self.proxyModel.setFilterRegExp(reg)
+        self.control.sortByColumn(0, self.proxyModel.sortOrder())
         self.control.button.setEnabled(bool(ft))
 
     def _on_row_selection(self, added, removed):
@@ -238,12 +271,11 @@ class _EnableFilterTabularEditor(_FilterTabularEditor):
 class FilterTabularEditor(myTabularEditor):
     enabled_cb = Str
     use_fuzzy = Bool
+
     def _get_klass(self):
         if self.enabled_cb:
             return _EnableFilterTabularEditor
         else:
             return _FilterTabularEditor
+
 # ============= EOF =============================================
-
-
-

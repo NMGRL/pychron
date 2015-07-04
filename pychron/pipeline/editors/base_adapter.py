@@ -23,6 +23,7 @@ from pychron.core.helpers.formatting import floatfmt
 
 
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 class TableBlank(HasTraits):
@@ -189,7 +190,6 @@ class BaseAdapter(TabularAdapter):
     def _get_ar36_err_text(self):
         return self._get_error('Ar36')
 
-
     def _get_rad40_percent_text(self):
         return self._get_value('rad40_percent', n=1)
 
@@ -202,7 +202,6 @@ class BaseAdapter(TabularAdapter):
     def _get_age_error_text(self):
         return self._get_value('age_err_wo_j')
 
-
     def _get_kca_text(self):
         return self._get_value('kca', n=2)
 
@@ -212,6 +211,7 @@ class BaseAdapter(TabularAdapter):
 
 class BaseGroupAdapter(BaseAdapter):
     columns = [
+        ('Identifier', 'identifier'),
         ('Sample', 'sample'),
         ('N', 'nanalyses'),
         ('Wtd. Age', 'weighted_age'),
@@ -219,13 +219,14 @@ class BaseGroupAdapter(BaseAdapter):
         ('MSWD', 'mswd'),
         ('Wtd. K/Ca', 'weighted_kca_error'),
         ('S.E', 'weighted_kca'),
-        #('Arith. Age', 'arith_age'),
-        #('S.D', 'age_sd'),
+        # ('Arith. Age', 'arith_age'),
+        # ('S.D', 'age_sd'),
         ('', 'blank_column')
     ]
 
     nanalyses_width = Int(40)
     sample_width = Int(75)
+    identifier_width = Int(75)
     mswd_width = Int(75)
     weighted_age_width = Int(75)
     weighted_kca_width = Int(75)
@@ -241,9 +242,10 @@ class BaseGroupAdapter(BaseAdapter):
     weighted_kca_error_text = Property
 
     font = 'Arial 9'
-    #age_sd_width = Int(75)
-    #arith_age_text = Property
-    #age_sd_text = Property
+    # age_sd_width = Int(75)
+    # arith_age_text = Property
+    # age_sd_text = Property
+
     def get_bg_color(self, obj, trait, row, column):
         return 'white'
 
@@ -261,10 +263,10 @@ class BaseGroupAdapter(BaseAdapter):
 
     def _get_mswd_text(self):
         return floatfmt(self.item.mswd, 2)
-        #def _get_arith_age_text(self):
+        # def _get_arith_age_text(self):
         #    return self._get_value('arith_age')
         #
-        #def _get_age_sd_text(self):
+        # def _get_age_sd_text(self):
         #    return self._get_error('arith_age')
 
 # ============= EOF =============================================

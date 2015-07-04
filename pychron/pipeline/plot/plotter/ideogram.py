@@ -434,7 +434,7 @@ class Ideogram(BaseArArFigure):
 
     def _add_mean_indicator(self, g, line, po, bins, probs, pid):
         wm, we, mswd, valid_mswd = self._calculate_stats(bins, probs)
-        print wm, we
+        # print wm, we
         ogid = self.group_id
         gid = ogid + 1
 

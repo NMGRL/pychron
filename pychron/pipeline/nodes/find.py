@@ -79,7 +79,7 @@ class FindFluxMonitorsNode(FindNode):
                 monitors = self.dvc.make_analyses(ans, calculate_f_only=False)
 
             state.geometry = dvc.get_irradiation_geometry(self.irradiation, self.level)
-
+            state.unknowns = monitors
             state.flux_monitors = monitors
             state.has_flux_monitors = True
             state.irradiation = self.irradiation

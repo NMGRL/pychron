@@ -32,6 +32,9 @@ class GroupingNode(BaseNode):
     analysis_kind = 'unknowns'
     name = 'Grouping'
 
+    def load(self, nodedict):
+        self.by_key = nodedict.get('key', 'Identifier')
+
     def configure(self):
         info = self.edit_traits()
         if info.result:

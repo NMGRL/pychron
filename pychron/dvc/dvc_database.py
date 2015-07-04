@@ -279,6 +279,21 @@ class DVCDatabase(DatabaseAdapter):
         return self._add_item(a)
 
     # special getters
+    def get_labnumbers_startswith(self, partial_id, mass_spectrometers=None, filter_non_run=True, **kw):
+        with self.session_ctx() as sess:
+            q = sess.query(IrradiationPositionTbl)
+            if mass_spectrometers or filter_non_run:
+                q = q.join(AnalysisTbl)
+
+            q = q.filter(IrradiationPositionTbl.identifier.like('%{}%'.format(partial_id)))
+            if mass_spectrometers:
+                q = q.filter(AnalysisTbl.mass_spectrometer.in_(mass_spectrometers))
+            if filter_non_run:
+                q = q.group_by(IrradiationPositionTbl.idirradiationpositionTbl)
+                q = q.having(count(AnalysisTbl.idanalysisTbl) > 0)
+
+            return self._query_all(q, verbose_query=True)
+
     def get_associated_experiments(self, idn):
         with self.session_ctx() as sess:
             q = sess.query(distinct(ExperimentTbl.name), IrradiationPositionTbl.identifier)
@@ -606,6 +621,9 @@ class DVCDatabase(DatabaseAdapter):
     def get_tags(self):
         return self._retrieve_items(TagTbl)
 
+    def get_experiments(self):
+        return self._retrieve_items(ExperimentTbl)
+
     def get_mass_spectrometer_names(self):
         with self.session_ctx():
             ms = self.get_mass_spectrometers()
@@ -630,12 +648,13 @@ class DVCDatabase(DatabaseAdapter):
     def get_flux_monitor_analyses(self, irradiation, level, sample):
         with self.session_ctx() as sess:
             q = sess.query(AnalysisTbl)
-            q = q.join(IrradiationPositionTbl, LevelTbl, IrradiationTbl, SampleTbl)
+            q = q.join(IrradiationPositionTbl, LevelTbl, IrradiationTbl, SampleTbl, AnalysisChangeTbl)
             # q = q.options(joinedload('experiment_associations'))
             # q = q.options(joinedload('irradiation_position'))
             q = q.filter(IrradiationTbl.name == irradiation)
             q = q.filter(LevelTbl.name == level)
             q = q.filter(SampleTbl.name == sample)
+            q = q.filter(AnalysisChangeTbl.tag != 'invalid')
             # q = q.filter(not_(IrradiationPositionTbl.identifier.in_(('24061','24062', '24063', '24076'))))
             # q = q.filter(SampleTbl.name.in_(('BW-2014-3', 'BW-2014-4')))
 

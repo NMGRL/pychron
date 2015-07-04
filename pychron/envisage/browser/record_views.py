@@ -162,6 +162,10 @@ class ProjectRecordView(RecordView):
         return self.name
 
 
+class ExperimentRecordView(HasTraits):
+    name = Str
+
+
 class AnalysisGroupRecordView(RecordView):
     name = Str
     create_date = Date

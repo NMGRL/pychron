@@ -94,6 +94,7 @@ class BrowserModel(BaseBrowserModel):
     def activate_sample_browser(self, force=False):
         if not self.is_activated or force:
             self.load_projects()
+            self.load_experiments()
             self._load_projects_and_irradiations()
 
             db = self.db

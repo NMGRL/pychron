@@ -33,6 +33,7 @@ from pychron.pipeline.options.plotter_options_manager import IsotopeEvolutionOpt
 
 class FitNode(FigureNode):
     use_save_node = Bool(True)
+    has_save_node = False
 
     def _set_saveable(self, state):
         ps = self.plotter_options.get_saveable_aux_plots()
@@ -42,7 +43,6 @@ class FitNode(FigureNode):
 
 class FitReferencesNode(FitNode):
     basename = None
-    has_save_node = False
 
     def run(self, state):
 

@@ -148,7 +148,7 @@ class _PipelineEditor(SimpleEditor):
                 iconwidth = 0
 
             offset = 20
-            r = rect.height() - 10
+            r = 13  # rect.height() - 10
             r2 = r / 2.
             status_color = node.get_status_color(object)
 

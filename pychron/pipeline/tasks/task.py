@@ -65,8 +65,7 @@ class PipelineTask(BaseBrowserTask):
                           SavePipelineTemplateAction()),
                  SToolBar(GitRollbackAction()),
                  SToolBar(TagAction(),
-                          SetInterpretedAgeAction())
-                 ]
+                          SetInterpretedAgeAction())]
 
     state = Instance(EngineState)
     resume_enabled = Bool(False)
@@ -80,6 +79,8 @@ class PipelineTask(BaseBrowserTask):
     modified = False
     dbmodified = False
     projects = None
+
+    _temp_state = None
 
     def run(self):
         self._run_pipeline()
@@ -99,7 +100,7 @@ class PipelineTask(BaseBrowserTask):
         # self.engine.set_template('ideogram')
         # self.engine.set_template('gain')
         # self.engine.set_template('ideogram')
-        self.engine.set_template('iso_evo')
+        self.engine.set_template('flux')
         # self.engine.add_is
         # self.engine.add_grouping(run=False)
         # self.engine.add_test_filter()
@@ -137,6 +138,8 @@ class PipelineTask(BaseBrowserTask):
             self.dvc.rollback_experiment_repo(expid)
 
     def reset(self):
+        self.resume_enabled = False
+        self._temp_state = None
         self.state = None
         self.engine.reset()
 
@@ -180,12 +183,15 @@ class PipelineTask(BaseBrowserTask):
         else:
             state = EngineState()
 
+        self.state = state
         self._temp_state = state
         if not self.engine.run(state, self.run_to):
             self._toggle_run(True)
         else:
             self._toggle_run(False)
             self.state = None
+
+        self.engine.update_needed = True
 
         self.close_all()
         for editor in state.editors:
@@ -201,6 +207,27 @@ class PipelineTask(BaseBrowserTask):
     def _toggle_run(self, v):
         self.resume_enabled = v
         self.run_enabled = not v
+
+    _delete_flag = False
+    _delete_cnt = 0
+    _cnt = 0
+
+    def _handle_items(self, sel, items):
+        if self.active_editor:
+            if not self._delete_flag:
+                self._delete_cnt = len(sel) + 1
+                self._cnt = 1
+                refresh = False
+                self._delete_flag = True
+            else:
+                self._cnt += 1
+                refresh = self._cnt >= self._delete_cnt
+
+            if refresh:
+                self.active_editor.set_items(items)
+                self.active_editor.refresh_needed = True
+                self._delete_flag = False
+                self._delete_cnt = 0
 
     def _default_layout_default(self):
         return TaskLayout(left=Splitter(PaneItem('pychron.pipeline.pane',
@@ -220,23 +247,24 @@ class PipelineTask(BaseBrowserTask):
     def _handle_reset(self):
         self.reset()
 
-    @on_trait_change('engine:unknowns[]')
-    def _handle_unknowns(self, name, old, new):
-        if self.active_editor:
-            if not new:
-                if hasattr(self.active_editor, 'set_items'):
-                    self.active_editor.set_items(self.engine.unknowns)
-                    self.active_editor.refresh_needed = True
+    @on_trait_change('engine:unknowns')
+    def _handle_unknowns(self, obj, name, old, new):
+        # print name, old, new
+        if name == 'unknowns_items':
+            self._handle_items(self.engine.selected_unknowns, self.engine.unknowns)
         self.engine.update_detectors()
 
-    @on_trait_change('engine:references[]')
+    @on_trait_change('engine:references')
     def _handle_references(self, name, old, new):
-        if self.active_editor:
-            # only update if deletion
-            if not new:
-                self.active_editor.set_references(self.engine.references)
-                self.active_editor.refresh_needed = True
+        if name == 'references_items':
+            self._handle_items(self.engine.selected_references, self.engine.references)
         self.engine.update_detectors()
+        # if self.active_editor:
+        #     # only update if deletion
+        #     if not new:
+        #         self.active_editor.set_references(self.engine.references)
+        #         self.active_editor.refresh_needed = True
+        # self.engine.update_detectors()
 
     def _active_editor_changed(self, new):
         if new:

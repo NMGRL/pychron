@@ -117,7 +117,7 @@ class TableTask(BaseBrowserTask):
     # def activated(self):
         #editor = FusionTableEditor()
         #self._open_editor(editor)
-        self.load_projects()
+        # self.load_projects()
         #self.selected_project = self.projects[1]
 
         # editor = StepHeatTableEditor()
