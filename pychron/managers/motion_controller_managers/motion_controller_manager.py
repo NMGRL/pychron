@@ -168,7 +168,7 @@ class MotionControllerManager(Manager):
                     f.write(l + '\n')
                     print l
         except Exception, e:
-            print e
+            print 'exception', e
 
     def traits_view(self):
         '''

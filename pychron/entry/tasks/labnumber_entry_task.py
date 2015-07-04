@@ -22,6 +22,7 @@ from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter, Tabbed
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.entry.entry_views.material_entry import MaterialEntry
 from pychron.core.helpers.filetools import add_extension
 
 from pychron.entry.graphic_generator import GraphicModel, GraphicGeneratorController
@@ -56,12 +57,12 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     preview_generate_identifiers_button = Button
 
     tool_bars = [SToolBar(SavePDFAction(),
-                          DatabaseSaveAction(),
-                          image_size=(16, 16))]
-                 # SToolBar(GenerateLabnumbersAction(),
-                 #          PreviewGenerateLabnumbersAction(),
-                 #          ImportIrradiationLevelAction(),
-                 #          image_size=(16, 16))]
+        DatabaseSaveAction(),
+        image_size=(16, 16))]
+    # SToolBar(GenerateLabnumbersAction(),
+    # PreviewGenerateLabnumbersAction(),
+    # ImportIrradiationLevelAction(),
+    # image_size=(16, 16))]
 
     invert_flag = Bool
     selection_freq = Int
@@ -74,6 +75,7 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
 
     def activated(self):
         if self.db.connected:
+            self.manager.activated()
             self.load_projects(include_recent=False)
 
     def transfer_j(self):
@@ -156,12 +158,13 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
         path = '/Users/ross/Desktop/sample_import.xls'
         if path:
             from pychron.entry.loaders.xls_sample_loader import XLSSampleLoader
+
             sample_loader = XLSSampleLoader()
             sample_loader.do_loading(self.manager, self.manager.db, path)
 
             spnames = []
             if self.selected_projects:
-                spnames =[ni.name for ni in self.selected_projects]
+                spnames = [ni.name for ni in self.selected_projects]
 
             self.load_projects(include_recent=False)
 
@@ -173,6 +176,7 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
 
     def import_sample_metadata(self):
         self.warning('Import sample metadata Deprecated')
+
     #     path = '/Users/ross/Programming/git/dissertation/data/minnabluff/lithologies.xls'
     #     path = '/Users/ross/Programming/git/dissertation/data/minnabluff/tables/TAS.xls'
     #     path = '/Users/ross/Programming/git/dissertation/data/minnabluff/tables/environ.xls'
@@ -193,10 +197,12 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
         info = es.edit_traits(kind='livemodal')
         if info.result:
             from pychron.entry.export.export_util import do_export
+
             do_export(self.manager, es.export_type, es.destination_dict, es.irradiations)
 
     def _manager_default(self):
-        return LabnumberEntry(application=self.application)
+        dvc = self.application.get_service('pychron.dvc.dvc.DVC')
+        return LabnumberEntry(application=self.application, dvc=dvc)
 
     # def _importer_default(self):
     #     return ImportManager(db=self.manager.db,
@@ -214,7 +220,7 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
                 PaneItem('pychron.entry.level'),
                 PaneItem('pychron.entry.chronology'),
                 PaneItem('pychron.entry.irradiation_canvas'),
-                           orientation='vertical'))
+                orientation='vertical'))
 
     def create_central_pane(self):
         return LabnumbersPane(model=self.manager)
@@ -229,6 +235,7 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
             # ImporterPane(model=self.importer),
             iep,
             IrradiationCanvasPane(model=self.manager)]
+
     # ===========================================================================
     # GenericActon Handlers
     # ===========================================================================
@@ -256,7 +263,9 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
 
     def _selected_samples_changed(self, new):
         if new:
-            self.manager.set_selected_attr(new.name, 'sample')
+            # self.manager.set_selected_attr(new.name, 'sample')
+            self.manager.set_selected_attrs((new.name, new.material, new.project),
+                                            ('sample', 'material', 'project'))
 
     def _load_associated_samples(self, names=None):
         if names is None:
@@ -284,7 +293,7 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
         self.preview_generate_identifiers()
 
     def _add_project_button_fired(self):
-        pr = ProjectEntry(db=self.manager.db)
+        pr = ProjectEntry(dvc=self.manager.dvc)
         if pr.do():
             self.load_projects(include_recent=False)
 
@@ -294,17 +303,17 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
             project = self.selected_projects[0].name
 
         mats = self.db.get_material_names()
-        sam = SampleEntry(db=self.manager.db,
+        sam = SampleEntry(dvc=self.manager.dvc,
                           project=project,
-                          projects = [p.name for p in self.projects],
-                          materials = mats)
+                          projects=[p.name for p in self.projects],
+                          materials=mats)
         if sam.do():
             self._load_associated_samples()
 
-    # def _add_material_button_fired(self):
-    #     mat = MaterialEntry(db=self.manager.db)
-    #     if mat.do():
-    #         self._load_materials()
+    def _add_material_button_fired(self):
+        mat = MaterialEntry(dvc=self.manager.dvc)
+        mat.do()
+        # self._load_materials()
 
     # def _edit_project_button_fired(self):
     #     pr = ProjectEntry(db=self.manager.db)
@@ -320,7 +329,6 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
 
     def _selected_projects_changed(self, old, new):
         if new and self.project_enabled:
-
             names = [ni.name for ni in new]
             self.debug('selected projects={}'.format(names))
 

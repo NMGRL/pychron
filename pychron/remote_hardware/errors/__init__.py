@@ -20,7 +20,7 @@ from laser_errors import *
 
 def _print_error_table(errors, loc):
 #    for e in errors:
-#        print e
+# print 'exception', e
     def get_code(x):
         try:
             v = loc[x]

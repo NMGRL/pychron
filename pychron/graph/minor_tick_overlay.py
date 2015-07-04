@@ -85,7 +85,7 @@ class MinorTicksOverlay(AbstractOverlay):
             gc.stroke_path()
 
         except Exception, e:
-            print e
+            print 'exception', e
         finally:
             gc.restore_state()
 

@@ -195,7 +195,7 @@ class FrequencyTemplateTestCase(unittest.TestCase):
             r.analysis_type = 'blank'
             runs.insert(i, r)
         atypes = [ri.analysis_type for ri in runs]
-        # print exp
+        # print 'exception', exp
         # print atypes
         self.assertListEqual(atypes, exp)
 

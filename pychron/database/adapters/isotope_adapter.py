@@ -2152,7 +2152,9 @@ class IsotopeAdapter(DatabaseAdapter):
     def get_irradiation_productions(self, **kw):
         return self._retrieve_items(irrad_ProductionTable, **kw)
 
-    def get_projects(self, irradiation=None, level=None, mass_spectrometers=None, **kw):
+    def get_projects(self, irradiation=None, level=None, mass_spectrometers=None, order=None, **kw):
+
+
         if irradiation or mass_spectrometers:
             with self.session_ctx() as sess:
                 if irradiation:
@@ -2164,7 +2166,10 @@ class IsotopeAdapter(DatabaseAdapter):
                     q = q.filter(gen_MassSpectrometerTable.name.in_(mass_spectrometers))
                 return self._query_all(q)
         else:
-            return self._retrieve_items(gen_ProjectTable, **kw)
+            if order == 'asc':
+                order = gen_ProjectTable.name.asc()
+
+            return self._retrieve_items(gen_ProjectTable, order=order, **kw)
 
     def get_sensitivities(self, **kw):
         return self._retrieve_items(gen_SensitivityTable, **kw)
@@ -2480,24 +2485,6 @@ class IsotopeAdapter(DatabaseAdapter):
     def _hash_factory(self, text):
         return hashlib.md5(text)
 
-    def _append_filters(self, f, kw):
-
-        filters = kw.get('filters', [])
-        if isinstance(f, (tuple, list)):
-            filters.extend(f)
-        else:
-            filters.append(f)
-        kw['filters'] = filters
-        return kw
-
-    def _append_joins(self, f, kw):
-        joins = kw.get('joins', [])
-        if isinstance(f, (tuple, list)):
-            joins.extend(f)
-        else:
-            joins.append(f)
-        kw['joins'] = joins
-        return kw
 
     def _get_date_range(self, q, hours=0):
         lan = q.order_by(meas_AnalysisTable.analysis_timestamp.asc()).first()

@@ -26,7 +26,7 @@ from traitsui.table_column import ObjectColumn
 # =============standard library imports ========================
 import os
 import glob
-import apptools.sweet_pickle as pickle
+import cPickle as pickle
 import copy
 # =============local library imports  ==========================
 

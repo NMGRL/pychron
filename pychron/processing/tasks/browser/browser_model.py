@@ -95,7 +95,6 @@ class BrowserModel(BaseBrowserModel):
             self._top_level_filter = None
 
     def activate_sample_browser(self, force=False):
-        print self.is_activated, force
         if not self.is_activated or force:
             self.load_projects()
             self._load_projects_and_irradiations()
@@ -256,7 +255,7 @@ class BrowserModel(BaseBrowserModel):
         ls = []
         atypes = self.analysis_include_types if self.use_analysis_type_filtering else None
 
-        print self.project_enabled, self.irradiation_enabled
+        # print self.project_enabled, self.irradiation_enabled
         if self.project_enabled:
             if not self.irradiation_enabled:
                 ls = super(BrowserModel, self)._retrieve_labnumbers_hook(db)
@@ -311,7 +310,7 @@ class BrowserModel(BaseBrowserModel):
                         try:
                             yield li.sample.project
                         except AttributeError, e:
-                            print e
+                            print 'exception', e
 
                 ps = sorted(list(set(get_projects())))
                 ps = [ProjectRecordView(p) for p in ps]

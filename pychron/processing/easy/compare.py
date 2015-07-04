@@ -77,7 +77,7 @@ class CompareIsochronSpec(BaseEasy):
                     wfile.write(t + '\n---\n')
                     # editor.set_items(unks)
                     # editor.rebuild()
-                    # print editor.get_trapped_component()
+                    # print 'exception', editor.get_trapped_component()
             wfile.close()
             progress.close()
 

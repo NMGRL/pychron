@@ -15,15 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from traits.api import Instance
+# ============= standard library imports ========================
 import base64
 import struct
-
-from traits.api import Instance
-
-
-
-
-# ============= standard library imports ========================
 import os
 # ============= local library imports  ==========================
 from uncertainties import nominal_value, std_dev
@@ -61,7 +56,7 @@ class XMLAnalysisExporter(Exporter):
         spec = self._make_spec(analysis)
         # if not isinstance(spec, MassSpecExportSpec):
         # s = MassSpecExportSpec()
-        #     s.load_record(spec)
+        # s.load_record(spec)
         #     spec = s
 
         self._make_xml_analysis(self._parser, spec)

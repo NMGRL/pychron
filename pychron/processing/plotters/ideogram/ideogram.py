@@ -61,8 +61,8 @@ class Ideogram(BaseArArFigure):
     # _reverse_sorted_analyses = True
     _analysis_number_cnt = 0
 
-    x_grid_visible = False
-    y_grid_visible = False
+    # x_grid_visible = False
+    # y_grid_visible = False
 
     _omit_key = 'omit_ideo'
 

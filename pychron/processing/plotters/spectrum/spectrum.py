@@ -104,7 +104,21 @@ class Spectrum(BaseArArFigure):
         graph.set_y_title('Apparent Age ({})'.format(au), plotid=pid)
 
         spec = self._add_plot(xs, ys, es, pid, po)
-        spec.line_style = self.options.center_line_style
+        ls = self.options.center_line_style
+        if not ls == 'No Line':
+            spec.line_style = ls
+        else:
+            # group = self.options.get_group(self.group_id)
+            # print 'lc',group.line_color
+            # print 'a', group.alpha
+            # print 'ccc', group.color
+            # c = group.color
+            # r,g,b,a = c.toTuple()
+            # ct = (r,g,b, group.alpha*255/100.)
+            # print ct
+            # spec.color = r,g,b, group.alpha *0.01
+            # spec.color = group.line_color
+            spec.line_width = 0
 
         # add inspector
         # sp=SpectrumInspector(component=spec)

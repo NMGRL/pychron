@@ -153,7 +153,7 @@ class LoadControlPane(TraitsDockPane):
                  editor=ComboboxEditor(name='irradiations', refresh='refresh_irradiation')),
             Item('level', editor=ComboboxEditor(name='levels', refresh='refresh_level')),
             # Item('level'),
-            Item('labnumber', editor=ComboboxEditor(name='labnumbers')),
+            Item('labnumber', editor=ComboboxEditor(name='labnumbers', refresh='refresh_labnumber')),
             Item('sample_info', style='readonly'),
             HGroup(
                 Item('weight', label='Weight (mg)'),

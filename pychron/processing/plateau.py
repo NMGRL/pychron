@@ -155,8 +155,7 @@ class Plateau(HasTraits):
         e2 *= overlap_sigma
 
         # log.debug('{}<{} {}>{}'.format(a1 - e1 , a2 + e2, a1 + e1 , a2 - e2))
-        if a1 - e1 < a2 + e2 and a1 + e1 > a2 - e2:
-            return True
+        return a1 - e1 < a2 + e2 and a1 + e1 > a2 - e2
 
     def check_nsteps(self, start, end):
         return end - start >= self.nsteps

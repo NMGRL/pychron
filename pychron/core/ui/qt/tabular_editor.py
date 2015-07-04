@@ -16,6 +16,8 @@
 
 # ============= enthought library imports =======================
 from pickle import dumps
+from pyface.image_resource import ImageResource
+from pyface.timer.do_later import do_later, do_after
 
 from traits.api import Bool, Str, List, Any, Instance, Property, Int, HasTraits, Color
 from traits.trait_base import SequenceTypes
@@ -36,6 +38,7 @@ class myTabularEditor(TabularEditor):
     key_pressed = Str
     rearranged = Str
     pasted = Str
+    autoscroll = Bool(True)
     # copy_cache = Str
 
     # link_copyable = Bool(True)
@@ -50,6 +53,7 @@ class myTabularEditor(TabularEditor):
     bgcolor = Color
     row_height = Int
     mime_type = Str('pychron.tabular_item')
+    # scroll_to_row_hint = 'top'
 
     def _get_klass(self):
         return _TabularEditor
@@ -117,7 +121,8 @@ class ItemDelegate(_ItemDelegate):
     # print 'asdf', painter, option, rect, pixmap
 
 
-class _TableView(TableView, ConsumerMixin):
+# class _TableView(TableView, ConsumerMixin):
+class _TableView(TableView):
     """
         for drag and drop reference see
         https://github.com/enthought/traitsui/blob/master/traitsui/qt4/tree_editor.py
@@ -134,8 +139,8 @@ class _TableView(TableView, ConsumerMixin):
     option_select = False
     drag_enabled = True
 
-    def __init__(self, *args, **kw):
-        super(_TableView, self).__init__(*args, **kw)
+    def __init__(self, editor, layout=None, *args, **kw):
+        super(_TableView, self).__init__(editor, *args, **kw)
         self.setItemDelegate(ItemDelegate(self))
 
         # self.setup_consumer(main=True)
@@ -524,14 +529,14 @@ class _TabularEditor(qtTabularEditor):
     model = Instance(_TabularModel)
     image_size = (32, 32)
 
-    def init(self, parent):
+    def init(self, layout):
         factory = self.factory
 
         self.adapter = factory.adapter
         self.model = _TabularModel(editor=self)
 
         # Create the control
-        control = self.control = self.widget_factory(self)
+        control = self.control = self.widget_factory(self, layout=layout)
 
         control.set_drag_enabled(factory.drag_enabled)
 
@@ -639,7 +644,7 @@ class _TabularEditor(qtTabularEditor):
                                self._on_column_resize)
 
     def dispose(self):
-        self.control._should_consume = False
+        # self.control._should_consume = False
         super(_TabularEditor, self).dispose()
 
     def refresh_editor(self):
@@ -669,59 +674,24 @@ class _TabularEditor(qtTabularEditor):
         cs = [header.sectionSize(i) for i in range(header.count())]
         self.col_widths = cs
 
+    def _multi_selected_rows_changed(self, selected_rows):
+        super(_TabularEditor, self)._multi_selected_rows_changed(selected_rows)
+        if selected_rows:
+            self._auto_scroll(selected_rows[0])
+
+    def _selected_changed(self, new):
+        super(_TabularEditor, self)._selected_changed(new)
+        self._auto_scroll(new)
+
+    def _auto_scroll(self, row):
+        if self.factory.autoscroll and row:
+            if not isinstance(row, int):
+                row = self.value.index(row)
+            self.scroll_to_row = row
+
     def _scroll_to_row_changed(self, row):
         row = min(row, self.model.rowCount(None)) - 1
         qtTabularEditor._scroll_to_row_changed(self, 0)
         qtTabularEditor._scroll_to_row_changed(self, row)
 
-        # def _copy_cache_changed(self):
-        # if self.control:
-        # self.control._linked_copy_cache = self.copy_cache
-
-        # def _update_changed(self):
-        # super(_TabularEditor, self)._update_changed()
-
-        # ============= EOF =============================================
-        # def _add(self, items, insert_mode='after', idx=None):
-        # if idx is None:
-        # selection = self.selectedIndexes()
-        # if len(selection):
-        # offset = 1 if insert_mode == 'after' else 0
-        #         idx = selection[-1].row() + offset
-        #     else:
-        #         idx = len(self._editor.value)
-        #
-        # paste_func = self.paste_func
-        # if paste_func is None:
-        #     paste_func = lambda x: x.clone_traits()
-        #
-        # editor = self._editor
-        # with no_update(editor.object):
-        #     model = editor.model
-        #     for ci in reversed(items):
-        #         model.insertRow(idx, obj=paste_func(ci))
-
-        # alt move when used in experiment editor conflicting with database so disabling
-        # def mousePressEvent(self, event):
-        # self._alt_move(event)
-        # super(_myTableView, self).mousePressEvent(event)
-        #
-        # def _alt_move(self, event):
-        # mods = event.modifiers()
-        # control_alt = int(mods) == int(Qt.AltModifier) + int(Qt.MetaModifier)
-        #     if mods == Qt.AltModifier or control_alt:
-        #         if self.option_select:
-        #             mode = 'before' if control_alt else 'after'
-        #             self._move_items(mode=mode, *self.option_select)
-        #             self.option_select = None
-        #         else:
-        #             self.option_select = (self._get_selection(), self._get_selection_indices())
-        #
-        # def _move_items(self, items, indices, mode='after'):
-        #     model=self._editor.model
-        #     for ci in indices:
-        #         model.removeRow(ci)
-        #
-        #     func=lambda x: self._add(x, mode)
-        #     self.add_consumable((func, items))
-        #     # self.add_consumable((self._add, items))
+# ============= EOF =============================================

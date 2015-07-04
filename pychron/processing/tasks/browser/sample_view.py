@@ -22,6 +22,7 @@ from traitsui.api import View, UItem, VGroup, EnumEditor, \
 # ============= local library imports  ==========================
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.core.ui.qt.tabular_editors import FilterTabularEditor
+from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.envisage.browser.adapters import ProjectAdapter
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.processing.tasks.browser.pane_model_view import PaneModelView

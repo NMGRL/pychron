@@ -58,7 +58,7 @@ class Report(HasTraits):
         try:
             self.runs[-1].set_complete_time()
         except IndexError, e:
-            print e, 'Report.complete_run'
+            print 'exception', e, 'Report.complete_run'
             return
 
         return self.runs[-1]

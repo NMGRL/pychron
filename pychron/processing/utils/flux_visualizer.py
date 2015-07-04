@@ -59,7 +59,7 @@ def pt_factory(line, holes):
 #        print hole, theta
         return x, y, theta, float(j)
     except Exception, e:
-        print e
+        print 'exception', e
 
 def get_column_idx(names, header):
     if not isinstance(names, (list, tuple)):

@@ -93,7 +93,7 @@ class Client(HasTraits):
 
                 time.sleep(max(0, self.period / 1000.0 - (time.time() - t)))
             except Exception, e:
-                print e
+                print 'exception', e
         print 'looping complete'
         self._alive = False
 
@@ -162,7 +162,7 @@ class Client(HasTraits):
             if verbose:
                 print '{} -----ask----- {} ==> {}'.format(self.ask_id, command, r)
         except socket.error, e:
-            print e
+            print 'exception', e
 
         return r
 

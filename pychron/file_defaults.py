@@ -113,6 +113,11 @@ TASK_EXTENSION_DEFAULT = """
   - pychron.reduction.discrimination, False
   - pychron.reduction.flux, True
 -
+ plugin_id: pychron.processing.plugin.dataset
+ actions:
+  - pychron.reduction.sqlite_dataset, True
+  - pychron.reduction.xml_dataset, True
+-
  plugin_id: pychron.processing.plugin.grouping
  actions:
   - pychron.grouping.selected, True
@@ -279,9 +284,13 @@ axes:
  xtick_out: 5
  ytick_in: 1
  ytick_out: 5
+ use_xgrid: False
+ use_ygrid: False
+
 background:
  bgcolor: 239,238,185
  plot_bgcolor: 208,243,241
+
 '''
 
 SPECTRUM_DEFAULTS = '''
@@ -316,6 +325,8 @@ axes:
  xtick_out: 5
  ytick_in: 1
  ytick_out: 5
+ use_xgrid: False
+ use_ygrid: False
 background:
  bgcolor: 239,238,185
  plot_bgcolor: 208,243,241
@@ -335,6 +346,13 @@ nominal_intercept:
 inset:
   inset_marker_size: 2.5
   inset_marker_color: black
+axes:
+ xtick_in: 1
+ xtick_out: 5
+ ytick_in: 1
+ ytick_out: 5
+ use_xgrid: False
+ use_ygrid: False
 '''
 
 COMPOSITE_DEFAULTS = '''

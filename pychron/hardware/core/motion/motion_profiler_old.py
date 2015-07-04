@@ -274,7 +274,7 @@ class MotionProfiler(ConfigLoadable):
 #            try:
 #                np = self.find_min(self, disp, v, a, d)
 #            except RuntimeError, e:
-#                print e, v, a, d
+# print 'exception', e, v, a, d
 #                np = self.min_velocity, self.min_acceleration. self.min_deceleration
 #            return np
 

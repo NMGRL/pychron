@@ -343,7 +343,7 @@ class BrowseInterpretedAgeTBAction(FigureTaskAction):
 
 
 # class OpenAdvancedQueryAction(Action):
-#     name = 'Find Analysis...'
+# name = 'Find Analysis...'
 #     image = icon('find.png')
 #
 #     def perform(self, event):
@@ -379,6 +379,15 @@ class SetSQLiteAction(Action):
         app = event.task.window.application
         man = app.get_service('pychron.processing.processor.Processor')
         man.set_sqlite_dataset()
+
+
+class SetXMLAction(Action):
+    name = 'Set XML Dataset...'
+    accelerator = 'Ctrl+3'
+    def perform(self, event):
+        app = event.task.window.application
+        man = app.get_service('pychron.processing.processor.Processor')
+        man.set_xml_dataset()
 
 
 class ModifyK3739Action(myTaskAction):

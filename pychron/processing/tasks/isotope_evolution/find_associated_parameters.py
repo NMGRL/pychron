@@ -24,7 +24,7 @@ set_qt()
 from traits.api import HasTraits, Instance, Date, Float, List, Property, Either, Time
 from traitsui.api import View, Item, UItem, CheckListEditor, HGroup, VGroup
 from traitsui.handler import Controller
-import apptools.sweet_pickle as pickle
+import cPickle as pickle
 # ============= standard library imports ========================
 import os
 # ============= local library imports  ==========================

@@ -77,10 +77,10 @@ class SpectrumTool(InfoInspector, BasePlateauOverlay):
     # # if isinstance(pos, tuple):
     # self.current_position = pos
     # self.current_screen = xy
-    #         # event.handled = True
-    #     else:
-    #         self.current_position = None
-    #         self.current_screen = None
+    # # event.handled = True
+    # else:
+    # self.current_position = None
+    # self.current_screen = None
     #     self.metadata_changed = True
 
     def normal_left_down(self, event):
@@ -188,9 +188,9 @@ class SpectrumErrorOverlay(AbstractOverlay):
             else:
                 selection_color = color[0], color[1], color[2], 0.3
 
+            prev = None
             for i, ((xa, xb), (ya, yb), (ea, eb)) in enumerate(zip(xs, ys, es)):
                 ea *= self.nsigma
-                # eb *= self.nsigma
                 p1 = xa, ya - ea
                 p2 = xa, ya + ea
                 p3 = xb, ya - ea
@@ -202,27 +202,28 @@ class SpectrumErrorOverlay(AbstractOverlay):
                 h = p2[1] - p1[1]
 
                 c = selection_color if i in sels else color
-                # if i in sels:
-
-                # gc.set_fill_color((0.75, 0, 0))
-                # gc.set_stroke_color((0.75, 0, 0))
-                # else:
-                # if self.use_user_color:
-                # c = map(lambda x: x/255., self.user_color.toTuple())
-
-                # else:
-                # c = comp.color
-                # if isinstance(c, str):
-                # c = color_table[c]
-
-                # c = c[0], c[1], c[2], alpha
 
                 gc.set_fill_color(c)
                 gc.set_stroke_color(c)
 
+                with gc:
+                    if prev and not self._check_overlap(prev, (x, y, h)):
+                        y1 = prev[1]
+
+                        gc.move_to(x, y1)
+                        gc.line_to(x, y)
+                        gc.stroke_path()
+
+                prev = x, y, h
+
                 gc.rect(x, y, w, h)
                 func()
-                # gc.fill_path()
+
+    def _check_overlap(self, prev, cur):
+        _, start1, end1 = prev
+        _, start2, end2 = cur
+
+        return start1 + end1 > start2 and start2 + end2 >= start1
 
 
 class PlateauTool(DragTool):

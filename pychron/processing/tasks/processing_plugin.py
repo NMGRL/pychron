@@ -32,7 +32,7 @@ from pychron.processing.tasks.actions.processing_actions import IdeogramAction, 
     GraphGroupSelectedAction, IdeogramFromFile, SpectrumFromFile, MakeAnalysisGroupAction, GraphGroupbySampleAction, \
     DeleteAnalysisGroupAction, XYScatterAction, ModifyK3739Action, GroupbySampleAction, \
     ConfigureRecallAction, ModifyIdentifierAction, CompositeAction, TimeViewAction, SpectrumFileTemplate, \
-    IdeogramFileTemplate
+    IdeogramFileTemplate, SetSQLiteAction, SetXMLAction
 
 from pychron.processing.tasks.actions.edit_actions import BlankEditAction, \
     FluxAction, IsotopeEvolutionAction, ICFactorAction, \
@@ -148,7 +148,7 @@ class ProcessingPlugin(BaseTaskPlugin):
             ('pychron.recall',
              self._recall_task_factory, 'Recall'),
             ('pychron.export',
-             self._export_task_factory, 'Export'),
+             self._export_task_factory, 'Export', '','',True),
 
             ('pychron.processing.reduction',
              self._reduction_task_factory, 'Reduction'),
@@ -225,13 +225,12 @@ class ProcessingPlugin(BaseTaskPlugin):
     def _recall_task_factory(self):
         from pychron.processing.tasks.recall.recall_task import RecallTask
 
-        return RecallTask(manager=self._processor_factory())
+        return RecallTask()  # manager=self._processor_factory())
 
     def _iso_evo_task_factory(self):
         from pychron.processing.tasks.isotope_evolution.isotope_evolution_task import IsotopeEvolutionTask
 
         return IsotopeEvolutionTask(manager=self._processor_factory())
-
 
     def _discrimination_task_factory(self):
         from pychron.processing.tasks.detector_calibration.discrimination_task import DiscrimintationTask
@@ -264,7 +263,9 @@ class ProcessingPlugin(BaseTaskPlugin):
         return InterpretedAgeTask(manager=self._processor_factory())
 
     def _browser_model_factory(self):
-        return BrowserModel(manager=self._processor_factory())
+        return BrowserModel(
+            # manager=self._processor_factory(),
+                            application=self.application)
 
     # defaults
     def _service_offers_default(self):
@@ -387,6 +388,7 @@ class ProcessingPlugin(BaseTaskPlugin):
         ffpath = 'MenuBar/data.menu/figures.group/figure.files.menu'
         apath = 'MenuBar/data.menu/analysis_grouping.menu'
         rpath = 'MenuBar/data.menu/recall.group'
+        fpath = 'MenuBar/file.menu'
 
         return [('{}.recall'.format(self.id), '', 'Recall',
                  [SchemaAddition(id='pychron.recall.recall', factory=RecallAction, path=rpath),
@@ -437,7 +439,11 @@ class ProcessingPlugin(BaseTaskPlugin):
                   SchemaAddition(id='pychron.reduction.blanks', factory=BlankEditAction, path=rgpath),
                   SchemaAddition(id='pychron.reduction.ic_factor', factory=ICFactorAction, path=rgpath),
                   SchemaAddition(id='pychron.reduction.discrimination', factory=DiscriminationAction, path=rgpath),
-                  SchemaAddition(id='pychron.reduction.flux', factory=FluxAction, path=rgpath), ])]
+                  SchemaAddition(id='pychron.reduction.flux', factory=FluxAction, path=rgpath), ]),
+            ('{}.dataset'.format(self.id), '', 'Dataset',
+             [SchemaAddition(id='pychron.reduction.sqlite_dataset', factory=SetSQLiteAction, path=fpath),
+              SchemaAddition(id='pychron.reduction.xml_dataset', factory=SetXMLAction, path=fpath)])
+                ]
 
         # ============= EOF =============================================
 

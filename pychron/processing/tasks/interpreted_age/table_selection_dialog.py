@@ -18,9 +18,11 @@
 # set_qt()
 
 # ============= enthought library imports =======================
+import cPickle as pickle
+
 from traits.api import HasTraits, Bool, Instance, Directory
 from traitsui.api import View, Item, VGroup, HGroup, Controller
-import apptools.sweet_pickle as pickle
+
 # ============= standard library imports ========================
 import os
 # ============= local library imports  ==========================

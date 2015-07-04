@@ -18,7 +18,6 @@
 
 from traits.api import Str, Password
 # ============= standard library imports ========================
-import logging
 import os
 import ftplib as ftp
 from zipfile import ZipFile, ZIP_DEFLATED
@@ -212,7 +211,7 @@ class FTPRepository(Repository):
             #                    self._client = None
             #                    self.warning('execute exception {}'.format(e))
             else:
-                print err
+                print 'exception', err
 
 
 if __name__ == '__main__':

@@ -15,16 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from threading import Event
-import time
-
 from traits.api import Range, Instance, Bool, \
     Button, Any
-import apptools.sweet_pickle as pickle
-
-
-
 # ============= standard library imports ========================
+from threading import Event
+import cPickle as pickle
+import os
+import time
 # ============= local library imports  ==========================
 from pychron.managers.manager import Manager
 from pychron.graph.graph import Graph
@@ -36,7 +33,6 @@ from pychron.spectrometer.jobs.peak_center import PeakCenter
 from pychron.pychron_constants import NULL_STR
 from pychron.core.ui.thread import Thread
 from pychron.paths import paths
-import os
 from pychron.core.helpers.isotope_utils import sort_isotopes
 # from pychron.core.ui.gui import invoke_in_main_thread
 

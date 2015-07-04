@@ -36,6 +36,9 @@ from pychron.paths import paths
 
 
 
+
+
+
 #from pychron.processing.entry.sensitivity_entry import SensitivityEntry
 #from pychron.processing.tasks.entry.sensitivity_entry_panes import SensitivityPane
 from pychron.processing.tasks.browser.browser_task import BaseBrowserTask
@@ -239,7 +242,7 @@ class BatchEditTask(AnalysisEditTask):
         # app = self.window.application
         #entry = app.get_service('pychron.entry.modal_sensitivity')
         #if entry:
-        #    print entry
+        # print 'exception', entry
 
         se = SensitivityEntry()
         se.activate()

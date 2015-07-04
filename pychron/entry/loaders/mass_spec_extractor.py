@@ -27,7 +27,7 @@ from pychron.database.orms.massspec_orm import AnalysesTable, MachineTable, \
     LoginSessionTable, RunScriptTable
 from pychron.core.helpers.filetools import unique_path
 from pychron.paths import paths
-from pychron.experiment.importer.extractor import Extractor
+from pychron.entry.loaders.extractor import Extractor
 from pychron.database.adapters.massspec_database_adapter import MassSpecDatabaseAdapter
 from pychron.database.database_connection_spec import DBConnectionSpec
 

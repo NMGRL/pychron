@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from PySide.QtCore import Qt
 from PySide.QtGui import QIcon, QTreeWidgetItemIterator
 from traits.api import Str, Bool, Event
 from traitsui.api import TreeEditor as _TreeEditor
@@ -46,7 +45,7 @@ class SimpleEditor(_SimpleEditor):
         #         self._expand_node(item)
         #         self._update_icon(item)
         #     except AttributeError, e:
-        #         print e
+        # print 'exception', e
         #     print i, item, item.text(0),
     def _expand_all_fired(self):
 

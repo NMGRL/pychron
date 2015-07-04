@@ -50,7 +50,7 @@ class _ProgressEditor(Editor):
         self._message_control.setText('     ')
         layout.addWidget(self._message_control)
         layout.addWidget(pb)
-        print parent
+        print 'parent', parent
         # parent.addLayout(layout)
 
         return pb

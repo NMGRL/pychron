@@ -16,14 +16,14 @@
 
 # ============= enthought library imports =======================
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traits.api import CInt, Str, on_trait_change, Int
+from traits.api import CInt, Str, on_trait_change
 from traitsui.api import View, Item, VGroup, ListStrEditor, HGroup
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.base_preferences_helper import FavoritesPreferencesHelper, FavoritesAdapter, \
-    BaseConsolePreferences, BaseConsolePreferencesPane, BasePreferencesHelper
+    BaseConsolePreferences, BaseConsolePreferencesPane
 
 
 class SystemMonitorPreferences(FavoritesPreferencesHelper):
@@ -39,7 +39,7 @@ class SystemMonitorPreferences(FavoritesPreferencesHelper):
 
     def _get_values(self):
         return [self.fav_name,
-                self.system_name, self.host, str(self.port)]
+                self.system_name, self.host, self.port]
 
     @on_trait_change('host, port, system_name')
     def attribute_changed(self, name, new):

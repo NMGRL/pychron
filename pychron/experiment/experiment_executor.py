@@ -143,6 +143,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     use_xls_persister = Bool(False)
     use_memory_check = Bool(True)
     memory_threshold = Int
+    use_dvc = Bool(False)
 
     baseline_color = Color
     sniff_color = Color
@@ -263,7 +264,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         return self._prev_baselines
 
     def get_prev_blanks(self):
-        return self._prev_blank_id, self._prev_blanks
+        return self._prev_blank_id, self._prev_blanks, self._prev_blank_runid
 
     def is_alive(self):
         return self.alive
@@ -584,6 +585,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if spec.analysis_type.startswith('blank'):
                 pb = run.get_baseline_corrected_signals()
                 if pb is not None:
+                    self._prev_blank_runid = run.spec.runid
                     self._prev_blank_id = run.spec.analysis_dbid
                     self._prev_blanks = pb
                     self.debug('previous blanks ={}'.format(pb))
@@ -816,6 +818,16 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     def _start(self, run):
         ret = True
 
+        if self.set_integration_time_on_start:
+            dit = self.default_integration_time
+            self.info('Setting default integration. t={}'.format(dit))
+            run.set_integration_time(dit)
+
+        if self.send_config_before_run:
+            self.info('Sending spectrometer configuration')
+            man = self.spectrometer_manager
+            man.send_configuration()
+
         if not run.start():
             self.alive = False
             ret = False
@@ -911,17 +923,19 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         # reuse run if not overlap
         # run = self.current_run if not spec.overlap[0] else None
+
         run = None
         arun = spec.make_run(run=run)
+
         arun.logger_name = 'AutomatedRun {}'.format(arun.runid)
-        '''
-            save this runs uuid to a hidden file
-            used for analysis recovery
-        '''
         if spec.end_after:
             self.end_at_run_completion = True
             arun.is_last = True
 
+        '''
+            save this runs uuid to a hidden file
+            used for analysis recovery
+        '''
         self._add_backup(arun.uuid)
 
         arun.integration_time = 1.04
@@ -938,6 +952,11 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         arun.persister.experiment_identifier = exp.database_identifier
 
         arun.use_syn_extraction = False
+
+        arun.use_dvc = self.use_dvc
+        if self.use_dvc:
+            arun.dvc_persister = self.application.get_service('pychron.dvc.dvc_persister.DVCPersister')
+            arun.dvc_persister.load_name = exp.load_name
 
         mon = self.monitor
         if mon is not None:
