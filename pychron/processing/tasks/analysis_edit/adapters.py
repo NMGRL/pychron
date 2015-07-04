@@ -73,6 +73,7 @@ class UnknownsAdapter(TabularAdapter):
 
     def _get_age_text(self):
         r = ''
+        # print self.item,not isinstance(self.item, IsotopeRecordView)
         if not isinstance(self.item, IsotopeRecordView):
             r = floatfmt(nominal_value(self.item.uage), n=3)
         return r

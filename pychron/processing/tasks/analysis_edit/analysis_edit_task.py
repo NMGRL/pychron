@@ -225,12 +225,17 @@ class AnalysisEditTask(BaseBrowserTask):
         if not open_copy:
             records = self._open_existing_recall_editors(records)
             if records:
+                ans = None
                 if self.browser_model.use_workspace:
                     ans = self.workspace.make_analyses(records)
+                elif self.dvc:
+                    ans = self.dvc.make_analyses(records)
+                # else:
+                # ans = self.manager.make_analyses(records, calculate_age=True, load_aux=True)
+                if ans:
+                    self._open_recall_editors(ans)
                 else:
-                    ans = self.manager.make_analyses(records, calculate_age=True, load_aux=True)
-
-                self._open_recall_editors(ans)
+                    self.warning('failed making records')
         else:
             ans = self.manager.make_analyses(records, use_cache=False, calculate_age=True, load_aux=True)
             self._open_recall_editors(ans)
@@ -883,8 +888,11 @@ class AnalysisEditTask(BaseBrowserTask):
     @on_trait_change('active_editor:analyses')
     def _ac_unknowns_changed(self):
         if self.unknowns_pane:
-            with no_update(self.unknowns_pane):
-                self.unknowns_pane.items = self.active_editor.analyses
+            # with no_update(self.unknowns_pane):
+            #     self.unknowns_pane.items = self.active_editor.analyses
+            self.unknowns_pane._no_update = True
+            self.unknowns_pane.items = self.active_editor.analyses
+            self.unknowns_pane._no_update = False
 
         # self.unknowns_pane._no_update = True
         # self.unknowns_pane.trait_set(items=self.active_editor.analyses, trait_change_notify=True)

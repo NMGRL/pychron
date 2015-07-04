@@ -114,6 +114,7 @@ class GraphEditor(BaseUnknownsEditor):
         if any((isinstance(ai, FileAnalysis) for ai in unks)):
             ans = unks
         else:
+
             ans = self.processor.make_analyses(unks, calculate_age=self.calculate_age,
                                                unpack=self.unpack_peaktime,
                                                **kw)
@@ -126,6 +127,7 @@ class GraphEditor(BaseUnknownsEditor):
             update_graph = self.update_graph_on_set_items
 
         self.analyses = ans
+        # self.trait_setq(analyses=ans)
         self._update_analyses(update_graph=update_graph)
 
     def load_fits(self, refiso):

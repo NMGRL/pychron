@@ -16,7 +16,8 @@
 
 # ============= enthought library imports =======================
 from traits.api import Instance, Bool, Str
-import apptools.sweet_pickle as pickle
+# import apptools.sweet_pickle as pickle
+import cPickle as pickle
 # ============= standard library imports ========================
 import os
 # ============= local library imports  ==========================
@@ -402,7 +403,7 @@ class LaserManager(BaseLaserManager):
 #             try:
 #                 self.stage_manager.video.close()
 #             except AttributeError, e:
-#                 print e
+# print 'exception', e
 #
 #         try:
 #             sm = self._stage_manager_factory(self.stage_args)
@@ -417,7 +418,7 @@ class LaserManager(BaseLaserManager):
 #
 #             self.stage_manager = sm
 #         except AttributeError, e:
-#             print e
+# print 'exception', e
 ## ===============================================================================
 # # persistence
 ## ===============================================================================

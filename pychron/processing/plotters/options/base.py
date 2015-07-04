@@ -16,14 +16,16 @@
 
 # ============= enthought library imports =======================
 import hashlib
-from traits.api import HasTraits, List, Str, TraitError, \
-    Button, Bool, Event, Color, Range, String, Float, Int
-from traitsui.api import View, HGroup, spring, VGroup, Item, Group, Spring
 
-import apptools.sweet_pickle as pickle
+from traits.api import HasTraits, List, Str, TraitError, \
+    Button, Bool, Event, Color, Range, String, Int, on_trait_change
+from traitsui.api import View, HGroup, spring, VGroup, Item, Group, Spring
+# import apptools.sweet_pickle as pickle
+
 # ============= standard library imports ========================
 import os
 import yaml
+import cPickle as pickle
 # ============= local library imports  ==========================
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.processing.plotters.options.option import AuxPlotOptions
@@ -57,18 +59,8 @@ class BasePlotterOptions(HasTraits):
             yd = yaml.load(rfile)
             self._load_factory_defaults(yd)
 
-    def _load_factory_defaults(self, yd):
-        print 'prrrr', yd
-
     def dump(self, root):
         self._dump(root)
-
-    def _make_dir(self, root):
-        if os.path.isdir(root):
-            return
-        else:
-            self._make_dir(os.path.dirname(root))
-            os.mkdir(root)
 
     def get_formatting_value(self, attr, oattr=None):
         """
@@ -94,7 +86,8 @@ class BasePlotterOptions(HasTraits):
         return v
 
     def get_hash(self):
-        attrs = self._get_dump_attrs()
+        attrs = self._get_change_attrs()
+
         h = hashlib.md5()
         for ai in attrs:
             h.update('{}{}'.format(ai, (getattr(self, ai))))
@@ -105,6 +98,30 @@ class BasePlotterOptions(HasTraits):
 
     def has_changes(self):
         return self._hash and self._hash != self.get_hash()
+
+    # handlers
+    def _anytrait_changed(self, name, new):
+        print name, new
+        if name in self._get_refreshable_attrs():
+            if self._process_trait_change(name, new):
+                self.refresh_plot_needed = True
+
+    # private
+    def _process_trait_change(self, name, new):
+        return True
+
+    def _get_refreshable_attrs(self):
+        return []
+
+    def _make_dir(self, root):
+        if os.path.isdir(root):
+            return
+        else:
+            self._make_dir(os.path.dirname(root))
+            os.mkdir(root)
+
+    def _get_change_attrs(self):
+        raise NotImplementedError
 
     def _get_dump_attrs(self):
         raise NotImplementedError
@@ -140,6 +157,9 @@ class BasePlotterOptions(HasTraits):
     def _load_hook(self):
         pass
 
+    def _load_factory_defaults(self, yd):
+        raise NotImplementedError
+
     def __repr__(self):
         return self.name
 
@@ -160,10 +180,13 @@ class FigurePlotterOptions(BasePlotterOptions):
     plot_bgcolor = Color
     plot_spacing = Range(0, 50)
 
-    padding_left = Int(100)
-    padding_right = Int(100)
-    padding_top = Int(100)
-    padding_bottom = Int(100)
+    padding_left = Int(100, enter_set=True, auto_set=False)
+    padding_right = Int(100, enter_set=True, auto_set=False)
+    padding_top = Int(100, enter_set=True, auto_set=False)
+    padding_bottom = Int(100, enter_set=True, auto_set=False)
+
+    use_xgrid = Bool(True)
+    use_ygrid = Bool(True)
 
     def deinitialize(self):
         for po in self.aux_plots:
@@ -206,7 +229,7 @@ class FigurePlotterOptions(BasePlotterOptions):
                 else:
                     self.trait_set(**{k: v})
             except TraitError, e:
-                print e
+                print 'exception', e
 
     def get_aux_plots(self):
         return reversed([pi
@@ -230,17 +253,19 @@ class FigurePlotterOptions(BasePlotterOptions):
     def _get_padding_group(self):
         return VGroup(HGroup(Spring(springy=False, width=100),
                              Item('padding_top', label='Top'),
-                             spring,),
+                             spring, ),
                       HGroup(Item('padding_left', label='Left'),
                              Item('padding_right', label='Right')),
                       HGroup(Spring(springy=False, width=100), Item('padding_bottom', label='Bottom'),
                              spring),
+                      enabled_when='not formatting_options',
                       label='Padding', show_border=True)
 
     def _get_bg_group(self):
         grp = Group(Item('bgcolor', label='Figure'),
                     Item('plot_bgcolor', label='Plot'),
                     show_border=True,
+                    enabled_when='not formatting_options',
                     label='Background')
         return grp
 
@@ -254,7 +279,8 @@ class FigurePlotterOptions(BasePlotterOptions):
                 'padding_left',
                 'padding_right',
                 'padding_top',
-                'padding_bottom']
+                'padding_bottom',
+                'use_xgrid', 'use_ygrid']
 
     def _load_hook(self):
         klass = self.plot_option_klass
@@ -277,7 +303,8 @@ class FigurePlotterOptions(BasePlotterOptions):
             self.trait_set(**padding)
 
         self._set_defaults(yd, 'axes', ('xtick_in', 'xtick_out',
-                                        'ytick_in', 'ytick_out'))
+                                        'ytick_in', 'ytick_out',
+                                        'use_xgrid', 'use_ygrid'))
 
         self._set_defaults(yd, 'background', ('bgcolor',
                                               'plot_bgcolor'))
@@ -290,5 +317,9 @@ class FigurePlotterOptions(BasePlotterOptions):
                     setattr(self, attr, d[attr])
                 except KeyError, e:
                     print d, attr
+
+    @on_trait_change('use_xgrid, use_ygrid, padding+, bgcolor, plot_bgcolor')
+    def _refresh_handler(self):
+        self.refresh_plot_needed = True
 
 # ============= EOF =============================================

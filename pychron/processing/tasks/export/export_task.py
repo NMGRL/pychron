@@ -41,7 +41,7 @@ class ExportTask(AnalysisEditTask):
     export_analyses = List
     exported_analyses = List
     #
-    #     append_button = Button
+    # append_button = Button
     #     replace_button = Button
     #     export_button = Button
     export_manager = Instance(ExportManager)
@@ -51,7 +51,7 @@ class ExportTask(AnalysisEditTask):
     #         ans = [ai for ai in self.analysis_table.analyses if ai not in self.export_analyses]
     #         self.export_analyses.extend(ans)
     #
-    
+
     def activated(self):
         super(ExportTask, self).activated()
         ans = self.browser_model.analysis_table.analyses
@@ -78,38 +78,42 @@ class ExportTask(AnalysisEditTask):
                 items = self.manager.make_analyses(items, calculate_age=True)
                 self.unknowns_pane.items = items
                 # self.export_analyses = items
-            #
+                #
 
     def _export_manager_default(self):
         return ExportManager(manager=self.manager)
 
     #
     def do_export(self):
-        if self.unknowns_pane.items:
-            self.export_manager.export(self.unknowns_pane.items)
+        items = self.unknowns_pane.items
+        if items:
+            for i in items:
+                self.manager.load_raw_data(i)
 
-        #     def _append_button_fired(self):
-        #         s = self._get_selected_analyses()
-        #         if s:
-        #             self.export_analyses.extend(s)
-        #
-        #     def _replace_button_fired(self):
-        #         s = self._get_selected_analyses()
-        #         if s:
-        #             self.export_analyses = s
-        #
-        #     def create_dock_panes(self):
-        #         bp=self._create_browser_pane()
-        #         # self.browser_pane = BrowserPane(model=self)
-        #         return [bp,
-        #                 DestinationPane(model=self.export_manager)]
-        #
+            self.export_manager.export(items)
+
+            #     def _append_button_fired(self):
+            #         s = self._get_selected_analyses()
+            #         if s:
+            #             self.export_analyses.extend(s)
+            #
+            #     def _replace_button_fired(self):
+            #         s = self._get_selected_analyses()
+            #         if s:
+            #             self.export_analyses = s
+            #
+            #     def create_dock_panes(self):
+            #         bp=self._create_browser_pane()
+            #         # self.browser_pane = BrowserPane(model=self)
+            #         return [bp,
+            #                 DestinationPane(model=self.export_manager)]
+            #
 
     def create_central_pane(self):
         return ExportCentralPane(model=self.export_manager)
 
 #
-#     def _default_layout_default(self):
+# def _default_layout_default(self):
 #         return TaskLayout(left=Tabbed(PaneItem('pychron.browser',width=300),
 #                                       PaneItem('pychron.export.destination')))
 #

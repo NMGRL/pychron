@@ -17,18 +17,18 @@
 # ============= enthought library imports =======================
 from traits.api import List, Str, Bool, Any, Enum, Button, \
     Int, Property, cached_property, DelegatesTo, Date, Instance, HasTraits, Event
-import apptools.sweet_pickle as pickle
+# import apptools.sweet_pickle as pickle
 # ============= standard library imports ========================
 from datetime import timedelta, datetime
 import os
 import re
+import cPickle as pickle
 # ============= local library imports  ==========================
 from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.core.codetools.inspection import caller
+from pychron.core.helpers.strtools import to_bool
 from pychron.core.helpers.iterfuncs import partition
 from pychron.core.progress import progress_loader
-from pychron.database.orms.isotope.gen import gen_ProjectTable
-from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.envisage.browser.date_selector import DateSelector
 from pychron.envisage.browser.record_views import ProjectRecordView, LabnumberRecordView, AnalysisGroupRecordView
 from pychron.core.ui.table_configurer import SampleTableConfigurer
@@ -227,7 +227,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     def load_projects(self, include_recent=True):
         db = self.db
         with db.session_ctx():
-            ps = db.get_projects(order=gen_ProjectTable.name.asc())
+            ps = db.get_projects(order='asc')
             ad = self._make_project_records(ps, include_recent=include_recent)
             self.projects = ad
             self.oprojects = ad
@@ -467,7 +467,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         def func(xi, prog, i, n):
             if prog:
                 prog.change_message('Loading {}'.format(xi.record_id))
-            return IsotopeRecordView(xi)
+            return xi.record_view()
 
         return progress_loader(ans, func, threshold=25)
 
@@ -534,7 +534,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
                     self.use_low_post = False
 
             names = [ni.name for ni in new]
-            self.debug('selected projects={}'.format(names))
+            self.debug('bbmodel selected projects={}'.format(names))
             if not isrecent:
                 self._load_project_date_range(names)
 
@@ -642,6 +642,8 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     def _get_db(self):
         if self.use_workspace:
             return self.workspace.index_db
+        elif to_bool(self.application.preferences.get('pychron.dvc.enabled')):
+            return self.application.get_service('pychron.dvc.dvc.DVC')
         else:
             return self.manager.db
 

@@ -46,7 +46,7 @@ class PlaneFluxRegressor(MultipleLinearRegressor):
     # def predict_error(self, x, error_calc=None):
     #     x = asarray(x)
     #     exog=self._get_X(x)
-    #     # print exog
+    # # print 'exception', exog
     #     res=self._result
     #     covb = res.cov_params()
     #     # weights=self._get_weights()

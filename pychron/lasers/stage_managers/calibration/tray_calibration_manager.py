@@ -15,9 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import cPickle as pickle
+
 from traits.api import Float, Event, String, Any, Enum, Property, cached_property
 from traitsui.api import View, Item, VGroup, HGroup, InstanceEditor
-import apptools.sweet_pickle as pickle
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.managers.manager import Manager

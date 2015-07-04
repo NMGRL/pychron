@@ -213,7 +213,7 @@ class EditExtensionsView(HasTraits):
                     d = yaml.load(rfile)
                     self.trait_set(**d)
                 except BaseException, e:
-                    print e
+                    print 'exception', e
 
     def dump(self):
         self.view_model.dump()

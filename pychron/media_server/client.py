@@ -80,7 +80,7 @@ class MediaClient(Loggable):
                 self._post(name, rfile.read())
                 return True
             except Exception, e:
-                print e
+                print 'exception', e
 
     def _new_connection(self):
         url = '{}:{}'.format(self.host, self.port)

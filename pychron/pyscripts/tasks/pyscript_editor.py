@@ -16,11 +16,12 @@
 
 # ============= enthought library imports =======================
 from datetime import datetime
-from pyface.file_dialog import FileDialog
 
+from pyface.file_dialog import FileDialog
 from traits.api import HasTraits, Property, Bool, Event, \
     Unicode, List, String, Int, on_trait_change, Instance
 from pyface.tasks.api import Editor
+
 # ============= standard library imports ========================
 import os
 import time
@@ -70,7 +71,7 @@ class Commands(HasTraits):
                 setattr(self, cmd_name, cmd)
             except AttributeError, e:
                 if scmd:
-                    print e
+                    print 'exception', e
 
         return cmd
 

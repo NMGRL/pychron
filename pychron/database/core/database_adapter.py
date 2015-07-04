@@ -17,8 +17,14 @@
 # =============enthought library imports=======================
 import sys
 from threading import Lock
+from datetime import datetime, timedelta
 
 from traits.api import Password, Bool, Str, on_trait_change, Any, Property, cached_property
+
+
+
+
+
 
 
 
@@ -472,6 +478,16 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
         args['filename'] = n
         return args
 
+    def _get_date_range(self, q, asc, desc, hours=0):
+        lan = q.order_by(asc).first()
+        han = q.order_by(desc).first()
+
+        lan = datetime.now() if not lan else lan[0]
+        han = datetime.now() if not han else han[0]
+        td = timedelta(hours=hours)
+
+        return lan - td, han + td
+
     def _delete_item(self, value, name=None):
         # sess = self.sess
         # if sess is None:
@@ -608,6 +624,25 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
                 # import traceback
                 # traceback.print_exc()
                 # self.sess.rollback()
+
+    def _append_filters(self, f, kw):
+
+        filters = kw.get('filters', [])
+        if isinstance(f, (tuple, list)):
+            filters.extend(f)
+        else:
+            filters.append(f)
+        kw['filters'] = filters
+        return kw
+
+    def _append_joins(self, f, kw):
+        joins = kw.get('joins', [])
+        if isinstance(f, (tuple, list)):
+            joins.extend(f)
+        else:
+            joins.append(f)
+        kw['joins'] = joins
+        return kw
 
     def _retrieve_item(self, table, value, key='name', last=None,
                        joins=None, filters=None, options=None, verbose=True,

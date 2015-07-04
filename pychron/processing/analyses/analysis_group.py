@@ -95,7 +95,7 @@ class AnalysisGroup(HasTraits):
         return self._calculate_mswd(attr)
 
     def _calculate_mswd(self, attr):
-        m = None
+        m = 0
         args = self._get_values(attr)
         if args:
             vs, es = args

@@ -21,7 +21,7 @@ import struct
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from datetime import datetime
-from pychron.experiment.importer.extractor import Extractor
+from pychron.entry.loaders.extractor import Extractor
 
 
 class BinarySpec(object):

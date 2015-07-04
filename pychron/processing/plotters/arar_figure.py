@@ -61,8 +61,8 @@ class BaseArArFigure(HasTraits):
 
     options = Any
 
-    x_grid_visible = Bool(True)
-    y_grid_visible = Bool(True)
+    # x_grid_visible = Bool(True)
+    # y_grid_visible = Bool(True)
     use_sparse_ticks = Bool(True)
 
     refresh_unknowns_table = Event
@@ -155,10 +155,11 @@ class BaseArArFigure(HasTraits):
         pp.index_range.on_trait_change(lambda: self.update_options_limits(i), 'updated')
         pp.value_range.tight_bounds = False
 
-        pp.x_grid.visible = self.x_grid_visible
-        pp.y_grid.visible = self.y_grid_visible
-
         options = self.options
+        pp.x_grid.visible = options.use_xgrid
+        pp.y_grid.visible = options.use_ygrid
+        # pp.x_grid.visible = self.x_grid_visible
+        # pp.y_grid.visible = self.y_grid_visible
 
         self._set_formatting(pp)
 

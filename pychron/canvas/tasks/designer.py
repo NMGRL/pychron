@@ -106,9 +106,9 @@ class Designer(HasTraits):
         for elem in self.scene.iteritems():
             if type(elem) in tags:
                 tag = tags[type(elem)]
-                print tag, elem
+                print 'adsfafd', tag, elem
             elif hasattr(elem, 'type_tag'):
-                print elem.type_tag, elem
+                print 'fffff', elem.type_tag, elem
 
     def open_xml(self, p):
         #cp=CanvasParser(p)

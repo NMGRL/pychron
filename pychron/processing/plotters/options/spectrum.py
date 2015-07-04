@@ -65,7 +65,7 @@ class SpectrumOptions(AgeOptions):
     envelope_alpha = Range(0, 100, style='simple')
     envelope_color = Color
     user_envelope_color = Bool
-    center_line_style = Enum('solid', 'dash', 'dot dash', 'dot', 'long dash')
+    center_line_style = Enum('No Line', 'solid', 'dash', 'dot dash', 'dot', 'long dash')
     extend_plateau_end_caps = Bool(True)
     # plateau_line_width = Float
     # plateau_line_color = Color
@@ -305,10 +305,10 @@ class SpectrumOptions(AgeOptions):
             # self._get_info_group(),
             label='Options')
 
-        label_grp = VGroup(self._get_x_axis_group(),
-                           self._get_y_axis_group(),
-                           label='Fonts')
-        return g, label_grp
+        # label_grp = VGroup(self._get_x_axis_group(),
+        #                    self._get_y_axis_group(),
+        #                    label='Fonts')
+        return g,
 
     def _load_factory_defaults(self, yd):
         super(SpectrumOptions, self)._load_factory_defaults(yd)

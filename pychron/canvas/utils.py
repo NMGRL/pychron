@@ -1,9 +1,15 @@
 import struct
 
+
 def load_holder_canvas(canvas, geom, **kw):
     if geom:
-        holes = [(x, y, r, str(c + 1))
-                 for c, (x, y, r) in iter_geom(geom)]
+        if isinstance(geom, (str, unicode)):
+
+            holes = [(x, y, r, str(c + 1))
+                     for c, (x, y, r) in iter_geom(geom)]
+        else:
+            holes = geom
+
         canvas.load_scene(holes, **kw)
 
 

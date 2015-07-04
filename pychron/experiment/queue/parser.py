@@ -74,7 +74,7 @@ class RunParser(Loggable):
                         return hi, cast(v) if cast else v
                 except IndexError, e:
                     pass
-                    #print e, attr, idx, args
+                    # print 'exception', e, attr, idx, args
 
     def _load_strings(self, header, args, params):
         for attr in [
@@ -156,7 +156,7 @@ class UVRunParser(RunParser):
                 v = args[idx]
                 params[attr] = cast(v)
             except (IndexError, ValueError, TypeError), e:
-                #print e
+                # print 'exception', e
                 pass
 
         _set('reprate', int)

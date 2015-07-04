@@ -688,7 +688,7 @@ class KerrMotor(KerrDevice, ConsumerMixin):
         try:
             return struct.unpack(fmt, h.decode('hex'))[0]
         except Exception, e:
-            print e
+            print 'exception', e
 
     def control_view(self):
         return View(

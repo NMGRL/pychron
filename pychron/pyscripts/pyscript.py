@@ -370,7 +370,7 @@ class PyScript(Loggable):
                     exec code_or_err in safe_dict
                     func = safe_dict['main']
                 except KeyError, e:
-                    print e, safe_dict.keys()
+                    print 'exception', e, safe_dict.keys()
                     self.debug('{} {}'.format(e, traceback.format_exc()))
                     return MainError()
 

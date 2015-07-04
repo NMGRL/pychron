@@ -246,15 +246,17 @@ class RecallTask(AnalysisEditTask):
         return panes
 
     def activated(self):
+        # if globalv.recall_debug:
+        # self.manager.set_xml_dataset()
+
         super(RecallTask, self).activated()
 
         # self._preference_binder('pychron.massspec.database',
         #                         ('username','name','password','host'),
         #                         obj=self.recaller.dbconn_spec)
-
         if globalv.recall_debug:
             try:
-                a = self.analysis_table.analyses[3]
+                a = self.browser_model.analysis_table.analyses[0]
                 self.recall([a])
                 # self.new_context_editor()
             except IndexError:

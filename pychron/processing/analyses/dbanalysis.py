@@ -148,7 +148,7 @@ class DBAnalysis(Analysis):
         # if det in self.ic_factors:
         # r = self.ic_factors[det]
         # else:
-        #     r = ufloat(1, 1e-20)
+        # r = ufloat(1, 1e-20)
 
         return r
 
@@ -164,7 +164,7 @@ class DBAnalysis(Analysis):
                          fi.isotope.molecular_weight.name == name), None)
 
         except AttributeError, e:
-            print e
+            print 'exception', e
 
     def set_tag(self, tag):
         if isinstance(tag, str):
@@ -197,16 +197,16 @@ class DBAnalysis(Analysis):
         self._sync_detector_info(meas_analysis, **kw)
 
     # def sync_arar(self, meas_analysis):
-    # # self.debug('not using db arar')
+    #     # self.debug('not using db arar')
     #     return
     #
-    #     hist = meas_analysis.selected_histories.selected_arar
-    #     if hist:
-    #         result = hist.arar_result
-    #         self.persisted_age = ufloat(result.age, result.age_err)
-    #         self.age = self.persisted_age / self.arar_constants.age_scalar
+    # hist = meas_analysis.selected_histories.selected_arar
+    # if hist:
+    # result = hist.arar_result
+    # self.persisted_age = ufloat(result.age, result.age_err)
+    # self.age = self.persisted_age / self.arar_constants.age_scalar
     #
-    #         attrs = ['k39', 'ca37', 'cl36',
+    # attrs = ['k39', 'ca37', 'cl36',
     #                  'Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36', 'rad40']
     #         d = dict()
     #         f = lambda k: getattr(result, k)

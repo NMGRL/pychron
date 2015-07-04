@@ -48,6 +48,7 @@ class LoadingTask(BaseManagerTask):
         # self.manager.level = 'A'
         # self.manager.labnumber = '23261'
         # self.manager.load_name = '4'
+
         if self.manager.verify_database_connection(inform=True):
             if self.manager.load():
                 self.manager.username = globalv.username

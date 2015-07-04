@@ -16,11 +16,12 @@
 
 # =============enthought library imports=======================
 from traits.api import Enum, Instance
-import apptools.sweet_pickle as pickle
+# import apptools.sweet_pickle as pickle
 # =============standard library imports ========================
 import os
 import time
 import math
+import cPickle as pickle
 # =============local library imports  ==========================
 from pychron.hardware.core.data_helper import make_bitarray
 from pychron.hardware.motion_controller import MotionController

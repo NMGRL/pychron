@@ -113,6 +113,8 @@ class AutomatedRun(Loggable):
     multi_collector = Instance('pychron.experiment.automated_run.multi_collector.MultiCollector')
     peak_hop_collector = Instance('pychron.experiment.automated_run.peak_hop_collector.PeakHopCollector')
     persister = Instance('pychron.experiment.automated_run.persistence.AutomatedRunPersister', ())
+    dvc_persister = Instance('pychron.experiment.dvc.Persister', ())
+
     xls_persister = Instance('pychron.experiment.automated_run.persistence.ExcelPersister')
     system_health = Instance('pychron.experiment.health.series.SystemHealthSeries')
 
@@ -128,7 +130,6 @@ class AutomatedRun(Loggable):
     spec = Any
     runid = Property
     uuid = Str
-    extract_device = Str
     analysis_id = Long
     fits = List
     eqtime = Float
@@ -143,6 +144,7 @@ class AutomatedRun(Loggable):
     measuring = Bool(False)
     dirty = Bool(False)
     update = Event
+    use_dvc = Bool(False)
 
     measurement_script = Instance('pychron.pyscripts.measurement_pyscript.MeasurementPyScript')
     post_measurement_script = Instance('pychron.pyscripts.extraction_line_pyscript.ExtractionPyScript')
@@ -186,12 +188,12 @@ class AutomatedRun(Loggable):
     def py_reset_data(self):
         # self.persister.pre_measurement_save()
         self._persister_action('pre_measurement_save')
-
+        
     def _persister_action(self, func, *args, **kw):
         getattr(self.persister, func)(*args, **kw)
-        if self.xls_persister:
+        for p in (self.xls_persister, self.dvc_persister):
             try:
-                getattr(self.xls_persister, func)(*args, **kw)
+                getattr(p, func)(*args, **kw)
             except BaseException, e:
                 self.warning('excel persister action failed. func={}, excp={}'.format(func, e))
                 import traceback
@@ -410,7 +412,7 @@ class AutomatedRun(Loggable):
         a = self.arar_age
         g = self.plot_panel.isotope_graph
 
-        pb = self.get_previous_blanks()
+        _, pb = self.get_previous_blanks()
         pbs = self.get_previous_baselines()
         correct_for_blank = (not self.spec.analysis_type.startswith('blank') and
                              not self.spec.analysis_type.startswith('background'))
@@ -610,6 +612,9 @@ class AutomatedRun(Loggable):
 
         # self.aliquot='##'
         self.persister.save_enabled = False
+        if self.use_dvc:
+            self.dvc_persister.save_enabled = False
+
         for s in ('extraction', 'measurement'):
             script = getattr(self, '{}_script'.format(s))
             if script is not None:
@@ -678,16 +683,6 @@ class AutomatedRun(Loggable):
         self.collector.stop()
 
     def start(self):
-        if self.experiment_executor.set_integration_time_on_start:
-            dit = self.experiment_executor.default_integration_time
-            self.info('Setting default integration. t={}'.format(dit))
-            self.set_integration_time(dit)
-
-        if self.experiment_executor.send_config_before_run:
-            self.info('Sending spectrometer configuration')
-            man = self.spectrometer_manager
-            man.send_configuration()
-
         if self.monitor is None:
             return self._start()
 
@@ -869,7 +864,7 @@ class AutomatedRun(Loggable):
         blanks = None
         pid = 0
         if self.experiment_executor:
-            pid, blanks = self.experiment_executor.get_prev_blanks()
+            pid, blanks, runid = self.experiment_executor.get_prev_blanks()
 
         if not blanks:
             blanks = dict(Ar40=ufloat(0, 0),
@@ -924,15 +919,17 @@ class AutomatedRun(Loggable):
             auto_save_detector_ic = queue.auto_save_detector_ic
             self.debug('$$$$$$$$$$$$$$$ auto_save_detector_ic={}'.format(auto_save_detector_ic))
 
-        ext_name, ext_blob = '', ''
+        ext_name, ext_blob, ext_path = '', '', ''
         if self.extraction_script:
             ext_name = self.extraction_script.name
             ext_blob = self._assemble_extraction_blob()
+            # ext_path = self.extraction_script.script_path()
 
-        ms_name, ms_blob, sfods, bsfods = '', '', {}, {}
+        ms_name, ms_blob, ms_path, sfods, bsfods = '', '', '', {}, {}
         if self.measurement_script:
             ms_name = self.measurement_script.name
             ms_blob = self.measurement_script.toblob()
+            # ms_path = self.measurement_script.script_path()
             sfods, bsfods = self._get_default_fods()
 
         ext_pos = []
@@ -959,26 +956,6 @@ class AutomatedRun(Loggable):
                                runscript_blob=script_blob,
                                signal_fods=sfods,
                                baseline_fods=bsfods)
-
-        # self.persister.trait_set(save_as_peak_hop=False,
-        # run_spec=self.spec,
-        # arar_age=self.arar_age,
-        #                          positions=self.spec.get_position_list(),
-        #                          auto_save_detector_ic=auto_save_detector_ic,
-        #                          extraction_positions=ext_pos,
-        #                          sensitivity_multiplier=sens,
-        #                          experiment_queue_name=eqn,
-        #                          experiment_queue_blob=eqb,
-        #                          extraction_name=ext_name,
-        #                          extraction_blob=ext_blob,
-        #                          measurement_name=ms_name,
-        #                          measurement_blob=ms_blob,
-        #                          previous_blank_id=pb[0],
-        #                          previous_blanks=pb[1],
-        #                          runscript_name=script_name,
-        #                          runscript_blob=script_blob,
-        #                          signal_fods=sfods,
-        #                          baseline_fods=bsfods)
 
     # ===============================================================================
     # doers

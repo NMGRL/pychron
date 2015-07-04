@@ -25,12 +25,10 @@ from pychron.experiment.factory import ExperimentFactory
 from pychron.experiment.utilities.aliquot_numbering import renumber_aliquots
 from pychron.experiment.stats import StatsGroup
 from pychron.experiment.experiment_executor import ExperimentExecutor
-from pychron.experiment.utilities.identifier import convert_identifier
 from pychron.loggable import Loggable
 
 
 class Experimentor(Loggable):
-    iso_db_manager = Instance(IsotopeDatabaseManager)
     experiment_factory = Instance(ExperimentFactory)
     experiment_queue = Instance(ExperimentQueue)
     executor = Instance(ExperimentExecutor)
@@ -59,7 +57,6 @@ class Experimentor(Loggable):
     save_event = Event
 
     def load(self):
-        self.iso_db_manager.load()
         self.experiment_factory.queue_factory.db_refresh_needed = True
         self.experiment_factory.run_factory.db_refresh_needed = True
 
@@ -132,21 +129,11 @@ class Experimentor(Loggable):
             aruns = self._get_all_automated_runs([qi])
             renumber_aliquots(aruns)
 
-        self._set_analysis_metatata()
+        self._set_analysis_metadata()
 
         self.debug('info updated')
         for qi in queues:
             qi.refresh_table_needed = True
-
-    def _get_labnumber(self, ln):
-        """
-           return gen_labtable object
-        """
-        db = self.iso_db_manager.db
-        ln = convert_identifier(ln)
-        dbln = db.get_labnumber(ln)
-
-        return dbln
 
     def _group_analyses(self, ans, exclude=None):
         """
@@ -160,12 +147,12 @@ class Experimentor(Loggable):
                 if ln not in exclude)
 
     def _get_analysis_info(self, li):
-        dbln = self.iso_db_manager.db.get_labnumber(li)
-        if not dbln:
+        dbpos = self.dvc.db.get_identifier(li)
+        if not dbpos:
             return None
         else:
             project, sample, material, irradiation = '', '', '', ''
-            sample = dbln.sample
+            sample = dbpos.sample
             if sample:
                 if sample.project:
                     project = sample.project.name
@@ -174,17 +161,15 @@ class Experimentor(Loggable):
                     material = sample.material.name
                 sample = sample.name
 
-            dbpos = dbln.irradiation_position
-            if dbpos:
-                level = dbpos.level
-                irradiation = '{} {}:{}'.format(level.irradiation.name,
-                                                level.name, dbpos.position)
+            level = dbpos.level
+            irradiation = '{} {}:{}'.format(level.irradiation.name,
+                                            level.name, dbpos.position)
 
         return project, sample, material, irradiation
 
-    def _set_analysis_metatata(self):
+    def _set_analysis_metadata(self):
         cache = dict()
-        db = self.iso_db_manager.db
+        db = self.dvc.db
         aruns = self._get_all_automated_runs()
 
         with db.session_ctx():
@@ -224,11 +209,13 @@ class Experimentor(Loggable):
         return self.executor.execute()
 
     def verify_database_connection(self, inform=True):
-        if self.iso_db_manager:
-            return self.iso_db_manager.verify_database_connection(inform)
-        else:
-            self.warning_dialog('Not connected to a database. Currently cannot use run experiments without a database.'
-                                'Make sure the Database plugin is enabled.')
+        db = self.dvc.db
+        if db is not None:
+            if db.connect(force=True):
+                return True
+        elif inform:
+            self.warning_dialog('Not Database available')
+
     # ===============================================================================
     # handlers
     # ===============================================================================
@@ -342,7 +329,8 @@ class Experimentor(Loggable):
                 dms = spec.name.capitalize()
 
         e = ExperimentFactory(application=self.application,
-                              # db=self.manager.db,
+                              # dvc=self.dvc,
+                              db=self.dvc.db,
                               default_mass_spectrometer=dms)
         if self.iso_db_manager:
             e.db = self.iso_db_manager.db
