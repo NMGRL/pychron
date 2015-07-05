@@ -116,12 +116,9 @@ class BaseTaskPlugin(BasePlugin):
         sadditions = []
         # print self.id, self.name
         for tid, action in self.application.get_task_extensions(self.id):
-            # if self.name == 'Update':
-            # if self.name == 'Experiment Plugin':
-            #     print 'c={} t={} {}'.format(ctid, tid, action)
 
             action = next((av for _, _, _, actions in self.available_task_extensions
-                                   for av in actions if av.id == action))
+                           for av in actions if av.id == action))
 
             if ctid is None:
                 ctid = tid
@@ -138,22 +135,7 @@ class BaseTaskPlugin(BasePlugin):
 
         if sadditions:
             xx.append((tid, sadditions))
-        # if self.name == 'Update':
-        # if self.name == 'Experiment Plugin':
-        #     print 'adsfasfdasd'
-        #     for xi in xx:
-        #         print xi
-        # print 'fffff', self.name, len(xx)
+
         return xx
-        # if exs:
-        # sadditions = []
-        # tid=''
-        # for tid, eid in exs:
-        #     sa = next((av for _, _, actions in self.available_task_extensions
-        #                for av in actions if av.id == eid))
-        #     sadditions.append(sa)
-        #
-        # xx = [(tid, sadditions)]
-        # return xx
 
 # ============= EOF =============================================

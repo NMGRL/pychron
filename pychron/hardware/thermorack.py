@@ -106,7 +106,7 @@ class ThermoRack(CoreDevice, RHMixin):
             sp = self._parse_response(resp, scale=0.1)
         return sp
 
-    @register(camel_case=True, postprocess=str.join)
+    @register(camel_case=True, postprocess=','.join)
     def get_faults(self, **kw):
         """
         """

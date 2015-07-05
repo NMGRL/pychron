@@ -158,6 +158,7 @@ TASK_EXTENSION_DEFAULT = """
   - pychron.experiment.open_queue_conditionals, True
   - pychron.experiment.open_experiment, True
   - pychron.experiment.open_last_experiment, True
+  - pychron.experiment.launch_history, True
   - pychron.experiment.test_notify, False
   - pychron.experiment.new_experiment, True
   - pychron.experiment.signal_calculator, False

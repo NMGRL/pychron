@@ -93,11 +93,11 @@ class FusionsTask(BaseLaserTask):
             #             pm = self.manager.get_power_map_manager()
             #             self.window.application.open_view(pm)
 
-    def test_degas(self):
-        if self.manager:
-            if self.manager.use_video:
-                v = self.manager.degasser_factory()
-                open_view(v)
+            # def test_degas(self):
+            #     if self.manager:
+            #         if self.manager.use_video:
+            #             v = self.manager.degasser_factory()
+            #             self.window.application.open_view(v)
 
 
 class FusionsCO2Task(FusionsTask):

@@ -169,6 +169,10 @@ class ArArAge(MLoggable):
     _kcl_warning = False
 
     discrimination = None
+    conditional_modifier = None
+    # def __init__(self, *args, **kw):
+    # HasTraits.__init__(self, *args, **kw)
+    #     self.logger = logger
 
     # moles_Ar40 = Property
     # irradiation_label = Property(depends_on='irradiation, irradiation_level,irradiation_pos')
@@ -282,10 +286,20 @@ class ArArAge(MLoggable):
 
     def get_current_intensity(self, attr):
         try:
-            r = self.isotopes[attr].ys[-1]
+            iso = self.isotopes[attr]
         except KeyError:
-            r = None
-        return r
+            return
+
+        if self.conditional_modifier:
+            try:
+                iso = getattr(iso, self.conditional_modifier)
+            except AttributeError:
+                return
+        # try:
+        #     r = self.isotopes[attr].ys[-1]
+        # except KeyError:
+        #     r = None
+        return iso.ys[-1]
 
     # def get_detector_active(self, attr):
     #     det = next((i for i in self.isotopes if i.detector == attr), None)
@@ -410,7 +424,7 @@ class ArArAge(MLoggable):
         """
 
         def _append(isotope):
-            if kind in ('sniff', 'baseline'):
+            if kind in ('sniff', 'baseline', 'whiff'):
                 if kind == 'sniff':
                     isotope._value = signal
                     isotope.dirty = True

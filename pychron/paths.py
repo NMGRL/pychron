@@ -190,6 +190,9 @@ class Paths(object):
     simple_ui_file = None
     edit_ui_defaults = None
 
+    duration_tracker = None
+    experiment_launch_history = None
+
     def write_default_file(self, p, default, overwrite=False):
         return self._write_default_file(p, default, overwrite)
 
@@ -376,6 +379,9 @@ class Paths(object):
         self.task_extensions_file = join(self.hidden_dir, 'task_extensions.yaml')
         self.simple_ui_file = join(self.hidden_dir, 'simple_ui.yaml')
         self.edit_ui_defaults = join(self.hidden_dir, 'edit_ui.yaml')
+
+        self.duration_tracker = join(self.hidden_dir, 'duration_tracker.txt')
+        self.experiment_launch_history = join(self.hidden_dir, 'experiment_launch_history.txt')
         build_directories()
 
     def write_defaults(self):

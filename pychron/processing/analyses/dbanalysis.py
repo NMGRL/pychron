@@ -163,8 +163,8 @@ class DBAnalysis(Analysis):
         self._sync_detector_info(meas_analysis, **kw)
 
     # def sync_arar(self, meas_analysis):
-    # # self.debug('not using db arar')
-    # return
+    #     # self.debug('not using db arar')
+    #     return
     #
     # hist = meas_analysis.selected_histories.selected_arar
     # if hist:

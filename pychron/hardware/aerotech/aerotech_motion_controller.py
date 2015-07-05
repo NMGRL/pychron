@@ -224,7 +224,7 @@ class AerotechMotionController(MotionController):
 #        resp = self.ask(cmd)
 #        return self._parse_response(resp)
 
-    def _moving_(self, *args, **kw):
+    def _moving(self, *args, **kw):
         '''
             unidex 511 6-12 Serial Pol
         '''

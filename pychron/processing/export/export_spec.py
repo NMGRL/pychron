@@ -19,6 +19,7 @@ from numpy import std, mean, where, delete
 from traits.api import CStr, Str, CInt, Float, \
     TraitError, Property, Any, Either, Dict, Bool, List
 from uncertainties import ufloat
+from pychron.core.regression.mean_regressor import MeanRegressor
 
 from pychron.loggable import Loggable
 
@@ -128,7 +129,7 @@ class MassSpecExportSpec(Loggable):
 
         # if hasattr(record, 'cdd_ic_factor'):
         # ic = record.cdd_ic_factor
-        #     if ic is None:
+        # if ic is None:
         #         self.debug('Using default CDD IC factor 1.0')
         #         ic = ufloat(1, 1.0e-20)
         #
@@ -154,7 +155,7 @@ class MassSpecExportSpec(Loggable):
         # def _iter():
         # dm = self.data_manager
         # hfile = dm._frame
-        #     root = dm._frame.root
+        # root = dm._frame.root
         #     signal = root.signal
         #     for isogroup in hfile.listNodes(signal):
         #         for dettable in hfile.listNodes(isogroup):
@@ -219,23 +220,37 @@ class MassSpecExportSpec(Loggable):
         self.debug('get signal data {} {}'.format(iso, det))
         return self._get_data('signal', iso, det, **kw)
 
-    def get_filtered_baseline_uvalue(self, iso, nsigma=2, niter=1):
-        m, s = 0, 0
-        n_filtered_pts = 0
+    def get_filtered_baseline_uvalue(self, iso, nsigma=2, niter=1, error='sem'):
+        m, s, fncnts = 0, 0, 0
+        # n_filtered_pts = 0
         if iso in self.isotopes:
             iso = self.isotopes[iso]
             xs, ys = iso.baseline.xs, iso.baseline.ys
+# s_dict={'filter_outliers':filter_outliers,
+#                                    'iterations':iterations,
+#                                    'std_devs':std_devs}
+#         self.dirty=notify
+            fod = iso.baseline.filter_outliers_dict
+            niter = fod.get('iterations', niter)
+            nsigma = fod.get('std_devs', nsigma)
+            # reg = MeanRegressor(xs=xs, ys=ys)
+            # reg.calculate()
+            # reg.
             for i in range(niter):
-                m, s = mean(ys), std(ys)
+                m, s = mean(ys), std(ys, ddof=1)
                 res = abs(ys - m)
 
                 outliers = where(res > (s * nsigma))[0]
                 ys = delete(ys, outliers)
-                n_filtered_pts += len(outliers)
+                # n_filtered_pts += len(outliers)
 
-            m, s = mean(ys), std(ys)
+            m, s = mean(ys), std(ys, ddof=1)
+            fncnts = ys.shape[0]
 
-        return ufloat(m, s), len(ys)
+        if error == 'sem':
+            s = (s / fncnts ** 0.5) if fncnts else 0
+
+        return ufloat(m, s), fncnts
 
     def get_baseline_uvalue(self, iso):
         try:
@@ -254,7 +269,7 @@ class MassSpecExportSpec(Loggable):
         # if hasattr(root, 'baseline'):
         # baseline = root.baseline
         # for isogroup in hfile.listNodes(baseline):
-        #         for dettable in hfile.listNodes(isogroup):
+        # for dettable in hfile.listNodes(isogroup):
         #             if dettable.name == det:
         #                 vb = [r['value'] for r in dettable.iterrows()]
         #                 break
@@ -268,7 +283,7 @@ class MassSpecExportSpec(Loggable):
     # def _get_baseline_detector(self, iso, det):
     # if self.is_peak_hop:
     # det = self.peak_hop_detector
-    #         msg = 'is_peak_hop using peak_hop_det baseline {} for {}'.format(det, iso)
+    # msg = 'is_peak_hop using peak_hop_det baseline {} for {}'.format(det, iso)
     #         self.debug(msg)
     #     return det
 

@@ -1053,6 +1053,39 @@ class Graph(ContextMenuMixin):
         for pi, d in enumerate(data):
             self.add_datum(d, plotid=pi, **kw)
 
+    def add_bulk_data(self, xs, ys, plotid=0, series=0,
+                      ypadding='0.1',
+                      update_y_limits=False):
+        try:
+            names = self.series[plotid][series]
+        except IndexError:
+            print 'adding data', plotid, series, self.series[plotid]
+
+        plot = self.plots[plotid]
+        data = plot.data
+        for n, ds in ((names[0], xs), (names[1], ys)):
+            xx = data.get_data(n)
+            xx = hstack((xx, ds))
+            data.set_data(n, xx)
+
+        if update_y_limits:
+            ys = data[names[1]]
+            mi = ys.min()
+            ma = ys.max()
+            if isinstance(ypadding, str):
+                ypad = max(0.1, abs(mi - ma)) * float(ypadding)
+            else:
+                ypad = ypadding
+
+            mi -= ypad
+            ma += ypad
+            # # if ymin_anchor is not None:
+            # #     mi = max(ymin_anchor, mi)
+            #
+            self.set_y_limits(min_=mi,
+                              max_=ma,
+                              plotid=plotid)
+
     def add_datum(self, datum, plotid=0, series=0,
                   update_y_limits=False,
                   ypadding=10,

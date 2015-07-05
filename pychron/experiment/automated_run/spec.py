@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import hashlib
 
 from traits.api import Str, Int, Bool, Float, Property, \
     Enum, on_trait_change, CStr, Long, HasTraits
@@ -489,5 +490,17 @@ class AutomatedRunSpec(HasTraits):
     @extract_duration.setter
     def set_duration(self, v):
         self.duration = v
+
+    @property
+    def script_hash(self):
+        ctx = self.make_script_context()
+        ctx['measurement'] = self.measurement_script
+        ctx['extraction'] = self.measurement_script
+
+        md5 = hashlib.md5()
+        for k, v in sorted(ctx.items()):
+            md5.update(str(k))
+            md5.update(str(v))
+        return md5.hexdigest()
 
 # ============= EOF =============================================

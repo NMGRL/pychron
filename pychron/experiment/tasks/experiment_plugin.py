@@ -15,11 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
+
 from envisage.ui.tasks.task_factory import TaskFactory
 from pyface.tasks.action.schema import SGroup
 from pyface.tasks.action.schema_addition import SchemaAddition
 from envisage.ui.tasks.task_extension import TaskExtension
 from traits.api import Instance
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.entry.entry_views.sensitivity_entry import SensitivitySelector
@@ -35,7 +38,9 @@ from pychron.experiment.tasks.experiment_actions import NewExperimentQueueAction
     OpenExperimentQueueAction, SignalCalculatorAction, \
     DeselectAction, SendTestNotificationAction, \
     NewPatternAction, OpenPatternAction, ResetQueuesAction, OpenLastExperimentQueueAction, UndoAction, \
-    QueueConditionalsAction, ConfigureEditorTableAction, SystemConditionalsAction, ResetSystemHealthAction
+    QueueConditionalsAction, ConfigureEditorTableAction, SystemConditionalsAction, ResetSystemHealthAction, \
+    OpenExperimentHistoryAction
+from pychron.paths import paths
 
 
 class ExperimentPlugin(BaseTaskPlugin):
@@ -70,6 +75,9 @@ class ExperimentPlugin(BaseTaskPlugin):
     def _task_factory(self):
         return ExperimentEditorTask(manager=self.experimentor)
 
+    def _preferences_default(self):
+        return ['file://{}'.format(os.path.join(paths.preferences_dir, 'experiment.ini'))]
+
     def _preferences_panes_default(self):
         return [ExperimentPreferencesPane,
                 LabspyPreferencesPane,
@@ -94,14 +102,13 @@ class ExperimentPlugin(BaseTaskPlugin):
         for eid, actions in self._get_extensions():
             # print 'b', eid, len(actions)
             for ai in actions:
-                # print 'c',ai,ai.id
                 if not eflag and ai.id.startswith('pychron.experiment.edit'):
                     eflag = True
                     additions.append(SchemaAddition(id='experiment.edit',
                                                     factory=lambda: SGroup(id='experiment.group'),
                                                     path='MenuBar/Edit'), )
-
-        extensions.append(TaskExtension(actions=additions))
+        if additions:
+            extensions.append(TaskExtension(actions=additions, task_id=''))
         return extensions
 
     def _available_task_extensions_default(self):
@@ -116,6 +123,8 @@ class ExperimentPlugin(BaseTaskPlugin):
                                  path='MenuBar/file.menu/Open'),
                   SchemaAddition(id='pychron.experiment.open_last_experiment', factory=OpenLastExperimentQueueAction,
                                  path='MenuBar/file.menu/Open'),
+                  SchemaAddition(id='pychron.experiment.launch_history', factory=OpenExperimentHistoryAction,
+                                 path='MenuBar/file.menu/Open'),
                   SchemaAddition(id='pychron.experiment.test_notify', factory=SendTestNotificationAction,
                                  path='MenuBar/file.menu'),
                   SchemaAddition(id='pychron.experiment.new_experiment', factory=NewExperimentQueueAction,
@@ -126,7 +135,7 @@ class ExperimentPlugin(BaseTaskPlugin):
                                  path='MenuBar/file.menu/New'),
                   SchemaAddition(id='pychron.experiment.open_pattern', factory=OpenPatternAction,
                                  path='MenuBar/file.menu/Open')]),
-                ('{}.edit'.format(self.id), self.id, 'ExperimentEdit',
+                ('{}.edit'.format(self.id), 'pychron.experiment.task', 'ExperimentEdit',
                  [SchemaAddition(id='pychron.experiment.edit.deselect', factory=DeselectAction,
                                  path='MenuBar/Edit/experiment.group'),
                   SchemaAddition(id='pychron.experiment.edit.reset', factory=ResetQueuesAction,

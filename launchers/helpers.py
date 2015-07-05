@@ -17,6 +17,7 @@ import warnings
 
 warnings.simplefilter("ignore")
 
+from ConfigParser import NoSectionError
 from pyface.constant import OK
 from traits.etsconfig.api import ETSConfig
 
@@ -966,6 +967,7 @@ def initialize_version(appname, debug):
         cp.set('pychron.general', 'root_dir', proot)
     except NoSectionError:
         cp.add_section('pychron.general')
+        cp.set('pychron.general', 'root_dir', proot)
 
     root = os.path.dirname(pref_path)
     if not os.path.isdir(root):

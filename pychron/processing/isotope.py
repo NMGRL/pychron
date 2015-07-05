@@ -480,6 +480,10 @@ class Sniff(BaseMeasurement):
     pass
 
 
+class Whiff(BaseMeasurement):
+    pass
+
+
 class BaseIsotope(IsotopicMeasurement):
     baseline = None
     # baseline_fit_abbreviation = Property(depends_on='baseline:fit')
@@ -597,6 +601,9 @@ class Isotope(BaseIsotope):
 
     def set_baseline(self, v, e):
         self.baseline = Baseline(_value=v, _error=e)
+
+    def _whiff_default(self):
+        return Whiff()
 
     def _sniff_default(self):
         return Sniff()

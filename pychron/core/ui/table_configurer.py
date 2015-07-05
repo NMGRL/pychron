@@ -92,7 +92,11 @@ class TableConfigurer(HasTraits):
 
     def set_font(self):
         if self.adapter:
-            self.adapter.font = 'arial {}'.format(self.font)
+            font = 'arial {}'.format(self.font)
+            self.adapter.font = font
+            for ci in self.children:
+                ci.font = font
+
             if self.refresh_func:
                 self.refresh_func()
 

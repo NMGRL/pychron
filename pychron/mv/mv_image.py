@@ -21,19 +21,15 @@ from chaco.plot_containers import HPlotContainer
 from enable.component_editor import ComponentEditor
 from chaco.plot import Plot
 from chaco.array_plot_data import ArrayPlotData
-from numpy import ones, asarray
 from chaco.default_colormaps import hot
-
+# ============= standard library imports ========================
+from numpy import ones, asarray
+# ============= local library imports  ==========================
 from pychron.image.cv_wrapper import grayspace
-from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.viewable import Viewable
 
 
-
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
-
-class TestImage(Viewable):
+class MVImage(Viewable):
     container = Instance(HPlotContainer)
     plotdata = Instance(ArrayPlotData)
 
@@ -46,9 +42,7 @@ class TestImage(Viewable):
             name = 'imagedata{:03d}'.format(i)
             plotdata.set_data(name, ones(wh))
 
-            plot.img_plot(name,
-                          colormap=hot
-                          )
+            plot.img_plot(name, colormap=hot)
             self.container.add(plot)
 
         self.container.request_redraw()
@@ -57,9 +51,9 @@ class TestImage(Viewable):
         arr = asarray(grayspace(arr))
 
         self.plotdata.set_data('imagedata{:03d}'.format(idx), arr)
-        invoke_in_main_thread(self.container.invalidate_and_redraw)
+        # invoke_in_main_thread(self.container.invalidate_and_redraw)
 #         self.container.invalidate_and_redraw()
-#         self.container.request_redraw()
+        self.container.request_redraw()
 
     def _container_default(self):
         hp = HPlotContainer(padding=0, spacing=0)
@@ -68,7 +62,6 @@ class TestImage(Viewable):
     def traits_view(self):
         v = View(UItem('container', editor=ComponentEditor()),
                  resizable=True,
-                 handler=self.handler_klass
-                 )
+                 handler=self.handler_klass)
         return v
 # ============= EOF =============================================

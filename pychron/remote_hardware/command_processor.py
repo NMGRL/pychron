@@ -246,7 +246,7 @@ class CommandProcessor(ConfigLoadable):
                 return
 
         resp = self._process_request(request_type, data, sender_addr)
-        if resp:
+        if resp is not None:
             self._end_request(sock, resp)
 
     def _process_request(self, request_type, data, sender_addr):

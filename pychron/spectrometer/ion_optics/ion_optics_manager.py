@@ -342,7 +342,7 @@ class IonOpticsManager(Manager):
 
             # needs to be called on the main thread to properly update
             # the menubar actions. alive=False enables IonOptics>Peak Center
-        #        d = lambda:self.trait_set(alive=False)
+        # d = lambda:self.trait_set(alive=False)
         # still necessary with qt? and tasks
 
         if on_end:
@@ -422,7 +422,7 @@ if __name__ == '__main__':
 # ============= EOF =============================================
 # def _graph_factory(self):
 # g = Graph(
-#                  container_dict=dict(padding=5, bgcolor='gray'))
+# container_dict=dict(padding=5, bgcolor='gray'))
 #        g.new_plot()
 #        return g
 #

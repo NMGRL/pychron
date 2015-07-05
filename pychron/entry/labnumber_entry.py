@@ -285,7 +285,7 @@ class LabnumberEntry(DVCIrradiationable):
                                          overwrite=overwrite,
                                          db=self.dvc.db)
                 if lg.setup():
-                    prog = open_progress(10)
+                    prog = open_progress()
                     lg.generate_identifiers(prog, overwrite)
                     prog.close()
                     self._update_level()
@@ -298,7 +298,7 @@ class LabnumberEntry(DVCIrradiationable):
                                  overwrite=True,
                                  db=self.dvc.db)
         if lg.setup():
-            prog = open_progress(10)
+            prog = open_progress()
             lg.preview(prog, self.irradiated_positions, self.irradiation, self.level)
             prog.close()
             self.refresh_table = True

@@ -16,7 +16,7 @@
 
 # ============= enthought library imports=======================
 from pyface.action.menu_manager import MenuManager
-from traits.api import Property, Int
+from traits.api import Property, Int, Dict
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
@@ -118,6 +118,13 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
     post_equilibration_script_text = Property
     sample_text = Property
     use_cdd_warming_text = Property
+    colors = Dict(COLORS)
+
+    # def get_tooltip(self, obj, trait, row, column):
+    #     name = self.column_map[column]
+    #     item = getattr(obj, trait)[row]
+    #     # name='_'.join(name.split('_')[:-1])
+    #     return '{}= {}'.format(name, getattr(item, name))
 
     def get_row_label(self, section, obj=None):
         return section + 1
@@ -131,10 +138,10 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
         else:
             if item.skip:
                 color = SKIP_COLOR  # '#33CCFF'  # light blue
-            elif item.state in COLORS:
-                color = COLORS[item.state]
-            elif item.end_after:
-                color = COLORS['end_after']
+            elif item.state in self.colors:
+                color = self.colors[item.state]
+            # elif item.end_after:
+            #     color = COLORS['end_after']
             else:
 
                 if row % 2 == 0:

@@ -15,8 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Str
-from traitsui.menu import Action
 from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.task_factory import TaskFactory
 from pyface.tasks.action.schema import SMenu
@@ -26,6 +24,7 @@ import os
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import list_directory2
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
+from pychron.envisage.tasks.list_actions import ProcedureAction
 from pychron.extraction_line.extraction_line_manager import ExtractionLineManager
 from pychron.extraction_line.ipyscript_runner import IPyScriptRunner
 from pychron.extraction_line.pyscript_runner import PyScriptRunner
@@ -35,49 +34,6 @@ from pychron.extraction_line.tasks.extraction_line_preferences import Extraction
     ConsolePreferencesPane
 from pychron.paths import paths
 
-
-class ProcedureAction(Action):
-    script_path = Str
-
-    def __init__(self, *args, **kw):
-        super(ProcedureAction, self).__init__(*args, **kw)
-
-        ex = self.application.get_plugin('pychron.experiment.plugin')
-        if ex:
-            ex = ex.experimentor.executor
-            ex.on_trait_change(self._update_alive, 'alive')
-
-    def _update_alive(self, new):
-        self.enabled = not new
-
-    def perform(self, event):
-        app = event.task.application
-
-        for tid in ('pychron.experiment.task', 'pychron.spectrometer'):
-            task = app.task_is_open(tid)
-            if task:
-                # make sure extraction line canvas is visible
-                task.show_pane('pychron.extraction_line.canvas_dock')
-                break
-        else:
-            # open extraction line task
-            app.open_task('pychron.extraction_line')
-
-        manager = app.get_service('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
-
-        root = os.path.dirname(self.script_path)
-        name = os.path.basename(self.script_path)
-
-        info = lambda x: '======= {} ======='.format(x)
-
-        manager.info(info('Started Procedure "{}"'.format(name)))
-
-        task = app.get_task('pychron.pyscript.task', activate=False)
-        context = {'analysis_type': 'blank' if 'blank' in name else 'unknown'}
-        task.execute_script(name, root,
-                            delay_start=1,
-                            on_completion=lambda: manager.info(info('Finished Procedure "{}"'.format(name))),
-                            context=context)
 
 
 def procedure_action(name, application):
@@ -131,6 +87,7 @@ class ExtractionLinePlugin(BaseTaskPlugin):
                                                     path='MenuBar/tools.menu')])]
 
         if self.application.get_plugin('pychron.pyscript.plugin'):
+
             actions = []
             for f in list_directory2(paths.procedures_dir, extension='.py', remove_extension=True):
                 actions.append(SchemaAddition(id='procedure.{}'.format(f),

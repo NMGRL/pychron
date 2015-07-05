@@ -18,13 +18,12 @@
 # from traits.api import HasTraits
 # from traitsui.api import View, Item
 from pyface.action.action import Action
+
 from pyface.tasks.action.task_action import TaskAction
 
 from pychron.envisage.view_util import open_view
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.lasers.laser_managers.pychron_laser_manager import PychronLaserManager
-
-
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -135,9 +134,9 @@ class LaserTaskAction(TaskAction):
             self.enabled = bool(self.object)
 
 
-class TestDegasAction(LaserTaskAction):
-    name = 'Test Degas...'
-    method = 'test_degas'
+# class TestDegasAction(LaserTaskAction):
+#     name = 'Test Degas...'
+#     method = 'test_degas'
 
 
 class OpenPatternAction(Action):
