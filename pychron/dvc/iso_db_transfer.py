@@ -617,8 +617,8 @@ def experiment_id_modifier(root, expid):
             write = False
             with open(p, 'r') as rfile:
                 jd = json.load(rfile)
-                if 'experiment_id' in jd:
-                    jd['experiment_id'] = expid
+                if 'experiment_identifier' in jd:
+                    jd['experiment_identifier'] = expid
                     write = True
 
             if write:

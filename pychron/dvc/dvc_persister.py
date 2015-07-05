@@ -61,7 +61,7 @@ class DVCPersister(BasePersister):
         self.post_extraction_save('', '', None)
         self.post_measurement_save(commit=commit, msg_prefix=msg_prefix)
 
-    def initialize(self, sync=True):
+    def initialize(self, experiment, sync=True):
         """
         setup git repos.
 
@@ -71,13 +71,12 @@ class DVCPersister(BasePersister):
         synchronize the database
         :return:
         """
-        if not self.experiment_repo:
-            project = self.per_spec.run_spec.project
-            project = format_project(project)
-            self.experiment_repo = GitRepoManager()
-            self.experiment_repo.open_repo(os.path.join(paths.experiment_dataset_dir, project))
-            self.info('pulling changes from project repo: {}'.format(project))
-            self.experiment_repo.pull()
+        # if not self.experiment_repo:
+        experiment = format_project(experiment)
+        self.experiment_repo = GitRepoManager()
+        self.experiment_repo.open_repo(os.path.join(paths.experiment_dataset_dir, experiment))
+        self.info('pulling changes from experiment repo: {}'.format(experiment))
+        self.experiment_repo.pull()
 
             # if sync:
             #     self.info('synchronize dvc')
@@ -214,10 +213,12 @@ class DVCPersister(BasePersister):
             # # special associations are handled by the ExperimentExecutor._retroactive_experiment_identifiers
             # if not is_special(rs.runid):
             if self.per_spec.use_experiment_association:
-                db.add_experiment_association(rs.experiment_id, an)
+                db.add_experiment_association(rs.experiment_identifier, rs)
 
-            pos = db.get_irradiation_position(rs.irradiation, rs.irradiation_level, rs.irradiation_position)
+            # pos = db.get_irradiation_position(rs.irradiation, rs.irradiation_level, rs.irradiation_position)
 
+            # print rs.irradiation, rs.irradiation_level, rs.irradiation_position, pos
+            pos = db.get_identifier(rs.identifier)
             an.irradiation_position = pos
             t = self.per_spec.tag
             if t:
@@ -386,7 +387,7 @@ class DVCPersister(BasePersister):
 
     def _make_path(self, modifier=None, extension='.json'):
         runid = self.per_spec.run_spec.runid
-        experiment_id = self.per_spec.run_spec.experiment_id
+        experiment_id = self.per_spec.run_spec.experiment_identifier
         return analysis_path(runid, experiment_id, modifier, extension, mode='w')
 
         # if prefix is None:

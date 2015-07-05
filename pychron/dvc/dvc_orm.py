@@ -183,7 +183,7 @@ class AnalysisTbl(Base, BaseMixin):
         iv.labnumber = iv.identifier
         iv.experiment_ids = es = [e.experimentName for e in self.experiment_associations]
         if len(es) == 1:
-            iv.experiment_id = es[0]
+            iv.experiment_identifier = es[0]
 
         for tag in ('aliquot', 'increment', 'uuid',
                     'extract_value', 'cleanup', 'duration',

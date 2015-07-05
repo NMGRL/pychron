@@ -467,7 +467,7 @@ class ArArAge(MLoggable):
         if name in self.isotopes:
             iso = self.isotopes[name]
         else:
-            iso = Isotope(name=name)
+            iso = Isotope(name, det)
             self.isotopes[name] = iso
 
         iso.detector = det
@@ -719,7 +719,7 @@ class ArArAge(MLoggable):
 
         self.age = age.nominal_value
         self.age_err = age.std_dev
-        # self.age_err_wo_j = float(age.std_dev)
+        self.age_err_wo_j = float(age.std_dev)
         self.uage = ufloat(self.age, self.age_err)
 
         # if self.j is not None:

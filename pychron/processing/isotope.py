@@ -27,6 +27,7 @@ from uncertainties import ufloat
 from numpy import array, Inf, polyfit
 
 
+
 # ============= local library imports  ==========================
 from pychron.core.helpers.fits import natural_name_fit, fit_to_degree
 from pychron.core.regression.mean_regressor import MeanRegressor
@@ -159,7 +160,7 @@ class IsotopicMeasurement(BaseMeasurement):
     _fit = None
     # _fit = String
     # fit_abbreviation = Property(depends_on='dirty')
-    # fit_blocks = List
+    fit_blocks = None
     error_type = None
     #
     filter_outliers_dict = None
@@ -482,6 +483,13 @@ class Sniff(BaseMeasurement):
 class BaseIsotope(IsotopicMeasurement):
     baseline = None
     # baseline_fit_abbreviation = Property(depends_on='baseline:fit')
+
+    @property
+    def baseline_fit_abbreviation(self):
+        if self.baseline:
+            return fit_abbreviation(self.baseline.fit)
+        else:
+            return ''
 
     def __init__(self, name, detector):
         IsotopicMeasurement.__init__(self, name, detector)

@@ -17,7 +17,7 @@ class DummyExecutor(object):
         # print '{} added to {}'.format(spec.experiment_id, spec.runid)
         self.cruns, self.expid = retroactive_experiment_identifiers(spec, self.cruns, self.expid)
 
-        self.associate(spec.experiment_id, spec.runid)
+        self.associate(spec.experiment_identifier, spec.runid)
         if not is_special(spec.identifier) and self.cruns:
             for c in self.cruns:
                 # print 'add {} {} {}'.format(self.expid, c.experiment_id, c.runid)

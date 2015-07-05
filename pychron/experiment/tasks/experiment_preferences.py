@@ -46,6 +46,7 @@ class ExperimentPreferences(BasePreferencesHelper):
 
     use_notifications = Bool
     notifications_port = Int
+    use_autoplot = Bool
 
     send_config_before_run = Bool
     use_auto_save = Bool
@@ -132,6 +133,7 @@ class ExperimentPreferencesPane(PreferencesPane):
                                    label='System Health')
 
         notification_grp = VGroup(
+            Item('use_autoplot'),
             Item('use_notifications'),
             Item('notifications_port',
                  enabled_when='use_notifications',

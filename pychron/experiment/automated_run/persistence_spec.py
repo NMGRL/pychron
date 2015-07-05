@@ -66,4 +66,5 @@ class PersistenceSpec(HasTraits):
     whiff_result = None
     timestamp = None
     use_experiment_association = False
+    tag = 'ok'
 # ============= EOF =============================================

@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from datetime import timedelta
+from sqlalchemy.orm.exc import NoResultFound
 
 from sqlalchemy.sql.functions import count
 from sqlalchemy.util import OrderedSet
@@ -23,6 +23,7 @@ from traits.api import HasTraits, Str, List
 from traitsui.api import View, Item
 
 # ============= standard library imports ========================
+from datetime import timedelta, datetime
 from sqlalchemy import not_, func, distinct
 # ============= local library imports  ==========================
 from pychron.database.core.database_adapter import DatabaseAdapter
@@ -31,7 +32,7 @@ from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, Ir
     MaterialTbl, IrradiationPositionTbl, UserTbl, ExtractDeviceTbl, LoadTbl, LoadHolderTbl, LoadPositionTbl, \
     MeasuredPositionTbl, ProductionTbl, VersionTbl, ExperimentAssociationTbl, ExperimentTbl, TagTbl, AnalysisChangeTbl, \
     InterpretedAgeTbl, InterpretedAgeSetTbl
-from pychron.pychron_constants import ALPHAS
+from pychron.pychron_constants import ALPHAS, alpha_to_int
 
 
 class NewMassSpectrometerView(HasTraits):
@@ -264,8 +265,8 @@ class DVCDatabase(DatabaseAdapter):
         a = LoadPositionTbl(identifier=ln, position=position, weight=weight, note=note)
         return self._add_item(a)
 
-    def add_experiment(self, **kw):
-        a = ExperimentTbl(**kw)
+    def add_experiment(self, name, **kw):
+        a = ExperimentTbl(name=name, **kw)
         return self._add_item(a)
 
     def add_interpreted_age(self, **kw):
@@ -279,6 +280,129 @@ class DVCDatabase(DatabaseAdapter):
         return self._add_item(a)
 
     # special getters
+    def get_greatest_identifier(self, **kw):
+        with self.session_ctx() as sess:
+            q = sess.query(IrradiationPositionTbl.identifier)
+            q = q.order_by(IrradiationPositionTbl.identifier.desc())
+            ret = self._query_first(q)
+            return int(ret[0]) if ret else 0
+
+    def get_last_analysis(self, ln=None, aliquot=None, spectrometer=None,
+                          hours_limit=None,
+                          analysis_type=None):
+        self.debug('get last analysis labnumber={}, aliquot={}, spectrometer={}'.format(ln, aliquot, spectrometer))
+        with self.session_ctx() as sess:
+            if ln:
+                ln = self.get_identifier(ln)
+                if not ln:
+                    return
+
+            q = sess.query(AnalysisTbl)
+            if ln:
+                q = q.join(IrradiationPositionTbl)
+
+            if spectrometer:
+                q = q.filter(AnalysisTbl.mass_spectrometer == spectrometer)
+
+            if ln:
+                q = q.filter(IrradiationPositionTbl.identifier == ln)
+                if aliquot:
+                    q = q.filter(AnalysisTbl.aliquot == aliquot)
+
+            if analysis_type:
+                q = q.filter(AnalysisTbl.analysis_type == analysis_type)
+
+            if hours_limit:
+                lpost = datetime.now() - timedelta(hours=hours_limit)
+                q = q.filter(AnalysisTbl.timestamp >= lpost)
+
+            q = q.order_by(AnalysisTbl.timestamp.desc())
+            q = q.limit(1)
+            try:
+                r = q.one()
+                self.debug('got last analysis {}-{}'.format(r.labnumber.identifier, r.aliquot))
+                return r
+            except NoResultFound, e:
+                if ln:
+                    name = ln.identifier
+                elif spectrometer:
+                    name = spectrometer
+
+                if name:
+                    self.debug('no analyses for {}'.format(name))
+                else:
+                    self.debug('no analyses for get_last_analysis')
+
+                return 0
+
+    def get_greatest_aliquot(self, identifier):
+        with self.session_ctx() as sess:
+            if identifier:
+                if not self.get_identifier(identifier):
+                    return
+
+                q = sess.query(AnalysisTbl.aliquot)
+                q = q.join(IrradiationPositionTbl)
+
+                q = q.filter(IrradiationPositionTbl.identifier == identifier)
+                q = q.order_by(AnalysisTbl.aliquot.desc())
+                result = self._query_one(q, verbose_query=True)
+                if result:
+                    return int(result[0])
+
+    def get_greatest_step(self, ln, aliquot):
+        """
+            return greatest step for this labnumber and aliquot.
+            return step as an integer. A=0, B=1...
+        """
+        with self.session_ctx() as sess:
+            if ln:
+                ln = self.get_identifier(ln)
+                if not ln:
+                    return
+                q = sess.query(AnalysisTbl.step)
+                q = q.join(IrradiationPositionTbl)
+
+                q = q.filter(IrradiationPositionTbl.identifier == ln)
+                q = q.filter(AnalysisTbl.aliquot == aliquot)
+                # q = q.order_by(cast(meas_AnalysisTable.step, INTEGER(unsigned=True)).desc())
+                q = q.order_by(AnalysisTbl.increment.desc())
+                result = self._query_one(q)
+                if result:
+                    step = result[0]
+                    return ALPHAS.index(step) if step else -1
+
+    def get_unique_analysis(self, ln, ai, step=None):
+        #         sess = self.get_session()
+        with self.session_ctx() as sess:
+            try:
+                ai = int(ai)
+            except ValueError, e:
+                self.debug('get_unique_analysis aliquot={}.  {}'.format(ai, e))
+                return
+
+            dbln = self.get_identifier(ln)
+            if not dbln:
+                self.debug('get_unique_analysis, no labnumber {}'.format(ln))
+                return
+
+            q = sess.query(AnalysisTbl)
+            q = q.join(IrradiationPositionTbl)
+
+            q = q.filter(IrradiationPositionTbl.identifier == ln)
+            q = q.filter(AnalysisTbl.aliquot == int(ai))
+            if step:
+                if not isinstance(step, int):
+                    step = alpha_to_int(step)
+
+                q = q.filter(AnalysisTbl.increment == step)
+
+            # q = q.limit(1)
+            try:
+                return q.one()
+            except NoResultFound:
+                return
+
     def get_labnumbers_startswith(self, partial_id, mass_spectrometers=None, filter_non_run=True, **kw):
         with self.session_ctx() as sess:
             q = sess.query(IrradiationPositionTbl)

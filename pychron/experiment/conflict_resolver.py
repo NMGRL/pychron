@@ -38,14 +38,14 @@ class ConflictResolver(HasTraits):
 
     def apply(self):
         for c in self.conflicts:
-            c.runspec.experiment_id = c.experiment_id
+            c.runspec.experiment_id = c.experiment_identifier
 
     def add_conflicts(self, qname, cs):
         for ai, exps in cs:
             self.conflicts.append(Conflict(queue_name=qname,
                                            runspec=ai,
                                            position=ai.position,
-                                           experiment_id=ai.experiment_id,
+                                           experiment_id=ai.experiment_identifier,
                                            identifier=ai.identifier,
                                            experiment_ids=','.join(exps),
                                            available_ids=self.available_ids))
@@ -54,7 +54,7 @@ class ConflictResolver(HasTraits):
         cols = [ObjectColumn(name='queue_name', editable=False),
                 ObjectColumn(name='identifier', editable=False),
                 ObjectColumn(name='position', editable=False),
-                ObjectColumn(name='experiment_id', editor=EnumEditor(name='available_ids')),
+                ObjectColumn(name='experiment_identifier', editor=EnumEditor(name='available_ids')),
                 ObjectColumn(name='experiment_ids', editable=False)]
 
         v = View(UItem('conflicts', editor=TableEditor(columns=cols)),
@@ -89,7 +89,7 @@ if __name__ == '__main__':
             for ai in runs:
                 identifier = ai.identifier
                 es = experiments[identifier]
-                if ai.experiment_id not in es:
+                if ai.experiment_identifier not in es:
                     conflicts.append((ai, es))
             if conflicts:
                 cr.add_conflicts('Foo', conflicts)
@@ -100,8 +100,8 @@ if __name__ == '__main__':
             if info.result:
                 cr.apply()
 
-        for ci in runs:
-            print ci.identifier, ci.experiment_id
+                # for ci in runs:
+                #     print ci.identifier, ci.experiment_identifier
 
 
     from traits.api import Button

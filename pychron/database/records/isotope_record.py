@@ -82,7 +82,7 @@ class IsotopeRecordView(object):
                  'extract_value', 'cleanup', 'duration',
                  'blank_fit_status',
                  'ic_fit_status',
-                 'experiment_id',
+                 'experiment_identifier',
                  'experiment_ids',
                  'iso_fit_status', 'is_plateau_step', 'group_id', 'graph_id')
 
@@ -102,7 +102,7 @@ class IsotopeRecordView(object):
         self.tag = ''
         self.tag_dict = None
         self.uuid = ''
-        self.experiment_id = ''
+        self.experiment_identifier = ''
         self.experiment_ids = None
         self.rundate = ''
         self.timestamp = ''

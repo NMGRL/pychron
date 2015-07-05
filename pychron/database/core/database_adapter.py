@@ -205,6 +205,7 @@ class DatabaseAdapter(Loggable):
         :rtype: bool
         """
         self._session_lock = Lock()
+        print 'acoanasdfascascdscawfewc', self._session_lock
 
         self.connection_error = ''
         if force:

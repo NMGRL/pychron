@@ -19,19 +19,14 @@
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import Instance, Bool
 # ============= standard library imports ========================
-from datetime import datetime
-import time
 # ============= local library imports  ==========================
 from pychron.database.adapters.massspec_database_adapter import MissingAliquotPychronException
-from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.dvc.dvc import DVC
 from pychron.experiment.utilities.identifier import make_aliquot_step, make_step, get_analysis_type
 from pychron.experiment.utilities.mass_spec_database_importer import MassSpecDatabaseImporter
 from pychron.loggable import Loggable
 
 # http://stackoverflow.com/q/3844931/
-from pychron.processing.analyses.dbanalysis import DBAnalysis
-from pychron.processing.analyses.exceptions import NoProductionError
 
 
 def check_list(lst):
@@ -70,9 +65,12 @@ class Datahub(Loggable):
             bind_preference(self.secondarystore.db, 'password', '{}.password'.format(prefid))
 
     def secondary_connect(self):
+        print self.massspec_enabled
         if self.massspec_enabled:
             if self.secondarystore:
                 return self.secondarystore.connect()
+        else:
+            return True
 
     def has_secondary_store(self):
         if self.massspec_enabled:
@@ -135,31 +133,38 @@ class Datahub(Loggable):
                                                                                        spec.increment))
 
     def load_analysis_backend(self, ln, arar_age):
-        db = self.mainstore.db
-        with db.session_ctx():
-            ln = db.get_labnumber(ln)
-            if ln:
-                an = DBAnalysis()
-                x = datetime.now()
-                now = time.mktime(x.timetuple())
-                an.timestamp = now
-                try:
-                    an.sync_irradiation(ln)
-                except NoProductionError:
-                    self.information_dialog('Irradiation={} Level={} has '
-                                            'no Correction/Production Ratio set defined'.format(an.irradiation,
-                                                                                                an.irradiation_level))
-                    return
-
-                arar_age.trait_set(j=an.j,
-                                   production_ratios=an.production_ratios,
-                                   interference_corrections=an.interference_corrections,
-                                   chron_segments=an.chron_segments,
-                                   irradiation_time=an.irradiation_time,
-                                   timestamp=now)
-
-                arar_age.calculate_decay_factors()
-            return True
+        dvc = self.mainstore
+        return dvc.load_analysis_backend(ln, arar_age)
+        # arar_age.trait_set(j=an.j,
+        #                    production_ratios=an.production_ratios,
+        #                    interference_corrections=an.interference_corrections,
+        #                    chron_segments=an.chron_segments,
+        #                    irradiation_time=an.irradiation_time,
+        #                    timestamp=now)
+        # with db.session_ctx():
+        #     ln = db.get_labnumber(ln)
+        #     if ln:
+        #         an = DBAnalysis()
+        #         x = datetime.now()
+        #         now = time.mktime(x.timetuple())
+        #         an.timestamp = now
+        #         try:
+        #             an.sync_irradiation(ln)
+        #         except NoProductionError:
+        #             self.information_dialog('Irradiation={} Level={} has '
+        #                                     'no Correction/Production Ratio set defined'.format(an.irradiation,
+        #                                                                                         an.irradiation_level))
+        #             return
+        #
+        #         arar_age.trait_set(j=an.j,
+        #                            production_ratios=an.production_ratios,
+        #                            interference_corrections=an.interference_corrections,
+        #                            chron_segments=an.chron_segments,
+        #                            irradiation_time=an.irradiation_time,
+        #                            timestamp=now)
+        #
+        #         arar_age.calculate_decay_factors()
+        #     return True
 
     def add_experiment(self, exp):
         db = self.mainstore.db
@@ -167,7 +172,7 @@ class Datahub(Loggable):
             dbexp = db.add_experiment(exp.path)
 
             sess.flush()
-            exp.database_identifier = dbexp.id
+            # exp.database_identifier = dbexp.
 
     def get_greatest_aliquot(self, identifier, store='main'):
         # store = getattr(self, '{}store'.format(store))
@@ -198,12 +203,14 @@ class Datahub(Loggable):
     def _datastores_default(self):
         return []
 
-    def _mainstore_default(self):
-        mainstore = IsotopeDatabaseManager(precedence=1,
-                                           connect=self.bind_mainstore,
-                                           bind=self.bind_mainstore)
-
-        return mainstore
+    # def _mainstore_default(self):
+    #     # mainstore = DVC(precedence=1,
+    #     #                 connect=self.bind_mainstore,
+    #     #                 bind=self.bind_mainstore)
+    #     mainstore = self.application.get_service('pychron.dvc.dvc.DVC')
+    #     mainstore.precedence = 1
+    #
+    #     return mainstore
 
     @property
     def new_runid(self):
@@ -224,4 +231,3 @@ class Datahub(Loggable):
             return r
 
 # ============= EOF =============================================
-

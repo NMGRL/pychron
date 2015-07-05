@@ -143,6 +143,7 @@ class ExperimentFactory(Loggable, ConsumerMixin):
             ret = ret and self.labnumber
         return ret
     '''
+
     def _add_run(self, *args, **kw):
 
         if not self.ok_add:
@@ -159,7 +160,7 @@ class ExperimentFactory(Loggable, ConsumerMixin):
                     missing.append('"Labnumber"')
 
             f = 'a value'
-            if len(missing)>1:
+            if len(missing) > 1:
                 f = 'values'
             self.warning_dialog('Please set {} for {}'.format(f, ','.join(missing)))
             return
@@ -237,6 +238,9 @@ queue_conditionals_name, experiment_identifier]''')
         if self.queue:
             self.queue.trait_set(**{name: new})
             self.queue.changed = True
+            if name == 'experiment_identifier':
+                for a in self.queue.automated_runs:
+                    a.experiment_identifier = new
 
         if name == 'mass_spectrometer':
             self.debug('_update_queue "{}"'.format(new))
@@ -362,6 +366,7 @@ queue_conditionals_name, experiment_identifier]''')
 
     def _gen_func(self, pd, ans):
         import time
+
         pd.max = 100
         self.debug('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ generate queue')
         auto_gen_config = self.auto_gen_config
@@ -434,7 +439,7 @@ queue_conditionals_name, experiment_identifier]''')
         q.changed = True
         rf.update_info_needed = True
         rf.suppress_meta = False
-        print 'totaltime', time.time()-st
+        print 'totaltime', time.time() - st
         pd.close()
         rf.labnumber = ''
         rf.sample = ''

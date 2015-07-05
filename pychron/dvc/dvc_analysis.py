@@ -44,7 +44,7 @@ META_ATTRS = ('analysis_type', 'uuid', 'sample', 'project', 'material', 'aliquot
               'irradiation', 'irradiation_level', 'irradiation_position',
               'comment', 'mass_spectrometer',
               'username', 'queue_conditionals_name', 'identifier',
-              'experiment_id')
+              'experiment_identifier')
 
 PATH_MODIFIERS = (
     None, '.data', 'blanks', 'intercepts', 'icfactors', 'baselines', 'tags', 'peakcenter', 'extraction', 'monitor')
@@ -124,7 +124,7 @@ class DVCAnalysis(Analysis):
         super(DVCAnalysis, self).__init__(*args, **kw)
         # print record_id, experiment_id
         path = analysis_path(record_id, experiment_id)
-        self.experiment_id = experiment_id
+        self.experiment_identifier = experiment_id
         # self.irradiation='NM-272'
         # self.irradiation_level = 'A'
         # self.irradiation_position = 2
@@ -492,7 +492,7 @@ class DVCAnalysis(Analysis):
 
     def _analysis_path(self, experiment_id=None, modifier=None, mode='r', extension='.json'):
         if experiment_id is None:
-            experiment_id = self.experiment_id
+            experiment_id = self.experiment_identifier
 
         return analysis_path(self.record_id, experiment_id, modifier=modifier, mode=mode, extension=extension)
 

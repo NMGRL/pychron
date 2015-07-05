@@ -23,9 +23,9 @@ class ExperimentIdentifierEntry(BaseEntry):
     tag = 'Experiment Identifier'
 
     def _add_item(self):
-        db = self.dvc.db
-        db.add_experiment(self.value)
-        return True
+        # db = self.dvc.db
+        return self.dvc.add_experiment(self.value)
+        # return True
 
 
 # ============= EOF =============================================

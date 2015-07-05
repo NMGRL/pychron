@@ -19,15 +19,15 @@ from traits.api import Instance, List, on_trait_change, Bool, Event
 # ============= standard library imports ========================
 from itertools import groupby
 # ============= local library imports  ==========================
+from pychron.dvc.dvc_irradiationable import DVCIrradiationable
 from pychron.experiment.queue.experiment_queue import ExperimentQueue
 from pychron.experiment.factory import ExperimentFactory
 from pychron.experiment.utilities.aliquot_numbering import renumber_aliquots
 from pychron.experiment.stats import StatsGroup
 from pychron.experiment.experiment_executor import ExperimentExecutor
-from pychron.loggable import Loggable
 
 
-class Experimentor(Loggable):
+class Experimentor(DVCIrradiationable):
     experiment_factory = Instance(ExperimentFactory)
     experiment_queue = Instance(ExperimentQueue)
     executor = Instance(ExperimentExecutor)
@@ -149,6 +149,7 @@ class Experimentor(Loggable):
     def _get_analysis_info(self, li):
         dbpos = self.dvc.db.get_identifier(li)
         if not dbpos:
+            self.warning('{} is not an identifier in the database'.format(li))
             return None
         else:
             project, sample, material, irradiation, level, pos = '', '', '', '', '', ''
@@ -163,6 +164,7 @@ class Experimentor(Loggable):
 
             level = dbpos.level.name
             pos = dbpos.position
+            irradiation = dbpos.level.irradiation.name
             # irradiation = '{} {}:{}'.format(level.irradiation.name,
             #                                 level.name, dbpos.position)
 
@@ -212,13 +214,13 @@ class Experimentor(Loggable):
 
         return self.executor.execute()
 
-    def verify_database_connection(self, inform=True):
-        db = self.dvc.db
-        if db is not None:
-            if db.connect(force=True):
-                return True
-        elif inform:
-            self.warning_dialog('Not Database available')
+    # def verify_database_connection(self, inform=True):
+    #     db = self.dvc.db
+    #     if db is not None:
+    #         if db.connect(force=True):
+    #             return True
+    #     elif inform:
+    #         self.warning_dialog('Not Database available')
 
     # ===============================================================================
     # handlers

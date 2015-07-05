@@ -16,9 +16,11 @@
 
 # ============= enthought library imports =======================
 from math import isnan
+from datetime import datetime
 
-from traits.api import Instance, Str, Set, List
+from traits.api import Instance, Str, Set, List, provides
 from apptools.preferences.preference_binding import bind_preference
+
 
 # ============= standard library imports ========================
 import shutil
@@ -29,6 +31,7 @@ import os
 # ============= local library imports  ==========================
 from uncertainties import nominal_value
 from uncertainties import std_dev
+from pychron.core.IDatastore import IDatastore
 from pychron.core.helpers.filetools import remove_extension
 from pychron.core.progress import progress_loader
 from pychron.dvc import jdump
@@ -40,7 +43,7 @@ from pychron.git_archive.repo_manager import GitRepoManager, format_date
 from pychron.github import Organization
 from pychron.loggable import Loggable
 from pychron.paths import paths
-from pychron.pychron_constants import OMIT_KEYS
+from pychron.pychron_constants import OMIT_KEYS, RATIO_KEYS, INTERFERENCE_KEYS
 
 TESTSTR = {'blanks': 'auto update blanks', 'iso_evo': 'auto update iso_evo'}
 
@@ -90,15 +93,15 @@ class Tag(object):
         tag.omit_dict = {k: getattr(an, k) for k in OMIT_KEYS}
         tag.name = an.tag
         tag.record_id = an.record_id
-        tag.experiment_id = an.experiment_id
-        tag.path = analysis_path(an.record_id, an.experiment_id, modifier='tag')
+        tag.experiment_identifier = an.experiment_identifier
+        tag.path = analysis_path(an.record_id, an.experiment_identifier, modifier='tag')
 
         return tag
 
     def dump(self):
         obj = {'name': self.name, 'omit_dict': self.omit_dict}
         if not self.path:
-            self.path = analysis_path(self.record_id, self.experiment_id, modifier='tag', mode='w')
+            self.path = analysis_path(self.record_id, self.experiment_identifier, modifier='tag', mode='w')
 
         # with open(self.path, 'w') as wfile:
         #     json.dump(obj, wfile, indent=4)
@@ -121,6 +124,7 @@ class GitSessionCTX(object):
                 self._parent.experiment_commit(self._experiment_id, self._message)
 
 
+@provides(IDatastore)
 class DVC(Loggable):
     db = Instance('pychron.dvc.dvc_database.DVCDatabase')
     meta_repo = Instance('pychron.dvc.meta_repo.MetaRepo')
@@ -143,7 +147,7 @@ class DVC(Loggable):
             # self.synchronize()
             # self._defaults()
 
-    def initialize(self):
+    def initialize(self, inform=False):
         mrepo = self.meta_repo
         root = os.path.join(paths.dvc_dir, self.meta_repo_name)
         if os.path.isdir(os.path.join(root, '.git')):
@@ -163,6 +167,30 @@ class DVC(Loggable):
 
     def get_experiment_repo(self, exp):
         return self._get_experiment_repo(exp)
+
+    def load_analysis_backend(self, ln, arar_age):
+        db = self.db
+        with db.session_ctx():
+            ip = db.get_identifier(ln)
+            dblevel = ip.level
+            irrad = dblevel.irradiation.name
+            level = dblevel.name
+            prodname = dblevel.production.name
+            pos = ip.position
+
+        j = self.meta_repo.get_flux(irrad, level, pos)
+        prod = self.meta_repo.get_production(prodname)
+        cs = self.meta_repo.get_chronology(irrad)
+
+        x = datetime.now()
+        now = time.mktime(x.timetuple())
+        arar_age.trait_set(j=j,
+                           production_ratios=prod.to_dict(RATIO_KEYS),
+                           interference_corrections=prod.to_dict(INTERFERENCE_KEYS),
+                           chron_segments=cs.get_chron_segments(x),
+                           irradiation_time=cs.irradiation_time,
+                           timestamp=now)
+        return True
 
     # database
 
@@ -202,7 +230,7 @@ class DVC(Loggable):
                                        plateau_step=plateau_step)
 
     def _add_interpreted_age(self, ia, d):
-        p = analysis_path('{}.ia'.format(ia.identifier), ia.experiment_id)
+        p = analysis_path('{}.ia'.format(ia.identifier), ia.experiment_identifier)
         jdump(d, p)
 
     def analysis_has_review(self, ai, attr):
@@ -217,11 +245,11 @@ class DVC(Loggable):
         #     self.debug('{} {} not reviewed'.format(ai, attr))
 
     def update_analyses(self, ans, modifier, msg):
-        key = lambda x: x.experiment_id
+        key = lambda x: x.experiment_identifier
         ans = sorted(ans, key=key)
         mod_experiments = []
         for expid, ais in groupby(ans, key=key):
-            paths = map(lambda x: analysis_path(x.record_id, x.experiment_id, modifier=modifier), ais)
+            paths = map(lambda x: analysis_path(x.record_id, x.experiment_identifier, modifier=modifier), ais)
             # print expid, modifier, paths
             if self.experiment_add_paths(expid, paths):
                 self.experiment_commit(expid, msg)
@@ -237,7 +265,7 @@ class DVC(Loggable):
         tag = Tag.from_analysis(an)
         tag.dump()
 
-        expid = an.experiment_id
+        expid = an.experiment_identifier
         return self.experiment_add_paths(expid, tag.path)
 
     def experiment_add_paths(self, experiment_id, paths):
@@ -266,6 +294,12 @@ class DVC(Loggable):
                                                                pos, identifier, j, e))
         self.meta_repo.update_j(irradiation, level, pos, identifier, j, e, add)
 
+        db = self.db
+        with self.db:
+            ip = db.get_identifier(identifier)
+            ip.j = j
+            ip.j_err = e
+
     def find_references(self, times, atypes):
         records = self.db.find_references(times, atypes)
         return self.make_analyses(records)
@@ -273,7 +307,7 @@ class DVC(Loggable):
     def make_analyses(self, records, calculate_f_only=False):
         # load repositories
         # {r.experiment_id for r in records}
-        exps = {r.experiment_id for r in records}
+        exps = {r.experiment_identifier for r in records}
         if self.pulled_experiments:
             exps = exps - self.pulled_experiments
 
@@ -341,10 +375,17 @@ class DVC(Loggable):
                 self.warning_dialog('{} already exists.'.format(root))
             else:
                 self.info('Creating repository. {}'.format(identifier))
-                org.create_repo(identifier, auto_init=True)
+                # with open('/Users/ross/Programming/githubauth.txt') as rfile:
+                #     usr = rfile.readline().strip()
+                #     pwd = rfile.readline().strip()
+
+                org.create_repo(identifier, self.github_user, self.github_password,
+                                auto_init=True)
 
                 url = '{}/{}/{}.git'.format(paths.git_base_origin, self.organization, identifier)
                 Repo.clone_from(url, root)
+                self.db.add_experiment(identifier)
+                return True
 
     def add_irradiation(self, name, doses=None):
         with self.db.session_ctx():
@@ -418,7 +459,7 @@ class DVC(Loggable):
             else:
                 db.add_experiment_association(expid, dban)
 
-            src_expid = runspec.experiment_id
+            src_expid = runspec.experiment_identifier
             if src_expid != expid:
                 repo = self._get_experiment_repo(expid)
 
@@ -455,6 +496,19 @@ class DVC(Loggable):
             dblevel = self.db.get_irradiation_level(irrad, level)
             return self.meta_repo.get_irradiation_holder_holes(dblevel.holder)
 
+    # IDatastore
+    def get_greatest_aliquot(self, identifier):
+        return self.db.get_greatest_aliquot(identifier)
+
+    def get_greatest_step(self, identifier, aliquot):
+        return self.db.get_greatest_step(identifier, aliquot)
+
+    def is_connected(self):
+        return self.db.connected
+
+    def connect(self, *args, **kw):
+        return self.db.connect(*args, **kw)
+
     # private
     def __getattr__(self, item):
         try:
@@ -480,7 +534,7 @@ class DVC(Loggable):
         if prog:
             prog.change_message('Loading analysis {}. {}/{}'.format(record.record_id, i, n))
 
-        expid = record.experiment_id
+        expid = record.experiment_identifier
         if not expid:
             exps = record.experiment_ids
             self.debug('Analysis {} is associated multiple experiments '

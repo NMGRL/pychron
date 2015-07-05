@@ -48,6 +48,7 @@ class AutomatedRunSpec(HasTraits):
 
     skip = Bool(False)
     end_after = Bool(False)
+    collection_version = Str
     # ===========================================================================
     # queue globals
     # ===========================================================================
@@ -139,7 +140,7 @@ class AutomatedRunSpec(HasTraits):
     _step_heat = False
     conflicts_checked = False
 
-    experiment_id = Str
+    experiment_identifier = Str
     identifier = Property
 
     def is_detector_ic(self):

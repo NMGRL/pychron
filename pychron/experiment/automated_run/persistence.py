@@ -367,6 +367,9 @@ class AutomatedRunPersister(BasePersister):
         :param oblob: output blob. binary time, value. time versus requested output
         :param snapshots: list of snapshot paths
         """
+        self.debug('AutomatedRunPersister post_extraction_save deprecated')
+        return
+
         if DEBUG:
             self.debug('Not saving extraction to database')
             return
@@ -377,7 +380,7 @@ class AutomatedRunPersister(BasePersister):
             with db.session_ctx() as sess:
                 loadtable = db.get_loadtable(self.per_spec.load_name)
                 if loadtable is None:
-                    loadtable = db.add_load(self.per_spec.load_name)
+                    loadtable = db.add_load(self.per_spec.load_name, 'None')
 
                 ext = self._save_extraction(db, loadtable=loadtable,
                                             response_blob=rblob,
@@ -392,13 +395,14 @@ class AutomatedRunPersister(BasePersister):
         """
         setup hdf5 file
         """
+
         self.info('pre measurement save')
 
         dm = self.data_manager
         # make a new frame for saving data
 
         name = self.per_spec.run_spec.uuid
-        root, tail = subdirize(paths.isotope_dir, '{}.h5'.format(name))
+        root, tail = subdirize(paths.isotope_dir, '{}.h5'.format(name), mode='w')
         path = os.path.join(root, tail)
         # path = os.path.join(paths.isotope_dir, '{}.h5'.format(name))
 
@@ -419,6 +423,9 @@ class AutomatedRunPersister(BasePersister):
         #. save detector_ic to csv if applicable
         #. save to secondary database
         """
+        self.debug('AutomatedRunPersister post_measurement_save deprecated')
+        return
+
         if DEBUG:
             self.debug('Not measurement saving to database')
             return

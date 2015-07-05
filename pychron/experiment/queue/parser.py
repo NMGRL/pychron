@@ -33,7 +33,7 @@ class RunParser(Loggable):
         ln = args[header.index('labnumber')]
         if ALIQUOT_REGEX.match(ln):
             ln, a = ln.split('-')
-            #params['aliquot'] = int(a)
+            # params['aliquot'] = int(a)
             params['user_defined_aliquot'] = int(a)
 
         params['labnumber'] = ln
@@ -65,8 +65,8 @@ class RunParser(Loggable):
     def _get_attr_value(self, header, args, attr, cast=None):
         for hi, ai in self._get_attr(attr):
             idx = self._get_idx(header, ai)
-            #print header
-            #print hi, ai, idx
+            # print header
+            # print hi, ai, idx
             if idx:
                 try:
                     v = args[idx]
@@ -77,22 +77,23 @@ class RunParser(Loggable):
                     # print 'exception', e, attr, idx, args
 
     def _load_strings(self, header, args, params):
-        for attr in [
-            'pattern',
-            'position',
-            'comment',
-            'syn_extraction',
-            'overlap',
-            ('conditionals', 'truncate'),
-            ('extract_units', 'e_units')]:
+        for attr in ['pattern',
+                     'position',
+                     'comment',
+                     'syn_extraction',
+                     'overlap',
+                     'experiment_identifier',
+                     ('conditionals', 'truncate'),
+                     ('extract_units', 'e_units')]:
             v = self._get_attr_value(header, args, attr)
+            # print attr, v
             if v is not None:
                 params[v[0]] = v[1]
 
     def _load_numbers(self, header, args, params):
         for attr in ['duration',
                      'cleanup',
-                     ('ramp_duration','ramp'),
+                     ('ramp_duration', 'ramp'),
                      'weight',
                      ('time_zero_offset', 't_o'),
                      ('extract_value', 'e_value'),
@@ -113,20 +114,20 @@ class RunParser(Loggable):
             if v is not None:
                 params[v[0]] = v[1]
 
-            #     def _validate_truncate_condition(self, t):
-            #         if t.endswith('.yaml'):
-            #             return True
-            #
-            #         try:
-            #             c, start = t.split(',')
-            #             pat = '<=|>=|[<>=]'
-            #             attr, value = re.split(pat, c)
-            #             m = re.search(pat, c)
-            #             comp = m.group(0)
-            # #             self.py_add_truncation(attr, comp, value, int(start))
-            #             return True
-            #         except Exception, e:
-            #             self.debug('truncate_condition parse failed {} {}'.format(e, t))
+                #     def _validate_truncate_condition(self, t):
+                #         if t.endswith('.yaml'):
+                #             return True
+                #
+                #         try:
+                #             c, start = t.split(',')
+                #             pat = '<=|>=|[<>=]'
+                #             attr, value = re.split(pat, c)
+                #             m = re.search(pat, c)
+                #             comp = m.group(0)
+                # #             self.py_add_truncation(attr, comp, value, int(start))
+                #             return True
+                #         except Exception, e:
+                #             self.debug('truncate_condition parse failed {} {}'.format(e, t))
 
     def _get_attr(self, attr):
         if isinstance(attr, tuple):

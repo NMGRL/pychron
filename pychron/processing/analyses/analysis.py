@@ -175,7 +175,7 @@ class Analysis(ArArAge):
     collection_version = ''
     # source_parameters = Dict
     # deflections = Dict
-    experiment_id = ''
+    experiment_identifier = ''
 
     # processing
     is_plateau_step = False

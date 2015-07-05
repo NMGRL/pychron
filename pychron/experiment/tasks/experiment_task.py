@@ -31,7 +31,7 @@ from pychron.envisage.view_util import open_view
 from pychron.experiment.queue.base_queue import extract_meta
 from pychron.experiment.tasks.experiment_editor import ExperimentEditor, UVExperimentEditor
 from pychron.experiment.tasks.experiment_panes import LoggerPane
-from pychron.experiment.utilities.identifier import convert_extract_device
+from pychron.experiment.utilities.identifier import convert_extract_device, is_special
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.paths import paths
 from pychron.pychron_constants import SPECTROMETER_PROTOCOL
@@ -261,6 +261,7 @@ class ExperimentEditorTask(EditorTask):
             path = (path,)
 
         manager = self.manager
+        # print 'asdfa', manager
         if manager.verify_database_connection(inform=True):
             if manager.load():
                 manager.experiment_factory.activate(load_persistence=False)
@@ -595,8 +596,42 @@ class ExperimentEditorTask(EditorTask):
             else:
                 self.warning('experiment queue did not start properly')
 
+    @on_trait_change('manager:executor:autoplot_event')
+    def _handle_autoplot(self, new):
+        if new:
+            editor = self._new_autoplot_editor(new)
+            ans = self._get_autoplot_analyses(new)
+            editor.set_items(ans)
+
+            self._open_editor(editor)
+
+            # print new, new.uuid, new.recorid_id
+
+    def _get_autoplot_analyses(self, new):
+        dvc = self.window.application.get_service('pychron.dvc.dvc.DVC')
+        db = dvc.db
+        with db.session_ctx():
+            ans, _ = db.get_labnumber_analyses(new.identifier)
+            return dvc.make_analyses(ans)
+
+    def _new_autplot_editor(self, new):
+        if is_special(new.identifier):
+            from pychron.pipeline.plot.editors.series_editor import SeriesEditor
+
+            editor = SeriesEditor()
+        elif new.step:
+            from pychron.pipeline.plot.editors.spectrum_editor import SpectrumEditor
+
+            editor = SpectrumEditor()
+        else:
+            from pychron.pipeline.plot.editors.ideogram_editor import IdeogramEditor
+
+            editor = IdeogramEditor()
+
+        return editor
+
     @on_trait_change('manager:executor:[measuring,extracting]')
-    def _update_measuring(self, name, new):
+    def _handle_measuring(self, name, new):
         if new:
             if name == 'measuring':
                 self._show_pane(self.isotope_evolution_pane)

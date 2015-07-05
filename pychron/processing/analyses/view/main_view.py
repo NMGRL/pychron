@@ -77,16 +77,16 @@ class MainView(HasTraits):
         return an.irradiation_label
 
     def _get_j(self, an):
-        return an.j
+        return ufloat(an.j, an.j_err)
 
     def load_measurement(self, an, ar):
 
         j = self._get_j(an)
         jf = 'NaN'
         if j is not None:
-            jj = floatfmt(j.nominal_value, n=7, s=5)
-            pe = format_percent_error(j.nominal_value, j.std_dev, include_percent_sign=True)
-            jf = u'{} \u00b1{:0.2e}({})'.format(jj, j.std_dev, pe)
+            jj = floatfmt(nominal_value(j), n=7, s=5)
+            pe = format_percent_error(nominal_value(j), std_dev(j), include_percent_sign=True)
+            jf = u'{} \u00b1{:0.2e}({})'.format(jj, std_dev(j), pe)
 
         a39 = ar.ar39decayfactor
         a37 = ar.ar37decayfactor
@@ -96,7 +96,7 @@ class MainView(HasTraits):
             MeasurementValue(name='DAQ Version',
                              value=an.collection_version),
             MeasurementValue(name='ExperimentID',
-                             value=an.experiment_id),
+                             value=an.experiment_identifier),
             # MeasurementValue(name='AnalysisID',
             #                  value=self.analysis_ida),
             MeasurementValue(name='Spectrometer',

@@ -23,6 +23,7 @@ from traits.api import Bool
 from datetime import datetime
 import os
 import shutil
+import time
 # ============= local library imports  ==========================
 from uncertainties import ufloat
 from pychron.canvas.utils import iter_geom
@@ -90,6 +91,33 @@ class Chronology(MetaObject):
 
     def get_doses(self):
         return self._doses
+
+    def get_chron_segments(self, analts):
+        convert_days = lambda x: x.total_seconds() / (60. * 60 * 24)
+
+        return [(p, convert_days(en - st), convert_days(analts - st)) for p, st, en in self._doses]
+
+    @property
+    def irradiation_time(self):
+        try:
+            d_o = self._doses[0][1]
+            return time.mktime(d_o.timetuple())
+        except IndexError:
+            return 0
+
+    @property
+    def start_date(self):
+        """
+            return date component of dose.
+            dose =(pwr, %Y-%m-%d %H:%M:%S, %Y-%m-%d %H:%M:%S)
+
+        """
+        # doses = self.get_doses(tofloat=False)
+        # d = datetime.strptime(doses[0][1], '%Y-%m-%d %H:%M:%S')
+        # return d.strftime('%m-%d-%Y')
+        # d = datetime.strptime(doses[0][1], '%Y-%m-%d %H:%M:%S')
+        d = self.get_doses()[0][1]
+        return d.strftime('%m-%d-%Y')
 
 
 class Production(MetaObject):

@@ -85,7 +85,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     active_editor = Any
     console_bgcolor = 'black'
     selected_run = Instance('pychron.experiment.automated_run.spec.AutomatedRunSpec', )
-
+    autoplot_event = Event
     # ===========================================================================
     # control
     # ===========================================================================
@@ -162,6 +162,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     use_memory_check = Bool(True)
     memory_threshold = Int
     use_dvc = Bool(False)
+    use_autoplot = Bool(False)
     monitor_name = 'FC-2'
 
     baseline_color = Color
@@ -179,6 +180,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     _prev_baselines = Dict
     _err_message = String
     _prev_blank_id = Long
+    _prev_blank_runid = Str
+
     _cv_info = None
     _cached_runs = List
     _active_experiment_identifier = Str
@@ -208,6 +211,11 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if self.extraction_line_manager is None:
                 self.warning_dialog('Extraction Line Plugin is required for Experiment')
                 return
+
+        dh = self.datahub
+        dh.mainstore = self.application.get_service('pychron.dvc.dvc.DVC')
+        dh.mainstore.precedence = 1
+
         return True
 
     def bind_preferences(self):
@@ -215,7 +223,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         prefid = 'pychron.experiment'
 
-        attrs = ('use_auto_save', 'auto_save_delay',
+        attrs = ('use_auto_save',
+                 'use_autoplot',
+                 'auto_save_delay',
                  'use_labspy',
                  'min_ms_pumptime',
                  'set_integration_time_on_start',
@@ -430,7 +440,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if self.labspy_enabled:
             self.labspy_client.add_experiment(exp)
 
-        self.datahub.add_experiment(exp)
+        # self.datahub.add_experiment(exp)
 
         # reset conditionals result file
         reset_conditional_results()
@@ -567,8 +577,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 yl = yaml.load(rfile)
 
                 items = [(i['name'], i['email']) for i in yl if i['enabled'] and i['email'] != email]
-
-            names, addrs = zip(*items)
+            if items:
+                names, addrs = zip(*items)
         return names, addrs
 
     def _wait_for(self, predicate, period=1, invert=False):
@@ -609,7 +619,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 pb = run.get_baseline_corrected_signals()
                 if pb is not None:
                     self._prev_blank_runid = run.spec.runid
-                    self._prev_blank_id = run.spec.analysis_dbid
+                    # self._prev_blank_id = run.spec.analysis_dbid
                     self._prev_blanks = pb
                     self.debug('previous blanks ={}'.format(pb))
 
@@ -677,6 +687,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.info('Automated run {} {} duration: {:0.3f} s'.format(run.runid, run.state, t))
 
         run.finish()
+        self._retroactive_experiment_identifiers(run.spec)
+
+        if self.use_autoplot:
+            self.autoplot_event = run
 
         self.wait_group.pop()
         if self.labspy_enabled:
@@ -696,7 +710,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if run.analysis_type.startswith('blank'):
             pb = run.get_baseline_corrected_signals()
             if pb is not None:
-                self._prev_blank_id = run.spec.analysis_dbid
+                # self._prev_blank_id = run.spec.analysis_dbid
                 self._prev_blanks = pb
         self._report_execution_state(run)
         run.teardown()
@@ -917,7 +931,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if not ai.do_post_measurement():
             self._failed_execution_step('Post Measurement Failed')
         else:
-            self._retroactive_experiment_identifiers(ai.spec)
+            # self._retroactive_experiment_identifiers(ai.spec)
             return True
 
     def _failed_execution_step(self, msg):
@@ -971,16 +985,24 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         arun.runner = self.pyscript_runner
         arun.extract_device = exp.extract_device
 
-        arun.persister.datahub = self.datahub
-        arun.persister.load_name = exp.load_name
-        arun.persister.experiment_identifier = exp.database_identifier
+        # arun.persister.datahub = self.datahub
+        # arun.persister.load_name = exp.load_name
+        # arun.persister.experiment_identifier = exp.database_identifier
 
         arun.use_syn_extraction = False
 
-        arun.use_dvc = self.use_dvc
-        if self.use_dvc:
-            arun.dvc_persister = self.application.get_service('pychron.dvc.dvc_persister.DVCPersister')
-            arun.dvc_persister.load_name = exp.load_name
+        # arun.use_dvc = self.use_dvc
+        # if self.use_dvc:
+        arun.collection_version = '0.1:0.1'
+        arun.dvc_persister = self.application.get_service('pychron.dvc.dvc_persister.DVCPersister')
+        dvc = self.application.get_service('pychron.dvc.dvc.DVC')
+
+        dvc.meta_repo.pull(use_progress=False)
+        arun.dvc_persister.dvc = dvc
+        arun.dvc_persister.load_name = exp.load_name
+
+        print spec, 'ffff', spec.experiment_identifier
+        arun.dvc_persister.initialize(spec.experiment_identifier)
 
         mon = self.monitor
         if mon is not None:
@@ -1320,10 +1342,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         crun, expid = retroactive_experiment_identifiers(spec, self._cached_runs, self._active_experiment_identifier)
         self._cached_runs, self._active_experiment_identifier = crun, expid
 
-        db.add_experiment_association(spec.experiment_id, spec.runid)
+        db.add_experiment_association(spec.experiment_identifier, spec)
         if not is_special(spec.identifier) and self._cached_runs:
             for c in self._cached_runs:
-                db.add_experiment_association(expid, c.runid)
+                db.add_experiment_association(expid, c)
             self._cached_runs = []
             # if is_special(spec.identifier):
             #     self._cached_runs.append(spec)
@@ -1339,12 +1361,13 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     def _check_experiment_identifiers(self):
         db = self.datahub.mainstore.db
+        print 'main stored db', id(db)
 
         with db.session_ctx():
 
             cr = ConflictResolver()
             for ei in self.experiment_queues:
-                identifiers = {ai.identifier for ai in ei.clean_automated_runs}
+                identifiers = {ai.identifier for ai in ei.cleaned_automated_runs}
                 identifiers = [idn for idn in identifiers if not is_special(idn)]
 
                 experiments = {}
@@ -1353,20 +1376,24 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     experiments[idn] = [e[0] for e in exps]
 
                 conflicts = []
-                for ai in ei.clean_automated_runs:
+                for ai in ei.cleaned_automated_runs:
                     identifier = ai.identifier
                     if not is_special(identifier):
-                        es = experiments[identifier]
-                        if ai.experiment_id not in es:
-                            if ai.sample == self.monitor_name:
-                                ai.experiment_id = ai.irradiation
+                        try:
+                            es = experiments[identifier]
+                            if ai.experiment_identifier not in es:
+                                if ai.sample == self.monitor_name:
+                                    ai.experiment_identifier = ai.irradiation
 
-                            else:
+                                else:
 
-                                self.debug('Experiment association conflict. '
-                                           'experimentID={} '
-                                           'previous_associations={}'.format(ai.experiment_id, ','.join(es)))
-                                conflicts.append((ai, es))
+                                    self.debug('Experiment association conflict. '
+                                               'experimentID={} '
+                                               'previous_associations={}'.format(ai.experiment_identifier,
+                                                                                 ','.join(es)))
+                                    conflicts.append((ai, es))
+                        except KeyError:
+                            pass
 
                 if conflicts:
                     self.debug('Experiment association warning')
@@ -1384,7 +1411,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 return True
 
     def _sync_repositories(self, prog):
-        experiment_ids = {a.experiment_id for q in self.experiment_queues for a in q.cleaned_automated_runs}
+        experiment_ids = {a.experiment_identifier for q in self.experiment_queues for a in q.cleaned_automated_runs}
         for e in experiment_ids:
             if prog:
                 prog.change_message('Syncing {}'.format(e))
@@ -1477,7 +1504,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             else:
                 self.info('using {} as the previous blank'.format(an.record_id))
                 try:
-                    self._prev_blank_id = an.meas_analysis_id
+                    # self._prev_blank_id = an.meas_analysis_id
                     self._prev_blanks = an.get_baseline_corrected_signal_dict()
                     self._prev_baselines = an.get_baseline_dict()
                 except TraitError:

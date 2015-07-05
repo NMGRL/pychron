@@ -113,7 +113,7 @@ class AutomatedRun(Loggable):
     multi_collector = Instance('pychron.experiment.automated_run.multi_collector.MultiCollector')
     peak_hop_collector = Instance('pychron.experiment.automated_run.peak_hop_collector.PeakHopCollector')
     persister = Instance('pychron.experiment.automated_run.persistence.AutomatedRunPersister', ())
-    dvc_persister = Instance('pychron.experiment.dvc.Persister', ())
+    dvc_persister = Instance('pychron.dvc.dvc_persister.DVCPersister', ())
 
     xls_persister = Instance('pychron.experiment.automated_run.persistence.ExcelPersister')
     system_health = Instance('pychron.experiment.health.series.SystemHealthSeries')
@@ -187,23 +187,27 @@ class AutomatedRun(Loggable):
         return self._whiff(ncounts, conditionals, starttime, starttime_offset, series, fit_series)
 
     def py_reset_data(self):
-        # self.persister.pre_measurement_save()
+        self.persister.pre_measurement_save()
         self._persister_action('pre_measurement_save')
 
     def _update_persister_spec(self, **kw):
         self.persistence_spec.trait_set(**kw)
         for p in (self.persister, self.xls_persister, self.dvc_persister):
+            # for p in (self.xls_persister, self.dvc_persister):
             if p is not None:
                 p.per_spec = self.persistence_spec
 
     def _persister_action(self, func, *args, **kw):
         # getattr(self.persister, func)(*args, **kw)
-        for p in (self.persister, self.xls_persister, self.dvc_persister):
+        for i, p in enumerate((self.xls_persister, self.dvc_persister)):
+            if p is None:
+                continue
+
             try:
                 getattr(p, func)(*args, **kw)
             except BaseException, e:
-                self.warning('{} persister action failed. func={}, excp={}'.format(p.__class__.__name__,
-                                                                                   func, e))
+                self.warning('{} persister action failed. {} func={}, excp={}'.format(i, p.__class__.__name__,
+                                                                                      func, e))
                 import traceback
 
                 traceback.print_exc()
@@ -621,9 +625,9 @@ class AutomatedRun(Loggable):
         self.collector.canceled = True
 
         # self.aliquot='##'
-        self.persister.save_enabled = False
-        if self.use_dvc:
-            self.dvc_persister.save_enabled = False
+        # self.persister.save_enabled = False
+        # if self.use_dvc:
+        self.dvc_persister.save_enabled = False
 
         for s in ('extraction', 'measurement'):
             script = getattr(self, '{}_script'.format(s))
@@ -693,6 +697,7 @@ class AutomatedRun(Loggable):
         self.collector.stop()
 
     def start(self):
+
         if self.monitor is None:
             return self._start()
 
@@ -839,7 +844,7 @@ class AutomatedRun(Loggable):
                 #                          active_detectors=self._active_detectors)
                 self._update_persister_spec(spec_dict=self.spectrometer_manager.make_parameters_dict(),
                                             defl_dict=self.spectrometer_manager.make_deflections_dict(),
-                                            gains=self.spectrometer_manager.make_gains_list(),
+                                            gains=self.spectrometer_manager.make_gains_dict(),
                                             active_detectors=self._active_detectors)
 
             # save to database
@@ -1070,7 +1075,7 @@ class AutomatedRun(Loggable):
         self.state = 'measurement'
 
         self._persister_action('pre_measurement_save')
-        # self.persister.pre_measurement_save()
+        self.persister.pre_measurement_save()
 
         self.measuring = True
         self._persister_action('trait_set', save_enabled=True)
@@ -1204,6 +1209,7 @@ anaylsis_type={}
     # private
     # ===============================================================================
     def _start(self):
+
         if self._use_arar_age():
             if self.arar_age is None:
                 # load arar_age object for age calculation
@@ -1513,8 +1519,7 @@ anaylsis_type={}
                 self.arar_age.set_blank(iso, v)
 
         for d in self._active_detectors:
-            self.arar_age.set_isotope(d.isotope, (0, 0),
-                                      detector=d.name,
+            self.arar_age.set_isotope(d.isotope, d.name,
                                       correct_for_blank=cb)
 
         self.arar_age.clear_baselines()

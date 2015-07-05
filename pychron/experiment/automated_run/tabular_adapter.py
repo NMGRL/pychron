@@ -123,7 +123,9 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
         return section + 1
 
     def get_bg_color(self, obj, trait, row, column=0):
-        item = self.item
+        # item = self.item
+        item = getattr(obj, trait)[row]
+        # print item.identifier, item.state, item.executable
         if not item.executable:
             color = NOT_EXECUTABLE_COLOR
         else:

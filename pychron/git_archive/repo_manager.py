@@ -427,7 +427,7 @@ class GitRepoManager(Loggable):
         return [b.name for b in self._repo.branches]
 
     @caller
-    def pull(self, branch='master', remote='origin', handled=True):
+    def pull(self, branch='master', remote='origin', handled=True, use_progress=True):
         """
             fetch and merge
         """
@@ -439,9 +439,9 @@ class GitRepoManager(Loggable):
             return
 
         if remote:
-            prog = open_progress(3)
-
-            prog.change_message('Fetching {}, branch={}'.format(remote, branch))
+            if use_progress:
+                prog = open_progress(3)
+                prog.change_message('Fetching {}, branch={}'.format(remote, branch))
             try:
                 repo.git.fetch(remote)
             except GitCommandError, e:
@@ -449,7 +449,8 @@ class GitRepoManager(Loggable):
                 if not handled:
                     raise e
 
-            prog.change_message('Merging')
+            if use_progress:
+                prog.change_message('Merging')
 
             try:
                 repo.git.merge('FETCH_HEAD')
@@ -458,7 +459,8 @@ class GitRepoManager(Loggable):
                 if not handled:
                     raise e
 
-            prog.close()
+            if use_progress:
+                prog.close()
 
     def push(self, branch='master', remote='origin'):
         repo = self._repo
