@@ -20,7 +20,6 @@ from traitsui.api import View, UItem, VGroup, EnumEditor, \
     HGroup, CheckListEditor, spring, Group
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.core.ui.qt.tabular_editors import FilterTabularEditor
 from pychron.envisage.browser.adapters import ProjectAdapter
 from pychron.envisage.icon_button_editor import icon_button_editor
@@ -100,7 +99,7 @@ class BrowserSampleView(PaneModelView):
                           visible_when='date_visible',
                           show_border=True)
 
-        ms_grp = HGroup(UItem('use_mass_spectrometers',
+        ms_grp = HGroup(UItem('mass_spectrometers_enabled',
                               tooltip='Enable Mass Spectrometer filter'),
                         spring,
                         UItem('mass_spectrometer_includes',
@@ -116,10 +115,10 @@ class BrowserSampleView(PaneModelView):
             visible_when='identifier_visible')
 
         top_level_filter_grp = VGroup(
-            CustomLabel('filter_label',
-                        style='custom',
-                        width=-1.0,
-                        visible_when='not filter_focus'),
+            # CustomLabel('filter_label',
+            #             style='custom',
+            #             width=-1.0,
+            #             visible_when='not filter_focus'),
             HGroup(ms_grp, ln_grp),
             HGroup(project_grp, exp_grp, irrad_grp),
             analysis_type_group,

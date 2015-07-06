@@ -31,7 +31,8 @@ from pychron.core.helpers.iterfuncs import partition
 from pychron.envisage.browser.base_browser_model import BaseBrowserModel, extract_mass_spectrometer_name
 from pychron.envisage.browser.record_views import ProjectRecordView
 from pychron.envisage.browser.analysis_table import AnalysisTable
-from pychron.processing.tasks.browser.time_view import TimeViewModel
+# from pychron.processing.tasks.browser.time_view import TimeViewModel
+from pychron.envisage.browser.time_view import TimeViewModel
 from pychron.processing.tasks.browser.util import get_pad
 
 NCHARS = 60
@@ -41,7 +42,7 @@ REG = re.compile(r'.' * NCHARS)
 class BrowserModel(BaseBrowserModel):
     filter_focus = Bool(True)
     use_focus_switching = Bool(True)
-    filter_label = Property(Str, depends_on='filter_focus')
+    # filter_label = Property(Str, depends_on='filter_focus')
 
     irradiation_visible = Property(depends_on='filter_focus')
     analysis_types_visible = Property(depends_on='filter_focus')
@@ -60,7 +61,7 @@ class BrowserModel(BaseBrowserModel):
     irradiation_enabled = Bool
     irradiations = List
     irradiation = Str
-    # irradiation_enabled = Bool
+    irradiation_enabled = Bool
     levels = List
     level = Str
     analysis_table = Instance(AnalysisTable, ())
@@ -88,7 +89,7 @@ class BrowserModel(BaseBrowserModel):
             self.load_browser_options()
             if self.sample_view_active:
                 self.activate_sample_browser(force)
-                self.filter_focus = True
+                # self.filter_focus = True
                 self.is_activated = True
             else:
                 self.time_view_model.load()
@@ -136,7 +137,9 @@ class BrowserModel(BaseBrowserModel):
 
     def refresh_samples(self):
         self.debug('refresh samples')
-        self.set_samples(self._retrieve_labnumbers())
+        self._filter_by_hook()
+        # self._load_associated_labnumbers()
+        # self.set_samples(self._retrieve_labnumbers())
 
     def retrieve_sample_analyses(self, *args, **kw):
         return self._retrieve_sample_analyses(*args, **kw)
@@ -226,7 +229,7 @@ class BrowserModel(BaseBrowserModel):
 
     def _load_projects_for_irradiation(self):
         ms = None
-        if self.use_mass_spectrometers:
+        if self.mass_spectrometers_enabled:
             ms = self.mass_spectrometer_includes
 
         if self.irradiation:
@@ -243,6 +246,10 @@ class BrowserModel(BaseBrowserModel):
         es = []
         ps = []
         ms = []
+        if self.mass_spectrometers_enabled:
+            if self.mass_spectrometer_includes:
+                ms = self.mass_spectrometer_includes
+
         if self.experiment_enabled:
             if self.selected_experiments:
                 es = [e.name for e in self.selected_experiments]
@@ -261,12 +268,16 @@ class BrowserModel(BaseBrowserModel):
                     self.trait_property_changed('low_post', self._low_post)
                     for ri in rs:
                         mi = extract_mass_spectrometer_name(ri)
-                        ms.append(mi)
+                        if mi not in ms:
+                            ms.append(mi)
                         self._recent_mass_spectrometers.append(mi)
 
         ls = self.db.get_labnumbers(projects=ps, experiments=es, mass_spectrometers=ms,
-                                    high_post=self.high_post,
-                                    low_post=self.low_post)
+                                    irradiation=self.irradiation if self.irradiation_enabled else None,
+                                    level=self.level if self.irradiation_enabled else None,
+                                    analysis_types=self.analysis_include_types if self.use_analysis_type_filtering else None,
+                                    high_post=self.high_post if self.use_high_post else None,
+                                    low_post=self.low_post if self.use_low_post else None)
         return ls
 
         # def _retrieve_labnumbers_hook(self, db):
@@ -467,17 +478,20 @@ class BrowserModel(BaseBrowserModel):
         if self._top_level_filter == 'irradiation':
             self._load_projects_for_irradiation()
 
-            # if name == 'irradiation':
-            # self.levels = obj.levels
-            # elif name == 'level':
-            #     self.set_samples(self._retrieve_labnumbers())
+        if name == 'irradiation':
+            self.levels = self.db.get_level_names(new)
+
+        # if name == 'irradiation':
+        elif name == 'level':
+            self._load_associated_labnumbers()
+            # self.set_samples(self._retrieve_labnumbers())
 
     def _use_analysis_type_filtering_changed(self):
         self.refresh_samples()
 
-    def _level_changed(self):
-        if self.update_on_level_change:
-            self.refresh_samples()
+    # def _level_changed(self):
+    #     if self.update_on_level_change:
+    #         self.refresh_samples()
 
     def __analysis_include_types_changed(self, new):
         if new:
@@ -501,11 +515,11 @@ class BrowserModel(BaseBrowserModel):
 
             self.refresh_samples()
 
-        self._load_projects_and_irradiations()
+            # self._load_projects_and_irradiations()
 
     def _load_projects_and_irradiations(self):
         ms = None
-        if self.use_mass_spectrometers:
+        if self.mass_spectrometers_enabled:
             ms = self.mass_spectrometer_includes
 
         db = self.db
@@ -533,8 +547,8 @@ class BrowserModel(BaseBrowserModel):
         if self.sample_view_active:
             self._filter_by_hook()
 
-    def _toggle_focus_fired(self):
-        self.filter_focus = not self.filter_focus
+            # def _toggle_focus_fired(self):
+            # self.filter_focus = not self.filter_focus
 
     def _toggle_view_fired(self):
         self.sample_view_active = not self.sample_view_active
@@ -614,12 +628,12 @@ class BrowserModel(BaseBrowserModel):
 
         self.analysis_table.set_analyses(ans)
         self.dump_browser()
-        self.filter_focus = not bool(new)
+        # self.filter_focus = not bool(new)
 
-    @on_trait_change('analysis_table:selected')
-    def _handle_analysis_selected(self, new):
-        if self.use_focus_switching:
-            self.filter_focus = not bool(new)
+    # @on_trait_change('analysis_table:selected')
+    # def _handle_analysis_selected(self, new):
+    #     if self.use_focus_switching:
+    #         self.filter_focus = not bool(new)
 
     # private
     def _load_mass_spectrometers(self):
@@ -649,26 +663,27 @@ class BrowserModel(BaseBrowserModel):
         return self._get_visible(self.use_low_post or self.use_high_post or self.use_named_date_range)
 
     def _get_mass_spectrometer_visible(self):
-        return self._get_visible(self.use_mass_spectrometers)
+        return self._get_visible(self.mass_spectrometers_enabled)
 
     def _get_identifier_visible(self):
-        return self.filter_focus if self.use_focus_switching else True
+        return True
+        # return self.filter_focus if self.use_focus_switching else True
 
     def _get_project_visible(self):
         return self._get_visible(self.project_enabled)
 
     def _get_visible(self, default):
-        ret = True
-        if self.use_focus_switching and not self.filter_focus:
-            ret = False  # default
-        return ret
+        return True
+        # if self.use_focus_switching and not self.filter_focus:
+        #     ret = False  # default
+        # return ret
 
     def _get_filter_label(self):
         ss = []
         if self.identifier:
             ss.append('Identifier={}'.format(self.identifier))
 
-        if self.use_mass_spectrometers:
+        if self.mass_spectrometers_enabled:
             ss.append('MS={}'.format(','.join(self.mass_spectrometer_includes)))
 
         if self.project_enabled:

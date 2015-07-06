@@ -29,7 +29,6 @@ import pickle
 # ============= local library imports  ==========================
 from pychron.core.progress import progress_loader
 from pychron.core.ui.tabular_editor import myTabularEditor
-from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.paths import paths
 
@@ -140,6 +139,7 @@ class TimeViewModel(HasTraits):
     context_menu_event = Event
     context_menu_enabled = True
     append_replace_enabled = True
+    _active_column = None
 
     @on_trait_change('mass_spectrometer, analysis_type, extract_device, lowdate, highdate, limit')
     def _handle_filter(self):
@@ -154,9 +154,15 @@ class TimeViewModel(HasTraits):
 
     def _column_clicked_changed(self, event):
         if event and self.selected:
-            name, field = event.editor.adapter.columns[event.column]
-            sattr = getattr(self.selected[0], field)
-            self.analyses = [ai for ai in self.analyses if getattr(ai, field) == sattr]
+            if self._active_column == event.column:
+                self._active_column = None
+                self.analyses = self.oanalyses
+            else:
+                self._active_column = event.column
+                name, field = event.editor.adapter.columns[event.column]
+
+                sattr = getattr(self.selected[0], field)
+                self.analyses = [ai for ai in self.analyses if getattr(ai, field) == sattr]
             self.refresh_table_needed = True
 
     def _highdays_changed(self):
@@ -216,11 +222,11 @@ class TimeViewModel(HasTraits):
         with db.session_ctx():
             ma = self.highdate
             mi = self.lowdate
-            ans = db.get_analyses_date_range(mi, ma,
-                                             mass_spectrometers=mass_spectrometer,
-                                             analysis_type=analysis_type,
-                                             extract_device=extract_device,
-                                             limit=self.limit, order='desc')
+            ans = db.get_analyses_by_date_range(mi, ma,
+                                                mass_spectrometers=mass_spectrometer,
+                                                analysis_type=analysis_type,
+                                                extract_device=extract_device,
+                                                limit=self.limit, order='desc')
             self.oanalyses = self._make_records(ans)
             self.analyses = self.oanalyses[:]
 
@@ -228,7 +234,7 @@ class TimeViewModel(HasTraits):
         def func(xi, prog, i, n):
             if prog:
                 prog.change_message('Loading {}'.format(xi.record_id))
-            return IsotopeRecordView(xi)
+            return xi.record_view
 
         return progress_loader(ans, func, threshold=25)
 
@@ -255,6 +261,3 @@ class TimeView(Controller):
         return v
 
 # ============= EOF =============================================
-
-
-

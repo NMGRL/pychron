@@ -23,13 +23,17 @@ http://blog.amjith.com/fuzzyfinder-in-10-lines-of-python
 """
 
 
-def func(regex, item):
-    match = regex.search(item)
+def func(regex, item, attr):
+    txt = item
+    if attr:
+        txt = getattr(item, attr)
+
+    match = regex.search(txt)
     if match:
         return len(match.group()), match.start(), item
 
 
-def fuzzyfinder(user_input, collection):
+def fuzzyfinder(user_input, collection, attr=None):
     # suggestions = []
     pattern = '.*'.join(user_input)  # Converts 'djm' to 'd.*?j.*?m'
     regex = re.compile('%s' % pattern)  # Compiles a regex.
@@ -38,7 +42,7 @@ def fuzzyfinder(user_input, collection):
     #     if match:
     #         suggestions.append((len(match.group()), match.start(), item))
 
-    suggestions = filter(lambda x: x is not None, map(lambda item: func(regex, item), collection))
+    suggestions = filter(lambda x: x is not None, map(lambda item: func(regex, item, attr), collection))
     return [x for _, _, x in sorted(suggestions)]
 
 

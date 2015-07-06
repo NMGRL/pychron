@@ -457,7 +457,7 @@ class SystemMonitorEditor(SeriesEditor):
                                                days=tool.days)
                         tool.low = low
 
-                    ans = db.get_analyses_date_range(low, high,
+                    ans = db.get_analyses_by_date_range(low, high,
                                                      labnumber=identifier,
                                                      order='desc',
                                                      limit=tool.limit)

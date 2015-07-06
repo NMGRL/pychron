@@ -250,7 +250,7 @@ class InterpolationTask(AnalysisEditTask):
 
         db = self.manager.db
         with db.session_ctx():
-            ans = db.get_analyses_date_range(sd, ed,
+            ans = db.get_analyses_by_date_range(sd, ed,
                                              analysis_type=at,
                                              mass_spectrometers=ms,
                                              extract_device=exd)

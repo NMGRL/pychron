@@ -131,6 +131,8 @@ class AnalysisTbl(Base, BaseMixin):
     experiment_associations = relationship('ExperimentAssociationTbl', backref='analysis')
     change = relationship('AnalysisChangeTbl', uselist=False, backref='analysis')
 
+    _record_view = None
+
     @property
     def irradiation(self):
         return self.irradiation_position.level.irradiation.name
@@ -170,37 +172,42 @@ class AnalysisTbl(Base, BaseMixin):
 
     @property
     def record_view(self):
-        iv = IsotopeRecordView()
-        iv.extract_script_name = self.extractionName
-        iv.meas_script_name = self.measurementName
+        iv = self._record_view
+        if not iv:
 
-        irradpos = self.irradiation_position
-        iv.identifier = irradpos.identifier
-        iv.irradiation = irradpos.level.irradiation.name
-        iv.irradiation_level = irradpos.level.name
-        iv.irradiation_position_position = irradpos.position
+            iv = IsotopeRecordView()
+            iv.extract_script_name = self.extractionName
+            iv.meas_script_name = self.measurementName
 
-        iv.labnumber = iv.identifier
-        iv.experiment_ids = es = [e.experimentName for e in self.experiment_associations]
-        if len(es) == 1:
-            iv.experiment_identifier = es[0]
+            irradpos = self.irradiation_position
+            iv.identifier = irradpos.identifier
+            iv.irradiation = irradpos.level.irradiation.name
+            iv.irradiation_level = irradpos.level.name
+            iv.irradiation_position_position = irradpos.position
 
-        for tag in ('aliquot', 'increment', 'uuid',
-                    'extract_value', 'cleanup', 'duration',
-                    'mass_spectrometer',
-                    'extract_device',
-                    'rundate',
-                    'analysis_type'):
-            setattr(iv, tag, getattr(self, tag))
+            iv.labnumber = iv.identifier
+            iv.experiment_ids = es = [e.experimentName for e in self.experiment_associations]
+            if len(es) == 1:
+                iv.experiment_identifier = es[0]
 
-        if irradpos.sample:
-            iv.sample = irradpos.sample.name
-            if irradpos.sample.project:
-                iv.project = irradpos.sample.project.name
+            for tag in ('aliquot', 'increment', 'uuid',
+                        'extract_value', 'cleanup', 'duration',
+                        'mass_spectrometer',
+                        'extract_device',
+                        'rundate',
+                        'analysis_type'):
+                setattr(iv, tag, getattr(self, tag))
 
-        tag = self.change.tag_item
-        iv.tag = tag.name
-        iv.tag_dict = {k: getattr(tag, k) for k in ('name',) + OMIT_KEYS}
+            if irradpos.sample:
+                iv.sample = irradpos.sample.name
+                if irradpos.sample.project:
+                    iv.project = irradpos.sample.project.name
+
+            tag = self.change.tag_item
+            iv.tag = tag.name
+            iv.tag_dict = {k: getattr(tag, k) for k in ('name',) + OMIT_KEYS}
+            self._record_view = iv
+
         return iv
 
 

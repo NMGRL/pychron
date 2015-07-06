@@ -26,6 +26,7 @@ import matplotlib.dates as mdates
 
 
 
+
 # ============= local library imports  ==========================
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 
@@ -134,7 +135,7 @@ def write_analyses_to_csv(p, ms):
     with db.session_ctx():
         h = datetime.now()
         l = h - timedelta(days=60)
-        ans = db.get_analyses_date_range(l, h, mass_spectrometers=ms)
+        ans = db.get_analyses_by_date_range(l, h, mass_spectrometers=ms)
 
         with open(p, 'w') as wfile:
             writer = csv.writer(wfile)

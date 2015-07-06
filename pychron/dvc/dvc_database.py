@@ -24,7 +24,7 @@ from traitsui.api import View, Item
 
 # ============= standard library imports ========================
 from datetime import timedelta, datetime
-from sqlalchemy import not_, func, distinct
+from sqlalchemy import not_, func, distinct, or_
 # ============= local library imports  ==========================
 from pychron.database.core.database_adapter import DatabaseAdapter
 from pychron.database.core.query import compile_query
@@ -494,6 +494,13 @@ class DVCDatabase(DatabaseAdapter):
             tc = q.count()
             return self._query_all(q), tc
 
+    def get_experiment_date_range(self, names):
+        with self.session_ctx() as sess:
+            q = sess.query(AnalysisTbl.timestamp)
+            q = q.join(ExperimentAssociationTbl)
+            q = q.filter(ExperimentAssociationTbl.experimentName.in_(names))
+            return self._get_date_range(q)
+
     def get_project_date_range(self, names):
         with self.session_ctx() as sess:
             q = sess.query(AnalysisTbl.timestamp)
@@ -501,9 +508,69 @@ class DVCDatabase(DatabaseAdapter):
             if names:
                 q = q.filter(ProjectTbl.name.in_(names))
 
+            return self._get_date_range(q)
+
+    def get_analyses_by_date_range(self, lpost, hpost,
+                                   labnumber=None,
+                                   limit=None,
+                                   analysis_type=None,
+                                   mass_spectrometers=None,
+                                   extract_device=None,
+                                   project=None,
+                                   order='asc',
+                                   exclude_invalid=True):
+        with self.session_ctx() as sess:
+            q = sess.query(AnalysisTbl)
+            if exclude_invalid:
+                q = q.join(AnalysisChangeTbl)
+            # q = self._analysis_query(sess, meas_MeasurementTable)
+            if labnumber:
+                q = q.join(IrradiationPositionTbl)
+            # if mass_spectrometers:
+            #     q = q.join(gen_MassSpectrometerTable)
+            # if extract_device:
+            #     q = q.join(meas_ExtractionTable, gen_ExtractionDeviceTable)
+            # if analysis_type:
+            #     q = q.join(gen_AnalysisTypeTable)
+            if project:
+                if not labnumber:
+                    q = q.join(IrradiationPositionTbl)
+                q = q.join(SampleTbl, ProjectTbl)
+
+            if labnumber:
+                q = q.filter(IrradiationPositionTbl.identifier == labnumber)
+            if mass_spectrometers:
+                if hasattr(mass_spectrometers, '__iter__'):
+                    q = q.filter(AnalysisTbl.mass_spectrometer.in_(mass_spectrometers))
+                else:
+                    q = q.filter(AnalysisTbl.mass_spectrometer == mass_spectrometers)
+            if extract_device:
+                q = q.filter(AnalysisTbl.extract_device == extract_device)
+            if analysis_type:
+                q = q.filter(AnalysisTbl.analysis_type == analysis_type)
+            if project:
+                q = q.filter(ProjectTbl.name == project)
+            if lpost:
+                q = q.filter(AnalysisTbl.timestamp >= lpost)
+                # q = q.filter(self._get_post_filter(mi, '__ge__', cast=False))
+            if hpost:
+                q = q.filter(AnalysisTbl.timestamp <= hpost)
+
+            if exclude_invalid:
+                q = q.filter(AnalysisChangeTbl.tag != 'invalid')
+
+            q = q.order_by(getattr(AnalysisTbl.timestamp, order)())
+            if limit:
+                q = q.limit(limit)
+
+            return self._query_all(q)
+
+    def _get_date_range(self, q, asc=None, desc=None, hours=0):
+        if asc is None:
             asc = AnalysisTbl.timestamp.asc()
+        if desc is None:
             desc = AnalysisTbl.timestamp.desc()
-            return self._get_date_range(q, asc, desc)
+        return super(DVCDatabase, self)._get_date_range(q, asc, desc, hours=hours)
 
     def get_project_labnumbers(self, project_names, filter_non_run, low_post=None, high_post=None,
                                analysis_types=None, mass_spectrometers=None):
@@ -544,7 +611,14 @@ class DVCDatabase(DatabaseAdapter):
     #         q = q.filter(ExperimentAssociationTbl.experimentName.in_(expnames))
     #         return self._query_all(q)
 
+    def get_level_names(self, irrad):
+        with self.session_ctx():
+            dbirrad = self.get_irradiation(irrad)
+            return [l.name for l in dbirrad.levels]
+
     def get_labnumbers(self, projects=None, experiments=None, mass_spectrometers=None,
+                       irradiation=None, level=None,
+                       analysis_types=None,
                        high_post=None,
                        low_post=None):
         with self.session_ctx() as sess:
@@ -552,16 +626,29 @@ class DVCDatabase(DatabaseAdapter):
             q = q.distinct(IrradiationPositionTbl.idirradiationpositionTbl)
 
             # joins
+            at = False
             if experiments:
+                at = True
                 q = q.join(AnalysisTbl, ExperimentAssociationTbl)
             if projects:
                 q = q.join(SampleTbl, ProjectTbl)
 
-            if mass_spectrometers and not experiments:
+            if mass_spectrometers and not at:
+                at = True
                 q = q.join(AnalysisTbl)
 
-            if (low_post or high_post) and not (mass_spectrometers or experiments):
+            if (low_post or high_post) and not at:
+                at = True
                 q = q.join(AnalysisTbl)
+
+            if analysis_types and not at:
+                at = True
+                q = q.join(AnalysisTbl)
+
+            if irradiation:
+                if not at:
+                    q = q.join(AnalysisTbl)
+                q = q.join(IrradiationPositionTbl, LevelTbl, IrradiationTbl)
 
             # filters
             if experiments:
@@ -574,6 +661,16 @@ class DVCDatabase(DatabaseAdapter):
                 q = q.filter(AnalysisTbl.timestamp >= low_post)
             if high_post:
                 q = q.filter(AnalysisTbl.timestamp <= high_post)
+            if analysis_types:
+                if 'blank' in analysis_types:
+                    analysis_types.remove('blank')
+                    q = q.filter(or_(AnalysisTbl.analysis_type.startswith('blank'),
+                                     AnalysisTbl.analysis_type.in_(analysis_types)))
+                else:
+                    q = q.filter(AnalysisTbl.analysis_type.in_(analysis_types))
+            if irradiation:
+                q = q.filter(IrradiationTbl.name == irradiation)
+                q = q.filter(LevelTbl.name == level)
 
             return self._query_all(q, verbose_query=True)
 
@@ -787,6 +884,9 @@ class DVCDatabase(DatabaseAdapter):
 
     def get_experiments(self):
         return self._retrieve_items(ExperimentTbl)
+
+    def get_extract_devices(self):
+        return self._retrieve_items(ExtractDeviceTbl)
 
     def get_mass_spectrometer_names(self):
         with self.session_ctx():

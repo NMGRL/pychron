@@ -43,6 +43,7 @@ class TableView(PaneModelView):
 
         sample_tools = HGroup(UItem('sample_filter_parameter',
                                     width=-90, editor=EnumEditor(name='sample_filter_parameters')),
+                              UItem('sample_filter_comparator'),
                               UItem('sample_filter',
                                     editor=ComboboxEditor(name='sample_filter_values')),
                               icon_button_editor('clear_sample_table',
@@ -51,7 +52,7 @@ class TableView(PaneModelView):
         sample_table = VGroup(sample_tools,
                               UItem('samples',
                                     editor=TabularEditor(
-                                        adapter=self.pane.labnumber_tabular_adapter,
+                                        adapter=self.model.labnumber_tabular_adapter,
                                         editable=False,
                                         selected='selected_samples',
                                         multi_select=True,

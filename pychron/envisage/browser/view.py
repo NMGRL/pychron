@@ -16,13 +16,13 @@
 
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Instance
-from traitsui.api import View, UItem, HGroup, VGroup, Group, spring, Spring
+from traitsui.api import View, UItem, HGroup, VGroup, Group, spring
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.handler import Handler
 from traitsui.menu import Action
 from pychron.core.ui.custom_label_editor import CustomLabel
-from pychron.envisage.browser.adapters import LabnumberAdapter, BrowserAdapter
+from pychron.envisage.browser.adapters import BrowserAdapter
 from pychron.envisage.browser.sample_view import BrowserSampleView
 from pychron.envisage.browser.time_view import TimeViewModel
 from pychron.envisage.icon_button_editor import icon_button_editor
@@ -55,7 +55,7 @@ class BrowserView(HasTraits):
     multi_select = True
     analyses_defined = Str('1')
 
-    labnumber_tabular_adapter = Instance(LabnumberAdapter, ())
+    # labnumber_tabular_adapter = Instance(LabnumberAdapter, ())
     # analysis_tabular_adapter = Instance(AnalysisAdapter, ())
     # analysis_group_tabular_adapter = Instance(AnalysisGroupAdapter, ())
 
@@ -104,14 +104,14 @@ class BrowserView(HasTraits):
                     icon_button_editor('toggle_view',
                                        'arrow_switch',
                                        tooltip='Toggle between Sample and Time views'),
-                    spring,
-                    UItem('use_focus_switching',
-                          tooltip='Show/Hide Filters on demand'),
-                    Spring(springy=False, width=10),
-                    icon_button_editor('toggle_focus',
-                                       'arrow_switch',
-                                       enabled_when='use_focus_switching',
-                                       tooltip='Toggle Filter and Result focus'),
+                    # spring,
+                    # UItem('use_focus_switching',
+                    #       tooltip='Show/Hide Filters on demand'),
+                    # Spring(springy=False, width=10),
+                    # icon_button_editor('toggle_focus',
+                    #                    'arrow_switch',
+                    #                    enabled_when='use_focus_switching',
+                    #                    tooltip='Toggle Filter and Result focus'),
                     spring,
                     # UItem('current_task_name', style='readonly'),
                     CustomLabel('datasource_url', color='maroon'),

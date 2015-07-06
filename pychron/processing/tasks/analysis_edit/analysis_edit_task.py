@@ -686,7 +686,7 @@ class AnalysisEditTask(BaseBrowserTask):
             with db.session_ctx():
                 mi = ref.rundate - td
                 ma = ref.rundate + td
-                ans = db.get_analyses_date_range(mi, ma,
+                ans = db.get_analyses_by_date_range(mi, ma,
                                                  analysis_type=list(rsd.analysis_types),
                                                  mass_spectrometers=[ref.mass_spectrometer])
 

@@ -174,7 +174,7 @@ class IsotopeEvolutionTask(AnalysisEditTask):
             return f.model
 
     def _find_associated_analyses(self, db, lpost, hpost, atype, ms):
-        ans = db.get_analyses_date_range(lpost, hpost,
+        ans = db.get_analyses_by_date_range(lpost, hpost,
                                          analysis_type=atype,
                                          mass_spectrometers=ms)
         if ans:
@@ -285,7 +285,7 @@ class IsotopeEvolutionTask(AnalysisEditTask):
                             td = timedelta(hours=6 * (i + 1))
                             lpost, hpost = min(ts) - td, max(ts) + td
 
-                            ans = db.get_analyses_date_range(lpost, hpost,
+                            ans = db.get_analyses_by_date_range(lpost, hpost,
                                                              analysis_type=atype,
                                                              mass_spectrometers=ms)
 
