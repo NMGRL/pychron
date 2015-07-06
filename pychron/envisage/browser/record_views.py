@@ -148,8 +148,15 @@ class LabnumberRecordView(RecordView):
         return self.identifier
 
 
-class ProjectRecordView(RecordView):
+class NameView(HasTraits):
     name = Str
+
+    @property
+    def id(self):
+        return self.name
+
+
+class ProjectRecordView(RecordView, NameView):
 
     def _create(self, dbrecord):
         if not isinstance(dbrecord, str):
@@ -157,13 +164,9 @@ class ProjectRecordView(RecordView):
         else:
             self.name = dbrecord
 
-    @property
-    def id(self):
-        return self.name
 
-
-class ExperimentRecordView(HasTraits):
-    name = Str
+class ExperimentRecordView(NameView):
+    pass
 
 
 class AnalysisGroupRecordView(RecordView):

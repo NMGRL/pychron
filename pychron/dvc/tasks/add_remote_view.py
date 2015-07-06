@@ -15,40 +15,21 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from traits.api import HasTraits, Str
+from traitsui.api import View, UItem
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pyface.tasks.action.task_action import TaskAction
 
-from pychron.envisage.resources import icon
+class AddRemoteView(HasTraits):
+    url = Str('https://github.com/')
+    name = 'origin'
 
+    def traits_view(self):
+        v = View(UItem('name'),
+                 UItem('url'),
+                 width=600,
+                 buttons=['OK', 'Cancel'],
+                 title='Add Remote')
+        return v
 
-class LocalRepositoryAction(TaskAction):
-    enabled_name = 'selected_local_repository_name'
-
-
-class RemoteRepositoryAction(TaskAction):
-    enabled_name = 'selected_repository_name'
-
-
-class CloneAction(RemoteRepositoryAction):
-    method = 'clone'
-    name = 'Clone'
-
-
-class AddBranchAction(LocalRepositoryAction):
-    name = 'Add Branch'
-    method = 'add_branch'
-    image = icon('add')
-
-
-class CheckoutBranchAction(LocalRepositoryAction):
-    name = 'Checkout Branch'
-    method = 'checkout_branch'
-    image = icon('checkout')
-
-
-class PushAction(LocalRepositoryAction):
-    name = 'Push'
-    method = 'push'
-    image = icon('arrow_up')
 # ============= EOF =============================================

@@ -462,6 +462,9 @@ class GitRepoManager(Loggable):
             if use_progress:
                 prog.close()
 
+    def has_remote(self, remote='origin'):
+        return bool(self._get_remote(remote))
+
     def push(self, branch='master', remote='origin'):
         repo = self._repo
         rr = self._get_remote(remote)

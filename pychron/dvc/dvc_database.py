@@ -537,6 +537,46 @@ class DVCDatabase(DatabaseAdapter):
             self.debug(compile_query(q))
             return self._query_all(q)
 
+    # def get_experiment_labnumbers(self, expnames):
+    #     with self.session_ctx() as sess:
+    #         q = sess.query(distinct(IrradiationPositionTbl.idirradiationpositionTbl), IrradiationPositionTbl)
+    #         q = q.join(AnalysisTbl, ExperimentAssociationTbl)
+    #         q = q.filter(ExperimentAssociationTbl.experimentName.in_(expnames))
+    #         return self._query_all(q)
+
+    def get_labnumbers(self, projects=None, experiments=None, mass_spectrometers=None,
+                       high_post=None,
+                       low_post=None):
+        with self.session_ctx() as sess:
+            q = sess.query(IrradiationPositionTbl)
+            q = q.distinct(IrradiationPositionTbl.idirradiationpositionTbl)
+
+            # joins
+            if experiments:
+                q = q.join(AnalysisTbl, ExperimentAssociationTbl)
+            if projects:
+                q = q.join(SampleTbl, ProjectTbl)
+
+            if mass_spectrometers and not experiments:
+                q = q.join(AnalysisTbl)
+
+            if (low_post or high_post) and not (mass_spectrometers or experiments):
+                q = q.join(AnalysisTbl)
+
+            # filters
+            if experiments:
+                q = q.filter(ExperimentAssociationTbl.experimentName.in_(experiments))
+            if projects:
+                q = q.filter(ProjectTbl.name.in_(projects))
+            if mass_spectrometers:
+                q = q.filter(AnalysisTbl.mass_spectrometer.in_(mass_spectrometers))
+            if low_post:
+                q = q.filter(AnalysisTbl.timestamp >= low_post)
+            if high_post:
+                q = q.filter(AnalysisTbl.timestamp <= high_post)
+
+            return self._query_all(q, verbose_query=True)
+
     def get_analysis_groups(self, **kw):
         return []
 

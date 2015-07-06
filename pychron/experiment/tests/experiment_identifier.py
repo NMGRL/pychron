@@ -74,13 +74,13 @@ class ExperimentIdentifierTestCase(unittest.TestCase):
         spec = AutomatedRunSpec(identifier='bu-FD-j', aliquot=2)
         d.retroactive_experiment_identifiers(spec)
 
-        spec = AutomatedRunSpec(identifier='10000', experiment_id='foo')
+        spec = AutomatedRunSpec(identifier='10000', experiment_identifier='foo')
         d.retroactive_experiment_identifiers(spec)
 
-        spec = AutomatedRunSpec(identifier='20000', experiment_id='bar')
+        spec = AutomatedRunSpec(identifier='20000', experiment_identifier='bar')
         d.retroactive_experiment_identifiers(spec)
 
-        spec = AutomatedRunSpec(identifier='20000', aliquot=1, experiment_id='bar')
+        spec = AutomatedRunSpec(identifier='20000', aliquot=1, experiment_identifier='bar')
         d.retroactive_experiment_identifiers(spec)
 
         spec = AutomatedRunSpec(identifier='bu-FD-j', aliquot=3)

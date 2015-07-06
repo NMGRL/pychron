@@ -16,18 +16,22 @@
 
 # ============= enthought library imports =======================
 import hashlib
+import os
 
 from traits.api import Str, Int, Bool, Float, Property, \
     Enum, on_trait_change, CStr, Long, HasTraits
+
 
 # ============= standard library imports ========================
 from datetime import datetime
 import uuid
 # ============= local library imports  ==========================
+from pychron.core.helpers.filetools import add_extension
 from pychron.core.helpers.logger_setup import new_logger
 from pychron.experiment.utilities.identifier import get_analysis_type, make_rid, make_runid, is_special, \
     convert_extract_device
 from pychron.experiment.utilities.position_regex import XY_REGEX
+from pychron.paths import paths
 from pychron.pychron_constants import SCRIPT_KEYS, SCRIPT_NAMES, ALPHAS
 
 logger = new_logger('AutomatedRunSpec')
@@ -494,8 +498,14 @@ class AutomatedRunSpec(HasTraits):
     @property
     def script_hash(self):
         ctx = self.make_script_context()
-        ctx['measurement'] = self.measurement_script
-        ctx['extraction'] = self.measurement_script
+        for k, d in (('measurement', paths.measurement_dir), ('extraction', paths.extraction_dir)):
+            s = getattr(self, '{}_script'.format(k))
+            if s:
+                s = '{}_{}'.format(self.mass_spectrometer.lower(), s)
+                p = os.path.join(d, add_extension(s, '.py'))
+                with open(p, 'r') as rfile:
+                    txt = rfile.read()
+                    ctx[k] = txt
 
         md5 = hashlib.md5()
         for k, v in sorted(ctx.items()):

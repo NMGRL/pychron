@@ -25,7 +25,7 @@ from git import Repo
 import os
 # ============= local library imports  ==========================
 from pychron.core.progress import open_progress
-from pychron.dvc.tasks.actions import CloneAction, AddBranchAction, CheckoutBranchAction
+from pychron.dvc.tasks.actions import CloneAction, AddBranchAction, CheckoutBranchAction, PushAction
 from pychron.dvc.tasks.panes import RepoCentralPane, SelectionPane
 from pychron.envisage.tasks.base_task import BaseTask
 # from pychron.git_archive.history import from_gitlog
@@ -47,7 +47,8 @@ class ExperimentRepoTask(BaseTask):
     local_names = List
     tool_bars = [SToolBar(CloneAction(),
                           AddBranchAction(),
-                          CheckoutBranchAction()
+                          CheckoutBranchAction(),
+                          PushAction()
                           )]
 
     commits = List
@@ -73,6 +74,19 @@ class ExperimentRepoTask(BaseTask):
                 ns.append(i)
 
         self.local_names = ns
+
+    def push(self):
+        if not self._repo.has_remote():
+            from pychron.dvc.tasks.add_remote_view import AddRemoteView
+
+            a = AddRemoteView()
+            info = a.edit_traits(kind='livemodal')
+            if info.result:
+                if a.url and a.name:
+                    self._repo.create_remote(a.url, a.name)
+                    self._repo.push()
+        else:
+            self._repo.push()
 
     def clone(self):
         name = self.selected_repository_name
@@ -112,11 +126,17 @@ class ExperimentRepoTask(BaseTask):
 
     def _refresh_branches(self):
         self.branches = self._repo.get_branch_names()
-        self.branch = self._repo.get_active_branch()
+        b = self._repo.get_active_branch()
+
+        force = self.branch == b
+        self.branch = b
+        if force:
+            self._branch_changed(self.branch)
 
     def _selected_local_repository_name_changed(self, new):
         if new:
             root = os.path.join(paths.experiment_dataset_dir, new)
+            print root, new, os.path.isdir(root)
             if os.path.isdir(root):
                 repo = GitRepoManager()
                 repo.open_repo(root)

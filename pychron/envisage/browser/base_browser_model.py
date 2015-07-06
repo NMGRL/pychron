@@ -189,11 +189,15 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
         ss = []
         if self.selected_samples:
-            if hasattr(self.selected_samples, '__iter__'):
-                ss = [p.identifier for p in self.selected_samples]
+            ss = [p.identifier for p in self.selected_samples]
+
+        es = []
+        if self.selected_experiments:
+            es = [e.name for e in self.selected_experiments]
 
         obj = dict(projects=ps,
                    samples=ss,
+                   experiments=es,
                    use_low_post=self.use_low_post,
                    use_high_post=self.use_high_post,
                    use_named_date_range=self.use_named_date_range,
@@ -303,20 +307,22 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         with db.session_ctx():
             self._recent_mass_spectrometers = []
             warned = False
+            if isinstance(names, bool):
+                sams.extend(self._make_labnumbers())
+            else:
+                rnames, onames = partition(names, lambda x: x.startswith('RECENT'))
+                for name in rnames:
+                    # load associated samples
+                    if not self.search_criteria.recent_hours:
+                        if not warned:
+                            self.warning_dialog('Set "Recent Hours" in Preferences.\n'
+                                                '"Recent Hours" is located in the "Processing" category')
+                            warned = True
+                    else:
+                        sams.extend(self._retrieve_recent_labnumbers(name))
 
-            rnames, onames = partition(names, lambda x: x.startswith('RECENT'))
-            for name in rnames:
-                # load associated samples
-                if not self.search_criteria.recent_hours:
-                    if not warned:
-                        self.warning_dialog('Set "Recent Hours" in Preferences.\n'
-                                            '"Recent Hours" is located in the "Processing" category')
-                        warned = True
-                else:
-                    sams.extend(self._retrieve_recent_labnumbers(name))
-
-            if list(onames):
-                sams.extend(self._retrieve_labnumbers())
+                if list(onames):
+                    sams.extend(self._make_labnumbers())
 
         self.samples = sams
         self.osamples = sams
@@ -334,7 +340,16 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
             self.trait_property_changed('low_post', self._low_post)
             self._recent_mass_spectrometers.append(ms)
-            sams = self._retrieve_labnumbers()
+
+            es = [e.name for e in self.selected_experiments] if self.selected_experiments else []
+            ls = db.get_labnumbers(experiments=es, mass_spectrometers=(ms,), low_post=lpost)
+
+            def func(li, prog, i, n):
+                if prog:
+                    prog.change_message('Loading Labnumber {}'.format(li.identifier))
+                return LabnumberRecordView(li)
+
+            sams = progress_loader(ls, func)
 
         return sams
 
@@ -358,38 +373,38 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         sel = sams[:1] if n == 1 and sams else []
         self.set_samples(sams, sel)
 
-    def _retrieve_labnumbers_hook(self, db):
-        projects = self.selected_projects
-
-        if self.use_mass_spectrometers:
-            mass_spectrometers = self.mass_spectrometer_includes
-        else:
-            mass_spectrometers = [extract_mass_spectrometer_name(p.name) for p in projects]
-            mass_spectrometers = [ms for ms in mass_spectrometers if ms]
-
-        projects = [p.name for p in projects if not p.name.startswith('RECENT')]
-        atypes = self.analysis_include_types if self.use_analysis_type_filtering else None
-
-        lp, hp = self.low_post, self.high_post
-        if atypes and projects:
-            tlp, thp = db.get_project_date_range(projects)
-            # tlp, thp = db.get_min_max_analysis_timestamp(projects=projects, delta=1)
-            if not lp:
-                lp = tlp
-            if not hp:
-                hp = thp
-
-        ls = db.get_project_labnumbers(projects,
-                                       self.filter_non_run_samples,
-                                       lp, hp,
-                                       # self.low_post,
-                                       # self.high_post,
-                                       analysis_types=atypes,
-                                       mass_spectrometers=mass_spectrometers)
-        return ls
+    # def _retrieve_labnumbers_hook(self, db):
+    #     projects = self.selected_projects
+    #
+    #     if self.use_mass_spectrometers:
+    #         mass_spectrometers = self.mass_spectrometer_includes
+    #     else:
+    #         mass_spectrometers = [extract_mass_spectrometer_name(p.name) for p in projects]
+    #         mass_spectrometers = [ms for ms in mass_spectrometers if ms]
+    #
+    #     projects = [p.name for p in projects if not p.name.startswith('RECENT')]
+    #     atypes = self.analysis_include_types if self.use_analysis_type_filtering else None
+    #
+    #     lp, hp = self.low_post, self.high_post
+    #     if atypes and projects:
+    #         tlp, thp = db.get_project_date_range(projects)
+    #         # tlp, thp = db.get_min_max_analysis_timestamp(projects=projects, delta=1)
+    #         if not lp:
+    #             lp = tlp
+    #         if not hp:
+    #             hp = thp
+    #
+    #     ls = db.get_project_labnumbers(projects,
+    #                                    self.filter_non_run_samples,
+    #                                    lp, hp,
+    #                                    # self.low_post,
+    #                                    # self.high_post,
+    #                                    analysis_types=atypes,
+    #                                    mass_spectrometers=mass_spectrometers)
+    #     return ls
 
     @caller
-    def _retrieve_labnumbers(self):
+    def _make_labnumbers(self):
         db = self.db
         # dont query if analysis_types enabled but not analysis type specified
         if self.use_analysis_type_filtering and not self.analysis_include_types:
@@ -397,7 +412,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             return []
 
         with db.session_ctx():
-            ls = self._retrieve_labnumbers_hook(db)
+            ls = self._retrieve_labnumbers()
             self.debug('_retrieve_labnumbers n={}'.format(len(ls)))
 
             def func(li, prog, i, n):
@@ -407,6 +422,9 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
             sams = progress_loader(ls, func)
         return sams
+
+    def _retrieve_labnumbers(self):
+        pass
 
     def _retrieve_analyses(self, samples=None, limit=500,
                            order='asc',
@@ -512,6 +530,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
         load('projects', self.projects)
         load('samples', self.samples)
+        load('experiments', self.experiments)
 
     # handlers
     def _identifier_changed(self, new):
@@ -540,6 +559,10 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
     def _identifier_change_hook(self, db, new, lns):
         pass
+
+    def _selected_experiments_changed(self, old, new):
+        if new and self.experiment_enabled:
+            self._load_associated_labnumbers(True)
 
     def _selected_projects_changed(self, old, new):
 
@@ -591,8 +614,8 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             self._filter_by_hook()
 
     def _filter_by_hook(self):
-        s = self._retrieve_labnumbers()
-        self.set_samples(s, [])
+        names = [ni.name for ni in self.selected_projects]
+        self._load_associated_labnumbers(names)
 
     def _sample_filter_changed(self, new):
         name = self._get_sample_filter_parameter()
