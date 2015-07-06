@@ -15,15 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Instance
-from traitsui.api import View
+from traits.api import HasTraits, Button, Any, Instance
+from traitsui.api import View, Item
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable
 
 
 class BaseEntry(Loggable):
-    dvc = Instance('pychron.dvc.dvc.DVC')
+    db = Instance('pychron.database.adapters.isotope_adapter.IsotopeAdapter')
+
     def do(self):
         return self._add_loop()
 
@@ -31,14 +32,14 @@ class BaseEntry(Loggable):
         while 1:
             info = self.edit_traits()
             if info.result:
-                db = self.dvc.db
+                db = self.db
                 with db.session_ctx():
-                    if self._add_item():
+                    if self._add_item(db):
                         return True
             else:
                 return False
 
-    def _add_item(self):
+    def _add_item(self, db):
         raise NotImplementedError
 
     def _new_view(self, *args, **kw):

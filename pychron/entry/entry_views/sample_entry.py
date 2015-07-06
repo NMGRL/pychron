@@ -36,19 +36,20 @@ class SampleEntry(BaseEntry):
         with db.session_ctx():
             dbsam = db.get_sample(sample, project, material)
             if dbsam:
-                print 'fffff', dbsam
+                print dbsam
 
-    def _add_item(self):
-        dvc = self.dvc
+    def _add_item(self, db):
         project = self.project
         sample = self.sample
         material = self.material
         self.info('Attempting to add Sample="{}", '
                   'Project="{}", Material="{}"'.format(sample, project, material))
 
-        dbsam = dvc.get_sample(sample, project)
+        dbsam = db.get_sample(sample, project, material)
         if dbsam is None:
-            dvc.add_sample(sample, project, material)
+            db.add_sample(sample,
+                          project=project,
+                          material=material)
             return True
         else:
             self.warning('{}, Project={}, Material={} already exists'.format(sample,

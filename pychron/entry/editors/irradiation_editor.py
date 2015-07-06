@@ -21,9 +21,8 @@ from traitsui.api import View, Item, UItem, Group, VGroup
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.entry.editors.base_editor import ModelView
+from pychron.entry.editors.base_editor import ModelView, BaseIrradiationEditor
 from pychron.entry.editors.chronology import IrradiationChronology
-from pychron.loggable import Loggable
 
 
 class AddView(ModelView):
@@ -52,7 +51,7 @@ class EditView(ModelView):
         return v
 
 
-class IrradiationEditor(Loggable):
+class IrradiationEditor(BaseIrradiationEditor):
     """
         class used to create/edit an irradiation
 
@@ -62,77 +61,68 @@ class IrradiationEditor(Loggable):
     def add(self):
         v = AddView(model=self)
         info = v.edit_traits()
+        db = self.db
+        with db.session_ctx():
+            while 1:
+                if info.result:
+                    name = self.name
+                    if not name:
+                        if self.confirmation_dialog('No name enter. Would you like to enter one?'):
+                            info = v.edit_traits()
+                            continue
+                        else:
+                            break
 
-        while 1:
-            if info.result:
-                name = self.name
-                if not name:
-                    if self.confirmation_dialog('No name enter. Would you like to enter one?'):
-                        info = v.edit_traits()
-                        continue
+                    if not db.get_irradiation(name):
+                        self._add_irradiation()
+                        return name
+
                     else:
-                        break
-
-                if not self.dvc.get_irradiation(name):
-                    self._add_irradiation()
-                    return name
-
+                        if self.confirmation_dialog(
+                                'Irradiation "{}" already exists. Would you like to try again ?'.format(name)):
+                            info = v.edit_traits()
+                            continue
+                        else:
+                            break
                 else:
-                    if self.confirmation_dialog(
-                            'Irradiation "{}" already exists. Would you like to try again ?'.format(name)):
-                        info = v.edit_traits()
-                        continue
-                    else:
-                        break
-            else:
-                break
+                    break
 
     def edit(self):
         original_name = self.name
-        # db = self.dvc.db
-        # with db.session_ctx():
-        # irrad = db.get_irradiation(original_name)
-        # print irrad, original_name
+        db = self.db
+        with db.session_ctx():
+            irrad = db.get_irradiation(original_name)
 
-        # chronology = DVCChronology(self.name)
-        chronology = self.dvc.get_chronology(self.name)
-        self.chronology.set_dosages(chronology.get_doses())
-        v = EditView(model=self)
-        info = v.edit_traits()
-        if info.result:
-            if original_name != self.name:
-                ret = self.confirmation_dialog('You have changed the irradiation name.\n\n'
-                                               'Would you like to rename "{}" to "{}" (Yes) '
-                                               'or make a new irradiation "{}" (No)'.format(original_name,
-                                                                                            self.name, self.name),
-                                               return_retval=True,
-                                               cancel=True)
-                if ret == YES:
-                    print 'asdfadfasd'
-                    # irrad.name = self.name
-                elif ret == NO:
-                    self._add_irradiation()
-                else:
-                    return
+            self.chronology.set_dosages(irrad.chronology.get_doses())
+            v = EditView(model=self)
+            info = v.edit_traits()
+            if info.result:
+                if original_name != self.name:
+                    ret = self.confirmation_dialog('You have changed the irradiation name.\n\n'
+                                                   'Would you like to rename "{}" to "{}" (Yes) '
+                                                   'or make a new irradiation "{}" (No)'.format(original_name,
+                                                                                                self.name, self.name),
+                                                   return_retval=True,
+                                                   cancel=True)
+                    if ret == YES:
+                        irrad.name = self.name
+                    elif ret == NO:
+                        self._add_irradiation()
+                    else:
+                        return
 
-            # irrad.chronology.chronology = self.chronology.make_blob()
-            # print self.chronology.get_doses()
-            self.dvc.update_chronology(self.name, self.chronology.get_doses())
+                irrad.chronology.chronology = self.chronology.make_blob()
+
         return self.name
 
     def _add_irradiation(self):
         self.debug('add irradiation={}'.format(self.name))
 
-        self.dvc.add_irradiation(self.name, self.chronology.get_doses())
+        db = self.db
+        with db.session_ctx():
+            dbchron = db.add_irradiation_chronology(self.chronology.make_blob())
+            db.add_irradiation(self.name, dbchron)
 
-        # db = self.db
-        #     with db.session_ctx():
-        #         # dbchron = db.add_irradiation_chronology(self.chronology.make_blob())
-        #         # db.add_irradiation(self.name, dbchron)
-        #         db.add_irradiation(self.name)
-        #
-        #     self.repo.add_irradiation(self.name)
-        #     self.repo.add_chronology(self.name, self.chronology)
 
 # ============= EOF =============================================
 

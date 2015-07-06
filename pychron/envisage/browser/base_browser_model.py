@@ -642,8 +642,8 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     def _get_db(self):
         if self.use_workspace:
             return self.workspace.index_db
-        elif to_bool(self.application.preferences.get('pychron.dvc.enabled')):
-            return self.application.get_service('pychron.dvc.dvc.DVC')
+        # elif to_bool(self.application.preferences.get('pychron.dvc.enabled')):
+        #     return self.application.get_service('pychron.dvc.dvc.DVC')
         else:
             return self.manager.db
 

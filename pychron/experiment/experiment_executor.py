@@ -143,7 +143,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     use_xls_persister = Bool(False)
     use_memory_check = Bool(True)
     memory_threshold = Int
-    use_dvc = Bool(False)
+    # use_dvc = Bool(False)
 
     baseline_color = Color
     sniff_color = Color
@@ -158,6 +158,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     _prev_blanks = Dict
     _prev_baselines = Dict
+    _prev_blank_runid = String
     _err_message = String
     _prev_blank_id = Long
     _cv_info = None
@@ -953,10 +954,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         arun.use_syn_extraction = False
 
-        arun.use_dvc = self.use_dvc
-        if self.use_dvc:
-            arun.dvc_persister = self.application.get_service('pychron.dvc.dvc_persister.DVCPersister')
-            arun.dvc_persister.load_name = exp.load_name
+        # arun.use_dvc = self.use_dvc
+        # if self.use_dvc:
+        #     arun.dvc_persister = self.application.get_service('pychron.dvc.dvc_persister.DVCPersister')
+        #     arun.dvc_persister.load_name = exp.load_name
 
         mon = self.monitor
         if mon is not None:

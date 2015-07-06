@@ -646,8 +646,7 @@ class ExperimentEditorTask(EditorTask):
     def _loading_manager_default(self):
         lm = self.window.application.get_service('pychron.loading.loading_manager.LoadingManager')
         if lm:
-            dvc = self.window.application.get_service('pychron.dvc.dvc.DVC')
-            lm.trait_set(db=dvc.db,
+            lm.trait_set(db=self.manager.manager.db,
                          show_group_positions=True)
             return lm
 

@@ -22,7 +22,6 @@ from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter, Tabbed
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.entry.entry_views.material_entry import MaterialEntry
 from pychron.core.helpers.filetools import add_extension
 
 from pychron.entry.graphic_generator import GraphicModel, GraphicGeneratorController
@@ -57,8 +56,8 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     preview_generate_identifiers_button = Button
 
     tool_bars = [SToolBar(SavePDFAction(),
-        DatabaseSaveAction(),
-        image_size=(16, 16))]
+                          DatabaseSaveAction(),
+                          image_size=(16, 16))]
     # SToolBar(GenerateLabnumbersAction(),
     # PreviewGenerateLabnumbersAction(),
     # ImportIrradiationLevelAction(),
@@ -75,7 +74,6 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
 
     def activated(self):
         if self.db.connected:
-            self.manager.activated()
             self.load_projects(include_recent=False)
 
     def transfer_j(self):
@@ -98,7 +96,7 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
             gm.srcpath = p
             # gm.xmlpath=p
             # p = make_xml(p,
-            #              default_radius=radius,
+            # default_radius=radius,
             #              default_bounds=bounds,
             #              convert_mm=convert_mm,
             #              use_label=use_label,
@@ -116,7 +114,7 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
 
     def save_pdf(self):
         p = '/Users/ross/Sandbox/irradiation.pdf'
-        #p=self.save_file_dialog()
+        # p=self.save_file_dialog()
 
         self.debug('saving pdf to {}'.format(p))
         #self.manager.make_labbook(p)
@@ -125,7 +123,7 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
 
     def save_labbook_pdf(self):
         p = '/Users/ross/Sandbox/irradiation.pdf'
-        #p=self.save_file_dialog()
+        # p=self.save_file_dialog()
 
         self.manager.make_labbook(p)
         self.view_pdf(p)
@@ -139,14 +137,14 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     def import_irradiation_load_xls(self):
         path = self.open_file_dialog()
         if path:
-            #p = '/Users/ross/Sandbox/irrad_load_template.xls'
+            # p = '/Users/ross/Sandbox/irrad_load_template.xls'
             self.manager.import_irradiation_load_xls(path)
 
     def make_irradiation_load_template(self):
         path = self.save_file_dialog()
         if path:
-            #        p = '/Users/ross/Sandbox/irrad_load_template.xls'
-            path = add_extension(path,'.xls')
+            # p = '/Users/ross/Sandbox/irrad_load_template.xls'
+            path = add_extension(path, '.xls')
             self.manager.make_irradiation_load_template(path)
 
             self.information_dialog('Template saved to {}'.format(path))
@@ -154,7 +152,7 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
 
     def import_sample_from_file(self):
         # path = self.open_file_dialog(default_directory=paths.root_dir,
-        #                              wildcard='*.xls')
+        # wildcard='*.xls')
         path = '/Users/ross/Desktop/sample_import.xls'
         if path:
             from pychron.entry.loaders.xls_sample_loader import XLSSampleLoader
@@ -177,7 +175,7 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     def import_sample_metadata(self):
         self.warning('Import sample metadata Deprecated')
 
-    #     path = '/Users/ross/Programming/git/dissertation/data/minnabluff/lithologies.xls'
+    # path = '/Users/ross/Programming/git/dissertation/data/minnabluff/lithologies.xls'
     #     path = '/Users/ross/Programming/git/dissertation/data/minnabluff/tables/TAS.xls'
     #     path = '/Users/ross/Programming/git/dissertation/data/minnabluff/tables/environ.xls'
     #     if not os.path.isfile(path):
@@ -201,8 +199,7 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
             do_export(self.manager, es.export_type, es.destination_dict, es.irradiations)
 
     def _manager_default(self):
-        dvc = self.application.get_service('pychron.dvc.dvc.DVC')
-        return LabnumberEntry(application=self.application, dvc=dvc)
+        return LabnumberEntry(application=self.application)
 
     # def _importer_default(self):
     #     return ImportManager(db=self.manager.db,
@@ -263,9 +260,7 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
 
     def _selected_samples_changed(self, new):
         if new:
-            # self.manager.set_selected_attr(new.name, 'sample')
-            self.manager.set_selected_attrs((new.name, new.material, new.project),
-                                            ('sample', 'material', 'project'))
+            self.manager.set_selected_attr(new.name, 'sample')
 
     def _load_associated_samples(self, names=None):
         if names is None:
@@ -293,7 +288,7 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
         self.preview_generate_identifiers()
 
     def _add_project_button_fired(self):
-        pr = ProjectEntry(dvc=self.manager.dvc)
+        pr = ProjectEntry(db=self.manager.db)
         if pr.do():
             self.load_projects(include_recent=False)
 
@@ -303,17 +298,17 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
             project = self.selected_projects[0].name
 
         mats = self.db.get_material_names()
-        sam = SampleEntry(dvc=self.manager.dvc,
+        sam = SampleEntry(db=self.manager.db,
                           project=project,
-                          projects=[p.name for p in self.projects],
-                          materials=mats)
+                          projects = [p.name for p in self.projects],
+                          materials = mats)
         if sam.do():
             self._load_associated_samples()
 
-    def _add_material_button_fired(self):
-        mat = MaterialEntry(dvc=self.manager.dvc)
-        mat.do()
-        # self._load_materials()
+    # def _add_material_button_fired(self):
+    #     mat = MaterialEntry(db=self.manager.db)
+    #     if mat.do():
+    #         self._load_materials()
 
     # def _edit_project_button_fired(self):
     #     pr = ProjectEntry(db=self.manager.db)
@@ -329,6 +324,7 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
 
     def _selected_projects_changed(self, old, new):
         if new and self.project_enabled:
+
             names = [ni.name for ni in new]
             self.debug('selected projects={}'.format(names))
 

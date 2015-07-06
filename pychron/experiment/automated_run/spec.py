@@ -44,6 +44,7 @@ class AutomatedRunSpec(HasTraits):
 
     #     automated_run = Instance(AutomatedRun)
     #    state = Property(depends_on='_state')
+    collection_version = '0.1:0.1'
     state = Enum('not run', 'extraction',
                  'measurement', 'success',
                  'failed', 'truncated', 'canceled',
@@ -479,7 +480,12 @@ class AutomatedRunSpec(HasTraits):
     @property
     def sensitivity(self):
         return 0
-
+    @property
+    def extract_duration(self):
+        return self.duration
+    @property
+    def cleanup_duration(self):
+        return self.cleanup
     @property
     def script_hash(self):
         ctx = self.make_script_context()

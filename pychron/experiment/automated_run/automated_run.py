@@ -113,7 +113,7 @@ class AutomatedRun(Loggable):
     multi_collector = Instance('pychron.experiment.automated_run.multi_collector.MultiCollector')
     peak_hop_collector = Instance('pychron.experiment.automated_run.peak_hop_collector.PeakHopCollector')
     persister = Instance('pychron.experiment.automated_run.persistence.AutomatedRunPersister', ())
-    dvc_persister = Instance('pychron.experiment.dvc.Persister', ())
+    # dvc_persister = Instance('pychron.experiment.dvc.Persister', ())
 
     xls_persister = Instance('pychron.experiment.automated_run.persistence.ExcelPersister')
     system_health = Instance('pychron.experiment.health.series.SystemHealthSeries')
@@ -144,7 +144,7 @@ class AutomatedRun(Loggable):
     measuring = Bool(False)
     dirty = Bool(False)
     update = Event
-    use_dvc = Bool(False)
+    # use_dvc = Bool(False)
 
     measurement_script = Instance('pychron.pyscripts.measurement_pyscript.MeasurementPyScript')
     post_measurement_script = Instance('pychron.pyscripts.extraction_line_pyscript.ExtractionPyScript')
@@ -191,14 +191,15 @@ class AutomatedRun(Loggable):
         
     def _persister_action(self, func, *args, **kw):
         getattr(self.persister, func)(*args, **kw)
-        for p in (self.xls_persister, self.dvc_persister):
-            try:
-                getattr(p, func)(*args, **kw)
-            except BaseException, e:
-                self.warning('excel persister action failed. func={}, excp={}'.format(func, e))
-                import traceback
+        for p in (self.xls_persister,):
+            if p is not None:
+                try:
+                    getattr(p, func)(*args, **kw)
+                except BaseException, e:
+                    self.warning('excel persister action failed. func={}, excp={}'.format(func, e))
+                    import traceback
 
-                traceback.print_exc()
+                    traceback.print_exc()
 
     def py_set_integration_time(self, v):
         self.set_integration_time(v)
@@ -612,8 +613,8 @@ class AutomatedRun(Loggable):
 
         # self.aliquot='##'
         self.persister.save_enabled = False
-        if self.use_dvc:
-            self.dvc_persister.save_enabled = False
+        # if self.use_dvc:
+        #     self.dvc_persister.save_enabled = False
 
         for s in ('extraction', 'measurement'):
             script = getattr(self, '{}_script'.format(s))
