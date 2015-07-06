@@ -219,7 +219,7 @@ class ExperimentEditorTask(EditorTask):
         self.wait_pane = WaitPane(model=self.manager.executor.wait_group)
 
         ex = self.manager.executor
-        panes = [StatsPane(model=self.manager),
+        panes = [StatsPane(model=self.manager.stats),
                  ControlsPane(model=ex),
                  ConsolePane(model=ex),
                  LoggerPane(),

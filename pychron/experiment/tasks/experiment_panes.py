@@ -18,7 +18,7 @@
 from traits.api import Color, Instance, DelegatesTo, List, Any, Property
 from traitsui.api import View, Item, UItem, VGroup, HGroup, spring, \
     EnumEditor, Group, Spring, VFold, Label, InstanceEditor, \
-    VSplit, TabularEditor, UReadonly, ListEditor, RangeEditor
+    VSplit, TabularEditor, UReadonly, ListEditor, RangeEditor, Readonly
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traitsui.editors import TableEditor, CheckListEditor
 from traitsui.table_column import ObjectColumn
@@ -376,11 +376,23 @@ class ConnectionStatusPane(TraitsDockPane):
 class StatsPane(TraitsDockPane):
     id = 'pychron.experiment.stats'
     name = 'Stats'
-
     def traits_view(self):
-        v = View(
-            UItem('stats', style='custom'))
+        v = View(VGroup(Readonly('nruns', label='Total Runs'),
+                        Readonly('nruns_finished', label='Completed'),
+                        Readonly('total_time'),
+                        Readonly('start_at'),
+                        Readonly('end_at'),
+                        Readonly('run_duration'),
+                        Readonly('current_run_duration', ),
+                        Readonly('etf', label='Est. finish'),
+                        Readonly('elapsed'),
+                        Readonly('run_elapsed'),
+                        show_border=True))
         return v
+
+    # def traits_view(self):
+    #     v = View(UItem('stats', style='custom'))
+    #     return v
 
 
 class ControlsPane(TraitsDockPane):

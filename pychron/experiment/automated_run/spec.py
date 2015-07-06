@@ -244,7 +244,7 @@ class AutomatedRunSpec(HasTraits):
                    ramp_duration=self.ramp_duration)
         return ctx
 
-    def get_estimated_duration(self, script_context, warned, force=False):
+    def get_estimated_duration(self, script_context=None, warned=None, force=False):
         """
             use the pyscripts to calculate etd
 
