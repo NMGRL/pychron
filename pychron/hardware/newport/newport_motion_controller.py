@@ -257,7 +257,7 @@ ABLE TO USE THE HARDWARE JOYSTICK
             if not points:
                 break
 
-    def linear_move(self, x, y, **kw):
+    def linear_move(self, x, y, set_desired=True, **kw):
 
         # calc the displacement
         dx = self._x_position - x
@@ -293,7 +293,8 @@ ABLE TO USE THE HARDWARE JOYSTICK
         tol = 0.001  # should be set to the motion controllers resolution
         if d > tol:
             kw['displacement'] = d
-            self.parent.canvas.set_desired_position(x, y)
+            if set_desired:
+                self.parent.canvas.set_desired_position(x, y)
             self._x_position = x
             self._y_position = y
 

@@ -398,7 +398,8 @@ class LaserTrayCanvas(MapCanvas):
 
     def get_offset_stage_screen_position(self):
         sx, sy = self.get_stage_screen_position()
-        return sx + self.crosshairs_offsetx, sy + self.crosshairs_offsety
+        return sx, sy
+        # return sx + self.crosshairs_offsetx, sy + self.crosshairs_offsety
 
     def get_stage_screen_position(self):
         return self.map_screen([self._stage_position])[0]
@@ -406,8 +407,8 @@ class LaserTrayCanvas(MapCanvas):
     def get_stage_position(self):
         return self._stage_position
 
-        #return (self._stage_position[0]-self.crosshairs_offsetx,
-        #self._stage_position[1] - self.crosshairs_offsety)
+        # return (self._stage_position[0]-self.crosshairs_offsetx,
+        # self._stage_position[1] - self.crosshairs_offsety)
 
     def set_stage_position(self, x, y):
         """
@@ -426,6 +427,7 @@ class LaserTrayCanvas(MapCanvas):
     def set_desired_position(self, x, y):
         """
         """
+
         self._desired_position = (x, y)
         self.request_redraw()
 
@@ -461,6 +463,7 @@ class LaserTrayCanvas(MapCanvas):
     def normal_left_down(self, event):
         """
         """
+        # print 'ff', self.crosshairs_offsetx, self.crosshairs_offsety
 
         x = event.x - self.crosshairs_offsetx
         y = event.y - self.crosshairs_offsety
@@ -597,9 +600,10 @@ class LaserTrayCanvas(MapCanvas):
         """
         """
 
-        if not self._desired_position is None:
+        if self._desired_position is not None:
+            # x, y = self._desired_position
             x, y = self.map_screen([self._desired_position])[0]
-            return x, y
+            return x+self.crosshairs_offsetx, y+self.crosshairs_offsety
 
     # ===============================================================================
     # defaults
@@ -632,8 +636,8 @@ class LaserTrayCanvas(MapCanvas):
         #             ch.overlay(self, gc, *args, **kw)
 
         # for o in self.crosshairs_overlays:
-        #if o.visible:
-        #o.overlay(self, gc, *args, **kw)
+        # if o.visible:
+        # o.overlay(self, gc, *args, **kw)
         # ========================EOF====================================================
         #    def _set_transect_points(self, tran, step, line_color=(1, 0, 0), point_color=(1, 0, 0), **ptargs):
         #        for pi in tran.step_points:
