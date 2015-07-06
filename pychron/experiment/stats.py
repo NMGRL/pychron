@@ -223,7 +223,7 @@ class ExperimentStats(Loggable):
         self._run_start = time.time()
         self.setup_run_clock(run)
 
-        self.current_run_duration = str(timedelta(seconds=round(run.get_estimated_duration())))
+        self.current_run_duration = str(timedelta(seconds=round(run.spec.get_estimated_duration())))
 
     def finish_run(self):
 
