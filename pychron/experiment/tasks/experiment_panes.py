@@ -211,10 +211,10 @@ QComboBox {font-size: 10px}
             # HGroup(run_factory_item('labnumber',
             # tooltip='Enter a Labnumber',
             # width=100, ),
-            #        run_factory_item('_labnumber', show_label=False,
-            #                         editor=CheckListEditor(name=run_factory_name('labnumbers')),
-            #                         width=-20),
-            #        run_factory_item('aliquot',
+            # run_factory_item('_labnumber', show_label=False,
+            # editor=CheckListEditor(name=run_factory_name('labnumbers')),
+            # width=-20),
+            # run_factory_item('aliquot',
             #                         width=50),
             #        spring),
 
@@ -355,8 +355,8 @@ class WaitPane(TraitsDockPane):
         # def traits_view(self):
         # v = View(
         # UItem('wait_group',
-        #               style='custom'))
-        #     return v
+        # style='custom'))
+        # return v
 
 
 class ConnectionStatusPane(TraitsDockPane):
@@ -376,23 +376,29 @@ class ConnectionStatusPane(TraitsDockPane):
 class StatsPane(TraitsDockPane):
     id = 'pychron.experiment.stats'
     name = 'Stats'
+
     def traits_view(self):
-        v = View(VGroup(Readonly('nruns', label='Total Runs'),
-                        Readonly('nruns_finished', label='Completed'),
-                        Readonly('total_time'),
-                        Readonly('start_at'),
-                        Readonly('end_at'),
-                        Readonly('run_duration'),
-                        Readonly('current_run_duration', ),
-                        Readonly('etf', label='Est. finish'),
-                        Readonly('elapsed'),
-                        Readonly('run_elapsed'),
-                        show_border=True))
+        gen_grp = VGroup(Readonly('nruns', width=350, label='Total Runs'),
+                         Readonly('nruns_finished', label='Completed'),
+                         Readonly('total_time'),
+                         Readonly('elapsed'),
+                         Readonly('etf', label='Est. finish'),
+                         show_border=True, label='General')
+        cur_grp = VGroup(Readonly('current_run_duration', ),
+                         Readonly('run_elapsed'),
+                         show_border=True,
+                         label='Current')
+        sel_grp = VGroup(Readonly('start_at'),
+                         Readonly('end_at'),
+                         Readonly('run_duration'),
+
+                         label='Selection', show_border=True)
+        v = View(VGroup(gen_grp, cur_grp, sel_grp))
         return v
 
-    # def traits_view(self):
-    #     v = View(UItem('stats', style='custom'))
-    #     return v
+        # def traits_view(self):
+        # v = View(UItem('stats', style='custom'))
+        # return v
 
 
 class ControlsPane(TraitsDockPane):

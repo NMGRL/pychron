@@ -33,6 +33,9 @@ FUDGE_COEFFS = (0, 0, 0)  # x**n+x**n-1....+c
 
 class AutomatedRunDurationTracker(Loggable):
     items = List
+    def __init__(self, *args, **kw):
+        super(AutomatedRunDurationTracker, self).__init__(*args, **kw)
+        self.load()
 
     def load(self):
         items = []
@@ -223,7 +226,21 @@ class ExperimentStats(Loggable):
         self._run_start = time.time()
         self.setup_run_clock(run)
 
-        self.current_run_duration = str(timedelta(seconds=round(run.spec.get_estimated_duration())))
+        self.current_run_duration = self.get_run_duration(run.spec, as_str=True)
+
+    def get_run_duration(self, run, as_str=False):
+        sh = run.script_hash
+        if sh in self.duration_tracker:
+            self.debug('using duration tracker value')
+            rd = self.duration_tracker[sh]
+        else:
+            rd = run.get_estimated_duration()
+        rd = round(rd)
+        if as_str:
+            rd = str(timedelta(seconds=rd))
+
+        self.debug('run duration: {}'.format(rd))
+        return rd
 
     def finish_run(self):
 
@@ -300,15 +317,10 @@ class StatsGroup(ExperimentStats):
 
                 si = ei.cleaned_automated_runs.index(sel)
 
-                st += ei.stats.calculate_duration(
-                    ei.executed_runs + ei.cleaned_automated_runs[:si]) + ei.delay_between_analyses
+                st += ei.stats.calculate_duration(ei.executed_runs + ei.cleaned_automated_runs[:si]) + ei.delay_between_analyses
                 # et += ei.stats.calculate_duration(ei.executed_runs+ei.cleaned_automated_runs[:si + 1])
 
-                sh = sel.script_hash
-                if sh in ei.stats.duration_tracker:
-                    rd = ei.stats.duration_tracker[sh]
-                else:
-                    rd = sel.get_estimated_duration()
+                rd = self.get_run_duration(sel)
                 et = st + rd
 
                 rd = timedelta(seconds=round(rd))

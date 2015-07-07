@@ -93,6 +93,11 @@ class ExperimentPlugin(BaseTaskPlugin):
                 ('pychron.deselect', 'Ctrl+Shift+D', 'Deselect'),
                 ('pychron.open_last_experiment', 'Alt+Ctrl+O', 'Open Last Experiment')]
 
+    def _help_tips_default(self):
+        return ['You can set the Analysis State colors in Preferences>Experiment',
+                'You can set the color for Sniff, Signal, and Baseline datapoints in Preferences>Experiment',
+                'The current version of Pychron contains over 120K lines of code']
+
     def _task_extensions_default(self):
         extensions = [TaskExtension(actions=actions, task_id=eid) for eid, actions in self._get_extensions()]
         # print 'a', len(extensions)
