@@ -1465,7 +1465,7 @@ post_equilibration_script:name''')
     def _aliquot_changed(self):
         if self.edit_mode:
             for si in self._selected_runs:
-                a = None
+                a = 0
                 if si.aliquot != self.aliquot:
                     a = int(self.aliquot)
 
