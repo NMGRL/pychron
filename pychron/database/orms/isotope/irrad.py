@@ -137,9 +137,11 @@ class irrad_ChronologyTable(Base, BaseMixin):
             if '|' in di:
                 pwr, di = di.split('|')
                 pwr = float(pwr)
-
-            s, e = di.strip().split('%')
-            dd.append((pwr, s, e))
+            try:
+                s, e = di.strip().split('%')
+                dd.append((pwr, s, e))
+            except ValueError:
+                pass
 
         if todatetime:
             # def convert(x):

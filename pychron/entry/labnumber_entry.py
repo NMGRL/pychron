@@ -644,7 +644,7 @@ THIS CHANGE CANNOT BE UNDONE')
                 return
 
             self.level_note = level.note or ''
-            self.level_production_name = level.production.name
+            self.level_production_name = level.production.name if level.production else ''
 
             holder = level.holder
             if holder:
@@ -777,8 +777,8 @@ THIS CHANGE CANNOT BE UNDONE')
             with db.session_ctx():
                 hs = db.get_irradiation_holders()
                 ts = [h.name for h in hs]
-
-            self.tray = ts[-1]
+            if ts:
+                self.tray = ts[-1]
 
         return ts
 
