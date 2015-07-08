@@ -22,7 +22,7 @@ from traitsui.api import View, UItem
 import os
 # ============= local library imports  ==========================
 from pychron.core.ui.qt.tabular_editor import TabularEditorHandler
-from pychron.core.ui.table_configurer import TableConfigurer, ExperimentTableConfigurer
+from pychron.core.ui.table_configurer import ExperimentTableConfigurer
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.experiment.automated_run.tabular_adapter import AutomatedRunSpecAdapter, UVAutomatedRunSpecAdapter, \
     ExecutedAutomatedRunSpecAdapter, ExecutedUVAutomatedRunSpecAdapter
@@ -183,14 +183,16 @@ class ExperimentEditor(BaseTraitsEditor):
     # ===============================================================================
     # handlers
     # ===============================================================================
-    def _dirty_changed(self):
-        self.debug('dirty changed {}'.format(self.dirty))
-
-    def _queue_changed(self):
+    # def _dirty_changed(self):
+    #     self.debug('dirty changed {}'.format(self.dirty))
+    def _queue_changed(self, old, new):
         f = self._set_queue_dirty
-        self.queue.on_trait_change(f, 'automated_runs[]')
-        self.queue.on_trait_change(f, 'changed')
-        self.queue.path = self.path
+        if old:
+            old.on_trait_change(f, 'automated_runs[]', remove=True)
+            old.on_trait_change(f, 'changed', remove=True)
+        new.on_trait_change(f, 'automated_runs[]')
+        new.on_trait_change(f, 'changed')
+        new.path = self.path
 
     def _path_changed(self):
         self.queue.path = self.path
