@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.confirmation_dialog import confirm
+from pyface.constant import YES
 from traits.api import Float, Str, List, Instance, Property, cached_property
 from traitsui.api import Item, EnumEditor
 # ============= standard library imports ========================
@@ -39,6 +41,7 @@ class FindFluxMonitorsNode(FindNode):
 
     level = Str
     levels = Property(depends_on='irradiation')
+    flux_monitors = List
 
     def load(self, nodedict):
         self.irradiation = nodedict.get('irradiation', '')
@@ -74,16 +77,32 @@ class FindFluxMonitorsNode(FindNode):
             state.veto = self
         else:
             dvc = self.dvc
-            with dvc.session_ctx():
-                ans = dvc.get_flux_monitor_analyses(self.irradiation, self.level, self.monitor_sample_name)
-                monitors = self.dvc.make_analyses(ans, calculate_f_only=False)
 
             state.geometry = dvc.get_irradiation_geometry(self.irradiation, self.level)
-            state.unknowns = monitors
-            state.flux_monitors = monitors
             state.has_flux_monitors = True
             state.irradiation = self.irradiation
             state.level = self.level
+
+            if self.flux_monitors:
+                #v = confirm(None, 'You already have Flux Monitors found. Do you want to refind the monitors')
+                #print v, v != YES
+                #if v != YES:
+                if confirm(None, 'You already have Flux Monitors found. Do you want to refind the monitors') != YES:
+                    state.flux_monitors = self.flux_monitors
+                    return
+
+            with dvc.session_ctx():
+                ans = dvc.get_flux_monitor_analyses(self.irradiation, self.level, self.monitor_sample_name)
+                monitors = self.dvc.make_analyses(ans, calculate_f_only=False)
+                #dvc = self.dvc
+            #with dvc.session_ctx():
+            #    ans = dvc.get_flux_monitor_analyses(self.irradiation, self.level, self.monitor_sample_name)
+            #    monitors = self.dvc.make_analyses(ans, calculate_f_only=False)
+            #
+            #state.geometry = dvc.get_irradiation_geometry(self.irradiation, self.level)
+            state.flux_monitors = monitors
+            self.flux_monitors = monitors
+            print 'oooo', len(self.flux_monitors)
 
 
 class FindReferencesNode(FindNode):
