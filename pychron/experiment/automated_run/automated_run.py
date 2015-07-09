@@ -2046,7 +2046,7 @@ anaylsis_type={}
             return obj
 
     def _make_script_name(self, name):
-        name = '{}_{}'.format(self.spec.mass_spectrometer.lower(), name)
+        # name = '{}_{}'.format(self.spec.mass_spectrometer.lower(), name)
         return add_extension(name, '.py')
 
     def _setup_context(self, script):

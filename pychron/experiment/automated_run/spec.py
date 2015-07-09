@@ -26,6 +26,7 @@ import uuid
 import weakref
 # ============= local library imports  ==========================
 #
+from pychron.core.helpers.filetools import remove_extension
 from pychron.core.helpers.logger_setup import new_logger
 from pychron.experiment.utilities.identifier import get_analysis_type, make_rid, \
     make_runid, is_special, convert_extract_device
@@ -298,16 +299,10 @@ class AutomatedRunSpec(HasTraits):
 
         self._changed = False
 
-    def _remove_mass_spectrometer_name(self, name):
-        if self.mass_spectrometer:
-            name = name.replace('{}_'.format(self.mass_spectrometer.lower()), '')
-        return name
-
-    def _remove_file_extension(self, name, ext='.py'):
-        if name.endswith(ext):
-            name = name[:-3]
-
-        return name
+    # def _remove_mass_spectrometer_name(self, name):
+    #     if self.mass_spectrometer:
+    #         name = name.replace('{}_'.format(self.mass_spectrometer.lower()), '')
+    #     return name
 
     def to_string_attrs(self, attrs):
         def get_attr(attrname):
@@ -319,8 +314,9 @@ class AutomatedRunSpec(HasTraits):
             elif attrname.endswith('script'):
                 # remove mass spectrometer name
                 v = getattr(self, attrname)
-                v = self._remove_mass_spectrometer_name(v)
-                v = self._remove_file_extension(v)
+                # v = self._remove_mass_spectrometer_name(v)
+                v = remove_extension(v)
+
             elif attrname == 'overlap':
                 o, m = self.overlap
                 if m:
@@ -369,8 +365,9 @@ class AutomatedRunSpec(HasTraits):
         else:
             self._changed = True
 
-    @on_trait_change('''extract_+, position, duration, cleanup ''')
-    def _extract_changed(self):
+    @on_trait_change('''extract_+, position, duration, cleanup, pattern, weight, comment,
+    beam_diameter, ramp_duration, ramp_rate, conditionals''')
+    def _handle_value_change(self):
         self._changed = True
 
     # ===============================================================================
@@ -480,12 +477,15 @@ class AutomatedRunSpec(HasTraits):
     @property
     def sensitivity(self):
         return 0
+
     @property
     def extract_duration(self):
         return self.duration
+
     @property
     def cleanup_duration(self):
         return self.cleanup
+
     @property
     def script_hash(self):
         ctx = self.make_script_context()

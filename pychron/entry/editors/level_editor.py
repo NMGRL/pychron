@@ -25,6 +25,7 @@ from traits.api import List, Instance, Str, Float, Any, Button, Property, HasTra
 from traitsui.api import View, Item, TabularEditor, HGroup, UItem, VSplit, Group, VGroup, \
     HSplit
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
@@ -254,7 +255,7 @@ class LevelEditor(Loggable):
                                                  self.selected_production.name,
                                                  self.z)
 
-                        # self._save_production()
+                        self._save_production()
 
                         return self.name
 
@@ -277,7 +278,6 @@ class LevelEditor(Loggable):
         with db.session_ctx():
             ps = []
             for pr in db.get_irradiation_productions():
-            # for pr in self.repo.get_irradiation_productions():
                 p = IrradiationProduction(name=pr.name)
                 p.create(pr)
                 ps.append(p)
@@ -344,7 +344,7 @@ class LevelEditor(Loggable):
         dlg = FileDialog(action='open', default_directory=paths.irradiation_tray_maps_dir)
         if dlg.open() == OK:
             if dlg.path:
-                #verify this is a valid irradiation map file
+                # verify this is a valid irradiation map file
                 if parse_irradiation_tray_map(dlg.path) is not None:
                     db = self.db
                     with db.session_ctx():
