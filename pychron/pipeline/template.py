@@ -21,7 +21,7 @@ from traits.api import HasTraits
 # ============= standard library imports ========================
 import yaml
 # ============= local library imports  ==========================
-from pychron.pipeline.nodes.data import DataNode
+from pychron.pipeline.nodes.data import DataNode, UnknownNode
 from pychron.pipeline.nodes.find import FindNode
 from pychron.pipeline.nodes.gain import GainCalibrationNode
 from pychron.pipeline.nodes.persist import PersistNode
@@ -48,7 +48,7 @@ class PipelineTemplate(HasTraits):
             pass
 
         if not datanode:
-            datanode = DataNode(browser_model=bmodel, dvc=dvc)
+            datanode = UnknownNode(browser_model=bmodel, dvc=dvc)
 
         pipeline.nodes = []
         with open(self.path, 'r') as rfile:

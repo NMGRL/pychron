@@ -26,6 +26,10 @@ ETSConfig.toolkit = "qt4"
 from traitsui.qt4.table_editor import TableDelegate
 from traitsui.qt4.extra import checkbox_renderer
 
+import traits.has_traits
+
+traits.has_traits.CHECK_INTERFACES = 1
+
 from PySide import QtCore
 from pyface.qt import QtGui
 from traits.trait_base import Undefined

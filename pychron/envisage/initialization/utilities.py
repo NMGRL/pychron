@@ -92,6 +92,7 @@ DEFAULT_PLUGINS = (('General', ('Experiment',
                    ('Social', ('Email',)))
 
 DEFAULT_GLOBALS = (('Use IPC', 'use_ipc'),
+                   ('Pipeline Debug', 'pipeline_debug'),
                    ('Use Startup Tests', 'use_startup_tests'),
                    ('Ignore Initialization Warnings', 'ignore_initialization_warnings'),
                    ('Ignore Initialization Questions', 'ignore_initialization_questions'),

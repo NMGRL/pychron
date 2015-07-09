@@ -43,14 +43,15 @@ from pychron.pychron_constants import NULL_STR
 
 DEBUG = False
 
-class IPersiter(Interface):
+
+class IPersister(Interface):
     def post_extraction_save(self, rblob, oblob, snapshots):
         pass
 
     def pre_measurement_save(self):
         pass
 
-    def post_measurement_save(self):
+    def post_measurement_save(self, **kw):
         pass
 
     def save_peak_center_to_file(self, pc):
@@ -60,10 +61,22 @@ class IPersiter(Interface):
         pass
 
 
-@provides(IPersiter)
+@provides(IPersister)
 class BasePersister(Loggable):
     per_spec = Instance('pychron.experiment.automated_run.persistence_spec.PersistenceSpec', ())
     save_enabled = Bool(False)
+
+    def post_extraction_save(self, rblob, oblob, snapshots):
+        pass
+
+    def pre_measurement_save(self):
+        pass
+
+    def post_measurement_save(self, **kw):
+        self._post_measurement_save(**kw)
+
+    def save_peak_center_to_file(self, pc):
+        self._save_peak_center(pc)
 
     def set_persistence_spec(self, **kw):
         self.per_spec.trait_set(**kw)
@@ -167,7 +180,7 @@ class ExcelPersister(BasePersister):
             for j,y in enumerate(iso.baseline.ys):
                 sh.write(j+1,i+5, y)
 
-    def save_peak_center_to_file(self, pc):
+    def _save_peak_center(self, pc):
         wb = self._workbook
         sh = wb.add_sheet('PeakCenter')
         xs, ys = pc.graph.get_data(), pc.graph.get_data(axis=1)

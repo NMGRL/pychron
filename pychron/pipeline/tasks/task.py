@@ -41,7 +41,7 @@ from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.tasks.select_repo import SelectExperimentIDView
 from pychron.processing.tasks.figures.interpreted_age_factory import InterpretedAgeFactory
 
-DEBUG = True
+DEBUG = False
 
 
 class DataMenu(SMenu):
@@ -179,6 +179,9 @@ class PipelineTask(BaseBrowserTask):
         if self.state:
             self.debug('using previous state')
             state = self.state
+            for editor in state.editors:
+                self._close_editor(editor)
+                self._open_editor(editor)
         else:
             state = EngineState()
 

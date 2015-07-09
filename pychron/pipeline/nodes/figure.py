@@ -28,6 +28,10 @@ from pychron.pipeline.options.plotter_options_manager import IdeogramOptionsMana
     SeriesOptionsManager
 
 
+class NoAnalysesError(BaseException):
+    pass
+
+
 class FigureNode(BaseNode):
     editor = Any
     editor_klass = Any
@@ -65,6 +69,9 @@ class FigureNode(BaseNode):
         except AttributeError:
             use_plotting = True
 
+        if not state.unknowns:
+            raise NoAnalysesError
+
         if use_plotting:
             editor = self.editor
             if not editor:
@@ -82,6 +89,7 @@ class FigureNode(BaseNode):
                 state.editors.append(editor)
 
             # print editor, state.unknowns
+
             editor.set_items(state.unknowns)
             oname = editor.name
 
@@ -101,8 +109,6 @@ class FigureNode(BaseNode):
         # self.name = new_name
         if use_plotting:
             self.editor.name = new_name
-
-        return editor
 
     def configure(self, refresh=True):
         self._configured = True

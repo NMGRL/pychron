@@ -29,7 +29,7 @@ from pychron.pipeline.nodes import FindReferencesNode
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.pipeline.nodes.data import UnknownNode, ReferenceNode, FluxMonitorsNode
 from pychron.loggable import Loggable
-from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, FigureNode, SeriesNode
+from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, FigureNode, SeriesNode, NoAnalysesError
 from pychron.pipeline.nodes.filter import FilterNode
 from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode, FitICFactorNode, FitFluxNode, FitNode
 from pychron.pipeline.nodes.grouping import GroupingNode
@@ -41,6 +41,10 @@ from pychron.pipeline.template import PipelineTemplate
 class Pipeline(HasTraits):
     name = Str('Pipeline')
     nodes = List
+
+    def reset(self):
+        for ni in self.nodes:
+            ni.visited = False
 
     @on_trait_change('nodes[]')
     def _handle_nodes_changed(self):
@@ -58,7 +62,7 @@ class Pipeline(HasTraits):
         ps = set()
         for node in self.nodes:
             if isinstance(node, UnknownNode):
-                ps = ps.union({ai.experiment_id for ai in node.analyses})
+                ps = ps.union({ai.experiment_identifier for ai in node.analyses})
         return ps
 
     def move_up(self, node):
@@ -350,11 +354,17 @@ class PipelineEngine(Loggable):
 
         for idx, node in enumerate(self.pipeline.iternodes(start_node, run_to)):
             # self.selected = node
-            node.visited = True
 
             if node.enabled:
+                node.editor = None
                 st = time.time()
-                node.run(state)
+                try:
+                    node.run(state)
+                    node.visited = True
+                except NoAnalysesError:
+                    self.information_dialog('No Analyses in Pipeline!')
+                    self.pipeline.reset()
+                    return True
                 self.debug('{:02n}: {} Runtime: {:0.4f}'.format(idx, node, time.time() - st))
 
                 if state.veto:

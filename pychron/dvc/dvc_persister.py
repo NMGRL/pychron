@@ -128,7 +128,7 @@ class DVCPersister(BasePersister):
     def pre_measurement_save(self):
         pass
 
-    def save_peak_center_to_file(self, pc):
+    def _save_peak_center(self, pc):
         p = self._make_path(modifier='peakcenter')
         xx, yy = pc.graph.get_data(), pc.graph.get_data(axis=1)
 
