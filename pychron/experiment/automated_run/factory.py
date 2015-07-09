@@ -17,8 +17,10 @@
 # ============= enthought library imports =======================
 import pickle
 
+from apptools.preferences.preference_binding import bind_preference
 from traits.api import String, Str, Property, Any, Float, Instance, Int, List, \
     cached_property, on_trait_change, Bool, Button, Event, Enum, Dict
+
 
 # ============= standard library imports ========================
 from traits.trait_errors import TraitError
@@ -42,7 +44,7 @@ from pychron.paths import paths
 from pychron.experiment.script.script import Script, ScriptOptions
 from pychron.experiment.queue.increment_heat_template import IncrementalHeatTemplate
 from pychron.experiment.utilities.human_error_checker import HumanErrorChecker
-from pychron.core.helpers.filetools import list_directory, add_extension, list_directory2
+from pychron.core.helpers.filetools import list_directory, add_extension, list_directory2, remove_extension
 from pychron.lasers.pattern.pattern_maker_view import PatternMakerView
 from pychron.core.ui.gui import invoke_in_main_thread
 
@@ -297,6 +299,9 @@ class AutomatedRunFactory(PersistenceLoggable):
                    'use_simple_truncation', 'conditionals_path')
 
     suppress_meta = False
+
+    use_name_prefix = Bool
+    name_prefix = Str
     # ===========================================================================
     # private
     # ===========================================================================
@@ -307,6 +312,11 @@ class AutomatedRunFactory(PersistenceLoggable):
     _no_clear_labnumber = False
     _meta_cache = Dict
 
+    def __init__(self, *args, **kw):
+        bind_preference(self, 'use_name_prefix', 'pychron.pyscript.use_name_prefix')
+        bind_preference(self, 'name_prefix', 'pychron.pyscript.name_prefix')
+        super(AutomatedRunFactory, self).__init__(*args, **kw)
+
     def setup_files(self):
         self.load_templates()
         self.load_run_blocks()
@@ -316,6 +326,7 @@ class AutomatedRunFactory(PersistenceLoggable):
         # self.load_comment_templates()
 
     def activate(self, load_persistence):
+
         # self.load_run_blocks()
         self.conditionals_path = NULL_STR
         if load_persistence:
@@ -403,12 +414,13 @@ class AutomatedRunFactory(PersistenceLoggable):
     def set_mass_spectrometer(self, new):
         new = new.lower()
         self.mass_spectrometer = new
+        for s in self._iter_scripts():
+            s.mass_spectrometer = new
 
     def set_extract_device(self, new):
         new = new.lower()
         self.extract_device = new
-        for s in SCRIPT_KEYS:
-            s = getattr(self, '{}_script'.format(s))
+        for s in self._iter_scripts():
             s.extract_device = new
 
     def new_runs(self, exp_queue, positions=None, auto_increment_position=False,
@@ -464,7 +476,7 @@ class AutomatedRunFactory(PersistenceLoggable):
             if not positions:
                 positions = self.position
 
-            template = self._use_template()# and not freq
+            template = self._use_template()  # and not freq
             arvs = self._new_runs_by_position(exp_queue, positions, template)
         else:
             arvs = [self._new_run()]
@@ -603,14 +615,19 @@ class AutomatedRunFactory(PersistenceLoggable):
             self.aliquot = int(run.aliquot)
 
         for si in SCRIPT_KEYS:
-            name = '{}_script'.format(si)
-            s = getattr(run, name)
-            if name in excludes or si in excludes:
+            skey = '{}_script'.format(si)
+            if skey in excludes or si in excludes:
                 continue
 
-            setattr(self, name, Script(name=s,
-                                       label=si,
-                                       mass_spectrometer=self.mass_spectrometer))
+            ms = getattr(self, skey)
+            sname = getattr(run, skey)
+            print sname
+            ms.name = sname
+            # ss = self._script_factory(label=si, name=s)
+            # setattr(self, name, ss)
+            # setattr(self, name, Script(name=s,
+            #                            label=si,
+            #                            mass_spectrometer=self.mass_spectrometer))
         self.script_options.name = run.script_options
 
     def _new_pattern(self):
@@ -627,7 +644,7 @@ class AutomatedRunFactory(PersistenceLoggable):
         if self._use_template():
             # t = self.template
             # if not t.endswith('.txt'):
-                # t = '{}.txt'.format(t)
+            # t = '{}.txt'.format(t)
             t = os.path.join(paths.incremental_heat_template_dir, add_extension(self.template))
             template.load(t)
 
@@ -875,7 +892,7 @@ class AutomatedRunFactory(PersistenceLoggable):
         if labnumber in self._meta_cache:
             self.debug('using cached meta values for {}'.format(labnumber))
             d = self._meta_cache[labnumber]
-            for attr in ('sample','irradiation','comment'):
+            for attr in ('sample', 'irradiation', 'comment'):
                 setattr(self, attr, d[attr])
             return True
         else:
@@ -1224,9 +1241,23 @@ class AutomatedRunFactory(PersistenceLoggable):
         self.changed = True
         self.refresh_table_needed = True
 
+    def _update_script_lists(self):
+        self.debug('update script lists')
+        for si in SCRIPT_NAMES:
+            si = getattr(self, si)
+            si.refresh_lists = True
+
+    def _iter_scripts(self):
+        return (getattr(self, s) for s in SCRIPT_NAMES)
+
     # ===============================================================================
     # handlers
     # ===============================================================================
+    @on_trait_change('use_name_prefix, name_prefix')
+    def _handle_prefix(self, name, new):
+        for si in self._iter_scripts():
+            setattr(si, name, new)
+
     def _edit_run_blocks(self):
         from pychron.experiment.queue.run_block import RunBlockEditView
 
@@ -1270,12 +1301,6 @@ class AutomatedRunFactory(PersistenceLoggable):
         task.open(path=path)
         task.set_on_save_as_handler(self._update_script_lists)
         task.set_on_close_handler(self._update_script_lists)
-
-    def _update_script_lists(self):
-        self.debug('update script lists')
-        for si in SCRIPT_NAMES:
-            si = getattr(self, si)
-            si.refresh_lists = True
 
     def _load_defaults_button_fired(self):
         if self.labnumber:
@@ -1342,7 +1367,7 @@ weight, comment, skip, overlap''')
         if name == 'pattern':
             if not self._use_pattern():
                 new = ''
-                #print name, new, self._use_pattern()
+                # print name, new, self._use_pattern()
         self._update_run_values(name, new)
 
     @on_trait_change('''measurement_script:name, 
@@ -1387,8 +1412,8 @@ post_equilibration_script:name''')
             if self._load_labnumber_meta(new):
                 if self._set_defaults:
                     self._load_labnumber_defaults(old, new, special)
-            # if not special:
-            #     self.special_labnumber = 'Special Labnumber'
+                    # if not special:
+                    #     self.special_labnumber = 'Special Labnumber'
         else:
             self.sample = ''
 
@@ -1478,19 +1503,34 @@ post_equilibration_script:name''')
     def _save_flux_button_fired(self):
         self._save_flux()
 
-    @on_trait_change('mass_spectrometer, can_edit')
-    def _update_value(self, name, new):
-        for si in SCRIPT_NAMES:
-            script = getattr(self, si)
-            setattr(script, name, new)
+    # @on_trait_change('mass_spectrometer, can_edit')
+    # def _update_value(self, name, new):
+    #     for si in SCRIPT_NAMES:
+    #         script = getattr(self, si)
+    #         setattr(script, name, new)
 
     # ===============================================================================
     # defaults
     # ================================================================================
-    def _script_factory(self, label, name, kind='ExtractionLine'):
-        return Script(label=label,
-                      mass_spectrometer=self.mass_spectrometer,
-                      kind=kind)
+    def _script_factory(self, label, name=NULL_STR, kind='ExtractionLine'):
+        print kind, self.use_name_prefix, self.name_prefix, self.mass_spectrometer
+        s = Script(label=label,
+                   use_name_prefix=self.use_name_prefix,
+                   name_prefix=self.name_prefix,
+                   mass_spectrometer=self.mass_spectrometer,
+                   name=name,
+                   kind=kind)
+        return s
+        # if self.use_name_prefix:
+        #     if self.name_prefix:
+        #         prefix = self.name_prefix
+        #     else:
+        #         prefix = self.mass_spectrometer
+
+        # return Script(label=label,
+        #               name_prefix = prefix,
+        #               # mass_spectrometer=self.mass_spectrometer,
+        #               kind=kind)
 
     def _extraction_script_default(self):
         return self._script_factory('Extraction', 'extraction')
@@ -1504,25 +1544,14 @@ post_equilibration_script:name''')
     def _post_equilibration_script_default(self):
         return self._script_factory('Post Equilibration', 'post_equilibration')
 
-    def _clean_script_name(self, name):
-        name = self._remove_mass_spectrometer_name(name)
-        return self._remove_file_extension(name)
-
-    def _remove_file_extension(self, name, ext='.py'):
+    def _remove_file_extension(self, name):
         if not name:
             return name
 
         if name is NULL_STR:
             return NULL_STR
 
-        if name.endswith('.py'):
-            name = name[:-3]
-
-        return name
-
-    def _remove_mass_spectrometer_name(self, name):
-        if self.mass_spectrometer:
-            name = name.replace('{}_'.format(self.mass_spectrometer), '')
+        name = remove_extension(name)
         return name
 
     def _factory_view_default(self):
@@ -1666,5 +1695,3 @@ post_equilibration_script:name''')
 #        #        set_pos = False
 #        #        positions = [0]
 #        return positions, set_pos
-
-
