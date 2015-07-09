@@ -22,6 +22,7 @@ from traits.api import Instance, Str, Set, List, provides
 from apptools.preferences.preference_binding import bind_preference
 
 
+
 # ============= standard library imports ========================
 import shutil
 import time
@@ -295,7 +296,7 @@ class DVC(Loggable):
         self.meta_repo.update_j(irradiation, level, pos, identifier, j, e, add)
 
         db = self.db
-        with self.db:
+        with db.session_ctx():
             ip = db.get_identifier(identifier)
             ip.j = j
             ip.j_err = e

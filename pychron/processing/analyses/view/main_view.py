@@ -76,12 +76,13 @@ class MainView(HasTraits):
     def _get_irradiation(self, an):
         return an.irradiation_label
 
-    def _get_j(self, an):
-        return ufloat(an.j, an.j_err)
+        # def _get_j(self, an):
+        # return ufloat(an.j, an.j_err)
 
     def load_measurement(self, an, ar):
 
-        j = self._get_j(an)
+        # j = self._get_j(an)
+        j = an.j
         jf = 'NaN'
         if j is not None:
             jj = floatfmt(nominal_value(j), n=7, s=5)
