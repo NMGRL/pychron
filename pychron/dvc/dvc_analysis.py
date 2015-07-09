@@ -172,7 +172,10 @@ class DVCAnalysis(Analysis):
             # print '    attr {}'.format(time.time()-sst)
 
             # sst=time.time()
-            self.rundate = datetime.datetime.strptime(yd['timestamp'], '%Y-%m-%dT%H:%M:%S')
+            try:
+                self.rundate = datetime.datetime.strptime(yd['timestamp'], '%Y-%m-%dT%H:%M:%S')
+            except ValueError:
+                self.rundate = datetime.datetime.strptime(yd['timestamp'], '%Y-%m-%dT%H:%M:%S.%f')
             self.timestamp = time.mktime(self.rundate.timetuple())
             self.collection_version = yd['collection_version']
             # print '    timestamps {}'.format(time.time()-sst)

@@ -171,6 +171,12 @@ class AnalysisTbl(Base, BaseMixin):
         return make_runid(self.irradiation_position.identifier, self.aliquot, self.increment)
 
     @property
+    def experiment_identifier(self):
+        es = [e.experimentName for e in self.experiment_associations]
+        if len(es) == 1:
+            return es[0]
+
+    @property
     def record_view(self):
         iv = self._record_view
         if not iv:
