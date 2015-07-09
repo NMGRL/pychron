@@ -25,6 +25,7 @@ from uncertainties import ufloat, umath, nominal_value
 from numpy import array
 
 
+
 # ============= local library imports  ==========================
 from pychron.processing.arar_constants import ArArConstants
 from pychron.core.stats.core import calculate_weighted_mean
@@ -370,7 +371,10 @@ def calculate_F(isotopes,
     # calculate radiogenic
     # dont include error in 40/36
     atm40 = atm36 * arar_constants.atm4036.nominal_value
-    k40 = k39 * pr.get('k4039', 1)
+
+    k4039 = pr['K4039']
+    k40 = k39 * k4039
+
     rad40 = a40 - atm40 - k40
     try:
         f = rad40 / k39

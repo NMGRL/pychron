@@ -110,6 +110,8 @@ class FigureNode(BaseNode):
         if use_plotting:
             self.editor.name = new_name
 
+        return self.editor
+
     def configure(self, refresh=True):
         self._configured = True
 

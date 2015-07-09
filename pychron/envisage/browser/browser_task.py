@@ -286,7 +286,7 @@ class BaseBrowserTask(BaseEditorTask):
         existing = [e.basename for e in self.get_recall_editors()]
         if ans:
             for rec in ans:
-                rec.application = self.application
+                # rec.application = self.application
                 av = rec.analysis_view
 
                 # av.application = self.application
