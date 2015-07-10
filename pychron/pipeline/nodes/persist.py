@@ -21,6 +21,7 @@ from traitsui.api import Item
 import os
 # ============= local library imports  ==========================
 from traitsui.editors import DirectoryEditor
+from uncertainties import ufloat
 from pychron.core.helpers.filetools import add_extension, unique_path2, view_file
 from pychron.core.progress import progress_iterator
 from pychron.paths import paths
@@ -29,7 +30,8 @@ from pychron.pipeline.nodes.base import BaseNode
 
 
 class PersistNode(BaseNode):
-    pass
+    def configure(self, **kw):
+        return True
 
 
 class FileNode(PersistNode):
@@ -43,6 +45,9 @@ class PDFNode(FileNode):
 
 class PDFFigureNode(PDFNode):
     name = 'PDF Figure'
+
+    def configure(self, **kw):
+        return self._configure()
 
     def traits_view(self):
 
@@ -83,9 +88,6 @@ class IsotopeEvolutionPersistNode(DVCPersistNode):
     commit_tag = 'ISOEVO'
     modifier = 'intercepts'
 
-    def configure(self):
-        return True
-
     def run(self, state):
         wrapper = lambda x, prog, i, n: self._save_fit(x, prog, i, n, state.saveable_keys)
         progress_iterator(state.unknowns, wrapper)
@@ -110,9 +112,6 @@ class BlanksPersistNode(DVCPersistNode):
     name = 'Save Blanks'
     commit_tag = 'BLANKS'
     modifier = 'blanks'
-
-    def configure(self):
-        return True
 
     def run(self, state):
         # if not state.user_review:
@@ -139,9 +138,6 @@ class ICFactorPersistNode(DVCPersistNode):
     name = 'Save ICFactor'
     commit_tag = 'ICFactor'
     modifier = 'icfactors'
-
-    def configure(self):
-        return True
 
     def run(self, state):
         wrapper = lambda ai, prog, i, n: self._save_icfactors(ai, prog, i, n,
@@ -193,6 +189,13 @@ class FluxPersistNode(DVCPersistNode):
         decay = state.decay_constants
         self.dvc.save_j(irp.irradiation, irp.level, irp.hole_id, irp.identifier,
                         irp.j, irp.jerr, decay, add=False)
+
+        j = ufloat(irp.j, irp.jerr, tag='j')
+        for i in state.unknowns:
+            if i.identifier == irp.identifier:
+                i.j = j
+                i.arar_constants.lambda_k = decay['lambda_k_total']
+                i.recalculate_age()
 
 
 class TablePersistNode(FileNode):

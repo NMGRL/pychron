@@ -193,6 +193,11 @@ class PipelineTask(BaseBrowserTask):
 
         self.state = state
         self._temp_state = state
+
+        # if not self.engine.pre_run(state, self.run_to):
+        #     self.state = None
+        #     self._temp_state = None
+
         if not self.engine.run(state, self.run_to):
             self._toggle_run(True)
         else:

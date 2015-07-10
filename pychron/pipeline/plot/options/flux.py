@@ -62,7 +62,6 @@ class FluxOptions(SaveableFigurePlotterOptions):
         appear_grp = VGroup(bg_grp, pd_grp, a_grp, label='Appearance')
 
         p_grp = self._get_fitting_group()
-
         v = View(Tabbed(p_grp, appear_grp))
         return v
 
@@ -80,9 +79,9 @@ class FluxOptions(SaveableFigurePlotterOptions):
         onedgrp = VGroup(Item('marker_size'),
                          visible_when='plot_kind=="1D"')
 
-        ogrp = HGroup(Item('confirm_save',
-                           label='Confirm Save', tooltip='Allow user to review evolutions '
-                                                         'before saving to file'))
+        # ogrp = HGroup(Item('confirm_save',
+        #                    label='Confirm Save', tooltip='Allow user to review evolutions '
+        #                                                  'before saving to file'))
         grp = VGroup(Item('plot_kind'),
                      twodgrp,
                      onedgrp,
@@ -92,10 +91,10 @@ class FluxOptions(SaveableFigurePlotterOptions):
                      Item('predicted_j_error_type', ),
                      Item('use_weighted_fit', ),
                      Item('monte_carlo_ntrials', ),
-                     Item('use_monte_carlo', ))
-
-        return VGroup(ogrp,
-                      grp,
-                      label='Fits')
+                     Item('use_monte_carlo', ),
+                     label='Fits')
+        return grp
+        # return VGroup(grp,
+        #               label='Fits')
 
 # ============= EOF =============================================

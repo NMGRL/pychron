@@ -32,13 +32,15 @@ class GroupingNode(BaseNode):
     analysis_kind = 'unknowns'
     name = 'Grouping'
 
+    auto_configure = False
+
     def load(self, nodedict):
         self.by_key = nodedict.get('key', 'Identifier')
 
-    def configure(self):
-        info = self.edit_traits()
-        if info.result:
-            return True
+    # def configure(self):
+    #     info = self.edit_traits()
+    #     if info.result:
+    #         return True
 
     def _generate_key(self):
         if self.by_key == 'Aliquot':

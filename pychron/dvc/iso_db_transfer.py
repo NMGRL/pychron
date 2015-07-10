@@ -381,7 +381,7 @@ class IsoDBTransfer(Loggable):
             except AttributeError:
                 j, e = 0, 0
 
-            yd.append({'j': j, 'j_err': e, 'position': pos})
+            yd.append({'j': j, 'j_err': e, 'position': pos, 'decay_constants': {}})
             jdump(yd, p)
             # with open(p, 'w') as wfile:
             #     json.dump(yd, wfile, indent=4)

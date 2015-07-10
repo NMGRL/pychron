@@ -284,9 +284,7 @@ class MetaRepo(GitRepoManager):
 
     def add_level(self, irrad, level):
         p = self.get_level_path(irrad, level)
-        # with open(p, 'w') as wfile:
-        #     json.dump([], wfile)
-        jdump({'decay_constants': {}, 'positions': []}, p)
+        jdump([], p)
         self.add(p, commit=False)
 
     def get_level_path(self, irrad, level):
@@ -324,21 +322,20 @@ class MetaRepo(GitRepoManager):
                 wfile.write(path_or_txt)
         self.add(p, commit=commit)
 
-    def update_j(self, irradiation, level, pos, identifier, j, e, decay, add=True):
+    def update_flux(self, irradiation, level, pos, identifier, j, e, decay, add=True):
         p = self.get_level_path(irradiation, level)
         with open(p, 'r') as rfile:
             jd = json.load(rfile)
 
-        if isinstance(jd, dict):
-            jd = jd['positions']
-
-        njd = [ji if ji['position'] != pos else {'position': pos, 'j': j, 'j_err': e, 'identifier': identifier} for ji
+        njd = [ji if ji['position'] != pos else {'position': pos, 'j': j, 'j_err': e,
+                                                 'decay_constants': decay,
+                                                 'identifier': identifier} for ji
                in jd]
 
-        n = {'decay_constants': decay, 'positions': njd}
+        # n = {'decay_constants': decay, 'positions': njd}
         # with open(p, 'w') as wfile:
         #     json.dump(njd, wfile, indent=4)
-        jdump(n, p)
+        jdump(njd, p)
         if add:
             self.add(p, commit=False)
 
@@ -367,15 +364,22 @@ class MetaRepo(GitRepoManager):
 
     def get_flux(self, irradiation, level, position):
         path = os.path.join(self.path, irradiation, add_extension(level, '.json'))
-        j, e = 0, 0
+        j, e, lambda_k = 0, 0, None
+
         if os.path.isfile(path):
             with open(path) as rfile:
                 positions = json.load(rfile)
+            # if isinstance(positions, dict):
+            #     positions = positions['positions']
+
             pos = next((p for p in positions if p['position'] == position), None)
             if pos:
                 j, e = pos['j'], pos['j_err']
+                dc = pos.get('decay_constants')
+                if dc:
+                    lambda_k = ufloat(dc['lambda_k_total'], dc['lambda_k_total_error'])
 
-        return ufloat(j, e)
+        return ufloat(j, e), lambda_k
 
     def get_gains(self, name):
         g = self.get_gain_obj(name)

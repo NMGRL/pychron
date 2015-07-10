@@ -90,14 +90,17 @@ class SimpleEditor(_SimpleEditor):
         """
             recursively refresh the nodes
         """
-        for i in range(tree.childCount()):
-            node = tree.child(i)
-            try:
-                self._update_icon(node)
-            except AttributeError:
-                continue
+        if tree:
+            n = tree.childCount()
+            if n:
+                for i in range(n):
+                    node = tree.child(i)
+                    try:
+                        self._update_icon(node)
+                    except AttributeError:
+                        continue
 
-            self._refresh_icons(node)
+                    self._refresh_icons(node)
 
     def _refresh_icons_fired(self):
         ctrl = self.control

@@ -32,7 +32,7 @@ class DataNode(BaseNode):
 
     check_reviewed = Bool(False)
 
-    def configure(self):
+    def configure(self, **kw):
         browser_view = BrowserView(model=self.browser_model)
         info = browser_view.edit_traits(kind='livemodal')
         if info.result:
@@ -96,6 +96,7 @@ class ReferenceNode(DataNode):
 class FluxMonitorsNode(DataNode):
     name = 'Flux Monitors'
     analysis_kind = 'flux_monitors'
+    auto_configure = False
 
     def run(self, state):
         items = getattr(state, self.analysis_kind)

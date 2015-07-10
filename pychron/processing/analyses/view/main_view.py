@@ -108,7 +108,8 @@ class MainView(HasTraits):
                              value=self._get_irradiation(an)),
             MeasurementValue(name='J',
                              value=jf),
-
+            MeasurementValue(name='Lambda K',
+                             value=nominal_value(ar.arar_constants.lambda_k)),
             MeasurementValue(name='Project',
                              value=an.project),
             MeasurementValue(name='Sample',

@@ -31,7 +31,9 @@ class TableNode(BaseNode):
     name = 'Analysis Table'
     options_klass = TableOptions
 
-    def configure(self):
+    auto_configure = False
+
+    def configure(self, **kw):
         return self._configure(self.options)
 
     def run(self, state):

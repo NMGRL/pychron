@@ -137,9 +137,9 @@ class PipelineEngine(Loggable):
         self._load_predefined_templates()
 
     def reset(self):
-        for ni in self.pipeline.nodes:
-            ni.visited = False
-
+        # for ni in self.pipeline.nodes:
+        #     ni.visited = False
+        self.pipeline.reset()
         self.update_needed = True
 
     def update_detectors(self):
@@ -350,6 +350,23 @@ class PipelineEngine(Loggable):
                 # self.refresh_analyses()
                 return True
 
+    # def pre_run(self, state, run_to):
+    #     # ost = time.time()
+    #     start_node = state.veto
+    #     self.debug('pipeline pre run started')
+    #     if start_node:
+    #         self.debug('starting at node {}'.format(start_node))
+    #     state.veto = None
+    #
+    #     for idx, node in enumerate(self.pipeline.iternodes(start_node, run_to)):
+    #         # self.selected = node
+    #         if node.enabled:
+    #             print node
+    #             if not node.pre_run(state):
+    #                 break
+    #     else:
+    #         return True
+
     def run(self, state, run_to):
         ost = time.time()
         start_node = state.veto
@@ -358,11 +375,20 @@ class PipelineEngine(Loggable):
             self.debug('starting at node {}'.format(start_node))
         state.veto = None
 
+        for node in self.pipeline.iternodes(start_node, run_to):
+            node.visited = False
+
         for idx, node in enumerate(self.pipeline.iternodes(start_node, run_to)):
             # self.selected = node
 
             if node.enabled:
                 node.editor = None
+
+                node.active = True
+                if not node.pre_run(state):
+                    return True
+                node.active = False
+
                 st = time.time()
                 try:
                     node.run(state)

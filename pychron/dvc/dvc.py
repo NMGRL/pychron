@@ -24,6 +24,7 @@ from apptools.preferences.preference_binding import bind_preference
 
 
 
+
 # ============= standard library imports ========================
 import shutil
 import time
@@ -294,7 +295,7 @@ class DVC(Loggable):
     def save_j(self, irradiation, level, pos, identifier, j, e, decay, add=True):
         self.info('Saving j for {}{}:{} {}, j={} +/-{}'.format(irradiation, level,
                                                                pos, identifier, j, e))
-        self.meta_repo.update_j(irradiation, level, pos, identifier, j, e, decay, add)
+        self.meta_repo.update_flux(irradiation, level, pos, identifier, j, e, decay, add)
 
         db = self.db
         with db.session_ctx():
@@ -583,8 +584,12 @@ class DVC(Loggable):
                 pt = time.time() - st
 
                 st = time.time()
-                a.j = meta_repo.get_flux(record.irradiation, record.irradiation_level,
+                j, lambda_k = meta_repo.get_flux(record.irradiation, record.irradiation_level,
                                          record.irradiation_position_position)
+                a.j = j
+                if lambda_k:
+                    a.arar_constants.lambda_k = lambda_k
+
                 ft = time.time() - st
                 a.set_tag(record.tag)
                 if calculate_f_only:
