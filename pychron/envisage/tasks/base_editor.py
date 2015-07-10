@@ -22,6 +22,7 @@ from pychron.loggable import Loggable
 
 
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -50,6 +51,7 @@ def grouped_name(names, delimiter='-'):
 
 class BaseTraitsEditor(TraitsEditor, Loggable):
     dirty = Bool(False)
+    save_required = Bool(False)
 
     def prepare_destroy(self):
         pass

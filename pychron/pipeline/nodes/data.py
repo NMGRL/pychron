@@ -52,11 +52,16 @@ class UnknownNode(DataNode):
     analysis_kind = 'unknowns'
 
     def run(self, state):
+        if not self.analyses:
+            if not self.configure():
+                state.canceled = True
+                return
+
         review_req = []
-        for attr in ('blanks', 'iso_evo'):
-            for ai in self.analyses:
-                ai.group_id = 0
-                if self.check_reviewed:
+        for ai in self.analyses:
+            ai.group_id = 0
+            if self.check_reviewed:
+                for attr in ('blanks', 'iso_evo'):
                     # check analyses to see if they have been reviewed
                     if attr not in review_req:
                         if not self.dvc.analysis_has_review(ai, attr):

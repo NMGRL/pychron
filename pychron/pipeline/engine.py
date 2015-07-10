@@ -224,6 +224,12 @@ class PipelineEngine(Loggable):
 
         self.pipeline.add_after(node, newnode)
 
+    def clear(self):
+        self.unknowns = []
+        self.references = []
+        self.pipeline.nodes = []
+        self.selected_pipeline_template = ''
+        # self._set_template(self.selected_pipeline_template)
     # ============================================================================================================
     # nodes
     # ============================================================================================================
@@ -509,6 +515,7 @@ class PipelineEngine(Loggable):
             # pt = PipelineTemplate(new)
 
     def _selected_changed(self, new):
+
         self.show_group_colors = False
         if isinstance(new, FigureNode):
             self.show_group_colors = True

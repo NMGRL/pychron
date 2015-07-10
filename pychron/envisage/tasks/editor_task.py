@@ -136,9 +136,10 @@ class BaseEditorTask(BaseManagerTask):
 
     def _open_editor(self, editor, activate=True, **kw):
         if self.editor_area:
-            self.editor_area.add_editor(editor)
-            if activate:
-                self.editor_area.activate_editor(editor)
+            if editor not in self.editor_area.editors:
+                self.editor_area.add_editor(editor)
+                if activate:
+                    self.editor_area.activate_editor(editor)
 
             # ===============================================================================
             # property get/set

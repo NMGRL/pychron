@@ -23,6 +23,7 @@ from traitsui.table_column import ObjectColumn
 # ============= standard library imports ========================
 from numpy import array, zeros, vstack, linspace, meshgrid, arctan2, sin, cos
 # ============= local library imports  ==========================
+from uncertainties import nominal_value
 from pychron.core.helpers.formatting import calc_percent_error, floatfmt
 from pychron.core.regression.flux_regressor import PlaneFluxRegressor, BowlFluxRegressor
 from pychron.envisage.icon_button_editor import icon_button_editor
@@ -76,6 +77,8 @@ class FluxPosition(HasTraits):
     percent_saved_error = Property
     percent_mean_error = Property
     percent_pred_error = Property
+
+    analyses = List
 
     def _get_percent_saved_error(self):
         return calc_percent_error(self.saved_j, self.saved_jerr)
@@ -223,8 +226,37 @@ class FluxResultsEditor(BaseTraitsEditor):
 
         p.y_axis.tick_label_formatter = lambda x: floatfmt(x, n=2, s=3)
 
+        # plot the individual analyses
+        def xfunc(i):
+            return i
+
+        ixs = []
+        iys = []
+        m, k = po.monitor_age * 1e6, po.lambda_k
+        slope = True
+        prev = self.monitor_positions[-1].j
+        for j, p in enumerate(self.monitor_positions):
+            if p.use:
+                if prev:
+                    slope = prev < p.j
+                prev = p.j
+                pp = arctan2(p.x, p.y)
+                xx = linspace(pp - .1, pp + .1, len(p.analyses))
+                ixs.extend(xx)
+
+                yy = [nominal_value(a.model_j(m, k)) for a in p.analyses]
+
+                yy = sorted(yy, reverse=not slope)
+
+                iys.extend(yy)
+
+        g.new_series(ixs, iys, type='scatter', marker='circle', marker_size=1.5)
+
         xs = arctan2(x, y)
         ys = reg.ys
+        ymi = min(ys.min(), min(iys))
+        yma = min(ys.max(), max(iys))
+
         yserr = reg.yserr
         scatter, _ = g.new_series(xs, ys,
                                   yerror=yserr,
@@ -247,7 +279,7 @@ class FluxResultsEditor(BaseTraitsEditor):
 
         g.new_series(fxs, fys)
         g.set_x_limits(-3.2, 3.2)
-
+        g.set_y_limits(ymi, yma, pad='0.1')
         self._model_sin_flux(fxs, fys)
 
     def _model_sin_flux(self, fxs, fys):
@@ -383,7 +415,8 @@ class FluxResultsEditor(BaseTraitsEditor):
                                  reorderable=False)
 
         pgrp = VGroup(UItem('monitor_positions', editor=mon_editor),
-                      UItem('unknown_positions', editor=unk_editor))
+                      UItem('unknown_positions', editor=unk_editor),
+                      label='Tables')
 
         ggrp = UItem('graph', style='custom')
         tgrp = HGroup(UItem('recalculate_button'),

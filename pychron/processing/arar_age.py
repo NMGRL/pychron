@@ -27,7 +27,7 @@ from copy import copy
 import os
 # ============= local library imports  ==========================
 from pychron.processing.argon_calculations import calculate_F, abundance_sensitivity_correction, age_equation, \
-    calculate_decay_factor
+    calculate_decay_factor, calculate_flux
 from pychron.processing.arar_constants import ArArConstants
 from pychron.processing.isotope import Isotope, Baseline, Blank
 
@@ -675,6 +675,10 @@ class ArArAge(MLoggable):
         iso_intensities[1] *= self.ar39decayfactor
         iso_intensities[3] *= self.ar37decayfactor
         return iso_intensities
+
+    def model_j(self, monitor_age, lambda_k):
+        j = calculate_flux(self.uF, monitor_age, lambda_k=lambda_k)
+        return j
 
     def _calculate_age(self, use_display_age=False, include_decay_error=None):
         """

@@ -35,18 +35,15 @@ from pychron.pychron_constants import ERROR_TYPES, K_DECAY_CONSTANTS
 
 class FluxOptions(SaveableFigurePlotterOptions):
     # plot_option_klass = IsoFilterFitAuxPlot
-    color_map_name = Str('jet')
-    marker_size = Int(5)
-    levels = Int(50, auto_set=False, enter_set=True)
+    color_map_name = dumpable(Str('jet'))
+    marker_size = dumpable(Int(5))
+    levels = dumpable(Int(50, auto_set=False, enter_set=True))
 
-    error_kind = 'SD'
+    error_kind = dumpable(Str('SD'))
 
-    selected_decay = Enum(K_DECAY_CONSTANTS.keys())
-    monitor_age = Float(28.201)
+    selected_decay = dumpable(Enum(K_DECAY_CONSTANTS.keys()))
+    monitor_age = dumpable(Float(28.201))
     lambda_k = Property(depends_on='selected_decay')
-    # decay_constants =
-    # monitor_age = 28.201
-    # lambda_k = 5.464e-10
 
     model_kind = dumpable(Enum('Plane', 'Bowl'))
     predicted_j_error_type = dumpable(Enum(*ERROR_TYPES))

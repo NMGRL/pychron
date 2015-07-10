@@ -286,7 +286,7 @@ class MetaRepo(GitRepoManager):
         p = self.get_level_path(irrad, level)
         # with open(p, 'w') as wfile:
         #     json.dump([], wfile)
-        jdump([], p)
+        jdump({'decay_constants': {}, 'positions': []}, p)
         self.add(p, commit=False)
 
     def get_level_path(self, irrad, level):
@@ -329,12 +329,16 @@ class MetaRepo(GitRepoManager):
         with open(p, 'r') as rfile:
             jd = json.load(rfile)
 
-        jd['decay_constants'] = decay
+        if isinstance(jd, dict):
+            jd = jd['positions']
+
         njd = [ji if ji['position'] != pos else {'position': pos, 'j': j, 'j_err': e, 'identifier': identifier} for ji
                in jd]
+
+        n = {'decay_constants': decay, 'positions': njd}
         # with open(p, 'w') as wfile:
         #     json.dump(njd, wfile, indent=4)
-        jdump(njd, p)
+        jdump(n, p)
         if add:
             self.add(p, commit=False)
 

@@ -32,14 +32,12 @@ from pychron.pipeline.engine import PipelineEngine
 from pychron.pipeline.plot.editors.interpreted_age_editor import InterpretedAgeEditor
 from pychron.pipeline.state import EngineState
 from pychron.pipeline.tasks.actions import RunAction, SavePipelineTemplateAction, ResumeAction, ResetAction, \
-    ConfigureRecallAction, GitRollbackAction, TagAction, SetInterpretedAgeAction
+    ConfigureRecallAction, GitRollbackAction, TagAction, SetInterpretedAgeAction, ClearAction
 from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane
 from pychron.envisage.browser.browser_task import BaseBrowserTask
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.tasks.select_repo import SelectExperimentIDView
 from pychron.processing.tasks.figures.interpreted_age_factory import InterpretedAgeFactory
-
-DEBUG = False
 
 
 class DataMenu(SMenu):
@@ -61,6 +59,7 @@ class PipelineTask(BaseBrowserTask):
     tool_bars = [SToolBar(RunAction(),
                           ResumeAction(),
                           ResetAction(),
+                          ClearAction(),
                           ConfigureRecallAction(),
                           SavePipelineTemplateAction()),
                  SToolBar(GitRollbackAction()),
@@ -137,6 +136,11 @@ class PipelineTask(BaseBrowserTask):
         if expid:
             self.dvc.rollback_experiment_repo(expid)
 
+    def clear(self):
+        self.engine.clear()
+        self.reset()
+        self.close_all()
+
     def reset(self):
         self.resume_enabled = False
         self._temp_state = None
@@ -180,11 +184,12 @@ class PipelineTask(BaseBrowserTask):
         if self.state:
             self.debug('using previous state')
             state = self.state
-            for editor in state.editors:
-                self._close_editor(editor)
-                self._open_editor(editor)
+            # for editor in state.editors:
+            #     self._close_editor(editor)
+            #     self._open_editor(editor)
         else:
             state = EngineState()
+            self.close_all()
 
         self.state = state
         self._temp_state = state
@@ -196,9 +201,9 @@ class PipelineTask(BaseBrowserTask):
 
         self.engine.update_needed = True
 
-        self.close_all()
         for editor in state.editors:
-            self._close_editor(editor)
+            # print editor
+            # self._close_editor(editor)
             self._open_editor(editor)
 
         self.engine.selected = None
@@ -301,14 +306,16 @@ class PipelineTask(BaseBrowserTask):
     def _prompt_for_save(self):
         ret = True
         ps = self.engine.get_experiment_ids()
-        print ps
+        # print ps
+
         if ps:
             changed = experiment_has_staged(ps)
+            self.debug('task has changes to {}'.format(changed))
             if changed:
                 m = 'You have changes to analyses. Would you like to share them?'
                 ret = self._handle_prompt_for_save(m, 'Share Changes')
                 if ret == 'save':
-                    push_experiments(ps)
+                    push_experiments(changed)
 
         return ret
 
