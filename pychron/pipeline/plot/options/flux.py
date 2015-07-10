@@ -16,8 +16,8 @@
 
 # ============= enthought library imports =======================
 from chaco.default_colormaps import color_map_name_dict
-from traits.api import Bool, Str, Int, Enum
-from traitsui.api import View, Item, VGroup, HGroup, Tabbed
+from traits.api import Bool, Str, Int, Enum, Float, Property
+from traitsui.api import View, Item, VGroup, HGroup, Tabbed, Readonly
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.editors import EnumEditor
@@ -25,7 +25,7 @@ from traitsui.editors import EnumEditor
 from pychron.pipeline.plot.options.base import dumpable
 from pychron.pipeline.plot.options.figure_plotter_options import SaveableFigurePlotterOptions
 # from pychron.processing.plot.options.option import AuxPlotOptions
-from pychron.pychron_constants import ERROR_TYPES
+from pychron.pychron_constants import ERROR_TYPES, K_DECAY_CONSTANTS
 
 
 # class IsoFilterFitAuxPlot(AuxPlotOptions, IsoFilterFit):
@@ -40,8 +40,13 @@ class FluxOptions(SaveableFigurePlotterOptions):
     levels = Int(50, auto_set=False, enter_set=True)
 
     error_kind = 'SD'
-    monitor_age = 28.201
-    lambda_k = 5.464e-10
+
+    selected_decay = Enum(K_DECAY_CONSTANTS.keys())
+    monitor_age = Float(28.201)
+    lambda_k = Property(depends_on='selected_decay')
+    # decay_constants =
+    # monitor_age = 28.201
+    # lambda_k = 5.464e-10
 
     model_kind = dumpable(Enum('Plane', 'Bowl'))
     predicted_j_error_type = dumpable(Enum(*ERROR_TYPES))
@@ -64,6 +69,10 @@ class FluxOptions(SaveableFigurePlotterOptions):
         v = View(Tabbed(p_grp, appear_grp))
         return v
 
+    def _get_lambda_k(self):
+        dc = K_DECAY_CONSTANTS[self.selected_decay]
+        return dc[0] + dc[2]
+
     def _get_fitting_group(self):
         twodgrp = VGroup(HGroup(Item('color_map_name',
                                      label='Color Map',
@@ -80,6 +89,9 @@ class FluxOptions(SaveableFigurePlotterOptions):
         grp = VGroup(Item('plot_kind'),
                      twodgrp,
                      onedgrp,
+                     Item('selected_decay', label='Total K Decay'),
+                     Readonly('lambda_k'),
+                     Item('monitor_age'),
                      Item('predicted_j_error_type', ),
                      Item('use_weighted_fit', ),
                      Item('monte_carlo_ntrials', ),

@@ -324,12 +324,14 @@ class MetaRepo(GitRepoManager):
                 wfile.write(path_or_txt)
         self.add(p, commit=commit)
 
-    def update_j(self, irradiation, level, pos, identifier, j, e, add=True):
+    def update_j(self, irradiation, level, pos, identifier, j, e, decay, add=True):
         p = self.get_level_path(irradiation, level)
         with open(p, 'r') as rfile:
             jd = json.load(rfile)
 
-        njd = [ji if ji['position'] != pos else {'position': pos, 'j': j, 'j_err': e} for ji in jd]
+        jd['decay_constants'] = decay
+        njd = [ji if ji['position'] != pos else {'position': pos, 'j': j, 'j_err': e, 'identifier': identifier} for ji
+               in jd]
         # with open(p, 'w') as wfile:
         #     json.dump(njd, wfile, indent=4)
         jdump(njd, p)

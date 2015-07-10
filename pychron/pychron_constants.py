@@ -133,6 +133,8 @@ QTEGRA_INTEGRATION_TIMES = [0.065536, 0.131072, 0.262144, 0.524288,
                             16.777216, 33.554432, 67.108864]
 DEFAULT_INTEGRATION_TIME = 1.048576
 
+K_DECAY_CONSTANTS = {'Min et al., 2000': (5.80e-11, 0, 4.884e-10, 0),
+                     'Steiger & Jager 1977': (5.81e-11, 0, 4.962e-10, 0)}
 # MINNA_BLUFF_IRRADIATIONS = [('NM-205', ['E', 'F' , 'G', 'H', 'O']),
 # ('NM-213', ['A', 'C', 'I', 'J', 'K', 'L']),
 # ('NM-216', ['C', 'D', 'E', 'F']),

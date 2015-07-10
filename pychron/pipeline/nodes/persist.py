@@ -179,19 +179,20 @@ class FluxPersistNode(DVCPersistNode):
             xs = [x for x in state.saveable_irradiation_positions if x.save]
             if xs:
                 progress_iterator(xs,
-                                  self._save_j,
+                                  lambda *args: self._save_j(state, *args),
                                   threshold=1)
 
                 p = self.dvc.meta_repo.get_level_path(state.irradiation, state.level)
                 self.dvc.meta_repo.add(p)
                 self.dvc.meta_commit('fit flux for {}'.format(state.irradiation, state.level))
 
-    def _save_j(self, irp, prog, i, n):
+    def _save_j(self, state, irp, prog, i, n):
         if prog:
             prog.change_message('Save J for {} {}/{}'.format(irp.identifier, i, n))
 
+        decay = state.decay_constants
         self.dvc.save_j(irp.irradiation, irp.level, irp.hole_id, irp.identifier,
-                        irp.j, irp.jerr, add=False)
+                        irp.j, irp.jerr, decay, add=False)
 
 
 class TablePersistNode(FileNode):

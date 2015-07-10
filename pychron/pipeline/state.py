@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, List, Bool, Any, Property, cached_property, Set, Str
+from traits.api import HasTraits, List, Bool, Any, Property, cached_property, Set, Str, Dict
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.isotope_utils import sort_isotopes
@@ -29,6 +29,8 @@ class EngineState(HasTraits):
     unknowns = List
     references = List
     flux_monitors = List
+    unknown_positions = List
+    decay_constants = Dict
 
     editors = List
     has_references = Bool

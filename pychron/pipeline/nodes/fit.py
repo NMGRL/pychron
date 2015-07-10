@@ -212,14 +212,14 @@ class FitFluxNode(FitNode):
         geom = state.geometry
 
         monitors = state.flux_monitors
-        editor.analyses = monitors
+        # editor.analyses = monitors
         # monitor_positions = []
         if monitors:
             opt = self.plotter_options
             monage = opt.monitor_age * 1e6
             lk = opt.lambda_k
             ek = opt.error_kind
-
+            state.decay_constants = {'lambda_k_total': lk, 'lambda_k_total_error': 0}
             # editor = FluxResultsEditor(options=self.options,
             #                            plotter_options=self.plotter_options)
             key = lambda x: x.identifier
@@ -247,11 +247,15 @@ class FitFluxNode(FitNode):
                                  x=x, y=y,
                                  n=n)
                 poss.append(p)
+
+                # for unk_pos in state.unknown_positions:
+                # print unk_pos
+
                 # print identifier, irradiation_position, j, mj, n
                 # editor.add_position(identifier, ip, sample, j, mj, n)
             editor.geometry = geom
-            state.saveable_irradiation_positions = poss
-            editor.set_positions(poss, [])
+            state.saveable_irradiation_positions = poss + state.unknown_positions
+            editor.set_positions(poss, state.unknown_positions)
             editor.predict_values()
 
             if self.has_save_node and self.plotter_options.confirm_save:

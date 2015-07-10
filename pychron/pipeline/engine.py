@@ -184,7 +184,7 @@ class PipelineEngine(Loggable):
         for node in self.pipeline.nodes:
             if isinstance(node, ReferenceNode):
                 refs.extend(node.analyses)
-            elif isinstance(node, UnknownNode):
+            elif isinstance(node, (UnknownNode, FluxMonitorsNode)):
                 unks.extend(node.analyses)
 
         self.unknowns = unks
@@ -408,7 +408,7 @@ class PipelineEngine(Loggable):
             if hasattr(node, 'editor'):
                 if node.editor == editor:
                     self.selected = node
-                    self.unknowns = editor.analyses
+                    # self.unknowns = editor.analyses
                     self.refresh_table_needed = True
                     break
 
@@ -510,15 +510,21 @@ class PipelineEngine(Loggable):
 
     def _selected_changed(self, new):
         self.show_group_colors = False
-        if isinstance(new, (UnknownNode, FluxMonitorsNode)):
-            self.unknowns = new.analyses
-        elif isinstance(new, ReferenceNode):
-            self.references = new.analyses
-        elif isinstance(new, FigureNode):
+        if isinstance(new, FigureNode):
             self.show_group_colors = True
             if new.editor:
-                self.unknowns = new.editor.analyses
                 self.active_editor = new.editor
+
+    # self.show_group_colors = False
+    #     if isinstance(new, (UnknownNode, FluxMonitorsNode)):
+    #         self.unknowns = new.analyses
+    #     elif isinstance(new, ReferenceNode):
+    #         self.references = new.analyses
+    #     elif isinstance(new, FigureNode):
+    #         self.show_group_colors = True
+    #         if new.editor:
+    #             self.unknowns = new.editor.analyses
+    #             self.active_editor = new.editor
 
     def _dclicked_changed(self, new):
         # if isinstance(new, DataNode):

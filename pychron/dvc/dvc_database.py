@@ -899,13 +899,23 @@ class DVCDatabase(DatabaseAdapter):
     def get_experiment_identifiers(self):
         return self._get_table_names(ExperimentTbl)
 
-    def get_flux_monitors(self, irradiation, level, sample):
+    def get_unknown_positions(self, *args, **kw):
+        kw['invert'] = True
+        return self._flux_positions(*args, **kw)
+
+    def get_flux_monitors(self, *args, **kw):
+        return self._flux_positions(*args, **kw)
+
+    def _flux_positions(self, irradiation, level, sample, invert=False):
         with self.session_ctx() as sess:
             q = sess.query(IrradiationPositionTbl)
-            q = q.join(IrradiationTbl, LevelTbl, SampleTbl)
+            q = q.join(LevelTbl, IrradiationTbl, SampleTbl)
             q = q.filter(IrradiationTbl.name == irradiation)
             q = q.filter(LevelTbl.name == level)
-            q = q.filter(SampleTbl.name == sample)
+            if invert:
+                q = q.filter(not_(SampleTbl.name == sample))
+            else:
+                q = q.filter(SampleTbl.name == sample)
 
             return self._query_all(q)
 

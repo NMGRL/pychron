@@ -204,6 +204,7 @@ class PipelineTask(BaseBrowserTask):
         self.engine.selected = None
         self.engine.update_needed = True
 
+        self.engine.refresh_analyses()
         if state.dbmodified:
             self.dbmodified = True
 

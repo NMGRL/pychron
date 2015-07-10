@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 
 from traits.api import HasTraits, Str, Int, Bool, Float, Property, List, Instance, Event, Button
-from traitsui.api import View, UItem, TableEditor, VGroup, HGroup, Item, spring
+from traitsui.api import View, UItem, TableEditor, VGroup, HGroup, Item, spring, Tabbed
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
 # ============= standard library imports ========================
@@ -124,7 +124,7 @@ class FluxResultsEditor(BaseTraitsEditor):
     def set_positions(self, mon, unk):
         self.monitor_positions = mon
         self.unknown_positions = unk
-        self.positions = mon + unk
+        # self.positions = mon + unk
 
     def predict_values(self):
         try:
@@ -162,15 +162,16 @@ class FluxResultsEditor(BaseTraitsEditor):
 
                 p.dev = (oj - j) / j * 100
         else:
-            for p in self.positions:
-                j = reg.predict([(p.x, p.y)])[0]
-                je = reg.predict_error([[(p.x, p.y)]])[0]
-                oj = p.saved_j
+            for positions in (self.unknown_positions, self.monitor_positions):
+                for p in positions:
+                    j = reg.predict([(p.x, p.y)])[0]
+                    je = reg.predict_error([[(p.x, p.y)]])[0]
+                    oj = p.saved_j
 
-                p.j = j
-                p.jerr = je
+                    p.j = float(j)
+                    p.jerr = float(je)
 
-                p.dev = (oj - j) / j * 100
+                    p.dev = (oj - j) / j * 100
 
         if self.plotter_options.plot_kind == '2D':
             self._graph_contour(x, y, z, r, reg)
@@ -350,10 +351,40 @@ class FluxResultsEditor(BaseTraitsEditor):
                    width=70),
             column(klass=CheckboxColumn, name='save', label='Save', editable=True, width=30)]
 
-        editor = TableEditor(columns=cols, sortable=False,
-                             reorderable=False)
+        unk_cols = [column(klass=CheckboxColumn, name='use', label='Use', editable=True, width=30),
+                    column(name='hole_id', label='Hole'),
+                    column(name='identifier', label='Identifier'),
+                    column(name='sample', label='Sample', width=115),
+                    column(name='saved_j', label='Saved J',
+                           format_func=lambda x: floatfmt(x, n=6, s=4)),
+                    column(name='saved_jerr', label=u'\u00b1\u03c3',
+                           format_func=lambda x: floatfmt(x, n=6, s=4)),
+                    column(name='percent_saved_error',
+                           label='%',
+                           format_func=lambda x: floatfmt(x, n=2)),
+                    column(name='j', label='Pred. J',
+                           format_func=lambda x: floatfmt(x, n=8, s=4),
+                           width=75),
+                    column(name='jerr',
+                           format_func=lambda x: floatfmt(x, n=10, s=4),
+                           label=u'\u00b1\u03c3',
+                           width=75),
+                    column(name='percent_pred_error',
+                           label='%',
+                           format_func=lambda x: floatfmt(x, n=2) if x else ''),
+                    column(name='dev', label='dev',
+                           format='%0.2f',
+                           width=70),
+                    column(klass=CheckboxColumn, name='save', label='Save', editable=True, width=30)]
+        mon_editor = TableEditor(columns=cols, sortable=False,
+                                 reorderable=False)
 
-        pgrp = UItem('positions', editor=editor)
+        unk_editor = TableEditor(columns=unk_cols, sortable=False,
+                                 reorderable=False)
+
+        pgrp = VGroup(UItem('monitor_positions', editor=mon_editor),
+                      UItem('unknown_positions', editor=unk_editor))
+
         ggrp = UItem('graph', style='custom')
         tgrp = HGroup(UItem('recalculate_button'),
                       Item('min_j', format_str='%0.4e',
@@ -374,7 +405,8 @@ class FluxResultsEditor(BaseTraitsEditor):
                                                  tooltip='Toggle "save" for unknown positions'),
                       icon_button_editor('save_all_button', 'dialog-ok-apply-5',
                                          tooltip='Toggle "save" for all positions'))
-        v = View(VGroup(ggrp, tgrp, pgrp))
+        # v = View(VGroup(ggrp, tgrp, pgrp))
+        v = View(VGroup(tgrp, Tabbed(ggrp, pgrp)))
         return v
 
     def _get_percent_j_change(self):

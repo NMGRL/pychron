@@ -21,6 +21,7 @@ from traitsui.api import Item, EnumEditor
 # ============= local library imports  ==========================
 from pychron.core.confirmation import remember_confirmation_dialog
 from pychron.experiment.utilities.identifier import SPECIAL_MAPPING
+from pychron.pipeline.editors.flux_results_editor import FluxPosition
 from pychron.pipeline.graphical_filter import GraphicalFilterModel, GraphicalFilterView
 from pychron.pipeline.nodes.base import BaseNode
 
@@ -74,16 +75,36 @@ class FindFluxMonitorsNode(FindNode):
             state.veto = self
         else:
             dvc = self.dvc
+            state.geometry = dvc.get_irradiation_geometry(self.irradiation, self.level)
+
             with dvc.session_ctx():
+                ips = dvc.get_unknown_positions(self.irradiation, self.level, self.monitor_sample_name)
+
+                state.unknown_positions = [self._fp_factory(state.geometry, self.irradiation, self.level,
+                                                            ip.identifier, ip.sample.name, ip.position,
+                                                            ip.j, ip.j_err) for ip in ips]
+
                 ans = dvc.get_flux_monitor_analyses(self.irradiation, self.level, self.monitor_sample_name)
                 monitors = self.dvc.make_analyses(ans, calculate_f_only=False)
 
-            state.geometry = dvc.get_irradiation_geometry(self.irradiation, self.level)
             state.unknowns = monitors
             state.flux_monitors = monitors
             state.has_flux_monitors = True
             state.irradiation = self.irradiation
             state.level = self.level
+
+    def _fp_factory(self, geom, irradiation, level, identifier, sample, hole_id, j, j_err):
+        x, y, r, idx = geom[hole_id - 1]
+        fp = FluxPosition(identifier=identifier,
+                          irradiation=irradiation,
+                          level=level,
+                          sample=sample, hole_id=hole_id,
+                          saved_j=j or 0,
+                          saved_jerr=j_err or 0,
+                          # mean_j=nominal_value(mj),/
+                          # mean_jerr=std_dev(mj),
+                          x=x, y=y)
+        return fp
 
 
 class FindReferencesNode(FindNode):

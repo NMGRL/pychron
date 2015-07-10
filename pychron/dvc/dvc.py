@@ -23,6 +23,7 @@ from apptools.preferences.preference_binding import bind_preference
 
 
 
+
 # ============= standard library imports ========================
 import shutil
 import time
@@ -290,10 +291,10 @@ class DVC(Loggable):
         self.info('Saving fits for {}'.format(ai))
         ai.dump_fits(keys)
 
-    def save_j(self, irradiation, level, pos, identifier, j, e, add):
+    def save_j(self, irradiation, level, pos, identifier, j, e, decay, add=True):
         self.info('Saving j for {}{}:{} {}, j={} +/-{}'.format(irradiation, level,
                                                                pos, identifier, j, e))
-        self.meta_repo.update_j(irradiation, level, pos, identifier, j, e, add)
+        self.meta_repo.update_j(irradiation, level, pos, identifier, j, e, decay, add)
 
         db = self.db
         with db.session_ctx():
