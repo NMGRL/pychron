@@ -26,5 +26,15 @@ v2.0.5
  - LabBook
  - Gitified Directories
  - Run block editing
+
+
+v2.1.0
+------------------
+ - major experiment versioon
+ - first release used outside of NMGRL
  
- 
+
+v3.0.0
+------------------
+ - Pipeline
+ - 
