@@ -1,11 +1,20 @@
 RoadMap
 ----------------
-
  - Implement ratio calculation of ages
  - Implement offline workspace
- - Deprecate RPC? move to one communication mechanism. 
+ - ~~Deprecate RPC? move to one communication mechanism.~~
  - use zeromq for all sockets
 
+v3.0.0
+------------------
+ - Pipeline
+ - DVC
+ 
+v2.1.0
+------------------
+ - major experiment versioon
+ - first release used outside of NMGRL
+ 
 v2.0.6
 ----------------
  - Improve labspy
@@ -28,13 +37,3 @@ v2.0.5
  - Run block editing
 
 
-v2.1.0
-------------------
- - major experiment versioon
- - first release used outside of NMGRL
- 
-
-v3.0.0
-------------------
- - Pipeline
- - 
