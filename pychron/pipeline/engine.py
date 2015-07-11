@@ -350,23 +350,6 @@ class PipelineEngine(Loggable):
                 # self.refresh_analyses()
                 return True
 
-    # def pre_run(self, state, run_to):
-    #     # ost = time.time()
-    #     start_node = state.veto
-    #     self.debug('pipeline pre run started')
-    #     if start_node:
-    #         self.debug('starting at node {}'.format(start_node))
-    #     state.veto = None
-    #
-    #     for idx, node in enumerate(self.pipeline.iternodes(start_node, run_to)):
-    #         # self.selected = node
-    #         if node.enabled:
-    #             print node
-    #             if not node.pre_run(state):
-    #                 break
-    #     else:
-    #         return True
-
     def run(self, state, run_to):
         ost = time.time()
         start_node = state.veto
