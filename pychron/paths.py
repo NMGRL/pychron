@@ -111,6 +111,7 @@ class Paths(object):
     block_dir = None
     heating_schedule_dir = None
     map_dir = None
+    furnace_map_dir = None
     user_points_dir = None
     irradiation_tray_maps_dir = None
     # ==============================================================================
@@ -298,7 +299,7 @@ class Paths(object):
         self.block_dir = join(setup_dir, 'blocks')
         self.map_dir = map_dir = join(setup_dir, 'tray_maps')
         self.user_points_dir = join(map_dir, 'user_points')
-
+        self.furnace_map_dir = join(map_dir, 'furnace')
         self.irradiation_tray_maps_dir = join(setup_dir, 'irradiation_tray_maps')
         # ==============================================================================
         # data
@@ -374,8 +375,7 @@ class Paths(object):
         build_directories()
 
     def write_defaults(self):
-        if os.environ.get('TRAVIS_CI', 'False') == 'False' and \
-                        os.environ.get('RTD', 'False') == 'False':
+        if os.environ.get('TRAVIS_CI', 'False') == 'False' and os.environ.get('RTD', 'False') == 'False':
             self._write_default_files()
 
     def _write_default_files(self):
@@ -389,8 +389,7 @@ class Paths(object):
                      (self.edit_ui_defaults, EDIT_UI_DEFAULT),
                      (self.task_extensions_file, TASK_EXTENSION_DEFAULT),
                      (self.identifiers_file, IDENTIFIERS_DEFAULT)):
-
-            overwrite = d in (SYSTEM_HEALTH, SIMPLE_UI_DEFAULT, )
+            overwrite = d in (SYSTEM_HEALTH, SIMPLE_UI_DEFAULT,)
             # overwrite = d in (SYSTEM_HEALTH, SIMPLE_UI_DEFAULT,)
             # print p
             self._write_default_file(p, d, overwrite)

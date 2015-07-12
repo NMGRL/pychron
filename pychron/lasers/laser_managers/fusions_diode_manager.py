@@ -40,6 +40,7 @@ from fusions_laser_manager import FusionsLaserManager
 class FusionsDiodeManager(FusionsLaserManager):
     """
     """
+    stage_manager_id = 'fusions.diode.stage_map'
     id = 'pychron.fusions.diode'
     # name = 'fusions_diode'
     name = 'FusionsDiode'
@@ -81,7 +82,7 @@ class FusionsDiodeManager(FusionsLaserManager):
             self.temperature_controller.use_calibrated_temperature = new
 
     def map_temperature(self, v):
-        #if self.use_calibrated_temperature:
+        # if self.use_calibrated_temperature:
         v = self.temperature_controller.map_temperature(v)
         return v
 
@@ -90,7 +91,6 @@ class FusionsDiodeManager(FusionsLaserManager):
         """
         return self._try('pyrometer',
                          'read_temperature', kw)
-
 
     def get_laser_internal_temperature(self, **kw):
         """
@@ -124,7 +124,7 @@ class FusionsDiodeManager(FusionsLaserManager):
 
     def set_laser_temperature(self, temp, set_pid=True):
         return self._set_laser_power_hook(temp, mode='closed', set_pid=set_pid)
-        #use_calibration=self.use_calibrated_temperature)
+        # use_calibration=self.use_calibrated_temperature)
 
     def get_response_blob(self):
         return self.response_recorder.get_response_blob() if self.response_recorder else ''
@@ -153,7 +153,7 @@ class FusionsDiodeManager(FusionsLaserManager):
                 self.fiber_light.power_off()
 
             if clear_setpoint:
-                #disable the temperature_controller unit a value is set
+                # disable the temperature_controller unit a value is set
                 self.temperature_controller.disable()
 
             self.response_recorder.start()
@@ -262,7 +262,6 @@ if __name__ == '__main__':
     from pychron.core.helpers.logger_setup import logging_setup
     from pychron.envisage.initialization.initializer import Initializer
 
-
     logging_setup('fusions diode')
     f = FusionsDiodeManager()
     f.use_video = True
@@ -281,17 +280,17 @@ if __name__ == '__main__':
 #
 #        self.pyrometer.start_scan()
 # #        self.control_module_manager.start_scan()
-#def open_scanner(self):
+# def open_scanner(self):
 #    from pychron.lasers.scanner import PIDScanner
 #
 #    self._open_scanner(PIDScanner, 'scanner.yaml')
 #
-#def open_autotuner(self):
+# def open_autotuner(self):
 #    from pychron.lasers.autotuner import AutoTuner
 #
 #    self._open_scanner(AutoTuner, 'autotuner.yaml')
 #
-#def _open_scanner(self, klass, name):
+# def _open_scanner(self, klass, name):
 #    from pychron.lasers.scanner import ScannerController
 #
 #    p = os.path.join(paths.scripts_dir, name)

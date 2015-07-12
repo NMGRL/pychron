@@ -15,22 +15,34 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Float
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.hardware.core.abstract_device import AbstractDevice
+from pychron.stage.maps.base_stage_map import BaseStageMap, SampleHole
 
 
-class LinearAxis(AbstractDevice):
-    position = Float
+class FurnaceStageMap(BaseStageMap):
+    def _hole_factory(self, hi, line, shape, dimension, valid_holes):
+        ah = ''
+        args = line.split(',')
 
-    # def update_position(self):
-    #     pass
-    #
-    # def linear_move(self, v, *args, **kw):
-    #     pass
-    #
-    # def relative_move(self, v, *args, **kw):
-    #     pass
+        y = 0
+        if len(args) == 1:
+            hole = str(hi + 1)
+            x = float(args[0])
+        elif len(args) == 2:
+            hole = args[0]
+            x = float(args[1])
+        else:
+            self.warning(
+                'invalid stage map file. {}. Problem with line {}: {}'.format(self.file_path, hi + 3, line))
+            return
+
+        return SampleHole(id=hole,
+                          x=float(x),
+                          y=float(y),
+                          associated_hole=ah,
+                          render='x' if hole in valid_holes else '',
+                          shape=shape,
+                          dimension=dimension)
 
 # ============= EOF =============================================

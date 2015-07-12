@@ -18,10 +18,9 @@
 from traits.api import TraitError, Instance, Float, provides
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.canvas.canvas2D.furnace_canvas import FurnaceCanvas
 from pychron.furnace.furnace_controller import FurnaceController
 from pychron.furnace.ifurnace_manager import IFurnaceManager
-from pychron.hardware.linear_axis import LinearAxis
+from pychron.furnace.stage_manager import FurnaceStageManager
 from pychron.managers.manager import Manager
 
 
@@ -36,16 +35,9 @@ class BaseFurnaceManager(Manager):
         return c
 
 
-class Dumper(LinearAxis):
-    def dump(self):
-        pass
-
-
 @provides(IFurnaceManager)
 class NMGRLFurnaceManager(BaseFurnaceManager):
-    dumper = Instance(Dumper)
-    funnel = Instance(LinearAxis)
-    canvas = Instance(FurnaceCanvas)
+    stage_manager = Instance(FurnaceStageManager, ())
 
     def dump_sample(self):
         self.debug('dump sample')
@@ -69,16 +61,8 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     def _setpoint_changed(self, new):
         self.set_setpoint(new)
 
-    def _dumper_default(self):
-        d = Dumper(name='dumper', configuration_dir_name='furnace')
-        return d
-
-    def _funnel_default(self):
-        f = LinearAxis(name='funnel', configuration_dir_name='furnace')
-        return f
-
-    def _canvas_default(self):
-        c = FurnaceCanvas(dumper=self.dumper)
-        return c
+    def _stage_manager_default(self):
+        sm = FurnaceStageManager(stage_manager_id='nmgrl.furnace.stage_map')
+        return sm
 
 # ============= EOF =============================================

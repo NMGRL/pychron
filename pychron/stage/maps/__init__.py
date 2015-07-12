@@ -15,22 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Float
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.hardware.core.abstract_device import AbstractDevice
 
-
-class LinearAxis(AbstractDevice):
-    position = Float
-
-    # def update_position(self):
-    #     pass
-    #
-    # def linear_move(self, v, *args, **kw):
-    #     pass
-    #
-    # def relative_move(self, v, *args, **kw):
-    #     pass
 
 # ============= EOF =============================================

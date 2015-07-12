@@ -27,31 +27,31 @@ import numpy as np
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.lasers.stage_managers.stage_map import StageMap
+from pychron.stage.maps.laser_stage_map import LaserStageMap
 from pychron.graph.graph import Graph
 from pychron.paths import paths
 # from pychron.displays.rich_text_display import RichTextDisplay
 from pychron.viewable import Viewable
-from pychron.displays.display import  DisplayController
+from pychron.displays.display import DisplayController
 
 
 class MapItemSummary(HasTraits):
     display = Instance(DisplayController)
+
     def _display_default(self):
-        r = DisplayController(
-                              width=180, height=80)
+        r = DisplayController(width=180, height=80)
         return r
 
     def traits_view(self):
-        v = View(
-                 Item('display', show_label=False, style='custom'),
+        v = View(Item('display', show_label=False, style='custom'),
                  width=200,
-                 height=100
-                 )
+                 height=100)
         return v
+
 
 class MapOverlay(AbstractOverlay):
     radius = 0.75
+
     def overlay(self, component, gc, *args, **kw):
         c = component
         gc.clip_to_rect(c.x + 1, c.y + 1, c.width - 1, c.height - 1)
@@ -76,8 +76,9 @@ class MapOverlay(AbstractOverlay):
                 gc.draw_path_at_points(pts, path, FILL_STROKE)
                 gc.restore_state()
 
+
 class MapView(Viewable):
-    stage_map = Instance(StageMap)
+    stage_map = Instance(LaserStageMap)
     graph = Instance(Graph)
 
     labnumber = Str
@@ -91,23 +92,23 @@ class MapView(Viewable):
 
     @on_trait_change('stage_map')
     def _build_map(self):
-#        xs = [1, 2, 3, 4]
-#        ys = [2, 4, 6, 8]
+        #        xs = [1, 2, 3, 4]
+        #        ys = [2, 4, 6, 8]
         if self.stage_map:
             if not self.stage_map.sample_holes:
                 return
 
-            xs, ys, states, labns = zip(*[(h.x, h.y, -1 , '') for h in self.stage_map.sample_holes])
+            xs, ys, states, labns = zip(*[(h.x, h.y, -1, '') for h in self.stage_map.sample_holes])
             g = self.graph
             states = list(states)
             states[len(states) / 2] = -1.2
             s, _p = g.new_series(xs, ys,
                                  colors=states,
-                         type='cmap_scatter',
-                         marker='circle',
-                         color_map_name='jet',
-                         marker_size=10,
-                         )
+                                 type='cmap_scatter',
+                                 marker='circle',
+                                 color_map_name='jet',
+                                 marker_size=10,
+                                 )
 
             s.tools.append(ScatterInspector(s,
                                             selection_mode='single',
@@ -126,11 +127,6 @@ class MapView(Viewable):
 
     def _update(self, new):
         if new:
-#            sel = self.scatter.index.metadata.get('selections')
-#            if sel:
-#                e = MapItemSummary()
-#                e.edit_traits()
-
 
             hov = self.scatter.index.metadata.get('hover')
             if hov:
@@ -150,9 +146,9 @@ class MapView(Viewable):
     def traits_view(self):
         g = Item('graph', style='custom', show_label=False)
         info = HGroup(
-                      Item('holenumber', width=30, style='readonly'),
-                      Item('labnumber', style='readonly'),
-                      )
+            Item('holenumber', width=30, style='readonly'),
+            Item('labnumber', style='readonly'),
+        )
         v = View(info,
                  g,
                  width=500,
@@ -174,11 +170,13 @@ class MapView(Viewable):
             if isinstance(hi, int):
                 self.labnumbers[hi - 1] = ln
                 self.set_hole_state(hi - 1, -1.1)
-#        self.scatter.states[holenum - 1] = 1
+
+# self.scatter.states[holenum - 1] = 1
 
 if __name__ == '__main__':
     import random
-    sm = StageMap(file_path=os.path.join(paths.map_dir, '221-hole.txt'))
+
+    sm = LaserStageMap(file_path=os.path.join(paths.map_dir, '221-hole.txt'))
     mv = MapView(stage_map=sm)
 
     for i in range(0, 210, 1):

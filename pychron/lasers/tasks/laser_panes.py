@@ -34,12 +34,26 @@ def SUItem(name, **kw):
 
 
 class BaseLaserPane(TraitsTaskPane):
-    def traits_view(self):
-        v = View(UItem('stage_manager',
-                       style='custom'),
-                 HGroup(UItem('status_text', style='readonly'), spring))
+    def trait_context(self):
+        return {'object': self.model.stage_manager}
 
-        return v
+    def traits_view(self):
+        editor = self.model.stage_manager.canvas_editor_factory()
+        canvas_grp = VGroup(
+            HGroup(UItem('stage_map_name', editor=EnumEditor(name='stage_map_names')),
+                   Item('stage_map',
+                        show_label=False),
+                   Item('back_button',
+                        enabled_when='linear_move_history',
+                        show_label=False),
+                   spring),
+            UItem('canvas', style='custom', editor=editor))
+
+        return View(canvas_grp)
+        # v = View(UItem('stage_manager',
+        #                style='custom'),
+        #          HGroup(UItem('status_text', style='readonly'), spring))
+        # return v
 
 
 class AxesPane(TraitsDockPane):
@@ -68,7 +82,6 @@ class StageControlPane(TraitsDockPane):
 
         def CUItem(name, **kw):
             return UItem('object.stage_manager.canvas.{}'.format(name), **kw)
-
 
         pgrp = Group(
             SUItem('calibrated_position_entry',
@@ -199,6 +212,7 @@ class OpticsPane(TraitsDockPane):
                        show_border=True))
         return v
 
+
 class ClientMixin(object):
     name = Property(depends_on='model')
     id = 'pychron.lasers.client'
@@ -235,6 +249,7 @@ class ClientMixin(object):
         v = View(VGroup(egrp, tgrp))
         return v
 
+
 class ClientPane(TraitsTaskPane, ClientMixin):
     pass
     # def traits_view(self):
@@ -255,14 +270,12 @@ class ClientDockPane(TraitsDockPane, ClientMixin):
     pass
 
 
-
 class AuxilaryGraphPane(TraitsDockPane):
     name = 'Auxilary Graph'
 
     def traits_view(self):
         v = View(UItem('auxilary_graph', editor=ComponentEditor()))
         return v
-
 
 # from pyface.tasks.enaml_dock_pane import EnamlDockPane
 # import enaml

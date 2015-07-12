@@ -20,7 +20,7 @@ from traitsui.api import Item, HGroup
 # from pychron.core.ui.custom_label_editor import CustomLabel
 # from pychron.core.geometry.geometry import calculate_reference_frame_center, calc_length
 from traitsui.view import View
-from pychron.lasers.stage_managers.calibration.calibrator import TrayCalibrator
+from pychron.stage.calibration.calibrator import TrayCalibrator
 from pychron.core.geometry.reference_point import ReferencePoint
 from pychron.core.geometry.affine import calculate_rigid_transform
 # ============= standard library imports ========================

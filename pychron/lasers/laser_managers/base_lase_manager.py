@@ -242,5 +242,6 @@ class BaseLaserManager(Manager):
 
         args['parent'] = self
         sm = klass(**args)
+        sm.id = self.stage_manager_id
         return sm
 # ============= EOF =============================================

@@ -28,6 +28,7 @@ from fusions_laser_manager import FusionsLaserManager
 class FusionsCO2Manager(FusionsLaserManager):
     """
     """
+    stage_manager_id = 'fusions.co2.stage_map'
     name = 'FusionsCO2'
     id = 'pychron.fusions.co2'
 
@@ -134,4 +135,3 @@ if __name__ == '__main__':
 #                ]
 #        return m
 # ============= EOF ====================================
-

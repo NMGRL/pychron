@@ -147,7 +147,6 @@ class BaseDataCanvas(DataView):
         self.x_grid.visible = self.show_grids
         self.y_grid.visible = self.show_grids
 
-
     @on_trait_change('view_x_range')
     def _update_xrange(self):
         self.set_mapper_limits('x', self.view_x_range)
@@ -246,11 +245,11 @@ class BaseDataCanvas(DataView):
         """
         pass
 
-        # def draw(self, *args, **kw):
-        # """
-        #     """
-        #
-        #     super(BaseDataCanvas, self).draw(*args, **kw)
-        #     self._draw_hook(*args, **kw)
+    def draw(self, *args, **kw):
+        """
+        """
+
+        super(BaseDataCanvas, self).draw(*args, **kw)
+        self._draw_hook(*args, **kw)
 
 # ====================EOF==================

@@ -256,7 +256,7 @@ class BaseExperimentQueue(RunBlock):
         # load sample map
         self._load_map(meta)
 
-        #default = lambda x: str(x) if x else ' '
+        # default = lambda x: str(x) if x else ' '
         default_int = lambda x: x if x is not None else 1
         key_default = lambda k: lambda x: str(x) if x else k
         bool_default = lambda x: bool(x) if x else False
@@ -280,7 +280,7 @@ class BaseExperimentQueue(RunBlock):
         pass
 
     def _load_map(self, meta):
-        from pychron.lasers.stage_managers.stage_map import StageMap
+        from pychron.stage.maps.laser_stage_map import LaserStageMap
         from pychron.experiment.map_view import MapView
 
         def create_map(name):
@@ -290,7 +290,7 @@ class BaseExperimentQueue(RunBlock):
                 name = os.path.join(paths.map_dir, name)
 
                 if os.path.isfile(name):
-                    sm = StageMap(file_path=name)
+                    sm = LaserStageMap(file_path=name)
                     mv = MapView(stage_map=sm)
                     return mv
 
@@ -390,6 +390,5 @@ class BaseExperimentQueue(RunBlock):
             return os.path.splitext(os.path.basename(self.path))[0]
         else:
             return ''
-
 
 # ============= EOF =============================================

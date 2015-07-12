@@ -15,51 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Property, CFloat, Float, List, Enum, Button, on_trait_change
+from traits.api import Button, on_trait_change
 from traitsui.api import View, Item, TabularEditor, HGroup
 from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
 import os
 from numpy import array
 import pickle
+import yaml
 # ============= local library imports  ==========================
-from pychron.core.helpers.filetools import parse_file
 from pychron.paths import paths
-from pychron.loggable import Loggable
-from pychron.core.geometry.affine import AffineTransform
-
-
-class SampleHole(HasTraits):
-    id = Str
-    x = Float
-    y = Float
-    x_cor = CFloat(0)
-    y_cor = CFloat(0)
-    render = Str
-    shape = Str
-    dimension = Float
-    interpolated = False
-    corrected = False
-    interpolation_holes = None
-
-    nominal_position = Property(depends_on='x,y')
-    corrected_position = Property(depends_on='x_cor,y_cor')
-
-    associated_hole = Str
-
-    def _get_corrected_position(self):
-        return self.x_cor, self.y_cor
-
-    def _get_nominal_position(self):
-        return self.x, self.y
-
-    def has_correction(self):
-        return self.corrected
-
-
-#        print self.id, self.x_cor, self.y_cor
-#        return True if (abs(self.x_cor) > 1e-6
-#                and abs(self.y_cor) > 1e-6) else False
+from pychron.stage.maps.base_stage_map import BaseStageMap
 
 
 class SampleHoleAdapter(TabularAdapter):
@@ -78,23 +44,9 @@ class SampleHoleAdapter(TabularAdapter):
         setattr(getattr(obj, trait)[row], self.columns[column][1], txt)
 
 
-class StageMap(Loggable):
-    file_path = Str
-    # holes = Dict
-    name = Property(depends_on='file_path')
-    bitmap_path = Property(depends_on='file_path')
-    #    valid_holes = None
-    #    use_valid_holes = True
-    # holes = Property
-    sample_holes = List(SampleHole)
-
-    g_dimension = Float(enter_set=True, auto_set=False)
-    g_shape = Enum('circle', 'square')
-
+class LaserStageMap(BaseStageMap):
     clear_corrections = Button
 
-    # should always be N,E,S,W,center
-    calibration_holes = None
     cpos = None
     rotation = None
 
@@ -225,8 +177,7 @@ class StageMap(Loggable):
                 # ie less than 1 radius from nominal hole
 
                 hx, hy = self.map_to_calibration(hole.nominal_position)
-                if (abs(mx - hx) < rad
-                    and abs(my - hy) < rad):
+                if abs(mx - hx) < rad and abs(my - hy) < rad:
                     nxs.append(mx)
                     nys.append(my)
                     iholes.append(found[i])
@@ -241,8 +192,7 @@ class StageMap(Loggable):
             if found[i] and found[j]:
                 ux, _ = self.map_to_uncalibration(found[i].corrected_position)
                 _, uy = self.map_to_uncalibration(found[j].corrected_position)
-                if (abs(ux - hole.x) < rad
-                    and abs(uy - hole.y) < rad):
+                if abs(ux - hole.x) < rad and abs(uy - hole.y) < rad:
                     x, y = self.map_to_calibration((ux, uy))
                     nxs.append(x)
                     nys.append(y)
@@ -251,14 +201,14 @@ class StageMap(Loggable):
 
     def _interpolated_normals(self, hole, found, nxs, nys, iholes, spacing):
         # try interpolation using legs of a triangle
-        for i, j, s in [
-            # vertical
-            (4, 1, 1), (6, 1, -1),
-            (5, 2, -1), (7, 2, 1),
+        for i, j, s in [  # vertical
 
-            # horizontal
-            (4, 0, -1), (5, 0, 1),
-            (7, 3, -1), (6, 3, 1)]:
+                          (4, 1, 1), (6, 1, -1),
+                          (5, 2, -1), (7, 2, 1),
+
+                          # horizontal
+                          (4, 0, -1), (5, 0, 1),
+                          (7, 3, -1), (6, 3, 1)]:
 
             p1 = found[i]
             p2 = found[j]
@@ -282,66 +232,6 @@ class StageMap(Loggable):
 
                 iholes.append(found[i])
                 iholes.append(found[j])
-
-    def _get_calibration_params(self, cpos, rot, scale):
-        if cpos is None:
-            cpos = self.cpos if self.cpos else (0, 0)
-        if rot is None:
-            rot = self.rotation if self.rotation else 0
-        if scale is None:
-            scale = 1
-        return cpos, rot, scale
-
-    def map_to_uncalibration(self, pos, cpos=None, rot=None, scale=None):
-        cpos, rot, scale = self._get_calibration_params(cpos, rot, scale)
-        a = AffineTransform()
-        a.scale(1 / scale, 1 / scale)
-        a.rotate(-rot)
-        a.translate(cpos[0], cpos[1])
-        #        a.translate(-cpos[0], -cpos[1])
-        #        a.translate(*cpos)
-        #        a.rotate(-rot)
-        #        a.translate(-cpos[0], -cpos[1])
-
-        pos = a.transform(*pos)
-        return pos
-
-    def map_to_calibration(self, pos, cpos=None, rot=None,
-                           use_modified=False,
-                           scale=None,
-                           translate=None):
-        cpos, rot, scale = self._get_calibration_params(cpos, rot, scale)
-
-        a = AffineTransform()
-        #         if translate:
-        #             a.translate(*translate)
-
-        #        if scale:
-        a.scale(scale, scale)
-        if use_modified:
-            a.translate(*cpos)
-
-        #         print cpos, rot, scale
-        a.rotate(rot)
-        a.translate(-cpos[0], -cpos[1])
-        if use_modified:
-            a.translate(*cpos)
-        pos = a.transform(*pos)
-        return pos
-
-    def get_hole(self, key):
-        return next((h for h in self.sample_holes if h.id == str(key)), None)
-
-    def get_hole_pos(self, key):
-        """
-            hole ids are str so convert key to str
-        """
-        return next(((h.x, h.y)
-                     for h in self.sample_holes if h.id == str(key)), None)
-
-    def get_corrected_hole_pos(self, key):
-        return next(((h.x_cor, h.y_cor)
-                     for h in self.sample_holes if h.id == key), None)
 
     def load_correction_file(self):
         p = os.path.join(paths.hidden_dir, '{}_correction_file'.format(self.name))
@@ -417,113 +307,8 @@ class StageMap(Loggable):
             holes = sorted(holes, lambda a, b: cmp(a[1], b[1]))
             return holes[0][0]
 
-    def _get_bitmap_path(self):
-
-        name, _ext = os.path.splitext(self.name)
-        root, _path = os.path.split(self.file_path)
-        name = '.'.join([name, 'png'])
-        return os.path.join(root, name)
-
-    def _get_name(self):
-        name = os.path.basename(self.file_path)
-        name, _ext = os.path.splitext(name)
-        return name
-
-    def __init__(self, *args, **kw):
-        super(StageMap, self).__init__(*args, **kw)
-        self.load()
-
-    def _g_dimension_changed(self):
-        for h in self.sample_holes:
-            h.dimension = self.g_dimension
-        self._save_()
-
-    def _g_shape_changed(self):
-        for h in self.sample_holes:
-            h.shape = self.g_shape
-        self._save_()
-
-    def _save_(self):
-        pass
-
-    #        with open(self.file_path, 'r') as f:
-    #            lines = [line for line in f]
-    #
-    #        lines[0] = '{},{}\n'.format(self.g_shape, self.g_dimension)
-    #        with open(self.file_path, 'w') as f:
-    #            f.writelines(lines)
-
-    def load(self):
-        lines = parse_file(self.file_path)
-        if not lines:
-            return
-
-        # line 0 shape, dimension
-        shape, dimension = lines[0].split(',')
-        self.g_shape = shape
-        self.g_dimension = float(dimension)
-
-        # line 1 list of holes to default draw
-        valid_holes = lines[1].split(',')
-
-        # line 2 list of calibration holes
-        # should always be N,E,S,W,center
-        self.calibration_holes = lines[2].split(',')
-
-        # for hi, line in enumerate(lines[3:]):
-        hi = 0
-        for line in lines[3:]:
-            if not line.startswith('#'):
-                ah=''
-                args = line.split(',')
-                if len(args) == 2:
-                    x, y = args
-                    hole = str(hi + 1)
-                elif len(args) == 3:
-                    hole, x, y = args
-                    if '(' in y:
-                        hole = str(hi + 1)
-                        x, y, ah = args
-                        ah = ah.strip()
-                        ah = ah[1:-1]
-
-                elif len(args) == 4:
-                    hole, x, y, ah = args
-                    if '(' in ah:
-                        ah = ah.strip()
-                        ah = ah[1:-1]
-                else:
-                    self.warning(
-                        'invalid stage map file. {}. Problem with line {}: {}'.format(self.file_path, hi + 3, line))
-                    break
-                # try:
-                #     hole, x, y = line.split(',')
-                # except ValueError:
-                #     try:
-                #         x, y = line.split(',')
-                #         hole = str(hi + 1)
-                #     except ValueError:
-                #         break
-
-                self.sample_holes.append(SampleHole(id=hole,
-                                                    x=float(x),
-                                                    y=float(y),
-                                                    associated_hole=ah,
-                                                    render='x' if hole in valid_holes else '',
-                                                    shape=shape,
-                                                    dimension=float(dimension)))
-                hi += 1
-                # ============= views ===========================================
-
+    # ============= views ===========================================
     def traits_view(self):
-        #        cols = [ObjectColumn(name = 'id'),
-        #              ObjectColumn(name = 'x'),
-        #              ObjectColumn(name = 'y'),
-        #              CheckboxColumn(name = 'render')
-        #              ]
-        #        editor = TableEditor(columns = cols)
-
-
         editor = TabularEditor(adapter=SampleHoleAdapter())
         v = View(
             HGroup(Item('clear_corrections', show_label=False)),
@@ -538,22 +323,18 @@ class StageMap(Loggable):
         return v
 
 
-import yaml
-
-
-class UVStageMap(StageMap):
+class UVLaserStageMap(LaserStageMap):
     def dump_correction_file(self):
-        '''
+        """
             dont dump a correction file for a uv stage map
-        '''
+        """
         pass
-
 
     def load(self):
         with open(self.file_path, 'r') as rfile:
             d = yaml.load(rfile.read())
             for attr in ('points', 'lines', 'polygons', 'transects'):
-                if d.has_key(attr):
+                if attr in d:
                     setattr(self, attr, d[attr])
 
     def get_polygon(self, name):
@@ -619,7 +400,7 @@ class UVStageMap(StageMap):
         # if the number of adjacent holes found is only 1
         # do a simple offset using
 
-#                nfound = [f for f in found if f is not None]
+# nfound = [f for f in found if f is not None]
 #                if len(nfound) == 1:
 #                    f = nfound[0]
 #                    ind = found.index(f)
@@ -638,4 +419,3 @@ class UVStageMap(StageMap):
 #                    else:
 #                        nxs.append(x)
 #                        nys.append(y + l)
-
