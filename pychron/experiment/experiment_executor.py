@@ -701,6 +701,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if self.labspy_enabled:
             self.labspy_client.add_run(run, self.experiment_queue)
 
+        if self.use_system_health:
+            self._add_system_health(run)
+
         mem_log('end run')
         if self.stats:
             self.stats.update_run_duration(run, t)
@@ -855,6 +858,22 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
             self.warning('******** Exception trying to open conditionals. Notify developer ********')
             self.debug(traceback.format_exc())
+
+    def _add_system_health(self, run):
+        # save analysis. don't cancel immediately
+        ret = None
+        if self.system_health:
+            ret = self.system_health.add_analysis(self)
+
+        # cancel the experiment if failed to save to the secondary database
+        # cancel/terminate if system health returns a value
+
+        if ret == 'cancel':
+            self.cancel(cancel_run=True, msg=self.system_health.error_msg)
+        elif ret == 'terminate':
+            self.cancel('run', cancel_run=True, msg=self.system_health.error_msg)
+        else:
+            return True
 
     # ===============================================================================
     # execution steps

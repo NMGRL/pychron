@@ -50,7 +50,7 @@ ICON_MAP = {'Database': icon('database'),
             'Loading': icon('caterpillar'),
             'Scripts': icon('scripts_text'),
             'Dashboard': icon('dashboard'),
-            'SystemMonitor': icon('action_log')}
+            }
 
 
 class CatergoryAdapter(TabularAdapter):

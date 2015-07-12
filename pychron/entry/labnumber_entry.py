@@ -602,13 +602,13 @@ THIS CHANGE CANNOT BE UNDONE')
 
                 item = self.canvas.scene.get_item(str(ir.hole))
                 item.fill = bool(dbpos.identifier)
-                ir.j = dbpos.j
-                ir.j_err = dbpos.j_err
+                ir.j = dbpos.j or 0
+                ir.j_err = dbpos.j_err or 0
                 ir.note = dbpos.note or ''
                 ir.weight = dbpos.weight or 0
 
-            item = self.canvas.scene.get_item(str(ir.hole))
-            item.fill = bool(ir.identifier)
+                # item = self.canvas.scene.get_item(str(ir.hole))
+                # item.fill = bool(ir.identifier)
 
     def _get_irradiation_editor(self, **kw):
         ie = self._irradiation_editor

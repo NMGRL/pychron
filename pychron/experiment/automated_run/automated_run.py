@@ -116,7 +116,7 @@ class AutomatedRun(Loggable):
     dvc_persister = Instance('pychron.dvc.dvc_persister.DVCPersister', ())
 
     xls_persister = Instance('pychron.experiment.automated_run.persistence.ExcelPersister')
-    system_health = Instance('pychron.experiment.health.series.SystemHealthSeries')
+    # system_health = Instance('pychron.experiment.health.series.SystemHealthSeries')
 
     collector = Property
 
@@ -848,28 +848,9 @@ class AutomatedRun(Loggable):
             # save to database
             self._persister_action('post_measurement_save')
             # self.persister.post_measurement_save()
-
-            # save analysis. don't cancel immediately
-            ret = None
-            if self.system_health:
-                ret = self.system_health.add_analysis(self)
-
-            executor = self.experiment_executor
-            # cancel the experiment if failed to save to the secondary database
-            # cancel/terminate if system health returns a value
             if self.persister.secondary_database_fail:
-                if executor:
-                    executor.cancel(cancel_run=True,
-                                    msg=self.persister.secondary_database_fail)
-            elif ret == 'cancel':
-                if executor:
-                    executor.cancel(cancel_run=True,
-                                    msg=self.system_health.error_msg)
-            elif ret == 'terminate':
-                if executor:
-                    executor.cancel('run',
-                                    cancel_run=True,
-                                    msg=self.system_health.error_msg)
+                self.cancel(cancel_run=True,
+                            msg=self.persister.secondary_database_fail)
             else:
                 return True
 

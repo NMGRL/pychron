@@ -57,8 +57,8 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     preview_generate_identifiers_button = Button
 
     tool_bars = [SToolBar(SavePDFAction(),
-        DatabaseSaveAction(),
-        image_size=(16, 16))]
+                          DatabaseSaveAction(),
+                          image_size=(16, 16))]
     # SToolBar(GenerateLabnumbersAction(),
     # PreviewGenerateLabnumbersAction(),
     # ImportIrradiationLevelAction(),
@@ -118,16 +118,16 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
 
     def save_pdf(self):
         p = '/Users/ross/Sandbox/irradiation.pdf'
-        #p=self.save_file_dialog()
+        # p=self.save_file_dialog()
 
         self.debug('saving pdf to {}'.format(p))
-        #self.manager.make_labbook(p)
+        # self.manager.make_labbook(p)
         self.manager.save_pdf(p)
         self.view_pdf(p)
 
     def save_labbook_pdf(self):
         p = '/Users/ross/Sandbox/irradiation.pdf'
-        #p=self.save_file_dialog()
+        # p=self.save_file_dialog()
 
         self.manager.make_labbook(p)
         self.view_pdf(p)
@@ -141,14 +141,14 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     def import_irradiation_load_xls(self):
         path = self.open_file_dialog()
         if path:
-            #p = '/Users/ross/Sandbox/irrad_load_template.xls'
+            # p = '/Users/ross/Sandbox/irrad_load_template.xls'
             self.manager.import_irradiation_load_xls(path)
 
     def make_irradiation_load_template(self):
         path = self.save_file_dialog()
         if path:
             #        p = '/Users/ross/Sandbox/irrad_load_template.xls'
-            path = add_extension(path,'.xls')
+            path = add_extension(path, '.xls')
             self.manager.make_irradiation_load_template(path)
 
             self.information_dialog('Template saved to {}'.format(path))
