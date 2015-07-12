@@ -23,7 +23,9 @@ from pychron.has_communicator import HasCommunicator
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.core.scanable_device import ScanableDevice
 
-PACKAGES = dict(ProXRADC='pychron.hardware.ncd.adc')
+PACKAGES = dict(ProXRADC='pychron.hardware.ncd.adc',
+                Eurotherm='pychron.hardware.eurotherm')
+
 
 @provides(ICoreDevice)
 class AbstractDevice(ScanableDevice, HasCommunicator):

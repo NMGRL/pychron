@@ -31,7 +31,6 @@ from pychron.user.tasks.plugin import UsersPlugin
 
 logger = logging.getLogger()
 
-
 PACKAGE_DICT = dict(
     CanvasDesignerPlugin='pychron.canvas.tasks.canvas_plugin',
     ArArConstantsPlugin='pychron.constants.tasks.arar_constants_plugin',
@@ -56,13 +55,13 @@ PACKAGE_DICT = dict(
     ArgusSpectrometerPlugin='pychron.spectrometer.tasks.argus_spectrometer_plugin',
     MapSpectrometerPlugin='pychron.spectrometer.tasks.map_spectrometer_plugin',
     EmailPlugin='pychron.social.email.tasks.plugin',
-    SystemMonitorPlugin='pychron.system_monitor.tasks.system_monitor_plugin',
     DVCPlugin='pychron.dvc.tasks.dvc_plugin',
     WorkspacePlugin='pychron.workspace.tasks.workspace_plugin',
     LabBookPlugin='pychron.labbook.tasks.labbook_plugin',
     LabspyClientPlugin='pychron.labspy.tasks.plugin',
     UpdatePlugin='pychron.updater.tasks.update_plugin',
-    ImagePlugin='pychron.image.tasks.image_plugin')
+    ImagePlugin='pychron.image.tasks.image_plugin',
+    NMGRLFurnacePlugin='pychron.furnace.tasks.furnace_plugin')
 
 
 def get_module_name(klass):
@@ -110,8 +109,8 @@ def get_plugin(pname):
     if not pname.endswith('Plugin'):
         pname = '{}Plugin'.format(pname)
 
-    #print PACKAGE_DICT.keys()
-    #print pname,pname in PACKAGE_DICT.keys()
+    # print PACKAGE_DICT.keys()
+    # print pname,pname in PACKAGE_DICT.keys()
     if pname in PACKAGE_DICT:
         package = PACKAGE_DICT[pname]
         klass = get_klass(package, pname)
@@ -215,6 +214,7 @@ def launch(klass, user):
     except Exception:
         logger.exception('Launching error')
         import traceback
+
         tb = traceback.format_exc()
         gTraceDisplay.add_text(tb)
         gTraceDisplay.edit_traits(kind='livemodal')
@@ -224,6 +224,5 @@ def launch(klass, user):
         os._exit(0)
 
     return
-
 
 # ============= EOF ====================================

@@ -57,7 +57,7 @@ from stage_map import StageMap
 class StageManager(Manager):
     """
     """
-    stage_controller_class = String('Newport')
+    stage_controller_klass = String('Newport')
 
     stage_controller = Instance(MotionController)
     points_programmer = Instance(PointsProgrammer)
@@ -1064,11 +1064,11 @@ class StageManager(Manager):
                                        **kw)
 
     def _stage_controller_factory(self):
-        if self.stage_controller_class == 'Newport':
+        if self.stage_controller_klass == 'Newport':
             from pychron.hardware.newport.newport_motion_controller import NewportMotionController
 
             factory = NewportMotionController
-        elif self.stage_controller_class == 'Aerotech':
+        elif self.stage_controller_klass == 'Aerotech':
             from pychron.hardware.aerotech.aerotech_motion_controller import AerotechMotionController
 
             factory = AerotechMotionController

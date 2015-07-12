@@ -63,8 +63,7 @@ class CoreLaserPlugin(BaseTaskPlugin):
 
 
 class BaseLaserPlugin(BaseTaskPlugin):
-    MANAGERS = 'pychron.hardware.managers'
-
+    managers = List(contributes_to='pychron.hardware.managers')
     klass = None
     # name = None
 
@@ -116,8 +115,6 @@ class BaseLaserPlugin(BaseTaskPlugin):
         m.bind_preferences(self.id)
 
         return m
-
-    managers = List(contributes_to=MANAGERS)
 
     def _managers_default(self):
         """
