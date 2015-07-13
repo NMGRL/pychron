@@ -62,7 +62,7 @@ class IrradiationEditor(Loggable):
     def add(self):
         v = AddView(model=self)
         info = v.edit_traits()
-
+        
         while 1:
             if info.result:
                 name = self.name

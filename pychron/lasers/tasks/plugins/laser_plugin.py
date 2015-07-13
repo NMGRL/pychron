@@ -129,7 +129,7 @@ class BaseLaserPlugin(BaseTaskPlugin):
         return d
 
     def _get_manager(self):
-        print 'get manager', self.name
+        # print 'get manager', self.name
         return self.application.get_service(ILaserManager, 'name=="{}"'.format(self.name))
 
         # def execute_pattern(self, name):

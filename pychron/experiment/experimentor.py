@@ -286,10 +286,10 @@ class Experimentor(Loggable):
 
             self._set_factory_runs(new)
 
-            if self.executor.is_alive():
-                a = new[-1]
-                if not a.skip:
-                    self.stats.calculate_at(a)
+            # if self.executor.is_alive():
+            a = new[-1]
+            if not a.skip:
+                self.stats.calculate_at(a, at_times=self.executor.is_alive())
                     # self.stats.calculate()
 
     @on_trait_change('experiment_factory:queue_factory:delay_between_analyses')

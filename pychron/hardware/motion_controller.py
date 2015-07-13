@@ -237,7 +237,9 @@ class MotionController(CoreDevice):
 
         if self._not_moving_count > 1:
             self._not_moving_count = 0
-            self.timer.Stop()
+            if self.timer:
+                self.timer.Stop()
+
             self.parent.canvas.clear_desired_position()
             self.update_axes()
         else:

@@ -192,13 +192,14 @@ class AutomatedRun(Loggable):
     def _persister_action(self, func, *args, **kw):
         getattr(self.persister, func)(*args, **kw)
         for p in (self.xls_persister, self.dvc_persister):
-            try:
-                getattr(p, func)(*args, **kw)
-            except BaseException, e:
-                self.warning('excel persister action failed. func={}, excp={}'.format(func, e))
-                import traceback
+            if p is not None:
+                try:
+                    getattr(p, func)(*args, **kw)
+                except BaseException, e:
+                    self.warning('excel persister action failed. func={}, excp={}'.format(func, e))
+                    import traceback
 
-                traceback.print_exc()
+                    traceback.print_exc()
 
     def py_set_integration_time(self, v):
         self.set_integration_time(v)
@@ -2045,7 +2046,7 @@ anaylsis_type={}
             return obj
 
     def _make_script_name(self, name):
-        name = '{}_{}'.format(self.spec.mass_spectrometer.lower(), name)
+        # name = '{}_{}'.format(self.spec.mass_spectrometer.lower(), name)
         return add_extension(name, '.py')
 
     def _setup_context(self, script):

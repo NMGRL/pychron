@@ -581,15 +581,15 @@ class PyScript(Loggable):
 
     @command_register
     def complete_interval(self):
+        if self._cancel:
+            return
+
         try:
             _, f, n = self._interval_stack.get(timeout=0.01)
         except Empty:
             raise IntervalError()
 
         if self.testing_syntax:
-            return
-
-        if self._cancel:
             return
 
         self.console_info('COMPLETE INTERVAL waiting for {} to complete'.format(n))

@@ -23,6 +23,8 @@ import cPickle as pickle
 from pychron.loggable import Loggable
 from pychron.paths import paths
 
+
+
 SIMPLE_HELP = '''1. Locate center hole
 2. Locate right hole
 '''

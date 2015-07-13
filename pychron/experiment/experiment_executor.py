@@ -158,6 +158,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     _prev_blanks = Dict
     _prev_baselines = Dict
+    _prev_blank_runid = String
     _err_message = String
     _prev_blank_id = Long
     _cv_info = None
@@ -460,7 +461,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                                    'cnts<nruns={}, is_first_analysis={}'.format(self.is_alive(),
                                                                                 cnt < nruns, is_first_analysis))
 
-
                 run = self._make_run(spec)
                 if run is None:
                     break
@@ -600,7 +600,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.debug('do run')
 
         if self.stats:
-            self.stats.setup_run_clock(run)
+            self.stats.start_run(run)
 
         mem_log('< start')
 
@@ -658,7 +658,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.labspy_client.add_run(run, self.experiment_queue)
 
         mem_log('end run')
-        if self.stats:
+        if self.stats and run.state == 'success':
             self.stats.update_run_duration(run, t)
 
     def _overlapped_run(self, v):
@@ -957,6 +957,11 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if self.use_dvc:
             arun.dvc_persister = self.application.get_service('pychron.dvc.dvc_persister.DVCPersister')
             arun.dvc_persister.load_name = exp.load_name
+
+        # arun.use_dvc = self.use_dvc
+        # if self.use_dvc:
+        # arun.dvc_persister = self.application.get_service('pychron.dvc.dvc_persister.DVCPersister')
+        #     arun.dvc_persister.load_name = exp.load_name
 
         mon = self.monitor
         if mon is not None:
@@ -1623,7 +1628,7 @@ Use Last "blank_{}"= {}
 
         if exp.extract_device and exp.extract_device not in ('Extract Device', LINE_STR):
             # extract_device = convert_extract_device(exp.extract_device)
-            extract_device = exp.extract_device.replace(' ','')
+            extract_device = exp.extract_device.replace(' ', '')
             ed_connectable = Connectable(name=extract_device)
             man = None
             if self.application:

@@ -98,7 +98,7 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
             gm.srcpath = p
             # gm.xmlpath=p
             # p = make_xml(p,
-            #              default_radius=radius,
+            # default_radius=radius,
             #              default_bounds=bounds,
             #              convert_mm=convert_mm,
             #              use_label=use_label,
@@ -116,7 +116,7 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
 
     def save_pdf(self):
         p = '/Users/ross/Sandbox/irradiation.pdf'
-        #p=self.save_file_dialog()
+        # p=self.save_file_dialog()
 
         self.debug('saving pdf to {}'.format(p))
         #self.manager.make_labbook(p)
@@ -125,7 +125,7 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
 
     def save_labbook_pdf(self):
         p = '/Users/ross/Sandbox/irradiation.pdf'
-        #p=self.save_file_dialog()
+        # p=self.save_file_dialog()
 
         self.manager.make_labbook(p)
         self.view_pdf(p)
@@ -139,14 +139,14 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     def import_irradiation_load_xls(self):
         path = self.open_file_dialog()
         if path:
-            #p = '/Users/ross/Sandbox/irrad_load_template.xls'
+            # p = '/Users/ross/Sandbox/irrad_load_template.xls'
             self.manager.import_irradiation_load_xls(path)
 
     def make_irradiation_load_template(self):
         path = self.save_file_dialog()
         if path:
-            #        p = '/Users/ross/Sandbox/irrad_load_template.xls'
-            path = add_extension(path,'.xls')
+            # p = '/Users/ross/Sandbox/irrad_load_template.xls'
+            path = add_extension(path, '.xls')
             self.manager.make_irradiation_load_template(path)
 
             self.information_dialog('Template saved to {}'.format(path))
@@ -154,7 +154,7 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
 
     def import_sample_from_file(self):
         # path = self.open_file_dialog(default_directory=paths.root_dir,
-        #                              wildcard='*.xls')
+        # wildcard='*.xls')
         path = '/Users/ross/Desktop/sample_import.xls'
         if path:
             from pychron.entry.loaders.xls_sample_loader import XLSSampleLoader

@@ -105,15 +105,6 @@ class PychronLaserManager(BaseLaserManager, EthernetDeviceMixin):
         if self.update_position():
             self._opened_hook()
             return True
-
-    def update_position(self):
-        self.debug('update position')
-        pos = self.get_position()
-        self.debug('got position {}'.format(pos))
-        if pos:
-            self.trait_set(**dict(zip(('_x', '_y', '_z'), pos)))
-            return True
-
         # self.trait_set(**dict(zip(('_x', '_y', '_z'),
         #                           self.get_position())))
 
@@ -398,55 +389,6 @@ class PychronLaserManager(BaseLaserManager, EthernetDeviceMixin):
 
         self.update_position()
         return r
-
-    def _block(self, cmd='GetDriveMoving', period=0.25, position_callback=None):
-
-        ask = self._ask
-
-        cnt = 0
-        tries = 0
-        maxtries = int(500 / float(period))  # timeout after 50 s
-        nsuccess = 2
-        self._cancel_blocking = False
-        while tries < maxtries and cnt < nsuccess:
-            if self._cancel_blocking:
-                break
-
-            time.sleep(period)
-            resp = ask(cmd)
-
-            if self.communicator.simulation:
-                resp = 'False'
-
-            if resp is not None:
-                try:
-                    if not to_bool(resp):
-                        cnt += 1
-                except (ValueError, TypeError):
-                    cnt = 0
-
-                if position_callback:
-                    if self.communicator.simulation:
-                        x, y, z = cnt / 3., cnt / 3., 0
-                        position_callback(x, y, z)
-                    else:
-                        xyz = self.get_position()
-                        if xyz:
-                            position_callback(*xyz)
-            else:
-                cnt = 0
-            tries += 1
-
-        state = cnt >= nsuccess
-        if state:
-            self.info('Block completed')
-        else:
-            if self._cancel_blocking:
-                self.info('Block failed. canceled by user')
-            else:
-                self.warning('Block failed. timeout after {}s'.format(maxtries * period))
-
-        return state
 
     # def _ask(self, cmd, **kw):
     #     # self.communicator.get_handler()

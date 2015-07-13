@@ -153,7 +153,6 @@ class ExperimentQueueFactory(PersistenceLoggable):
         db = self.db
         if db is None or not db.connected:
             return []
-
         with db.session_ctx():
             dbus = db.get_users()
             us = [ui.name for ui in dbus]

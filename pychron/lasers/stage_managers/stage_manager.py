@@ -731,6 +731,12 @@ class StageManager(BaseStageManager):
         self.info('Move complete')
         self.update_axes()
 
+    def get_hole_xy(self, key):
+        pos = self._stage_map.get_hole_pos(key)
+        # map the position to calibrated space
+        pos = self.get_calibrated_position(pos)
+        return pos
+
     def _move_to_hole(self, key, correct_position=True):
         self.info('Move to hole {} type={}'.format(key, str(type(key))))
         self.temp_hole = key

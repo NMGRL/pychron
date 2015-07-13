@@ -264,8 +264,8 @@ class LabnumberEntry(DVCIrradiationable):
             return True
 
     def generate_identifiers(self):
-        # self.warning('GENERATE LABNUMBERS DISABLED')
-        # return
+        self.warning('GENERATE LABNUMBERS DISABLED')
+        return
 
         if self.check_monitor_name():
             return

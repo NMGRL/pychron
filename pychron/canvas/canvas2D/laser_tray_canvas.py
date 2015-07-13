@@ -378,7 +378,8 @@ class LaserTrayCanvas(StageCanvas):
 
     def get_offset_stage_screen_position(self):
         sx, sy = self.get_stage_screen_position()
-        return sx + self.crosshairs_offsetx, sy + self.crosshairs_offsety
+        return sx, sy
+        # return sx + self.crosshairs_offsetx, sy + self.crosshairs_offsety
 
     def adjust_limits(self, mapper, val, delta=None):
         """
@@ -412,6 +413,7 @@ class LaserTrayCanvas(StageCanvas):
     def normal_left_down(self, event):
         """
         """
+        # print 'ff', self.crosshairs_offsetx, self.crosshairs_offsety
 
         x = event.x - self.crosshairs_offsetx
         y = event.y - self.crosshairs_offsety

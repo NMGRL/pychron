@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import cPickle as pickle
+
 from traits.api import Float, Event, String, Any, Enum, Property, cached_property
 # ============= standard library imports ========================
 import cPickle as pickle
