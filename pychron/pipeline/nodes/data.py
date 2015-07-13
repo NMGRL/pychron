@@ -32,7 +32,12 @@ class DataNode(BaseNode):
 
     check_reviewed = Bool(False)
 
-    def configure(self, **kw):
+    def configure(self, pre_run=False, **kw):
+        # if pre_run and self.analyses:
+        #     return True
+        if not pre_run:
+            self._manual_configured = True
+
         browser_view = BrowserView(model=self.browser_model)
         info = browser_view.edit_traits(kind='livemodal')
         if info.result:

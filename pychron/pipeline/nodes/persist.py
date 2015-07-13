@@ -46,9 +46,6 @@ class PDFNode(FileNode):
 class PDFFigureNode(PDFNode):
     name = 'PDF Figure'
 
-    def configure(self, **kw):
-        return self._configure()
-
     def traits_view(self):
 
         return self._view_factory(Item('root', editor=DirectoryEditor(root_path=paths.data_dir)),

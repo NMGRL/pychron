@@ -33,7 +33,10 @@ class TableNode(BaseNode):
 
     auto_configure = False
 
-    def configure(self, **kw):
+    def configure(self, pre_run=False, **kw):
+        if not pre_run:
+            self._manual_configured = True
+
         return self._configure(self.options)
 
     def run(self, state):

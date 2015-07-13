@@ -57,9 +57,6 @@ class FigureNode(BaseNode):
         #     if not self.configure(refresh=False):
         #         state.canceled = True
         #         return
-
-
-
         po = self.plotter_options
         if not po:
             state.canceled = True
@@ -113,8 +110,10 @@ class FigureNode(BaseNode):
 
         return self.editor
 
-    def configure(self, refresh=True):
+    def configure(self, refresh=True, pre_run=False, **kw):
         # self._configured = True
+        if not pre_run:
+            self._manual_configured = True
 
         pom = self.plotter_options_manager
         # pom = self.plotter_options_manager_klass()

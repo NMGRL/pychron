@@ -30,6 +30,8 @@ class BaseNode(HasTraits):
     auto_configure = Bool(True)
     active = Bool(False)
 
+    _manual_configured = Bool(False)
+
     def load(self, nodedict):
         pass
 
@@ -43,7 +45,10 @@ class BaseNode(HasTraits):
         if not self.auto_configure:
             return True
 
-        if self.configure(refresh=False):
+        if self._manual_configured:
+            return True
+
+        if self.configure(refresh=False, pre_run=True):
             return True
         else:
             state.canceled = True
@@ -57,7 +62,10 @@ class BaseNode(HasTraits):
     def refresh(self):
         pass
 
-    def configure(self, **kw):
+    def configure(self, pre_run=False, **kw):
+        if not pre_run:
+            self._manual_configured = True
+
         return self._configure(**kw)
 
     def _configure(self, obj=None, **kw):

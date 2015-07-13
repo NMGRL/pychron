@@ -172,7 +172,7 @@ class FitIsotopeEvolutionNode(FitNode):
     def _assemble_result(self, xi, prog, i, n):
 
         if prog:
-            prog.change_message.format('Load raw data {}'.format(xi.record_id))
+            prog.change_message('Load raw data {}'.format(xi.record_id))
 
         fits = self._fits
         keys = [fi.name for fi in fits]
