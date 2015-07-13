@@ -17,7 +17,8 @@
 # ============= enthought library imports =======================
 from enable.component_editor import ComponentEditor
 from traits.api import Button
-from traitsui.api import View, Item, Readonly, UItem, VGroup, HGroup, EnumEditor, spring, InstanceEditor, ButtonEditor
+from traitsui.api import View, Item, Readonly, UItem, UReadonly, VGroup, HGroup, EnumEditor, spring, \
+    InstanceEditor, ButtonEditor, RangeEditor, Tabbed
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pyface.tasks.traits_task_pane import TraitsTaskPane
@@ -26,6 +27,8 @@ from pychron.core.ui.custom_label_editor import CustomLabel
 
 class FurnacePane(TraitsTaskPane):
     dump_sample_button = Button('Dump')
+    lower_funnel_button = Button('Lower Funnel')
+    raise_funnel_button = Button('Raise Funnel')
 
     def trait_context(self):
         return {'object': self.model,
@@ -34,7 +37,13 @@ class FurnacePane(TraitsTaskPane):
                 'stage_manager': self.model.stage_manager}
 
     def _dump_sample_button_fired(self):
-        self.model.dump_sample()
+        self.model.stage_manager.dump_sample()
+
+    def _raise_funnel_button_fired(self):
+        self.model.stage_manager.raise_funnel()
+
+    def _lower_funnel_button_fired(self):
+        self.model.stage_manager.lower_funnel()
 
     def traits_view(self):
         canvas_grp = VGroup(
@@ -42,27 +51,45 @@ class FurnacePane(TraitsTaskPane):
                    spring),
             UItem('stage_manager.canvas', style='custom', editor=ComponentEditor()))
 
-        cali_grp = VGroup(
-            # Item('tray_manager.style', show_label=False, enabled_when='not tray_manager.isCalibrating()'),
-            UItem('tray_manager.calibrate',
-                  enabled_when='stage_manager.stage_map_name',
-                  editor=ButtonEditor(label_value='tray_manager.calibration_step')),
-            HGroup(Readonly('tray_manager.x', format_str='%0.3f'),
-                   Readonly('tray_manager.y', format_str='%0.3f')),
-            Readonly('tray_manager.rotation', format_str='%0.3f'),
-            Readonly('tray_manager.scale', format_str='%0.4f'),
-            Readonly('tray_manager.error', format_str='%0.2f'),
-            UItem('tray_manager.calibrator', style='custom', editor=InstanceEditor()),
-            CustomLabel('tray_manager.calibration_help',
-                        color='green',
-                        height=75, width=300))
+        cali_grp = VGroup(UItem('tray_manager.calibrate',
+                                enabled_when='stage_manager.stage_map_name',
+                                editor=ButtonEditor(label_value='tray_manager.calibration_step')),
+                          HGroup(Readonly('tray_manager.x', format_str='%0.3f'),
+                                 Readonly('tray_manager.y', format_str='%0.3f')),
+                          Readonly('tray_manager.rotation', format_str='%0.3f'),
+                          Readonly('tray_manager.scale', format_str='%0.4f'),
+                          Readonly('tray_manager.error', format_str='%0.2f'),
+                          UItem('tray_manager.calibrator', style='custom', editor=InstanceEditor()),
+                          CustomLabel('tray_manager.calibration_help',
+                                      color='green',
+                                      height=75, width=300),
 
-        v = View(VGroup(Item('setpoint'),
-                        Readonly('setpoint_readback'),
-                        Item('stage_manager.calibrated_position_entry'),
-                        UItem('pane.dump_sample_button'),
-                        cali_grp,
-                        canvas_grp))
+                          show_border=True, label='Calibration')
+
+        c_grp = VGroup(HGroup(Item('setpoint'),
+                              UReadonly('setpoint_readback',
+                                        width=100)),
+                       UItem('setpoint_readback',
+                             enabled_when='0',
+                             editor=RangeEditor(mode='slider',
+                                                low_name='setpoint_readback_min',
+                                                high_name='setpoint_readback_max')),
+
+                       label='Controller', show_border=True)
+
+        d_grp = VGroup(Item('stage_manager.calibrated_position_entry', label='Hole'),
+                       Item('stage_manager.dumper.position',
+                            editor=RangeEditor(mode='slider',
+                                               low_name='stage_manager.dumper.min_value',
+                                               high_name='stage_manager.dumper.max_value', )),
+                       UItem('pane.lower_funnel_button', enabled_when='stage_manager.funnel.min_limit'),
+                       UItem('pane.dump_sample_button', enabled_when='stage_manager.funnel.max_limit'),
+                       UItem('pane.raise_funnel_button', enabled_when='stage_manager.funnel.max_limit'),
+                       label='Dumper', show_border=True)
+
+        v = View(VGroup(c_grp,
+                        UItem('graph', style='custom'),
+                        HGroup(Tabbed(d_grp, cali_grp), canvas_grp)))
         return v
 
 # ============= EOF =============================================

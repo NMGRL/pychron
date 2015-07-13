@@ -27,10 +27,10 @@ class FurnaceTask(BaseManagerTask):
     name = 'Furnace'
 
     def activated(self):
-        pass
+        self.manager.activate()
 
     def prepare_destroy(self):
-        pass
+        self.manager.prepare_destroy()
 
     def create_dock_panes(self):
         return []

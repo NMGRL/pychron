@@ -48,6 +48,8 @@ class FurnaceCanvas(StageCanvas):
 
         self.view_y_range = (-5, 5)
         self.view_x_range = (0, 10)
+        self.padding_top = 5
+        self.padding_bottom = 5
 
     def clear_all(self):
         self.scene.reset_layers()
@@ -90,7 +92,7 @@ class FurnaceCanvas(StageCanvas):
             ax_key, direction = DIRECTIONS[c]
             # direction = self._calc_relative_move_direction(c, direction)
             distance = 5 if event.shift_down else 1
-            self.dumper.relative_move(ax_key, direction, distance)
+            self.dumper.relative_move(direction * distance)
             event.handled = True
 
     def key_released(self, char):

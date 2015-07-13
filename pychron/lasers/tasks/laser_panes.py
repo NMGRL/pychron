@@ -29,8 +29,8 @@ from pychron.core.ui.led_editor import LEDEditor
 from enable.component_editor import ComponentEditor
 
 
-def SUItem(name, **kw):
-    return UItem('object.stage_manager.{}'.format(name), **kw)
+# def SUItem(name, **kw):
+#     return UItem('object.stage_manager.{}'.format(name), **kw)
 
 
 class BaseLaserPane(TraitsTaskPane):
@@ -60,51 +60,56 @@ class AxesPane(TraitsDockPane):
     name = 'Axes'
 
     def traits_view(self):
-        agrp = SUItem('stage_controller', style='custom')
+        agrp = UItem('stage_controller', style='custom')
         return View(agrp)
 
 
 class StageControlPane(TraitsDockPane):
     name = 'Stage'
 
+    def trait_context(self):
+        return {'canvas': self.model.stage_manager.canvas,
+                'stage_manager': self.model.stage_manager,
+                'tray_calibration': self.model.stage_manager.tray_calibration_manager}
+
     def traits_view(self):
         # =======================================================================
         # convienience functions
         # =======================================================================
-        def make_sm_name(name):
-            return 'object.stage_manager.{}'.format(name)
+        # def make_sm_name(name):
+        #     return 'object.stage_manager.{}'.format(name)
 
-        def SItem(name, **kw):
-            return Item(make_sm_name(name), **kw)
+        # def SItem(name, **kw):
+        #     return Item(make_sm_name(name), **kw)
 
-        def CItem(name, **kw):
-            return Item('object.stage_manager.canvas.{}'.format(name), **kw)
+        # def CItem(name, **kw):
+        #     return Item('object.stage_manager.canvas.{}'.format(name), **kw)
+        #
+        # def CUItem(name, **kw):
+        #     return UItem('object.stage_manager.canvas.{}'.format(name), **kw)
 
-        def CUItem(name, **kw):
-            return UItem('object.stage_manager.canvas.{}'.format(name), **kw)
+        pgrp = Group(UItem('stage_manager.calibrated_position_entry',
+                           tooltip='Enter a positon e.g 1 for a hole, or 3,4 for X,Y'),
+                     label='Calibrated Position',
+                     show_border=True)
+        hgrp = HGroup(UItem('stage_manager.stop_button'),
+                      UItem('stage_manager.home'),
+                      UItem('stage_manager.home_option',
+                            editor=EnumEditor(name='stage_manager.home_options')))
 
-        pgrp = Group(
-            SUItem('calibrated_position_entry',
-                   tooltip='Enter a positon e.g 1 for a hole, or 3,4 for X,Y'),
-            label='Calibrated Position',
-            show_border=True)
-        hgrp = HGroup(SUItem('stop_button'),
-                      SUItem('home'),
-                      SUItem('home_option', editor=EnumEditor(name='object.stage_manager.home_options')))
-        cngrp = VGroup(
-            CItem('show_bounds_rect'),
-            CItem('show_grids'),
-            HGroup(CItem('show_laser_position'),
-                   CUItem('crosshairs_color')),
-            CItem('crosshairs_kind'),
-            CItem('crosshairs_radius'),
-            HGroup(
-                CItem('crosshairs_offsetx', label='Offset'),
-                CUItem('crosshairs_offsety')),
-            CItem('crosshairs_offset_color'),
-            HGroup(CItem('show_desired_position'),
-                   CUItem('desired_position_color')),
-            label='Canvas')
+        cngrp = VGroup(Item('canvas.show_bounds_rect'),
+                       Item('canvas.show_grids'),
+                       HGroup(Item('canvas.show_laser_position'),
+                              UItem('canvas.crosshairs_color')),
+                       Item('canvas.crosshairs_kind'),
+                       Item('canvas.crosshairs_radius'),
+                       HGroup(
+                           Item('canvas.crosshairs_offsetx', label='Offset'),
+                           UItem('canvas.crosshairs_offsety')),
+                       Item('canvas.crosshairs_offset_color'),
+                       HGroup(Item('canvas.show_desired_position'),
+                              UItem('canvas.desired_position_color')),
+                       label='Canvas')
 
         mode = self.model.mode
         cagrp = VGroup(
@@ -113,44 +118,54 @@ class StageControlPane(TraitsDockPane):
 
         if self.model.stage_manager.__class__.__name__ == 'VideoStageManager':
             mvgrp = VGroup(
-                SUItem('autocenter_manager', style='custom'),
-                SUItem('autofocus_manager', style='custom'),
+                UItem('stage_manager.autocenter_manager', style='custom'),
+                UItem('stage_manager.autofocus_manager', style='custom'),
                 label='Machine Vision', show_border=True)
 
             recgrp = VGroup(
-                HGroup(icon_button_editor(make_sm_name('snapshot_button'), 'camera',
+                HGroup(icon_button_editor('stage_manager.snapshot_button', 'camera',
                                           tooltip='Take a snapshot'),
-                       icon_button_editor(make_sm_name('record'),
+                       icon_button_editor('stage_manager.record',
                                           'media-record',
                                           tooltip='Record video'),
-                       CustomLabel(make_sm_name('record_label'), color='red')),
-                VGroup(SItem('auto_save_snapshot'),
-                       SItem('render_with_markup')),
+                       CustomLabel('stage_manager.record_label', color='red')),
+                VGroup(Item('stage_manager.auto_save_snapshot'),
+                       Item('stage_manager.render_with_markup')),
                 show_border=True,
                 label='Recording')
 
-            cfggrp = VGroup(SItem('camera_zoom_coefficients', label='Zoom Coefficients'))
+            cfggrp = VGroup(Item('stage_manager.camera_zoom_coefficients', label='Zoom Coefficients'))
             cagrp.content.extend((cfggrp, recgrp, mvgrp))
 
         cgrp = Group(
-            SUItem('stage_controller', style='custom',
-                   label='Axes'),
+            UItem('stage_manager.stage_controller', style='custom',
+                  label='Axes'),
             cngrp,
             cagrp,
             layout='tabbed')
 
         if mode != 'client':
-            grps = (
-                SUItem('points_programmer',
-                       label='Points',
-                       defined_when='mode!="client"',
-                       style='custom'),
+            pp_grp = UItem('stage_manager.points_programmer',
+                           label='Points',
+                           style='custom')
+            cgrp.content.append(pp_grp)
 
-                SUItem('tray_calibration_manager',
-                       label='Calibration',
-                       style='custom',
-                       defined_when='mode!="client"'))
-            cgrp.content.extend(grps)
+            tc_grp = VGroup(UItem('tray_calibration.style',
+                                  enabled_when='not tray_calibration.isCalibrating()'),
+                            UItem('tray_calibration.calibrate',
+                                  editor=ButtonEditor(label_value='tray_calibration.calibration_step')),
+                            HGroup(Item('tray_calibration.x', format_str='%0.3f', style='readonly'),
+                                   Item('tray_calibration.y', format_str='%0.3f', style='readonly')),
+                            Item('tray_calibration.rotation', format_str='%0.3f', style='readonly'),
+                            Item('tray_calibration.scale', format_str='%0.4f', style='readonly'),
+                            Item('tray_calibration.error', format_str='%0.2f', style='readonly'),
+                            UItem('tray_calibration.calibrator', style='custom', editor=InstanceEditor()),
+                            CustomLabel('tray_calibration.calibration_help',
+                                        color='green',
+                                        height=75, width=300),
+                            label='Calibration')
+
+            cgrp.content.append(tc_grp)
 
         v = View(VGroup(hgrp, pgrp, cgrp))
 

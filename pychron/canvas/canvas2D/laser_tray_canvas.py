@@ -64,18 +64,17 @@ from pychron.experiment.utilities.position_regex import TRANSECT_REGEX, DRILL_RE
 
 class BoundsOverlay(AbstractOverlay):
     def overlay(self, component, gc, *args, **kw):
-        gc.save_state()
-        (x1, y1), (x2, y2) = component.map_screen([(-25, -25), (25, 25)])
-        w = abs(x1 - x2)
-        h = abs(y1 - y2)
-        gc.set_stroke_color((1, 0, 0))
-        gc.set_line_width(3)
-        gc.set_line_dash((5, 5))
-        rect = [getattr(component, attr) for attr in ('x', 'y', 'width', 'height')]
-        gc.clip_to_rect(*rect)
+        with gc:
+            (x1, y1), (x2, y2) = component.map_screen([(-25, -25), (25, 25)])
+            w = abs(x1 - x2)
+            h = abs(y1 - y2)
+            gc.set_stroke_color((1, 0, 0))
+            gc.set_line_width(3)
+            gc.set_line_dash((5, 5))
+            rect = [getattr(component, attr) for attr in ('x', 'y', 'width', 'height')]
+            gc.clip_to_rect(*rect)
 
-        gc.draw_rect((x1 + 1, y1, w, h), constants.STROKE)
-        gc.restore_state()
+            gc.draw_rect((x1 + 1, y1, w, h), constants.STROKE)
 
 
 DIRECTIONS = {'Left': ('x', -1), 'Right': ('x', 1),

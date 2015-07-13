@@ -51,6 +51,10 @@ class BaseCalibrator(Loggable):
     def _get_path(cls, name):
         return os.path.join(paths.hidden_dir, '{}_stage_calibration'.format(name))
 
+    def traits_view(self):
+        from traitsui.api import View
+
+        return View()
 
 class LinearCalibrator(BaseCalibrator):
     def handle(self, step, x, y, canvas):
@@ -68,14 +72,6 @@ class LinearCalibrator(BaseCalibrator):
             # #            return 'Calibrate', None, None, canvas.calibration_item.rotation, 1
             #             return dict(calibration_step='Calibrate',
             #                         rotation=canvas.calibration_item.rotation)
-
-    def get_controls(self):
-        pass
-
-    def traits_view(self):
-        from traitsui.api import View
-
-        return View()
 
 
 class TrayCalibrator(BaseCalibrator):

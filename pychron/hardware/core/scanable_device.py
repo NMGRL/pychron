@@ -63,6 +63,9 @@ class ScanableDevice(ViewableDevice):
     use_db = False
     _auto_started = False
 
+    def is_scanning(self):
+        return self._scanning
+
     def _scan_path_changed(self):
         self.scan_root = os.path.split(self.scan_path)[0]
         self.scan_name = os.path.basename(self.scan_path)

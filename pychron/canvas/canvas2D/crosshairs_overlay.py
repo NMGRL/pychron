@@ -24,6 +24,7 @@ from chaco.abstract_overlay import AbstractOverlay
 class SimpleCrosshairsOverlay(AbstractOverlay):
     radius = Float
     constrain = Enum('x', 'y')
+    circle_only = True
 
     def overlay(self, component, gc, *args, **kw):
         with gc:
@@ -66,7 +67,7 @@ class SimpleCrosshairsOverlay(AbstractOverlay):
         gc.line_to(mx, my + length)
         gc.stroke_path()
 
-    def _draw_radius_ch(self, gc, component, pt, radius, color=None, circle_only=False):
+    def _draw_radius_ch(self, gc, component, pt, radius, color=None):
         if color is not None:
             rgb = lambda x: 0 <= x <= 1.
             #            print color
@@ -94,7 +95,7 @@ class SimpleCrosshairsOverlay(AbstractOverlay):
             radius = comp._get_wh(radius, 0)[0]
             gc.arc(mx, my, radius, 0, 360)
 
-            if not circle_only:
+            if not self.circle_only:
                 x, x2, y, y2 = comp.x, comp.x2, comp.y, comp.y2
                 gc.move_to(x, my)
                 gc.line_to(mx - radius, my)
@@ -112,6 +113,7 @@ class SimpleCrosshairsOverlay(AbstractOverlay):
 
 
 class CrosshairsOverlay(SimpleCrosshairsOverlay):
+    circle_only = False
     def overlay(self, component, gc, *args, **kw):
         with gc:
             gc.clip_to_rect(component.x, component.y, component.width, component.height)

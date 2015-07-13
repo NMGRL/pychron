@@ -16,13 +16,11 @@
 
 # ============= enthought library imports =======================
 from traits.api import Float, Event, String, Any, Enum, Property, cached_property
-from traitsui.api import View, Item, VGroup, HGroup, InstanceEditor
 # ============= standard library imports ========================
 import cPickle as pickle
 import os
 # ============= local library imports  ==========================
-from pychron.managers.manager import Manager
-from pychron.core.ui.custom_label_editor import CustomLabel
+from pychron.loggable import Loggable
 from pychron.stage.calibration.free_calibrator import FreeCalibrator
 from pychron.stage.calibration.calibrator import TrayCalibrator, LinearCalibrator
 from pychron.paths import paths
@@ -37,7 +35,9 @@ HELP_DICT = {
 2. Hit End Calibrate to finish and compute parameters
 ''',
     'Hole': '''1. Move to Hole, Enter Reference hole. Repeat at least 2X
-2. Hit End Calibrate to finish and compute parameters'''
+2. Hit End Calibrate to finish and compute parameters''',
+    'Linear': '1. Locate Origin (i.e. 0)'
+
 }
 
 STYLE_DICT = {'Free': FreeCalibrator,
@@ -46,7 +46,7 @@ STYLE_DICT = {'Free': FreeCalibrator,
               }
 
 
-class TrayCalibrationManager(Manager):
+class TrayCalibrationManager(Loggable):
     x = Float
     y = Float
     rotation = Float
@@ -108,27 +108,27 @@ class TrayCalibrationManager(Manager):
     # def get_additional_controls(self):
     # return self.calibrator.get_controls()
 
-    def traits_view(self):
-        cg = VGroup(
-            Item('style', show_label=False, enabled_when='not object.isCalibrating()'),
-            self._button_factory('calibrate', 'calibration_step'),
-            HGroup(Item('x', format_str='%0.3f', style='readonly'),
-                   Item('y', format_str='%0.3f', style='readonly')),
-            Item('rotation', format_str='%0.3f', style='readonly'),
-            Item('scale', format_str='%0.4f', style='readonly'),
-            Item('error', format_str='%0.2f', style='readonly'),
-            Item('object.calibrator', style='custom', editor=InstanceEditor())
-        )
-        # ad = self.get_additional_controls()
-        # if ad is not None:
-        # cg.content.append(ad)
-
-        v = View(cg,
-                 CustomLabel('calibration_help',
-                             color='green',
-                             height=75, width=300),
-                 )
-        return v
+    # def traits_view(self):
+    #     cg = VGroup(
+    #         Item('style', show_label=False, enabled_when='not object.isCalibrating()'),
+    #         self._button_factory('calibrate', 'calibration_step'),
+    #         HGroup(Item('x', format_str='%0.3f', style='readonly'),
+    #                Item('y', format_str='%0.3f', style='readonly')),
+    #         Item('rotation', format_str='%0.3f', style='readonly'),
+    #         Item('scale', format_str='%0.4f', style='readonly'),
+    #         Item('error', format_str='%0.2f', style='readonly'),
+    #         Item('object.calibrator', style='custom', editor=InstanceEditor())
+    #     )
+    #     # ad = self.get_additional_controls()
+    #     # if ad is not None:
+    #     # cg.content.append(ad)
+    #
+    #     v = View(cg,
+    #              CustomLabel('calibration_help',
+    #                          color='green',
+    #                          height=75, width=300),
+    #              )
+    #     return v
 
     # ===============================================================================
     # handlers
@@ -150,14 +150,12 @@ class TrayCalibrationManager(Manager):
             for a in ('calibration_step', 'cx', 'cy', 'scale', 'error', 'rotation'):
                 if a in args:
                     setattr(self, a, args[a])
-                    print a
-                    if a == 'rotation':
-                        self.save_calibration()
 
-                        # ===============================================================================
-                        # property get/set
-                        # ===============================================================================
+            self.save_calibration()
 
+    # ===============================================================================
+    # property get/set
+    # ===============================================================================
     @cached_property
     def _get_calibrator(self):
         kw = dict(name=self.parent.stage_map_name or '',

@@ -22,7 +22,6 @@ from traits.api import HasTraits, Str, CFloat, Float, Property, List, Enum
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.geometry.affine import AffineTransform
-from pychron.core.helpers.filetools import parse_file
 from pychron.loggable import Loggable
 
 
@@ -38,6 +37,7 @@ class SampleHole(HasTraits):
     interpolated = False
     corrected = False
     interpolation_holes = None
+    analyzed = False
 
     nominal_position = Property(depends_on='x,y')
     corrected_position = Property(depends_on='x_cor,y_cor')
@@ -75,44 +75,48 @@ class BaseStageMap(Loggable):
         self.load()
 
     def load(self):
-        lines = parse_file(self.file_path)
-        if not lines:
-            return
+        # lines = parse_file(self.file_path)
+        # if not lines:
+        #     return
+        with open(self.file_path, 'r') as rfile:
 
-        # line 0 shape, dimension
-        shape, dimension = lines[0].split(',')
-        self.g_shape = shape
-        self.g_dimension = dimension = float(dimension)
+            line = rfile.readline()
+            # line 0 shape, dimension
+            shape, dimension = line.split(',')
+            self.g_shape = shape
+            self.g_dimension = dimension = float(dimension)
 
-        # line 1 list of holes to default draw
-        valid_holes = lines[1].split(',')
+            # line 1 list of holes to default draw
+            line = rfile.readline()
+            valid_holes = line.split(',')
 
-        # line 2 list of calibration holes
-        # should always be N,E,S,W,center
-        self.calibration_holes = lines[2].split(',')
+            # line 2 list of calibration holes
+            # should always be N,E,S,W,center
+            line = rfile.readline()
+            self.calibration_holes = line.split(',')
 
-        # for hi, line in enumerate(lines[3:]):
-        hi = 0
-        sms = []
-        for line in lines[3:]:
-            if not line.startswith('#'):
+            # for hi, line in enumerate(lines[3:]):
+            hi = 0
+            sms = []
+            for line in rfile:
+                if not line.startswith('#'):
 
-                # try:
-                #     hole, x, y = line.split(',')
-                # except ValueError:
-                #     try:
-                #         x, y = line.split(',')
-                #         hole = str(hi + 1)
-                #     except ValueError:
-                #         break
-                h = self._hole_factory(hi, line, shape, dimension, valid_holes)
-                if h is None:
-                    break
+                    # try:
+                    #     hole, x, y = line.split(',')
+                    # except ValueError:
+                    #     try:
+                    #         x, y = line.split(',')
+                    #         hole = str(hi + 1)
+                    #     except ValueError:
+                    #         break
+                    h = self._hole_factory(hi, line, shape, dimension, valid_holes)
+                    if h is None:
+                        break
 
-                sms.append(h)
-                hi += 1
-        else:
-            self.sample_holes = sms
+                    sms.append(h)
+                    hi += 1
+            else:
+                self.sample_holes = sms
 
     def _hole_factory(self, hi, line, shape, dimension, valid_holes):
         ah = ''

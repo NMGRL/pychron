@@ -15,22 +15,47 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Float
+from traits.api import Float, Property
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.hardware.core.abstract_device import AbstractDevice
+from pychron.hardware.core.core_device import CoreDevice
+
+
+class NMGRLFurnaceDrive(CoreDevice):
+    def set_position(self, v):
+        self.ask('Setposition {}'.format(v))
 
 
 class LinearAxis(AbstractDevice):
-    position = Float
+    position = Property(depends_on='_position')
+    _position = Float
 
-    # def update_position(self):
-    #     pass
-    #
-    # def linear_move(self, v, *args, **kw):
-    #     pass
-    #
-    # def relative_move(self, v, *args, **kw):
-    #     pass
+    min_value = Float(0.0)
+    max_value = Float(100.0)
+
+    min_limit = Property(depends_on='_position')
+    max_limit = Property(depends_on='_position')
+
+    def set_position(self, v):
+        if self._cdevice:
+            self.add_consumable((self._cdevice.set_position, v))
+
+    def relative_move(self, v):
+        self.set_position(self._position + v)
+
+    def _get_min_limit(self):
+        return abs(self._position - self.min_value) < 1e-5
+
+    def _get_max_limit(self):
+        return abs(self._position - self.max_value) < 1e-5
+
+    def _get_position(self):
+        return float('{:0.3f}'.format(self._position))
+
+    def _set_position(self, v):
+        self._position = v
+        if self._cdevice:
+            self.set_position(v)
 
 # ============= EOF =============================================

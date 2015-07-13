@@ -30,15 +30,35 @@ class Dumper(LinearAxis):
         pass
 
 
-class FurnaceStageManager(BaseStageManager):
-    dumper = Instance(Dumper)
-    funnel = Instance(LinearAxis)
+class BaseFurnaceStageManager(BaseStageManager):
     root = paths.furnace_map_dir
     stage_map_klass = FurnaceStageMap
 
     def __init__(self, *args, **kw):
-        super(FurnaceStageManager, self).__init__(*args, **kw)
+        super(BaseFurnaceStageManager, self).__init__(*args, **kw)
         self.tray_calibration_manager.style = 'Linear'
+
+
+class NMGRLFurnaceStageManager(BaseFurnaceStageManager):
+    dumper = Instance(Dumper)
+    funnel = Instance(LinearAxis)
+
+    def dump_sample(self):
+        self.debug('dump sample')
+        # self.dumper
+        hole = self.stage_map.get_hole(self.calibrated_position_entry)
+        if hole:
+            hole.analyzed = True
+            self.canvas.request_redraw()
+
+    def lower_funnel(self):
+        self.debug('lower funnel')
+        self.funnel.position = self.funnel.max_value
+
+    def raise_funnel(self):
+        self.debug('raise funnel')
+
+        self.funnel.position = self.funnel.min_value
 
     def get_current_position(self):
         if self.dumper:
@@ -51,15 +71,19 @@ class FurnaceStageManager(BaseStageManager):
     # private
     def _move_to_hole(self, key, correct_position=True):
         self.info('Move to hole {} type={}'.format(key, str(type(key))))
-        self.temp_hole = key
-        self.temp_position = pos = self.stage_map.get_hole_pos(key)
+        pos = self.stage_map.get_hole_pos(key)
+        if pos:
+            self.temp_hole = key
+            self.temp_position = pos
 
-        x, y = self.get_calibrated_position(pos, key=key)
-        self.info('hole={}, position={}, calibrated_position={}'.format(key, pos, (x, y)))
+            x, y = self.get_calibrated_position(pos, key=key)
+            self.info('hole={}, position={}, calibrated_position={}'.format(key, pos, (x, y)))
 
-        # self.dumper.linear_move(x)
-        self.info('Move complete')
-        self.update_axes()  # update_hole=False)
+            self.dumper.position = x
+            self.info('Move complete')
+            self.update_axes()  # update_hole=False)
+        else:
+            self.debug('invalid hole {}'.format(key))
 
     def _update_axes(self):
         pass

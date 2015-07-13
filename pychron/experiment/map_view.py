@@ -66,15 +66,16 @@ class MapOverlay(AbstractOverlay):
 
         gc.set_stroke_color((0, 0, 0))
         for k, color in [(-1, (0, 0, 0)), (-1.1, (1, 1, 1)), (-1.2, (0, 1, 0))]:
-            gc.save_state()
+            # gc.save_state()
             pts = [pt for pt, si in zip(data, cs) if si == k]
             if pts:
-                gc.set_fill_color(color)
-                marker = CircleMarker
-                path = gc.get_empty_path()
-                marker().add_to_path(path, size)
-                gc.draw_path_at_points(pts, path, FILL_STROKE)
-                gc.restore_state()
+                with gc:
+                    gc.set_fill_color(color)
+                    marker = CircleMarker
+                    path = gc.get_empty_path()
+                    marker().add_to_path(path, size)
+                    gc.draw_path_at_points(pts, path, FILL_STROKE)
+                    # gc.restore_state()
 
 
 class MapView(Viewable):

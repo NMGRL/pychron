@@ -24,7 +24,8 @@ from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.core.scanable_device import ScanableDevice
 
 PACKAGES = dict(ProXRADC='pychron.hardware.ncd.adc',
-                Eurotherm='pychron.hardware.eurotherm')
+                Eurotherm='pychron.hardware.eurotherm',
+                NMGRLFurnaceDrive='pychron.hardware.linear_axis')
 
 
 @provides(ICoreDevice)
