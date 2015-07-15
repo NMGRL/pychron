@@ -71,7 +71,6 @@ class dirty_ctx(object):
 
 
 class LabnumberEntry(DVCIrradiationable):
-
     use_dvc = Bool
 
     irradiation_tray = Str
@@ -122,6 +121,7 @@ class LabnumberEntry(DVCIrradiationable):
     _irradiation_editor = None
 
     j_multiplier = Float(1e-4)  # j units per hour
+    _estimated_j_value = 0
 
     def __init__(self, *args, **kw):
         super(LabnumberEntry, self).__init__(*args, **kw)
@@ -180,19 +180,27 @@ class LabnumberEntry(DVCIrradiationable):
         self._inform_save()
 
     def estimate_j(self):
-        j, je = self._estimate_j()
-        for ip in self.irradiated_positions:
-            ip.trait_set(j=j, j_err=je)
+        j = self._estimated_j_value
+
+        pos = self.selected
+        if not pos:
+            pos = self.irradiated_positions
+
+        for ip in pos:
+            ip.trait_set(j=j, j_err=j * 1e-3)
         self.refresh_table = True
 
-    def _estimate_j(self):
-        self.debug('estimate J. irradiation={}'.format(self.irradiation))
-        db = self.dvc.db
-        with db.session_ctx():
-            dbirrad = db.get_irradiation(self.irradiation)
-            j = dbirrad.chronology.duration
-            j *= self.j_multiplier
-            return j, j * 0.001
+        # def _estimate_j(self):
+        # j = self._estimated_j_value
+        # print j
+        # return j, j*0.001
+        # self.debug('estimate J. irradiation={}'.format(self.irradiation))
+        # db = self.dvc.db
+        # with db.session_ctx():
+        #     dbirrad = db.get_irradiation(self.irradiation)
+        #     j = dbirrad.chronology.duration
+        #     j *= self.j_multiplier
+        #     return j, j * 0.001
 
     # def set_selected_sample(self, new):
     # self.selected_sample = new
@@ -624,6 +632,8 @@ THIS CHANGE CANNOT BE UNDONE')
             self._level_editor = ie = LevelEditor(db=self.dvc.db,
                                                   repo=self.dvc.meta_repo,
                                                   trays=self.trays)
+
+        print 'afsd', ie.trays, self.trays
         ie.trait_set(**kw)
         return ie
 
@@ -722,13 +732,22 @@ THIS CHANGE CANNOT BE UNDONE')
         irrad = self._get_irradiation_editor(name=self.irradiation)
 
         new_irrad = irrad.edit()
+        self._suppress_auto_select_irradiation = True
+        self.updated = 'Irradiation'
         if new_irrad:
             self.irradiation = new_irrad
-        self.updated = 'Irradiation'
+
+        self._suppress_auto_select_irradiation = False
+
+        olevel = self.level
+        self._irradiation_changed()
+        self.level = olevel
+        # print self.irradiation
 
     def _edit_level_button_fired(self):
         editor = self._get_level_editor(name=self.level,
                                         irradiation=self.irradiation)
+
         new_level = editor.edit()
         if new_level:
             self.level = new_level
@@ -744,8 +763,9 @@ THIS CHANGE CANNOT BE UNDONE')
             self.updated = 'Level'
 
     def _updated_fired(self, new):
-        self.info('Pushing changes to meta repo. {} changed'.format(new))
-        self.dvc.meta_repo.push()
+        if self.dvc.meta_repo.has_unpushed_commits():
+            self.info('Pushing changes to meta repo. {} changed'.format(new))
+            self.dvc.meta_repo.push()
 
     def _irradiation_changed(self):
         # super(LabnumberEntry, self)._irradiation_changed()
@@ -753,8 +773,8 @@ THIS CHANGE CANNOT BE UNDONE')
             self.level = ''
 
             chron = self.dvc.meta_repo.get_chronology(self.irradiation)
-
             j = chron.duration * self.j_multiplier
+            self._estimated_j_value = j
             self.estimated_j_value = u'{} {}{}'.format(floatfmt(j),
                                                        PLUSMINUS,
                                                        floatfmt(j * 0.001))

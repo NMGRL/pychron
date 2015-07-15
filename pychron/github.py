@@ -51,7 +51,6 @@ def create_organization_repository(org, name, usr, pwd, **kw):
     auth = base64.encodestring('{}:{}'.format(usr, pwd)).replace('\n', '')
     headers = {"Authorization": "Basic {}".format(auth)}
     r = requests.post(cmd, data=json.dumps(payload), headers=headers)
-    print r.text
 
 
 class GithubObject(object):
@@ -72,8 +71,8 @@ class GithubObject(object):
 
 class Organization(GithubObject):
     def __init__(self, name, *args, **kw):
-        super(Organization, self).__init__(*args, **kw)
         self._name = name
+        super(Organization, self).__init__(*args, **kw)
 
     @property
     def base_cmd(self):
@@ -84,7 +83,6 @@ class Organization(GithubObject):
 
         cmd = make_request(self.base_cmd)
         doc = requests.get(cmd)
-
         return [repo['name'] for repo in json.loads(doc.text)]
 
     def has_repo(self, name):
@@ -101,9 +99,12 @@ class Organization(GithubObject):
 
 
 if __name__ == '__main__':
+    with open('/Users/ross/Programming/githubauth.txt') as rfile:
+        usr = rfile.readline().strip()
+        pwd = rfile.readline().strip()
     # print get_organization_repositiories('NMGRL')
     # create_organization_repository('NMGRL', 'test', 'jirhiker', 'jross4039')
-    org = Organization('NMGRL', 'jirhiker', 'jross4039')
+    org = Organization('NMGRLData', usr, pwd)
     print org.repos, len(org.repos)
     # print org.create_repo('test2', auto_init=True)
     # print org.repos, len(org.repos)

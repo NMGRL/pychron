@@ -18,7 +18,7 @@
 from enable.component_editor import ComponentEditor
 from traits.api import Instance, Int
 from traitsui.api import View, Item, TabularEditor, VGroup, HGroup, \
-    EnumEditor, UItem, Label, VSplit, TextEditor
+    EnumEditor, UItem, Label, TextEditor
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 # ============= standard library imports ========================
@@ -71,6 +71,8 @@ class IrradiationEditorPane(TraitsDockPane):
     labnumber_tabular_adapter = Instance(SampleAdapter, ())
 
     def traits_view(self):
+        self.labnumber_tabular_adapter.columns = [('Sample', 'name'),
+                                                  ('Material', 'material')]
         tgrp = HGroup(VGroup(icon_button_editor('add_project_button', 'database_add',
                                                 tooltip='Add project'),
                              show_border=True,
@@ -82,13 +84,13 @@ class IrradiationEditorPane(TraitsDockPane):
                       VGroup(icon_button_editor('add_sample_button', 'database_add',
                                                 tooltip='Add sample'),
                              show_border=True,
-                             label='Sample'),
-                      icon_button_editor('generate_identifiers_button',
-                                         'table_lightning',
-                                         tooltip='Generate Identifiers for this irradiation'),
-                      icon_button_editor('preview_generate_identifiers_button',
-                                         'document-preview',
-                                         tooltip='Preview identifiers generated for this irradiation level'))
+                             label='Sample')),
+        # icon_button_editor('generate_identifiers_button',
+        #                    'table_lightning',
+        #                    tooltip='Generate Identifiers for this irradiation'),
+        # icon_button_editor('preview_generate_identifiers_button',
+        #                    'document-preview',
+        #                    tooltip='Preview identifiers generated for this irradiation level'))
 
         project_grp = VGroup(
             UItem('projects',
@@ -106,11 +108,11 @@ class IrradiationEditorPane(TraitsDockPane):
                       editor=EnumEditor(name='sample_filter_parameters')),
                 UItem('sample_filter',
                       editor=ComboboxEditor(name='sample_filter_values'),
-                      width=75),
-                icon_button_editor('edit_sample_button', 'database_edit',
-                                   tooltip='Edit sample in database'),
-                icon_button_editor('add_sample_button', 'database_add',
-                                   tooltip='Add sample to database')),
+                      width=75)),
+            # icon_button_editor('edit_sample_button', 'database_edit',
+            #                    tooltip='Edit sample in database'),
+            # icon_button_editor('add_sample_button', 'database_add',
+            #                    tooltip='Add sample to database')),
 
             UItem('samples',
                   editor=TabularEditor(
@@ -119,25 +121,45 @@ class IrradiationEditorPane(TraitsDockPane):
                       selected='selected_samples',
                       multi_select=False,
                       column_clicked='column_clicked',
-                      stretch_last_section=False),
-                  width=75))
+                      stretch_last_section=False)),
+            show_border=True, label='Sample')
+
         jgrp = HGroup(UItem('j'), Label(PLUSMINUS_SIGMA), UItem('j_err'),
-                      icon_button_editor('estimate_j_button', 'cog'),
+                      icon_button_editor('estimate_j_button', 'cog',
+                                         tooltip='Apply a nominal J to the selected positions'),
                       show_border=True, label='J')
         ngrp = HGroup(UItem('note'),
                       UItem('weight'),
                       show_border=True, label='Note')
-        # wgrp = HGroup(UItem('weight'), show_border=True, label='Weight')
         sgrp = HGroup(UItem('invert_flag'),
                       Item('selection_freq', label='Freq'),
                       show_border=True,
                       label='Selection')
-        v = View(VSplit(VGroup(tgrp,
-                               HGroup(sgrp, jgrp),
-                               # wgrp,
-                               ngrp,
-                               project_grp),
-                        sample_grp))
+
+        ss = '''
+QLineEdit {font-size: 10px}
+QGroupBox {
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                      stop: 0 #E0E0E0, stop: 1 #FFFFFF);
+    border: 2px solid gray;
+    border-radius: 5px;
+    margin-top: 1ex; /* leave space at the top for the title */
+}
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left; /* position at the top center */
+    padding: 0 3px;
+    color: blue;
+}
+QComboBox {font-size: 10px}
+
+'''
+
+        v = View(VGroup(tgrp,
+                        HGroup(sgrp, jgrp),
+                        ngrp,
+                        HGroup(project_grp, sample_grp),
+                        style_sheet=ss))
         return v
 
 

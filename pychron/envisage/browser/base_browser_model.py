@@ -690,7 +690,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
     @cached_property
     def _get_sample_filter_parameters(self):
-        print 'fooooo', self.labnumber_tabular_adapter
+        # print 'fooooo', self.labnumber_tabular_adapter
         if self.labnumber_tabular_adapter:
             return {ci[1]: ci[0] for ci in self.labnumber_tabular_adapter.columns}
             # return dict([(ci[1], ci[0]) for ci in self.labnumber_tabular_adapter.columns])
