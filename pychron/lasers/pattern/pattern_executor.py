@@ -209,7 +209,7 @@ class PatternExecutor(Patternable):
             elif kind == 'DegasPattern':
                 self._execute_lumen_degas(controller, pattern)
             else:
-                self._execute_points(controller, pattern, multipoint=True)
+                self._execute_points(controller, pattern, multipoint=False)
 
     def _execute_points(self, controller, pattern, multipoint=False):
         pts = pattern.points_factory()
