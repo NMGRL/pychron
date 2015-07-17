@@ -19,29 +19,33 @@
 # =============local library imports  ==========================
 from kerr_motor import KerrMotor
 class KerrSnapMotor(KerrMotor):
-    '''
-    Snap Motor 
-    
-    '''
+    """
+    Snap Motor
+
+    """
     def _build_io(self):
-        '''
+        """
             picsrvsc.pdf p.35
             I/O Control
             18   04
             cmd  iobit
-            
+
             Bit 0 - Not used (clear to 0 for future compatibility)
             Bit 1 - Not used (clear to 0 for future compatibility)
-            Bit 2 - Enable limit switch protection, turn motor off when limit is hit 
-            Bit 3 - Enable limit switch protection, stop abruptly when limit is hit 
+            Bit 2 - Enable limit switch protection, turn motor off when limit is hit
+            Bit 3 - Enable limit switch protection, stop abruptly when limit is hit
             Bit 4 - Enable 3-Phase commutation output mode
             Bit 5 - Enable Antiphase PWM output mode
             Bit 6 - Set fast path option for path control mode
             Bit 7 - Enable Step & Direction input mode
-            
+
+
             04=00000100
-        '''
-        return '1804'
+            08=00001000
+            14(20)=00010100 enable 3 phase
+            24(36)=00100100 enable antiphase
+        """
+        return '1808'
 
 
 #        return ''.join(['F6'] + map(hexfmt, [p, d, i, il, ol, cl, el, sr, db, sm]))

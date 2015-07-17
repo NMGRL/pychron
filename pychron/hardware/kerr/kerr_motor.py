@@ -55,7 +55,8 @@ class KerrMotor(KerrDevice, ConsumerMixin):
     home_acceleration = Float
     homing_position = Int
     home_at_startup = Bool(True)
-    home_position = Int
+    home_position = CInt
+    home_limit = CInt
 
     min = Float(0)
     max = Float(100)
@@ -118,7 +119,9 @@ class KerrMotor(KerrDevice, ConsumerMixin):
             ('Homing', 'home_velocity'),
             ('Homing', 'home_acceleration'),
             ('Homing', 'home_at_startup', 'boolean'),
-            ('Homing', 'home_position')
+            ('Homing', 'home_position'),
+            ('Homing', 'home_limit'),
+
             ('General', 'min'),
             ('General', 'max'),
             ('General', 'nominal_position'),
@@ -272,12 +275,14 @@ class KerrMotor(KerrDevice, ConsumerMixin):
 
     def read_home_position(self):
         addr = self.address
-        cmd = '0E'
+
+        cb = int('00010000', 2)
+        cmd = '13{:02X}'.format(cb)
         cmd = self._build_command(addr, cmd)
         position_byte = self.ask(cmd, is_hex=True,
                                  delay=100,
-                                 nbytes=4,
-                                 info='get defined status',
+                                 nbytes=6,
+                                 info='get home position',
                                  verbose=True)
         return self._parse_position(position_byte)
 
@@ -388,6 +393,7 @@ class KerrMotor(KerrDevice, ConsumerMixin):
         self.load_data_position()
 
     def _home_motor(self, progress=None, *args, **kw):
+
         if progress is not None:
             progress.increase_max()
             progress.change_message('Homing {}'.format(self.name))
@@ -403,26 +409,30 @@ class KerrMotor(KerrDevice, ConsumerMixin):
 
         home_control_byte = self._load_home_control_byte()
         home_cmd = '19{:02x}'.format(home_control_byte)
-
+        self._clear_bits()
         cmds = [(addr, home_cmd, 100, '=======Set Homing===='),
                 (addr, move_cmd, 100, 'Send to Home')]
         self._execute_hex_commands(cmds)
-
+        # self.block(4, progress=progress, homing=True)
         # wait until homing signal set
+
+        hbit = 5 if self.home_limit == 1 else 6
         while 1:
             steps = self.load_data_position(set_pos=False)
             invoke_in_main_thread(self.trait_set, homing_position=steps)
             status = self.read_defined_status()
 
-            if not self._test_status_byte(status, bits=[7]):
+            if not self._test_status_byte(status, setbits=[7]):
                 break
-
+            if self._test_status_byte(status, setbits=[7,hbit]):
+                break
             time.sleep(0.25)
 
         pos = self.read_home_position()
         cmds = [(addr, '00', 100, 'reset position')]
         self._execute_hex_commands(cmds)
-        self.update_configuration(homing={'home_position': pos})
+        print 'ppppp', pos
+        # self.update_configuration(homing={'home_position': pos})
 
     def _parse_position(self, pos):
         if pos is not None:
@@ -430,7 +440,9 @@ class KerrMotor(KerrDevice, ConsumerMixin):
             return self._hexstr_to_float(pos)
 
     def _test_status_byte(self, status, setbits):
-        b = ':08b'.format(status)
+        b = '{:08b}'.format(int(status[:2], 16))
+        print b
+        # status_register = map(int, make_bitarray(int(status_byte[:2], 16)))
         return all(bool(int(b[7 - si])) for si in setbits)
 
     def _home_motor2(self, progress=None, *args, **kw):
@@ -443,11 +455,12 @@ class KerrMotor(KerrDevice, ConsumerMixin):
         addr = self.address
 
         cmd = '94'
-        control = 'F6'
+        # control = 'F6'
+        control = '8E'
 
         v = self._float_to_hexstr(self.home_velocity)
         a = self._float_to_hexstr(self.home_acceleration)
-        move_cmd = ''.join((cmd, control, v, a))
+        move_cmd = ''.join((cmd, control, v, a, '00'))
 
         #         home_control_byte = self._load_home_control_byte()
         #         home_cmd = '19{:02x}'.format(home_control_byte)
@@ -514,8 +527,13 @@ class KerrMotor(KerrDevice, ConsumerMixin):
             5=stop smoothly
             6,7=not used- clear to 0
         """
+        if self.home_limit == 1:
+            bs = '00010001'
+        else:
+            bs = '00010010'
 
-        return int('00010011', 2)
+        return int(bs, 2)
+        # return int('00010011', 2)
 
     def _load_trajectory_controlbyte(self):
         """
@@ -647,19 +665,37 @@ class KerrMotor(KerrDevice, ConsumerMixin):
 
     def _float_to_hexstr(self, f, endianness='little'):
         f = max(0, f)
-        fmt = '%sI' % ('<' if endianness == 'little' else '>')
+        fmt = '%si' % ('<' if endianness == 'little' else '>')
         return binascii.hexlify(struct.pack(fmt, int(f)))
 
     def _hexstr_to_float(self, h, endianness='little'):
-        fmt = '%sI' % ('<' if endianness == 'little' else '>')
+        # fmt = '%si'.('<' if endianness == 'little' else '>')
+        fmt = '<i' if endianness == 'little' else '>i'
         try:
             return struct.unpack(fmt, h.decode('hex'))[0]
         except Exception, e:
             print 'exception', e
 
     def _build_hexstr(self, *hxlist):
-        hexfmt = lambda a: '{{:0{}x}}'.format(a[1]).format(a[0])
-        return ''.join(map(hexfmt, hxlist))
+        ss = []
+        for args in hxlist:
+            if len(args) == 2:
+                v, n = args
+                flip = False
+            else:
+                v, n, flip = args
+
+            fmt = '{{:0{}x}}'.format(n)
+            s = fmt.format(v)
+            if flip:
+                s = '{}{}'.format(s[2:], s[:2])
+
+            ss.append(s)
+
+        return ''.join(ss)
+
+        # hexfmt = lambda a: '{{:0{}x}}'.format(a[1]).format(a[0])
+        # return ''.join(map(hexfmt, hxlist))
 
     def _build_io(self):
         return '1800'
@@ -671,25 +707,17 @@ class KerrMotor(KerrDevice, ConsumerMixin):
 
             B004 2003 F401 B004 FF 00 6400 010101
 
-            100 1000 0 0 255 0 4000 1 1 1
+            0064 03e8 0000 0000 ff 00 0fa0 01 01 01
         """
-        #        p = (45060, 4)
-        #        d = (8195, 4)
-        #        i = (62465, 4)
-        #        il = (59395, 4)
-        #        ol = (255, 2)
-        #        cl = (0, 2)
-        #        el = (59395, 4)
-        #        sr = (1, 2)
-        #        db = (1, 2)
-        #        sm = (1, 2)
-        p = (100, 4)
-        d = (1000, 4)
-        i = (0, 4)
-        il = (0, 4)
+        flip_nibbles = True
+
+        p = (100, 4, flip_nibbles)
+        d = (1000, 4, flip_nibbles)
+        i = (0, 4, flip_nibbles)
+        il = (0, 4, flip_nibbles)
         ol = (255, 2)
         cl = (0, 2)
-        el = (4000, 4)
+        el = (4000, 4, flip_nibbles)
         sr = (1, 2)
         db = (1, 2)
         sm = (1, 2)
