@@ -84,7 +84,6 @@ class Script(Loggable):
 
     def _get_name_prefix(self):
         r = ''
-        # print self.use_name_prefix, self._name_prefix, self.mass_spectrometer
         if self.use_name_prefix:
             r = self._name_prefix if self._name_prefix else self.mass_spectrometer
         return r

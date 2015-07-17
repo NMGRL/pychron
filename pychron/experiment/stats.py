@@ -85,7 +85,7 @@ class AutomatedRunDurationTracker(Loggable):
         return next((True for h, d in self.items if h == v), False)
 
     def __getitem__(self, item):
-        return next((d for h, d in self.items if h == item), 0)
+        return next((float(d.split(',')[0]) for h, d in self.items if h == item), 0)
 
 
 class ExperimentStats(Loggable):

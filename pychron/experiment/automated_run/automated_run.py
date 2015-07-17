@@ -1991,6 +1991,7 @@ anaylsis_type={}
         func = getattr(self, '_{}_script_factory'.format(name))
         s = func()
         valid = True
+
         if s and os.path.isfile(s.filename):
             if s.bootstrap():
                 self.debug('%%%%%%%%%%%%%%%%%%%%%%%%%%%% setting default context for {}'.format(fname))
@@ -2046,7 +2047,7 @@ anaylsis_type={}
             return obj
 
     def _make_script_name(self, name):
-        # name = '{}_{}'.format(self.spec.mass_spectrometer.lower(), name)
+        name = '{}_{}'.format(self.spec.mass_spectrometer.lower(), name)
         return add_extension(name, '.py')
 
     def _setup_context(self, script):

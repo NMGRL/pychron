@@ -40,6 +40,7 @@ from pychron.experiment.tasks.experiment_panes import ExperimentFactoryPane, Sta
 
 
 class ExperimentEditorTask(EditorTask):
+    id = 'pychron.experiment.task'
     name = 'Experiment'
 
     default_filename = 'Experiment Current.txt'
