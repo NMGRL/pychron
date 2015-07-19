@@ -443,7 +443,7 @@ class MassSpecDatabaseImporter(Loggable):
         blob = ''
         if runtype == 'Air':
             isos = []
-            for a, v in (('Ar40', 295.5e-13), ('Ar38', 0.19e-13), ('Ar36', 1e-13)):
+            for a, v in (('Ar40', 295.5e-13), ('Ar38', 0.18762e-13), ('Ar36', 1e-13)):
                 isos.append('{}\t{}'.format(a, v))
             blob = '\r'.join(isos)
         return blob

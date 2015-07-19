@@ -1991,6 +1991,7 @@ anaylsis_type={}
         func = getattr(self, '_{}_script_factory'.format(name))
         s = func()
         valid = True
+
         if s and os.path.isfile(s.filename):
             if s.bootstrap():
                 self.debug('%%%%%%%%%%%%%%%%%%%%%%%%%%%% setting default context for {}'.format(fname))

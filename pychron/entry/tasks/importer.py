@@ -22,8 +22,6 @@ import time
 
 # ============= local library imports  ==========================
 from pychron.core.progress import open_progress
-# from pychron.experiment.importer.mass_spec_extractor import Extractor, \
-#     MassSpecExtractor
 from pychron.entry.loaders.extractor import Extractor
 from pychron.entry.loaders.mass_spec_extractor import MassSpecExtractor
 from pychron.loggable import Loggable
