@@ -68,9 +68,10 @@ class AutomatedRunDurationTracker(Loggable):
 
                         ds = map(float, ds)
                         ds.append(t)
-                        ds = ds[10:]
-                        args = [h, sum(ds) / len(ds)]
-                        args.extend(ds)
+                        ds = ds[-10:]
+                        if len(ds):
+                            args = [h, sum(ds) / len(ds)]
+                            args.extend(ds)
 
                     out.append(args)
 
@@ -79,7 +80,7 @@ class AutomatedRunDurationTracker(Loggable):
 
         with open(p, 'w') as wfile:
             for line in out:
-                wfile.write('{}\n'.format(','.join(line)))
+                wfile.write('{}\n'.format(','.join(map(str, line))))
 
     def __contains__(self, v):
         return next((True for h, d in self.items if h == v), False)
