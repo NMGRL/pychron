@@ -337,7 +337,7 @@ class AutomatedRunFactory(PersistenceLoggable):
         # db = self.db
         # with db.session_ctx():
         # ms = db.get_mass_spectrometer(self.mass_spectrometer)
-        #     ed = db.get_extraction_device(self.extract_device)
+        # ed = db.get_extraction_device(self.extract_device)
         #     self._mass_spectrometers = ms
         #     self._extract_devices = ed
 
@@ -630,7 +630,7 @@ class AutomatedRunFactory(PersistenceLoggable):
             # ss = self._script_factory(label=si, name=s)
             # setattr(self, name, ss)
             # setattr(self, name, Script(name=s,
-            #                            label=si,
+            # label=si,
             #                            mass_spectrometer=self.mass_spectrometer))
         self.script_options.name = run.script_options
 
@@ -767,7 +767,7 @@ class AutomatedRunFactory(PersistenceLoggable):
             # with db.session_ctx():
             # dbln = db.get_labnumber(self.labnumber)
             # if dbln:
-            #         dbpos = dbln.irradiation_position
+            # dbpos = dbln.irradiation_position
             #         dbhist = db.add_flux_history(dbpos)
             #         dbflux = db.add_flux(float(v), float(e))
             #         dbflux.history = dbhist
@@ -950,7 +950,7 @@ class AutomatedRunFactory(PersistenceLoggable):
     # property get/set
     # ===============================================================================
     # def _get_default_fits_enabled(self):
-    #     return self.measurement_script.name not in ('None', '')
+    # return self.measurement_script.name not in ('None', '')
 
     def _get_edit_mode_label(self):
         return 'Editing' if self.edit_mode else ''
@@ -1379,10 +1379,11 @@ extraction_script:name,
 post_measurement_script:name,
 post_equilibration_script:name''')
     def _edit_script_handler(self, obj, name, new):
-        if self.edit_mode and not self.suppress_update:
-            if obj.label=='Measurement':
-                self.default_fits_enabled = bool(new)
 
+        if obj.label == 'Measurement':
+            self.default_fits_enabled = bool(new and new not in (NULL_STR, ))
+
+        if self.edit_mode and not self.suppress_update:
             self._auto_save()
             if obj.label == 'Extraction':
                 self._load_extraction_info(obj)
@@ -1519,7 +1520,6 @@ post_equilibration_script:name''')
     # defaults
     # ================================================================================
     def _script_factory(self, label, name=NULL_STR, kind='ExtractionLine'):
-        self.debug('88888888888888888888888 {} {} {} {} {}'.format(label, kind, self.use_name_prefix, self.name_prefix, self.mass_spectrometer))
         s = Script(label=label,
                    use_name_prefix=self.use_name_prefix,
                    name_prefix=self.name_prefix,
@@ -1668,7 +1668,7 @@ post_equilibration_script:name''')
 # s, e = map(int, pos.split(':'))[:2]
 # elif CSLICE_REGEX.match(pos):
 # args = pos.split(';')
-#            positions = []
+# positions = []
 #            for ai in args:
 #                if '-' in ai:
 #                    a, b = map(int, ai.split('-'))
