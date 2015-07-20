@@ -134,7 +134,7 @@ class AutomatedRunFactory(PersistenceLoggable):
     load_defaults_button = Button('Default')
 
     default_fits_button = Button
-    default_fits_enabled = Property(depends_on='measurement_script.name')
+    default_fits_enabled = Bool
     # ===================================
 
     human_error_checker = Instance(HumanErrorChecker, ())
@@ -414,8 +414,12 @@ class AutomatedRunFactory(PersistenceLoggable):
     def set_mass_spectrometer(self, new):
         new = new.lower()
         self.mass_spectrometer = new
+        # print SCRIPT_NAMES
         for s in self._iter_scripts():
+            # print s.kind, s, new
             s.mass_spectrometer = new
+            s.refresh_lists = True
+
 
     def set_extract_device(self, new):
         new = new.lower()
@@ -621,7 +625,7 @@ class AutomatedRunFactory(PersistenceLoggable):
 
             ms = getattr(self, skey)
             sname = getattr(run, skey)
-            print sname
+            # print sname
             ms.name = sname
             # ss = self._script_factory(label=si, name=s)
             # setattr(self, name, ss)
@@ -945,8 +949,8 @@ class AutomatedRunFactory(PersistenceLoggable):
     # ===============================================================================
     # property get/set
     # ===============================================================================
-    def _get_default_fits_enabled(self):
-        return self.measurement_script.name not in ('None', '')
+    # def _get_default_fits_enabled(self):
+    #     return self.measurement_script.name not in ('None', '')
 
     def _get_edit_mode_label(self):
         return 'Editing' if self.edit_mode else ''
@@ -1375,8 +1379,10 @@ extraction_script:name,
 post_measurement_script:name,
 post_equilibration_script:name''')
     def _edit_script_handler(self, obj, name, new):
-
         if self.edit_mode and not self.suppress_update:
+            if obj.label=='Measurement':
+                self.default_fits_enabled = bool(new)
+
             self._auto_save()
             if obj.label == 'Extraction':
                 self._load_extraction_info(obj)
@@ -1513,7 +1519,7 @@ post_equilibration_script:name''')
     # defaults
     # ================================================================================
     def _script_factory(self, label, name=NULL_STR, kind='ExtractionLine'):
-        print kind, self.use_name_prefix, self.name_prefix, self.mass_spectrometer
+        self.debug('88888888888888888888888 {} {} {} {} {}'.format(label, kind, self.use_name_prefix, self.name_prefix, self.mass_spectrometer))
         s = Script(label=label,
                    use_name_prefix=self.use_name_prefix,
                    name_prefix=self.name_prefix,
