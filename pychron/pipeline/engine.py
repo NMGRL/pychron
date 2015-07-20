@@ -205,13 +205,15 @@ class PipelineEngine(Loggable):
     def select_default(self):
         node = self.pipeline.nodes[0]
 
-        self.browser_model.select_project('J')
+        self.browser_model.select_project('J-Curve')
+        self.browser_model.select_experiment('Irradiation-NM-272')
         self.browser_model.select_sample(idx=0)
         records = self.browser_model.get_analysis_records()
         if records:
             analyses = self.dvc.make_analyses(records)
             # print len(records),len(analyses)
             node.analyses.extend(analyses)
+            node._manual_configured = True
             # self.refresh_analyses()
 
     def add_test_filter(self):
