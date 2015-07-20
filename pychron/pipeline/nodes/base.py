@@ -27,6 +27,10 @@ class BaseNode(HasTraits):
     visited = Bool(False)
     options_klass = None
     options = Any
+    auto_configure = Bool(True)
+    active = Bool(False)
+
+    _manual_configured = Bool(False)
 
     def load(self, nodedict):
         pass
@@ -37,6 +41,18 @@ class BaseNode(HasTraits):
     def disable(self):
         self.enabled = False
 
+    def pre_run(self, state):
+        if not self.auto_configure:
+            return True
+
+        if self._manual_configured:
+            return True
+
+        if self.configure(refresh=False, pre_run=True):
+            return True
+        else:
+            state.canceled = True
+
     def run(self, state):
         raise NotImplementedError(self.__class__.__name__)
 
@@ -46,14 +62,17 @@ class BaseNode(HasTraits):
     def refresh(self):
         pass
 
-    def configure(self):
-        return self._configure()
+    def configure(self, pre_run=False, **kw):
+        if not pre_run:
+            self._manual_configured = True
 
-    def _configure(self, obj=None):
+        return self._configure(**kw)
+
+    def _configure(self, obj=None, **kw):
         if obj is None:
             obj = self
 
-        info = obj.edit_traits()
+        info = obj.edit_traits(kind='livemodal')
         if info.result:
             self.refresh()
             return True

@@ -16,8 +16,8 @@
 
 # ============= enthought library imports =======================
 from chaco.default_colormaps import color_map_name_dict
-from traits.api import Bool, Str, Int, Enum
-from traitsui.api import View, Item, VGroup, HGroup, Tabbed
+from traits.api import Bool, Str, Int, Enum, Float, Property
+from traitsui.api import View, Item, VGroup, HGroup, Tabbed, Readonly
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.editors import EnumEditor
@@ -25,7 +25,7 @@ from traitsui.editors import EnumEditor
 from pychron.pipeline.plot.options.base import dumpable
 from pychron.pipeline.plot.options.figure_plotter_options import SaveableFigurePlotterOptions
 # from pychron.processing.plot.options.option import AuxPlotOptions
-from pychron.pychron_constants import ERROR_TYPES
+from pychron.pychron_constants import ERROR_TYPES, K_DECAY_CONSTANTS
 
 
 # class IsoFilterFitAuxPlot(AuxPlotOptions, IsoFilterFit):
@@ -35,13 +35,15 @@ from pychron.pychron_constants import ERROR_TYPES
 
 class FluxOptions(SaveableFigurePlotterOptions):
     # plot_option_klass = IsoFilterFitAuxPlot
-    color_map_name = Str('jet')
-    marker_size = Int(5)
-    levels = Int(50, auto_set=False, enter_set=True)
+    color_map_name = dumpable(Str('jet'))
+    marker_size = dumpable(Int(5))
+    levels = dumpable(Int(50, auto_set=False, enter_set=True))
 
-    error_kind = 'SD'
-    monitor_age = 28.201
-    lambda_k = 5.464e-10
+    error_kind = dumpable(Str('SD'))
+
+    selected_decay = dumpable(Enum(K_DECAY_CONSTANTS.keys()))
+    monitor_age = dumpable(Float(28.201))
+    lambda_k = Property(depends_on='selected_decay')
 
     model_kind = dumpable(Enum('Plane', 'Bowl'))
     predicted_j_error_type = dumpable(Enum(*ERROR_TYPES))
@@ -60,9 +62,12 @@ class FluxOptions(SaveableFigurePlotterOptions):
         appear_grp = VGroup(bg_grp, pd_grp, a_grp, label='Appearance')
 
         p_grp = self._get_fitting_group()
-
         v = View(Tabbed(p_grp, appear_grp))
         return v
+
+    def _get_lambda_k(self):
+        dc = K_DECAY_CONSTANTS[self.selected_decay]
+        return dc[0] + dc[2]
 
     def _get_fitting_group(self):
         twodgrp = VGroup(HGroup(Item('color_map_name',
@@ -74,19 +79,22 @@ class FluxOptions(SaveableFigurePlotterOptions):
         onedgrp = VGroup(Item('marker_size'),
                          visible_when='plot_kind=="1D"')
 
-        ogrp = HGroup(Item('confirm_save',
-                           label='Confirm Save', tooltip='Allow user to review evolutions '
-                                                         'before saving to file'))
+        # ogrp = HGroup(Item('confirm_save',
+        #                    label='Confirm Save', tooltip='Allow user to review evolutions '
+        #                                                  'before saving to file'))
         grp = VGroup(Item('plot_kind'),
                      twodgrp,
                      onedgrp,
+                     Item('selected_decay', label='Total K Decay'),
+                     Readonly('lambda_k'),
+                     Item('monitor_age'),
                      Item('predicted_j_error_type', ),
                      Item('use_weighted_fit', ),
                      Item('monte_carlo_ntrials', ),
-                     Item('use_monte_carlo', ))
-
-        return VGroup(ogrp,
-                      grp,
-                      label='Fits')
+                     Item('use_monte_carlo', ),
+                     label='Fits')
+        return grp
+        # return VGroup(grp,
+        #               label='Fits')
 
 # ============= EOF =============================================

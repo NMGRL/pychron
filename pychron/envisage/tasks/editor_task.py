@@ -49,6 +49,9 @@ class BaseEditorTask(BaseManagerTask):
     def get_editor_names(self):
         return [e.name for e in self.editor_area.editors]
 
+    def iter_editors(self, klass):
+        return (e for e in self.editor_area.editors if isinstance(e, klass))
+
     def has_active_editor(self, klass=None):
         if not self.active_editor:
             self.information_dialog('No active tab. Please open a tab')
@@ -136,9 +139,10 @@ class BaseEditorTask(BaseManagerTask):
 
     def _open_editor(self, editor, activate=True, **kw):
         if self.editor_area:
-            self.editor_area.add_editor(editor)
-            if activate:
-                self.editor_area.activate_editor(editor)
+            if editor not in self.editor_area.editors:
+                self.editor_area.add_editor(editor)
+                if activate:
+                    self.editor_area.activate_editor(editor)
 
             # ===============================================================================
             # property get/set

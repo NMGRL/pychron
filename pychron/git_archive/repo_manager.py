@@ -318,12 +318,12 @@ class GitRepoManager(Loggable):
         return untracked_files
 
     def has_staged(self):
-        return self._repo.git.diff('--cached', '--name-only')
+        return self._repo.git.diff('HEAD', '--name-only')
         # return self._repo.is_dirty()
 
-    def has_unpushed_commits(self):
-        print self.path
-        return self._repo.git.log('--not', '--remotes', '--oneline')
+    def has_unpushed_commits(self, remote='origin', branch='master'):
+        # return self._repo.git.log('--not', '--remotes', '--oneline')
+        return self._repo.git.log('{}/{}..HEAD'.format(remote, branch), '--oneline')
 
     def add_unstaged(self, root, extension=None, use_diff=False):
         index = self.index
@@ -488,6 +488,9 @@ class GitRepoManager(Loggable):
 
     def add(self, p, msg=None, msg_prefix=None, verbose=True, **kw):
         repo = self._repo
+        if not repo.is_dirty():
+            return
+
         bp = os.path.basename(p)
         dest = os.path.join(repo.working_dir, p)
 

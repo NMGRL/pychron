@@ -397,17 +397,30 @@ class BaseArArFigure(HasTraits):
 
     def _set_ml_title(self, text, plotid, ax):
         plot = self.graph.plots[plotid]
+
         tag = '{}_axis'.format(ax)
         xa = getattr(plot, tag)
+        # remove the axis tool
+        self._remove_axis_tool(plot, xa)
+
         nxa = MPlotAxis()
+
         nxa.title = text
         nxa.clone(xa)
 
         setattr(plot, tag, nxa)
+        self._add_axis_tool(plot, nxa)
+        # nxa.do_layout(force=True)
 
     # ===============================================================================
     #
     # ===============================================================================
+    def _remove_axis_tool(self, plot, axis):
+        for t in plot.tools:
+            if t.component == axis:
+                plot.tools.remove(t)
+                break
+
     def _add_axis_tool(self, plot, axis):
         t = AxisTool(component=axis)
         plot.tools.append(t)

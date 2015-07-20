@@ -30,6 +30,8 @@ from traitsui.api import View, Item, TabularEditor, HGroup, UItem, VSplit, Group
 
 
 
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
@@ -256,8 +258,8 @@ class LevelEditor(Loggable):
                     if not next((li for li in irrad.levels if li.name == self.name), None):
                         db.add_irradiation_level(self.name, irrad,
                                                  self.selected_tray,
-                                                 # self.selected_production.name,
-                                                 self.z,
+                                                 self.selected_production.name,
+                                                 float(self.z),
                                                  self.level_note)
 
                         self._save_production()

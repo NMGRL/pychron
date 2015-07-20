@@ -68,7 +68,7 @@ class PipelineHandler(Handler):
 
     def _toggle_enable(self, info, obj, state):
         obj.enabled = state
-        info.object.run_needed = True
+        # info.object.run_needed = True
         info.object.refresh_all_needed = True
 
     def configure(self, info, obj):

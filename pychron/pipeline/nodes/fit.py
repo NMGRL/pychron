@@ -20,7 +20,6 @@ from traits.api import Bool, List, HasTraits, Str, Float, Instance
 from itertools import groupby
 # ============= local library imports  ==========================
 from uncertainties import nominal_value, std_dev
-from pychron.core.confirmation import confirmation_dialog
 from pychron.core.helpers.isotope_utils import sort_isotopes
 from pychron.core.progress import progress_loader
 from pychron.pipeline.editors.flux_results_editor import FluxResultsEditor, FluxPosition
@@ -57,14 +56,14 @@ class FitReferencesNode(FitNode):
         self.name = 'Fit {} {}'.format(self.basename, self.name)
         self._set_saveable(state)
 
-        if self.has_save_node:
-            if self.plotter_options.confirm_save:
-                if confirmation_dialog('Would you like to review the {} before saving?'.format(self.basename)):
-                    state.veto = self
-                else:
-                    self.editor.force_update(force=True)
-            else:
-                self.editor.force_update(force=True)
+        # if self.has_save_node:
+        #     if self.plotter_options.confirm_save:
+        #         if confirmation_dialog('Would you like to review the {} before saving?'.format(self.basename)):
+        #             state.veto = self
+        #         else:
+        #             self.editor.force_update(force=True)
+        #     else:
+        self.editor.force_update(force=True)
 
 
 class FitBlanksNode(FitReferencesNode):
@@ -157,9 +156,9 @@ class FitIsotopeEvolutionNode(FitNode):
 
         self._set_saveable(state)
         # self.name = '{} Fit IsoEvo'.format(self.name)
-        if self.has_save_node and po.confirm_save:
-            if confirmation_dialog('Would you like to review the iso fits before saving?'):
-                state.veto = self
+        # if self.has_save_node and po.confirm_save:
+        #     if confirmation_dialog('Would you like to review the iso fits before saving?'):
+        #         state.veto = self
 
         if fs:
             k = lambda an: an.isotope
@@ -173,7 +172,7 @@ class FitIsotopeEvolutionNode(FitNode):
     def _assemble_result(self, xi, prog, i, n):
 
         if prog:
-            prog.change_message.format('Load raw data {}'.format(xi.record_id))
+            prog.change_message('Load raw data {}'.format(xi.record_id))
 
         fits = self._fits
         keys = [fi.name for fi in fits]
@@ -212,14 +211,14 @@ class FitFluxNode(FitNode):
         geom = state.geometry
 
         monitors = state.flux_monitors
-        editor.analyses = monitors
+        # editor.analyses = monitors
         # monitor_positions = []
         if monitors:
             opt = self.plotter_options
             monage = opt.monitor_age * 1e6
             lk = opt.lambda_k
             ek = opt.error_kind
-
+            state.decay_constants = {'lambda_k_total': lk, 'lambda_k_total_error': 0}
             # editor = FluxResultsEditor(options=self.options,
             #                            plotter_options=self.plotter_options)
             key = lambda x: x.identifier
@@ -244,20 +243,25 @@ class FitFluxNode(FitNode):
                                  saved_jerr=std_dev(j),
                                  mean_j=nominal_value(mj),
                                  mean_jerr=std_dev(mj),
+                                 analyses=ais,
                                  x=x, y=y,
                                  n=n)
                 poss.append(p)
+
+                # for unk_pos in state.unknown_positions:
+                # print unk_pos
+
                 # print identifier, irradiation_position, j, mj, n
                 # editor.add_position(identifier, ip, sample, j, mj, n)
             editor.geometry = geom
-            state.saveable_irradiation_positions = poss
-            editor.set_positions(poss, [])
+            state.saveable_irradiation_positions = poss + state.unknown_positions
+            editor.set_positions(poss, state.unknown_positions)
             editor.predict_values()
 
-            if self.has_save_node and self.plotter_options.confirm_save:
-                if confirmation_dialog('Would you like to review the flux fits before saving?'):
-                    state.veto = self
+            # if self.has_save_node and self.plotter_options.confirm_save:
+            #     if confirmation_dialog('Would you like to review the flux fits before saving?'):
+            # state.veto = self
 
-            state.editors.append(editor)
-
+            # state.editors.append(editor)
+            # state.prev_node_label = 'Flux'
 # ============= EOF =============================================

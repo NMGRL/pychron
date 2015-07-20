@@ -27,7 +27,7 @@ from copy import copy
 import os
 # ============= local library imports  ==========================
 from pychron.processing.argon_calculations import calculate_F, abundance_sensitivity_correction, age_equation, \
-    calculate_decay_factor
+    calculate_decay_factor, calculate_flux
 from pychron.processing.arar_constants import ArArConstants
 from pychron.processing.isotope import Isotope, Baseline, Blank
 
@@ -550,6 +550,18 @@ class ArArAge(MLoggable):
         self._calculate_F()
 
     # @caller
+
+    def model_j(self, monitor_age, lambda_k):
+        j = calculate_flux(self.uF, monitor_age, lambda_k=lambda_k)
+        return j
+
+    def recalculate_age(self):
+        print 'recacl age', self
+        if not self.uF:
+            self._calculate_F()
+
+        self._set_age_values(self.uF)
+
     def calculate_age(self, use_display_age=False, force=False, **kw):
         """
             force: force recalculation of age. necessary if you want error components
@@ -709,6 +721,9 @@ class ArArAge(MLoggable):
         for k, v in interference_corrected.iteritems():
             isotopes[k].interference_corrected_value = v
 
+        self._set_age_values(f, include_decay_error)
+
+    def _set_age_values(self, f, include_decay_error=False):
         if self.j is not None:
             j = copy(self.j)
         else:
@@ -769,6 +784,7 @@ class ArArAge(MLoggable):
     # @cached_property
     # def _get_moles_Ar40(self):
     #     return self.sensitivity * self.get_isotope('Ar40').get_intensity()
+
 
     @property
     def isotope_keys(self):

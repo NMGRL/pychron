@@ -564,7 +564,7 @@ class BrowserModel(BaseBrowserModel):
         super(BrowserModel, self).dump()
 
     def select_sample(self, idx=None, name=None):
-        if idx:
+        if idx is not None:
             sams = self.samples[idx:idx + 1]
             self.selected_samples = sams
 
@@ -572,6 +572,14 @@ class BrowserModel(BaseBrowserModel):
         for p in self.projects:
             if p.name == name:
                 self.selected_projects = [p]
+                self.project_enabled = True
+                break
+
+    def select_experiment(self, exp):
+        for e in self.experiments:
+            if e.name == exp:
+                self.selected_experiments = [e]
+                self.experiment_enabled = True
                 break
 
     def _selected_samples_changed(self, new):

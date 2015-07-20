@@ -24,6 +24,7 @@ import os
 import re
 import cPickle as pickle
 # ============= local library imports  ==========================
+from traitsui.tabular_adapter import TabularAdapter
 from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.core.codetools.inspection import caller
 from pychron.core.fuzzyfinder import fuzzyfinder
@@ -124,7 +125,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
     filter_non_run_samples = DelegatesTo('table_configurer')
 
-    labnumber_tabular_adapter = Instance(LabnumberAdapter, ())
+    labnumber_tabular_adapter = Instance(TabularAdapter)
     table_configurer = Instance(SampleTableConfigurer)
 
     search_criteria = Instance(SearchCriteria, ())
@@ -689,7 +690,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
     @cached_property
     def _get_sample_filter_parameters(self):
-        print 'fooooo', self.labnumber_tabular_adapter
+        # print 'fooooo', self.labnumber_tabular_adapter
         if self.labnumber_tabular_adapter:
             return {ci[1]: ci[0] for ci in self.labnumber_tabular_adapter.columns}
             # return dict([(ci[1], ci[0]) for ci in self.labnumber_tabular_adapter.columns])
@@ -747,4 +748,6 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     def _table_configurer_default(self):
         return SampleTableConfigurer()
 
+    def _labnumber_tabular_adapter_default(self):
+        return LabnumberAdapter()
 # ============= EOF =============================================

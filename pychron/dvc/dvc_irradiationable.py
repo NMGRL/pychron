@@ -30,6 +30,7 @@ class DVCIrradiationable(Loggable):
     irradiations = Property(depends_on='updated')
 
     updated = Event
+    _suppress_auto_select_irradiation = False
 
     def verify_database_connection(self, inform=True):
         return self.dvc.initialize(inform)
@@ -49,7 +50,8 @@ class DVCIrradiationable(Loggable):
                 irs = self.dvc.db.get_irradiations()
                 names = [i.name for i in irs]
                 if names:
-                    self.irradiation = names[0]
+                    if not self._suppress_auto_select_irradiation:
+                        self.irradiation = names[0]
                 return names
         else:
             return []

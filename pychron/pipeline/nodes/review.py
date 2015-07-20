@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2013 Jake Ross
+# Copyright 2015 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,47 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from pyface.tasks.action.task_action import TaskAction
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.envisage.resources import icon
+from pychron.core.confirmation import confirmation_dialog
+from pychron.pipeline.nodes.base import BaseNode
 
 
-class ResetEditorsAction(TaskAction):
-    method = 'reset_editors'
-    name = 'Reset Editors'
-    image = icon('arrow_refresh')
+class ReviewNode(BaseNode):
+    name = 'Review'
+    auto_configure = False
 
-
-class ClearFigureAction(TaskAction):
-    name = 'Clear Figure'
-    method = 'clear_figure'
-    image = icon('clear')
-
-
-class AddSystemMonitorAction(TaskAction):
-    name = 'New Monitor'
-    method = 'add_system_monitor'
-    image = icon('add')
-
-
-class PauseAction(TaskAction):
-    name = 'Pause'
-    method = 'toggle_pause'
-    image = icon('control_pause_blue')
-    visible_name = 'pause_visible'
-
-
-class PlayAction(TaskAction):
-    name = 'Play'
-    method = 'toggle_pause'
-    image = icon('control_play_blue')
-    visible_name = 'play_visible'
-
-
-class NewSeriesAction(TaskAction):
-    name = 'New Series'
-    method = 'new_analysis_series'
-    image= icon('add')
+    def run(self, state):
+        if confirmation_dialog('Would you like to review before continuing?'):
+            state.veto = self
 # ============= EOF =============================================

@@ -15,14 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from pyface.confirmation_dialog import confirm
-from pyface.constant import YES
 from traits.api import Float, Str, List, Instance, Property, cached_property
 from traitsui.api import Item, EnumEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.confirmation import remember_confirmation_dialog
 from pychron.experiment.utilities.identifier import SPECIAL_MAPPING
+from pychron.pipeline.editors.flux_results_editor import FluxPosition
 from pychron.pipeline.graphical_filter import GraphicalFilterModel, GraphicalFilterView
 from pychron.pipeline.nodes.base import BaseNode
 
@@ -41,7 +40,6 @@ class FindFluxMonitorsNode(FindNode):
 
     level = Str
     levels = Property(depends_on='irradiation')
-    flux_monitors = List
 
     def load(self, nodedict):
         self.irradiation = nodedict.get('irradiation', '')
@@ -77,32 +75,36 @@ class FindFluxMonitorsNode(FindNode):
             state.veto = self
         else:
             dvc = self.dvc
-
             state.geometry = dvc.get_irradiation_geometry(self.irradiation, self.level)
+
+            with dvc.session_ctx():
+                ips = dvc.get_unknown_positions(self.irradiation, self.level, self.monitor_sample_name)
+
+                state.unknown_positions = [self._fp_factory(state.geometry, self.irradiation, self.level,
+                                                            ip.identifier, ip.sample.name, ip.position,
+                                                            ip.j, ip.j_err) for ip in ips]
+
+                ans = dvc.get_flux_monitor_analyses(self.irradiation, self.level, self.monitor_sample_name)
+                monitors = self.dvc.make_analyses(ans, calculate_f_only=False)
+
+            state.unknowns = monitors
+            state.flux_monitors = monitors
             state.has_flux_monitors = True
             state.irradiation = self.irradiation
             state.level = self.level
 
-            if self.flux_monitors:
-                #v = confirm(None, 'You already have Flux Monitors found. Do you want to refind the monitors')
-                #print v, v != YES
-                #if v != YES:
-                if confirm(None, 'You already have Flux Monitors found. Do you want to refind the monitors') != YES:
-                    state.flux_monitors = self.flux_monitors
-                    return
-
-            with dvc.session_ctx():
-                ans = dvc.get_flux_monitor_analyses(self.irradiation, self.level, self.monitor_sample_name)
-                monitors = self.dvc.make_analyses(ans, calculate_f_only=False)
-                #dvc = self.dvc
-            #with dvc.session_ctx():
-            #    ans = dvc.get_flux_monitor_analyses(self.irradiation, self.level, self.monitor_sample_name)
-            #    monitors = self.dvc.make_analyses(ans, calculate_f_only=False)
-            #
-            #state.geometry = dvc.get_irradiation_geometry(self.irradiation, self.level)
-            state.flux_monitors = monitors
-            self.flux_monitors = monitors
-            print 'oooo', len(self.flux_monitors)
+    def _fp_factory(self, geom, irradiation, level, identifier, sample, hole_id, j, j_err):
+        x, y, r, idx = geom[hole_id - 1]
+        fp = FluxPosition(identifier=identifier,
+                          irradiation=irradiation,
+                          level=level,
+                          sample=sample, hole_id=hole_id,
+                          saved_j=j or 0,
+                          saved_jerr=j_err or 0,
+                          # mean_j=nominal_value(mj),/
+                          # mean_jerr=std_dev(mj),
+                          x=x, y=y)
+        return fp
 
 
 class FindReferencesNode(FindNode):

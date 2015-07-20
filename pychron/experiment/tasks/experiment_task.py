@@ -15,16 +15,19 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import time
+
 from traits.api import Int, on_trait_change, Bool, Instance, Event, Color
 from pyface.constant import CANCEL, NO
 from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter, Tabbed
 from pyface.timer.do_later import do_after
+
 # ============= standard library imports ========================
 import os
 import xlrd
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import add_extension, backup
-from pychron.core.ui.preference_binding import color_bind_preference, extract_color, toTuple
+from pychron.core.ui.preference_binding import color_bind_preference, toTuple
 from pychron.envisage.tasks.editor_task import EditorTask
 from pychron.envisage.tasks.pane_helpers import ConsolePane
 from pychron.envisage.view_util import open_view
@@ -35,6 +38,7 @@ from pychron.experiment.tasks.experiment_panes import LoggerPane
 from pychron.experiment.utilities.identifier import convert_extract_device, is_special
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.paths import paths
+from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pychron_constants import SPECTROMETER_PROTOCOL
 from pychron.experiment.tasks.experiment_panes import ExperimentFactoryPane, StatsPane, \
     ControlsPane, WaitPane, IsotopeEvolutionPane, ConnectionStatusPane
@@ -618,7 +622,12 @@ class ExperimentEditorTask(EditorTask):
 
             self._open_editor(editor)
 
-            # print new, new.uuid, new.recorid_id
+            fs = [e for e in self.iter_editors(FigureEditor)]
+
+            # close the oldest editor
+            if len(fs) > 5:
+                fs = sorted(fs, key=lambda x: x.last_update)
+                self.close_editor(fs[0])
 
     def _get_autoplot_analyses(self, new):
         dvc = self.window.application.get_service('pychron.dvc.dvc.DVC')
@@ -627,20 +636,30 @@ class ExperimentEditorTask(EditorTask):
             ans, _ = db.get_labnumber_analyses(new.identifier)
             return dvc.make_analyses(ans)
 
-    def _new_autplot_editor(self, new):
-        if is_special(new.identifier):
-            from pychron.pipeline.plot.editors.series_editor import SeriesEditor
+    def _new_autoplot_editor(self, new):
+        from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 
-            editor = SeriesEditor()
-        elif new.step:
-            from pychron.pipeline.plot.editors.spectrum_editor import SpectrumEditor
-
-            editor = SpectrumEditor()
+        for editor in self.editor_area.editors:
+            if isinstance(editor, FigureEditor):
+                if new.identifier == editor.identifier:
+                    break
         else:
-            from pychron.pipeline.plot.editors.ideogram_editor import IdeogramEditor
+            if is_special(new.identifier):
+                from pychron.pipeline.plot.editors.series_editor import SeriesEditor
 
-            editor = IdeogramEditor()
+                editor = SeriesEditor()
+            elif new.step:
+                from pychron.pipeline.plot.editors.spectrum_editor import SpectrumEditor
 
+                editor = SpectrumEditor()
+            else:
+                from pychron.pipeline.plot.editors.ideogram_editor import IdeogramEditor
+
+                editor = IdeogramEditor()
+
+            editor.identifier = new.identifier
+
+        editor.last_update = time.time()
         return editor
 
     @on_trait_change('manager:executor:[measuring,extracting]')
@@ -664,10 +683,10 @@ class ExperimentEditorTask(EditorTask):
     def _update_active_editor_dirty(self, new):
         if new and self.manager:
             self.manager.executor.executable = False
-        # if self.active_editor:
-        #     if self.active_editor.dirty:
-        #         if self.manager:
-        #             self.manager.executor.executable = False
+            # if self.active_editor:
+            #     if self.active_editor.dirty:
+            #         if self.manager:
+            #             self.manager.executor.executable = False
 
     # ===============================================================================
     # default/factory

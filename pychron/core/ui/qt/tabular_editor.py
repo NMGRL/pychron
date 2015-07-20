@@ -16,8 +16,6 @@
 
 # ============= enthought library imports =======================
 from pickle import dumps
-from pyface.image_resource import ImageResource
-from pyface.timer.do_later import do_later, do_after
 
 from traits.api import Bool, Str, List, Any, Instance, Property, Int, HasTraits, Color
 from traits.trait_base import SequenceTypes
@@ -31,7 +29,6 @@ from PySide import QtCore, QtGui
 from PySide.QtGui import QColor, QHeaderView, QApplication
 # ============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
-from pychron.consumer_mixin import ConsumerMixin
 
 
 class myTabularEditor(TabularEditor):
@@ -159,14 +156,14 @@ class _TableView(TableView):
             vheader.setFont(fnt)
             hheader = self.horizontalHeader()
             hheader.setFont(fnt)
-        else:
-            if editor.factory.row_height:
-                height = editor.factory.row_height
+
+        if editor.factory.row_height:
+            height = editor.factory.row_height
 
         if height:
             vheader.setDefaultSectionSize(height)
-
-        vheader.ResizeMode(QHeaderView.ResizeToContents)
+        else:
+            vheader.ResizeMode(QHeaderView.ResizeToContents)
 
     def set_bg_color(self, bgcolor):
         if isinstance(bgcolor, tuple):

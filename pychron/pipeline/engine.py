@@ -137,9 +137,9 @@ class PipelineEngine(Loggable):
         self._load_predefined_templates()
 
     def reset(self):
-        for ni in self.pipeline.nodes:
-            ni.visited = False
-
+        # for ni in self.pipeline.nodes:
+        #     ni.visited = False
+        self.pipeline.reset()
         self.update_needed = True
 
     def update_detectors(self):
@@ -184,7 +184,7 @@ class PipelineEngine(Loggable):
         for node in self.pipeline.nodes:
             if isinstance(node, ReferenceNode):
                 refs.extend(node.analyses)
-            elif isinstance(node, UnknownNode):
+            elif isinstance(node, (UnknownNode, FluxMonitorsNode)):
                 unks.extend(node.analyses)
 
         self.unknowns = unks
@@ -205,13 +205,15 @@ class PipelineEngine(Loggable):
     def select_default(self):
         node = self.pipeline.nodes[0]
 
-        self.browser_model.select_project('J')
+        self.browser_model.select_project('J-Curve')
+        self.browser_model.select_experiment('Irradiation-NM-272')
         self.browser_model.select_sample(idx=0)
         records = self.browser_model.get_analysis_records()
         if records:
             analyses = self.dvc.make_analyses(records)
             # print len(records),len(analyses)
             node.analyses.extend(analyses)
+            node._manual_configured = True
             # self.refresh_analyses()
 
     def add_test_filter(self):
@@ -224,6 +226,12 @@ class PipelineEngine(Loggable):
 
         self.pipeline.add_after(node, newnode)
 
+    def clear(self):
+        self.unknowns = []
+        self.references = []
+        self.pipeline.nodes = []
+        self.selected_pipeline_template = ''
+        # self._set_template(self.selected_pipeline_template)
     # ============================================================================================================
     # nodes
     # ============================================================================================================
@@ -352,11 +360,20 @@ class PipelineEngine(Loggable):
             self.debug('starting at node {}'.format(start_node))
         state.veto = None
 
+        for node in self.pipeline.iternodes(start_node, run_to):
+            node.visited = False
+
         for idx, node in enumerate(self.pipeline.iternodes(start_node, run_to)):
             # self.selected = node
 
             if node.enabled:
                 node.editor = None
+
+                node.active = True
+                if not node.pre_run(state):
+                    return True
+                node.active = False
+
                 st = time.time()
                 try:
                     node.run(state)
@@ -408,7 +425,7 @@ class PipelineEngine(Loggable):
             if hasattr(node, 'editor'):
                 if node.editor == editor:
                     self.selected = node
-                    self.unknowns = editor.analyses
+                    # self.unknowns = editor.analyses
                     self.refresh_table_needed = True
                     break
 
@@ -509,16 +526,23 @@ class PipelineEngine(Loggable):
             # pt = PipelineTemplate(new)
 
     def _selected_changed(self, new):
+
         self.show_group_colors = False
-        if isinstance(new, (UnknownNode, FluxMonitorsNode)):
-            self.unknowns = new.analyses
-        elif isinstance(new, ReferenceNode):
-            self.references = new.analyses
-        elif isinstance(new, FigureNode):
+        if isinstance(new, FigureNode):
             self.show_group_colors = True
             if new.editor:
-                self.unknowns = new.editor.analyses
                 self.active_editor = new.editor
+
+    # self.show_group_colors = False
+    #     if isinstance(new, (UnknownNode, FluxMonitorsNode)):
+    #         self.unknowns = new.analyses
+    #     elif isinstance(new, ReferenceNode):
+    #         self.references = new.analyses
+    #     elif isinstance(new, FigureNode):
+    #         self.show_group_colors = True
+    #         if new.editor:
+    #             self.unknowns = new.editor.analyses
+    #             self.active_editor = new.editor
 
     def _dclicked_changed(self, new):
         # if isinstance(new, DataNode):

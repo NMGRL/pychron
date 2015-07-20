@@ -87,8 +87,10 @@ class MPlotAxis(PlotAxis):
                      'ensure_labels_bounded',
                      'ensure_ticks_bounded',
                      'bgcolor',
+                     'use_draw_order', 'component',
                      'resizable',
-                     'tag'):
+                     'tag',
+                     'use'):
             try:
                 setattr(self, attr, getattr(ax, attr))
             except AttributeError:
@@ -113,7 +115,7 @@ class MPlotAxis(PlotAxis):
         if self.title_spacing != 'auto':
             axis_offset = self.title_spacing
 
-        if (self.title_spacing) and (axis_offset is None ):
+        if (self.title_spacing) and (axis_offset is None):
             if not self.ticklabel_cache:
                 axis_offset = 25
             else:
@@ -200,7 +202,7 @@ class MLLabel(Label):
 
     def _draw_vertical(self, gc, poss):
         bb = self._bounding_box
-        gc.translate_ctm(bb[1]-2, 0)
+        gc.translate_ctm(bb[1] - 2, 0)
         gc.rotate_ctm(math.radians(90))
         self._draw_horizontal(gc, poss)
 
@@ -215,7 +217,7 @@ class MLLabel(Label):
         # width. Label calculates the width without the markup so its greater than the real width.
         w = self._calculate_text_width(gc)
         ow = self._bounding_box[0]
-        gc.translate_ctm((ow - w)/2, 0)
+        gc.translate_ctm((ow - w) / 2, 0)
 
         x = 0
         for offset, text in poss:
@@ -282,6 +284,3 @@ if __name__ == '__main__':
     g.configure_traits()
 
 # ============= EOF =============================================
-
-
-

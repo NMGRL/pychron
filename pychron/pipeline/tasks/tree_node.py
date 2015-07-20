@@ -30,15 +30,27 @@ from pychron.envisage.resources import icon
 #         elif obj.status == 'paused':
 #             c = QColor('orange')
 #         return c
+from pychron.pipeline.nodes import ReviewNode
+
 
 class PipelineTreeNode(TreeNode):
     icon_name = ''
     label = 'name'
 
+    def get_background(self, obj):
+        if isinstance(obj, ReviewNode):
+            return QColor(Qt.cyan)
+        else:
+            return super(PipelineTreeNode, self).get_background(obj)
+
     def get_status_color(self, obj):
         c = QColor(Qt.lightGray)
+
         if obj.visited:
             c = QColor(Qt.green)
+        elif obj.active:
+            c = QColor('orange')
+
         # if obj.status == 'ran':
         #     c = QColor('green')
         # elif obj.status == 'paused':

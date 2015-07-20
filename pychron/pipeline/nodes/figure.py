@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from pyface.confirmation_dialog import confirm
 from pyface.constant import YES
-from traits.api import Any, Bool
+from traits.api import Any
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.base_editor import grouped_name
@@ -38,7 +38,7 @@ class FigureNode(BaseNode):
     plotter_options = Any
     plotter_options_manager_klass = Any
     plotter_options_manager = Any
-    _configured = Bool(False)
+    # _configured = Bool(False)
 
     def refresh(self):
         if self.editor:
@@ -51,14 +51,13 @@ class FigureNode(BaseNode):
                         self.editor.save_needed = True
 
     def run(self, state):
-        self._configured = True
+        # self._configured = True
         self.plotter_options = self.plotter_options_manager.plotter_options
 
-        if not self.plotter_options or not self._configured:
-            if not self.configure(refresh=False):
-                state.canceled = True
-                return
-
+        # if not self.plotter_options or not self._configured:
+        #     if not self.configure(refresh=False):
+        #         state.canceled = True
+        #         return
         po = self.plotter_options
         if not po:
             state.canceled = True
@@ -112,8 +111,10 @@ class FigureNode(BaseNode):
 
         return self.editor
 
-    def configure(self, refresh=True):
-        self._configured = True
+    def configure(self, refresh=True, pre_run=False, **kw):
+        # self._configured = True
+        if not pre_run:
+            self._manual_configured = True
 
         pom = self.plotter_options_manager
         # pom = self.plotter_options_manager_klass()

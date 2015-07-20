@@ -13,13 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from pychron.core.ui import set_qt
 
+set_qt()
 # ============= enthought library imports =======================
 from math import isnan
 from datetime import datetime
 
 from traits.api import Instance, Str, Set, List, provides
 from apptools.preferences.preference_binding import bind_preference
+
+
 
 
 
@@ -290,10 +294,10 @@ class DVC(Loggable):
         self.info('Saving fits for {}'.format(ai))
         ai.dump_fits(keys)
 
-    def save_j(self, irradiation, level, pos, identifier, j, e, add):
+    def save_j(self, irradiation, level, pos, identifier, j, e, decay, add=True):
         self.info('Saving j for {}{}:{} {}, j={} +/-{}'.format(irradiation, level,
                                                                pos, identifier, j, e))
-        self.meta_repo.update_j(irradiation, level, pos, identifier, j, e, add)
+        self.meta_repo.update_flux(irradiation, level, pos, identifier, j, e, decay, add)
 
         db = self.db
         with db.session_ctx():
@@ -417,6 +421,9 @@ class DVC(Loggable):
     #
     # def update_experiment_queue(self, name, path):
     #     self.meta_repo.update_experiment_queue(name, path)
+    def update_chronology(self, name, doses):
+        self.meta_repo.update_chronology(name, doses)
+        self.meta_commit('updated chronology for {}'.format(name))
 
     def meta_commit(self, msg):
         changes = self.meta_repo.has_staged()
@@ -424,6 +431,7 @@ class DVC(Loggable):
             self.debug('meta repo has changes: {}'.format(changes))
             self.meta_repo.report_status()
             self.meta_repo.commit(msg)
+            self.meta_repo.clear_cache = True
         else:
             self.debug('no changes to meta repo')
 
@@ -582,8 +590,12 @@ class DVC(Loggable):
                 pt = time.time() - st
 
                 st = time.time()
-                a.j = meta_repo.get_flux(record.irradiation, record.irradiation_level,
+                j, lambda_k = meta_repo.get_flux(record.irradiation, record.irradiation_level,
                                          record.irradiation_position_position)
+                a.j = j
+                if lambda_k:
+                    a.arar_constants.lambda_k = lambda_k
+
                 ft = time.time() - st
                 a.set_tag(record.tag)
                 if calculate_f_only:
@@ -683,4 +695,15 @@ class DVC(Loggable):
     def _meta_repo_default(self):
         return MetaRepo()
 
+
+if __name__ == '__main__':
+    paths.build('_dev')
+    d = DVC(bind=False)
+    with open('/Users/ross/Programming/githubauth.txt') as rfile:
+        usr = rfile.readline().strip()
+        pwd = rfile.readline().strip()
+    d.github_user = usr
+    d.github_password = pwd
+    d.organization = 'NMGRLData'
+    d.add_experiment('Irradiation-NM-273')
 # ============= EOF =============================================

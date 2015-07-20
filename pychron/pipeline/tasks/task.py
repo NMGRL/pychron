@@ -29,19 +29,15 @@ from pychron.dvc.dvc import experiment_has_staged, push_experiments
 from pychron.globals import globalv
 from pychron.paths import paths
 from pychron.pipeline.engine import PipelineEngine
-from pychron.pipeline.nodes.data import FluxMonitorsNode
-from pychron.pipeline.nodes.find import FindFluxMonitorsNode
 from pychron.pipeline.plot.editors.interpreted_age_editor import InterpretedAgeEditor
 from pychron.pipeline.state import EngineState
 from pychron.pipeline.tasks.actions import RunAction, SavePipelineTemplateAction, ResumeAction, ResetAction, \
-    ConfigureRecallAction, GitRollbackAction, TagAction, SetInterpretedAgeAction
+    ConfigureRecallAction, GitRollbackAction, TagAction, SetInterpretedAgeAction, ClearAction
 from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane
 from pychron.envisage.browser.browser_task import BaseBrowserTask
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.tasks.select_repo import SelectExperimentIDView
 from pychron.processing.tasks.figures.interpreted_age_factory import InterpretedAgeFactory
-
-DEBUG = False
 
 
 class DataMenu(SMenu):
@@ -63,12 +59,12 @@ class PipelineTask(BaseBrowserTask):
     tool_bars = [SToolBar(RunAction(),
                           ResumeAction(),
                           ResetAction(),
+                          ClearAction(),
                           ConfigureRecallAction(),
                           SavePipelineTemplateAction()),
                  SToolBar(GitRollbackAction()),
                  SToolBar(TagAction(),
-                          SetInterpretedAgeAction())
-                 ]
+                          SetInterpretedAgeAction())]
 
     state = Instance(EngineState)
     resume_enabled = Bool(False)
@@ -82,6 +78,8 @@ class PipelineTask(BaseBrowserTask):
     modified = False
     dbmodified = False
     projects = None
+
+    _temp_state = None
 
     def run(self):
         self._run_pipeline()
@@ -100,8 +98,8 @@ class PipelineTask(BaseBrowserTask):
         self.engine.select_default()
         # self.engine.set_template('ideogram')
         # self.engine.set_template('gain')
-        # self.engine.set_template('ideogram')
-        self.engine.set_template('iso_evo')
+        self.engine.set_template('ideogram')
+        # self.engine.set_template('flux')
         # self.engine.add_is
         # self.engine.add_grouping(run=False)
         # self.engine.add_test_filter()
@@ -138,7 +136,14 @@ class PipelineTask(BaseBrowserTask):
         if expid:
             self.dvc.rollback_experiment_repo(expid)
 
+    def clear(self):
+        self.engine.clear()
+        self.reset()
+        self.close_all()
+
     def reset(self):
+        self.resume_enabled = False
+        self._temp_state = None
         self.state = None
         self.engine.reset()
 
@@ -179,33 +184,64 @@ class PipelineTask(BaseBrowserTask):
         if self.state:
             self.debug('using previous state')
             state = self.state
-            for editor in state.editors:
-                self._close_editor(editor)
-                self._open_editor(editor)
+            # for editor in state.editors:
+            #     self._close_editor(editor)
+            #     self._open_editor(editor)
         else:
             state = EngineState()
+            self.close_all()
 
+        self.state = state
         self._temp_state = state
+
+        # if not self.engine.pre_run(state, self.run_to):
+        #     self.state = None
+        #     self._temp_state = None
+
         if not self.engine.run(state, self.run_to):
             self._toggle_run(True)
         else:
             self._toggle_run(False)
             self.state = None
 
-        self.close_all()
+        self.engine.update_needed = True
+
         for editor in state.editors:
-            self._close_editor(editor)
+            # print editor
+            # self._close_editor(editor)
             self._open_editor(editor)
 
         self.engine.selected = None
         self.engine.update_needed = True
 
+        self.engine.refresh_analyses()
         if state.dbmodified:
             self.dbmodified = True
 
     def _toggle_run(self, v):
         self.resume_enabled = v
         self.run_enabled = not v
+
+    _delete_flag = False
+    _delete_cnt = 0
+    _cnt = 0
+
+    def _handle_items(self, sel, items):
+        if self.active_editor:
+            if not self._delete_flag:
+                self._delete_cnt = len(sel) + 1
+                self._cnt = 1
+                refresh = False
+                self._delete_flag = True
+            else:
+                self._cnt += 1
+                refresh = self._cnt >= self._delete_cnt
+
+            if refresh:
+                self.active_editor.set_items(items)
+                self.active_editor.refresh_needed = True
+                self._delete_flag = False
+                self._delete_cnt = 0
 
     def _default_layout_default(self):
         return TaskLayout(left=Splitter(PaneItem('pychron.pipeline.pane',
@@ -225,35 +261,24 @@ class PipelineTask(BaseBrowserTask):
     def _handle_reset(self):
         self.reset()
 
-    @on_trait_change('engine:unknowns[]')
-    def _handle_unknowns(self, name, old, new):
-        if self.active_editor:
-            if not new:
-                if hasattr(self.active_editor, 'set_items'):
-                    self.active_editor.set_items(self.engine.unknowns)
-                    self.active_editor.refresh_needed = True
-
-            for node in self.engine.pipeline.iternodes():
-                if isinstance(node, FindFluxMonitorsNode):
-                    print 'chan', len(self.engine.unknowns),
-                    node.flux_monitors = self.engine.unknowns
-                elif isinstance(node, FluxMonitorsNode):
-                    print 'analyses', len(self.engine.unknowns)
-                    node.analyses = self.engine.unknowns
-                #elif isinstance()
-                    #if node.editor:
-                    #    node.editor.analyses = node.analyses
-
+    @on_trait_change('engine:unknowns')
+    def _handle_unknowns(self, obj, name, old, new):
+        # print name, old, new
+        if name == 'unknowns_items':
+            self._handle_items(self.engine.selected_unknowns, self.engine.unknowns)
         self.engine.update_detectors()
 
-    @on_trait_change('engine:references[]')
+    @on_trait_change('engine:references')
     def _handle_references(self, name, old, new):
-        if self.active_editor:
-            # only update if deletion
-            if not new:
-                self.active_editor.set_references(self.engine.references)
-                self.active_editor.refresh_needed = True
+        if name == 'references_items':
+            self._handle_items(self.engine.selected_references, self.engine.references)
         self.engine.update_detectors()
+        # if self.active_editor:
+        #     # only update if deletion
+        #     if not new:
+        #         self.active_editor.set_references(self.engine.references)
+        #         self.active_editor.refresh_needed = True
+        # self.engine.update_detectors()
 
     def _active_editor_changed(self, new):
         if new:
@@ -286,14 +311,16 @@ class PipelineTask(BaseBrowserTask):
     def _prompt_for_save(self):
         ret = True
         ps = self.engine.get_experiment_ids()
-        print ps
+        # print ps
+
         if ps:
             changed = experiment_has_staged(ps)
+            self.debug('task has changes to {}'.format(changed))
             if changed:
                 m = 'You have changes to analyses. Would you like to share them?'
                 ret = self._handle_prompt_for_save(m, 'Share Changes')
                 if ret == 'save':
-                    push_experiments(ps)
+                    push_experiments(changed)
 
         return ret
 

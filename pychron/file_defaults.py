@@ -208,7 +208,6 @@ DEFAULT_INITIALIZATION = '''<root>
             <plugin enabled="false">Video</plugin>
             <plugin enabled="false">Database</plugin>
             <plugin enabled="false">Entry</plugin>
-            <plugin enabled="false">SystemMonitor</plugin>
             <plugin enabled="false">ArArConstants</plugin>
             <plugin enabled="false">Loading</plugin>
             <plugin enabled="false">Workspace</plugin>

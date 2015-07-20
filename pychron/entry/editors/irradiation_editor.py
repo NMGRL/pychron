@@ -119,7 +119,8 @@ class IrradiationEditor(Loggable):
             # irrad.chronology.chronology = self.chronology.make_blob()
             # print self.chronology.get_doses()
             self.dvc.update_chronology(self.name, self.chronology.get_doses())
-            self.dvc.commit('updated chronology')
+            # self.dvc.meta_repo.clear_cache = True
+            # self.dvc.meta_commit('updated chronology')
 
         return self.name
 

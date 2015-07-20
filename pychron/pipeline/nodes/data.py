@@ -32,7 +32,12 @@ class DataNode(BaseNode):
 
     check_reviewed = Bool(False)
 
-    def configure(self):
+    def configure(self, pre_run=False, **kw):
+        # if pre_run and self.analyses:
+        #     return True
+        if not pre_run:
+            self._manual_configured = True
+
         browser_view = BrowserView(model=self.browser_model)
         info = browser_view.edit_traits(kind='livemodal')
         if info.result:
@@ -52,11 +57,16 @@ class UnknownNode(DataNode):
     analysis_kind = 'unknowns'
 
     def run(self, state):
+        if not self.analyses:
+            if not self.configure():
+                state.canceled = True
+                return
+
         review_req = []
-        for attr in ('blanks', 'iso_evo'):
-            for ai in self.analyses:
-                ai.group_id = 0
-                if self.check_reviewed:
+        for ai in self.analyses:
+            ai.group_id = 0
+            if self.check_reviewed:
+                for attr in ('blanks', 'iso_evo'):
                     # check analyses to see if they have been reviewed
                     if attr not in review_req:
                         if not self.dvc.analysis_has_review(ai, attr):
@@ -91,6 +101,7 @@ class ReferenceNode(DataNode):
 class FluxMonitorsNode(DataNode):
     name = 'Flux Monitors'
     analysis_kind = 'flux_monitors'
+    auto_configure = False
 
     def run(self, state):
         items = getattr(state, self.analysis_kind)

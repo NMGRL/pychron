@@ -20,8 +20,9 @@ from traits.api import Property, on_trait_change, List, Array
 # ============= standard library imports ========================
 from math import isnan, isinf
 from uncertainties import nominal_value, std_dev
-from numpy import zeros_like, array
+from numpy import zeros_like, array, asarray
 # ============= local library imports  ==========================
+from pychron.core.regression.base_regressor import BaseRegressor
 from pychron.core.regression.interpolation_regressor import InterpolationRegressor
 from pychron.pipeline.plot.plotter.series import BaseSeries
 
@@ -60,7 +61,7 @@ class ReferencesSeries(BaseSeries):
             p_uys = zeros_like(p_uys)
 
         self._set_interpolated_values(iso, fit, ans, p_uys, p_ues)
-        return p_uys, p_ues
+        return asarray(p_uys), asarray(p_ues)
 
     def post_make(self):
         self.graph.refresh()
@@ -86,7 +87,8 @@ class ReferencesSeries(BaseSeries):
         key = 'Unknowns-predicted{}'
         key = key.format(0)
         for plotobj, reg in new:
-            self._set_values(plotobj, reg, key)
+            if isinstance(reg, BaseRegressor):
+                self._set_values(plotobj, reg, key)
 
     def _handle_limits(self):
         self.graph.refresh()
@@ -99,6 +101,7 @@ class ReferencesSeries(BaseSeries):
         reg, a, b = self._plot_references(pid, po)
         ymi = min(ymi, a)
         yma = max(yma, b)
+        print 'asdfa', reg
         if reg:
             a, b = self._plot_interpolated(pid, po, reg)
             ymi = min(ymi, a)
@@ -220,12 +223,12 @@ class ReferencesSeries(BaseSeries):
             graph.set_series_label('Unknowns-predicted{}'.format(series_id), plotid=pid,
                                    series=series)
 
-            self._add_error_bars(s, p_ues, 'y', 1, True)
+            self._add_error_bars(s, p_ues, 'y', self.options.nsigma, True)
         return ymi, yma
 
     def _plot_references(self, pid, po):
         graph = self.graph
-        efit = po.fit
+        efit = po.fit.lower()
         r_xs = self.rxs
         r_ys, r_es = self.reference_data(po)
 
@@ -237,6 +240,7 @@ class ReferencesSeries(BaseSeries):
                   selection_marker=po.marker,
                   marker=po.marker,
                   marker_size=po.marker_size, )
+
         if efit in ['preceding', 'bracketing interpolate', 'bracketing average']:
             reg = InterpolationRegressor(xs=r_xs,
                                          ys=r_ys,
