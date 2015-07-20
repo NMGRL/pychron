@@ -85,7 +85,7 @@ class Script(Loggable):
     def _get_name_prefix(self):
         r = ''
         if self.use_name_prefix:
-            r = self._name_prefix if self._name_prefix else self.mass_spectrometer
+            r = self._name_prefix if self._name_prefix else self.mass_spectrometer.lower()
         return r
 
     def _set_name_prefix(self, new):
@@ -187,7 +187,6 @@ class Script(Loggable):
         ms = self._load_script_names()
         if ms:
             # msn = '{}_'.format(self.mass_spectrometer.lower())
-
             names.extend([self._clean_script_name(ei) for ei in ms
                           if self.name_prefix and ei.startswith(self.name_prefix)])
         return names
