@@ -17,10 +17,11 @@
 # ============= enthought library imports =======================
 from chaco.axis_view import float_or_auto
 from enable.base_tool import BaseTool
-from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change
-from traitsui.api import View, UItem, Item, HGroup, VGroup, Group, TextEditor
+from traits.api import on_trait_change
+from traitsui.api import View, Item, HGroup, VGroup, Group, TextEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+
 
 AxisView = View(VGroup(
     Group(
@@ -57,7 +58,7 @@ AxisView = View(VGroup(
     title='Edit Axis',
     x=50,
     y=50,
-    buttons=["OK",])
+    buttons=['OK', ])
 
 
 class AxisTool(BaseTool):
@@ -77,6 +78,3 @@ class AxisTool(BaseTool):
         return self.component.is_in(event.x, event.y)
 
 # ============= EOF =============================================
-
-
-
