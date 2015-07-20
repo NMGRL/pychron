@@ -494,7 +494,9 @@ class AutomatedRun(Loggable):
 
         return ret
 
-    def py_peak_center(self, detector=None, save=True, isotope=None, check_intensity=True, **kw):
+    def py_peak_center(self, detector=None, save=True, isotope=None, check_intensity=True,
+                       directions='Increase',
+                       **kw):
         if not self._alive:
             return
 
@@ -525,6 +527,7 @@ class AutomatedRun(Loggable):
             pc = ion.setup_peak_center(detector=[detector] + ad,
                                        plot_panel=self.plot_panel,
                                        isotope=isotope,
+                                       directions=directions,
                                        **kw)
             self.peak_center = pc
             self.debug('do peak center')

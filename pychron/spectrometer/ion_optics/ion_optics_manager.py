@@ -248,7 +248,6 @@ class IonOpticsManager(Manager):
                            center_dac, directions, plot_panel, new,
                            standalone_graph, name, show_label):
 
-
         spec = self.spectrometer
 
         ref = detectors[0]

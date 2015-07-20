@@ -25,6 +25,8 @@ import yaml
 
 
 
+
+
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import fileiter
 from pychron.paths import paths
@@ -314,7 +316,9 @@ class MeasurementPyScript(ValvePyScript):
 
     @count_verbose_skip
     @command_register
-    def peak_center(self, detector='AX', isotope='Ar40', integration_time=1.04, save=True, calc_time=False):
+    def peak_center(self, detector='AX', isotope='Ar40',
+                    integration_time=1.04, save=True, calc_time=False,
+                    directions='Increase'):
         """
         Calculate the peak center for ``isotope`` on ``detector``.
 
@@ -331,6 +335,7 @@ class MeasurementPyScript(ValvePyScript):
 
         self._automated_run_call('py_peak_center', detector=detector,
                                  isotope=isotope, integration_time=integration_time,
+                                 directions=directions,
                                  save=save)
 
     @verbose_skip

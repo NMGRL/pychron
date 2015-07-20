@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
 import time
 
 # ============= standard library imports ========================
@@ -93,6 +94,7 @@ class IsotopeRecordView(object):
         self.labnumber = ''
         self.aliquot = 0
         self._increment = -1
+        self.step = ''
         self.tag = ''
         self.uuid = ''
         self.rundate = ''
@@ -115,125 +117,123 @@ class IsotopeRecordView(object):
 
         # super(IsotopeRecordView, self).__init__(*args, **kw)
 
-    #
-    # if dbrecord:
-    #             self.create(dbrecord, **kw)
-    #
-    #     def set_tag(self, tag):
-    #         self.tag = tag.name
-    #
-    #     def create(self, dbrecord, fast_load=False):
-    #         # print 'asdfsadfsdaf', dbrecord, dbrecord.labnumber, dbrecord.uuid
-    #         try:
-    #             if dbrecord is None or not dbrecord.labnumber:
-    #                 return
-    #
-    #             ln = dbrecord.labnumber
-    #             self.labnumber = str(ln.identifier)
-    #             self.identifier = self.labnumber
-    #
-    #             self.aliquot = dbrecord.aliquot
-    #             # self.step = dbrecord.step
-    #             self._increment = dbrecord.increment
-    #             # temporary hack to handle increment
-    #             # todo: change database so all increment=-1 where step=''
-    #             # change how automated run persister sets increment
-    #             if not self.step:
-    #                 self._increment = -1
-    #
-    #             # self.record_id = make_runid(self.labnumber, self.aliquot, self.step)
-    #
-    #             self.uuid = dbrecord.uuid
-    #             self.tag = dbrecord.tag or ''
-    #             self.rundate = dbrecord.analysis_timestamp
-    #
-    #             sam = ln.sample
-    #
-    #             if sam:
-    #                 self.sample = sam.name
-    #                 if sam.project:
-    #                     if isinstance(sam.project, (str, unicode)):
-    #                         self.project = sam.project.lower()
-    #                     else:
-    #                         self.project = sam.project.name.lower()
-    #
-    #             irp = ln.irradiation_position
-    #             if irp is not None:
-    #                 irl = irp.level
-    #                 ir = irl.irradiation
-    #                 self.irradiation_info = '{}{} {}'.format(ir.name, irl.name, irp.position)
-    #
-    #             try:
-    #                 self.mass_spectrometer = dbrecord.mass_spectrometer
-    #             except AttributeError:
-    #                 try:
-    #                     meas = dbrecord.measurement
-    #                     if meas:
-    #                         self.mass_spectrometer = meas.mass_spectrometer.name.lower()
-    #                         try:
-    #                             self.analysis_type = meas.analysis_type.name
-    #                         except AttributeError, e:
-    #                             pass
-    #                 except AttributeError:
-    #                     pass
-    #             try:
-    #                 ext = dbrecord.extraction
-    #             if ext:
-    #                 self.extract_value = ext.extract_value
-    #                 self.cleanup = ext.cleanup_duration
-    #                 self.duration = ext.extract_duration
-    #
-    #                 try:
-    #                     if ext.extraction_device:
-    #                         self.extract_device = ext.extraction_device.name
-    #                 except AttributeError, e:
-    #                     pass
-    #                     # print 'IsotopeRecord create ext 2 {}'.format(e)
-    #
-    #             # if not fast_load:
-    #             #     self.timestamp = time.mktime(self.rundate.timetuple())
-    #             #     if meas:
-    #             #         try:
-    #             #             self.meas_script_name = self._clean_script_name(meas.script.name)
-    #             #         except AttributeError, e:
-    #             #             pass
-    #             #             # print 'IsotopeRecord create meas 2 {}'.format(e)
-    #             #     else:
-    #             #         print 'measurment is None'
-    #             #
-    #             #     if ext is not None:
-    #             #         try:
-    #             #             self.extract_script_name = self._clean_script_name(ext.script.name)
-    #             #         except AttributeError, e:
-    #             #             pass
-    #             #             # print 'IsotopeRecord create ext 1 {}'.format(e)
-    #             #     else:
-    #             #         print 'extraction is None'
-    #             #
-    #             #     self.flux_fit_status = get_flux_fit_status(dbrecord)
-    #             #
-    #             #     sh = dbrecord.selected_histories
-    #             #     if sh:
-    #             #         self.blank_fit_status = get_selected_history_item(sh, 'selected_blanks_id')
-    #             #         self.ic_fit_status = get_selected_history_item(sh, 'selected_det_intercal_id')
-    #             #         self.iso_fit_status = get_selected_history_item(sh, 'selected_fits_id')
-    #
-    #             return True
-    #         except Exception, e:
-    #             import traceback
-    #
-    #             traceback.print_exc()
-    #             print 'exception', e
-    #
-    #     def _clean_script_name(self, name):
-    #         n = name.replace('{}_'.format(self.mass_spectrometer.lower()), '')
-    #         n = os.path.basename(n)
-    #         n, t = os.path.splitext(n)
-    #         return n
-    #
-    #     def to_string(self):
-    #         return '{} {} {} {}'.format(self.identifier, self.aliquot, self.timestamp, self.uuid)
-    #
+        if dbrecord:
+            self.create(dbrecord, **kw)
+
+    def set_tag(self, tag):
+        self.tag = tag.name
+
+    def create(self, dbrecord, fast_load=False):
+        # print 'asdfsadfsdaf', dbrecord, dbrecord.labnumber, dbrecord.uuid
+        try:
+            if dbrecord is None or not dbrecord.labnumber:
+                return
+
+            ln = dbrecord.labnumber
+
+            self.labnumber = str(ln.identifier)
+            self.identifier = self.labnumber
+
+            self.aliquot = dbrecord.aliquot
+            self.step = dbrecord.step
+            self._increment = dbrecord.increment
+            # temporary hack to handle increment
+            # todo: change database so all increment=-1 where step=''
+            # change how automated run persister sets increment
+            if not self.step:
+                self._increment = -1
+
+            # self.record_id = make_runid(self.labnumber, self.aliquot, self.step)
+
+            self.uuid = dbrecord.uuid
+            self.tag = dbrecord.tag or ''
+            self.rundate = dbrecord.analysis_timestamp
+
+            sam = ln.sample
+            if sam:
+                self.sample = sam.name
+                if sam.project:
+                    if isinstance(sam.project, (str, unicode)):
+                        self.project = sam.project.lower()
+                    else:
+                        self.project = sam.project.name.lower()
+
+            irp = ln.irradiation_position
+            if irp is not None:
+                irl = irp.level
+                ir = irl.irradiation
+                self.irradiation_info = '{}{} {}'.format(ir.name, irl.name, irp.position)
+
+            try:
+                self.mass_spectrometer = dbrecord.mass_spectrometer
+            except AttributeError:
+                pass
+
+            meas = dbrecord.measurement
+            if meas:
+                self.mass_spectrometer = meas.mass_spectrometer.name.lower()
+                try:
+                    self.analysis_type = meas.analysis_type.name
+                except AttributeError, e:
+                    pass
+                    # print 'IsotopeRecord create meas 1 {}'.format(e)
+
+            ext = dbrecord.extraction
+            if ext:
+                self.extract_value = ext.extract_value
+                self.cleanup = ext.cleanup_duration
+                self.duration = ext.extract_duration
+
+                try:
+                    if ext.extraction_device:
+                        self.extract_device = ext.extraction_device.name
+                except AttributeError, e:
+                    pass
+                    # print 'IsotopeRecord create ext 2 {}'.format(e)
+
+            if not fast_load:
+                self.timestamp = time.mktime(self.rundate.timetuple())
+                if meas:
+                    try:
+                        self.meas_script_name = self._clean_script_name(meas.script.name)
+                    except AttributeError, e:
+                        pass
+                        # print 'IsotopeRecord create meas 2 {}'.format(e)
+                else:
+                    print 'measurment is None'
+
+                if ext is not None:
+                    try:
+                        self.extract_script_name = self._clean_script_name(ext.script.name)
+                    except AttributeError, e:
+                        pass
+                        # print 'IsotopeRecord create ext 1 {}'.format(e)
+                else:
+                    print 'extraction is None'
+
+                self.flux_fit_status = get_flux_fit_status(dbrecord)
+
+                sh = dbrecord.selected_histories
+                self.blank_fit_status = get_selected_history_item(sh, 'selected_blanks_id')
+                self.ic_fit_status = get_selected_history_item(sh, 'selected_det_intercal_id')
+                self.iso_fit_status = get_selected_history_item(sh, 'selected_fits_id')
+
+            return True
+        except Exception, e:
+            import traceback
+
+            traceback.print_exc()
+            print e
+
+    def _clean_script_name(self, name):
+        n = name.replace('{}_'.format(self.mass_spectrometer.lower()), '')
+        n = os.path.basename(n)
+        n, t = os.path.splitext(n)
+        return n
+
+    def to_string(self):
+        return '{} {} {} {}'.format(self.identifier, self.aliquot, self.timestamp, self.uuid)
+
     @property
     def record_id(self):
         return make_runid(self.identifier, self.aliquot, self.step)
