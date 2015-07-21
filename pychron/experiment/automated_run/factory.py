@@ -134,7 +134,7 @@ class AutomatedRunFactory(PersistenceLoggable):
     load_defaults_button = Button('Default')
 
     default_fits_button = Button
-    default_fits_enabled = Property(depends_on='measurement_script.name')
+    default_fits_enabled = Bool
     # ===================================
 
     human_error_checker = Instance(HumanErrorChecker, ())
@@ -337,7 +337,7 @@ class AutomatedRunFactory(PersistenceLoggable):
         # db = self.db
         # with db.session_ctx():
         # ms = db.get_mass_spectrometer(self.mass_spectrometer)
-        #     ed = db.get_extraction_device(self.extract_device)
+        # ed = db.get_extraction_device(self.extract_device)
         #     self._mass_spectrometers = ms
         #     self._extract_devices = ed
 
@@ -414,8 +414,12 @@ class AutomatedRunFactory(PersistenceLoggable):
     def set_mass_spectrometer(self, new):
         new = new.lower()
         self.mass_spectrometer = new
+        # print SCRIPT_NAMES
         for s in self._iter_scripts():
+            # print s.kind, s, new
             s.mass_spectrometer = new
+            s.refresh_lists = True
+
 
     def set_extract_device(self, new):
         new = new.lower()
@@ -621,12 +625,12 @@ class AutomatedRunFactory(PersistenceLoggable):
 
             ms = getattr(self, skey)
             sname = getattr(run, skey)
-            print sname
+            # print sname
             ms.name = sname
             # ss = self._script_factory(label=si, name=s)
             # setattr(self, name, ss)
             # setattr(self, name, Script(name=s,
-            #                            label=si,
+            # label=si,
             #                            mass_spectrometer=self.mass_spectrometer))
         self.script_options.name = run.script_options
 
@@ -763,7 +767,7 @@ class AutomatedRunFactory(PersistenceLoggable):
             # with db.session_ctx():
             # dbln = db.get_labnumber(self.labnumber)
             # if dbln:
-            #         dbpos = dbln.irradiation_position
+            # dbpos = dbln.irradiation_position
             #         dbhist = db.add_flux_history(dbpos)
             #         dbflux = db.add_flux(float(v), float(e))
             #         dbflux.history = dbhist
@@ -945,8 +949,8 @@ class AutomatedRunFactory(PersistenceLoggable):
     # ===============================================================================
     # property get/set
     # ===============================================================================
-    def _get_default_fits_enabled(self):
-        return self.measurement_script.name not in ('None', '')
+    # def _get_default_fits_enabled(self):
+    # return self.measurement_script.name not in ('None', '')
 
     def _get_edit_mode_label(self):
         return 'Editing' if self.edit_mode else ''
@@ -1381,6 +1385,9 @@ post_measurement_script:name,
 post_equilibration_script:name''')
     def _edit_script_handler(self, obj, name, new):
 
+        if obj.label == 'Measurement':
+            self.default_fits_enabled = bool(new and new not in (NULL_STR, ))
+
         if self.edit_mode and not self.suppress_update:
             self._auto_save()
             if obj.label == 'Extraction':
@@ -1518,7 +1525,6 @@ post_equilibration_script:name''')
     # defaults
     # ================================================================================
     def _script_factory(self, label, name=NULL_STR, kind='ExtractionLine'):
-        print kind, self.use_name_prefix, self.name_prefix, self.mass_spectrometer
         s = Script(label=label,
                    use_name_prefix=self.use_name_prefix,
                    name_prefix=self.name_prefix,
@@ -1667,7 +1673,7 @@ post_equilibration_script:name''')
 # s, e = map(int, pos.split(':'))[:2]
 # elif CSLICE_REGEX.match(pos):
 # args = pos.split(';')
-#            positions = []
+# positions = []
 #            for ai in args:
 #                if '-' in ai:
 #                    a, b = map(int, ai.split('-'))

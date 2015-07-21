@@ -494,7 +494,9 @@ class AutomatedRun(Loggable):
 
         return ret
 
-    def py_peak_center(self, detector=None, save=True, isotope=None, check_intensity=True, **kw):
+    def py_peak_center(self, detector=None, save=True, isotope=None, check_intensity=True,
+                       directions='Increase',
+                       **kw):
         if not self._alive:
             return
 
@@ -525,6 +527,7 @@ class AutomatedRun(Loggable):
             pc = ion.setup_peak_center(detector=[detector] + ad,
                                        plot_panel=self.plot_panel,
                                        isotope=isotope,
+                                       directions=directions,
                                        **kw)
             self.peak_center = pc
             self.debug('do peak center')
@@ -1991,6 +1994,7 @@ anaylsis_type={}
         func = getattr(self, '_{}_script_factory'.format(name))
         s = func()
         valid = True
+
         if s and os.path.isfile(s.filename):
             if s.bootstrap():
                 self.debug('%%%%%%%%%%%%%%%%%%%%%%%%%%%% setting default context for {}'.format(fname))
@@ -2046,7 +2050,7 @@ anaylsis_type={}
             return obj
 
     def _make_script_name(self, name):
-        # name = '{}_{}'.format(self.spec.mass_spectrometer.lower(), name)
+        name = '{}_{}'.format(self.spec.mass_spectrometer.lower(), name)
         return add_extension(name, '.py')
 
     def _setup_context(self, script):

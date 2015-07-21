@@ -658,8 +658,11 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.labspy_client.add_run(run, self.experiment_queue)
 
         mem_log('end run')
-        if self.stats and run.state == 'success':
-            self.stats.update_run_duration(run, t)
+        if self.stats:
+            self.stats.finish_run()
+            if run.state == 'success':
+                self.stats.update_run_duration(run, t)
+                self.stats.calculate()
 
     def _overlapped_run(self, v):
         self._overlapping = True

@@ -16,8 +16,6 @@
 
 # ============= enthought library imports =======================
 from pickle import dumps
-from pyface.image_resource import ImageResource
-from pyface.timer.do_later import do_later, do_after
 
 from traits.api import Bool, Str, List, Any, Instance, Property, Int, HasTraits, Color
 from traits.trait_base import SequenceTypes
@@ -31,7 +29,6 @@ from PySide import QtCore, QtGui
 from PySide.QtGui import QColor, QHeaderView, QApplication
 # ============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
-from pychron.consumer_mixin import ConsumerMixin
 
 
 class myTabularEditor(TabularEditor):
@@ -258,7 +255,9 @@ class _TableView(TableView):
                 model.moveRows(rows, row)
             else:
                 with no_update(self._editor.object):
-                    for i, (_, di) in enumerate(reversed(data)):
+                    for i, di in enumerate(reversed(data)):
+                        if isinstance(di, tuple):
+                            di = di[1]
                         model.insertRow(row=row, obj=df(di))
 
             e.accept()

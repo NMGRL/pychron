@@ -16,7 +16,6 @@
 
 # ============= enthought library imports =======================
 from traits.api import Property, String, Float, Any, Int, List, Instance, Bool
-from traitsui.api import View, Item, VGroup, UItem, Readonly
 # ============= standard library imports ========================
 from datetime import datetime, timedelta
 import os
@@ -33,6 +32,7 @@ FUDGE_COEFFS = (0, 0, 0)  # x**n+x**n-1....+c
 
 class AutomatedRunDurationTracker(Loggable):
     items = List
+
     def __init__(self, *args, **kw):
         super(AutomatedRunDurationTracker, self).__init__(*args, **kw)
         self.load()
@@ -44,42 +44,49 @@ class AutomatedRunDurationTracker(Loggable):
                 for line in rfile:
                     line = line.strip()
                     if line:
-                        h, d = line.split(',')
-                        items.append((h, float(d)))
+                        args = line.split(',')
+                        items.append((args[0], args[1]))
         self.items = items
 
     def update(self, rh, t):
-
         p = paths.duration_tracker
+        if not os.path.isfile(p):
+            return
 
         out = []
         exists = False
-        if os.path.isfile(p):
-            with open(p, 'r') as rfile:
-                for line in rfile:
-                    line = line.strip()
-                    if line:
-                        h, d = line.split(',')
+        with open(p, 'r') as rfile:
+            for line in rfile:
+                line = line.strip()
+                if line:
+                    args = line.split(',')
 
-                        # update the runs duration by taking average of current (t) and previous (d) durations
-                        if h == rh:
-                            o = (h, (float(d) + t) * 0.5)
-                            exists = True
-                        else:
-                            o = (h, d)
-                        out.append(o)
+                    h, ct, ds = args[0], args[1], args[2:]
+                    # update the runs duration by taking running average of last 10
+                    if h == rh:
+                        exists = True
+
+                        ds = map(float, ds)
+                        ds.append(t)
+                        ds = ds[-10:]
+                        if len(ds):
+                            args = [h, sum(ds) / len(ds)]
+                            args.extend(ds)
+
+                    out.append(args)
+
         if not exists:
             out.append((rh, t))
 
         with open(p, 'w') as wfile:
             for line in out:
-                wfile.write('{},{}\n'.format(*line))
+                wfile.write('{}\n'.format(','.join(map(str, line))))
 
     def __contains__(self, v):
         return next((True for h, d in self.items if h == v), False)
 
     def __getitem__(self, item):
-        return next((d for h, d in self.items if h == item), 0)
+        return next((float(d.split(',')[0]) for h, d in self.items if h == item), 0)
 
 
 class ExperimentStats(Loggable):
@@ -317,7 +324,8 @@ class StatsGroup(ExperimentStats):
 
                 si = ei.cleaned_automated_runs.index(sel)
 
-                st += ei.stats.calculate_duration(ei.executed_runs + ei.cleaned_automated_runs[:si]) + ei.delay_between_analyses
+                st += ei.stats.calculate_duration(
+                    ei.executed_runs + ei.cleaned_automated_runs[:si]) + ei.delay_between_analyses
                 # et += ei.stats.calculate_duration(ei.executed_runs+ei.cleaned_automated_runs[:si + 1])
 
                 rd = self.get_run_duration(sel)

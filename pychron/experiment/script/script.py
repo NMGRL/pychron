@@ -84,9 +84,8 @@ class Script(Loggable):
 
     def _get_name_prefix(self):
         r = ''
-        # print self.use_name_prefix, self._name_prefix, self.mass_spectrometer
         if self.use_name_prefix:
-            r = self._name_prefix if self._name_prefix else self.mass_spectrometer
+            r = self._name_prefix if self._name_prefix else '{}_'.format(self.mass_spectrometer.lower())
         return r
 
     def _set_name_prefix(self, new):
@@ -112,7 +111,7 @@ class Script(Loggable):
 
     def script_path(self):
         if self.name_prefix:
-            name = '{}_{}'.format(self.name_prefix, self.name)
+            name = '{}{}'.format(self.name_prefix, self.name)
 
         name = add_extension(name, '.py')
         p = os.path.join(self._get_root(), name)
@@ -137,8 +136,8 @@ class Script(Loggable):
 
     def _clean_script_name(self, name):
         # name = self._remove_mass_spectrometer_name(name)
-        # if self.name_prefix:
-        #     name = self._remove_name_prefix(name)
+        if self.name_prefix:
+            name = self._remove_name_prefix(name)
 
         return self._remove_file_extension(name)
 
@@ -150,7 +149,7 @@ class Script(Loggable):
 
     def _remove_name_prefix(self, name):
         if self.name_prefix:
-            name = name[len(self.name_prefix) + 1:]
+            name = name[len(self.name_prefix):]
             # name = name.replace('{}_'.format(self.name_prefix), '')
         return name
 
@@ -188,9 +187,11 @@ class Script(Loggable):
         ms = self._load_script_names()
         if ms:
             # msn = '{}_'.format(self.mass_spectrometer.lower())
-
+            # if self.kind=='Measurement':
+                # print self,self.name_prefix, self.mass_spectrometer, ms
             names.extend([self._clean_script_name(ei) for ei in ms
                           if self.name_prefix and ei.startswith(self.name_prefix)])
+        # print names
         return names
 
 
