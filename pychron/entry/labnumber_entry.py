@@ -334,6 +334,16 @@ class LabnumberEntry(DVCIrradiationable):
 
         self.refresh_table = True
 
+    def push_changes(self):
+        if self.dvc.meta_repo.has_unpushed_commits():
+            if self.confirmation_dialog('You have non-pushed commits. Would you like to share them?'):
+                prog = open_progress(2)
+                self.info('Pushing changes to meta repo')
+                prog.change_message('Pushing changes to meta repo')
+                self.dvc.meta_repo.push()
+                prog.close()
+
+    # private
     def _load_canvas_analyses(self, db, level):
         poss = db.get_analyzed_positions(level)
         if poss:
@@ -567,11 +577,12 @@ THIS CHANGE CANNOT BE UNDONE')
                 return
 
             self.level_note = level.note or ''
-            # self.level_production_name = level.production.name
-
-            holes = self.dvc.meta_repo.get_irradiation_holder_holes(level.holder)
-            self._load_holder_positions(holes)
-            self._load_holder_canvas(holes)
+            self.level_production_name = level.production.name if level.production else ''
+            if level.holder:
+                self.irradiation_tray = level.holder
+                holes = self.dvc.meta_repo.get_irradiation_holder_holes(level.holder)
+                self._load_holder_positions(holes)
+                self._load_holder_canvas(holes)
 
             # self._load_canvas_analyses(db, level)
 
@@ -633,7 +644,6 @@ THIS CHANGE CANNOT BE UNDONE')
                                                   repo=self.dvc.meta_repo,
                                                   trays=self.trays)
 
-        print 'afsd', ie.trays, self.trays
         ie.trait_set(**kw)
         return ie
 
@@ -726,14 +736,14 @@ THIS CHANGE CANNOT BE UNDONE')
         new_irrad = irrad.add()
         if new_irrad:
             self.irradiation = new_irrad
-            self.updated = 'Irradiation'
+            # self.updated = 'Irradiation'
 
     def _edit_irradiation_button_fired(self):
         irrad = self._get_irradiation_editor(name=self.irradiation)
 
         new_irrad = irrad.edit()
         self._suppress_auto_select_irradiation = True
-        self.updated = 'Irradiation'
+        # self.updated = 'Irradiation'
         if new_irrad:
             self.irradiation = new_irrad
 
@@ -749,23 +759,25 @@ THIS CHANGE CANNOT BE UNDONE')
                                         irradiation=self.irradiation)
 
         new_level = editor.edit()
+        print 'asfdasd', new_level
         if new_level:
             self.level = new_level
 
-        self.updated = 'Level'
-        self._level_changed(self.level)
+        self._update_level()
+        # self.updated = 'Level'
+        # self._level_changed(self.level)
 
     def _add_level_button_fired(self):
         editor = self._get_level_editor(irradiation=self.irradiation)
         new_level = editor.add()
         if new_level:
             self.level = new_level
-            self.updated = 'Level'
+            # self.updated = 'Level'
 
-    def _updated_fired(self, new):
-        if self.dvc.meta_repo.has_unpushed_commits():
-            self.info('Pushing changes to meta repo. {} changed'.format(new))
-            self.dvc.meta_repo.push()
+    # def _updated_fired(self, new):
+    #     if self.dvc.meta_repo.has_unpushed_commits():
+    #         self.info('Pushing changes to meta repo. {} changed'.format(new))
+    #         self.dvc.meta_repo.push()
 
     def _irradiation_changed(self):
         # super(LabnumberEntry, self)._irradiation_changed()

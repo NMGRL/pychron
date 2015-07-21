@@ -344,6 +344,8 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
             # self.dump_browser_selection()
 
     def _prompt_for_save(self):
+        self.manager.push_changes()
+
         if self.manager.dirty:
             message = 'You have unsaved changes. Save changes to Database?'
             ret = self._handle_prompt_for_save(message)
