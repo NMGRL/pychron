@@ -151,4 +151,21 @@ class SeriesNode(FigureNode):
     editor_klass = 'pychron.pipeline.plot.editors.series_editor,SeriesEditor'
     plotter_options_manager_klass = SeriesOptionsManager
 
+    def configure(self, refresh=True, pre_run=False, **kw):
+        # self._configured = True
+        if not pre_run:
+            self._manual_configured = True
+
+        pom = self.plotter_options_manager
+        # pom = self.plotter_options_manager_klass()
+        if self.editor:
+            pom.plotter_options = self.editor.plotter_options
+
+        info = pom.edit_traits(kind='livemodal')
+        if info.result:
+            self.plotter_options = pom.plotter_options
+            if refresh:
+                self.refresh()
+
+            return True
 # ============= EOF =============================================
