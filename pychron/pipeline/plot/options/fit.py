@@ -79,7 +79,7 @@ class FitOptions(SaveableFigurePlotterOptions):
                 ]
 
     def _get_edit_view(self):
-        return View(VGroup(Item('name', editor=EnumEditor(name='names')),
+        return View(VGroup(Item('name', editor=EnumEditor(name='names'), width=150),
                            Item('marker', editor=EnumEditor(values=marker_names)),
                            Item('marker_size'),
                            HGroup(Item('ymin', label='Min'),

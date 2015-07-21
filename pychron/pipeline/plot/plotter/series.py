@@ -28,6 +28,7 @@ from numpy import array, Inf
 # ============= local library imports  ==========================
 from pychron.experiment.utilities.identifier import ANALYSIS_MAPPING_INTS
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
+from pychron.pipeline.plot.plotter.ticks import TICKS
 
 N = 500
 
@@ -72,11 +73,20 @@ class BaseSeries(BaseArArFigure):
 class Series(BaseSeries):
     _omit_key = 'omit_series'
 
+    def _has_attr(self, name):
+        a = name in ('AnalysisType', 'Peak Center')
+        if not a:
+            if self.sorted_analyses:
+                ai = self.sorted_analyses[0]
+                a = bool(ai.get_value(name))
+        return a
+
     def build(self, plots):
 
         graph = self.graph
-        plots = (pp for pp in plots if pp.use)
+        plots = (pp for pp in plots if self._has_attr(pp.name))
         for i, po in enumerate(plots):
+
             p = graph.new_plot(
                 # padding=self.padding,
                 ytitle=po.name,
@@ -88,7 +98,8 @@ class Series(BaseSeries):
                 p.y_axis.tick_label_formatter = tick_formatter
                 p.y_axis.tick_generator = StaticTickGenerator()
                 # p.y_axis.tick_label_rotate_angle = 45
-                graph.set_y_limits(min_=-1, max_=7, plotid=i)
+                graph.set_y_limits(-0.5, len(TICKS) - 0.5, plotid=i)
+                # graph.set_y_limits(min_=-1, max_=7, plotid=i)
 
             p.value_scale = po.scale
             p.padding_left = 75
@@ -104,9 +115,8 @@ class Series(BaseSeries):
 
         if plots:
             self.xs = self._get_xs(plots, self.sorted_analyses)
-
             # with graph.no_regression(refresh=True):
-            plots = [po for po in plots if po.use]
+            # plots = [po for po in plots if po.use]
             for i, po in enumerate(plots):
                 self._plot_series(po, i, omits)
 
@@ -120,27 +130,28 @@ class Series(BaseSeries):
                 from pychron.pipeline.plot.plotter.ticks import analysis_type_formatter
 
                 ys = list(self._unpack_attr(po.name))
-                kw = dict(y=ys, colors=ys, type='cmap_scatter', marker_size=4, color_map_name='gist_rainbow')
+                kw = dict(y=ys, colors=ys, type='cmap_scatter', color_map_name='gist_rainbow')
                 yerr = None
                 value_format = analysis_type_formatter
                 set_ylimits = False
+
             else:
+                set_ylimits = True
                 value_format = None
                 ys = array([ai.nominal_value for ai in self._unpack_attr(po.name)])
                 yerr = array([ai.std_dev for ai in self._unpack_attr(po.name)])
                 kw = dict(y=ys, yerror=yerr, type='scatter')
                 set_ylimits = True
 
+            # print ys
             n = [ai.record_id for ai in self.sorted_analyses]
             args = graph.new_series(x=self.xs,
                                     display_index=ArrayDataSource(data=n),
                                     fit=po.fit,
                                     plotid=pid,
-                                    # type='scatter',
                                     add_inspector=False,
                                     marker=po.marker,
                                     marker_size=po.marker_size,
-
                                     **kw)
             if len(args) == 2:
                 scatter, p = args
@@ -172,6 +183,9 @@ class Series(BaseSeries):
                 graph.set_y_limits(min_=mi, max_=mx, pad='0.1', plotid=pid)
 
         except (KeyError, ZeroDivisionError, AttributeError), e:
+            import traceback
+
+            traceback.print_exc()
             print 'Series', e
 
     def _unpack_attr(self, attr):
@@ -182,7 +196,7 @@ class Series(BaseSeries):
             # amap={'unknown':1, 'blank_unknown':2, 'blank_air':3, 'blank_cocktail':4}
             f = lambda x: ANALYSIS_MAPPING_INTS[x] if x in ANALYSIS_MAPPING_INTS else -1
             return (f(ai.analysis_type) for ai in self.sorted_analyses)
-        elif attr == 'PC':
+        elif attr == 'Peak Center':
             return (ai.peak_center for ai in self.sorted_analyses)
         else:
             return super(Series, self)._unpack_attr(attr)

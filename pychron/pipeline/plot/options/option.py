@@ -19,7 +19,7 @@ from traits.api import HasTraits, Str, Bool, Property, Int, Enum, List, String, 
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.pychron_constants import NULL_STR, FIT_TYPES
+from pychron.pychron_constants import NULL_STR
 
 
 class AuxPlotOptions(HasTraits):
@@ -130,8 +130,8 @@ class AuxPlotOptions(HasTraits):
             #            'relative_probability': 'Ideogram'}
 
 
-class FitPlotterOptions(AuxPlotOptions):
-    fit = Enum(['', ] + FIT_TYPES)
+        # class FitPlotterOptions(AuxPlotOptions):
+        # fit = Enum(['', ] + FIT_TYPES)
 
 
 class SpectrumPlotOptions(AuxPlotOptions):

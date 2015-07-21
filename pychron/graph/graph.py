@@ -972,11 +972,14 @@ class Graph(ContextMenuMixin):
                 if 'outline_color' in rd:
                     rd['outline_color'] = rd['color']
 
-                rd['selection_color'] = rd['selection_color']
+                rd['selection_color'] = rd['color']
                 rd['selection_outline_color'] = rd['color']
 
             if rd['type'] == 'cmap_scatter':
                 from chaco.default_colormaps import color_map_name_dict
+
+                rd['selection_color'] = rd['color']
+                rd['selection_outline_color'] = rd['color']
 
                 rd['color_mapper'] = color_map_name_dict[color_map_name]
                 #                 rd['line_width'] = 1

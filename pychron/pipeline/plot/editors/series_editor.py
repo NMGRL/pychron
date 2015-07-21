@@ -33,13 +33,13 @@ class SeriesEditor(FigureEditor):
     # def _plotter_options_manager_default(self):
     # return self.plotter_options_manager_klass()
 
-    def _update_analyses_hook(self):
-        # po = self.plotter_options_manager.plotter_options
-        po = self.plotter_options
-        ref = self.analyses[0]
-        po.load_aux_plots(ref)
-
-        self._set_name()
+    # def _update_analyses_hook(self):
+    #     # po = self.plotter_options_manager.plotter_options
+    #     po = self.plotter_options
+    #     ref = self.analyses[0]
+    #     po.load_aux_plots(ref)
+    #
+    #     self._set_name()
 
         # def get_component(self, ans, plotter_options):
         # if plotter_options is None:

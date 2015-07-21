@@ -15,37 +15,37 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traitsui.api import View, Item, VGroup
-from traitsui.extras.checkbox_column import CheckboxColumn
-from traitsui.table_column import ObjectColumn
+from traitsui.api import View, VGroup, Tabbed, EnumEditor
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.core.ui.table_editor import myTableEditor
 # from pychron.processing.plot.options.option import GroupablePlotterOptions
 # from pychron.processing.plotters.options.base import FigurePlotterOptions
 # from pychron.processing.plot.options import FitPlotterOptions
 # from pychron.pipeline.plot.options import GroupablePlotterOptions
-from pychron.pipeline.plot.options.age import GroupablePlotterOptions
-from pychron.pipeline.plot.options.option import FitPlotterOptions
+# from pychron.pipeline.plot.options.option import FitPlotterOptions
+from pychron.pipeline.plot.options.figure_plotter_options import object_column, checkbox_column
+from pychron.pipeline.plot.options.fit import FitAuxPlot, FitOptions
 
 
-class SeriesOptions(GroupablePlotterOptions):
+# class SeriesOptions(GroupablePlotterOptions):
+from pychron.pychron_constants import ARGON_KEYS
+
+
+class SeriesOptions(FitOptions):
     # groups = List
-
-    def load_aux_plots(self, ref):
+    # aux_plot_klass = FitAuxPlot
+    def _aux_plots_default(self):
         def f(kii):
-            ff = next((x for x in self.aux_plots if x.name == kii), None)
-            if not ff:
-                ff = FitPlotterOptions(name=kii)
-                ff.trait_set(use=False, fit='')
+            ff = FitAuxPlot(name=kii)
+            ff.trait_set(plot_enabled=False,
+                         save_enabled=False, fit='')
 
             return ff
 
-        keys = ref.isotope_keys
-        ks = ref.isotope_keys[:]
-        keys.extend(['{}bs'.format(ki) for ki in ks])
-        keys.extend(['{}ic'.format(ki) for ki in ks])
+        keys = list(ARGON_KEYS)
+        keys.extend(['{}bs'.format(ki) for ki in ARGON_KEYS])
+        keys.extend(['{}ic'.format(ki) for ki in ARGON_KEYS])
         if 'Ar40' in keys:
             if 'Ar39' in keys:
                 keys.append('Ar40/Ar39')
@@ -54,32 +54,57 @@ class SeriesOptions(GroupablePlotterOptions):
                 keys.append('Ar40/Ar36')
                 keys.append('uAr40/Ar36')
 
-        keys.append('PC')
+        keys.append('Peak Center')
         keys.append('AnalysisType')
 
-        ap = [f(k) for k in keys]
-        self.trait_set(aux_plots=ap)
+        return [f(k) for k in keys]
+
+    def _get_columns(self):
+        return [object_column(name='name', width=125),
+                checkbox_column(name='plot_enabled', label='Plot'),
+                object_column(name='fit',
+                              editor=EnumEditor(name='fit_types'),
+                              width=75),
+                object_column(name='error_type',
+                              editor=EnumEditor(name='error_types'),
+                              width=75, label='Error'),
+                checkbox_column(name='y_error', label='YError')]
 
     def traits_view(self):
-        cols = [
-            CheckboxColumn(name='use', label='Show'),
-            ObjectColumn(name='name', editable=False),
-            ObjectColumn(name='fit', width=135),
-            ObjectColumn(name='scale', label='Y Scale'),
-            #               ObjectColumn(name='height'),
-            #               CheckboxColumn(name='x_error', label='X Error'),
-            CheckboxColumn(name='y_error', label='Y Error')]
-        aux_plots_grp = Item('aux_plots',
-                             style='custom',
-                             show_label=False,
+        bg_grp = self._get_bg_group()
+        pd_grp = self._get_padding_group()
+        a_grp = self._get_axes_group()
+        appear_grp = VGroup(bg_grp, pd_grp, a_grp, label='Appearance')
 
-                             editor=myTableEditor(columns=cols,
-                                                  sortable=False,
-                                                  deletable=False,
-                                                  clear_selection_on_dclicked=True,
-                                                  edit_on_first_click=False,
-                                                  reorderable=False))
-        v = View(VGroup(self._get_refresh_group(), aux_plots_grp))
+        p_grp = self._get_aux_plots_group()
+
+        v = View(VGroup(Tabbed(p_grp, appear_grp)))
         return v
 
 # ============= EOF =============================================
+    # def load_aux_plots(self, ref):
+    #     def f(kii):
+    #         ff = next((x for x in self.aux_plots if x.name == kii), None)
+    #         if not ff:
+    #             ff = FitAuxPlot(name=kii)
+    #             ff.trait_set(use=False, fit='')
+    #
+    #         return ff
+    #
+    #     keys = ref.isotope_keys
+    #     ks = ref.isotope_keys[:]
+    #     keys.extend(['{}bs'.format(ki) for ki in ks])
+    #     keys.extend(['{}ic'.format(ki) for ki in ks])
+    #     if 'Ar40' in keys:
+    #         if 'Ar39' in keys:
+    #             keys.append('Ar40/Ar39')
+    #             keys.append('uAr40/Ar39')
+    #         if 'Ar36' in keys:
+    #             keys.append('Ar40/Ar36')
+    #             keys.append('uAr40/Ar36')
+    #
+    #     keys.append('PC')
+    #     keys.append('AnalysisType')
+    #
+    #     ap = [f(k) for k in keys]
+    #     self.trait_set(aux_plots=ap)
