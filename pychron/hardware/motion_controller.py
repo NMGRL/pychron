@@ -68,6 +68,7 @@ class MotionController(CoreDevice):
 
     groupobj = None
     _not_moving_count = 0
+    _homing = False
 
     def update_axes(self):
         for a in self.axes:
@@ -224,7 +225,7 @@ class MotionController(CoreDevice):
         """
         """
         # stopped = False
-        m = self._moving()
+        m = self._moving(axis='z')
         if not m:
             self._not_moving_count += 1
 
@@ -263,8 +264,11 @@ class MotionController(CoreDevice):
                 self.parent.canvas.set_stage_position(*xy)
 
     def _validate_xy(self, x, y):
-        vx = self.xaxes_min - 1 <= x <= self.xaxes_max + 1
-        vy = self.yaxes_min - 1 <= y <= self.yaxes_max + 1
+        if self._homing:
+            return
+
+        vx = self.xaxes_min - 2 <= x <= self.xaxes_max + 2
+        vy = self.yaxes_min - 2 <= y <= self.yaxes_max + 2
         # print x,y,vx,vy, self.xaxes_min, self.xaxes_max
         if not (vx and vy):
             self.timer.stop()

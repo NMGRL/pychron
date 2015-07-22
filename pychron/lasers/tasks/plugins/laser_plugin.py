@@ -25,7 +25,7 @@ import os
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import list_directory2
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
-from pychron.envisage.tasks.list_actions import PatternAction
+from pychron.envisage.tasks.list_actions import PatternAction, ShowMotionConfigureAction
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.envisage.initialization.initialization_parser import InitializationParser
 from pychron.paths import paths
@@ -195,7 +195,8 @@ class FusionsPlugin(BaseLaserPlugin):
 
         exts = [TaskExtension(actions=actions)]
 
-        actions = []
+        actions = [SchemaAddition(factory=ShowMotionConfigureAction,
+                                  path='MenuBar/laser.menu')]
         for f in list_directory2(paths.pattern_dir, extension='.lp', remove_extension=True):
             actions.append(SchemaAddition(id='pattern.{}'.format(f),
                                           factory=pattern_action(f, self.application, self.name),

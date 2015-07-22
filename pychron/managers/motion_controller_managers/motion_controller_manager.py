@@ -29,6 +29,7 @@ from pychron.hardware.motion_controller import MotionController
 from pychron.paths import paths
 from pychron.core.helpers.filetools import parse_file
 
+
 # class MotionControllerManagerHandler(Handler):
 #    def closed(self, info, is_ok):
 #        '''
@@ -55,6 +56,7 @@ class MotionControllerManager(Manager):
     view_style = Enum('simple_view', 'full_view')
 
     selected = Any
+
     def kill(self, **kw):
         super(MotionControllerManager, self).kill(**kw)
         self.motion_controller.save_axes_parameters()
@@ -63,7 +65,6 @@ class MotionControllerManager(Manager):
         path = self.open_file_dialog(default_directory=paths.device_dir)
         # path = os.path.join(root_dir, 'zobs', 'NewStage-Axis-1.txt')
         if path is not None:
-
 
             # sniff the file to get the axis
             lines = parse_file(path)
@@ -77,7 +78,6 @@ class MotionControllerManager(Manager):
                 ax = self._get_selected()
                 if ax is not None:
                     func = ax.load
-
 
             if ax is not None:
                 func(path)
@@ -96,24 +96,25 @@ class MotionControllerManager(Manager):
         if self.motion_group:
             axs += [self.motion_group]
         return axs
-#        print [self._axes[k] for k in keys] + [self.motion_group]
-#        return [self._axes[k] for k in keys] + [self.motion_group]
 
-#    def _restore_fired(self):
-#        '''
-#        '''
-#        self.motion_controller.axes_factory()
-#        self.trait_property_changed('axes', None)
-#        for a in self.axes:
-#            a.load_
+    #        print [self._axes[k] for k in keys] + [self.motion_group]
+    #        return [self._axes[k] for k in keys] + [self.motion_group]
 
-#    def _apply_all_fired(self):
-#        '''
-#        '''
-# #        for a in self.axes:
-# #            a.upload_parameters_to_device()
-#        if sele
-# #        self.motion_controller.save()
+    #    def _restore_fired(self):
+    #        '''
+    #        '''
+    #        self.motion_controller.axes_factory()
+    #        self.trait_property_changed('axes', None)
+    #        for a in self.axes:
+    #            a.load_
+
+    #    def _apply_all_fired(self):
+    #        '''
+    #        '''
+    # #        for a in self.axes:
+    # #            a.upload_parameters_to_device()
+    #        if sele
+    # #        self.motion_controller.save()
     def _get_selected(self):
         ax = self.selected
         if ax is None:
@@ -127,7 +128,7 @@ class MotionControllerManager(Manager):
 
     def _apply_button_fired(self):
         ax = self._get_selected()
-
+        print ax, ax.id
         if ax is not None:
             ax.upload_parameters_to_device()
 
@@ -135,22 +136,22 @@ class MotionControllerManager(Manager):
 
     def configure_view(self):
         v = View(Item('axes',
-                       style='custom',
-                       show_label=False,
-                       editor=ListEditor(use_notebook=True,
-                                                dock_style='tab',
-                                                page_name='.name',
-                                                view=self.view_style,
-                                                selected='selected'
-                        )
+                      style='custom',
+                      show_label=False,
+                      editor=ListEditor(use_notebook=True,
+                                        dock_style='tab',
+                                        page_name='.name',
+                                        view=self.view_style,
+                                        selected='selected'
+                                        )
+                      ),
+                 HGroup(spring, Item('load_button'), Item('read_button'), Item('apply_button'), show_labels=False,
+                        #                           visible_when='view_style=="full_view"'
                         ),
-                    HGroup(spring, Item('load_button'), Item('read_button'), Item('apply_button'), show_labels=False,
-#                           visible_when='view_style=="full_view"'
-                           ),
-                # resizable=True,
-                # handler=self.handler_klass, #MotionControllerManagerHandler,
-                # title='Configure Motion Controller'
-                )
+                 # resizable=True,
+                 # handler=self.handler_klass, #MotionControllerManagerHandler,
+                 # title='Configure Motion Controller'
+                 )
         return v
 
     def _print_param_table_fired(self):
@@ -171,26 +172,26 @@ class MotionControllerManager(Manager):
             print 'exception', e
 
     def traits_view(self):
-        '''
-        '''
+        """
+        """
         view = View(Item('axes',
-                       style='custom',
-                       show_label=False,
-                       editor=ListEditor(use_notebook=True,
-                                                dock_style='tab',
-                                                page_name='.name',
-                                                view=self.view_style
-                        )
-                        ),
+                         style='custom',
+                         show_label=False,
+                         editor=ListEditor(use_notebook=True,
+                                           dock_style='tab',
+                                           page_name='.name',
+                                           selected='selected',
+                                           view=self.view_style
+                                           )),
                     HGroup(spring, Item('load_button'),
-#                           Item('restore'),
-                           Item('print_param_table'),
+                           #                           Item('restore'),
+                           #                            Item('print_param_table'),
+                           Item('read_button'),
                            Item('apply_button'),
                            show_labels=False,
                            # visible_when='view_style=="full_view"'
                            ),
-                resizable=True,
-                handler=self.handler_klass,  # MotionControllerManagerHandler,
-                title='Configure Motion Controller'
-                )
+                    resizable=True,
+                    handler=self.handler_klass,  # MotionControllerManagerHandler,
+                    title='Configure Motion Controller')
         return view

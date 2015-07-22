@@ -425,25 +425,22 @@ ABLE TO USE THE HARDWARE JOYSTICK
         # transition.
         # If nn = 6, the axes will search for negative limit and
         # index signal transition.
-
         # destroy the grouping
         self.destroy_group(force=True)
 
+        self._homing = True
         cmd = ';'.join([self._build_command('OR', a.id, nn=search_mode if a.name.lower() != 'z' else 3)
                         for a in self.axes.itervalues() if a.name in axes])
-
-        self.timer = self.timer_factory()
-
         if self.group_commands:
             self.tell(cmd)
-
-            if block:
-                self._block()
         else:
             for c in cmd.split(';'):
                 self.tell(c)
-                if block:
-                    self._block()
+
+        self.timer = self.timer_factory()
+        if block:
+            self._block()
+        self._homing = False
 
     def block_group(self, n=10):
         cmd = '1HQ%i' % n
@@ -880,9 +877,6 @@ ABLE TO USE THE HARDWARE JOYSTICK
             time.sleep(0.5)
             return
 
-        if self.mode == 'grouped':
-            return self.group_moving()
-
         if axis is not None:
             if isinstance(axis, str):
                 axis = self.axes[axis].id
@@ -894,6 +888,9 @@ ABLE TO USE THE HARDWARE JOYSTICK
                 moving = not int(r)
 
         else:
+            if self.mode == 'grouped':
+                return self.group_moving()
+
             r = self.repeat_command('TX', 5, check_type=str, verbose=verbose)
             if r is not None and len(r) > 0:
                 controller_state = ord(r[0])

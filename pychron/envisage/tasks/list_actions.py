@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.tasks.action.task_action import TaskAction
 from traits.api import Str
 # ============= standard library imports ========================
 import os
@@ -22,6 +23,11 @@ import os
 # ============= local library imports  ==========================
 from traitsui.menu import Action
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
+
+
+class ShowMotionConfigureAction(TaskAction):
+    method = 'show_motion_configure'
+    name = 'Motion Configure...'
 
 
 class ListAction(Action):
