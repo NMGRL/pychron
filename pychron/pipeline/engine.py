@@ -37,6 +37,8 @@ from pychron.pipeline.nodes.persist import PDFFigureNode, IsotopeEvolutionPersis
     BlanksPersistNode, ICFactorPersistNode, FluxPersistNode, PersistNode
 from pychron.pipeline.template import PipelineTemplate
 
+TEMPLATE_NAMES = ('Iso Evo', 'Icfactor', 'Blanks', 'Flux', 'Ideogram', 'Spectrum',
+                  'Isochron', 'Series', 'Table')
 
 class Pipeline(HasTraits):
     name = Str('Pipeline')
@@ -459,7 +461,9 @@ class PipelineEngine(Loggable):
             return ' '.join(map(str.capitalize, t.split('_')))
 
         templates = map(formatter, templates)
-        self.available_pipeline_templates = templates
+
+        ns = [pt for pt in TEMPLATE_NAMES if pt in templates]
+        self.available_pipeline_templates = ns
 
     def _add_find_node(self, node, run, analysis_type):
         newnode = FindReferencesNode(dvc=self.dvc, analysis_type=analysis_type)
