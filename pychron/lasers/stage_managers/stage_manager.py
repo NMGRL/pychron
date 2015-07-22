@@ -31,7 +31,7 @@ from pychron.managers.manager import Manager
 from pychron.canvas.canvas2D.laser_tray_canvas import LaserTrayCanvas
 # from pychron.core.helpers.color_generators import colors8i as colors
 
-from pychron.hardware.motion_controller import MotionController
+from pychron.hardware.motion_controller import MotionController, PositionError
 from pychron.paths import paths
 import pickle
 # from pychron.lasers.stage_managers.stage_visualizer import StageVisualizer
@@ -845,6 +845,7 @@ class StageManager(Manager):
                     self.info('using an interpolated value')
                 else:
                     self.info('using previously calculated corrected position')
+
             self.stage_controller.linear_move(block=True, *pos)
             #            if self.tray_calibration_manager.calibration_style == 'MassSpec':
             if not self.tray_calibration_manager.isCalibrating():
@@ -853,7 +854,7 @@ class StageManager(Manager):
                 self._move_to_hole_hook(key, correct_position)
 
             self.info('Move complete')
-            self.update_axes()  # update_hole=False)
+            # self.update_axes()  # update_hole=False)
 
             #        self.move_thread = None
 

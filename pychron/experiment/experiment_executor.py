@@ -1289,6 +1289,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self._err_message = 'Not all managers available'
             return True
 
+        if self._check_for_errors():
+            return True
+
         if self.monitor:
             if not self.monitor.check():
                 self._err_message = 'Automated Run Monitor Failed'
@@ -1299,6 +1302,14 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         # timed out. if timed out autosave.
         self._wait_for_save()
         self.heading('Pre Run Check Passed')
+
+    def _check_for_errors(self):
+        for c in self.connectables:
+            man = self.application.get_service(c.protocol, 'name=="{}"'.format(c.name))
+            e = man.get_error()
+            if e:
+                self._err_message = e
+                break
 
     def _pre_execute_check(self, inform=True):
         if not self.datahub.secondary_connect():

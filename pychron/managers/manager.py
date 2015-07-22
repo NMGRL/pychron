@@ -192,9 +192,10 @@ class Manager(Viewable, ConfigLoadable):
         return self._directory_dialog(True)
 
     def get_error(self):
-        e = self.error_code
-        self.error_code = None
-        return str(e)
+        if self.error_code:
+            e = self.error_code
+            self.error_code = None
+            return str(e)
 
     def get_managers(self):
 

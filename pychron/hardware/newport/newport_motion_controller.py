@@ -46,6 +46,8 @@ class NewportMotionController(MotionController):
     def initialize(self, *args, **kw):
         """
         """
+        if self._communicator:
+            self._communicator.read_terminator = '{}{}'.format(chr(13), chr(10))
 
         # try to get x position to test comms
         if super(NewportMotionController, self).initialize(*args, **kw):
@@ -146,29 +148,44 @@ ABLE TO USE THE HARDWARE JOYSTICK
         self.joystick.disable_laser()
 
     def xy_swapped(self):
-        if self.axes.has_key('x'):
+        if 'x' in self.axes:
             return self.axes['x'].id == 2
 
     def get_current_xy(self):
-        cmd = '{}TP?;{}TP?'.format(self.axes['x'].id, self.axes['y'].id)
-        # cmd = self._build_query('TP')
-        f = self.ask(cmd, verbose=True)
+        x, y = None, None
+        if self.mode == 'grouped':
+            f = self.ask('{}HP'.format(self.groupobj.id))
+            # cmd = '{}TP?;{}TP?'.format(self.axes['x'].id, self.axes['y'].id)
+            # f = self.ask(cmd, verbose=True)
+            # args = f.split(',')[:2]
+            try:
+                f = f.strip()
+                args = f.split('\n')
+                x, y = map(float, map(str.strip, args))
+
+                ax = self.axes['x']
+                x = self._sign_correct(x, 'x', ratio=False) / ax.drive_ratio
+
+                ax = self.axes['y']
+                y = self._sign_correct(y, 'y', ratio=False) / ax.drive_ratio
+                return x, y
+            except BaseException, e:
+                import traceback
+
+                traceback.print_exc()
+                self.warning('get_current_xy failed. {}'.format(e))
+
+        else:
+            x = self.get_current_position('x')
+            y = self.get_current_position('y')
+
+        return x, y
+
+        # cmd = '{}TP?;{}TP?'.format(self.axes['x'].id, self.axes['y'].id)
+        # # cmd = self._build_query('TP')
+        # f = self.ask(cmd, verbose=True)
+
         # args = f.split(',')[:2]
-        try:
-            args = f.split('\n')
-            x, y = map(float, map(str.strip, args))
-
-            ax = self.axes['x']
-            x = self._sign_correct(x, 'x', ratio=False) / ax.drive_ratio
-
-            ax = self.axes['y']
-            y = self._sign_correct(y, 'y', ratio=False) / ax.drive_ratio
-            return x, y
-        except BaseException, e:
-            import traceback
-
-            traceback.print_exc()
-            self.warning('get_current_xy failed. {}'.format(e))
 
     def get_current_position(self, aid):
         if isinstance(aid, str):
@@ -227,8 +244,8 @@ ABLE TO USE THE HARDWARE JOYSTICK
         def add_to_buffer(x, y):
             nn = '{:0.5f},{:0.5f}'.format(self._sign_correct(x, 'x'), self._sign_correct(y, 'y'))
             cmd = self._build_command('HL', xx=gid, nn=nn)
-            self.ask(cmd, verbose=True)
-
+            self.tell(cmd, verbose=True)
+        self.debug('mutlipoint move npoints={}'.format(len(points)))
         # move to first point
         x, y = points[0]
         add_to_buffer(x, y)
@@ -242,7 +259,7 @@ ABLE TO USE THE HARDWARE JOYSTICK
             cmd = self._build_query('HQ', xx=gid)
             while 1:
                 self._inprogress_update()
-                resp = self.ask(cmd, verbose=False)
+                resp = self.ask(cmd, verbose=True)
                 if resp is not None:
                     resp = resp.strip()
                     resp = int(resp)
@@ -337,7 +354,7 @@ ABLE TO USE THE HARDWARE JOYSTICK
             self._y_position = y
 
             self.debug('doing linear move')
-            self.timer = self.timer_factory()
+
             self._linear_move(dict(x=x, y=y), **kw)
         else:
             self.info('displacement of move too small {} < {}'.format(d, tol))
@@ -374,7 +391,7 @@ ABLE TO USE THE HARDWARE JOYSTICK
         """
         self.configure_group(True)
 
-        if self.mode == 'group':
+        if self.mode == 'grouped':
             if sign_correct:
                 cx = self._sign_correct(cx, 'x')
                 cy = self._sign_correct(cy, 'y')
@@ -439,11 +456,10 @@ ABLE TO USE THE HARDWARE JOYSTICK
         #        cmd = '1HS?'
 
         cmd = self._build_query('HS', xx=self.groupobj.id)
-        m = True if self.ask(cmd) == '0' else False
+        m = True if self.ask(cmd, verbose=False) == '0' else False
         return m
 
     def stop(self, ax_key=None, verbose=False):
-
         if self.timer is not None:
             self.timer.Stop()
 
@@ -694,6 +710,7 @@ ABLE TO USE THE HARDWARE JOYSTICK
                 time.sleep(0.1)
                 # self.read_error()
                 # time.sleep(0.1)
+        self.tell('{}HO'.format(self.groupobj.id))
 
     def _get_axis_by_id(self, aid):
         """
@@ -807,11 +824,12 @@ ABLE TO USE THE HARDWARE JOYSTICK
             self.multiple_axis_move([(self.axes['y'].id, kwargs['y']),
                                      (self.axes['x'].id, kwargs['x'])])
 
+        self.timer = self.timer_factory()
         if block:
             self.info('moving to {x:0.5f},{y:0.5f}'.format(**kwargs))
             self._block()
             self.info('move to {x:0.5f},{y:0.5f} complete'.format(**kwargs))
-            self.update_axes()
+            # self.update_axes()
 
     def _axis_move(self, com, block=False, verbose=True, **kw):
         """
@@ -858,34 +876,35 @@ ABLE TO USE THE HARDWARE JOYSTICK
             return True if moving
 
         """
-        moving = False
+        if self.simulation:
+            time.sleep(0.5)
+            return
+
+        if self.mode == 'grouped':
+            return self.group_moving()
+
         if axis is not None:
             if isinstance(axis, str):
                 axis = self.axes[axis].id
 
-            if self.mode == 'grouped':
-                return self.group_moving()
-            else:
-                r = self.repeat_command(('MD?', axis), 5, check_type=int,
-                                        verbose=verbose)
-                if r is not None:
-                    # stage is moving if r==0
-                    moving = not int(r)
+            r = self.repeat_command(('MD?', axis), 5, check_type=int,
+                                    verbose=verbose)
+            if r is not None:
+                # stage is moving if r==0
+                moving = not int(r)
 
-        elif not self.simulation:
+        else:
             r = self.repeat_command('TX', 5, check_type=str, verbose=verbose)
             if r is not None and len(r) > 0:
                 controller_state = ord(r[0])
                 cs = make_bitarray(controller_state, width=8)
                 moving = cs[3] == '1'
-        else:
-            time.sleep(0.5)
 
         return moving
 
     def _build_command(self, command, xx=None, nn=None):
-        '''
-        '''
+        """
+        """
         if isinstance(nn, list):
             nn = ','.join([str(n) for n in nn])
 
