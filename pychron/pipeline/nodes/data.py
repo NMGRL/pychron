@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from pyface.message_dialog import information
-from traits.api import List, Instance, Bool
+from traits.api import Instance, Bool
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.browser.view import BrowserView
@@ -25,7 +25,7 @@ from pychron.pipeline.nodes.base import BaseNode
 
 class DataNode(BaseNode):
     name = 'Data'
-    analyses = List
+
     analysis_kind = None
     dvc = Instance('pychron.dvc.dvc.DVC')
     browser_model = Instance('pychron.envisage.browser.browser_model.BrowserModel')
@@ -40,15 +40,21 @@ class DataNode(BaseNode):
 
         browser_view = BrowserView(model=self.browser_model)
         info = browser_view.edit_traits(kind='livemodal')
+
         if info.result:
             records = self.browser_model.get_analysis_records()
             if records:
                 analyses = self.dvc.make_analyses(records)
                 if browser_view.is_append:
-                    self.analyses.extend(analyses)
+                    ans = getattr(self, self.analysis_kind)
+                    ans.extend(analyses)
+                    # self.analyses.extend(analyses)
                 else:
-                    self.analyses = analyses
-
+                    self.trait_set(**{self.analysis_kind: analyses})
+                    # self.analyses = analyses
+                print self.unknowns
+                # setattr(self, self.analysis_kind, self.analyses)
+                # self.metadata = self.analyses
                 return True
 
 
@@ -57,13 +63,14 @@ class UnknownNode(DataNode):
     analysis_kind = 'unknowns'
 
     def run(self, state):
-        if not self.analyses:
+        if not self.unknowns:
             if not self.configure():
                 state.canceled = True
                 return
 
         review_req = []
-        for ai in self.analyses:
+        unks = self.unknowns
+        for ai in unks:
             ai.group_id = 0
             if self.check_reviewed:
                 for attr in ('blanks', 'iso_evo'):
@@ -78,7 +85,7 @@ class UnknownNode(DataNode):
 
         # add our analyses to the state
         items = getattr(state, self.analysis_kind)
-        items.extend(self.analyses)
+        items.extend(self.unknowns)
 
         state.projects = {ai.project for ai in state.unknowns}
 
@@ -89,13 +96,14 @@ class ReferenceNode(DataNode):
 
     def run(self, state):
         items = getattr(state, self.analysis_kind)
-        if not self.analyses or state.has_references:
-            self.analyses = items
+        if not self.references or state.has_references:
+            # self.analyses = items
+            self.references = items
         else:
-            for ai in self.analyses:
+            for ai in self.references:
                 ai.group_id = 0
 
-            items.extend(self.analyses)
+            items.extend(self.references)
 
 
 class FluxMonitorsNode(DataNode):

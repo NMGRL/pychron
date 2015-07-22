@@ -327,19 +327,19 @@ class UnknownsAdapter(TabularAdapter):
 
     def get_text_color(self, obj, trait, row, column=0):
         color = 'black'
-        if obj.show_group_colors:
-            # n = len(colornames)
-            colors = self.colors
-            n = len(colors)
+        # if obj.show_group_colors:
+        # n = len(colornames)
+        colors = self.colors
+        n = len(colors)
 
-            gid = getattr(obj, trait)[row].group_id
-            # gid = obj.items[row].group_id
+        gid = getattr(obj, trait)[row].group_id
+        # gid = obj.items[row].group_id
 
-            cid = gid % n if n else 0
-            try:
-                color = colors[cid]
-            except IndexError:
-                pass
+        cid = gid % n if n else 0
+        try:
+            color = colors[cid]
+        except IndexError:
+            pass
 
         return color
 
@@ -366,15 +366,15 @@ class AnalysesPane(TraitsDockPane):
     id = 'pychron.pipeline.analyses'
 
     def traits_view(self):
-        v = View(VGroup(UItem('unknowns',
+        v = View(VGroup(UItem('object.selected.unknowns',
                               editor=TabularEditor(adapter=UnknownsAdapter(),
                                                    refresh='refresh_table_needed',
                                                    multi_select=True,
                                                    dclicked='dclicked_unknowns',
                                                    selected='selected_unknowns',
                                                    operations=['delete'])),
-                        UItem('references',
-                              visible_when='references',
+                        UItem('object.selected.references',
+                              visible_when='object.selected.references',
                               editor=TabularEditor(adapter=ReferencesAdapter(),
                                                    refresh='refresh_table_needed',
                                                    multi_select=True,

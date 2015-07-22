@@ -204,17 +204,14 @@ class PipelineTask(BaseBrowserTask):
             self._toggle_run(False)
             self.state = None
 
-        self.engine.update_needed = True
-
         for editor in state.editors:
-            # print editor
-            # self._close_editor(editor)
             self._open_editor(editor)
 
-        self.engine.selected = None
-        self.engine.update_needed = True
+        # self.engine.selected = None
+        # self.engine.update_needed = True
+        # self.engine.update_needed = True
+        # self.engine.refresh_analyses()
 
-        self.engine.refresh_analyses()
         if state.dbmodified:
             self.dbmodified = True
 
@@ -261,18 +258,18 @@ class PipelineTask(BaseBrowserTask):
     def _handle_reset(self):
         self.reset()
 
-    @on_trait_change('engine:unknowns')
-    def _handle_unknowns(self, obj, name, old, new):
-        # print name, old, new
-        if name == 'unknowns_items':
-            self._handle_items(self.engine.selected_unknowns, self.engine.unknowns)
-        self.engine.update_detectors()
+        # @on_trait_change('engine:unknowns')
+        # def _handle_unknowns(self, obj, name, old, new):
+        #     print 'ffsaafa', name, old, new
+        #     if name == 'unknowns_items':
+        #         self._handle_items(self.engine.selected_unknowns, self.engine.unknowns)
+        #     self.engine.update_detectors()
 
-    @on_trait_change('engine:references')
-    def _handle_references(self, name, old, new):
-        if name == 'references_items':
-            self._handle_items(self.engine.selected_references, self.engine.references)
-        self.engine.update_detectors()
+        # @on_trait_change('engine:references')
+        # def _handle_references(self, name, old, new):
+        #     if name == 'references_items':
+        #         self._handle_items(self.engine.selected_references, self.engine.references)
+        #     self.engine.update_detectors()
         # if self.active_editor:
         #     # only update if deletion
         #     if not new:
@@ -290,8 +287,9 @@ class PipelineTask(BaseBrowserTask):
     def _handle_save_needed(self):
         self.engine.run_persist(self._temp_state)
 
-    @on_trait_change('engine:unknowns:[tag_event, invalid_event]')
+    @on_trait_change('engine:[tag_event, invalid_event]')
     def _handle_analysis_tagging(self, name, new):
+        print name, new
         if name == 'tag_event':
             self.set_tag(items=new)
         elif name == 'invalid_event':

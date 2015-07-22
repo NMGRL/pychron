@@ -70,6 +70,9 @@ class FigureNode(BaseNode):
         if not state.unknowns:
             raise NoAnalysesError
 
+        self.unknowns = state.unknowns
+        self.references = state.references
+
         if use_plotting:
             editor = self.editor
             if not editor:

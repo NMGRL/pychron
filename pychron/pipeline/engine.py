@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 import time
 
-from traits.api import HasTraits, Str, Instance, List, Event, Bool, on_trait_change
+from traits.api import HasTraits, Str, Instance, List, Event, on_trait_change
 
 # ============= standard library imports ========================
 import os
@@ -27,7 +27,7 @@ from pychron.core.helpers.filetools import list_directory2, add_extension
 from pychron.paths import paths
 from pychron.pipeline.nodes import FindReferencesNode
 from pychron.pipeline.nodes.base import BaseNode
-from pychron.pipeline.nodes.data import UnknownNode, ReferenceNode, FluxMonitorsNode
+from pychron.pipeline.nodes.data import UnknownNode, ReferenceNode
 from pychron.loggable import Loggable
 from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, FigureNode, SeriesNode, NoAnalysesError
 from pychron.pipeline.nodes.filter import FilterNode
@@ -64,7 +64,7 @@ class Pipeline(HasTraits):
         ps = set()
         for node in self.nodes:
             if isinstance(node, UnknownNode):
-                ps = ps.union({ai.experiment_identifier for ai in node.analyses})
+                ps = ps.union({ai.experiment_identifier for ai in node.unknowns})
         return ps
 
     def move_up(self, node):
@@ -109,18 +109,18 @@ class PipelineEngine(Loggable):
     dvc = Instance('pychron.dvc.dvc.DVC')
     browser_model = Instance('pychron.envisage.browser.base_browser_model.BaseBrowserModel')
     pipeline = Instance(Pipeline, ())
-    selected = Instance(BaseNode)
+    selected = Instance(BaseNode, ())
     dclicked = Event
     active_editor = Event
 
-    unknowns = List
-    references = List
+    # unknowns = List
+    # references = List
     run_needed = Event
     refresh_all_needed = Event
     update_needed = Event
     refresh_table_needed = Event
 
-    show_group_colors = Bool
+    # show_group_colors = Bool
 
     selected_pipeline_template = Str
     available_pipeline_templates = List
@@ -132,6 +132,9 @@ class PipelineEngine(Loggable):
 
     recall_analyses_needed = Event
     reset_event = Event
+
+    tag_event = Event
+    invalid_event = Event
 
     def __init__(self, *args, **kw):
         super(PipelineEngine, self).__init__(*args, **kw)
@@ -151,9 +154,9 @@ class PipelineEngine(Loggable):
         """
         for p in self.pipeline.nodes:
             if isinstance(p, FitICFactorNode):
-                udets = {iso.detector for ai in self.unknowns
+                udets = {iso.detector for ai in p.unknowns
                          for iso in ai.isotopes.itervalues()}
-                rdets = {iso.detector for ai in self.references
+                rdets = {iso.detector for ai in p.references
                          for iso in ai.isotopes.itervalues()}
 
                 p.set_detectors(list(udets.union(rdets)))
@@ -175,22 +178,24 @@ class PipelineEngine(Loggable):
     def configure(self, node):
         node.configure()
         # self.refresh_analyses()
+        osel = self.selected
         self.update_needed = True
+        self.selected = osel
         # if node.configure():
         # node.refresh()
         # self.run_needed = node
 
-    def refresh_analyses(self):
-        unks = []
-        refs = []
-        for node in self.pipeline.nodes:
-            if isinstance(node, ReferenceNode):
-                refs.extend(node.analyses)
-            elif isinstance(node, (UnknownNode, FluxMonitorsNode)):
-                unks.extend(node.analyses)
-
-        self.unknowns = unks
-        self.references = refs
+    # def refresh_analyses(self):
+    #     unks = []
+    #     refs = []
+    #     for node in self.pipeline.nodes:
+    #         if isinstance(node, ReferenceNode):
+    #             refs.extend(node.analyses)
+    #         elif isinstance(node, (UnknownNode, FluxMonitorsNode)):
+    #             unks.extend(node.analyses)
+    #
+    #     self.unknowns = unks
+    #     self.references = refs
 
     def remove_node(self, node):
         self.pipeline.nodes.remove(node)
@@ -214,7 +219,7 @@ class PipelineEngine(Loggable):
         if records:
             analyses = self.dvc.make_analyses(records)
             # print len(records),len(analyses)
-            node.analyses.extend(analyses)
+            node.unknowns.extend(analyses)
             node._manual_configured = True
             # self.refresh_analyses()
 
@@ -238,6 +243,7 @@ class PipelineEngine(Loggable):
     # nodes
     # ============================================================================================================
     # data
+
     def add_data(self, node=None, run=False):
         """
 
@@ -250,7 +256,7 @@ class PipelineEngine(Loggable):
         node = self._get_last_node(node)
         self.pipeline.add_after(node, newnode)
 
-        self.refresh_analyses()
+        # self.refresh_analyses()
 
     def add_references(self, node=None, run=False):
         newnode = ReferenceNode(name='references', dvc=self.dvc, browser_model=self.browser_model)
@@ -380,6 +386,7 @@ class PipelineEngine(Loggable):
                 try:
                     node.run(state)
                     node.visited = True
+                    self.selected = node
                 except NoAnalysesError:
                     self.information_dialog('No Analyses in Pipeline!')
                     self.pipeline.reset()
@@ -426,6 +433,7 @@ class PipelineEngine(Loggable):
         for node in self.pipeline.nodes:
             if hasattr(node, 'editor'):
                 if node.editor == editor:
+
                     self.selected = node
                     # self.unknowns = editor.analyses
                     self.refresh_table_needed = True
@@ -440,8 +448,8 @@ class PipelineEngine(Loggable):
             self.warning('Invalid template name. {} does not exist'.format(path))
             return
 
-        self.unknowns = []
-        self.references = []
+        # self.unknowns = []
+        # self.references = []
 
         pt = PipelineTemplate(name, path)
         pt.render(self.pipeline, self.browser_model, self.dvc)
@@ -529,13 +537,26 @@ class PipelineEngine(Loggable):
             self._set_template(new)
             # pt = PipelineTemplate(new)
 
-    def _selected_changed(self, new):
+    def _selected_changed(self, old, new):
+        if old:
+            old.on_trait_change(self._handle_tag, 'unknowns:tag_event,references:tag_event', remove=True)
+            old.on_trait_change(self._handle_invalid, 'unknowns:invalid_event,references:invalid_event', remove=True)
 
-        self.show_group_colors = False
+        if new:
+            new.on_trait_change(self._handle_tag, 'unknowns:tag_event,references:tag_event')
+            new.on_trait_change(self._handle_invalid, 'unknowns:invalid_event,references:invalid_event')
+
+        # self.show_group_colors = False
         if isinstance(new, FigureNode):
-            self.show_group_colors = True
+            # self.show_group_colors = True
             if new.editor:
                 self.active_editor = new.editor
+
+    def _handle_tag(self, new):
+        self.tag_event = new
+
+    def _handle_invalid(self, new):
+        self.invalid_event = new
 
     # self.show_group_colors = False
     #     if isinstance(new, (UnknownNode, FluxMonitorsNode)):
@@ -552,6 +573,11 @@ class PipelineEngine(Loggable):
         # if isinstance(new, DataNode):
         self.configure(new)
         # self.update_needed = True
+
+        # @on_trait_change('pipeline:nodes:metadata')
+        # def _handle_node_configured(self, new):
+        #     if new:
+        #         self.unknowns = new
 
 # if __name__ == '__main__':
 # from traitsui.api import TreeNode, Handler
