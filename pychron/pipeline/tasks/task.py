@@ -15,14 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-
 from pyface.tasks.action.schema import SToolBar, SMenu
 from pyface.tasks.action.schema_addition import SchemaAddition
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter
 from traits.api import Instance, Bool, on_trait_change
 # ============= standard library imports ========================
 from itertools import groupby
-import os
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import list_gits
 from pychron.dvc.dvc import experiment_has_staged, push_experiments
@@ -70,16 +68,14 @@ class PipelineTask(BaseBrowserTask):
     resume_enabled = Bool(False)
     run_enabled = Bool(True)
     set_interpreted_enabled = Bool(False)
-    # reset_enabled = Bool(False)
     run_to = None
-    # def switch_to_browser(self):
-    #     self._activate_task('pychron.browser.task')
 
     modified = False
     dbmodified = False
     projects = None
 
     _temp_state = None
+    # reset_enabled = Bool(False)
 
     def run(self):
         self._run_pipeline()
@@ -93,7 +89,6 @@ class PipelineTask(BaseBrowserTask):
         self.engine.add_data()
 
     def _debug(self):
-        pass
         # self.engine.add_data()
         self.engine.select_default()
         # self.engine.set_template('ideogram')
@@ -131,7 +126,6 @@ class PipelineTask(BaseBrowserTask):
 
     def git_rollback(self):
         # select experiment
-        # expid = 'Cather_McIntosh'
         expid = select_experiment_repo()
         if expid:
             self.dvc.rollback_experiment_repo(expid)
@@ -148,9 +142,9 @@ class PipelineTask(BaseBrowserTask):
         self.engine.reset()
 
     def save_pipeline_template(self):
-        # path = self.save_file_dialog()
+        path = self.save_file_dialog(default_directory=paths.pipeline_template_dir)
         # path = '/Users/ross/Sandbox/template.yaml'
-        path = os.path.join(paths.pipeline_template_dir, 'test.yaml')
+        # path = os.path.join(paths.pipeline_template_dir, 'test.yaml')
         if path:
             self.engine.save_pipeline_template(path)
 
@@ -184,9 +178,6 @@ class PipelineTask(BaseBrowserTask):
         if self.state:
             self.debug('using previous state')
             state = self.state
-            # for editor in state.editors:
-            #     self._close_editor(editor)
-            #     self._open_editor(editor)
         else:
             state = EngineState()
             self.close_all()
@@ -219,27 +210,10 @@ class PipelineTask(BaseBrowserTask):
         self.resume_enabled = v
         self.run_enabled = not v
 
-    _delete_flag = False
-    _delete_cnt = 0
-    _cnt = 0
+    def _sa_factory(self, path, factory, **kw):
+        return SchemaAddition(path=path, factory=factory, **kw)
 
-    def _handle_items(self, sel, items):
-        if self.active_editor:
-            if not self._delete_flag:
-                self._delete_cnt = len(sel) + 1
-                self._cnt = 1
-                refresh = False
-                self._delete_flag = True
-            else:
-                self._cnt += 1
-                refresh = self._cnt >= self._delete_cnt
-
-            if refresh:
-                self.active_editor.set_items(items)
-                self.active_editor.refresh_needed = True
-                self._delete_flag = False
-                self._delete_cnt = 0
-
+    # defaults
     def _default_layout_default(self):
         return TaskLayout(left=Splitter(PaneItem('pychron.pipeline.pane',
                                                  width=200),
@@ -250,32 +224,10 @@ class PipelineTask(BaseBrowserTask):
         sas = (('MenuBar/data.menu', RunAction, {}),)
         return [self._sa_factory(path, factory, **kw) for path, factory, kw in sas]
 
-    def _sa_factory(self, path, factory, **kw):
-        return SchemaAddition(path=path, factory=factory, **kw)
-
     # handlers
     @on_trait_change('engine:reset_event')
     def _handle_reset(self):
         self.reset()
-
-        # @on_trait_change('engine:unknowns')
-        # def _handle_unknowns(self, obj, name, old, new):
-        #     print 'ffsaafa', name, old, new
-        #     if name == 'unknowns_items':
-        #         self._handle_items(self.engine.selected_unknowns, self.engine.unknowns)
-        #     self.engine.update_detectors()
-
-        # @on_trait_change('engine:references')
-        # def _handle_references(self, name, old, new):
-        #     if name == 'references_items':
-        #         self._handle_items(self.engine.selected_references, self.engine.references)
-        #     self.engine.update_detectors()
-        # if self.active_editor:
-        #     # only update if deletion
-        #     if not new:
-        #         self.active_editor.set_references(self.engine.references)
-        #         self.active_editor.refresh_needed = True
-        # self.engine.update_detectors()
 
     def _active_editor_changed(self, new):
         if new:
@@ -309,7 +261,6 @@ class PipelineTask(BaseBrowserTask):
     def _prompt_for_save(self):
         ret = True
         ps = self.engine.get_experiment_ids()
-        # print ps
 
         if ps:
             changed = experiment_has_staged(ps)
@@ -442,3 +393,41 @@ class PipelineTask(BaseBrowserTask):
             return tv.model
 
 # ============= EOF =============================================
+#  _delete_flag = False
+#     _delete_cnt = 0
+#     _cnt = 0
+#
+#     def _handle_items(self, sel, items):
+#         if self.active_editor:
+#             if not self._delete_flag:
+#                 self._delete_cnt = len(sel) + 1
+#                 self._cnt = 1
+#                 refresh = False
+#                 self._delete_flag = True
+#             else:
+#                 self._cnt += 1
+#                 refresh = self._cnt >= self._delete_cnt
+#
+#             if refresh:
+#                 self.active_editor.set_items(items)
+#                 self.active_editor.refresh_needed = True
+#                 self._delete_flag = False
+#                 self._delete_cnt = 0
+# @on_trait_change('engine:unknowns')
+# def _handle_unknowns(self, obj, name, old, new):
+#     print 'ffsaafa', name, old, new
+#     if name == 'unknowns_items':
+#         self._handle_items(self.engine.selected_unknowns, self.engine.unknowns)
+#     self.engine.update_detectors()
+
+# @on_trait_change('engine:references')
+# def _handle_references(self, name, old, new):
+#     if name == 'references_items':
+#         self._handle_items(self.engine.selected_references, self.engine.references)
+#     self.engine.update_detectors()
+# if self.active_editor:
+#     # only update if deletion
+#     if not new:
+#         self.active_editor.set_references(self.engine.references)
+#         self.active_editor.refresh_needed = True
+# self.engine.update_detectors()

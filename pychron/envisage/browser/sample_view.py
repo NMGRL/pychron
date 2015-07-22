@@ -159,23 +159,23 @@ class BrowserSampleView(PaneModelView):
                                 UItem(make_name('analysis_filter'),
                                       editor=ComboboxEditor(name=make_name('analysis_filter_values'))))
 
-        agrp = analysis_table = VGroup(analysis_tools,
-                                       UItem(make_name('analyses'),
-                                             width=0.4,
-                                             editor=myTabularEditor(
-                                                 adapter=self.model.analysis_table.tabular_adapter,
-                                                 operations=['move'],
-                                                 refresh=make_name('refresh_needed'),
-                                                 selected=make_name('selected'),
-                                                 dclicked=make_name('dclicked'),
-                                                 multi_select=self.pane.multi_select,
-                                                 drag_external=True,
-                                                 scroll_to_row=make_name('scroll_to_row'),
-                                                 stretch_last_section=False)),
-                                       # HGroup(spring, Item(make_name('omit_invalid'))),
-                                       defined_when=self.pane.analyses_defined,
-                                       show_border=True,
-                                       label='Analyses')
+        agrp = VGroup(analysis_tools,
+                      UItem(make_name('analyses'),
+                            width=0.4,
+                            editor=myTabularEditor(
+                                adapter=self.model.analysis_table.tabular_adapter,
+                                operations=['move'],
+                                refresh=make_name('refresh_needed'),
+                                selected=make_name('selected'),
+                                dclicked=make_name('dclicked'),
+                                multi_select=self.pane.multi_select,
+                                drag_external=True,
+                                scroll_to_row=make_name('scroll_to_row'),
+                                stretch_last_section=False)),
+                      # HGroup(spring, Item(make_name('omit_invalid'))),
+                      defined_when=self.pane.analyses_defined,
+                      show_border=True,
+                      label='Analyses')
 
         return View(HGroup(grp, agrp))
 

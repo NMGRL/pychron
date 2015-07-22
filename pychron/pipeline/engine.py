@@ -141,6 +141,10 @@ class PipelineEngine(Loggable):
 
         self._load_predefined_templates()
 
+    def drop_factory(self, items):
+
+        return self.dvc.make_analyses(items)
+
     def reset(self):
         # for ni in self.pipeline.nodes:
         #     ni.visited = False
@@ -177,25 +181,9 @@ class PipelineEngine(Loggable):
 
     def configure(self, node):
         node.configure()
-        # self.refresh_analyses()
         osel = self.selected
         self.update_needed = True
         self.selected = osel
-        # if node.configure():
-        # node.refresh()
-        # self.run_needed = node
-
-    # def refresh_analyses(self):
-    #     unks = []
-    #     refs = []
-    #     for node in self.pipeline.nodes:
-    #         if isinstance(node, ReferenceNode):
-    #             refs.extend(node.analyses)
-    #         elif isinstance(node, (UnknownNode, FluxMonitorsNode)):
-    #             unks.extend(node.analyses)
-    #
-    #     self.unknowns = unks
-    #     self.references = refs
 
     def remove_node(self, node):
         self.pipeline.nodes.remove(node)
@@ -255,8 +243,6 @@ class PipelineEngine(Loggable):
         newnode = UnknownNode(dvc=self.dvc, browser_model=self.browser_model)
         node = self._get_last_node(node)
         self.pipeline.add_after(node, newnode)
-
-        # self.refresh_analyses()
 
     def add_references(self, node=None, run=False):
         newnode = ReferenceNode(name='references', dvc=self.dvc, browser_model=self.browser_model)
@@ -357,7 +343,6 @@ class PipelineEngine(Loggable):
             node.run(state)
             if state.canceled:
                 self.debug('pipeline canceled by {}'.format(node))
-                # self.refresh_analyses()
                 return True
 
     def run(self, state, run_to):
@@ -372,7 +357,6 @@ class PipelineEngine(Loggable):
             node.visited = False
 
         for idx, node in enumerate(self.pipeline.iternodes(start_node, run_to)):
-            # self.selected = node
 
             if node.enabled:
                 node.editor = None
@@ -395,26 +379,19 @@ class PipelineEngine(Loggable):
 
                 if state.veto:
                     self.debug('pipeline vetoed by {}'.format(node))
-                    # self.refresh_analyses()
                     return
 
                 if state.canceled:
                     self.debug('pipeline canceled by {}'.format(node))
-                    # self.refresh_analyses()
                     return True
 
             else:
                 self.debug('Skip node {:02n}: {}'.format(idx, node))
         else:
             self.debug('pipeline run finished')
-            # self.refresh_analyses()
             self.debug('pipeline runtime {}'.format(time.time() - ost))
-            # self.selected = None
-            # self.update_needed = True
-            return True
 
-            # self.unknowns = state.unknowns
-            # self.references = state.references
+            return True
 
     def post_run(self, state):
         self.debug('pipeline post run started')
@@ -448,16 +425,11 @@ class PipelineEngine(Loggable):
             self.warning('Invalid template name. {} does not exist'.format(path))
             return
 
-        # self.unknowns = []
-        # self.references = []
-
         pt = PipelineTemplate(name, path)
         pt.render(self.pipeline, self.browser_model, self.dvc)
         self.update_detectors()
         if self.pipeline.nodes:
             self.selected = self.pipeline.nodes[0]
-            # self.update_unknowns()
-            # self.update_references()
 
     def _load_predefined_templates(self):
         templates = []
@@ -501,28 +473,6 @@ class PipelineEngine(Loggable):
         return node
 
     # handlers
-    # @on_trait_change('unknowns[]')
-    # def _handle_unknowns(self, name, old, new):
-    #     if not new:
-    #         # only update if deletion
-    #         for n in self.pipeline.nodes:
-    #             try:
-    #                 n.editor.set_items(self.unknowns)
-    #                 n.refresh()
-    #             except AttributeError:
-    #                 pass
-    #
-    # @on_trait_change('references[]')
-    # def _handle_unknowns(self, name, old, new):
-    #     if not new:
-    #         # only update if deletion
-    #         for n in self.pipeline.nodes:
-    #             try:
-    #                 n.editor.set_references(self.references)
-    #                 n.refresh()
-    #             except AttributeError:
-    #                 pass
-
     def _dclicked_unknowns_changed(self):
         if self.selected_unknowns:
             self.recall_unknowns()
@@ -535,7 +485,6 @@ class PipelineEngine(Loggable):
         if new:
             self.debug('Pipeline template {} selected'.format(new))
             self._set_template(new)
-            # pt = PipelineTemplate(new)
 
     def _selected_changed(self, old, new):
         if old:
@@ -545,6 +494,7 @@ class PipelineEngine(Loggable):
         if new:
             new.on_trait_change(self._handle_tag, 'unknowns:tag_event,references:tag_event')
             new.on_trait_change(self._handle_invalid, 'unknowns:invalid_event,references:invalid_event')
+            # new.on_trait_change(self._handle_unknowns, 'unknowns[]')
 
         # self.show_group_colors = False
         if isinstance(new, FigureNode):
@@ -552,32 +502,34 @@ class PipelineEngine(Loggable):
             if new.editor:
                 self.active_editor = new.editor
 
+    # _suppress_handle_unknowns = False
+    # def _handle_unknowns(self, obj, name, new):
+    #     if self._suppress_handle_unknowns:
+    #         return
+    #
+    #     items = obj.unknowns
+    #
+    #     for i, item in enumerate(items):
+    #         if not isinstance(item, DVCAnalysis):
+    #             self._suppress_handle_unknowns = True
+    #             nitem = self.dvc.make_analyses((item,))[0]
+    #             obj.unknowns.pop(i)
+    #             obj.unknowns.insert(i, nitem)
+    #
+    #     self._suppress_handle_unknowns = False
+    #     print 'asdfasdfasfsafs', obj, new
+
     def _handle_tag(self, new):
         self.tag_event = new
 
     def _handle_invalid(self, new):
         self.invalid_event = new
 
-    # self.show_group_colors = False
-    #     if isinstance(new, (UnknownNode, FluxMonitorsNode)):
-    #         self.unknowns = new.analyses
-    #     elif isinstance(new, ReferenceNode):
-    #         self.references = new.analyses
-    #     elif isinstance(new, FigureNode):
-    #         self.show_group_colors = True
-    #         if new.editor:
-    #             self.unknowns = new.editor.analyses
-    #             self.active_editor = new.editor
-
     def _dclicked_changed(self, new):
-        # if isinstance(new, DataNode):
         self.configure(new)
         # self.update_needed = True
 
-        # @on_trait_change('pipeline:nodes:metadata')
-        # def _handle_node_configured(self, new):
-        #     if new:
-        #         self.unknowns = new
+# ============= EOF =============================================
 
 # if __name__ == '__main__':
 # from traitsui.api import TreeNode, Handler
@@ -587,7 +539,37 @@ class PipelineEngine(Loggable):
 # from traitsui.menu import Action
 # from pychron.envisage.resources import icon
 # from pychron.core.helpers.logger_setup import logging_setup
+# @on_trait_change('unknowns[]')
+# def _handle_unknowns(self, name, old, new):
+#     if not new:
+#         # only update if deletion
+#         for n in self.pipeline.nodes:
+#             try:
+#                 n.editor.set_items(self.unknowns)
+#                 n.refresh()
+#             except AttributeError:
+#                 pass
 #
+# @on_trait_change('references[]')
+# def _handle_unknowns(self, name, old, new):
+#     if not new:
+#         # only update if deletion
+#         for n in self.pipeline.nodes:
+#             try:
+#                 n.editor.set_references(self.references)
+#                 n.refresh()
+#             except AttributeError:
+#                 pass
+# self.show_group_colors = False
+#     if isinstance(new, (UnknownNode, FluxMonitorsNode)):
+#         self.unknowns = new.analyses
+#     elif isinstance(new, ReferenceNode):
+#         self.references = new.analyses
+#     elif isinstance(new, FigureNode):
+#         self.show_group_colors = True
+#         if new.editor:
+#             self.unknowns = new.editor.analyses
+#             self.active_editor = new.editor
 # logging_setup('pipeline')
 # class PipelineHandler(Handler):
 #         def add_data(self, info, obj):
@@ -628,5 +610,14 @@ class PipelineEngine(Loggable):
 #              handler=PipelineHandler())
 #     e.configure_traits(view=v)
 
-
-# ============= EOF =============================================
+# def refresh_analyses(self):
+#     unks = []
+#     refs = []
+#     for node in self.pipeline.nodes:
+#         if isinstance(node, ReferenceNode):
+#             refs.extend(node.analyses)
+#         elif isinstance(node, (UnknownNode, FluxMonitorsNode)):
+#             unks.extend(node.analyses)
+#
+#     self.unknowns = unks
+#     self.references = refs
