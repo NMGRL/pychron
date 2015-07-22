@@ -18,7 +18,9 @@
 # ============= standard library imports ========================
 import base64
 import os
+
 import time
+
 # ============= local library imports  ==========================
 import datetime
 from uncertainties import ufloat, std_dev, nominal_value
@@ -122,6 +124,7 @@ class TIsotope:
 class DVCAnalysis(Analysis):
     def __init__(self, record_id, experiment_id, *args, **kw):
         super(DVCAnalysis, self).__init__(*args, **kw)
+        self.record_id = record_id
         # print record_id, experiment_id
         path = analysis_path(record_id, experiment_id)
         self.experiment_identifier = experiment_id
