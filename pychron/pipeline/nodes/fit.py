@@ -141,10 +141,23 @@ class FitIsotopeEvolutionNode(FitNode):
     name = 'Fit IsoEvo'
     _fits = List
 
+    def _configure_hook(self):
+        pom = self.plotter_options_manager
+        print 'asffasafasfasfass'
+        if self.unknowns:
+            unk = self.unknowns[0]
+            names = unk.isotope_keys
+            if names:
+                dets = unk.detector_keys
+                if dets:
+                    names.extend(dets)
+                pom.set_names(names)
+
     def run(self, state):
         super(FitIsotopeEvolutionNode, self).run(state)
 
         po = self.plotter_options
+
         self._fits = [pi for pi in po.get_loadable_aux_plots()]
         fs = progress_loader(state.unknowns, self._assemble_result)
 
@@ -179,9 +192,14 @@ class FitIsotopeEvolutionNode(FitNode):
         xi.load_raw_data(keys)
 
         xi.set_fits(fits)
+        isotopes = xi.isotopes
         for f in fits:
             k = f.name
-            iso = xi.isotopes[k]
+            if k in isotopes:
+                iso = isotopes[k]
+            else:
+                iso = next((i.baseline for i in isotopes.values() if i.detector == k), None)
+
             yield IsoEvoResult(analysis=xi,
                                intercept_value=nominal_value(iso.uvalue),
                                intercept_error=std_dev(iso.uvalue),

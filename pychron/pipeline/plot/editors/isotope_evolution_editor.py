@@ -147,97 +147,97 @@ class IsotopeEvolutionEditor(FigureEditor):
     # unpack_peaktime = True
     # calculate_age = False
 
-    def _plot_baselines(self, add_tools, fd, fit, trunc, g, i, isok, unk):
-        isok = isok[:-2]
-        iso = unk.isotopes[isok]
-        time_zero_offset = self.tool.time_zero_offset
-        iso.baseline.time_zero_offset = time_zero_offset
-        xs, ys = iso.baseline.offset_xs, iso.baseline.ys
-
-        g.new_series(xs, ys,
-                     fit=fit.fit,
-                     filter_outliers_dict=fd,
-                     add_tools=add_tools,
-                     plotid=i)
-        return xs
-
-    def _plot_ratio(self, add_tools, fd, fit, g, i, isok, trunc, unk):
-        # correct for baseline when plotting ratios
-        n, d = isok.split('/')
-        niso, diso = unk.isotopes[n], unk.isotopes[d]
-        nsniff, dsniff = niso.sniff, diso.sniff
-        nbs, dbs = niso.baseline.value, diso.baseline.value
-        if nsniff and dsniff:
-            offset = niso.time_zero_offset
-            nxs = nsniff.xs - offset
-            ys = (nsniff.ys - nbs) / (dsniff.ys - dbs)
-
-            g.new_series(nxs, ys,
-                         plotid=i,
-                         type='scatter',
-                         fit=False)
-        xs = niso.offset_xs
-        ys = (niso.ys - nbs) / (diso.ys - dbs)
-        g.new_series(xs, ys,
-                     fit=(fit.fit, fit.error_type),
-                     filter_outliers_dict=fd,
-                     truncate=trunc,
-                     add_tools=add_tools,
-                     plotid=i)
-        return xs
+    # def _plot_baselines(self, add_tools, fd, fit, trunc, g, i, isok, unk):
+    #     isok = isok[:-2]
+    #     iso = unk.isotopes[isok]
+    #     time_zero_offset = self.tool.time_zero_offset
+    #     iso.baseline.time_zero_offset = time_zero_offset
+    #     xs, ys = iso.baseline.offset_xs, iso.baseline.ys
+    #
+    #     g.new_series(xs, ys,
+    #                  fit=fit.fit,
+    #                  filter_outliers_dict=fd,
+    #                  add_tools=add_tools,
+    #                  plotid=i)
+    #     return xs
+    #
+    # def _plot_ratio(self, add_tools, fd, fit, g, i, isok, trunc, unk):
+    #     # correct for baseline when plotting ratios
+    #     n, d = isok.split('/')
+    #     niso, diso = unk.isotopes[n], unk.isotopes[d]
+    #     nsniff, dsniff = niso.sniff, diso.sniff
+    #     nbs, dbs = niso.baseline.value, diso.baseline.value
+    #     if nsniff and dsniff:
+    #         offset = niso.time_zero_offset
+    #         nxs = nsniff.xs - offset
+    #         ys = (nsniff.ys - nbs) / (dsniff.ys - dbs)
+    #
+    #         g.new_series(nxs, ys,
+    #                      plotid=i,
+    #                      type='scatter',
+    #                      fit=False)
+    #     xs = niso.offset_xs
+    #     ys = (niso.ys - nbs) / (diso.ys - dbs)
+    #     g.new_series(xs, ys,
+    #                  fit=(fit.fit, fit.error_type),
+    #                  filter_outliers_dict=fd,
+    #                  truncate=trunc,
+    #                  add_tools=add_tools,
+    #                  plotid=i)
+    #     return xs
 
     def _get_sniff_visible(self, fit, i):
         v = self.component.get_eq_visible(i)
         return fit.use_sniff or v
 
-    def _plot_signal(self, add_tools, fd, fit, trunc, g, i, isok, unk):
-        xs = []
-        if "/" in isok:
-            return self._plot_ratio(add_tools, fd, fit, g, i, isok, trunc, unk)
-        else:
-            eq_only = self.component.get_eq_only_visible(0)
-            if not eq_only:
-                display_sniff = self._get_sniff_visible(fit, 0)
-            else:
-                display_sniff = True
-
-            # print i, ' eq_only: ', eq_only, 'display sniff: ', display_sniff
-            if isok not in unk.isotopes:
-                return []
-            iso = unk.isotopes[isok]
-
-            iso.time_zero_offset = self.tool.time_zero_offset
-
-            if display_sniff:
-                # xs = [1,2,3,4]
-                # g.new_series(xs, [1,2,3,4],
-                #              plotid=i,
-                #              type='scatter',
-                #              fit=False)
-
-                sniff = iso.sniff
-                if sniff:
-                    xs = sniff.offset_xs
-                    g.new_series(xs, sniff.ys,
-                                 plotid=i,
-                                 type='scatter',
-                                 fit=False)
-
-            if not eq_only:
-                iso.trait_setq(fit=fit.fit, error_type=fit.error_type)
-                iso.filter_outlier_dict = fd
-
-                xs, ys = iso.offset_xs, iso.ys
-                g.new_series(xs, ys,
-                             fit=(fit.fit, fit.error_type),
-                             filter_outliers_dict=fd,
-                             truncate=trunc,
-                             add_tools=add_tools,
-                             plotid=i)
-
-                # iso.set_fit(fit, notify=False)
-                iso.dirty = True
-            return xs
+    # def _plot_signal(self, add_tools, fd, fit, trunc, g, i, isok, unk):
+    #     xs = []
+    #     if "/" in isok:
+    #         return self._plot_ratio(add_tools, fd, fit, g, i, isok, trunc, unk)
+    #     else:
+    #         eq_only = self.component.get_eq_only_visible(0)
+    #         if not eq_only:
+    #             display_sniff = self._get_sniff_visible(fit, 0)
+    #         else:
+    #             display_sniff = True
+    #
+    #         # print i, ' eq_only: ', eq_only, 'display sniff: ', display_sniff
+    #         if isok not in unk.isotopes:
+    #             return []
+    #         iso = unk.isotopes[isok]
+    #
+    #         iso.time_zero_offset = self.tool.time_zero_offset
+    #
+    #         if display_sniff:
+    #             # xs = [1,2,3,4]
+    #             # g.new_series(xs, [1,2,3,4],
+    #             #              plotid=i,
+    #             #              type='scatter',
+    #             #              fit=False)
+    #
+    #             sniff = iso.sniff
+    #             if sniff:
+    #                 xs = sniff.offset_xs
+    #                 g.new_series(xs, sniff.ys,
+    #                              plotid=i,
+    #                              type='scatter',
+    #                              fit=False)
+    #
+    #         if not eq_only:
+    #             iso.trait_setq(fit=fit.fit, error_type=fit.error_type)
+    #             iso.filter_outlier_dict = fd
+    #
+    #             xs, ys = iso.offset_xs, iso.ys
+    #             g.new_series(xs, ys,
+    #                          fit=(fit.fit, fit.error_type),
+    #                          filter_outliers_dict=fd,
+    #                          truncate=trunc,
+    #                          add_tools=add_tools,
+    #                          plotid=i)
+    #
+    #             # iso.set_fit(fit, notify=False)
+    #             iso.dirty = True
+    #         return xs
 
     def _set_name(self):
         if not self.name:

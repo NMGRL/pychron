@@ -27,6 +27,7 @@ from uncertainties import ufloat, std_dev, nominal_value
 # import yaml
 import json
 from pychron.core.helpers.filetools import add_extension, subdirize
+from pychron.core.helpers.iterfuncs import partition
 from pychron.dvc import jdump
 from pychron.experiment.utilities.identifier import make_aliquot_step
 from pychron.paths import paths
@@ -251,9 +252,9 @@ class DVCAnalysis(Analysis):
 
         path = self._analysis_path(modifier='.data')
         isotopes = self.isotopes
-        isos = [i for i in isotopes.itervalues() if i.name in keys and not i.xs.shape[0]]
-        if not isos:
-            return
+        # isos = [i for i in isotopes.itervalues() if i.name in keys and not i.xs.shape[0]]
+        # if not isos:
+        #     return
 
         with open(path, 'r') as rfile:
             yd = json.load(rfile)
@@ -264,8 +265,8 @@ class DVCAnalysis(Analysis):
             # isotopes = self.isotopes
             for sd in signals:
                 isok = sd['isotope']
-                if isok not in keys:
-                    continue
+                # if isok not in keys:
+                #     continue
 
                 try:
                     iso = isotopes[isok]
@@ -325,24 +326,56 @@ class DVCAnalysis(Analysis):
             try:
                 iso = isos[fi.name]
             except KeyError:
+                # name is a detector
+                for i in isos.itervalues():
+                    if i.detector == fi.name:
+                        i.baseline.set_fit(fi)
+
                 continue
 
             iso.set_fit(fi)
 
     def dump_fits(self, keys):
-        isos, path = self._get_yd('intercepts')
 
         sisos = self.isotopes
-        for k in keys:
-            if k in isos and k in sisos:
-                iso = isos[k]
-                siso = sisos[k]
-                iso['fit'] = siso.fit
-                iso['value'] = float(siso.value)
-                iso['error'] = float(siso.error)
-                isos[k] = iso
+        isoks, dks = map(tuple, partition(keys, lambda x: x in sisos))
 
-        self._dump(isos, path)
+        # save intercepts
+        if isoks:
+            isos, path = self._get_yd('intercepts')
+            for k in isoks:
+                try:
+                    iso = isos[k]
+                    siso = sisos[k]
+                    iso.update(fit=siso.fit, value=float(siso.value), error=float(siso.error))
+                except KeyError:
+                    pass
+
+            self._dump(isos, path)
+
+        # save baselines
+        if dks:
+            baselines, path = self._get_yd('baselines')
+            for di in dks:
+                try:
+                    det = baselines[di]
+                except KeyError:
+                    det = {}
+                    baselines[di] = det
+
+                bs = next((iso.baseline for iso in sisos.itervalues() if iso.detector == di), None)
+                det.update(fit=bs.fit, value=float(bs.value), error=float(bs.error))
+
+            self._dump(baselines, path)
+
+            # for k in keys:
+            #     if k in isos and k in sisos:
+            #         iso = isos[k]
+            #         siso = sisos[k]
+            #         iso['fit'] = siso.fit
+            #         iso['value'] = float(siso.value)
+            #         iso['error'] = float(siso.error)
+            #         isos[k] = iso
 
     def dump_blanks(self, keys, refs):
         isos, path = self._get_yd('blanks')
@@ -471,7 +504,11 @@ class DVCAnalysis(Analysis):
         if not isos:
             return
 
-        self.isotopes = {k: Isotope(k, v['detector']) for k, v in isos.iteritems()}
+        isos = {k: Isotope(k, v['detector']) for k, v in isos.iteritems()}
+        # baselines = yd.get('baselines')
+        # for iso in isos:
+        self.isotopes = isos
+
         # self.isotopes = {k: TIsotope(k, v['detector']) for k,v in isos.iteritems()}
         # nisos = {}
         # for k, v in isos.items():

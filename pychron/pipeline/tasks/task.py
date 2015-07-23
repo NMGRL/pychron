@@ -136,6 +136,7 @@ class PipelineTask(BaseBrowserTask):
         self.close_all()
 
     def reset(self):
+        self.run_enabled = True
         self.resume_enabled = False
         self._temp_state = None
         self.state = None

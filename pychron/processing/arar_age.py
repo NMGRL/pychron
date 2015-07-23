@@ -31,7 +31,7 @@ from pychron.processing.argon_calculations import calculate_F, abundance_sensiti
 from pychron.processing.arar_constants import ArArConstants
 from pychron.processing.isotope import Isotope, Baseline, Blank
 
-from pychron.core.helpers.isotope_utils import sort_isotopes
+from pychron.core.helpers.isotope_utils import sort_isotopes, sort_detectors
 from pychron.core.helpers.logger_setup import new_logger
 from pychron.paths import paths
 from pychron.pychron_constants import ARGON_KEYS
@@ -785,6 +785,9 @@ class ArArAge(MLoggable):
     # def _get_moles_Ar40(self):
     #     return self.sensitivity * self.get_isotope('Ar40').get_intensity()
 
+    @property
+    def detector_keys(self):
+        return sort_detectors(set((d.detector for d in self.isotopes.values())))
 
     @property
     def isotope_keys(self):

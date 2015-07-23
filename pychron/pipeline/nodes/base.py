@@ -53,6 +53,9 @@ class BaseNode(HasTraits):
         if self._manual_configured:
             return True
 
+        self.unknowns = state.unknowns
+        self.references = state.references
+
         if self.configure(refresh=False, pre_run=True):
             return True
         else:

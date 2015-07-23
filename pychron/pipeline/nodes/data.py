@@ -52,7 +52,7 @@ class DataNode(BaseNode):
                 else:
                     self.trait_set(**{self.analysis_kind: analyses})
                     # self.analyses = analyses
-                print self.unknowns
+                # print self.unknowns
                 # setattr(self, self.analysis_kind, self.analyses)
                 # self.metadata = self.analyses
                 return True
