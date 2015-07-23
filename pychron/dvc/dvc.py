@@ -287,12 +287,14 @@ class DVC(Loggable):
         ai.dump_icfactors(dets, fits, refs)
 
     def save_blanks(self, ai, keys, refs):
-        self.info('Saving blanks for {}'.format(ai))
-        ai.dump_blanks(keys, refs)
+        if keys:
+            self.info('Saving blanks for {}'.format(ai))
+            ai.dump_blanks(keys, refs)
 
     def save_fits(self, ai, keys):
-        self.info('Saving fits for {}'.format(ai))
-        ai.dump_fits(keys)
+        if keys:
+            self.info('Saving fits for {}'.format(ai))
+            ai.dump_fits(keys)
 
     def save_j(self, irradiation, level, pos, identifier, j, e, decay, add=True):
         self.info('Saving j for {}{}:{} {}, j={} +/-{}'.format(irradiation, level,

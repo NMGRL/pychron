@@ -15,23 +15,24 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Instance
 from traitsui.api import View, UItem, VGroup, EnumEditor, \
     HGroup, CheckListEditor, spring, Group
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.core.ui.qt.tabular_editors import FilterTabularEditor
+from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.envisage.browser.adapters import ProjectAdapter
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.browser.pane_model_view import PaneModelView
-from pychron.envisage.browser.tableview import TableView
+# from pychron.envisage.browser.tableview import TableView
 
 
 class BrowserSampleView(PaneModelView):
-    tableview = Instance(TableView)
+    # tableview = Instance(TableView)
 
-    def _tableview_default(self):
-        return TableView(model=self.model, pane=self.pane)
+    # def _tableview_default(self):
+    #     return TableView(model=self.model, pane=self.pane)
 
     def traits_view(self):
         irrad_grp = VGroup(
@@ -124,9 +125,59 @@ class BrowserSampleView(PaneModelView):
             analysis_type_group,
             date_grp)
 
-        g1 = UItem('controller.tableview', style='custom')
-        grp = VGroup(top_level_filter_grp, g1)
-        return View(grp)
+        # g1 = UItem('controller.tableview', style='custom')
+
+        sample_tools = HGroup(UItem('sample_filter_parameter',
+                                    width=-90, editor=EnumEditor(name='sample_filter_parameters')),
+                              UItem('sample_filter_comparator'),
+                              UItem('sample_filter',
+                                    editor=ComboboxEditor(name='sample_filter_values')),
+                              icon_button_editor('clear_sample_table',
+                                                 'clear',
+                                                 tooltip='Clear Sample Table'))
+        sample_table = VGroup(sample_tools,
+                              UItem('samples',
+                                    editor=myTabularEditor(
+                                        adapter=self.model.labnumber_tabular_adapter,
+                                        editable=False,
+                                        selected='selected_samples',
+                                        multi_select=True,
+                                        dclicked='dclicked_sample',
+                                        column_clicked='column_clicked',
+                                        # update='update_sample_table',
+                                        # refresh='update_sample_table',
+                                        stretch_last_section=False)),
+                              show_border=True, label='Samples')
+        grp = VGroup(top_level_filter_grp, sample_table)
+
+        def make_name(name):
+            return 'object.analysis_table.{}'.format(name)
+
+        analysis_tools = HGroup(UItem(make_name('analysis_filter_parameter'),
+                                      width=-90,
+                                      editor=EnumEditor(name=make_name('analysis_filter_parameters'))),
+                                UItem(make_name('analysis_filter'),
+                                      editor=ComboboxEditor(name=make_name('analysis_filter_values'))))
+
+        agrp = VGroup(analysis_tools,
+                      UItem(make_name('analyses'),
+                            width=0.4,
+                            editor=myTabularEditor(
+                                adapter=self.model.analysis_table.tabular_adapter,
+                                operations=['move'],
+                                refresh=make_name('refresh_needed'),
+                                selected=make_name('selected'),
+                                dclicked=make_name('dclicked'),
+                                multi_select=self.pane.multi_select,
+                                drag_external=True,
+                                scroll_to_row=make_name('scroll_to_row'),
+                                stretch_last_section=False)),
+                      # HGroup(spring, Item(make_name('omit_invalid'))),
+                      defined_when=self.pane.analyses_defined,
+                      show_border=True,
+                      label='Analyses')
+
+        return View(HGroup(grp, agrp))
 
     def unselect_projects(self, info, obj):
         obj.selected_projects = []

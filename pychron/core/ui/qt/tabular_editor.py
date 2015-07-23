@@ -15,9 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from pickle import dumps
 
-from traits.api import Bool, Str, List, Any, Instance, Property, Int, HasTraits, Color
+from traits.api import Bool, Str, List, Any, Instance, Property, Int, HasTraits, Color, Either, Callable
 from traits.trait_base import SequenceTypes
 from traitsui.api import View, Item, TabularEditor, Handler
 from traitsui.mimedata import PyMimeData
@@ -27,6 +26,7 @@ from traitsui.qt4.tabular_model import TabularModel, alignment_map
 # ============= standard library imports ========================
 from PySide import QtCore, QtGui
 from PySide.QtGui import QColor, QHeaderView, QApplication
+from pickle import dumps
 # ============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
 
@@ -42,7 +42,7 @@ class myTabularEditor(TabularEditor):
     pastable = Bool(True)
 
     paste_function = Str
-    drop_factory = Str
+    drop_factory = Either(Str, Callable)
     col_widths = Str
     drag_external = Bool(False)
     drag_enabled = Bool(True)
@@ -254,9 +254,11 @@ class _TableView(TableView):
                 rows = [ri for ri, _ in data]
                 model.moveRows(rows, row)
             else:
+                data = [di for _, di in data]
                 with no_update(self._editor.object):
-                    for i, (_, di) in enumerate(reversed(data)):
-                        model.insertRow(row=row, obj=df(di))
+
+                    for i, di in enumerate(reversed(df(data))):
+                        model.insertRow(row=row, obj=di)
 
             e.accept()
             self._dragging = None
@@ -630,8 +632,13 @@ class _TabularEditor(qtTabularEditor):
 
         if hasattr(self.object, factory.paste_function):
             control.paste_func = getattr(self.object, factory.paste_function)
-        if hasattr(self.object, factory.drop_factory):
-            control.drop_func = getattr(self.object, factory.drop_factory)
+
+        if factory.drop_factory:
+            if hasattr(factory.drop_factory, '__call__'):
+                control.drop_factory = factory.drop_factory
+
+            elif hasattr(self.object, factory.drop_factory):
+                control.drop_factory = getattr(self.object, factory.drop_factory)
 
         # control.link_copyable = factory.link_copyable
         control.pastable = factory.pastable

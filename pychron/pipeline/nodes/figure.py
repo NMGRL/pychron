@@ -71,6 +71,9 @@ class FigureNode(BaseNode):
         if not state.unknowns:
             raise NoAnalysesError
 
+        self.unknowns = state.unknowns
+        self.references = state.references
+
         if use_plotting:
             editor = self.editor
             if not editor:
@@ -121,6 +124,7 @@ class FigureNode(BaseNode):
         if self.editor:
             pom.plotter_options = self.editor.plotter_options
 
+        self._configure_hook()
         info = pom.edit_traits(kind='livemodal')
         if info.result:
             self.plotter_options = pom.plotter_options
@@ -132,6 +136,8 @@ class FigureNode(BaseNode):
     def _plotter_options_manager_default(self):
         return self.plotter_options_manager_klass()
 
+    def _configure_hook(self):
+        pass
 
 class IdeogramNode(FigureNode):
     name = 'Ideogram'

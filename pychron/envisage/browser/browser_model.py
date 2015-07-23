@@ -84,6 +84,10 @@ class BrowserModel(BaseBrowserModel):
         # 'reference_hours_padding'),
         # obj=self.search_criteria)
 
+    # def drop_factory(self, item):
+    #     print 'dropadfs', item
+    #     return item
+
     def activated(self, force=False):
         if not self.is_activated or force:
             self.load_browser_options()

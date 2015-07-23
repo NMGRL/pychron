@@ -63,7 +63,7 @@ class FitOptions(SaveableFigurePlotterOptions):
 
     def _get_columns(self):
         return [object_column(name='name'),
-                checkbox_column(name='plot_enabled', label='Plot'),
+                checkbox_column(name='plot_enabled', label='Enabled'),
                 checkbox_column(name='save_enabled', label='Save'),
                 object_column(name='fit',
                               editor=EnumEditor(name='fit_types'),

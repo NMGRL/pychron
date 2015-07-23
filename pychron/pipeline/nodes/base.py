@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Bool, Any
+from traits.api import HasTraits, Bool, Any, List
 from traitsui.api import View
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -29,8 +29,12 @@ class BaseNode(HasTraits):
     options = Any
     auto_configure = Bool(True)
     active = Bool(False)
-
+    # metadata = Event
     _manual_configured = Bool(False)
+
+    # analyses = List
+    unknowns = List
+    references = List
 
     def load(self, nodedict):
         pass
@@ -42,11 +46,15 @@ class BaseNode(HasTraits):
         self.enabled = False
 
     def pre_run(self, state):
+
         if not self.auto_configure:
             return True
 
         if self._manual_configured:
             return True
+
+        self.unknowns = state.unknowns
+        self.references = state.references
 
         if self.configure(refresh=False, pre_run=True):
             return True

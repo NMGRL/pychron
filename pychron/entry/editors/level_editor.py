@@ -32,6 +32,7 @@ from traitsui.api import View, Item, TabularEditor, HGroup, UItem, VSplit, Group
 
 
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
@@ -147,9 +148,10 @@ class LevelEditor(Loggable):
             level = db.get_irradiation_level(self.irradiation, self.name)
 
             self.z = level.z or 0
-            # if level.production:
-            # self.selected_production = next((p for p in self.productions
-            # if p.name == level.production.name), None)
+            if level.production:
+                self.selected_production = next((p for p in self.productions
+                                                 if p.name == level.production.name), None)
+
             original_tray = None
             if level.holder:
                 self.selected_tray = next((t for t in self.trays if t == level.holder), None)
@@ -178,11 +180,14 @@ class LevelEditor(Loggable):
                         else:
                             return
 
-                    # self._save_production()
+                    self._save_production()
 
                     level.note = self.level_note
-                    # pr = db.get_irradiation_production(self.selected_production.name)
-                    # level.production = pr
+                    if self.selected_production:
+                        pr = db.get_production(self.selected_production.name)
+                        if not pr:
+                            pr = db.add_production(self.selected_production.name)
+                        level.production = pr
 
                     if original_tray != self.selected_tray:
                         self._save_tray(level, original_tray)
@@ -355,7 +360,7 @@ class LevelEditor(Loggable):
         dlg = FileDialog(action='open', default_directory=paths.irradiation_tray_maps_dir)
         if dlg.open() == OK:
             if dlg.path:
-                #verify this is a valid irradiation map file
+                # verify this is a valid irradiation map file
                 if parse_irradiation_tray_map(dlg.path) is not None:
                     db = self.db
                     with db.session_ctx():

@@ -125,6 +125,7 @@ class BrowserView(HasTraits):
                             action='replace_analyses'),
                      'Cancel'],
             handler=BrowserViewHandler(),
+            title='Browser',
             resizable=True)
 
         return v

@@ -38,6 +38,7 @@ class EUCustom(UCustom):
 
 
 class IrradiationProduction(HasTraits):
+    name = 'Default Production'
     reactor = Str
     note = Str
     last_modified = Str
@@ -49,13 +50,12 @@ class IrradiationProduction(HasTraits):
     k3839 = Instance(ProductionValue, (), {'name': 'K 38/39'})
     k3739 = Instance(ProductionValue, (), {'name': 'K 37/39'})
 
-
-    #Ca interferences
+    # Ca interferences
     ca3937 = Instance(ProductionValue, (), {'name': 'Ca 39/37'})
     ca3837 = Instance(ProductionValue, (), {'name': 'Ca 38/37'})
     ca3637 = Instance(ProductionValue, (), {'name': 'Ca 36/37'})
 
-    #Cl interference
+    # Cl interference
     cl3638 = Instance(ProductionValue, (), {'name': 'Cl 36/38'})
 
     # elemental production ratio
@@ -155,10 +155,10 @@ Ca_K:[value,error],Cl_K:[value,error],note''')
 
         v = View(
             Tabbed(VGroup(HGroup(kgrp,
-                              cagrp),
-                       clgrp,
-                       elem_grp,
-                    label='Ratios'),
+                                 cagrp),
+                          clgrp,
+                          elem_grp,
+                          label='Ratios'),
                    Group(UItem('note', enabled_when='editable',
                                style='custom'),
                          label='Note')),
@@ -166,4 +166,3 @@ Ca_K:[value,error],Cl_K:[value,error],note''')
         return v
 
 # ============= EOF =============================================
-

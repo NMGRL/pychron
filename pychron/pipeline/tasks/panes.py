@@ -18,7 +18,6 @@
 from pyface.action.menu_manager import MenuManager
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traits.api import Int, Property, List
-from traitsui.editors import TabularEditor
 from traitsui.handler import Handler
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
@@ -29,6 +28,7 @@ from uncertainties import nominal_value, std_dev
 from pychron.core.helpers.color_generators import colornames
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.ui.qt.tree_editor import PipelineEditor
+from pychron.core.ui.tabular_editor import myTabularEditor
 
 from pychron.pipeline.engine import Pipeline
 from pychron.pipeline.nodes import FindReferencesNode
@@ -327,19 +327,19 @@ class UnknownsAdapter(TabularAdapter):
 
     def get_text_color(self, obj, trait, row, column=0):
         color = 'black'
-        if obj.show_group_colors:
-            # n = len(colornames)
-            colors = self.colors
-            n = len(colors)
+        # if obj.show_group_colors:
+        # n = len(colornames)
+        colors = self.colors
+        n = len(colors)
 
-            gid = getattr(obj, trait)[row].group_id
-            # gid = obj.items[row].group_id
+        gid = getattr(obj, trait)[row].group_id
+        # gid = obj.items[row].group_id
 
-            cid = gid % n if n else 0
-            try:
-                color = colors[cid]
-            except IndexError:
-                pass
+        cid = gid % n if n else 0
+        try:
+            color = colors[cid]
+        except IndexError:
+            pass
 
         return color
 
@@ -366,21 +366,24 @@ class AnalysesPane(TraitsDockPane):
     id = 'pychron.pipeline.analyses'
 
     def traits_view(self):
-        v = View(VGroup(UItem('unknowns',
-                              editor=TabularEditor(adapter=UnknownsAdapter(),
-                                                   refresh='refresh_table_needed',
-                                                   multi_select=True,
-                                                   dclicked='dclicked_unknowns',
-                                                   selected='selected_unknowns',
-                                                   operations=['delete'])),
-                        UItem('references',
-                              visible_when='references',
-                              editor=TabularEditor(adapter=ReferencesAdapter(),
-                                                   refresh='refresh_table_needed',
-                                                   multi_select=True,
-                                                   dclicked='dclicked_references',
-                                                   selected='selected_references',
-                                                   operations=['delete']))),
+        v = View(VGroup(UItem('object.selected.unknowns',
+                              editor=myTabularEditor(adapter=UnknownsAdapter(),
+                                                     refresh='refresh_table_needed',
+                                                     multi_select=True,
+                                                     drag_external=True,
+                                                     drop_factory=self.model.drop_factory,
+                                                     dclicked='dclicked_unknowns',
+                                                     selected='selected_unknowns',
+                                                     operations=['delete'])),
+                        UItem('object.selected.references',
+                              visible_when='object.selected.references',
+                              editor=myTabularEditor(adapter=ReferencesAdapter(),
+                                                     refresh='refresh_table_needed',
+                                                     drag_external=True,
+                                                     multi_select=True,
+                                                     dclicked='dclicked_references',
+                                                     selected='selected_references',
+                                                     operations=['delete']))),
                  handler=AnalysesPaneHandler())
         return v
 

@@ -86,6 +86,9 @@ class IsotopeEvolutionPersistNode(DVCPersistNode):
     modifier = 'intercepts'
 
     def run(self, state):
+        if not state.saveable_keys:
+            return
+
         wrapper = lambda x, prog, i, n: self._save_fit(x, prog, i, n, state.saveable_keys)
         progress_iterator(state.unknowns, wrapper)
         # for ai in state.unknowns:
@@ -159,7 +162,6 @@ class ICFactorPersistNode(DVCPersistNode):
         if prog:
             prog.change_message('Save IC Factor for {} {}/{}'.format(ai.record_id, i, n))
 
-        print 'asdfasdf', saveable_keys, saveable_fits
         self.dvc.save_icfactors(ai, saveable_keys, saveable_fits, reference)
 
 
@@ -205,7 +207,6 @@ class XLSTablePersistNode(TablePersistNode):
     def run(self, state):
         for editor in state.editors:
             if isinstance(editor, ArArTableEditor):
-                print editor
                 basename = 'test_xls_table'
                 path, _ = unique_path2(paths.data_dir, basename, extension='.xls')
                 editor.make_xls_table('FooBar', path)

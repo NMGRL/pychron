@@ -325,7 +325,10 @@ class IsotopeEvolutionOptionsManager(PlotterOptionsManager):
     plotter_options_klass = IsotopeEvolutionOptions
     persistence_name = 'iso_evo'
     # _defaults_path = paths.ideogram_defaults
-
+    def set_names(self, names):
+        for p in self.plotter_options_list:
+            print p
+            p.set_names(names)
 
 class ICFactorOptionsManager(PlotterOptionsManager):
     plotter_options_klass = ICFactorOptions

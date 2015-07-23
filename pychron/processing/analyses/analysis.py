@@ -136,7 +136,7 @@ class Analysis(ArArAge):
 
     # ids
     # record_id = Property(depends_on='labnumber,aliquot, step')
-    # _record_id = Str
+    _record_id = None
     group_id = 0  # Int
     graph_id = 0  # Int
 
@@ -373,7 +373,14 @@ class Analysis(ArArAge):
 
     @property
     def record_id(self):
-        return make_runid(self.labnumber, self.aliquot, self.step)
+        v = self._record_id
+        if v is None:
+            v = make_runid(self.labnumber, self.aliquot, self.step)
+        return v
+
+    @record_id.setter
+    def record_id(self, v):
+        self._record_id = v
 
     def __str__(self):
         return '{}<{}>'.format(self.record_id, self.__class__.__name__)

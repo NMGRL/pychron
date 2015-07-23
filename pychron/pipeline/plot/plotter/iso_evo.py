@@ -38,54 +38,73 @@ class IsoEvo(BaseArArFigure):
 
     def _plot(self, i, p):
         ai = self.analyses[0]
+
+        # name is either an isotope "Ar40" or a detector "H1"
+        # if its a detector only plot the baseline
         name = p.name
+
+        is_baseline = False
         try:
             iso = ai.isotopes[name]
         except KeyError, e:
-            print 'asdfasd', ai.record_id, e
-            return
+            is_baseline = True
+            iso = next((iso for iso in ai.isotopes.itervalues() if iso.detector == name), None)
+            if iso is None:
+                print 'iso_evo _plot', ai.record_id, ai.isotopes_keys, name
+                return
 
         ymi, yma = Inf, -Inf
         xmi, xma = 0, -Inf
+        if is_baseline:
+            xma, xmi, yma, ymi = self._plot_baseline(i, iso, p, xma, xmi, yma, ymi)
+            # print xma, xmi, yma, ymi
+        else:
+            if self.show_sniff:
+                xs, ys = iso.sniff.xs, iso.sniff.ys
+                self.graph.new_series(xs, ys,
+                                      marker=p.marker,
+                                      marker_size=p.marker_size,
+                                      type='scatter',
+                                      plotid=i,
+                                      fit=None,
+                                      color='red')
+                ymi, yma = min_max(ymi, yma, iso.sniff.ys)
+                xmi, xma = min_max(xmi, xma, iso.sniff.xs)
 
-        if self.show_sniff:
-            xs, ys = iso.sniff.xs, iso.sniff.ys
+            xs = iso.xs
+            ys = iso.ys
+
             self.graph.new_series(xs, ys,
                                   marker=p.marker,
                                   marker_size=p.marker_size,
                                   type='scatter',
                                   plotid=i,
-                                  fit=None,
-                                  color='red')
-            ymi, yma = min_max(ymi, yma, iso.sniff.ys)
-            xmi, xma = min_max(xmi, xma, iso.sniff.xs)
+                                  fit=iso.fit,
+                                  filter_outliers_dict=iso.filter_outliers_dict,
+                                  color='black')
+            ymi, yma = min_max(ymi, yma, iso.ys)
+            xmi, xma = min_max(xmi, xma, iso.xs)
 
-        xs = iso.xs
-        ys = iso.ys
+            if self.show_baseline:
+                xma, xmi, yma, ymi = self._plot_baseline(i, iso, p, xma, xmi, yma, ymi)
 
+        self.graph.set_x_limits(min_=xmi, max_=xma * 1.05, plotid=i)
+        self.graph.set_y_limits(min_=ymi, max_=yma, pad='0.05', plotid=i)
+        self.graph.refresh()
+
+    def _plot_baseline(self, i, iso, p, xma, xmi, yma, ymi):
+        xs = iso.baseline.xs
+        ys = iso.baseline.ys
         self.graph.new_series(xs, ys,
                               marker=p.marker,
                               marker_size=p.marker_size,
                               type='scatter',
                               plotid=i,
-                              fit=iso.fit,
-                              filter_outliers_dict=iso.filter_outliers_dict,
+                              fit=iso.baseline.fit,
                               color='black')
-        ymi, yma = min_max(ymi, yma, iso.ys)
-        xmi, xma = min_max(xmi, xma, iso.xs)
 
-        if self.show_baseline:
-            self.graph.new_series(iso.baseline.xs, iso.baseline.ys,
-                                  marker=p.marker,
-                                  marker_size=p.marker_size,
-                                  type='scatter',
-                                  plotid=i,
-                                  fit=iso.baseline.fit,
-                                  color='black')
-            ymi, yma = min_max(ymi, yma, iso.baseline.ys)
-            xmi, xma = min_max(xmi, xma, iso.baseline.xs)
-
-        self.graph.set_x_limits(min_=xmi, max_=xma * 1.05, plotid=i)
-        self.graph.set_y_limits(min_=ymi, max_=yma, pad='0.05', plotid=i)
+        xmi, xma = min_max(xmi, xma, xs)
+        ymi, yma = min_max(ymi, yma, ys)
+        return xma, xmi, yma, ymi
 
 # ============= EOF =============================================

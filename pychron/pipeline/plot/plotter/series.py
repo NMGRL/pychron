@@ -90,7 +90,7 @@ class Series(BaseSeries):
             p = graph.new_plot(
                 # padding=self.padding,
                 ytitle=po.name,
-                xtitle='Time')
+                xtitle='Time (hrs)')
 
             if po.name == 'AnalysisType':
                 from pychron.pipeline.plot.plotter.ticks import tick_formatter, StaticTickGenerator
