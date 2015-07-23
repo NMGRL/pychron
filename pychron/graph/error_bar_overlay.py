@@ -40,7 +40,7 @@ class ErrorBarOverlay(AbstractOverlay):
             comp = self.component
             x = comp.index.get_data()
             y = comp.value.get_data()
-
+            print 'ebo', self.nsigma
             if self.orientation == 'x':
                 y = comp.value_mapper.map_screen(y)
                 err = comp.xerror.get_data()

@@ -261,8 +261,7 @@ class ReferencesSeries(BaseSeries):
             _, scatter, l = graph.new_series(r_xs, r_ys,
                                              # display_index=ArrayDataSource(data=display_xs),
                                              yerror=ArrayDataSource(data=r_es),
-                                             fit=po.fit,
-
+                                             fit='{}_{}'.format(po.fit, po.error_type),
                                              **kw)
             # print self.graph, po.fit, args
             # print l

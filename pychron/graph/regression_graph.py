@@ -263,6 +263,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
             r = self._mean_regress(scatter, r, fit)
 
         if r:
+            print 'errrocclac type', scatter.fit, fit, err
             r.error_calc_type = err
 
             if line:
