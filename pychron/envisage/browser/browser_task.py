@@ -187,7 +187,7 @@ class BaseBrowserTask(BaseEditorTask):
         info = tc.edit_traits()
         if info.result:
             for e in self.get_recall_editors()[:]:
-                e.analysis_view.isotopes_view.show_intermediate = tc.show_intermediate
+                e.analysis_view.show_intermediate = tc.show_intermediate
 
             for e in self.get_recall_editors():
                 tc.set_fonts(e.analysis_view)
