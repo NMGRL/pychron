@@ -53,7 +53,7 @@ class FitReferencesNode(FitNode):
         if state.references:
             self.editor.set_references(state.references)
 
-        self.name = 'Fit {} {}'.format(self.basename, self.name)
+        # self.name = 'Fit {} {}'.format(self.basename, self.name)
         self._set_saveable(state)
 
         # if self.has_save_node:

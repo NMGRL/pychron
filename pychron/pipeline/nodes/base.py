@@ -36,6 +36,15 @@ class BaseNode(HasTraits):
     unknowns = List
     references = List
 
+    def clear_data(self):
+        self.unknowns = []
+        self.references = []
+
+    def reset(self):
+        self.visited = False
+        self._manual_configured = False
+        self.active = False
+
     def load(self, nodedict):
         pass
 
@@ -52,9 +61,10 @@ class BaseNode(HasTraits):
 
         if self._manual_configured:
             return True
-
-        self.unknowns = state.unknowns
-        self.references = state.references
+        if state.unknowns:
+            self.unknowns = state.unknowns
+        if state.references:
+            self.references = state.references
 
         if self.configure(refresh=False, pre_run=True):
             return True

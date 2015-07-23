@@ -33,8 +33,9 @@ class DataNode(BaseNode):
     check_reviewed = Bool(False)
 
     def configure(self, pre_run=False, **kw):
-        # if pre_run and self.analyses:
-        #     return True
+        if pre_run and getattr(self, self.analysis_kind):
+            return True
+
         if not pre_run:
             self._manual_configured = True
 
@@ -94,16 +95,26 @@ class ReferenceNode(DataNode):
     name = 'References'
     analysis_kind = 'references'
 
-    def run(self, state):
-        items = getattr(state, self.analysis_kind)
-        if not self.references or state.has_references:
-            # self.analyses = items
-            self.references = items
-        else:
-            for ai in self.references:
-                ai.group_id = 0
+    def pre_run(self, state):
+        self.unknowns = state.unknowns
+        refs = state.references
+        if refs:
+            self.references.extend(refs)
 
-            items.extend(self.references)
+        if not self.references:
+            self.configure(pre_run=True)
+
+        return self.references
+        # items = getattr(state, self.analysis_kind)
+        # if state.has_references:
+        #     for ai in self.references:
+        #         ai.group_id = 0
+
+        # items.extend(self.references)
+        # self.references = items
+
+    def run(self, state):
+        pass
 
 
 class FluxMonitorsNode(DataNode):
@@ -113,9 +124,11 @@ class FluxMonitorsNode(DataNode):
 
     def run(self, state):
         items = getattr(state, self.analysis_kind)
-        if not self.analyses or state.has_flux_monitors:
-            self.analyses = items
-        else:
-            items.extend(self.analyses)
+        self.unknowns = items
+
+        # if not self.unknowns or state.has_flux_monitors:
+        #     self.unknowns = items
+        # else:
+        #     items.extend(self.unknowns)
 
 # ============= EOF =============================================

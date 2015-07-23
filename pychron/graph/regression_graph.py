@@ -210,8 +210,9 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                 for si, fl in zip(scatters, fls):
                     if not si.no_regression:
                         r = self._plot_regression(plot, si, fl)
-
                         regs.append((plot, r))
+                        # print si, fl
+                        # si.invalidate_and_redraw()
 
             except ValueError, e:
                 # add a float instead of regressor to regs
@@ -223,6 +224,13 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
 
         self.regressors = regs
         self.regression_results = regs
+
+        # force layout updates. i.e for ErrorBarOverlay
+        for plot in self.plots:
+            for p in plot.plots.values():
+                p[0]._layout_needed = True
+
+        self.redraw()
 
     def _plot_regression(self, plot, scatter, line):
         if not plot.visible:

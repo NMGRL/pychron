@@ -44,9 +44,12 @@ class Pipeline(HasTraits):
     name = Str('Pipeline')
     nodes = List
 
-    def reset(self):
+    def reset(self, clear_data=False):
         for ni in self.nodes:
-            ni.visited = False
+            if isinstance(ni, UnknownNode) and clear_data:
+                ni.clear_data()
+
+            ni.reset()
 
     @on_trait_change('nodes[]')
     def _handle_nodes_changed(self):

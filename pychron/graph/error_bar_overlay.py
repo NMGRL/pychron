@@ -96,8 +96,8 @@ class ErrorBarOverlay(AbstractOverlay):
 
             gc.draw_path()
 
-    @on_trait_change('component:bounds')
-    def _handle_component_change(self, name, new):
+    @on_trait_change('component:[bounds, _layout_needed]')
+    def _handle_component_change(self, obj, name, new):
         self._cache_valid = False
         self.invalidate_and_redraw()
 
