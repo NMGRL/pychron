@@ -45,8 +45,8 @@ class ErrorBarOverlay(AbstractOverlay):
                 y = comp.value_mapper.map_screen(y)
                 err = comp.xerror.get_data()
 
-                err *= self.nsigma
-                xlow, xhigh = x - err, x + err
+                scaled_err = err * self.nsigma
+                xlow, xhigh = x - scaled_err, x + scaled_err
                 xlow = comp.index_mapper.map_screen(xlow)
                 xhigh = comp.index_mapper.map_screen(xhigh)
 
@@ -58,8 +58,8 @@ class ErrorBarOverlay(AbstractOverlay):
                 x = comp.index_mapper.map_screen(x)
                 err = comp.yerror.get_data()
                 # print 'fff', len(x), len(err), comp.color
-                err *= self.nsigma
-                ylow, yhigh = y - err, y + err
+                scaled_err = err * self.nsigma
+                ylow, yhigh = y - scaled_err, y + scaled_err
                 ylow = comp.value_mapper.map_screen(ylow)
                 yhigh = comp.value_mapper.map_screen(yhigh)
                 # idx = arange(len(x))

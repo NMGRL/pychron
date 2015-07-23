@@ -130,7 +130,9 @@ class Series(BaseSeries):
                 from pychron.pipeline.plot.plotter.ticks import analysis_type_formatter
 
                 ys = list(self._unpack_attr(po.name))
-                kw = dict(y=ys, colors=ys, type='cmap_scatter', color_map_name='gist_rainbow')
+                kw = dict(y=ys, colors=ys, type='cmap_scatter',
+                          fit='',
+                          color_map_name='gist_rainbow')
                 yerr = None
                 value_format = analysis_type_formatter
                 set_ylimits = False
@@ -140,14 +142,14 @@ class Series(BaseSeries):
                 value_format = None
                 ys = array([ai.nominal_value for ai in self._unpack_attr(po.name)])
                 yerr = array([ai.std_dev for ai in self._unpack_attr(po.name)])
-                kw = dict(y=ys, yerror=yerr, type='scatter')
+                kw = dict(y=ys, yerror=yerr, type='scatter',
+                          fit='{}_{}'.format(po.fit, po.error_type))
                 set_ylimits = True
 
             # print ys
             n = [ai.record_id for ai in self.sorted_analyses]
             args = graph.new_series(x=self.xs,
                                     display_index=ArrayDataSource(data=n),
-                                    fit=po.fit,
                                     plotid=pid,
                                     add_inspector=False,
                                     marker=po.marker,

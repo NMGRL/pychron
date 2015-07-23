@@ -182,6 +182,7 @@ class BaseRegressor(HasTraits):
         return rmodel - es, rmodel + es
 
     def calculate_ci(self, rx, rmodel):
+
         cors = self.calculate_ci_error(rx)
         if rmodel is not None and cors is not None:
             if rmodel.shape[0] and cors.shape[0]:
@@ -189,7 +190,7 @@ class BaseRegressor(HasTraits):
 
     def calculate_ci_error(self, rx):
         cors = self._calculate_ci(rx)
-        return 2*cors
+        return cors
 
     def get_syx(self):
         n = self.clean_xs.shape[0]
@@ -205,7 +206,6 @@ class BaseRegressor(HasTraits):
         x = self.clean_xs
         if xm is None:
             xm = x.mean()
-
         return ((x - xm) ** 2).sum()
 
     def tostring(self, sig_figs=5):
@@ -272,11 +272,10 @@ class BaseRegressor(HasTraits):
         if n > 2:
             xm = x.mean()
 
-            ti = tinv(alpha, n - 2)
+            ti = tinv(alpha, n - 1)
 
             syx = self.get_syx()
             ssx = self.get_ssx(xm)
-
             d = n ** -1 + (rx - xm) ** 2 / ssx
             cors = ti * syx * d ** 0.5
 

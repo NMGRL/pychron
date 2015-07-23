@@ -32,6 +32,8 @@ class SeriesPanel(FigurePanel):
     plot_spacing = 5
     use_previous_limits = False
 
+    def _make_graph_hook(self, g):
+        g.refresh()
 
 class DashboardSeriesPanel(SeriesPanel):
     _figure_klass = DashboardSeries

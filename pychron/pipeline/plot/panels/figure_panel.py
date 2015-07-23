@@ -88,6 +88,9 @@ class FigurePanel(HasTraits):
 
         return center, mi, ma
 
+    def _make_graph_hook(self, g):
+        pass
+
     # @caller
     def make_graph(self):
 
@@ -115,13 +118,15 @@ class FigurePanel(HasTraits):
                 legend = None
 
             ymas, ymis = [], []
+            update_dict = {}
             for i, fig in enumerate(self.figures):
                 fig.trait_set(xma=ma, xmi=mi,
                               ymas=ymas, ymis=ymis,
                               center=center,
                               options=po,
                               graph=g,
-                              title=self.title)
+                              title=self.title,
+                              **update_dict)
 
                 if i == 0:
                     fig.build(plots)
@@ -135,6 +140,8 @@ class FigurePanel(HasTraits):
                 ma, mi = max(fig.xma, ma), min(fig.xmi, mi)
                 ymas, ymis = fig.ymas, fig.ymis
                 xpad = fig.xpad
+
+                update_dict = fig.get_update_dict()
 
             if legend:
                 g.plots[0].overlays.append(legend)
@@ -168,6 +175,7 @@ class FigurePanel(HasTraits):
                 for i in range(len(plots)):
                     fig.update_options_limits(i)
 
+        self._make_graph_hook(g)
         # self.graph = g
         print '----------------------- make graph {}'.format(time.time() - st)
         return g.plotcontainer

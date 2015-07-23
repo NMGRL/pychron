@@ -91,9 +91,9 @@ class PipelineTask(BaseBrowserTask):
     def _debug(self):
         # self.engine.add_data()
         self.engine.select_default()
-        # self.engine.set_template('ideogram')
+        self.engine.set_template('ideogram')
         # self.engine.set_template('gain')
-        self.engine.set_template('series')
+        # self.engine.set_template('series')
         # self.engine.set_template('flux')
         # self.engine.add_is
         # self.engine.add_grouping(run=False)

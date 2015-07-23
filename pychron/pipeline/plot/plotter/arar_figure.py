@@ -44,8 +44,8 @@ from pychron.graph.tools.analysis_inspector import AnalysisPointInspector
 from pychron.graph.tools.point_inspector import PointInspectorOverlay
 from pychron.pychron_constants import PLUSMINUS
 
-PLOT_MAPPING = {'analysis #': 'Analysis Number', 'Analysis #': 'Analysis Number Stacked',
-                '%40Ar*': 'Radiogenic 40Ar'}
+# PLOT_MAPPING = {'analysis #': 'Analysis Number', 'Analysis #': 'Analysis Number Stacked',
+#                 '%40Ar*': 'Radiogenic 40Ar'}
 
 
 class BaseArArFigure(HasTraits):
@@ -85,6 +85,9 @@ class BaseArArFigure(HasTraits):
     xtitle = None
 
     _has_formatting_hash = None
+
+    def get_update_dict(self):
+        return {}
 
     def build(self, plots):
         """
@@ -292,7 +295,7 @@ class BaseArArFigure(HasTraits):
     def _cmp_analyses(self, x):
         return x.timestamp
 
-    def _unpack_attr(self, attr):
+    def _unpack_attr(self, attr, nonsorted=False):
 
         # if '/' in attr:
         #     def gen():
@@ -307,8 +310,10 @@ class BaseArArFigure(HasTraits):
             # f = lambda x: x
             # if attr in ARGON_KEYS:
             #     f = lambda x: x.get_intensity()
-
-            for ai in self.sorted_analyses:
+            ans = self.sorted_analyses
+            if nonsorted:
+                ans = self.analyses
+            for ai in ans:
                 v = ai.get_value(attr)
                 yield v or ufloat(0, 0)
                 # if v is not None:

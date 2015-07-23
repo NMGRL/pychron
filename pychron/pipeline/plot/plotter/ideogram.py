@@ -28,6 +28,7 @@ from numpy.core.umath import exp
 from numpy import max as np_max
 from math import pi
 # ============= local library imports  ==========================
+from uncertainties import nominal_value
 from pychron.pipeline.plot.flow_label import FlowPlotLabel
 
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
@@ -61,12 +62,15 @@ class Ideogram(BaseArArFigure):
     # index_key = 'uage'
     ytitle = 'Relative Probability'
     # _reverse_sorted_analyses = True
-    _analysis_number_cnt = 0
+    # _analysis_number_cnt = 1
 
     # x_grid_visible = False
     # y_grid_visible = False
 
     _omit_key = 'omit_ideo'
+
+    # def get_update_dict(self):
+    #     return {'_analysis_number_cnt': self._analysis_number_cnt}
 
     def plot(self, plots, legend=None):
         """
@@ -83,11 +87,10 @@ class Ideogram(BaseArArFigure):
 
         graph = self.graph
 
-        self._analysis_number_cnt = 0
-
         try:
             self.xs, self.xes = array([(ai.nominal_value, ai.std_dev)
                                        for ai in self._get_xs(key=index_attr)]).T
+
         except (ValueError, AttributeError), e:
             print 'asdfasdf', e, index_attr
             return
@@ -215,41 +218,65 @@ class Ideogram(BaseArArFigure):
     def _plot_analysis_number(self, *args, **kw):
         return self.__plot_analysis_number(*args, **kw)
 
-    def _plot_analysis_number_stacked(self, *args, **kw):
-        kw['stacked'] = True
+    def _plot_analysis_number_nonsorted(self, *args, **kw):
+        kw['nonsorted'] = True
         return self.__plot_analysis_number(*args, **kw)
 
-    def __plot_analysis_number(self, po, plot, pid, stacked=False):
+    def _get_nonsorted_xs(self):
+        opt = self.options
+        if opt.index_attr:
+            index_attr = opt.index_attr
+            if index_attr == 'uage' and opt.include_j_error:
+                index_attr = 'uage_w_j_err'
+
+        return [v for v in self._unpack_attr()]
+
+    def __plot_analysis_number(self, po, plot, pid, nonsorted=False):
         xs = self.xs
         n = xs.shape[0]
 
         startidx = 1
-        name = 'analysis #'
-        if stacked:
+        # name = 'analysis #'
+        if nonsorted:
+            name = 'A# Nonsorted'
+            tag = 'Analysis Number Nonsorted'
+            opt = self.options
+
+            index_attr = opt.index_attr
+            if index_attr == 'uage' and opt.include_j_error:
+                index_attr = 'uage_w_j_err'
+
+            xs = [nominal_value(x) for x in self._get_xs(key=index_attr, nonsorted=True)]
+        else:
             name = 'Analysis #'
-            for p in self.graph.plots:
+            tag = 'Analysis Number'
+            xs = self.xs
 
-                # if title is not visible title=='' so check tag instead
-                if p.y_axis.tag == 'Analysis Number Stacked':
-                    for k, rend in p.plots.iteritems():
-                        # if title is not visible k == e.g '-1' instead of 'Analysis #-1'
-                        if k.startswith(name) or k.startswith('-'):
-                            startidx += rend[0].index.get_size()
+        for p in self.graph.plots:
+            # if title is not visible title=='' so check tag instead
 
-        if self.options.analysis_number_sorting == 'Oldest @Top':
+            if p.y_axis.tag == tag:
+                for k, rend in p.plots.iteritems():
+                    # if title is not visible k == e.g '-1' instead of 'Analysis #-1'
+                    if k.startswith(name) or k.startswith('-'):
+                        startidx += rend[0].index.get_size()
+
+        if self.options.analysis_number_sorting == 'Oldest @Top' or nonsorted:
             ys = arange(startidx, startidx + n)
         else:
             ys = arange(startidx + n - 1, startidx - 1, -1)
 
-        ts = array([ai.timestamp for ai in self.sorted_analyses])
-        ts -= ts[0]
         if self.options.use_cmap_analysis_number:
-            scatter = self._add_aux_plot(ys, name, po, pid,
+            ans = self.sorted_analyses
+            ts = array([ai.timestamp for ai in ans])
+            ts -= ts[0]
+            scatter = self._add_aux_plot(xs, ys, name, po, pid,
                                          colors=ts,
                                          color_map_name=self.options.cmap_analysis_number,
-                                         type='cmap_scatter')
+                                         type='cmap_scatter',
+                                         xs=xs)
         else:
-            scatter = self._add_aux_plot(ys, name, po, pid)
+            scatter = self._add_aux_plot(ys, name, po, pid, xs=xs)
 
         if self.options.use_latest_overlay:
             idx = argmax(ts)
@@ -591,11 +618,15 @@ class Ideogram(BaseArArFigure):
         # utils
         # ===============================================================================
 
-    def _get_xs(self, key='age'):
-        xs = array([ai for ai in self._unpack_attr(key)])
+    def _get_xs(self, key='age', nonsorted=False):
+        xs = array([ai for ai in self._unpack_attr(key, nonsorted=nonsorted)])
+        # xs = array(self._unpack_attr(key, nonsorted=nonsorted))
         return xs
 
-    def _add_aux_plot(self, ys, title, po, pid, type='scatter', **kw):
+    def _add_aux_plot(self, ys, title, po, pid, type='scatter', xs=None, **kw):
+        if xs is None:
+            xs = self.xs
+
         plot = self.graph.plots[pid]
         if plot.value_scale == 'log':
             ys = array(ys)
@@ -608,7 +639,7 @@ class Ideogram(BaseArArFigure):
 
         # print 'aux plot',title, self.group_id
         s, p = graph.new_series(
-            x=self.xs, y=ys,
+            x=xs, y=ys,
             color=color,
             type=type,
             marker=po.marker,

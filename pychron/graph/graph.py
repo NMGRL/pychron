@@ -972,7 +972,7 @@ class Graph(ContextMenuMixin):
                 if 'outline_color' in rd:
                     rd['outline_color'] = rd['color']
 
-                rd['selection_color'] = rd['color']
+                rd['selection_color'] = 'red' if rd['color'] != 'red' else 'white'
                 rd['selection_outline_color'] = rd['color']
 
             if rd['type'] == 'cmap_scatter':
