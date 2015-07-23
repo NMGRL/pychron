@@ -224,7 +224,10 @@ class DVCAnalysis(Analysis):
                 i = self.isotopes[iso]
                 i.value = v['value']
                 i.error = v['error']
-                i.set_fit(v['fit'])
+                i.set_fit(v['fit'], notify=False)
+                i.set_filter_outliers_dict(filter_outliers=v.get('filter_outliers', False),
+                                           iterations=v.get('iterations', 0),
+                                           std_devs=v.get('std_devs', 0))
 
     def _load_baselines(self, jd):
         for det, v in jd.iteritems():
@@ -232,7 +235,10 @@ class DVCAnalysis(Analysis):
                 if iso.detector == det:
                     iso.baseline.value = v['value']
                     iso.baseline.error = v['error']
-                    iso.baseline.set_fit(v['fit'])
+                    iso.baseline.set_fit(v['fit'], notify=False)
+                    iso.baseline.set_filter_outliers_dict(filter_outliers=v.get('filter_outliers', False),
+                                                          iterations=v.get('iterations', 0),
+                                                          std_devs=v.get('std_devs', 0))
 
                     # self.set_ic_factor(det, v['value'], v['error'])
                     # if iso in self.isotopes:
@@ -340,6 +346,13 @@ class DVCAnalysis(Analysis):
         sisos = self.isotopes
         isoks, dks = map(tuple, partition(keys, lambda x: x in sisos))
 
+        def update(d, i):
+            fd = i.filter_outliers_dict
+            d.update(fit=i.fit, value=float(i.value), error=float(i.error),
+                     filter_outliers=fd.get('filter_outliers', False),
+                     iterations=fd.get('iterations', 0),
+                     std_devs=fd.get('std_devs', 0))
+
         # save intercepts
         if isoks:
             isos, path = self._get_yd('intercepts')
@@ -347,7 +360,7 @@ class DVCAnalysis(Analysis):
                 try:
                     iso = isos[k]
                     siso = sisos[k]
-                    iso.update(fit=siso.fit, value=float(siso.value), error=float(siso.error))
+                    update(iso, siso)
                 except KeyError:
                     pass
 
@@ -364,7 +377,8 @@ class DVCAnalysis(Analysis):
                     baselines[di] = det
 
                 bs = next((iso.baseline for iso in sisos.itervalues() if iso.detector == di), None)
-                det.update(fit=bs.fit, value=float(bs.value), error=float(bs.error))
+                update(det, bs)
+                # det.update(fit=bs.fit, value=float(bs.value), error=float(bs.error))
 
             self._dump(baselines, path)
 

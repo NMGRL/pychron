@@ -28,6 +28,7 @@ from numpy import array, Inf, polyfit
 
 
 
+
 # ============= local library imports  ==========================
 from pychron.core.helpers.fits import natural_name_fit, fit_to_degree
 from pychron.core.regression.mean_regressor import MeanRegressor
@@ -491,7 +492,7 @@ class BaseIsotope(IsotopicMeasurement):
     @property
     def baseline_fit_abbreviation(self):
         if self.baseline:
-            return fit_abbreviation(self.baseline.fit)
+            return self.baseline.fit_abbreviation
         else:
             return ''
 
