@@ -71,7 +71,7 @@ class IdeogramEditor(InterpretedAgeEditor):
     def disable_aux_plots(self):
         po = self.plotter_options_manager.plotter_options
         for ap in po.aux_plots:
-            if ap.name.lower() not in ('ideogram', 'analysis number', 'analysis number stacked'):
+            if ap.name.lower() not in ('ideogram', 'analysis number', 'analysis number nonsorted'):
                 ap.use = False
                 ap.enabled = False
 
@@ -154,7 +154,7 @@ class IdeogramEditor(InterpretedAgeEditor):
 
         po = self.plotter_options_manager.plotter_options
         for ap in po.aux_plots:
-            if ap.name.lower() not in ('ideogram', 'analysis number', 'analysis number stacked'):
+            if ap.name.lower() not in ('ideogram', 'analysis number', 'analysis number nonsorted'):
                 ap.use = False
                 ap.enabled = False
             else:

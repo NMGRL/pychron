@@ -191,7 +191,7 @@ class Permutator(Loggable):
     def _setup_ideo_editor(self):
         editor = IdeogramEditor()
         po = editor.plotter_options_manager.plotter_options
-        po.set_aux_plot_height('Analysis Number Stacked', 300)
+        po.set_aux_plot_height('Analysis Number Nonsorted', 300)
         editor.disable_aux_plots()
         return editor
 

@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Array
+from traits.api import Array, Tuple
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.lineplot import LinePlot
 # ============= standard library imports ========================
@@ -29,6 +29,8 @@ class ErrorEnvelopeOverlay(AbstractOverlay):
     upper = Array
     lower = Array
     use_downsampling = False
+    line_color = Tuple((1, 0, 0))
+    xs = None
 
     def invalidate(self):
         self._cache_valid = False
@@ -41,7 +43,10 @@ class ErrorEnvelopeOverlay(AbstractOverlay):
             if not index or not value:
                 return
 
-            xs = index.get_data()
+            xs = self.xs
+            if xs is None:
+                xs = index.get_data()
+
             ls = self.lower
             us = self.upper
 
@@ -65,7 +70,7 @@ class ErrorEnvelopeOverlay(AbstractOverlay):
             gc.clip_to_rect(0, 0, self.component.width, self.component.height)
             upts, lpts = self.get_screen_points()
             gc.set_line_dash((5, 5))
-            gc.set_stroke_color((1, 0, 0))
+            gc.set_stroke_color(self.line_color)
             LinePlot._render_normal(gc, upts, '')
             LinePlot._render_normal(gc, lpts, '')
 

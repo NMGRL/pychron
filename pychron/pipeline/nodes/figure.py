@@ -15,8 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from pyface.confirmation_dialog import confirm
-from pyface.constant import YES
 from traits.api import Any
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -45,10 +43,9 @@ class FigureNode(BaseNode):
             # self.editor.force_update()
             # print 'editor refres'
             self.editor.refresh_needed = True
-            if hasattr(self.editor, 'save_required'):
-                if self.editor.save_required:
-                    if confirm(None, 'Save Changes') == YES:
-                        self.editor.save_needed = True
+            # if self.editor.save_required:
+            #     if confirm(None, 'Save Changes') == YES:
+            #         self.editor.save_needed = True
 
     def run(self, state):
         # self._configured = True

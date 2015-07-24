@@ -25,6 +25,9 @@ class ReviewNode(BaseNode):
     name = 'Review'
     auto_configure = False
 
+    def configure(self, pre_run=False, **kw):
+        return True
+
     def run(self, state):
         if confirmation_dialog('Would you like to review before continuing?'):
             state.veto = self

@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traits.api import Instance
@@ -22,6 +23,7 @@ from traits.api import Instance
 # ============= local library imports  ==========================
 from pychron.envisage.browser.browser_task import BaseBrowserTask
 from pychron.envisage.browser.view import BrowserView
+from pychron.pipeline.tasks.actions import ConfigureRecallAction
 
 
 class BrowserPane(TraitsDockPane, BrowserView):
@@ -45,7 +47,7 @@ class BrowserTask(BaseBrowserTask):
     name = 'Analysis Browser'
 
     model = Instance('pychron.envisage.browser.browser_model.BrowserModel')
-    # tool_bars = [SToolBar(ToPipelineAction())]
+    tool_bars = [SToolBar(ConfigureRecallAction())]
 
     # def switch_to_pipeline(self):
     #     self._activate_task('pychron.pipeline.task')

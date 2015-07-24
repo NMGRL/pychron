@@ -69,6 +69,8 @@ class BaseSeries(BaseArArFigure):
 
         return xs
 
+    def _handle_limits(self):
+        self.graph.refresh()
 
 class Series(BaseSeries):
     _omit_key = 'omit_series'
@@ -91,6 +93,7 @@ class Series(BaseSeries):
                 # padding=self.padding,
                 ytitle=po.name,
                 xtitle='Time (hrs)')
+            # self._add_limit_tool(p, 'y')
 
             if po.name == 'AnalysisType':
                 from pychron.pipeline.plot.plotter.ticks import tick_formatter, StaticTickGenerator
@@ -101,9 +104,10 @@ class Series(BaseSeries):
                 graph.set_y_limits(-0.5, len(TICKS) - 0.5, plotid=i)
                 # graph.set_y_limits(min_=-1, max_=7, plotid=i)
 
-            p.value_scale = po.scale
-            p.padding_left = 75
+            # p.value_scale = po.scale
+            # p.padding_left = 75
             p.value_range.tight_bounds = False
+            self._setup_plot(i, p, po)
 
     def plot(self, plots, legend=None):
         """
@@ -130,7 +134,9 @@ class Series(BaseSeries):
                 from pychron.pipeline.plot.plotter.ticks import analysis_type_formatter
 
                 ys = list(self._unpack_attr(po.name))
-                kw = dict(y=ys, colors=ys, type='cmap_scatter', color_map_name='gist_rainbow')
+                kw = dict(y=ys, colors=ys, type='cmap_scatter',
+                          fit='',
+                          color_map_name='gist_rainbow')
                 yerr = None
                 value_format = analysis_type_formatter
                 set_ylimits = False
@@ -140,14 +146,14 @@ class Series(BaseSeries):
                 value_format = None
                 ys = array([ai.nominal_value for ai in self._unpack_attr(po.name)])
                 yerr = array([ai.std_dev for ai in self._unpack_attr(po.name)])
-                kw = dict(y=ys, yerror=yerr, type='scatter')
+                kw = dict(y=ys, yerror=yerr, type='scatter',
+                          fit='{}_{}'.format(po.fit, po.error_type))
                 set_ylimits = True
 
             # print ys
             n = [ai.record_id for ai in self.sorted_analyses]
             args = graph.new_series(x=self.xs,
                                     display_index=ArrayDataSource(data=n),
-                                    fit=po.fit,
                                     plotid=pid,
                                     add_inspector=False,
                                     marker=po.marker,

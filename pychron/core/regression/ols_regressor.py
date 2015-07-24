@@ -45,12 +45,21 @@ class OLSRegressor(BaseRegressor):
     constant = None
     _ols = None
 
-    def _get_degrees_of_freedom(self):
-        return len(self.coefficients)
+    def set_degree(self, d, refresh=True):
+        if isinstance(d, str):
+            d = d.lower()
+            fits = ['linear', 'parabolic', 'cubic']
+            if d in fits:
+                d = fits.index(d) + 1
+            else:
+                d = None
 
-    def __degree_changed(self):
-        if self._degree:
-            self.calculate()
+        if d is None:
+            d = 1
+
+        self._degree = d
+        if refresh:
+            self.dirty = True
 
     def get_exog(self, x):
         return self._get_X(x)
@@ -120,8 +129,11 @@ class OLSRegressor(BaseRegressor):
 
                 traceback.print_exc()
 
-    def _engine_factory(self, fy, X, check_integrity=True):
-        return OLS(fy, X)
+    def calculate_error_envelope2(self, fx, fy):
+        from statsmodels.sandbox.regression.predstd import wls_prediction_std
+
+        prstd, iv_l, iv_u = wls_prediction_std(self._result)
+        return iv_l, iv_u, self._result.model.exog[::, 1]
 
     def predict(self, pos):
         return_single = False
@@ -302,24 +314,11 @@ class OLSRegressor(BaseRegressor):
         else:
             return [0, 0]
 
+    def _engine_factory(self, fy, X, check_integrity=True):
+        return OLS(fy, X)
+
     def _get_degree(self):
         return self._degree
-
-    def set_degree(self, d, refresh=True):
-        if isinstance(d, str):
-            d = d.lower()
-            fits = ['linear', 'parabolic', 'cubic']
-            if d in fits:
-                d = fits.index(d) + 1
-            else:
-                d = None
-
-        if d is None:
-            d = 1
-
-        self._degree = d
-        if refresh:
-            self.dirty = True
 
     def _set_degree(self, d):
         self.set_degree(d)
@@ -333,6 +332,13 @@ class OLSRegressor(BaseRegressor):
     def var_covar(self):
         if self._result:
             return self._result.normalized_cov_params
+
+    def _get_degrees_of_freedom(self):
+        return len(self.coefficients)
+
+    def __degree_changed(self):
+        if self._degree:
+            self.calculate()
 
     def _get_fit(self):
         fits = ['linear', 'parabolic', 'cubic']

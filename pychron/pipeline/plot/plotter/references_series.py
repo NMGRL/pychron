@@ -90,9 +90,6 @@ class ReferencesSeries(BaseSeries):
             if isinstance(reg, BaseRegressor):
                 self._set_values(plotobj, reg, key)
 
-    def _handle_limits(self):
-        self.graph.refresh()
-
     def _calc_limits(self, ys, ye):
         return calc_limits(ys, ye, self.options.nsigma)
 
@@ -261,8 +258,7 @@ class ReferencesSeries(BaseSeries):
             _, scatter, l = graph.new_series(r_xs, r_ys,
                                              # display_index=ArrayDataSource(data=display_xs),
                                              yerror=ArrayDataSource(data=r_es),
-                                             fit=po.fit,
-
+                                             fit='{}_{}'.format(po.fit, po.error_type),
                                              **kw)
             # print self.graph, po.fit, args
             # print l

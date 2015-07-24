@@ -569,7 +569,7 @@ class BrowserModel(BaseBrowserModel):
 
     def select_sample(self, idx=None, name=None):
         if idx is not None:
-            sams = self.samples[idx:idx + 1]
+            sams = self.samples[idx:idx + 2]
             self.selected_samples = sams
 
     def select_project(self, name):

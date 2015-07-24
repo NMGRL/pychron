@@ -28,9 +28,9 @@ class AuxPlotOptions(HasTraits):
     name = Str(NULL_STR)
     plot_name = Property(Str, depends_on='name')
 
-    names = List([NULL_STR, 'Analysis Number Stacked', 'Analysis Number',
+    names = List([NULL_STR, 'Analysis Number Nonsorted', 'Analysis Number',
                   'Radiogenic 40Ar', 'K/Ca', 'K/Cl', 'Mol K39', 'Ideogram'])
-    _plot_names = List(['', 'analysis_number_stacked', 'analysis_number', 'radiogenic_yield',
+    _plot_names = List(['', 'analysis_number_nonsorted', 'analysis_number', 'radiogenic_yield',
                         'kca', 'kcl', 'moles_k39', 'relative_probability'])
 
     scale = Enum('linear', 'log')

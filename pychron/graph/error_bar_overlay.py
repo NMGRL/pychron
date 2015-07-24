@@ -40,13 +40,12 @@ class ErrorBarOverlay(AbstractOverlay):
             comp = self.component
             x = comp.index.get_data()
             y = comp.value.get_data()
-
             if self.orientation == 'x':
                 y = comp.value_mapper.map_screen(y)
                 err = comp.xerror.get_data()
 
-                err *= self.nsigma
-                xlow, xhigh = x - err, x + err
+                scaled_err = err * self.nsigma
+                xlow, xhigh = x - scaled_err, x + scaled_err
                 xlow = comp.index_mapper.map_screen(xlow)
                 xhigh = comp.index_mapper.map_screen(xhigh)
 
@@ -58,8 +57,8 @@ class ErrorBarOverlay(AbstractOverlay):
                 x = comp.index_mapper.map_screen(x)
                 err = comp.yerror.get_data()
                 # print 'fff', len(x), len(err), comp.color
-                err *= self.nsigma
-                ylow, yhigh = y - err, y + err
+                scaled_err = err * self.nsigma
+                ylow, yhigh = y - scaled_err, y + scaled_err
                 ylow = comp.value_mapper.map_screen(ylow)
                 yhigh = comp.value_mapper.map_screen(yhigh)
                 # idx = arange(len(x))
@@ -96,8 +95,8 @@ class ErrorBarOverlay(AbstractOverlay):
 
             gc.draw_path()
 
-    @on_trait_change('component:bounds')
-    def _handle_component_change(self, name, new):
+    @on_trait_change('component:[bounds, _layout_needed, index_mapper:updated, value_mapper:updated]')
+    def _handle_component_change(self, obj, name, new):
         self._cache_valid = False
         self.invalidate_and_redraw()
 

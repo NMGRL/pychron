@@ -283,6 +283,7 @@ class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
                    (sigmaf('Bk'), 'blank_error'),
                    ('%(Bk)', 'blank_percent_error'),
                    ('IC', 'ic_factor'),
+                   (sigmaf('IC'), 'ic_factor_error'),
                    ('Disc', 'discrimination'),
                    ('Error Comp.', 'age_error_component')]
     columns = [('Iso.', 'name'),
@@ -309,6 +310,7 @@ class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
     blank_value_text = Property
     blank_error_text = Property
     ic_factor_text = Property
+    ic_factor_error_text = Property
     discrimination_text = Property
     include_baseline_error_text = Property
 
@@ -357,7 +359,16 @@ class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
         if ic is None:
             v = 0.0
         else:
-            v = ic.nominal_value
+            v = nominal_value(ic)
+
+        return floatfmt(v, n=4)
+
+    def _get_ic_factor_error_text(self):
+        ic = self.item.ic_factor
+        if ic is None:
+            v = 0.0
+        else:
+            v = std_dev(ic)
 
         return floatfmt(v, n=4)
 

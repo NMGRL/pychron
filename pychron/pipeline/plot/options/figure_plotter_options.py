@@ -367,7 +367,7 @@ class FigurePlotterOptions(BasePlotterOptions):
         return 10
 
     def _aux_plots_default(self):
-        return [self.aux_plot_klass() for _ in range(5)]
+        return [self.aux_plot_klass() for _ in range(12)]
 
     # ===============================================================================
     # views

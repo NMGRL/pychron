@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 
-from traits.api import Any, List, Bool, on_trait_change
+from traits.api import Any, List
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -26,7 +26,7 @@ from pychron.pipeline.plot.editors.graph_editor import GraphEditor
 
 class FigureEditor(GraphEditor):
     references = List
-    save_required = Bool
+    # save_required = Bool
     # table_editor = Any
     # component = Any
     # plotter_options_manager = Any
@@ -51,9 +51,9 @@ class FigureEditor(GraphEditor):
     # show_caption = False
     # caption_path = None
     # caption_text = None
-    @on_trait_change('plotter_options:save_required')
-    def handle_save_required(self):
-        self.save_required = True
+    # @on_trait_change('plotter_options:save_required')
+    # def handle_save_required(self):
+    #     self.save_required = True
 
     def enable_aux_plots(self):
         po = self.plotter_options

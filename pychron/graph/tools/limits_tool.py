@@ -53,12 +53,12 @@ class LimitsTool(BaseTool):
     def manual_set_key_pressed(self, event):
         c = event.character
         if c == 'Enter':
-            self._finish(event)
             try:
                 self._set_data_value(float(self.entered_value))
             except ValueError:
                 pass
 
+            self._finish(event)
             self.entered_value = ''
         else:
             self._set_entered_value(c)
@@ -92,8 +92,8 @@ class LimitsTool(BaseTool):
                 self._dsign = 'high'
 
             self._set_ruler_pos(event)
-            self.component.request_redraw()
             event.handled = True
+            self.component.request_redraw()
 
     def _set_ruler_pos(self, v):
         self.ruler_pos = (v.x, v.y)
@@ -140,6 +140,7 @@ class LimitsTool(BaseTool):
         else:
             r = self.component.value_range
 
+        print 'setting', v
         if self._dsign == 'low':
             if getattr(r, 'high') > v:
                 r.trait_set(**{'{}_setting'.format(self._dsign): v})

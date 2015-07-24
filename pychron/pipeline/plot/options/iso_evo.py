@@ -56,16 +56,17 @@ class IsotopeEvolutionOptions(SaveableFigurePlotterOptions):
 
     def set_names(self, names):
         for ai in self.aux_plots:
-            ai.name = ''
-            ai.plot_enabled = False
-            ai.save_enabled = False
+            if ai.name != names:
+                ai.plot_enabled = False
+                ai.save_enabled = False
+                ai.name = ''
             ai.names = names
 
     @on_trait_change('aux_plots:fit')
     def _handle_fit(self, obj, name, old, new):
         if obj.save_enabled:
-            if new != obj.ofit:
-                self.save_required = True
+            # if new != obj.ofit:
+            # self.save_required = True
 
             obj.ofit = old
 

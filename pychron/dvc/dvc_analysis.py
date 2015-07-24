@@ -405,11 +405,15 @@ class DVCAnalysis(Analysis):
                 if siso.temporary_blank is not None:
                     # blank = iso.get('blank', {})
                     # print blank, float(siso.temporary_blank.value)
-                    blank['value'] = float(siso.temporary_blank.value)
-                    blank['error'] = float(siso.temporary_blank.error)
-                    blank['fit'] = siso.temporary_blank.fit
+                    blank['value'] = v = float(siso.temporary_blank.value)
+                    blank['error'] = e = float(siso.temporary_blank.error)
+                    blank['fit'] = f = siso.temporary_blank.fit
                     blank['references'] = make_ref_list(refs)
                     isos[k] = blank
+
+                    siso.blank.value = v
+                    siso.blank.error = e
+                    siso.blank.fit = f
                     # iso['blank'] = blank
 
         self._dump(isos, path)
