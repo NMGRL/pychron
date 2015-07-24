@@ -65,8 +65,8 @@ class IsotopeEvolutionOptions(SaveableFigurePlotterOptions):
     @on_trait_change('aux_plots:fit')
     def _handle_fit(self, obj, name, old, new):
         if obj.save_enabled:
-            if new != obj.ofit:
-                self.save_required = True
+            # if new != obj.ofit:
+            # self.save_required = True
 
             obj.ofit = old
 

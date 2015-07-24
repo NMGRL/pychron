@@ -92,6 +92,107 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
     # ===============================================================================
     #
     # ===============================================================================
+    def new_series(self, x=None, y=None,
+                   ux=None, uy=None, lx=None, ly=None,
+                   fx=None, fy=None,
+                   fit='linear',
+                   filter_outliers_dict=None,
+                   use_error_envelope=True,
+                   truncate='',
+                   marker='circle',
+                   marker_size=2,
+                   add_tools=True,
+                   add_inspector=True,
+                   convert_index=None,
+                   plotid=None, *args,
+                   **kw):
+
+        kw['marker'] = marker
+        kw['marker_size'] = marker_size
+
+        if plotid is None:
+            plotid = len(self.plots) - 1
+
+        if not fit:
+            s, p = super(RegressionGraph, self).new_series(x, y,
+                                                           plotid=plotid,
+                                                           *args, **kw)
+            if add_tools:
+                self.add_tools(p, s, None, convert_index, add_inspector)
+            return s, p
+
+        scatter, si = self._new_scatter(kw, marker, marker_size,
+                                        plotid, x, y, fit,
+                                        filter_outliers_dict, truncate)
+        lkw = kw.copy()
+        lkw['color'] = 'black'
+        lkw['type'] = 'line'
+        lkw['render_style'] = 'connectedpoints'
+        plot, names, rd = self._series_factory(fx, fy, plotid=plotid,
+                                               **lkw)
+        line = plot.plot(names, add=False, **rd)[0]
+        line.index.sort_order = 'ascending'
+        self.set_series_label('fit{}'.format(si), plotid=plotid)
+
+        plot.add(line)
+        plot.add(scatter)
+
+        if use_error_envelope:
+            self._add_error_envelope_overlay(line)
+
+            # # test
+            # o = ErrorEnvelopeOverlay(component=line, line_color=(0,1,0))
+            # line.underlays.append(o)
+            # line.error_envelope2 = o
+
+        # print x, y
+        if x is not None and y is not None:
+            if not self.suppress_regression:
+                self._regress(plot, scatter, line)
+
+        try:
+            self._set_bottom_axis(plot, plot, plotid)
+        except:
+            pass
+
+        # self._bind_index(scatter, **kw)
+
+        if add_tools:
+            self.add_tools(plot, scatter, line,
+                           convert_index, add_inspector)
+
+        return plot, scatter, line
+
+    def add_tools(self, plot, scatter, line=None,
+                  convert_index=None, add_inspector=True):
+
+        # add a regression inspector tool to the line
+        if line:
+            tool = RegressionInspectorTool(component=line)
+            overlay = RegressionInspectorOverlay(component=line,
+                                                 tool=tool)
+            line.tools.append(tool)
+            line.overlays.append(overlay)
+
+        # broadcaster = BroadcasterTool()
+        # scatter.tools.append(broadcaster)
+        if add_inspector:
+            point_inspector = PointInspector(scatter,
+                                             convert_index=convert_index or self.convert_index_func)
+            pinspector_overlay = PointInspectorOverlay(component=scatter,
+                                                       tool=point_inspector)
+
+            scatter.overlays.append(pinspector_overlay)
+            scatter.tools.append(point_inspector)
+            # broadcaster.tools.append(point_inspector)
+
+        rect_tool = RectSelectionTool(scatter)
+        rect_overlay = RectSelectionOverlay(tool=rect_tool)
+
+        scatter.overlays.append(rect_overlay)
+        scatter.tools.append(rect_tool)
+        # broadcaster.tools.append(rect_tool)
+
     def set_filter_outliers(self, fi, plotid=0, series=0):
         plot = self.plots[plotid]
         scatter = plot.plots['data{}'.format(series)][0]
@@ -263,12 +364,12 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
             r = self._mean_regress(scatter, r, fit)
 
         if r:
-            print 'errrocclac type', scatter.fit, fit, err
             r.error_calc_type = err
 
             if line:
-                plow = plot.index_range.low
-                phigh = plot.index_range.high
+                plow = plot.index_range._low_value
+                phigh = plot.index_range._high_value
+                print plow, phigh
                 if hasattr(line, 'regression_bounds') and line.regression_bounds:
                     low, high, first, last = line.regression_bounds
                     if first:
@@ -280,6 +381,9 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
 
                 fx = linspace(low, high, 100)
                 fy = r.predict(fx)
+
+                # fy = r._result.fittedvalues
+                # fx = r._result.model.exog[::,1]
                 line.regressor = r
 
                 try:
@@ -289,6 +393,15 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                     return
 
                 if hasattr(line, 'error_envelope'):
+                    # ly, uy, x = r.calculate_error_envelope2(fx, fy)
+                    # print 'fff', ly
+                    # print 'x',x
+                    # print 'ly',ly
+                    # line.error_envelope2.xs = x
+                    # line.error_envelope2.lower = ly
+                    # line.error_envelope2.upper = uy
+                    # line.error_envelope2.invalidate()
+
                     ci = r.calculate_error_envelope(fx, fy)
                     # ci = r.calculate_ci(fx, fy)
                     #                 print ci
@@ -296,7 +409,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                         ly, uy = ci
                     else:
                         ly, uy = fy, fy
-
+                    # print 'bbb', ly
                     # not_ok=False
                     # if isinstance(r, LeastSquaresRegressor):
                     #     try:
@@ -447,106 +560,12 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
 
         return scatter, si
 
-    def new_series(self, x=None, y=None,
-                   ux=None, uy=None, lx=None, ly=None,
-                   fx=None, fy=None,
-                   fit='linear',
-                   filter_outliers_dict=None,
-                   use_error_envelope=True,
-                   truncate='',
-                   marker='circle',
-                   marker_size=2,
-                   add_tools=True,
-                   add_inspector=True,
-                   convert_index=None,
-                   plotid=None, *args,
-                   **kw):
-
-        kw['marker'] = marker
-        kw['marker_size'] = marker_size
-
-        if plotid is None:
-            plotid = len(self.plots) - 1
-
-        if not fit:
-            s, p = super(RegressionGraph, self).new_series(x, y,
-                                                           plotid=plotid,
-                                                           *args, **kw)
-            if add_tools:
-                self.add_tools(p, s, None, convert_index, add_inspector)
-            return s, p
-
-        scatter, si = self._new_scatter(kw, marker, marker_size,
-                                        plotid, x, y, fit,
-                                        filter_outliers_dict, truncate)
-        lkw = kw.copy()
-        lkw['color'] = 'black'
-        lkw['type'] = 'line'
-        lkw['render_style'] = 'connectedpoints'
-        plot, names, rd = self._series_factory(fx, fy, plotid=plotid,
-                                               **lkw)
-        line = plot.plot(names, add=False, **rd)[0]
-        line.index.sort_order = 'ascending'
-        self.set_series_label('fit{}'.format(si), plotid=plotid)
-
-        plot.add(line)
-        plot.add(scatter)
-
-        if use_error_envelope:
-            self._add_error_envelope_overlay(line)
-
-        # print x, y
-        if x is not None and y is not None:
-            if not self.suppress_regression:
-                self._regress(plot, scatter, line)
-
-        try:
-            self._set_bottom_axis(plot, plot, plotid)
-        except:
-            pass
-
-        # self._bind_index(scatter, **kw)
-
-        if add_tools:
-            self.add_tools(plot, scatter, line,
-                           convert_index, add_inspector)
-
-        return plot, scatter, line
-
     def _add_error_envelope_overlay(self, line):
         o = ErrorEnvelopeOverlay(component=line)
         line.underlays.append(o)
         line.error_envelope = o
 
-    def add_tools(self, plot, scatter, line=None,
-                  convert_index=None, add_inspector=True):
 
-        # add a regression inspector tool to the line
-        if line:
-            tool = RegressionInspectorTool(component=line)
-            overlay = RegressionInspectorOverlay(component=line,
-                                                 tool=tool)
-            line.tools.append(tool)
-            line.overlays.append(overlay)
-
-        # broadcaster = BroadcasterTool()
-        # scatter.tools.append(broadcaster)
-        if add_inspector:
-            point_inspector = PointInspector(scatter,
-                                             convert_index=convert_index or self.convert_index_func)
-            pinspector_overlay = PointInspectorOverlay(component=scatter,
-                                                       tool=point_inspector)
-
-            scatter.overlays.append(pinspector_overlay)
-            scatter.tools.append(point_inspector)
-            # broadcaster.tools.append(point_inspector)
-
-        rect_tool = RectSelectionTool(scatter)
-        rect_overlay = RectSelectionOverlay(tool=rect_tool)
-
-        scatter.overlays.append(rect_overlay)
-        scatter.tools.append(rect_tool)
-        # broadcaster.tools.append(rect_tool)
 
         # def _bind_index(self, *args, **kw):
         #     pass

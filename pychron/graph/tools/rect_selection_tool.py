@@ -67,7 +67,6 @@ class RectSelectionTool(BaseTool):
         if event.handled:
             return
 
-
         plot = self.component
         index = plot.map_index((event.x, event.y), threshold=self.threshold)
 

@@ -69,6 +69,8 @@ class BaseSeries(BaseArArFigure):
 
         return xs
 
+    def _handle_limits(self):
+        self.graph.refresh()
 
 class Series(BaseSeries):
     _omit_key = 'omit_series'
@@ -91,6 +93,7 @@ class Series(BaseSeries):
                 # padding=self.padding,
                 ytitle=po.name,
                 xtitle='Time (hrs)')
+            # self._add_limit_tool(p, 'y')
 
             if po.name == 'AnalysisType':
                 from pychron.pipeline.plot.plotter.ticks import tick_formatter, StaticTickGenerator
@@ -101,9 +104,10 @@ class Series(BaseSeries):
                 graph.set_y_limits(-0.5, len(TICKS) - 0.5, plotid=i)
                 # graph.set_y_limits(min_=-1, max_=7, plotid=i)
 
-            p.value_scale = po.scale
-            p.padding_left = 75
+            # p.value_scale = po.scale
+            # p.padding_left = 75
             p.value_range.tight_bounds = False
+            self._setup_plot(i, p, po)
 
     def plot(self, plots, legend=None):
         """

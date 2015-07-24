@@ -40,7 +40,6 @@ class ErrorBarOverlay(AbstractOverlay):
             comp = self.component
             x = comp.index.get_data()
             y = comp.value.get_data()
-            print 'ebo', self.nsigma
             if self.orientation == 'x':
                 y = comp.value_mapper.map_screen(y)
                 err = comp.xerror.get_data()
@@ -96,7 +95,7 @@ class ErrorBarOverlay(AbstractOverlay):
 
             gc.draw_path()
 
-    @on_trait_change('component:[bounds, _layout_needed]')
+    @on_trait_change('component:[bounds, _layout_needed, index_mapper:updated, value_mapper:updated]')
     def _handle_component_change(self, obj, name, new):
         self._cache_valid = False
         self.invalidate_and_redraw()

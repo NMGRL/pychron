@@ -90,9 +90,6 @@ class ReferencesSeries(BaseSeries):
             if isinstance(reg, BaseRegressor):
                 self._set_values(plotobj, reg, key)
 
-    def _handle_limits(self):
-        self.graph.refresh()
-
     def _calc_limits(self, ys, ye):
         return calc_limits(ys, ye, self.options.nsigma)
 

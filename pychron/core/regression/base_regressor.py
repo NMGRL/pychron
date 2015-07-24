@@ -160,7 +160,10 @@ class BaseRegressor(HasTraits):
         return s
 
     def calculate_residuals(self):
-        return self.predict(self.clean_xs) - self.clean_ys
+        if self._result:
+            return self._result.resid
+        else:
+            return self.clean_ys - self.predict(self.clean_xs)
 
     def calculate_error_envelope(self, rx, rmodel=None):
         if rmodel is None:
@@ -195,7 +198,6 @@ class BaseRegressor(HasTraits):
     def get_syx(self):
         n = self.clean_xs.shape[0]
         obs = self.clean_ys
-
         model = self.predict(self.clean_xs)
         if model is not None:
             return (1. / (n - 2) * ((obs - model) ** 2).sum()) ** 0.5

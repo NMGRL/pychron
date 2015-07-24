@@ -436,7 +436,7 @@ class BaseArArFigure(HasTraits):
 
         o = LimitOverlay(component=plot, tool=t)
 
-        plot.tools.append(t)
+        plot.tools.insert(0, t)
         plot.overlays.append(o)
         t.on_trait_change(self._handle_limits, 'limits_updated')
 

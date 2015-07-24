@@ -33,7 +33,7 @@ from pychron.pipeline.plot.options.option import AuxPlotOptions
 class BasePlotterOptions(BaseOptions):
     auto_refresh = dumpable(Bool, True)
     aux_plots = dumpable(List)
-    save_required = Event
+    # save_required = Event
 
     aux_plot_klass = AuxPlotOptions
     aux_plot_name = None
