@@ -333,7 +333,7 @@ class FusionsLaserManager(LaserManager):
         module = __import__(package, globals(), locals(), [klass], -1)
         factory = getattr(module, klass)
         m = factory(motion_controller=stage_controller)
-        m.edit_traits()
+        self.open_view(m)
 
     # ========================= views =========================
 

@@ -64,7 +64,7 @@ class MotionController(CoreDevice):
 
     _z_position = Float
     z_progress = Float
-    motion_profiler = Instance(MotionProfiler, ())
+    motion_profiler = Instance(MotionProfiler)
 
     groupobj = None
     _not_moving_count = 0
@@ -432,8 +432,7 @@ class MotionController(CoreDevice):
             if k == 'z':
                 g.content.append(Item('z_progress', show_label=False,
                                       editor=editor,
-                                      enabled_when='0'
-                                      ))
+                                      enabled_when='0'))
         return g
 
     # ===============================================================================
@@ -441,6 +440,7 @@ class MotionController(CoreDevice):
     # ===============================================================================
     def _motion_profiler_default(self):
         mp = MotionProfiler()
+
         if self.configuration_dir_path:
             p = os.path.join(self.configuration_dir_path, 'motion_profiler.cfg')
             mp.load(p)

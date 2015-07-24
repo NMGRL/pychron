@@ -17,6 +17,7 @@
 
 
 # =============enthought library imports=======================
+from threading import Thread
 from traits.api import Instance, Enum, DelegatesTo, Property, Button, Any, Float
 from traitsui.api import View, Item, HGroup, spring, \
     ListEditor, VGroup, UItem
@@ -76,12 +77,20 @@ class MotionControllerManager(Manager):
 
     # handlers
     def _xmove_to_button_fired(self):
-        ax = self.motion_controller.axes['x']
-        self.motion_controller.ask('{}PA{}'.format(ax.id, self.xtarget_position))
+        self._move_to('x', self.xtarget_position)
 
     def _ymove_to_button_fired(self):
-        ax = self.motion_controller.axes['y']
-        self.motion_controller.ask('{}PA{}'.format(ax.id, self.ytarget_position))
+        self._move_to('y', self.ytarget_position)
+
+    def _move_to(self, k, v):
+        def func():
+            self.motion_controller.start_timer()
+            ax = self.motion_controller.axes[k]
+            self.motion_controller.destroy_group()
+            self.motion_controller._axis_move('{}PA{}'.format(ax.id, v), block=k)
+            self.motion_controller.update_axes()
+        t = Thread(target=func)
+        t.start()
 
     def _read_button_fired(self):
         ax = self._get_selected()

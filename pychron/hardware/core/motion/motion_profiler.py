@@ -24,6 +24,7 @@ import math
 import os
 # ============= local library imports  ==========================
 
+
 class MotionProfiler(ConfigLoadable):
     velocity_tol = Float(0.5)
     acceleration_tol = Float(0.5)
@@ -49,6 +50,7 @@ class MotionProfiler(ConfigLoadable):
             config = self.get_configuration(self.config_path)
             for attr in attrs:
                 self.set_attribute(config, attr, 'General', attr, cast='float')
+                self.debug('setting {}. {}'.format(attr, getattr(self, attr)))
         else:
             # create a new config file with default values
             config = self.configparser_factory()
