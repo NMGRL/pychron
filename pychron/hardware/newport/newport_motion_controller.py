@@ -580,7 +580,7 @@ ABLE TO USE THE HARDWARE JOYSTICK
             if velocity is not None:
                 self.groupobj.velocity = velocity
 
-    def configure_group(self, group, displacement=None, velocity=None, **kw):
+    def configure_group(self, group, displacement=None, velocity=None, force=False, **kw):
         self.debug('configuring group')
         gobj = self.groupobj
         if not gobj and group:
@@ -593,7 +593,7 @@ ABLE TO USE THE HARDWARE JOYSTICK
                 change = abs(gobj.velocity - velocity) > 0.001
                 gobj.velocity = velocity
             else:
-                change = self._check_motion_parameters(displacement, gobj)
+                change = self._check_motion_parameters(displacement, gobj, force=force)
 
         if self.mode == 'grouped':
             if not group:
@@ -669,12 +669,13 @@ ABLE TO USE THE HARDWARE JOYSTICK
                 time.sleep(0.1)
 
     # private
-    def _check_motion_parameters(self, displacement, obj):
+    def _check_motion_parameters(self, displacement, obj, force=False):
         self.debug('checking motion parameters')
         if displacement <= 0:
             return
+
         if obj.calculate_parameters:
-            change, nv, ac, dc = self.motion_profiler.check_motion(displacement, obj)
+            change, nv, ac, dc = self.motion_profiler.check_motion(displacement, obj, force=force)
             self.debug('calculated {} {} {} {}'.format(change, nv, ac, dc))
             if change:
                 obj.trait_set(acceleration=ac,
@@ -797,7 +798,7 @@ ABLE TO USE THE HARDWARE JOYSTICK
         """
         """
 
-        self.configure_group(grouped_move, **kw)
+        self.configure_group(grouped_move, force=True, **kw)
         self.debug('group configured')
         for k in kwargs:
             key = k[0]
