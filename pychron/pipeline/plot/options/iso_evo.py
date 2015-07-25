@@ -56,7 +56,7 @@ class IsotopeEvolutionOptions(SaveableFigurePlotterOptions):
 
     def set_names(self, names):
         for ai in self.aux_plots:
-            if ai.name != names:
+            if ai.name not in names:
                 ai.plot_enabled = False
                 ai.save_enabled = False
                 ai.name = ''

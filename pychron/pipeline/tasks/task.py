@@ -131,8 +131,8 @@ class PipelineTask(BaseBrowserTask):
             self.dvc.rollback_experiment_repo(expid)
 
     def clear(self):
-        self.engine.clear()
         self.reset()
+        self.engine.clear()
         self.close_all()
 
     def reset(self):

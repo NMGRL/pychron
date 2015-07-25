@@ -117,6 +117,7 @@ class BrowserModel(BaseBrowserModel):
         records = self.analysis_table.selected
         if not records:
             records = self.analysis_table.analyses
+
         return records
 
     def get_selection(self, low_post, high_post, unks=None, selection=None, make_records=True):
@@ -587,6 +588,8 @@ class BrowserModel(BaseBrowserModel):
                 break
 
     def _selected_samples_changed(self, new):
+        self.analysis_table.selected = []
+
         ans = []
         if new:
             at = self.analysis_table

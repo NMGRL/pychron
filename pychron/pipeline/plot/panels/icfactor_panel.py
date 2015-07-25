@@ -19,7 +19,6 @@
 # ============= local library imports  ==========================
 from pychron.pipeline.plot.panels.references_panel import ReferencesPanel
 from pychron.pipeline.plot.plotter.icfactor import ICFactor
-
 from pychron.processing.analysis_graph import AnalysisStackedRegressionGraph
 # from pychron.pipeline.plot import ReferencesPanel
 # from pychron.pipeline.plot import ICFactor

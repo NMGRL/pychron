@@ -143,7 +143,6 @@ class FitIsotopeEvolutionNode(FitNode):
 
     def _configure_hook(self):
         pom = self.plotter_options_manager
-        print 'asffasafasfasfass'
         if self.unknowns:
             unk = self.unknowns[0]
             names = unk.isotope_keys

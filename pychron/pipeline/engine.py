@@ -227,8 +227,11 @@ class PipelineEngine(Loggable):
     def clear(self):
         self.unknowns = []
         self.references = []
-        self.pipeline.nodes = []
-        self.selected_pipeline_template = ''
+        for ni in self.pipeline.nodes:
+            ni.clear_data()
+
+            # self.pipeline.nodes = []
+            # self.selected_pipeline_template = ''
         # self._set_template(self.selected_pipeline_template)
     # ============================================================================================================
     # nodes

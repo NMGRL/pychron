@@ -53,7 +53,6 @@ class ReferencesSeries(BaseSeries):
 
         p_uys = reg.predict(xs)
         p_ues = reg.predict_error(xs)
-
         if any(map(isnan, p_ues)) or any(map(isinf, p_ues)):
             p_ues = zeros_like(p_ues)
 
@@ -98,7 +97,7 @@ class ReferencesSeries(BaseSeries):
         reg, a, b = self._plot_references(pid, po)
         ymi = min(ymi, a)
         yma = max(yma, b)
-        print 'asdfa', reg
+        # print 'asdfa', reg
         if reg:
             a, b = self._plot_interpolated(pid, po, reg)
             ymi = min(ymi, a)
@@ -280,7 +279,7 @@ class ReferencesSeries(BaseSeries):
                                     items=self.sorted_references)
         plot = self.graph.plots[pid]
         plot.isotope = po.name
-        plot.fit = po.fit
+        plot.fit = '{}_{}'.format(po.fit, po.error_type)
         # scatter.index.on_trait_change(self._update_metadata, 'metadata_changed')
 
         return reg, ymi, yma

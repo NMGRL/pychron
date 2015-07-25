@@ -169,7 +169,7 @@ class OLSRegressor(BaseRegressor):
         x = asarray(x)
 
         if error_calc == 'CI':
-            e = self.calculate_ci_error(x[0])
+            e = self.calculate_ci_error(x)
         else:
             e = self.predict_error_matrix(x, error_calc)
 
