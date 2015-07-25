@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, List, Event, Instance, Any, Property, cached_property
+from traits.api import HasTraits, Str, List, Event, Instance, Any, Property, cached_property, Dict
 from traitsui.api import View, UItem, VGroup, HGroup
 
 # ============= standard library imports ========================
@@ -40,7 +40,7 @@ class MainView(HasTraits):
     analysis_id = Str
     analysis_type = Str
 
-    isotopes = List
+    isotopes = Dict
     refresh_needed = Event
 
     computed_values = List
@@ -68,6 +68,7 @@ class MainView(HasTraits):
             self.refresh_needed = True
 
     def _load(self, an):
+        self.isotopes = an.isotopes
         # self.isotopes = [an.isotopes[k] for k in an.isotope_keys]
         self.load_computed(an)
         self.load_extraction(an)
@@ -190,8 +191,8 @@ class MainView(HasTraits):
         elif self.analysis_type == 'cocktail':
             self._load_cocktail_computed(new_list)
 
-    def _get_isotope(self, name):
-        return next((iso for iso in self.isotopes if iso.name == name), None)
+    # def _get_isotope(self, name):
+    #     return next((iso for iso in self.isotopes if iso.name == name), None)
 
     def _make_ratios(self, ratios):
         cv = []
@@ -253,8 +254,7 @@ class MainView(HasTraits):
 
             nd = ci.detectors
             n, d = nd.split('/')
-            niso, diso = self._get_isotope(n), self._get_isotope(d)
-
+            niso, diso = self.isotopes.get(n), self.isotopes.get(d)
             noncorrected = self._get_non_corrected_ratio(niso, diso)
             corrected, ic = self._get_corrected_ratio(niso, diso)
 
@@ -434,6 +434,5 @@ class MainView(HasTraits):
             # handler=MainViewHandler()
         )
         return v
-
 
 # ============= EOF =============================================
