@@ -15,15 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from enable.markers import marker_names
 from traits.api import List, on_trait_change
-from traitsui.api import View, Item, Group, VGroup, HGroup, EnumEditor, Tabbed
+from traitsui.api import View, VGroup, EnumEditor, Tabbed
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.core.ui.table_editor import myTableEditor
 # from pychron.processing.fits.iso_evo_fit_selector import IsoFilterFit
-from pychron.pipeline.plot.options.figure_plotter_options import SaveableFigurePlotterOptions, object_column, \
+from pychron.pipeline.plot.options.figure_plotter_options import object_column, \
     checkbox_column
+from pychron.pipeline.plot.options.fit import FitOptions
 from pychron.processing.fits.fit import IsoFilterFit
 # from pychron.pipeline.plot.options import checkbox_column, \
 #     object_column, SaveableFigurePlotterOptions
@@ -41,8 +40,9 @@ class IsoFilterFitAuxPlot(AuxPlotOptions, IsoFilterFit):
     # return self.show
 
 
-class IsotopeEvolutionOptions(SaveableFigurePlotterOptions):
+class IsotopeEvolutionOptions(FitOptions):
     aux_plot_klass = IsoFilterFitAuxPlot
+
     # use_plotting = dumpable(Bool)
     # confirm_save = dumpable(Bool)
     # def get_aux_plots(self):
@@ -81,7 +81,18 @@ class IsotopeEvolutionOptions(SaveableFigurePlotterOptions):
         v = View(Tabbed(p_grp, appear_grp))
         return v
 
-    def _get_aux_plots_group(self):
+    # def _get_edit_view(self):
+    #     v = View(VGroup(self._get_name_fit_group(),
+    #                     Item('marker', editor=EnumEditor(values=marker_names)),
+    #                     Item('marker_size'),
+    #                     HGroup(Item('ymin', label='Min'),
+    #                            Item('ymax', label='Max'),
+    #                            show_border=True,
+    #                            label='Y Limits'),
+    #                     show_border=True))
+    #     return v
+
+    def _get_columns(self):
         cols = [object_column(name='name', editable=False),
                 checkbox_column(name='plot_enabled', label='Plot'),
                 checkbox_column(name='save_enabled', label='Save'),
@@ -96,30 +107,8 @@ class IsotopeEvolutionOptions(SaveableFigurePlotterOptions):
                 object_column(name='filter_outlier_std_devs', label='SD'),
                 object_column(name='truncate', label='Trunc.'),
                 checkbox_column(name='include_baseline_error', label='Inc. BsErr')]
+        return cols
 
-        v = View(VGroup(Item('name', editor=EnumEditor(name='names')),
-                        Item('marker', editor=EnumEditor(values=marker_names)),
-                        Item('marker_size'),
-                        HGroup(Item('ymin', label='Min'),
-                               Item('ymax', label='Max'),
-                               show_border=True,
-                               label='Y Limits'),
-                        show_border=True))
 
-        aux_plots_grp = Item('aux_plots',
-                             style='custom',
-                             show_label=False,
-                             editor=myTableEditor(columns=cols,
-                                                  sortable=False,
-                                                  deletable=False,
-                                                  clear_selection_on_dclicked=True,
-                                                  edit_on_first_click=False,
-                                                  # on_select=lambda *args: setattr(self, 'selected', True),
-                                                  # selected='selected',
-                                                  edit_view=v,
-                                                  reorderable=False))
-        ogrp = self._button_grp()
-        return Group(VGroup(ogrp,
-                            aux_plots_grp), label='Fits')
 
 # ============= EOF =============================================

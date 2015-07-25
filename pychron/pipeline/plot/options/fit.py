@@ -16,8 +16,8 @@
 
 # ============= enthought library imports =======================
 from enable.markers import marker_names
-from traitsui.api import View, Item, HGroup, VGroup, EnumEditor, Tabbed, Group
-from traits.api import List
+from traitsui.api import View, Item, HGroup, VGroup, EnumEditor, Tabbed, Group, UItem
+from traits.api import Str
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -29,12 +29,10 @@ from pychron.processing.fits.fit import Fit
 # from pychron.pipeline.plot.options import object_column, \
 #     checkbox_column, SaveableFigurePlotterOptions
 from pychron.pipeline.plot.options.option import AuxPlotOptions
-from pychron.pychron_constants import FIT_TYPES_INTERPOLATE, ARGON_KEYS
+from pychron.pychron_constants import FIT_TYPES_INTERPOLATE, FIT_ERROR_TYPES
 
 
 class FitAuxPlot(AuxPlotOptions, Fit):
-    names = List(ARGON_KEYS)
-
     def _get_fit_types(self):
         return FIT_TYPES_INTERPOLATE
 
@@ -42,12 +40,12 @@ class FitAuxPlot(AuxPlotOptions, Fit):
 class FitOptions(SaveableFigurePlotterOptions):
     aux_plot_klass = FitAuxPlot
 
+    global_fit = Str('Fit')
+    global_error_type = Str('Error')
+
     def set_detectors(self, dets):
         for p in self.aux_plots:
             p.detectors = dets
-
-    # def get_saveable_plots(self):
-    #     return [p for p in self.aux_plots if p.use]
 
     def traits_view(self):
         bg_grp = self._get_bg_group()
@@ -57,7 +55,7 @@ class FitOptions(SaveableFigurePlotterOptions):
 
         p_grp = self._get_aux_plots_group()
 
-        hgrp = self._button_grp()
+        hgrp = self._misc_grp()
         v = View(VGroup(hgrp, Tabbed(p_grp, appear_grp)))
         return v
 
@@ -78,8 +76,14 @@ class FitOptions(SaveableFigurePlotterOptions):
                 # checkbox_column(name='include_baseline_error', label='Inc. BsErr')
                 ]
 
+    def _get_name_fit_group(self):
+        h = HGroup(Item('name', editor=EnumEditor(name='names')),
+                   Item('fit', editor=EnumEditor(name='fit_types')),
+                   UItem('error_type', editor=EnumEditor(name='error_types'))),
+        return h
+
     def _get_edit_view(self):
-        return View(VGroup(Item('name', editor=EnumEditor(name='names'), width=150),
+        return View(VGroup(self._get_name_fit_group(),
                            Item('marker', editor=EnumEditor(values=marker_names)),
                            Item('marker_size'),
                            HGroup(Item('ymin', label='Min'),
@@ -88,19 +92,55 @@ class FitOptions(SaveableFigurePlotterOptions):
                                   label='Y Limits'),
                            show_border=True))
 
+    def _get_aux_plots_item(self):
+        aux_plots_item = UItem('aux_plots',
+                               style='custom',
+                               show_label=False,
+                               editor=myTableEditor(columns=self._get_columns(),
+                                                    sortable=False,
+                                                    deletable=False,
+                                                    clear_selection_on_dclicked=True,
+                                                    edit_on_first_click=False,
+                                                    selection_mode='rows',
+                                                    selected='selected_aux_plots',
+                                                    # on_select=lambda *args: setattr(self, 'selected', True),
+                                                    # selected='selected',
+                                                    edit_view=self._get_edit_view(),
+                                                    reorderable=False))
+        return aux_plots_item
+
     def _get_aux_plots_group(self):
-        aux_plots_grp = Item('aux_plots',
-                             style='custom',
-                             show_label=False,
-                             editor=myTableEditor(columns=self._get_columns(),
-                                                  sortable=False,
-                                                  deletable=False,
-                                                  clear_selection_on_dclicked=True,
-                                                  edit_on_first_click=False,
-                                                  # on_select=lambda *args: setattr(self, 'selected', True),
-                                                  # selected='selected',
-                                                  edit_view=self._get_edit_view(),
-                                                  reorderable=False))
-        return Group(aux_plots_grp, label='Fits')
+        ggrp = VGroup(HGroup(UItem('global_fit', editor=EnumEditor(name='fit_types')),
+                             UItem('global_error_type', editor=EnumEditor(name='error_types'))))
+        api = self._get_aux_plots_item()
+        return Group(VGroup(ggrp, api), label='Fits')
+
+    def _misc_grp(self):
+        ogrp = HGroup(Item('use_plotting',
+                           label='Use Plotting',
+                           tooltip='(Checked) Plot the isotope evolutions '
+                                   '(Non-checked) Only calculate new fit results. Do not plot'))
+        return ogrp
+
+    # def _get_aux_plots_group(self):
+    #     return Group(self._get_aux_plots_item(), label='Fits')
+
+    def _get_aux_plots(self):
+        fs = self.selected_aux_plots
+        if not fs:
+            fs = self.aux_plots
+        return fs
+
+    def _global_fit_changed(self):
+        # if self.global_fit in self.fit_types:
+        fs = self._get_aux_plots()
+        for fi in fs:
+            fi.fit = self.global_fit
+
+    def _global_error_type_changed(self):
+        if self.global_error_type in FIT_ERROR_TYPES:
+            fs = self._get_aux_plots()
+            for fi in fs:
+                fi.error_type = self.global_error_type
 
 # ============= EOF =============================================

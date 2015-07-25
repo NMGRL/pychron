@@ -21,15 +21,15 @@ from traitsui.api import EnumEditor, View, Item, UItem, VGroup, HGroup, Label
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.pipeline.plot.options.figure_plotter_options import object_column, checkbox_column
-from pychron.pipeline.plot.options.fit import FitOptions
-from pychron.processing.fits.fit import Fit
+from pychron.pipeline.plot.options.fit import FitOptions, FitAuxPlot
+# from pychron.processing.fits.fit import Fit
 # from pychron.pipeline.plot.options import object_column, checkbox_column
 # from pychron.pipeline.plot.options import FitOptions
-from pychron.pipeline.plot.options.option import AuxPlotOptions
 from pychron.pychron_constants import FIT_TYPES_INTERPOLATE
 
 
-class ICFactorAuxPlot(AuxPlotOptions, Fit):
+# class ICFactorAuxPlot(AuxPlotOptions, Fit):
+class ICFactorAuxPlot(FitAuxPlot):
     # names = List([, ])
     # numerators = List
     # denominators = List
@@ -73,8 +73,11 @@ class ICFactorOptions(FitOptions):
     def _get_edit_view(self):
         f = VGroup(HGroup(UItem('numerator', editor=EnumEditor(name='detectors')), Label('/'),
                           UItem('denominator', editor=EnumEditor(name='detectors'))),
+                   HGroup(Item('fit', editor=EnumEditor(name='fit_types')),
+                          UItem('error_type', editor=EnumEditor(name='error_types'))),
                    Item('analysis_type', editor=EnumEditor(name='analysis_types')),
                    Item('standard_ratio'), show_border=True, label='IC')
+
         s = VGroup(HGroup(Item('marker', editor=EnumEditor(values=marker_names)),
                           Item('marker_size')), show_border=True, label='Scatter')
         y = VGroup(HGroup(Item('ymin', label='Min'),

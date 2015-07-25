@@ -16,7 +16,6 @@
 
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Bool, Property, List, Int
-from traitsui.api import View, HGroup, UItem, EnumEditor
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -25,22 +24,22 @@ from pychron.pychron_constants import FIT_TYPES, FIT_ERROR_TYPES
 
 class Fit(HasTraits):
     name = Str
-    use = Bool
-    show = Bool
+    # use = Bool
+    # show = Bool
     fit = Str
     fit_types = Property
-    error_type=Str
+    error_type = Str
     error_types = List(FIT_ERROR_TYPES)
 
     #     fit = Enum(FIT_TYPES)
-    valid = Property(depends_on=('fit, use, show'))
-    save= Property(depends_on=('fit','use'))
+    # valid = Property(depends_on=('fit, use, show'))
+    # save = Property(depends_on=('fit', 'use'))
 
     def fit_tuple(self):
         return self.fit.lower(), self.error_type
 
-    def _get_save(self):
-        return self.use and self.fit
+    # def _get_save(self):
+    #     return self.use and self.fit
 
     def _fit_default(self):
         return self.fit_types[0]
@@ -48,22 +47,22 @@ class Fit(HasTraits):
     def _get_fit_types(self):
         return FIT_TYPES
 
-    def _get_valid(self):
-        return self.use and self.show and self.fit
-
-    def _show_changed(self):
-        self.use = self.show
-
-    def traits_view(self):
-        v = View(HGroup(
-            UItem('name', style='readonly'),
-            UItem('show'),
-            UItem('fit',
-                  editor=EnumEditor(name='fit_types'),
-                  enabled_when='show',
-                  width=-50, ),
-            UItem('use')))
-        return v
+        # def _get_valid(self):
+        #     return self.use and self.show and self.fit
+        #
+        # def _show_changed(self):
+        #     self.use = self.show
+        #
+        # def traits_view(self):
+        #     v = View(HGroup(
+        #         UItem('name', style='readonly'),
+        #         UItem('show'),
+        #         UItem('fit',
+        #               editor=EnumEditor(name='fit_types'),
+        #               enabled_when='show',
+        #               width=-50, ),
+        #         UItem('use')))
+        #     return v
 
 
 class FilterFit(Fit):
