@@ -43,6 +43,14 @@ class FitOptions(SaveableFigurePlotterOptions):
     global_fit = Str('Fit')
     global_error_type = Str('Error')
 
+    def set_names(self, names):
+        for ai in self.aux_plots:
+            if ai.name not in names:
+                ai.plot_enabled = False
+                ai.save_enabled = False
+                ai.name = ''
+            ai.names = names
+
     def set_detectors(self, dets):
         for p in self.aux_plots:
             p.detectors = dets

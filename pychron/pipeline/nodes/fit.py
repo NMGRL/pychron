@@ -71,6 +71,14 @@ class FitBlanksNode(FitReferencesNode):
     plotter_options_manager_klass = BlanksOptionsManager
     name = 'Fit Blanks'
     basename = 'Blanks'
+
+    def _configure_hook(self):
+        pom = self.plotter_options_manager
+        if self.unknowns:
+            unk = self.unknowns[0]
+            names = unk.isotope_keys
+            if names:
+                pom.set_names(names)
     # def _set_saveable(self, state):
     #     super(FitBlanksNode, self)._set_saveable()
 

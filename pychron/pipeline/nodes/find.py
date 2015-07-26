@@ -19,7 +19,6 @@ from traits.api import Float, Str, List, Instance, Property, cached_property
 from traitsui.api import Item, EnumEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.core.confirmation import remember_confirmation_dialog
 from pychron.experiment.utilities.identifier import SPECIAL_MAPPING
 from pychron.pipeline.editors.flux_results_editor import FluxPosition
 from pychron.pipeline.graphical_filter import GraphicalFilterModel, GraphicalFilterView
@@ -139,14 +138,14 @@ class FindReferencesNode(FindNode):
         refs = self.dvc.find_references(times, atype)
         # print 'refs', atype, refs
         if refs:
-            review = self.user_choice
-            if not self.user_choice:
-                # ask if use wants to review
-                review, remember = remember_confirmation_dialog('What you like to review this Node? '
-                                                                '{}'.format(self.name))
-                if remember:
-                    self.user_choice = review
-
+            # review = self.user_choice
+            # if not self.user_choice:
+            #     # ask if use wants to review
+            #     review, remember = remember_confirmation_dialog('Would you like to review this Node? '
+            #                                                     '{}'.format(self.name))
+            #     if remember:
+            #         self.user_choice = review
+            review = True
             if review:
                 ans = state.unknowns[:]
                 ans.extend(refs)

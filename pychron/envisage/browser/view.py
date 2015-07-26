@@ -104,7 +104,7 @@ class BrowserView(HasTraits):
 
         bgrp = HGroup(spring, UItem('pane.append_button'), UItem('pane.replace_button'))
         v = View(VGroup(hgrp, main_grp, bgrp),
-                 buttons=['Cancel'],
+                 # buttons=['Cancel'],
                  # Action(name='Append',
                  #        action='append_analyses'),
                  # Action(name='Replace',
