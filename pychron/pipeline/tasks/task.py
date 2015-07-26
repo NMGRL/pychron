@@ -86,7 +86,7 @@ class PipelineTask(BaseBrowserTask):
         self.engine.dvc = self.dvc
         self.engine.browser_model = self.browser_model
 
-        self.engine.add_data()
+        # self.engine.add_data()
 
     def _debug(self):
         # self.engine.add_data()
@@ -152,6 +152,7 @@ class PipelineTask(BaseBrowserTask):
     # action handlers
     def set_ideogram_template(self):
         self.engine.set_template('ideogram')
+        self.run()
 
     def set_spectrum_template(self):
         self.engine.set_template('spectrum')
