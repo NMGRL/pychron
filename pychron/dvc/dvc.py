@@ -307,9 +307,10 @@ class DVC(Loggable):
             ip.j = j
             ip.j_err = e
 
-    def find_references(self, times, atypes):
-        records = self.db.find_references(times, atypes)
-        return self.make_analyses(records)
+    def find_references(self, times, atypes, hours, exclude=None):
+        records = self.db.find_references(times, atypes, hours, exclude=exclude)
+        if records:
+            return self.make_analyses(records)
 
     def make_analyses(self, records, calculate_f_only=False):
         # load repositories

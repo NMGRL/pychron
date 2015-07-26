@@ -14,7 +14,8 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Instance, List, Int, Bool, on_trait_change, Button, Str
+from datetime import timedelta
+from traits.api import HasTraits, Instance, List, Int, Bool, on_trait_change, Button, Str, Any, Float
 from traitsui.api import View, Controller, UItem, HGroup, CheckListEditor, VGroup, Item, spring
 from chaco.scales.api import CalendarScaleSystem
 from chaco.scales_tick_generator import ScalesTickGenerator
@@ -145,6 +146,7 @@ class SelectionGraph(Graph):
 
 
 class GraphicalFilterModel(HasTraits):
+    dvc = Any
     graph = Instance(SelectionGraph, ())
     analyses = List
     analysis_types = List(['Unknown'])
@@ -156,20 +158,9 @@ class GraphicalFilterModel(HasTraits):
     use_offset_analyses = Bool(True)
     projects = List
     always_exclude_unknowns = Bool(False)
+    threshold = Float(1)
     # is_append = True
     # use_all = False
-
-    def _toggle_analysis_types_changed(self):
-        if self.toggle_analysis_types:
-            val = self.available_analysis_types
-        else:
-            val = []
-
-        self.trait_set(analysis_types=val)
-
-    @on_trait_change('use_offset_analyses, analysis_types[]')
-    def handle_analysis_types(self):
-        self.setup(set_atypes=False)
 
     def setup(self, set_atypes=True):
         self.graph.clear()
@@ -201,7 +192,6 @@ class GraphicalFilterModel(HasTraits):
             x, y, ans = [], [], []
 
         self.graph.setup(x, y, ans)
-        # self.analysis_types = self.available_analysis_types
 
     def get_filtered_selection(self):
         selection = self.graph.scatter.index.metadata['selections']
@@ -212,43 +202,30 @@ class GraphicalFilterModel(HasTraits):
 
         return self._filter_analysis_types(ans)
 
-    # def _filter_projects(self, ans):
-    #     if not self.projects or not self.use_project_exclusion:
-    #         return ans
-    #
-    #     def gen():
-    #         projects = self.projects
-    #
-    #         def test(aa):
-    #             """
-    #                 is ai within X hours of an analysis from projects
-    #             """
-    #             at = aa.analysis_timestamp
-    #             threshold = 3600. * self.exclusion_pad
-    #             idx = ans.index(aa)
-    #             # search backwards
-    #             for i in xrange(idx - 1, -1, -1):
-    #                 ta = ans[i]
-    #                 if abs(ta.analysis_timestamp - at) > threshold:
-    #                     return
-    #                 elif ta.project in projects:
-    #                     return True
-    #             # search forwards
-    #             for i in xrange(idx, len(ans), 1):
-    #                 ta = ans[i]
-    #                 if abs(ta.analysis_timestamp - at) > threshold:
-    #                     return
-    #                 elif ta.project in projects:
-    #                     return True
-    #
-    #         for ai in ans:
-    #             if self.use_project_exclusion and ai.project == ('references', 'j-curve'):
-    #                 if test(ai):
-    #                     yield ai
-    #             elif ai.project in projects:
-    #                 yield ai
-    #
-    #     return list(gen())
+    def search_backward(self):
+        def func():
+            self.low_post = self.low_post - timedelta(hours=self.threshold)
+
+        self.search(func)
+
+    def search_forward(self):
+        def func():
+            self.high_post = self.high_post + timedelta(hours=self.threshold)
+
+        self.search(func)
+
+    def search(self, func):
+        uuids = [a.uuid for a in self.analyses]
+        for i in range(10):
+            records = self.dvc.find_references([self.low_post, self.high_post],
+                                               [x.lower().replace(' ', '_') for x in self.analysis_types],
+                                               self.threshold,
+                                               exclude=uuids)
+            func()
+            if records:
+                self.analyses.extend(records)
+                self.setup()
+                break
 
     def _filter_analysis_types(self, ans):
         """
@@ -260,12 +237,32 @@ class GraphicalFilterModel(HasTraits):
         ans = filter(f, ans)
         return ans
 
+    def _toggle_analysis_types_changed(self):
+        if self.toggle_analysis_types:
+            val = self.available_analysis_types
+        else:
+            val = []
+
+        self.trait_set(analysis_types=val)
+
+    @on_trait_change('use_offset_analyses, analysis_types[]')
+    def handle_analysis_types(self):
+        self.setup(set_atypes=False)
 
 class GraphicalFilterView(Controller):
     is_append = Bool
     append_button = Button('Append')
     replace_button = Button('Replace')
     help_str = Str('Select the analyses you want to EXCLUDE')
+
+    search_backward = Button
+    search_forward = Button
+
+    def controller_search_backward_changed(self, info):
+        self.model.search_backward()
+
+    def controller_search_forward_changed(self, info):
+        self.model.search_forward()
 
     def controller_append_button_changed(self, info):
         self.is_append = True
@@ -291,6 +288,9 @@ class GraphicalFilterView(Controller):
         bgrp = HGroup(spring, UItem('controller.append_button'), UItem('controller.replace_button'))
         tgrp = HGroup(UItem('controller.help_str', style='readonly'), show_border=True)
         v = View(VGroup(tgrp,
+                        HGroup(UItem('controller.search_backward'),
+                               spring,
+                               UItem('controller.search_forward')),
                         HGroup(ctrl_grp, UItem('graph', style='custom', width=0.80)),
                         bgrp),
                  title='Graphical Filter',
@@ -298,6 +298,45 @@ class GraphicalFilterView(Controller):
                  resizable=True)
         return v
 
+# ============= EOF =============================================
+
+# def _filter_projects(self, ans):
+#     if not self.projects or not self.use_project_exclusion:
+#         return ans
+#
+#     def gen():
+#         projects = self.projects
+#
+#         def test(aa):
+#             """
+#                 is ai within X hours of an analysis from projects
+#             """
+#             at = aa.analysis_timestamp
+#             threshold = 3600. * self.exclusion_pad
+#             idx = ans.index(aa)
+#             # search backwards
+#             for i in xrange(idx - 1, -1, -1):
+#                 ta = ans[i]
+#                 if abs(ta.analysis_timestamp - at) > threshold:
+#                     return
+#                 elif ta.project in projects:
+#                     return True
+#             # search forwards
+#             for i in xrange(idx, len(ans), 1):
+#                 ta = ans[i]
+#                 if abs(ta.analysis_timestamp - at) > threshold:
+#                     return
+#                 elif ta.project in projects:
+#                     return True
+#
+#         for ai in ans:
+#             if self.use_project_exclusion and ai.project == ('references', 'j-curve'):
+#                 if test(ai):
+#                     yield ai
+#             elif ai.project in projects:
+#                 yield ai
+#
+#     return list(gen())
 # if __name__ == '__main__':
 #     from traits.api import Button
 #
@@ -351,4 +390,3 @@ class GraphicalFilterView(Controller):
 #     # s = g.get_selection()
 #     # for si in s:
 #     # print si, si.analysis_type
-# ============= EOF =============================================

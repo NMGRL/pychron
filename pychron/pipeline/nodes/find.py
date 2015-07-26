@@ -135,7 +135,7 @@ class FindReferencesNode(FindNode):
         times = sorted((ai.rundate for ai in state.unknowns))
 
         atype = self.analysis_type.lower().replace(' ', '_')
-        refs = self.dvc.find_references(times, atype)
+        refs = self.dvc.find_references(times, atype, hours=self.threshold)
         # print 'refs', atype, refs
         if refs:
             # review = self.user_choice
@@ -145,28 +145,32 @@ class FindReferencesNode(FindNode):
             #                                                     '{}'.format(self.name))
             #     if remember:
             #         self.user_choice = review
-            review = True
-            if review:
-                ans = state.unknowns[:]
-                ans.extend(refs)
-                # refs.extend(state.unknowns)
-                model = GraphicalFilterModel(analyses=ans)
-                model.setup()
-                # print self.analysis_type
-                # print model.available_analysis_types
-                model.analysis_types = [self.analysis_type]
+            # review = True
+            # if review:
+            ans = state.unknowns[:]
+            ans.extend(refs)
+            # refs.extend(state.unknowns)
+            model = GraphicalFilterModel(analyses=ans,
+                                         dvc=self.dvc,
+                                         low_post=times[0],
+                                         high_post=times[-1],
+                                         threshold=self.threshold)
+            model.setup()
+            # print self.analysis_type
+            # print model.available_analysis_types
+            model.analysis_types = [self.analysis_type]
 
-                obj = GraphicalFilterView(model=model)
-                info = obj.edit_traits(kind='livemodal')
-                if info.result:
-                    refs = model.get_filtered_selection()
+            obj = GraphicalFilterView(model=model)
+            info = obj.edit_traits(kind='livemodal')
+            if info.result:
+                refs = model.get_filtered_selection()
 
-                    if obj.is_append:
-                        state.references.extend(refs)
-                    else:
-                        state.references = list(refs)
-            else:
-                state.references = refs
+                if obj.is_append:
+                    state.references.extend(refs)
+                else:
+                    state.references = list(refs)
+            # else:
+            #     state.references = refs
 
             state.has_references = True
 

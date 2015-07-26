@@ -121,7 +121,7 @@ class DVCDatabase(DatabaseAdapter):
             change.tag = tagname
             change.user = self.save_username
 
-    def find_references(self, times, atypes, hours=10):
+    def find_references(self, times, atypes, hours=10, exclude=None):
         with self.session_ctx() as sess:
             # delta = 60 * 60 * hours  # seconds
             delta = timedelta(hours=hours)
@@ -130,7 +130,7 @@ class DVCDatabase(DatabaseAdapter):
             for ti in times:
                 low = ti - delta
                 high = ti + delta
-                rs = self.get_analyses_data_range(low, high, atypes, exclude=ex)
+                rs = self.get_analyses_data_range(low, high, atypes, exclude=ex, exclude_uuids=exclude)
                 refs.update(rs)
                 ex = [r.idanalysisTbl for r in refs]
                 # print rs
@@ -138,7 +138,7 @@ class DVCDatabase(DatabaseAdapter):
             # print 'refs', refs
             return [ri.record_view for ri in refs]
 
-    def get_analyses_data_range(self, low, high, atypes, exclude=None):
+    def get_analyses_data_range(self, low, high, atypes, exclude=None, exclude_uuids=None):
         with self.session_ctx() as sess:
             q = sess.query(AnalysisTbl)
             q = q.filter(AnalysisTbl.timestamp >= low.strftime('%Y-%m-%d %H:%M:%S'))
@@ -155,6 +155,9 @@ class DVCDatabase(DatabaseAdapter):
 
             if exclude:
                 q = q.filter(not_(AnalysisTbl.idanalysisTbl.in_(exclude)))
+            if exclude_uuids:
+                q = q.filter(not_(AnalysisTbl.uuid.in_(exclude_uuids)))
+
             return self._query_all(q, verbose_query=False)
 
     def get_production_name(self, irrad, level):
