@@ -18,10 +18,21 @@
 # ============= standard library imports ========================
 from numpy import array
 # ============= local library imports  ==========================
+from uncertainties import std_dev, nominal_value
 from pychron.pipeline.plot.plotter.references_series import ReferencesSeries
 
 
 class ICFactor(ReferencesSeries):
+    def _get_interpolated_value(self, po, analysis):
+        n, d = po.name.split('/')
+        iso = next((i for i in analysis.isotopes if i.detector == d), None)
+        v, e = 0, 0
+        if iso:
+            ic = iso.temporary_ic_factors[d]
+            v, e = nominal_value(ic), std_dev(ic)
+
+        return v, e
+
     def _set_interpolated_values(self, iso, fit, ans, p_uys, p_ues):
         n, d = iso.split('/')
         for ui, v, e in zip(ans, p_uys, p_ues):

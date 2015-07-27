@@ -156,8 +156,7 @@ class FindReferencesNode(FindNode):
                                          high_post=times[-1],
                                          threshold=self.threshold)
             model.setup()
-            # print self.analysis_type
-            # print model.available_analysis_types
+
             model.analysis_types = [self.analysis_type]
 
             obj = GraphicalFilterView(model=model)
@@ -169,10 +168,10 @@ class FindReferencesNode(FindNode):
                     state.references.extend(refs)
                 else:
                     state.references = list(refs)
-            # else:
-            #     state.references = refs
 
-            state.has_references = True
+                state.has_references = True
+            else:
+                state.veto = self
 
     def traits_view(self):
         v = self._view_factory(Item('threshold',

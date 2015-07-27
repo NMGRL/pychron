@@ -218,20 +218,6 @@ class OLSRegressor(BaseRegressor):
 
             return varY_hat[0, 0]
 
-        # def calc_sd(xi):
-        #     varY_hat = calc_hat(xi)
-        #     return sqrt(sef ** 2 + sef ** 2 * varY_hat)
-        #
-        # def calc_sem(xi):
-        #     varY_hat = calc_hat(xi)
-        #     return sef * sqrt(varY_hat)
-        #
-        # mswd=self.mswd
-        # def calc_modified_sem(xi):
-        #     varY_hat = calc_hat(xi)
-        #     m=1 if mswd<=1 else mswd**0.5
-        #     return sef * sqrt(varY_hat)* m
-
         if error_calc == 'SEM':
             def func(xi):
                 varY_hat = calc_hat(xi)

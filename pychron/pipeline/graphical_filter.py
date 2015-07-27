@@ -287,11 +287,12 @@ class GraphicalFilterView(Controller):
                                  show_border=True))
         bgrp = HGroup(spring, UItem('controller.append_button'), UItem('controller.replace_button'))
         tgrp = HGroup(UItem('controller.help_str', style='readonly'), show_border=True)
-        v = View(VGroup(tgrp,
-                        HGroup(UItem('controller.search_backward'),
+        sgrp = HGroup(UItem('controller.search_backward'),
                                spring,
-                               UItem('controller.search_forward')),
-                        HGroup(ctrl_grp, UItem('graph', style='custom', width=0.80)),
+                      UItem('controller.search_forward'))
+        ggrp = VGroup(sgrp, UItem('graph', style='custom'))
+        v = View(VGroup(tgrp,
+                        HGroup(ctrl_grp, ggrp),
                         bgrp),
                  title='Graphical Filter',
                  kind='livemodal',
