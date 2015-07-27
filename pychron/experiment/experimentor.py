@@ -128,9 +128,9 @@ class Experimentor(Loggable):
 
         self.debug('get all runs n={}'.format(len(ans)))
 
-        for qi in self.experiment_queues:
-            aruns = self._get_all_automated_runs([qi])
-            renumber_aliquots(aruns)
+        # for qi in self.experiment_queues:
+            # aruns = self._get_all_automated_runs([qi])
+            # renumber_aliquots(aruns)
 
         self._set_analysis_metadata()
 
@@ -318,6 +318,7 @@ class Experimentor(Loggable):
 
         rf.suppress_update = True
         rf.set_selected_runs(new)
+        rf.suppress_update = False
 
     def _executor_factory(self):
         e = ExperimentExecutor(
