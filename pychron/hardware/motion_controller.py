@@ -96,13 +96,13 @@ class MotionController(CoreDevice):
 
         if timer is None:
             self._not_moving_count = 0
-            timer = Timer(period, func)
+            timer = Timer(period, func, delay=250)
         elif timer.func == func:
             if timer.isActive():
                 self.debug('reusing old timer')
             else:
                 self._not_moving_count = 0
-                timer = Timer(period, func)
+                timer = Timer(period, func, delay=250)
         else:
             timer.stop()
             self._not_moving_count = 0
@@ -248,6 +248,8 @@ class MotionController(CoreDevice):
         # self.debug('moving {}'.format(m))
         if not m:
             self._not_moving_count += 1
+        else:
+            self._not_moving_count = 0
 
         if self._not_moving_count > 1:
             self.debug('not moving')
@@ -258,6 +260,7 @@ class MotionController(CoreDevice):
             self.parent.canvas.clear_desired_position()
             self.update_axes()
         else:
+
             xy = self.get_current_xy()
             if xy:
                 self._validate_xy(*xy)
