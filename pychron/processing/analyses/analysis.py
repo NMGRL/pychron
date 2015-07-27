@@ -25,6 +25,7 @@ from traits.api import Event
 from collections import namedtuple
 # ============= local library imports  ==========================
 from traitsui.handler import Handler
+from uncertainties import ufloat
 from pychron.core.helpers.formatting import format_percent_error, floatfmt
 from pychron.core.helpers.logger_setup import new_logger
 from pychron.envisage.view_util import open_view
@@ -211,6 +212,20 @@ class Analysis(ArArAge):
         self.deflections = []
         self.blank_changes = []
         self.fit_changes = []
+
+    def get_ic_factor(self, det):
+        iso = next((i for i in self.isotopes.itervalues() if i.detector == det), None)
+        if iso:
+            r = iso.ic_factor
+        else:
+            r = ufloat(1, 0)
+
+        # if det in self.ic_factors:
+        # r = self.ic_factors[det]
+        # else:
+        # r = ufloat(1, 1e-20)
+
+        return r
 
     def set_tag(self, tag):
         if isinstance(tag, str):

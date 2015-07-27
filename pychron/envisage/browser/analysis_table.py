@@ -52,9 +52,16 @@ class AnalysisTable(HasTraits):
     tabular_adapter = Instance(AnalysisAdapter)
     append_replace_enabled = Bool(True)
 
-    def set_analyses(self, ans, tc=None, page=None, reset_page=False):
-        self.analyses = ans
-        self.oanalyses = ans
+    def set_analyses(self, ans, tc=None, page=None, reset_page=False, selected_identifiers=None):
+        if selected_identifiers:
+            aa = self.analyses
+            aa = [ai for ai in aa if ai.identifier in selected_identifiers]
+            aa.extend(ans)
+            self.oanalyses = self.analyses = sorted(aa, key=lambda x: (x.identifier, x.aliquot, x.step))
+        else:
+
+            self.analyses = ans
+            self.oanalyses = ans
         self._analysis_filter_parameter_changed(True)
 
     def configure_analysis_table(self):

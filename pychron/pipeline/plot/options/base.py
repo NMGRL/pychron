@@ -28,11 +28,15 @@ import cPickle as pickle
 # ============= local library imports  ==========================
 from pychron.pipeline.options.base import BaseOptions, dumpable
 from pychron.pipeline.plot.options.option import AuxPlotOptions
+from pychron.pychron_constants import FIT_TYPES, FIT_ERROR_TYPES
 
 
 class BasePlotterOptions(BaseOptions):
+    error_types = FIT_ERROR_TYPES
+    fit_types = FIT_TYPES
     auto_refresh = dumpable(Bool, True)
     aux_plots = dumpable(List)
+    selected_aux_plots = List
     # save_required = Event
 
     aux_plot_klass = AuxPlotOptions

@@ -22,6 +22,10 @@ from pychron.pipeline.plot.plotter.references_series import ReferencesSeries
 
 
 class Blanks(ReferencesSeries):
+    def _get_interpolated_value(self, po, analysis):
+        iso = analysis.isotopes[po.name]
+        return iso.temporary_blank.value, iso.temporary_blank.error
+
     def _set_interpolated_values(self, iso, fit, ans, p_uys, p_ues):
         for ui, v, e in zip(ans, p_uys, p_ues):
             if v is not None and e is not None:

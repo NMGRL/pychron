@@ -93,7 +93,8 @@ class PipelineTask(BaseBrowserTask):
         self.engine.select_default()
         # self.engine.set_template('ideogram')
         # self.engine.set_template('gain')
-        self.engine.set_template('series')
+        # self.engine.set_template('series')
+        self.engine.set_template('blanks')
         # self.engine.set_template('flux')
         # self.engine.add_is
         # self.engine.add_grouping(run=False)
@@ -131,8 +132,8 @@ class PipelineTask(BaseBrowserTask):
             self.dvc.rollback_experiment_repo(expid)
 
     def clear(self):
-        self.engine.clear()
         self.reset()
+        self.engine.clear()
         self.close_all()
 
     def reset(self):
@@ -152,6 +153,7 @@ class PipelineTask(BaseBrowserTask):
     # action handlers
     def set_ideogram_template(self):
         self.engine.set_template('ideogram')
+        self.run()
 
     def set_spectrum_template(self):
         self.engine.set_template('spectrum')

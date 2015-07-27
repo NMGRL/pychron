@@ -447,6 +447,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
                            order='asc',
                            low_post=None,
                            high_post=None,
+                           exclude_identifiers=None,
                            exclude_uuids=None,
                            include_invalid=False,
                            mass_spectrometers=None,
@@ -464,6 +465,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
                                                     low_post=low_post,
                                                     high_post=high_post,
                                                     limit=limit,
+                                                    exclude_identifiers=exclude_identifiers,
                                                     exclude_uuids=exclude_uuids,
                                                     include_invalid=include_invalid,
                                                     mass_spectrometers=mass_spectrometers)

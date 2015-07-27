@@ -500,15 +500,5 @@ class SaveableFigurePlotterOptions(FigurePlotterOptions):
     use_plotting = dumpable(Bool(True))
     # confirm_save = dumpable(Bool)
 
-    def _button_grp(self):
-        ogrp = HGroup(Item('use_plotting',
-                           label='Plot Evolutions',
-                           tooltip='(Checked) Plot the isotope evolutions '
-                                   '(Non-checked) Only calculate new fit results. Do not plot'),
-                      Spring(springy=False, width=-30),
-                      # Item('confirm_save', label='Confirm Save', tooltip='Allow user to review evolutions '
-                      #                                                    'before saving to file')
-                      )
-        return ogrp
 
 # ============= EOF =============================================

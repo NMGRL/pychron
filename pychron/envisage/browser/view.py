@@ -15,12 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Instance
+from traits.api import HasTraits, Str, Instance, Button
 from traitsui.api import View, UItem, HGroup, VGroup, Group, spring
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.handler import Handler
-from traitsui.menu import Action
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.browser.adapters import BrowserAdapter
 from pychron.envisage.browser.sample_view import BrowserSampleView
@@ -39,14 +38,13 @@ class AnalysisGroupAdapter(BrowserAdapter):
 
 
 class BrowserViewHandler(Handler):
-    def append_analyses(self, info):
+    def pane_append_button_changed(self, info):
         info.ui.context['pane'].is_append = True
         info.ui.dispose(True)
 
-    def replace_analyses(self, info):
+    def pane_replace_button_changed(self, info):
         info.ui.context['pane'].is_append = False
         info.ui.dispose(True)
-
 
 
 class BrowserView(HasTraits):
@@ -65,6 +63,9 @@ class BrowserView(HasTraits):
 
     model = Instance(HasTraits)
     is_append = False
+
+    append_button = Button('Append')
+    replace_button = Button('Replace')
 
     def trait_context(self):
         """ Use the model object for the Traits UI context, if appropriate.
@@ -89,44 +90,28 @@ class BrowserView(HasTraits):
     def traits_view(self):
         main_grp = self._get_browser_group()
 
-        v = View(
-            VGroup(
-                HGroup(
-                    # icon_button_editor('advanced_query', 'application_form_magnify',
-                    # tooltip='Advanced Query'),
-                    icon_button_editor('filter_by_button',
-                                       'find',
-                                       tooltip='Filter analyses using defined criteria'),
-                    icon_button_editor('graphical_filter_button',
-                                       'chart_curve_go',
-                                       # enabled_when='samples',
-                                       tooltip='Filter analyses graphically'),
-                    icon_button_editor('toggle_view',
-                                       'arrow_switch',
-                                       tooltip='Toggle between Sample and Time views'),
-                    # spring,
-                    # UItem('use_focus_switching',
-                    #       tooltip='Show/Hide Filters on demand'),
-                    # Spring(springy=False, width=10),
-                    # icon_button_editor('toggle_focus',
-                    #                    'arrow_switch',
-                    #                    enabled_when='use_focus_switching',
-                    #                    tooltip='Toggle Filter and Result focus'),
-                    spring,
-                    # UItem('current_task_name', style='readonly'),
-                    CustomLabel('datasource_url', color='maroon'),
-                ),
-                main_grp),
-            # handler=TablesHandler()
-            # handler=UnselectTabularEditorHandler(selected_name='selected_projects')
-            buttons=[Action(name='Append',
-                            action='append_analyses'),
-                     Action(name='Replace',
-                            action='replace_analyses'),
-                     'Cancel'],
-            handler=BrowserViewHandler(),
-            title='Browser',
-            resizable=True)
+        hgrp = HGroup(icon_button_editor('filter_by_button',
+                                         'find',
+                                         tooltip='Filter analyses using defined criteria'),
+                      icon_button_editor('graphical_filter_button',
+                                         'chart_curve_go',
+                                         tooltip='Filter analyses graphically'),
+                      icon_button_editor('toggle_view',
+                                         'arrow_switch',
+                                         tooltip='Toggle between Sample and Time views'),
+                      spring,
+                      CustomLabel('datasource_url', color='maroon'))
+
+        bgrp = HGroup(spring, UItem('pane.append_button'), UItem('pane.replace_button'))
+        v = View(VGroup(hgrp, main_grp, bgrp),
+                 # buttons=['Cancel'],
+                 # Action(name='Append',
+                 #        action='append_analyses'),
+                 # Action(name='Replace',
+                 #        action='replace_analyses')],
+                 handler=BrowserViewHandler(),
+                 title='Browser',
+                 resizable=True)
 
         return v
 
@@ -136,8 +121,4 @@ class BrowserView(HasTraits):
         # def _query_view_default(self):
         # return BrowserQueryView(model=self.model.data_selector, pane=self)
 
-
 # ============= EOF =============================================
-
-
-

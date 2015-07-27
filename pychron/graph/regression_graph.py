@@ -369,7 +369,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
             if line:
                 plow = plot.index_range._low_value
                 phigh = plot.index_range._high_value
-                print plow, phigh
+                # print plow, phigh
                 if hasattr(line, 'regression_bounds') and line.regression_bounds:
                     low, high, first, last = line.regression_bounds
                     if first:

@@ -69,24 +69,9 @@ class PlotterOptionsManager(HasTraits):
         super(PlotterOptionsManager, self).__init__(*args, **kw)
         self._load()
 
-    def _load(self):
-        p = paths.plotter_options
-        if os.path.isfile(p):
-            with open(p, 'r') as rfile:
-                try:
-                    pd = pickle.load(rfile)
-                    self.trait_set(**pd)
-                except (pickle.PickleError, TraitError):
-                    pass
-
-    def _dump(self):
-        with open(paths.plotter_options, 'w') as wfile:
-            d = {'formatting_option': self.formatting_option or NULL_STR,
-                 'use_formatting_options': self.use_formatting_options}
-            try:
-                pickle.dump(d, wfile)
-            except pickle.PickleError:
-                pass
+    def set_names(self, names):
+        for p in self.plotter_options_list:
+            p.set_names(names)
 
     def deinitialize(self):
         if self.plotter_options:
@@ -135,6 +120,26 @@ class PlotterOptionsManager(HasTraits):
         self.plotter_options = next((pi for pi in self.plotter_options_list
                                      if pi.name == name), None)
 
+    # private
+    def _load(self):
+        p = paths.plotter_options
+        if os.path.isfile(p):
+            with open(p, 'r') as rfile:
+                try:
+                    pd = pickle.load(rfile)
+                    self.trait_set(**pd)
+                except (pickle.PickleError, TraitError):
+                    pass
+
+    def _dump(self):
+        with open(paths.plotter_options, 'w') as wfile:
+            d = {'formatting_option': self.formatting_option or NULL_STR,
+                 'use_formatting_options': self.use_formatting_options}
+            try:
+                pickle.dump(d, wfile)
+            except pickle.PickleError:
+                pass
+
     def _factory_default(self):
         """
             read defaults from yaml file
@@ -142,14 +147,29 @@ class PlotterOptionsManager(HasTraits):
         if os.path.isfile(self._defaults_path):
             self.plotter_options.load_factory_defaults(self._defaults_path)
 
-    # ===============================================================================
-    # handlers
-    # ===============================================================================
     def _formatting_option_factory(self):
         p = getattr(paths, '{}_formatting_options'.format(self.formatting_option.lower()))
         fmt = FormattingOptions(p)
         return fmt
 
+    def _plotter_options_changed_hook(self, new):
+        pass
+
+    def _load_selected_po(self):
+        p = os.path.join(self.persistence_root, '{}.default'.format(self.plotter_options_name))
+
+        n = 'Default'
+        if os.path.isfile(p):
+            with open(p, 'r') as rfile:
+                try:
+                    n = pickle.load(rfile)
+                except (pickle.PickleError, EOFError):
+                    n = 'Default'
+        return n
+
+    # ===============================================================================
+    # handlers
+    # ===============================================================================
     def _use_formatting_options_changed(self, new):
         if not new:
             if self.plotter_options:
@@ -172,9 +192,6 @@ class PlotterOptionsManager(HasTraits):
                 fmt = self._formatting_option_factory()
                 new.formatting_options = fmt
             self._plotter_options_changed_hook(new)
-
-    def _plotter_options_changed_hook(self, new):
-        pass
 
     def _factory_default_fired(self):
         self._factory_default()
@@ -259,17 +276,7 @@ class PlotterOptionsManager(HasTraits):
         self._plotter_options_changed(po)
         return po
 
-    def _load_selected_po(self):
-        p = os.path.join(self.persistence_root, '{}.default'.format(self.plotter_options_name))
 
-        n = 'Default'
-        if os.path.isfile(p):
-            with open(p, 'r') as rfile:
-                try:
-                    n = pickle.load(rfile)
-                except (pickle.PickleError, EOFError):
-                    n = 'Default'
-        return n
 
 
 class IdeogramOptionsManager(PlotterOptionsManager):
@@ -325,10 +332,7 @@ class IsotopeEvolutionOptionsManager(PlotterOptionsManager):
     plotter_options_klass = IsotopeEvolutionOptions
     persistence_name = 'iso_evo'
     # _defaults_path = paths.ideogram_defaults
-    def set_names(self, names):
-        for p in self.plotter_options_list:
-            print p
-            p.set_names(names)
+
 
 class ICFactorOptionsManager(PlotterOptionsManager):
     plotter_options_klass = ICFactorOptions

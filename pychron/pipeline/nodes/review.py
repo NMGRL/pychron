@@ -24,11 +24,17 @@ from pychron.pipeline.nodes.base import BaseNode
 class ReviewNode(BaseNode):
     name = 'Review'
     auto_configure = False
+    auto_review = True
 
     def configure(self, pre_run=False, **kw):
         return True
 
     def run(self, state):
-        if confirmation_dialog('Would you like to review before continuing?'):
+        review = True
+        if not self.auto_review:
+            review = confirmation_dialog('Would you like to review before continuing?')
+
+        if review:
             state.veto = self
+
 # ============= EOF =============================================

@@ -89,10 +89,11 @@ class BaseArArFigure(HasTraits):
     def get_update_dict(self):
         return {}
 
-    def build(self, plots):
+    def build(self, plots, plot_dict=None):
         """
             make plots
         """
+
         self._plots = plots
         graph = self.graph
 
@@ -109,6 +110,9 @@ class BaseArArFigure(HasTraits):
             # kw = {'padding': self.padding,
             # 'ytitle': po.name}
             kw = {'ytitle': po.name}
+            if plot_dict:
+                kw.update(plot_dict)
+
             if po.height:
                 kw['bounds'] = [50, po.height]
 

@@ -123,20 +123,6 @@ class DBAnalysis(Analysis):
         get = lambda iso: iso.baseline.uvalue
         return self._get_isotope_dict(get)
 
-    def get_ic_factor(self, det):
-        iso = next((i for i in self.isotopes.itervalues() if i.detector == det), None)
-        if iso:
-            r = iso.ic_factor
-        else:
-            r = ufloat(1, 0)
-
-        # if det in self.ic_factors:
-        # r = self.ic_factors[det]
-        # else:
-        # r = ufloat(1, 1e-20)
-
-        return r
-
     def get_db_fit(self, meas_analysis, name, kind, selected_histories):
         try:
             if selected_histories is None:

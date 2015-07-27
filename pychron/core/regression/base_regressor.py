@@ -275,11 +275,12 @@ class BaseRegressor(HasTraits):
             xm = x.mean()
 
             ti = tinv(alpha, n - 1)
-
             syx = self.get_syx()
             ssx = self.get_ssx(xm)
             d = n ** -1 + (rx - xm) ** 2 / ssx
             cors = ti * syx * d ** 0.5
+
+            # print rx, cors[0]
 
             return cors
 

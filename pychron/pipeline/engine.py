@@ -40,6 +40,7 @@ from pychron.pipeline.template import PipelineTemplate
 TEMPLATE_NAMES = ('Iso Evo', 'Icfactor', 'Blanks', 'Flux', 'Ideogram', 'Spectrum',
                   'Isochron', 'Series', 'Table')
 
+
 class Pipeline(HasTraits):
     name = Str('Pipeline')
     nodes = List
@@ -227,9 +228,13 @@ class PipelineEngine(Loggable):
     def clear(self):
         self.unknowns = []
         self.references = []
-        self.pipeline.nodes = []
-        self.selected_pipeline_template = ''
-        # self._set_template(self.selected_pipeline_template)
+        for ni in self.pipeline.nodes:
+            ni.clear_data()
+
+            # self.pipeline.nodes = []
+            # self.selected_pipeline_template = ''
+            # self._set_template(self.selected_pipeline_template)
+
     # ============================================================================================================
     # nodes
     # ============================================================================================================
@@ -413,7 +418,6 @@ class PipelineEngine(Loggable):
         for node in self.pipeline.nodes:
             if hasattr(node, 'editor'):
                 if node.editor == editor:
-
                     self.selected = node
                     # self.unknowns = editor.analyses
                     self.refresh_table_needed = True
@@ -493,10 +497,14 @@ class PipelineEngine(Loggable):
         if old:
             old.on_trait_change(self._handle_tag, 'unknowns:tag_event,references:tag_event', remove=True)
             old.on_trait_change(self._handle_invalid, 'unknowns:invalid_event,references:invalid_event', remove=True)
+            old.on_trait_change(self._handle_len_unknowns, 'unknowns_items', remove=True)
+            old.on_trait_change(self._handle_len_references, 'references_items', remove=True)
 
         if new:
             new.on_trait_change(self._handle_tag, 'unknowns:tag_event,references:tag_event')
             new.on_trait_change(self._handle_invalid, 'unknowns:invalid_event,references:invalid_event')
+            new.on_trait_change(self._handle_len_unknowns, 'unknowns_items')
+            new.on_trait_change(self._handle_len_references, 'references_items')
             # new.on_trait_change(self._handle_unknowns, 'unknowns[]')
 
         # self.show_group_colors = False
@@ -521,6 +529,42 @@ class PipelineEngine(Loggable):
     #
     #     self._suppress_handle_unknowns = False
     #     print 'asdfasdfasfsafs', obj, new
+
+    _len_unknowns_cnt = 0
+    _len_unknowns_removed = 0
+    _len_references_cnt = 0
+    _len_references_removed = 0
+
+    def _handle_len_unknowns(self, new):
+        self._handle_len('unknowns', lambda e: e.set_items(self.selected.unknowns))
+
+    def _handle_len_references(self, new):
+        self._handle_len('references', lambda e: e.set_references(self.selected.references))
+
+    def _handle_len(self, k, func):
+        lr = '_len_{}_removed'.format(k)
+        lc = '_len_{}_cnt'.format(k)
+
+        editor = None
+        if hasattr(self.selected, 'editor'):
+            editor = self.selected.editor
+
+        if editor:
+            n = len(getattr(self, 'selected_{}'.format(k)))
+            if not n:
+                setattr(self, lc, getattr(self, lc) + 1)
+
+            else:
+                setattr(self, lc, 0)
+                setattr(self, lr, n)
+
+            if getattr(self, lc) >= getattr(self, lr) or n == 1:
+                setattr(self, lc, 0)
+                # self._len_references_cnt = 0
+                func(editor)
+                # editor.set_references(self.selected.references)
+                editor.refresh_needed = True
+
 
     def _handle_tag(self, new):
         self.tag_event = new
