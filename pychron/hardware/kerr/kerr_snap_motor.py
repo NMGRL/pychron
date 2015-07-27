@@ -58,9 +58,9 @@ class KerrSnapMotor(KerrMotor):
         """
         flip_nibbles = True
 
-        p = (1900, 4, flip_nibbles)
-        d = (1000, 4, flip_nibbles)
-        i = (100, 4, flip_nibbles)
+        p = (10000, 4, flip_nibbles)
+        d = (30000, 4, flip_nibbles)
+        i = (0, 4, flip_nibbles)
         il = (4000, 4, flip_nibbles)
         ol = (255, 2)
         cl = (0, 2)

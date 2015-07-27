@@ -441,9 +441,9 @@ class KerrMotor(KerrDevice, ConsumerMixin):
 
     def _test_status_byte(self, status, setbits):
         b = '{:08b}'.format(int(status[:2], 16))
-        print b
-        # status_register = map(int, make_bitarray(int(status_byte[:2], 16)))
-        return all(bool(int(b[7 - si])) for si in setbits)
+        bb = [bool(int(b[7-si])) for si in setbits]
+
+        return all(bb)
 
     def _home_motor2(self, progress=None, *args, **kw):
         """
