@@ -99,6 +99,13 @@ class IsochronAction(PlotAction):
     # image = icon('histogram')
 
 
+class SeriesAction(PlotAction):
+    name = 'Series'
+    dname = 'Series'
+    action = 'set_series_template'
+    id = 'pychron.series'
+
+
 # ============= tag =============================================
 class TagAction(TaskAction):
     name = 'Tag...'

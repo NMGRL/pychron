@@ -28,7 +28,8 @@ from pyface.tasks.action.schema_addition import SchemaAddition
 from pychron.core.helpers.filetools import add_extension
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.paths import paths
-from pychron.pipeline.tasks.actions import ConfigureRecallAction, IdeogramAction, IsochronAction, SpectrumAction
+from pychron.pipeline.tasks.actions import ConfigureRecallAction, IdeogramAction, IsochronAction, SpectrumAction, \
+    SeriesAction
 from pychron.pipeline.tasks.browser_task import BrowserTask
 from pychron.pipeline.tasks.preferences import PipelinePreferencesPane
 from pychron.pipeline.tasks.task import PipelineTask
@@ -93,7 +94,10 @@ class PipelinePlugin(BaseTaskPlugin):
                             SchemaAddition(factory=SpectrumAction,
                                            path='MenuBar/data.menu/plot.group'),
                             SchemaAddition(factory=IsochronAction,
-                                           path='MenuBar/data.menu/plot.group')]
+                                           path='MenuBar/data.menu/plot.group'),
+                            SchemaAddition(factory=SeriesAction,
+                                           path='MenuBar/data.menu/plot.group'),
+                            ]
 
         return [TaskExtension(task_id='pychron.pipeline.task',
                               actions=[SchemaAddition(factory=ConfigureRecallAction,
