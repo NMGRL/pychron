@@ -47,7 +47,7 @@ class BrowserViewHandler(Handler):
         info.ui.dispose(True)
 
 
-class BrowserView(HasTraits):
+class BaseBrowserView(HasTraits):
     name = 'Browser'
     id = 'pychron.browser'
     multi_select = True
@@ -62,10 +62,6 @@ class BrowserView(HasTraits):
     time_view = Instance(TimeViewModel)
 
     model = Instance(HasTraits)
-    is_append = False
-
-    append_button = Button('Append')
-    replace_button = Button('Replace')
 
     def trait_context(self):
         """ Use the model object for the Traits UI context, if appropriate.
@@ -86,6 +82,43 @@ class BrowserView(HasTraits):
                     # visible_when='not sample_view_active')
                     )
         return grp
+
+    def _sample_view_default(self):
+        return BrowserSampleView(model=self.model, pane=self)
+
+        # def _query_view_default(self):
+        # return BrowserQueryView(model=self.model.data_selector, pane=self)
+
+
+class StandaloneBrowserView(BaseBrowserView):
+    def traits_view(self):
+        main_grp = self._get_browser_group()
+
+        hgrp = HGroup(icon_button_editor('filter_by_button',
+                                         'find',
+                                         tooltip='Filter analyses using defined criteria'),
+                      icon_button_editor('graphical_filter_button',
+                                         'chart_curve_go',
+                                         tooltip='Filter analyses graphically'),
+                      icon_button_editor('toggle_view',
+                                         'arrow_switch',
+                                         tooltip='Toggle between Sample and Time views'),
+                      spring,
+                      CustomLabel('datasource_url', color='maroon'))
+
+        v = View(VGroup(hgrp, main_grp),
+                 buttons=['OK', 'Cancel'],
+                 title='Browser',
+                 resizable=True)
+
+        return v
+
+
+class BrowserView(BaseBrowserView):
+    is_append = False
+
+    append_button = Button('Append')
+    replace_button = Button('Replace')
 
     def traits_view(self):
         main_grp = self._get_browser_group()
@@ -114,11 +147,4 @@ class BrowserView(HasTraits):
                  resizable=True)
 
         return v
-
-    def _sample_view_default(self):
-        return BrowserSampleView(model=self.model, pane=self)
-
-        # def _query_view_default(self):
-        # return BrowserQueryView(model=self.model.data_selector, pane=self)
-
 # ============= EOF =============================================

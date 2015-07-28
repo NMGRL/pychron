@@ -146,6 +146,7 @@ class Analysis(ArArAge):
     labnumber = ''
     aliquot = 0
     step = ''
+    increment = 0
     aliquot_step_str = ''
     sample = ''
     material = ''

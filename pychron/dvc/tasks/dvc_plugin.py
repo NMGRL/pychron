@@ -17,10 +17,13 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.task_factory import TaskFactory
+from pyface.tasks.action.schema_addition import SchemaAddition
 
 from pychron.dvc.dvc import DVC
 from pychron.dvc.dvc_persister import DVCPersister
+from pychron.dvc.tasks.actions import PullAnalysesAction
 from pychron.dvc.tasks.preferences import DVCPreferencesPane, DVCDBConnectionPreferencesPane
 from pychron.dvc.tasks.repo_task import ExperimentRepoTask
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
@@ -99,4 +102,7 @@ class DVCPlugin(BaseTaskPlugin):
         #         repo.add(db.path, commit=False)
         #         repo.commit('added {}'.format(db.path))
 
+    def _task_extensions_default(self):
+        return [TaskExtension(actions=[SchemaAddition(factory=PullAnalysesAction,
+                                                      path='MenuBar/data.menu')]), ]
 # ============= EOF =============================================
