@@ -53,8 +53,9 @@ class PipelineTemplate(HasTraits):
         pipeline.nodes = []
         with open(self.path, 'r') as rfile:
             nodes = yaml.load(rfile)
-
+        print 'fafa', nodes
         for i, ni in enumerate(nodes):
+            print i, ni
             klass = ni['klass']
             if i == 0 and klass == 'UnknownNode':
                 pipeline.nodes.append(datanode)

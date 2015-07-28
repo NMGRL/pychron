@@ -382,8 +382,6 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                 fx = linspace(low, high, 100)
                 fy = r.predict(fx)
 
-                # fy = r._result.fittedvalues
-                # fx = r._result.model.exog[::,1]
                 line.regressor = r
 
                 try:
@@ -401,7 +399,6 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                     # line.error_envelope2.lower = ly
                     # line.error_envelope2.upper = uy
                     # line.error_envelope2.invalidate()
-
                     ci = r.calculate_error_envelope(fx, fy)
                     # ci = r.calculate_ci(fx, fy)
                     #                 print ci
@@ -409,17 +406,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                         ly, uy = ci
                     else:
                         ly, uy = fy, fy
-                    # print 'bbb', ly
-                    # not_ok=False
-                    # if isinstance(r, LeastSquaresRegressor):
-                    #     try:
-                    #         (uy-ly).sum()
-                    #     except OverflowError:
-                    #         not_ok = True
-                    #
-                    # if not_ok:
-                    #     line.error_envelope.visible=False
-                    # else:
+
                     line.error_envelope.lower = ly
                     line.error_envelope.upper = uy
                     line.error_envelope.invalidate()

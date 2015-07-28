@@ -24,7 +24,6 @@ from itertools import groupby
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import list_gits
 from pychron.dvc.dvc import experiment_has_staged, push_experiments
-from pychron.globals import globalv
 from pychron.paths import paths
 from pychron.pipeline.engine import PipelineEngine
 from pychron.pipeline.plot.editors.interpreted_age_editor import InterpretedAgeEditor
@@ -157,9 +156,16 @@ class PipelineTask(BaseBrowserTask):
 
     def set_spectrum_template(self):
         self.engine.set_template('spectrum')
+        self.run()
 
     def set_isochron_template(self):
         self.engine.set_template('isochron')
+        self.run()
+
+    def set_series_template(self):
+        print 'set series template'
+        self.engine.set_template('series')
+        self.run()
 
     # private
     def _add_interpreted_ages(self, ias):
@@ -276,10 +282,10 @@ class PipelineTask(BaseBrowserTask):
 
         return ret
 
-    def _opened_hook(self):
-        super(PipelineTask, self)._opened_hook()
-        if globalv.pipeline_debug:
-            self._debug()
+    # def _opened_hook(self):
+    #     super(PipelineTask, self)._opened_hook()
+    #     if globalv.pipeline_debug:
+    #         self._debug()
 
     def set_tag(self, tag=None, items=None, use_filter=True, warn=False):
         """

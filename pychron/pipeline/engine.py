@@ -425,6 +425,7 @@ class PipelineEngine(Loggable):
 
     # private
     def _set_template(self, name):
+        print 'set template', name
         name = name.replace(' ', '_').lower()
 
         path = os.path.join(paths.pipeline_template_dir, add_extension(name, '.yaml'))

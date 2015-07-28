@@ -142,11 +142,11 @@ class Paths(object):
     experiment_dataset_dir = None
     project_dir = None
     meta_dir = None
-    meta_db = None
-    meta_txtdb = None
     dvc_dir = None
     device_scan_dir = None
     isotope_dir = None
+
+    index_db = None
     # vcs_dir = None
     # initialization_dir = None
     # device_creator_dir = None
@@ -339,6 +339,8 @@ class Paths(object):
         # self.project_dir = join(self.dvc_dir, 'projects')
         self.experiment_dataset_dir = join(self.dvc_dir, 'experiments')
         self.meta_dir = join(self.dvc_dir, 'meta')
+        self.index_db = join(self.dvc_dir, 'index.db')
+
         # self.meta_db = join(self.meta_dir, 'pychronmeta.sqlite')
         # self.meta_txtdb = join(self.meta_dir, 'pychronmeta.txtdb')
         # self.vcs_dir = join(self.data_dir, 'vcs')
