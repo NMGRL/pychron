@@ -139,6 +139,7 @@ class PipelineEngine(Loggable):
 
     tag_event = Event
     invalid_event = Event
+    recall_event = Event
 
     def __init__(self, *args, **kw):
         super(PipelineEngine, self).__init__(*args, **kw)
@@ -498,12 +499,14 @@ class PipelineEngine(Loggable):
         if old:
             old.on_trait_change(self._handle_tag, 'unknowns:tag_event,references:tag_event', remove=True)
             old.on_trait_change(self._handle_invalid, 'unknowns:invalid_event,references:invalid_event', remove=True)
+            old.on_trait_change(self._handle_recall, 'unknowns:recall_event,references:recall_event', remove=True)
             old.on_trait_change(self._handle_len_unknowns, 'unknowns_items', remove=True)
             old.on_trait_change(self._handle_len_references, 'references_items', remove=True)
 
         if new:
             new.on_trait_change(self._handle_tag, 'unknowns:tag_event,references:tag_event')
             new.on_trait_change(self._handle_invalid, 'unknowns:invalid_event,references:invalid_event')
+            old.on_trait_change(self._handle_recall, 'unknowns:recall_event,references:recall_event')
             new.on_trait_change(self._handle_len_unknowns, 'unknowns_items')
             new.on_trait_change(self._handle_len_references, 'references_items')
             # new.on_trait_change(self._handle_unknowns, 'unknowns[]')
@@ -566,6 +569,8 @@ class PipelineEngine(Loggable):
                 # editor.set_references(self.selected.references)
                 editor.refresh_needed = True
 
+    def _handle_recall(self, new):
+        self.recall_event = new
 
     def _handle_tag(self, new):
         self.tag_event = new

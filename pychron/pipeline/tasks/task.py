@@ -248,15 +248,15 @@ class PipelineTask(BaseBrowserTask):
     def _handle_save_needed(self):
         self.engine.run_persist(self._temp_state)
 
-    @on_trait_change('engine:[tag_event, invalid_event]')
+    @on_trait_change('engine:[tag_event, invalid_event, recall_event]')
     def _handle_analysis_tagging(self, name, new):
-        print name, new
         if name == 'tag_event':
             self.set_tag(items=new)
         elif name == 'invalid_event':
             from pychron.processing.tagging.analysis_tags import Tag
-
             self.set_tag(tag=Tag(name='invalid'), items=new, warn=True)
+        elif name == 'recall_event':
+            self.recall(new)
 
     @on_trait_change('engine:run_needed')
     def _handle_run_needed(self, new):
@@ -317,7 +317,7 @@ class PipelineTask(BaseBrowserTask):
             if name and items:
                 dvc = self.dvc
                 db = dvc.db
-                key = lambda x: x.experiment_id
+                key = lambda x: x.experiment_identifier
 
                 for expid, ans in groupby(sorted(items, key=key), key=key):
                     # repo = dvc.get_experiment_repo(expid)

@@ -258,8 +258,11 @@ class Analysis(ArArAge):
 
             return g
 
-    def trigger_recall(self):
-        pass
+    def trigger_recall(self, analyses=None):
+        if analyses is None:
+            analyses = [self, ]
+
+        self.recall_event = analyses
 
     def trigger_tag(self, analyses=None):
         if analyses is None:

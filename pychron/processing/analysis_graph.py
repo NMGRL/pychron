@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Event
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -25,34 +24,35 @@ from pychron.graph.stacked_regression_graph import StackedRegressionGraph
 
 
 class AnalysisGraph(Graph):
-    tag = Event
-    save_db_figure = Event
-    invalid = Event
+    pass
+    # tag = Event
+    # save_db_figure = Event
+    # invalid = Event
 
-    def get_contextual_menu_save_actions(self):
-        s = super(AnalysisGraph, self).get_contextual_menu_save_actions()
-        s.extend([('Database', '_save_to_database', {})])
-        return s
-
-    def get_child_context_menu_actions(self):
-        return [self.action_factory('Set tag', '_set_tag'),
-                self.action_factory('Set INVALID', '_set_invalid')]
-
-    def _save_to_database(self):
-        print 'save to database'
-        self.save_db_figure = True
-
-    def _set_tag(self):
-        """
-        open the tag dialog
-        :return:
-        """
-        print 'set tag'
-        self.tag = True
-
-    def _set_invalid(self):
-        print 'set invalid'
-        self.invalid = True
+    # def get_contextual_menu_save_actions(self):
+    #     s = super(AnalysisGraph, self).get_contextual_menu_save_actions()
+    #     s.extend([('Database', '_save_to_database', {})])
+    #     return s
+    #
+    # def get_child_context_menu_actions(self):
+    #     return [self.action_factory('Set tag', '_set_tag'),
+    #             self.action_factory('Set INVALID', '_set_invalid')]
+    #
+    # def _save_to_database(self):
+    #     print 'save to database'
+    #     self.save_db_figure = True
+    #
+    # def _set_tag(self):
+    #     """
+    #     open the tag dialog
+    #     :return:
+    #     """
+    #     print 'set tag'
+    #     self.tag = True
+    #
+    # def _set_invalid(self):
+    #     print 'set invalid'
+    #     self.invalid = True
 
 
 class AnalysisStackedGraph(AnalysisGraph, StackedGraph):
