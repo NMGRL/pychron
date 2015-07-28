@@ -25,10 +25,10 @@ from pychron.pipeline.plot.plotter.references_series import ReferencesSeries
 class ICFactor(ReferencesSeries):
     def _get_interpolated_value(self, po, analysis):
         n, d = po.name.split('/')
-        iso = next((i for i in analysis.isotopes if i.detector == d), None)
+        #iso = next((i for i in analysis.isotopes.itervalues() if i.detector == d), None)
         v, e = 0, 0
-        if iso:
-            ic = iso.temporary_ic_factors[d]
+        if d in analysis.temporary_ic_factors:
+            ic = analysis.temporary_ic_factors[d]
             v, e = nominal_value(ic), std_dev(ic)
 
         return v, e

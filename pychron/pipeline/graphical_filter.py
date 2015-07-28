@@ -232,7 +232,7 @@ class GraphicalFilterModel(HasTraits):
             only use analyses with analysis_type in self.analyses_types
         """
 
-        ats = map(lambda x: x.lower().replace(' ', '_'), map(str.lower, self.analysis_types))
+        ats = map(lambda x: x.lower().replace(' ', '_'), map(str, self.analysis_types))
         f = lambda x: x.analysis_type.lower() in ats
         ans = filter(f, ans)
         return ans
@@ -276,15 +276,15 @@ class GraphicalFilterView(Controller):
         egrp = HGroup(UItem('use_project_exclusion'),
                                  Item('exclusion_pad',
                                       enabled_when='use_project_exclusion')),
-        ctrl_grp = VGroup(HGroup(Item('use_offset_analyses', label='Use Offset')),
-                          VGroup(HGroup(Item('toggle_analysis_types', label='Toggle')),
-                                 UItem('analysis_types',
-                                       tooltip='Only select these types of analyses',
-                                       style='custom',
-                                       editor=CheckListEditor(cols=1,
-                                                              name='available_analysis_types')),
-                                 label='Analysis Types',
-                                 show_border=True))
+        ctrl_grp = VGroup(HGroup(Item('use_offset_analyses', label='Use Offset')))
+                          #VGroup(HGroup(Item('toggle_analysis_types', label='Toggle')),
+                          #       UItem('analysis_types',
+                          #             tooltip='Only select these types of analyses',
+                          #             style='custom',
+                          #             editor=CheckListEditor(cols=1,
+                          #                                    name='available_analysis_types')),
+                          #       label='Analysis Types',
+                          #       show_border=True))
         bgrp = HGroup(spring, UItem('controller.append_button'), UItem('controller.replace_button'))
         tgrp = HGroup(UItem('controller.help_str', style='readonly'), show_border=True)
         sgrp = HGroup(UItem('controller.search_backward'),
