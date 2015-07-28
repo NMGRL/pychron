@@ -140,7 +140,7 @@ ABLE TO USE THE HARDWARE JOYSTICK
     def get_current_xy(self):
         x, y = None, None
         if self.mode == 'grouped':
-            f = self.ask('{}HP'.format(self.groupobj.id))
+            f = self.ask('{}HP'.format(self.groupobj.id), verbose=True)
             # cmd = '{}TP?;{}TP?'.format(self.axes['x'].id, self.axes['y'].id)
             # f = self.ask(cmd, verbose=True)
             # args = f.split(',')[:2]
@@ -707,9 +707,7 @@ ABLE TO USE THE HARDWARE JOYSTICK
         if block:
             block = key
 
-        if update:
-            self.timer = self.timer_factory(func=func, period=update)
-        else:
+        if not update:
             if mode == 'absolute':
                 if x is not None and y is not None:
                     self.parent.canvas.set_stage_position(x, y)
@@ -720,7 +718,7 @@ ABLE TO USE THE HARDWARE JOYSTICK
         self.debug('command={} block={}. kw={}'.format(cmd, block, kw))
 
         # setattr(self, '_{}_position'.format(key), value)
-        self._axis_move(cmd, block=block, **kw)
+        self._axis_move(cmd, block=block, update=(func, update), **kw)
 
     def _check_motion_parameters(self, displacement, obj, force=False):
         self.debug('checking motion parameters')
@@ -786,7 +784,7 @@ ABLE TO USE THE HARDWARE JOYSTICK
     def start_timer(self):
         self.timer = self.timer_factory()
 
-    def _axis_move(self, com, block=False, verbose=True, **kw):
+    def _axis_move(self, com, block=False, update=None, verbose=True, **kw):
         """
         """
 
@@ -796,6 +794,10 @@ ABLE TO USE THE HARDWARE JOYSTICK
             for c in com.split(';'):
                 self.tell(c)
                 time.sleep(0.1)
+        if update:
+            func, update = update
+            if update:
+                self.timer = self.timer_factory(func=func, period=update)
 
         if block:
             self.debug('blocking {}'.format(block))
