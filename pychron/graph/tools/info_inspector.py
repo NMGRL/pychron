@@ -19,6 +19,8 @@ from traits.api import Event, Instance
 from chaco.abstract_overlay import AbstractOverlay
 from enable.base_tool import BaseTool
 from kiva.fonttools import Font
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -30,7 +32,7 @@ def intersperse(m, delim):
          result=[1,'---',2,'---',3]
 
     """
-    m=iter(m)
+    m = iter(m)
     yield next(m)
     for x in m:
         yield delim
@@ -67,8 +69,10 @@ class InfoInspector(BaseTool):
         self.metadata_changed = True
         event.window.set_pointer('arrow')
 
-    def normal_mouse_enter(self, event):
-        event.window.set_pointer('arrow')
+        # def normal_mouse_enter(self, event):
+        #     print self, event
+        #     event.window.set_pointer('arrow')
+
 
 class InfoOverlay(AbstractOverlay):
     """
@@ -105,7 +109,7 @@ class InfoOverlay(AbstractOverlay):
         lws, lhs = zip(*[gc.get_full_text_extent(mi)[:2] for mi in lines])
 
         rect_width = max(lws) + 4
-        rect_height = (max(lhs)+2) * len(lhs)
+        rect_height = (max(lhs) + 2) * len(lhs)
 
         xoffset = 15
         yoffset = -15
@@ -127,12 +131,12 @@ class InfoOverlay(AbstractOverlay):
         if x < sx:
             x = sx - rect_width - xoffset - 6
 
-        gc.translate_ctm(x, y-rect_height)
-        gc.rect(0, -2, rect_width, rect_height+4)
+        gc.translate_ctm(x, y - rect_height)
+        gc.rect(0, -2, rect_width, rect_height + 4)
         gc.draw_path()
         gc.set_fill_color((0, 0, 0))
 
-        h = max(lhs)+2
+        h = max(lhs) + 2
 
         # this is cause the pointer to change to an IBeam if the cursor is close the the box
         # increase offsets? as a hack

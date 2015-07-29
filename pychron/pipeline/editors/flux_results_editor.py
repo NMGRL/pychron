@@ -30,6 +30,7 @@ from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 from pychron.graph.contour_graph import ContourGraph
 from pychron.graph.error_bar_overlay import ErrorBarOverlay
+from pychron.graph.error_envelope_overlay import ErrorEnvelopeOverlay
 from pychron.graph.graph import Graph
 from pychron.graph.tools.analysis_inspector import AnalysisPointInspector
 from pychron.pipeline.editors.irradiation_tray_overlay import IrradiationTrayOverlay
@@ -43,11 +44,11 @@ def make_grid(r, n):
     return meshgrid(xi, yi)
 
 
-def add_inspector(scatter):
+def add_inspector(scatter, func):
     from pychron.graph.tools.point_inspector import PointInspector
     from pychron.graph.tools.point_inspector import PointInspectorOverlay
 
-    point_inspector = PointInspector(scatter)
+    point_inspector = PointInspector(scatter, additional_info=func)
     pinspector_overlay = PointInspectorOverlay(component=scatter,
                                                tool=point_inspector)
 
@@ -274,6 +275,11 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
                          marker_size=self.marker_size)
         self.cmap_scatter = s[0]
 
+    def _additional_info(self, ind):
+        fm = self.monitor_positions[ind]
+        return ['Pos: {}'.format(fm.hole_id),
+                'Identifier: {}'.format(fm.identifier)]
+
     def _graph_hole_vs_j(self, x, y, r, reg, refresh):
 
         sel = [i for i, a in enumerate(self.analyses) if a.is_omitted()]
@@ -296,6 +302,11 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
 
         fys = reg.predict(pts)
         yserr = reg.yserr
+        l, u = reg.calculate_error_envelope([[p] for p in pts], rmodel=fys)
+
+        lyy = ys - yserr
+        uyy = ys + yserr
+
         if not refresh:
             g.clear()
             p = g.new_plot(xtitle='Hole (Theta)',
@@ -313,38 +324,47 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
             ebo = ErrorBarOverlay(component=scatter,
                                   orientation='y')
             scatter.overlays.append(ebo)
-            add_inspector(scatter)
-            g.new_series(fxs, fys)
+            scatter.error_bars = ebo
+
+            add_inspector(scatter, self._additional_info)
+            line, _p = g.new_series(fxs, fys)
+
+            ee = ErrorEnvelopeOverlay(component=line,
+                                      xs=fxs, lower=l, upper=u)
+            line.error_envelope = ee
+            line.overlays.append(ee)
 
             # plot the individual analyses
             s, iys = self._graph_individual_analyses()
             s.index.metadata['selections'] = sel
             # s.index.metadata_changed = True
 
-            ymi = min(ys.min(), min(iys))
-            yma = min(ys.max(), max(iys))
-
+            ymi = min(lyy.min(), min(iys))
+            yma = max(uyy.max(), max(iys))
             g.set_x_limits(-3.2, 3.2)
-            g.set_y_limits(ymi, yma, pad='0.1')
 
         else:
             plot = g.plots[0]
 
             s1 = plot.plots['plot0'][0]
             s1.yerror.set_data(yserr)
+            s1.error_bars.invalidate()
 
-            ebo = next((o for o in s1.overlays if isinstance(o, ErrorBarOverlay)), None)
-            if ebo:
-                ebo.invalidate()
+            l1 = plot.plots['plot1'][0]
+            l1.error_envelope.trait_set(xs=fxs, lower=l, upper=u)
+            l1.error_envelope.invalidate()
 
             g.set_data(ys, plotid=0, series=0, axis=1)
             g.set_data(fys, plotid=0, series=1, axis=1)
+
             s2 = plot.plots['plot2'][0]
+            iys = s2.value.get_data()
+            ymi = min(fys.min(), lyy.min(), iys.min())
+            yma = max(fys.max(), uyy.max(), iys.max())
 
             s2.index.metadata['selections'] = sel
-            # s2.index.metadata = {'selections': sel}
-            # s2.index.metadata_changed = True
 
+        g.set_y_limits(ymi, yma, pad='0.1')
         self._model_sin_flux(fxs, fys)
 
     def _graph_individual_analyses(self):
@@ -385,24 +405,23 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
         sel = self._filter_metadata_changes(obj, self._recalculate_means, self.analyses)
 
     def _recalculate_means(self, sel):
-        # print sel
-        # if sel:
-
-        # pos = next((p for p in self.monitor_positions if p.identifier==sel[0].identifier), None)
-        # if pos:
-        #     pos.set_mean_j()
         identifier = None
         if sel:
-            ai = self.analyses[sel[0]]
-            identifier = ai.identifier
+            idx = {self.analyses[si].identifier for si in sel}
+        else:
+            idx = [None]
 
-        for p in self.monitor_positions:
-            if p.was_altered:
-                p.set_mean_j()
-                p.was_altered = False
-            elif p.identifier == identifier:
-                p.set_mean_j()
-                p.was_altered = True
+        for identifier in idx:
+            # self.debug('sel:{} idx:{}'.format(sel, idx))
+            for p in self.monitor_positions:
+                if p.identifier == identifier:
+                    # self.debug('recalculate position {} {}, {}'.format(sel, p.hole_id, p.identifier))
+                    p.set_mean_j()
+                    p.was_altered = True
+                elif p.was_altered:
+                    # self.debug('was altered recalculate position {} {}, {}'.format(sel, p.hole_id, p.identifier))
+                    p.set_mean_j()
+                    p.was_altered = False
 
         self.predict_values(refresh=True)
 

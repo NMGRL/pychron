@@ -20,11 +20,12 @@ from traits.api import Callable
 from numpy import where, vstack, zeros_like
 # ============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
-from pychron.graph.tools.info_inspector import InfoInspector, InfoOverlay, intersperse
+from pychron.graph.tools.info_inspector import InfoInspector, InfoOverlay
 
 
 class PointInspector(InfoInspector):
     convert_index = Callable
+    additional_info = Callable
 
     def get_selected_index(self):
         xxyy = self.component.hittest(self.current_position)
@@ -78,8 +79,16 @@ class PointInspector(InfoInspector):
                         x = comp.display_index.get_data()[i]
                         lines.append(u'{}'.format(x))
 
-            delim_n = max([len(li) for li in lines])
-            return intersperse(lines, '-' * delim_n)
+                    if self.additional_info is not None:
+                        ad = self.additional_info(i)
+                        if isinstance(ad, (list, tuple)):
+                            lines.extend(ad)
+                        else:
+                            lines.append(ad)
+
+            return lines
+            # delim_n = max([len(li) for li in lines])
+            # return intersperse(lines, '-' * delim_n)
         else:
             return []
 
