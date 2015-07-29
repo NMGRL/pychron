@@ -84,6 +84,7 @@ class FindFluxMonitorsNode(FindNode):
                                                             ip.j, ip.j_err) for ip in ips]
 
                 ans = dvc.get_flux_monitor_analyses(self.irradiation, self.level, self.monitor_sample_name)
+
                 monitors = self.dvc.make_analyses(ans, calculate_f_only=False)
 
             state.unknowns = monitors

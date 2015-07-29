@@ -360,10 +360,10 @@ class PipelineTask(BaseBrowserTask):
 
     def _get_selection(self):
         items = None
-        unks = self.engine.unknowns
-        if self.engine.unknowns:
+        unks = self.engine.selected_unknowns
+        if unks:
             if not items:
-                items = self.engine.selected_unknowns
+                items = unks
 
             if not items:
                 items = [i for i in unks if i.is_temp_omitted()]

@@ -233,12 +233,13 @@ class Analysis(ArArAge):
             self.tag = tag
             omit = tag == 'invalid'
         else:
-            name = tag.name
+            name = tag['name']
             self.tag = name
 
             omit = name == 'omit'
             for a in OMIT_KEYS:
-                v = getattr(tag, a)
+                v = tag[a]
+                # v = getattr(tag, a)
                 setattr(self, a, v)
                 if v:
                     omit = True

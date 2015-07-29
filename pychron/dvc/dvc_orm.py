@@ -147,8 +147,8 @@ class AnalysisTbl(Base, BaseMixin):
         return self.irradiation_position.position
 
     @property
-    def tag(self):
-        return self.change.tag_item
+    def tag_dict(self):
+        return {k: getattr(self.change.tag_item, k) for k in ('name',) + OMIT_KEYS}
     # @property
     # def labnumber(self):
     #     return self.irradiation_position

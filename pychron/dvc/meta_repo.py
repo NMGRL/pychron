@@ -75,6 +75,7 @@ def dump_chronology(path, doses):
             line = '{},{},{}\n'.format(p, s, e)
             wfile.write(line)
 
+
 class Chronology(MetaObject):
     _doses = None
     duration = 0
@@ -351,15 +352,18 @@ class MetaRepo(GitRepoManager):
                 wfile.write(path_or_txt)
         self.add(p, commit=commit)
 
-    def update_flux(self, irradiation, level, pos, identifier, j, e, decay, add=True):
+    def update_flux(self, irradiation, level, pos, identifier, j, e, decay, analyses, add=True):
         p = self.get_level_path(irradiation, level)
         with open(p, 'r') as rfile:
             jd = json.load(rfile)
 
         njd = [ji if ji['position'] != pos else {'position': pos, 'j': j, 'j_err': e,
                                                  'decay_constants': decay,
-                                                 'identifier': identifier} for ji
-               in jd]
+                                                 'identifier': identifier,
+                                                 'analyses': [{'uuid': ai.uuid,
+                                                               'record_id': ai.record_id,
+                                                               'status': ai.is_omitted()}
+                                                              for ai in analyses]} for ji in jd]
 
         # n = {'decay_constants': decay, 'positions': njd}
         # with open(p, 'w') as wfile:

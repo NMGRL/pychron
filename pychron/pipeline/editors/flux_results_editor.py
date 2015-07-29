@@ -179,7 +179,6 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
     level = Str
 
     def set_items(self, analyses):
-        print 'set items', len(analyses)
         if self.geometry:
             self.set_positions(analyses)
             self.predict_values()

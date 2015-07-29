@@ -48,7 +48,9 @@ class InfoInspector(BaseTool):
         xy = event.x, event.y
         try:
             pos = self.component.hittest(xy)
+            event.window.set_pointer('cross')
         except IndexError:
+            event.window.set_pointer('arrow')
             return
 
         if isinstance(pos, tuple):
@@ -56,6 +58,7 @@ class InfoInspector(BaseTool):
             self.current_screen = xy
             event.handled = True
         else:
+            event.window.set_pointer('arrow')
             self.current_position = None
             self.current_screen = None
         self.metadata_changed = True

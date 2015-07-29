@@ -296,10 +296,10 @@ class DVC(Loggable):
             self.info('Saving fits for {}'.format(ai))
             ai.dump_fits(keys)
 
-    def save_j(self, irradiation, level, pos, identifier, j, e, decay, add=True):
+    def save_j(self, irradiation, level, pos, identifier, j, e, decay, analyses, add=True):
         self.info('Saving j for {}{}:{} {}, j={} +/-{}'.format(irradiation, level,
                                                                pos, identifier, j, e))
-        self.meta_repo.update_flux(irradiation, level, pos, identifier, j, e, decay, add)
+        self.meta_repo.update_flux(irradiation, level, pos, identifier, j, e, decay, analyses, add)
 
         db = self.db
         with db.session_ctx():
@@ -566,9 +566,13 @@ class DVC(Loggable):
         # func = lambda: DVCAnalysis(record.record_id, expid)
         # a = timethis(func, )
         # st = time.time()
+
         if isinstance(record, DVCAnalysis):
             a = record
         else:
+            # if isinstance(record, AnalysisTbl):
+            # record = record.record_view
+
             st = time.time()
             a = DVCAnalysis(record.record_id, expid)
             cot = time.time() - st
@@ -600,7 +604,7 @@ class DVC(Loggable):
                     a.arar_constants.lambda_k = lambda_k
 
                 ft = time.time() - st
-                a.set_tag(record.tag)
+                a.set_tag(record.tag_dict)
                 if calculate_f_only:
                     a.calculate_F()
                 else:

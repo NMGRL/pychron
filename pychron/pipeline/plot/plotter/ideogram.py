@@ -155,7 +155,7 @@ class Ideogram(BaseArArFigure):
         plot.value_axis.tick_label_formatter = lambda x: ''
         plot.value_axis.tick_visible = False
 
-        # print 'ideo omit', self.group_id, omit
+        print 'ideo omit', self.group_id, omit
         if omit:
             self._rebuild_ideo(list(omit))
 
@@ -238,6 +238,7 @@ class Ideogram(BaseArArFigure):
         startidx = 1
         # name = 'analysis #'
         if nonsorted:
+            items = self.analyses
             name = 'A# Nonsorted'
             tag = 'Analysis Number Nonsorted'
             opt = self.options
@@ -248,6 +249,7 @@ class Ideogram(BaseArArFigure):
 
             xs = [nominal_value(x) for x in self._get_xs(key=index_attr, nonsorted=True)]
         else:
+            items = self.sorted_analyses
             name = 'Analysis #'
             tag = 'Analysis Number'
             xs = self.xs
@@ -276,6 +278,10 @@ class Ideogram(BaseArArFigure):
                                          type='cmap_scatter',
                                          xs=xs)
         else:
+            if nonsorted:
+                data = sorted(zip(xs, ys), key=lambda x: x[0])
+                xs, ys = zip(*data)
+
             scatter = self._add_aux_plot(ys, name, po, pid, xs=xs)
 
         if self.options.use_latest_overlay:
@@ -306,6 +312,7 @@ class Ideogram(BaseArArFigure):
 
         func = self._get_index_attr_label_func()
         self._add_scatter_inspector(scatter,
+                                    items=items,
                                     value_format=lambda x: '{:d}'.format(int(x)),
                                     additional_info=func)
 
@@ -520,12 +527,12 @@ class Ideogram(BaseArArFigure):
             # hover = obj.metadata.get('hover')
             # if hover:
             #     hoverid = hover[0]
-                # try:
-                # self.selected_analysis = sorted_ans[hoverid]
-                #
-                # except IndexError, e:
-                # print 'asaaaaa', e
-                #     return
+            # try:
+            # self.selected_analysis = sorted_ans[hoverid]
+            #
+            # except IndexError, e:
+            # print 'asaaaaa', e
+            #     return
             # else:
             # self.selected_analysis = None
 
