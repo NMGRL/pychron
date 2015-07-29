@@ -35,7 +35,7 @@ class myTabularEditor(TabularEditor):
     key_pressed = Str
     rearranged = Str
     pasted = Str
-    autoscroll = Bool(True)
+    autoscroll = Bool(False)
     # copy_cache = Str
 
     # link_copyable = Bool(True)
