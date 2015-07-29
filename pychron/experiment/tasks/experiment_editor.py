@@ -141,6 +141,7 @@ class ExperimentEditor(BaseTraitsEditor):
                                                 dclicked='dclicked',
                                                 selected='selected',
                                                 paste_function='paste_function',
+                                                update='refresh_table_needed',
                                                 refresh='refresh_table_needed',
                                                 scroll_to_row='automated_runs_scroll_to_row',
                                                 # copy_cache='linked_copy_cache',

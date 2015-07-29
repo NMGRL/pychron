@@ -1497,7 +1497,7 @@ post_equilibration_script:name''')
             self._set_conditionals('')
 
     def _aliquot_changed(self):
-        print 'aliquot chhanged {} {}'.format(self.aliquot, self.suppress_update)
+        # print 'aliquot chhanged {} {}'.format(self.aliquot, self.suppress_update)
         if self.suppress_update:
             return
 
@@ -1508,7 +1508,7 @@ post_equilibration_script:name''')
                 # if si.aliquot != self.aliquot:
                 si.user_defined_aliquot = a
 
-            self.update_info_needed = True
+            # self.update_info_needed = True
             self.refresh_table_needed = True
             self.changed = True
 
