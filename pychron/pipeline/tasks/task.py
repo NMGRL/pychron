@@ -24,6 +24,7 @@ from itertools import groupby
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import list_gits
 from pychron.dvc.dvc import experiment_has_staged, push_experiments
+from pychron.globals import globalv
 from pychron.paths import paths
 from pychron.pipeline.engine import PipelineEngine
 from pychron.pipeline.plot.editors.interpreted_age_editor import InterpretedAgeEditor
@@ -93,8 +94,8 @@ class PipelineTask(BaseBrowserTask):
         # self.engine.set_template('ideogram')
         # self.engine.set_template('gain')
         # self.engine.set_template('series')
-        self.engine.set_template('blanks')
-        # self.engine.set_template('flux')
+        # self.engine.set_template('blanks')
+        self.engine.set_template('flux')
         # self.engine.add_is
         # self.engine.add_grouping(run=False)
         # self.engine.add_test_filter()
@@ -282,10 +283,10 @@ class PipelineTask(BaseBrowserTask):
 
         return ret
 
-    # def _opened_hook(self):
-    #     super(PipelineTask, self)._opened_hook()
-    #     if globalv.pipeline_debug:
-    #         self._debug()
+    def _opened_hook(self):
+        super(PipelineTask, self)._opened_hook()
+        if globalv.pipeline_debug:
+            self._debug()
 
     def set_tag(self, tag=None, items=None, use_filter=True, warn=False):
         """

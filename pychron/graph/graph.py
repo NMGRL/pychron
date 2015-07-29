@@ -927,9 +927,9 @@ class Graph(ContextMenuMixin):
     def new_series(self, x=None, y=None,
                    yer=None,
                    plotid=None,
-                   #                   aux_plot=False,
                    colors=None,
                    color_map_name='hot',
+                   marker_size=2,
                    **kw):
         """
         """
@@ -937,6 +937,7 @@ class Graph(ContextMenuMixin):
         if plotid is None:
             plotid = len(self.plots) - 1
         kw['plotid'] = plotid
+        kw['marker_size'] = marker_size
         plotobj, names, rd = self._series_factory(x, y, yer=yer, **kw)
         # print 'downsample', plotobj.use_downsample
 

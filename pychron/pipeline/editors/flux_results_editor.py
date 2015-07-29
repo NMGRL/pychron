@@ -23,7 +23,7 @@ from traitsui.table_column import ObjectColumn
 # ============= standard library imports ========================
 from numpy import array, zeros, vstack, linspace, meshgrid, arctan2, sin, cos
 # ============= local library imports  ==========================
-from uncertainties import nominal_value
+from uncertainties import nominal_value, std_dev
 from pychron.core.helpers.formatting import calc_percent_error, floatfmt
 from pychron.core.regression.flux_regressor import PlaneFluxRegressor, BowlFluxRegressor
 from pychron.envisage.icon_button_editor import icon_button_editor
@@ -31,7 +31,10 @@ from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 from pychron.graph.contour_graph import ContourGraph
 from pychron.graph.error_bar_overlay import ErrorBarOverlay
 from pychron.graph.graph import Graph
+from pychron.graph.tools.analysis_inspector import AnalysisPointInspector
 from pychron.pipeline.editors.irradiation_tray_overlay import IrradiationTrayOverlay
+from pychron.pipeline.plot.plotter.arar_figure import SelectionFigure
+from pychron.processing.flux.utilities import mean_j
 
 
 def make_grid(r, n):
@@ -50,6 +53,46 @@ def add_inspector(scatter):
 
     scatter.overlays.append(pinspector_overlay)
     scatter.tools.append(point_inspector)
+
+
+def add_analysis_inspector(scatter, items, add_selection=True, value_format=None, convert_index=None):
+    from chaco.tools.broadcaster import BroadcasterTool
+    from pychron.graph.tools.rect_selection_tool import RectSelectionTool
+    from pychron.graph.tools.rect_selection_tool import RectSelectionOverlay
+    from pychron.graph.tools.point_inspector import PointInspectorOverlay
+
+    broadcaster = BroadcasterTool()
+    scatter.tools.append(broadcaster)
+    if add_selection:
+        rect_tool = RectSelectionTool(scatter)
+        rect_overlay = RectSelectionOverlay(component=scatter,
+                                            tool=rect_tool)
+
+        scatter.overlays.append(rect_overlay)
+        broadcaster.tools.append(rect_tool)
+
+    if value_format is None:
+        value_format = lambda x: '{:0.5f}'.format(x)
+
+    if convert_index is None:
+        convert_index = lambda x: '{:0.3f}'.format(x)
+
+    point_inspector = AnalysisPointInspector(scatter,
+                                             analyses=items,
+                                             convert_index=convert_index,
+                                             # index_tag=index_tag,
+                                             # index_attr=index_attr,
+                                             value_format=value_format)
+    # additional_info=additional_info)
+
+    pinspector_overlay = PointInspectorOverlay(component=scatter,
+                                               tool=point_inspector)
+
+    scatter.overlays.append(pinspector_overlay)
+    broadcaster.tools.append(point_inspector)
+
+    # u = lambda a, b, c, d: self.update_graph_metadata(a, b, c, d)
+    # scatter.index.on_trait_change(self.update_graph_metadata, 'metadata_changed')
 
 
 class FluxPosition(HasTraits):
@@ -79,6 +122,19 @@ class FluxPosition(HasTraits):
     percent_pred_error = Property
 
     analyses = List
+    error_kind = Str
+    monitor_age = Float
+    lambda_k = Float
+    was_altered = Bool
+
+    def set_mean_j(self):
+        ans = [a for a in self.analyses if not a.is_omitted()]
+        if ans:
+            j = mean_j(ans, self.error_kind, self.monitor_age, self.lambda_k)
+            self.mean_j = nominal_value(j)
+            self.mean_jerr = std_dev(j)
+
+        self.n = len(ans)
 
     def _get_percent_saved_error(self):
         return calc_percent_error(self.saved_j, self.saved_jerr)
@@ -92,7 +148,7 @@ class FluxPosition(HasTraits):
             return calc_percent_error(self.j, self.jerr)
 
 
-class FluxResultsEditor(BaseTraitsEditor):
+class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
     geometry = List
     monitor_positions = List
     unknown_positions = List
@@ -129,7 +185,7 @@ class FluxResultsEditor(BaseTraitsEditor):
         self.unknown_positions = unk
         # self.positions = mon + unk
 
-    def predict_values(self):
+    def predict_values(self, refresh=False):
         try:
             x, y, z, ze = array([(pos.x, pos.y, pos.mean_j, pos.mean_jerr)
                                  for pos in self.monitor_positions
@@ -177,14 +233,19 @@ class FluxResultsEditor(BaseTraitsEditor):
                     p.dev = (oj - j) / j * 100
 
         if self.plotter_options.plot_kind == '2D':
-            self._graph_contour(x, y, z, r, reg)
+            self._graph_contour(x, y, z, r, reg, refresh)
         else:
-            self._graph_hole_vs_j(x, y, r, reg)
+            self._graph_hole_vs_j(x, y, r, reg, refresh)
 
-    def _graph_contour(self, x, y, z, r, reg):
-        g = ContourGraph(container_dict={'kind': 'h',
-                                         'bgcolor': self.plotter_options.bgcolor})
-        self.graph = g
+    def _graph_contour(self, x, y, z, r, reg, refresh):
+
+        g = self.graph
+        if not isinstance(g, ContourGraph):
+            g = ContourGraph(container_dict={'kind': 'h',
+                                             'bgcolor': self.plotter_options.bgcolor})
+            self.graph = g
+        else:
+            g.clear()
 
         p = g.new_plot(xtitle='X', ytitle='Y')
 
@@ -213,25 +274,86 @@ class FluxResultsEditor(BaseTraitsEditor):
                          marker_size=self.marker_size)
         self.cmap_scatter = s[0]
 
-    def _graph_hole_vs_j(self, x, y, r, reg):
-        g = Graph(container_dict={'bgcolor': self.plotter_options.bgcolor})
-        self.graph = g
+    def _graph_hole_vs_j(self, x, y, r, reg, refresh):
+
+        sel = [i for i, a in enumerate(self.analyses) if a.is_omitted()]
+
+        g = self.graph
+        if not isinstance(g, Graph):
+            g = Graph(container_dict={'bgcolor': self.plotter_options.bgcolor})
+            self.graph = g
+
         po = self.plotter_options
-        p = g.new_plot(xtitle='Hole (Theta)',
-                       ytitle='J',
-                       # padding=[90, 5, 5, 40],
-                       padding=po.paddings(),
-                       )
-        p.bgcolor = po.plot_bgcolor
 
-        p.y_axis.tick_label_formatter = lambda x: floatfmt(x, n=2, s=3)
+        xs = arctan2(x, y)
+        ys = reg.ys
+        a = max((abs(min(xs)), abs(max(xs))))
+        fxs = linspace(-a, a)
 
-        # plot the individual analyses
-        def xfunc(i):
-            return i
+        a = r * sin(fxs)
+        b = r * cos(fxs)
+        pts = vstack((a, b)).T
+
+        fys = reg.predict(pts)
+        yserr = reg.yserr
+        if not refresh:
+            g.clear()
+            p = g.new_plot(xtitle='Hole (Theta)',
+                           ytitle='J',
+                           # padding=[90, 5, 5, 40],
+                           padding=po.paddings())
+            p.bgcolor = po.plot_bgcolor
+
+            p.y_axis.tick_label_formatter = lambda x: floatfmt(x, n=2, s=4, use_scientific=True)
+
+            scatter, _ = g.new_series(xs, ys,
+                                      yerror=yserr,
+                                      type='scatter', marker='circle')
+
+            ebo = ErrorBarOverlay(component=scatter,
+                                  orientation='y')
+            scatter.overlays.append(ebo)
+            add_inspector(scatter)
+            g.new_series(fxs, fys)
+
+            # plot the individual analyses
+            s, iys = self._graph_individual_analyses()
+            s.index.metadata['selections'] = sel
+            # s.index.metadata_changed = True
+
+            ymi = min(ys.min(), min(iys))
+            yma = min(ys.max(), max(iys))
+
+            g.set_x_limits(-3.2, 3.2)
+            g.set_y_limits(ymi, yma, pad='0.1')
+
+        else:
+            plot = g.plots[0]
+
+            s1 = plot.plots['plot0'][0]
+            s1.yerror.set_data(yserr)
+
+            ebo = next((o for o in s1.overlays if isinstance(o, ErrorBarOverlay)), None)
+            if ebo:
+                ebo.invalidate()
+
+            g.set_data(ys, plotid=0, series=0, axis=1)
+            g.set_data(fys, plotid=0, series=1, axis=1)
+            s2 = plot.plots['plot2'][0]
+
+            s2.index.metadata['selections'] = sel
+            # s2.index.metadata = {'selections': sel}
+            # s2.index.metadata_changed = True
+
+        self._model_sin_flux(fxs, fys)
+
+    def _graph_individual_analyses(self):
+        po = self.plotter_options
+        g = self.graph
 
         ixs = []
         iys = []
+        ans = []
         m, k = po.monitor_age * 1e6, po.lambda_k
         slope = True
         prev = self.monitor_positions[-1].j
@@ -242,6 +364,7 @@ class FluxResultsEditor(BaseTraitsEditor):
                 prev = p.j
                 pp = arctan2(p.x, p.y)
                 xx = linspace(pp - .1, pp + .1, len(p.analyses))
+                ans.extend(p.analyses)
                 ixs.extend(xx)
 
                 yy = [nominal_value(a.model_j(m, k)) for a in p.analyses]
@@ -249,38 +372,39 @@ class FluxResultsEditor(BaseTraitsEditor):
                 yy = sorted(yy, reverse=not slope)
 
                 iys.extend(yy)
+        s, _p = g.new_series(ixs, iys, type='scatter', marker='circle', marker_size=1.5)
+        add_analysis_inspector(s, ans)
 
-        g.new_series(ixs, iys, type='scatter', marker='circle', marker_size=1.5)
+        self.analyses = ans
+        s.index.on_trait_change(self._update_graph_metadata, 'metadata_changed')
+        return s, iys
 
-        xs = arctan2(x, y)
-        ys = reg.ys
-        ymi = min(ys.min(), min(iys))
-        yma = min(ys.max(), max(iys))
+    def _update_graph_metadata(self, obj, name, old, new):
+        # print obj, name, old, new
+        # print obj.metadata
+        sel = self._filter_metadata_changes(obj, self._recalculate_means, self.analyses)
 
-        yserr = reg.yserr
-        scatter, _ = g.new_series(xs, ys,
-                                  yerror=yserr,
-                                  type='scatter', marker='circle')
+    def _recalculate_means(self, sel):
+        # print sel
+        # if sel:
 
-        ebo = ErrorBarOverlay(component=scatter,
-                              orientation='y')
-        scatter.overlays.append(ebo)
-        add_inspector(scatter)
+        # pos = next((p for p in self.monitor_positions if p.identifier==sel[0].identifier), None)
+        # if pos:
+        #     pos.set_mean_j()
+        identifier = None
+        if sel:
+            ai = self.analyses[sel[0]]
+            identifier = ai.identifier
 
-        a = max((abs(min(xs)), abs(max(xs))))
+        for p in self.monitor_positions:
+            if p.was_altered:
+                p.set_mean_j()
+                p.was_altered = False
+            elif p.identifier == identifier:
+                p.set_mean_j()
+                p.was_altered = True
 
-        fxs = linspace(-a, a)
-
-        a = r * sin(fxs)
-        b = r * cos(fxs)
-        pts = vstack((a, b)).T
-
-        fys = reg.predict(pts)
-
-        g.new_series(fxs, fys)
-        g.set_x_limits(-3.2, 3.2)
-        g.set_y_limits(ymi, yma, pad='0.1')
-        self._model_sin_flux(fxs, fys)
+        self.predict_values(refresh=True)
 
     def _model_sin_flux(self, fxs, fys):
         self.max_j = fys.max()

@@ -44,11 +44,46 @@ from pychron.graph.tools.analysis_inspector import AnalysisPointInspector
 from pychron.graph.tools.point_inspector import PointInspectorOverlay
 from pychron.pychron_constants import PLUSMINUS
 
+
 # PLOT_MAPPING = {'analysis #': 'Analysis Number', 'Analysis #': 'Analysis Number Stacked',
 #                 '%40Ar*': 'Radiogenic 40Ar'}
 
+class SelectionFigure(object):
+    _omit_key = None
 
-class BaseArArFigure(HasTraits):
+    def _set_selected(self, ans, sel):
+        for i, a in enumerate(ans):
+            if not (a.table_filter_omit or a.value_filter_omit or a.is_tag_omitted(self._omit_key)):
+                a.temp_status = 1 if i in sel else 0
+
+    def _filter_metadata_changes(self, obj, func, ans):
+        sel = obj.metadata.get('selections', [])
+        if sel:
+            obj.was_selected = True
+
+            prev = None
+            if hasattr(obj, 'prev_selection'):
+                prev = obj.prev_selection
+
+            if prev != sel:
+                self._set_selected(ans, sel)
+                func(sel)
+
+            obj.prev_selection = sel
+
+        elif hasattr(obj, 'was_selected'):
+            if obj.was_selected:
+                self._set_selected(ans, sel)
+                func(sel)
+            obj.was_selected = False
+            obj.prev_selection = None
+        else:
+            obj.prev_selection = None
+
+        return sel
+
+
+class BaseArArFigure(HasTraits, SelectionFigure):
     analyses = Any
     sorted_analyses = Property(depends_on='analyses')
     analysis_group = Property(depends_on='analyses')
@@ -71,7 +106,7 @@ class BaseArArFigure(HasTraits):
     _suppress_table_update = False
     suppress_ylimits_update = False
     suppress_xlimits_update = False
-    _omit_key = None
+
     xpad = None
 
     title = Str
@@ -259,36 +294,37 @@ class BaseArArFigure(HasTraits):
                 if ai.is_omitted(omit, include_value_filtered)]
 
     def _set_selected(self, ans, sel):
-        for i, a in enumerate(ans):
-            if not (a.table_filter_omit or a.value_filter_omit or a.is_tag_omitted(self._omit_key)):
-                a.temp_status = 1 if i in sel else 0
+        super(BaseArArFigure, self)._set_selected(ans, sel)
+        # for i, a in enumerate(ans):
+        #     if not (a.table_filter_omit or a.value_filter_omit or a.is_tag_omitted(self._omit_key)):
+        #         a.temp_status = 1 if i in sel else 0
         self.refresh_unknowns_table = True
 
-    def _filter_metadata_changes(self, obj, func, ans):
-        sel = obj.metadata.get('selections', [])
-        if sel:
-            obj.was_selected = True
-
-            prev = None
-            if hasattr(obj, 'prev_selection'):
-                prev = obj.prev_selection
-
-            if prev != sel:
-                self._set_selected(ans, sel)
-                func(sel)
-
-            obj.prev_selection = sel
-
-        elif hasattr(obj, 'was_selected'):
-            if obj.was_selected:
-                self._set_selected(ans, sel)
-                func(sel)
-            obj.was_selected = False
-            obj.prev_selection = None
-        else:
-            obj.prev_selection = None
-
-        return sel
+    # def _filter_metadata_changes(self, obj, func, ans):
+    #     sel = obj.metadata.get('selections', [])
+    #     if sel:
+    #         obj.was_selected = True
+    #
+    #         prev = None
+    #         if hasattr(obj, 'prev_selection'):
+    #             prev = obj.prev_selection
+    #
+    #         if prev != sel:
+    #             self._set_selected(ans, sel)
+    #             func(sel)
+    #
+    #         obj.prev_selection = sel
+    #
+    #     elif hasattr(obj, 'was_selected'):
+    #         if obj.was_selected:
+    #             self._set_selected(ans, sel)
+    #             func(sel)
+    #         obj.was_selected = False
+    #         obj.prev_selection = None
+    #     else:
+    #         obj.prev_selection = None
+    #
+    #     return sel
 
     # def _get_mswd(self, ages, errors):
     # mswd = calculate_mswd(ages, errors)

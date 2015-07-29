@@ -517,9 +517,9 @@ class Ideogram(BaseArArFigure):
         # print obj, name, old,new
         sorted_ans = self.sorted_analyses
         if obj:
-            hover = obj.metadata.get('hover')
-            if hover:
-                hoverid = hover[0]
+            # hover = obj.metadata.get('hover')
+            # if hover:
+            #     hoverid = hover[0]
                 # try:
                 # self.selected_analysis = sorted_ans[hoverid]
                 #
@@ -529,7 +529,7 @@ class Ideogram(BaseArArFigure):
             # else:
             # self.selected_analysis = None
 
-            sel = self._filter_metadata_changes(obj, self._rebuild_ideo, sorted_ans)
+            self._filter_metadata_changes(obj, self._rebuild_ideo, sorted_ans)
             # self._set_selected(sorted_ans, sel)
             # set the temp_status for all the analyses
             # for i, a in enumerate(sorted_ans):

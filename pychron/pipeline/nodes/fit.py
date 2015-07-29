@@ -25,7 +25,6 @@ from pychron.core.progress import progress_loader
 from pychron.pipeline.editors.flux_results_editor import FluxResultsEditor, FluxPosition
 from pychron.pipeline.editors.results_editor import IsoEvolutionResultsEditor
 from pychron.pipeline.nodes.figure import FigureNode
-from pychron.processing.flux.utilities import mean_j
 from pychron.pipeline.options.plotter_options_manager import IsotopeEvolutionOptionsManager, BlanksOptionsManager, \
     ICFactorOptionsManager, FluxOptionsManager
 
@@ -258,7 +257,7 @@ class FitFluxNode(FitNode):
                 sample = ref.sample
 
                 x, y, r, idx = geom[ip - 1]
-                mj = mean_j(ais, ek, monage, lk)
+                # mj = mean_j(ais, ek, monage, lk)
 
                 p = FluxPosition(identifier=identifier,
                                  irradiation=state.irradiation,
@@ -266,11 +265,15 @@ class FitFluxNode(FitNode):
                                  sample=sample, hole_id=ip,
                                  saved_j=nominal_value(j),
                                  saved_jerr=std_dev(j),
-                                 mean_j=nominal_value(mj),
-                                 mean_jerr=std_dev(mj),
+                                 # mean_j=nominal_value(mj),
+                                 # mean_jerr=std_dev(mj),
+                                 error_kind=ek,
+                                 monitor_age=monage,
                                  analyses=ais,
+                                 lambdak=lk,
                                  x=x, y=y,
                                  n=n)
+                p.set_mean_j()
                 poss.append(p)
 
                 # for unk_pos in state.unknown_positions:
