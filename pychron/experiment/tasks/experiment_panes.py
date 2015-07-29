@@ -20,12 +20,13 @@ from traitsui.api import View, Item, UItem, VGroup, HGroup, spring, \
     EnumEditor, Group, Spring, VFold, Label, InstanceEditor, \
     VSplit, TabularEditor, UReadonly, ListEditor, RangeEditor, Readonly
 from pyface.tasks.traits_dock_pane import TraitsDockPane
-from traitsui.editors import TableEditor, CheckListEditor
+from traitsui.editors import TableEditor
 from traitsui.table_column import ObjectColumn
 from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.ui.combobox_editor import ComboboxEditor
+from pychron.core.ui.led_editor import LEDEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.experiment.utilities.identifier import SPECIAL_NAMES
 from pychron.pychron_constants import MEASUREMENT_COLOR, EXTRACTION_COLOR, \
@@ -424,6 +425,7 @@ Quick=   measure_iteration stopped at current step
 
         v = View(
             HGroup(
+                UItem('executing_led', editor=LEDEditor()),
                 spacer(-20),
                 icon_button_editor('start_button',
                                    'start',
@@ -449,14 +451,12 @@ Quick=   measure_iteration stopped at current step
                 UItem('truncate_style',
                       enabled_when='measuring',
                       tooltip=truncate_style_tt),
-                UItem('show_conditionals_button',
-                      # enabled_when='measuring'
-                ),
+                UItem('show_conditionals_button'),
                 spacer(-75),
                 CustomLabel('extraction_state_label',
                             color_name='extraction_state_color',
                             size=24,
-                            weight='bold')))
+                            weight='bold'), spring))
         return v
 
 
