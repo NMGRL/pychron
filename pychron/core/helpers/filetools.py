@@ -387,8 +387,8 @@ def get_path(root, name, extensions):
     """
     for ext in extensions:
         for f in os.listdir(root):
-            name = add_extension(name, ext)
-            if re.match(name, f):
+            nn = add_extension(name, ext)
+            if re.match(nn, f):
                 return os.path.join(root, f)
 
         # p = os.path.join(root, add_extension(name, ext))

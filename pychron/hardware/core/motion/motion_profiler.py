@@ -24,6 +24,7 @@ import math
 import os
 # ============= local library imports  ==========================
 
+
 class MotionProfiler(ConfigLoadable):
     velocity_tol = Float(0.5)
     acceleration_tol = Float(0.5)
@@ -41,15 +42,15 @@ class MotionProfiler(ConfigLoadable):
 
     def load(self, p):
         attrs = ['max_velocity', 'max_transit_time',
-               'min_acceleration_time', 'velocity_tol',
-               'acceleration_tol', 'deceleration_tol',
-               'max_acceleration'
-               ]
+                 'min_acceleration_time', 'velocity_tol',
+                 'acceleration_tol', 'deceleration_tol',
+                 'max_acceleration']
         self.config_path = p
         if os.path.isfile(p):
             config = self.get_configuration(self.config_path)
             for attr in attrs:
                 self.set_attribute(config, attr, 'General', attr, cast='float')
+                self.debug('setting {}. {}'.format(attr, getattr(self, attr)))
         else:
             # create a new config file with default values
             config = self.configparser_factory()
@@ -58,10 +59,7 @@ class MotionProfiler(ConfigLoadable):
                 config.set('General', attr, getattr(self, attr))
             self.write_configuration(config)
 
-    def check_motion(self, displacement, obj):
-#         ac = obj.nominal_acceleration
-#         dc = obj.nominal_deceleration
-#         v = obj.nominal_velocity
+    def check_motion(self, displacement, obj, force=False):
 
         mv = obj.velocity
         mac = obj.acceleration
@@ -81,14 +79,13 @@ class MotionProfiler(ConfigLoadable):
             '''
             nv, nac, ndc = self.max_velocity, obj.nominal_acceleration, obj.nominal_deceleration
 
-
         dv = abs(nv - mv)
         dac = abs(nac - mac)
         ddc = abs(ndc - mdc)
-        change = (
-                  dv / mv > self.velocity_tol or
-                  dac / mac > self.acceleration_tol or
-                  ddc / mdc > self.deceleration_tol)
+
+        change = force or (dv / mv > self.velocity_tol or
+                           dac / mac > self.acceleration_tol or
+                           ddc / mdc > self.deceleration_tol)
 
         return change, nv, max(0.1, nac), max(0.1, ndc)
 
@@ -98,21 +95,21 @@ class MotionProfiler(ConfigLoadable):
         vel = min(self.max_velocity, vel)
 
         if cnt > 200 or \
-             acc >= self.max_acceleration or \
-                 dec >= self.max_acceleration:
+                        acc >= self.max_acceleration or \
+                        dec >= self.max_acceleration:
             acc = min(acc, self.max_acceleration)
             dec = min(dec, self.max_acceleration)
             return vel, acc, dec
 
         # do current parameters define trapezoidal move
         times, _ = self.calculate_transit_parameters(displacement,
-                                                    vel, acc, dec)
-#         print cnt, '---------------------------'
-#         print 'times', times
+                                                     vel, acc, dec)
+        #         print cnt, '---------------------------'
+        #         print 'times', times
 
         # if all times are greater than 0 then trapezoid
         if all([ti >= 0 for ti in times]):
-#             print 'is trapezoid'
+            #             print 'is trapezoid'
             # is time greater than max transit time
             if sum(times) > self.max_transit_time:
                 '''
@@ -122,14 +119,14 @@ class MotionProfiler(ConfigLoadable):
                 '''
 
 
-#                 print 'max transit', sum(times)
+                #                 print 'max transit', sum(times)
                 return self.calculate_corrected_parameters(cnt + 1,
                                                            displacement,
                                                            acc * 1.01, dec * 1.01)
 
-#             # is ac time less than min
+            # # is ac time less than min
             if times[0] < self.min_acceleration_time or \
-                 times[1] < self.min_acceleration_time:
+                            times[1] < self.min_acceleration_time:
                 '''
                     acc is too fast. calculate new accel so that acctime=min
                 '''

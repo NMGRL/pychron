@@ -47,6 +47,30 @@ class KerrSnapMotor(KerrMotor):
         """
         return '1808'
 
+    def _build_gains(self):
+        """
+            F6  B004 2003 F401 E803 FF 00 E803 01 01 01
+            cmd p    d    i    il   ol cl el   sr db sm
+
+            B004 2003 F401 B004 FF 00 6400 010101
+
+            0064 03e8 0000 0000 ff 00 0fa0 01 01 01
+        """
+        flip_nibbles = True
+
+        p = (10000, 4, flip_nibbles)
+        d = (30000, 4, flip_nibbles)
+        i = (0, 4, flip_nibbles)
+        il = (4000, 4, flip_nibbles)
+        ol = (255, 2)
+        cl = (0, 2)
+        el = (4000, 4, flip_nibbles)
+        sr = (1, 2)
+        db = (1, 2)
+        sm = (1, 2)
+        gains = self._build_hexstr(p, d, i, il, ol, cl, el, sr, db, sm)
+        return 'F6{}'.format(gains)
+
 
 #        return ''.join(['F6'] + map(hexfmt, [p, d, i, il, ol, cl, el, sr, db, sm]))
 

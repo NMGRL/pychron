@@ -389,6 +389,9 @@ class AutomatedRunFactory(PersistenceLoggable):
 
     def set_selected_runs(self, runs):
         self.debug('len selected runs {}'.format(len(runs)))
+
+        self._selected_runs = runs
+
         if runs:
             run = runs[0]
             self._set_defaults = False
@@ -396,16 +399,17 @@ class AutomatedRunFactory(PersistenceLoggable):
                             set_position=self.set_position)
             self._set_defaults = True
 
-        self._selected_runs = runs
-        self.suppress_update = False
+        # self.suppress_update = False
 
         if not runs:
             self.edit_mode = False
-            self.edit_enabled = False
+            # self.edit_enabled = False
         elif len(runs) == 1:
-            self.edit_enabled = True
+            pass
+            # self.edit_enabled = True
+            # self._aliquot_changed()
         else:
-            self.edit_enabled = False
+            # self.edit_enabled = False
             self.edit_mode = True
 
         if run and self.edit_mode:
@@ -419,7 +423,6 @@ class AutomatedRunFactory(PersistenceLoggable):
             # print s.kind, s, new
             s.mass_spectrometer = new
             s.refresh_lists = True
-
 
     def set_extract_device(self, new):
         new = new.lower()
@@ -615,8 +618,8 @@ class AutomatedRunFactory(PersistenceLoggable):
             except TraitError, e:
                 self.debug(e)
 
-        if run.user_defined_aliquot:
-            self.aliquot = int(run.aliquot)
+        # if run.user_defined_aliquot:
+            # self.aliquot = int(run.aliquot)
 
         for si in SCRIPT_KEYS:
             skey = '{}_script'.format(si)
@@ -1384,7 +1387,7 @@ extraction_script:name,
 post_measurement_script:name,
 post_equilibration_script:name''')
     def _edit_script_handler(self, obj, name, new):
-
+        self.debug('name={}, new={}, suppress={}'.format(obj.label, new, self.suppress_update))
         if obj.label == 'Measurement':
             self.default_fits_enabled = bool(new and new not in (NULL_STR, ))
 
@@ -1392,10 +1395,9 @@ post_equilibration_script:name''')
             self._auto_save()
             if obj.label == 'Extraction':
                 self._load_extraction_info(obj)
-
             if self._selected_runs:
                 for si in self._selected_runs:
-                    name = '{}_script'.format(obj.label)
+                    name = '{}_script'.format(obj.label.lower().replace(' ', '_'))
                     setattr(si, name, new)
                 self.refresh()
 
@@ -1500,21 +1502,28 @@ post_equilibration_script:name''')
             self._set_conditionals('')
 
     def _aliquot_changed(self):
-        if self.edit_mode:
-            for si in self._selected_runs:
-                a = 0
-                if si.aliquot != self.aliquot:
-                    a = int(self.aliquot)
+        # print 'aliquot chhanged {} {}'.format(self.aliquot, self.suppress_update)
+        if self.suppress_update:
+            return
 
+        if self.edit_mode:
+            a = int(self.aliquot)
+            for si in self._selected_runs:
+                # a = 0
+                # if si.aliquot != self.aliquot:
                 si.user_defined_aliquot = a
 
-            self.update_info_needed = True
+            # self.update_info_needed = True
             self.refresh_table_needed = True
             self.changed = True
 
     def _save_flux_button_fired(self):
         self._save_flux()
 
+    def _edit_mode_changed(self):
+        self.suppress_update = True
+        self.aliquot = 0
+        self.suppress_update = False
     # @on_trait_change('mass_spectrometer, can_edit')
     # def _update_value(self, name, new):
     #     for si in SCRIPT_NAMES:

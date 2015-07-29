@@ -826,11 +826,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.info('Setting default integration. t={}'.format(dit))
             run.set_integration_time(dit)
 
-        if self.send_config_before_run:
-            self.info('Sending spectrometer configuration')
-            man = self.spectrometer_manager
-            man.send_configuration()
-
         if not run.start():
             self.alive = False
             ret = False
@@ -873,6 +868,11 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             ai: AutomatedRun
             measurement step
         """
+        if self.send_config_before_run:
+            self.info('Sending spectrometer configuration')
+            man = self.spectrometer_manager
+            man.send_configuration()
+
         ret = True
         self.measuring_run = ai
         if ai.start_measurement():
@@ -1294,6 +1294,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self._err_message = 'Not all managers available'
             return True
 
+        if self._check_for_errors():
+            return True
+
         if self.monitor:
             if not self.monitor.check():
                 self._err_message = 'Automated Run Monitor Failed'
@@ -1304,6 +1307,18 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         # timed out. if timed out autosave.
         self._wait_for_save()
         self.heading('Pre Run Check Passed')
+
+    def _check_for_errors(self):
+        for c in self.connectables:
+            man = c.manager
+            if man is None:
+                man = self.application.get_service(c.protocol, 'name=="{}"'.format(c.name))
+
+            if man:
+                e = man.get_error()
+                if e:
+                    self._err_message = e
+                    break
 
     def _pre_execute_check(self, inform=True):
         if not self.datahub.secondary_connect():
@@ -1407,8 +1422,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     def _load_system_conditionals(self, term_name, **kw):
         self.debug('loading system conditionals {}'.format(term_name))
-        p = paths.system_conditionals
-        # p = get_path(paths.spectrometer_dir, 'default_conditionals', ['.yaml', '.yml'])
+        # p = paths.system_conditionals
+        p = get_path(paths.spectrometer_dir, '.*conditionals', ['.yaml', '.yml'])
         if p:
             return self._extract_conditionals(p, term_name, level=SYSTEM, **kw)
         else:
@@ -1464,7 +1479,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
                     self.cancel(confirm=False)
 
-                    self._show_conditionals(show_measuring=True, tripped=ci)
+                    self.show_conditionals(show_measuring=True, tripped=ci)
                     return True
 
     def _do_action(self, action):
@@ -1618,7 +1633,8 @@ Use Last "blank_{}"= {}
 
         exp = self.experiment_queue
         nonfound = []
-        elm_connectable = Connectable(name='Extraction Line')
+        elm_connectable = Connectable(name='Extraction Line',
+                                      manager=self.extraction_line_manager)
         self.connectables = [elm_connectable]
 
         if self.extraction_line_manager is None:
@@ -1659,7 +1675,7 @@ Use Last "blank_{}"= {}
                               if ai.state == 'not run'])
 
         if needs_spec_man:
-            s_connectable = Connectable(name='Spectrometer')
+            s_connectable = Connectable(name='Spectrometer', manager=self.spectrometer_manager)
             self.connectables.append(s_connectable)
             if self.spectrometer_manager is None:
                 nonfound.append('spectrometer')
