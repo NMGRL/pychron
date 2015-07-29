@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from itertools import groupby
 
 from traits.api import HasTraits, Str, Int, Bool, Float, Property, List, Instance, Event, Button
 from traitsui.api import View, UItem, TableEditor, VGroup, HGroup, Item, spring, Tabbed
@@ -174,26 +175,86 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
     percent_j_change = Property
     # j_gradient = Property
     plotter_options = None
+    irradiation = Str
+    level = Str
 
-    def set_items(self, *args, **kw):
-        pass
+    def set_items(self, analyses):
+        print 'set items', len(analyses)
+        if self.geometry:
+            self.set_positions(analyses)
+            self.predict_values()
 
     def _recalculate_button_fired(self):
         self.predict_values()
 
-    def set_positions(self, mon, unk):
-        self.monitor_positions = mon
-        self.unknown_positions = unk
-        # self.positions = mon + unk
+    def set_positions(self, monitors, unk=None):
+        self.debug('setting positions mons={}, unks={}'.format(len(monitors), len(unk) if unk else 0))
+        opt = self.plotter_options
+        monage = opt.monitor_age * 1e6
+        lk = opt.lambda_k
+        ek = opt.error_kind
+
+        key = lambda x: x.identifier
+        geom = self.geometry
+        poss = []
+        ans = []
+        slope = True
+        prev = None
+        for identifier, ais in groupby(sorted(monitors, key=key), key=key):
+
+            ais = list(ais)
+            n = len(ais)
+
+            ref = ais[0]
+            j = ref.j
+            ip = ref.irradiation_position
+            sample = ref.sample
+
+            x, y, r, idx = geom[ip - 1]
+            # mj = mean_j(ais, ek, monage, lk)
+
+            p = FluxPosition(identifier=identifier,
+                             irradiation=self.irradiation,
+                             level=self.level,
+                             sample=sample, hole_id=ip,
+                             saved_j=nominal_value(j),
+                             saved_jerr=std_dev(j),
+                             # mean_j=nominal_value(mj),
+                             # mean_jerr=std_dev(mj),
+                             error_kind=ek,
+                             monitor_age=monage,
+                             analyses=ais,
+                             lambdak=lk,
+                             x=x, y=y,
+                             n=n)
+            # ans.extend(ais)
+            p.set_mean_j()
+            poss.append(p)
+            if prev:
+                slope = prev < p.j
+            prev = p.j
+            aa, xx, yy = self._sort_individuals(p, monage, lk, slope)
+            ans.extend(aa)
+            # data = zip(p.analyses, xx, yy)
+            # data = sorted(data, key=lambda x: x[2], reverse=p.slope)
+            # aa, xx, yy = zip(*data)
+            # ans.extend(aa)
+
+        self.monitor_positions = poss
+        self.analyses = ans
+        if unk is not None:
+            self.unknown_positions = unk
+            # self.positions = mon + unk
 
     def predict_values(self, refresh=False):
+        self.debug('preodict values {}'.format(refresh))
         try:
             x, y, z, ze = array([(pos.x, pos.y, pos.mean_j, pos.mean_jerr)
                                  for pos in self.monitor_positions
                                  if pos.use]).T
 
-        except ValueError:
-            # self.debug('no monitor positions to fit')
+        except ValueError, e:
+            self.debug('no monitor positions to fit, {}'.format(e))
             return
 
         n = x.shape[0]
@@ -204,7 +265,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
             reg = self._regressor_factory(x, y, z, ze)
             self._regressor = reg
         else:
-            # self.warning('not enough monitor positions. at least 3 required. Currently only {} active'.format(n))
+            self.debug('not enough monitor positions. at least 3 required. Currently only {} active'.format(n))
             return
 
         if self.plotter_options.use_monte_carlo:
@@ -382,22 +443,32 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
                 if prev:
                     slope = prev < p.j
                 prev = p.j
-                pp = arctan2(p.x, p.y)
-                xx = linspace(pp - .1, pp + .1, len(p.analyses))
-                ans.extend(p.analyses)
+                aa, xx, yy = self._sort_individuals(p, m, k, slope)
+                ans.extend(aa)
                 ixs.extend(xx)
-
-                yy = [nominal_value(a.model_j(m, k)) for a in p.analyses]
-
-                yy = sorted(yy, reverse=not slope)
-
                 iys.extend(yy)
+                p.slope = slope
+                # yy = sorted(yy, reverse=not slope)
+
+                # ans.extend(p.analyses)
+                # ixs.extend(xx)
+                # iys.extend(yy)
+
         s, _p = g.new_series(ixs, iys, type='scatter', marker='circle', marker_size=1.5)
         add_analysis_inspector(s, ans)
 
         self.analyses = ans
         s.index.on_trait_change(self._update_graph_metadata, 'metadata_changed')
         return s, iys
+
+    def _sort_individuals(self, p, m, k, slope):
+        pp = arctan2(p.x, p.y)
+        xx = linspace(pp - .1, pp + .1, len(p.analyses))
+        yy = [nominal_value(a.model_j(m, k)) for a in p.analyses]
+
+        data = zip(p.analyses, xx, yy)
+        data = sorted(data, key=lambda x: x[2], reverse=not slope)
+        return zip(*data)
 
     def _update_graph_metadata(self, obj, name, old, new):
         # print obj, name, old, new

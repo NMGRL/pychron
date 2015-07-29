@@ -355,6 +355,7 @@ class PipelineEngine(Loggable):
                 return True
 
     def run(self, state, run_to):
+        self.state = state
         ost = time.time()
         start_node = state.veto
         self.debug('pipeline run started')
@@ -399,7 +400,7 @@ class PipelineEngine(Loggable):
         else:
             self.debug('pipeline run finished')
             self.debug('pipeline runtime {}'.format(time.time() - ost))
-
+            self.state = None
             return True
 
     def post_run(self, state):
@@ -540,10 +541,21 @@ class PipelineEngine(Loggable):
     _len_references_removed = 0
 
     def _handle_len_unknowns(self, new):
-        self._handle_len('unknowns', lambda e: e.set_items(self.selected.unknowns))
+        # self._handle_len('unknowns', lambda e: e.set_items(self.selected.unknowns))
+        def func(editor):
+            vs = self.selected.unknowns
+            editor.set_items(vs)
+            self.state.unknowns = vs
+
+        self._handle_len('unknowns', func)
 
     def _handle_len_references(self, new):
-        self._handle_len('references', lambda e: e.set_references(self.selected.references))
+        def func(editor):
+            vs = self.selected.references
+            editor.set_references(vs)
+            self.state.references = vs
+
+        self._handle_len('references', func)
 
     def _handle_len(self, k, func):
         lr = '_len_{}_removed'.format(k)
@@ -566,6 +578,7 @@ class PipelineEngine(Loggable):
                 setattr(self, lc, 0)
                 # self._len_references_cnt = 0
                 func(editor)
+
                 # editor.set_references(self.selected.references)
                 editor.refresh_needed = True
 

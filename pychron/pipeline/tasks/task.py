@@ -204,6 +204,7 @@ class PipelineTask(BaseBrowserTask):
         else:
             self._toggle_run(False)
             self.state = None
+            self.engine.state = None
 
         for editor in state.editors:
             self._open_editor(editor)
