@@ -1382,7 +1382,7 @@ extraction_script:name,
 post_measurement_script:name,
 post_equilibration_script:name''')
     def _edit_script_handler(self, obj, name, new):
-
+        self.debug('name={}, new={}, suppress={}'.format(obj.label, new, self.suppress_update))
         if obj.label == 'Measurement':
             self.default_fits_enabled = bool(new and new not in (NULL_STR, ))
 
@@ -1390,10 +1390,9 @@ post_equilibration_script:name''')
             self._auto_save()
             if obj.label == 'Extraction':
                 self._load_extraction_info(obj)
-
             if self._selected_runs:
                 for si in self._selected_runs:
-                    name = '{}_script'.format(obj.label)
+                    name = '{}_script'.format(obj.label.lower().replace(' ', '_'))
                     setattr(si, name, new)
                 self.refresh()
 
