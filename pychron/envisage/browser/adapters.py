@@ -129,7 +129,8 @@ class AnalysisAdapter(BrowserAdapter):
                    # Action(name='Append', action='append_items', enabled=e),
                    Action(name='Open', action='recall_items'),
                    # Action(name='Open Copy', action='recall_copies'),
-                   Action(name='Find References', action='find_refs')]
+                   # Action(name='Find References', action='find_refs')
+                   ]
 
         return MenuManager(*actions)
 

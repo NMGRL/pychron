@@ -25,6 +25,8 @@ from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.envisage.browser.adapters import ProjectAdapter
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.browser.pane_model_view import PaneModelView
+
+
 # from pychron.envisage.browser.tableview import TableView
 
 
@@ -165,6 +167,7 @@ class BrowserSampleView(PaneModelView):
                             editor=myTabularEditor(
                                 adapter=self.model.analysis_table.tabular_adapter,
                                 operations=['move'],
+                                column_clicked=make_name('column_clicked'),
                                 refresh=make_name('refresh_needed'),
                                 selected=make_name('selected'),
                                 dclicked=make_name('dclicked'),
@@ -181,5 +184,14 @@ class BrowserSampleView(PaneModelView):
 
     def unselect_projects(self, info, obj):
         obj.selected_projects = []
+
+    def unselect_analyses(self, info, obj):
+        obj.selected = []
+
+    def configure_analysis_table(self, info, obj):
+        self.model.analysis_table.configure_table()
+
+    def recall_items(self, info, obj):
+        obj.context_menu_event = ('open', {'open_copy': False})
 
 # ============= EOF =============================================

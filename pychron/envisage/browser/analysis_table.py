@@ -15,18 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, List, Any, Str, Enum, Bool, Event, Property, cached_property, Instance, DelegatesTo, \
+from traits.api import List, Any, Str, Enum, Bool, Event, Property, cached_property, Instance, DelegatesTo, \
     CStr
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.envisage.browser.adapters import AnalysisAdapter
 from pychron.envisage.browser.base_browser_model import filter_func
 from pychron.core.ui.table_configurer import AnalysisTableConfigurer
 
 
-
-
-class AnalysisTable(HasTraits):
+class AnalysisTable(ColumnSorterMixin):
     analyses = List
     oanalyses = List
     selected = Any
@@ -64,7 +63,7 @@ class AnalysisTable(HasTraits):
             self.oanalyses = ans
         self._analysis_filter_parameter_changed(True)
 
-    def configure_analysis_table(self):
+    def configure_table(self):
         self.table_configurer.edit_traits(kind='livemodal')
 
     # handlers

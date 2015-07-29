@@ -255,8 +255,9 @@ class PipelineTask(BaseBrowserTask):
         if name == 'tag_event':
             self.set_tag(items=new)
         elif name == 'invalid_event':
-            from pychron.processing.tagging.analysis_tags import Tag
-            self.set_tag(tag=Tag(name='invalid'), items=new, warn=True)
+            tag = {'name': 'invalid', 'omit_ideo': True, 'omit_series': True,
+                   'omit_spec': True, 'omit_iso': True}
+            self.set_tag(tag=tag, items=new, warn=True)
         elif name == 'recall_event':
             self.recall(new)
 

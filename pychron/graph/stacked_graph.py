@@ -168,10 +168,12 @@ class StackedGraph(Graph):
                         #                pi.padding_top = 0
                         #                pi.padding_bottom = 0
 
-    def new_series(self, bind_id=None, *args, **kw):
+    def new_series(self, *args, **kw):
         s, _p = super(StackedGraph, self).new_series(*args, **kw)
-
         if self.bind_index:
+            if 'bind_id' not in kw:
+                kw['bind_id'] = None
+            bind_id = kw['bind_id']
             if isinstance(s, ScatterPlot):
                 s.bind_id = bind_id
                 self._bind_index(s, bind_id=bind_id)

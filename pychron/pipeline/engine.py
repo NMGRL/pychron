@@ -471,8 +471,8 @@ class PipelineEngine(Loggable):
             node = self._get_last_node(node)
 
             self.pipeline.add_after(node, new)
-            if run:
-                self.run_needed = new
+            # if run:
+            #     self.run_needed = new
 
     def _get_last_node(self, node=None):
         if node is None:
