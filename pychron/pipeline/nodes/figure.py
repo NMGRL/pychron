@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Any, Bool
+from traits.api import Any, Bool, List
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.base_editor import grouped_name
@@ -38,6 +38,8 @@ class FigureNode(BaseNode):
     plotter_options_manager = Any
     no_analyses_warning = Bool(False)
     # _configured = Bool(False)
+    editors = List
+    auto_set_items = True
 
     def refresh(self):
         if self.editor:
@@ -75,22 +77,14 @@ class FigureNode(BaseNode):
         if use_plotting:
             editor = self.editor
             if not editor:
-                klass = self.editor_klass
-                if isinstance(klass, (str, unicode)):
-                    pkg, klass = klass.split(',')
-                    mod = __import__(pkg, fromlist=[klass])
-                    klass = getattr(mod, klass)
-
-                editor = klass()
-
-                editor.plotter_options = po
-
+                editor = self._editor_factory()
                 self.editor = editor
                 state.editors.append(editor)
 
             # print editor, state.unknowns
+            if self.auto_set_items:
+                editor.set_items(state.unknowns)
 
-            editor.set_items(state.unknowns)
             oname = editor.name
 
             # self.name = editor.name
@@ -130,6 +124,18 @@ class FigureNode(BaseNode):
                 self.refresh()
 
             return True
+
+    def _editor_factory(self):
+        klass = self.editor_klass
+        if isinstance(klass, (str, unicode)):
+            pkg, klass = klass.split(',')
+            mod = __import__(pkg, fromlist=[klass])
+            klass = getattr(mod, klass)
+
+        editor = klass()
+
+        editor.plotter_options = self.plotter_options
+        return editor
 
     def _plotter_options_manager_default(self):
         return self.plotter_options_manager_klass()

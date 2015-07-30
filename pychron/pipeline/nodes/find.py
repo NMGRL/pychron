@@ -15,8 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from itertools import groupby
+
 from traits.api import Float, Str, List, Instance, Property, cached_property
 from traitsui.api import Item, EnumEditor
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.experiment.utilities.identifier import SPECIAL_MAPPING
@@ -133,25 +136,21 @@ class FindReferencesNode(FindNode):
         if not state.unknowns:
             return
 
-        times = sorted((ai.rundate for ai in state.unknowns))
+        key = lambda x: x.group_id
+        for gid, ans in groupby(sorted(state.unknowns, key=key), key=key):
+            if self._run_group(state, gid, ans):
+                return
+
+    def _run_group(self, state, gid, unknowns):
+        times = sorted((ai.rundate for ai in unknowns))
 
         atype = self.analysis_type.lower().replace(' ', '_')
         refs = self.dvc.find_references(times, atype, hours=self.threshold)
         # print 'refs', atype, refs
         if refs:
-            # review = self.user_choice
-            # if not self.user_choice:
-            #     # ask if use wants to review
-            #     review, remember = remember_confirmation_dialog('Would you like to review this Node? '
-            #                                                     '{}'.format(self.name))
-            #     if remember:
-            #         self.user_choice = review
-            # review = True
-            # if review:
-            ans = state.unknowns[:]
-            ans.extend(refs)
-            # refs.extend(state.unknowns)
-            model = GraphicalFilterModel(analyses=ans,
+            # ans = unknowns[:]
+            unknowns.extend(refs)
+            model = GraphicalFilterModel(analyses=unknowns,
                                          dvc=self.dvc,
                                          low_post=times[0],
                                          high_post=times[-1],
@@ -164,6 +163,8 @@ class FindReferencesNode(FindNode):
             info = obj.edit_traits(kind='livemodal')
             if info.result:
                 refs = model.get_filtered_selection()
+                for ri in refs:
+                    ri.group_id = gid
 
                 if obj.is_append:
                     state.references.extend(refs)
@@ -173,6 +174,7 @@ class FindReferencesNode(FindNode):
                 state.has_references = True
             else:
                 state.veto = self
+                return True
 
     def traits_view(self):
         v = self._view_factory(Item('threshold',

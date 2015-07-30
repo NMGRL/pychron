@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 from traits.api import Str
 from traitsui.api import View, UItem, EnumEditor
+from numpy import array, ediff1d, where, array_split
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.pipeline.nodes.base import BaseNode
@@ -60,8 +61,32 @@ class GroupingNode(BaseNode):
                  width=300,
                  title='Edit Grouping',
                  buttons=['OK', 'Cancel'],
-                 kind='livemodal'
-                 )
+                 kind='livemodal')
         return v
+
+
+class BinNode(BaseNode):
+    analysis_kind = 'unknowns'
+
+    def run(self, state):
+        unks = getattr(state, self.analysis_kind)
+
+        key = lambda x: x.timestamp
+        unks = sorted(unks, key=key)
+
+        tol_hrs = 1
+        tol = 60 * 60 * tol_hrs
+
+        ts = array([ai.timestamp for ai in unks])
+        dts = ediff1d(ts)
+        idxs = where(dts > tol)[0]
+        if idxs:
+            unks = array(unks)
+            for i, ais in enumerate(array_split(unks, idxs + 1)):
+                for ai in ais:
+                    ai.group_id = i
+        else:
+            for ai in unks:
+                ai.group_id = 0
 
 # ============= EOF =============================================

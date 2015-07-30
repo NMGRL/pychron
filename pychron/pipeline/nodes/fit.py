@@ -41,6 +41,7 @@ class FitNode(FigureNode):
 
 class FitReferencesNode(FitNode):
     basename = None
+    auto_set_items = False
 
     def run(self, state):
 
@@ -50,7 +51,19 @@ class FitReferencesNode(FitNode):
 
         self.plotter_options.set_detectors(state.union_detectors)
         if state.references:
-            self.editor.set_references(state.references)
+            key = lambda x: x.group_id
+            for i, (gid, refs) in enumerate(groupby(sorted(state.references, key=key), key=key)):
+                if i == 0:
+                    editor = self.editor
+                else:
+                    editor = self._editor_factory()
+                    state.editors.append(editor)
+
+                unks = [u for u in state.unknowns if i.group_id == gid]
+                editor.set_items(unks)
+                editor.set_references(len(refs))
+
+                # self.editor.set_references(state.references)
 
         # self.name = 'Fit {} {}'.format(self.basename, self.name)
         self._set_saveable(state)
@@ -78,8 +91,8 @@ class FitBlanksNode(FitReferencesNode):
             names = unk.isotope_keys
             if names:
                 pom.set_names(names)
-    # def _set_saveable(self, state):
-    #     super(FitBlanksNode, self)._set_saveable()
+                # def _set_saveable(self, state):
+                #     super(FitBlanksNode, self)._set_saveable()
 
 
 ATTRS = ('numerator', 'denominator', 'standard_ratio', 'analysis_type')
@@ -272,11 +285,11 @@ class FitFluxNode(FitNode):
             #     p.set_mean_j()
             #     poss.append(p)
 
-                # for unk_pos in state.unknown_positions:
-                # print unk_pos
+            # for unk_pos in state.unknown_positions:
+            # print unk_pos
 
-                # print identifier, irradiation_position, j, mj, n
-                # editor.add_position(identifier, ip, sample, j, mj, n)
+            # print identifier, irradiation_position, j, mj, n
+            # editor.add_position(identifier, ip, sample, j, mj, n)
             editor.plotter_options = self.plotter_options
             editor.geometry = geom
             editor.irradiation = state.irradiation
@@ -292,4 +305,5 @@ class FitFluxNode(FitNode):
 
             # state.editors.append(editor)
             # state.prev_node_label = 'Flux'
+
 # ============= EOF =============================================
