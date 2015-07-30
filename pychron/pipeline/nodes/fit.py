@@ -59,22 +59,11 @@ class FitReferencesNode(FitNode):
                     editor = self._editor_factory()
                     state.editors.append(editor)
 
-                unks = [u for u in state.unknowns if i.group_id == gid]
+                unks = [u for u in state.unknowns if u.group_id == gid]
                 editor.set_items(unks)
                 editor.set_references(len(refs))
 
-                # self.editor.set_references(state.references)
-
-        # self.name = 'Fit {} {}'.format(self.basename, self.name)
         self._set_saveable(state)
-
-        # if self.has_save_node:
-        #     if self.plotter_options.confirm_save:
-        #         if confirmation_dialog('Would you like to review the {} before saving?'.format(self.basename)):
-        #             state.veto = self
-        #         else:
-        #             self.editor.force_update(force=True)
-        #     else:
         self.editor.force_update(force=True)
 
 
