@@ -237,8 +237,9 @@ class Ideogram(BaseArArFigure):
 
         startidx = 1
         # name = 'analysis #'
+        items = self.sorted_analyses
         if nonsorted:
-            items = self.analyses
+            # items = self.analyses
             name = 'A# Nonsorted'
             tag = 'Analysis Number Nonsorted'
             opt = self.options
@@ -249,7 +250,6 @@ class Ideogram(BaseArArFigure):
 
             xs = [nominal_value(x) for x in self._get_xs(key=index_attr, nonsorted=True)]
         else:
-            items = self.sorted_analyses
             name = 'Analysis #'
             tag = 'Analysis Number'
             xs = self.xs

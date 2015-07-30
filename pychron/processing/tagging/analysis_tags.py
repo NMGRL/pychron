@@ -32,6 +32,10 @@ class Tag(HasTraits):
     omit_iso = Bool
     omit_series = Bool
 
+    def to_dict(self):
+        return {k: getattr(self, k) for k in ('name', 'omit_ideo', 'omit_series',
+                                              'omit_spec', 'omit_iso')}
+
 
 class AnalysisTagModel(BaseTagModel):
     tags = List

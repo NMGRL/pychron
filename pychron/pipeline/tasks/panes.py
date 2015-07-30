@@ -368,7 +368,7 @@ class AnalysesPane(TraitsDockPane):
     def traits_view(self):
         v = View(VGroup(UItem('object.selected.unknowns',
                               editor=myTabularEditor(adapter=UnknownsAdapter(),
-                                                     refresh='refresh_table_needed',
+                                                     update='refresh_table_needed',
                                                      multi_select=True,
                                                      drag_external=True,
                                                      drop_factory=self.model.drop_factory,
@@ -378,7 +378,7 @@ class AnalysesPane(TraitsDockPane):
                         UItem('object.selected.references',
                               visible_when='object.selected.references',
                               editor=myTabularEditor(adapter=ReferencesAdapter(),
-                                                     refresh='refresh_table_needed',
+                                                     update='refresh_table_needed',
                                                      drag_external=True,
                                                      multi_select=True,
                                                      dclicked='dclicked_references',

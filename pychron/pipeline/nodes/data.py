@@ -15,8 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from threading import Thread
+
 from pyface.message_dialog import information
 from traits.api import Instance, Bool
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.browser.view import BrowserView
@@ -130,5 +133,31 @@ class FluxMonitorsNode(DataNode):
         #     self.unknowns = items
         # else:
         #     items.extend(self.unknowns)
+
+
+class ListenUnknownsNode(UnknownNode):
+    def run(self, state):
+        super(ListenUnknownsNode, self).run(state)
+
+        self._start_listening()
+
+    def _start_listening(self):
+        t = Thread(target=self._listen)
+        t.start()
+
+    def _stop_listening(self):
+        pass
+
+    def _listen(self):
+        period = 1
+        while self._alive:
+            unks = self._load_unknowns()
+            if unks:
+                self.unknowns = unks
+
+            time.sleep(period)
+
+    def _load_unknowns(self):
+        self.dvc.get_analyses_da()
 
 # ============= EOF =============================================

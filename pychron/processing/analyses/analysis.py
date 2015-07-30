@@ -19,7 +19,7 @@ from numpy import Inf
 from pyface.message_dialog import information
 from pyface.qt import QtCore
 
-from traits.api import Event
+from traits.api import Event, Int
 
 # ============= standard library imports ========================
 from collections import namedtuple
@@ -181,7 +181,7 @@ class Analysis(ArArAge):
 
     # processing
     is_plateau_step = False
-    temp_status = 0
+    temp_status = Int(0)
     value_filter_omit = False
     table_filter_omit = False
     tag = ''
@@ -233,6 +233,9 @@ class Analysis(ArArAge):
             self.tag = tag
             omit = tag == 'invalid'
         else:
+            if not hasattr(tag, '__getitem__'):
+                tag = tag.to_dict()
+
             name = tag['name']
             self.tag = name
 
