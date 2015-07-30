@@ -17,9 +17,9 @@
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Instance, Button
 from traitsui.api import View, UItem, HGroup, VGroup, Group, spring
+from traitsui.handler import Handler
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from traitsui.handler import Handler
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.browser.adapters import BrowserAdapter
 from pychron.envisage.browser.sample_view import BrowserSampleView
@@ -110,6 +110,27 @@ class StandaloneBrowserView(BaseBrowserView):
                  buttons=['OK', 'Cancel'],
                  title='Browser',
                  resizable=True)
+
+        return v
+
+
+class PaneBrowserView(BaseBrowserView):
+    def traits_view(self):
+        main_grp = self._get_browser_group()
+
+        hgrp = HGroup(icon_button_editor('filter_by_button',
+                                         'find',
+                                         tooltip='Filter analyses using defined criteria'),
+                      icon_button_editor('graphical_filter_button',
+                                         'chart_curve_go',
+                                         tooltip='Filter analyses graphically'),
+                      icon_button_editor('toggle_view',
+                                         'arrow_switch',
+                                         tooltip='Toggle between Sample and Time views'),
+                      spring,
+                      CustomLabel('datasource_url', color='maroon'))
+
+        v = View(VGroup(hgrp, main_grp))
 
         return v
 

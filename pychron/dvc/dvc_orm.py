@@ -21,6 +21,7 @@ from sqlalchemy.sql.schema import ForeignKey
 # ============= local library imports  ==========================
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy import Column, Integer, String, TIMESTAMP, Float, BLOB, func, Boolean
+from pychron.core.helpers.datetime_tools import make_timef
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.experiment.utilities.identifier import make_runid
 from pychron.pychron_constants import OMIT_KEYS
@@ -209,6 +210,7 @@ class AnalysisTbl(Base, BaseMixin):
                 if irradpos.sample.project:
                     iv.project = irradpos.sample.project.name
 
+            iv.timestampf = make_timef(self.timestamp)
             tag = self.change.tag_item
             iv.tag = tag.name
             iv.tag_dict = {k: getattr(tag, k) for k in ('name',) + OMIT_KEYS}

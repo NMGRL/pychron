@@ -73,7 +73,8 @@ class IsotopeRecordView(object):
     __slots__ = ('sample', 'project', 'labnumber', 'identifier', 'aliquot', 'step',
                  '_increment',
                  'uuid', 'rundate',
-                 'timestamp', 'tag',
+                 'timestampf', 'tag',
+                 'delta_time',
                  'tag_dict',
                  'irradiation_position_position',
                  'irradiation', 'irradiation_level',
@@ -105,7 +106,8 @@ class IsotopeRecordView(object):
         self.experiment_identifier = ''
         self.experiment_ids = None
         self.rundate = ''
-        self.timestamp = ''
+        self.timestampf = 0
+        self.delta_time = 0
         # self.record_id = ''
         self.sample = ''
         self.project = ''

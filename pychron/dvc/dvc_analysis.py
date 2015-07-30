@@ -26,6 +26,7 @@ import datetime
 from uncertainties import ufloat, std_dev, nominal_value
 # import yaml
 import json
+from pychron.core.helpers.datetime_tools import make_timef
 from pychron.core.helpers.filetools import add_extension, subdirize
 from pychron.core.helpers.iterfuncs import partition
 from pychron.dvc import jdump
@@ -133,7 +134,7 @@ class DVCAnalysis(Analysis):
         # self.irradiation_level = 'A'
         # self.irradiation_position = 2
         self.rundate = datetime.datetime.now()
-        self.timestamp = time.mktime(self.rundate.timetuple())
+
 
         root = os.path.dirname(path)
         bname = os.path.basename(path)
@@ -180,11 +181,12 @@ class DVCAnalysis(Analysis):
                 self.rundate = datetime.datetime.strptime(yd['timestamp'], '%Y-%m-%dT%H:%M:%S')
             except ValueError:
                 self.rundate = datetime.datetime.strptime(yd['timestamp'], '%Y-%m-%dT%H:%M:%S.%f')
-            self.timestamp = time.mktime(self.rundate.timetuple())
+
             self.collection_version = yd['collection_version']
             # print '    timestamps {}'.format(time.time()-sst)
             # sst=time.time()
             self._set_isotopes(yd)
+
             # print '    isotopes {}'.format(time.time()-sst)
 
             # try:
@@ -200,8 +202,10 @@ class DVCAnalysis(Analysis):
             # print '    load time {}'.format(time.time()-sst)
             # self._set_changeables(yd)
             # print '  changeables {}'.format(time.time()-st)
-        # for tag in ('intercepts','blanks', 'baselines', 'icfactors'):
-        for tag in ('intercepts', 'baselines', 'blanks', 'icfactors'):  # 'blanks', 'baselines', 'icfactors'):
+
+        self.timestamp = make_timef(self.rundate)
+
+        for tag in ('intercepts', 'baselines', 'blanks', 'icfactors'):
             # print tag
             with open(self._analysis_path(modifier=tag), 'r') as rfile:
                 jd = json.load(rfile)

@@ -166,7 +166,7 @@ class BrowserSampleView(PaneModelView):
                             width=0.4,
                             editor=myTabularEditor(
                                 adapter=self.model.analysis_table.tabular_adapter,
-                                operations=['move'],
+                                operations=['move', 'delete'],
                                 column_clicked=make_name('column_clicked'),
                                 refresh=make_name('refresh_needed'),
                                 selected=make_name('selected'),

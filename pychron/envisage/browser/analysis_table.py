@@ -56,17 +56,44 @@ class AnalysisTable(ColumnSorterMixin):
             aa = self.analyses
             aa = [ai for ai in aa if ai.identifier in selected_identifiers]
             aa.extend(ans)
-            self.oanalyses = self.analyses = sorted(aa, key=lambda x: (x.identifier, x.aliquot, x.step))
+            aa = sorted(aa, key=lambda x: x.timestampf)
+            self.oanalyses = self.analyses = aa  # sorted(aa, key=lambda x: (x.identifier, x.aliquot, x.step))
         else:
-
+            ans = sorted(ans, key=lambda x: x.timestampf)
             self.analyses = ans
             self.oanalyses = ans
+
+        self.calculate_dts(self.analyses)
         self._analysis_filter_parameter_changed(True)
+
+    def calculate_dts(self, ans):
+        if ans and len(ans) > 1:
+            n = len(ans)
+            # st = time.time()
+            self._python_dt(ans)
+            # et = (time.time() - st) * 1e6
+            # print 'python time: {:0.2f} n: {} avg: {:0.4f}'.format(et, n, et / n)
+
+    def _python_dt(self, ans):
+        ref = ans[0]
+        prev = ref.timestampf
+        ref.delta_time = 0
+        for ai in ans[1:]:
+            t = ai.timestampf
+            dt = (t - prev) / 60.
+            ai.delta_time = dt
+            prev = t
 
     def configure_table(self):
         self.table_configurer.edit_traits(kind='livemodal')
 
     # handlers
+    def _analyses_items_changed(self):
+        if self.sort_suppress:
+            return
+
+        self.calculate_dts(self.analyses)
+
     def _analysis_filter_changed(self, new):
         if new:
             name = self.analysis_filter_parameter
@@ -83,7 +110,7 @@ class AnalysisTable(ColumnSorterMixin):
             p = self._get_analysis_filter_parameter()
             for si in self.oanalyses:
                 v = getattr(si, p)
-                if not v in vs:
+                if v not in vs:
                     vs.append(v)
 
             self.analysis_filter_values = vs

@@ -29,7 +29,7 @@ from pychron.core.helpers.filetools import add_extension
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.paths import paths
 from pychron.pipeline.tasks.actions import ConfigureRecallAction, IdeogramAction, IsochronAction, SpectrumAction, \
-    SeriesAction
+    SeriesAction, BlanksAction, ICFactorAction
 from pychron.pipeline.tasks.browser_task import BrowserTask
 from pychron.pipeline.tasks.preferences import PipelinePreferencesPane
 from pychron.pipeline.tasks.task import PipelineTask
@@ -83,6 +83,11 @@ class PipelinePlugin(BaseTaskPlugin):
         def plot_group():
             return SGroup(id='plot.group')
 
+        def reduction_group():
+            return SGroup(id='reduction.group')
+
+        pg = 'MenuBar/data.menu/plot.group'
+        rg = 'MenuBar/data.menu/reduction.group'
         plotting_actions = [SchemaAddition(factory=data_menu,
                                            path='MenuBar',
                                            before='tools.menu',
@@ -90,20 +95,29 @@ class PipelinePlugin(BaseTaskPlugin):
                             SchemaAddition(factory=plot_group,
                                            path='MenuBar/data.menu'),
                             SchemaAddition(factory=IdeogramAction,
-                                           path='MenuBar/data.menu/plot.group'),
+                                           path=pg),
                             SchemaAddition(factory=SpectrumAction,
-                                           path='MenuBar/data.menu/plot.group'),
+                                           path=pg),
                             SchemaAddition(factory=IsochronAction,
-                                           path='MenuBar/data.menu/plot.group'),
+                                           path=pg),
                             SchemaAddition(factory=SeriesAction,
-                                           path='MenuBar/data.menu/plot.group'),
-                            ]
+                                           path=pg)]
+
+        reduction_actions = [SchemaAddition(factory=reduction_group,
+                                            path='MenuBar/data.menu'),
+                             SchemaAddition(factory=BlanksAction,
+                                            path=rg),
+                             SchemaAddition(factory=ICFactorAction,
+                                            path=rg)]
+        configure_recall = SchemaAddition(factory=ConfigureRecallAction,
+                                          path='MenuBar/Edit')
+        browser_actions = [configure_recall]
 
         return [TaskExtension(task_id='pychron.pipeline.task',
-                              actions=[SchemaAddition(factory=ConfigureRecallAction,
-                                                      path='MenuBar/Edit')]),
-
-                TaskExtension(actions=plotting_actions)]
+                              actions=[configure_recall]),
+                TaskExtension(task_id='pychron.browser.task',
+                              actions=browser_actions),
+                TaskExtension(actions=plotting_actions + reduction_actions)]
 
     def _tasks_default(self):
         return [TaskFactory(id='pychron.pipeline.task',

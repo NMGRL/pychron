@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from pyface.action.menu_manager import MenuManager
-from traits.api import Int
+from traits.api import Int, Property
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
@@ -83,7 +83,7 @@ class LabnumberAdapter(BrowserAdapter):
 
     def get_menu(self, obj, trait, row, column):
         if obj.selected_samples:
-            psenabled = obj.current_task_name in ('Ideogram','Spectrum')
+            psenabled = obj.current_task_name in ('Ideogram', 'Spectrum')
             # psenabled = isinstance(obj, FigureTask)
             return MenuManager(Action(name='Unselect', action='unselect_samples'),
                                Action(name='Chronological View', action='on_chrono_view'),
@@ -100,6 +100,7 @@ class AnalysisAdapter(BrowserAdapter):
     all_columns = [('Run ID', 'record_id'),
                    ('Tag', 'tag'),
                    ('RunDate', 'rundate'),
+                   ('Dt', 'delta_time'),
                    ('Iso Fits', 'iso_fit_status'),
                    ('Blank', 'blank_fit_status'),
                    ('IC', 'ic_fit_status'),
@@ -113,13 +114,28 @@ class AnalysisAdapter(BrowserAdapter):
                    ('Device', 'extract_device')]
 
     columns = [('Run ID', 'record_id'),
-               ('Tag', 'tag')]
+               ('Tag', 'tag'),
+               ('Dt', 'delta_time')]
 
     rundate_width = Int(120)
-    record_id_width = Int(100)
+    delta_time_width = Int(65)
+    delta_time_text = Property
+    record_id_width = Int(70)
     tag_width = Int(65)
     odd_bg_color = 'lightgray'
     font = 'arial 10'
+
+    def _get_delta_time_text(self):
+        dt = self.item.delta_time
+        if dt > 60:
+            units = '(h)'
+            dt /= 60.
+            if dt > 24:
+                units = '(d)'
+                dt /= 24.
+        else:
+            units = ''
+        return '{:0.1f} {}'.format(dt, units)
 
     def get_menu(self, obj, trait, row, column):
         e = obj.append_replace_enabled
@@ -138,6 +154,9 @@ class AnalysisAdapter(BrowserAdapter):
         color = 'white'
         if self.item.is_plateau_step:
             color = 'lightgreen'
+        elif self.item.delta_time > 1440:  # 24 hours
+            color = '#76C1E2'
 
         return color
+
 # ============= EOF =============================================

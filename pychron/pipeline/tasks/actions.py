@@ -72,13 +72,31 @@ class ConfigureRecallAction(TaskAction):
     image = icon('cog')
 
 
-# ============= Plotting Actions =============================================
-class PlotAction(Action):
+class PipelineAction(Action):
     def perform(self, event):
         app = event.task.window.application
         task = app.get_task('pychron.pipeline.task')
         if hasattr(task, self.action):
             getattr(task, self.action)()
+
+
+class ReductionAction(PipelineAction):
+    pass
+
+
+class BlanksAction(PipelineAction):
+    name = 'Blanks'
+    dname = 'Blanks'
+
+
+class ICFactorAction(PipelineAction):
+    name = 'ICFactor'
+    dname = 'ICFactor'
+
+
+# ============= Plotting Actions =============================================
+class PlotAction(PipelineAction):
+    pass
 
 
 class IdeogramAction(PlotAction):
