@@ -313,6 +313,9 @@ class DVC(Loggable):
             return self.make_analyses(records)
 
     def make_analyses(self, records, calculate_f_only=False):
+        if not records:
+            return
+
         # load repositories
         # {r.experiment_id for r in records}
         exps = {r.experiment_identifier for r in records}

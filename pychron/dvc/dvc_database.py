@@ -525,7 +525,8 @@ class DVCDatabase(DatabaseAdapter):
                                    order='asc',
                                    exclude=None,
                                    exclude_uuids=None,
-                                   exclude_invalid=True):
+                                   exclude_invalid=True,
+                                   verbose=False):
         with self.session_ctx() as sess:
             q = sess.query(AnalysisTbl)
             if exclude_invalid:
@@ -574,7 +575,7 @@ class DVCDatabase(DatabaseAdapter):
             if limit:
                 q = q.limit(limit)
 
-            return self._query_all(q)
+            return self._query_all(q, verbose_query=verbose)
 
     def _get_date_range(self, q, asc=None, desc=None, hours=0):
         if asc is None:

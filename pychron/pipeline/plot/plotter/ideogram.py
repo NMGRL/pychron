@@ -155,7 +155,6 @@ class Ideogram(BaseArArFigure):
         plot.value_axis.tick_label_formatter = lambda x: ''
         plot.value_axis.tick_visible = False
 
-        print 'ideo omit', self.group_id, omit
         if omit:
             self._rebuild_ideo(list(omit))
 

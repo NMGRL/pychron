@@ -53,9 +53,9 @@ class PipelineTemplate(HasTraits):
         pipeline.nodes = []
         with open(self.path, 'r') as rfile:
             nodes = yaml.load(rfile)
-        print 'fafa', nodes
+        # print 'fafa', nodes
         for i, ni in enumerate(nodes):
-            print i, ni
+            # print i, ni
             klass = ni['klass']
             if i == 0 and klass == 'UnknownNode':
                 pipeline.nodes.append(datanode)
@@ -66,7 +66,7 @@ class PipelineTemplate(HasTraits):
                 node.trait_set(browser_model=bmodel, dvc=dvc)
             elif isinstance(node, (FindNode, PersistNode, GainCalibrationNode)):
                 node.trait_set(dvc=dvc)
-
+            node.finish_load()
             # elif isinstance(node, FitICFactorNode):
             #     node.set_detectors()
 

@@ -48,6 +48,9 @@ class BaseNode(HasTraits):
     def load(self, nodedict):
         pass
 
+    def finish_load(self):
+        pass
+
     def enable(self):
         self.enabled = True
 
@@ -74,7 +77,7 @@ class BaseNode(HasTraits):
     def run(self, state):
         raise NotImplementedError(self.__class__.__name__)
 
-    def post_run(self, state):
+    def post_run(self, engine, state):
         pass
 
     def refresh(self):

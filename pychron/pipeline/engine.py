@@ -38,7 +38,7 @@ from pychron.pipeline.nodes.persist import PDFFigureNode, IsotopeEvolutionPersis
 from pychron.pipeline.template import PipelineTemplate
 
 TEMPLATE_NAMES = ('Iso Evo', 'Icfactor', 'Blanks', 'Flux', 'Ideogram', 'Spectrum',
-                  'Isochron', 'Series', 'Table')
+                  'Isochron', 'Series', 'Table', 'Auto Ideogram')
 
 
 class Pipeline(HasTraits):
@@ -409,7 +409,8 @@ class PipelineEngine(Loggable):
             action = 'skip'
             if node.enabled:
                 action = 'post run'
-                node.post_run(state)
+                node.post_run(self, state)
+
             self.debug('{} node {:02n}: {}'.format(action, idx, node.name))
         self.debug('pipeline post run finished')
 
@@ -420,6 +421,7 @@ class PipelineEngine(Loggable):
         for node in self.pipeline.nodes:
             if hasattr(node, 'editor'):
                 if node.editor == editor:
+                    # print 'selecting',node
                     self.selected = node
                     # self.unknowns = editor.analyses
                     # self.refresh_table_needed = True
@@ -536,6 +538,10 @@ class PipelineEngine(Loggable):
     #
     #     self._suppress_handle_unknowns = False
     #     print 'asdfasdfasfsafs', obj, new
+
+    def refresh_unknowns(self, unks):
+        self.selected.unknowns = unks
+        self.selected.editor.set_items(unks)
 
     _len_unknowns_cnt = 0
     _len_unknowns_removed = 0

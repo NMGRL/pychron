@@ -15,12 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from threading import Thread
-
 from pyface.message_dialog import information
-from traits.api import Instance, Bool
-
+from pyface.timer.do_later import do_after
+from traits.api import Instance, Bool, Int, Str, List, Enum
+from traitsui.api import View, Item, EnumEditor
 # ============= standard library imports ========================
+import weakref
+from datetime import datetime
 # ============= local library imports  ==========================
 from pychron.envisage.browser.view import BrowserView
 from pychron.pipeline.nodes.base import BaseNode
@@ -52,13 +53,9 @@ class DataNode(BaseNode):
                 if browser_view.is_append:
                     ans = getattr(self, self.analysis_kind)
                     ans.extend(analyses)
-                    # self.analyses.extend(analyses)
                 else:
                     self.trait_set(**{self.analysis_kind: analyses})
-                    # self.analyses = analyses
-                # print self.unknowns
-                # setattr(self, self.analysis_kind, self.analyses)
-                # self.metadata = self.analyses
+
                 return True
 
 
@@ -135,29 +132,62 @@ class FluxMonitorsNode(DataNode):
         #     items.extend(self.unknowns)
 
 
-class ListenUnknownsNode(UnknownNode):
-    def run(self, state):
-        super(ListenUnknownsNode, self).run(state)
+class ListenUnknownNode(UnknownNode):
+    hours = Int(10)
+    mass_spectrometer = Str()
+    available_spectrometers = List
+    exclude_uuids = List
+    period = 60
+    mode = Enum('normal')
 
+    def finish_load(self):
+        self.available_spectrometers = self.dvc.get_mass_spectrometer_names()
+
+    def configure(self, pre_run=False, *args, **kw):
+        if pre_run:
+            return True
+
+        return BaseNode.configure(self, pre_run=pre_run, *args, **kw)
+
+    def traits_view(self):
+        v = View(Item('hours'),
+                 Item('mass_spectrometer', editor=EnumEditor(name='available_spectrometers')),
+                 buttons=['OK', 'Cancel'])
+        return v
+
+    def post_run(self, engine, state):
+        self.engine = weakref.ref(engine)()
         self._start_listening()
 
     def _start_listening(self):
-        t = Thread(target=self._listen)
-        t.start()
+        self._low = datetime.now()
+        self._alive = True
+        self._iter()
 
     def _stop_listening(self):
         pass
 
-    def _listen(self):
-        period = 1
-        while self._alive:
+    def _iter(self):
+        if self._alive:
+
             unks = self._load_unknowns()
             if unks:
                 self.unknowns = unks
+                self.exclude_uuids = [u.uuid for u in unks]
+                self.engine.refresh_unknowns(unks)
 
-            time.sleep(period)
+            do_after(self.period * 1000, self._iter)
 
     def _load_unknowns(self):
-        self.dvc.get_analyses_da()
+        if self.mode == 'normal':
+            high = datetime.now()
+            low = self._low
+
+        with self.dvc.session_ctx():
+            unks = self.dvc.get_analyses_by_date_range(low, high,
+                                                       exclude_uuids=self.exclude_uuids,
+                                                       analysis_type='unknown',
+                                                       mass_spectrometers=self.mass_spectrometer, verbose=True)
+            return self.dvc.make_analyses(unks)
 
 # ============= EOF =============================================

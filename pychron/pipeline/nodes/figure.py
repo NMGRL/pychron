@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Any
+from traits.api import Any, Bool
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.base_editor import grouped_name
@@ -36,6 +36,7 @@ class FigureNode(BaseNode):
     plotter_options = Any
     plotter_options_manager_klass = Any
     plotter_options_manager = Any
+    no_analyses_warning = Bool(False)
     # _configured = Bool(False)
 
     def refresh(self):
@@ -65,7 +66,7 @@ class FigureNode(BaseNode):
         except AttributeError:
             use_plotting = True
 
-        if not state.unknowns:
+        if not state.unknowns and self.no_analyses_warning:
             raise NoAnalysesError
 
         self.unknowns = state.unknowns
@@ -135,6 +136,7 @@ class FigureNode(BaseNode):
 
     def _configure_hook(self):
         pass
+
 
 class IdeogramNode(FigureNode):
     name = 'Ideogram'

@@ -202,6 +202,8 @@ class PipelineTask(BaseBrowserTask):
         if not self.engine.run(state, self.run_to):
             self._toggle_run(True)
         else:
+            self.engine.post_run(state)
+
             self._toggle_run(False)
             self.state = None
             self.engine.state = None
