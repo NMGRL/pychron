@@ -316,7 +316,7 @@ class PipelineTask(BaseBrowserTask):
                     if tag:
                         name = tag.name
             else:
-                name = tag.name
+                name = tag['name']
 
             # set tags for items
             if name and items:
