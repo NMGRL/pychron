@@ -25,11 +25,8 @@ from pychron.processing.utils.grouping import group_analyses_by_key
 
 
 class GroupingNode(BaseNode):
-    # by_identifier = Bool
-    # by_aliquot = Bool
-    # by_sample = Bool
     by_key = Str
-    keys = ('Aliquot', 'Identifier')
+    keys = ('Aliquot', 'Identifier', 'Step')
     analysis_kind = 'unknowns'
     name = 'Grouping'
 
@@ -38,16 +35,13 @@ class GroupingNode(BaseNode):
     def load(self, nodedict):
         self.by_key = nodedict.get('key', 'Identifier')
 
-    # def configure(self):
-    #     info = self.edit_traits()
-    #     if info.result:
-    #         return True
-
     def _generate_key(self):
         if self.by_key == 'Aliquot':
             key = lambda x: x.aliquot
         elif self.by_key == 'Identifier':
             key = lambda x: x.identifier
+        elif self.by_key == 'Step':
+            key = lambda x: x.increment
         return key
 
     def run(self, state):
