@@ -424,7 +424,9 @@ class Graph(ContextMenuMixin):
     def save_pdf(self, path=None):
         """
         """
-        self._save(type_='pdf', path=path)
+        from pychron.core.pdf.save_pdf_dialog import save_pdf
+        save_pdf(self.plotcontainer)
+        # self._save(type_='pdf', path=path)
 
     def save(self, path=None):
         """
@@ -1485,26 +1487,27 @@ class Graph(ContextMenuMixin):
     def _render_to_pdf(self, save=True, canvas=None, filename=None, dest_box=None):
         """
         """
-        from chaco.pdf_graphics_context import PdfPlotGraphicsContext
-
-        if filename:
-            # if not filename.endswith('.pdf'):
-            #     filename += '.pdf'
-            filename = add_extension(filename, ext='.pdf')
-
-        gc = PdfPlotGraphicsContext(filename=filename,
-                                    pdf_canvas=canvas,
-                                    dest_box=dest_box)
-        pc = self.plotcontainer
-
-        # pc.do_layout(force=True)
-        # pc.use_backbuffer=False
-        gc.render_component(pc, valign='center')
-        if save:
-            gc.save()
-            # pc.use_backbuffer=True
-
-        return gc
+        # save_pdf()
+        # from chaco.pdf_graphics_context import PdfPlotGraphicsContext
+        #
+        # if filename:
+        #     # if not filename.endswith('.pdf'):
+        #     #     filename += '.pdf'
+        #     filename = add_extension(filename, ext='.pdf')
+        #
+        # gc = PdfPlotGraphicsContext(filename=filename,
+        #                             pdf_canvas=canvas,
+        #                             dest_box=dest_box)
+        # pc = self.plotcontainer
+        #
+        # # pc.do_layout(force=True)
+        # # pc.use_backbuffer=False
+        # gc.render_component(pc, valign='center')
+        # if save:
+        #     gc.save()
+        #     # pc.use_backbuffer=True
+        #
+        # return gc
 
     def _render_to_pic(self, filename):
         """

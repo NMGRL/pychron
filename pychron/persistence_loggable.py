@@ -54,6 +54,20 @@ def dump_persistence_values(obj, p, attrs):
 class PersistenceMixin(object):
     pattributes = None
 
+    def get_attributes(self):
+        attrs = self.pattributes
+        try:
+            dattrs = tuple(self.traits(dump=True).keys())
+            if attrs:
+                attrs += dattrs
+            else:
+                attrs = dattrs
+        except AttributeError, e:
+            print 'ddddd', e
+            pass
+
+        return attrs
+
     def get_persistence_path(self):
         try:
             return self._make_persistence_path(self.persistence_path)
@@ -61,8 +75,8 @@ class PersistenceMixin(object):
             self.warning('persistence path not implemented')
 
     def load(self, verbose=False):
-
-        if not self.pattributes:
+        attrs = self.get_attributes()
+        if not attrs:
             raise NotImplementedError
 
         if verbose:
@@ -82,7 +96,7 @@ class PersistenceMixin(object):
                 if verbose:
                     self.debug('***************** loading pickled object')
 
-                for k in self.pattributes:
+                for k in attrs:
                     try:
                         v = d[k]
                         if verbose:
@@ -92,7 +106,8 @@ class PersistenceMixin(object):
                         pass
 
     def dump(self, verbose=False):
-        if not self.pattributes:
+        attrs = self.get_attributes()
+        if not attrs:
             raise NotImplementedError
 
         p = self.get_persistence_path()
@@ -101,12 +116,12 @@ class PersistenceMixin(object):
             if verbose:
                 self.debug('***************** dumping')
                 d = {}
-                for a in self.pattributes:
+                for a in attrs:
                     v = getattr(self, a)
                     self.debug('dump {}="{}"'.format(a, v))
                     d[a] = v
             else:
-                d = {a: getattr(self, a) for a in self.pattributes}
+                d = {a: getattr(self, a) for a in attrs}
             with open(p, 'w') as wfile:
                 pickle.dump(d, wfile)
 
@@ -127,4 +142,3 @@ class PersistenceLoggable(Loggable, PersistenceMixin):
     pass
 
 # ============= EOF =============================================
-

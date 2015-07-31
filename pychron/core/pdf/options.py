@@ -17,94 +17,98 @@
 # ============= enthought library imports =======================
 import os
 
-from traits.api import HasTraits, Str, Bool, Color, Enum, \
-    Button, Float, TraitError, Property, Int
+from traits.api import HasTraits, Str, Bool, Enum, \
+    Button, Float, Int
 from traitsui.api import View, Item, UItem, HGroup, Group, VGroup
 
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-import yaml
 from pychron.envisage.icon_button_editor import icon_button_editor
-from pychron.globals import globalv
 from pychron.paths import paths
+from pychron.persistence_loggable import PersistenceMixin
 
 
-class BasePDFOptions(HasTraits):
-    orientation = Enum('landscape', 'portrait')
-    left_margin = Float(1.5)
-    right_margin = Float(1)
-    top_margin = Float(1)
-    bottom_margin = Float(1)
-    show_page_numbers = Bool(False)
-    use_alternating_background = Bool
-    alternating_background = Color
+def dumpable(klass, *args, **kw):
+    return klass(dump=True, *args, **kw)
 
-    persistence_path = Property
+
+class BasePDFOptions(HasTraits, PersistenceMixin):
+    orientation = dumpable(Enum('landscape', 'portrait'))
+    left_margin = dumpable(Float(1.5))
+    right_margin = dumpable(Float(1))
+    top_margin = dumpable(Float(1))
+    bottom_margin = dumpable(Float(1))
+    show_page_numbers = dumpable(Bool(False))
+    # use_alternating_background = dumpable(Bool)
+    # alternating_background = dumpable(Color)
+
+    # persistence_path = Property
     _persistence_name = 'base_pdf_options'
 
     def __init__(self, *args, **kw):
-        super(BasePDFOptions, self).__init__(*args, **kw)
-        self.load_yaml()
+        self.persistence_path = os.path.join(paths.hidden_dir, self._persistence_name)
+        #     super(BasePDFOptions, self).__init__(*args, **kw)
+        #     self.load_yaml()
 
-    def _get_persistence_path(self):
-        return os.path.join(paths.hidden_dir, '{}.{}'.format(self._persistence_name, globalv.username))
+        # def _get_persistence_path(self):
+        #     return os.path.join(paths.hidden_dir, '{}.{}'.format(self._persistence_name, globalv.username))
 
-    def dump_yaml(self):
-        p = self.persistence_path
-        with open(p, 'w') as wfile:
-            yaml.dump(self.get_dump_dict(), wfile)
+        # def dump_yaml(self):
+        #     p = self.persistence_path
+        #     with open(p, 'w') as wfile:
+        #         yaml.dump(self.get_dump_dict(), wfile)
+        #
+        # def _get_dump_attrs(self):
+        #     return ('orientation', 'left_margin', 'right_margin',
+        #             'top_margin', 'bottom_margin', 'show_page_numbers',
+        #             'use_alternating_background')
+        #
+        # def get_dump_dict(self):
+        #     dd = {k: getattr(self, k) for k in self._get_dump_attrs()}
+        #     # d = dict(orientation=self.orientation,
+        #     # left_margin=self.left_margin,
+        #     # right_margin=self.right_margin,
+        #     # top_margin=self.top_margin,
+        #     # bottom_margin=self.bottom_margin)
+        #     dd['alternating_background'] = self.get_alternating_background()
+        #
+        #     return dd
 
-    def _get_dump_attrs(self):
-        return ('orientation', 'left_margin', 'right_margin',
-                'top_margin', 'bottom_margin', 'show_page_numbers',
-                'use_alternating_background')
+        # def set_alternating_background(self, t):
+        #     self.alternating_background = tuple(map(lambda x: int(x * 255), t))
+        #
+        # def get_alternating_background(self):
+        #     t = self.alternating_background.toTuple()[:3]
+        #     return map(lambda x: x / 255., t)
 
-    def get_dump_dict(self):
-        dd = {k: getattr(self, k) for k in self._get_dump_attrs()}
-        # d = dict(orientation=self.orientation,
-        # left_margin=self.left_margin,
-        # right_margin=self.right_margin,
-        # top_margin=self.top_margin,
-        # bottom_margin=self.bottom_margin)
-        dd['alternating_background'] = self.get_alternating_background()
-
-        return dd
-
-    def set_alternating_background(self, t):
-        self.alternating_background = tuple(map(lambda x: int(x * 255), t))
-
-    def get_alternating_background(self):
-        t = self.alternating_background.toTuple()[:3]
-        return map(lambda x: x / 255., t)
-
-    def get_load_dict(self):
-        d = {}
-        p = self.persistence_path
-        if os.path.isfile(p):
-            with open(p, 'r') as rfile:
-                try:
-                    d = yaml.load(rfile)
-                except yaml.YAMLError:
-                    pass
-        return d
-
-    def load_yaml(self):
-        d = self.get_load_dict()
-        for k, v in d.iteritems():
-            try:
-                setattr(self, k, v)
-            except TraitError:
-                pass
-
-        ab = d.get('use_alternating_background', False)
-        if ab:
-            self.set_alternating_background(d.get('alternating_background',
-                                                  (0.7, 0.7, 0.7)))
-        self._load_yaml_hook(d)
-
-    def _load_yaml_hook(self, d):
-        pass
+        # def get_load_dict(self):
+        #     d = {}
+        #     p = self.persistence_path
+        #     if os.path.isfile(p):
+        #         with open(p, 'r') as rfile:
+        #             try:
+        #                 d = yaml.load(rfile)
+        #             except yaml.YAMLError:
+        #                 pass
+        #     return d
+        #
+        # def load_yaml(self):
+        #     d = self.get_load_dict()
+        #     for k, v in d.iteritems():
+        #         try:
+        #             setattr(self, k, v)
+        #         except TraitError:
+        #             pass
+        #
+        #     ab = d.get('use_alternating_background', False)
+        #     if ab:
+        #         self.set_alternating_background(d.get('alternating_background',
+        #                                               (0.7, 0.7, 0.7)))
+        #     self._load_yaml_hook(d)
+        #
+        # def _load_yaml_hook(self, d):
+        #     pass
 
 
 class PDFTableOptions(BasePDFOptions):
