@@ -46,6 +46,11 @@ class ResumeAction(TaskAction):
     visible_name = 'resume_enabled'
 
 
+class RunFromAction(TaskAction):
+    name = 'Run From'
+    method = 'run_from'
+
+
 class ResetAction(TaskAction):
     name = 'Reset'
     method = 'reset'

@@ -138,7 +138,7 @@ class FindReferencesNode(FindNode):
 
         key = lambda x: x.group_id
         for gid, ans in groupby(sorted(state.unknowns, key=key), key=key):
-            if self._run_group(state, gid, ans):
+            if self._run_group(state, gid, list(ans)):
                 return
 
     def _run_group(self, state, gid, unknowns):

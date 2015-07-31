@@ -42,6 +42,17 @@ TEMPLATE_NAMES = ('Iso Evo', 'Icfactor', 'Blanks', 'Flux', 'Ideogram', 'Spectrum
                   'Isochron', 'Series', 'Table', 'Auto Ideogram')
 
 
+class ActiveCTX(object):
+    def __init__(self, node):
+        self._node = node
+
+    def __enter__(self):
+        self._node.active = True
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._node.active = False
+
+
 class Pipeline(HasTraits):
     name = Str('Pipeline')
     nodes = List
@@ -207,7 +218,7 @@ class PipelineEngine(Loggable):
 
     def review_node(self, node):
         node.reset()
-        self.run_needed = True
+        # self.run_needed = True
         # if node.review():
         #     self.run_needed = True
 
@@ -219,7 +230,7 @@ class PipelineEngine(Loggable):
 
     def remove_node(self, node):
         self.pipeline.nodes.remove(node)
-        self.run_needed = True
+        # self.run_needed = True
 
     def set_template(self, name):
         self.reset_event = True
@@ -322,8 +333,8 @@ class PipelineEngine(Loggable):
             self.pipeline.add_after(node, new)
             if new.use_save_node:
                 self.add_icfactor_persist(new, run=False)
-            if run:
-                self.run_needed = True
+                # if run:
+                #     self.run_needed = True
 
     def add_blanks(self, node=None, run=True):
         new = FitBlanksNode()
@@ -332,8 +343,8 @@ class PipelineEngine(Loggable):
             self.pipeline.add_after(node, new)
             if new.use_save_node:
                 self.add_blanks_persist(new, run=False)
-            if run:
-                self.run_needed = True
+                # if run:
+                #     self.run_needed = True
 
     def add_isotope_evolution(self, node=None, run=True):
         new = FitIsotopeEvolutionNode()
@@ -344,8 +355,8 @@ class PipelineEngine(Loggable):
             if new.use_save_node:
                 self.add_iso_evo_persist(new, run=False)
 
-            if run:
-                self.run_needed = new
+                # if run:
+                #     self.run_needed = new
 
     # save
     def add_icfactor_persist(self, node=None, run=True):
@@ -381,19 +392,31 @@ class PipelineEngine(Loggable):
     #             self.debug('pipeline canceled by {}'.format(node))
     #             return True
 
+    def run_from_pipeline(self):
+        if not self.state:
+            self.run_pipeline()
+        else:
+            node = self.selected
+            idx = self.pipeline.nodes.index(node)
+            idx = max(0, idx - 1)
+            node = self.pipeline.nodes[idx]
+
+            self.run_pipeline(run_from=node)
+
     def resume_pipeline(self):
         self.run_pipeline(self.state)
 
-    def run_pipeline(self, state=None):
+    def run_pipeline(self, run_from=None, state=None):
         if state is None:
             state = EngineState()
             self.state = state
 
         ost = time.time()
-        start_node = state.veto
+
+        start_node = run_from or state.veto
         self.debug('pipeline run started')
         if start_node:
-            self.debug('starting at node {}'.format(start_node))
+            self.debug('starting at node {} {}'.format(start_node, run_from))
         state.veto = None
 
         for node in self.pipeline.iternodes(start_node):
@@ -404,29 +427,29 @@ class PipelineEngine(Loggable):
             if node.enabled:
                 node.editor = None
 
-                node.active = True
-                if not node.pre_run(state):
-                    return True
-                node.active = False
+                with ActiveCTX(node):
+                    if not node.pre_run(state):
+                        self.debug('Pre run failed {}'.format(node))
+                        return True
 
-                st = time.time()
-                try:
-                    node.run(state)
-                    node.visited = True
-                    self.selected = node
-                except NoAnalysesError:
-                    self.information_dialog('No Analyses in Pipeline!')
-                    self.pipeline.reset()
-                    return True
-                self.debug('{:02n}: {} Runtime: {:0.4f}'.format(idx, node, time.time() - st))
+                    st = time.time()
+                    try:
+                        node.run(state)
+                        node.visited = True
+                        self.selected = node
+                    except NoAnalysesError:
+                        self.information_dialog('No Analyses in Pipeline!')
+                        self.pipeline.reset()
+                        return True
+                    self.debug('{:02n}: {} Runtime: {:0.4f}'.format(idx, node, time.time() - st))
 
-                if state.veto:
-                    self.debug('pipeline vetoed by {}'.format(node))
-                    return
+                    if state.veto:
+                        self.debug('pipeline vetoed by {}'.format(node))
+                        return
 
-                if state.canceled:
-                    self.debug('pipeline canceled by {}'.format(node))
-                    return True
+                    if state.canceled:
+                        self.debug('pipeline canceled by {}'.format(node))
+                        return True
 
             else:
                 self.debug('Skip node {:02n}: {}'.format(idx, node))

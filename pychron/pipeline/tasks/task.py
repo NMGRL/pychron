@@ -30,7 +30,7 @@ from pychron.pipeline.engine import PipelineEngine
 from pychron.pipeline.plot.editors.interpreted_age_editor import InterpretedAgeEditor
 from pychron.pipeline.state import EngineState
 from pychron.pipeline.tasks.actions import RunAction, SavePipelineTemplateAction, ResumeAction, ResetAction, \
-    ConfigureRecallAction, GitRollbackAction, TagAction, SetInterpretedAgeAction, ClearAction
+    ConfigureRecallAction, GitRollbackAction, TagAction, SetInterpretedAgeAction, ClearAction, RunFromAction
 from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane
 from pychron.envisage.browser.browser_task import BaseBrowserTask
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
@@ -56,6 +56,7 @@ class PipelineTask(BaseBrowserTask):
     engine = Instance(PipelineEngine, ())
     tool_bars = [SToolBar(RunAction(),
                           ResumeAction(),
+                          RunFromAction(),
                           ResetAction(),
                           ClearAction(),
                           ConfigureRecallAction(),
@@ -76,12 +77,6 @@ class PipelineTask(BaseBrowserTask):
 
     # _temp_state = None
     # reset_enabled = Bool(False)
-
-    def run(self):
-        self._run_pipeline()
-
-    def resume(self):
-        self._resume_pipeline()
 
     def activated(self):
         super(PipelineTask, self).activated()
@@ -121,6 +116,15 @@ class PipelineTask(BaseBrowserTask):
         return panes
 
     # toolbar actions
+    def run(self):
+        self._run_pipeline()
+
+    def resume(self):
+        self._resume_pipeline()
+
+    def run_from(self):
+        self._run_from_pipeline()
+
     def set_interpreted_age(self):
         ias = self.active_editor.get_interpreted_ages()
         iaf = InterpretedAgeFactory(groups=ias)
@@ -186,21 +190,32 @@ class PipelineTask(BaseBrowserTask):
                 self.close_editor(e)
                 break
 
-    def _resume_pipeline(self):
-        self.debug('resume pipeline')
-        self.engine.resume_pipeline()
+    def _run(self, message, func, close_all=False):
+        self.debug('{} started'.format(message))
+        if close_all:
+            self.close_all()
+
+        getattr(self.engine, func)()
         for editor in self.engine.state.editors:
             self._open_editor(editor)
-        self.debug('resume pipline finished')
+
+        self.debug('{} finished'.format(message))
+
+    def _run_from_pipeline(self):
+        self._run('run from', 'run_from_pipeline')
+
+    def _resume_pipeline(self):
+        self._run('resume pipeline', 'resume_pipeline')
 
     def _run_pipeline(self):
-        self.debug('run pipeline')
-        self.close_all()
-        self.engine.run_pipeline()
-
-        for editor in self.engine.state.editors:
-            self._open_editor(editor)
-        self.debug('pipeline finished')
+        self._run('run pipeline', 'run_pipeline', close_all=True)
+        # self.debug('run pipeline')
+        # self.close_all()
+        # self.engine.run_pipeline()
+        #
+        # for editor in self.engine.state.editors:
+        #     self._open_editor(editor)
+        # self.debug('pipeline finished')
 
         # if self.state:
         #     self.debug('using previous state')
