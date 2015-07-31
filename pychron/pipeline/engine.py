@@ -173,6 +173,30 @@ class PipelineEngine(Loggable):
 
                 p.set_detectors(list(udets.union(rdets)))
 
+    def unknowns_clear_all_grouping(self):
+        self._set_grouping(self.selected.unknowns, 0)
+
+    def unknowns_clear_grouping(self):
+        items = self.selected_unknowns
+        if not items:
+            items = self.selected.unknowns
+
+        self._set_grouping(items, 0)
+
+    def unknowns_group_by_selected(self):
+        items = self.selected.unknowns
+        max_gid = max([si.group_id for si in items]) + 1
+
+        self._set_grouping(self.selected_unknowns, max_gid)
+
+    def _set_grouping(self, items, gid):
+        for si in items:
+            si.group_id = gid
+
+        if hasattr(self.selected, 'editor') and self.selected.editor:
+            self.selected.editor.refresh_needed = True
+        self.refresh_table_needed = True
+
     def recall_unknowns(self):
         self.debug('recall unks')
         self.recall_analyses_needed = self.selected_unknowns
@@ -427,7 +451,6 @@ class PipelineEngine(Loggable):
 
         self.update_needed = True
         self.refresh_table_needed = True
-
 
     def select_node_by_editor(self, editor):
         for node in self.pipeline.nodes:

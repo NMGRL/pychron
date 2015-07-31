@@ -274,6 +274,7 @@ class UnknownsAdapter(TabularAdapter):
                ('Age', 'age'),
                (u'\u00b11\u03c3', 'error'),
                ('Tag', 'tag'),
+               ('GroupID', 'group_id'),
                ('GID', 'graph_id')]
 
     record_id_width = Int(80)
@@ -294,7 +295,11 @@ class UnknownsAdapter(TabularAdapter):
     # return self.item.__class__.__name__.split('.')[-1]
 
     def get_menu(self, object, trait, row, column):
-        return MenuManager(Action(name='Recall', action='recall_unknowns'))
+        return MenuManager(Action(name='Recall', action='recall_unknowns'),
+                           Action(name='Group Selected', action='unknowns_group_by_selected'),
+                           Action(name='Clear Group', action='unknowns_clear_grouping'),
+                           Action(name='Clear All Group', action='unknowns_clear_all_grouping'),
+                           )
 
     # return MenuManager(Action(name='Group Selected', action='group_by_selected'),
     # Action(name='Group by Labnumber', action='group_by_labnumber'),
@@ -354,10 +359,24 @@ class ReferencesAdapter(TabularAdapter):
 
 
 class AnalysesPaneHandler(Handler):
+    def unknowns_group_by_selected(self, info, obj):
+        obj = info.ui.context['object']
+        obj.unknowns_group_by_selected()
+
+    def unknowns_clear_grouping(self, info, obj):
+        obj = info.ui.context['object']
+        obj.unknowns_clear_grouping()
+
+    def unknowns_clear_all_grouping(self, info, obj):
+        obj = info.ui.context['object']
+        obj.unknowns_clear_all_grouping()
+
     def recall_unknowns(self, info, obj):
+        obj = info.ui.context['object']
         obj.recall_unknowns()
 
     def recall_references(self, info, obj):
+        obj = info.ui.context['object']
         obj.recall_references()
 
 
