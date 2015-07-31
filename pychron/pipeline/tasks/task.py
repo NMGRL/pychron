@@ -68,17 +68,20 @@ class PipelineTask(BaseBrowserTask):
     resume_enabled = Bool(False)
     run_enabled = Bool(True)
     set_interpreted_enabled = Bool(False)
-    run_to = None
+    # run_to = None
 
     modified = False
-    dbmodified = False
+    # dbmodified = False
     projects = None
 
-    _temp_state = None
+    # _temp_state = None
     # reset_enabled = Bool(False)
 
     def run(self):
         self._run_pipeline()
+
+    def resume(self):
+        self._resume_pipeline()
 
     def activated(self):
         super(PipelineTask, self).activated()
@@ -139,8 +142,8 @@ class PipelineTask(BaseBrowserTask):
     def reset(self):
         self.run_enabled = True
         self.resume_enabled = False
-        self._temp_state = None
-        self.state = None
+        # self._temp_state = None
+        # self.state = None
         self.engine.reset()
 
     def save_pipeline_template(self):
@@ -183,41 +186,55 @@ class PipelineTask(BaseBrowserTask):
                 self.close_editor(e)
                 break
 
+    def _resume_pipeline(self):
+        self.debug('resume pipeline')
+        self.engine.resume_pipeline()
+        for editor in self.engine.state.editors:
+            self._open_editor(editor)
+        self.debug('resume pipline finished')
+
     def _run_pipeline(self):
         self.debug('run pipeline')
-        if self.state:
-            self.debug('using previous state')
-            state = self.state
-        else:
-            state = EngineState()
-            self.close_all()
+        self.close_all()
+        self.engine.run_pipeline()
 
-        self.state = state
-        self._temp_state = state
+        for editor in self.engine.state.editors:
+            self._open_editor(editor)
+        self.debug('pipeline finished')
+
+        # if self.state:
+        #     self.debug('using previous state')
+        #     state = self.state
+        # else:
+        #     state = EngineState()
+        #     self.close_all()
+
+        # self.state = state
+        # self._temp_state = state
 
         # if not self.engine.pre_run(state, self.run_to):
         #     self.state = None
         #     self._temp_state = None
 
-        if not self.engine.run(state, self.run_to):
-            self._toggle_run(True)
-        else:
-            self.engine.post_run(state)
-
-            self._toggle_run(False)
-            self.state = None
-            self.engine.state = None
-
-        for editor in state.editors:
-            self._open_editor(editor)
+        # if not self.engine.run(state, self.run_to):
+        #     self._toggle_run(True)
+        # else:
+        #     self.engine.post_run(state)
+        #
+        #     self._toggle_run(False)
+        #     self.state = None
+        #     self.engine.state = None
+        #
+        # for editor in state.editors:
+        #     self._open_editor(editor)
 
         # self.engine.selected = None
         # self.engine.update_needed = True
         # self.engine.update_needed = True
         # self.engine.refresh_analyses()
-
-        if state.dbmodified:
-            self.dbmodified = True
+        #
+        # if state.dbmodified:
+        #     self.dbmodified = True
 
     def _toggle_run(self, v):
         self.resume_enabled = v
@@ -248,9 +265,9 @@ class PipelineTask(BaseBrowserTask):
 
         self.set_interpreted_enabled = isinstance(new, InterpretedAgeEditor)
 
-    @on_trait_change('active_editor:save_needed')
-    def _handle_save_needed(self):
-        self.engine.run_persist(self._temp_state)
+    # @on_trait_change('active_editor:save_needed')
+    # def _handle_save_needed(self):
+    #     self.engine.run_persist(self._temp_state)
 
     @on_trait_change('engine:[tag_event, invalid_event, recall_event]')
     def _handle_analysis_tagging(self, name, new):

@@ -41,7 +41,7 @@ class RunAction(TaskAction):
 
 class ResumeAction(TaskAction):
     name = 'Resume'
-    method = 'run'
+    method = 'resume'
     image = icon('resume')
     visible_name = 'resume_enabled'
 

@@ -31,10 +31,11 @@ from pychron.pipeline.nodes.data import UnknownNode, ReferenceNode
 from pychron.loggable import Loggable
 from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, FigureNode, SeriesNode, NoAnalysesError
 from pychron.pipeline.nodes.filter import FilterNode
-from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode, FitICFactorNode, FitFluxNode, FitNode
+from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode, FitICFactorNode, FitFluxNode
 from pychron.pipeline.nodes.grouping import GroupingNode
 from pychron.pipeline.nodes.persist import PDFFigureNode, IsotopeEvolutionPersistNode, \
-    BlanksPersistNode, ICFactorPersistNode, FluxPersistNode, PersistNode
+    BlanksPersistNode, ICFactorPersistNode, FluxPersistNode
+from pychron.pipeline.state import EngineState
 from pychron.pipeline.template import PipelineTemplate
 
 TEMPLATE_NAMES = ('Iso Evo', 'Icfactor', 'Blanks', 'Flux', 'Ideogram', 'Spectrum',
@@ -140,6 +141,8 @@ class PipelineEngine(Loggable):
     tag_event = Event
     invalid_event = Event
     recall_event = Event
+
+    state = Instance(EngineState)
 
     def __init__(self, *args, **kw):
         super(PipelineEngine, self).__init__(*args, **kw)
@@ -344,18 +347,24 @@ class PipelineEngine(Loggable):
             obj = self.pipeline.to_template()
             yaml.dump(obj, wfile, default_flow_style=False)
 
-    def run_persist(self, state):
-        for node in self.pipeline.iternodes():
-            if not isinstance(node, (FitNode, PersistNode)):
-                continue
+    # def run_persist(self, state):
+    #     for node in self.pipeline.iternodes():
+    #         if not isinstance(node, (FitNode, PersistNode)):
+    #             continue
+    #
+    #         node.run(state)
+    #         if state.canceled:
+    #             self.debug('pipeline canceled by {}'.format(node))
+    #             return True
 
-            node.run(state)
-            if state.canceled:
-                self.debug('pipeline canceled by {}'.format(node))
-                return True
+    def resume_pipeline(self):
+        self.run_pipeline(self.state)
 
-    def run(self, state, run_to):
-        self.state = state
+    def run_pipeline(self, state=None):
+        if state is None:
+            state = EngineState()
+            self.state = state
+
         ost = time.time()
         start_node = state.veto
         self.debug('pipeline run started')
@@ -363,10 +372,10 @@ class PipelineEngine(Loggable):
             self.debug('starting at node {}'.format(start_node))
         state.veto = None
 
-        for node in self.pipeline.iternodes(start_node, run_to):
+        for node in self.pipeline.iternodes(start_node):
             node.visited = False
 
-        for idx, node in enumerate(self.pipeline.iternodes(start_node, run_to)):
+        for idx, node in enumerate(self.pipeline.iternodes(start_node)):
 
             if node.enabled:
                 node.editor = None
@@ -400,8 +409,10 @@ class PipelineEngine(Loggable):
         else:
             self.debug('pipeline run finished')
             self.debug('pipeline runtime {}'.format(time.time() - ost))
-            self.state = None
+            # self.state = None
             return True
+
+    run = run_pipeline
 
     def post_run(self, state):
         self.debug('pipeline post run started')
@@ -416,6 +427,7 @@ class PipelineEngine(Loggable):
 
         self.update_needed = True
         self.refresh_table_needed = True
+
 
     def select_node_by_editor(self, editor):
         for node in self.pipeline.nodes:
@@ -554,6 +566,9 @@ class PipelineEngine(Loggable):
             vs = self.selected.unknowns
             editor.set_items(vs)
             self.state.unknowns = vs
+            for node in self.pipeline.nodes:
+                if isinstance(node, UnknownNode) and node is not self.selected:
+                    node.unknowns = vs
 
         self._handle_len('unknowns', func)
 
@@ -562,6 +577,10 @@ class PipelineEngine(Loggable):
             vs = self.selected.references
             editor.set_references(vs)
             self.state.references = vs
+
+            for node in self.pipeline.nodes:
+                if isinstance(node, ReferenceNode) and node is not self.selected:
+                    node.references = vs
 
         self._handle_len('references', func)
 
