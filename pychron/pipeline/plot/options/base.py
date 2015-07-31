@@ -18,7 +18,7 @@
 import hashlib
 
 from traits.api import List, Str, TraitError, \
-    Bool, Event, Color, Range, Int
+    Bool, Event, Color, Range, Int, Float, Property
 # import apptools.sweet_pickle as pickle
 
 # ============= standard library imports ========================
@@ -32,6 +32,10 @@ from pychron.pychron_constants import FIT_TYPES, FIT_ERROR_TYPES
 
 
 class BasePlotterOptions(BaseOptions):
+    xpadding = Property
+    xpad = dumpable(Float)
+    xpad_as_percent = dumpable(Bool)
+
     error_types = FIT_ERROR_TYPES
     fit_types = FIT_TYPES
     auto_refresh = dumpable(Bool, True)
@@ -130,6 +134,9 @@ class BasePlotterOptions(BaseOptions):
                 self.refresh_plot_needed = True
 
     # private
+    def _get_xpadding(self):
+        return str(self.xpad) if self.xpad_as_percent else self.xpad
+
     def _process_trait_change(self, name, new):
         return True
 

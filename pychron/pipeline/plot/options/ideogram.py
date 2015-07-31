@@ -207,7 +207,15 @@ class IdeogramOptions(AgeOptions):
                                    enabled_when='object.use_centered_range'),
                              label='Center on fixed range',
                              show_border=True,
-                             enabled_when='not object.use_static_limits'))
+                             enabled_when='not object.use_static_limits'),
+                      HGroup(Item('xpad', label='Pad'),
+                             Item('xpad_as_percent',
+                                  tooltip='Treat Pad as a percent of the nominal width, otherwise Pad is in Ma. '
+                                          'e.g if width=10 Ma, Pad=0.5 '
+                                          'the final width will be 10 + (10*0.5)*2 = 20 Ma.',
+                                  label='%'),
+                             label='X Pad',
+                             show_border=True))
 
         grp_grp = VGroup(UItem('group',
                                style='custom',
