@@ -47,22 +47,20 @@ class HardwarePreferences(BasePreferencesHelper):
     system_lock_names = List
     system_lock_addresses = Dict
 
-    #    enable_directory_server = Bool
-    #    directory_server_host = Str
-    #    directory_server_port = Int
-    #    directory_server_root = Str
-
     use_twisted = Bool
-
-    _protocols = List
-
     pnames = List
     ports = Dict
     factories = Dict
+    _protocols = List
 
     def _initialize(self, *args, **kw):
         super(HardwarePreferences, self)._initialize(*args, **kw)
-        ap = (('ValveProtocol', 'pychron.tx.factories.ValveFactory'),)
+        ap = (('ValveProtocol', 'pychron.tx.factories.ValveFactory'),
+              ('FusionsCO2Protocol', 'pychron.tx.factories.FusionsCO2Factory'),
+              ('FusionsDiodeProtocol', 'pychron.tx.factories.FusionsDiodeFactory'),
+              ('FusionsUVProtocol', 'pychron.tx.factories.FusionsUVFactory'),
+              # ('FurnaceProtocol','pychron.txt.factories.LaserFactory'),
+              )
         self._protocols = [Protocol(name=n, factory=f,
                                     port=self.ports.get(n, 8000),
                                     enabled=n in self.pnames) for n, f in ap]
@@ -93,11 +91,13 @@ class HardwarePreferencesPane(PreferencesPane):
                 ObjectColumn(name='port')]
 
         txgrp = VGroup(UItem('_protocols',
-                             editor=TableEditor(columns=cols)))
+                             editor=TableEditor(columns=cols)),
+                       enabled_when='use_twisted')
+
         ehs_grp = VGroup(Item('enable_hardware_server', label='Enabled'),
                          VGroup(Item('use_twisted'),
                                 txgrp,
-                                Item('enable_system_lock'),
+                                # Item('enable_system_lock'),
                                 enabled_when='enable_hardware_server'),
                          show_border=True, label='Pychron Proxy Server')
 

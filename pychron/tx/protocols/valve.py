@@ -16,108 +16,11 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-from twisted.internet import defer
-from twisted.internet.protocol import Protocol
 # ============= local library imports  ==========================
 from pychron.pychron_constants import EL_PROTOCOL
-from pychron.remote_hardware.errors import InvalidValveErrorCode, InvalidGaugeErrorCode, InvalidArgumentsErrorCode, \
-    ValveSoftwareLockErrorCode, ValveActuationErrorCode, DeviceConnectionErrorCode
-from pychron.tx.exceptions import ServiceNameError, ResponseError
-
-
-def default_err(failure):
-    failure.trap(BaseException)
-    return failure
-
-
-def service_err(failure):
-    failure.trap(ServiceNameError)
-    return failure
-
-
-def response_err(failure):
-    failure.trap(ResponseError)
-    return failure
-
-
-def nargs_err(failure):
-    failure.trap(ValueError)
-    return InvalidArgumentsErrorCode(str(failure.value))
-
-
-class ServiceProtocol(Protocol):
-    def __init__(self, *args, **kw):
-        # super(ServiceProtocol, self).__init__(*args, **kw)
-        self._services = {}
-        self._delim = ' '
-
-    def dataReceived(self, data):
-
-        service = self._get_service(data)
-        if service:
-            self._get_response(service, data)
-
-            # else:
-            #     self.transport.write('Invalid request: {}'.format(data))
-
-            # self.transport.loseConnection()
-
-    def register_service(self, service_name, success, err=None):
-        """
-
-        """
-
-        if err is None:
-            err = default_err
-
-        d = defer.Deferred()
-        if not isinstance(success, (list, tuple)):
-            success = (success,)
-
-        for si in success:
-            d.addCallback(si)
-
-        d.addCallback(self._prepare_response)
-        d.addCallback(self._send_response)
-
-        d.addErrback(nargs_err)
-        d.addErrback(service_err)
-        d.addErrback(err)
-
-        self._services[service_name] = d
-
-    def _prepare_response(self, data):
-        if isinstance(data, bool) and data:
-            return 'OK'
-        elif data is None:
-            return 'No Response'
-        else:
-            return data
-
-    def _send_response(self, data):
-        self.transport.write(str(data))
-        self.transport.loseConnection()
-
-    def _get_service(self, data):
-        args = data.split(self._delim)
-        name = args[0]
-        try:
-            service = self._services[name]
-            return service
-        except KeyError:
-            raise ServiceNameError(name, data)
-
-    def _get_response(self, service, data):
-        delim = self._delim
-        data = delim.join(data.split(delim)[1:])
-        service.callback(data)
-
-
-# def sleep(secs):
-#     d = defer.Deferred()
-#     reactor.callLater(secs, d.callback, None)
-#     return d
-
+from pychron.tx.errors import InvalidValveErrorCode, ValveActuationErrorCode, ValveSoftwareLockErrorCode, \
+    InvalidArgumentsErrorCode, DeviceConnectionErrorCode, InvalidGaugeErrorCode
+from pychron.tx.protocols.service import ServiceProtocol
 
 
 class ValveProtocol(ServiceProtocol):
@@ -138,6 +41,9 @@ class ValveProtocol(ServiceProtocol):
                     ('GetValveLockState', '_get_valve_lock_state'),
                     ('GetValveOwners', '_get_valve_owners'),
                     ('GetPressure', '_get_pressure'))
+        self._register_services(services)
+
+    def _register_services(self, services):
         for name, cb in services:
             if isinstance(cb, str):
                 cb = getattr(self, cb)
@@ -164,8 +70,7 @@ class ValveProtocol(ServiceProtocol):
     def _get_error(self, data):
         return self._manager.get_error()
 
-    def _set(self, data):
-        dname, value = data.split(',')
+    def _set(self, dname, value):
         d = self._get_device(dname, owner=self._addr)
         if d is not None:
             self.info('Set {} to {}'.format(d.name,
@@ -242,11 +147,10 @@ class ValveProtocol(ServiceProtocol):
 
         return result
 
-    def _get_state_checksum(self, vnamestr):
+    def _get_state_checksum(self, *vnames):
         """
 
         """
-        vnames = vnamestr.split(',')
         result = self._manager.get_state_checksum(vnames)
         return result
 
@@ -308,7 +212,7 @@ class ValveProtocol(ServiceProtocol):
         result = self._manager.get_valve_owners()
         return result
 
-    def _get_pressure(self, data):
+    def _get_pressure(self, controller, gauge):
         """
         Get the pressure from ``controller``'s ``gauge``
 
@@ -317,7 +221,6 @@ class ValveProtocol(ServiceProtocol):
         :return: pressure
         """
         manager = self._manager
-        controller, gauge = data.split(',')
 
         p = None
         if manager:

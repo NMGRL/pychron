@@ -16,41 +16,7 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-from twisted.internet.protocol import Factory
 # ============= local library imports  ==========================
-from pychron.tx.protocols.valve import ValveProtocol
-from pychron.tx.protocols.laser import LaserProtocol
 
-
-class LaserFactory(Factory):
-    _name = None
-
-    def __init__(self, application):
-        self._app = application
-
-    def buildProtocol(self, addr):
-        if self._name is None:
-            raise NotImplementedError
-        return LaserProtocol(self._app, self._name, addr)
-
-
-class FusionsCO2Factory(LaserFactory):
-    _name = 'FusionsCO2'
-
-
-class FusionsDiodeFactory(LaserFactory):
-    _name = 'FusionsDiode'
-
-
-class FusionsUVFactory(LaserFactory):
-    _name = 'FusionsUV'
-
-
-class ValveFactory(Factory):
-    def __init__(self, application):
-        self._app = application
-
-    def buildProtocol(self, addr):
-        return ValveProtocol(self._app, addr)
 
 # ============= EOF =============================================

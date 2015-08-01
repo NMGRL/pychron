@@ -16,41 +16,25 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-from twisted.internet.protocol import Factory
+import io
+import os
+import sys
 # ============= local library imports  ==========================
-from pychron.tx.protocols.valve import ValveProtocol
-from pychron.tx.protocols.laser import LaserProtocol
+from twisted.logger import eventsFromJSONLogFile, textFileLogObserver
 
 
-class LaserFactory(Factory):
-    _name = None
+def print_log(path=None, output_stream=None):
+    if path is None:
+        from pychron.paths import paths
+        path = os.path.join(paths.log_dir, 'pps.log.json')
 
-    def __init__(self, application):
-        self._app = application
+    if output_stream is None:
+        output_stream = sys.stdout
+    elif isinstance(output_stream, (str, unicode)):
+        output_stream = io.open(output_stream, 'w')
 
-    def buildProtocol(self, addr):
-        if self._name is None:
-            raise NotImplementedError
-        return LaserProtocol(self._app, self._name, addr)
-
-
-class FusionsCO2Factory(LaserFactory):
-    _name = 'FusionsCO2'
-
-
-class FusionsDiodeFactory(LaserFactory):
-    _name = 'FusionsDiode'
-
-
-class FusionsUVFactory(LaserFactory):
-    _name = 'FusionsUV'
-
-
-class ValveFactory(Factory):
-    def __init__(self, application):
-        self._app = application
-
-    def buildProtocol(self, addr):
-        return ValveProtocol(self._app, addr)
+    output = textFileLogObserver(output_stream)
+    for event in eventsFromJSONLogFile(io.open(path)):
+        output(event)
 
 # ============= EOF =============================================
