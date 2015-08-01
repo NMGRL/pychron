@@ -91,7 +91,7 @@ class Communicator(ConfigLoadable):
         for c in s:
             oc = ord(c)
             if not 0x20 <= oc <= 0x7E:
-                c = '[{:02n}]'.format(ord(c))
+                c = '[{:02d}]'.format(ord(c))
             ns += c
         return ns
 

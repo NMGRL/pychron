@@ -99,8 +99,8 @@ class DataSetGenerator(HasTraits):
     def generate_from_file(self):
         p = os.path.join(paths.data_dir, 'dataset.yaml')
 
-        with open(p, 'r') as fp:
-            yd = yaml.load(fp)
+        with open(p, 'r') as rfile:
+            yd = yaml.load(rfile)
             print yd
 
         pdataset = yd.get('pychron')
@@ -155,16 +155,16 @@ class DataSetGenerator(HasTraits):
 
     def _make_blank_pychron_database(self, sess):
         p = os.path.join(os.path.dirname(__file__), 'pychron_dataset.sql')
-        with open(p, 'r') as fp:
-            sql = fp.read()
+        with open(p, 'r') as rfile:
+            sql = rfile.read()
             sess.execute(sql)
 
             sess.execute('Insert into alembic_version version_num 123456')
 
     def _make_blank_massspec_database(self, sess):
         p = os.path.join(os.path.dirname(__file__), 'massspec_dataset.sql')
-        with open(p, 'r') as fp:
-            sql = fp.read()
+        with open(p, 'r') as rfile:
+            sql = rfile.read()
             sess.execute(sql)
 
 

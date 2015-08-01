@@ -145,8 +145,8 @@ class MediaBrowser(Loggable):
     def _open_fired(self):
         dlg = FileDialog(action='open')
         if dlg.open() == OK:
-            with open(dlg.path, 'rb') as fp:
-                self.viewer.set_image(fp)
+            with open(dlg.path, 'rb') as rfile:
+                self.viewer.set_image(rfile)
                 self.hierarchy.files.append(os.path.basename(dlg.path))
 
             self.client.cache(dlg.path)

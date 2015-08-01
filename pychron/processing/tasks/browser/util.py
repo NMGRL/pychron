@@ -40,12 +40,12 @@ def browser_pane_item(width=300):
 
 # ===============================================================
 def get_pad(low, high):
-    p=os.path.join(paths.hidden_dir, 'pad_entry')
+    p=os.path.join(paths.hidden_dir, 'pad_entry.p')
     pe =None
     if os.path.isfile(p):
         try:
-            with open(p, 'r') as fp:
-                pe = pickle.load(fp)
+            with open(p, 'r') as rfile:
+                pe = pickle.load(rfile)
         except (pickle.PickleError, OSError, EOFError):
             pass
 
@@ -61,8 +61,8 @@ def get_pad(low, high):
 
     info=pe.edit_traits()
     if info.result:
-        with open(p, 'w') as fp:
-            pickle.dump(pe, fp)
+        with open(p, 'w') as wfile:
+            pickle.dump(pe, wfile)
         return pe
 
 

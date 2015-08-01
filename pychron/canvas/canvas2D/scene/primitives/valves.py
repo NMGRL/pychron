@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,11 +15,60 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import math
 
-from pychron.canvas.canvas2D.scene.primitives.primitives import rounded_rect, \
-    RoundedRectangle, Bordered, Connectable
+from pychron.canvas.canvas2D.scene.primitives.base import Connectable
+from pychron.canvas.canvas2D.scene.primitives.primitives import Bordered, Circle, Label
+from pychron.canvas.canvas2D.scene.primitives.rounded import RoundedRectangle, rounded_rect
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+
+
+class Switch(Connectable, Circle):
+    def set_label(self, label, offset_x, offset_y, **kw):
+        lb = Label(0, 0,
+                   text=label,
+                   hjustify='center',
+                   soffset_x=offset_x,
+                   soffset_y=offset_y,
+                   # font='modern 9',
+                   use_border=False,
+                   **kw)
+
+        self.primitives.append(lb)
+        return lb
+
+    def _render_(self, gc):
+        x, y = self.get_xy()
+        # print 'asaaaa', self.radius
+        r = self.radius
+        r = self.map_dimension(r)
+
+        if self.state:
+            gc.set_fill_color(self._convert_color(self.active_color))
+        else:
+            gc.set_fill_color(self._convert_color(self.default_color))
+
+        # if self.fill_color:
+        gc.arc(x + r, y + r / 2., r, 0, 360)
+        gc.set_stroke_color((0, 0, 0))
+        gc.set_line_width(2)
+        gc.draw_path()
+
+        for p in self.primitives:
+            # p._layout_needed=False
+            p.x, p.y = self.x, self.y
+            # p._cached_xy = (x + r, y + r / 2.)
+            p.render(gc)
+
+            # self._render_name(gc, x + self.name_offsetx, y + self.name_offsety, r / 4., r / 2.)
+
+    def is_in(self, sx, sy):
+        x, y = self.get_xy()
+        r = self.map_dimension(self.radius)
+        # print ((x - sx) ** 2 + (y - sy) ** 2) ** 0.5, r
+        return ((x + r - sx) ** 2 + (y + r / 2. - sy) ** 2) ** 0.5 < r
 
 
 class BaseValve(Connectable):
@@ -28,11 +77,11 @@ class BaseValve(Connectable):
     oactive_color = (0, 255, 0)
     description = ''
 
-    def is_in(self, x, y):
-        mx, my = self.get_xy()
-        w, h = self.get_wh()
-        if mx <= x <= (mx + w) and my <= y <= (my + h):
-            return True
+    # def is_in(self, x, y):
+    #     mx, my = self.get_xy()
+    #     w, h = self.get_wh()
+    #     if mx <= x <= (mx + w) and my <= y <= (my + h):
+    #         return True
 
     def get_tooltip_text(self):
         state = 'Open' if self.state else 'Closed'
@@ -41,18 +90,50 @@ class BaseValve(Connectable):
         return 'Valve={}\nDesc={}\nState={}'.format(self.name, self.description, state)
 
 
+class ManualSwitch(BaseValve, RoundedRectangle):
+    width = 1.6622795630156608
+    height = 2
+    corner_radius = 4
+    use_border_gaps = False
+
+    def _render_(self, gc):
+        # self._rotate(gc, 45)
+        super(ManualSwitch, self)._render_(gc)
+
+    def _rotate(self, gc, angle):
+        x, y = self.get_xy()
+        w, h = self.get_wh()
+        xx=x+w/2
+        yy=y+h/2.
+        gc.translate_ctm(xx,yy)
+        gc.rotate_ctm(math.radians(angle))
+        gc.translate_ctm(-xx,-yy)
+
+    def _render_textbox(self, gc, *args, **kw):
+        with gc:
+            #self._rotate(gc, -45)
+            gc.translate_ctm(0, 25)
+            super(ManualSwitch, self)._render_textbox(gc, *args, **kw)
+    # def _render_name(self, gc, x, y, w, h):
+    #     # dont use this render_name
+    #     # this gets call with rotation
+    #     with gc:
+    #         self._rotate(gc, -45)
+    #         gc.translate_ctm(0, 25)
+    #         super(ManualSwitch, self)._render_name(gc,x,y,w,h)
+
+
 # class Valve(RoundedRectangle, BaseValve):
 class Valve(BaseValve, RoundedRectangle):
     width = 2
     height = 2
     corner_radius = 4
+    use_border_gaps = False
 
     def _render_(self, gc):
-
-        super(Valve, self)._render_(gc)
-        #
-        x, y = self.get_xy()
+        x, y = self.get_xy(clear_layout_needed=False)
         w, h = self.get_wh()
+        super(Valve, self)._render_(gc)
 
         self._draw_soft_lock(gc)
 
@@ -129,7 +210,7 @@ class RoughValve(BaseValve, Bordered):
     border_width = 3
 
     def _render_(self, gc):
-        cx, cy = self.get_xy()
+        cx, cy = self.get_xy(clear_layout_needed=False)
         #         cx, cy = 200, 50
         width, height = self.get_wh()
         #         width += 10
@@ -195,71 +276,71 @@ class RoughValve(BaseValve, Bordered):
                 gc.draw_path()
 
 
-class RoughValve2(BaseValve):
-    def _render_(self, gc):
-        cx, cy = self.get_xy()
-        width, height = self.get_wh()
-
-        w2 = width / 2
-        x1 = cx
-        x2 = cx + width
-        x3 = cx + w2
-
-        y1 = cy
-        y2 = y1
-        y3 = cy + height
-
-        gc.lines([(x1, y1), (x2, y2), (x3, y3), (x1, y1)])
-        gc.fill_path()
-
-        #         gc.set_stroke_color((0, 0, 0))
-        #         gc.lines([(x1, y1), (x2, y2), (x3, y3), (x1, y1)])
-
-
-        #         func = gc.lines
-        #         args = (([(x1, y1), (x2, y2), (x3, y3), (x1, y1), (x2, y2)]),)
-        #        args = (x - 2, y - 2, width + 4, height + 4)
-
-        #         self._draw_soft_lock(gc, func, args)
-        #         self._draw_owned(gc, func, args)
-        self._draw_state_indicator(gc, cx, cy, width, height)
-        self._render_name(gc, cx, cy, width, height)
-
-    def _draw_owned(self, gc, func, args):
-        if self.soft_lock:
-            with gc:
-                gc.set_fill_color((0, 0, 0, 0))
-                gc.set_stroke_color((0, 0, 1))
-                gc.set_line_width(5)
-                func(*args)
-                gc.draw_path()
-
-    def _draw_soft_lock(self, gc, func, args):
-        if self.soft_lock:
-            with gc:
-                gc.set_fill_color((0, 0, 1, 0))
-                gc.set_stroke_color((0, 0, 1))
-                gc.set_line_width(5)
-                func(*args)
-                gc.draw_path()
-
-    def _draw_state_indicator(self, gc, x, y, w, h):
-        if not self.state:
-            l = 7
-            w2 = w / 2.
-            w3 = w / 3.
-
-            gc.set_line_width(2)
-            gc.move_to(x + w2, y + h)
-            gc.line_to(x + w2, y + h - l)
-            gc.draw_path()
-
-            gc.move_to(x, y)
-            gc.line_to(x + w3, y + l)
-            gc.draw_path()
-
-            gc.move_to(x + w, y)
-            gc.line_to(x + w - w3, y + l)
-            gc.draw_path()
+# class RoughValve2(BaseValve):
+#     def _render_(self, gc):
+#         cx, cy = self.get_xy()
+#         width, height = self.get_wh()
+#
+#         w2 = width / 2
+#         x1 = cx
+#         x2 = cx + width
+#         x3 = cx + w2
+#
+#         y1 = cy
+#         y2 = y1
+#         y3 = cy + height
+#
+#         gc.lines([(x1, y1), (x2, y2), (x3, y3), (x1, y1)])
+#         gc.fill_path()
+#
+#         #         gc.set_stroke_color((0, 0, 0))
+#         #         gc.lines([(x1, y1), (x2, y2), (x3, y3), (x1, y1)])
+#
+#
+#         #         func = gc.lines
+#         #         args = (([(x1, y1), (x2, y2), (x3, y3), (x1, y1), (x2, y2)]),)
+#         #        args = (x - 2, y - 2, width + 4, height + 4)
+#
+#         #         self._draw_soft_lock(gc, func, args)
+#         #         self._draw_owned(gc, func, args)
+#         self._draw_state_indicator(gc, cx, cy, width, height)
+#         self._render_name(gc, cx, cy, width, height)
+#
+#     def _draw_owned(self, gc, func, args):
+#         if self.soft_lock:
+#             with gc:
+#                 gc.set_fill_color((0, 0, 0, 0))
+#                 gc.set_stroke_color((0, 0, 1))
+#                 gc.set_line_width(5)
+#                 func(*args)
+#                 gc.draw_path()
+#
+#     def _draw_soft_lock(self, gc, func, args):
+#         if self.soft_lock:
+#             with gc:
+#                 gc.set_fill_color((0, 0, 1, 0))
+#                 gc.set_stroke_color((0, 0, 1))
+#                 gc.set_line_width(5)
+#                 func(*args)
+#                 gc.draw_path()
+#
+#     def _draw_state_indicator(self, gc, x, y, w, h):
+#         if not self.state:
+#             l = 7
+#             w2 = w / 2.
+#             w3 = w / 3.
+#
+#             gc.set_line_width(2)
+#             gc.move_to(x + w2, y + h)
+#             gc.line_to(x + w2, y + h - l)
+#             gc.draw_path()
+#
+#             gc.move_to(x, y)
+#             gc.line_to(x + w3, y + l)
+#             gc.draw_path()
+#
+#             gc.move_to(x + w, y)
+#             gc.line_to(x + w - w3, y + l)
+#             gc.draw_path()
 
 # ============= EOF =============================================

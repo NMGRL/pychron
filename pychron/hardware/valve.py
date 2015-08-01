@@ -47,13 +47,12 @@ class HardwareValve(Switch):
     sample_period = Float(1)
 
     evalve = Any
-    owner = Str
     prefix_name = 'VALVE'
 
-    def is_name(self, name):
-        if len(name) == 1:
-            name = 'VALVE-{}'.format(name)
-        return name == self.name
+    # def is_name(self, name):
+    #     if len(name) == 1:
+    #         name = '{}-{}'.format(self.prefix_name, name)
+    #     return name == self.name
 
     def _state_changed(self):
         if self.evalve:

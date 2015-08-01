@@ -66,8 +66,8 @@ def Si(pis, ai_ei, ts):
 if __name__ == '__main__':
     # [35.27,36.27] [0.59, 0.41]
     p = '/Users/ross/Sandbox/unmix_data.txt'
-    with open(p, 'U') as fp:
-        reader = csv.reader(fp, delimiter='\t')
+    with open(p, 'U') as rfile:
+        reader = csv.reader(rfile, delimiter='\t')
         ages, errors = [], []
 
         for line in reader:

@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,6 +22,7 @@ import os
 import sys
 
 import serial
+
 
 # =============local library imports  ==========================
 from communicator import Communicator
@@ -92,6 +93,13 @@ class SerialCommunicator(Communicator):
             self.debug('closing handle {}'.format(self.handle))
             self.handle.close()
 
+    def load_comdict(self, port, baudrate=9600, bytesize=8, parity=None, stopbits=1):
+        self.baudrate = baudrate
+        self.port = port
+        self.set_parity(parity)
+        self.set_stopbits(stopbits)
+        self.bytesize = bytesize
+
     def load(self, config, path):
 
         self.config_path = path
@@ -109,22 +117,36 @@ class SerialCommunicator(Communicator):
                            cast='boolean', optional=True)
 
         parity = self.config_get(config, 'Communications', 'parity', optional=True)
-        if parity is not None:
-            self.parity = getattr(serial, 'PARITY_%s' % parity.upper())
+        # if parity is not None:
+        # self.parity = getattr(serial, 'PARITY_%s' % parity.upper())
+        self.set_parity(parity)
 
         stopbits = self.config_get(config, 'Communications', 'stopbits', optional=True)
-        if stopbits is not None:
-            if stopbits == '1':
-                stopbits = 'ONE'
-            elif stopbits == '2':
-                stopbits = 'TWO'
-            self.stopbits = getattr(serial, 'STOPBITS_%s' % stopbits.upper())
+        self.set_stopbits(stopbits)
+        # if stopbits is not None:
+        # if stopbits == '1':
+        #         stopbits = 'ONE'
+        #     elif stopbits == '2':
+        #         stopbits = 'TWO'
+        #     self.stopbits = getattr(serial, 'STOPBITS_%s' % stopbits.upper())
 
         self.set_attribute(config, 'read_delay', 'Communications', 'read_delay',
                            cast='float', optional=True, default=25)
 
         self.set_attribute(config, 'read_terminator', 'Communications', 'terminator',
                            optional=True, default=None)
+
+    def set_parity(self, parity):
+        if parity is not None:
+            self.parity = getattr(serial, 'PARITY_%s' % parity.upper())
+
+    def set_stopbits(self, stopbits):
+        if stopbits is not None:
+            if stopbits in ('1', 1):
+                stopbits = 'ONE'
+            elif stopbits in ('2', 2):
+                stopbits = 'TWO'
+            self.stopbits = getattr(serial, 'STOPBITS_{}'.format(stopbits.upper()))
 
     def tell(self, cmd, is_hex=False, info=None, verbose=True, **kw):
         """
@@ -137,28 +159,28 @@ class SerialCommunicator(Communicator):
             return
 
         with self._lock:
-        #            self._lock.acquire()
+            # self._lock.acquire()
             self._write(cmd, is_hex=is_hex)
             if verbose:
                 self.log_tell(cmd, info)
 
-            #        self._lock.release()
+                #        self._lock.release()
 
-            #    def write(self, *args, **kw):
-            #        '''
-            #        '''
-            #        self.info('%s' % args[0], decorate = False)
-            #
-            #        self._lock.acquire()
-            #        self._write(*args, **kw)
-            #        self._lock.release()
+                #    def write(self, *args, **kw):
+                # '''
+                #        '''
+                #        self.info('%s' % args[0], decorate = False)
+                #
+                #        self._lock.acquire()
+                #        self._write(*args, **kw)
+                #        self._lock.release()
 
     def read(self, nchars=None, *args, **kw):
         """
         """
         with self._lock:
             if nchars is not None:
-            # self._lock.acquire()
+                # self._lock.acquire()
                 r = self._read_nchars(nchars)
             else:
                 r = self._read_terminator(*args, **kw)
@@ -175,7 +197,6 @@ class SerialCommunicator(Communicator):
 
         """
 
-
         if self.handle is None:
             if verbose:
                 x = self._prep_str(cmd.strip())
@@ -183,7 +204,7 @@ class SerialCommunicator(Communicator):
             return
 
         if not self.handle.isOpen():
-            return 
+            return
 
         with self._lock:
             if self.clear_output:
@@ -348,9 +369,9 @@ class SerialCommunicator(Communicator):
                                             title='Quit Pychron'):
                     os._exit(0)
 
-                #            valid = '\n'.join(['%s' % v for v in valid])
-                #            self.warning('''%s is not a valid port address
-                #==== valid port addresses ==== \n%s''' % (port, valid))
+                    #            valid = '\n'.join(['%s' % v for v in valid])
+                    # self.warning('''%s is not a valid port address
+                    #==== valid port addresses ==== \n%s''' % (port, valid))
 
 
     def _write(self, cmd, is_hex=False):
@@ -375,13 +396,13 @@ class SerialCommunicator(Communicator):
                 if self.write_terminator is not None:
                     cmd += self.write_terminator
 
-                #                if self.char_write:
-                #                    for c in cmd:
-                #                        write(c)
-                #                        time.sleep(0.0005)
-                #                else:
-                #                    write(cmd)
-                #            time.sleep(50e-9)
+                    #                if self.char_write:
+                    # for c in cmd:
+                    #                        write(c)
+                    #                        time.sleep(0.0005)
+                    #                else:
+                    #                    write(cmd)
+                    #            time.sleep(50e-9)
             write(cmd)
 
     def _read_nchars(self, n, timeout=1, delay=None):
@@ -389,7 +410,7 @@ class SerialCommunicator(Communicator):
         return self._read_loop(func, delay, timeout)
 
     def _read_hex(self, nbytes=8, timeout=1, delay=None):
-    #        print nbytes
+        #        print nbytes
         func = lambda r: self._get_nbytes(nbytes * 2, r)
         return self._read_loop(func, delay, timeout)
 
@@ -411,8 +432,8 @@ class SerialCommunicator(Communicator):
 
     def _read_terminator(self, timeout=1, delay=None,
                          terminator=None):
-    #        func = (lambda: self._get_nbytes(nbytes)) \
-    #                if is_hex else lambda: self._get_isterminated(self.read_terminator)
+        #        func = (lambda: self._get_nbytes(nbytes)) \
+        # if is_hex else lambda: self._get_isterminated(self.read_terminator)
         if terminator is None:
             terminator = self.read_terminator
 
@@ -495,24 +516,24 @@ class SerialCommunicator(Communicator):
             r += self.handle.read(inw)
             #            print 'inw', inw, r, terminator
             if terminator is None:
-                terminator = ('\n', '\r')
+                terminator = ('\n', '\r', '\r\x00')
 
             if not isinstance(terminator, (list, tuple)):
                 terminator = (terminator,)
 
             if r and r.strip():
                 for ti in terminator:
-                #                    print ' '.join(map(str,[ord(t) for t in ti])),' '.join(map(str,[ord(t) for t in r]))
+                    #                    print ' '.join(map(str,[ord(t) for t in ti])),' '.join(map(str,[ord(t) for t in r]))
                     if r.endswith(ti):
                         terminated = True
                         break
-                    #                terminated = r[-1] in terminator
+                        #                terminated = r[-1] in terminator
 
-                    #                t1 = '\n'
-                    #                t2 = '\r'
-                    #                return r, r.endswith(t1) or r.endswith(t2) if r is not None else False
-                    #            else:
-                    #                return r, r.endswith(terminator) if r is not None else False
+                        # t1 = '\n'
+                        #                t2 = '\r'
+                        # return r, r.endswith(t1) or r.endswith(t2) if r is not None else False
+                        #            else:
+                        #                return r, r.endswith(terminator) if r is not None else False
 
         except (OSError, IOError), e:
             self.warning(e)
@@ -529,13 +550,13 @@ class SerialCommunicator(Communicator):
         r = ''
         st = time.time()
 
-        handle=self.handle
+        handle = self.handle
 
         ct = time.time()
         while ct - st < timeout:
             if not handle.isOpen():
                 break
-            
+
             try:
                 r, isterminated = func(r)
                 #                print r, isterminated
@@ -543,18 +564,20 @@ class SerialCommunicator(Communicator):
                     break
             except (ValueError, TypeError):
                 pass
-#                import traceback
-#                traceback.print_exc()
+            #                import traceback
+            #                traceback.print_exc()
             time.sleep(0.01)
             ct = time.time()
 
         if ct - st > timeout:
             l = len(r) if r else 0
+            print 'time out'
             self.info('timed out. {}s r={}, len={}'.format(timeout, r, l))
 
         return r
 
-    #    def _read(self, is_hex=False, time_out=1, delay=None):
+        #    def _read(self, is_hex=False, time_out=1, delay=None):
+
 #        '''
 #            use the serial handle to read available bytes from the serial buffer
 #

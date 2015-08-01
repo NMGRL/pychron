@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from envisage.extension_point import ExtensionPoint
 from pyface.dialog import Dialog
 from traits.api import List, Instance
 from envisage.ui.tasks.tasks_application import TasksApplication
@@ -22,9 +23,11 @@ from pyface.tasks.task_window_layout import TaskWindowLayout
 # ============= standard library imports ========================
 import weakref
 # ============= local library imports  ==========================
+from pychron.core.helpers.strtools import to_bool
 from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.hardware.core.i_core_device import ICoreDevice
+from pychron.paths import paths
 from pychron.startup_test.results_view import ResultsView
 from pychron.startup_test.tester import StartupTester
 
@@ -33,6 +36,7 @@ class BaseTasksApplication(TasksApplication, Loggable):
     about_dialog = Instance(Dialog)
     startup_tester = Instance(StartupTester)
     uis = List
+    available_task_extensions = ExtensionPoint(id='pychron.available_task_extensions')
 
     def _started_fired(self):
         st = self.startup_tester
@@ -42,8 +46,25 @@ class BaseTasksApplication(TasksApplication, Loggable):
 
         if globalv.use_testbot:
             from pychron.testbot.testbot import TestBot
+
             testbot = TestBot(application=self)
             testbot.run()
+
+    def get_task_extensions(self, pid):
+        import yaml
+
+        p = paths.task_extensions_file
+        with open(p, 'r') as rfile:
+            yl = yaml.load(rfile)
+            for yi in yl:
+                # print yi['plugin_id'], pid
+                if yi['plugin_id'].startswith(pid):
+                    tid = yi.get('task_id', '')
+                    for ai in yi['actions']:
+                        a, e = ai.split(',')
+                        # print tid, a, e
+                        if to_bool(e):
+                            yield tid, a
 
     def about(self):
         self.about_dialog.open()
@@ -106,7 +127,7 @@ class BaseTasksApplication(TasksApplication, Loggable):
         self._cleanup_services()
 
         uis = self.uis
-        #         uis = copy.copy(self.uis)
+        # uis = copy.copy(self.uis)
         for ui in uis:
             try:
                 ui.dispose(abort=True)

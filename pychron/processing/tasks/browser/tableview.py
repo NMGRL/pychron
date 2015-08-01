@@ -75,7 +75,7 @@ class TableView(PaneModelView):
                                 UItem(make_name('analyses'),
                                       width=0.4,
                                       editor=myTabularEditor(
-                                          adapter=self.pane.analysis_tabular_adapter,
+                                          adapter=self.model.analysis_table.tabular_adapter,
                                           operations=['move'],
                                           refresh=make_name('refresh_needed'),
                                           selected=make_name('selected'),
@@ -84,7 +84,7 @@ class TableView(PaneModelView):
                                           drag_external=True,
                                           scroll_to_row=make_name('scroll_to_row'),
                                           stretch_last_section=False)),
-                                HGroup(spring, Item(make_name('omit_invalid'))),
+                                # HGroup(spring, Item(make_name('omit_invalid'))),
                                 defined_when=self.pane.analyses_defined,
                                 show_border=True,
                                 label='Analyses')
@@ -124,18 +124,21 @@ class TableView(PaneModelView):
     def configure_sample_table(self, info, obj):
         obj.configure_sample_table()
 
-    def on_time_view(self, info, obj):
-        obj.load_time_view()
+    def on_chrono_view(self, info, obj):
+        obj.load_chrono_view()
 
     def plot_selected(self, info, obj):
         try:
-            obj.plot_selected()
+            obj.plot_selected = False
+            # obj.plot_selected()
         except AttributeError:
             pass
 
     def plot_selected_grouped(self, info, obj):
+        print info, obj
         try:
-            obj.plot_selected_grouped()
+            obj.plot_selected = True
+            # obj.plot_selected_grouped()
         except AttributeError:
             pass
 

@@ -102,7 +102,7 @@ class FluxTask(InterpolationTask):
 
     def new_flux(self):
         from pychron.processing.tasks.flux.flux_editor import FluxEditor
-        editor = FluxEditor(name='Flux {:03n}'.format(self.flux_editor_count),
+        editor = FluxEditor(name='Flux {:03d}'.format(self.flux_editor_count),
                             processor=self.manager)
 
         self._open_editor(editor)
@@ -209,7 +209,7 @@ class FluxTask(InterpolationTask):
         # reg.error_calc_type = editor.tool.mean_j_error_type
         error_kind = editor.tool.mean_j_error_type
         monitor_age = editor.tool.monitor_age
-        print error_kind
+        print 'exception', error_kind
         # helper funcs
         def mean_j(ans):
             ufs = (ai.uF for ai in ans)

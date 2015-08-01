@@ -17,17 +17,14 @@
 # ============= enthought library imports =======================
 from cStringIO import StringIO
 import os
-from skimage import io
-from threading import Lock
-from scipy.misc import imsave
-from traits.api import provides, Event
+
+from traits.api import provides
+
 # ============= standard library imports ========================
 import ctypes
-from numpy import zeros, uint8, uint32, asarray, uint16, int8, rot90, flipud, array, int32, save
+from numpy import zeros, uint8, uint32
 import Image as pil
 # ============= local library imports  ==========================
-from pychron.core.helpers.filetools import view_file
-from pychron.image.cv_wrapper import save_image
 from pychron.image.i_camera import ICamera
 
 lib = ctypes.cdll.LoadLibrary('libtoupcam.dylib')
@@ -59,7 +56,7 @@ class ToupCamCamera(object):
     _data = None
     _frame_fn = None
     _temptint_cb = None
-
+    _save_path = None
     def __init__(self, resolution=2, bits=32):
         if bits not in (32,):
             raise ValueError('Bits needs to by 8 or 32')
@@ -83,7 +80,8 @@ class ToupCamCamera(object):
         # image = pil.merge('RGB', (r,g,b))
         # image = self.get_jpeg_data(im, 10)
         image = self.get_pil_image(im)
-        image.save(self._save_path, 'JPEG', quality=10)
+        # image.save(self._save_path, 'JPEG', quality=90)
+        image.save(self._save_path, 'TIFF')
         # view_file(self._save_path)
 
     def get_jpeg_data(self, data=None, quality=75):

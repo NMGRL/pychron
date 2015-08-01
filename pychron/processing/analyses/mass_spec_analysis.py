@@ -28,6 +28,14 @@ from pychron.pychron_constants import IRRADIATION_KEYS
 class MassSpecAnalysis(Analysis):
     def _sync(self, obj):
 
+        arar = obj.araranalyses[-1]
+        if arar:
+            self.j = ufloat(arar.JVal, arar.JEr)
+            self.age = arar.Age
+            self.age_err = arar.ErrAge
+            self.age_err_wo_j = arar.ErrAgeWOErInJ
+            self.rad40_percent = ufloat(arar.PctRad, arar.PctRadEr)
+
         for dbiso in obj.isotopes:
             r = dbiso.results[-1]
             uv = r.Iso

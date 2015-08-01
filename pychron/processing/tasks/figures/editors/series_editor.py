@@ -44,36 +44,14 @@ class SeriesEditor(FigureEditor):
         self._set_name()
 
     def get_component(self, ans, plotter_options):
-    #         print plotter_options
         if plotter_options is None:
             pom = self.plotter_options_manager_klass()
             plotter_options = pom.plotter_options
-
-        #         ref = ans[0]
-        #         plotter_options.load_aux_plots(ref)
-        #             plotter_options.load_fits(ref)
-
 
         model = self.model_klass(plot_options=plotter_options)
         model.analyses = ans
         iv = FigureContainer(model=model)
 
         return model, iv.component
-
-#     def show_series(self, key, fit='Linear'):
-#         fi = next((ti for ti in self.tool.fits if ti.name == key), None)
-# #         self.tool.suppress_refresh_unknowns = True
-#         if fi:
-#             fi.trait_set(
-#                          fit=fit,
-#                          show=True,
-#                          trait_change_notify=False)
-#
-#         self.rebuild(refresh_data=False)
-
-
-#class AutoSeriesEditor(SeriesEditor):
-#    auto_figure_control = Instance(AutoSeriesControl, ())
-
 
 # ============= EOF =============================================

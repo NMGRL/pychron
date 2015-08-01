@@ -40,6 +40,9 @@ logger = new_logger('ArArAge')
 
 
 class ArArAge(Loggable):
+    """
+    High level representation of the ArAr attributes of an analysis.
+    """
     j = Either(Variable, AffineScalarFunc)
     irradiation = Str
     irradiation_level = Str
@@ -89,12 +92,9 @@ class ArArAge(Loggable):
     ar37decayfactor = Float
 
     arar_constants = Instance(ArArConstants, ())
-    logger = logger
+
     Ar39_decay_corrected = Either(Variable, AffineScalarFunc)
     Ar37_decay_corrected = Either(Variable, AffineScalarFunc)
-
-    arar_constants = Instance(ArArConstants, ())
-    logger = logger
 
     moles_Ar40 = Property
     sensitivity = Float  # moles/pA
@@ -103,9 +103,12 @@ class ArArAge(Loggable):
     _kca_warning = False
     _kcl_warning = False
 
+    conditional_modifier = None
     # def __init__(self, *args, **kw):
     # HasTraits.__init__(self, *args, **kw)
     #     self.logger = logger
+
+        # super(ArArAge, self).__init__(*args, **kw)
 
     def set_j(self, s, e):
         self.j = ufloat(s, std_dev=e)
@@ -172,15 +175,25 @@ class ArArAge(Loggable):
 
     def get_current_intensity(self, attr):
         try:
-            r = self.isotopes[attr].ys[-1]
+            iso = self.isotopes[attr]
         except KeyError:
-            r = None
-        return r
+            return
 
-    def get_detector_active(self, attr):
-        det = next((i for i in self.isotopes if i.detector == attr), None)
-        if det:
-            pass
+        if self.conditional_modifier:
+            try:
+                iso = getattr(iso, self.conditional_modifier)
+            except AttributeError:
+                return
+        # try:
+        #     r = self.isotopes[attr].ys[-1]
+        # except KeyError:
+        #     r = None
+        return iso.ys[-1]
+
+    # def get_detector_active(self, attr):
+    #     det = next((i for i in self.isotopes if i.detector == attr), None)
+    #     if det:
+    #         pass
 
     def get_values(self, attr, n):
         """
@@ -206,7 +219,7 @@ class ArArAge(Loggable):
         if attr.endswith('bs'):
             iso = attr[:-2]
             if iso in self.isotopes:
-                r = self.isotopes[iso].baseline.value
+                r = self.isotopes[iso].baseline.uvalue
         elif '/' in attr:
             non_ic_cor = attr.startswith('u')
             if non_ic_cor:
@@ -293,15 +306,13 @@ class ArArAge(Loggable):
         else:
             return 0
 
-    #def get_signal_value(self, k):
-    #    return self._get_arar_result_attr(k)
     def append_data(self, iso, det, x, signal, kind):
         """
             if kind is baseline then key used to match isotope is `detector` not an `isotope_name`
         """
 
         def _append(isotope):
-            if kind in ('sniff', 'baseline'):
+            if kind in ('sniff', 'baseline', 'whiff'):
                 if kind == 'sniff':
                     isotope._value = signal
                     isotope.dirty = True
@@ -348,6 +359,7 @@ class ArArAge(Loggable):
         return Isotope(**kw)
 
     def set_isotope_detector(self, det, iso=None):
+        name = None
         if iso:
             name = iso
 
@@ -388,7 +400,6 @@ class ArArAge(Loggable):
                 return iso
             except KeyError:
                 pass
-                #attr = 'name'
         else:
             attr = 'detector'
             value = detector
@@ -409,7 +420,6 @@ class ArArAge(Loggable):
         return niso
 
     def set_blank(self, iso, v):
-        #print 'set blank', iso, v
         if not self.isotopes.has_key(iso):
             niso = Isotope(name=iso)
             self.isotopes[iso] = niso
@@ -418,7 +428,6 @@ class ArArAge(Loggable):
         self.isotopes[iso].blank.set_uvalue(v)
 
     def set_baseline(self, iso, v):
-        #print 'set baseline', iso
         if not self.isotopes.has_key(iso):
             niso = Isotope(name=iso)
             self.isotopes[iso] = niso
@@ -444,7 +453,7 @@ class ArArAge(Loggable):
 
     def calculate_decay_factors(self):
         arc = self.arar_constants
-        #only calculate decayfactors once
+        # only calculate decayfactors once
         if not self.ar39decayfactor:
             a37df = calculate_decay_factor(arc.lambda_Ar37.nominal_value,
                                            self.chron_segments)
@@ -466,7 +475,7 @@ class ArArAge(Loggable):
     #     self.logger.debug(*args, **kw)
 
     def _calculate_kca(self):
-        #self.debug('calculated kca')
+        # self.debug('calculated kca')
 
         k = self.get_computed_value('k39')
         ca = self.get_non_ar_isotope('ca37')
@@ -560,6 +569,9 @@ class ArArAge(Loggable):
         """
         # self.debug('calculate age')
         iso_intensities = self._assemble_isotope_intensities()
+        if not iso_intensities:
+            return
+
         self.Ar39_decay_corrected = iso_intensities[1]
         self.Ar37_decay_corrected = iso_intensities[3]
 
@@ -643,12 +655,14 @@ class ArArAge(Loggable):
 
     def __getattr__(self, attr):
         if '/' in attr:
-            #treat as ratio
+            # treat as ratio
             n, d = attr.split('/')
             try:
                 return self.get_value(n) / self.get_value(d)
             except (ZeroDivisionError, TypeError):
                 return ufloat(0, 1e-20)
+        else:
+            raise AttributeError(attr)
                 # ===============================================================================
                 #
                 # ===============================================================================

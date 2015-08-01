@@ -14,8 +14,6 @@
 # limitations under the License.
 # ===============================================================================
 
-
-
 # =============enthought library imports========================
 
 # ============= standard library imports =======================
@@ -45,20 +43,21 @@ class ErrorHandler:
             return InvalidCommandErrorCode(None, logger=self.logger), None
 
     def check_response(self, func, manager, args):
-        '''
+        """
             performs the requested command and checks for errors
-        '''
+        """
         result = None
         err = None
         try:
             result = func(manager, *args)
-
             if result is None:
                 err = NoResponseErrorCode(logger=self.logger)
             elif isinstance(result, ErrorCode):
                 err = result
 
         except TypeError, e:
+            import traceback
+            traceback.print_exc()
             err = FuncCallErrorCode(e, args, logger=self.logger)
 
         return err, '{}'.format(str(result))

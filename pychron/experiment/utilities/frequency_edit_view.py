@@ -33,13 +33,16 @@ class FrequencyModel(HasTraits):
     _template = Str
 
     frequency = Property
-    _frequency = Int
+    frequency_int = Int
 
     def _get_frequency(self):
         f = self.template
         if not f:
-            f = self._frequency
+            f = self.frequency_int
         return f
+
+    # def _set_frequency(self, v):
+    #     self._frequency = v
 
     def _get_template(self):
         return self._template
@@ -69,7 +72,7 @@ Examples:
 
 
 class FrequencyEditView(Controller):
-    templates = List(['s,e', 's,3,e'])
+    templates = List(['', 's,e', 's,3,e'])
 
     def __init__(self, *args, **kw):
         super(FrequencyEditView, self).__init__(*args, **kw)
@@ -81,17 +84,17 @@ class FrequencyEditView(Controller):
 
     def _dump(self):
         p = os.path.join(paths.hidden_dir, 'frequency_edit_view')
-        with open(p, 'w') as fp:
-            pickle.dump(self.templates, fp)
+        with open(p, 'w') as wfile:
+            pickle.dump(self.templates, wfile)
 
     def _load(self):
         p = os.path.join(paths.hidden_dir, 'frequency_edit_view')
         if os.path.isfile(p):
-            with open(p, 'r') as fp:
-                self.templates = pickle.load(fp)
+            with open(p, 'r') as rfile:
+                self.templates = pickle.load(rfile)
 
     def traits_view(self):
-        v = View(Item('_frequency'),
+        v = View(Item('frequency_int'),
                  # Item('before'),
                  # Item('after'),
                  Item('template', tooltip=TEMPLATE_HELP,

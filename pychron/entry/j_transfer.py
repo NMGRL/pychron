@@ -15,11 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Button, Instance, Bool, Str
-from traitsui.api import View, Item, UItem, HGroup, VGroup, Controller, Readonly
+from traits.api import HasTraits, Instance, Bool, Str
+from traitsui.api import View, Item, VGroup, Controller, Readonly
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.database.database_connection_spec import DBConnectionSpec
 from pychron.loggable import Loggable
 
 
@@ -82,7 +81,7 @@ class JTransferer(Loggable):
     def _transfer_pychron_to_massspec(self, *args):
         self._transfer(self._backward_transfer_func, *args)
 
-    def _transfer(self, config, func, irrad, level, positions):
+    def _transfer(self, func, config, irrad, level, positions):
         with self.massspecdb.session_ctx(), self.pychrondb.session_ctx():
             for pp in positions:
                 self.debug('Transferring position {}. labnumber={} current_j={}'.format(pp.hole,

@@ -70,7 +70,8 @@ class OpenPyScriptAction(FileOpenAction):
     image = icon('document-open')
     task_id = 'pychron.pyscript.task'
     # test_path = '/Users/ross/Pychrondata_dev/scripts/extraction/jan_pause.py'
-    test_path = '/Users/ross/Pychrondata_dev/scripts/measurement/jan_unknown.py'
+    test_path = '/Users/ross/Pychron_dev/scripts/measurement/jan_unknown.py'
+    # test_path = '/Users/ross/Pychron_dev/scripts/extraction/jan_air_x1.py'
     # test_path = '/Users/argonlab2/Pychrondata_view/scripts/measurement/obama_analysis400_120.py'
 
 
@@ -101,4 +102,13 @@ class JumpToGosubAction(TaskAction):
     method = 'jump_to_gosub'
     tooltip = 'Jump to gosub defined at the current line. CMD+click on a gosub will also work.'
 
+
+class ExpandGosubsAction(TaskAction):
+    name = 'Expand Gosubs'
+    method = 'expand_gosubs'
+
+
+class MakeGosubAction(TaskAction):
+    name = 'Make Gosub'
+    method = 'make_gosub'
 # ============= EOF =============================================

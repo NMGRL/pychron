@@ -20,6 +20,7 @@ import os
 import subprocess
 from datetime import datetime
 import shutil
+import re
 
 
 def backup(p, backupdir, **kw):
@@ -151,7 +152,7 @@ def unique_dir(root, base):
     p = os.path.join(root, '{}001'.format(base))
     i = 2
     while os.path.exists(p):
-        p = os.path.join(root, '{}{:03n}'.format(base, i))
+        p = os.path.join(root, '{}{:03d}'.format(base, i))
         i += 1
 
     os.mkdir(p)
@@ -169,7 +170,7 @@ def unique_date_path(root, base, extension='.txt'):
     return p
 
 
-def unique_path2(root, base, delimiter='-', extension='.txt'):
+def unique_path2(root, base, delimiter='-', extension='.txt', width=3):
     """
         unique_path suffers from the fact that it starts at 001.
         this is a problem for log files because the logs are periodically archived which means
@@ -187,7 +188,7 @@ def unique_path2(root, base, delimiter='-', extension='.txt'):
     #
     # cnt += 1
     cnt = max_path_cnt(root, '{}-'.format(base), delimiter=delimiter, extension=extension)
-    p = os.path.join(root, '{}-{:03n}{}'.format(base, cnt, extension))
+    p = os.path.join(root, '{{}}-{{:0{}d}}{{}}'.format(width).format(base, cnt, extension))
     return p, cnt
 
 
@@ -239,37 +240,11 @@ def unique_path(root, base, extension='.txt'):
     cnt = 1
     i = 2
     while os.path.isfile(p):
-        p = os.path.join(root, '{}-{:03n}{}'.format(base, i, extension))
+        p = os.path.join(root, '{}-{:03d}{}'.format(base, i, extension))
         i += 1
         cnt += 1
 
     return p, cnt
-
-
-def to_bool(a):
-    """
-        a: a str or bool object
-
-        if a is string
-            'true', 't', 'yes', 'y', '1', 'ok' ==> True
-            'false', 'f', 'no', 'n', '0' ==> False
-    """
-
-    if isinstance(a, bool):
-        return a
-    elif isinstance(a, (int, float)):
-        return bool(a)
-
-    tks = ['true', 't', 'yes', 'y', '1', 'ok']
-    fks = ['false', 'f', 'no', 'n', '0']
-
-    if a is not None:
-        a = str(a).strip().lower()
-
-    if a in tks:
-        return True
-    elif a in fks:
-        return False
 
 
 def parse_xy(p, delimiter=','):
@@ -299,8 +274,8 @@ def parse_file(p, delimiter=None, cast=None):
 
     """
     if os.path.exists(p) and os.path.isfile(p):
-        with open(p, 'U') as fp:
-            r = filetolist(fp)
+        with open(p, 'U') as rfile:
+            r = filetolist(rfile)
             if delimiter:
                 if cast is None:
                     cast = str
@@ -313,8 +288,8 @@ def parse_setupfile(p):
     """
     """
 
-    fp = parse_file(p)
-    if fp:
+    rfile = parse_file(p)
+    if rfile:
         return [line.split(',') for line in file]
 
 
@@ -325,10 +300,10 @@ def parse_canvasfile(p, kw):
     # kw=['origin','valvexy','valvewh','opencolor','closecolor']
 
     if os.path.exists(p) and os.path.isfile(p):
-        with open(p, 'r') as fp:
+        with open(p, 'r') as rfile:
             indices = {}
             i = 0
-            f = filetolist(fp)
+            f = filetolist(rfile)
             count = 1
             for i in range(len(f)):
                 if f[i][:1] == '!':
@@ -354,8 +329,8 @@ def pathtolist(p, **kw):
         kw: same keyword arguments accepted by filetolist
         return: list
     """
-    with open(p, 'r') as fp:
-        return filetolist(fp, **kw)
+    with open(p, 'r') as rfile:
+        return filetolist(rfile, **kw)
 
 
 def filetolist(f, commentchar='#'):
@@ -385,7 +360,7 @@ def filetolist(f, commentchar='#'):
     return r
 
 
-def fileiter(fp, commentchar='#', strip=False):
+def fileiter(rfile, commentchar='#', strip=False):
     def isNewLine(c):
         return c in ('\r', '\n')
 
@@ -393,7 +368,7 @@ def fileiter(fp, commentchar='#', strip=False):
         cc = li[:1]
         return not (cc == commentchar or isNewLine(cc))
 
-    for line in fp:
+    for line in rfile:
         if test(line):
             if strip:
                 line = line.strip()
@@ -411,7 +386,12 @@ def get_path(root, name, extensions):
 
     """
     for ext in extensions:
-        p = os.path.join(root, add_extension(name, ext))
-        if os.path.isfile(p):
-            return p
+        for f in os.listdir(root):
+            nn = add_extension(name, ext)
+            if re.match(nn, f):
+                return os.path.join(root, f)
+
+        # p = os.path.join(root, add_extension(name, ext))
+        # if os.path.isfile(p):
+        #     return p
 

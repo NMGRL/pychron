@@ -29,8 +29,8 @@ class MapCanvas(SceneCanvas):
     calibration_item = Instance(CalibrationObject)
     calibrate = Bool(False)
     hole_color = (0, 0, 0)
-    show_grids = False
-    show_axes = False
+    # show_grids = False
+    # show_axes = False
 
     render_map = Bool(False)
     hole_crosshairs_kind = Enum(1, 2)
@@ -43,6 +43,15 @@ class MapCanvas(SceneCanvas):
 
     scaling = Float(1.0)
 
+    def _show_grids_default(self):
+        return False
+
+    def _show_axes_default(self):
+        return False
+
+    def __init__(self, *args, **kw):
+
+        super(MapCanvas, self).__init__(*args, **kw)
 
 #    def normal_key_pressed(self, event):
 # #        super(MapCanvas, self).normal_key_pressed(event)

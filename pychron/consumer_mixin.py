@@ -34,6 +34,9 @@ class ConsumerMixin(object):
     _consumer = None
     _timeout = 0
 
+    def __init__(self, func=None, buftime=None, auto_start=True, main=False, timeout=None):
+        self.setup_consumer(func, buftime, auto_start, main, timeout)
+
     def setup_consumer(self, func=None, buftime=None, auto_start=True, main=False, timeout=None):
         self._consume_func = func
         self._main = main
@@ -85,7 +88,7 @@ class ConsumerMixin(object):
     def _consume(self, timeout):
         bt = self._buftime
         if bt:
-            bt = bt / 1000.
+            bt /= 1000.
 
             def get_func():
                 q = self._consumer_queue
@@ -116,7 +119,7 @@ class ConsumerMixin(object):
 
             try:
                 v = get_func()
-                if v:
+                if v is not None:
                     if cfunc:
                         if self._main:
                             from pychron.core.ui.gui import invoke_in_main_thread
@@ -129,6 +132,7 @@ class ConsumerMixin(object):
                             func, args, kw = v
                         else:
                             func, args = v
+                            kw = {}
 
                         if not isinstance(args, tuple):
                             args = (args, )
@@ -143,11 +147,6 @@ class ConsumerMixin(object):
                 import traceback
 
                 traceback.print_exc()
-                #pass
-
-
-#             if not self._should_consume:
-#                 break
 
 
 class consumable(object):
@@ -160,7 +159,7 @@ class consumable(object):
         self._main = main
 
     def __enter__(self):
-        self._consumer = c = ConsumerMixin()
+        self._consumer = c = ConsumerMixin(auto_start=False)
         c.setup_consumer(func=self._func, main=self._main)
         return c
 

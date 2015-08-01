@@ -40,6 +40,7 @@ class AnalysisEditAction(TaskAction):
 
 class DatabaseSaveAction(TaskAction):
     name = 'Database Save'
+    dname = 'Database Save'
     description = 'Save current changes to the database'
     method = 'save_to_db'
     image = icon('database_save')
@@ -61,34 +62,51 @@ class FindAssociatedAction(TaskAction):
 
 class TagAction(TaskAction):
     name = 'Tag...'
+    dname = 'Tag'
     # accelerator = 'Ctrl+Shift+t'
     method = 'set_tag'
-    image = icon('tag-blue-add.png')
+    image = icon('tag-blue-add')
     id = 'pychron.tag'
+
 
 class DataReductionTagAction(TaskAction):
     name = 'Data Reduction Tag...'
+    dname = 'Data Reduction Tag'
     method = 'set_data_reduction_tag'
 
 
 class SelectDataReductionTagAction(TaskAction):
     name = 'Select Data Reduction Tag...'
+    dname = 'Select Data Reduction Tag'
     method ='select_data_reduction_tag'
 
 
 class FluxAction(AnalysisEditAction):
     name = 'Flux...'
+    dname = 'Flux'
     # accelerator = 'Ctrl+g'
     method = 'new_flux'
     task_id = 'pychron.processing.flux'
     id = 'pychron.flux'
 
+
 class BlankEditAction(AnalysisEditAction):
     name = 'Blanks...'
+    dname = 'Blanks'
     # accelerator = 'Ctrl+B'
     method = 'new_blank'
-    task_id = 'pychron.processing.blanks'
+    # task_id = 'pychron.processing.blanks'
+    task_id = 'pychron.processing.reduction'
     id = 'pychron.blank'
+
+
+class ICFactorAction(AnalysisEditAction):
+    name = 'IC Factor...'
+    dname = 'IC Factor'
+    # accelerator = 'Ctrl+shift+i'
+    method = 'new_ic_factor'
+    task_id = 'pychron.processing.reduction'
+    id = 'pychron.ic_factor'
 
 # class SeriesAction(AnalysisEditAction):
 #     name = 'Series...'
@@ -98,6 +116,7 @@ class BlankEditAction(AnalysisEditAction):
 
 class IsotopeEvolutionAction(AnalysisEditAction):
     name = 'Isotope Evolution...'
+    dname = 'Isotope Evolution'
     # accelerator = 'Ctrl+k'
     method = 'new_isotope_evolution'
     task_id = 'pychron.processing.isotope_evolution'
@@ -110,15 +129,12 @@ class RefitIsotopeEvolutionAction(AnalysisEditAction):
     task_id = 'pychron.processing.isotope_evolution'
 
 
-class ICFactorAction(AnalysisEditAction):
-    name = 'IC Factor...'
-    # accelerator = 'Ctrl+shift+i'
-    method = 'new_ic_factor'
-    task_id = 'pychron.processing.ic_factor'
-    id = 'pychron.ic_factor'
+
+
 
 class DiscriminationAction(AnalysisEditAction):
     name = 'Discrimination...'
+    dname = 'Discrimination'
     accelerator = 'Ctrl+shift+d'
     #method = 'new_ic_factor'
     task_id = 'pychron.processing.discrimination'

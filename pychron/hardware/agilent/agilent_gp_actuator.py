@@ -45,14 +45,14 @@ class AgilentGPActuator(GPActuator):
             self.warning('\n'.join(errs))
         return True
 
-    def get_channel_state(self, obj):
+    def get_channel_state(self, obj, verbose=False):
         """
             Query the hardware for the channel state
         """
 
         # returns one if channel close  0 for open
         cmd = 'ROUT:OPEN? (@{})'.format(self._get_address(obj))
-        s = self.ask(cmd)
+        s = self.ask(cmd, verbose=verbose)
         if self.simulation:
             return
 

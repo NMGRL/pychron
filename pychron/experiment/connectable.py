@@ -29,6 +29,7 @@ class Connectable(HasTraits):
 
     # can this connection be used by the AutomatedRunMonitor
     monitorable = False
+    manager = Any
 
     def set_connection_parameters(self, obj):
         if hasattr(obj, 'communicator'):

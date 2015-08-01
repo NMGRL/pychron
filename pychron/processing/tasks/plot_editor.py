@@ -342,7 +342,7 @@ class PlotEditor(HasTraits):
             VGroup(UItem('selected_renderer_name',
                          editor=EnumEditor(name='renderer_names')),
                    UItem('selected_renderer', style='custom')),
-            label='Selected Plot')
+            label='Selected Dataset')
 
         xlim_grp = HGroup(
             # Item('xauto', label='Auto'),

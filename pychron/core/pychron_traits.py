@@ -25,7 +25,7 @@ IPREGEX = re.compile(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$')
 
 class IPAddress(BaseStr):
     def validate(self, obj, name, value):
-        if value == 'localhost' or IPREGEX.match(value):
+        if not value or value == 'localhost' or IPREGEX.match(value):
             return value
         else:
             self.error(obj, name, value)

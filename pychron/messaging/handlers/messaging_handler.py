@@ -90,6 +90,6 @@ class MessagingHandler(BaseRequestHandler):
                 # totalsent += sock.sendto(msg, self.client_address)
                 #print 'totalsent={} total={}'.format(totalsent, mlen)
             except socket.error, e:
-                print e
+                print 'exception', e
                 continue
 # ============= EOF ====================================

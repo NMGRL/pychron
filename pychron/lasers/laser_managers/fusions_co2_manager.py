@@ -21,15 +21,14 @@ from traits.api import Button, DelegatesTo
 # import os
 # =============local library imports  ==========================
 from pychron.hardware.fusions.fusions_co2_logic_board import FusionsCO2LogicBoard
-from pychron.paths import paths
 from pychron.monitors.fusions_co2_laser_monitor import FusionsCO2LaserMonitor
 from fusions_laser_manager import FusionsLaserManager
 
 
 class FusionsCO2Manager(FusionsLaserManager):
-    '''
-    '''
-    name = 'fusions_co2'
+    """
+    """
+    name = 'FusionsCO2'
     id = 'pychron.fusions.co2'
 
     launch_profile = Button
@@ -42,22 +41,20 @@ class FusionsCO2Manager(FusionsLaserManager):
     monitor_name = 'co2_laser_monitor'
     monitor_klass = FusionsCO2LaserMonitor
 
-    dbname = paths.co2laser_db
-    db_root = paths.co2laser_db_root
+    # dbname = paths.co2laser_db
+    # db_root = paths.co2laser_db_root
 
     _stop_signal = None
 
     configuration_dir_name = 'fusions_co2'
 
-    #    def _brightness_meter_default(self):
-    #        mv = self._get_machine_vision()
-    #        return BrightnessPIDManager(parent=self,
-    #                                    machine_vision=mv)
+    def get_laser_watts(self):
+        return self.laser_controller.read_power_meter()
 
     def _set_laser_power_hook(self, rp, **kw):
-        '''
-        '''
-        self.laser_controller._set_laser_power_(rp, **kw)
+        """
+        """
+        self.laser_controller.set_laser_power(rp, **kw)
         if self.monitor:
             self.monitor.setpoint = self._requested_power
         else:
@@ -69,20 +66,17 @@ class FusionsCO2Manager(FusionsLaserManager):
                 if tab:
                     tab.attrs.request_power = rp
 
-    def get_laser_watts(self):
-        return self.laser_controller.read_power_meter()
-
     def _laser_controller_default(self):
-        '''
-        '''
+        """
+        """
         b = FusionsCO2LogicBoard(name='laser_controller',
                                  configuration_name='laser_controller',
                                  configuration_dir_name=self.configuration_dir_name)
         return b
 
     def _stage_manager_default(self):
-        '''
-        '''
+        """
+        """
         args = dict(name='stage',
                     configuration_name='stage',
                     configuration_dir_name=self.configuration_dir_name,

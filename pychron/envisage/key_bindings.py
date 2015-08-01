@@ -38,7 +38,7 @@ from pychron.paths import paths
 # default_key_map = {'pychron.open_experiment': ('O', 'Open Experiment'),
 # 'pychron.new_experiment': ('N', 'New Experiment'),
 # 'pychron.deselect': ('Ctrl+Shift+D', 'Deselect'),
-#                    'pychron.open_last_experiment': ('Alt+Ctrl+O', 'Open Last Experiment')}
+# 'pychron.open_last_experiment': ('Alt+Ctrl+O', 'Open Last Experiment')}
 
 
 def key_bindings_path():
@@ -50,8 +50,8 @@ def load_key_map():
     # if not os.path.isfile(p):
     # dump_key_bindings(default_key_map)
     if os.path.isfile(p):
-        with open(p, 'r') as fp:
-            return yaml.load(fp)
+        with open(p, 'r') as rfile:
+            return yaml.load(rfile)
     else:
         return {}
 
@@ -69,8 +69,8 @@ def update_key_bindings(actions):
 
 def dump_key_bindings(obj):
     p = key_bindings_path()
-    with open(p, 'w') as fp:
-        yaml.dump(obj, fp)
+    with open(p, 'w') as wfile:
+        yaml.dump(obj, wfile)
 
 
 def keybinding_exists(key):
@@ -78,12 +78,14 @@ def keybinding_exists(key):
         if b == key:
             return d
 
+
 def clear_keybinding(desc):
     for k, (b, d) in user_key_map.iteritems():
         if d == desc:
-            user_key_map[k]=('',d)
+            user_key_map[k] = ('', d)
             dump_key_bindings(user_key_map)
             return
+
 
 class mKeyBinding(HasTraits):
     binding = Str
@@ -95,21 +97,23 @@ class mKeyBinding(HasTraits):
     # def _refresh_needed_fired(self):
     #     print 'asdfasdasdfsafd'
 
+
 class mKeyBindings(HasTraits):
     bindings = List(mKeyBinding)
 
     # @on_trait_change('bindings:dump_needed')
     def dump(self):
-        return {bi.id:(bi.binding,bi.description) for bi in self.bindings}
-    #
-    #
-    # @on_trait_change('bindings:refresh_needed')
-    # def handle(self):
-    #     # for k, v in user_key_map.iteritems():
-    #     #     print k, v
-    #     km = load_key_map()
-    #     bs = [mKeyBinding(binding=v[0], description=v[1], id=k) for k, v in km.items()]
-    #     self.bindings = bs
+        return {bi.id: (bi.binding, bi.description) for bi in self.bindings}
+        #
+        #
+        # @on_trait_change('bindings:refresh_needed')
+        # def handle(self):
+        #     # for k, v in user_key_map.iteritems():
+        #     #     print k, v
+        #     km = load_key_map()
+        #     bs = [mKeyBinding(binding=v[0], description=v[1], id=k) for k, v in km.items()]
+        #     self.bindings = bs
+
 
 def edit_key_bindings():
     from pychron.core.ui.qt.keybinding_editor import KeyBindingsEditor
@@ -125,8 +129,8 @@ def edit_key_bindings():
     if info.result:
         dump_key_bindings(kb.dump())
         information(None, 'Changes take effect on Restart')
-    # ed.edit_traits()
-    # kb.edit_traits()
+        # ed.edit_traits()
+        # kb.edit_traits()
 
 
 if __name__ == '__main__':

@@ -107,7 +107,7 @@ class XYScatterOptions(BasePlotterOptions):
     def _load_file_source(self):
         p = self.get_parser()
         keys = p.list_attributes()
-        self.attrs = {ai: '{:02n}:{}'.format(i, ai) for i, ai in enumerate(keys)}
+        self.attrs = {ai: '{:02d}:{}'.format(i, ai) for i, ai in enumerate(keys)}
         self.index_attr = keys[0]
         self.value_attr = keys[1]
 

@@ -57,14 +57,14 @@ class RemoteHardwareServerManager(Manager):
             self.repeater = self.selected.repeater
 
     def load(self):
-        '''
-        '''
+        """
+        """
         names, de, dh, dp, dr = self.read_configuration()
         if names:
             for s in names:
-                e = RemoteCommandServer(name=s,
-                               configuration_dir_name='servers',
-                               )
+                # e = RemoteCommandServer(name=s, configuration_dir_name='servers')
+                e = RemoteCommandServer(name=s, config_path = os.path.join(paths.root, 'servers', '{}.cfg'.format(s)))
+
 
                 e.bootstrap()
                 self.servers.append(e)
@@ -106,8 +106,11 @@ class RemoteHardwareServerManager(Manager):
 #        return names
 
         config = ConfigParser.ConfigParser()
+        # print paths.setup_dir
 
-        path = os.path.join(paths.setup_dir, 'rhs.cfg')
+        path = os.path.join(paths.root, 'rhs.cfg')
+        # print os.path.isfile(path), path
+
         config.read(path)
 
         servernames = [s.strip() for s in self.config_get(config, 'General', 'servers').split(',')]

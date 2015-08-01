@@ -108,7 +108,7 @@ class AnalysisModifierTestCase(unittest.TestCase):
             old_an = db.get_analysis(an.labnumber, an.aliquot, an.step)
             self.assertIsNone(old_an)
 
-            new_an = db.get_analysis(self.new_identifier, '{:02n}'.format(an.aliquot), an.step)
+            new_an = db.get_analysis(self.new_identifier, '{:02d}'.format(an.aliquot), an.step)
             self.assertEqual(new_an.RID, make_runid(self.new_identifier, an.aliquot, an.step))
             self.assertEqual(new_an.sample.Sample, 'Bar')
 

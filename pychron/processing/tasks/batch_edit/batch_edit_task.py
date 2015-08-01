@@ -36,6 +36,9 @@ from pychron.paths import paths
 
 
 
+
+
+
 #from pychron.processing.entry.sensitivity_entry import SensitivityEntry
 #from pychron.processing.tasks.entry.sensitivity_entry_panes import SensitivityPane
 from pychron.processing.tasks.browser.browser_task import BaseBrowserTask
@@ -200,7 +203,7 @@ class BatchEditTask(AnalysisEditTask):
     @on_trait_change('unknowns_pane:[append_button, replace_button]')
     def _append_unknowns(self, obj, name, old, new):
 
-        s = self._get_selected_analyses(self.unknowns_pane.items)
+        s = self._get_selected_analyses(unks=self.unknowns_pane.items)
         if s:
             if name == 'replace_button':
                 self.unknowns_pane.items = s
@@ -239,7 +242,7 @@ class BatchEditTask(AnalysisEditTask):
         # app = self.window.application
         #entry = app.get_service('pychron.entry.modal_sensitivity')
         #if entry:
-        #    print entry
+        # print 'exception', entry
 
         se = SensitivityEntry()
         se.activate()

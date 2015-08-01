@@ -17,18 +17,21 @@
 # ============= enthought library imports =======================
 
 from chaco.array_data_source import ArrayDataSource
-from traits.api import HasTraits, Any, Int, Str, Tuple, Property, \
-    Event, Bool, cached_property, on_trait_change
+from traits.api import HasTraits, Any, Int, Str, Property, \
+    Event, Bool, cached_property, List, Float
 from chaco.tools.data_label_tool import DataLabelTool
 from chaco.tools.broadcaster import BroadcasterTool
 # ============= standard library imports ========================
-from numpy import Inf, inf
+from numpy import Inf
 import re
 from uncertainties import std_dev, nominal_value, ufloat
 # ============= local library imports  ==========================
 from pychron.graph.error_bar_overlay import ErrorBarOverlay
+from pychron.graph.ml_label import MPlotAxis
+from pychron.graph.tools.axis_tool import AxisTool
 from pychron.graph.tools.limits_tool import LimitsTool, LimitOverlay
 from pychron.processing.analyses.analysis_group import AnalysisGroup
+from pychron.processing.plotters.formatting_options import FormattingOptions
 from pychron.processing.plotters.points_label_overlay import PointsLabelOverlay
 from pychron.processing.plotters.sparse_ticks import SparseLogTicks, SparseTicks
 from pychron.core.helpers.formatting import floatfmt, format_percent_error
@@ -37,6 +40,7 @@ from pychron.graph.tools.rect_selection_tool import RectSelectionOverlay, \
     RectSelectionTool
 from pychron.graph.tools.analysis_inspector import AnalysisPointInspector
 from pychron.graph.tools.point_inspector import PointInspectorOverlay
+from pychron.pychron_constants import PLUSMINUS
 
 PLOT_MAPPING = {'analysis #': 'Analysis Number', 'Analysis #': 'Analysis Number Stacked',
                 '%40Ar*': 'Radiogenic 40Ar'}
@@ -49,7 +53,7 @@ class BaseArArFigure(HasTraits):
     _analysis_group_klass = AnalysisGroup
 
     group_id = Int
-    padding = Tuple((60, 10, 5, 40))
+    # padding = Tuple((60, 10, 5, 40))
     ytitle = Str
     replot_needed = Event
     _reverse_sorted_analyses = False
@@ -57,8 +61,8 @@ class BaseArArFigure(HasTraits):
 
     options = Any
 
-    x_grid_visible = Bool(True)
-    y_grid_visible = Bool(True)
+    # x_grid_visible = Bool(True)
+    # y_grid_visible = Bool(True)
     use_sparse_ticks = Bool(True)
 
     refresh_unknowns_table = Event
@@ -72,59 +76,18 @@ class BaseArArFigure(HasTraits):
 
     bgcolor = None
 
-    def _add_limit_tool(self, plot, orientation):
-        t = LimitsTool(component=plot,
-                       orientation=orientation)
+    ymas = List
+    ymis = List
+    xmi = Float
+    xma = Float
 
-        o = LimitOverlay(component=plot, tool=t)
-
-        plot.tools.append(t)
-        plot.overlays.append(o)
+    _has_formatting_hash = None
 
     def build(self, plots):
         """
             make plots
         """
         self._plots = plots
-
-        def _setup_plot(pp, po):
-
-            #add limit tools
-            self._add_limit_tool(pp, 'x')
-            self._add_limit_tool(pp, 'y')
-
-            pp.value_range.tight_bounds = False
-            # print po, po.ylimits, po.has_ylimits()
-            # if po.has_ylimits():
-            #     print 'setting ylimits {}'.format(po.ylimits)
-            #     pp.value_range.set_bounds(*po.ylimits)
-            # if po.has_xlimits():
-            #     pp.index_range.set_bounds(*po.xlimits)
-
-            pp.x_grid.visible = self.x_grid_visible
-            pp.y_grid.visible = self.y_grid_visible
-
-            options = self.options
-            pp.x_axis.title_font = options.xtitle_font
-            pp.x_axis.tick_label_font = options.xtick_font
-
-            pp.y_axis.title_font = options.ytitle_font
-            pp.y_axis.tick_label_font = options.ytick_font
-
-            pp.bgcolor = options.plot_bgcolor
-
-            if po:
-                pp.value_scale = po.scale
-                if not po.ytick_visible:
-                    pp.y_axis.tick_visible = False
-                    pp.y_axis.tick_label_formatter = lambda x: ''
-
-            if self.use_sparse_ticks:
-                if pp.value_scale == 'log':
-                    pp.value_axis.tick_generator = SparseLogTicks()
-                else:
-                    pp.value_axis.tick_generator = SparseTicks()
-
         graph = self.graph
 
         vertical_resize = not all([p.height for p in plots])
@@ -137,9 +100,9 @@ class BaseArArFigure(HasTraits):
             title = self.options.title
 
         for i, po in enumerate(plots):
-            kw = {'padding': self.padding,
-                  'ytitle': po.name}
-
+            # kw = {'padding': self.padding,
+            # 'ytitle': po.name}
+            kw = {'ytitle': po.name}
             if po.height:
                 kw['bounds'] = [50, po.height]
 
@@ -153,9 +116,16 @@ class BaseArArFigure(HasTraits):
 
             p = graph.new_plot(**kw)
 
-            #set a tag for easy identification
+            # set a tag for easy identification
             p.y_axis.tag = po.name
-            _setup_plot(p, po)
+            self._setup_plot(i, p, po)
+
+            # if self.options.use_legend:
+            # if True:
+            # self._add_legend()
+
+    def post_make(self):
+        pass
 
     def plot(self, *args, **kw):
         pass
@@ -171,6 +141,106 @@ class BaseArArFigure(HasTraits):
 
     def mean_x(self, *args):
         return 0
+
+    # private
+    def _setup_plot(self, i, pp, po):
+        # add limit tools
+        self._add_limit_tool(pp, 'x')
+        self._add_limit_tool(pp, 'y')
+
+        self._add_axis_tool(pp, pp.x_axis)
+        self._add_axis_tool(pp, pp.y_axis)
+
+        pp.value_range.on_trait_change(lambda: self.update_options_limits(i), 'updated')
+        pp.index_range.on_trait_change(lambda: self.update_options_limits(i), 'updated')
+        pp.value_range.tight_bounds = False
+
+        options = self.options
+        pp.x_grid.visible = options.use_xgrid
+        pp.y_grid.visible = options.use_ygrid
+        # pp.x_grid.visible = self.x_grid_visible
+        # pp.y_grid.visible = self.y_grid_visible
+
+        self._set_formatting(pp)
+
+        # pp.bgcolor = options.plot_bgcolor
+        for attr in ('left', 'right', 'top'):
+            setattr(pp, 'padding_{}'.format(attr),
+                    getattr(options, 'padding_{}'.format(attr)))
+
+        if not i:
+            pp.padding_bottom = options.padding_bottom
+
+        if po:
+            pp.value_scale = po.scale
+            if not po.ytick_visible:
+                pp.y_axis.tick_visible = False
+                pp.y_axis.tick_label_formatter = lambda x: ''
+
+        if self.use_sparse_ticks:
+            if pp.value_scale == 'log':
+                pp.value_axis.tick_generator = SparseLogTicks()
+            else:
+                pp.value_axis.tick_generator = SparseTicks()
+
+    def _set_formatting(self, pp):
+
+        # implement a formatting_options object.
+        # this object defines the fonts, sizes and some colors.
+        # there will be 5 default formatting_object objects
+        # the user may save more. a single formatting object maybe applied to any of the options types
+        # e.g ideogram, spectrum, etc. therefore the formatting_options object should be defined
+        # at the PlotterOptionsManager level and not PlotterOptions.
+        # defaults
+        # 1. screen
+        # 2. pdf
+        # 3. poster
+        # 4. projector
+        # 5. publication
+        #
+        # in the future publication may be divided into various formats. e.g. 1/2 column, 2/3 column etc.
+        # a Null formatting option should be available. If null is used the the fonts etc are defined by
+        # the options object.
+
+        options = self.options
+
+        # self.formatting_options = None
+        # from pychron.paths import paths
+        # self.formatting_options = FormattingOptions(paths.presentation_formatting_options)
+
+        if options.formatting_options is None:
+            self._set_options_format(pp)
+        else:
+
+            if self.options.has_changes():
+                self._set_options_format(pp)
+            else:
+                # print 'using formatting options'
+                fmt_opt = options.formatting_options
+                for name, axis in (('x', pp.x_axis), ('y', pp.y_axis)):
+                    for attr in ('title_font', 'tick_label_font', 'tick_in', 'tick_out'):
+                        value = fmt_opt.get_value(name, attr)
+                        setattr(axis, attr, value)
+
+                pp.bgcolor = fmt_opt.plot_bgcolor
+
+            options.set_hash()
+
+    def _set_options_format(self, pp):
+        print 'using options format'
+
+        options = self.options
+        pp.x_axis.title_font = options.xtitle_font
+        pp.x_axis.tick_label_font = options.xtick_font
+        pp.x_axis.tick_in = options.xtick_in
+        pp.x_axis.tick_out = options.xtick_out
+
+        pp.y_axis.title_font = options.ytitle_font
+        pp.y_axis.tick_label_font = options.ytick_font
+        pp.y_axis.tick_in = options.ytick_in
+        pp.y_axis.tick_out = options.ytick_out
+
+        pp.bgcolor = options.plot_bgcolor
 
     def _get_omitted(self, ans, omit=None, include_value_filtered=True):
         return [i for i, ai in enumerate(ans)
@@ -209,8 +279,8 @@ class BaseArArFigure(HasTraits):
         return sel
 
     # def _get_mswd(self, ages, errors):
-    #     mswd = calculate_mswd(ages, errors)
-    #     n = len(ages)
+    # mswd = calculate_mswd(ages, errors)
+    # n = len(ages)
     #     valid_mswd = validate_mswd(mswd, n)
     #     return mswd, valid_mswd, n
 
@@ -235,10 +305,11 @@ class BaseArArFigure(HasTraits):
 
             for ai in self.sorted_analyses:
                 v = ai.get_value(attr)
-                yield v or ufloat(0,0)
+                yield v or ufloat(0, 0)
                 # if v is not None:
                 #     yield v
                 # yield f(ai.get_value(attr))
+
         return gen()
 
     def _set_y_limits(self, a, b, min_=None, max_=None,
@@ -254,13 +325,16 @@ class BaseArArFigure(HasTraits):
 
         ma = max_ if max_ is not None else max(ma, b)
 
-        self.graph.set_y_limits(min_=mi, max_=ma, pad=pad, plotid=pid)
+        self.graph.set_y_limits(min_=mi, max_=ma, pad=pad, plotid=pid, pad_style='upper')
 
     def update_options_limits(self, pid):
         n = len(self.options.aux_plots)
         ap = self.options.aux_plots[n - pid - 1]
-        ap.ylimits = self.graph.get_y_limits(pid)
-        ap.xlimits = self.graph.get_x_limits(pid)
+        if not self.suppress_ylimits_update:
+            ap.ylimits = self.graph.get_y_limits(pid)
+
+        if not self.suppress_xlimits_update:
+            ap.xlimits = self.graph.get_x_limits(pid)
 
     # ===========================================================================
     # aux plots
@@ -277,25 +351,25 @@ class BaseArArFigure(HasTraits):
 
         return omits
 
-    def _plot_raw_40_36(self,  po, plot, pid, **kw):
+    def _plot_raw_40_36(self, po, plot, pid, **kw):
         k = 'uAr40/Ar36'
         ys, es = self._get_aux_plot_data(k)
-        return self._plot_aux('40/36', k, ys, po, plot, pid, es, **kw)
+        return self._plot_aux('noncor. <sup>40</sup>Ar/<sup>36</sup>Ar', k, ys, po, plot, pid, es, **kw)
 
-    def _plot_ic_40_36(self,  po, plot, pid, **kw):
+    def _plot_ic_40_36(self, po, plot, pid, **kw):
         k = 'Ar40/Ar36'
         ys, es = self._get_aux_plot_data(k)
-        return self._plot_aux('40/36', k, ys, po, plot, pid, es, **kw)
+        return self._plot_aux('<sup>40</sup>Ar/<sup>36</sup>Ar', k, ys, po, plot, pid, es, **kw)
 
-    def _plot_ic_if_40_36(self,  po, plot, pid, **kw):
+    def _plot_icf_40_36(self, po, plot, pid, **kw):
         k = 'icf_40_36'
         ys, es = self._get_aux_plot_data(k)
-        return self._plot_aux('40/36', k, ys, po, plot, pid, es, **kw)
+        return self._plot_aux('ifc <sup>40</sup>Ar/<sup>36</sup>Ar', k, ys, po, plot, pid, es, **kw)
 
     def _plot_radiogenic_yield(self, po, plot, pid, **kw):
         k = 'rad40_percent'
         ys, es = self._get_aux_plot_data(k)
-        return self._plot_aux('%40Ar*', k, ys, po, plot, pid, es, **kw)
+        return self._plot_aux('%<sup>40</sup>Ar*', k, ys, po, plot, pid, es, **kw)
 
     def _plot_kcl(self, po, plot, pid, **kw):
         k = 'kcl'
@@ -316,16 +390,39 @@ class BaseArArFigure(HasTraits):
         vs = self._unpack_attr(k)
         return [nominal_value(vi) for vi in vs], [std_dev(vi) for vi in vs]
 
+    def _set_ml_title(self, text, plotid, ax):
+        plot = self.graph.plots[plotid]
+        tag = '{}_axis'.format(ax)
+        xa = getattr(plot, tag)
+        nxa = MPlotAxis()
+        nxa.title = text
+        nxa.clone(xa)
+
+        setattr(plot, tag, nxa)
+
     # ===============================================================================
     #
     # ===============================================================================
+    def _add_axis_tool(self, plot, axis):
+        t = AxisTool(component=axis)
+        plot.tools.append(t)
+
+    def _add_limit_tool(self, plot, orientation):
+        t = LimitsTool(component=plot,
+                       orientation=orientation)
+
+        o = LimitOverlay(component=plot, tool=t)
+
+        plot.tools.append(t)
+        plot.overlays.append(o)
+
     def _add_point_labels(self, scatter):
         labels = []
 
         f = self.options.analysis_label_format
 
         if not f:
-            f = '{aliquot:02n}{step:}'
+            f = '{aliquot:02d}{step:}'
 
         for si in self.sorted_analyses:
             ctx = {'aliquot': si.aliquot,
@@ -335,15 +432,17 @@ class BaseArArFigure(HasTraits):
             x = f.format(**ctx)
             labels.append(x)
 
+        font = self.options.get_formatting_value('label_font', 'label_font')
         ov = PointsLabelOverlay(component=scatter,
                                 labels=labels,
                                 label_box=self.options.label_box,
-                                font='modern {}'.format(self.options.label_fontsize))
+                                font=font)
         scatter.underlays.append(ov)
 
     def _add_error_bars(self, scatter, errors, axis, nsigma,
                         end_caps,
                         visible=True):
+
         ebo = ErrorBarOverlay(component=scatter,
                               orientation=axis,
                               nsigma=nsigma,
@@ -387,11 +486,10 @@ class BaseArArFigure(HasTraits):
 
             # u = lambda a, b, c, d: self.update_graph_metadata(a, b, c, d)
             scatter.index.on_trait_change(self.update_graph_metadata, 'metadata_changed')
-            # ===============================================================================
-            # labels
-            # ===============================================================================
 
-
+    # ===============================================================================
+    # labels
+    # ===============================================================================
     def _add_data_label(self, s, text, point, bgcolor='transparent',
                         label_position='top right', color=None, append=True, **kw):
         if color is None:
@@ -420,18 +518,25 @@ class BaseArArFigure(HasTraits):
         label.on_trait_change(self._handle_overlay_move, 'label_position')
         return label
 
-    def _build_label_text(self, x, we, mswd, valid_mswd, n,
+    def _build_label_text(self, x, we, n,
+                          total_n=None,
+                          mswd_args=None,
                           percent_error=False,
                           sig_figs=3):
 
         display_n = True
         display_mswd = n >= 2
+
         if display_n:
-            n = 'n= {}'.format(n)
+            if total_n and n != total_n:
+                n = 'n= {}/{}'.format(n, total_n)
+            else:
+                n = 'n= {}'.format(n)
         else:
             n = ''
 
-        if display_mswd:
+        if mswd_args and display_mswd:
+            mswd, valid_mswd, _ = mswd_args
             vd = '' if valid_mswd else '*'
             mswd = '{}mswd= {:0.2f}'.format(vd, mswd)
         else:
@@ -441,14 +546,14 @@ class BaseArArFigure(HasTraits):
         swe = floatfmt(we, sig_figs)
 
         if self.options.index_attr in ('uF', 'Ar40/Ar36'):
-            me = '{} +/-{}'.format(sx, swe)
+            me = u'{} {}{}'.format(sx, PLUSMINUS, swe)
         else:
             age_units = self._get_age_units()
             pe = ''
             if percent_error:
                 pe = '({})'.format(format_percent_error(x, we, include_percent_sign=True))
 
-            me = '{} +/-{}{} {}'.format(sx, swe, pe, age_units)
+            me = u'{} {}{}{} {}'.format(sx, PLUSMINUS, swe, pe, age_units)
 
         return u'{} {} {}'.format(me, mswd, n)
 
@@ -476,7 +581,6 @@ class BaseArArFigure(HasTraits):
                     new = float(new)
                 axp.set_overlay_position(obj.id, new)
 
-
     def _handle_overlay_move(self, obj, name, old, new):
         axps = [a for a in self.options.aux_plots if a.use][::-1]
         for i, p in enumerate(self.graph.plots):
@@ -491,42 +595,42 @@ class BaseArArFigure(HasTraits):
 
                 break
 
-    @on_trait_change('graph:plots:index_mapper:updated')
-    def _handle_index_range(self, obj, name, old, new):
+    # @on_trait_change('graph:plots:index_mapper:updated')
+    # def _handle_index_range(self, obj, name, old, new):
+    #
+    #     if not isinstance(new, bool):
+    #         if new.low == -inf or new.high == inf:
+    #             return
+    #
+    #         if self.suppress_xlimits_update:
+    #             return
+    #
+    #         for p in self.graph.plots:
+    #             if p.index_mapper == obj:
+    #                 op = self.options.aux_plots[-1]
+    #                 op.xlimits = (new.low, new.high)
+    #                 # print 'setting xlimits', op.xlimits, op, op.name
+    #                 break
 
-        if not isinstance(new, bool):
-            if new.low == -inf or new.high == inf:
-                return
-
-            if self.suppress_xlimits_update:
-                return
-
-            for p in self.graph.plots:
-                if p.index_mapper == obj:
-                    op = self.options.aux_plots[-1]
-                    op.xlimits = (new.low, new.high)
-                    # print 'setting xlimits', op.xlimits, op, op.name
-                    break
-
-    @on_trait_change('graph:plots:value_mapper:updated')
-    def _handle_value_range(self, obj, name, old, new):
-        if not isinstance(new, bool):
-            if self.suppress_ylimits_update:
-                return
-
-            for p in self.graph.plots:
-                if p.value_mapper == obj:
-                    plot = p
-                    title = plot.y_axis.title
-
-                    if title in PLOT_MAPPING:
-                        title = PLOT_MAPPING[title]
-
-                    for op in self.options.aux_plots:
-                        if title.startswith(op.name):
-                            op.ylimits = (new.low, new.high)
-                            break
-                    break
+    # @on_trait_change('graph:plots:value_mapper:updated')
+    # def _handle_value_range(self, obj, name, old, new):
+    #     if not isinstance(new, bool):
+    #         if self.suppress_ylimits_update:
+    #             return
+    #
+    #         for p in self.graph.plots:
+    #             if p.value_mapper == obj:
+    #                 plot = p
+    #                 title = plot.y_axis.title
+    #
+    #                 if title in PLOT_MAPPING:
+    #                     title = PLOT_MAPPING[title]
+    #
+    #                 for op in self.options.aux_plots:
+    #                     if title.startswith(op.name):
+    #                         op.ylimits = (new.low, new.high)
+    #                         break
+    #                 break
 
     # ===============================================================================
     # property get/set
@@ -540,4 +644,5 @@ class BaseArArFigure(HasTraits):
     @cached_property
     def _get_analysis_group(self):
         return self._analysis_group_klass(analyses=self.sorted_analyses)
-        # ============= EOF =============================================
+
+# ============= EOF =============================================

@@ -167,10 +167,10 @@ class LabBookTask(BaseEditorTask):
             # offset = max_path_cnt(root, 'Note ', delimiter=' ', extension='')
 
         offset = max_file_cnt(root, excludes=['README.md'])
-        name = 'Note {:03n}'.format(offset)
+        name = 'Note {:03d}'.format(offset)
         while name in names:
             offset += 1
-            name = 'Note {:03n}'.format(offset)
+            name = 'Note {:03d}'.format(offset)
 
         name = nfunc(name)
         editor = NoteEditor(default_name=name, root=root)
@@ -191,7 +191,7 @@ class LabBookTask(BaseEditorTask):
             try:
                 self.history_model.load_history(new.path)
             except Exception, e:
-                print e
+                print 'exception', e
                 self.debug('failed loading file history for {}'.format(new.path))
 
             labels = self.labeler.load_labels_for_path(os.path.relpath(new.path, paths.labbook_dir))

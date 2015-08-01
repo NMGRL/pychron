@@ -80,7 +80,7 @@ class GitRepoManager(Loggable):
         if os.path.isdir(path):
             g = os.path.join(path, '.git')
             if os.path.isdir(g):
-                self.debug('initialzied repo {}'.format(path))
+                self.debug('initialized repo {}'.format(path))
                 self._repo = Repo(path)
                 return True
             else:
@@ -113,6 +113,12 @@ class GitRepoManager(Loggable):
 
         return blob.data_stream.read() if blob else ''
 
+    def shell(self, cmd, *args):
+        repo = self._repo
+
+        func = getattr(repo.git, cmd)
+        return func(*args)
+
     def truncate_repo(self, date='1 month'):
         repo = self._repo
         name = os.path.basename(self.path)
@@ -123,8 +129,8 @@ class GitRepoManager(Loggable):
         sha = logs.next()
 
         gpath = os.path.join(self.path, '.git', 'info', 'grafts')
-        with open(gpath, 'w') as fp:
-            fp.write(sha)
+        with open(gpath, 'w') as wfile:
+            wfile.write(sha)
 
         repo.git.filter_branch('--tag-name-filter', 'cat', '--', '--all')
         repo.git.gc('--prune=now')
@@ -148,6 +154,11 @@ class GitRepoManager(Loggable):
     def diff(self, a, b):
         repo = self._repo
         return repo.git.diff(a, b, )
+
+    def report_status(self):
+        self.debug('Local Changes to {}'.format(self.path))
+        for p in self.get_local_changes():
+            self.debug('\t{}'.format(p))
 
     def commit_dialog(self):
         from pychron.git_archive.commit_dialog import CommitDialog
@@ -180,6 +191,16 @@ class GitRepoManager(Loggable):
         # return index, patches
         #
 
+    def get_head(self, commit=True, hexsha=True):
+        head = self._repo
+        if commit:
+            head = head.commit
+
+        if hexsha:
+            head = head.hexsha
+        return head
+        # return self._repo.head.commit.hexsha
+
     def cmd(self, cmd, *args):
         return getattr(self._repo.git, cmd)(*args)
 
@@ -208,7 +229,7 @@ class GitRepoManager(Loggable):
             # ps = [diff.a_blob.path for diff in index.diff(None)]
             # func(ps, extension)
             # except IOError,e:
-            #     print e
+            # print 'exception', e
         else:
             for r, ds, fs in os.walk(root):
                 ps = [os.path.join(r, fi) for fi in fs]
@@ -219,15 +240,15 @@ class GitRepoManager(Loggable):
         # mode = 'a' if os.path.isfile(p) else 'w'
         args = list(args)
         if os.path.isfile(p):
-            with open(p, 'r') as fp:
-                for line in fileiter(fp, strip=True):
+            with open(p, 'r') as rfile:
+                for line in fileiter(rfile, strip=True):
                     for i, ai in enumerate(args):
                         if line == ai:
                             args.pop(i)
         if args:
-            with open(p, 'a') as fp:
+            with open(p, 'a') as wfile:
                 for ai in args:
-                    fp.write('{}\n'.format(ai))
+                    wfile.write('{}\n'.format(ai))
             self._add_to_repo(p, msg='updated .gitignore')
 
     def get_commit(self, hexsha):
@@ -278,7 +299,12 @@ class GitRepoManager(Loggable):
             fetch and merge
         """
         repo = self._repo
-        remote = self._get_remote(remote)
+        try:
+            remote = self._get_remote(remote)
+        except AttributeError, e:
+            print 'repo man pull', e
+            return
+        
         if remote:
             try:
                 repo.git.pull(remote, branch)
@@ -334,7 +360,7 @@ class GitRepoManager(Loggable):
 
     def revert_to_selected(self):
         # check for uncommitted changes
-        #warn user the uncommitted changes will be lost if revert now
+        # warn user the uncommitted changes will be lost if revert now
 
         commit = self.selected_commits[-1]
         self.revert(commit.hexsha, self.selected)
@@ -411,8 +437,8 @@ class GitRepoManager(Loggable):
 
     def _set_active_commit(self):
         p = self.selected
-        with open(p, 'r') as fp:
-            chexsha = hashlib.sha1(fp.read()).hexdigest()
+        with open(p, 'r') as rfile:
+            chexsha = hashlib.sha1(rfile.read()).hexdigest()
 
         for c in self.selected_path_commits:
             blob = self.unpack_blob(c.hexsha, p)
@@ -420,7 +446,7 @@ class GitRepoManager(Loggable):
 
         self.refresh_commits_table_needed = True
 
-    #handlers
+    # handlers
     def _selected_fired(self, new):
         if new:
             self._selected_hook(new)
@@ -448,7 +474,7 @@ if __name__ == '__main__':
     # ============= EOF =============================================
     # repo manager protocol
     # def get_local_changes(self, repo=None):
-    #     repo = self._get_repo(repo)
+    # repo = self._get_repo(repo)
     #     diff_str = repo.git.diff('--full-index')
     #     patches = map(str.strip, diff_str.split('diff --git'))
     #     patches = ['\n'.join(p.split('\n')[2:]) for p in patches[1:]]

@@ -64,7 +64,7 @@ class BatchEditPane(TraitsTaskPane):
 
     def _sensitivity_group(self):
         im = ImageResource(
-            name='database_go.png',
+            name='database_go',
             search_path=paths.icon_search_path)
         beditor = ButtonEditor(image=im)
 

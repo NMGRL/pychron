@@ -291,7 +291,7 @@ class Scanner(Loggable):
                 # do_after no longer necessary with Qt
                 record(v, plotid=i, x=x, do_after=None)
             except Exception, e:
-                print e
+                print 'exception', e
 
         sv = []
         for _, v in self.static_values:

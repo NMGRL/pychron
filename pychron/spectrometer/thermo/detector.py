@@ -26,15 +26,12 @@ from scipy import optimize
 # ============= local library imports  ==========================
 from pychron.spectrometer.thermo.spectrometer_device import SpectrometerDevice
 from pychron.paths import paths
-from pychron.core.ui.qt.color_square_editor import ColorSquareEditor
-
 
 charge = 1.6021764874e-19
 
 
 class Detector(SpectrometerDevice):
     name = Str
-
     kind = Str
 
     protection_threshold = None
@@ -59,7 +56,7 @@ class Detector(SpectrometerDevice):
     isotope = Str
 
     isotopes = Property
-    #color_square = None
+    # color_square = None
     def __init__(self, *args, **kw):
         super(Detector, self).__init__(*args, **kw)
         self.intensities = array([])
@@ -92,10 +89,12 @@ class Detector(SpectrometerDevice):
         except (ValueError, TypeError), e:
             self.warning('Failed reading {} deflection. Error={}. Using previous value {}'.format(self.name, e,
                                                                                                   self._deflection))
+        return self._deflection
 
     def get_deflection_correction(self, current=False):
         if current:
             self.read_deflection()
+
         dev = 0
         if self._deflection_correction_factors is not None:
             de = self._deflection
@@ -129,6 +128,9 @@ class Detector(SpectrometerDevice):
         return sorted(molweights.keys(), key=lambda x: int(x[2:]))
 
     def _set_deflection(self, v):
+        if self._deflection != v:
+            self.spectrometer.update_config(Deflections=[(self.name, v)])
+
         self._deflection = v
         self.ask('SetDeflection {},{}'.format(self.name, v))
 
@@ -138,6 +140,9 @@ class Detector(SpectrometerDevice):
     def set_intensity(self, v):
         if v is not None:
             n = self.nstd
+            if self.intensities is None:
+                self.intensities = array([])
+
             self.intensities = hstack((self.intensities[-n:], [v]))
             self.std = '{:0.5f}'.format(self.intensities.std())
             self.intensity = '{:0.5f}'.format(v)
@@ -149,7 +154,7 @@ class Detector(SpectrometerDevice):
             self.info('De/Activating CDD disabled')
             # self.ask('ActivateIonCounter' if new else 'DeactivateIonCounter')
 
-    #def intensity_view(self):
+    # def intensity_view(self):
     #    v = View(HGroup(
     #        Item('color',
     #             editor=ColorSquareEditor(),
@@ -164,6 +169,8 @@ class Detector(SpectrometerDevice):
     #    return v
 
     def traits_view(self):
+        from pychron.core.ui.qt.color_square_editor import ColorSquareEditor
+
         v = View(HGroup(Item('active'),
                         Item('color', width=25, editor=ColorSquareEditor()),
                         Item('name', style='readonly'),
@@ -175,4 +182,4 @@ class Detector(SpectrometerDevice):
     def __repr__(self):
         return self.name
 
-#============= EOF =============================================
+        # ============= EOF =============================================

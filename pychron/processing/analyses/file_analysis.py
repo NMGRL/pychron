@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,11 +24,20 @@ from pychron.processing.analyses.analysis import Analysis
 
 
 class NonDBAnalysis(Analysis):
-    record_id = Str
+    # record_id = Str
     uage = Property(depends_on='age, age_err')
     uage_wo_j_err = Property(depends_on='age, age_err')
     uuid = Str
     sample = Str
+
+    k39 = Float
+    k39_err = Float
+
+    def get_computed_value(self, attr):
+        if attr == 'k39':
+            return ufloat(self.k39, self.k39_err)
+        else:
+            return ufloat(0, 0)
 
     @cached_property
     def _get_uage(self):

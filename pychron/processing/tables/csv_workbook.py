@@ -90,8 +90,8 @@ class CSVWorkbook(HasTraits):
         return sh
 
     def save(self, p, **kw):
-        with open(p, 'w') as fp:
-            writer = csv.writer(fp)
+        with open(p, 'w') as wfile:
+            writer = csv.writer(wfile)
 
             for sh in self.sheets:
                 sh.render(writer)

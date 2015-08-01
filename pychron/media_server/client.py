@@ -75,12 +75,12 @@ class MediaClient(Loggable):
         if dest is not None:
             name = os.path.join(dest, name)
 
-        with open(path, 'rb') as fp:
+        with open(path, 'rb') as rfile:
             try:
-                self._post(name, fp.read())
+                self._post(name, rfile.read())
                 return True
             except Exception, e:
-                print e
+                print 'exception', e
 
     def _new_connection(self):
         url = '{}:{}'.format(self.host, self.port)
@@ -127,8 +127,8 @@ class MediaClient(Loggable):
             self.info('No file named {}'.format(name))
         else:
             if output is not None:
-                with open(output, 'wb') as fp:
-                    fp.write(buf.read())
+                with open(output, 'wb') as wfile:
+                    wfile.write(buf.read())
 
             if self.use_cache and not is_local:
                 if not os.path.isdir(self.cache_dir):
@@ -145,8 +145,8 @@ class MediaClient(Loggable):
             buf = open(path, 'r')
 
         if os.path.isdir(self.cache_dir):
-            with open(os.path.join(self.cache_dir, os.path.basename(path)), 'w') as fp:
-                fp.write(buf.read())
+            with open(os.path.join(self.cache_dir, os.path.basename(path)), 'w') as wfile:
+                wfile.write(buf.read())
         else:
             self.warning('No cache directory available. {}'.format(self.cache_dir))
 

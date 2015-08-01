@@ -23,7 +23,7 @@ from laser_handler import LaserHandler
 
 
 class Co2Handler(LaserHandler):
-    manager_name = 'fusions_co2'
+    manager_name = 'FusionsCO2'
 #    def SetLaserPower(self, manager, data):
 #        result = 'OK'
 #        try:

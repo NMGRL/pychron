@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,6 +20,7 @@ from traits.api import Any
 import time
 # ============= local library imports  ==========================
 from pychron.globals import globalv
+from pychron.pychron_constants import NULL_STR
 from pychron.pyscripts.pyscript import PyScript, verbose_skip, makeRegistry, \
     makeNamedRegistry
 
@@ -71,17 +72,18 @@ class ValvePyScript(PyScript):
     @verbose_skip
     @named_register('open')
     def _m_open(self, name=None, description=''):
+        st = time.time()
+        # if description is None:
+        #     description = NULL_STR
 
-        if description is None:
-            description = '---'
-
-        self.console_info('opening {} ({})'.format(name, description))
+        self.console_info('opening name={} desc={}'.format(name or NULL_STR, description or NULL_STR))
 
         result = self._manager_action([('open_valve', (name,), dict(
             mode='script',
             description=description))], protocol=ELPROTOCOL)
-
-        self.debug('---------------------------------------- open {} ({}) result={}'.format(name, description, result))
+        et = time.time() - st
+        self.debug('---------------------------------------- open {} ({}) result={}, '
+                   'time={:0.2f} sec'.format(name, description, result, et))
         if result is not None:
             self._finish_valve_change('open', result, name, description)
 
@@ -92,7 +94,7 @@ class ValvePyScript(PyScript):
         if description is None:
             description = '---'
 
-        self.console_info('closing {} ({})'.format(name, description))
+        self.console_info('closing name={} desc={}'.format(name or NULL_STR, description or NULL_STR))
         result = self._manager_action([('close_valve', (name,), dict(
             mode='script',
             description=description))], protocol=ELPROTOCOL)
@@ -104,7 +106,7 @@ class ValvePyScript(PyScript):
     @verbose_skip
     @command_register
     def is_open(self, name=None, description=''):
-        self.console_info('is {} ({}) open?'.format(name, description))
+        self.console_info('is name={} desc={} open?'.format(name or NULL_STR, description or NULL_STR))
         result = self._get_valve_state(name, description)
         if result:
             return result[0] is True

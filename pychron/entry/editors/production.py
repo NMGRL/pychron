@@ -131,9 +131,9 @@ Ca_K:[value,error],Cl_K:[value,error],note''')
         self.Cl_K.value = dbrecord.Cl_K if dbrecord.Cl_K else 0
         self.Cl_K.error = dbrecord.Cl_K_err if dbrecord.Cl_K_err else 0
 
-        if dbrecord.last_modified:
-            self.last_modified=dbrecord.last_modified.strftime('%m-%d-%Y %H:%M:%S')
-        self.note = dbrecord.note or ''
+        # if dbrecord.last_modified:
+        # self.last_modified=dbrecord.last_modified.strftime('%m-%d-%Y %H:%M:%S')
+        # self.note = dbrecord.note or ''
 
     def traits_view(self):
         kgrp = VGroup(EUCustom('k4039'),

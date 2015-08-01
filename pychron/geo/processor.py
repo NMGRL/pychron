@@ -110,8 +110,8 @@ class GeoProcessor(IsotopeDatabaseManager):
 
         import yaml
 
-        with open(p, 'w') as fp:
-            yaml.dump(yd, fp, default_flow_style=False)
+        with open(p, 'w') as wfile:
+            yaml.dump(yd, wfile, default_flow_style=False)
 
         from pychron.canvas.canvas2D.strat_canvas import StratCanvas
 

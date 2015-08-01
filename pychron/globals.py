@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,10 +17,11 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.core.helpers.filetools import to_bool
+from pychron.core.helpers.strtools import to_bool
 
 
 class Globals(object):
+    prev_db_kind = None
     dev_pwd = '6e06f5d370baef1a115ae2f134fae22fbfbe79dc'  # Argon
     # use_shared_memory = False
 
@@ -44,10 +45,10 @@ class Globals(object):
 
     video_test = False
     #    video_test = True
-    video_test_path = '/Users/ross/Sandbox/pos_err/diodefailsnapshot.jpg'
+    # video_test_path = '/Users/ross/Sandbox/pos_err/diodefailsnapshot.jpg'
     #    video_test_path = '/Users/ross/Sandbox/snapshot002-6.662--8.572.jpg'
     #    video_test_path = '/Users/ross/Sandbox/watershed_test.jpg'
-    video_test_path = '/Users/ross/Sandbox/watershed_test2.jpg'
+    # video_test_path = '/Users/ross/Sandbox/watershed_test2.jpg'
     video_test_path = '/Users/ross/Sandbox/snapshot002.jpg'
     #    video_test_path = '/Users/ross/Sandbox/snapshot003-fail.jpg'
     show_autocenter_debug_image = False
@@ -57,20 +58,21 @@ class Globals(object):
     #    test_experiment_set = '/Users/ross/Pychrondata_experiment/experiments/bar.txt'
     # use_ipc = False == embed the remote hardware servers into pychron
     # = True == an instance of RemoteHardwareServer must be launched
-
-    use_ipc = False
+    use_message_len_checking = False
+    use_ipc = True
 
     _test = False  # set test to 'true' when running tests
 
     experiment_debug = False
-    #    experiment_debug = True
     experiment_savedb = True
     automated_run_debug = False
     spectrometer_debug = False
-    #    spectrometer_debug = True
+    system_monitor_debug = False
+    figure_debug = False
 
     load_valve_states = True
     load_soft_locks = True
+    load_manual_states = True
 
     debug = False
     use_logger_display = True
@@ -83,6 +85,7 @@ class Globals(object):
     use_startup_tests = True
     dashboard_simulation = False
     use_testbot = False
+    random_tip_enabled = True
 
     def build(self, ip):
 
@@ -97,17 +100,20 @@ class Globals(object):
                            ('video_test', to_bool),
                            ('load_valve_states', to_bool),
                            ('load_soft_locks', to_bool),
+                           ('load_manual_states', to_bool),
                            ('experiment_debug', to_bool),
                            ('experiment_savedb', to_bool),
                            ('recall_debug', to_bool),
+                           ('figure_debug', to_bool),
                            ('communication_simulation', to_bool),
                            ('dashboard_simulation', to_bool),
                            ('use_startup_tests', to_bool),
                            ('use_testbot', to_bool),
                            ('dev_confirm_exit', to_bool),
-                           ('test_experiment_set', str)]:
+                           ('random_tip_enabled', to_bool),
+                           ('test_experiment_set', str),
+                           ('system_monitor_debug', to_bool)]:
             a = ip.get_global(attr)
-
             if a:
                 setattr(globalv, attr, func(a))
 
@@ -116,6 +122,7 @@ class Globals(object):
 
     # mode is readonly. set once in the launchers/pychron.py module
     test = property(fget=_get_test)
+
 
 globalv = Globals()
 

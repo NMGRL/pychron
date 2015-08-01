@@ -340,7 +340,7 @@ class BaseExperimentQueue(RunBlock):
         header, attrs = zip(*seq)
         return header, attrs
 
-    def _meta_dumper(self, fp):
+    def _meta_dumper(self, wfile):
         ms = self.mass_spectrometer
         if ms in ('Spectrometer', LINE_STR):
             ms = ''
@@ -359,8 +359,8 @@ class BaseExperimentQueue(RunBlock):
             self.tray or '',
             self.load_name or '')
 
-        if fp:
-            fp.write(s)
+        if wfile:
+            wfile.write(s)
         else:
             return s
 

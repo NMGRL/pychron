@@ -25,16 +25,16 @@ from pychron.loggable import Loggable
 
 def load_persistence_dict(p):
     if os.path.isfile(p):
-        with open(p, 'r') as fp:
+        with open(p, 'r') as rfile:
             try:
-                return pickle.load(fp)
+                return pickle.load(rfile)
             except (pickle.PickleError, EOFError):
                 pass
 
 
 def dump_persistence_dict(p, d):
-    with open(p, 'w') as fp:
-        pickle.dump(d, fp)
+    with open(p, 'w') as wfile:
+        pickle.dump(d, wfile)
 
 
 def load_persistence_values(obj, p, attrs):
@@ -60,27 +60,33 @@ class PersistenceMixin(object):
         except (AttributeError, NotImplementedError):
             self.warning('persistence path not implemented')
 
-    def load(self):
-        self.debug('***************** loading')
+    def load(self, verbose=False):
+
         if not self.pattributes:
             raise NotImplementedError
+
+        if verbose:
+            self.debug('***************** loading')
 
         p = self.get_persistence_path()
         self.debug(p)
         if p and os.path.isfile(p):
             self.debug('loading {}'.format(p))
             d = None
-            with open(p, 'r') as fp:
+            with open(p, 'r') as rfile:
                 try:
-                    d = pickle.load(fp)
+                    d = pickle.load(rfile)
                 except (pickle.PickleError, EOFError):
                     self.warning('Invalid pickle file {}'.format(p))
             if d:
-                self.debug('***************** loading has d')
+                if verbose:
+                    self.debug('***************** loading pickled object')
+
                 for k in self.pattributes:
                     try:
                         v = d[k]
-                        self.debug('setting {} to {}'.format(k, v))
+                        if verbose:
+                            self.debug('setting {} to {}'.format(k, v))
                         setattr(self, k, v)
                     except KeyError:
                         pass
@@ -101,8 +107,8 @@ class PersistenceMixin(object):
                     d[a] = v
             else:
                 d = {a: getattr(self, a) for a in self.pattributes}
-            with open(p, 'w') as fp:
-                pickle.dump(d, fp)
+            with open(p, 'w') as wfile:
+                pickle.dump(d, wfile)
 
     def _make_persistence_path(self, p):
         return '{}.{}'.format(p, globalv.username)

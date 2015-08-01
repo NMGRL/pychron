@@ -31,7 +31,7 @@ from pychron.managers.manager import Manager
 from pychron.canvas.canvas2D.laser_tray_canvas import LaserTrayCanvas
 # from pychron.core.helpers.color_generators import colors8i as colors
 
-from pychron.hardware.motion_controller import MotionController
+from pychron.hardware.motion_controller import MotionController, PositionError
 from pychron.paths import paths
 import pickle
 # from pychron.lasers.stage_managers.stage_visualizer import StageVisualizer
@@ -83,21 +83,12 @@ class StageManager(Manager):
     joystick = Bool(False)
     joystick_timer = None
 
-    #    buttons = List([('home', None, None),
-    # #                    ('jog', 'jog_label', None),
-    #                    ('stop_button', 'stop_label', None)
-    #                      ])
-
     back_button = Button
     stop_button = Button('Stop')
 
     canvas_editor_klass = LaserComponentEditor
 
     tray_calibration_manager = Instance(TrayCalibrationManager)
-
-    #     motion_profiler = DelegatesTo('stage_controller')
-
-    #     visualizer = Instance(StageVisualizer)
 
     move_thread = None
     temp_position = None
@@ -113,17 +104,15 @@ class StageManager(Manager):
     use_modified = Bool(True)  # set true to use modified affine calculation
     use_autocenter = Bool
 
+    _default_z = 0
+
     def __init__(self, *args, **kw):
         """
 
         """
         super(StageManager, self).__init__(*args, **kw)
-        #        self.add_output('Welcome')
         self.stage_controller = self._stage_controller_factory()
 
-    #    def opened(self, ui):
-    #        self.keyboard_focus = True
-    #        super(StageManager, self).opened(ui)
     def create_device(self, *args, **kw):
         dev = super(StageManager, self).create_device(*args, **kw)
         dev.parent = self
@@ -137,6 +126,7 @@ class StageManager(Manager):
 
         else:
             self.move_to_hole(v)
+
     def is_auto_correcting(self):
         return False
 
@@ -151,6 +141,8 @@ class StageManager(Manager):
 
     def bind_preferences(self, pref_id):
         bind_preference(self.canvas, 'show_grids', '{}.show_grids'.format(pref_id))
+        self.canvas.change_grid_visibility()
+
         bind_preference(self.canvas, 'show_laser_position', '{}.show_laser_position'.format(pref_id))
         bind_preference(self.canvas, 'show_desired_position', '{}.show_laser_position'.format(pref_id))
         bind_preference(self.canvas, 'desired_position_color', '{}.desired_position_color'.format(pref_id),
@@ -176,41 +168,42 @@ class StageManager(Manager):
     def load(self):
         self._stage_maps = []
         config = self.get_configuration()
-        # load the stage maps
-        mapfiles = self.config_get(config, 'General', 'mapfiles')
-        for mapfile in mapfiles.split(','):
-            path = os.path.join(paths.map_dir, mapfile.strip())
-            sm = StageMap(file_path=path)
-            sm.load_correction_file()
-            self._stage_maps.append(sm)
-
-        # load user points as stage map
-        for di in os.listdir(paths.user_points_dir):
-            if di.endswith('.yaml'):
-                path = os.path.join(paths.user_points_dir, di)
-                sm = self.stage_map_klass(file_path=path)
+        if config:
+            # load the stage maps
+            mapfiles = self.config_get(config, 'General', 'mapfiles')
+            for mapfile in mapfiles.split(','):
+                path = os.path.join(paths.map_dir, mapfile.strip())
+                sm = StageMap(file_path=path)
+                sm.load_correction_file()
                 self._stage_maps.append(sm)
 
-        # load the saved stage map
-        sp = self._get_stage_map_by_name(self._load_previous_stage_map())
-        if sp is not None:
-            sm = sp
+            # load user points as stage map
+            for di in os.listdir(paths.user_points_dir):
+                if di.endswith('.yaml'):
+                    path = os.path.join(paths.user_points_dir, di)
+                    sm = self.stage_map_klass(file_path=path)
+                    self._stage_maps.append(sm)
 
-        self._stage_map = sm
-        self.points_programmer.load_stage_map(sm)
+            # load the saved stage map
+            sp = self._get_stage_map_by_name(self._load_previous_stage_map())
+            if sp is not None:
+                sm = sp
 
-        # load the calibration file
-        # should have calibration files for each stage map
-        self.tray_calibration_manager.load_calibration()
+            self._stage_map = sm
+            self.points_programmer.load_stage_map(sm)
 
-        # load the points file
-        # self.canvas.load_points_file(self.points_file)
+            # load the calibration file
+            # should have calibration files for each stage map
+            self.tray_calibration_manager.load_calibration()
 
-        # load defaults
-        self._default_z = self.config_get(config, 'Defaults', 'z', default=13, cast='float')
+            # load the points file
+            # self.canvas.load_points_file(self.points_file)
 
-        self.canvas.set_map(sm)
-        self.canvas.request_redraw()
+            # load defaults
+            self._default_z = self.config_get(config, 'Defaults', 'z', default=13, cast='float')
+
+            self.canvas.set_map(sm)
+            self.canvas.request_redraw()
 
     #    def finish_loading(self):
     #        self.initialize_stage()
@@ -348,9 +341,12 @@ class StageManager(Manager):
         if self.stage_controller.timer is not None:
             moving = self.stage_controller.timer.isActive()
         elif force_query:
-            moving = self.stage_controller._moving_(**kw)
+            moving = self.stage_controller.moving(**kw)
 
         return moving
+
+    def get_brightness(self):
+        return 0
 
     def define_home(self, **kw):
         self.stage_controller.define_home(**kw)
@@ -814,12 +810,18 @@ class StageManager(Manager):
                 self.stage_controller.set_z(pt.z, block=True)
 
             self.debug('Not setting motors for pt')
-            #self.parent.set_motors_for_point(pt)
+            # self.parent.set_motors_for_point(pt)
 
             self._move_to_point_hook()
 
         self.info('Move complete')
         self.update_axes()
+
+    def get_hole_xy(self, key):
+        pos = self._stage_map.get_hole_pos(key)
+        # map the position to calibrated space
+        pos = self.get_calibrated_position(pos)
+        return pos
 
     def _move_to_hole(self, key, correct_position=True):
         self.info('Move to hole {} type={}'.format(key, str(type(key))))
@@ -843,6 +845,7 @@ class StageManager(Manager):
                     self.info('using an interpolated value')
                 else:
                     self.info('using previously calculated corrected position')
+
             self.stage_controller.linear_move(block=True, *pos)
             #            if self.tray_calibration_manager.calibration_style == 'MassSpec':
             if not self.tray_calibration_manager.isCalibrating():
@@ -851,7 +854,7 @@ class StageManager(Manager):
                 self._move_to_hole_hook(key, correct_position)
 
             self.info('Move complete')
-            self.update_axes()  # update_hole=False)
+            # self.update_axes()  # update_hole=False)
 
             #        self.move_thread = None
 
@@ -1094,7 +1097,6 @@ class StageManager(Manager):
                             map=self._stage_map,
                             view_x_range=[-w, w],
                             view_y_range=[-h, h])
-
         return l
 
     def _canvas_editor_factory(self):
@@ -1127,8 +1129,7 @@ class StageManager(Manager):
         return pp
 
     def traits_view(self):
-        '''
-        '''
+        print 'stage manager traits view'
         self.initialize_stage()
 
         editor = self._canvas_editor_factory()

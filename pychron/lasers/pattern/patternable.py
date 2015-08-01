@@ -16,19 +16,22 @@
 
 # ============= enthought library imports =======================
 from traits.api import Instance, DelegatesTo
-import apptools.sweet_pickle as pickle
+# import apptools.sweet_pickle as pickle
+import cPickle as pickle
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.lasers.pattern.patterns import Pattern
 from pychron.managers.manager import Manager
 
+
 class Patternable(Manager):
     pattern = Instance(Pattern)
     pattern_name = DelegatesTo('pattern', prefix='name')
+
     def _load_pattern(self, fileobj, path):
-        '''
+        """
             unpickle fileobj as a pattern
-        '''
+        """
         try:
             obj = pickle.load(fileobj)
             self.pattern = obj
@@ -38,5 +41,7 @@ class Patternable(Manager):
             import traceback
             traceback.print_exc()
             self.debug('load pattern:{}'.format(e))
+        finally:
+            fileobj.close()
 
 # ============= EOF =============================================

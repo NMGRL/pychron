@@ -17,8 +17,9 @@
 # ============= enthought library imports =======================
 import csv
 import os
-from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change
-from traitsui.api import View, UItem, Item, HGroup, VGroup
+
+from traits.api import HasTraits, Str, Float
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from uncertainties import nominal_value, std_dev
@@ -54,7 +55,7 @@ class RatioItem(HasTraits):
 def make_items(isotopes):
     items = []
     for det in DETECTOR_ORDER:
-        ai = next((ai for ai in isotopes if ai.detector.upper() == det), None)
+        ai = next((ai for ai in isotopes.values() if ai.detector.upper() == det), None)
         if ai:
             rv = ai.get_non_detector_corrected_value()
             r = RatioItem(name=ai.detector,
@@ -62,16 +63,16 @@ def make_items(isotopes):
                           intensity=floatfmt(nominal_value(rv)),
                           intensity_err=floatfmt(std_dev(rv)))
             r.add_ratio(ai)
-            for bi in isotopes:
+            for bi in isotopes.values():
                 r.add_ratio(bi)
 
             items.append(r)
-
+    return items
 
 def save_csv(record_id, items):
     path = os.path.join(paths.data_det_ic_dir, add_extension(record_id, '.csv'))
-    with open(path, 'w') as fp:
-        wrt = csv.writer(fp, delimiter='\t')
+    with open(path, 'w') as wfile:
+        wrt = csv.writer(wfile, delimiter='\t')
         wrt.writerow(['#det', 'intensity', 'err'] + DETECTOR_ORDER)
         for i in items:
             wrt.writerow(i.to_row())

@@ -53,32 +53,40 @@ class OpenFigureAction(TaskAction):
 
 class NewXYScatterAction(TaskAction):
     name = 'New XY Scatter'
-    method = 'tb_xy_scatter'
+    method = 'new_xy_scatter'
 
 
 class NewIsochronAction(TaskAction):
-    name = 'New Isochron'
-    method = 'tb_new_isochron'
+    name = 'New Inv. Isochron'
+    method = 'new_inverse_isochron'
 
 
 class NewIdeogramAction(TaskAction):
     name = 'New Ideogram'
-    method = 'tb_new_ideogram'
+    method = 'new_ideogram'
     image = icon('histogram')
 
 
 class NewSpectrumAction(TaskAction):
     name = 'New Spectrum'
-    method = 'tb_new_spectrum'
+    method = 'new_spectrum'
     image = icon('chart_curve')
 
 
 class RefreshActiveEditorAction(TaskAction):
     name = 'Refresh Plot'
+    dname = 'Refresh Plot'
     method = 'refresh_active_editor'
     image = icon('refresh')
     # accelerator = 'Ctrl+Shift+R'
     id = 'pychron.refresh_plot'
+
+
+class NewTableAction(TaskAction):
+    name = 'New Table'
+    method = 'new_table'
+    image = icon('table')
+
 # ============= EOF =============================================
 # class AppendSpectrumAction(TaskAction):
 #     name = 'Append Spectrum'

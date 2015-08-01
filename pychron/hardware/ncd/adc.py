@@ -35,6 +35,7 @@ import struct
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.hardware.ncd.ncd_device import NCDDevice
+from pychron.hardware.polyinomial_mapper import PolynomialMapper
 
 
 class ProXRADCExpansion(NCDDevice):
@@ -60,6 +61,7 @@ TWELVE_BIT_BANKS = [196, 197, 198]
 
 class ProXRADC(NCDDevice):
     max_voltage = 5
+
 
     def read_device_info(self):
         cmdstr = self._make_cmdstr(254, 246)
@@ -146,13 +148,14 @@ if __name__ == '__main__':
     from pychron.core.helpers.logger_setup import logging_setup
 
     logging_setup('adc')
-    from pychron.paths import paths
 
-    paths.build('_dev')
+    # paths.build('_dev')
 
     a = ProXRADC(name='ProXRADC')
     #a = MultiBankADCExpansion(name='proxr_adc')
-    a.bootstrap()
+    # a.bootstrap()
+    a.load_communicator('serial', port='usbserial-A5018URQ', baudrate=115200)
+    a.open()
     #print 'read bank', a.read_bank()
     a.read_bank(nbits=12)
     a.read_bank(1, nbits=12)

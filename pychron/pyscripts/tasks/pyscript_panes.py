@@ -42,22 +42,24 @@ class CommitAdapter(TabularAdapter):
     font = '10'
     date_width = Int(100)
 
-    def get_bg_color( self, obj, trait, row, column = 0):
-        color='white'
+    def get_bg_color(self, obj, trait, row, column=0):
+        color = 'white'
         if self.item.active:
-            color='gray'
+            color = 'gray'
         return color
 
     def get_menu(self, obj, trait, row, column):
         return MenuManager(Action(name='Diff', action='on_diff'),
                            Action(name='Revert To', action='on_revert_to'))
 
+
 class RepoHandler(Handler):
     def on_diff(self, info, obj):
         obj.diff_selected()
 
-    def on_revert_to(self,info, obj):
+    def on_revert_to(self, info, obj):
         obj.revert_to_selected()
+
 
 class RepoPane(TraitsDockPane):
     name = 'Repo'
@@ -100,7 +102,7 @@ class DescriptionPane(TraitsDockPane):
             UItem('description',
                   style='readonly')
 
-            #                 'object.selected_command_object',
+            # 'object.selected_command_object',
             #                 show_label=False,
             #                 style='custom',
             #                 height=0.25,
@@ -122,7 +124,7 @@ class ExamplePane(TraitsDockPane):
 
 # class EditorPane(TraitsDockPane):
 # name = 'Editor'
-#     id = 'pychron.pyscript.editor'
+# id = 'pychron.pyscript.editor'
 #     editor = Instance('pychron.pyscripts.parameter_editor.ParameterEditor')
 #
 #     def traits_view(self):
@@ -237,11 +239,14 @@ class ScriptBrowserPane(TraitsDockPane):
 
     def _root_changed(self):
         root = self.root
-
-        ps = [p for p in os.listdir(root)]
-        self.items = filter(lambda x: not (x.startswith('.') or os.path.isdir(os.path.join(root, x))), ps)
-        self.directories = filter(lambda x: os.path.isdir(os.path.join(root, x)), ps)
-        self.selected_directory = self.root
+        if root:
+            ps = [p for p in os.listdir(root)]
+            self.items = filter(lambda x: not (x.startswith('.') or os.path.isdir(os.path.join(root, x))), ps)
+            self.directories = filter(lambda x: os.path.isdir(os.path.join(root, x)), ps)
+            self.selected_directory = self.root
+        else:
+            self.directories = []
+            self.selected_directory = ''
 
     def _directory_dclicked_changed(self):
         if self.selected_directory:

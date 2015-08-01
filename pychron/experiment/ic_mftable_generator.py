@@ -66,8 +66,8 @@ class ICMFTableGenerator(Loggable):
     def _write_table(self, detectors, refiso, results):
         p = paths.ic_mftable
         self.info('Writing new IC MFTable to {}'.format(p))
-        with open(p, 'w') as fp:
-            w = csv.writer(fp)
+        with open(p, 'w') as wfile:
+            w = csv.writer(wfile)
             header = ['iso'] + list(detectors)
             w.writerow(header)
             w.writerow([refiso] + results)

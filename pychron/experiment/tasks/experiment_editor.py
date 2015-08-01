@@ -22,7 +22,7 @@ from traitsui.api import View, UItem
 import os
 # ============= local library imports  ==========================
 from pychron.core.ui.qt.tabular_editor import TabularEditorHandler
-from pychron.core.ui.table_configurer import TableConfigurer, ExperimentTableConfigurer
+from pychron.core.ui.table_configurer import ExperimentTableConfigurer
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.experiment.automated_run.tabular_adapter import AutomatedRunSpecAdapter, UVAutomatedRunSpecAdapter, \
     ExecutedAutomatedRunSpecAdapter, ExecutedUVAutomatedRunSpecAdapter
@@ -33,6 +33,9 @@ from pychron.core.helpers.filetools import add_extension
 
 class ExperimentEditorHandler(TabularEditorHandler):
     refresh_name = 'refresh_table_needed'
+
+    def select_unknowns(self, info, obj):
+        obj.select_unknowns()
 
     def select_same(self, info, obj):
         obj.select_same()
@@ -77,11 +80,12 @@ class ExperimentEditor(BaseTraitsEditor):
     def refresh(self):
         self.queue.refresh_table_needed = True
 
-    def setup_tabular_adapters(self, c, ec):
+    def setup_tabular_adapters(self, c, ec, colors):
         self.bgcolor = c
         self.tabular_adapter = self.tabular_adapter_klass()
         self.executed_tabular_adapter = self.executed_tabular_adapter_klass()
 
+        self.executed_tabular_adapter.colors = colors
         self.tabular_adapter.odd_bg_color = c
         self.executed_tabular_adapter.odd_bg_color = c
         self.tabular_adapter.even_bg_color = ec
@@ -132,13 +136,15 @@ class ExperimentEditor(BaseTraitsEditor):
                                                 operations=operations,
                                                 bgcolor=self.bgcolor,
                                                 editable=True,
+                                                mime_type='pychron.automated_run_spec',
                                                 # show_row_titles=True,
                                                 dclicked='dclicked',
                                                 selected='selected',
                                                 paste_function='paste_function',
+                                                update='refresh_table_needed',
                                                 refresh='refresh_table_needed',
                                                 scroll_to_row='automated_runs_scroll_to_row',
-                                                copy_cache='linked_copy_cache',
+                                                # copy_cache='linked_copy_cache',
                                                 stretch_last_section=False,
                                                 multi_select=True),
                          height=200)
@@ -150,9 +156,10 @@ class ExperimentEditor(BaseTraitsEditor):
                                                     auto_update=True,
                                                     selectable=True,
                                                     pastable=False,
-                                                    link_copyable=False,
+                                                    mime_type='pychron.automated_run_spec',
+                                                    # link_copyable=False,
                                                     paste_function='executed_paste_function',
-                                                    copy_cache='linked_copy_cache',
+                                                    # copy_cache='linked_copy_cache',
                                                     selected='executed_selected',
                                                     multi_select=True,
                                                     stretch_last_section=False,
@@ -177,14 +184,16 @@ class ExperimentEditor(BaseTraitsEditor):
     # ===============================================================================
     # handlers
     # ===============================================================================
-    def _dirty_changed(self):
-        self.debug('dirty changed {}'.format(self.dirty))
-
-    def _queue_changed(self):
+    # def _dirty_changed(self):
+    #     self.debug('dirty changed {}'.format(self.dirty))
+    def _queue_changed(self, old, new):
         f = self._set_queue_dirty
-        self.queue.on_trait_change(f, 'automated_runs[]')
-        self.queue.on_trait_change(f, 'changed')
-        self.queue.path = self.path
+        if old:
+            old.on_trait_change(f, 'automated_runs[]', remove=True)
+            old.on_trait_change(f, 'changed', remove=True)
+        new.on_trait_change(f, 'automated_runs[]')
+        new.on_trait_change(f, 'changed')
+        new.path = self.path
 
     def _path_changed(self):
         self.queue.path = self.path
@@ -225,14 +234,14 @@ class ExperimentEditor(BaseTraitsEditor):
         p = add_extension(p)
 
         self.info('saving experiment to {}'.format(p))
-        with open(p, 'wb') as fp:
+        with open(p, 'wb') as wfile:
             n = len(queues)
             for i, exp in enumerate(queues):
                 exp.path = p
-                exp.dump(fp)
+                exp.dump(wfile)
                 if i < (n - 1):
-                    fp.write('\n')
-                    fp.write('*' * 80)
+                    wfile.write('\n')
+                    wfile.write('*' * 80)
 
         return p
 

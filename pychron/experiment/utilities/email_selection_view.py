@@ -25,7 +25,7 @@ import yaml
 
 
 def boiler_plate(path):
-    with open(path, 'w') as fp:
+    with open(path, 'w') as wfile:
         pass
 
 
@@ -52,13 +52,13 @@ class EmailSelectionView(HasTraits):
 
     #persistence
     def dump(self):
-        with open(self._path, 'w') as fp:
+        with open(self._path, 'w') as wfile:
             yl=[{'name':i.name,'email':i.email, 'enabled':i.enabled} for i in self.items]
-            yaml.dump(yl, fp, default_flow_style=False)
+            yaml.dump(yl, wfile, default_flow_style=False)
 
     def load(self, path):
-        with open(path, 'r') as fp:
-            yl = yaml.load(fp)
+        with open(path, 'r') as rfile:
+            yl = yaml.load(rfile)
 
             self.items = list(self._parse_yaml(yl))
 

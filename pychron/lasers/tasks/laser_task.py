@@ -48,6 +48,7 @@ class BaseLaserTask(BaseHardwareTask):
 
 
 class FusionsTask(BaseLaserTask):
+
     def _default_layout_default(self):
         return TaskLayout(left=PaneItem('{}.stage'.format(self.id)),
                           top=Splitter(PaneItem('{}.control'.format(self.id),
@@ -60,6 +61,10 @@ class FusionsTask(BaseLaserTask):
     # ===============================================================================
     # action handlers
     # ===============================================================================
+    def show_motion_configure(self):
+        if self.manager:
+            self.manager.show_motion_controller_manager()
+
     def open_power_calibration(self):
         if self.manager:
             pc = self.manager.power_calibration_manager
@@ -92,11 +97,11 @@ class FusionsTask(BaseLaserTask):
             #             pm = self.manager.get_power_map_manager()
             #             self.window.application.open_view(pm)
 
-    def test_degas(self):
-        if self.manager:
-            if self.manager.use_video:
-                v = self.manager.degasser_factory()
-                self.window.application.open_view(v)
+            # def test_degas(self):
+            #     if self.manager:
+            #         if self.manager.use_video:
+            #             v = self.manager.degasser_factory()
+            #             self.window.application.open_view(v)
 
 
 class FusionsCO2Task(FusionsTask):

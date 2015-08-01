@@ -24,6 +24,7 @@ from traits.has_traits import provides
 import struct
 from numpy import array
 # ============= local library imports  ==========================
+from uncertainties import nominal_value, std_dev
 from pychron.core.i_datastore import IDatastore
 from pychron.core.helpers.isotope_utils import sort_isotopes
 from pychron.experiment.utilities.identifier import make_runid
@@ -102,6 +103,7 @@ class MassSpecDatabaseImporter(Loggable):
                 sl = db.add_sample_loading(ms, tray)
                 #sess.flush()
                 #             db.flush()
+                sess.flush()
                 self.sample_loading_id = sl.SampleLoadingID
 
     def add_login_session(self, ms):
@@ -109,7 +111,7 @@ class MassSpecDatabaseImporter(Loggable):
         db = self.db
         with db.session_ctx() as sess:
             ls = db.add_login_session(ms)
-            #sess.flush()
+            sess.flush()
             self.login_session_id = ls.LoginSessionID
 
     def add_data_reduction_session(self):
@@ -117,7 +119,7 @@ class MassSpecDatabaseImporter(Loggable):
             db = self.db
             with db.session_ctx() as sess:
                 dr = db.add_data_reduction_session()
-                #sess.flush()
+                sess.flush()
                 self.data_reduction_session_id = dr.DataReductionSessionID
 
     def create_import_session(self, spectrometer, tray):
@@ -264,7 +266,7 @@ class MassSpecDatabaseImporter(Loggable):
 
         # add the reference detector
         refdbdet = db.add_detector('H1', Label='H1')
-        #sess.flush()
+        sess.flush()
 
         spec.runid = rid
         analysis = db.add_analysis(rid, spec.aliquot, spec.step,
@@ -287,7 +289,7 @@ class MassSpecDatabaseImporter(Loggable):
                                    SampleLoadingID=self.sample_loading_id,
                                    LoginSessionID=self.login_session_id,
                                    RunScriptID=rs.RunScriptID)
-        # sess.flush()
+        sess.flush()
         if spec.update_rundatetime:
             d = datetime.fromtimestamp(spec.timestamp)
             analysis.RunDateTime = d
@@ -301,11 +303,11 @@ class MassSpecDatabaseImporter(Loggable):
 
         self.debug('%%%%%%%%%%%%%%%%%%%% Comment: {} %%%%%%%%%%%%%%%%%%%'.format(spec.comment))
         item.Comment = spec.comment
-        #sess.flush()
+        sess.flush()
         analysis.ChangeableItemsID = item.ChangeableItemsID
 
         self._add_isotopes(analysis, spec, refdbdet, runtype)
-        # sess.flush()
+        sess.flush()
 
         t = time.time() - gst
         self.debug('{} added analysis time {}s'.format(spec.runid, t))
@@ -351,7 +353,7 @@ class MassSpecDatabaseImporter(Loggable):
             if det == 'CDD':
                 dbdet.ICFactor = spec.ic_factor_v
                 dbdet.ICFactorEr = spec.ic_factor_e
-
+        db.flush()
         n = spec.get_ncounts(iso)
         return db.add_isotope(analysis, dbdet, iso, NumCnts=n), dbdet
 
@@ -391,8 +393,9 @@ class MassSpecDatabaseImporter(Loggable):
         signal = spec.get_signal_uvalue(iso, det)
         sfit = spec.get_signal_fit(iso)
 
-        if runtype == 'Blank':
-            ublank = signal - baseline
+        is_blank = runtype == 'Blank'
+        if is_blank:
+            ublank = signal - nominal_value(baseline)
         else:
             ublank = spec.get_blank_uvalue(iso)
 
@@ -401,7 +404,8 @@ class MassSpecDatabaseImporter(Loggable):
                               baseline,
                               ublank,
                               sfit,
-                              dbdet)
+                              dbdet,
+                              is_blank=is_blank)
 
     def _add_baseline(self, spec, dbiso, dbdet, odet):
         iso = dbiso.Label
@@ -415,30 +419,31 @@ class MassSpecDatabaseImporter(Loggable):
         label = '{} Baseline'.format(det.upper())
         ncnts = len(tb)
         db_baseline = db.add_baseline(blob, label, ncnts, dbiso)
-
+        db.flush()
         # if spec.is_peak_hop:
         #     det = spec.peak_hop_detector
 
         # bs = spec.get_baseline_uvalue(iso)
         bs, fncnts = spec.get_filtered_baseline_uvalue(iso)
 
-        sem = bs.std_dev / (fncnts) ** 0.5 if fncnts else 0
+        # sem = bs.std_dev / (fncnts) ** 0.5 if fncnts else 0
 
         bfit = spec.get_baseline_fit(iso)
 
-        infoblob = self._make_infoblob(bs.nominal_value, sem, fncnts, pos)
+        infoblob = self._make_infoblob(nominal_value(bs), std_dev(bs), fncnts, pos)
         db_changeable = db.add_baseline_changeable_item(self.data_reduction_session_id,
                                                         bfit,
                                                         infoblob)
 
         # baseline and baseline changeable items need matching BslnID
         db_changeable.BslnID = db_baseline.BslnID
+        db.flush()
 
     def _make_pipetted_isotopes(self, runtype):
         blob = ''
         if runtype == 'Air':
             isos = []
-            for a, v in (('Ar40', 295.5e-13), ('Ar38', 0.19e-13), ('Ar36', 1e-13)):
+            for a, v in (('Ar40', 295.5e-13), ('Ar38', 0.18762e-13), ('Ar36', 1e-13)):
                 isos.append('{}\t{}'.format(a, v))
             blob = '\r'.join(isos)
         return blob
@@ -462,7 +467,7 @@ class MassSpecDatabaseImporter(Loggable):
         return b
 
     def _db_default(self):
-        db = MassSpecDatabaseAdapter(kind='mysql', autoflush=True)
+        db = MassSpecDatabaseAdapter(kind='mysql', autoflush=False)
 
         return db
 

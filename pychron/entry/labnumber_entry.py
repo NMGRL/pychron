@@ -18,7 +18,7 @@
 from apptools.preferences.preference_binding import bind_preference
 from pyface.constant import YES, CANCEL
 from traits.api import Property, Str, cached_property, \
-    List, Event, Any, Button, Instance, Bool, on_trait_change, Float
+    List, Event, Any, Button, Instance, Bool, on_trait_change, Float, HasTraits
 from traitsui.api import Image
 from pyface.image_resource import ImageResource
 
@@ -27,6 +27,8 @@ import os
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.irradiation_canvas import IrradiationCanvas
 from pychron.core.helpers.ctx_managers import no_update
+from pychron.core.helpers.formatting import floatfmt
+from pychron.core.progress import open_progress
 from pychron.database.defaults import load_irradiation_map
 from pychron.entry.editors.irradiation_editor import IrradiationEditor
 from pychron.entry.editors.level_editor import LevelEditor, load_holder_canvas, iter_geom
@@ -37,7 +39,7 @@ from pychron.entry.identifier_generator import IdentifierGenerator
 from pychron.paths import paths
 # from pychron.entry.irradiation import Irradiation
 # from pychron.entry.level import Level, load_holder_canvas, iter_geom
-from pychron.pychron_constants import NULL_STR
+from pychron.pychron_constants import NULL_STR, PLUSMINUS
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.entry.irradiated_position import IrradiatedPosition
 from pychron.database.orms.isotope.gen import gen_ProjectTable, gen_SampleTable
@@ -53,6 +55,12 @@ from pychron.database.orms.isotope.gen import gen_ProjectTable, gen_SampleTable
 # def __exit__(self, exc_type, exc_val, exc_tb):
 # self._p.information_dialog('Changes saved to database')
 
+class NeutronDose(HasTraits):
+    def __init__(self, power, start, end):
+        self.power = power
+        self.start = start.strftime('%m-%d-%Y %H:%M')
+        self.end = end.strftime('%m-%d-%Y %H:%M')
+
 
 class dirty_ctx(object):
     def __init__(self, p):
@@ -66,6 +74,7 @@ class dirty_ctx(object):
 
 
 class LabnumberEntry(IsotopeDatabaseManager):
+
     irradiation_tray = Str
     trays = Property
 
@@ -83,6 +92,11 @@ class LabnumberEntry(IsotopeDatabaseManager):
 
     load_file_button = Button('Load File')
     generate_labnumbers_button = Button('Generate Labnumbers')
+
+    level_note = Str
+    level_production_name = Str
+    chronology_items = List
+    estimated_j_value = Str
     # ===========================================================================
     # irradiation positions table events
     # ===========================================================================
@@ -113,7 +127,7 @@ class LabnumberEntry(IsotopeDatabaseManager):
     def __init__(self, *args, **kw):
         super(LabnumberEntry, self).__init__(*args, **kw)
 
-        # self.labnumber_generator = LabnumberGenerator(db=self.db)
+        # self.labnumber_generator = LabnumberGenerator(db=self.dvc.db)
 
         bind_preference(self, 'irradiation_prefix',
                         'pychron.entry.irradiation_prefix')
@@ -168,8 +182,8 @@ class LabnumberEntry(IsotopeDatabaseManager):
 
     # def set_selected_sample(self, new):
     # self.selected_sample = new
-    #     self.set_selected_attr(new.name, 'sample')
-    #     #self.canvas.selected_samples=new
+    # self.set_selected_attr(new.name, 'sample')
+    # #self.canvas.selected_samples=new
 
     def select_positions(self, freq, eoflag):
         positions = self.irradiated_positions
@@ -211,7 +225,7 @@ class LabnumberEntry(IsotopeDatabaseManager):
                                                  order_func='asc')
 
                     n = sum([len(irrad.levels) for irrad in irrads])
-                    prog = self.open_progress(n=n)
+                    prog = open_progress(n=n)
 
                     w.build(out, irrads, progress=prog)
 
@@ -232,7 +246,7 @@ class LabnumberEntry(IsotopeDatabaseManager):
 
     def generate_identifiers(self):
         self.warning('GENERATE LABNUMBERS DISABLED')
-        # return
+        return
 
         if self.check_monitor_name():
             return
@@ -249,7 +263,7 @@ class LabnumberEntry(IsotopeDatabaseManager):
                                          overwrite=overwrite,
                                          db=self.db)
                 if lg.setup():
-                    prog = self.open_progress()
+                    prog = open_progress()
                     lg.generate_identifiers(prog, overwrite)
                     self._update_level()
 
@@ -261,7 +275,7 @@ class LabnumberEntry(IsotopeDatabaseManager):
                                  overwrite=True,
                                  db=self.db)
         if lg.setup():
-            prog = self.open_progress()
+            prog = open_progress()
             lg.preview(prog, self.irradiated_positions, self.irradiation, self.level)
             self.refresh_table = True
 
@@ -273,13 +287,13 @@ class LabnumberEntry(IsotopeDatabaseManager):
 
     def make_irradiation_load_template(self, p):
         loader = XLSIrradiationLoader()
-        n = len(self.irradiated_positions)
-        loader.make_template(p, n, self.level)
+        # n = len(self.irradiated_positions)
+        loader.make_template(p)
 
     def import_irradiation_load_xls(self, p):
         loader = XLSIrradiationLoader(db=self.db,
                                       monitor_name=self.monitor_name)
-        prog = self.open_progress()
+        prog = open_progress()
         loader.progress = prog
         loader.canvas = self.canvas
 
@@ -361,7 +375,7 @@ class LabnumberEntry(IsotopeDatabaseManager):
 
         with db.session_ctx():
             n = len(self.irradiated_positions)
-            prog = self.open_progress(n)
+            prog = open_progress(n)
 
             for irs in self.irradiated_positions:
                 ln = irs.labnumber
@@ -472,7 +486,7 @@ class LabnumberEntry(IsotopeDatabaseManager):
                     last = last[1:]
 
         try:
-            return j.join((head, '{:03n}'.format(int(last) + 1)))
+            return j.join((head, '{:03d}'.format(int(last) + 1)))
         except ValueError:
             return name
 
@@ -572,6 +586,21 @@ THIS CHANGE CANNOT BE UNDONE')
             self.level = new_level
             self.updated = True
 
+    def _irradiation_changed(self):
+        super(LabnumberEntry, self)._irradiation_changed()
+        if self.irradiation:
+            db = self.db
+            with db.session_ctx():
+                irrad = db.get_irradiation(self.irradiation)
+
+                j = irrad.chronology.duration
+                j *= self.j_multiplier
+                self.estimated_j_value = u'{} {}{}'.format(floatfmt(j),
+                                                          PLUSMINUS,
+                                                          floatfmt(j*0.001))
+                items = [NeutronDose(*args) for args in irrad.chronology.get_doses()]
+                self.chronology_items = items
+
     def _level_changed(self, new):
         self.debug('level changed "{}"'.format(new))
         self.irradiated_positions = []
@@ -614,12 +643,18 @@ THIS CHANGE CANNOT BE UNDONE')
                 self.debug('no level for {}'.format(name))
                 return
 
+            self.level_note = level.note or ''
+            self.level_production_name = level.production.name
+
             holder = level.holder
             if holder:
                 self.debug('holder {}'.format(holder.name))
                 self._load_holder_positions(holder)
                 self._load_holder_canvas(holder)
                 self._load_canvas_analyses(db, level)
+                self.irradiation_tray = holder.name
+            else:
+                self.irradiation_tray = ''
                 #if debug:
             #    return
             try:
@@ -630,7 +665,8 @@ THIS CHANGE CANNOT BE UNDONE')
                 if positions:
                     with dirty_ctx(self):
                         self._make_positions(n, positions)
-            except:
+            except BaseException, e:
+                print 'excep', e
                 self.warning_dialog('Failed loading Irradiation level="{}"'.format(name))
                 sess.rollback()
 
@@ -654,7 +690,7 @@ THIS CHANGE CANNOT BE UNDONE')
             ir.trait_set(labnumber=str(labnumber), hole=position)
 
             item = self.canvas.scene.get_item(str(position))
-            item.fill = ln.identifier
+            item.fill = bool(ln.identifier)
 
             selhist = ln.selected_flux_history
             if selhist:
@@ -716,40 +752,32 @@ THIS CHANGE CANNOT BE UNDONE')
         return materials
 
     def _get_irradiation_tray_image(self):
+
         p = self._get_map_path()
         db = self.db
-        with db.session_ctx():
-            level = db.get_irradiation_level(self.irradiation,
-                                             self.level)
-            holder = None
-            if level:
-                holder = level.holder
-                holder = holder.name if holder else None
-            holder = holder if holder is not None else NULL_STR
-            self.tray_name = holder
-            im = ImageResource('{}.png'.format(holder),
-                               search_path=[p]
-            )
-            return im
+        if db.connected:
+            with db.session_ctx():
+                level = db.get_irradiation_level(self.irradiation,
+                                                 self.level)
+                holder = None
+                if level:
+                    holder = level.holder
+                    holder = holder.name if holder else None
+                holder = holder if holder is not None else NULL_STR
+                self.tray_name = holder
+                im = ImageResource('{}.png'.format(holder),
+                                   search_path=[p])
+                return im
 
     @cached_property
     def _get_trays(self):
         db = self.db
-        with db.session_ctx():
-            hs = db.get_irradiation_holders()
-            ts = [h.name for h in hs]
+        ts = []
+        if db.connected:
+            with db.session_ctx():
+                hs = db.get_irradiation_holders()
+                ts = [h.name for h in hs]
 
-            #p = os.path.join(self._get_map_path(), 'images')
-            #if not os.path.isdir(p):
-            #    self.warning_dialog('{} does not exist'.format(p))
-            #    return Undefined
-            #
-            #ts = [os.path.splitext(pi)[0] for pi in os.listdir(p) if not pi.startswith('.')
-            #      #                    if not (pi.endswith('.png')
-            #      #                            or pi.endswith('.pct')
-            #      #                            or pi.startswith('.'))
-            #]
-            #if ts:
             self.tray = ts[-1]
 
         return ts

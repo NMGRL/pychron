@@ -40,8 +40,8 @@ class DeviceModel(HasTraits):
         tmp = self.get_template()
 
         p = '/Users/ross/Sandbox/device_creator.yaml'
-        with open(p, 'r') as fp:
-            yd = yaml.load(fp)
+        with open(p, 'r') as rfile:
+            yd = yaml.load(rfile)
             print yd
 
         print tmp.render(**yd)

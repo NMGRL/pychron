@@ -2,11 +2,11 @@ import os
 
 from pylab import *
 def plot_mem(p, use_histogram=True):
-    with open(p, 'r') as fp:
+    with open(p, 'r') as rfile:
         ms = []
         started = False
         mx, mn = -Inf, Inf
-        for line in fp:
+        for line in rfile:
 
             # print line
             msg, mem = map(str.strip, line.split(':'))
@@ -52,7 +52,7 @@ def plot_file(p, normalize=False, stacked=False,
 
     mxs = []
     mys = []
-    with open(p, 'r') as fp:
+    with open(p, 'r') as rfile:
         xi = 0
         ticked = False
 #         for line in fp:
@@ -60,7 +60,7 @@ def plot_file(p, normalize=False, stacked=False,
 #             if msg.startswith('exp start'):
 #                 break
 
-        for line in fp:
+        for line in rfile:
 
             # print line
             msg, mem = map(str.strip, line.split(':'))
@@ -180,11 +180,11 @@ if __name__ == '__main__':
         if paths[0] == 'last':
             i = 1
             while 1:
-                pa = os.path.join(d, 'mem-{:03n}.txt'.format(i))
+                pa = os.path.join(d, 'mem-{:03d}.txt'.format(i))
                 if os.path.isfile(pa):
                     i += 1
                 else:
-                    pa = os.path.join(d, 'mem-{:03n}.txt'.format(i - 1))
+                    pa = os.path.join(d, 'mem-{:03d}.txt'.format(i - 1))
                     if os.path.isfile(pa):
                         break
                     else:
@@ -205,7 +205,7 @@ if __name__ == '__main__':
 
         else:
             for ai in paths:
-                n = 'mem-{:03n}.txt'.format(int(ai))
+                n = 'mem-{:03d}.txt'.format(int(ai))
                 p = os.path.join(d, n)
                 plot_file(p, normalize=normalize, stacked=stacked, use_gradient=grad,)
 #                legend(loc='upper left')

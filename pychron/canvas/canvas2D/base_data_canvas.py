@@ -27,11 +27,11 @@ from numpy import hstack
 class BaseDataCanvas(DataView):
     """
     """
-    fill_padding = True
+    # fill_padding = True
     #    bgcolor = (0.9, 0.9, 1.0)
     #    bgcolor = (0, 1.0, 0)
     #    border_visible = True
-    #    use_backbuffer = True
+    # use_backbuffer = True
     #    bgcolor = 'lightblue'
     x_range = Tuple
     y_range = Tuple
@@ -143,6 +143,7 @@ class BaseDataCanvas(DataView):
         #            self.index_axis.visible = False
         self.value_axis.visible = self.show_axes
         self.index_axis.visible = self.show_axes
+
         self.x_grid.visible = self.show_grids
         self.y_grid.visible = self.show_grids
 
@@ -157,7 +158,9 @@ class BaseDataCanvas(DataView):
 
     @on_trait_change('show_grids')
     def change_grid_visibility(self):
+        print 'change visiblity', self.show_grids
         try:
+
             self.x_grid.visible = self.show_grids
             self.y_grid.visible = self.show_grids
             self.request_redraw()
@@ -215,7 +218,6 @@ class BaseDataCanvas(DataView):
 
         return w, h
 
-
     def _vertical_line(self, gc, x, y1, y2, color=(0, 0, 0)):
         """
         """
@@ -225,9 +227,8 @@ class BaseDataCanvas(DataView):
         self.line_segment(gc, p1, p2, color)
 
     def _horizontal_line(self, gc, y, x1, x2, color=(0, 0, 0)):
-        '''
-
-        '''
+        """
+        """
         p1 = (x1, y)
         p2 = (x2, y)
         self.line_segment(gc, p1, p2, color)
@@ -242,29 +243,14 @@ class BaseDataCanvas(DataView):
 
     def _draw_hook(self, gc, *args, **kw):
         """
-
         """
         pass
 
-    def draw(self, gc, *args, **kw):
-        """
-        """
-        with gc:
-
-            DataView._draw(self, gc, *args, **kw)
-
-            #with gc:
-            #gc.translate_ctm(0,0.5)
-            #gc.clip_to_rect(self.x-0.5, self.y-2, self.width+1, self.height+4)
-            #gc.clip_to_rect(self.outer_x, self.outer_y, self.outer_width, self.outer_height)
-            self._draw_hook(gc, *args, **kw)
-
-            for o in self.overlays:
-                if o.visible:
-                    o.overlay(None, gc, *args, **kw)
-
-                    #DataView._draw(self, gc, *args, **kw)
-                    # super(BaseDataCanvas, self).draw(gc, *args, **kw)
-
+        # def draw(self, *args, **kw):
+        # """
+        #     """
+        #
+        #     super(BaseDataCanvas, self).draw(*args, **kw)
+        #     self._draw_hook(*args, **kw)
 
 # ====================EOF==================

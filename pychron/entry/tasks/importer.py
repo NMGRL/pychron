@@ -21,8 +21,9 @@ from collections import namedtuple
 import time
 
 # ============= local library imports  ==========================
-from pychron.experiment.importer.mass_spec_extractor import Extractor, \
-    MassSpecExtractor
+from pychron.core.progress import open_progress
+from pychron.entry.loaders.extractor import Extractor
+from pychron.entry.loaders.mass_spec_extractor import MassSpecExtractor
 from pychron.loggable import Loggable
 from pychron.pychron_constants import NULL_STR
 from pychron.core.ui.qt.thread import Thread
@@ -140,8 +141,8 @@ class ImporterModel(Loggable):
     def _open_button_fired(self):
         p = self.open_file_dialog()
         if p:
-            with open(p, 'r') as fp:
-                rids = [records(ri.strip()) for ri in fp.read().split('\n')]
+            with open(p, 'r') as rfile:
+                rids = [records(ri.strip()) for ri in rfile.read().split('\n')]
                 self.names = rids
 
     _import_thread = None
@@ -170,7 +171,7 @@ class ImporterModel(Loggable):
                     # get import func from extractor
 
                     n = len(selected) * 2
-                    pd = self.open_progress(n=n)
+                    pd = open_progress(n=n)
 
                     if new_thread:
                         t = Thread(target=self._do_import, args=(selected, pd))

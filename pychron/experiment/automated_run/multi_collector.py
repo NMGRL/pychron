@@ -23,6 +23,13 @@ from pychron.experiment.automated_run.data_collector import DataCollector
 
 
 class MultiCollector(DataCollector):
+    """
+    Collector class for doing multi-collection, i.e. measuring multiple intensities simultaneously.
+
+    ``MulticCollector`` and ``PeakHopCollector`` conceptually very similar and potentially could be merged and simplified.
+    MultiCollection is a simple case of PeakHopCollection in which only one peak hop is made at the beginning.
+
+    """
     def _iter_hook(self, con, i):
         if i % 50 == 0:
             self.info('collecting point {}'.format(i))
@@ -40,7 +47,7 @@ class MultiCollector(DataCollector):
 
     def _iter_step(self, data):
         x, data, i = data
-        #print 'iterstep', x,data, i
+        # print 'iterstep', x,data, i
 
         # save the data
         self._save_data(x, *data)

@@ -150,8 +150,8 @@ def make_binned_elevations(dbname):
             mi, ma = min(pp), max(pp)
             writer.writerow((cbin, mi, ma, ma - mi ))
 
-        with open(p, 'w') as fp:
-            writer = csv.writer(fp)
+        with open(p, 'w') as wfile:
+            writer = csv.writer(wfile)
 
             for po in pts[1:]:
                 if int(po.age) != cbin:
@@ -182,7 +182,7 @@ def make_interpreted_age_shape_file(dbname, group=False):
             cbin = int(ps[0].age)
             for po in pts[1:]:
                 if int(po.age) != cbin:
-                    p = os.path.join(root, 'ages_{:02n}'.format(cbin))
+                    p = os.path.join(root, 'ages_{:02d}'.format(cbin))
                     write_shape_file(ps, attrs, p)
                     ps = [po]
                     cbin = int(po.age)
@@ -190,7 +190,7 @@ def make_interpreted_age_shape_file(dbname, group=False):
                     ps.append(po)
 
             if ps:
-                p = os.path.join(root, 'ages_{:02n}'.format(cbin))
+                p = os.path.join(root, 'ages_{:02d}'.format(cbin))
                 write_shape_file(ps, attrs, p)
 
         else:
@@ -198,8 +198,8 @@ def make_interpreted_age_shape_file(dbname, group=False):
             write_shape_file(pts, attrs, p)
             #write to csv
             p = os.path.join(root, '{}.csv'.format(name))
-            with open(p, 'w') as fp:
-                writer = csv.writer(fp)
+            with open(p, 'w') as wfile:
+                writer = csv.writer(wfile)
                 writer.writerow(attrs)
                 for pt in pts:
                     data = [getattr(pt, ai[0]) for ai in attrs]

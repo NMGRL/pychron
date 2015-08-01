@@ -39,13 +39,13 @@ from skimage.draw import line
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Instance, Button, Range
 from traitsui.api import View, Item, UItem
-from pychron.mv.test_image import TestImage
+from pychron.mv.mv_image import MVImage
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
 class ZoomCalibration(HasTraits):
-    test_image = Instance(TestImage, ())
+    test_image = Instance(MVImage, ())
     test_button = Button
     threshold_low = Range(0, 100, 10)
     threshold_high = Range(0, 100, 50)
@@ -189,7 +189,7 @@ class ZoomCalibration(HasTraits):
             zs = []
             root = '/Users/ross/Pychrondata_demo/data/snapshots/scan{}'.format(scan_i)
             for  zi, idx in zip(z, idxs):
-                pn = os.path.join(root, '{:03n}.jpg'.format(idx))
+                pn = os.path.join(root, '{:03d}.jpg'.format(idx))
                 d = load_image(pn)
 
                 dx = self._calculate_spacing(d)

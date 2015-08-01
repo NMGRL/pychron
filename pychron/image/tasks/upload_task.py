@@ -23,7 +23,7 @@ from traits.api import HasTraits, Button, Str, List, Property, Bool
 from traitsui.api import View, Item
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.envisage.browser.browser_mixin import BrowserMixin
+from pychron.envisage.browser.base_browser_model import BaseBrowserModel
 from pychron.envisage.tasks.base_task import BaseTask, BaseManagerTask
 from pychron.image.tasks.actions import AssociateAction, SaveAction
 from pychron.image.tasks.pane import SampleBrowserPane
@@ -37,7 +37,7 @@ class UploadItem(HasTraits):
     sample = Str
 
 
-class ImageUploadTask(BaseManagerTask, BrowserMixin):
+class ImageUploadTask(BaseManagerTask, BaseBrowserModel):
     id = 'pychron.image.upload'
     name = 'Image Uploader'
     tool_bars = [SToolBar(AssociateAction(),

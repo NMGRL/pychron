@@ -67,10 +67,10 @@ class ShapeFileWriter(Loggable):
         head, tail = os.path.splitext(p)
         p = '{}.prj'.format(head)
 
-        with open(p, 'w') as fp:
+        with open(p, 'w') as wfile:
             ref = "http://spatialreference.org/ref/epsg/{}/prettywkt/".format(epsg)
             f = urllib.urlopen(ref)
-            fp.write(f.read())
+            wfile.write(f.read())
 
     def write_polygon(self, p, polygons):
         """

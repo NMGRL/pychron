@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,18 +15,33 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, cached_property, List, Str, \
-    Property, Int, Event, Any, Bool, Button, Float, on_trait_change
+import os
+from datetime import datetime
+
+from matplotlib.cm import get_cmap, cmap_d
+from traits.api import HasTraits, cached_property, List, Str, Instance, \
+    Property, Int, Event, Any, Bool, Button, Float, on_trait_change, Enum, RGBColor
 from traitsui.api import View, Item, EnumEditor, UItem, ListStrEditor
+
+
+
+
+
+
+
+
 # ============= standard library imports ========================
 
 from itertools import groupby
 # ============= local library imports  ==========================
 from pychron.canvas.utils import load_holder_canvas
+from pychron.core.helpers.filetools import view_file
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.canvas.canvas2D.loading_canvas import LoadingCanvas, group_position
 
 from pychron.canvas.canvas2D.scene.primitives.primitives import LoadIndicator
+from pychron.loading.loading_pdf_writer import LoadingPDFWriter
+from pychron.paths import paths
 
 
 def make_bound(st):
@@ -48,8 +63,8 @@ def make_position_str(pos):
         # ss = []
         #
         # for pi in pos[1:]:
-        #     if not pp + 1 == pi:
-        #         ss.append(make_bound(stack))
+        # if not pp + 1 == pi:
+        # ss.append(make_bound(stack))
         #         stack = []
         #
         #     stack.append(pi)
@@ -80,6 +95,7 @@ class LoadSelection(HasTraits):
 class LoadPosition(HasTraits):
     labnumber = Str
     sample = Str
+    project = Str
     positions = List
     weight = Float
     note = Str
@@ -91,6 +107,7 @@ class LoadPosition(HasTraits):
     irradiation_str = Property
 
     position_str = Property(depends_on='positions[]')
+    color = RGBColor
 
     def _get_position_str(self):
         return make_position_str(self.positions)
@@ -101,15 +118,23 @@ class LoadPosition(HasTraits):
                                 self.irrad_position)
 
 
+maps = [m for m in cmap_d if not m.endswith("_r")]
+
+
 class LoadingManager(IsotopeDatabaseManager):
+    _pdf_writer = Instance(LoadingPDFWriter, ())
     dirty = Bool(False)
-    loader_name = Str('Foo')
+    username = Str
+    refresh_level = Event
+    refresh_irradiation = Event
+
     available_user_names = List
 
     labnumber = Str
     labnumbers = Property(depends_on='level')
     weight = Float
     note = Str
+    save_directory = Str
 
     '''
         when a hole is selected npositions defines the number of 
@@ -117,7 +142,7 @@ class LoadingManager(IsotopeDatabaseManager):
     '''
     npositions = Int(1)
     auto_increment = Bool(False)
-    #     irradiation_hole = Str
+    # irradiation_hole = Str
     #     sample = Str
 
     positions = List
@@ -145,6 +170,7 @@ class LoadingManager(IsotopeDatabaseManager):
 
     sample_info = Property(depends_on='labnumber')
     sample = Property(depends_on='labnumber')
+    project = Property(depends_on='labnumber')
     irradiation_hole = Property(depends_on='labnumber')
 
     retain_weight = Bool(False)
@@ -153,15 +179,113 @@ class LoadingManager(IsotopeDatabaseManager):
     show_labnumbers = Bool(False)
     show_weights = Bool(False)
     show_hole_numbers = Bool(False)
-    show_spans = Bool(True)
+    cmap_name = Enum(maps)
+    use_cmap = Bool(True)
+    interaction_mode = Enum('Entry', 'Info', 'Edit')
+    suppress_update = False
 
-    def save(self):
-        self.debug('saving load to database')
+    def load(self):
+        if self.canvas:
+            self.canvas.editable = True
+            self.clear()
+        return super(LoadingManager, self).load()
+
+    def clear(self):
+        self.load_name = ''
+        if self.canvas:
+            self.canvas.clear_all()
+
+    def load_load_by_name(self, loadtable, group_labnumbers=True):
+
+        self.canvas = self.make_canvas(loadtable)
+
         with self.db.session_ctx():
-            self._save_load()
-            self._save_positions(self.load_name)
-            self.dirty = False
-        return True
+            if isinstance(loadtable, (str, unicode)):
+                loadtable = self.db.get_loadtable(loadtable)
+
+            self.positions = []
+            if not loadtable:
+                return
+
+            for ln, poss in groupby(loadtable.loaded_positions,
+                                    key=lambda x: x.lab_identifier):
+                dbln = self.db.get_labnumber(ln, key='id')
+                sample = ''
+                if dbln and dbln.sample:
+                    sample = dbln.sample.name
+                dbirradpos = dbln.irradiation_position
+                dblevel = dbirradpos.level
+
+                irrad = dblevel.irradiation.name
+                level = dblevel.name
+                irradpos = dbirradpos.position
+                irradiation = '{} {}{}'.format(irrad, level, irradpos)
+
+                pos = []
+                for pi in poss:
+                    pid = str(pi.position)
+                    item = self.canvas.scene.get_item(pid)
+                    if item:
+                        item.fill = True
+                        item.add_labnumber_label(
+                            dbln.identifier,
+                            # ox=-10, oy=-10,
+                            visible=self.show_labnumbers)
+
+                        oy = -10 if not self.show_labnumbers else -20
+                        wt = '' if pi.weight is None else str(pi.weight)
+                        item.add_weight_label(wt, oy=oy, visible=self.show_weights)
+                        item.weight = pi.weight
+                        item.note = pi.note
+                        item.sample = sample
+                        item.irradiation = irradiation
+
+                    pos.append(pid)
+
+                if group_labnumbers:
+                    self._add_position(ln, pos)
+                else:
+                    for pi in pos:
+                        self._add_position(ln, [pi])
+
+        self.positions = sorted(self.positions, key=lambda x: x.positions[0])
+        self._set_group_colors()
+        self.canvas.request_redraw()
+
+    def make_canvas(self, new, editable=True):
+        db = self.db
+        with db.session_ctx():
+
+            #         with session(None) as s:
+            lt = db.get_loadtable(new)
+            c = self.canvas
+            if not c:
+                c = LoadingCanvas(
+                    view_x_range=(-2, 2),
+                    view_y_range=(-2, 2),
+                    editable=editable)
+
+            if lt and lt.holder_:
+                load_holder_canvas(c, lt.holder_.geometry,
+                                   show_hole_numbers=self.show_hole_numbers)
+
+                for pi in lt.loaded_positions:
+                    item = c.scene.get_item(str(pi.position))
+                    if item:
+                        item.fill = True
+                        item.identifier = pi.labnumber.identifier
+                        item.add_labnumber_label(item.identifier)
+
+                for pi in lt.measured_positions:
+                    item = c.scene.get_item(str(pi.position))
+                    if item:
+                        if pi.is_degas:
+                            item.degas_indicator = True
+                        else:
+                            item.measured_indicator = True
+
+        self._set_group_colors(c)
+        return c
 
     def setup(self):
         if self.db.connected:
@@ -177,9 +301,97 @@ class LoadingManager(IsotopeDatabaseManager):
             if us:
                 self.available_user_names = us
 
-            ls = self._get_last_load()
+            # ls = self._get_last_load()
             return True
 
+    # actions
+    def configure_pdf(self):
+        options = self._pdf_writer.options
+
+        options.orientation = 'portrait'
+        options.left_margin = 0.5
+        options.right_margin = 0.5
+        options.top_margin = 0.5
+        options.bottom_margin = 0.5
+
+        options.load_yaml()
+        info = options.edit_traits()
+        if info.result:
+            options.dump_yaml()
+
+    def save_pdf(self):
+        # p = LoadingPDFWriter()
+        ln = self.load_name
+        if ln:
+            root = self.save_directory
+            if not root or not os.path.isdir(root):
+                root = paths.loading_dir
+
+            positions = self.positions
+            ps = ', '.join({p.project for p in positions})
+
+            un = self.username
+
+            dt = datetime.now()
+            date_str = dt.strftime("%Y-%m-%d %H:%M:%S")
+            meta = dict(load_name=ln, username=un,
+                        load_date=date_str,
+                        projects=ps)
+
+            path = os.path.join(root, '{}.pdf'.format(ln))
+
+            options = self._pdf_writer.options
+
+            osl = self.show_labnumbers
+            osw = self.show_weights
+            oshn = self.show_hole_numbers
+
+            for attr in ('labnumbers', 'weights', 'hole_numbers'):
+                attr = 'show_{}'.format(attr)
+                setattr(self, attr, getattr(options, attr))
+
+            # c = self.canvas.clone_traits()
+            self._pdf_writer.build(path, positions, self.canvas, meta)
+            if options.view_pdf:
+                view_file(path)
+            on = self.load_name
+            self.canvas = None
+            self.load_name = ''
+            self.load_name = on
+
+            self.show_labnumbers = osl
+            self.show_weights = osw
+            self.show_hole_numbers = oshn
+
+        else:
+            self.information_dialog('Please select a load')
+
+    def save(self):
+        self.debug('saving load to database')
+        with self.db.session_ctx():
+            self._save_load()
+            self._save_positions(self.load_name)
+            self.dirty = False
+        return True
+
+    def set_edit(self):
+        if self.canvas:
+            self.canvas.event_state = 'edit'
+        self.interaction_mode = 'Edit'
+
+    def set_entry(self):
+
+        if self.canvas:
+            self.canvas.event_state = 'normal'
+        self.interaction_mode = 'Entry'
+
+    def set_info(self):
+
+        if self.canvas:
+            self.canvas.event_state = 'info'
+        self.interaction_mode = 'Info'
+
+    # private
     def _get_users(self):
         with self.db.session_ctx():
             users = self.db.get_users()
@@ -213,6 +425,7 @@ class LoadingManager(IsotopeDatabaseManager):
     def _get_pid_pos(self, canvas_hole):
         pos = next((pi for pi in self.positions
                     if pi.labnumber == self.labnumber), None)
+
         pid = int(canvas_hole.name)
         return pid, pos
 
@@ -239,22 +452,34 @@ class LoadingManager(IsotopeDatabaseManager):
                                             self.irradiation_hole)
 
     def _deselect_position(self, canvas_hole):
-        pid, pos = self._get_pid_pos(canvas_hole)
-        if pid in pos.positions:
-            pos.positions.remove(pid)
-            canvas_hole.fill = False
-            canvas_hole.clear_text()
-        else:
-            npos = next((pi for pi in self.positions
-                         if pid in pi.positions), None)
-            print 'fff', npos
-            if npos:
-                npos.positions.remove(pid)
 
-            pos.positions.append(pid)
+        # pid, pos = self._get_pid_pos(canvas_hole)
+        # print canvas_hole,pid, pos
+        # if pid in pos.positions:
+        #     pos.positions.remove(pid)
+        #     canvas_hole.fill = False
+        #     canvas_hole.clear_text()
+        # else:
+        #     npos = next((pi for pi in self.positions
+        #                  if pid in pi.positions), None)
+        #     print 'fff', npos
+        #     if npos:
+        #         npos.positions.remove(pid)
+        #
+        #     pos.positions.append(pid)
 
-        if not pos.positions:
-            self.positions.remove(pos)
+        # remove from position list
+        pid = int(canvas_hole.name)
+        for p in self.positions:
+            if pid in p.positions:
+                p.positions.remove(pid)
+                if not p.positions:
+                    self.positions.remove(p)
+                break
+
+        # clear fill
+        canvas_hole.fill = False
+        canvas_hole.clear_text()
 
     def _new_position_group(self, canvas_hole):
         pid = int(canvas_hole.name)
@@ -264,6 +489,7 @@ class LoadingManager(IsotopeDatabaseManager):
                           level=self.level,
                           irrad_position=int(self.irradiation_hole),
                           sample=self.sample,
+                          project=self.project,
                           positions=[pid],
                           weight=self.weight,
                           note=self.note)
@@ -272,7 +498,7 @@ class LoadingManager(IsotopeDatabaseManager):
         self._set_canvas_hole_selected(canvas_hole)
 
     def _auto_increment_labnumber(self):
-        if self.auto_increment:
+        if self.auto_increment and self.labnumber:
             idx = self.labnumbers.index(self.labnumber)
             try:
                 self.labnumber = self.labnumbers[idx + 1]
@@ -281,14 +507,19 @@ class LoadingManager(IsotopeDatabaseManager):
                 try:
                     self.level = self.levels[idx + 1]
                     self.labnumber = self.labnumbers[0]
+                    self.refresh_level = True
+                    # print 'increment level', self.level
                 except IndexError:
                     idx = self.irradiations.index(self.irradiation)
                     try:
                         self.irradiation = self.irradiations[idx + 1]
                         self.level = self.levels[0]
                         self.labnumber = self.labnumbers[0]
+                        self.refresh_irradiation = True
                     except IndexError:
                         pass
+
+                        print self.level, self.levels, self.level in self.levels, self.labnumber
 
     def _set_position(self, canvas_hole):
 
@@ -298,117 +529,22 @@ class LoadingManager(IsotopeDatabaseManager):
         else:
             self._new_position_group(canvas_hole)
 
-    def make_canvas(self, new, editable=True):
-        db = self.db
-        with db.session_ctx():
-
-            #         with session(None) as s:
-            lt = db.get_loadtable(new)
-            c = self.canvas
-            if not c:
-                c = LoadingCanvas(
-                    view_x_range=(-2, 2),
-                    view_y_range=(-2, 2),
-                    editable=editable)
-
-            if lt and lt.holder_:
-                # h = lt.holder_.name
-                # c.load_scene(lt.holder_.geometry,
-                #              show_hole_numbers=self.show_hole_numbers)
-                print 'make canvas', lt.holder_.name
-                load_holder_canvas(c, lt.holder_.geometry,
-                                   show_hole_numbers=self.show_hole_numbers)
-
-                for pi in lt.loaded_positions:
-                    item = c.scene.get_item(str(pi.position))
-                    if item:
-                        item.fill = True
-                        item.identifier = pi.lab_identifier
-                        #                     item.label_item.visible = self.show_labnumbers
-                        #                     print item.label_item.visible
-
-                for pi in lt.measured_positions:
-                    item = c.scene.get_item(str(pi.position))
-                    if item:
-                        if pi.is_degas:
-                            item.degas_indicator = True
-                        else:
-                            item.measured_indicator = True
-        return c
-
-    def load_load(self, loadtable, group_labnumbers=True, set_tray=True):
-        with self.db.session_ctx():
-            #         with session(None) as s:
-            if isinstance(loadtable, str):
-                loadtable = self.db.get_loadtable(loadtable)
-
-            self.positions = []
-            if not loadtable:
-                return
-
-            # if set_tray and loadtable.holder_:
-            #     self.tray = loadtable.holder_.name
-
-            for ln, poss in groupby(loadtable.loaded_positions,
-                                    key=lambda x: x.lab_identifier):
-
-                dbln = self.db.get_labnumber(ln)
-                sample = ''
-                if dbln and dbln.sample:
-                    sample = dbln.sample.name
-                dbirradpos = dbln.irradiation_position
-                dblevel = dbirradpos.level
-
-                irrad = dblevel.irradiation.name
-                level = dblevel.name
-                irradpos = dbirradpos.position
-                irradiation = '{} {}{}'.format(irrad, level, irradpos)
-
-                pos = []
-                for pi in poss:
-                    pid = str(pi.position)
-                    item = self.canvas.scene.get_item(pid)
-                    if item:
-                        item.fill = True
-                        item.add_labnumber_label(
-                            ln, ox=-10, oy=-10,
-                            visible=self.show_labnumbers
-                        )
-
-                        oy = -10 if not self.show_labnumbers else -20
-                        wt = '' if pi.weight is None else str(pi.weight)
-                        item.add_weight_label(wt, oy=oy,
-                                              visible=self.show_weights
-                        )
-                        item.weight = pi.weight
-                        item.note = pi.note
-                        item.sample = sample
-                        item.irradiation = irradiation
-                        #                     print item
-                        #                     item.add_text(ln, ox=-10, oy=-10,
-                        #                                   visible=self.show_labnumbers
-                        #                                   )
-
-                    pos.append(pid)
-
-                if group_labnumbers:
-                    self._add_position(ln, pos)
-                else:
-                    for pi in pos:
-                        self._add_position(ln, [pi])
-            self._update_span_indicators()
-
     def _add_position(self, ln, pos):
         pos = map(int, pos)
-        ln = self.db.get_labnumber(ln)
+        ln = self.db.get_labnumber(ln, key='id')
         ip = ln.irradiation_position
         level = ip.level
         irrad = level.irradiation
-
-        sample = ln.sample.name if ln.sample else ''
+        sample = ''
+        project = ''
+        if ln.sample:
+            sample = ln.sample.name
+            if ln.sample.project:
+                project = ln.sample.project.name
 
         lp = LoadPosition(labnumber=ln.identifier,
                           sample=sample,
+                          project=project,
                           irradiation=irrad.name,
                           level=level.name,
                           irrad_position=int(ip.position),
@@ -426,9 +562,6 @@ class LoadingManager(IsotopeDatabaseManager):
             else:
                 self.info('adding load {} {} to database'.format(nln, self.tray))
                 db.add_load(nln, holder=self.tray)
-                # db.sess.commit()
-                #                 sess.commit()
-                #                     db.commit()
 
                 ls = self._get_loads()
                 self.loads = ls
@@ -440,15 +573,12 @@ class LoadingManager(IsotopeDatabaseManager):
         with db.session_ctx() as sess:
             lt = db.get_loadtable(name=name)
 
-            #         sess = db.get_session()
             for li in lt.loaded_positions:
                 sess.delete(li)
 
-                #         db.flush()
             for pi in self.positions:
                 ln = pi.labnumber
-                self.info('updating positions for {} {}'.format(lt.name, ln))
-                #             self.debug('weight: {} note: {}'.format(pi.weight, pi.note))
+                self.info('updating positions for load:{}, labnumber: {}'.format(lt.name, ln))
                 scene = self.canvas.scene
                 for pp in pi.positions:
                     ip = scene.get_item(str(pp))
@@ -459,8 +589,6 @@ class LoadingManager(IsotopeDatabaseManager):
                                              weight=ip.weight,
                                              note=ip.note)
                     lt.loaded_positions.append(i)
-
-                    # sess.commit()
 
     @cached_property
     def _get_labnumbers(self):
@@ -474,21 +602,9 @@ class LoadingManager(IsotopeDatabaseManager):
                     #             self._positions = [str(li.position) for li in level.positions]
                     r = sorted([li.labnumber.identifier
                                 for li in level.positions if li.labnumber])
+                    if r:
+                        self.labnumber = r[0]
         return r
-
-    #     def _labnumber_changed(self):
-    #         print self.labnumber
-    #         level = self.db.get_irradiation_level(self.irradiation, self.level)
-    #         if level:
-    #             pos = next((pi for pi in level.positions
-    #                   if pi.labnumber.identifier == self.labnumber), None)
-    #
-    #             if pos is not None:
-    #                 self.irradiation_hole = str(pos.position)
-    #
-    #                 sample = pos.labnumber.sample
-    #                 if sample:
-    #                     self.sample = sample.name
 
     def _get_irradiation_position_record(self):
         with self.db.session_ctx():
@@ -496,7 +612,19 @@ class LoadingManager(IsotopeDatabaseManager):
                                                   self.level)
             if level:
                 return next((pi for pi in level.positions
-                             if pi.labnumber.identifier == self.labnumber), None)
+                             if pi.labnumber and pi.labnumber.identifier == self.labnumber), None)
+
+    @cached_property
+    def _get_project(self):
+        project = ''
+        if self.db.connected:
+            with self.db.session_ctx():
+                pos = self._get_irradiation_position_record()
+                try:
+                    project = pos.labnumber.sample.project.name
+                except AttributeError:
+                    pass
+        return project
 
     @cached_property
     def _get_sample(self):
@@ -504,20 +632,15 @@ class LoadingManager(IsotopeDatabaseManager):
         if self.db.connected:
             with self.db.session_ctx():
                 pos = self._get_irradiation_position_record()
-                if pos is not None:
-                    dbsample = pos.labnumber.sample
-                    sample = dbsample.name if dbsample else ''
+                try:
+                    sample = pos.labnumber.sample.name
+                except AttributeError:
+                    pass
         return sample
 
     @cached_property
     def _get_sample_info(self):
         return '{}{} {}'.format(self.level, self.irradiation_hole, self.sample)
-
-    #         pos = self._get_irradiation_position_record()
-    #         if pos is not None:
-    #             dbsample = pos.labnumber.sample
-    #             sample = dbsample.name if dbsample else ''
-    #             return '{}{} {}'.format(self.level, pos.position, sample)
 
     @cached_property
     def _get_irradiation_hole(self):
@@ -536,15 +659,6 @@ class LoadingManager(IsotopeDatabaseManager):
                  title='New Load Name',
                  buttons=['OK', 'Cancel'])
         return v
-
-    def _update_span_indicators(self):
-        canvas = self.canvas
-        canvas.clear_spans()
-        # for i,p in enumerate(self.positions[:1]):
-        for p in self.positions[:1]:
-            # for p in self.positions:
-            pos = p.positions
-            canvas.add_span_indicator(pos, self.show_spans)
 
     # ===============================================================================
     # handlers
@@ -565,7 +679,7 @@ class LoadingManager(IsotopeDatabaseManager):
         db = self.db
         with db.session_ctx():
             ln = db.get_latest_load()
-            ln = int(ln.name)
+            ln = ln.name
 
         try:
 
@@ -580,10 +694,14 @@ class LoadingManager(IsotopeDatabaseManager):
 
         if info.result:
             self.save()
+            self._refresh_loads()
 
     def _delete_button_fired(self):
         ln = self.load_name
         if ln:
+            if not self.confirmation_dialog('Are you sure you want to delete {}?'.format(ln)):
+                return
+
             with self.db.session_ctx() as sess:
                 # delete the load and any associated records
                 dbload = self.db.get_loadtable(name=ln)
@@ -595,20 +713,20 @@ class LoadingManager(IsotopeDatabaseManager):
                     sess.delete(dbload)
                     sess.commit()
 
-            self.loads = self._get_loads()
-            self.load_name = self.loads[0]
+            self._refresh_loads()
+
+
+    def _refresh_loads(self):
+        self.loads = self._get_loads()
+        self.load_name = self.loads[0]
 
     def _load_name_changed(self, new):
+        if self.suppress_update:
+            return
+
         if new:
             self.tray = ''
-            # print new
-            self.canvas = self.make_canvas(new)
-            # print self.canvas, self.canvas.scene
-            self.load_load(new)
-
-    def _show_spans_changed(self, new):
-        if self.canvas:
-            self.canvas.set_spans_visibility(new)
+            self.load_load_by_name(new)
 
     def _show_labnumbers_changed(self, new):
         if self.canvas:
@@ -637,37 +755,113 @@ class LoadingManager(IsotopeDatabaseManager):
 
             self.canvas.request_redraw()
 
+    def _cmap_name_changed(self):
+        self._set_group_colors()
+        self.canvas.request_redraw()
+        self.refresh_table = True
+
+    def _note_changed(self):
+        if self.canvas:
+            sel = self.canvas.selected
+            if sel:
+                sel.note = self.note
+                # pos = next((p for p in self.positions if int(sel.name) in p.positions))
+                # pos.note = self.note
+
+    def _weight_changed(self):
+        if self.canvas:
+            sel = self.canvas.selected
+            if sel:
+                # pos = next((p for p in self.positions if int(sel.name) in p.positions))
+                # pos.weight = self.weight
+                sel.weight = self.weight
+                sel.weight_label.text = self.weight
+
     @on_trait_change('canvas:selected')
     def _update_selected(self, new):
-        if not self.loader_name:
+        if not self.load_name:
+            self.warning_dialog('Select a load')
+            return
+
+        if not self.canvas.editable:
+            ps = self.canvas.get_selection()
+            pp = []
+            for p in ps:
+                po = next((ppp for ppp in self.positions if int(p.name) in ppp.positions))
+                pp.append(po)
+
+            self.selected_positions = pp
+            return
+
+        if not self.username:
             self.warning_dialog('Set a username')
             return
 
         if not new:
             return
 
-        if new.fill:
-            self._deselect_position(new)
+        if self.canvas.event_state in ('edit', 'info'):
+            self.note = new.note
+            self.weight = new.weight
+
         else:
-            if not self.irradiation_hole:
-                self.warning_dialog('Select a Labnumber')
+            if new.fill:
+                self._deselect_position(new)
             else:
-                for i in range(self.npositions):
-                    if not new:
-                        continue
+                if not self.labnumber:
+                    self.warning_dialog('Select a Labnumber')
+                else:
+                    for i in range(self.npositions):
+                        if not new:
+                            continue
 
-                    self._set_position(new)
-                    new = self.canvas.scene.get_item(str(int(new.name) + 1))
+                        item = self.canvas.scene.get_item(new.name)
+                        if item.fill:
+                            continue
 
-                if not self.retain_weight:
-                    self.weight = 0
-                if not self.retain_note:
-                    self.note = ''
+                        self._set_position(new)
+                        new = self.canvas.scene.get_item(str(int(new.name) + 1))
+                        self.canvas.set_last_position(int(new.name))
 
-                self._auto_increment_labnumber()
-                self._update_span_indicators()
+                    if not self.retain_weight:
+                        self.weight = 0
+                    if not self.retain_note:
+                        self.note = ''
 
+                    self._auto_increment_labnumber()
+                    # self._update_span_indicators()
+        self._set_group_colors()
         self.refresh_table = True
         self.dirty = True
+        self.canvas.request_redraw()
 
-        # ============= EOF =============================================
+    def _set_group_colors(self, canvas=None):
+        if canvas is None:
+            canvas = self.canvas
+
+        if self.use_cmap:
+            c = get_cmap(self.cmap_name)
+        else:
+            c = lambda x: (1, 1, 0, 1)
+
+        # n = len(self.positions)
+        nl = len({p.labnumber for p in self.positions})
+
+        scene = canvas.scene
+        cs = {}
+        cnt = 0
+        for i, p in enumerate(self.positions):
+            if p.labnumber in cs:
+                color = cs[p.labnumber]
+            else:
+                color = c(cnt / float(nl))
+                color = color[:-1]
+                cs[p.labnumber] = color
+                cnt += 1
+
+            p.color = color
+            for pp in p.positions:
+                pp = scene.get_item(str(pp), klass=LoadIndicator)
+                pp.fill_color = color
+
+# ============= EOF =============================================

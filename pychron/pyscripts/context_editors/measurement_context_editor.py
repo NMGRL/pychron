@@ -16,8 +16,8 @@
 
 # ============= enthought library imports =======================
 from traits.api import Int, on_trait_change, Str, Property, cached_property, \
-    Float, Bool, HasTraits, Instance, TraitError, Button, List
-from traitsui.api import View, Item, EnumEditor, VGroup, HGroup
+    Float, Bool, HasTraits, Instance, TraitError, Button, List, Enum
+from traitsui.api import View, Item, EnumEditor, VGroup, HGroup, CheckListEditor
 # ============= standard library imports ========================
 import os
 import ast
@@ -28,18 +28,20 @@ from pychron.core.helpers.filetools import list_directory2
 from pychron.core.ui.qt.combobox_editor import ComboboxEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.paths import paths
+from pychron.pychron_constants import QTEGRA_INTEGRATION_TIMES
 from pychron.pyscripts.context_editors.context_editor import ContextEditor
 from pychron.pyscripts.hops_editor import HopEditorModel, HopEditorView
 
 
 class YamlObject(HasTraits):
     name = ''
-    excludes=None
+    excludes = None
 
     def load(self, ctx):
         try:
             for k, v in ctx[self.name].items():
                 setattr(self, k, v)
+            ctx.pop(self.name)
         except (KeyError, TraitError):
             pass
 
@@ -48,11 +50,13 @@ class YamlObject(HasTraits):
             v = getattr(self, k)
             if isinstance(v, unicode):
                 v = str(v)
+            elif hasattr(v, '__iter__'):
+                v = list(v)
             return v
 
         excludes = ['trait_added', 'trait_modified', 'name']
         if self.excludes:
-            excludes+=self.excludes
+            excludes += self.excludes
 
         return {k: get(k)
                 for k in self.trait_names() if not k in excludes}
@@ -61,13 +65,15 @@ class YamlObject(HasTraits):
 class IsotopeDetectorObject(YamlObject):
     isotope = Str(enter_set=True, auto_set=False)
     detector = Str(enter_set=True, auto_set=False)
-    detectors = List
-    isotopes = List
-    excludes = ['detectors','isotopes']
+    # available_detectors = List
+    # isotopes = List
+    # excludes = ['detectors','isotopes']
+
 
 class Multicollect(IsotopeDetectorObject):
     name = 'multicollect'
     counts = Int(enter_set=True, auto_set=False)
+
 
 class Baseline(YamlObject):
     name = 'baseline'
@@ -76,12 +82,15 @@ class Baseline(YamlObject):
     counts = Int(enter_set=True, auto_set=False)
     before = Bool
     after = Bool
+    settling_time = Float(enter_set=True, auto_set=False)
 
 
 class PeakCenter(IsotopeDetectorObject):
     name = 'peakcenter'
     before = Bool
     after = Bool
+    detectors = List
+    integration_time = Enum(QTEGRA_INTEGRATION_TIMES)
 
 
 class Equilibration(YamlObject):
@@ -97,6 +106,8 @@ class PeakHop(YamlObject):
     name = 'peakhop'
     use_peak_hop = Bool
     hops_name = Str
+    ncycles = Int
+    generate_ic_table = Bool
 
 
 class MeasurementContextEditor(ContextEditor):
@@ -116,8 +127,10 @@ class MeasurementContextEditor(ContextEditor):
     edit_peakhop_button = Button
 
     valves = List
-    detectors = List
+    available_detectors = List
     isotopes = List
+
+    _octx = None
 
     # persistence
     def load(self, s):
@@ -131,7 +144,7 @@ class MeasurementContextEditor(ContextEditor):
             if s:
                 try:
                     ctx = yaml.load(s)
-                except yaml.ScannerError:
+                except yaml.YAMLError:
                     return
 
                 self.multicollect.load(ctx)
@@ -147,6 +160,7 @@ class MeasurementContextEditor(ContextEditor):
                 self.peakhop.load(ctx)
 
                 self.default_fits = ctx.get('default_fits', '')
+                self._octx = ctx
 
     def dump(self):
         ctx = dict(default_fits=self.default_fits,
@@ -155,7 +169,8 @@ class MeasurementContextEditor(ContextEditor):
                    peakcenter=self.peakcenter.dump(),
                    equilibration=self.equilibration.dump(),
                    peakhop=self.peakhop.dump())
-
+        if self._octx:
+            ctx.update(self._octx)
         return yaml.dump(ctx, default_flow_style=False)
 
     def generate_docstr(self):
@@ -207,32 +222,39 @@ class MeasurementContextEditor(ContextEditor):
     def traits_view(self):
         mc_grp = VGroup(HGroup(Item('object.multicollect.isotope',
                                     editor=ComboboxEditor(name='isotopes')),
-            Item('object.multicollect.detector',
-                 editor=ComboboxEditor(name='detectors'))),
-            Item('object.multicollect.counts'),
-            show_border=True, label='Multicollect')
+                               Item('object.multicollect.detector',
+                                    editor=ComboboxEditor(name='available_detectors'))),
+                        Item('object.multicollect.counts'),
+                        enabled_when='not object.peakhop.use_peak_hop',
+                        show_border=True, label='Multicollect')
 
         bs_grp = VGroup(HGroup(Item('object.baseline.mass'),
-                        Item('object.baseline.counts')),
+                               Item('object.baseline.detector',
+                                    editor=ComboboxEditor(name='available_detectors')),
+                               Item('object.baseline.counts')),
                         HGroup(Item('object.baseline.before'),
                                Item('object.baseline.after')),
+                        Item('object.baseline.settling_time', ),
                         show_border=True, label='Baseline')
 
         pc_grp = VGroup(
             HGroup(Item('object.peakcenter.isotope',
                         editor=ComboboxEditor(name='isotopes'),
                         label='Iso.'),
-            Item('object.peakcenter.detector',
-                 label='Det.',
-                 editor=ComboboxEditor(name='detectors'))),
+                   Item('object.peakcenter.detector',
+                        label='Det.',
+                        editor=ComboboxEditor(name='available_detectors'))),
+            Item('object.peakcenter.integration_time'),
             HGroup(Item('object.peakcenter.before'),
                    Item('object.peakcenter.after')),
+            Item('object.peakcenter.detectors', style='custom',
+                 editor=CheckListEditor(name='available_detectors', cols=len(self.available_detectors))),
             show_border=True, label='PeakCenter')
 
         eq_grp = VGroup(HGroup(Item('object.equilibration.inlet',
                                     editor=ComboboxEditor(name='valves')),
-                        Item('object.equilibration.outlet',
-                             editor=ComboboxEditor(name='valves'))),
+                               Item('object.equilibration.outlet',
+                                    editor=ComboboxEditor(name='valves'))),
                         Item('object.equilibration.inlet_delay'),
                         Item('object.equilibration.use_extraction_eqtime'),
                         Item('object.equilibration.eqtime',
@@ -240,6 +262,8 @@ class MeasurementContextEditor(ContextEditor):
                              label='Duration'),
                         show_border=True, label='Equilibration')
         ph_grp = VGroup(Item('object.peakhop.use_peak_hop'),
+                        Item('object.peakhop.ncycles'),
+                        Item('object.peakhop.generate_ic_table'),
                         HGroup(Item('object.peakhop.hops_name',
                                     label='Hops',
                                     editor=EnumEditor(name='available_hops')),
@@ -252,9 +276,9 @@ class MeasurementContextEditor(ContextEditor):
                               editor=EnumEditor(name='available_default_fits')),
                          show_border=True, label='General')
 
-        #using VFold causing crash. just use VGroup for now
+        # using VFold causing crash. just use VGroup for now
         # v = View(VFold(gen_grp, mc_grp, bs_grp, pc_grp, eq_grp, ph_grp))
-        v = View(VGroup(gen_grp, mc_grp, bs_grp, pc_grp, eq_grp, ph_grp))
+        v = View(VGroup(gen_grp, ph_grp, mc_grp, bs_grp, pc_grp, eq_grp))
         return v
 
 # ============= EOF =============================================

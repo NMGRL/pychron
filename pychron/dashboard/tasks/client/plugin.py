@@ -67,7 +67,7 @@ class DashboardClientPlugin(BaseTaskPlugin):
 
     def _preferences_panes_default(self):
         ps = [DashboardClientPreferencesPane]
-        if self.application.get_plugin('pychron.experiment'):
+        if self.application.get_plugin('pychron.experiment.plugin'):
             ps.append(ExperimentDashboardClientPreferencesPane)
         return ps
 

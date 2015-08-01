@@ -51,6 +51,8 @@ class StepHeatTableAdapter(BaseAdapter):
         ('', 'blank_column')
     ]
 
+    def get_bg_color(self, obj, trait, row, column):
+        return 'white'
 
 class StepHeatGroupTableAdapter(BaseGroupAdapter):
     pass

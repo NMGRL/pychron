@@ -193,12 +193,12 @@ class MassSpecReverter(Loggable):
                     self.debug('{} deleting {} refits'.format(isol, nf - 1))
                     # delete peak time blobs
                     for i, pt in enumerate(iso.peak_time_series[1:]):
-                        self.debug('{} A {:02n} deleting pt series {}'.format(isol, i + 1, pt.Counter))
+                        self.debug('{} A {:02d} deleting pt series {}'.format(isol, i + 1, pt.Counter))
                         sess.delete(pt)
 
                     # delete isotope results
                     for i, ir in enumerate(iso.results[1:]):
-                        self.debug('{} B {:02n} deleting results {}'.format(isol, i + 1, ir.Counter))
+                        self.debug('{} B {:02d} deleting results {}'.format(isol, i + 1, ir.Counter))
                         sess.delete(ir)
 
 

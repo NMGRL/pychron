@@ -360,8 +360,8 @@ class IsotopePDFTableWriter(BasePDFTableWriter):
     def _get_average_blanks(self):
         p = '/Users/ross/Programming/git/dissertation/data/minnabluff/average_blanks_map.yaml'
         if os.path.isfile(p):
-            with open(p, 'r') as fp:
-                yd = yaml.load(fp)
+            with open(p, 'r') as rfile:
+                yd = yaml.load(rfile)
 
             #convert to mols
             ydc = yd['CO2']

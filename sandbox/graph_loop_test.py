@@ -133,7 +133,7 @@ class Looper(HasTraits):
 
     def _iter_step(self, n, i, d):
         if i % 10 == 0:
-            print '{:03n} {}'.format(i, get_current_mem())
+            print '{:03d} {}'.format(i, get_current_mem())
 #         invoke_in_main_thread(self._graph, d, i)
         if i < n:
             t = Timer(.1, self._iter_step, args=(n, i + 1, d))
@@ -146,7 +146,7 @@ class Looper(HasTraits):
 #         g = self.graph
 
         if i % 10 == 0:
-            print '{:03n} {}'.format(i, get_current_mem())
+            print '{:03d} {}'.format(i, get_current_mem())
 #         for j in range(d):
 #             g.add_datum((i, j + i * 0.1),
 # #                         update_y_limits=True,

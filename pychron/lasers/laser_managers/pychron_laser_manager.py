@@ -15,25 +15,26 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import CInt, Str, String, on_trait_change, Button, Float, \
+from traits.api import Str, String, on_trait_change, Button, Float, \
     Property, Bool, Instance, Event, Enum, Int, Either, Range, cached_property
-import apptools.sweet_pickle as pickle
+# import apptools.sweet_pickle as pickle
 from apptools.preferences.preference_binding import bind_preference
 # ============= standard library imports ========================
+import cPickle as pickle
 import time
 import os
 from threading import Thread
 # ============= local library imports  ==========================
 from pychron.globals import globalv
-from pychron.hardware.pychron_device import PychronDevice
+from pychron.hardware.pychron_device import EthernetDeviceMixin
 from pychron.lasers.laser_managers.client import UVLaserOpticsClient, UVLaserControlsClient, \
     LaserOpticsClient, LaserControlsClient
 from pychron.lasers.laser_managers.laser_manager import BaseLaserManager
-from pychron.core.helpers.filetools import to_bool
+from pychron.core.helpers.strtools import to_bool
 from pychron.paths import paths
 
 
-class PychronLaserManager(BaseLaserManager, PychronDevice):
+class PychronLaserManager(BaseLaserManager, EthernetDeviceMixin):
     """
     A PychronLaserManager is used to control an instance of
     pychron remotely.
@@ -80,6 +81,7 @@ class PychronLaserManager(BaseLaserManager, PychronDevice):
     # def shutdown(self):
     #     if self.communicator:
     #         self.communicator.close()
+    _patterning = False
 
     def bind_preferences(self, pref_id):
         bind_preference(self, 'use_video', '{}.use_video'.format(pref_id))
@@ -99,15 +101,10 @@ class PychronLaserManager(BaseLaserManager, PychronDevice):
     #     return r
 
     def opened(self):
-        self.update_position()
-        self._opened_hook()
-
-    def update_position(self):
-
-        pos = self.get_position()
-        if pos:
-            self.trait_set(**dict(zip(('_x', '_y', '_z'), pos)))
-
+        self.debug('opened')
+        if self.update_position():
+            self._opened_hook()
+            return True
         # self.trait_set(**dict(zip(('_x', '_y', '_z'),
         #                           self.get_position())))
 
@@ -123,10 +120,14 @@ class PychronLaserManager(BaseLaserManager, PychronDevice):
             of a pickled pattern obj
         """
         if name:
-            return self._execute_pattern(name)
+            self._patterning = True
+            self._execute_pattern(name, block)
+            if block:
+                self._patterning = False
 
     def stop_pattern(self):
         self._ask('AbortPattern')
+        self._patterning = False
 
     def get_pattern_names(self):
         # get contents of local pattern_dir
@@ -226,6 +227,9 @@ class PychronLaserManager(BaseLaserManager, PychronDevice):
         self.info('ending extraction. set laser power to 0')
         self.set_laser_power(0)
 
+        if self._patterning:
+            self.stop_pattern()
+
     def extract(self, value, units=''):
         self.info('set laser output')
         return self._ask('SetLaserOutput {} {}'.format(value, units)) == 'OK'
@@ -296,14 +300,13 @@ class PychronLaserManager(BaseLaserManager, PychronDevice):
             return globalv.communication_simulation
         else:
             if self.setup_communicator():
-                self.connected = self.communicator.open()
                 self.debug('test connection. connected= {}'.format(self.connected))
             return self.connected
 
     def _opened_hook(self):
         pass
 
-    def _execute_pattern(self, pat):
+    def _execute_pattern(self, pat, block):
         self.info('executing pattern {}'.format(pat))
 
         if not pat.endswith('.lp'):
@@ -318,11 +321,11 @@ class PychronLaserManager(BaseLaserManager, PychronDevice):
         cmd = 'DoPattern {}'.format(pat)
         self._ask(cmd, verbose=False)
 
-        time.sleep(0.5)
-
-        if not self._block('IsPatterning', period=1):
-            cmd = 'AbortPattern'
-            self._ask(cmd)
+        if block:
+            time.sleep(0.5)
+            if not self._block('IsPatterning', period=1):
+                cmd = 'AbortPattern'
+                self._ask(cmd)
 
     # ===============================================================================
     # pyscript private
@@ -386,55 +389,6 @@ class PychronLaserManager(BaseLaserManager, PychronDevice):
 
         self.update_position()
         return r
-
-    def _block(self, cmd='GetDriveMoving', period=0.25, position_callback=None):
-
-        ask = self._ask
-
-        cnt = 0
-        tries = 0
-        maxtries = int(500 / float(period))  # timeout after 50 s
-        nsuccess = 2
-        self._cancel_blocking = False
-        while tries < maxtries and cnt < nsuccess:
-            if self._cancel_blocking:
-                break
-
-            time.sleep(period)
-            resp = ask(cmd)
-
-            if self.communicator.simulation:
-                resp = 'False'
-
-            if resp is not None:
-                try:
-                    if not to_bool(resp):
-                        cnt += 1
-                except (ValueError, TypeError):
-                    cnt = 0
-
-                if position_callback:
-                    if self.communicator.simulation:
-                        x, y, z = cnt / 3., cnt / 3., 0
-                        position_callback(x, y, z)
-                    else:
-                        xyz = self.get_position()
-                        if xyz:
-                            position_callback(*xyz)
-            else:
-                cnt = 0
-            tries += 1
-
-        state = cnt >= nsuccess
-        if state:
-            self.info('Block completed')
-        else:
-            if self._cancel_blocking:
-                self.info('Block failed. canceled by user')
-            else:
-                self.warning('Block failed. timeout after {}s'.format(maxtries * period))
-
-        return state
 
     # def _ask(self, cmd, **kw):
     #     # self.communicator.get_handler()
@@ -654,8 +608,8 @@ class PychronUVLaserManager(PychronLaserManager):
         p = os.path.join(paths.device_dir, 'fusions_uv', '{}.txt'.format(name))
         values = []
         if os.path.isfile(p):
-            with open(p, 'r') as fp:
-                for lin in fp:
+            with open(p, 'r') as rfile:
+                for lin in rfile:
                     lin = lin.strip()
                     if not lin or lin.startswith('#'):
                         continue

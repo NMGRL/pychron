@@ -72,8 +72,8 @@ class EasyParser(Loggable):
             # path = os.path.join(paths.dissertation, 'data', 'minnabluff', 'spectra_unknowns.yaml')
 
         if os.path.isfile(path):
-            with open(path, 'r') as fp:
-                md = yaml.load_all(fp)
+            with open(path, 'r') as rfile:
+                md = yaml.load_all(rfile)
                 self._docs = list(md)
                 self._ndocs = len(self._docs)
         else:

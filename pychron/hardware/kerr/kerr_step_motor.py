@@ -22,8 +22,9 @@ from pychron.hardware.core.data_helper import make_bitarray
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-SPEED_MODES = {'1x':'11', '2x':'10', '4x':'01', '8x':'00'}
+SPEED_MODES = {'1x': '11', '2x': '10', '4x': '01', '8x': '00'}
 from pychron.hardware.kerr.kerr_motor import KerrMotor
+
 '''
     status byte
     0 1 2 3 4 5 6 7
@@ -42,13 +43,15 @@ from pychron.hardware.kerr.kerr_motor import KerrMotor
 
 '''
 
+
 class DiscretePosition(HasTraits):
     position = Float
     value = Float
 
+
 class KerrStepMotor(KerrMotor):
-#    min = CInt
-#    max = CInt
+    #    min = CInt
+    #    max = CInt
 
     run_current = CInt
     hold_current = CInt
@@ -60,6 +63,7 @@ class KerrStepMotor(KerrMotor):
     discrete_position = Any
     discrete_positions = Dict
     home_offset = Float(0)
+
     def load_additional_args(self, config):
         super(KerrStepMotor, self).load_additional_args(config)
         for section, option in [('Parameters', 'run_current'),
@@ -75,7 +79,7 @@ class KerrStepMotor(KerrMotor):
         section = 'Discrete Positions'
         if config.has_section(section):
             off = self.config_get(config, section, 'offset', cast='int', default=0)
-#            self.set_attribute(config, 'home_offset', section, 'offset', cast='int')
+            #            self.set_attribute(config, 'home_offset', section, 'offset', cast='int')
             for i, option in enumerate(config.options(section)):
                 if option == 'offset':
                     continue
@@ -89,9 +93,9 @@ class KerrStepMotor(KerrMotor):
 
                 pos = int(pos)
                 dp = DiscretePosition(name=option, position=pos + off, value=float(v))
-#                dp = DiscretePosition(name=option, position=pos, value=float(v))
-#                self.discrete_positions[str(value + off)] = '{:02n}:{}'.format(i + 1, option)
-                self.discrete_positions[dp] = '{:02n}:{}'.format(i + 1, option)
+                #                dp = DiscretePosition(name=option, position=pos, value=float(v))
+                #                self.discrete_positions[str(value + off)] = '{:02n}:{}'.format(i + 1, option)
+                self.discrete_positions[dp] = '{:02d}:{}'.format(i + 1, option)
 
     def _get_io_bits(self):
         return ['0',  # bit 4
@@ -140,21 +144,20 @@ class KerrStepMotor(KerrMotor):
 
     def get_discrete_position(self, name):
 
-#        for di in self.discrete_positions:
-#            print di.name.lower(), name.lower(),di.name.lower()== name.lower
+        #        for di in self.discrete_positions:
+        #            print di.name.lower(), name.lower(),di.name.lower()== name.lower
         if name is not None:
             return next((di for di in self.discrete_positions if di.name.lower() == name.lower()), None)
 
-    def _initialize_(self, *args, **kw):
+    def _initialize(self, *args, **kw):
         addr = self.address
         commands = [
-                    (addr, '1706', 100, 'stop motor, turn off amp'),
-                    (addr, self._build_parameters(), 100, 'set parameters'),
-                    (addr, self._build_io(), 100, 'set io'),
-                    (addr, '1701', 100, 'turn on amp'),
-                    ]
+            (addr, '1706', 100, 'stop motor, turn off amp'),
+            (addr, self._build_parameters(), 100, 'set parameters'),
+            (addr, self._build_io(), 100, 'set io'),
+            (addr, '1701', 100, 'turn on amp'),
+        ]
         self._initialize_motor(commands, *args, **kw)
-
 
     def _assemble_options_byte(self):
         ob = []
@@ -168,30 +171,29 @@ class KerrStepMotor(KerrMotor):
 
         return ''.join(ob)
 
-
     def _build_parameters(self):
 
         cmd = '56'
         obbyte = self._assemble_options_byte()
-#        print obbyte
+        #        print obbyte
         op = (int(obbyte, 2), 2)  # '00001011'
         mps = (1, 2)
         rcl = (self.run_current, 2)
         hcl = (self.hold_current, 2)
         tl = (0, 2)
-#        print self.run_current,self.hold_current
-#        hexfmt = lambda a: '{{:0{}x}}'.format(a[1]).format(a[0])
+        #        print self.run_current,self.hold_current
+        #        hexfmt = lambda a: '{{:0{}x}}'.format(a[1]).format(a[0])
 
-#        args=self._make_hexstr([op, mps, rcl, hcl, tl])
-#        bs = [cmd ] + map(hexfmt, )
+        #        args=self._make_hexstr([op, mps, rcl, hcl, tl])
+        #        bs = [cmd ] + map(hexfmt, )
 
-#        return cmd+''.join(args)
-#        return ''.join(bs)
+        #        return cmd+''.join(args)
+        #        return ''.join(bs)
         return cmd + self._build_hexstr(op, mps, rcl, hcl, tl)
 
     def _home_motor(self, *args, **kw):
-        '''
-        '''
+        """
+        """
         progress = self.progress
         if progress is not None:
             progress = kw['progress']
@@ -203,8 +205,8 @@ class KerrStepMotor(KerrMotor):
         home_control_byte = self._load_home_control_byte()
         home_cmd = '19{:02x}'.format(home_control_byte)
 
-#        cmd = '94'
-#        control = 'F6' #'11110110'
+        #        cmd = '94'
+        #        control = 'F6' #'11110110'
 
         cmd = '34'
         control = '{:02x}'.format(int('10010110', 2))
@@ -212,16 +214,15 @@ class KerrStepMotor(KerrMotor):
         v = '{:02x}'.format(int(self.home_velocity))
         a = '{:02x}'.format(int(self.home_acceleration))
 
-#        print control, v,a
-#        v = self._float_to_hexstr(self.home_velocity)
-#        a = self._float_to_hexstr(self.home_acceleration)
+        #        print control, v,a
+        #        v = self._float_to_hexstr(self.home_velocity)
+        #        a = self._float_to_hexstr(self.home_acceleration)
         move_cmd = ''.join((cmd, control, v, a))
 
         cmds = [  # (addr,home_cmd,10,'=======Set Homing===='),
-                (addr, home_cmd, 100, 'Set homing options'),
-                (addr, move_cmd, 100, 'Send to Home')]
+                  (addr, home_cmd, 100, 'Set homing options'),
+                  (addr, move_cmd, 100, 'Send to Home')]
         self._execute_hex_commands(cmds)
-
 
         '''
             this is a hack. Because the home move is in velocity profile mode we cannot use the 0bit of the status byte to
@@ -237,14 +238,14 @@ class KerrStepMotor(KerrMotor):
         cmds = [(addr, '00', 100, 'reset position')]
 
         self._execute_hex_commands(cmds)
-#
-    def _set_motor_position_(self, pos, hysteresis=0, velocity=None, reverse=False):
-        '''
-        '''
+
+    def _set_motor_position(self, pos, hysteresis=0, velocity=None, reverse=False):
+        """
+        """
         hpos = self._calculate_hysteresis_position(pos, hysteresis)
         self._motor_position = hpos
         self._desired_position = pos
-        #============pos is in mm===========
+        # ============pos is in mm===========
         addr = self.address
         cmd = '74'
         control = self._load_trajectory_controlbyte(reverse=reverse)
@@ -253,13 +254,13 @@ class KerrStepMotor(KerrMotor):
             velocity = self.velocity
         v = '{:02x}'.format(int(velocity))
         a = '{:02x}'.format(int(self.acceleration))
-#        print self.velocity, self.acceleration
+        #        print self.velocity, self.acceleration
         cmd = ''.join((cmd, control, position, v, a))
         cmd = (addr, cmd, 100, 'setting motor steps {}'.format(hpos))
         self._execute_hex_command(cmd)
 
     def _load_trajectory_controlbyte(self, reverse=False):
-        '''
+        """
            control byte
                 7 6 5 4 3 2 1 0
             97- 1 0 0 1 0 1 1 1
@@ -273,24 +274,21 @@ class KerrStepMotor(KerrMotor):
             6=not used
             7=start motion now
 
-        '''
+        """
         cb = '10000111'
         if reverse:
             cb = cb[:4] + '1' + cb[-3:]
 
         return '{:02x}'.format(int(cb, 2))
 
-#    def _get_velocity(self):
-#        speed = self._velocity #in um/sec
-#        res = 0.5
-#        steprate = speed / res
-#        result = round(steprate / 25)
-#        result = min(max(1, result), 250)
-#        print 'calcualtes velocity', result
-#        return result
-
-
-
+    #    def _get_velocity(self):
+    #        speed = self._velocity #in um/sec
+    #        res = 0.5
+    #        steprate = speed / res
+    #        result = round(steprate / 25)
+    #        result = min(max(1, result), 250)
+    #        print 'calcualtes velocity', result
+    #        return result
 
     def _moving(self, verbose=True):
         status_byte = self.read_defined_status(verbose=verbose)
@@ -303,25 +301,20 @@ class KerrStepMotor(KerrMotor):
 
     def control_view(self):
         v = View(
-#                 Group(
-                     Item('discrete_position', show_label=False,
-                          editor=EnumEditor(name='discrete_positions'),
-                          defined_when='discrete_positions'
-                          ),
-                     Item('data_position', show_label=False,
-                             editor=RangeEditor(mode='slider',
-                                                low_name='min',
-                                                high_name='max')
-                             ),
-                     Item('update_position', show_label=False,
-                         editor=RangeEditor(mode='slider',
-                                            low_name='min',
-                                            high_name='max', enabled=False),
-                         ),
-#                       label=self.display_name,
-#                       show_border=True
-#                       )
-
-                 )
+            Item('discrete_position', show_label=False,
+                 editor=EnumEditor(name='discrete_positions'),
+                 defined_when='discrete_positions'
+                 ),
+            Item('data_position', show_label=False,
+                 editor=RangeEditor(mode='slider',
+                                    low_name='min',
+                                    high_name='max')
+                 ),
+            Item('update_position', show_label=False,
+                 editor=RangeEditor(mode='slider',
+                                    low_name='min',
+                                    high_name='max', enabled=False),
+                 ))
         return v
+
 # ============= EOF =============================================

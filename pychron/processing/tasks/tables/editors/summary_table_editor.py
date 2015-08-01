@@ -62,18 +62,18 @@ class SummaryTableEditor(BaseTableEditor, ColumnSorterMixin):
         return cs
 
     def _load_widths(self):
-        p = os.path.join(paths.hidden_dir, 'summary_col_widths')
+        p = os.path.join(paths.hidden_dir, 'summary_col_widths.p')
         if os.path.isfile(p):
-            with open(p, 'r') as fp:
+            with open(p, 'r') as rfile:
                 try:
-                    return pickle.load(fp)
+                    return pickle.load(rfile)
                 except Exception, e :
                     print 'load_widths', e
 
     def _dump_widths(self):
-        p = os.path.join(paths.hidden_dir, 'summary_col_widths')
-        with open(p, 'w') as fp:
-            pickle.dump(self.col_widths, fp)
+        p = os.path.join(paths.hidden_dir, 'summary_col_widths.p')
+        with open(p, 'w') as wfile:
+            pickle.dump(self.col_widths, wfile)
 
     def traits_view(self):
 

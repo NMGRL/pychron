@@ -166,7 +166,7 @@ class Datahub(Loggable):
             dbexp = db.add_experiment(exp.path)
 
             sess.flush()
-            exp.database_identifier = int(dbexp.id)
+            exp.database_identifier = dbexp.id
 
     def get_greatest_aliquot(self, identifier, store='main'):
         # store = getattr(self, '{}store'.format(store))

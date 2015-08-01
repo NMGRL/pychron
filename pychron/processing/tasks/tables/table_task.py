@@ -110,14 +110,14 @@ class TableTask(BaseBrowserTask):
         return [tb1, tb2]
 
 
-    def activated(self):
+    # def activated(self):
         #editor = FusionTableEditor()
         #self._open_editor(editor)
         self.load_projects()
         #self.selected_project = self.projects[1]
 
-        editor = StepHeatTableEditor()
-        self._open_editor(editor)
+        # editor = StepHeatTableEditor()
+        # self._open_editor(editor)
 
 
         # def _dclicked_sample_changed(self, new):

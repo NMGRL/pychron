@@ -19,7 +19,6 @@ from envisage.ui.tasks.preferences_category import PreferencesCategory
 from envisage.ui.tasks.preferences_dialog import PreferencesDialog as PD, PreferencesTab
 from pyface.tasks.topological_sort import before_after_sort
 from traitsui.api import View, UItem
-from traitsui.editors import TabularEditor
 from traitsui.group import HGroup
 from traits.api import on_trait_change, Property
 # ============= standard library imports ========================
@@ -44,6 +43,7 @@ ICON_MAP = {'Database': icon('database'),
             'Fusions UV': icon('laser'),
             'Fusions CO2': icon('laser'),
             'ExtractionLine': icon('motherboard'),
+            'ClientExtractionLine': icon('motherboard'),
             'Entry': icon('radioactivity'),
             'Loading': icon('caterpillar'),
             'Scripts': icon('scripts_text'),

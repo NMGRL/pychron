@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -26,4 +26,26 @@ class SaveLoadingAction(TaskAction):
     name = 'Save PDF'
     method = 'save_loading'
     image = icon('file_pdf')
+
+
+class ConfigurePDFAction(TaskAction):
+    name = 'Configure PDF'
+    method = 'configure_pdf'
+    image = icon('cog')
+
+
+class EntryAction(TaskAction):
+    name = 'Entry'
+    method = 'set_entry'
+
+
+class InfoAction(TaskAction):
+    name = 'Info'
+    method = 'set_info'
+
+
+class EditAction(TaskAction):
+    name = 'Edit'
+    method = 'set_edit'
+
 # ============= EOF =============================================

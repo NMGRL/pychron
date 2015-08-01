@@ -19,7 +19,7 @@
 # ============= local library imports  ==========================
 import os
 
-from pychron.core.helpers.filetools import to_bool
+from pychron.core.helpers.strtools import to_bool
 from pychron.envisage.initialization.initialization_parser import InitializationParser
 from pychron.envisage.initialization.nodes import Plugin, PluginTree, GlobalTree, GlobalValue, InitializationModel
 
@@ -32,6 +32,7 @@ DESCRIPTION_MAP = {'Experiment': 'Execute sets of automated runs',
                    'Processing': 'Ar/Ar Processing plugin',
                    'Entry': 'Enter/Edit irradiation data',
                    'Workspace': 'Git-enabled workspace repository',
+                   'DVC': "Pychron's custom Data Version Control system",
                    'SystemMonitor': 'Auto plot analyses and system variables',
                    'MediaServer': 'Image server/client',
                    'LabBook': 'Git-enabled labbook repository',
@@ -43,11 +44,13 @@ DESCRIPTION_MAP = {'Experiment': 'Execute sets of automated runs',
                    'Image': 'Use to take snapshots with a connected camera\n'
                             'and save to file or database',
                    'ExtractionLine': 'Control extraction line components',
+                   'ClientExtractionLine': 'Remotely control extraction line components',
                    'ArgusSpectrometer': 'Thermo ArgusVI plugin',
                    'FusionsCO2': 'Photon Machines Fusions CO2',
                    'FusionsDiode': 'Photon Machines Fusions Diode',
                    'FusionsUV': "NMGRL's custom Fusions UV",
                    'ExternalPipette': 'Interface with the APIS pipette system',
+                   'CanvasDesigner': 'Visual editor for the Extraction Line Schematic',
 
                    'Email': 'Allows pychron to send emails',
 
@@ -64,6 +67,7 @@ DEFAULT_PLUGINS = (('General', ('Experiment',
                                 'Loading',
                                 'Processing',
                                 'Database',
+                                'DVC',
                                 'Entry',
                                 'SystemMonitor',
                                 'DashboardServer',
@@ -74,9 +78,11 @@ DEFAULT_PLUGINS = (('General', ('Experiment',
                                 'MediaServer',
                                 'Update',
                                 'Video',
-                                'Image')),
+                                'Image',
+                                'CanvasDesigner')),
                    ('Hardware', ('ArgusSpectrometer',
                                  'ExtractionLine',
+                                 'ClientExtractionLine',
                                  'FusionsCO2',
                                  'FusionsDiode',
                                  'FusionsUV',
@@ -105,19 +111,19 @@ DEFAULTS_MAP = {'Ar Data Reduction': {'globals': ('Use Startup Tests',),
                             'social': None},
                 'Experiment': {'globals': ('Use Startup Tests',),
                                'general': ('Experiment', 'Database', 'ArArConstants', 'PyScript', 'Entry',),
-                               'hardware': ('ArgusSpectrometer', 'ExtractionLine'),
+                               'hardware': ('ArgusSpectrometer', 'ClientExtractionLine'),
                                'social': ('Email',)},
                 'Experiment CO2': {'globals': ('Use Startup Tests',),
                                    'general': ('Experiment', 'Database', 'ArArConstants', 'PyScript'),
-                                   'hardware': ('ArgusSpectrometer', 'ExtractionLine', 'FusionsCO2'),
+                                   'hardware': ('ArgusSpectrometer', 'ClientExtractionLine', 'FusionsCO2'),
                                    'social': ('Email',)},
                 'Experiment Diode': {'globals': ('Use Startup Tests',),
                                      'general': ('Experiment', 'Database', 'ArArConstants', 'PyScript'),
-                                     'hardware': ('ArgusSpectrometer', 'ExtractionLine', 'FusionsDiode'),
+                                     'hardware': ('ArgusSpectrometer', 'ClientExtractionLine', 'FusionsDiode'),
                                      'social': ('Email',)},
                 'Experiment UV': {'globals': ('Use Startup Tests',),
                                   'general': ('Experiment', 'Database', 'ArArConstants', 'PyScript'),
-                                  'hardware': ('ArgusSpectrometer', 'ExtractionLine', 'FusionsUV'),
+                                  'hardware': ('ArgusSpectrometer', 'ClientExtractionLine', 'FusionsUV'),
                                   'social': ('Email',)}}
 
 NOMINAL_DEFAULTS = ['Ar Data Reduction',
@@ -174,10 +180,12 @@ def get_initialization_model():
     for gi in ip.get_plugin_groups():
         tree = get_tree(gi, rtree)
         if tree:
-            for pp in ip.get_plugins(gi, element=True):
-                plugin = get_plugin(pp.text.strip(), tree)
-                if plugin:
-                    plugin.enabled = to_bool(pp.get('enabled'))
+            ps = ip.get_plugins(gi, element=True)
+            if ps:
+                for pp in ps:
+                    plugin = get_plugin(pp.text.strip(), tree)
+                    if plugin:
+                        plugin.enabled = to_bool(pp.get('enabled'))
 
     for gi in ip.get_globals():
         gv = gtree.get_value(gi.tag)

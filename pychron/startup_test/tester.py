@@ -108,8 +108,8 @@ class StartupTester(Loggable):
 
     def _load(self):
         if os.path.isfile(paths.startup_tests):
-            with open(paths.startup_tests, 'r') as fp:
-                yd = yaml.load(fp)
+            with open(paths.startup_tests, 'r') as rfile:
+                yd = yaml.load(rfile)
             return yd
         else:
             self.warning('No Startup Test file located at "{}"'.format(paths.startup_tests))

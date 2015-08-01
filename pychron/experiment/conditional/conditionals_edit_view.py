@@ -592,16 +592,16 @@ class ConditionalsEditView(ConditionalsViewable):
         self.load(path, save_as)
 
     def load(self, path, save_as):
-
-        root, name = os.path.split(path)
-        p = get_path(root, name, ('.yaml', '.yml'))
         yd = None
-        if p:
-            if not save_as:
-                self.path = p
+        if path:
+            root, name = os.path.split(path)
+            p = get_path(root, name, ('.yaml', '.yml'))
+            if p:
+                if not save_as:
+                    self.path = p
 
-            with open(p, 'r') as fp:
-                yd = yaml.load(fp)
+                with open(p, 'r') as rfile:
+                    yd = yaml.load(rfile)
 
         if 'pre_run_terminations' in self.group_names:
             grp = self._group_factory(yd, EPreRunGroup, name='pre_run_terminations',
@@ -635,10 +635,10 @@ class ConditionalsEditView(ConditionalsViewable):
 
         if path:
             self.path = path
-            with open(path, 'w') as fp:
+            with open(path, 'w') as wfile:
                 # d = {k: getattr(self, '{}_group'.format(k)).dump() for k in self.group_names}
                 d = {g.name: g.dump() for g in self.groups}
-                yaml.dump(d, fp, default_flow_style=False)
+                yaml.dump(d, wfile, default_flow_style=False)
 
     def traits_view(self):
         v = View(VGroup(self._view_tabs(),

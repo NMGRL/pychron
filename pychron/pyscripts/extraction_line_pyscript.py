@@ -22,25 +22,21 @@ import time
 import inspect
 import re
 # ============= local library imports  ==========================
-from pychron.external_pipette.apis_manager import InvalidPipetteError
 from pychron.external_pipette.protocol import IPipetteManager
 from pychron.hardware.core.exceptions import TimeoutError
 from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.pyscripts.pyscript import verbose_skip, makeRegistry
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.pyscripts.valve_pyscript import ValvePyScript
-from pychron.pychron_constants import EXTRACTION_COLOR
+from pychron.pychron_constants import EXTRACTION_COLOR, LINE_STR
 
-ELPROTOCOL = 'pychron.extraction_line.extraction_line_manager.ExtractionLineManager'
+# ELPROTOCOL = 'pychron.extraction_line.extraction_line_manager.ExtractionLineManager'
 
 COMPRE = re.compile(r'[A-Za-z]*')
 
-'''
-    make a registry to hold all the commands exposed by ExtractionPyScript
-    used when building the context
-    see PyScript.get_context and get_command_register
-    
-'''
+# make a registry to hold all the commands exposed by ExtractionPyScript
+# used when building the context
+# see PyScript.get_context and get_command_register
 command_register = makeRegistry()
 
 
@@ -91,6 +87,10 @@ class Ramper(object):
 
 
 class ExtractionPyScript(ValvePyScript):
+    """
+    The ExtractionPyScript is used to program the extraction and gettering of
+    sample gas.
+    """
     _resource_flag = None
     info_color = EXTRACTION_COLOR
     snapshots = List
@@ -102,10 +102,14 @@ class ExtractionPyScript(ValvePyScript):
 
     def get_extraction_positions(self, clear=True):
         """
-            return a list of x,y,z tuples
-            each tuple represents where the extraction occurred
-            if clear is True (default)
-            _extraction_positions set to empty list
+        Returns a list of x,y,z tuples
+        each tuple represents where the extraction occurred
+
+        if clear is True (default) ``self._extraction_positions`` set to an empty list
+
+        :return: list of x,y,z tuples
+        :rtype: list of tuples
+
         """
         ret = self._extraction_positions
         if clear:
@@ -114,12 +118,33 @@ class ExtractionPyScript(ValvePyScript):
         return ret
 
     def get_response_blob(self):
+        """
+        Get the extraction device's response blob
+
+        :return: response blob. binary string representing time v measured output
+        :rtype: str
+        """
         return self._extraction_action([('get_response_blob', (), {})])
 
     def get_output_blob(self):
+        """
+        Get the extraction device's output blob
+
+        :return: output blob: binary string representing time v requested output
+        :rtype: str
+        """
         return self._extraction_action([('get_output_blob', (), {})])
 
     def output_achieved(self):
+        """
+        Return a formated string with the extraction "heating" results::
+
+            Requested Output= 100.000
+            Achieved Output= 99.012
+
+        :return: Formatted string with results
+        :rtype: str
+        """
         request = self.extract
         ach = self._extraction_action([('get_achieved_output', (), {})])
         try:
@@ -141,7 +166,7 @@ class ExtractionPyScript(ValvePyScript):
 
     def set_default_context(self):
         """
-            provide default values for all the properties exposed in the script
+        provide default values for all the properties exposed in the script
         """
 
         self.setup_context(analysis_type='',
@@ -171,14 +196,26 @@ class ExtractionPyScript(ValvePyScript):
     def waitfor(self, func_or_tuple, start_message='', end_message='',
                 check_period=1, timeout=0):
         """
-            func_or_tuple: callable or a tuple
 
-            tuple format: (device_name, get_..., comparison)
-                comparison: x<10
-                          : 10<x<20
+        tuple format: (device_name, function_name, comparison)
+        comparison ::
 
-            callable can of form func() or func(ti) or func(ti, i)
-            where ti is the current relative time (relative to start of waitfor) and i is a counter
+          x<10
+          10<x<20
+
+        callable can of form ``func() or func(ti) or func(ti, i)``
+        where ``ti`` is the current relative time (relative to start of waitfor) and ``i`` is a counter
+
+        :param func_or_tuple: wait for function to return True
+        :type func_or_tuple: callable, tuple
+        :param start_message: Message to display at start
+        :type start_message: str
+        :param end_message: Message to display at end
+        :type end_message: str
+        :param check_period: Delay between checks in seconds
+        :type check_period: int, float
+        :param timeout: Cancel waiting after ``timeout`` seconds
+        :type timeout: int, float
         """
         include_time = False
         include_time_and_count = False
@@ -381,6 +418,7 @@ class ExtractionPyScript(ValvePyScript):
             it is the ExtractionPyScripts responsiblity to handle the waiting.
             use the waitfor command to wait for signals from apis.
         """
+        from pychron.external_pipette.apis_manager import InvalidPipetteError
         cmd = 'load_blank_non_blocking' if self.analysis_type == 'blank' else 'load_pipette_non_blocking'
         try:
             #bug _manager_action only with except tuple of len 1 for args
@@ -404,6 +442,7 @@ class ExtractionPyScript(ValvePyScript):
             this is an atomic command. use the apis_controller config file to define
             the isolation procedures.
         """
+        from pychron.external_pipette.apis_manager import InvalidPipetteError
         if identifier == '':
             identifier = self.extract_value
 
@@ -433,11 +472,11 @@ class ExtractionPyScript(ValvePyScript):
         ed = self.extract_device
         ed = ed.replace('_', ' ')
 
-        #get current position and add as an extraction position
+        # get current position and add as an extraction position
         pos = self._extraction_action([('get_position', (), {})])
         self._extraction_positions.append(pos)
 
-        #set an experiment message
+        # set an experiment message
         if self.manager:
             self.manager.set_extract_state('{} ON! {}({})'.format(ed, power, units), color='red')
 
@@ -488,18 +527,17 @@ class ExtractionPyScript(ValvePyScript):
             if r.isSet():
                 self.console_info('waiting for access')
 
-        if r.isSet():
-            if self.manager:
-                self.manager.set_extract_state('Waiting for Resource Access. "{}"'.format(name), color='red')
+                if self.manager:
+                    self.manager.set_extract_state('Waiting for Resource Access. "{}"'.format(name), color='red')
 
-            while r.isSet():
-                if self._cancel:
-                    break
-                self._sleep(1)
+                while r.isSet():
+                    if self._cancel:
+                        break
+                    self._sleep(1)
 
-                if not self.runner.reset_connection():
-                    self.cancel()
-                    break
+                    if not self.runner.reset_connection():
+                        self.cancel()
+                        break
 
         if not self._cancel:
             self._resource_flag = r
@@ -705,6 +743,9 @@ class ExtractionPyScript(ValvePyScript):
             kw['name'] = self.extract_device
 
         kw['name'] = kw.get('name', self.extract_device) or self.extract_device
+        if kw['name'] in ('Extract Device', LINE_STR):
+            return
+
         # if not 'protocol' in kw:
         #     kw['protocol'] = ILaserManager
         kw['protocol']=kw.get('protocol', ILaserManager) or ILaserManager

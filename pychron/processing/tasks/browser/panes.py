@@ -27,7 +27,8 @@ from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.browser.adapters import BrowserAdapter, LabnumberAdapter
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.processing.tasks.browser.sample_view import BrowserSampleView
-from pychron.processing.tasks.browser.query_view import BrowserQueryView
+# from pychron.processing.tasks.browser.query_view import BrowserQueryView
+from pychron.processing.tasks.browser.time_view import TimeViewModel
 
 
 class AnalysisGroupAdapter(BrowserAdapter):
@@ -40,49 +41,6 @@ class AnalysisGroupAdapter(BrowserAdapter):
                ('Modified', 'last_modified')]
 
 
-class AnalysisAdapter(BrowserAdapter):
-    all_columns = [('Run ID', 'record_id'),
-                   ('Tag', 'tag'),
-                   ('Iso Fits', 'iso_fit_status'),
-                   ('Blank', 'blank_fit_status'),
-                   ('IC', 'ic_fit_status'),
-                   ('Flux', 'flux_fit_status'),
-                   ('Spec.', 'mass_spectrometer'),
-                   ('Meas.', 'meas_script_name'),
-                   ('Ext.', 'extract_script_name'),
-                   ('EVal.', 'extract_value'),
-                   ('Cleanup', 'cleanup'),
-                   ('Dur', 'duration'),
-                   ('Device', 'extract_device')]
-
-    columns = [('Run ID', 'record_id'),
-               ('Tag', 'tag')]
-
-    record_id_width = Int(100)
-    tag_width = Int(65)
-    odd_bg_color = 'lightgray'
-    font = 'arial 10'
-
-    def get_menu(self, obj, trait, row, column):
-        e = obj.append_replace_enabled
-        actions = [Action(name='Configure', action='configure_analysis_table'),
-                   Action(name='Unselect', action='unselect_analyses'),
-                   Action(name='Replace', action='replace_items', enabled=e),
-                   Action(name='Append', action='append_items', enabled=e),
-                   Action(name='Open', action='recall_items'),
-                   Action(name='Open Copy', action='recall_copies'),
-                   Action(name='Find References', action='find_refs')]
-
-        return MenuManager(*actions)
-
-    def get_bg_color(self, obj, trait, row, column=0):
-        color = 'white'
-        if self.item.is_plateau_step:
-            color = 'lightgreen'
-
-        return color
-
-
 class BrowserPane(TraitsDockPane):
     name = 'Browser'
     id = 'pychron.browser'
@@ -90,19 +48,23 @@ class BrowserPane(TraitsDockPane):
     analyses_defined = Str('1')
 
     labnumber_tabular_adapter = Instance(LabnumberAdapter, ())
-    analysis_tabular_adapter = Instance(AnalysisAdapter, ())
+    # analysis_tabular_adapter = Instance(AnalysisAdapter, ())
     analysis_group_tabular_adapter = Instance(AnalysisGroupAdapter, ())
 
     sample_view = Instance(BrowserSampleView)
-    query_view = Instance(BrowserQueryView)
+    # query_view = Instance(BrowserQueryView)
+    time_view = Instance(TimeViewModel)
 
     def _get_browser_group(self):
         grp = Group(UItem('pane.sample_view',
                           style='custom',
                           visible_when='sample_view_active'),
+                    UItem('time_view_model',
+                          style='custom',
+                          visible_when='not sample_view_active')
                     # UItem('pane.query_view',
                     # style='custom',
-                    #       visible_when='not sample_view_active')
+                    # visible_when='not sample_view_active')
         )
         return grp
 
@@ -121,9 +83,9 @@ class BrowserPane(TraitsDockPane):
                                        'chart_curve_go',
                                        # enabled_when='samples',
                                        tooltip='Filter analyses graphically'),
-                    # icon_button_editor('toggle_view',
-                    # 'arrow_switch',
-                    #                    tooltip='Toggle between Sample and Time views'),
+                    icon_button_editor('toggle_view',
+                                       'arrow_switch',
+                                       tooltip='Toggle between Sample and Time views'),
                     spring,
                     UItem('use_focus_switching',
                           tooltip='Show/Hide Filters on demand'),
@@ -133,7 +95,7 @@ class BrowserPane(TraitsDockPane):
                                        enabled_when='use_focus_switching',
                                        tooltip='Toggle Filter and Result focus'),
                     spring,
-                    UItem('current_task_name'),
+                    # UItem('current_task_name', style='readonly'),
                     CustomLabel('datasource_url', color='maroon'),
                 ),
                 main_grp),
@@ -146,7 +108,7 @@ class BrowserPane(TraitsDockPane):
     def _sample_view_default(self):
         return BrowserSampleView(model=self.model, pane=self)
 
-    def _query_view_default(self):
-        return BrowserQueryView(model=self.model.data_selector, pane=self)
+        # def _query_view_default(self):
+        # return BrowserQueryView(model=self.model.data_selector, pane=self)
 
 # ============= EOF =============================================

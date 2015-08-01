@@ -25,24 +25,15 @@ from pyface.tasks.action.task_action import TaskAction
 
 from pychron.envisage.resources import icon
 
-
-# sample change actions
-class IsolateChamberAction(TaskAction):
-    name = 'Isolate Chamber'
-    method = 'isolate_chamber'
-    image = icon('arrow_in')
+class AutoReloadAction(TaskAction):
+    name = 'Auto Reload'
+    method = 'enable_auto_reload'
 
 
-class EvacuateChamberAction(TaskAction):
-    name = 'Evacuate Chamber'
-    method = 'evacuate_chamber'
+class SampleLoadingAction(TaskAction):
+    name = 'Load Samples'
+    method = 'do_sample_loading'
     image = icon('arrow_out')
-
-
-class FinishChamberChangeAction(TaskAction):
-    name = 'Finish'
-    method = 'finish_chamber_change'
-    image = icon('tick')
 
 
 class ExtractionLineAction(Action):

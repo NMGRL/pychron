@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from pyface.action.menu_manager import MenuManager
-from traits.api import Int, Property
+from traits.api import Int, Property, List
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 from uncertainties import nominal_value, std_dev
@@ -25,15 +25,13 @@ from pychron.core.helpers.color_generators import colornames
 from pychron.core.helpers.formatting import floatfmt
 from pychron.database.records.isotope_record import IsotopeRecordView
 
-
-
-
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
+
 class UnknownsAdapter(TabularAdapter):
     columns = [('Run ID', 'record_id'),
+               # ('Class','klass'),
                ('Sample', 'sample'),
                ('Age', 'age'),
                (u'\u00b11\u03c3', 'error'),
@@ -52,7 +50,12 @@ class UnknownsAdapter(TabularAdapter):
     #     tag_text_color = Property
     age_text = Property
     error_text = Property
-    def get_menu( self, object, trait, row, column ):
+    colors = List(colornames)
+    # klass_text = Property
+    # def _get_klass_text(self):
+    #     return self.item.__class__.__name__.split('.')[-1]
+
+    def get_menu(self, object, trait, row, column):
         return MenuManager(Action(name='Group Selected', action='group_by_selected'),
                            Action(name='Group by Labnumber', action='group_by_labnumber'),
                            Action(name='Group by Aliquot', action='group_by_aliquot'),
@@ -65,12 +68,12 @@ class UnknownsAdapter(TabularAdapter):
             if self.item.tag == 'invalid':
                 c = '#C9C5C5'
             elif self.item.is_omitted():
-            #elif self.item.temp_status != 0:#and not self.item.tag:
                 c = '#FAC0C0'
         return c
 
     def _get_age_text(self):
         r = ''
+        # print self.item,not isinstance(self.item, IsotopeRecordView)
         if not isinstance(self.item, IsotopeRecordView):
             r = floatfmt(nominal_value(self.item.uage), n=3)
         return r
@@ -82,36 +85,22 @@ class UnknownsAdapter(TabularAdapter):
         return r
 
     def get_text_color(self, obj, trait, row, column=0):
-        n = len(colornames)
+        # n = len(colornames)
+        colors = self.colors
+        n = len(colors)
         gid = obj.items[row].group_id
-        cid = gid % n
 
-        return colornames[cid]
+        cid = gid % n if n else 0
+        try:
+            return colors[cid]
+        except IndexError:
+            return 'black'
+        # return colornames[cid]
 
-#     def _get_record_id_text_color(self):
-# #         print self.item.group_id
-#         return colornames[self.item.group_id]
-#
-#     def _get_tag_text_color(self):
-# #         print self.item.group_id
-#         return colornames[self.item.group_id]
-#
-#     def _get_sample_text_color(self):
-#         return colornames[self.item.group_id]
-#
-#     def _get_error_text_color(self):
-#         return colornames[self.item.group_id]
-#
-#     def _get_age_text_color(self):
-#         return colornames[self.item.group_id]
-
-#    record_id_width = Int(50)
 
 class ReferencesAdapter(TabularAdapter):
     columns = [
         ('Run ID', 'record_id'), ]
     font = 'arial 10'
 
-#     font = 'modern 10'
-#    record_id_width = Int(50)
 # ============= EOF =============================================

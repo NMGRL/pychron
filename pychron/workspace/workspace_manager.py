@@ -50,26 +50,26 @@ class Manifest(object):
         return os.path.join(p, '.MANIFEST')
 
     def add(self, name):
-        with open(self.path, 'r') as fp:
-            exists = next((line for line in fileiter(fp, strip=True)
+        with open(self.path, 'r') as rfile:
+            exists = next((line for line in fileiter(rfile, strip=True)
                            if line == name), None)
 
         if not exists:
-            with open(self.path, 'a') as fp:
-                fp.write('{}\n'.format(name))
+            with open(self.path, 'a') as wfile:
+                wfile.write('{}\n'.format(name))
 
     def remove(self, name):
-        with open(self.path, 'w') as fp:
+        with open(self.path, 'w') as wfile:
             for line in fileiter(self.path, strip=True):
                 if line == name:
                     continue
                 else:
-                    fp.write('{}\n'.format(line))
+                    wfile.write('{}\n'.format(line))
 
     @property
     def names(self):
-        with open(self.path, 'r') as fp:
-            return list(fileiter(fp, strip=True))
+        with open(self.path, 'r') as rfile:
+            return list(fileiter(rfile, strip=True))
 
 
 class WorkspaceManager(GitRepoManager):
@@ -226,8 +226,8 @@ class WorkspaceManager(GitRepoManager):
         index.commit(message)
 
     def _load_file_text(self, new):
-        with open(new, 'r') as fp:
-            self.selected_text = fp.read()
+        with open(new, 'r') as rfile:
+            self.selected_text = rfile.read()
 
     def _calculate_diff_dict(self, left, right):
         left = self.get_commit(left.hexsha)

@@ -60,8 +60,8 @@ class UVAutomatedRunFactory(AutomatedRunFactory):
         p = os.path.join(paths.device_dir, 'fusions_uv', 'mask_names.txt')
         masks = []
         if os.path.isfile(p):
-            with open(p, 'r') as fp:
-                for lin in fp:
+            with open(p, 'r') as rfile:
+                for lin in rfile:
                     lin = lin.strip()
                     if not lin or lin.startswith('#'):
                         continue

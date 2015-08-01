@@ -17,8 +17,6 @@ from pychron.core.ui import set_qt
 
 set_qt()
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Button
-from traitsui.api import View, Item
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.logger_setup import logging_setup
@@ -26,6 +24,8 @@ from pychron.hardware.core.core_device import CoreDevice
 
 
 class TempHumMicroServer(CoreDevice):
+    scan_func = 'read_temperature'
+
     def read_temperature(self, **kw):
         v = self.ask('*SRTF', **kw)
         return self._parse_response(v)

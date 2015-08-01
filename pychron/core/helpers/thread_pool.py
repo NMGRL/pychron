@@ -35,7 +35,7 @@ class Worker(Thread):
             try:
                 func(*args, **kargs)
             except Exception, e:
-                print e
+                print 'exception', e
             finally:
                 self.tasks.task_done()
 

@@ -15,9 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
+
 from traits.api import Instance
+
 # ============= standard library imports ========================
-from datetime import datetime
 import hashlib
 import time
 # ============= local library imports  ==========================
@@ -28,6 +30,9 @@ from pychron.pychron_constants import SCRIPT_NAMES
 
 
 class LabspyClient(Loggable):
+    """
+    Used to add experiments and runs to the database. Used in conjunction with ExperimentPlugin
+    """
     # db = Property
     db = Instance(LabspyDatabaseAdapter)
 
@@ -84,6 +89,7 @@ class LabspyClient(Loggable):
                 self.db.add_measurement(dev, tag, val, unit)
         else:
             self.warning('not connected to db {}'.format(self.db.url))
+            self.db.connect()
 
     # @cached_property
     # def _get_db(self):
@@ -123,67 +129,72 @@ class LabspyClient(Loggable):
 # ================= testing =========================
 
 if __name__ == '__main__':
-    from random import random, choice, randint
+    from random import random
+    from pychron.paths import paths
 
-    def add_runs(c, e):
-        class Spec():
-            def __init__(self, record_id):
-                self.runid = record_id
-                # self.mass_spectrometer = 'jan'
-                # self.extract_device = 'LF'
-                self.analysis_timestamp = datetime.now()
-                self.state = choice(['Finished', 'Canceled', 'Failed'])
-                self.analysis_type = "unknown"
-                self.sample = "FC-2"
-                self.extract_value = random() * 2
-                self.extract_units = 'watts'
-                self.duration = randint(100, 200)
-                self.cleanup = randint(100, 200)
-                self.position = randint(0, 100)
-                self.comment = "Test comment"
-                self.material = "sanidine"
-                self.project = "Monitor"
-                self.measurement_script = 'unknown400_180'
-                self.extraction_script = 'sniffair_x1'
-                self.post_measurement_script = 'pump_spectrometer'
-                self.post_equilibration_script = 'pump_extraction_line'
+    paths.build('_dev')
 
-        class Run():
-            def __init__(self, *args, **kw):
-                self.spec = Spec(*args, **kw)
 
-        for i in range(6):
-            c.add_run(Run('20016-{:02n}'.format(i + 1)), e)
-
-    def add_experiment(c):
-        class Exp():
-            def __init__(self, name, user, status):
-                self.name = name
-                self.username = user
-                spec = choice(('Jan','Obama'))
-                self.spectrometer = spec
-                self.mass_spectrometer = spec
-                self.extract_device = choice(('Fusions CO2', 'Fusions Diode'))
-                self.status = status
-                self.starttime = datetime.now()
-
-        e = Exp('Current Experiment', 'foobar', 'Running')
-        c.add_experiment(e)
-        return e
-
-    def update_status(c):
-        c.update_status(Error='Error big time')
-        c.update_status(Message='This is a long message', ShortMessage='This is a short message')
+    # def add_runs(c, e):
+    #     class Spec():
+    #         def __init__(self, record_id):
+    #             self.runid = record_id
+    #             # self.mass_spectrometer = 'jan'
+    #             # self.extract_device = 'LF'
+    #             self.analysis_timestamp = datetime.now()
+    #             self.state = choice(['Finished', 'Canceled', 'Failed'])
+    #             self.analysis_type = "unknown"
+    #             self.sample = "FC-2"
+    #             self.extract_value = random() * 2
+    #             self.extract_units = 'watts'
+    #             self.duration = randint(100, 200)
+    #             self.cleanup = randint(100, 200)
+    #             self.position = randint(0, 100)
+    #             self.comment = "Test comment"
+    #             self.material = "sanidine"
+    #             self.project = "Monitor"
+    #             self.measurement_script = 'unknown400_180'
+    #             self.extraction_script = 'sniffair_x1'
+    #             self.post_measurement_script = 'pump_spectrometer'
+    #             self.post_equilibration_script = 'pump_extraction_line'
+    #
+    #     class Run():
+    #         def __init__(self, *args, **kw):
+    #             self.spec = Spec(*args, **kw)
+    #
+    #     for i in range(6):
+    #         c.add_run(Run('20016-{:02d}'.format(i + 1)), e)
+    #
+    # def add_experiment(c):
+    #     class Exp():
+    #         def __init__(self, name, user, status):
+    #             self.name = name
+    #             self.username = user
+    #             spec = choice(('Jan','Obama'))
+    #             self.spectrometer = spec
+    #             self.mass_spectrometer = spec
+    #             self.extract_device = choice(('Fusions CO2', 'Fusions Diode'))
+    #             self.status = status
+    #             self.starttime = datetime.now()
+    #
+    #     e = Exp('Current Experiment', 'foobar', 'Running')
+    #     c.add_experiment(e)
+    #     return e
+    #
+    # def update_status(c):
+    #     c.update_status(Error='Error big time')
+    #     c.update_status(Message='This is a long message', ShortMessage='This is a short message')
 
     def add_measurements(c):
-        for i in range(10):
+        for i in range(100):
             c.add_measurement('AirPressure', 'pneumatics', random(), 'PSI')
             c.add_measurement('Environmental', 'temperature', random() * 2 + 70, 'C')
             c.add_measurement('Environmental', 'humidity', random() * 5 + 50, '%')
 
-            time.sleep(0.25)
+            time.sleep(1)
 
-    logging_setup('labspyclient')
+
+    logging_setup('labspyclient', use_archiver=False)
     # c = LabspyClient(bind=False, host='129.138.12.138', port=27017)
     # c = MeteorLabspyClient(bind=False, host='localhost', port=3001)
     # # update_state(c)
@@ -192,21 +203,17 @@ if __name__ == '__main__':
     # time.sleep(1)
 
     clt = LabspyClient(bind=False)
-    clt.db.host = '129.138.12.160'
-    clt.db.username = 'root'
-    clt.db.password = 'DBArgon'
+    clt.db.host = 'localhost'
+    clt.db.username = os.environ.get('DB_USER')
+    clt.db.password = os.environ.get('DB_PWD')
     clt.db.name = 'labspy'
-    # clt.db.host = 'localhost'
-    # clt.db.username = 'root'
-    # clt.db.password = 'Argon'
-    # clt.db.name = 'argonlab'
     clt.test_connection()
 
     # set status
-    update_status(clt)
+    # update_status(clt)
 
     # measurements
-    # add_measurements(clt)
+    add_measurements(clt)
 
     # experiments/runs
     # exp = add_experiment(clt)

@@ -1,0 +1,5 @@
+uncertainties
+PyMySQL
+pint
+GitPython
+pyserial

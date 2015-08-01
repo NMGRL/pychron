@@ -52,8 +52,8 @@ class IrradiationTableWriter(IsotopeDatabaseManager):
     def make(self):
         root = os.path.join(paths.dissertation, 'data', 'minnabluff', 'irradiations')
         p = os.path.join(root, 'irradiations.yaml')
-        with open(p, 'r') as fp:
-            yd = yaml.load(fp)
+        with open(p, 'r') as rfile:
+            yd = yaml.load(rfile)
 
         db = self.db
         irrads = []

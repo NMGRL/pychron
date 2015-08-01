@@ -571,7 +571,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
     #             #            nx = hstack((nx, nnx))
     #             #            ny = hstack((ny, nny))
     #             #            exc_xs += exc_i
-    #             #        print exc_xs
+        # #        print 'exception', exc_xs
     #             #        return nx, ny, exc_xs
     #         except:
     #             exc_xs = []

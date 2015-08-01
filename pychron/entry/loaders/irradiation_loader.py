@@ -21,7 +21,7 @@ import os
 from xlrd.sheet import ctype_text
 
 # ============= local library imports  ==========================
-from pychron.core.helpers.filetools import to_bool
+from pychron.core.helpers.strtools import to_bool
 from pychron.loggable import Loggable
 from pychron.managers.data_managers.xls_data_manager import XLSDataManager
 
@@ -88,7 +88,7 @@ class XLSIrradiationLoader(Loggable):
                 self._load_irradiation_from_file(p, dry_run)
                 return True
         except BaseException, e:
-            print e
+            print 'exception', e
 
     def identifier_generator(self):
         """

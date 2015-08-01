@@ -41,8 +41,8 @@ class DiscrimintationTask(InterpolationTask):
                 prev = v, e
 
     def _load_discrimination_from_file(self, p):
-        with open(p, 'r') as fp:
-            reader = csv.reader(fp)
+        with open(p, 'r') as rfile:
+            reader = csv.reader(rfile)
             discs = []
             header = reader.next()
             detidx = header.index('DetectorTypeID')
@@ -108,7 +108,7 @@ class DiscrimintationTask(InterpolationTask):
             if disc_from_file:
                 disc, disc_err = self._get_discrimination_from_file(ai)
 
-            rid = '{}-{:02n}{}'.format(ai.labnumber.identifier, ai.aliquot, ai.step)
+            rid = '{}-{:02d}{}'.format(ai.labnumber.identifier, ai.aliquot, ai.step)
             msg = 'Setting discrimination={} +/-{} detector={} analysis={}'.format(disc, disc_err,
                                                                                    det, rid)
             self.debug(msg)

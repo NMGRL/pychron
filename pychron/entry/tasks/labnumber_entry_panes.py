@@ -16,20 +16,53 @@
 
 # ============= enthought library imports =======================
 from enable.component_editor import ComponentEditor
-from traits.api import Instance
-from traitsui.api import View, Item, TabularEditor, VGroup, spring, HGroup, \
-    EnumEditor, UItem, Label, VSplit, InstanceEditor
+from traits.api import Instance, Int
+from traitsui.api import View, Item, TabularEditor, VGroup, HGroup, \
+    EnumEditor, UItem, Label, VSplit, TextEditor
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.core.ui.custom_label_editor import CustomLabel
+from traitsui.tabular_adapter import TabularAdapter
+from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.core.ui.qt.tabular_editors import FilterTabularEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.pane_helpers import spacer
 from pychron.entry.irradiated_position import IrradiatedPositionAdapter
-from pychron.envisage.browser.adapters import ProjectAdapter, LabnumberAdapter, SampleAdapter
+from pychron.envisage.browser.adapters import ProjectAdapter, SampleAdapter
 from pychron.pychron_constants import PLUSMINUS_SIGMA
+
+
+class LevelInfoPane(TraitsDockPane):
+    id = 'pychron.entry.level'
+    name = 'Level'
+
+    def traits_view(self):
+        v = View(Item('level_production_name', label='Production', style='readonly'),
+                 Item('irradiation_tray', label='Irradiation Tray', style='readonly'),
+                 VGroup(UItem('level_note', style='custom', editor=TextEditor(read_only=True)),
+                        show_border=True, label='Note'))
+        return v
+
+
+class ChronologyAdapter(TabularAdapter):
+    columns = [('Start', 'start'), ('End', 'end')]
+    start_width = Int(150)
+    end_width = Int(150)
+
+
+class ChronologyPane(TraitsDockPane):
+    id = 'pychron.entry.chronology'
+    name = 'Chronology'
+
+    def traits_view(self):
+        v = View(VGroup(VGroup(Item('estimated_j_value',
+                                    style='readonly',
+                                    label='Est. J')),
+                        VGroup(UItem('chronology_items',
+                                     editor=TabularEditor(editable=False,
+                                                          adapter=ChronologyAdapter())))))
+        return v
 
 
 class IrradiationEditorPane(TraitsDockPane):
@@ -39,15 +72,15 @@ class IrradiationEditorPane(TraitsDockPane):
 
     def traits_view(self):
         tgrp = HGroup(VGroup(icon_button_editor('add_project_button', 'database_add',
-                                         tooltip='Add project'),
+                                                tooltip='Add project'),
                              show_border=True,
                              label='Project'),
                       VGroup(icon_button_editor('add_material_button', 'database_add',
-                                         tooltip='Add material'),
+                                                tooltip='Add material'),
                              show_border=True,
                              label='Material'),
                       VGroup(icon_button_editor('add_sample_button', 'database_add',
-                                         tooltip='Add sample'),
+                                                tooltip='Add sample'),
                              show_border=True,
                              label='Sample'),
                       icon_button_editor('generate_identifiers_button',
@@ -72,10 +105,8 @@ class IrradiationEditorPane(TraitsDockPane):
                 UItem('sample_filter_parameter',
                       editor=EnumEditor(name='sample_filter_parameters')),
                 UItem('sample_filter',
+                      editor=ComboboxEditor(name='sample_filter_values'),
                       width=75),
-                UItem('sample_filter',
-                      editor=EnumEditor(name='sample_filter_values'),
-                      width=-25),
                 icon_button_editor('edit_sample_button', 'database_edit',
                                    tooltip='Edit sample in database'),
                 icon_button_editor('add_sample_button', 'database_add',
@@ -126,8 +157,8 @@ class IrradiationCanvasPane(TraitsDockPane):
     id = 'pychron.entry.irradiation_canvas'
 
     def traits_view(self):
-        v = View(UItem('canvas',
-                       editor=ComponentEditor()))
+        v = View(VGroup(HGroup(Item('irradiation_tray', style='readonly')),
+                        UItem('canvas', editor=ComponentEditor())))
         return v
 
 
@@ -160,8 +191,7 @@ class IrradiationPane(TraitsDockPane):
             icon_button_editor('add_level_button', 'database_add',
                                tooltip='Add level'))
 
-        conn = HGroup(spring, CustomLabel('datasource_url', color='maroon'), spring)
-        v = View(VGroup(conn, irrad, level))
+        v = View(VGroup(irrad, level))
         return v
 
 # ============= EOF =============================================

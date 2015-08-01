@@ -112,12 +112,12 @@ class MFTableHistory(HasTraits):
             self._load_items()
 
     def _checkout_button_fired(self):
-        with open(self.checkout_path, 'w') as fp:
+        with open(self.checkout_path, 'w') as wfile:
             hs = [hi[1] for hi in self.selected_adapter.columns]
             h = ','.join(hs)
-            fp.write('{}\n'.format(h))
+            wfile.write('{}\n'.format(h))
             for r in self.selected_table:
-                fp.write('{}\n'.format(','.join([getattr(r, hi) for hi in hs])))
+                wfile.write('{}\n'.format(','.join([getattr(r, hi) for hi in hs])))
 
 
 class MFTableHistoryView(Controller):

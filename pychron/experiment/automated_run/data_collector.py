@@ -28,10 +28,13 @@ from pychron.experiment.utilities.conditionals_results import check_conditional_
 from pychron.globals import globalv
 from pychron.consumer_mixin import consumable
 # from pychron.core.codetools.memory_usage import mem_log
-from pychron.core.ui.gui import invoke_in_main_thread
 
 
 class DataCollector(Consoleable):
+    """
+    Base class for ``Collector`` objects. Provides logic for iterative measurement.
+    """
+
     measurement_script = Any
     # plot_panel = Any
     # arar_age = Any
@@ -63,7 +66,7 @@ class DataCollector(Consoleable):
     _warned_no_fit = None
     _warned_no_det = None
 
-    collection_kind = Enum(('sniff', 'signal', 'baseline'))
+    collection_kind = Enum(('sniff', 'signal', 'baseline','whiff'))
     refresh_age = False
     _data = None
     _temp_conds = None
@@ -120,9 +123,8 @@ class DataCollector(Consoleable):
         tt = time.time() - st
         self.debug('estimated time: {:0.3f} actual time: :{:0.3f}'.format(et, tt))
 
-
     def plot_data(self, *args, **kw):
-
+        from pychron.core.ui.gui import invoke_in_main_thread
         invoke_in_main_thread(self._plot_data, *args, **kw)
 
     def set_temporary_conditionals(self, cd):
@@ -274,7 +276,7 @@ class DataCollector(Consoleable):
             if is_baseline than use detector to get isotope
         """
 
-        #get fit and name
+        # get fit and name
         fit, name = self._get_fit(cnt, det, iso)
         # print fit, name, det, iso
         graph = self.plot_panel.isotope_graph
@@ -313,6 +315,7 @@ class DataCollector(Consoleable):
     def _check_conditionals(self, conditionals, cnt):
         for ti in conditionals:
             if ti.check(self.automated_run, self._data, cnt):
+                self.info('Conditional tripped: {}'.format(ti.to_string()))
                 return ti
 
     def _check_iteration(self, evt, i):

@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,7 +18,7 @@
 
 from chaco.scales.time_scale import CalendarScaleSystem
 from chaco.scales_tick_generator import ScalesTickGenerator
-from traits.api import Instance, Any, Bool, \
+from traits.api import Instance, Bool, \
     List, Str, Property, Dict, Callable, Event
 from traitsui.api import View, Item
 from enable.component_editor import ComponentEditor
@@ -58,10 +58,10 @@ from chaco.array_data_source import ArrayDataSource
 
 # from chaco.tools.pan_tool import PanTool
 VALID_FONTS = [
-    #                'Helvetica',
+    # 'Helvetica',
     'Arial',
     'Lucida Grande',
-    #               'Times New Roman',
+    # 'Times New Roman',
     'Geneva',
     'Courier'
 
@@ -87,8 +87,8 @@ def fmt(data):
 
 
 # class GraphHandler(Handler):
-#    def init(self, info):
-#        info.object.ui = info.ui
+# def init(self, info):
+# info.object.ui = info.ui
 #
 #    def closed(self, info, isok):
 #        info.object.closed()
@@ -102,7 +102,7 @@ class Graph(Viewable, ContextMenuMixin):
     container_dict = Dict
     plots = List(Plot)
 
-    selected_plotid = Property
+    selected_plotid = Property(depends_on='selected_plot')
     selected_plot = Instance(Plot)
     window_title = ''
     window_width = 600
@@ -113,18 +113,10 @@ class Graph(Viewable, ContextMenuMixin):
     width = 300
     height = 300
     resizable = True
-    # crosshairs_enabled = False
     # editor_enabled = True
 
     line_inspectors_write_metadata = False
     add_context_menu = Bool(True)
-
-    plot_editor = Any
-
-    # plot_editor_klass = PlotEditor
-
-    graph_editor = Any
-    autoupdate = Bool(False)
 
     _title = Str
     _title_font = None
@@ -132,16 +124,9 @@ class Graph(Viewable, ContextMenuMixin):
 
     _convert_index = None
 
-    _control = None
-
     status_text = Str
-    groups = None
-
-    current_pos = None
 
     view_identifier = None
-
-    #    ui = Any
 
     close_func = Callable
     x_limits_changed = Event
@@ -239,6 +224,13 @@ class Graph(Viewable, ContextMenuMixin):
     #
     #     self.redraw()
 
+    def set_time_xaxis(self, plotid=None):
+        if plotid is None:
+            plotid = len(self.plots) - 1
+
+        p = self.plots[plotid]
+        p.x_axis.tick_generator = ScalesTickGenerator(scale=CalendarScaleSystem())
+
     def add_point_inspector(self, scatter, convert_index=None):
         point_inspector = PointInspector(scatter,
                                          convert_index=convert_index)
@@ -301,7 +293,7 @@ class Graph(Viewable, ContextMenuMixin):
     def get_aux_data(self, plotid=0, series=1):
         plot = self.plots[plotid]
 
-        si = plot.plots['aux{:03n}'.format(series)][0]
+        si = plot.plots['aux{:03d}'.format(series)][0]
 
         oi = si.index.get_data()
         ov = si.value.get_data()
@@ -339,15 +331,6 @@ class Graph(Viewable, ContextMenuMixin):
         if path is not None:
             path = add_extension(path, '.csv')
             self._export_data(path, plotid)
-
-    def _path_factory(self):
-
-        dlg = FileDialog(action='save as')
-        if dlg.open() == OK:
-            return dlg.path
-
-    def _name_generator_factory(self, name):
-        return name_generator(name)
 
     def read_xy(self, p, header=False, series=0, plotid=0):
         """
@@ -456,22 +439,8 @@ class Graph(Viewable, ContextMenuMixin):
             kw['attr'] = a
             self._set_axis_color(*args, **kw)
 
-    def _set_axis_color(self, name, color, **kw):
-        """
-        """
-        attr = kw['attr']
-        p = self.plots[kw['plotid']]
-        if 'axis' in kw:
-            ax = kw['axis']
-        else:
-            ax = getattr(p, '{}_axis'.format(name))
-        if isinstance(attr, str):
-            attr = [attr]
-        for a in attr:
-            setattr(ax, '{}_color'.format(a), color)
-
     def set_aux_data(self, x, y, plotid=0, series=1):
-        p = self.plots[plotid].plots['aux{:03n}'.format(series)][0]
+        p = self.plots[plotid].plots['aux{:03d}'.format(series)][0]
         p.index.set_data(x)
         p.value.set_data(y)
 
@@ -518,7 +487,7 @@ class Graph(Viewable, ContextMenuMixin):
 
     def get_series_color(self, plotid=0, series=0):
         if isinstance(series, int):
-            series = 'plot{:03n}'.format(series)
+            series = 'plot{:03d}'.format(series)
 
         p = self.plots[plotid].plots[series][0]
         return p.color
@@ -642,7 +611,7 @@ class Graph(Viewable, ContextMenuMixin):
         #         invoke_in_main_thread(self._set_limits,
         #                               min_, max_, 'index', plotid, pad, **kw)
         if self._set_limits(min_, max_, 'index', plotid, pad, **kw):
-            self.x_limits_changed =True
+            self.x_limits_changed = True
 
     def set_x_tracking(self, track, plotid=0):
         '''
@@ -704,7 +673,7 @@ class Graph(Viewable, ContextMenuMixin):
                        font=font,
                        #                                 vjustify='bottom',
                        #                                 overlay_position='top'
-        )
+                       )
         #        print pl
         pc.overlays.append(pl)
         #        print pc.components
@@ -806,7 +775,7 @@ class Graph(Viewable, ContextMenuMixin):
         if zoom:
             nkw = dict(tool_mode='box',
                        always_on=False
-            )
+                       )
             if 'zoom_dict' in kw:
                 zoomargs = kw['zoom_dict']
                 for k in zoomargs:
@@ -918,38 +887,6 @@ class Graph(Viewable, ContextMenuMixin):
 
         return renderer[0], plotobj
 
-    def show_graph_editor(self):
-        """
-        """
-        pass
-        # from editors.graph_editor import GraphEditor
-        #
-        # g = self.graph_editor
-        # if g is None:
-        #     print self
-        #     g = GraphEditor(graph=self)
-        #     self.graph_editor = g
-        #
-        # g.edit_traits(parent=self._control)
-
-    def show_plot_editor(self):
-        '''
-        '''
-        self._show_plot_editor()
-
-    # def _show_plot_editor(self, **kw):
-    #     '''
-    #     '''
-    #     p = self.plot_editor
-    #     if p is None or not p.plot == self.selected_plot:
-    #         p = self.plot_editor_klass(plot=self.selected_plot,
-    #                                    graph=self,
-    #                                    **kw
-    #         )
-    #         self.plot_editor = p
-    #
-    #         p.edit_traits(parent=self._control)
-
     def auto_update(self, *args, **kw):
         '''
         '''
@@ -966,7 +903,7 @@ class Graph(Viewable, ContextMenuMixin):
                         tick_color=color,
                         tick_label_color=color,
                         title_color=color
-        )
+                        )
 
         p.underlays.append(axis)
         po.add(p)
@@ -982,7 +919,7 @@ class Graph(Viewable, ContextMenuMixin):
         def add():
             plot = self.plots[plotid]
 
-            si = plot.plots['aux{:03n}'.format(series)][0]
+            si = plot.plots['aux{:03d}'.format(series)][0]
 
             oi = si.index.get_data()
             ov = si.value.get_data()
@@ -1008,6 +945,39 @@ class Graph(Viewable, ContextMenuMixin):
 
             #     def add_datum(self, *args, **kw):
             #         invoke_in_main_thread(self._add_datum, *args, **kw)
+
+    def add_bulk_data(self, xs, ys, plotid=0, series=0,
+                      ypadding='0.1',
+                      update_y_limits=False):
+        try:
+            names = self.series[plotid][series]
+        except IndexError:
+            print 'adding data', plotid, series, self.series[plotid]
+
+        plot = self.plots[plotid]
+        data = plot.data
+        for n, ds in ((names[0], xs), (names[1], ys)):
+            xx = data.get_data(n)
+            xx = hstack((xx, ds))
+            data.set_data(n, xx)
+
+        if update_y_limits:
+            ys = data[names[1]]
+            mi = ys.min()
+            ma = ys.max()
+            if isinstance(ypadding, str):
+                ypad = max(0.1, abs(mi - ma)) * float(ypadding)
+            else:
+                ypad = ypadding
+
+            mi -= ypad
+            ma += ypad
+            # # if ymin_anchor is not None:
+            # #     mi = max(ymin_anchor, mi)
+            #
+            self.set_y_limits(min_=mi,
+                              max_=ma,
+                              plotid=plotid)
 
     def add_datum(self, datum, plotid=0, series=0,
                   update_y_limits=False,
@@ -1057,21 +1027,6 @@ class Graph(Viewable, ContextMenuMixin):
             #         else:
             #             add(datum)
 
-    def show_crosshairs(self, color='black'):
-        '''
-        '''
-        self.crosshairs_enabled = True
-        self._crosshairs_factory(color=color)
-        self.plotcontainer.request_redraw()
-
-    def destroy_crosshairs(self):
-        '''
-        '''
-        self.crosshairs_enabled = False
-        plot = self.plots[0].plots['plot0'][0]
-        plot.overlays = [o for o in plot.overlays if not isinstance(o, LineInspector)]
-        self.plotcontainer.request_redraw()
-
     def add_range_selector(self, plotid=0, series=0):
         #        plot = self.series[plotid][series]
         plot = self.plots[plotid].plots['plot{}'.format(series)][0]
@@ -1112,40 +1067,16 @@ class Graph(Viewable, ContextMenuMixin):
             ax = self._plot_axis_factory(p, key, False)
             p.underlays.append(ax)
 
-    def _plot_axis_factory(self, p, key, normal, **kw):
-        if key == 'x':
-            m = p.index_mapper
-            if normal:
-                o = 'bottom'
-            else:
-                o = 'top'
-                kw['tick_label_formatter'] = lambda x: ''
-        else:
-            if normal:
-                o = 'left'
-            else:
-                o = 'right'
-                kw['tick_label_formatter'] = lambda x: ''
-            m = p.value_mapper
-
-        ax = PlotAxis(component=p,
-                      mapper=m,
-                      orientation=o,
-                      axis_line_visible=False,
-                      **kw
-        )
-        return ax
-
     def add_minor_xticks(self, plotid=0, **kw):
-        '''
-        '''
+        """
+        """
         p = self.plots[plotid]
         m = MinorTicksOverlay(component=p, orientation='v', **kw)
         p.underlays.append(m)
 
     def add_minor_yticks(self, plotid=0, **kw):
-        '''
-        '''
+        """
+        """
         p = self.plots[plotid]
 
         m = MinorTicksOverlay(component=p, orientation='h', **kw)
@@ -1179,26 +1110,71 @@ class Graph(Viewable, ContextMenuMixin):
 
         return nc
 
-
     def container_factory(self):
-        '''
-        '''
+        """
+        """
         return self._container_factory(**self.container_dict)
 
+    # private
+    def _plot_axis_factory(self, p, key, normal, **kw):
+        if key == 'x':
+            m = p.index_mapper
+            if normal:
+                o = 'bottom'
+            else:
+                o = 'top'
+                kw['tick_label_formatter'] = lambda x: ''
+        else:
+            if normal:
+                o = 'left'
+            else:
+                o = 'right'
+                kw['tick_label_formatter'] = lambda x: ''
+            m = p.value_mapper
+
+        ax = PlotAxis(component=p,
+                      mapper=m,
+                      orientation=o,
+                      axis_line_visible=False,
+                      **kw)
+        return ax
+
+    def _path_factory(self):
+
+        dlg = FileDialog(action='save as')
+        if dlg.open() == OK:
+            return dlg.path
+
+    def _name_generator_factory(self, name):
+        return name_generator(name)
+
+    def _set_axis_color(self, name, color, **kw):
+        """
+        """
+        attr = kw['attr']
+        p = self.plots[kw['plotid']]
+        if 'axis' in kw:
+            ax = kw['axis']
+        else:
+            ax = getattr(p, '{}_axis'.format(name))
+        if isinstance(attr, str):
+            attr = [attr]
+        for a in attr:
+            setattr(ax, '{}_color'.format(a), color)
+
     def _add_line_inspector(self, plot, axis='x', color='red'):
-        '''
-        '''
+        """
+        """
         plot.overlays.append(LineInspector(component=plot,
                                            axis='index_%s' % axis,
                                            write_metadata=self.line_inspectors_write_metadata,
                                            inspect_mode='indexed',
                                            is_listener=False,
-                                           color=color
-        ))
+                                           color=color))
 
     def _container_factory(self, **kw):
-        '''
-        '''
+        """
+        """
         if 'kind' in kw:
             kind = kw['kind']
         else:
@@ -1209,48 +1185,21 @@ class Graph(Viewable, ContextMenuMixin):
 
         c = containers[kinds.index(kind)]
 
-        options = dict(
-            bgcolor='white',
-            # spacing = spacing,
-            # padding=25,
-            padding=5,
-            #                     padding=[40, 10, 60, 10],
-            fill_padding=True,
-            #                      use_backbuffer=True
-        )
+        options = dict(bgcolor='white', padding=5, fill_padding=True)
 
         for k in options:
             if k not in kw.keys():
                 kw[k] = options[k]
 
         container = c(**kw)
-
-        # add some tools
-        #        cm=ContextualMenuTool(parent=container,
-        #                              component=container
-        #                              )
-        #        container.tools.append(cm)
-        #
-        # gt = TraitsTool(component = container)
-        # container.tools.append(gt)
         return container
-
-    def _crosshairs_factory(self, plot=None, color='black'):
-        '''
-        '''
-        if plot is None:
-            plot = self.plots[0].plots['plot0'][0]
-        self._add_line_inspector(plot, axis='x', color=color)
-        self._add_line_inspector(plot, axis='y', color=color)
 
     def _plot_factory(self, legend_kw=None, **kw):
         """
         """
-        p = Plot(data=ArrayPlotData(),
-                 # use_backbuffer=True,
-                 **kw)
+        p = Plot(data=ArrayPlotData(), **kw)
 
-        vis = kw['show_legend'] if 'show_legend' in kw else False
+        vis = kw.get('show_legend', False)
 
         if not isinstance(vis, bool):
             align = vis
@@ -1430,19 +1379,7 @@ class Graph(Viewable, ContextMenuMixin):
                         break
 
                 if not saved:
-                    self._render_to_pic(path + DEFAULT_IMAGE_EXT)
-
-                    #                base, ext = os.path.splitext(path)
-                    #
-                    #                if not ext in IMAGE_EXTENSIONS:
-                    #                    path = ''.join((base, DEFAULT_IMAGE_EXT))
-
-    def render_to_pdf(self, canvas=None):
-        """
-            make a new PDFgc but dont save it
-        """
-        return self._render_to_pdf(save=False, filename='/Users/ross/Sandbox/aaa.pdf', canvas=canvas)
-
+                    self._render_to_pic(add_extension(path, DEFAULT_IMAGE_EXT))
 
     def _render_to_pdf(self, save=True, canvas=None, filename=None, dest_box=None):
         """
@@ -1452,14 +1389,14 @@ class Graph(Viewable, ContextMenuMixin):
         if filename:
             # if not filename.endswith('.pdf'):
             #     filename += '.pdf'
-            filename=add_extension(filename, ext='.pdf')
+            filename = add_extension(filename, ext='.pdf')
 
         gc = PdfPlotGraphicsContext(filename=filename,
                                     pdf_canvas=canvas,
                                     dest_box=dest_box)
         pc = self.plotcontainer
 
-        #pc.do_layout(force=True)
+        # pc.do_layout(force=True)
         # pc.use_backbuffer=False
         gc.render_component(pc, valign='center')
         if save:
@@ -1525,13 +1462,6 @@ class Graph(Viewable, ContextMenuMixin):
         axis = getattr(self.plots[plotid], axis)
         return axis.title
 
-    def set_time_xaxis(self, plotid=None):
-        if plotid is None:
-            plotid = len(self.plots) - 1
-
-        p=self.plots[plotid]
-        p.x_axis.tick_generator = ScalesTickGenerator(scale=CalendarScaleSystem())
-
     def _set_title(self, axis, title, plotid, font=None, size=None):
         """
         """
@@ -1580,8 +1510,8 @@ class Graph(Viewable, ContextMenuMixin):
                 if mi <= 0:
 
                     mi = Inf
-                    data = plot.data.list_data()
-                    for di in plot.data.list_data():
+                    data = plot.data
+                    for di in data.list_data():
                         if 'y' in di:
                             ya = sorted(data.get_data[di])
                             #                             ya = np.copy(plot.data.get_data(di))
@@ -1636,9 +1566,9 @@ class Graph(Viewable, ContextMenuMixin):
                     if pad_style in ('symmetric', 'lower'):
                         mi -= pad
 
-        change=False
+        change = False
         if mi is not None:
-            change = ra.low!=mi
+            change = ra.low != mi
             if isinstance(mi, (int, float)):
                 if mi < ra.high:
                     ra.low = mi
@@ -1646,7 +1576,7 @@ class Graph(Viewable, ContextMenuMixin):
                 ra.low = mi
 
         if ma is not None:
-            change = change or ra.high!=ma
+            change = change or ra.high != ma
             if isinstance(ma, (int, float)):
                 if ma > ra.low:
                     ra.high = ma
@@ -1660,10 +1590,14 @@ class Graph(Viewable, ContextMenuMixin):
     def _get_selected_plotid(self):
         r = 0
         if self.selected_plot is not None:
-            try:
-                r = self.plots.index(self.selected_plot)
-            except ValueError:
-                pass
+            # r = next((i for i, p in enumerate(self.plots) if p == self.s))
+            r = self.plots.index(self.selected_plot)
+            #     # if self.selected_plot is not None:
+            #     #     print self, self.plots
+            #     #     for pp in self.plots:
+            #     #         print pp, self.selected_plot
+            #     #     r = self.plots.index(self.selected_plot)
+            #     # print 'get selected plotid', r, self.selected_plot
         return r
 
     def show(self):
@@ -1677,7 +1611,7 @@ class Graph(Viewable, ContextMenuMixin):
                         #size=(self.width,
                         #      self.height)
                     ),
-        )
+                    )
 
         v = View(plot)
         return v

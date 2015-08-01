@@ -11,9 +11,9 @@ DEBUGGING = False
 import sys
 
 if sys.platform == 'darwin':
-    from pychron.core.helpers.logger_setup import logging_setup
-
-    logging_setup('conditionals')
+    pass
+    # from pychron.core.helpers.logger_setup import logging_setup
+    # logging_setup('conditionals')
 else:
     DEBUGGING = False
 

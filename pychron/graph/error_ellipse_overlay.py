@@ -108,7 +108,7 @@ class ErrorEllipseOverlay(AbstractOverlay):
                     self._draw_ellipse(gc, component, cx, cy, a, b, rot)
                     #gc.restore_state()
         except Exception, e:
-            print e
+            print 'exception', e
 
     def _draw_ellipse(self, gc, component, cx, cy, a, b, rot):
         #a *= self.nsigma

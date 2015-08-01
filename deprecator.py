@@ -33,13 +33,13 @@ def locate_deprecated(root):
 
             cnt+=1
             p = os.path.join(r, fi)
-            with open(p, 'r') as fp:
-                for li in fp:
+            with open(p, 'r') as rfile:
+                for li in rfile:
                     li = li.strip()
                     if li and not li.startswith('#'):
                         break
                 else:
-                    print '{:03n} is deprecated {}'.format(i, p)
+                    print '{:03d} is deprecated {}'.format(i, p)
                     i+=1
 
     print 'examined {} files from {} directories'.format(cnt, dcnt)

@@ -25,7 +25,7 @@ from pychron.processing.analyses.changes import AnalysisRecord
 
 class RecallEditor(BaseTraitsEditor):
     model = Any
-    analysis_view = Instance('pychron.processing.analyses.analysis_view.AnalysisView')
+    analysis_view = Any#Instance('pychron.processing.analyses.analysis_view.AnalysisView')
 
     manager = Any
 
@@ -33,7 +33,15 @@ class RecallEditor(BaseTraitsEditor):
     basename = Str
     instance_id = 0
 
-    @on_trait_change('analysis_view:history_view:load_ages_needed')
+    def _analysis_view_changed(self, av):
+        if av:
+            if hasattr(av, 'history_view'):
+                av.on_trait_change(self.handle_load_ages, 'history_view:load_ages_needed')
+                av.on_trait_change(self.handle_load_analyses, 'history_view:blank_selected_:selected')
+                av.on_trait_change(self.handle_apply_blank_change, 'history_view:apply_blank_change_needed')
+                av.on_trait_change(self.handle_show_iso_evo, 'main_view:show_iso_evo_needed')
+
+    # @on_trait_change('analysis_view:history_view:load_ages_needed')
     def handle_load_ages(self, obj):
         left, right = obj
 
@@ -52,7 +60,7 @@ class RecallEditor(BaseTraitsEditor):
         # meas_analysis.selected_histories.selected_blanks_id = orig
         # self.model.sync_blanks(meas_analysis)
 
-    @on_trait_change('analysis_view:history_view:blank_selected_:selected')
+    # @on_trait_change('analysis_view:history_view:blank_selected_:selected')
     def handle_load_analyses(self, obj):
         db = self.manager.db
         with db.session_ctx():
@@ -60,7 +68,7 @@ class RecallEditor(BaseTraitsEditor):
             obj.analyses = [AnalysisRecord(id=ai.analysis.id,
                                            record_id=ai.analysis.record_id) for ai in dbblank.analysis_set]
 
-    @on_trait_change('analysis_view:history_view:apply_blank_change_needed')
+    # @on_trait_change('analysis_view:history_view:apply_blank_change_needed')
     def handle_apply_blank_change(self, obj):
 
         apply_to_session, obj = obj
@@ -70,7 +78,7 @@ class RecallEditor(BaseTraitsEditor):
             self.manager.apply_blank_history(self.model,
                                              obj.id)
 
-    @on_trait_change('analysis_view:main_view:show_iso_evo_needed')
+    # @on_trait_change('analysis_view:main_view:show_iso_evo_needed')
     def handle_show_iso_evo(self, obj):
         from pychron.graph.stacked_regression_graph import StackedRegressionGraph
 
@@ -98,14 +106,14 @@ class RecallEditor(BaseTraitsEditor):
         self.model = item
         self.analysis_view = self.model.analysis_view
 
-        #set name
+        # set name
         r = self.analysis_view.analysis_id
         if self.instance_id:
             r = '{} #{}'.format(r, self.instance_id + 1)
 
         self.name = r
 
-        #set basename
+        # set basename
         self.basename = self.analysis_view.analysis_id
 
     def traits_view(self):

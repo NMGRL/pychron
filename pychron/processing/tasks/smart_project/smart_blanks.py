@@ -47,7 +47,7 @@ class SmartBlanks(BaseSmarter):
                 ed = n * et / float(i)
                 er = (ed - et) / 60.
 
-                self.info('applying blank {:04n}/{:04n} ({:0.2f}%) estimated remain {:0.1f} (mins)'.format(i, n, p, er))
+                self.info('applying blank {:04d}/{:04d} ({:0.2f}%) estimated remain {:0.1f} (mins)'.format(i, n, p, er))
                 if dry_run:
                     man.db.sess.rollback()
                 else:

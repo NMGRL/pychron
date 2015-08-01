@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,16 +16,18 @@
 
 # ============= enthought library imports =======================
 from traits.api import Float, on_trait_change, Bool, Property, List
-from traitsui.api import  Item, VGroup, HGroup
+from traitsui.api import Item, VGroup, HGroup
 
 from pychron.canvas.canvas2D.scene.primitives.primitives import Polygon, \
     PolyLine, PointIndicator
 from pychron.core.geometry.geometry import calc_point_along_line
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 class VelocityPolyLine(PolyLine):
     velocity_segments = List
+
 
 class LaserPoint(PointIndicator):
     z = Float
@@ -38,6 +40,7 @@ class LaserPoint(PointIndicator):
 class DrillPoint(LaserPoint):
     velocity = Float
     zend = Float
+
 
 class RasterPolygon(Polygon):
     use_convex_hull = Bool(False)
@@ -76,6 +79,7 @@ class RasterPolygon(Polygon):
 
         return g
 
+
 class Transect(PolyLine):
     step = Float
     step_points = List
@@ -83,7 +87,7 @@ class Transect(PolyLine):
     point_klass = LaserPoint
 
     def add_point(self, x, y, z=0, point_color=(1, 0, 0), line_color=(1, 0, 0),
-                   **ptargs):
+                  **ptargs):
 
         p2 = LaserPoint(x, y, z=z, default_color=point_color, **ptargs)
         self._add_point(p2, line_color)
@@ -124,8 +128,8 @@ class Transect(PolyLine):
             p1 = li.start_point
             p2 = li.end_point
 
-#            if cnt is None:
-#                cnt = int(p1.identifier) + 1
+            # if cnt is None:
+            #                cnt = int(p1.identifier) + 1
 
             x, y = p1.x, p1.y
 
@@ -141,22 +145,20 @@ class Transect(PolyLine):
                 else:
                     p = self.new_point(x, y,
                                        cnt,
-                                   line_color=line_color, point_color=point_color,
-                                   **ptargs)
-
+                                       line_color=line_color, point_color=point_color,
+                                       **ptargs)
 
                     self.step_points.append(p)
                     cnt += 1
 
     def new_point(self, x, y, i, **kw):
         p = LaserPoint(x, y,
-                identifier=str(i),
-                **kw
-                )
+                       identifier=str(i),
+                       **kw)
         return p
 
     def set_canvas(self, canvas):
-#        self.canvas = canvas
+        #        self.canvas = canvas
         super(Transect, self).set_canvas(canvas)
         for pt in self.step_points:
             pt.set_canvas(canvas)

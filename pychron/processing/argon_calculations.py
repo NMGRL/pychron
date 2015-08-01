@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -38,6 +38,7 @@ from pychron.core.stats.core import calculate_weighted_mean
 
 
 # ============= local library imports  ==========================
+from pychron.pychron_constants import ALPHAS
 
 
 def calculate_F_ratio(m4039, m3739, m3639, pr):
@@ -97,7 +98,7 @@ def calculate_isochron(analyses, reg='NewYork'):
     xns, xnes = zip(*[(xi.nominal_value, xi.std_dev) for xi in a39])
 
     regx = isochron_regressor(ys, yerrs, xs, xerrs,
-                              xds,xdes, yns, ynes, xns, xnes)
+                              xds, xdes, yns, ynes, xns, xnes)
 
     reg = isochron_regressor(xs, xerrs, ys, yerrs,
                              xds, xdes, xns, xnes, yns, ynes,
@@ -132,7 +133,7 @@ def isochron_regressor(xs, xes, ys, yes,
     return reg
 
 
-def calculate_plateau_age(ages, errors, k39, kind='inverse_variance', method='fleck 1977'):
+def calculate_plateau_age(ages, errors, k39, kind='inverse_variance', method='fleck 1977', options=None):
     """
         ages: list of ages
         errors: list of corresponding  1sigma errors
@@ -143,23 +144,46 @@ def calculate_plateau_age(ages, errors, k39, kind='inverse_variance', method='fl
     # print 'ages=array({})'.format(ages)
     # print 'errors=array({})'.format(errors)
     # print 'k39=array({})'.format(k39)
+    if options is None:
+        options = {}
 
     ages = asarray(ages)
     errors = asarray(errors)
-
     k39 = asarray(k39)
-    from pychron.processing.plateau import Plateau
 
-    p = Plateau(ages=ages,
-                errors=errors,
-                signals=k39)
-    pidx = p.find_plateaus(method)
-    # pidx = find_plateaus(ages, errors, k39,
-    #                      overlap_sigma=2)
+    force_steps = options.get('force_steps', False)
+    if force_steps:
+        sstep, estep = force_steps
+        sstep, estep = sstep.upper(), estep.upper()
+        if not sstep:
+            sidx = 0
+        else:
+            sidx = ALPHAS.index(sstep)
+
+        n = ages.shape[0] - 1
+        if not estep:
+            eidx = n
+        else:
+            eidx = ALPHAS.index(estep)
+
+        sidx, eidx = min(sidx, eidx), min(max(sidx, eidx), n)
+        pidx = (sidx, eidx) if sidx < n else None
+
+    else:
+
+        from pychron.processing.plateau import Plateau
+
+        p = Plateau(ages=ages,
+                    errors=errors,
+                    signals=k39,
+                    nsteps=options.get('nsteps', 3),
+                    gas_fraction=options.get('gas_fraction', 50))
+
+        pidx = p.find_plateaus(method)
+
     if pidx:
-        sx = slice(*pidx)
+        sx = slice(pidx[0], pidx[1] + 1)
         plateau_ages = ages[sx]
-
         if kind == 'vol_fraction':
             weights = k39[sx]
             wm, we = average(plateau_ages, weights=weights)
@@ -180,9 +204,9 @@ def calculate_flux(f, age, arar_constants=None):
         solve age equation for J
     """
     # if isinstance(rad40, (list, tuple)):
-    #     rad40 = ufloat(*rad40)
+    # rad40 = ufloat(*rad40)
     # if isinstance(k39, (list, tuple)):
-    #     k39 = ufloat(*k39)
+    # k39 = ufloat(*k39)
 
     if isinstance(f, (list, tuple)):
         f = ufloat(*f)
@@ -201,7 +225,7 @@ def calculate_flux(f, age, arar_constants=None):
         return 1, 0
 
 
-#    return j
+# return j
 def calculate_decay_time(dc, f):
     return math.log(f) / dc
 
@@ -315,7 +339,7 @@ def calculate_atmospheric(a38, a36, k38, ca38, ca36, decay_time,
 
     pr = production_ratios
 
-    m = pr.get('cl3638', 0) * arar_constants.lambda_Cl36.nominal_value * decay_time
+    m = pr.get('Cl3638', 0) * arar_constants.lambda_Cl36.nominal_value * decay_time
     atm36 = ufloat(0, 1e-20)
     for _ in range(5):
         ar38atm = arar_constants.atm3836.nominal_value * atm36
@@ -337,7 +361,7 @@ def calculate_F(isotopes,
     """
     a40, a39, a38, a37, a36 = isotopes
 
-    #a37*=113
+    # a37*=113
 
     if interferences is None:
         interferences = {}
@@ -476,7 +500,7 @@ def calculate_error_t(F, ssF, j, ssJ):
 #
 #
 # def overlap(a1, a2, e1, e2, overlap_sigma):
-#     e1 *= overlap_sigma
+# e1 *= overlap_sigma
 #     e2 *= overlap_sigma
 #     if a1 - e1 < a2 + e2 and a1 + e1 > a2 - e2:
 #         return True

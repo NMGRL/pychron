@@ -171,8 +171,8 @@ class DeviceConfigurer(Loggable):
         # putting the device dir under git control is a good idea
 
         self._backup()
-        with open(self.config_path, 'w') as fp:
-            self._config.write(fp)
+        with open(self.config_path, 'w') as wfile:
+            self._config.write(wfile)
 
     def _backup(self):
         bp, pp = backup(self.config_path, paths.backup_device_dir, extension='.cfg')

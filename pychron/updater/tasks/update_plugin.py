@@ -15,22 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from envisage.ui.tasks.task_extension import TaskExtension
-from pyface.tasks.action.schema_addition import SchemaAddition
-from traits.api import List
-from envisage.plugin import Plugin
-# ============= standard library imports ========================
-import sys
-import stat
 import os
+
+from pyface.tasks.action.schema_addition import SchemaAddition
+
+# ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.core.helpers.filetools import to_bool
-from pychron.core.helpers.logger_setup import new_logger
-from pychron.core.ui.progress_dialog import myProgressDialog
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
-from pychron.loggable import confirmation_dialog
-from pychron.paths import paths, r_mkdir
-from pychron.updater.tasks.actions import CheckForUpdatesAction, ManageVersionAction
+from pychron.paths import paths
+from pychron.updater.tasks.actions import CheckForUpdatesAction, ManageVersionAction, BuildApplicationAction, \
+    ManageBranchAction
 from pychron.updater.tasks.update_preferences import UpdatePreferencesPane
 from pychron.updater.updater import Updater
 
@@ -68,10 +62,10 @@ def gen_commits(log):
 
 class UpdatePlugin(BaseTaskPlugin):
     name = 'Update'
-    id = 'pychron.update'
+    id = 'pychron.update.plugin'
 
-    preferences = List(contributes_to='envisage.preferences')
-    preferences_panes = List(contributes_to='envisage.ui.tasks.preferences_panes')
+    # preferences = List(contributes_to='envisage.preferences')
+    # preferences_panes = List(contributes_to='envisage.ui.tasks.preferences_panes')
 
     # plugin interface
     def test_repository(self):
@@ -82,6 +76,7 @@ class UpdatePlugin(BaseTaskPlugin):
         super(UpdatePlugin, self).start()
 
         updater = self.application.get_service('pychron.updater.updater.Updater')
+        # if updater:
         if updater.check_on_startup:
             updater.check_for_updates()
 
@@ -89,13 +84,13 @@ class UpdatePlugin(BaseTaskPlugin):
     def check(self):
         try:
             from git import Repo
+
             return True
         except ImportError:
             return False
 
-    def set_preference_defaults(self):
-        defaults = (('remote', 'NMGRL/pychron'),('branch','master'))
-        self._set_preference_defaults(defaults, 'pychron.update')
+    def _preferences_default(self):
+        return ['file://{}'.format(os.path.join(paths.preferences_dir, 'update.ini'))]
 
     # private
     def _updater_factory(self):
@@ -105,49 +100,56 @@ class UpdatePlugin(BaseTaskPlugin):
 
     # defaults
     def _service_offers_default(self):
-        so = self.service_offer_factory(protocol='pychron.updater.updater.Updater',
+        so = self.service_offer_factory(protocol=Updater,
                                         factory=self._updater_factory)
         return [so]
 
     def _preferences_panes_default(self):
         return [UpdatePreferencesPane]
 
-    def _task_extensions_default(self):
-        ex = [TaskExtension(actions=[SchemaAddition(id='check_for_updates',
-                                                    factory=CheckForUpdatesAction,
-                                                    path='MenuBar/help.menu'),
-                                     SchemaAddition(id='manager_version',
-                                                    factory=ManageVersionAction,
-                                                    path='MenuBar/help.menu')])]
-        return ex
+    def _available_task_extensions_default(self):
+        return [(self.id, '', self.name, [SchemaAddition(id='pychron.update.check_for_updates',
+                                                         factory=CheckForUpdatesAction,
+                                                         path='MenuBar/help.menu'),
+                                          SchemaAddition(id='pychron.update.build_app',
+                                                         factory=BuildApplicationAction,
+                                                         path='MenuBar/help.menu'),
+                                          SchemaAddition(id='pychron.update.manage_branch',
+                                                         factory=ManageBranchAction,
+                                                         path='MenuBar/help.menu'),
+                                          SchemaAddition(id='pychron.update.manage_version',
+                                                         factory=ManageVersionAction,
+                                                         path='MenuBar/help.menu')]), ]
 
-# ============= EOF =============================================
-# def stop(self):
-    #     self.debug('stopping update plugin')
-    #     if self._build_required:
-    #         self.debug('building new version')
-    #         dest = self._build_update()
-    #         if dest:
-    #             # get executable
-    #             mos = os.path.join(dest, 'MacOS')
-    #             for p in os.listdir(mos):
-    #                 if p != 'python':
-    #                     pp = os.path.join(mos, p)
-    #                     if stat.S_IXUSR & os.stat(pp)[stat.ST_MODE]:
-    #                         os.execl(pp)
+
+        # ============= EOF =============================================
+        # def stop(self):
+        # self.debug('stopping update plugin')
+        # if self._build_required:
+        # self.debug('building new version')
+        # dest = self._build_update()
+        # if dest:
+        # # get executable
+        # mos = os.path.join(dest, 'MacOS')
+        #             for p in os.listdir(mos):
+        #                 if p != 'python':
+        #                     pp = os.path.join(mos, p)
+        #                     if stat.S_IXUSR & os.stat(pp)[stat.ST_MODE]:
+        #                         os.execl(pp)
+
 # pref = self.application.preferences
 # if to_bool(pref.get('pychron.update.check_on_startup')):
 # url = pref.get('pychron.update.remote')
-#     branch = pref.get('pychron.update.branch')
-#     if url and branch:
+# branch = pref.get('pychron.update.branch')
+# if url and branch:
 #
-#         lc, rc = self._check_for_updates(url, branch)
-#         if lc != rc:
-#             if self._out_of_date():
-#                 origin = self._repo.remotes.origin
-#                 self.debug('pulling changes from {} to {}'.format(origin.url, branch))
-#                 origin.pull(branch)
-#                 self._build(branch, rc)
+# lc, rc = self._check_for_updates(url, branch)
+# if lc != rc:
+# if self._out_of_date():
+# origin = self._repo.remotes.origin
+# self.debug('pulling changes from {} to {}'.format(origin.url, branch))
+# origin.pull(branch)
+# self._build(branch, rc)
 #                 os.execl(sys.executable, *([sys.executable] + sys.argv))
 
 # def _load_local_revision(self):

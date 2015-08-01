@@ -111,7 +111,7 @@ class LaserCalibrationTask(BaseLaserTask):
         n = len([ed for ed in self.editor_area.editors
                  if isinstance(ed, PowerMapEditor)])
 
-        editor = PowerMapEditor(name='Power Map {:03n}'.format(n + 1))
+        editor = PowerMapEditor(name='Power Map {:03d}'.format(n + 1))
         if self.active_editor:
             editor.editor = self.control_pane.editor
 
@@ -121,7 +121,7 @@ class LaserCalibrationTask(BaseLaserTask):
         n = len([ed for ed in self.editor_area.editors
                  if isinstance(ed, PowerCalibrationEditor)])
 
-        editor = PowerCalibrationEditor(name='Power Calibration {:03n}'.format(n + 1))
+        editor = PowerCalibrationEditor(name='Power Calibration {:03d}'.format(n + 1))
         self._open_editor(editor)
 
     def new_pyrometer_calibration(self):

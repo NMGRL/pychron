@@ -23,7 +23,7 @@ from __future__ import with_statement
 from traits.api import HasTraits, List, Property, Str, Int, Float, Button, Enum
 from traitsui.api import View, Item, Group, TableEditor
 from traitsui.table_column import ObjectColumn
-import apptools.sweet_pickle as pickle
+import cPickle as pickle
 # ============= standard library imports ========================
 import os
 import shutil

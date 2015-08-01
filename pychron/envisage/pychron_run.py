@@ -42,6 +42,7 @@ PACKAGE_DICT = dict(
     ExperimentPlugin='pychron.experiment.tasks.experiment_plugin',
     ExternalPipettePlugin='pychron.external_pipette.tasks.external_pipette_plugin',
     ExtractionLinePlugin='pychron.extraction_line.tasks.extraction_line_plugin',
+    ClientExtractionLinePlugin='pychron.extraction_line.tasks.client_extraction_line_plugin',
     GeoPlugin='pychron.geo.tasks.geo_plugin',
     VideoPlugin='pychron.image.tasks.video_plugin',
     FusionsDiodePlugin='pychron.lasers.tasks.plugins.diode',
@@ -56,6 +57,7 @@ PACKAGE_DICT = dict(
     MapSpectrometerPlugin='pychron.spectrometer.tasks.map_spectrometer_plugin',
     EmailPlugin='pychron.social.email.tasks.plugin',
     SystemMonitorPlugin='pychron.system_monitor.tasks.system_monitor_plugin',
+    DVCPlugin='pychron.dvc.tasks.dvc_plugin',
     WorkspacePlugin='pychron.workspace.tasks.workspace_plugin',
     LabBookPlugin='pychron.labbook.tasks.labbook_plugin',
     LabspyClientPlugin='pychron.labspy.tasks.plugin',
@@ -190,9 +192,6 @@ def app_factory(klass, user):
     return app
 
 
-
-
-
 def launch(klass, user):
     """
     """
@@ -203,7 +202,7 @@ def launch(klass, user):
     # from pychron.login.login import check_login
     # from pychron.paths import paths
     # import os
-    # with open(os.path.join(paths.hidden_dir, 'login_pwd'), 'r') as fp:
+    # with open(os.path.join(paths.hidden_dir, 'login_pwd'), 'r') as rfile:
     #     if not check_login(fp.read()):
     #         logger.critical('Login failed')
     #         return
@@ -216,7 +215,6 @@ def launch(klass, user):
     except Exception:
         logger.exception('Launching error')
         import traceback
-
         tb = traceback.format_exc()
         gTraceDisplay.add_text(tb)
         gTraceDisplay.edit_traits(kind='livemodal')

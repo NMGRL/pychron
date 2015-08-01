@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -41,8 +41,8 @@ class AddView(ModelView):
 class EditView(ModelView):
     def traits_view(self):
         v = View(VGroup(Item('name'),
-                 Group(UItem('chronology', style='custom'),
-                       label='Chronology', show_border=True)),
+                        Group(UItem('chronology', style='custom'),
+                              label='Chronology', show_border=True)),
                  title='Edit Irradiation',
                  kind='livemodal',
                  buttons=['OK', 'Cancel'],
@@ -68,7 +68,7 @@ class IrradiationEditor(BaseIrradiationEditor):
                     name = self.name
                     if not name:
                         if self.confirmation_dialog('No name enter. Would you like to enter one?'):
-                            info=v.edit_traits()
+                            info = v.edit_traits()
                             continue
                         else:
                             break
@@ -98,15 +98,15 @@ class IrradiationEditor(BaseIrradiationEditor):
             info = v.edit_traits()
             if info.result:
                 if original_name != self.name:
-                    ret=self.confirmation_dialog('You have changed the irradiation name.\n\n'
-                                                'Would you like to rename "{}" to "{}" (Yes) '
-                                                'or make a new irradiation "{}" (No)'.format(original_name,
-                                                                                             self.name, self.name),
-                                                return_retval=True,
-                                                cancel=True)
-                    if ret==YES:
+                    ret = self.confirmation_dialog('You have changed the irradiation name.\n\n'
+                                                   'Would you like to rename "{}" to "{}" (Yes) '
+                                                   'or make a new irradiation "{}" (No)'.format(original_name,
+                                                                                                self.name, self.name),
+                                                   return_retval=True,
+                                                   cancel=True)
+                    if ret == YES:
                         irrad.name = self.name
-                    elif ret==NO:
+                    elif ret == NO:
                         self._add_irradiation()
                     else:
                         return

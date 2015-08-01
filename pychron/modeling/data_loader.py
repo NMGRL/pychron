@@ -136,7 +136,7 @@ class DataLoader(Loggable):
                     self.info('Skipping negative age {}'.format(age))
                     continue
             except ValueError, e:
-                print e
+                print 'exception', e
                 self.info('Invalid age {}'.format(a))
                 continue
             except IndexError:

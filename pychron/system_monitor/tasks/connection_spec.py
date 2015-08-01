@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,10 +16,10 @@
 
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Int, Property
-from traitsui.api import View, Item, VGroup
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+
 
 class ConnectionSpec(HasTraits):
     host = Str('localhost')
@@ -30,14 +30,11 @@ class ConnectionSpec(HasTraits):
     def _get_url(self):
         return '{}:{}'.format(self.host, self.port)
 
-    def traits_view(self):
-        return View(VGroup(
-            Item('host'),
-            Item('port'),
-            Item('system_name',
-                 label='Name')
-        )
-        )
+    # def traits_view(self):
+    # return View(VGroup(VGroup(Item('host'),
+    #                               Item('port'),
+    #                               Item('system_name',
+    #                                    label='Name'))))
 
     def __repr__(self):
         return self.system_name

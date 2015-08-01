@@ -24,22 +24,24 @@ from pychron.hardware.core.communicators.ethernet_communicator import EthernetCo
 from pychron.loggable import Loggable
 
 
-class PychronDevice(Loggable):
+class EthernetDeviceMixin(Loggable):
     communicator = None
     connected = False
     port = CInt
     host = Str
+    message_frame = Str
 
     def setup_communicator(self):
         host = self.host
         port = self.port
-
         self.communicator = ec = EthernetCommunicator(host=host,
-                                                      port=port)
+                                                      port=port,
+                                                      message_frame=self.message_frame)
+
         r = ec.open()
         if r:
-            self.connected = True
-            self.opened()
+            r = self.opened()
+            self.connected = bool(r)
 
         return r
 

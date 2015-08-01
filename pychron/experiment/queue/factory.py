@@ -73,6 +73,8 @@ class ExperimentQueueFactory(PersistenceLoggable):
                    'delay_between_analyses',
                    'delay_before_analyses',
                    'queue_conditionals_name')
+
+
     # def _add_user_fired(self):
     # a=UserEntry()
     # a.    edit_user(self.username)
@@ -92,6 +94,11 @@ class ExperimentQueueFactory(PersistenceLoggable):
         """
         self.dump()
 
+    # persistence
+    @property
+    def persistence_path(self):
+        return os.path.join(paths.hidden_dir, 'queue_factory')
+
     def _load_queue_conditionals(self):
         root = paths.queue_conditionals_dir
         cs = list_directory2(root, remove_extension=True)
@@ -103,11 +110,6 @@ class ExperimentQueueFactory(PersistenceLoggable):
         if nuser:
             self.users_dirty = True
             self.username = nuser
-
-    #persistence
-    @property
-    def persistence_path(self):
-        return os.path.join(paths.hidden_dir, 'queue_factory')
 
     # ===============================================================================
     # property get/set
@@ -128,7 +130,7 @@ class ExperimentQueueFactory(PersistenceLoggable):
     # @cached_property
     def _get_load_names(self):
         db = self.db
-        if not self.db.connected:
+        if db is None or not db.connected:
             return []
 
         with db.session_ctx():
@@ -149,9 +151,8 @@ class ExperimentQueueFactory(PersistenceLoggable):
     @cached_property
     def _get_usernames(self):
         db = self.db
-        if not db.connected:
+        if db is None or not db.connected:
             return []
-
         with db.session_ctx():
             dbus = db.get_users()
             us = [ui.name for ui in dbus]
@@ -207,6 +208,7 @@ class ExperimentQueueFactory(PersistenceLoggable):
         if config.has_section(section):
             return [config.get(section, option) for option in config.options(section)]
 
+    # handlers
     def _mass_spectrometer_changed(self, new):
         self.debug('mass spectrometer ="{}"'.format(new))
 

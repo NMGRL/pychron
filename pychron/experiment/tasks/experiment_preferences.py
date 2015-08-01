@@ -60,6 +60,8 @@ class ExperimentPreferences(BasePreferencesHelper):
 
     min_ms_pumptime = Int
 
+    use_system_health = Bool
+
     use_memory_check = Bool
     memory_threshold = Property(PositiveInteger,
                                 depends_on='_memory_threshold')
@@ -74,6 +76,17 @@ class ExperimentPreferences(BasePreferencesHelper):
     default_integration_time = Enum(*QTEGRA_INTEGRATION_TIMES)
 
     automated_runs_editable = Bool
+
+    use_xls_persister = Bool
+
+    success_color = Color
+    extraction_color = Color
+    measurement_color = Color
+    canceled_color = Color
+    truncated_color = Color
+    failed_color = Color
+    end_after_color = Color
+    invalid_color = Color
 
     def _get_memory_threshold(self):
         return self._memory_threshold
@@ -98,7 +111,7 @@ class ConsolePreferences(BaseConsolePreferences):
 
 
 # class SysLoggerPreferences(BasePreferencesHelper):
-#     use_syslogger = Bool
+# use_syslogger = Bool
 #     preferences_path = 'pychron.syslogger'
 #     username = Str
 #     password = Password
@@ -112,7 +125,7 @@ class ConsolePreferences(BaseConsolePreferences):
 class LabspyPreferencesPane(PreferencesPane):
     model_factory = LabspyPreferences
     category = 'Experiment'
-#
+    #
     def traits_view(self):
         v = View(VGroup(Item('use_labspy', label='Use Labspy'),
                         label='Labspy', show_border=True))
@@ -124,6 +137,9 @@ class ExperimentPreferencesPane(PreferencesPane):
     category = 'Experiment'
 
     def traits_view(self):
+        system_health_grp = VGroup(Item('use_system_health'),
+                                   label='System Health')
+
         notification_grp = VGroup(
             Item('use_notifications'),
             Item('notifications_port',
@@ -150,6 +166,16 @@ class ExperimentPreferencesPane(PreferencesPane):
                             Item('signal_color', label='Signal'),
                             label='Measurement Colors')
 
+        state_color_grp = VGroup(Item('success_color', label='Success'),
+                                 Item('extraction_color', label='Extraction'),
+                                 Item('measurement_color', label='Measurement'),
+                                 Item('canceled_color', label='Canceled'),
+                                 Item('truncated_color', label='Truncated'),
+                                 Item('failed_color', label='Failed'),
+                                 Item('end_after_color', label='End After'),
+                                 Item('invalid_color', label='Invalid'),
+
+                                 label='State Colors')
         analysis_grouping_grp = Group(Item('use_analysis_grouping',
                                            label='Auto group analyses',
                                            tooltip=''),
@@ -181,7 +207,8 @@ class ExperimentPreferencesPane(PreferencesPane):
                                  label='Min. Mass Spectrometer Pumptime (s)'),
                             show_border=True,
                             label='Overlap')
-
+        persist_grp = Group(Item('use_xls_persister', label='Save analyses to Excel workbook'),
+                            label='Persist', show_border=True)
         automated_grp = Group(VGroup(Item('send_config_before_run',
                                           tooltip='Set the spectrometer configuration before each analysis',
                                           label='Set Spectrometer Configuration on Start'),
@@ -190,13 +217,16 @@ class ExperimentPreferencesPane(PreferencesPane):
                                           label='Set Integration Time on Start'),
                                      Item('default_integration_time',
                                           enabled_when='set_integration_time_on_start'),
+                                     persist_grp,
                                      monitor_grp, overlap_grp),
                               label='Automated Run')
 
         return View(color_group,
-                    automated_grp, notification_grp,
+                    automated_grp,
+                    state_color_grp,
+                    notification_grp,
                     editor_grp,
-                    analysis_grouping_grp, memory_grp)
+                    analysis_grouping_grp, memory_grp, system_health_grp)
 
 
 class UserNotifierPreferencesPane(PreferencesPane):
@@ -230,7 +260,6 @@ class ConsolePreferencesPane(BaseConsolePreferencesPane):
                         show_border=True,
                         label=self.label))
         return v
-
 
 # class SysLoggerPreferencesPane(PreferencesPane):
 #     model_factory = SysLoggerPreferences

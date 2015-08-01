@@ -17,6 +17,7 @@ Pychron Develop Guide
   :maxdepth: 1
 
   running_pychron
+  build
   hardware
   database
   database_analysis
@@ -28,3 +29,4 @@ Pychron Develop Guide
   remote_hardware
   errors/el_errors
   errors/laser_errors
+  updater

@@ -78,13 +78,13 @@ class WorkspaceTask(BaseBrowserTask):
         import random
         p=os.path.join(self.workspace.path, '23447-02.yaml')
 
-        with open(p, 'r') as fp:
-            yd = yaml.load(fp)
+        with open(p, 'r') as rfile:
+            yd = yaml.load(rfile)
 
         yd['23447-02']['age'] = random.random()
         yd['23447-02']['tag'] = 'omit'
-        with open(p, 'w') as fp:
-            fp.write(yaml.dump(yd, default_flow_style=False))
+        with open(p, 'w') as wfile:
+            wfile.write(yaml.dump(yd, default_flow_style=False))
 
         self.workspace.modify_analysis(p)
 

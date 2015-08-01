@@ -46,7 +46,7 @@ class ResultsAdapter(TabularAdapter):
     aliquot_text = Property
 
     def _get_aliquot_text(self):
-        return '{:02n}{}'.format(self.item.aliquot, self.item.step)
+        return '{:02d}{}'.format(self.item.aliquot, self.item.step)
 
 
 def selector_name(name):

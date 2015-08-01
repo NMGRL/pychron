@@ -40,7 +40,7 @@ class CompareIsochronSpec(BaseEasy):
             editor.plotter_options_manager.set_plotter_options('Default')
             p, _ = unique_path(os.path.join(paths.dissertation, 'data', 'minnabluff'),
                                'compare_iso_spec')
-            fp = open(p, 'w')
+            wfile = open(p, 'w')
             for i in ids:
 
                 hist = db.get_interpreted_age_histories((i,))[-1]
@@ -74,11 +74,11 @@ class CompareIsochronSpec(BaseEasy):
                     t5 = 'TrappedComparison: {}'.format(comp)
                     t = '\n'.join((t0, t00, t1, t2, t3, t4, t5))
                     # print t
-                    fp.write(t + '\n---\n')
+                    wfile.write(t + '\n---\n')
                     # editor.set_items(unks)
                     # editor.rebuild()
-                    # print editor.get_trapped_component()
-            fp.close()
+                    # print 'exception', editor.get_trapped_component()
+            wfile.close()
             progress.close()
 
     def _calculate_intercept(self, reg):

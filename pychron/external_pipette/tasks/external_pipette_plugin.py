@@ -52,6 +52,7 @@ class ExternalPipettePlugin(BaseTaskPlugin):
 
     def _managers_default(self):
         return [dict(name='ExternalPipette',
+                     plugin_name='ExternalPipette',
                      manager=self._manager_factory())]
 
     def _tasks_default(self):
@@ -59,7 +60,7 @@ class ExternalPipettePlugin(BaseTaskPlugin):
                             task_group='hardware',
                             factory=self._task_factory,
                             name='External Pipette',
-                            image='pipette.png',
+                            image='pipette',
                             accelerator='Ctrl+Shift+0')]
 
     def _task_factory(self):

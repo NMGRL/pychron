@@ -36,7 +36,7 @@ try:
         CV_8UC3, CV_RGB, CV_16UC1, CV_32FC3, CV_CHAIN_APPROX_NONE, CV_RETR_EXTERNAL, \
         CV_AA, CV_16UC3, CV_16SC1
 except ImportError, e:
-    print e
+    print 'exception', e
     print 'OpenCV required'
 
 

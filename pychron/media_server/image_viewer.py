@@ -29,8 +29,8 @@ class ImageViewer(HasTraits):
 
     def load_image(self, path):
         if os.path.isfile(path):
-            with open(path, 'r') as fp:
-                self.set_image(fp)
+            with open(path, 'r') as rfile:
+                self.set_image(rfile)
 
     def set_image(self, buf):
         '''

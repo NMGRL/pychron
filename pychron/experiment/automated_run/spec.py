@@ -15,10 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import imp
+import hashlib
 
 from traits.api import Str, Int, Bool, Float, Property, \
-    Enum, on_trait_change, CStr, Long
+    Enum, on_trait_change, CStr, Long, HasTraits
 
 # ============= standard library imports ========================
 from datetime import datetime
@@ -26,22 +26,26 @@ import uuid
 import weakref
 # ============= local library imports  ==========================
 #
+from pychron.core.helpers.filetools import remove_extension
+from pychron.core.helpers.logger_setup import new_logger
 from pychron.experiment.utilities.identifier import get_analysis_type, make_rid, \
     make_runid, is_special, convert_extract_device
 from pychron.experiment.utilities.position_regex import XY_REGEX
 from pychron.pychron_constants import SCRIPT_KEYS, SCRIPT_NAMES, ALPHAS
-from pychron.loggable import Loggable
+
+logger = new_logger('AutomatedRunSpec')
 
 
-class AutomatedRunSpec(Loggable):
+class AutomatedRunSpec(HasTraits):
     """
         this class is used to as a simple container and factory for
         an AutomatedRun. the AutomatedRun does the actual work. ie extraction and measurement
     """
-    shared_logger = True
+    # shared_logger = True
 
     #     automated_run = Instance(AutomatedRun)
     #    state = Property(depends_on='_state')
+    collection_version = '0.1:0.1'
     state = Enum('not run', 'extraction',
                  'measurement', 'success',
                  'failed', 'truncated', 'canceled',
@@ -64,7 +68,7 @@ class AutomatedRunSpec(Loggable):
 
     aliquot = Property
     _aliquot = Int
-    #assigned_aliquot = Int
+    # assigned_aliquot = Int
 
     user_defined_aliquot = Int
 
@@ -169,7 +173,7 @@ class AutomatedRunSpec(Loggable):
             name = getattr(self, si)
             if name in script_context:
                 if name not in warned:
-                    self.debug('{} in script context. using previous estimated duration'.format(name))
+                    logger.debug('{} in script context. using previous estimated duration'.format(name))
                     warned.append(name)
 
                 script, ok = script_context[name]
@@ -241,7 +245,7 @@ class AutomatedRunSpec(Loggable):
                    ramp_duration=self.ramp_duration)
         return ctx
 
-    def get_estimated_duration(self, script_context, warned, force=False):
+    def get_estimated_duration(self, script_context=None, warned=None, force=False):
         """
             use the pyscripts to calculate etd
 
@@ -256,6 +260,7 @@ class AutomatedRunSpec(Loggable):
             self._estimated_duration = s + db_save_time
 
         self._changed = False
+        logger.debug('Run total estimated duration= {:0.3f}'.format(self._estimated_duration))
         return self._estimated_duration
 
     def make_run(self, new_uuid=True, run=None):
@@ -265,7 +270,7 @@ class AutomatedRunSpec(Loggable):
 
             md = __import__(md, fromlist=[klass])
             # md = imp.find_module(md)
-            run =getattr(md,klass)()
+            run = getattr(md, klass)()
 
             # run = self.run_klass()
 
@@ -294,16 +299,10 @@ class AutomatedRunSpec(Loggable):
 
         self._changed = False
 
-    def _remove_mass_spectrometer_name(self, name):
-        if self.mass_spectrometer:
-            name = name.replace('{}_'.format(self.mass_spectrometer.lower()), '')
-        return name
-
-    def _remove_file_extension(self, name, ext='.py'):
-        if name.endswith(ext):
-            name = name[:-3]
-
-        return name
+    # def _remove_mass_spectrometer_name(self, name):
+    #     if self.mass_spectrometer:
+    #         name = name.replace('{}_'.format(self.mass_spectrometer.lower()), '')
+    #     return name
 
     def to_string_attrs(self, attrs):
         def get_attr(attrname):
@@ -315,8 +314,9 @@ class AutomatedRunSpec(Loggable):
             elif attrname.endswith('script'):
                 # remove mass spectrometer name
                 v = getattr(self, attrname)
-                v = self._remove_mass_spectrometer_name(v)
-                v = self._remove_file_extension(v)
+                # v = self._remove_mass_spectrometer_name(v)
+                v = remove_extension(v)
+
             elif attrname == 'overlap':
                 o, m = self.overlap
                 if m:
@@ -365,8 +365,9 @@ class AutomatedRunSpec(Loggable):
         else:
             self._changed = True
 
-    @on_trait_change('''extract_+, position, duration, cleanup ''')
-    def _extract_changed(self):
+    @on_trait_change('''extract_+, position, duration, cleanup, pattern, weight, comment,
+    beam_diameter, ramp_duration, ramp_rate, conditionals''')
+    def _handle_value_change(self):
         self._changed = True
 
     # ===============================================================================
@@ -398,10 +399,10 @@ class AutomatedRunSpec(Loggable):
         #         # a = self.user_defined_aliquot
         #
         # return a
-        #a = self.assigned_aliquot
-        #if not a:
+        # a = self.assigned_aliquot
+        # if not a:
         #    a = self._aliquot
-        #return a
+        # return a
 
     def _get_analysis_type(self):
         return get_analysis_type(self.labnumber)
@@ -440,10 +441,13 @@ class AutomatedRunSpec(Loggable):
         return self._executable and not self.identifier_error
 
     def _set_overlap(self, v):
-        try:
-            args = map(int, v.split(','))
-        except ValueError:
-            self.debug('Invalid overlap string "{}". Should be of the form "10,60" or "10" '.format(v))
+        if isinstance(v, (list, tuple)):
+            args = v
+        else:
+            try:
+                args = map(int, v.split(','))
+            except ValueError:
+                logger.debug('Invalid overlap string "{}". Should be of the form "10,60" or "10" '.format(v))
 
         if len(args) == 1:
             self._overlap = args[0]
@@ -451,9 +455,9 @@ class AutomatedRunSpec(Loggable):
             self._overlap, self._min_ms_pumptime = args
 
     def _get_overlap(self):
-        return (self._overlap, self._min_ms_pumptime)
+        return self._overlap, self._min_ms_pumptime
 
-    #mirror labnumber for now. deprecate labnumber and replace with identifier
+    # mirror labnumber for now. deprecate labnumber and replace with identifier
     @property
     def identifier(self):
         return self.labnumber
@@ -473,4 +477,27 @@ class AutomatedRunSpec(Loggable):
     @property
     def sensitivity(self):
         return 0
+
+    @property
+    def extract_duration(self):
+        return self.duration
+
+    @property
+    def cleanup_duration(self):
+        return self.cleanup
+
+    @property
+    def script_hash(self):
+        ctx = self.make_script_context()
+        ctx['measurement'] = self.measurement_script
+        ctx['extraction'] = self.measurement_script
+
+        md5 = hashlib.md5()
+        for k, v in sorted(ctx.items()):
+            md5.update(str(k))
+            md5.update(str(v))
+        return md5.hexdigest()
+
+        # d = script.calculate_estimated_duration(ctx)
+
         # ============= EOF =============================================

@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 import math
 
-from traits.api import HasTraits, List, Property, cached_property, Str, Bool, Int, Event
+from traits.api import HasTraits, List, Property, cached_property, Str, Bool, Int, Event, Tuple
 
 # ============= standard library imports ========================
 from numpy import array, nan
@@ -38,6 +38,7 @@ def AGProperty(*depends):
 
 
 class AnalysisGroup(HasTraits):
+    attribute = Str('uage')
     analyses = List
     nanalyses = AGProperty()
 
@@ -59,6 +60,9 @@ class AnalysisGroup(HasTraits):
     isochron_age_error_kind = Str
     identifier = Property
     sample = Property
+    aliquot = Property
+
+    _sample = Str
     age_scalar = Property
     age_units = Property
 
@@ -82,14 +86,16 @@ class AnalysisGroup(HasTraits):
 
     # @cached_property
     def _get_mswd(self):
-        attr = 'uage_wo_j_err'
-        if self.include_j_error_in_individual_analyses:
-            attr = 'uage'
+        attr = self.attribute
+        if attr.startswith('uage'):
+            attr = 'uage_wo_j_err'
+            if self.include_j_error_in_individual_analyses:
+                attr = 'uage'
 
         return self._calculate_mswd(attr)
 
     def _calculate_mswd(self, attr):
-        m = None
+        m = 0
         args = self._get_values(attr)
         if args:
             vs, es = args
@@ -111,21 +117,34 @@ class AnalysisGroup(HasTraits):
         return self._calculate_isochron_age()
 
     @cached_property
+    def _get_aliquot(self):
+        return self.analyses[0].aliquot
+
+    @cached_property
     def _get_identifier(self):
         return self.analyses[0].labnumber
 
     @cached_property
     def _get_sample(self):
-        return self.analyses[0].sample
+        sam = self._sample
+        if not sam:
+            sam = self.analyses[0].sample
+        return sam
+
+    def _set_sample(self, s):
+        self._sample = s
 
     # @cached_property
     def _get_weighted_age(self):
-
-        if self.include_j_error_in_individual_analyses:
-            v, e = self._calculate_weighted_mean('uage', self.weighted_age_error_kind)
-        else:
-            v, e = self._calculate_weighted_mean('uage_wo_j_err', self.weighted_age_error_kind)
-
+        attr = self.attribute
+        if attr.startswith('uage'):
+            attr = 'uage' if self.include_j_error_in_individual_analyses else 'uage_wo_j_err'
+        #     if self.include_j_error_in_individual_analyses:
+        #         v, e = self._calculate_weighted_mean('uage', self.weighted_age_error_kind)
+        #     else:
+        #         v, e = self._calculate_weighted_mean('uage_wo_j_err', self.weighted_age_error_kind)
+        # else:
+        v, e = self._calculate_weighted_mean(attr, self.weighted_age_error_kind)
         e = self._modify_error(v, e, self.weighted_age_error_kind)
         try:
             return ufloat(v, e)
@@ -233,6 +252,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
 
     plateau_age_error_kind = Str
     nsteps = Int
+    calculate_fixed_plateau_steps = Tuple
 
     # def _get_nanalyses(self):
     #     if self.plateau_steps:
@@ -276,17 +296,22 @@ class StepHeatAnalysisGroup(AnalysisGroup):
     def _get_plateau_age(self):
         ages, errors, k39 = self._get_steps()
 
-        args = calculate_plateau_age(ages, errors, k39)
+        options = {'nsteps': self.pc_nsteps,
+                   'gas_fraction': self.pc_gas_fraction,
+                   'force_steps': self.calculate_fixed_plateau_steps}
+
+        args = calculate_plateau_age(ages, errors, k39, options=options)
         if args:
             v, e, pidx = args
+            if pidx[0]==pidx[1]:
+                return
 
             self.plateau_steps = pidx
             self.plateau_steps_str = '{}-{}'.format(ALPHAS[pidx[0]],
                                                     ALPHAS[pidx[1]])
 
-
             self.nsteps = (pidx[1] - pidx[0]) + 1
-
+            # print pidx
             pages, perrs = zip(*[(ages[i], errors[i]) for i in range(pidx[0], pidx[1])])
             mswd = calculate_mswd(pages, perrs)
             self.plateau_mswd_valid = validate_mswd(mswd, self.nsteps)

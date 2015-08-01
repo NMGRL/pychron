@@ -22,7 +22,6 @@ from traits.api import Instance
 # ============= local library imports  ==========================
 from pychron.processing.analyses.file_analysis import SpectrumFileAnalysis
 from pychron.processing.tasks.figures.figure_editor import FigureEditor
-from pychron.processing.plotters.figure_container import FigureContainer
 from pychron.processing.plotter_options_manager import SpectrumOptionsManager
 #from pychron.processing.tasks.figures.editors.auto_controls import AutoSpectrumControl
 
@@ -45,18 +44,13 @@ class SpectrumEditor(FigureEditor):
 
         from pychron.processing.plotters.spectrum.spectrum_model import SpectrumModel
 
-        model = SpectrumModel(plot_options=plotter_options)
-        model.analyses = ans
-        iv = FigureContainer(model=model)
-        component = iv.component
-
-        c = u'Plateau age calculated as weighted mean of plateau steps. ' \
-            u'Integrated age calculated as isotopic recombination of all steps.\n' \
-            u'Plateau and Integrated Age uncertainties \u00b1{}\u03c3.' \
-            u'GMC=Groundmass Concentrate, Kaer=Kaersutite, Plag=Plagioclase'
-
-        self._add_caption(component, plotter_options, default_captext=c)
-
+        # c = u'Plateau age calculated as weighted mean of plateau steps. ' \
+        #     u'Integrated age calculated as isotopic recombination of all steps.\n' \
+        #     u'Plateau and Integrated Age uncertainties \u00b1{}\u03c3.' \
+        #     u'GMC=Groundmass Concentrate, Kaer=Kaersutite, Plag=Plagioclase'
+        #
+        # self._add_caption(component, plotter_options, default_captext=c)
+        model, component = self._make_component(SpectrumModel, ans, plotter_options)
         return model, component
 
     def _check_for_necessary_attributes(self, d):

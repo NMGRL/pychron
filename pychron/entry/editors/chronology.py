@@ -47,9 +47,20 @@ class IrradiationDosage(HasTraits):
     def _end_date_default(self):
         return date.today()
 
+    def start(self):
+        return '{} {}'.format(self.start_date, self.start_time)
+
+    def end(self):
+        return '{} {}'.format(self.start_date, self.start_time)
+
     def make_blob(self):
         return '{}|{} {}%{} {}'.format(self.power, self.start_date, self.start_time,
                                        self.end_date, self.end_time)
+
+    def to_tuple(self):
+        print 'tooo'
+        return str(self.power), self.start(), self.end()
+
         # def validate_dosage(self, prev_dose):
         #     if self.start_date is None:
         #         return 'Start date not set'
@@ -89,6 +100,9 @@ class IrradiationChronology(HasTraits):
 
         self.dosages = map(dose_factory, ds)
 
+    def get_doses(self):
+        return [ci.to_tuple() for ci in self.dosages]
+
     def make_blob(self):
         chronblob = '$\n'.join([ci.make_blob() for ci in self.dosages])
         return chronblob
@@ -123,6 +137,7 @@ class IrradiationChronology(HasTraits):
                 ObjectColumn(name='end_time'),
                 ObjectColumn(name='power')]
         table = UItem('dosages', editor=TableEditor(columns=cols,
+                                                    edit_on_first_click=False,
                                                     selected='selected_dosage',
                                                     sortable=False))
         v = View(VGroup(tb, table))

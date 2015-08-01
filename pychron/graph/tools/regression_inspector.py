@@ -27,8 +27,8 @@ class RegressionInspectorTool(InfoInspector):
 
         v, e = reg.predict(0), reg.predict_error(0)
         lines = [reg.make_equation(),
-                 'x=0, y={} +/-{}({}%)'.format(floatfmt(v, n=5),
-                                               floatfmt(e, n=5),
+                 'x=0, y={} +/-{}({}%)'.format(floatfmt(v, n=9),
+                                               floatfmt(e, n=9),
                                                format_percent_error(v, e))]
 
         if not reg.mswd in ('NaN', None):

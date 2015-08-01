@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,6 +19,7 @@ from traits.api import Button, Bool, Any, List
 from traitsui.api import Item, HGroup
 # from pychron.core.ui.custom_label_editor import CustomLabel
 # from pychron.core.geometry.geometry import calculate_reference_frame_center, calc_length
+from traitsui.view import View
 from pychron.lasers.stage_managers.calibration.calibrator import TrayCalibrator
 from pychron.core.geometry.reference_point import ReferencePoint
 from pychron.core.geometry.affine import calculate_rigid_transform
@@ -36,16 +37,17 @@ class FreeCalibrator(TrayCalibrator):
     points = List
     append_current_calibration = Bool(False)
 
-    def get_controls(self):
-        cg = HGroup(Item('object.calibrator.accept_point',
-                         enabled_when='object.calibrator.calibrating',
-                       show_label=False),
-                    Item('object.calibrator.append_current_calibration',
+    # def get_controls(self):
+    #
+    def traits_view(self):
+        cg = HGroup(Item('accept_point',
+                         enabled_when='calibrating',
+                         show_label=False),
+                    Item('append_current_calibration',
                          label='Append Points',
                          tooltip='Should points be appended to the current calibration or a new calibration started?'
-                         )
-                    )
-        return cg
+                         ))
+        return View(cg)
 
     def handle(self, step, x, y, canvas):
         if step == 'Calibrate':
@@ -58,29 +60,41 @@ class FreeCalibrator(TrayCalibrator):
                 canvas.new_calibration_item()
                 self.points = []
             return dict(calibration_step='End Calibrate')
-#            return 'End Calibrate', None, None, None, None, None
+        # return 'End Calibrate', None, None, None, None, None
 
         elif step == 'End Calibrate':
-            self.calibrating = False
-            d = dict(calibration_step='Calibrate')
+            n = 0
             if self.points:
-                refpoints, points = zip(*self.points)
+                n = len(self.points)
 
-                scale, theta, (tx, ty), err = calculate_rigid_transform(refpoints,
-                                                                   points)
+            if n < 3:
+                d = None
+                if self.confirmation_dialog('Need to enter at least 3 calibration points. Current NPoints: {}\n\n'
+                                            'Are you sure you want to End calibration'.format(n)):
+                    self.calibrating = False
+                    d = dict(calibration_step='Calibrate')
+                return d
 
-                # set canvas calibration
-                ca = canvas.calibration_item
-                ca.cx, ca.cy = tx, ty
-                ca.rotation = theta
-                ca.scale = 1 / scale
-                d.update(dict(cx=tx, cy=ty, rotation=theta, scale=1 / scale, error=err
-                            ))
+            d = dict(calibration_step='Calibrate')
+            self.calibrating = False
+
+            refpoints, points = zip(*self.points)
+
+            scale, theta, (tx, ty), err = calculate_rigid_transform(refpoints,
+                                                                    points)
+
+            # set canvas calibration
+            ca = canvas.calibration_item
+            ca.cx, ca.cy = tx, ty
+            ca.rotation = theta
+            ca.scale = 1 / scale
+            d.update(dict(cx=tx, cy=ty, rotation=theta, scale=1 / scale, error=err
+                          ))
             return d
-#                return 'Calibrate', tx, ty, theta, 1 / scale, err
-#            else:
-#                return dict(calibration_step='Calibrate')
-#                return 'Calibrate', None, None, None, None, None
+            # return 'Calibrate', tx, ty, theta, 1 / scale, err
+            # else:
+            #                return dict(calibration_step='Calibrate')
+            #                return 'Calibrate', None, None, None, None, None
 
     def _accept_point(self):
         sp = self.manager.get_current_position()
@@ -100,7 +114,6 @@ class FreeCalibrator(TrayCalibrator):
 # ===============================================================================
     def _accept_point_fired(self):
         self._accept_point()
-
 
 
 # ============= EOF =============================================

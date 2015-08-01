@@ -67,6 +67,11 @@ def get_selected_history_item(sh, key):
 
 
 class IsotopeRecordView(object):
+    pass
+
+
+#
+class IsotopeRecordView(object):
     __slots__ = ('sample', 'project', 'labnumber', 'identifier', 'aliquot', 'step',
                  '_increment',
                  'uuid', 'rundate',
@@ -88,8 +93,8 @@ class IsotopeRecordView(object):
         self.identifier = ''
         self.labnumber = ''
         self.aliquot = 0
-        self.step = ''
         self._increment = -1
+        self.step = ''
         self.tag = ''
         self.uuid = ''
         self.rundate = ''

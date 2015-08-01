@@ -102,8 +102,8 @@ class LaserScriptExecutor(Loggable):
 #        py = self.laser_manager.pyrometer
 #        tc = self.laser_manager.get_device('temperature_monitor')
 
-        with open(p, 'w') as fp:
-            writer = csv.writer(fp)
+        with open(p, 'w') as wfile:
+            writer = csv.writer(wfile)
             st = time.time()
             for ti in linspace(start, end, n):
                 if self._cancel:
@@ -213,8 +213,8 @@ class LaserScriptExecutor(Loggable):
             g.record(v2, plotid=1)
 
         pi = 0
-        with open(p, 'w') as fp:
-            writer = csv.writer(fp)
+        with open(p, 'w') as wfile:
+            writer = csv.writer(wfile)
             t = 0
             ti = 0
             while ti <= duration:
@@ -284,12 +284,12 @@ class UVLaserScriptExecutor(LaserScriptExecutor):
         sm = lm.stage_manager
         atl = lm.atl_controller
 
-        with open(name, 'r') as fp:
+        with open(name, 'r') as rfile:
             def shot(delay=3):
                 if not self._cancel:
                     lm.single_burst(delay=delay)
 
-            d = yaml.load(fp.read())
+            d = yaml.load(rfile.read())
 
             device = d['device']
             if device == 'z':

@@ -65,7 +65,7 @@
 #         self.prev_commit_messages=[]
 #
 #         if os.path.isfile(p):
-#             with open(p, 'r') as fp:
+#             with open(p, 'r') as rfile:
 #                 try:
 #                     ms=pickle.load(fp)
 #                     self._commit_messages=ms

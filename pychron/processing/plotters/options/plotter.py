@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,23 +15,24 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from itertools import groupby
 
-from kiva.fonttools import str_to_font
-from traits.api import Str, Property, Enum, Button, List
+from traits.api import Str, Property, Enum, Button, List, Int, Any, on_trait_change, Instance, Bool
 from traitsui.api import View, Item, HGroup, VGroup, Group, \
     EnumEditor, TableEditor
-
-
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
+from kiva.fonttools import str_to_font
+from enable.markers import marker_names
+# ============= standard library imports ========================
+from itertools import groupby
+# ============= local library imports  ==========================
+from pychron.core.ui.table_editor import myTableEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.processing.plotters.options.base import FigurePlotterOptions
+from pychron.processing.plotters.options.option import AuxPlotOptions
 from pychron.pychron_constants import ALPHAS
 
-FONTS = ['modern', 'arial']
+FONTS = ['Helvetica', ]  # 'Courier','Times-Roman']#['modern', 'arial']
 SIZES = [10, 6, 8, 9, 10, 11, 12, 14, 15, 18, 24, 36]
 
 
@@ -57,11 +58,13 @@ class PlotterOptions(FigurePlotterOptions):
     title_leading_text = Str
     title_trailing_text = Str
     # auto_generate_title = Bool
-    #     data_type = Str('database')
+    # data_type = Str('database')
 
     xtick_font = Property
     xtick_font_size = Enum(*SIZES)
     xtick_font_name = Enum(*FONTS)
+    xtick_in = Int(1)
+    xtick_out = Int(5)
 
     xtitle_font = Property
     xtitle_font_size = Enum(*SIZES)
@@ -70,12 +73,20 @@ class PlotterOptions(FigurePlotterOptions):
     ytick_font = Property
     ytick_font_size = Enum(*SIZES)
     ytick_font_name = Enum(*FONTS)
+    ytick_in = Int(1)
+    ytick_out = Int(5)
 
     ytitle_font = Property
     ytitle_font_size = Enum(*SIZES)
     ytitle_font_name = Enum(*FONTS)
 
     x_filter_str = Str
+
+    @on_trait_change('aux_plots:name')
+    def _handle_name_change(self, obj, name, old, new):
+        print obj, name, old, new
+        obj.clear_ylimits()
+
 
     def _edit_title_format_fired(self):
         from pychron.processing.label_maker import TitleTemplater, TitleTemplateView
@@ -171,8 +182,11 @@ class PlotterOptions(FigurePlotterOptions):
                   'title_delimiter',
                   'title_leading_text',
                   'title_trailing_text',
-                  #                  'data_type',
-
+                  # 'data_type',
+                  'xtick_in',
+                  'ytick_in',
+                  'xtick_out',
+                  'ytick_out',
                   'xtick_font_size',
                   'xtick_font_name',
                   'xtitle_font_size',
@@ -184,6 +198,11 @@ class PlotterOptions(FigurePlotterOptions):
                   'x_filter_str']
 
         return attrs
+
+    def _get_change_attrs(self):
+        return ['xtick_in', 'ytick_in', 'xtick_out', 'ytick_out', 'xtick_font_size', 'xtick_font_name',
+                'xtitle_font_size', 'xtitle_font_name', 'ytick_font_size', 'ytick_font_name', 'ytitle_font_size',
+                'ytitle_font_name', ]
 
     # ===============================================================================
     # property get/set
@@ -233,11 +252,28 @@ class PlotterOptions(FigurePlotterOptions):
     def _get_groups(self):
         pass
 
+    def _get_axes_group(self):
+        axis_grp = Group(self._get_x_axis_group(), self._get_y_axis_group(),
+                         enabled_when='not formatting_options',
+                         layout='tabbed', show_border=True, label='Axes')
+        grid_grp = VGroup(Item('use_xgrid',
+                               label='XGrid Visible'),
+                          Item('use_ygrid', label='YGrid Visible'),
+                          show_border=True,
+                          label='Grid')
+        grp = VGroup(axis_grp, grid_grp)
+        return grp
+
     def _get_x_axis_group(self):
         v = VGroup(
             self._create_axis_group('x', 'title'),
             self._create_axis_group('x', 'tick'),
-            #                    show_border=True,
+
+            Item('xtick_in', label='Tick In', tooltip='The number of pixels by which '
+                                                      'the ticks extend into the plot area.'),
+            Item('xtick_out', label='Tick Out', tooltip='The number of pixels by which '
+                                                        'the ticks extend into the label area.'),
+            # show_border=True,
             label='X')
         return v
 
@@ -245,12 +281,16 @@ class PlotterOptions(FigurePlotterOptions):
         v = VGroup(
             self._create_axis_group('y', 'title'),
             self._create_axis_group('y', 'tick'),
-            #                    show_border=True,
+            Item('ytick_in', label='Tick In', tooltip='The number of pixels by which '
+                                                      'the ticks extend into the plot area.'),
+            Item('ytick_out', label='Tick Out', tooltip='The number of pixels by which '
+                                                        'the ticks extend into the label area.'),
+            # show_border=True,
             label='Y')
         return v
 
     # def _get_info_group(self):
-    #     return Group()
+    # return Group()
     def _get_title_group(self):
         return VGroup(HGroup(Item('auto_generate_title',
                                   tooltip='Auto generate a title based on the analysis list'),
@@ -263,9 +303,9 @@ class PlotterOptions(FigurePlotterOptions):
 
     def _get_main_group(self):
         main_grp = VGroup(self._get_aux_plots_group(),
-                          HGroup(Item('plot_spacing', label='Spacing')),
-                          # HGroup(Item('x_filter_str', label='X Filter')),
-                          label='Plots')
+            HGroup(Item('plot_spacing', label='Spacing',
+                        tooltip='Spacing between stacked plots')),
+            label='Plots')
         return main_grp
 
     def _get_aux_plots_group(self):
@@ -281,36 +321,53 @@ class PlotterOptions(FigurePlotterOptions):
                 checkbox_column(name='y_error', label='Y Err.'),
                 checkbox_column(name='ytick_visible', label='Y Tick'),
                 checkbox_column(name='ytitle_visible', label='Y Title'),
-                object_column(name='filter_str', label='Filter')]
+                # object_column(name='filter_str', label='Filter')
+                ]
+
+        v = View(VGroup(Item('name', editor=EnumEditor(name='names')),
+                        Item('marker', editor=EnumEditor(values=marker_names)),
+                        Item('marker_size'),
+                        HGroup(Item('ymin', label='Min'),
+                               Item('ymax', label='Max'),
+                               show_border=True,
+                               label='Y Limits'),
+                        show_border=True))
 
         aux_plots_grp = Item('aux_plots',
                              style='custom',
                              show_label=False,
-                             editor=TableEditor(columns=cols,
-                                                sortable=False,
-                                                deletable=False,
-                                                reorderable=False))
+                             editor=myTableEditor(columns=cols,
+                                                  sortable=False,
+                                                  deletable=False,
+                                                  clear_selection_on_dclicked=True,
+                                                  edit_on_first_click=False,
+                                                  # on_select=lambda *args: setattr(self, 'selected', True),
+                                                  # selected='selected',
+                                                  edit_view=v,
+                                                  reorderable=False))
         return aux_plots_grp
-
-    def _get_bg_group(self):
-        grp = Group(Item('bgcolor', label='Figure'),
-                    Item('plot_bgcolor', label='Plot'),
-                    label='Background')
-        return grp
 
     def traits_view(self):
         main_grp = self._get_main_group()
         bg_grp = self._get_bg_group()
+        pd_grp = self._get_padding_group()
+        a_grp = self._get_axes_group()
         grps = self._get_groups()
         if grps:
+            a_grp = VGroup(bg_grp, pd_grp,
+                           a_grp,
+                           label='Appearance',
+                           show_border=True)
             g = Group(main_grp,
-                      bg_grp,
+                      a_grp,
+                      # bg_grp,
+                      # self._get_padding_group(),
                       layout='fold', *grps)
         else:
-            g = Group(main_grp, bg_grp)
+            g = Group(main_grp, bg_grp, pd_grp)
 
         v = View(VGroup(self._get_refresh_group(), g),
-                 scrollable=True)
+            scrollable=True)
         # v = View(VGroup(self._get_refresh_group(),g))
         return v
 

@@ -95,13 +95,13 @@ class XLSFluxParser(FluxParser):
 
 class CSVFluxParser(FluxParser):
     def _get_irradiation(self):
-        with open(self.path, 'r') as fp:
-            reader = csv.reader(fp)
+        with open(self.path, 'r') as rfile:
+            reader = csv.reader(rfile)
             return reader.next()
 
     def _iter_positions(self):
-        with open(self.path, 'r') as fp:
-            reader = csv.reader(fp)
+        with open(self.path, 'r') as rfile:
+            reader = csv.reader(rfile)
             _ = reader.next()
             header = reader.next()
 

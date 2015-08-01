@@ -26,6 +26,9 @@ from uncertainties import std_dev, nominal_value
 
 
 
+
+
+
 # =============local library imports  ==========================
 from pychron.database.orms.massspec_orm import IsotopeResultsTable, \
     AnalysesChangeableItemsTable, BaselinesTable, DetectorTable, \
@@ -35,7 +38,7 @@ from pychron.database.orms.massspec_orm import IsotopeResultsTable, \
     PreferencesTable, DatabaseVersionTable, FittypeTable, \
     BaselinesChangeableItemsTable, SampleLoadingTable, MachineTable, \
     AnalysisPositionTable, LoginSessionTable, RunScriptTable, \
-    IrradiationChronologyTable, IrradiationLevelTable, IrradiationProductionTable
+    IrradiationChronologyTable, IrradiationLevelTable, IrradiationProductionTable, ProjectTable, MaterialTable
 from pychron.database.core.database_adapter import DatabaseAdapter
 from pychron.database.core.functions import delete_one
 
@@ -67,22 +70,29 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
 
     def bind_preferences(self):
         from apptools.preferences.preference_binding import bind_preference
+
         prefid = 'pychron.massspec.database'
         bind_preference(self, 'host', '{}.host'.format(prefid))
         bind_preference(self, 'username', '{}.username'.format(prefid))
         bind_preference(self, 'password', '{}.password'.format(prefid))
         bind_preference(self, 'name', '{}.name'.format(prefid))
 
-    @property
-    def selector_klass(self):
-        # lazy load selector klass.
-        from pychron.database.selectors.massspec_selector import MassSpecSelector
-
-        return MassSpecSelector
+    # @property
+    # def selector_klass(self):
+    # # lazy load selector klass.
+    #     from pychron.database.selectors.massspec_selector import MassSpecSelector
+    #
+    #     return MassSpecSelector
 
     # ===============================================================================
     # getters
     # ===============================================================================
+    def get_material(self, name):
+        return self._retrieve_item(MaterialTable, name, 'Material')
+
+    def get_project(self, name):
+        return self._retrieve_item(ProjectTable, name, 'Project')
+
     def get_irradiation_positions(self, name, level):
         with self.session_ctx() as sess:
             q = sess.query(IrradiationPositionTable)
@@ -145,7 +155,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
     def get_irradiation_names(self):
         with self.session_ctx() as sess:
             q = sess.query(distinct(IrradiationLevelTable.IrradBaseID))
-            vs =q.all()
+            vs = q.all()
             if vs:
                 vs = [vi[0] for vi in vs]
             return vs
@@ -178,7 +188,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
                 #       'ORDER BY `AnalysesTable`.`AnalysisID` DESC LIMIT 1'.format(labnumber, aliquot)
                 sql = 'SELECT AnalysesTable.Aliquot_pychron, AnalysesTable.Increment ' \
                       'FROM AnalysesTable ' \
-                      'WHERE AnalysesTable.RID LIKE "{}-{:02n}%" ' \
+                      'WHERE AnalysesTable.RID LIKE "{}-{:02d}%" ' \
                       'ORDER BY AnalysesTable.AnalysisID DESC LIMIT 1'.format(labnumber, aliquot)
                 v = sess.execute(sql)
                 if v is not None:
@@ -295,6 +305,16 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
     # ===============================================================================
     # adders
     # ===============================================================================
+    def add_project(self, name):
+        with self.session_ctx():
+            obj = ProjectTable(Project=name)
+            return self._add_item(obj)
+
+    def add_material(self, name):
+        with self.session_ctx():
+            obj = MaterialTable(Material=name)
+            return self._add_item(obj)
+
     def add_sample(self, name):
         with self.session_ctx():
             obj = SampleTable(Sample=name, ProjectID=1)
@@ -324,7 +344,8 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
 
             return self._add_item(i)
 
-    def add_irradiation_position(self, identifier, irrad_level, hole, material='', sample=6, j=1e-4, jerr=1e-7):
+    def add_irradiation_position(self, identifier, irrad_level, hole,
+                                 material='', sample=6, j=1e-4, jerr=1e-7, note=''):
         """
 
         :param identifier:
@@ -340,10 +361,10 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
             q = sess.query(IrradiationPositionTable)
             q = q.filter(IrradiationPositionTable.IrradPosition == identifier)
             if not self._query_one(q):
-
                 i = IrradiationPositionTable(IrradPosition=identifier,
                                              IrradiationLevel=irrad_level,
                                              HoleNumber=hole,
+                                             Note=note,
                                              Material=material,
                                              SampleID=sample,
                                              J=j, JEr=jerr)
@@ -421,7 +442,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
 
     def add_analysis(self, rid, aliquot, step, irradpos, runtype, **kw):
         if isinstance(aliquot, int):
-            aliquot = '{:02n}'.format(aliquot)
+            aliquot = '{:02d}'.format(aliquot)
 
         # query the IrradiationPositionTable
         irradpos = self.get_irradiation_position(irradpos, )
@@ -510,19 +531,13 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         self._add_item(iso, )
         return iso
 
-    def add_isotope_result(self, isotope, data_reduction_session_id,
-                           intercept, baseline, blank,
-                           fit,
-                           detector
-
-                           #                           intercept, intercept_err,
-                           #                           baseline, baseline_err,
-                           #                           blank, blank_err
-    ):
+    def add_isotope_result(self, isotope, data_reduction_session_id, intercept, baseline, blank, fit, detector,
+                           is_blank=False):
         """
             intercept, baseline and blank should be ufloats
 
             mass spec does not propogate baseline error
+        :param is_blank:
         """
 
         isotope = self.get_isotope(isotope, )
@@ -530,12 +545,14 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         # in mass spec intercept is baseline corrected
         # mass spec does not propagate baseline error
         # convert baseline to scalar
-        baseline = baseline.nominal_value
+        baseline = nominal_value(baseline)
 
         intercept = intercept - baseline
-
-        # isotope is corrected for background (blank in pychron parlance)
-        isotope_value = intercept - blank
+        if is_blank:
+            isotope_value = intercept
+        else:
+            # isotope is corrected for background (blank in pychron parlance)
+            isotope_value = intercept - blank
 
         fit = self.get_fittype(fit, )
 
@@ -667,7 +684,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
 # #            sess.add(det)
 # #
 # #        return det, sess
-#    def add_detector(self, args):
+# def add_detector(self, args):
 #        return self._add_tableitem(DetectorTable(**args))
 #
 #    def add_analysis_changeable(self, args, dbanalysis=None):
@@ -721,13 +738,13 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
 #        try:
 #            table = globals()[tablename]
 #        except KeyError, e:
-#            print e
+# print 'exception', e
 #            a = None
 #
 #        try:
 #            a = sess.query(table)
 #        except Exception, e:
-#            print e
+# print 'exception', e
 #            a = None
 #        if a is not None:
 #            a.delete()

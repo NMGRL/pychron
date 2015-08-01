@@ -18,9 +18,8 @@
 from pyface.timer.do_later import do_later
 from traits.api import Instance, Enum, Any, DelegatesTo, List, Property, \
     Bool, Button, String, cached_property, \
-    HasTraits, Range, Float, Event
+    Float, Event
 # ============= standard library imports ========================
-import random
 import os
 import pickle
 import time
@@ -30,13 +29,11 @@ from Queue import Queue
 import yaml
 # ============= local library imports  ==========================
 from pychron.core.ui.preference_binding import bind_preference
-from pychron.core.ui.toggle_button import ToggleButton
-from pychron.envisage.resources import icon
 from pychron.managers.manager import Manager
 from pychron.graph.time_series_graph import TimeSeriesStreamGraph
 from pychron.spectrometer.graph.spectrometer_scan_graph import SpectrometerScanGraph
+from pychron.spectrometer.jobs.scanner import Scanner
 from pychron.spectrometer.thermo.detector import Detector
-from pychron.spectrometer.jobs.magnet_scan import MagnetScan
 from pychron.spectrometer.jobs.rise_rate import RiseRate
 from pychron.paths import paths
 from pychron.managers.data_managers.csv_data_manager import CSVDataManager
@@ -48,7 +45,7 @@ from pychron.graph.tools.data_tool import DataTool, DataToolOverlay
 
 class ScanManager(Manager):
     spectrometer = Any
-    ion_optics_manager = Instance('pychron.spectrometer.ion_optics_manager.IonOpticsManager')
+    ion_optics_manager = Instance('pychron.spectrometer.ion_optics.ion_optics_manager.IonOpticsManager')
 
     graph = Instance(TimeSeriesStreamGraph)
     # graphs = List
@@ -61,7 +58,7 @@ class ScanManager(Manager):
     detector = Instance(Detector)
     magnet = DelegatesTo('spectrometer')
     source = DelegatesTo('spectrometer')
-    scanner = Instance(MagnetScan)
+    scanner = Instance(Scanner)
     rise_rate = Instance(RiseRate)
     isotope = String
     isotopes = Property
@@ -77,12 +74,16 @@ class ScanManager(Manager):
     graph_scan_width = Float(enter_set=True, auto_set=False)  # in minutes
     clear_button = Event
     # record_button = Event
-    record_button = ToggleButton(image_on=icon('media-record'),
-                                 image_off=icon('media-playback-stop'),
-                                 tooltip_on='Start recording scan',
-                                 tooltip_off='Stop recording scan',
-                                 height=22,
-                                 width=45)
+    # record_button = ToggleButton(image_on=icon('media-record'),
+    # image_off=icon('media-playback-stop'),
+    # tooltip_on='Start recording scan',
+    #                              tooltip_off='Stop recording scan',
+    #                              # height=22,
+    #                              # width=45
+    #                             )
+
+    start_record_button = Button
+    stop_record_button = Button
 
     snapshot_button = Button
     snapshot_output = Enum('png', 'pdf')
@@ -106,6 +107,8 @@ class ScanManager(Manager):
     use_log_events = Bool
     log_events_enabled = False
     _valve_event_list = List
+    _prev_signals = None
+    _no_intensity_change_cnt = 0
 
     def _bind_listeners(self, remove=False):
         self.on_trait_change(self._update_magnet, 'magnet:dac_changed', remove=remove)
@@ -119,6 +122,7 @@ class ScanManager(Manager):
         plot = self.graph.plots[0]
         plot.value_range.on_trait_change(self._update_graph_limits,
                                          '_low_value, _high_value', remove=True)
+        self.readout_view.stop()
 
     def stop_scan(self):
         self.dump_settings()
@@ -136,6 +140,7 @@ class ScanManager(Manager):
 
         self.load_event_marker_config()
         self.setup_scan()
+        # self.readout_view.start()
 
     def load_event_marker_config(self):
         if self.use_log_events:
@@ -144,13 +149,13 @@ class ScanManager(Manager):
                 if self.confirmation_dialog('No scan.yaml file found. '
                                             'Required to configure which valves trigger adding a marker.\n'
                                             'Would you like to add a blank scan.yaml file?'):
-                    with open(p, 'w') as fp:
-                        yaml.dump({'valves': []}, fp,
+                    with open(p, 'w') as wfile:
+                        yaml.dump({'valves': []}, wfile,
                                   default_flow_style=False)
 
             if os.path.isfile(p):
-                with open(p, 'r') as fp:
-                    yd = yaml.load(fp)
+                with open(p, 'r') as rfile:
+                    yd = yaml.load(rfile)
                     self._valve_event_list = yd['valves']
 
     def bind_preferences(self):
@@ -179,7 +184,7 @@ class ScanManager(Manager):
         self.info('load scan settings')
         spec = self.spectrometer
 
-        p = os.path.join(paths.hidden_dir, 'scan_settings')
+        p = os.path.join(paths.hidden_dir, 'scan_settings.p')
         if os.path.isfile(p):
             with open(p, 'rb') as f:
                 try:
@@ -194,7 +199,7 @@ class ScanManager(Manager):
                         try:
                             setattr(self, pi, params[pi])
                         except KeyError, e:
-                            print pi, e
+                            print 'sm load settings', pi, e
 
                 except (pickle.PickleError, EOFError, KeyError):
                     self.detector = self.detectors[-1]
@@ -205,7 +210,7 @@ class ScanManager(Manager):
 
     def dump_settings(self):
         self.info('dump scan settings')
-        p = os.path.join(paths.hidden_dir, 'scan_settings')
+        p = os.path.join(paths.hidden_dir, 'scan_settings.p')
         with open(p, 'wb') as f:
             iso = self.isotope
             if not iso:
@@ -226,7 +231,7 @@ class ScanManager(Manager):
     def reset_scan_timer(self):
         self.info('reset scan timer')
 
-        self.graph.set_scan_delay(self.integration_time)
+        # self.graph.set_scan_delay(self.integration_time)
         self.timer = self._timer_factory()
 
     def add_spec_event_marker(self, msg, mode=None, extra=None, bgcolor='white'):
@@ -241,7 +246,7 @@ class ScanManager(Manager):
 
     # def peak_center(self):
     #
-    #     man = self.ion_optics_manager
+    # man = self.ion_optics_manager
     #     # if len(self.graphs) > 1:
     #     #     i = int(self.graphs[-1].split(' ')[2]) + 1
     #     # else:
@@ -298,9 +303,36 @@ class ScanManager(Manager):
 
             self.trait_setq(isotope=iso)
 
+    def _check_intensity_no_change(self, signals):
+        if self.spectrometer.simulation:
+            return
+
+        if self._no_intensity_change_cnt > 4:
+            self.warning_dialog('Something appears to be wrong.\n\n'
+                                'The detector intensities have not changed in 5 iterations. '
+                                'Check Qtegra and RemoteControlServer.\n\n'
+                                'Scan is stopped! Close and reopen window to restart')
+            self._stop_timer()
+            self._no_intensity_change_cnt = 0
+            self._prev_signals = None
+            return True
+
+        if self._prev_signals is not None:
+
+            if (signals == self._prev_signals).all():
+                self._no_intensity_change_cnt += 1
+            else:
+                self._no_intensity_change_cnt = 0
+                self._prev_signals = None
+
+        self._prev_signals = signals
+
     def _update(self, data):
         keys, signals = data
         if keys:
+            if self._check_intensity_no_change(signals):
+                return
+
             x = self.graph.record_multiple(signals,
                                            track_y=False)
 
@@ -361,14 +393,14 @@ class ScanManager(Manager):
         if self.use_detector_safety and self.detector:
             threshold = self.detector.protection_threshold
             if threshold:
-                for di in self.detectors:
-                    print di, di.isotope
+                # for di in self.detectors:
+                #     print di, di.isotope
 
-                #find detector that the desired isotope is being measured on
+                # find detector that the desired isotope is being measured on
                 det = next((di for di in self.detectors
                             if di.isotope == self.isotope), None)
                 if det:
-                    #check that the intensity is less than threshold
+                    # check that the intensity is less than threshold
                     abort = det.intensity > threshold
                     if abort:
                         if not self.confirmation_dialog('Are you sure you want to make this move.\n'
@@ -460,13 +492,17 @@ class ScanManager(Manager):
     def _clear_all_markers_button_fired(self):
         self.graph.clear_markers()
 
-    def _record_button_fired(self):
-        if self._recording:
-            self._stop_recording()
-            self._recording = False
-        else:
-            self._start_recording()
-            self._recording = True
+    def _start_record_button_fired(self):
+        # if self._recording:
+        #     self._stop_recording()
+        #     self._recording = False
+        # else:
+        self._start_recording()
+        self._recording = True
+
+    def _stop_record_button_fired(self):
+        self._stop_recording()
+        self._recording = False
 
     def _snapshot_button_fired(self):
         self.debug('snapshot button fired')
@@ -643,77 +679,71 @@ class ScanManager(Manager):
         return r
 
     def _scanner_default(self):
-        s = MagnetScan(spectrometer=self.spectrometer)
+        s = Scanner(spectrometer=self.spectrometer)
         return s
 
     def _readout_view_default(self):
         rd = ReadoutView(spectrometer=self.spectrometer)
-        p = os.path.join(paths.spectrometer_dir, 'readout.cfg')
-        if os.path.isfile(p):
-            config = self.get_configuration(path=p)
-            rd.load(config)
-        else:
-            self.warning('no readout configuration file. add one at {}'.format(p))
         return rd
 
 
-if __name__ == '__main__':
-    from pychron.spectrometer.molecular_weights import MOLECULAR_WEIGHTS
-
-    class Magnet(HasTraits):
-        dac = Range(0.0, 6.0)
-
-        def map_mass_to_dac(self, d):
-            return d
-
-    class Source(HasTraits):
-        y_symmetry = Float
-
-    class DummySpectrometer(HasTraits):
-        detectors = List
-        magnet = Instance(Magnet, ())
-        source = Instance(Source, ())
-        molecular_weights = MOLECULAR_WEIGHTS
-
-        def get_intensities(self):
-            return [d.name for d in self.detectors], [random.random() + (i * 12.3) for i in range(len(self.detectors))]
-
-        def get_intensity(self, *args, **kw):
-            return 1
-
-    detectors = [
-        Detector(name='H2',
-                 color='black',
-                 isheader=True
-        ),
-        Detector(name='H1',
-                 color='red'
-        ),
-        Detector(name='AX',
-                 color='violet'
-        ),
-        Detector(name='L1',
-                 color='maroon'
-        ),
-        Detector(name='L2',
-                 color='yellow'
-        ),
-        Detector(name='CDD',
-                 color='lime green',
-                 active=False
-        ),
-
-    ]
-    sm = ScanManager(
-        # detectors=detectors,
-        spectrometer=DummySpectrometer(detectors=detectors))
-    # sm.load_detectors()
-    sm.configure_traits()
+        # if __name__ == '__main__':
+        # from pychron.spectrometer.molecular_weights import MOLECULAR_WEIGHTS
+        #
+        #     class Magnet(HasTraits):
+        #         dac = Range(0.0, 6.0)
+        #
+        #         def map_mass_to_dac(self, d):
+        #             return d
+        #
+        #     class Source(HasTraits):
+        #         y_symmetry = Float
+        #
+        #     class DummySpectrometer(HasTraits):
+        #         detectors = List
+        #         magnet = Instance(Magnet, ())
+        #         source = Instance(Source, ())
+        #         molecular_weights = MOLECULAR_WEIGHTS
+        #
+        #         def get_intensities(self):
+        #             return [d.name for d in self.detectors], [random.random() + (i * 12.3) for i in range(len(self.detectors))]
+        #
+        #         def get_intensity(self, *args, **kw):
+        #             return 1
+        #
+        #     detectors = [
+        #         Detector(name='H2',
+        #                  color='black',
+        #                  isheader=True
+        #         ),
+        #         Detector(name='H1',
+        #                  color='red'
+        #         ),
+        #         Detector(name='AX',
+        #                  color='violet'
+        #         ),
+        #         Detector(name='L1',
+        #                  color='maroon'
+        #         ),
+        #         Detector(name='L2',
+        #                  color='yellow'
+        #         ),
+        #         Detector(name='CDD',
+        #                  color='lime green',
+        #                  active=False
+        #         ),
+        #
+        #     ]
+        #     sm = ScanManager(
+        #         # detectors=detectors,
+        #         spectrometer=DummySpectrometer(detectors=detectors))
+        #     # sm.load_detectors()
+        #     sm.configure_traits()
     # ============= EOF =============================================
     # def _check_detector_protection1(self, prev):
-    #     """
-    #         used when detector changes
-    #         return True if magnet move should be aborted
+    # """
+    # used when detector changes
+    # return True if magnet move should be aborted
     #     """
     #     return self._check_detector_protection(prev, True)
     #

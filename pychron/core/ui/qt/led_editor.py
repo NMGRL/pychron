@@ -126,7 +126,7 @@ def change_intensity(color, fac):
 #
 #
 # #    def OnMotion(self, event):
-# #        print event
+# #        print 'exception', event
 # #
 # #    def OnLeft(self, event):
 # #        if self._state:

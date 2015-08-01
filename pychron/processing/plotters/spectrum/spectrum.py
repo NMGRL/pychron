@@ -24,6 +24,7 @@ from traits.api import Array, List, Instance
 from numpy import hstack, array
 # ============= local library imports  ==========================
 from uncertainties import nominal_value
+from pychron.graph.ml_label import MPlotAxis
 from pychron.processing.analyses.analysis_group import StepHeatAnalysisGroup
 from pychron.processing.plotters.arar_figure import BaseArArFigure
 from pychron.processing.plotters.flow_label import FlowPlotLabel
@@ -31,6 +32,7 @@ from pychron.processing.plotters.sparse_ticks import SparseLogTicks, SparseTicks
 from pychron.processing.plotters.spectrum.label_overlay import SpectrumLabelOverlay, IntegratedPlotLabel
 from pychron.processing.plotters.spectrum.tools import SpectrumTool, \
     SpectrumErrorOverlay, PlateauTool, PlateauOverlay, SpectrumInspectorOverlay
+from pychron.pychron_constants import PLUSMINUS, SIGMA
 
 
 class Spectrum(BaseArArFigure):
@@ -41,19 +43,32 @@ class Spectrum(BaseArArFigure):
     spectrum_overlays = List
     plateau_overlay = Instance(PlateauOverlay)
     integrated_label = None
-    broadcaster = None
 
-    def plot(self, plots):
+    def plot(self, plots, legend=None):
         """
             plot data on plots
         """
 
         graph = self.graph
 
+        ag = self.analysis_group
         for pid, (plotobj, po) in enumerate(zip(graph.plots, plots)):
-            getattr(self, '_plot_{}'.format(po.plot_name))(po, plotobj, pid)
 
-        self.graph.set_x_title('Cumulative %39ArK', plotid=0)
+            plot = getattr(self, '_plot_{}'.format(po.plot_name))(po, plotobj, pid)
+            if legend and po.plot_name == 'age_spectrum':
+                ident = ag.identifier
+                sample = ag.sample
+
+                key = self.options.make_legend_key(ident, sample)
+                if key in legend.plots:
+                    ident = '{}-{:02d}'.format(ident, ag.aliquot)
+                    key = self.options.make_legend_key(ident, sample)
+
+                legend.plots[key] = plot
+
+        # self.graph.set_x_title('Cumulative %39ArK', plotid=0)
+        # self.set_x_title('Cumulative %<sup>39</sup>Ar<sub>K</sub>')
+        self._set_ml_title('Cumulative %<sup>39</sup>Ar<sub>K</sub>', 0, 'x')
 
     def max_x(self, attr):
         return max([ai.nominal_value for ai in self._unpack_attr(attr)])
@@ -70,9 +85,10 @@ class Spectrum(BaseArArFigure):
 
     def _plot_aux(self, title, vk, ys, po, plot, pid, es=None, **kw):
         graph = self.graph
-        graph.set_y_title(title,
-                          plotid=pid)
-
+        if '<sup>' in title or '<sub>' in title:
+            self._set_ml_title(title, pid, 'y')
+        else:
+            graph.set_y_title(title, plotid=pid)
         xs, ys, es, _, _, _ = self._calculate_spectrum(value_key=vk)
         s = self._add_plot(xs, ys, es, pid, po)
         return s
@@ -88,7 +104,21 @@ class Spectrum(BaseArArFigure):
         graph.set_y_title('Apparent Age ({})'.format(au), plotid=pid)
 
         spec = self._add_plot(xs, ys, es, pid, po)
-        spec.line_style = self.options.center_line_style
+        ls = self.options.center_line_style
+        if not ls == 'No Line':
+            spec.line_style = ls
+        else:
+            # group = self.options.get_group(self.group_id)
+            # print 'lc',group.line_color
+            # print 'a', group.alpha
+            # print 'ccc', group.color
+            # c = group.color
+            # r,g,b,a = c.toTuple()
+            # ct = (r,g,b, group.alpha*255/100.)
+            # print ct
+            # spec.color = r,g,b, group.alpha *0.01
+            # spec.color = group.line_color
+            spec.line_width = 0
 
         # add inspector
         # sp=SpectrumInspector(component=spec)
@@ -97,6 +127,14 @@ class Spectrum(BaseArArFigure):
         ag = self.analysis_group
         ag.include_j_error_in_plateau = self.options.include_j_error_in_plateau
         ag.plateau_age_error_kind = self.options.plateau_age_error_kind
+        ag.pc_nsteps = self.options.pc_nsteps
+        ag.pc_gas_fraction = self.options.pc_gas_fraction
+
+        grp = self.options.get_group(self.group_id)
+        if grp.calculate_fixed_plateau:
+            ag.calculate_fixed_plateau_steps = grp.calculate_fixed_plateau_start, grp.calculate_fixed_plateau_end
+        else:
+            ag.calculate_fixed_plateau_steps = tuple()
 
         pma = None
         plateau_age = ag.plateau_age
@@ -109,7 +147,7 @@ class Spectrum(BaseArArFigure):
             # e = plateau_age.std_dev * self.options.nsigma
             # info_txt = self._build_label_text(plateau_age.nominal_value, e,
             # plateau_mswd, valid_mswd, nsteps,
-            #                                   sig_figs=self.options.plateau_sig_figs)
+            # sig_figs=self.options.plateau_sig_figs)
             txt = self._make_plateau_text()
             overlay = self._add_plateau_overlay(spec, platbounds, plateau_age,
                                                 ys[::2], es[::2],
@@ -168,12 +206,13 @@ class Spectrum(BaseArArFigure):
 
         self.graph.set_y_limits(min_=_mi, max_=_ma, pad=pad, plotid=pid)
         # self._set_y_limits(_mi, _ma, pad=pad)
+        return spec
 
     def _add_info(self, g, plot):
         if self.group_id == 0:
             if self.options.show_info:
-                ts = ['Age +/-{}s'.format(self.options.nsigma),
-                      'Error Env. +/-{}s'.format(self.options.step_nsigma)]
+                ts = [u'Age {}{}{}'.format(PLUSMINUS, self.options.nsigma, SIGMA),
+                      u'Error Env. {}{}{}'.format(PLUSMINUS, self.options.step_nsigma, SIGMA)]
 
                 if ts:
                     pl = FlowPlotLabel(text='\n'.join(ts),
@@ -193,24 +232,27 @@ class Spectrum(BaseArArFigure):
 
     def _add_plot(self, xs, ys, es, plotid, po):
         graph = self.graph
-        if not self.broadcaster:
-            self.broadcaster = BroadcasterTool()
 
-        ds, p = graph.new_series(xs, ys, plotid=plotid)
+        # color = self.options.get_group_color(self.group_id)
+        # color.setAlphaF(1.0)
+        group = self.options.get_group(self.group_id)
 
-        ds.tools.append(self.broadcaster)
+        ds, p = graph.new_series(xs, ys,
+                                 color = group.line_color,
+                                 value_scale=po.scale,
+                                 plotid=plotid)
 
         ds.index.on_trait_change(self._update_graph_metadata, 'metadata_changed')
 
         ds.index.sort_order = 'ascending'
         # ds.index.on_trait_change(self._update_graph, 'metadata_changed')
-
+        ns = self.options.step_nsigma
         # sp = SpectrumTool(ds, spectrum=self, group_id=group_id)
         sp = SpectrumTool(component=ds,
                           cumulative39s=self.xs,
+                          nsigma=ns,
                           analyses=self.analyses)
 
-        self.broadcaster.tools.append(sp)
         # sp.on_trait_change('selection_changed')
         ov = SpectrumInspectorOverlay(tool=sp, component=ds)
         ds.tools.append(sp)
@@ -219,53 +261,72 @@ class Spectrum(BaseArArFigure):
         # provide 1s errors use nsigma to control display
         ds.errors = es
 
-        ns = self.options.step_nsigma
-        a = self.options.envelope_alpha * 0.01
+        # edict = self.options.get_envelope(self.group_id)
 
         sp = SpectrumErrorOverlay(component=ds,
-                                  spectrum=self,
-                                  alpha=max(min(1.0, a), 0.0),
-                                  use_fill=self.options.use_error_envelope_fill,
+                                  use_user_color=True,
+                                  user_color=group.color,
+                                  alpha=group.alpha,
+                                  use_fill=group.use_fill,
                                   nsigma=ns)
+
         ds.underlays.append(sp)
         self.spectrum_overlays.append(sp)
 
         if po.show_labels:
+            # edict =self.options.get_envelope(self.group_id)
+            grp = self.options.get_group(self.group_id)
             lo = SpectrumLabelOverlay(component=ds,
                                       nsigma=ns,
-                                      spectrum=self,
+                                      sorted_analyses = self.sorted_analyses,
+                                      # spectrum=self,
+                                      use_user_color=True,
+                                      user_color=grp.line_color,
+
                                       font_size=self.options.step_label_font_size,
                                       display_extract_value=self.options.display_extract_value,
                                       display_step=self.options.display_step)
 
             ds.underlays.append(lo)
-        if po.scale == 'log':
-            p.value_axis.tick_generator = SparseLogTicks()
-        else:
-            p.value_axis.tick_generator = SparseTicks()
+        # if po.scale == 'log':
+        # p.value_axis.tick_generator = SparseLogTicks()
+        # else:
+        #     p.value_axis.tick_generator = SparseTicks()
         return ds
 
     # ===============================================================================
     # overlays
     # ===============================================================================
     def _add_plateau_overlay(self, lp, bounds, plateau_age, ages, age_errors, info_txt):
+        opt = self.options
+
+        # color = opt.get_group_color(self.group_id)
+        # line_width = option.get_group(self.group_id)
+        group = self.options.get_group(self.group_id)
+
         ov = PlateauOverlay(component=lp, plateau_bounds=bounds,
                             cumulative39s=hstack(([0], self.xs)),
                             info_txt=info_txt,
                             id='plateau',
                             ages=ages,
                             age_errors=age_errors,
-                            line_width=self.options.plateau_line_width,
-                            line_color=self.options.plateau_line_color,
-                            extend_end_caps=self.options.extend_plateau_end_caps,
-                            label_visible=self.options.display_plateau_info,
-                            label_font_size=self.options.plateau_font_size,
+
+                            line_width = group.line_width,
+                            line_color = group.line_color,
+                            # line_width=opt.plateau_line_width,
+                            # line_color=opt.plateau_line_color if opt.user_plateau_line_color else lp.color,
+                            # line_color=color,
+
+                            extend_end_caps=opt.extend_plateau_end_caps,
+                            label_visible=opt.display_plateau_info,
+                            label_font_size=opt.plateau_font_size,
 
                             # label_offset=plateau_age.std_dev*self.options.step_nsigma,
-                            y=plateau_age.nominal_value * 1.25)
+                            # y=plateau_age.nominal_value * 1.25)
+                            y=plateau_age.nominal_value)
 
-        lp.underlays.append(ov)
-
+        # lp.underlays.append(ov)
+        lp.overlays.append(ov)
         tool = PlateauTool(component=ov)
         lp.tools.append(tool)
         # plateau_label:[x, y
@@ -278,9 +339,10 @@ class Spectrum(BaseArArFigure):
 
     # def update_index_mapper(self, gid, obj, name, old, new):
     # if new is True:
-    #         self._update_graph_metadata(gid, None, name, old, new)
+    # self._update_graph_metadata(gid, None, name, old, new)
 
     def _update_graph_metadata(self, obj, name, old, new):
+
         sel = obj.metadata['selections']
         for sp in self.spectrum_overlays:
             sp.selections = sel
@@ -293,9 +355,9 @@ class Spectrum(BaseArArFigure):
             ai.temp_status = i in sel
 
         ag.dirty = True
-        tga = ag.integrated_age
-        mswd = ag.get_mswd_tuple()
-        text = self._build_integrated_age_label(tga, *mswd)
+        # tga = ag.integrated_age
+        # mswd = ag.get_mswd_tuple()
+        text = self._build_integrated_age_label(ag.integrated_age, ag.nanalyses)
         self.integrated_label.text = text
 
         if ag.plateau_age and self.plateau_overlay:
@@ -314,16 +376,29 @@ class Spectrum(BaseArArFigure):
         plateau_mswd, valid_mswd, nsteps = ag.get_plateau_mswd_tuple()
 
         e = plateau_age.std_dev * self.options.nsigma
-        text = self._build_label_text(plateau_age.nominal_value, e,
-                                      plateau_mswd, valid_mswd, nsteps,
+        text = self._build_label_text(plateau_age.nominal_value, e, nsteps,
+                                      mswd_args=(plateau_mswd, valid_mswd, nsteps),
                                       sig_figs=self.options.plateau_sig_figs)
+
+        sample = self.analysis_group.sample
+        identifier = self.analysis_group.identifier
+
+        if self.options.include_plateau_sample:
+            if self.options.include_plateau_identifier:
+                text = u'{}({}) {}'.format(sample, identifier, text)
+            else:
+                text = u'{} {}'.format(sample, text)
+        elif self.options.include_plateau_identifier:
+            text = u'{} {}'.format(identifier, text)
+
         return text
 
     def _make_integrated_text(self):
         ag = self.analysis_group
         tga = ag.integrated_age
-        mswd = ag.get_mswd_tuple()
-        text = self._build_integrated_age_label(tga, *mswd)
+        n = ag.nanalyses
+        # mswd = ag.get_mswd_tuple()
+        text = self._build_integrated_age_label(tga, n)
         return text
 
     def _get_age_errors(self, ans):
@@ -397,14 +472,15 @@ class Spectrum(BaseArArFigure):
     # ===============================================================================
     # labels
     # ===============================================================================
-    def _build_integrated_age_label(self, tga, *args):
+    def _build_integrated_age_label(self, tga, n):
         txt = 'NaN'
         if not isnan(nominal_value(tga)):
             age, error = tga.nominal_value, tga.std_dev
-            error *= self.options.nsigma
-            txt = self._build_label_text(age, error, *args, sig_figs=self.options.integrated_sig_figs)
 
-        return 'Integrated Age= {}'.format(txt)
+            error *= self.options.nsigma
+            txt = self._build_label_text(age, error, n, sig_figs=self.options.integrated_sig_figs)
+
+        return u'Integrated Age= {}'.format(txt)
         # ============= EOF =============================================
         # def _get_plateau(self, analyses, exclude=None):
         # if exclude is None:
@@ -420,9 +496,9 @@ class Spectrum(BaseArArFigure):
         # n = platbounds[1] - platbounds[0] + 1
         #
         # if n > 1:
-        #     ans = []
+        # ans = []
         #
-        #     for j, ai in enumerate(analyses):
+        # for j, ai in enumerate(analyses):
         #         if j not in exclude and platbounds[0] <= j <= platbounds[1]:
         #             ans.append(ai)
         #             #            ans=[ai for (j,ai) in analyses if]

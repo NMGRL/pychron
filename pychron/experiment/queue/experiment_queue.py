@@ -16,11 +16,12 @@
 
 # ============= enthought library imports =======================
 from traits.api import Any, on_trait_change, Int, List, Bool, \
-    Instance, Property, Str, HasTraits, Event
+    Instance, Property, Str, HasTraits, Event, Long
 from traits.trait_types import Date
 from traitsui.api import View, Item
 from pyface.timer.do_later import do_later
 # ============= standard library imports ========================
+import time
 from itertools import groupby
 import os
 # ============= local library imports  ==========================
@@ -64,11 +65,11 @@ class NewRunBlockView(HasTraits):
 class ExperimentQueue(BaseExperimentQueue):
     executed_selected = Any
     dclicked = Any
-    database_identifier = Int
+    database_identifier = Long
     executed_runs = List
     executed_runs_scroll_to_row = Int
     automated_runs_scroll_to_row = Int
-    linked_copy_cache = List
+    # linked_copy_cache = List
     start_timestamp = Date
     # queue_actions = List
     auto_save_detector_ic = Bool
@@ -79,8 +80,13 @@ class ExperimentQueue(BaseExperimentQueue):
     execution_ratio = Property
 
     refresh_blocks_needed = Event
+    _auto_save_time = 0
 
     def auto_save(self):
+        if self._auto_save_time and time.time() - self._auto_save_time < 0.25:
+            return
+
+        self._auto_save_time = time.time()
         path = self.path
         if os.path.isfile(path):
             bk = os.path.join(paths.auto_save_experiment_dir, '{}.bak'.format(self.name))
@@ -88,8 +94,8 @@ class ExperimentQueue(BaseExperimentQueue):
             bk = os.path.join(paths.auto_save_experiment_dir, 'Untitled.bak')
 
         self.debug('Autosaving to {}'.format(bk))
-        with open(bk, 'w') as fp:
-            self.dump(fp)
+        with open(bk, 'w') as wfile:
+            self.dump(wfile)
 
     def toggle_skip(self):
         for si in self.selected:
@@ -119,8 +125,8 @@ class ExperimentQueue(BaseExperimentQueue):
         info = nrbv.edit_traits()
         if info.result:
             p = os.path.join(paths.run_block_dir, '{}.txt'.format(nrbv.name))
-            with open(p, 'w') as fp:
-                self.dump(fp, runs=self.selected, include_meta=False)
+            with open(p, 'w') as wfile:
+                self.dump(wfile, runs=self.selected, include_meta=False)
             self.refresh_blocks_needed = True
 
     def move_selected_to_row(self):
@@ -143,6 +149,12 @@ class ExperimentQueue(BaseExperimentQueue):
 
     def jump_to_start(self):
         self.automated_runs_scroll_to_row = 0
+
+    def select_unknowns(self):
+        def test(ss):
+            return ss.analysis_type == 'unknown'
+
+        self.selected = [si for si in self.cleaned_automated_runs if test(si)]
 
     def select_same(self):
         ident = self.selected[0].identifier

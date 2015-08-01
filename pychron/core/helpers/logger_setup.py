@@ -23,7 +23,7 @@ from logging.handlers import RotatingFileHandler
 import shutil
 # =============local library imports  =========================
 from pychron.paths import paths
-from pychron.core.helpers.filetools import list_directory, add_extension
+from pychron.core.helpers.filetools import list_directory
 from filetools import unique_path2
 
 NAME_WIDTH = 40
@@ -44,8 +44,8 @@ def get_log_text(n):
     root = logging.getLogger()
     for h in root.handlers:
         if isinstance(h, RotatingFileHandler):
-            with open(h.baseFilename) as fp:
-                return tail(fp, n)
+            with open(h.baseFilename) as rfile:
+                return tail(rfile, n)
 
 
 def tail(f, lines=20):
@@ -94,7 +94,7 @@ def set_exception_handler(func=None):
     root = logging.getLogger()
     if func is None:
         def func(exctype, value, tb):
-            for ti in traceback.format_tb(tb):
+            for ti in traceback.format_exc():
                 root.critical(ti.strip())
             sys.__excepthook__(exctype, value, tb)
 
@@ -131,8 +131,8 @@ def logging_setup(name, use_archiver=True, **kw):
         # lazy load Archive because of circular dependency
         from pychron.core.helpers.archiver import Archiver
 
-        a = Archiver(archive_days=30,
-                     archive_months=6,
+        a = Archiver(archive_days=14,
+                     archive_months=1,
                      root=bdir)
         a.clean()
 
@@ -141,7 +141,7 @@ def logging_setup(name, use_archiver=True, **kw):
     logpath = os.path.join(bdir, logname)
 
     if os.path.isfile(logpath):
-        backup_logpath, _cnt = unique_path2(bdir, name, delimiter='-', extension='.log')
+        backup_logpath, _cnt = unique_path2(bdir, name, delimiter='-', extension='.log', width=5)
 
         shutil.copyfile(logpath, backup_logpath)
         os.remove(logpath)

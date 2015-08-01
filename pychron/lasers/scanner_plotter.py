@@ -71,7 +71,7 @@ if __name__ == '__main__':
                 # (8, 'hole4 z=5  1500,1600'),
 
                 ):
-        plot_rtemp(os.path.join(root, 'scan{:03n}.txt'.format(i)), name=n)
+        plot_rtemp(os.path.join(root, 'scan{:03d}.txt'.format(i)), name=n)
 #
 #    for po in paths:
 #        if po.endswith('.txt'):

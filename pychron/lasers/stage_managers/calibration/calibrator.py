@@ -16,12 +16,14 @@
 
 # ============= enthought library imports =======================
 import os
+import cPickle as pickle
 
 from traits.api import Str
-import apptools.sweet_pickle as pickle
 
 from pychron.loggable import Loggable
 from pychron.paths import paths
+
+
 
 
 # ============= standard library imports ========================
@@ -76,4 +78,8 @@ class TrayCalibrator(Loggable):
     def _get_path(cls, name):
         return os.path.join(paths.hidden_dir, '{}_stage_calibration'.format(name))
 
+    def traits_view(self):
+        from traitsui.api import View
+
+        return View()
 # ============= EOF =============================================

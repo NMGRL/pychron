@@ -18,11 +18,11 @@ Welcome to Pychron's documentation!
 
   intro
   python
-  build
   user_guide/index
   dev_guide/index
   course/index
   tutorials/index
+  api/index
 
 Indices and tables
 ==================

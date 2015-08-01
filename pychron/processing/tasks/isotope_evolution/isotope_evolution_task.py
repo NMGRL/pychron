@@ -45,9 +45,11 @@ from pychron.processing.tasks.isotope_evolution.isotope_evolution_editor import 
 
 class IsotopeEvolutionTask(AnalysisEditTask):
     name = 'Isotope Evolutions'
+    default_task_name = 'IsoEvo'
+
     iso_evo_editor_count = 1
     id = 'pychron.processing.isotope_evolution',
-    auto_select_analysis = False
+    # auto_select_analysis = False
     tool_bars = [SToolBar(DatabaseSaveAction(),
                           FindAssociatedAction(),
                           image_size=(16, 16)),
@@ -84,7 +86,7 @@ class IsotopeEvolutionTask(AnalysisEditTask):
     def new_isotope_evolution(self):
 
 
-        editor = IsotopeEvolutionEditor(name='Iso Evo {:03n}'.format(self.iso_evo_editor_count),
+        editor = IsotopeEvolutionEditor(name='Iso Evo {:03d}'.format(self.iso_evo_editor_count),
                                         processor=self.manager)
         #selector = self.manager.db.selector
 
@@ -180,9 +182,9 @@ class IsotopeEvolutionTask(AnalysisEditTask):
             return f.model
 
     def _find_associated_analyses(self, db, lpost, hpost, atype, ms):
-        ans = db.get_date_range_analyses(lpost, hpost,
-                                         atype=atype,
-                                         spectrometer=ms)
+        ans = db.get_analyses_date_range(lpost, hpost,
+                                         analysis_type=atype,
+                                         mass_spectrometers=ms)
         if ans:
             self.debug('{} {} to {}. nanalyses={}'.format(atype, lpost, hpost, len(ans)))
             # ans = [ai for ai in ans if ai.uuid not in uuids]
@@ -291,9 +293,9 @@ class IsotopeEvolutionTask(AnalysisEditTask):
                             td = timedelta(hours=6 * (i + 1))
                             lpost, hpost = min(ts) - td, max(ts) + td
 
-                            ans = db.get_date_range_analyses(lpost, hpost,
-                                                             atype=atype,
-                                                             spectrometer=ms)
+                            ans = db.get_analyses_date_range(lpost, hpost,
+                                                             analysis_type=atype,
+                                                             mass_spectrometers=ms)
 
                             if ans:
                                 self.debug('{} {} to {}. nanalyses={}'.format(atype, lpost, hpost, len(ans)))

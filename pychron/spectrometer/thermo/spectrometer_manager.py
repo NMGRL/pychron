@@ -19,12 +19,10 @@ from traits.api import Any, Property
 # ============= standard library imports ========================
 import os
 # ============= local library imports  ==========================
-from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.spectrometer.base_spectrometer_manager import BaseSpectrometerManager
 from pychron.spectrometer.thermo.spectrometer import Spectrometer
 from pychron.paths import paths
 from pychron.spectrometer.jobs.relative_detector_positions import RelativeDetectorPositions
-from pychron.spectrometer.jobs.coincidence_scan import CoincidenceScan
 from pychron.spectrometer.jobs.cdd_operating_voltage_scan import CDDOperatingVoltageScan
 from apptools.preferences.preference_binding import bind_preference
 from pychron.spectrometer.spectrometer_parameters import SpectrometerParameters, \
@@ -32,12 +30,22 @@ from pychron.spectrometer.spectrometer_parameters import SpectrometerParameters,
 
 
 class ArgusSpectrometerManager(BaseSpectrometerManager):
+    """
+    Top level interface to an Thermo Scientific Argus Mass Spectrometer
+
+    direct access provided by spectrometer_microcontroller; an instance
+    of thermo.spectrometer.Spectrometer
+
+    """
     spectrometer_klass = Spectrometer
     spectrometer_microcontroller = Any
     name = Property(depends_on='spectrometer_microcontroller')
 
-    def test_connection(self):
-        return self.spectrometer.test_connection()
+    def test_connection(self, **kw):
+        return self.spectrometer.test_connection(**kw)
+
+    def test_intensity(self, **kw):
+        return self.spectrometer.test_intensity(**kw)
 
     def open_parameters(self):
         p = SpectrometerParameters(spectrometer=self.spectrometer)
@@ -82,9 +90,10 @@ class ArgusSpectrometerManager(BaseSpectrometerManager):
         self.debug('******************************* LOAD Spec')
         if db_mol_weights:
             # get the molecular weights from the database
-            dbm = IsotopeDatabaseManager(application=self.application,
-                                         warn=False)
-            if dbm.is_connected():
+            # dbm = IsotopeDatabaseManager(application=self.application,
+            #                              warn=False)
+            dbm = self.application.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
+            if dbm and dbm.is_connected():
                 self.info('loading molecular_weights from database')
                 mws = dbm.db.get_molecular_weights()
                 # convert to a dictionary

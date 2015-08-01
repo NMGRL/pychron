@@ -15,15 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import os
-from traits.api import HasTraits, Property, Float, Event, Any, Instance, Int
+from traits.api import HasTraits, Property, Float, Event, Any, Instance
 from traitsui.api import View, Item, VGroup, HGroup, Spring, RangeEditor
 # ============= standard library imports ========================
 from scipy import optimize
 # ============= local library imports  ==========================
-from pychron.core.helpers.filetools import add_extension
-from pychron.paths import paths
-from pychron.spectrometer.mftable import MagnetFieldTable, get_detector_name, mass_cal_func
+# from pychron.spectrometer.mftable import MagnetFieldTable, get_detector_name, mass_cal_func
 
 
 def get_float(func):
@@ -31,7 +28,7 @@ def get_float(func):
         try:
             return float(func(*args, **kw))
         except (TypeError, ValueError):
-            pass
+            return 0.0
 
     return dec
 
@@ -54,8 +51,8 @@ class BaseMagnet(HasTraits):
 
     dac_changed = Event
 
-    mftable = Instance(MagnetFieldTable, ())
-    confirmation_threshold_mass = Int
+    mftable = Instance('pychron.spectrometer.mftable.MagnetFieldTable', ())
+    confirmation_threshold_mass = Float
     use_deflection_correction = True
 
     _suppress_mass_update = False
@@ -67,10 +64,6 @@ class BaseMagnet(HasTraits):
         self.mftable.set_path_name(name)
 
     def update_field_table(self, *args):
-        """
-
-            dac needs to be in axial units
-        """
         self.mftable.update_field_table(*args)
 
     # ===============================================================================
@@ -80,6 +73,12 @@ class BaseMagnet(HasTraits):
         pass
 
     def finish_loading(self):
+        """
+        initialize the mftable
+
+        read DAC from device
+        :return:
+        """
         if self.spectrometer:
             molweights = self.spectrometer.molecular_weights
             name = self.spectrometer.name
@@ -99,6 +98,15 @@ class BaseMagnet(HasTraits):
     # mapping
     # ===============================================================================
     def map_dac_to_mass(self, dac, detname):
+        """
+        convert a DAC value (voltage) to mass for a given detector
+        use the mftable
+
+        :param dac: float, voltage (0-10V)
+        :param detname: str, name of a detector, e.g H1
+        :return: float, mass
+        """
+        from pychron.spectrometer.mftable import get_detector_name, mass_cal_func
         detname = get_detector_name(detname)
 
         d = self.mftable.get_table()
@@ -114,9 +122,20 @@ class BaseMagnet(HasTraits):
         return mass
 
     def map_mass_to_dac(self, mass, detname):
+        """
+        convert a mass value from amu to dac for a given detector
+
+        :param mass: float, amu
+        :param detname: std, name of a detector, e.g. H1
+        :return: float, dac voltage
+        """
+
+        from pychron.spectrometer.mftable import get_detector_name, mass_cal_func
+
         detname = get_detector_name(detname)
         d = self.mftable.get_table()
         _, xs, ys, p = d[detname]
+
         dac = mass_cal_func(p, mass)
 
         self.debug('map mass to dac {} >> {}'.format(mass, dac))
@@ -124,6 +143,15 @@ class BaseMagnet(HasTraits):
         return dac
 
     def map_dac_to_isotope(self, dac=None, det=None, current=True):
+        """
+        convert a dac voltage to isotope name for a given detector
+
+
+        :param dac: float, voltage
+        :param det: str, detector name
+        :param current: bool, get current hv
+        :return: str, e.g Ar40
+        """
         if dac is None:
             dac = self._dac
         if det is None:
@@ -137,10 +165,20 @@ class BaseMagnet(HasTraits):
         return next((k for k, v in molweights.iteritems() if abs(v - m) < 0.001), None)
 
     def mass_change(self, m):
+        """
+        set the self.mass attribute
+        suppress mass change handler
+
+        :param m: float
+        :return:
+        """
         self._suppress_mass_update = True
         self.trait_set(mass=m)
         self._suppress_mass_update = False
 
+    # ===============================================================================
+    # private
+    # ===============================================================================
     def _validate_mass_change(self, cm, m):
         ct = self.confirmation_threshold_mass
 
@@ -175,8 +213,6 @@ class BaseMagnet(HasTraits):
     # ===============================================================================
     # property get/set
     # ===============================================================================
-
-
     def _validate_dac(self, d):
         return self._validate_float(d)
 

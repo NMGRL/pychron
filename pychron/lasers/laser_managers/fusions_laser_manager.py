@@ -37,7 +37,7 @@ from pychron.hardware.fiber_light import FiberLight
 from laser_manager import LaserManager
 # from pychron.lasers.laser_managers.brightness_pid_manager import BrightnessPIDManager
 # from pychron.viewable import Viewable
-from pychron.core.helpers.filetools import to_bool
+from pychron.core.helpers.strtools import to_bool
 from pychron.core.ui.thread import Thread
 # from pychron.core.ui.gui import invoke_in_main_thread
 # from pychron.lasers.laser_managers.degas_manager import DegasManager
@@ -127,6 +127,7 @@ class FusionsLaserManager(LaserManager):
 
     def end_extract(self):
         self.disable_laser()
+        self.stop_pattern()
 
     def open_motor_configure(self):
         self.laser_controller.open_motor_configure()
@@ -200,8 +201,8 @@ class FusionsLaserManager(LaserManager):
                 pd.close()
 
     def set_beam_diameter(self, bd, force=False, **kw):
-        '''
-        '''
+        """
+        """
         result = False
         motor = self.get_motor('beam')
         if motor is not None:
@@ -213,8 +214,8 @@ class FusionsLaserManager(LaserManager):
         return result
 
     def set_zoom(self, z, **kw):
-        '''
-        '''
+        """
+        """
         self.set_motor('zoom', z, **kw)
 
     def set_motor_lock(self, name, value):
@@ -272,6 +273,12 @@ class FusionsLaserManager(LaserManager):
             else:
                 func()
 
+    def get_brightness(self):
+        if self.use_video:
+            return self.stage_manager.get_brightness()
+        else:
+            return super(FusionsLaserManager, self).get_brightness()
+
     def is_degassing(self):
         if self._degas_thread:
             return self._degas_thread.isRunning()
@@ -326,7 +333,7 @@ class FusionsLaserManager(LaserManager):
         module = __import__(package, globals(), locals(), [klass], -1)
         factory = getattr(module, klass)
         m = factory(motion_controller=stage_controller)
-        m.edit_traits()
+        self.open_view(m)
 
     # ========================= views =========================
 
@@ -448,19 +455,19 @@ class FusionsLaserManager(LaserManager):
         return self.record_brightness and self._get_machine_vision() is not None
 
     # ========================= defaults =======================
-    def get_power_database(self):
-        from pychron.database.adapters.power_adapter import PowerAdapter
+    # def get_power_database(self):
+    # from pychron.database.adapters.power_adapter import PowerAdapter
+    #
+    #     db = PowerAdapter(name=self.dbname,
+    #                       kind='sqlite')
+    #     return db
 
-        db = PowerAdapter(name=self.dbname,
-                          kind='sqlite')
-        return db
-
-    def get_power_calibration_database(self):
-        from pychron.database.adapters.power_calibration_adapter import PowerCalibrationAdapter
-
-        db = PowerCalibrationAdapter(name=self.dbname,
-                                     kind='sqlite')
-        return db
+    # def get_power_calibration_database(self):
+    # from pychron.database.adapters.power_calibration_adapter import PowerCalibrationAdapter
+    #
+    #     db = PowerCalibrationAdapter(name=self.dbname,
+    #                                  kind='sqlite')
+    #     return db
 
     #    def _subsystem_default(self):
     #        '''

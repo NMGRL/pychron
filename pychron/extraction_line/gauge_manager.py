@@ -71,6 +71,7 @@ class GaugeManager(Manager):
         self.stop_scans()
 
         # sp = self.scan_period*1000
+        sp = None
         if self.use_update:
             sp = self.update_period
 
@@ -83,14 +84,16 @@ class GaugeManager(Manager):
                 time.sleep(0.25)
 
     def traits_view(self):
-
-        v = View(Item('devices', style='custom',
-                      show_label=False,
-                      editor=ListEditor(mutable=False,
-                                        columns=len(self.devices),
-                                        style='custom',
-                                        editor=InstanceEditor(view='gauge_view'))),
-                 height=-100)
+        if self.devices:
+            v = View(Item('devices', style='custom',
+                          show_label=False,
+                          editor=ListEditor(mutable=False,
+                                            columns=len(self.devices),
+                                            style='custom',
+                                            editor=InstanceEditor(view='gauge_view'))),
+                     height=-100)
+        else:
+            v =View()
         return v
 
     def _get_simulation(self):
@@ -98,5 +101,6 @@ class GaugeManager(Manager):
 
 if __name__ == '__main__':
     g = GaugeManager()
-    g.configure_traits()
+    g.bootstrap()
+    # g.configure_traits()
 # ============= EOF =====================================

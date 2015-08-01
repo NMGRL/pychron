@@ -15,8 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Any, Float, Str, List, Bool, Int, CInt
-from traitsui.api import View, Item
+from traits.api import Any, Str, List, Bool, Int, CInt
+from traitsui.api import View
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.item import Item
@@ -26,8 +26,8 @@ from pychron.persistence_loggable import PersistenceMixin
 
 
 def get_maxs(lns):
-    lns = [int(li[0]) for li in lns]
-    return map(int, map(max, group_runs(lns)))
+    lns = [int(li or 0) for li in lns]
+    return map(max, group_runs(lns))
 
 
 def group_runs(li, tolerance=1000):
@@ -57,8 +57,8 @@ class IdentifierGenerator(Loggable, PersistenceMixin):
 
     level_offset = Int(0)
     offset = Int(5)
-    mon_start = CInt
-    unk_start = CInt
+    mon_start = CInt(5000)
+    unk_start = CInt(1000)
 
     pattributes = ('level_offset', 'offset')
     persistence_path = 'identifier_generator'
@@ -67,11 +67,13 @@ class IdentifierGenerator(Loggable, PersistenceMixin):
 
     def setup(self):
         self.load()
-        monlns = self.db.get_last_labnumbers(self.monitor_name)
-        unklns = self.db.get_last_labnumbers(excludes=(self.monitor_name,))
+        monlns = self.db.get_last_identifiers(self.monitor_name)
+        unklns = self.db.get_last_identifiers(excludes=(self.monitor_name,))
 
-        self.mon_maxs = get_maxs(monlns)
-        self.unk_maxs = get_maxs(unklns)
+        if monlns:
+            self.mon_maxs = get_maxs(monlns)
+        if unklns:
+            self.unk_maxs = get_maxs(unklns)
 
         info = self.edit_traits(view=View(Item('offset'), Item('level_offset'),
                                           Item('mon_start', label='Starting Monitor L#',
@@ -124,7 +126,7 @@ class IdentifierGenerator(Loggable, PersistenceMixin):
                     if self.is_preview:
                         self._set_position_identifier(pos, ident)
                     else:
-                        pos.labnumber.identifier = ident
+                        pos.identifier = ident
 
                     # self._add_default_flux(pos)
                     msg = 'setting irrad. pos. {} {}-{} labnumber={}'.format(irradiation, le, po, ident)
@@ -134,10 +136,9 @@ class IdentifierGenerator(Loggable, PersistenceMixin):
             prog.close()
 
     def _set_position_identifier(self, dbpos, ident):
-        if self.is_preview:
-            ipos = self._get_irradiated_position(dbpos)
-            if ipos:
-                ipos.labnumber = str(ident)
+        ipos = self._get_irradiated_position(dbpos)
+        if ipos:
+            ipos.labnumber = str(ident)
 
     def _get_irradiated_position(self, dbpos):
         if dbpos.level.name == self.level:
@@ -172,7 +173,7 @@ class IdentifierGenerator(Loggable, PersistenceMixin):
         db = self.db
         irradiation = self.irradiation
         if not self.mon_start:
-            last_mon_ln = db.get_last_labnumber(self.monitor_name)
+            last_mon_ln = db.get_last_identifier(self.monitor_name)
             if last_mon_ln:
                 last_mon_ln = int(last_mon_ln.identifier)
             else:
@@ -181,7 +182,7 @@ class IdentifierGenerator(Loggable, PersistenceMixin):
             last_mon_ln = self.mon_start
 
         if not self.unk_start:
-            last_unk_ln = db.get_last_labnumber()
+            last_unk_ln = db.get_last_identifier()
             if last_unk_ln:
                 last_unk_ln = int(last_unk_ln.identifier)
             else:
@@ -196,7 +197,7 @@ class IdentifierGenerator(Loggable, PersistenceMixin):
         mons = self._identifier_generator(last_mon_ln, True, *args)
         unks = self._identifier_generator(last_unk_ln, False, *args)
         n = sum([len([p for p in li.positions
-                      if overwrite or (p.labnumber.sample and not p.labnumber.identifier)]) for li in levels])
+                      if overwrite or (p.sample and not p.identifier)]) for li in levels])
 
         return mons, unks, n
 
@@ -220,12 +221,12 @@ class IdentifierGenerator(Loggable, PersistenceMixin):
                 r = None
                 if self.is_preview:
                     r = self._get_position_is_monitor(x)
-
-                if not r:
-                    try:
-                        r = x.labnumber.sample.name == self.monitor_name
-                    except AttributeError, e:
-                        pass
+                else:
+                    if not r:
+                        try:
+                            r = x.sample.name == self.monitor_name
+                        except AttributeError, e:
+                            pass
 
                 if invert:
                     r = not r
@@ -237,11 +238,11 @@ class IdentifierGenerator(Loggable, PersistenceMixin):
             r = None
             if self.is_preview:
                 r = self._get_position_sample(x)
-
-            try:
-                r = x.labnumber.sample.name == self.monitor_name
-            except AttributeError, e:
-                pass
+            else:
+                try:
+                    r = x.sample.name  # == self.monitor_name
+                except AttributeError, e:
+                    pass
 
             return r
 
@@ -254,10 +255,9 @@ class IdentifierGenerator(Loggable, PersistenceMixin):
 
                 if not test(position):
                     continue
-
-                if position.labnumber.identifier and not overwrite:
-                    le = '{}{}-{}'.format(irrad.name, position.level.name, position.position)
-                    ln = position.labnumber.identifier
+                if position.identifier and not overwrite:
+                    le = '{}{}-{}'.format(irrad, position.level.name, position.position)
+                    ln = position.identifier
                     self.warning('skipping position {} already has labnumber {}'.format(le, ln))
                     continue
 

@@ -119,8 +119,8 @@ __alembic__ = '{}'
     # print context.get_context().opts
     # # print context.context_opts['destination_rev']
     pp = os.path.join(root, 'pychron', 'version.py')
-    with open(pp, 'w') as fp:
-        fp.write(temp)
+    with open(pp, 'w') as wfile:
+        wfile.write(temp)
 
 
 if context.is_offline_mode():

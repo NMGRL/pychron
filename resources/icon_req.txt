@@ -86,6 +86,8 @@ window-new
 arrow-right-2
 arrow-left-2
 image_add
+edit-bomb
+text_exportsimage_add
 green_ball
 gray_ball
 red_ball
@@ -108,3 +110,13 @@ tools-anvil
 server-connect
 start
 table_row_delete
+document-preview
+control_pause_blue
+media-record
+media-playback-stop
+pipette
+package-green
+update-product
+bricks
+brick-go
+control_play_blue

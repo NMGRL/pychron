@@ -93,37 +93,44 @@ class BasePeakCenter(MagnetScan):
                               max_=max([start, end]))
 
         # move to start position
-        delay = 1
+        delay = 3
         self.info('moving to starting dac {}. delay {} before continuing'.format(start, delay))
         self.spectrometer.magnet.set_dac(start)
         time.sleep(delay)
 
-        ok = self._do_scan(start, end, width, directions=self.directions, map_mass=False)
-        self.debug('result of _do_scan={}'.format(ok))
-
         center, smart_shift, success = None, False, False
-        if ok and self.directions != 'Oscillate':
-            if not self.canceled:
-                dac_values = graph.get_data()
-                intensities = graph.get_data(axis=1)
+        # cdd has been tripping during the previous move on obama when moving H1 from 34.5 to 39.7
+        # check if cdd is still active
+        if not self.spectrometer.get_detector_active('CDD'):
+            self.warning('CDD has tripped!')
+            self.cancel()
+        else:
 
-                n = sorted(zip(dac_values, intensities), key=lambda x: x[0])
-                dac_values, intensities = zip(*n)
+            ok = self._do_scan(start, end, width, directions=self.directions, map_mass=False)
+            self.debug('result of _do_scan={}'.format(ok))
 
-                result = self._calculate_peak_center(dac_values, intensities)
-                self.debug('result of _calculate_peak_center={}'.format(result))
-                self.result = result
-                if result is not None:
-                    xs, ys, mx, my = result
+            if ok and self.directions != 'Oscillate':
+                if not self.canceled:
+                    dac_values = graph.get_data()
+                    intensities = graph.get_data(axis=1)
 
-                    center, success = xs[1], True
-                    invoke_in_main_thread(self._plot_center, xs, ys, mx, my, center)
-                else:
-                    if max(intensities) > self.min_peak_height * 5:
-                        smart_shift = True
+                    n = sorted(zip(dac_values, intensities), key=lambda x: x[0])
+                    dac_values, intensities = zip(*n)
 
-                    idx = argmax(intensities)
-                    center, success = dac_values[idx], False
+                    result = self._calculate_peak_center(dac_values, intensities)
+                    self.debug('result of _calculate_peak_center={}'.format(result))
+                    self.result = result
+                    if result is not None:
+                        xs, ys, mx, my = result
+
+                        center, success = xs[1], True
+                        invoke_in_main_thread(self._plot_center, xs, ys, mx, my, center)
+                    else:
+                        if max(intensities) > self.min_peak_height * 5:
+                            smart_shift = True
+
+                        idx = argmax(intensities)
+                        center, success = dac_values[idx], False
 
         return center, smart_shift, success
 
@@ -218,7 +225,7 @@ class PeakCenter(BasePeakCenter):
 # '''
 # center pos needs to be ne axial dac units now
 # '''
-#        if isinstance(center_pos, str):
+# if isinstance(center_pos, str):
 #            '''
 #                passing in a mol weight key ie Ar40
 #                get_dac_for_mass can take a str or a float

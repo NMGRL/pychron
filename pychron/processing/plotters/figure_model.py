@@ -19,6 +19,7 @@ from traits.api import HasTraits, List, Property, Any, Instance
 # ============= standard library imports ========================
 from itertools import groupby
 # ============= local library imports  ==========================
+from pychron.processing.plotters.layout import FigureLayout
 
 
 class FigureModel(HasTraits):
@@ -28,6 +29,8 @@ class FigureModel(HasTraits):
     plot_options = Any
     _panel_klass = Instance('pychron.processing.plotters.figure_panel.FigurePanel')
     titles = List
+
+    layout = Instance(FigureLayout, ())
 
     def refresh(self):
         for p in self.panels:

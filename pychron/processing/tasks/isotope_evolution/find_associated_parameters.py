@@ -24,7 +24,7 @@ set_qt()
 from traits.api import HasTraits, Instance, Date, Float, List, Property, Either, Time
 from traitsui.api import View, Item, UItem, CheckListEditor, HGroup, VGroup
 from traitsui.handler import Controller
-import apptools.sweet_pickle as pickle
+import cPickle as pickle
 # ============= standard library imports ========================
 import os
 # ============= local library imports  ==========================
@@ -120,11 +120,11 @@ class FindAssociatedParametersDialog(Controller):
 
     def __init__(self, *args, **kw):
         super(FindAssociatedParametersDialog, self).__init__(*args, **kw)
-        p = os.path.join(paths.hidden_dir, 'find_associated_parameters_dialog')
+        p = os.path.join(paths.hidden_dir, 'find_associated_parameters_dialog.p')
         if os.path.isfile(p):
-            with open(p, 'r') as fp:
+            with open(p, 'r') as rfile:
                 try:
-                    self.model = pickle.load(fp)
+                    self.model = pickle.load(rfile)
                 except (pickle.PickleError, AttributeError, OSError, EOFError):
                     pass
         if not self.model:
@@ -132,10 +132,10 @@ class FindAssociatedParametersDialog(Controller):
 
     def closed(self, info, is_ok):
         if is_ok:
-            p = os.path.join(paths.hidden_dir, 'find_associated_parameters_dialog')
-            with open(p, 'w') as fp:
+            p = os.path.join(paths.hidden_dir, 'find_associated_parameters_dialog.p')
+            with open(p, 'w') as wfile:
                 try:
-                    pickle.dump(self.model, fp)
+                    pickle.dump(self.model, wfile)
                 except pickle.PickleError:
                     pass
 

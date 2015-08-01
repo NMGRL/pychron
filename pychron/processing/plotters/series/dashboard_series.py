@@ -42,14 +42,14 @@ class DashboardSeries(BaseArArFigure):
                 p.padding_left = 75
                 p.value_range.tight_bounds = False
 
-    def plot(self, plots):
+    def plot(self, plots, legend=None):
         """
             plot data on plots
         """
         graph = self.graph
 
         if plots:
-            px = plots[0]
+            # px = plots[0]
             #            data = self.measurements[px.name]
             #            if data is None:
             #                return

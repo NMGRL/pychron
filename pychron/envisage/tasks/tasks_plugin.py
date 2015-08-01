@@ -15,10 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import hashlib
+import random
 
+from traits.api import List, Tuple, HasTraits, Password
+from traitsui.api import View, Item
 from envisage.extension_point import ExtensionPoint
-from envisage.plugin import Plugin
 from envisage.ui.tasks.action.exit_action import ExitAction
 from envisage.ui.tasks.action.preferences_action import PreferencesAction
 from envisage.ui.tasks.task_extension import TaskExtension
@@ -27,21 +28,21 @@ from pyface.confirmation_dialog import confirm
 from pyface.constant import NO
 from pyface.tasks.action.dock_pane_toggle_group import DockPaneToggleGroup
 from pyface.tasks.action.schema_addition import SchemaAddition
-from traits.api import List
 
 # ============= standard library imports ========================
+import hashlib
 # ============= local library imports  ==========================
-from traits.has_traits import HasTraits
-from traits.trait_types import Password
-from traitsui.item import Item
-from traitsui.view import View
+from pychron.envisage.tasks.base_plugin import BasePlugin
+from pychron.paths import paths
 from pychron.envisage.resources import icon
-from pychron.envisage.tasks.actions import ToggleFullWindowAction, EditInitializationAction
+from pychron.envisage.tasks.actions import ToggleFullWindowAction, EditInitializationAction, EditTaskExtensionsAction
 from pychron.envisage.tasks.preferences import GeneralPreferencesPane
 from pychron.globals import globalv
 
+# logger = new_logger('PychronTasksPlugin')
 
-class PychronTasksPlugin(Plugin):
+
+class PychronTasksPlugin(BasePlugin):
     id = 'pychron.tasks.plugin'
     name = 'Tasks'
     preferences_panes = List(
@@ -49,6 +50,52 @@ class PychronTasksPlugin(Plugin):
     task_extensions = List(contributes_to='envisage.ui.tasks.task_extensions')
 
     actions = ExtensionPoint(List, id='pychron.actions')
+    file_defaults = ExtensionPoint(List(Tuple), id='pychron.plugin.file_defaults')
+    help_tips = ExtensionPoint(List, id='pychron.plugin.help_tips')
+    available_task_extensions = ExtensionPoint(List, id='pychron.available_task_extensions')
+
+    my_tips = List(contributes_to='pychron.plugin.help_tips')
+
+    def _application_changed(self):
+        # defaults = (('use_advanced_ui', False), ('show_random_tip', True))
+        defaults = (('show_random_tip', True),)
+        try:
+            self._set_preference_defaults(defaults, 'pychron.general')
+        except AttributeError, e:
+            print 'exception', e
+
+    def start(self):
+        self.info('Writing plugin file defaults')
+        for p, d, o in self.file_defaults:
+            try:
+                mod = __import__('pychron.file_defaults', fromlist=[d])
+                d = getattr(mod, d)
+            except BaseException, e:
+                print p, e
+                pass
+            try:
+                p = getattr(paths, p)
+            except AttributeError:
+                pass
+
+            if paths.write_default_file(p, d, o):
+                self.info('Wrote default file {} (overwrite: {})'.format(p, o))
+
+        self._random_tip()
+
+    def _random_tip(self):
+        if globalv.random_tip_enabled and self.application.preferences.get('pychron.general.show_random_tip'):
+            from pychron.envisage.tasks.tip_view import TipView
+
+            t = random.choice(self.help_tips)
+
+            tv = TipView(text=t)
+            tv.edit_traits()
+
+    def _my_tips_default(self):
+        return ["Use <b>Help>What's New</b> to view the official ChangeLog for the current version",
+                'Turn Off Random Tip two ways:<br><b>1. Preferences>General></b> Uncheck "Random Tip".</b><br>'
+                '<b>2.</b> Set the flag <i>random_tip_enabled</i> to False in the initialization file']
 
     def _preferences_panes_default(self):
         return [GeneralPreferencesPane]
@@ -92,8 +139,12 @@ class mExitAction(ExitAction):
                 ret = confirm(None, 'Are you sure you want to Quit?')
                 if ret == NO:
                     return
+        try:
+            app.exit(force=True)
+        except RuntimeError:
+            import os
 
-        app.exit(force=True)
+            os._exit(0)
 
 
 class myTasksPlugin(TasksPlugin):
@@ -111,7 +162,10 @@ class myTasksPlugin(TasksPlugin):
                                   path='MenuBar/view.menu'),
                    SchemaAddition(factory=ToggleFullWindowAction,
                                   id='toggle_full_window',
-                                  path='MenuBar/window.menu')]
+                                  path='MenuBar/window.menu'),
+                   SchemaAddition(factory=EditTaskExtensionsAction,
+                                  id='edit_task_extensions',
+                                  path='MenuBar/help.menu')]
 
         return [TaskExtension(actions=actions)]
 

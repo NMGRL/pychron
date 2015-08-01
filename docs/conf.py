@@ -14,12 +14,40 @@
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#sys.path.insert(0, os.path.abspath('.'))
+import os, sys
+
+os.environ['RTD'] = 'True'
+
+sys.path.insert(0, os.path.abspath('../'))
+
+import sys
+
+# from mock import Mock
+try:
+    from unittest.mock import MagicMock
+except ImportError:
+    from mock import Mock as MagicMock
+
+
+class Mock(MagicMock):
+    @classmethod
+    def __getattr__(cls, name):
+        return Mock()
+
+MOCK_MODULES = ['numpy',
+                'uncertainties',
+                # 'traits.api',
+                # 'traitsui.api',
+                'apptools.preferences.preference_binding',
+                'scipy.optimize',
+                'scipy']
+
+sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 # -- General configuration -----------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
-#needs_sphinx = '1.0'
+# needs_sphinx = '1.0'
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.

@@ -129,7 +129,7 @@ class EasyFigures(BaseEasy):
                 if groupby_aliquot:
                     key = lambda x: x.aliquot
                     for ali, ais in groupby(ans, key=key):
-                        if '{}-{:02n}'.format(li, ali) in excludes:
+                        if '{}-{:02d}'.format(li, ali) in excludes:
                             continue
                         yield ais
                 else:
@@ -188,7 +188,7 @@ class EasyFigures(BaseEasy):
         ident = ','.join([li for li in lns])
         li = ident
 
-        ident = '{:03n}-{}'.format(cnt, ident)
+        ident = '{:03d}-{}'.format(cnt, ident)
         ln_root = os.path.join(root, ident)
         r_mkdir(ln_root)
         ans = sorted(ans, key=pred)

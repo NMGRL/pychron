@@ -334,7 +334,8 @@ if __name__ == '__main__':
         ])
         ts = [xi.analysis_timestamp for xi in _ans]
         lpost, hpost = min(ts), max(ts)
-        _ans = db.get_date_range_analyses(lpost, hpost, ordering='asc')
+        _ans = db.get_analyses_date_range(lpost, hpost, order='asc')
+        # _ans = db.get_date_range_analyses(lpost, hpost, ordering='asc')
         _ans = [IsotopeRecordView(xi) for xi in _ans]
         # _ans = sorted(_ans, key=lambda x: x.timestamp)
 

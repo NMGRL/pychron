@@ -4,6 +4,7 @@ from uncertainties import nominal_value, std_dev
 
 from pychron.experiment.utilities.mass_spec_database_importer import MassSpecDatabaseImporter
 from pychron.processing.export.destinations import MassSpecDestination
+from pychron.processing.export.export_spec import MassSpecExportSpec
 from pychron.processing.export.exporter import Exporter
 
 
@@ -39,7 +40,7 @@ class MassSpecAnalysisExporter(Exporter):
         self.importer.db.commit()
         self.info('commit successful')
 
-    #        self.extractor.db.close()
+    # self.extractor.db.close()
 
     def rollback(self):
         """
@@ -51,7 +52,22 @@ class MassSpecAnalysisExporter(Exporter):
     #        self.extractor.db.rollback()
     #        self.extractor.db.reset()
 
-    def add(self, spec):
+    def _make_spec(self, ai):
+        rs_name, rs_text = '', ''
+        rid = ai.record_id
+        exp = MassSpecExportSpec(runid=rid,
+                                 runscript_name=rs_name,
+                                 runscript_text=rs_text,
+                                 mass_spectrometer=ai.mass_spectrometer.capitalize(),
+                                 isotopes=ai.isotopes)
+
+        exp.load_record(ai)
+        return exp
+
+    def add(self, analysis):
+
+        spec = self._make_spec(analysis)
+
         db = self.importer.db
 
         # rid = spec.runid
@@ -78,7 +94,7 @@ class MassSpecAnalysisExporter(Exporter):
                                                spec.irradiation_position,
                                                j=float(nominal_value(spec.j or 0)),
                                                jerr=float(std_dev(spec.j or 0))
-                                               )
+        )
 
         if db.get_analysis(rid, spec.aliquot, spec.step):
             self.debug('analysis {} already exists in database'.format(rid))

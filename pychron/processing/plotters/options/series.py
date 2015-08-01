@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,17 +15,21 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traitsui.api import View, Item, TableEditor, VGroup
+from traitsui.api import View, Item, VGroup
+from traitsui.extras.checkbox_column import CheckboxColumn
+from traitsui.table_column import ObjectColumn
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from traitsui.extras.checkbox_column import CheckboxColumn
-from traitsui.table_column import ObjectColumn
-from pychron.processing.plotters.options.base import FigurePlotterOptions
+from pychron.core.ui.table_editor import myTableEditor
+from pychron.processing.plotters.options.age import GroupablePlotterOptions
+# from pychron.processing.plotters.options.base import FigurePlotterOptions
 from pychron.processing.plotters.options.option import FitPlotterOptions
 
 
-class SeriesOptions(FigurePlotterOptions):
+class SeriesOptions(GroupablePlotterOptions):
+    # groups = List
+
     def load_aux_plots(self, ref):
         def f(kii):
             ff = next((x for x in self.aux_plots if x.name == kii), None)
@@ -66,11 +70,12 @@ class SeriesOptions(FigurePlotterOptions):
                              style='custom',
                              show_label=False,
 
-                             editor=TableEditor(columns=cols,
-                                                sortable=False,
-                                                deletable=False,
-                                                cell_font='10',
-                                                reorderable=False))
+                             editor=myTableEditor(columns=cols,
+                                                  sortable=False,
+                                                  deletable=False,
+                                                  clear_selection_on_dclicked=True,
+                                                  edit_on_first_click=False,
+                                                  reorderable=False))
         v = View(VGroup(self._get_refresh_group(), aux_plots_grp))
         return v
 

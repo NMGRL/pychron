@@ -20,7 +20,13 @@ import ast
 import time
 import os
 from ConfigParser import ConfigParser
+
 import yaml
+
+
+
+
+
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import fileiter
 from pychron.paths import paths
@@ -29,14 +35,14 @@ from pychron.pyscripts.pyscript import verbose_skip, count_verbose_skip, \
     makeRegistry, CTXObject
 from pychron.pyscripts.valve_pyscript import ValvePyScript
 
-ESTIMATED_DURATION_FF = 1.045
+ESTIMATED_DURATION_FF = 1.0
 
 command_register = makeRegistry()
 
 
 class MeasurementCTXObject(object):
     def create(self, yd):
-        for k in ('baseline', 'multicollect', 'peakcenter', 'equilibration', 'whiff'):
+        for k in ('baseline', 'multicollect', 'peakcenter', 'equilibration', 'whiff', 'peakhop'):
             try:
                 c = CTXObject()
                 c.update(yd[k])
@@ -46,6 +52,9 @@ class MeasurementCTXObject(object):
 
 
 class MeasurementPyScript(ValvePyScript):
+    """
+    MeasurementPyScripts are used to collect isotopic data
+    """
     automated_run = None
     ncounts = 0
     info_color = MEASUREMENT_COLOR
@@ -65,6 +74,12 @@ class MeasurementPyScript(ValvePyScript):
         super(MeasurementPyScript, self).gosub(*args, **kw)
 
     def reset(self, arun):
+        """
+        Reset the script with a new automated run
+
+        :param arun: A new ``AutomatedRun``
+        :type arun: ``AutomatedRun``
+        """
         self.debug('%%%%%%%%%%%%%%%%%% setting automated run {}'.format(arun.runid))
         self.automated_run = arun
         self._reset()
@@ -88,9 +103,31 @@ class MeasurementPyScript(ValvePyScript):
     # ===============================================================================
     # commands
     # ===============================================================================
+    @command_register
+    def measurement_delay(self, duration=None, message=None):
+        if duration:
+            try:
+                self.automated_run.plot_panel.total_counts += round(duration)
+            except AttributeError:
+                pass
+
+            self.sleep(duration, message=message)
+
     @verbose_skip
     @command_register
     def generate_ic_mftable(self, detectors, refiso='Ar40', calc_time=False):
+        """
+        Generate an IC MFTable. Use this when doing a Detector Intercalibration.
+        peak centers the ``refiso`` on a list of ``detectors``. MFTable saved as ic_mftable
+
+        cancel script if generating mftable fails
+
+        :param detectors: list of detectors to peak center
+        :type detectors: list
+        :param refiso: isotope to peak center
+        :type refiso: str
+        """
+
         if calc_time:
             self._estimated_duration += len(detectors) * 30
             return
@@ -108,6 +145,17 @@ class MeasurementPyScript(ValvePyScript):
     @command_register
     def sniff(self, ncounts=0, calc_time=False,
               integration_time=1.04, block=True):
+        """
+        collect a sniff measurement. Sniffs are the measurement of the equilibration gas.
+
+        :param ncounts: Number of counts
+        :type ncounts: int
+        :param integration_time: integration time in seconds
+        :type integration_time: float
+        :param block: Is this call blocking or should it return immediately
+        :type block: bool
+        """
+
         if calc_time:
             self._estimated_duration += (ncounts * integration_time * ESTIMATED_DURATION_FF)
             return
@@ -120,7 +168,15 @@ class MeasurementPyScript(ValvePyScript):
 
     @count_verbose_skip
     @command_register
-    def multicollect(self, ncounts=200, integration_time=1.04, increment_series_count=True, calc_time=False):
+    def multicollect(self, ncounts=200, integration_time=1.04, calc_time=False):
+        """
+        Do a multicollection. Measure all detectors setup using ``activate_detectors``
+
+        :param ncounts: Number of counts
+        :type ncounts: int
+        :param integration_time: integration time in seconds
+        :type integration_time: float
+        """
         if calc_time:
             self._estimated_duration += (ncounts * integration_time * ESTIMATED_DURATION_FF)
             return
@@ -138,17 +194,25 @@ class MeasurementPyScript(ValvePyScript):
                                         series=self._series_count):
             self.cancel()
 
-            # if increment_series_count:
-            # self._series_count += 2
-            #     self._fit_series_count += 1
-
     @count_verbose_skip
     @command_register
     def baselines(self, ncounts=1, mass=None, detector='',
                   integration_time=1.04,
                   settling_time=4, calc_time=False):
         """
-            if detector is not none then it is peak hopped
+        Measure the baseline for all detectors. Position ion beams using mass and detector
+
+        :param ncounts: Number of counts
+        :type ncounts: int
+        :param mass: Mass to measure baseline in amu
+        :type mass: float
+        :param detector: name of detector
+        :type detector: str
+        :param integration_time: integration time in seconds
+        :type integration_time: float
+        :param settling_time: delay between magnet positioning and measurement in seconds
+        :type settling_time: float
+
         """
         if self.abbreviated_count_ratio:
             ncounts *= self.abbreviated_count_ratio
@@ -181,12 +245,19 @@ class MeasurementPyScript(ValvePyScript):
     @count_verbose_skip
     @command_register
     def load_hops(self, p, *args, **kw):
+        """
+        load the hops definition from a file
+
+        :param p: path. absolute or relative to this scripts root
+        :return: hops
+        :rtype: list of tuples
+        """
         if not os.path.isfile(p):
             p = os.path.join(self.root, p)
 
         if os.path.isfile(p):
-            with open(p, 'r') as fp:
-                hops = [eval(li) for li in fileiter(fp)]
+            with open(p, 'r') as rfile:
+                hops = [eval(li) for li in fileiter(rfile)]
                 return hops
 
         else:
@@ -208,6 +279,15 @@ class MeasurementPyScript(ValvePyScript):
     @count_verbose_skip
     @command_register
     def peak_hop(self, ncycles=5, hops=None, mftable='mftable', calc_time=False):
+        """
+        Peak hop ion beams. Hops usually defined in a separate file.
+        if mftable == 'ic_mftable' use the ic_mftable generated during detector intercalibration.
+
+
+        :param ncycles: int, number of cycles
+        :param hops: list of tuples, defined in a hops file
+        :param mftable: str
+        """
         if not hops:
             return
 
@@ -236,13 +316,26 @@ class MeasurementPyScript(ValvePyScript):
 
     @count_verbose_skip
     @command_register
-    def peak_center(self, detector='AX', isotope='Ar40', integration_time=1.04, save=True, calc_time=False):
+    def peak_center(self, detector='AX', isotope='Ar40',
+                    integration_time=1.04, save=True, calc_time=False,
+                    directions='Increase'):
+        """
+        Calculate the peak center for ``isotope`` on ``detector``.
+
+        :param detector: str
+        :param isotope: str
+        :param integration_time: float
+        :param save: bool
+        """
+
         if calc_time:
-            self._estimated_duration += 30 * integration_time
+            n = 40
+            self._estimated_duration += n * integration_time
             return
 
         self._automated_run_call('py_peak_center', detector=detector,
                                  isotope=isotope, integration_time=integration_time,
+                                 directions=directions,
                                  save=save)
 
     @verbose_skip
@@ -257,6 +350,17 @@ class MeasurementPyScript(ValvePyScript):
     @verbose_skip
     @command_register
     def whiff(self, ncounts=0, conditionals=None):
+        """
+        Do a whiff measurement.
+
+        Whiff's are quick measurements with conditionals. use them to take action at
+        the beginning of a measurement. For example do a whiff to determine if intensity
+        to great.
+
+        :param ncounts: int
+        :param conditionals: list of dicts
+
+        """
         self.ncounts = ncounts
         ret = self._automated_run_call('py_whiff', ncounts, conditionals,
                                        self._time_zero, self._time_zero_offset,
@@ -285,6 +389,11 @@ class MeasurementPyScript(ValvePyScript):
     @verbose_skip
     @command_register
     def post_equilibration(self, block=False):
+        """
+        Run the post equilibration script.
+
+        """
+
         self._automated_run_call('py_post_equilibration', block=block)
 
     @verbose_skip
@@ -292,9 +401,18 @@ class MeasurementPyScript(ValvePyScript):
     def equilibrate(self, eqtime=20, inlet=None, outlet=None,
                     do_post_equilibration=True, close_inlet=True, delay=3):
         """
-            inlet: str, tuple, or list
-            outlet: str, tuple, or list
-            e.g. 'A', ('A','B'), ['A','B'], 'A,B'
+        equilibrate the extraction line with the mass spectrometer
+
+        inlet or outlet can be a single valve name or a list of valve names. ::
+
+            'A', ('A','B'), ['A','B'], 'A,B'
+
+        :param eqtime: int, equilibration duration in seconds
+        :param inlet: str, tuple or list, inlet valve
+        :param outlet: str, tuple or list, ion pump valve
+        :param do_post_equilibration: bool
+        :param close_inlet: bool
+        :param delay: int, delay in seconds between close of outlet and open of inlet
 
         """
         evt = self._automated_run_call('py_equilibration', eqtime=eqtime,
@@ -313,16 +431,33 @@ class MeasurementPyScript(ValvePyScript):
     @verbose_skip
     @command_register
     def set_fits(self, *fits):
+        """
+        set time vs intensity regression fits for isotopes
+
+        :param fits: str, list, or tuple
+
+        """
         self._automated_run_call('py_set_fits', fits)
 
     @verbose_skip
     @command_register
     def set_baseline_fits(self, *fits):
+        """
+        set baseline fits for detectors
+
+        :param fits:
+        """
         self._automated_run_call('py_set_baseline_fits', fits)
 
     @verbose_skip
     @command_register
     def activate_detectors(self, *dets, **kw):
+        """
+        set the active detectors
+
+        :param dets: list
+
+        """
         peak_center = kw.get('peak_center', False)
 
         if dets:
@@ -335,6 +470,16 @@ class MeasurementPyScript(ValvePyScript):
     @command_register
     def position_magnet(self, pos, detector='AX', dac=False):
         """
+
+        :param pos: location to set magnetic field
+        :type pos: str, float
+        :param detector: detector to position ``pos``
+        :type pos: str
+        :param dac: is the ``pos`` a DAC voltage
+        :type dac: bool
+
+        examples::
+
             position_magnet(4.54312, dac=True) # detector is not relevant
             position_magnet(39.962, detector='AX')
             position_magnet('Ar40', detector='AX') #Ar40 will be converted to 39.962 use mole weight dict
@@ -345,6 +490,12 @@ class MeasurementPyScript(ValvePyScript):
     @verbose_skip
     @command_register
     def coincidence(self):
+        """
+        Do a coincidence scan. Peak center all active detectors simulatenously.
+        calculate required deflection corrections to bring all detectors into
+        coincidence
+
+        """
         self._automated_run_call('py_coincidence_scan')
 
     # ===============================================================================
@@ -437,14 +588,13 @@ class MeasurementPyScript(ValvePyScript):
     @command_register
     def set_time_zero(self, offset=0):
         """
-            set the time_zero value.
-            add offset to time_zero
-            e.g
+        set the time_zero value.
+        add offset to time_zero ::
 
-                T_o= ion pump closes
-                offset seconds after T_o. define time_zero
+            T_o= ion pump closes
+            offset seconds after T_o. define time_zero
 
-                T_eq= inlet closes
+            T_eq= inlet closes
 
         """
         self._time_zero = time.time() + offset
@@ -453,32 +603,72 @@ class MeasurementPyScript(ValvePyScript):
     @verbose_skip
     @command_register
     def set_integration_time(self, v):
+        """
+        Set the integration time
+
+        :param v: integration time in seconds
+        :type v: float
+        """
         self._automated_run_call('py_set_integration_time', v)
 
     @verbose_skip
     @command_register
     def set_ysymmetry(self, v):
+        """
+        Set YSymmetry to v
+
+        :param v: ysymmetry value
+        :type v: int, float
+
+        """
         self._set_spectrometer_parameter('SetYSymmetry', v)
 
     @verbose_skip
     @command_register
     def set_zsymmetry(self, v):
+        """
+        Set ZSymmetry to v
+
+        :param v: zsymmetry value
+        :type v: int, float
+        """
         self._set_spectrometer_parameter('SetZSymmetry', v)
 
     @verbose_skip
     @command_register
     def set_zfocus(self, v):
+        """
+        Set ZFocus to v
+
+        :param v: zfocus value
+        :type v: int, float
+        """
         self._set_spectrometer_parameter('SetZFocus', v)
 
     @verbose_skip
     @command_register
     def set_extraction_lens(self, v):
+        """
+        Set Extraction Lens to v
+
+        :param v: extraction lens value
+        :type v: int, float
+        """
         self._set_spectrometer_parameter('SetExtractionLens', v)
 
     @verbose_skip
     @command_register
     def set_deflection(self, detname, v=''):
+        """
+        if v is an empty str (default) then get the deflection value from
+        the configuration file.
 
+        :param detname: name of detector
+        :type detname: str
+        :param v: deflection value or an empty string
+        :type v: '', int, float
+
+        """
         if v == '':
             v = self._get_deflection_from_file(detname)
 
@@ -491,14 +681,23 @@ class MeasurementPyScript(ValvePyScript):
     @verbose_skip
     @command_register
     def get_deflection(self, detname):
+        """
+        Read the deflection from the spectrometer
 
-        self._get_spectrometer_parameter('GetDeflection', detname)
+        :param detname: name of detector
+        :type detname: str
+        :return: float
+        """
+        return self._get_spectrometer_parameter('GetDeflection', detname)
 
     @verbose_skip
     @command_register
     def set_cdd_operating_voltage(self, v=''):
         """
-            if v is None use value from file
+        if v is '' (default) use value from file
+
+        :param v: cdd operating voltage
+        :type v: '', int, float
         """
         if self.automated_run is None:
             return
@@ -513,8 +712,14 @@ class MeasurementPyScript(ValvePyScript):
     @command_register
     def set_source_optics(self, **kw):
         """
-        set_source_optics(YSymmetry=10.0)
-        set ysymmetry to 10 use config.cfg
+        example ::
+
+            # set all source parameters to values stored in config.cfg
+            set_source_optics()
+
+            # set ysymmetry to 10.
+            # set all other values using config.cfg
+            set_source_optics(YSymmetry=10.0)
 
         """
         attrs = ['YSymmetry', 'ZSymmetry', 'ZFocus', 'ExtractionLens']
@@ -534,6 +739,9 @@ class MeasurementPyScript(ValvePyScript):
     @verbose_skip
     @command_register
     def set_deflections(self):
+        """
+        Set deflections to values stored in config.cfg
+        """
         func = self._set_spectrometer_parameter
 
         config = self._get_config()
@@ -544,6 +752,53 @@ class MeasurementPyScript(ValvePyScript):
             if v is not None:
                 func('SetDeflection', '{},{}'.format(dn, v))
 
+    @property
+    def truncated(self):
+        """
+        Property. True if run was truncated otherwise False
+
+        :return: bool
+        """
+        return self._automated_run_call(lambda: self.automated_run.truncated)
+
+    @property
+    def eqtime(self):
+        """
+        Property. Equilibration time. Get value from ``AutomatedRun``.
+
+        :return: float, int
+        """
+        if self.automated_run:
+            return self._automated_run_call(lambda: self.automated_run.eqtime)
+        else:
+            r = 15
+            cg = self._get_config()
+            if cg.has_option('Default', 'eqtime'):
+                r = cg.getfloat('Default', 'eqtime', )
+            return r
+
+    @property
+    def time_zero_offset(self):
+        """
+        Property. Substract ``time_zero_offset`` from time value for all data points
+
+        :return: float, int
+        """
+        if self.automated_run:
+            return self._automated_run_call(lambda: self.automated_run.time_zero_offset)
+        else:
+            return 0
+
+    @property
+    def use_cdd_warming(self):
+        """
+        Property. Use CDD Warming. Get value from ``AutomatedRunSpec``
+
+        :return: bool
+        """
+        return self._automated_run_call(lambda: self.automated_run.spec.use_cdd_warming)
+
+    # private
     def _get_deflection_from_file(self, name):
         config = self._get_config()
         section = 'Deflections'
@@ -616,32 +871,6 @@ class MeasurementPyScript(ValvePyScript):
 
         self.abbreviated_count_ratio = None
         self.ncounts = 0
-
-    @property
-    def truncated(self):
-        return self._automated_run_call(lambda: self.automated_run.truncated)
-
-    @property
-    def eqtime(self):
-        if self.automated_run:
-            return self._automated_run_call(lambda: self.automated_run.eqtime)
-        else:
-            r = 15
-            cg = self._get_config()
-            if cg.has_option('Default', 'eqtime'):
-                r = cg.getfloat('Default', 'eqtime', )
-            return r
-
-    @property
-    def time_zero_offset(self):
-        if self.automated_run:
-            return self._automated_run_call(lambda: self.automated_run.time_zero_offset)
-        else:
-            return 0
-
-    @property
-    def use_cdd_warming(self):
-        return self._automated_run_call(lambda: self.automated_run.spec.use_cdd_warming)
 
 
 # ============= EOF =============================================
