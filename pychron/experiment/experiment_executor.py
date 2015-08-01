@@ -35,6 +35,7 @@ from pychron.core.codetools.memory_usage import mem_available, mem_log
 from pychron.core.helpers.filetools import add_extension, get_path
 from pychron.core.notification_manager import NotificationManager
 from pychron.core.ui.gui import invoke_in_main_thread
+from pychron.core.ui.led_editor import LED
 from pychron.database.selectors.isotope_selector import IsotopeAnalysisSelector
 from pychron.envisage.consoleable import Consoleable
 from pychron.envisage.preference_mixin import PreferenceMixin
@@ -76,7 +77,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     start_button = Event
     stop_button = Event
     can_start = Property(depends_on='executable, _alive')
-
+    executing_led = Instance(LED, ())
     delaying_between_runs = Bool
 
     extraction_state_label = String
@@ -250,6 +251,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.extraction_state_label = ''
 
             self.experiment_queue.executed = True
+            self.alive = True
             t = Thread(name='execute_exp',
                        target=self._execute)
             t.start()
@@ -1748,6 +1750,9 @@ Use Last "blank_{}"= {}
             self.selected_run = new[0]
         else:
             self.selected_run = None
+
+    def _alive_changed(self, new):
+        self.executing_led.state = 2 if new else 0
 
     # ===============================================================================
     # property get/set
