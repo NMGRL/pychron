@@ -34,19 +34,13 @@
 #        return cls
 #    return decorator
 
-class ErrorCode(object):
+
+class ErrorCode:
     msg = ''
     code = None
     description = ''
-    def __init__(self, logger=None, *args, **kw):
-        if logger is not None:
-            logger.debug(self.msg)
 
     def __str__(self):
-        return self.get_str()
-
-    def get_str(self):
-
         return 'ERROR {} : {}'.format(self.code, self.msg)
 
 

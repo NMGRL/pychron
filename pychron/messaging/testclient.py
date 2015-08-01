@@ -15,9 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from multiprocessing import Process
+
 from traits.api import HasTraits, String, Button, Int, Str, Enum, \
     Float, Bool, Event, Property, List
 from traitsui.api import View, Item, HGroup, VGroup, ButtonEditor, EnumEditor
+
 
 # ============= standard library imports ========================
 
@@ -34,6 +37,8 @@ import time
 # from datetime import timedelta
 from threading import Thread
 import random
+
+
 # import struct
 
 
@@ -45,9 +50,9 @@ class Client(HasTraits):
     receive_data_stream = Button
     response = String
     port = Int(1069)
-#    port = Int(8080)
+    #    port = Int(8080)
     # host = Str('192.168.0.65')
-#    host = Str('129.138.12.145')
+    #    host = Str('129.138.12.145')
     host = 'localhost'
     path = None
     kind = Enum('IPC', 'UDP', 'TCP')
@@ -70,6 +75,7 @@ class Client(HasTraits):
     test_response = ''
 
     _sock = None
+
     def _get_calculated_duration(self):
         return self.period / 1000. * self.n_periods / 3600.
 
@@ -82,7 +88,7 @@ class Client(HasTraits):
 
     def _loop(self):
         self.time_remain = self.calculated_duration
-#        sock = self.get_connection()
+        #        sock = self.get_connection()
         while self._alive and self.periods_completed <= self.n_periods:
             t = time.time()
             try:
@@ -104,7 +110,7 @@ class Client(HasTraits):
         self._send()
 
     def _set_command(self, v):
-#    def _command_changed(self):
+        #    def _command_changed(self):
         self._command = v
         self.sent_commands.append(v)
         self._send()
@@ -126,7 +132,7 @@ class Client(HasTraits):
         # send command
         sock.send(self.command)
         self.response = sock.recv(1024)
-#        print self.response, 'foo'
+        #        print self.response, 'foo'
         if 'ERROR' in self.response:
             print time.strftime('%H:%M:%S'), self.response
         return sock
@@ -137,7 +143,7 @@ class Client(HasTraits):
         if port is None:
             port = self.port
         addr = (self.host, port)
-#        print 'connection address', addr
+        #        print 'connection address', addr
         if self.kind == 'UDP':
             packet_kind = socket.SOCK_DGRAM
 
@@ -147,8 +153,8 @@ class Client(HasTraits):
             addr = self.path
 
         sock = socket.socket(family, packet_kind)
-        sock.settimeout(5)
-        print addr
+        sock.settimeout(3)
+        # print addr
         sock.connect(addr)
         return sock
 
@@ -178,50 +184,51 @@ class Client(HasTraits):
         print '=====test {} complete======'.format(self.ask_id)
         print '{} error count= {}'.format(self.ask_id, ecount)
 
-#        self.ask('StartMultRuns Foo')
-#        time.sleep(2)
-#
-#        self.ask('CompleteMultRuns Foo')
+    #        self.ask('StartMultRuns Foo')
+    #        time.sleep(2)
+    #
+    #        self.ask('CompleteMultRuns Foo')
 
-#        for i in range(500):
-#            for v in 'ABCEDFG':
-#
-#                self.ask('GetValveState {}'.format(v))
-#
-#            if i % 5 == 0:
-#                self.ask('Open {}'.format(self.ask_id[0]))
-#            elif i % 8 == 0:
-#                self.ask('Close {}'.format(self.ask_id[0]))
-#
-#            time.sleep(random.randint(0, 175) / 100.)
+    #        for i in range(500):
+    #            for v in 'ABCEDFG':
+    #
+    #                self.ask('GetValveState {}'.format(v))
+    #
+    #            if i % 5 == 0:
+    #                self.ask('Open {}'.format(self.ask_id[0]))
+    #            elif i % 8 == 0:
+    #                self.ask('Close {}'.format(self.ask_id[0]))
+    #
+    #            time.sleep(random.randint(0, 175) / 100.)
 
     def traits_view(self):
         v = View(
-                 VGroup(
-                     Item('receive_data_stream', show_label=False),
-                     Item('command'),
-                     Item('response', show_label=False, style='custom',
-                          width=-300
-                          ),
-                     Item('pcommand', editor=EnumEditor(name='object.sent_commands')),
-                     Item('resend', show_label=False),
+            VGroup(
+                Item('receive_data_stream', show_label=False),
+                Item('command'),
+                Item('response', show_label=False, style='custom',
+                     width=-300
+                     ),
+                Item('pcommand', editor=EnumEditor(name='object.sent_commands')),
+                Item('resend', show_label=False),
 
-                     HGroup(Item('periodic',
-                                 editor=ButtonEditor(label_value='periodic_label'),
-                                 show_label=False), Item('period', show_label=False),
-                                 Item('n_periods'),
-                                 Item('periods_completed', show_label=False)
-                            ),
-                     HGroup(Item('calculated_duration', format_str='%0.3f', style='readonly'),
-                            Item('time_remain', format_str='%0.3f', style='readonly'),
-                            ),
-                     Item('kind', show_label=False),
-                     Item('port'),
-                     Item('host')),
+                HGroup(Item('periodic',
+                            editor=ButtonEditor(label_value='periodic_label'),
+                            show_label=False), Item('period', show_label=False),
+                       Item('n_periods'),
+                       Item('periods_completed', show_label=False)
+                       ),
+                HGroup(Item('calculated_duration', format_str='%0.3f', style='readonly'),
+                       Item('time_remain', format_str='%0.3f', style='readonly'),
+                       ),
+                Item('kind', show_label=False),
+                Item('port'),
+                Item('host')),
 
-                 resizable=True
-                 )
+            resizable=True
+        )
         return v
+
 
 def send_command(addr, cmd, kind='UDP'):
     p = socket.SOCK_STREAM
@@ -235,6 +242,7 @@ def send_command(addr, cmd, kind='UDP'):
     sock.send(cmd)
     resp = sock.recv(1024)
     return resp
+
 
 def client(kind, port):
     while 1:
@@ -251,6 +259,7 @@ def client(kind, port):
         print 'Received', repr(datad)
         s.close()
 
+
 def main():
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect(('localhost', 1063))
@@ -259,6 +268,7 @@ def main():
     s.send(cmd)
     s.recv(1024)
     s.close()
+
 
 def main2():
     s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -270,13 +280,12 @@ def main2():
     s.close()
 
 
-
 def multiplex_test():
     # cmd = 'GetValveState C'
     c = Client(
-               port=1067,
-               ask_id='D'
-               )
+        port=1067,
+        ask_id='D'
+    )
 
     c.test_command = 'GetPosition'
     c.test_response = '0.00,0.00,0.00'
@@ -285,8 +294,8 @@ def multiplex_test():
 
     # cmd = 'GetValveState C'
     c = Client(
-               port=1067,
-               ask_id='E')
+        port=1067,
+        ask_id='E')
     c.test_command = 'SetLaserPower 10'
     c.test_response = 'OK'
     t2 = Thread(target=c.test)
@@ -294,46 +303,54 @@ def multiplex_test():
     t.start()
     t2.start()
 
+
 def diode_client():
     c = Client(
-               port=1068,
-               ask_id='D')
+        port=1068,
+        ask_id='D')
     c.configure_traits()
+
 
 def co2_client():
     c = Client(
 
-               port=1067,
-               ask_id='E')
+        port=1067,
+        ask_id='E')
     c.configure_traits()
+
+
 def system_client():
     c = Client(
-               host='129.138.12.141',
-               port=1061,
-               ask_id='E')
+        host='129.138.12.141',
+        port=1061,
+        ask_id='E')
     c.configure_traits()
+
 
 def local_client():
     c = Client(
-               path='/tmp/hardware-argus',
-#               host=socket.gethostbyname(socket.gethostname()),
-#               port=8900,
-               ask_id='E')
+        path='/tmp/hardware-argus',
+        #               host=socket.gethostbyname(socket.gethostname()),
+        #               port=8900,
+        ask_id='E')
     c.configure_traits()
 
+
 def power_test():
-        c = Client(
-                   port=1068,
-    #               host='129.138.12.141',
-                    host='192.168.0.253',
-                   ask_id='E')
+    c = Client(
+        port=1068,
+        #               host='129.138.12.141',
+        host='192.168.0.253',
+        ask_id='E')
 
-        ask = c.ask
-        ask('Enable')
+    ask = c.ask
+    ask('Enable')
 
-        ask('SetLaserPower 10')
-        time.sleep(4)
-        ask('Disable')
+    ask('SetLaserPower 10')
+    time.sleep(4)
+    ask('Disable')
+
+
 #    for i in range(500):
 #        print i
 #        c.ask('Enable')
@@ -343,8 +360,8 @@ def power_test():
 
 def timed_flag_test():
     c = Client(
-              port=1061,
-              ask_id='E')
+        port=1061,
+        ask_id='E')
     for _ in range(3):
         c.ask('Open ChamberPumpTimeFlag')
 
@@ -358,19 +375,20 @@ def timed_flag_test():
 
 def mass_spec_param_test():
     c = Client(
-              port=1061,
-              ask_id='E')
+        port=1061,
+        ask_id='E')
     c.ask('Read test_param')
     c.ask('Read test_param1')
     c.ask('Read test_paramfoo')
     c.ask('Read pump_time')
 
+
 def video_test():
     c = Client(
-               port=1067,
-               host='localhost',
-               ask_id='E',
-               kind='TCP')
+        port=1067,
+        host='localhost',
+        ask_id='E',
+        kind='TCP')
 
     ask = c.ask
     for i in range(10):
@@ -382,13 +400,48 @@ def video_test():
         print 'finish run', i
 
         time.sleep(7)
+
+
+def get_data():
+    # for i in range(4):
+    c = Client(host='localhost', port=8007, kind='TCP', ask_id='A')
+
+    def func1():
+        pt = time.time()
+        for i in range(30):
+            t = time.time()
+            c.ask('GetValveState C')
+            pt = t
+
+    t = Thread(target=func1)
+
+    def func():
+        c2 = Client(host='localhost', port=8007, kind='TCP', ask_id='B')
+        for i in range(30):
+            c2.ask('GetValveState A')
+
+    p = Process(target=func)
+    p.start()
+    t.start()
+
+    # c2 = Client(host='localhost', port=8007, kind='TCP', ask_id='B')
+    #
+    # def func2():
+    #     for i in range(30):
+    #         c2.ask('GetData')
+    #
+    # t2 = Thread(target=func2)
+    # t2.start()
+
+
 if __name__ == '__main__':
-    video_test()
+    get_data()
+    # video_test()
 #    local_client()
 #    diode_client()
 # 	system_client()
-    # power_test()
-    # plothist('benchmark_unix_only.npz')
+# power_test()
+# plothist('benchmark_unix_only.npz')
 #    benchmark('main()', 'from __main__ import main',
 #              'benchmark_unix_tcp_no_log.npz'
 #              )
@@ -398,35 +451,35 @@ if __name__ == '__main__':
 #    power_test()
 #    timed_flag_test()
 #    mass_spec_param_test()
-    # ===========================================================================
-    # Check Remote launch snippet
-    # ===========================================================================
-    # ===========================================================================
-    # def ready(client):
-    #    r = client.ask('PychronReady')
-    #    if r is not None:
-    #        r = r.strip()
-    #    return r == 'OK'
-    #
-    # c.port = 1063
-    #
-    # if not ready(c):
-    #    print 'not ready'
-    #    c.ask('RemoteLaunch')
-    #    st = time.time()
-    #    timeout = 5
-    #    print 'launching'
-    #    success = False
-    #    while time.time() - st < timeout:
-    #        if ready(c):
-    #            success = True
-    #            print 'Remotely launched !!!'
-    #            break
-    #
-    #        time.sleep(2)
-    #    if not success:
-    #        print 'Launch timed out after {}'.format(timeout)
-    # ===========================================================================
+# ===========================================================================
+# Check Remote launch snippet
+# ===========================================================================
+# ===========================================================================
+# def ready(client):
+#    r = client.ask('PychronReady')
+#    if r is not None:
+#        r = r.strip()
+#    return r == 'OK'
+#
+# c.port = 1063
+#
+# if not ready(c):
+#    print 'not ready'
+#    c.ask('RemoteLaunch')
+#    st = time.time()
+#    timeout = 5
+#    print 'launching'
+#    success = False
+#    while time.time() - st < timeout:
+#        if ready(c):
+#            success = True
+#            print 'Remotely launched !!!'
+#            break
+#
+#        time.sleep(2)
+#    if not success:
+#        print 'Launch timed out after {}'.format(timeout)
+# ===========================================================================
 
 
 # ======================== EOF ===================================
@@ -446,8 +499,8 @@ if __name__ == '__main__':
 #        plot(linspace(0, 6.28, n / 8), ys)
 #        show()
 #            print struct.unpack('!dd',data[i:i+16])
-            # print struct.unpack('>d',data[i:i+8])
-        # array(data, dtype='>'+'d'*400)
+# print struct.unpack('>d',data[i:i+8])
+# array(data, dtype='>'+'d'*400)
 # def plothist(name):
 #    p = os.path.join(os.getcwd(), name)
 #    files = load(p)

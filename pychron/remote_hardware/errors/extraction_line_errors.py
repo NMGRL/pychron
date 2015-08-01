@@ -20,6 +20,7 @@
 # ============= local library imports  ==========================
 from error import ErrorCode  # , code_generator, get_code_decorator
 
+
 # code_gen = code_generator(0, start=1)
 #
 # def generate_code(*args):
@@ -30,19 +31,22 @@ from error import ErrorCode  # , code_generator, get_code_decorator
 class PyScriptErrorCode(ErrorCode):
     msg = 'invalid pyscript {} does not exist'
     code = '001'
+
     def __init__(self, path, *args, **kw):
         self.msg = self.msg.format(path)
-        super(PyScriptErrorCode, self).__init__(*args, **kw)
+        # super(PyScriptErrorCode, self).__init__(*args, **kw)
 
 
-#===== debug errors =====
+# ===== debug errors =====
 # @generate_code
 class FuncCallErrorCode(ErrorCode):
     code = '002'
     msg = 'func call problem: err= {} args= {}'
+
     def __init__(self, err, data, *args, **kw):
         self.msg = self.msg.format(err, data)
-        super(FuncCallErrorCode, self).__init__(*args, **kw)
+        # super(FuncCallErrorCode, self).__init__(*args, **kw)
+
 
 # @generate_code
 class InvalidCommandErrorCode(ErrorCode):
@@ -51,7 +55,7 @@ class InvalidCommandErrorCode(ErrorCode):
 
     def __init__(self, command, *args, **kw):
         self.msg = self.msg.format(command)
-        super(InvalidCommandErrorCode, self).__init__(*args, **kw)
+        # super(InvalidCommandErrorCode, self).__init__(*args, **kw)
 
 
 # @generate_code
@@ -61,7 +65,7 @@ class InvalidArgumentsErrorCode(ErrorCode):
 
     def __init__(self, command, err, *args, **kw):
         self.msg = self.msg.format(command, err)
-        super(InvalidArgumentsErrorCode, self).__init__(*args, **kw)
+        # super(InvalidArgumentsErrorCode, self).__init__(*args, **kw)
 
 
 # @generate_code
@@ -71,61 +75,68 @@ class InvalidValveErrorCode(ErrorCode):
 
     def __init__(self, name, *args, **kw):
         self.msg = self.msg.format(name)
-        super(InvalidValveErrorCode, self).__init__(*args, **kw)
+        # super(InvalidValveErrorCode, self).__init__(*args, **kw)
 
 
 # @generate_code
 class InvalidValveGroupErrorCode(ErrorCode):
     msg = 'Invalid valve group - {}'
     code = '006'
+
     def __init__(self, name, *args, **kw):
         self.msg = self.msg.format(name)
-        super(InvalidValveGroupErrorCode, self).__init__(*args, **kw)
+        # super(InvalidValveGroupErrorCode, self).__init__(*args, **kw)
 
 
-#====== initialization problems with pychron
+# ====== initialization problems with pychron
 # @generate_code
 class ManagerUnavaliableErrorCode(ErrorCode):
     msg = 'manager unavaliable: {}'
     code = '007'
+
     def __init__(self, manager, *args, **kw):
         self.msg = self.msg.format(manager)
-        super(ManagerUnavaliableErrorCode, self).__init__(*args, **kw)
+        # super(ManagerUnavaliableErrorCode, self).__init__(*args, **kw)
 
 
 # @generate_code
 class DeviceConnectionErrorCode(ErrorCode):
     msg = 'device {} not connected'
     code = '008'
+
     def __init__(self, name, *args, **kw):
         self.msg = self.msg.format(name)
-        super(DeviceConnectionErrorCode, self).__init__(*args, **kw)
+        # super(DeviceConnectionErrorCode, self).__init__(*args, **kw)
 
 
 # @generate_code
 class InvalidIPAddressErrorCode(ErrorCode):
     msg = '{} is not a registered ip address'
     code = '009'
+
     def __init__(self, ip, *args, **kw):
         self.msg = self.msg.format(ip)
-        super(InvalidIPAddressErrorCode, self).__init__(*args, **kw)
+        # super(InvalidIPAddressErrorCode, self).__init__(*args, **kw)
 
 
-#===== comm errors =====
+# ===== comm errors =====
 # @generate_code
 class NoResponseErrorCode(ErrorCode):
     msg = 'no response from device'
     code = '010'
 
+
 # @generate_code
 class PychronCommErrorCode(ErrorCode):
     msg = 'could not communicate with pychron through {}. socket.error = {}'
     code = '011'
+
     def __init__(self, path, err, *args, **kw):
         self.msg = self.msg.format(path, err)
-        super(PychronCommErrorCode, self).__init__(*args, **kw)
+        # super(PychronCommErrorCode, self).__init__(*args, **kw)
 
-#===== security =====
+
+# ===== security =====
 # @generate_code
 class SystemLockErrorCode(ErrorCode):
     msg = 'Access restricted to {} ({}). You are {}'
@@ -133,7 +144,8 @@ class SystemLockErrorCode(ErrorCode):
 
     def __init__(self, name, locker, sender, *args, **kw):
         self.msg = self.msg.format(name, locker, sender)
-        super(SystemLockErrorCode, self).__init__(*args, **kw)
+        # super(SystemLockErrorCode, self).__init__(*args, **kw)
+
 
 # @generate_code
 class SecurityErrorCode(ErrorCode):
@@ -142,9 +154,10 @@ class SecurityErrorCode(ErrorCode):
 
     def __init__(self, addr, *args, **kw):
         self.msg = self.msg.format(addr)
-        super(SecurityErrorCode, self).__init__(*args, **kw)
+        # super(SecurityErrorCode, self).__init__(*args, **kw)
 
-#======= runtime errors ------
+
+# ======= runtime errors ------
 # @generate_code
 class ValveSoftwareLockErrorCode(ErrorCode):
     msg = 'Valve {} is software locked'
@@ -152,7 +165,8 @@ class ValveSoftwareLockErrorCode(ErrorCode):
 
     def __init__(self, name, *args, **kw):
         self.msg = self.msg.format(name)
-        super(ValveSoftwareLockErrorCode, self).__init__(*args, **kw)
+        # super(ValveSoftwareLockErrorCode, self).__init__(*args, **kw)
+
 
 # @generate_code
 class ValveActuationErrorCode(ErrorCode):
@@ -163,6 +177,7 @@ class ValveActuationErrorCode(ErrorCode):
         self.msg = self.msg.format(name, action)
         super(ValveActuationErrorCode, self).__init__(*args, **kw)
 
+
 # @generate_code
 class InvalidGaugeErrorCode(ErrorCode):
     msg = '{} {} not available'
@@ -170,7 +185,7 @@ class InvalidGaugeErrorCode(ErrorCode):
 
     def __init__(self, controller, gauge, *args, **kw):
         self.msg = self.msg.format(controller, gauge)
-        super(InvalidGaugeErrorCode, self).__init__(*args, **kw)
+        # super(InvalidGaugeErrorCode, self).__init__(*args, **kw)
 
 # @generate_code
 # class HMACSecurityErrorCode(ErrorCode):
