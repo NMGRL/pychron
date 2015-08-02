@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 
 from traits.api import Instance, Bool, Float, Str, \
-    Interface, provides
+    Interface, provides, Long
 # ============= standard library imports ========================
 import binascii
 import os
@@ -217,6 +217,7 @@ class AutomatedRunPersister(BasePersister):
     #. use the ``Datahub`` to save data to databases
 
     """
+    dbexperiment_identifier = Long
     local_lab_db = Instance(LocalLabAdapter)
     datahub = Instance('pychron.experiment.datahub.Datahub')
 
@@ -494,12 +495,12 @@ class AutomatedRunPersister(BasePersister):
                 run_spec.analysis_dbid = a.id
                 run_spec.analysis_timestamp = a.analysis_timestamp
 
-                experiment = db.get_experiment(self.per_spec.experiment_identifier, key='id')
+                experiment = db.get_experiment(self.dbexperiment_identifier, key='id')
                 if experiment is not None:
                     # added analysis to experiment
                     a.experiment_id = experiment.id
                 else:
-                    self.warning('no experiment found for {}'.format(self.per_spec.experiment_identifier))
+                    self.warning('no experiment found for {}'.format(self.dbexperiment_identifier))
 
                 # save measurement
                 meas = self._save_measurement(db, a)
@@ -545,8 +546,8 @@ class AutomatedRunPersister(BasePersister):
                 self.debug('pychron save time= {:0.3f} '.format(pt))
                 # file_log(pt)
 
-        self.debug('$$$$$$$$$$$$$$$ auto_save_detector_ic={}'.format(self.auto_save_detector_ic))
-        if self.auto_save_detector_ic:
+        self.debug('$$$$$$$$$$$$$$$ auto_save_detector_ic={}'.format(self.per_spec.auto_save_detector_ic))
+        if self.per_spec.auto_save_detector_ic:
             try:
                 self._save_detector_ic_csv()
             except BaseException, e:

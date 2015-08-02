@@ -290,6 +290,7 @@ class AutomatedRunSpec(HasTraits):
             setattr(self, k, v)
 
         for k, v in params.iteritems():
+            print 'load', hasattr(self, k), k, v
             if hasattr(self, k):
                 setattr(self, k, v)
 

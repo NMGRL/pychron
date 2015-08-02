@@ -24,7 +24,7 @@ from traitsui.api import View, Item
 
 # ============= standard library imports ========================
 from datetime import timedelta, datetime
-from sqlalchemy import not_, func, distinct
+from sqlalchemy import not_, func, distinct, or_
 # ============= local library imports  ==========================
 from pychron.database.core.database_adapter import DatabaseAdapter
 from pychron.database.core.query import compile_query
@@ -580,8 +580,9 @@ class DVCDatabase(DatabaseAdapter):
     def _get_date_range(self, q, asc=None, desc=None, hours=0):
         if asc is None:
             asc = AnalysisTbl.timestamp.asc()
+        if desc is None:
             desc = AnalysisTbl.timestamp.desc()
-            return self._get_date_range(q, asc, desc)
+        return super(DVCDatabase, self)._get_date_range(q, asc, desc, hours=hours)
 
     def get_project_labnumbers(self, project_names, filter_non_run, low_post=None, high_post=None,
                                analysis_types=None, mass_spectrometers=None):
@@ -599,15 +600,15 @@ class DVCDatabase(DatabaseAdapter):
                     q = q.filter(AnalysisTbl.mass_spectrometer.in_(mass_spectrometers))
 
                 if analysis_types:
-                    q = q.filter(AnalysisTbl.analysistype.in_(analysis_types))
+                    q = q.filter(AnalysisTbl.analysis_type.in_(analysis_types))
                     project_names.append('references')
 
                 q = q.group_by(IrradiationPositionTbl.identifier)
                 q = q.having(count(AnalysisTbl.idanalysisTbl) > 0)
                 if low_post:
-                    q = q.filter(AnalysisTbl.timestamp >= low_post)
+                    q = q.filter(AnalysisTbl.timestamp >= str(low_post))
                 if high_post:
-                    q = q.filter(AnalysisTbl.timestamp <= high_post)
+                    q = q.filter(AnalysisTbl.timestamp <= str(high_post))
 
             if project_names:
                 q = q.filter(ProjectTbl.name.in_(project_names))
@@ -615,10 +616,89 @@ class DVCDatabase(DatabaseAdapter):
             self.debug(compile_query(q))
             return self._query_all(q)
 
+    # def get_experiment_labnumbers(self, expnames):
+    #     with self.session_ctx() as sess:
+    #         q = sess.query(distinct(IrradiationPositionTbl.idirradiationpositionTbl), IrradiationPositionTbl)
+    #         q = q.join(AnalysisTbl, ExperimentAssociationTbl)
+    #         q = q.filter(ExperimentAssociationTbl.experimentName.in_(expnames))
+    #         return self._query_all(q)
+
+    def get_level_names(self, irrad):
+        with self.session_ctx():
+            dbirrad = self.get_irradiation(irrad)
+            return [l.name for l in dbirrad.levels]
+
+    def get_labnumbers(self, projects=None, experiments=None, mass_spectrometers=None,
+                       irradiation=None, level=None,
+                       analysis_types=None,
+                       high_post=None,
+                       low_post=None):
+        with self.session_ctx() as sess:
+            q = sess.query(IrradiationPositionTbl)
+            q = q.distinct(IrradiationPositionTbl.idirradiationpositionTbl)
+
+            # joins
+            at = False
+            if experiments:
+                at = True
+                q = q.join(AnalysisTbl, ExperimentAssociationTbl)
+            if projects:
+                q = q.join(SampleTbl, ProjectTbl)
+
+            if mass_spectrometers and not at:
+                at = True
+                q = q.join(AnalysisTbl)
+
+            if (low_post or high_post) and not at:
+                at = True
+                q = q.join(AnalysisTbl)
+
+            if analysis_types and not at:
+                at = True
+                q = q.join(AnalysisTbl)
+
+            if irradiation:
+                if not at:
+                    q = q.join(AnalysisTbl)
+                q = q.join(IrradiationPositionTbl, LevelTbl, IrradiationTbl)
+
+            # filters
+            if experiments:
+                q = q.filter(ExperimentAssociationTbl.experimentName.in_(experiments))
+            if projects:
+                q = q.filter(ProjectTbl.name.in_(projects))
+            if mass_spectrometers:
+                q = q.filter(AnalysisTbl.mass_spectrometer.in_(mass_spectrometers))
+            if low_post:
+                q = q.filter(AnalysisTbl.timestamp >= low_post)
+            if high_post:
+                q = q.filter(AnalysisTbl.timestamp <= high_post)
+            if analysis_types:
+                if 'blank' in analysis_types:
+                    analysis_types.remove('blank')
+                    q = q.filter(or_(AnalysisTbl.analysis_type.startswith('blank'),
+                                     AnalysisTbl.analysis_type.in_(analysis_types)))
+                else:
+                    q = q.filter(AnalysisTbl.analysis_type.in_(analysis_types))
+            if irradiation:
+                q = q.filter(IrradiationTbl.name == irradiation)
+                q = q.filter(LevelTbl.name == level)
+
+            return self._query_all(q, verbose_query=True)
+
     def get_analysis_groups(self, **kw):
         return []
 
     # single getters
+    def get_user(self, name):
+        return self._retrieve_item(UserTbl, name)
+
+    def get_mass_spectrometer(self, name):
+        return self._retrieve_item(MassSpectrometerTbl, name)
+
+    def get_experiment(self, name):
+        return self._retrieve_item(ExperimentTbl, name)
+
     def get_loadtable(self, name=None):
         if name is not None:
             lt = self._retrieve_item(LoadTbl, name)
@@ -642,6 +722,9 @@ class DVCDatabase(DatabaseAdapter):
             q = q.filter(IrradiationPositionTbl.position == pos)
 
         return self._query_one(q)
+
+    def get_production(self, name):
+        return self._retrieve_item(ProductionTbl, name)
 
     def get_project(self, name):
         return self._retrieve_item(ProjectTbl, name)
@@ -687,6 +770,20 @@ class DVCDatabase(DatabaseAdapter):
         return self._retrieve_first(LoadTbl, order_by=LoadTbl.create_date.desc())
 
     # multi getters
+    def get_analyses(self, analysis_type=None, mass_spectrometer=None, reverse_order=False):
+        with self.session_ctx() as sess:
+            q = sess.query(AnalysisTbl)
+            if mass_spectrometer:
+                q = q.filter(AnalysisTbl.mass_spectrometer == mass_spectrometer)
+            if analysis_type:
+                q = q.filter(AnalysisTbl.analysis_type == analysis_type)
+
+            q = q.order_by(getattr(AnalysisTbl.timestamp, 'desc' if reverse_order else 'asc')())
+            return self._query_all(q)
+
+    def get_analysis_types(self):
+        return []
+
     def get_load_holders(self):
         with self.session_ctx():
             return [ni.name for ni in self._retrieve_items(LoadHolderTbl)]
@@ -718,14 +815,17 @@ class DVCDatabase(DatabaseAdapter):
             return [ui.name for ui in eds]
 
     def get_users(self):
+        return self._retrieve_items(UserTbl)
+
+    def get_usernames(self):
         with self.session_ctx():
-            users = self._retrieve_items(UserTbl)
-            return [ui.name for ui in users]
+            return [ui.name for ui in self.get_users()]
+
+    def get_project_names(self):
+        return self._get_table_names(ProjectTbl)
 
     def get_material_names(self):
-        with self.session_ctx():
-            names = self._retrieve_items(MaterialTbl)
-            return [ni.name for ni in names]
+        return self._get_table_names(MaterialTbl)
 
     def get_samples(self, project=None, **kw):
         if project:
@@ -776,7 +876,7 @@ class DVCDatabase(DatabaseAdapter):
 
                 else:
                     if not hasattr(mass_spectrometers, '__iter__'):
-                        mass_spectrometers = (mass_spectrometers, )
+                        mass_spectrometers = (mass_spectrometers,)
 
                     q = q.join(AnalysisTbl)
 
@@ -788,12 +888,84 @@ class DVCDatabase(DatabaseAdapter):
             ps = self._retrieve_items(ProjectTbl, order=order)
         return ps
 
+    def get_tag(self, name):
+        return self._retrieve_item(TagTbl, name)
+
+    def get_tags(self):
+        return self._retrieve_items(TagTbl)
+
+    def get_experiments(self):
+        return self._retrieve_items(ExperimentTbl)
+
+    def get_extract_devices(self):
+        return self._retrieve_items(ExtractDeviceTbl)
+
+    def get_mass_spectrometer_names(self):
+        with self.session_ctx():
+            ms = self.get_mass_spectrometers()
+            return [mi.name for mi in ms]
+
     def get_mass_spectrometers(self):
         return self._retrieve_items(MassSpectrometerTbl)
 
-        # private
+    def get_experiment_identifiers(self):
+        return self._get_table_names(ExperimentTbl)
+
+    def get_unknown_positions(self, *args, **kw):
+        kw['invert'] = True
+        return self._flux_positions(*args, **kw)
+
+    def get_flux_monitors(self, *args, **kw):
+        return self._flux_positions(*args, **kw)
+
+    def _flux_positions(self, irradiation, level, sample, invert=False):
+        with self.session_ctx() as sess:
+            q = sess.query(IrradiationPositionTbl)
+            q = q.join(LevelTbl, IrradiationTbl, SampleTbl)
+            q = q.filter(IrradiationTbl.name == irradiation)
+            q = q.filter(LevelTbl.name == level)
+            if invert:
+                q = q.filter(not_(SampleTbl.name == sample))
+            else:
+                q = q.filter(SampleTbl.name == sample)
+
+            return self._query_all(q)
+
+    def get_flux_monitor_analyses(self, irradiation, level, sample):
+        with self.session_ctx() as sess:
+            q = sess.query(AnalysisTbl)
+            q = q.join(IrradiationPositionTbl, LevelTbl, IrradiationTbl, SampleTbl, AnalysisChangeTbl)
+            # q = q.options(joinedload('experiment_associations'))
+            # q = q.options(joinedload('irradiation_position'))
+            q = q.filter(IrradiationTbl.name == irradiation)
+            q = q.filter(LevelTbl.name == level)
+            q = q.filter(SampleTbl.name == sample)
+            q = q.filter(AnalysisChangeTbl.tag != 'invalid')
+            # q = q.filter(not_(IrradiationPositionTbl.identifier.in_(('24061','24062', '24063', '24076'))))
+            # q = q.filter(SampleTbl.name.in_(('BW-2014-3', 'BW-2014-4')))
+
+            return self._query_all(q, verbose_query=True)
+
+    def delete_tag(self, name):
+        with self.session_ctx() as sess:
+            q = sess.query(AnalysisTbl.idanalysisTbl)
+            q = q.join(AnalysisChangeTbl)
+            q = q.filter(AnalysisChangeTbl.tag == name)
+            n = q.count()
+            if n:
+                a = 'analyses' if n > 1 else 'analysis'
+
+                if not self.confirmation_dialog('The Tag "{}" is applied to {} {}. '
+                                                'Are you sure to want to delete it?'.format(name, n, a)):
+                    return
+
+            self._delete_item(name, name='tag')
+            return True
+
+    # private
+    def _get_table_names(self, tbl):
+        with self.session_ctx():
+            names = self._retrieve_items(tbl)
+            return [ni.name for ni in names]
 
 # ============= EOF =============================================
-
-
-

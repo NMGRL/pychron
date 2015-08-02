@@ -147,9 +147,11 @@ class DVC(Loggable):
             # self._defaults()
 
     def initialize(self, inform=False):
+        self.debug('Initialize DVC')
         mrepo = self.meta_repo
         root = os.path.join(paths.dvc_dir, self.meta_repo_name)
         if os.path.isdir(os.path.join(root, '.git')):
+            self.debug('Opening Meta Repo')
             mrepo.open_repo(root)
         else:
             url = 'https://github.com/{}/{}.git'.format(self.organization, self.meta_repo_name)

@@ -29,6 +29,7 @@ from pychron.dvc.dvc_analysis import META_ATTRS, EXTRACTION_ATTRS, analysis_path
 from pychron.experiment.automated_run.persistence import BasePersister
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths
+from pychron.pychron_constants import DVC_PROTOCOL
 
 
 def format_project(project):
@@ -37,7 +38,7 @@ def format_project(project):
 
 class DVCPersister(BasePersister):
     experiment_repo = Instance(GitRepoManager)
-    dvc = Instance('pychron.dvc.dvc.DVC')
+    dvc = Instance(DVC_PROTOCOL)
 
     def per_spec_save(self, pr, commit=False, msg_prefix=None):
         self.per_spec = pr
@@ -56,6 +57,10 @@ class DVCPersister(BasePersister):
 
         :return:
         """
+        self.debug('^^^^^^^^^^^^^ Initialize DVCPersister {} pull={}'.format(experiment, pull))
+
+        self.dvc.initialize()
+
         experiment = format_project(experiment)
         self.experiment_repo = repo = GitRepoManager()
 

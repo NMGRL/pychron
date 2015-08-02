@@ -512,6 +512,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 if self.end_at_run_completion:
                     break
 
+            self.debug('run loop exited. end at completion:{}'.format(self.end_at_run_completion))
             if self.end_at_run_completion:
                 # if overlapping run is a special labnumber cancel it and finish experiment
                 if self.extracting_run:
@@ -574,6 +575,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             wait until predicate evaluates to False
             if invert is True wait until predicate evaluates to True
         """
+        self.debug('waiting for')
         st = time.time()
         if invert:
             predicate = lambda x: not predicate(x)
@@ -609,6 +611,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         self._report_execution_state(run)
         run.teardown()
+        self.measuring_run = None
         mem_log('> end join')
 
     def _do_run(self, run):
@@ -785,8 +788,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             password = self.dvc_password
             org = self.dvc_organization
             pm = PushExperimentsModel(org, username, password)
-            pv = PushExperimentsView(model=pm)
-            open_view(pv)
+            if pm.shareables:
+                if self.confirmation_dialog('You have shareable Experiments. Would you like to examine them?'):
+                    pv = PushExperimentsView(model=pm)
+                    open_view(pv)
 
     def _show_conditionals(self, show_measuring=False, tripped=None, kind='livemodal'):
         try:
@@ -984,7 +989,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         arun.persister.datahub = self.datahub
         arun.persister.load_name = exp.load_name
-        arun.persister.experiment_identifier = exp.database_identifier
+        arun.persister.dbexperiment_identifier = exp.database_identifier
 
         arun.use_syn_extraction = False
 
@@ -1444,6 +1449,16 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         # check the first aliquot before delaying
         arv = runs[0]
         if not self._set_run_aliquot(arv):
+            return
+
+        no_exp = False
+        for i, ai in enumerate(runs):
+            if not ai.experiment_identifier:
+                self.warning('No experiment identifier for i={}, {}'.format(i + 1, ai.runid))
+                no_exp = True
+
+        if no_exp:
+            self.warning_dialog('No Experiment Identifiers')
             return
 
         if globalv.experiment_debug:

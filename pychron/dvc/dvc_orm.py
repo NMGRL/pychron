@@ -88,7 +88,6 @@ class ExperimentTbl(Base, BaseMixin):
         v.name = self.name
         return v
 
-
 class ExperimentAssociationTbl(Base, BaseMixin):
     idexperimentassociationTbl = Column(Integer, primary_key=True)
     experimentName = Column(String(80), ForeignKey('ExperimentTbl.name'))
@@ -151,7 +150,6 @@ class AnalysisTbl(Base, BaseMixin):
     @property
     def tag_dict(self):
         return {k: getattr(self.change.tag_item, k) for k in ('name',) + OMIT_KEYS}
-
     # @property
     # def labnumber(self):
     #     return self.irradiation_position
@@ -272,6 +270,10 @@ class IrradiationPositionTbl(Base, BaseMixin):
     weight = Column(Float)
     j = Column(Float)
     j_err = Column(Float)
+
+    # @property
+    # def irradiation_position(self):
+    #     return self
 
 
 class TagTbl(Base, BaseMixin):

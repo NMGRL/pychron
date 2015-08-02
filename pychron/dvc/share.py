@@ -23,6 +23,7 @@ from traits.api import HasTraits, Str, Bool, List
 from traitsui.api import View, UItem, VGroup, TableEditor
 
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.extras.checkbox_column import CheckboxColumn
@@ -104,6 +105,7 @@ class PushExperimentsView(Controller):
         v = View(UItem('shareables',
                        editor=TableEditor(columns=cols,
                                           edit_view=ev)),
+                 title='Shareable Experiments',
                  buttons=['OK', 'Cancel'],
                  resizable=True)
         return v
