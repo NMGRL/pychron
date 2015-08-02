@@ -40,6 +40,11 @@ class LabspyPreferences(BasePreferencesHelper):
     use_labspy = Bool
 
 
+class DVCPreferences(BasePreferencesHelper):
+    preferences_path = 'pychron.experiment'
+    use_dvc_persistence = Bool
+
+
 class ExperimentPreferences(BasePreferencesHelper):
     preferences_path = 'pychron.experiment'
     id = 'pychron.experiment.preferences_page'
@@ -125,10 +130,20 @@ class ConsolePreferences(BaseConsolePreferences):
 class LabspyPreferencesPane(PreferencesPane):
     model_factory = LabspyPreferences
     category = 'Experiment'
-    #
+
     def traits_view(self):
         v = View(VGroup(Item('use_labspy', label='Use Labspy'),
                         label='Labspy', show_border=True))
+        return v
+
+
+class DVCPreferencesPane(PreferencesPane):
+    model_factory = DVCPreferences
+    category = 'Experiment'
+
+    def traits_view(self):
+        v = View(VGroup(Item('use_dvc_persistence', label='Use DVC Persistence'),
+                        label='DVC', show_border=True))
         return v
 
 

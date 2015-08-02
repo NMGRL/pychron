@@ -16,7 +16,9 @@
 
 # ============= enthought library imports =======================
 import os
+
 from traits.api import Str, Either, Int, Callable, Bool, Float, Enum
+
 # ============= standard library imports ========================
 from uncertainties import nominal_value, std_dev
 import pprint
@@ -24,7 +26,7 @@ import pprint
 import yaml
 from pychron.experiment.conditional.regexes import MAPPER_KEY_REGEX, \
     STD_REGEX, INTERPOLATE_REGEX
-from pychron.experiment.conditional.utilities import tokenize, get_teststr_attr_func, extract_attr, interpolate_teststr
+from pychron.experiment.conditional.utilities import tokenize, get_teststr_attr_func, extract_attr
 from pychron.experiment.utilities.conditionals import RUN, QUEUE, SYSTEM
 from pychron.loggable import Loggable
 from pychron.paths import paths
@@ -181,6 +183,7 @@ class AutomatedRunConditional(BaseConditional):
     # start_count=0,
     # frequency=1,
     # *args, **kw):
+
     def __init__(self, teststr,
                  start_count=0,
                  frequency=1,
@@ -251,6 +254,7 @@ class AutomatedRunConditional(BaseConditional):
 
             vv = std_dev(v) if STD_REGEX.match(teststr) else nominal_value(v)
             vv = self._map_value(vv)
+            self.value = vv
             ctx[attr] = vv
 
             ts = self._interpolate_teststr(ts, obj, data)

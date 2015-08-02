@@ -72,6 +72,8 @@ class DataCollector(Consoleable):
     _temp_conds = None
     _result = None
 
+    err_message = Str
+
     def wait(self):
         st = time.time()
         self.debug('wait started')
@@ -313,9 +315,12 @@ class DataCollector(Consoleable):
     # checks
     # ===============================================================================
     def _check_conditionals(self, conditionals, cnt):
+        self.err_message = ''
         for ti in conditionals:
             if ti.check(self.automated_run, self._data, cnt):
-                self.info('Conditional tripped: {}'.format(ti.to_string()))
+                m = 'Conditional tripped: {}'.format(ti.to_string())
+                self.info(m)
+                self.err_message = m
                 return ti
 
     def _check_iteration(self, evt, i):
@@ -377,6 +382,7 @@ class DataCollector(Consoleable):
                 self.info('cancelation conditional {}. measurement iteration executed {}/{} counts'.format(
                     cancelation_conditional.message, j, original_counts), color='red')
                 self.automated_run.show_conditionals(tripped=cancelation_conditional)
+
                 return 'cancel'
 
             truncation_conditional = self._check_conditionals(self.truncation_conditionals, i)

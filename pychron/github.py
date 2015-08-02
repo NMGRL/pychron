@@ -96,7 +96,7 @@ class Organization(GithubObject):
 if __name__ == '__main__':
     # print get_organization_repositiories('NMGRL')
     # create_organization_repository('NMGRL', 'test', 'jirhiker', 'jross4039')
-    org = Organization('NMGRL', 'jirhiker', 'jross4039')
+    org = Organization('NMGRL', '', '')
     print org.repos, len(org.repos)
     # print org.create_repo('test2', auto_init=True)
     # print org.repos, len(org.repos)

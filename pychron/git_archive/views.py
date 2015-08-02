@@ -1,11 +1,11 @@
 # ===============================================================================
-# Copyright 2014 Jake Ross
+# Copyright 2015 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,24 +15,19 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Interface
+from traits.api import HasTraits, Str
+from traitsui.api import View, UItem
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-import traits.has_traits
+class NewBranchView(HasTraits):
+    name = Str
 
-traits.has_traits.CHECK_INTERFACES = 2
+    def traits_view(self):
+        v = View(UItem('name'),
+                 kind='livemodal',
+                 buttons=['OK', 'Cancel'], title='New Branch')
+        return v
 
-
-class IDatastore(Interface):
-    def get_greatest_aliquot(self, identifier):
-        pass
-
-    def get_greatest_step(self, identifier, aliquot):
-        pass
-
-    def connect(self, *args, **kw):
-        pass
-
-    def is_connected(self):
-        pass
 # ============= EOF =============================================

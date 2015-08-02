@@ -33,7 +33,7 @@ from pychron.experiment.signal_calculator import SignalCalculator
 from pychron.experiment.image_browser import ImageBrowser
 from pychron.experiment.tasks.experiment_task import ExperimentEditorTask
 from pychron.experiment.tasks.experiment_preferences import ExperimentPreferencesPane, ConsolePreferencesPane, \
-    UserNotifierPreferencesPane, LabspyPreferencesPane
+    UserNotifierPreferencesPane, LabspyPreferencesPane, DVCPreferencesPane
 from pychron.experiment.tasks.experiment_actions import NewExperimentQueueAction, \
     OpenExperimentQueueAction, SignalCalculatorAction, \
     DeselectAction, SendTestNotificationAction, \
@@ -81,6 +81,7 @@ class ExperimentPlugin(BaseTaskPlugin):
     def _preferences_panes_default(self):
         return [ExperimentPreferencesPane,
                 LabspyPreferencesPane,
+                DVCPreferencesPane,
                 ConsolePreferencesPane,
                 UserNotifierPreferencesPane]
 

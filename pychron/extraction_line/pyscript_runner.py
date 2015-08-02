@@ -17,12 +17,17 @@
 # ============= enthought library imports =======================
 from traits.api import Any, Dict, List, provides
 # ============= standard library imports ========================
-from threading import Event, Lock
+from threading import _Event, Lock
 # ============= local library imports  ==========================
 from pychron.core.helpers.logger_setup import logging_setup
 from pychron.extraction_line.ipyscript_runner import IPyScriptRunner
 from pychron.loggable import Loggable
 from pychron.hardware.core.communicators.ethernet_communicator import EthernetCommunicator
+
+
+class LocalResource(_Event):
+    def read(self, *args, **kw):
+        return self.is_set()
 
 
 @provides(IPyScriptRunner)
@@ -49,7 +54,7 @@ class PyScriptRunner(Loggable):
             return r
 
     def _get_resource(self, name):
-        return Event()
+        return LocalResource()
 
         # def traits_view(self):
         #

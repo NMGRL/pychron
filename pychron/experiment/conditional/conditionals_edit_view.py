@@ -13,9 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from pychron.core.helpers.formatting import floatfmt
 from pychron.core.ui import set_qt
 from pychron.envisage.icon_button_editor import icon_button_editor
-from pychron.envisage.resources import icon, image
+from pychron.envisage.resources import icon
 from pychron.experiment.conditional.conditional import conditional_from_dict, ActionConditional, TruncationConditional, \
     CancelationConditional, TerminationConditional, BaseConditional
 from pychron.experiment.conditional.regexes import CP_REGEX, STD_REGEX, ACTIVE_REGEX, BASELINECOR_REGEX, BASELINE_REGEX, \
@@ -29,8 +30,8 @@ from traits.api import HasTraits, List, Instance, Any, \
     Enum, Float, on_trait_change, Str, Int, Property, Button, Bool, CStr
 
 from pyface.file_dialog import FileDialog
-from traitsui.api import View, Tabbed, Group, UItem, \
-    TabularEditor, VGroup, EnumEditor, Item, HGroup, spring, Label, Handler, HSplit, ListEditor
+from traitsui.api import View, UItem, \
+    TabularEditor, VGroup, EnumEditor, Item, HGroup, Handler, HSplit, ListEditor
 from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
 import os
@@ -45,10 +46,14 @@ class BaseConditionalsAdapter(TabularAdapter):
     level_text = Property
     tripped_text = Property
     tripped_image = Property
+    value_text = Property
 
     def get_bg_color(self, obj, trait, row, column=0):
         item = getattr(obj, trait)[row]
         return level_color(item.level)
+
+    def _get_value_text(self):
+        return floatfmt(self.item.value)
 
     def _get_level_text(self):
         return level_text(self.item.level)
