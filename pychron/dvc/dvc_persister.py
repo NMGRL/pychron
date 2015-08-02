@@ -15,30 +15,20 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import base64
-
 from traits.api import Instance
-
 # ============= standard library imports ========================
+import base64
 import hashlib
 import os
 import struct
-# import yaml
-
 from datetime import datetime
-from uncertainties import std_dev
-from uncertainties import nominal_value
+from uncertainties import std_dev, nominal_value
 # ============= local library imports  ==========================
 from pychron.dvc import jdump
 from pychron.dvc.dvc_analysis import META_ATTRS, EXTRACTION_ATTRS, analysis_path, PATH_MODIFIERS
 from pychron.experiment.automated_run.persistence import BasePersister
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths
-
-
-# def jdump(obj, p):
-#     with open(p, 'w') as wfile:
-#         json.dump(obj, wfile, indent=4)
 
 
 def format_project(project):
@@ -48,10 +38,6 @@ def format_project(project):
 class DVCPersister(BasePersister):
     experiment_repo = Instance(GitRepoManager)
     dvc = Instance('pychron.dvc.dvc.DVC')
-
-    # def __init__(self, *args, **kw):
-    #     super(DVCPersister, self).__init__(*args, **kw)
-    #     self.dvc = self.application.get_service('pychron.dvc.dvc.DVC')
 
     def per_spec_save(self, pr, commit=False, msg_prefix=None):
         self.per_spec = pr
@@ -68,22 +54,13 @@ class DVCPersister(BasePersister):
         repositories are guaranteed to exist. The automated run factory clones the required projects
         on demand.
 
-        synchronize the database
         :return:
         """
-        # if not self.experiment_repo:
         experiment = format_project(experiment)
         self.experiment_repo = GitRepoManager()
         self.experiment_repo.open_repo(os.path.join(paths.experiment_dataset_dir, experiment))
         self.info('pulling changes from experiment repo: {}'.format(experiment))
         self.experiment_repo.pull()
-
-            # if sync:
-            #     self.info('synchronize dvc')
-            # self.dvc.synchronize()
-            # self.meta_repo = GitRepoManager()
-            # self.meta_repo.open_repo(paths.meta_dir)
-            # self.meta_repo.pull()
 
     def pre_extraction_save(self):
         pass
@@ -158,7 +135,6 @@ class DVCPersister(BasePersister):
         # save spectrometer
         spec_sha = self._get_spectrometer_sha()
         spec_path = os.path.join(self.experiment_repo.path, '{}.json'.format(spec_sha))
-        # spec_path = self._make_path('.spectrometer', spec_sha)
         if not os.path.isfile(spec_path):
             self._save_spectrometer_file(spec_path)
 
@@ -257,14 +233,6 @@ class DVCPersister(BasePersister):
 
     def _make_analysis_dict(self, keys=None):
         rs = self.per_spec.run_spec
-        # attrs = ('sample', 'aliquot', 'increment', 'irradiation', 'weight',
-        # 'comment', 'irradiation_level', 'mass_spectrometer', 'extract_device',
-        # 'username', 'tray', 'queue_conditionals_name', 'extract_value',
-        # 'extract_units', 'position', 'xyz_position', 'duration', 'cleanup',
-        # 'pattern', 'beam_diameter', 'ramp_duration', 'ramp_rate')
-        # attrs = ANALYSIS_ATTRS
-        # if exclude:
-        #     attrs = (a for a in ANALYSIS_ATTRS if a not in exclude)
         if keys is None:
             keys = META_ATTRS
 
@@ -278,7 +246,6 @@ class DVCPersister(BasePersister):
         signals = []
         baselines = []
         sniffs = []
-        # cisos = {}
         blanks = {}
         intercepts = {}
         cbaselines = {}
@@ -297,7 +264,6 @@ class DVCPersister(BasePersister):
             if iso.detector not in dets:
                 bblob = base64.b64encode(iso.baseline.pack(endianness, as_hex=False))
                 baselines.append({'detector': iso.detector, 'blob': bblob})
-                # baselines[iso.detector] = bblob
                 dets[iso.detector] = {'deflection': self.per_spec.defl_dict.get(iso.detector),
                                       'gain': self.per_spec.gains.get(iso.detector)}
 
@@ -309,13 +275,6 @@ class DVCPersister(BasePersister):
                                             'value': float(iso.baseline.value),
                                             'error': float(iso.baseline.error)}
 
-                # cdets[iso.detector] = {'baseline': {'fit': iso.baseline.fit,
-                #                                     'value': float(iso.baseline.value),
-                #                                     'error': float(iso.baseline.error)},
-                #                        'ic_factor': {'value': float(nominal_value(iso.ic_factor)),
-                #                                      'error': float(std_dev(iso.ic_factor)),
-                #                                      'fit': 'default',
-                #                                      'references': []}}
             intercepts[iso.name] = {'fit': iso.fit,
                                     'value': iso.value, 'error': iso.error}
             blanks[iso.name] = {'fit': 'previous',
@@ -323,13 +282,6 @@ class DVCPersister(BasePersister):
                                                 'exclude': False}],
                                 'value': float(iso.blank.value),
                                 'error': float(iso.blank.error)}
-            # cisos[iso.name] = {'fit': iso.fit,
-            #                    'raw_intercept': {'value': iso.value, 'error': iso.error},
-            #                    'blank': {'fit': 'previous',
-            #                              'references': [{'runid': self.per_spec.previous_blank_runid,
-            #                                              'exclude': False}],
-            #                              'value': float(iso.blank.value),
-            #                              'error': float(iso.blank.error)}}
 
         obj = self._make_analysis_dict()
 
@@ -363,11 +315,10 @@ class DVCPersister(BasePersister):
         p = self._make_path()
         jdump(obj, p)
 
-        # dump runid.blank.json
         p = self._make_path(modifier='intercepts')
         jdump(intercepts, p)
-        # jdump({'commit': hexsha, '': intercepts, 'detectors': cdets}, p)
 
+        # dump runid.blank.json
         p = self._make_path(modifier='blanks')
         jdump(blanks, p)
 
@@ -389,18 +340,6 @@ class DVCPersister(BasePersister):
         runid = self.per_spec.run_spec.runid
         experiment_id = self.per_spec.run_spec.experiment_identifier
         return analysis_path(runid, experiment_id, modifier, extension, mode='w')
-
-        # if prefix is None:
-        #     root = self.experiment_repo.path
-        #     root = os.path.join(root, prefix[:3])
-        #     if not os.path.isdir(root):
-        #         os.mkdir(root)
-        #     prefix = prefix[3:]
-        #
-        # else:
-        #     root = self.experiment_repo.path
-        #
-        # return os.path.join(root, '{}{}{}'.format(prefix, name, extension))
 
     def _get_spectrometer_sha(self):
         """
