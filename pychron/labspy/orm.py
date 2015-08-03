@@ -27,6 +27,7 @@ stringcolumn = lambda w=80, **kw: Column(String(w), **kw)
 
 
 class BaseMixin(object):
+    id = Column(Integer, primary_key=True)
     @declared_attr
     def __tablename__(self):
         return self.__name__

@@ -87,6 +87,7 @@ class LabspyClient(Loggable):
 
 
     def add_measurement(self, dev, tag, val, unit):
+        val = float(val)
         self.debug('adding measurement dev={} process={} value={} ({})'.format(dev, tag, val, unit))
         if self.db.connected:
             with self.db.session_ctx():

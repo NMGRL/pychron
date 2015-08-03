@@ -36,6 +36,7 @@ class ValveProtocol(ServiceProtocol):
                     ('Open', '_open'),
                     ('Close', '_close'),
                     ('GetValveState', '_get_valve_state'),
+                    ('GetStateChecksum', '_get_state_checksum'),
                     ('GetValveStates', '_get_valve_states'),
                     ('GetValveLockStates', '_get_valve_lock_states'),
                     ('GetValveLockState', '_get_valve_lock_state'),
@@ -147,11 +148,11 @@ class ValveProtocol(ServiceProtocol):
 
         return result
 
-    def _get_state_checksum(self, *vnames):
+    def _get_state_checksum(self, data):
         """
 
         """
-        result = self._manager.get_state_checksum(vnames)
+        result = self._manager.get_state_checksum(data)
         return result
 
     def _get_valve_state(self, data):
@@ -182,7 +183,7 @@ class ValveProtocol(ServiceProtocol):
         result = self._manager.get_valve_states()
         return result
 
-    def _get_valve_lock_states(self):
+    def _get_valve_lock_states(self, data):
         """
         Get all the valve lock states::
 
@@ -212,16 +213,13 @@ class ValveProtocol(ServiceProtocol):
         result = self._manager.get_valve_owners()
         return result
 
-    def _get_pressure(self, controller, gauge):
+    def _get_pressure(self, data):
         """
         Get the pressure from ``controller``'s ``gauge``
 
-        :param controller: name of gauge controller
-        :param gauge: name of gauge
-        :return: pressure
         """
         manager = self._manager
-
+        controller, gauge =data
         p = None
         if manager:
             p = manager.get_pressure(controller, gauge)

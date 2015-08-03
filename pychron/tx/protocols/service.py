@@ -18,6 +18,7 @@
 # ============= standard library imports ========================
 import io
 import os
+import traceback
 
 from twisted.internet import defer
 from twisted.internet.protocol import Protocol
@@ -58,8 +59,8 @@ class ServiceProtocol(Protocol):
     def __init__(self, *args, **kw):
         # super(ServiceProtocol, self).__init__(*args, **kw)
         self._services = {}
-        self._delim = ' '
-
+        self._cmd_delim = ' '
+        self._arg_delim = ','
         self.debug = logger.debug
         self.warning = logger.warn
         self.info = logger.info
@@ -68,12 +69,13 @@ class ServiceProtocol(Protocol):
 
     def dataReceived(self, data):
         self.debug('Received n={n}: {data!r}', n=len(data), data=data)
+        data = data.strip()
         service = self._get_service(data)
         if service:
             self._get_response(service, data)
 
             # else:
-            #     self.transport.write('Invalid request: {}'.format(data))
+            # self.transport.write('Invalid request: {}'.format(data))
 
             # self.transport.loseConnection()
 
@@ -116,22 +118,38 @@ class ServiceProtocol(Protocol):
         self.transport.loseConnection()
 
     def _get_service(self, data):
-        args = data.split(self._delim)
-        name = args[0]
+
+        if self._cmd_delim in data:
+            args = data.split(self._cmd_delim)
+            name = args[0]
+        else:
+            name = data
+
         try:
             service = self._services[name]
             return service
-        except KeyError:
+        except KeyError, e:
+            traceback.print_exc()
             raise ServiceNameError(name, data)
 
     def _get_response(self, service, data):
-        delim = self._delim
+
+        delim = self._cmd_delim
         data = delim.join(data.split(delim)[1:])
-        service.callback(*tuple(data.split(',')))
+        # service.callback(*tuple(data.split(',')))
+        data = data.split(self._arg_delim)
+        if len(data) == 1:
+            data = data[0]
+        else:
+            data = tuple(data)
+        # elif data:
+        #     data = data[0]
+        self.debug('Data {data!r}', data=data)
+        service.callback(data)
 
 # ============= EOF =============================================
 # def sleep(secs):
-#     d = defer.Deferred()
+# d = defer.Deferred()
 #     reactor.callLater(secs, d.callback, None)
 #     return d
 
