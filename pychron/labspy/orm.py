@@ -71,6 +71,7 @@ class Analysis(Base, BaseMixin):
     experiment_id = Column(Integer, ForeignKey('Experiment.id'))
     runid = stringcolumn()
     start_time = Column(DateTime)
+    analysis_type = stringcolumn()
 
 
 class Experiment(Base, BaseMixin):
@@ -78,7 +79,7 @@ class Experiment(Base, BaseMixin):
     system = stringcolumn()
     user = stringcolumn()
     start_time = Column(DateTime)
-
+    state = stringcolumn()
     # ExpID = Column(Integer, primary_key=True)
     # ExtractionDevice = stringcolumn()
     # StartTime = Column(DateTime)
