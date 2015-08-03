@@ -51,22 +51,25 @@ class LabspyClient(Loggable):
         if self.db.connected:
             with self.db.session_ctx():
                 hid = self._generate_hid(exp)
-                self.db.add_experiment(Name=exp.name,
-                                       StartTime=exp.starttime,
-                                       Spectrometer=exp.mass_spectrometer,
-                                       ExtractionDevice=exp.extract_device,
-                                       User=exp.username,
-                                       HashID=hid)
+                self.db.add_experiment(name=exp.name,
+                                       start_time=exp.starttime,
+                                       system=exp.mass_spectrometer,
+                                       user=exp.username)
+                # ExtractionDevice=exp.extract_device,
+                # HashID=hid)
 
     def update_experiment(self, exp, err_msg):
         if self.db.connected:
             with self.db.session_ctx():
                 hid = self._generate_hid(exp)
                 exp = self.db.get_experiment(hid)
-                exp.EndTime = exp.endtime
-                exp.State = err_msg
+                # exp.EndTime = exp.endtime
+                # exp.State = err_msg
 
     def update_status(self, **kw):
+        self.debug('update status not enabled')
+        return
+
         if self.db.connected:
             with self.db.session_ctx():
                 status = self.db.get_status()
@@ -81,6 +84,7 @@ class LabspyClient(Loggable):
             with self.db.session_ctx():
                 exp = self.db.get_experiment(self._generate_hid(exp))
                 self.db.add_analysis(exp, self._run_dict(run))
+
 
     def add_measurement(self, dev, tag, val, unit):
         self.debug('adding measurement dev={} process={} value={} ({})'.format(dev, tag, val, unit))
@@ -97,7 +101,10 @@ class LabspyClient(Loggable):
         return LabspyDatabaseAdapter()
 
     def _run_dict(self, run):
+
         spec = run.spec
+        return {'runid': spec.runid,
+                'start_time': spec.analysis_timestamp}
 
         d = {dbk: getattr(spec, k) for k, dbk in (('runid', 'Runid'),
                                                   ('analysis_type', 'analysis_type'),

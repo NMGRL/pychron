@@ -65,23 +65,30 @@ class Version(Base):
     app = stringcolumn()
     name = stringcolumn()
 
-#
-#
-#
-# # Experiment klasses
-# class Experiment(Base, BaseMixin):
-#     ExpID = Column(Integer, primary_key=True)
-#     Name = stringcolumn()
-#     Spectrometer = stringcolumn()
-#     ExtractionDevice = stringcolumn()
-#     StartTime = Column(DateTime)
-#     EndTime = Column(DateTime)
-#     State = stringcolumn(default='Running')
-#     LastUpdate = Column(DateTime, default=func.now())
-#     User = stringcolumn()
-#
-#     HashID = stringcolumn()
-#     analyses = relationship('Analysis', backref='experiment')
+
+# Experiment klasses
+class Analysis(Base, BaseMixin):
+    experiment_id = Column(Integer, ForeignKey('Experiment.id'))
+    runid = stringcolumn()
+    start_time = Column(DateTime)
+
+
+class Experiment(Base, BaseMixin):
+    name = stringcolumn()
+    system = stringcolumn()
+    user = stringcolumn()
+    start_time = Column(DateTime)
+
+    # ExpID = Column(Integer, primary_key=True)
+    # ExtractionDevice = stringcolumn()
+    # StartTime = Column(DateTime)
+    # EndTime = Column(DateTime)
+    # State = stringcolumn(default='Running')
+    # LastUpdate = Column(DateTime, default=func.now())
+    # User = stringcolumn()
+
+    # HashID = stringcolumn()
+    analyses = relationship('Analysis', backref='experiment')
 #
 #
 # class AnalysisType(Base,BaseMixin):

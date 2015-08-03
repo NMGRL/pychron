@@ -20,7 +20,7 @@ from apptools.preferences.preference_binding import bind_preference
 # ============= local library imports  ==========================
 from pychron.database.core.database_adapter import DatabaseAdapter
 from pychron.labspy.orm import Measurement, ProcessInfo, Version, \
-    Device  # , Version, Status, Experiment, Analysis, AnalysisType
+    Device, Experiment, Analysis  # , Version, Status, Experiment, Analysis, AnalysisType
 
 
 class LabspyDatabaseAdapter(DatabaseAdapter):
@@ -33,23 +33,24 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
         bind_preference(self, 'password', 'pychron.labspy.password')
         bind_preference(self, 'name', 'pychron.labspy.name')
 
-    # def add_experiment(self, **kw):
-    #     exp = Experiment(**kw)
-    #     return self._add_item(exp)
-    #
-    # def add_analysis(self, dbexp, rd):
-    #     at = None
-    #     if 'analysis_type' in rd:
-    #         analysis_type = rd.pop('analysis_type')
-    #         at = self.get_analysis_type(analysis_type)
-    #         if not at:
-    #             at = self.add_analysis_type(analysis_type)
-    #     an = Analysis(**rd)
-    #     if at:
-    #         an.analysis_type = at
-    #
-    #     an.experiment = dbexp
-    #     return self._add_item(an)
+    def add_experiment(self, **kw):
+        exp = Experiment(**kw)
+        return self._add_item(exp)
+
+    def add_analysis(self, dbexp, rd):
+        at = None
+        # if 'analysis_type' in rd:
+        #     analysis_type = rd.pop('analysis_type')
+        #     at = self.get_analysis_type(analysis_type)
+        #     if not at:
+        #         at = self.add_analysis_type(analysis_type)
+
+        an = Analysis(**rd)
+        if at:
+            an.analysis_type = at
+
+        an.experiment = dbexp
+        return self._add_item(an)
 
     def update_experiment(self, hashid, **kw):
         exp = self.get_experiment(hashid)
