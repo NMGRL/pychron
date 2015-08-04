@@ -31,7 +31,7 @@ from pychron.managers.manager import Manager
 from pychron.canvas.canvas2D.laser_tray_canvas import LaserTrayCanvas
 # from pychron.core.helpers.color_generators import colors8i as colors
 
-from pychron.hardware.motion_controller import MotionController, PositionError
+from pychron.hardware.motion_controller import MotionController, PositionError, TargetPositionError
 from pychron.paths import paths
 import pickle
 # from pychron.lasers.stage_managers.stage_visualizer import StageVisualizer
@@ -205,7 +205,7 @@ class StageManager(Manager):
             self.canvas.set_map(sm)
             self.canvas.request_redraw()
 
-    #    def finish_loading(self):
+    # def finish_loading(self):
     #        self.initialize_stage()
 
     def initialize_stage(self):
@@ -248,11 +248,11 @@ class StageManager(Manager):
             if self.moving():
                 self.warning('MotionController already in motion')
                 if abort_if_moving:
-                    self.warning('Move to {},{} aborted'.format(x,y))
+                    self.warning('Move to {},{} aborted'.format(x, y))
                     return
                 else:
                     self.stop()
-                    self.debug('Motion stopped. moving to {},{}'.format(x,y))
+                    self.debug('Motion stopped. moving to {},{}'.format(x, y))
 
         cpos = self.get_uncalibrated_xy()
         self.linear_move_history.append((cpos, {}))
@@ -292,7 +292,7 @@ class StageManager(Manager):
         hole = self._get_hole_by_position(x, y)
         if hole:
             self.move_to_hole(hole)
-        #            self._set_hole(hole.id)
+        # self._set_hole(hole.id)
         # self.move_to_hole(hole.id)
         #            self._set_hole(hole.id)
         else:
@@ -410,7 +410,7 @@ class StageManager(Manager):
 
             return next((si for si in smap.sample_holes
                          if _filter(si, x, y)
-                        ), None)
+                         ), None)
 
 
             #    def _hole_changed(self):
@@ -442,7 +442,7 @@ class StageManager(Manager):
             homed = ['x', 'y']
             home_kwargs = dict(x=-25, y=-25)
         else:
-        #            define_home =
+            #            define_home =
             msg = 'homing {}'.format(self.home_option)
             home_kwargs = {self.home_option: -25 if self.home_option in ['X', 'Y'] else 50}
             homed = [self.home_option.lower().strip()]
@@ -458,8 +458,8 @@ class StageManager(Manager):
         #        self.stage_controller.block()
 
         if 'z' in homed and 'z' in self.stage_controller.axes:
-        # will be a positive limit error in z
-        #            self.stage_controller.read_error()
+            # will be a positive limit error in z
+            #            self.stage_controller.read_error()
 
             time.sleep(1)
             self.info('setting z to nominal position. {} mm '.format(self._default_z))
@@ -598,7 +598,7 @@ class StageManager(Manager):
                 if start_callback is not None:
                     start_callback()
 
-                #                buf=[]
+                # buf=[]
                 for pi in xy[1:]:
                     self.linear_move(pi[0], pi[1],
                                      velocity=velocity,
@@ -648,7 +648,7 @@ class StageManager(Manager):
         if verbose:
             self.info('start raster')
 
-        #        print lines
+        # print lines
         # loop thru each scan line
         #        for yi, xs in lines[::skip]:
         for yi, xs in lines:
@@ -705,7 +705,7 @@ class StageManager(Manager):
                     else:
                         self.linear_move(x2, yy, velocity=velocity,
                                          mode='absolute', set_stage=False,
-                        )
+                                         )
                     cnt += 1
                     flip = True
                 else:
@@ -717,7 +717,6 @@ class StageManager(Manager):
         sc.block()
         if verbose:
             self.info('end raster')
-
 
     def _move_polyline(self, pts, start_callback=None, end_callback=None):
         if not isinstance(pts, list):
@@ -765,7 +764,7 @@ class StageManager(Manager):
 
             self.linear_move(xi, yi, velocity=vi,
                              block=block,
-                             mode='absolute', # use absolute mode because commands are queued
+                             mode='absolute',  # use absolute mode because commands are queued
                              set_stage=False)
             if block:
                 if end_callback:
@@ -831,7 +830,7 @@ class StageManager(Manager):
         pos = self._stage_map.get_corrected_hole_pos(key)
         self.info('position {}'.format(pos))
         if pos is not None:
-        #             self.visualizer.set_current_hole(key)
+            # self.visualizer.set_current_hole(key)
 
             if abs(pos[0]) < 1e-6:
                 pos = self._stage_map.get_hole_pos(key)
@@ -845,14 +844,18 @@ class StageManager(Manager):
                     self.info('using an interpolated value')
                 else:
                     self.info('using previously calculated corrected position')
+            try:
+                self.stage_controller.linear_move(block=True, *pos)
+                #            if self.tray_calibration_manager.calibration_style == 'MassSpec':
+            except TargetPositionError, e:
+                self.warning('Move to {} failed'.format(pos))
+                self.parent.emergency_shutoff(str(e))
+                return
 
-            self.stage_controller.linear_move(block=True, *pos)
-            #            if self.tray_calibration_manager.calibration_style == 'MassSpec':
             if not self.tray_calibration_manager.isCalibrating():
                 self._move_to_hole_hook(key, correct_position)
             else:
                 self._move_to_hole_hook(key, correct_position)
-
             self.info('Move complete')
             # self.update_axes()  # update_hole=False)
 
@@ -863,7 +866,6 @@ class StageManager(Manager):
 
     def _move_to_point_hook(self):
         pass
-
 
     # ===============================================================================
     # Views
@@ -957,8 +959,7 @@ class StageManager(Manager):
         else:
             self.warning('invalid calibrated position. incorrect number of arguments "{}"'.format(args))
 
-
-    #    def _set_hole(self, v):
+    # def _set_hole(self, v):
     #        if v is None:
     #            return
     #
@@ -1002,7 +1003,7 @@ class StageManager(Manager):
             return
 
         if (self.move_thread is None or \
-                not self.move_thread.isRunning()) and \
+                    not self.move_thread.isRunning()) and \
                         v is not self._point:
             pos = self.canvas.get_item('point', int(v) - 1)
             if pos is not None:
@@ -1059,7 +1060,7 @@ class StageManager(Manager):
         self.move_thread = t
 
     def _test_fired(self):
-    #        self.do_pattern('testpattern')
+        #        self.do_pattern('testpattern')
         self.do_pattern('pattern003')
 
     # ===============================================================================
@@ -1155,7 +1156,8 @@ class StageManager(Manager):
         #        return View(HSplit(vg, canvas_group), handler=self.handler_klass)
         return View(canvas_grp,
                     #                    handler=self.handler_klass
-        )
+                    )
+
 
 # ===============================================================================
 # mass spec hacks
@@ -1198,94 +1200,93 @@ if __name__ == '__main__':
 # ========================EOF============================
 
 # view groups
-    # ===============================================================================
-    #    def _hole__group__(self):
-    #        g = Group(HGroup(Item('hole'), spring))
-    #        return g
-    #    def _position__group__(self):
-    #        g = Group(HGroup(Item('calibrated_position_entry', label='Position',
-    #                              tooltip='Enter a x,y point in reference frame space',
-    #                              ), spring))
+# ===============================================================================
+#    def _hole__group__(self):
+#        g = Group(HGroup(Item('hole'), spring))
+#        return g
+#    def _position__group__(self):
+#        g = Group(HGroup(Item('calibrated_position_entry', label='Position',
+#                              tooltip='Enter a x,y point in reference frame space',
+#                              ), spring))
 
-    #        g = Group(
-    #                  Item('calibrated_position_entry',
-    #                       show_label=False,
-    #                       tooltip='Enter a positon e.g 1 for a hole, or 3,4 for X,Y'
-    #                       ), label='Calibrated Position',
-    #                  show_border=True)
-    #        return g
+#        g = Group(
+#                  Item('calibrated_position_entry',
+#                       show_label=False,
+#                       tooltip='Enter a positon e.g 1 for a hole, or 3,4 for X,Y'
+#                       ), label='Calibrated Position',
+#                  show_border=True)
+#        return g
 
-    #    def _button__group__(self):
-    #        '''
-    #        '''
-    #        vg = VGroup()
-    #
-    #        home = self._button_factory(*self.buttons[0])
-    #        calibrate_stage = self._button_factory(*self.buttons[1])
-    #
-    #        vg.content.append(HGroup(calibrate_stage, home,
-    #                                 Item('home_option',
-    #                                      editor=EnumEditor(values=self.home_options),
-    #                                      show_label=False)))
-    #
-    #        if len(self.buttons) > 2:
-    #        # vg.content.append(self._button_group_factory(self.buttons[:2], orientation = 'h'))
-    #            vg.content.append(self._button_group_factory(self.buttons[2:], orientation='h'))
-    #        return vg
+#    def _button__group__(self):
+#        '''
+#        '''
+#        vg = VGroup()
+#
+#        home = self._button_factory(*self.buttons[0])
+#        calibrate_stage = self._button_factory(*self.buttons[1])
+#
+#        vg.content.append(HGroup(calibrate_stage, home,
+#                                 Item('home_option',
+#                                      editor=EnumEditor(values=self.home_options),
+#                                      show_label=False)))
+#
+#        if len(self.buttons) > 2:
+#        # vg.content.append(self._button_group_factory(self.buttons[:2], orientation = 'h'))
+#            vg.content.append(self._button_group_factory(self.buttons[2:], orientation='h'))
+#        return vg
 
-    #    def _axis__group__(self):
-    #        '''
-    #        '''
-    #        return Item('stage_controller', show_label=False, style='custom')
-    #
-    #
-    #    def _sconfig__group__(self):
-    #        '''
-    #        '''
-    #        return Group(
-    # #                     Item('pattern_manager',
-    # #                          label='Pattern',
-    # #                          editor=InstanceEditor(view='execute_view'),
-    # #                           show_label=False, style='custom'
-    # #                          ),
-    #
-    #                     Group(
-    #                           Item('canvas', show_label=False,
-    #                                 editor=InstanceEditor(view='config_view'),
-    #                                 style='custom'
-    #                                 ),
-    #                           label='Canvas'),
-    #
-    # #                     Group(Item('motion_controller_manager', editor=InstanceEditor(view='configure_view'),
-    # #                                 style='custom', show_label=False),
-    # #                           Item('motion_profiler', style='custom', show_label=False),
-    # #                           label='Motion'
-    # #                           ),
-    #
-    # #                     Group(
-    # #                            self._button_factory('program_points', 'program_points_label'),
-    # #                            Item('accept_point', show_label=False),
-    # #                            Item('load_points', show_label=False),
-    # #                            Item('save_points', show_label=False),
-    # #                            Item('clear_points', show_label=False),
-    # #                            label='Points'),
-    #                     Item('points_programmer',
-    #                          label='Points',
-    #                          show_label=False, style='custom'),
-    #                     Item('tray_calibration_manager',
-    #                          label='Calibration',
-    #                           show_label=False, style='custom'),
-    # #                     Item('pattern_manager',
-    # #                          label='Pattern',
-    # #                          editor=InstanceEditor(view='execute_view'),
-    # #                           show_label=False, style='custom'
-    # #                          ),
-    #
-    # #                     Item('output', show_label = False, style = 'custom'),
-    #
-    # #                     Item('jog_manager', show_label = False, style = 'custom',
-    # #                          resizable=False
-    # #                          ),
-    #                     layout='tabbed'
-    #                     )
-
+#    def _axis__group__(self):
+#        '''
+#        '''
+#        return Item('stage_controller', show_label=False, style='custom')
+#
+#
+#    def _sconfig__group__(self):
+#        '''
+#        '''
+#        return Group(
+# #                     Item('pattern_manager',
+# #                          label='Pattern',
+# #                          editor=InstanceEditor(view='execute_view'),
+# #                           show_label=False, style='custom'
+# #                          ),
+#
+#                     Group(
+#                           Item('canvas', show_label=False,
+#                                 editor=InstanceEditor(view='config_view'),
+#                                 style='custom'
+#                                 ),
+#                           label='Canvas'),
+#
+# #                     Group(Item('motion_controller_manager', editor=InstanceEditor(view='configure_view'),
+# #                                 style='custom', show_label=False),
+# #                           Item('motion_profiler', style='custom', show_label=False),
+# #                           label='Motion'
+# #                           ),
+#
+# #                     Group(
+# #                            self._button_factory('program_points', 'program_points_label'),
+# #                            Item('accept_point', show_label=False),
+# #                            Item('load_points', show_label=False),
+# #                            Item('save_points', show_label=False),
+# #                            Item('clear_points', show_label=False),
+# #                            label='Points'),
+#                     Item('points_programmer',
+#                          label='Points',
+#                          show_label=False, style='custom'),
+#                     Item('tray_calibration_manager',
+#                          label='Calibration',
+#                           show_label=False, style='custom'),
+# #                     Item('pattern_manager',
+# #                          label='Pattern',
+# #                          editor=InstanceEditor(view='execute_view'),
+# #                           show_label=False, style='custom'
+# #                          ),
+#
+# #                     Item('output', show_label = False, style = 'custom'),
+#
+# #                     Item('jog_manager', show_label = False, style = 'custom',
+# #                          resizable=False
+# #                          ),
+#                     layout='tabbed'
+#                     )
