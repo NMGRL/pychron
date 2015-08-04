@@ -18,12 +18,15 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.pychron_constants import EL_PROTOCOL
+from pychron.remote_hardware.registry import MetaHandler
 from pychron.tx.errors import InvalidValveErrorCode, ValveActuationErrorCode, ValveSoftwareLockErrorCode, \
     InvalidArgumentsErrorCode, DeviceConnectionErrorCode, InvalidGaugeErrorCode
 from pychron.tx.protocols.service import ServiceProtocol
 
 
 class ValveProtocol(ServiceProtocol):
+    __metaclass__ = MetaHandler
+
     def __init__(self, application, addr):
         ServiceProtocol.__init__(self)
         # self._application = application
@@ -41,7 +44,12 @@ class ValveProtocol(ServiceProtocol):
                     ('GetValveLockStates', '_get_valve_lock_states'),
                     ('GetValveLockState', '_get_valve_lock_state'),
                     ('GetValveOwners', '_get_valve_owners'),
-                    ('GetPressure', '_get_pressure'))
+                    ('GetPressure', '_get_pressure'),
+
+                    # dynamically registered. need better way to load these
+                    ('GetFaults', 'GetFaults'),
+                    ('GetCoolantOutTemperature', 'GetCoolantOutTemperature'),
+                    ('GetPneumaticsPressure', 'GetPneumaticsPressure'))
         self._register_services(services)
 
     def _register_services(self, services):
@@ -67,6 +75,7 @@ class ValveProtocol(ServiceProtocol):
                         if owner:
                             dev.set_owner(owner)
         return dev
+
 
     def _get_error(self, data):
         return self._manager.get_error()
@@ -219,7 +228,7 @@ class ValveProtocol(ServiceProtocol):
 
         """
         manager = self._manager
-        controller, gauge =data
+        controller, gauge = data
         p = None
         if manager:
             p = manager.get_pressure(controller, gauge)

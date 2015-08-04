@@ -34,7 +34,7 @@ class Pneumatics(AddressableAbstractDevice, RHMixin, PolynomialMapperMixin):
         self.load_mapping(config)
         return super(Pneumatics, self).load_additional_args(config)
 
-    @register('GetPneumatics')
+    @register('GetPneumaticsPressure')
     def get_pressure(self, **kw):
         v = self.get(**kw)
         if v is not None:
@@ -44,7 +44,7 @@ class Pneumatics(AddressableAbstractDevice, RHMixin, PolynomialMapperMixin):
 
 
 class PychronPneumatics(CoreDevice):
-    @registered_function('GetPneumatics', camel_case=True, returntype=float)
+    @registered_function('GetPneumaticsPressure', camel_case=True, returntype=float)
     def get_pressure(self):
         pass
 

@@ -55,7 +55,7 @@ obs = jsonFileLogObserver(io.open(path, 'w'))
 logger = Logger(observer=obs)
 
 
-class ServiceProtocol(Protocol):
+class ServiceProtocol(Protocol, object):
     def __init__(self, *args, **kw):
         # super(ServiceProtocol, self).__init__(*args, **kw)
         self._services = {}

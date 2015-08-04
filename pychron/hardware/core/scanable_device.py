@@ -111,7 +111,7 @@ class ScanableDevice(ViewableDevice):
             if v is not None:
                 self.current_scan_value = str(v)
 
-                self.debug('current scan func={}, value ={}'.format(self.scan_func, v))
+                # self.debug('current scan func={}, value ={}'.format(self.scan_func, v))
 
                 x = None
                 if self.graph_scan_data:
