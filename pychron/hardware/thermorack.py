@@ -21,7 +21,8 @@ from traits.api import provides
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.core.data_helper import make_bitarray
 from pychron.hardware.ichiller import IChiller
-from pychron.remote_hardware.registry import RHMixin, register
+from pychron.remote_hardware.registry import register
+from pychron.tx.registry import tx_register_functions
 
 SET_BITS = '111'
 GET_BITS = '110'
@@ -40,7 +41,7 @@ FAULTS_TABLE = ['Tank Level Low',
 
 
 @provides(IChiller)
-class ThermoRack(CoreDevice, RHMixin):
+class ThermoRack(CoreDevice):
     """
     """
     convert_to_C = True
@@ -49,8 +50,8 @@ class ThermoRack(CoreDevice, RHMixin):
 
     def __init__(self, *args, **kw):
         super(ThermoRack, self).__init__(*args, **kw)
+        tx_register_functions()
 
-        self.register_functions()
     # ===========================================================================
     # icore device interface
     # ===========================================================================

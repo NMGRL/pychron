@@ -20,15 +20,18 @@
 from pychron.hardware.adc.adc_device import PolynomialMapperMixin
 from pychron.hardware.core.abstract_device import AddressableAbstractDevice
 from pychron.hardware.core.core_device import CoreDevice
-from pychron.remote_hardware.registry import register, RHMixin, registered_function
+from pychron.remote_hardware.registry import register, registered_function
+from pychron.tx.registry import tx_register_functions
 
 
-class Pneumatics(AddressableAbstractDevice, RHMixin, PolynomialMapperMixin):
+class Pneumatics(AddressableAbstractDevice, PolynomialMapperMixin):
     scan_func = 'get_pressure'
 
     def __init__(self, *args, **kw):
         super(Pneumatics, self).__init__(*args, **kw)
-        self.register_functions()
+        tx_register_functions(self)
+
+        # self.register_functions()
 
     def load_additional_args(self, config):
         self.load_mapping(config)

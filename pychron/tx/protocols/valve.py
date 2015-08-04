@@ -18,14 +18,37 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.pychron_constants import EL_PROTOCOL
-from pychron.remote_hardware.registry import MetaHandler
+from pychron.remote_hardware.registry import FUNC_REGISTRY
 from pychron.tx.errors import InvalidValveErrorCode, ValveActuationErrorCode, ValveSoftwareLockErrorCode, \
     InvalidArgumentsErrorCode, DeviceConnectionErrorCode, InvalidGaugeErrorCode
 from pychron.tx.protocols.service import ServiceProtocol
 
 
+def make_wrapper(func, postprocess):
+    def wrapper(obj, manager, *args, **kw):
+        """
+        handler signature is self, manager, args, sender
+        """
+
+        ret = func(*args[1:], **kw)
+        if postprocess:
+            ret = postprocess(ret)
+        return ret
+
+    return wrapper
+
+
+class MetaService(object):
+    def __call__(cls, *args, **kw):
+        for k, v in FUNC_REGISTRY.items():
+            # setattr(cls, k, make_wrapper(*v))
+            cls.register_service(k, make_wrapper(*v))
+
+        return object.__call__(cls, *args, **kw)
+
+
 class ValveProtocol(ServiceProtocol):
-    __metaclass__ = MetaHandler
+    __metaclass__ = MetaService
 
     def __init__(self, application, addr):
         ServiceProtocol.__init__(self)
@@ -47,9 +70,11 @@ class ValveProtocol(ServiceProtocol):
                     ('GetPressure', '_get_pressure'),
 
                     # dynamically registered. need better way to load these
-                    ('GetFaults', 'GetFaults'),
-                    ('GetCoolantOutTemperature', 'GetCoolantOutTemperature'),
-                    ('GetPneumaticsPressure', 'GetPneumaticsPressure'))
+                    # ('GetFaults', 'GetFaults'),
+                    # ('GetCoolantOutTemperature', 'GetCoolantOutTemperature'),
+                    # ('GetPneumaticsPressure', 'GetPneumaticsPressure')
+                    )
+
         self._register_services(services)
 
     def _register_services(self, services):
@@ -75,7 +100,6 @@ class ValveProtocol(ServiceProtocol):
                         if owner:
                             dev.set_owner(owner)
         return dev
-
 
     def _get_error(self, data):
         return self._manager.get_error()
