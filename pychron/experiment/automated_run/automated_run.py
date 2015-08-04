@@ -200,6 +200,7 @@ class AutomatedRun(Loggable):
     def _persister_action(self, func, *args, **kw):
         getattr(self.persister, func)(*args, **kw)
         for i, p in enumerate((self.xls_persister, self.dvc_persister)):
+            print 'aaaa', i, p
             if p is None:
                 continue
 
@@ -540,12 +541,12 @@ class AutomatedRun(Loggable):
                                        directions=directions,
                                        **kw)
             self.peak_center = pc
-            self.debug('do peak center')
+            self.debug('do peak center. {}'.format(pc))
 
             ion.do_peak_center(new_thread=False, save=save, message='automated run peakcenter', timeout=300)
-
-            if pc.result:
-                self._persister_action('save_peak_center_to_file', pc)
+            self._update_persister_spec(peak_center=pc)
+            # if pc.result:
+            #     self._persister_action('save_peak_center_to_file', pc)
                 # self.persister.save_peak_center_to_file(pc)
 
     def py_coincidence_scan(self):

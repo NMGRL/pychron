@@ -116,10 +116,13 @@ class DVCPersister(BasePersister):
         pass
 
     def _save_peak_center(self, pc):
+        self.info('DVC saving peakcenter')
         p = self._make_path(modifier='peakcenter')
         xx, yy = pc.graph.get_data(), pc.graph.get_data(axis=1)
-
-        xs, ys, _mx, _my = pc.result
+        if pc.result:
+            xs, ys, _mx, _my = pc.result
+        else:
+            xs, ys = (0, 0, 0), (0, 0, 0)
         fmt = '>ff'
         obj = {'low_dac': xs[0],
                'center_dac': xs[1],
@@ -128,7 +131,8 @@ class DVCPersister(BasePersister):
                'center_signal': ys[1],
                'high_signal': ys[2],
                'fmt': fmt,
-               'data': ''.join([struct.pack(fmt, di) for di in zip(xx, yy)])}
+               'data': base64.b64encode(''.join([struct.pack(fmt, *di) for di in zip(xx, yy)]))
+               }
         jdump(obj, p)
 
     def post_measurement_save(self, commit=True, msg_prefix='Collection'):
@@ -159,6 +163,9 @@ class DVCPersister(BasePersister):
 
         # save monitor
         self._save_monitor()
+
+        # save peak center
+        self._save_peak_center(self.per_spec.peak_center)
 
         # stage files
         paths = [spec_path, ] + [self._make_path(modifier=m) for m in PATH_MODIFIERS]
