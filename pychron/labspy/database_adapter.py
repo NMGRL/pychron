@@ -52,17 +52,19 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
         an.experiment = dbexp
         return self._add_item(an)
 
-    def set_connection(self, appname, devname, com, addr, status):
+    def set_connection(self, ts, appname, username, devname, com, addr, status):
         conn = self.get_connection(appname, devname)
         if conn is None:
             conn = Connections()
             self._add_item(conn)
 
         conn.appname = appname
+        conn.username = username
         conn.devname = devname
         conn.com = com
         conn.address = addr
         conn.status = bool(status)
+        conn.timestamp = ts
 
     def get_connection(self, appname, devname):
         with self.session_ctx() as sess:

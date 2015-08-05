@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from datetime import datetime
 from traits.api import Instance, Bool, Int
 from apptools.preferences.preference_binding import bind_preference
 
@@ -74,7 +75,7 @@ class LabspyClient(Loggable):
         self.debug('Start Connection status timer')
         if self.application and self.use_connection_status:
             self.debug('timer started period={}'.format(self.connection_status_period))
-            t = Timer(self.connection_status_period, self._connection_status)
+            t = Timer(self.connection_status_period, self._connection_status, kwargs={'verbose': True})
             t.start()
 
     def _connection_status(self, verbose=False):
@@ -82,11 +83,13 @@ class LabspyClient(Loggable):
         if verbose:
             self.debug('Connection Status. ndevs={}'.format(len(devs or ())))
         if devs:
+            ts = datetime.now()
             for dev in devs:
                 self.update_connection(dev.name,
                                        dev.communicator.__class__.__name__,
                                        dev.communicator.address,
-                                       dev.communicator.test_connection())
+                                       dev.communicator.test_connection(),
+                                       verbose=verbose)
 
         t = Timer(self.connection_status_period, self._connection_status, kwargs={'verbose':verbose})
         t.start()
@@ -115,12 +118,15 @@ class LabspyClient(Loggable):
         exp = self.db.get_experiment(hid)
 
     @auto_connect
-    def update_connection(self, devname, com, addr, status, verbose=False):
+    def update_connection(self, ts, devname, com, addr, status, verbose=False):
         if verbose:
             self.debug('Setting connection status for dev={},com={},addr={},status={}'.format(devname, com,
                                                                                               addr, status))
-        self.db.set_connection(
-            self.application.name,
+
+        appname, user = self.application.split('-')
+        self.db.set_connection(ts,
+                               appname.strip(),
+                               user.strip(),
             devname, com, addr, status)
 
     @auto_connect

@@ -61,10 +61,12 @@ class Measurement(Base, StatusMixin):
 
 class Connections(Base, StatusMixin):
     appname = stringcolumn()
+    username = stringcolumn()
     devname = stringcolumn()
     com = stringcolumn()
     address = stringcolumn()
     status = Column(Boolean)
+    timestamp = Column(DateTime)
 
 
 class Version(Base):
