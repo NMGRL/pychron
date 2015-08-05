@@ -20,7 +20,7 @@ from apptools.preferences.preference_binding import bind_preference
 # ============= local library imports  ==========================
 from pychron.database.core.database_adapter import DatabaseAdapter
 from pychron.labspy.orm import Measurement, ProcessInfo, Version, \
-    Device, Experiment, Analysis, ConnectionStatus  # , Version, Status, Experiment, Analysis, AnalysisType
+    Device, Experiment, Analysis, Connections  # , Version, Status, Experiment, Analysis, AnalysisType
 
 
 class LabspyDatabaseAdapter(DatabaseAdapter):
@@ -55,7 +55,8 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
     def set_connection(self, appname, devname, com, addr, status):
         conn = self.get_connection(appname, devname)
         if conn is None:
-            conn = ConnectionStatus()
+            conn = Connections()
+            self._add_item(conn)
 
         conn.appname = appname
         conn.devname = devname
@@ -65,9 +66,9 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
 
     def get_connection(self, appname, devname):
         with self.session_ctx() as sess:
-            q = sess.query(ConnectionStatus)
-            q = q.filter(ConnectionStatus.appname == appname)
-            q = q.filter(ConnectionStatus.devname == devname)
+            q = sess.query(Connections)
+            q = q.filter(Connections.appname == appname)
+            q = q.filter(Connections.devname == devname)
             return self._query_one(q)
 
     def update_experiment(self, hashid, **kw):

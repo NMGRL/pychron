@@ -21,8 +21,8 @@ from traits.api import provides
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.core.data_helper import make_bitarray
 from pychron.hardware.ichiller import IChiller
-from pychron.remote_hardware.registry import register
-from pychron.tx.registry import tx_register_functions
+# from pychron.remote_hardware.registry import register
+from pychron.tx.registry import tx_register_functions, register
 
 SET_BITS = '111'
 GET_BITS = '110'
@@ -50,7 +50,7 @@ class ThermoRack(CoreDevice):
 
     def __init__(self, *args, **kw):
         super(ThermoRack, self).__init__(*args, **kw)
-        tx_register_functions()
+        tx_register_functions(self)
 
     # ===========================================================================
     # icore device interface

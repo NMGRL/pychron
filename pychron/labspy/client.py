@@ -59,6 +59,7 @@ class LabspyClient(Loggable):
         super(LabspyClient, self).__init__(*args, **kw)
         if bind:
             self.bind_preferences()
+            self.start()
 
     def bind_preferences(self):
         self.db.bind_preferences()
@@ -69,20 +70,26 @@ class LabspyClient(Loggable):
         return self.db.connect(**kw)
 
     def start(self):
+
+        self.debug('Start Connection status timer')
         if self.application and self.use_connection_status:
+            self.debug('timer started period={}'.format(self.connection_status_period))
             t = Timer(self.connection_status_period, self._connection_status)
             t.start()
-            self._timer = t
 
-    def _connection_status(self):
+    def _connection_status(self, verbose=False):
         devs = self.application.get_services(ICoreDevice)
-        self.debug('Connection Status. ndevs={}'.format(len(devs or ())))
+        if verbose:
+            self.debug('Connection Status. ndevs={}'.format(len(devs or ())))
         if devs:
             for dev in devs:
                 self.update_connection(dev.name,
                                        dev.communicator.__class__.__name__,
                                        dev.communicator.address,
                                        dev.communicator.test_connection())
+
+        t = Timer(self.connection_status_period, self._connection_status, kwargs={'verbose':verbose})
+        t.start()
 
     @auto_connect
     def add_experiment(self, exp):
@@ -108,9 +115,10 @@ class LabspyClient(Loggable):
         exp = self.db.get_experiment(hid)
 
     @auto_connect
-    def update_connection(self, devname, com, addr, status):
-        self.debug('Setting connection status for dev={},com={},addr={},status={}'.format(devname, com,
-                                                                                          addr, status))
+    def update_connection(self, devname, com, addr, status, verbose=False):
+        if verbose:
+            self.debug('Setting connection status for dev={},com={},addr={},status={}'.format(devname, com,
+                                                                                              addr, status))
         self.db.set_connection(
             self.application.name,
             devname, com, addr, status)

@@ -21,7 +21,8 @@ from traits.has_traits import provides
 from pychron.core.helpers.strtools import to_list
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.ichiller import IChiller
-from pychron.remote_hardware.registry import registered_function
+# from pychron.remote_hardware.registry import registered_function
+from pychron.tx.registry import registered_function
 
 
 @provides(IChiller)

@@ -190,6 +190,10 @@ class EthernetCommunicator(Communicator):
     error_mode = False
     message_frame = ''
 
+    @property
+    def address(self):
+        return '{}://{}:{}'.format(self.kind, self.host, self.port)
+
     def load(self, config, path):
         """
         """

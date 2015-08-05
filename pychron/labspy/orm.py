@@ -59,7 +59,7 @@ class Measurement(Base, StatusMixin):
     pub_date = Column(DateTime, default=func.now())
 
 
-class ConnectionStatus(BaseMixin, StatusMixin):
+class Connections(Base, StatusMixin):
     appname = stringcolumn()
     devname = stringcolumn()
     com = stringcolumn()

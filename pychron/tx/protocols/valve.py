@@ -18,14 +18,14 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.pychron_constants import EL_PROTOCOL
-from pychron.remote_hardware.registry import FUNC_REGISTRY
 from pychron.tx.errors import InvalidValveErrorCode, ValveActuationErrorCode, ValveSoftwareLockErrorCode, \
     InvalidArgumentsErrorCode, DeviceConnectionErrorCode, InvalidGaugeErrorCode
 from pychron.tx.protocols.service import ServiceProtocol
+from pychron.tx.registry import FUNC_REGISTRY
 
 
 def make_wrapper(func, postprocess):
-    def wrapper(obj, manager, *args, **kw):
+    def wrapper(*args, **kw):
         """
         handler signature is self, manager, args, sender
         """
@@ -38,20 +38,12 @@ def make_wrapper(func, postprocess):
     return wrapper
 
 
-class MetaService(object):
-    def __call__(cls, *args, **kw):
-        for k, v in FUNC_REGISTRY.items():
-            # setattr(cls, k, make_wrapper(*v))
-            cls.register_service(k, make_wrapper(*v))
-
-        return object.__call__(cls, *args, **kw)
-
-
 class ValveProtocol(ServiceProtocol):
-    __metaclass__ = MetaService
-
     def __init__(self, application, addr):
         ServiceProtocol.__init__(self)
+        for k, v in FUNC_REGISTRY.items():
+            self.register_service(k, make_wrapper(*v))
+
         # self._application = application
         man = application.get_service(EL_PROTOCOL)
         self._manager = man

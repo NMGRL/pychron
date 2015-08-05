@@ -20,8 +20,8 @@
 from pychron.hardware.adc.adc_device import PolynomialMapperMixin
 from pychron.hardware.core.abstract_device import AddressableAbstractDevice
 from pychron.hardware.core.core_device import CoreDevice
-from pychron.remote_hardware.registry import register, registered_function
-from pychron.tx.registry import tx_register_functions
+# from pychron.remote_hardware.registry import register, registered_function
+from pychron.tx.registry import tx_register_functions, register, registered_function
 
 
 class Pneumatics(AddressableAbstractDevice, PolynomialMapperMixin):

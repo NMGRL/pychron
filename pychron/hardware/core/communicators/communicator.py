@@ -37,6 +37,8 @@ class Communicator(ConfigLoadable):
     write_terminator = chr(13)  # '\r'
     handle = None
     scheduler = None
+    address = None
+
     def __init__(self, *args, **kw):
         """
         """
