@@ -131,9 +131,6 @@ class ThermoRack(CoreDevice):
     def get_coolant_out_temperature(self, force=False, **kw):
         """
         """
-        if not kw.has_key('verbose'):
-            kw['verbose'] = False
-
         cmd = self._get_read_command_str(COOLANT_BITS)
 
         resp = self.ask(cmd, nbytes=2, **kw)
