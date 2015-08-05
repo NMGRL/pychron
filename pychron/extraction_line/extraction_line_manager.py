@@ -350,7 +350,7 @@ class ExtractionLineManager(Manager, Consoleable):
                             vc.state = v.state
 
     def update_switch_state(self, name, state, *args, **kw):
-        self.debug('update valve state {} {}'.format(name, state))
+        # self.debug('update valve state {} {}'.format(name, state))
         if self.use_network:
             self.network.set_valve_state(name, state)
             for c in self._canvases:

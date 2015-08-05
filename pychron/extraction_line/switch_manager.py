@@ -389,7 +389,7 @@ class SwitchManager(Manager):
         """
         state = None
         if self.query_valve_state and v.query_state:
-            state = v.get_hardware_state()
+            state = v.get_hardware_state(verbose=False)
 
         if state is None:
             state = v.state
@@ -449,7 +449,7 @@ class SwitchManager(Manager):
     def load_hardware_states(self):
         for k, v in self.switches.iteritems():
             if v.query_state:
-                s = v.get_hardware_state(verbose=True)
+                s = v.get_hardware_state(verbose=False)
                 self.refresh_state = (k, s, False)
 
     def _load_states(self):

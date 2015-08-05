@@ -85,7 +85,7 @@ class LabspyClient(Loggable):
         if devs:
             ts = datetime.now()
             for dev in devs:
-                self.update_connection(dev.name,
+                self.update_connection(ts, dev.name,
                                        dev.communicator.__class__.__name__,
                                        dev.communicator.address,
                                        dev.communicator.test_connection(),
@@ -123,7 +123,7 @@ class LabspyClient(Loggable):
             self.debug('Setting connection status for dev={},com={},addr={},status={}'.format(devname, com,
                                                                                               addr, status))
 
-        appname, user = self.application.split('-')
+        appname, user = self.application.name.split('-')
         self.db.set_connection(ts,
                                appname.strip(),
                                user.strip(),
