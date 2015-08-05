@@ -15,26 +15,45 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import os
+from traits.api import Instance, Bool, Int
+from apptools.preferences.preference_binding import bind_preference
 
-from traits.api import Instance
 
 # ============= standard library imports ========================
+import os
+from threading import Timer
 import hashlib
 import time
 # ============= local library imports  ==========================
 from pychron.core.helpers.logger_setup import logging_setup
+from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.labspy.database_adapter import LabspyDatabaseAdapter
 from pychron.loggable import Loggable
 from pychron.pychron_constants import SCRIPT_NAMES
+
+
+def auto_connect(func):
+    def wrapper(obj, *args, **kw):
+        if not obj.db.connected:
+            obj.connect()
+
+        if obj.db.connected:
+            with obj.db.session_ctx():
+                return func(obj, *args, **kw)
+
+    return wrapper
 
 
 class LabspyClient(Loggable):
     """
     Used to add experiments and runs to the database. Used in conjunction with ExperimentPlugin
     """
-    # db = Property
     db = Instance(LabspyDatabaseAdapter)
+
+    use_connection_status = Bool
+    connection_status_period = Int
+
+    _timer = None
 
     def __init__(self, bind=True, *args, **kw):
         super(LabspyClient, self).__init__(*args, **kw)
@@ -43,58 +62,85 @@ class LabspyClient(Loggable):
 
     def bind_preferences(self):
         self.db.bind_preferences()
+        bind_preference(self, 'use_connection_status', 'pychron.labspy.use_connection_status')
+        bind_preference(self, 'connection_status_period', 'pychron.labspy.connection_status_period')
 
     def test_connection(self, **kw):
         return self.db.connect(**kw)
 
+    def start(self):
+        if self.application and self.use_connection_status:
+            t = Timer(self.connection_status_period, self._connection_status)
+            t.start()
+            self._timer = t
+
+    def _connection_status(self):
+        devs = self.application.get_services(ICoreDevice)
+        self.debug('Connection Status. ndevs={}'.format(len(devs or ())))
+        if devs:
+            for dev in devs:
+                self.update_connection(dev.name,
+                                       dev.communicator.__class__.__name__,
+                                       dev.communicator.address,
+                                       dev.communicator.test_connection())
+
+    @auto_connect
     def add_experiment(self, exp):
-        if self.db.connected:
-            with self.db.session_ctx():
-                hid = self._generate_hid(exp)
-                self.db.add_experiment(name=exp.name,
-                                       start_time=exp.starttime,
-                                       system=exp.mass_spectrometer,
-                                       user=exp.username)
-                # ExtractionDevice=exp.extract_device,
-                # HashID=hid)
+        # if self.db.connected:
+        #     with self.db.session_ctx():
+        hid = self._generate_hid(exp)
+        self.db.add_experiment(name=exp.name,
+                               start_time=exp.starttime,
+                               system=exp.mass_spectrometer,
+                               user=exp.username)
+        # ExtractionDevice=exp.extract_device,
+        # HashID=hid)
 
+    @auto_connect
     def update_experiment(self, exp, err_msg):
-        if self.db.connected:
-            with self.db.session_ctx():
-                hid = self._generate_hid(exp)
-                exp = self.db.get_experiment(hid)
-                # exp.EndTime = exp.endtime
-                # exp.State = err_msg
+        # if self.db.connected:
+        #     with self.db.session_ctx():
+        #         hid = self._generate_hid(exp)
+        #         exp = self.db.get_experiment(hid)
+        #         # exp.EndTime = exp.endtime
+        #         # exp.State = err_msg
+        hid = self._generate_hid(exp)
+        exp = self.db.get_experiment(hid)
 
+    @auto_connect
+    def update_connection(self, devname, com, addr, status):
+        self.debug('Setting connection status for dev={},com={},addr={},status={}'.format(devname, com,
+                                                                                          addr, status))
+        self.db.set_connection(
+            self.application.name,
+            devname, com, addr, status)
+
+    @auto_connect
     def update_status(self, **kw):
         self.debug('update status not enabled')
         return
 
-        if self.db.connected:
-            with self.db.session_ctx():
-                status = self.db.get_status()
-                if not status:
-                    status = self.db.add_status()
+        status = self.db.get_status()
+        if not status:
+            status = self.db.add_status()
 
-                for k, v in kw.items():
-                    setattr(status, k, v)
+        for k, v in kw.items():
+            setattr(status, k, v)
 
+    @auto_connect
     def add_run(self, run, exp):
-        if self.db.connected:
-            with self.db.session_ctx():
-                exp = self.db.get_experiment(self._generate_hid(exp))
-                self.db.add_analysis(exp, self._run_dict(run))
+        exp = self.db.get_experiment(self._generate_hid(exp))
+        self.db.add_analysis(exp, self._run_dict(run))
 
-
+    @auto_connect
     def add_measurement(self, dev, tag, val, unit):
         val = float(val)
         self.debug('adding measurement dev={} process={} value={} ({})'.format(dev, tag, val, unit))
-        if self.db.connected:
-            with self.db.session_ctx():
-                self.db.add_measurement(dev, tag, val, unit)
-        else:
-            self.warning('not connected to db {}'.format(self.db.url))
-            self.db.connect()
+        self.db.add_measurement(dev, tag, val, unit)
+
+    def connect(self):
+        self.warning('not connected to db {}'.format(self.db.url))
+        self.db.connect()
 
     # @cached_property
     # def _get_db(self):
@@ -133,6 +179,7 @@ class LabspyClient(Loggable):
         md5.update(exp.spectrometer)
         md5.update(exp.starttime.isoformat())
         return md5.hexdigest()
+
 
 # ================= testing =========================
 
@@ -389,6 +436,3 @@ if __name__ == '__main__':
 #     c = Dev('gauge', ('bone_ig',), ('torr',))
 #     d = Dev('gauge', ('microbone_ig',), ('torr',))
 #     clt.add_device_post([a, b, c, d])
-
-
-

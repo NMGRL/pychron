@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, func
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, func, Boolean
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.orm import relationship
 # ============= standard library imports ========================
@@ -57,6 +57,14 @@ class Measurement(Base, StatusMixin):
     value = Column(Float(32))
     process_info_id = Column(Integer, ForeignKey('status_processinfo.id'))
     pub_date = Column(DateTime, default=func.now())
+
+
+class ConnectionStatus(BaseMixin, StatusMixin):
+    appname = stringcolumn()
+    devname = stringcolumn()
+    com = stringcolumn()
+    address = stringcolumn()
+    status = Column(Boolean)
 
 
 class Version(Base):

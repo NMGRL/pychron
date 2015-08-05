@@ -23,7 +23,7 @@
 
 # class HasCommunicator(ConfigLoadable):
 class HasCommunicator(object):
-    _communicator = None
+    communicator = None
     id_query = ''
     id_response = ''
 
@@ -31,13 +31,13 @@ class HasCommunicator(object):
         communicator = self._communicator_factory(comtype)
         if communicator is not None:
             communicator.load_comdict(**kw)
-        self._communicator = communicator
+        self.communicator = communicator
 
     def create_communicator(self, comm_type, **kw):
 
         c = self._communicator_factory(comm_type)
         c.open(**kw)
-        self._communicator = c
+        self.communicator = c
 
     def _communicator_factory(self, communicator_type):
         if communicator_type is not None:
@@ -53,8 +53,8 @@ class HasCommunicator(object):
     def open(self, **kw):
         """
         """
-        if self._communicator is not None:
-            return self._communicator.open(**kw)
+        if self.communicator is not None:
+            return self.communicator.open(**kw)
 
     def _communicate_hook(self, cmd, r):
         """
@@ -69,7 +69,7 @@ class HasCommunicator(object):
 
             if hasattr(self, 'id_query'):
                 communicator.id_query = getattr(self, 'id_query')
-            self._communicator = communicator
+            self.communicator = communicator
             return True
 
 # ============= EOF =============================================

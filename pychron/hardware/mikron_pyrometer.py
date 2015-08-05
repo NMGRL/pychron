@@ -80,7 +80,7 @@ class MikronGA140Pyrometer(CoreDevice):
         """
 
         """
-        self._communicator.char_write = True
+        self.communicator.char_write = True
         return True
 
     #REsponseRecorder Interface
