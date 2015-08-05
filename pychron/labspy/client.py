@@ -87,9 +87,8 @@ class LabspyClient(Loggable):
             for dev in devs:
 
                 # remove Communicator for name. e.g SerialCommunicator to Serial
-                cname = dev.communicator.__class__.__name__,
+                cname = dev.communicator.__class__.__name__
                 com_name = cname[:-12]
-
                 self.update_connection(ts, dev.name,
                                        com_name,
                                        dev.communicator.address,
