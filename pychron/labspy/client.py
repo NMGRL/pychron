@@ -85,8 +85,13 @@ class LabspyClient(Loggable):
         if devs:
             ts = datetime.now()
             for dev in devs:
+
+                # remove Communicator for name. e.g SerialCommunicator to Serial
+                cname = dev.communicator.__class__.__name__,
+                com_name = cname[:-12]
+
                 self.update_connection(ts, dev.name,
-                                       dev.communicator.__class__.__name__,
+                                       com_name,
                                        dev.communicator.address,
                                        dev.communicator.test_connection(),
                                        verbose=verbose)
