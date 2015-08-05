@@ -29,7 +29,7 @@ from pychron.experiment.utilities.position_regex import POINT_REGEX, XY_REGEX, T
 from pychron.canvas.canvas2D.laser_tray_canvas import LaserTrayCanvas
 # from pychron.core.helpers.color_generators import colors8i as colors
 
-from pychron.hardware.motion_controller import MotionController, PositionError
+from pychron.hardware.motion_controller import MotionController, PositionError, TargetPositionError
 from pychron.paths import paths
 # from pychron.lasers.stage_managers.stage_visualizer import StageVisualizer
 from pychron.lasers.points.points_programmer import PointsProgrammer
@@ -745,7 +745,7 @@ class StageManager(BaseStageManager):
         pos = self.stage_map.get_corrected_hole_pos(key)
         self.info('position {}'.format(pos))
         if pos is not None:
-            #             self.visualizer.set_current_hole(key)
+        #             self.visualizer.set_current_hole(key)
 
             if abs(pos[0]) < 1e-6:
                 pos = self.stage_map.get_hole_pos(key)
@@ -759,14 +759,18 @@ class StageManager(BaseStageManager):
                     self.info('using an interpolated value')
                 else:
                     self.info('using previously calculated corrected position')
+            try:
+                self.stage_controller.linear_move(block=True, *pos)
+                #            if self.tray_calibration_manager.calibration_style == 'MassSpec':
+            except TargetPositionError, e:
+                self.warning('Move to {} failed'.format(pos))
+                self.parent.emergency_shutoff(str(e))
+                return
 
-            self.stage_controller.linear_move(block=True, *pos)
-            #            if self.tray_calibration_manager.calibration_style == 'MassSpec':
             if not self.tray_calibration_manager.isCalibrating():
                 self._move_to_hole_hook(key, correct_position)
             else:
                 self._move_to_hole_hook(key, correct_position)
-
             self.info('Move complete')
             # self.update_axes()  # update_hole=False)
 

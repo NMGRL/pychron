@@ -37,6 +37,20 @@ class PositionError(BaseException):
         return 'PositionError. x={}, y={}'.format(self._x, self._y)
 
 
+class TargetPositionError(BaseException):
+    def __init__(self, x, y, tx, ty):
+        self._tx = tx
+        self._ty = ty
+        self._y = y
+        self._x = x
+
+    def __str__(self):
+        dx = self._x - self._tx
+        dy = self._y - self._ty
+        return 'PositionError. Dev:{},{} Current: x={}, y={}, Target: x={}, y={}'.format(dx, dy, self._x, self._y,
+                                                                               self._tx, self._ty)
+
+
 class MotionController(CoreDevice):
     """
     """
