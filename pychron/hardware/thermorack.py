@@ -108,11 +108,11 @@ class ThermoRack(CoreDevice):
         return sp
 
     @register(camel_case=True, postprocess=','.join)
-    def get_faults(self, **kw):
+    def get_faults(self, verbose=False, **kw):
         """
         """
         cmd = self._get_read_command_str(FAULT_BITS)
-        resp = self.ask(cmd, nbytes=1)
+        resp = self.ask(cmd, nbytes=1, verbose=verbose)
 
         if self.simulation:
             resp = '0'
@@ -128,12 +128,12 @@ class ThermoRack(CoreDevice):
         return faults
 
     @register(camel_case=True)
-    def get_coolant_out_temperature(self, force=False, **kw):
+    def get_coolant_out_temperature(self, force=False, verbose=False, **kw):
         """
         """
         cmd = self._get_read_command_str(COOLANT_BITS)
 
-        resp = self.ask(cmd, nbytes=2, **kw)
+        resp = self.ask(cmd, nbytes=2,verbose=verbose, **kw)
         if not self.simulation and resp is not None:
             temp = self._parse_response(resp, scale=0.1)
         else:
