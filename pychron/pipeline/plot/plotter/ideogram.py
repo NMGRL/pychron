@@ -413,8 +413,8 @@ class Ideogram(BaseArArFigure):
 
             cfunc = lambda x1, x2: self._cumulative_probability(self.xs, self.xes, x1, x2)
             xs, ys, xmi, xma = self._calculate_asymptotic_limits(cfunc,
-                                                                 asymptotic_width=10,
-                                                                 tol=10)
+                                                                 # asymptotic_width=10,
+                                                                 tol=self.options.asymptotic_height_percent)
             oo = IdeogramInset(xs, ys,
                                color=d['color'],
                                bgcolor=bgcolor,
@@ -689,8 +689,7 @@ class Ideogram(BaseArArFigure):
                 # m, e = nominal_value(wa), std_dev(wa)
                 # xmi, xma = m - e, m + e
                 bins, probs, x1, x2 = self._calculate_asymptotic_limits(cfunc,
-                                                                        asymptotic_width=(opt.asymptotic_width or 10),
-                                                                        tol=(opt.asymptotic_percent or 10))
+                                                                        tol=(opt.asymptotic_height_percent or 10))
                 self.trait_setq(xmi=x1, xma=x2)
 
                 return bins, probs
@@ -731,8 +730,54 @@ class Ideogram(BaseArArFigure):
     def _calculate_nominal_xlimits(self):
         return self.min_x(self.options.index_attr), self.max_x(self.options.index_attr)
 
-    def _calculate_asymptotic_limits(self, cfunc, max_iter=200, asymptotic_width=10,
-                                     tol=10):
+    def _calculate_asymptotic_limits(self, cfunc, max_iter=200, tol=10):
+        tol *= 0.01
+        rx1, rx2 = None, None
+        xs, ys = None, None
+        xmi, xma = self._calculate_nominal_xlimits()
+        x1, x2 = xmi, xma
+
+        step_percent = 0.005
+        step = step_percent * (xma - xmi)
+        # aw = int(asymptotic_width * N * 0.01)
+        for i in xrange(max_iter):
+            if rx1 is None:
+                x1 -= step
+            else:
+                x1 = rx1
+
+            if rx2 is None:
+                x2 += step
+            else:
+                x2 = rx2
+
+            # grow step size
+            step = step_percent * (x2 - x1)
+
+            xs, ys = cfunc(x1, x2)
+            tt = tol * ys.max()
+            # print i, x1, x2, tt, tol, ys.max(), ys[0], ys[-1]
+            if rx1 is None:
+                if ys[0] < tt:
+                    rx1 = x1
+
+            if rx2 is None:
+                if ys[-1] < tt:
+                    rx2 = x2
+
+            if rx1 is not None and rx2 is not None:
+                break
+
+        if rx1 is None:
+            rx1 = x1
+        if rx2 is None:
+            rx2 = x2
+
+        # print 'set limits to {},{}'.format(rx1, rx2)
+        return xs, ys, rx1, rx2
+
+    def _calculate_asymptotic_limits2(self, cfunc, max_iter=200, asymptotic_width=10,
+                                      tol=10):
         """
             cfunc: callable that returns xs,ys and accepts xmin, xmax
                     xs, ys= cfunc(x1,x2)

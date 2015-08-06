@@ -37,6 +37,7 @@ class RunAction(TaskAction):
     method = 'run'
     image = icon('start')
     visible_name = 'run_enabled'
+    accelerator = 'Ctrl+R'
 
 
 class ResumeAction(TaskAction):

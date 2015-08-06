@@ -46,7 +46,7 @@ class IdeogramGroupOptions(BaseGroupOptions):
                           show_border=True,
                           label='Line')
 
-        return fill_grp, line_grp
+        return HGroup(fill_grp, line_grp),
 
     def simple_view(self):
         grps = self._get_groups()

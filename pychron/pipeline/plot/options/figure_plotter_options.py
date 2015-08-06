@@ -15,20 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from itertools import groupby
-
 from enable.markers import marker_names
 from kiva.fonttools import str_to_font
 from traits.api import Str, Int, Bool, Property, on_trait_change, \
     Button, TraitError, Enum, List
-from traitsui.api import View, Item, HGroup, VGroup, Spring, Group, EnumEditor, spring
-
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+from traitsui.api import View, Item, HGroup, VGroup, Spring, Group, EnumEditor, spring, UItem, InstanceEditor
 from traitsui.extras.checkbox_column import CheckboxColumn
-from traitsui.group import VFold
 from traitsui.table_column import ObjectColumn
+# ============= standard library imports ========================
+from itertools import groupby
 import yaml
+# ============= local library imports  ==========================
 from pychron.core.ui.table_editor import myTableEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.pipeline.plot.options.base import BasePlotterOptions, dumpable
@@ -376,16 +373,16 @@ class FigurePlotterOptions(BasePlotterOptions):
         pass
 
     def _get_axes_group(self):
-        axis_grp = Group(self._get_x_axis_group(), self._get_y_axis_group(),
-                         enabled_when='not formatting_options',
-                         layout='tabbed', show_border=True, label='Axes')
-        grid_grp = VGroup(Item('use_xgrid',
-                               label='XGrid Visible'),
-                          Item('use_ygrid', label='YGrid Visible'),
-                          show_border=True,
-                          label='Grid')
-        grp = VGroup(axis_grp, grid_grp)
-        return grp
+        axis_grp = HGroup(self._get_x_axis_group(),
+                          self._get_y_axis_group(),
+                          enabled_when='not formatting_options')
+        # grid_grp = VGroup(Item('use_xgrid',
+        #                        label='XGrid Visible'),
+        #                   Item('use_ygrid', label='YGrid Visible'),
+        #                   show_border=True,
+        #                   label='Grid')
+        # grp = VGroup(axis_grp, grid_grp)
+        return axis_grp
 
     def _get_x_axis_group(self):
         v = VGroup(
@@ -396,7 +393,9 @@ class FigurePlotterOptions(BasePlotterOptions):
                                                       'the ticks extend into the plot area.'),
             Item('xtick_out', label='Tick Out', tooltip='The number of pixels by which '
                                                         'the ticks extend into the label area.'),
-            # show_border=True,
+            Item('use_xgrid', label='XGrid Visible'),
+
+            show_border=True,
             label='X')
         return v
 
@@ -408,7 +407,8 @@ class FigurePlotterOptions(BasePlotterOptions):
                                                       'the ticks extend into the plot area.'),
             Item('ytick_out', label='Tick Out', tooltip='The number of pixels by which '
                                                         'the ticks extend into the label area.'),
-            # show_border=True,
+            Item('use_ygrid', label='YGrid Visible'),
+            show_border=True,
             label='Y')
         return v
 
@@ -470,22 +470,40 @@ class FigurePlotterOptions(BasePlotterOptions):
                                                   reorderable=False))
         return aux_plots_grp
 
+    def _get_groups_group(self):
+        grp_grp = VGroup(UItem('group',
+                               style='custom',
+                               editor=InstanceEditor(view='simple_view')),
+                         show_border=True,
+                         label='Group Attributes')
+        return grp_grp
+
     def traits_view(self):
         main_grp = self._get_main_group()
         bg_grp = self._get_bg_group()
         pd_grp = self._get_padding_group()
         a_grp = self._get_axes_group()
+        g_grp = self._get_groups_group()
         grps = self._get_groups()
+
         if grps:
-            a_grp = VGroup(bg_grp, pd_grp,
-                           a_grp,
-                           label='Appearance',
-                           show_border=True)
-            g = Group(VFold(main_grp, *grps),
-                      a_grp,
-                      # bg_grp,
-                      # self._get_padding_group(),
+            appear_grp = VGroup(HGroup(bg_grp, pd_grp),
+                                a_grp, g_grp,
+                                label='Appearance',
+                                show_border=True)
+            g = Group(main_grp,
+                      appear_grp,
+                      *grps,
                       layout='tabbed')
+
+            # # temp for debugging
+            # g = Group(grps[0],
+            #           grps[1],
+            #           main_grp,
+            #           appear_grp,
+            #
+            #           layout='tabbed')
+
         else:
             g = Group(main_grp, bg_grp, pd_grp)
 
@@ -499,6 +517,5 @@ class FigurePlotterOptions(BasePlotterOptions):
 class SaveableFigurePlotterOptions(FigurePlotterOptions):
     use_plotting = dumpable(Bool(True))
     # confirm_save = dumpable(Bool)
-
 
 # ============= EOF =============================================

@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from matplotlib.cm import cmap_d
 from traits.api import Enum, Float, Bool, Button, Property, Int, on_trait_change
-from traitsui.api import Item, HGroup, Group, VGroup, UItem, EnumEditor, InstanceEditor
+from traitsui.api import Item, HGroup, Group, VGroup, UItem, EnumEditor
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -52,8 +52,8 @@ class IdeogramOptions(AgeOptions):
     aux_plot_name = 'Ideogram'
 
     use_asymptotic_limits = dumpable(Bool)
-    asymptotic_width = dumpable(Float)
-    asymptotic_percent = dumpable(Float)
+    # asymptotic_width = dumpable(Float)
+    asymptotic_height_percent = dumpable(Float)
 
     x_end_caps = dumpable(Bool, False)
     y_end_caps = dumpable(Bool, False)
@@ -191,14 +191,14 @@ class IdeogramOptions(AgeOptions):
                              show_border=True,
                              label='Static Limits'),
                       HGroup(UItem('use_asymptotic_limits'),
-                             Item('asymptotic_width', label='% Width',
-                                  tooltip='Width of asymptotic section that is less than the Asymptotic %'),
-                             Item('asymptotic_percent',
+                             # Item('asymptotic_width', label='% Width',
+                             #      tooltip='Width of asymptotic section that is less than the Asymptotic %'),
+                             Item('asymptotic_height_percent',
                                   tooltip='Percent of Max probability',
                                   label='% Height'),
-                             icon_button_editor('refresh_asymptotic_button', 'refresh',
-                                                enabled_when='object.use_asymptotic_limits',
-                                                tooltip='Refresh plot with defined asymptotic limits'),
+                             # icon_button_editor('refresh_asymptotic_button', 'refresh',
+                             #                    enabled_when='object.use_asymptotic_limits',
+                             #                    tooltip='Refresh plot with defined asymptotic limits'),
                              enabled_when='not object.use_centered_range and not object.use_static_limits',
                              show_border=True,
                              label='Asymptotic Limits'),
@@ -208,22 +208,20 @@ class IdeogramOptions(AgeOptions):
                              label='Center on fixed range',
                              show_border=True,
                              enabled_when='not object.use_static_limits'),
-                      HGroup(Item('xpad', label='Pad'),
+                      HGroup(UItem('use_xpad'),
+                             Item('xpad', label='Pad', enabled_when='use_xpad'),
                              Item('xpad_as_percent',
                                   tooltip='Treat Pad as a percent of the nominal width, otherwise Pad is in Ma. '
                                           'e.g if width=10 Ma, Pad=0.5 '
                                           'the final width will be 10 + (10*0.5)*2 = 20 Ma.',
+                                  enabled_when='use_xpad',
                                   label='%'),
                              label='X Pad',
-                             show_border=True))
+                             show_border=True),
+                      show_border=True,
+                      label='X')
 
-        grp_grp = VGroup(UItem('group',
-                               style='custom',
-                               editor=InstanceEditor(view='simple_view')),
-                         show_border=True,
-                         label='Group Attributes')
-
-        g = Group(
+        calcgrp = Group(
             Item('probability_curve_kind',
                  width=-150,
                  label='Probability Curve Method'),
@@ -247,66 +245,61 @@ class IdeogramOptions(AgeOptions):
             show_border=True,
             label='Calculations')
 
-        g2 = Group(VGroup(HGroup(Item('display_mean_indicator', label='Indicator'),
+        errbar_grp = VGroup(HGroup(Item('x_end_caps', label='X End Caps'),
+                                   Item('y_end_caps', label='Y End Caps'),
+                                   Item('error_bar_nsigma', label='NSigma')),
+                            show_border=True,
+                            label='Error Bars')
+
+        an_grp = VGroup(Item('analysis_number_sorting', label='Analysis# Sort'),
+                        Item('use_cmap_analysis_number'),
+                        Item('cmap_analysis_number'),
+                        Item('use_latest_overlay'), show_border=True, label='Analysis #')
+        label_grp = VGroup(
+            HGroup(Item('label_box'),
+                   Item('analysis_label_display',
+                        label='Label Format',
+                        width=100,
+                        style='readonly'),
+                   icon_button_editor('edit_label_format', 'cog',
+                                      tooltip='Open Label maker')),
+            show_border=True, label='Label')
+        inset_grp = VGroup(HGroup(Item('display_inset', label='Use'),
+                                  Item('inset_location', label='Location'),
+                                  Item('inset_width', label='Width'),
+                                  Item('inset_height', label='Height')),
+                           show_border=True,
+                           label='Inset')
+        mean_grp = VGroup(HGroup(Item('display_mean_indicator', label='Indicator'),
                                  Item('display_mean', label='Value',
                                       enabled_when='display_mean_indicator'),
                                  Item('display_percent_error', label='%Error',
-                                      enabled_when='display_mean_indicator')),
-                          HGroup(Item('mean_sig_figs', label='Mean'),
-                                 show_border=True,
-                                 label='SigFigs'),
+                                      enabled_when='display_mean_indicator'),
+                                 Item('mean_sig_figs', label='SigFigs')),
                           show_border=True,
-                          label='Mean'),
-                   VGroup(Item('display_inset'),
-                          Item('inset_location'),
-                          HGroup(Item('inset_width', label='Width'),
-                                 Item('inset_height', label='Height')),
-                          show_border=True,
-                          label='Inset'),
-                   Item('label_box'),
-                   Item('analysis_number_sorting', label='Analysis# Sort'),
-                   Item('use_cmap_analysis_number'),
-                   Item('cmap_analysis_number'),
-                   Item('use_latest_overlay'),
-                   HGroup(Item('analysis_label_display',
-                               width=100,
-                               style='readonly'),
-                          icon_button_editor('edit_label_format', 'cog',
-                                             tooltip='Open Label maker')),
-                   HGroup(Item('show_info', label='Show'),
+                          label='Mean')
+        info_grp = HGroup(Item('show_info', label='Show'),
                           Item('show_mean_info', label='Mean', enabled_when='show_info'),
                           Item('show_error_type_info', label='Error Type', enabled_when='show_info'),
                           show_border=True,
-                          label='Info'),
-                   # VGroup(UItem('fill_group', style='custom',
-                   #              editor=InstanceEditor(view='simple_view')),
-                   #        HGroup(icon_button_editor('edit_group_fill_color_button', 'cog'), spring),
-                   #        show_border=True, label='Fill'),
-                   # VGroup(HGroup(UItem('use_filled_line'),
-                   #               Item('fill_color', enabled_when='use_filled_line')),
-                   #        Item('fill_alpha'),
-                   #        icon_button_editor('edit_group_fill_color_button', 'cog'),
-                   #        label='Fill',
-                   #        show_border=True),
-                   show_border=True,
-                   label='Display')
+                          label='Info')
 
-        egrp = VGroup(HGroup(Item('x_end_caps', label='X'),
-                             Item('y_end_caps', label='Y'),
-                             label='End Caps', ),
-                      Item('error_bar_nsigma', label='NSigma'),
-                      show_border=True,
-                      label='Error Bars')
-        main_grp = VGroup(self._get_title_group(),
-                          xgrp,
-                          grp_grp,
-                          g, g2, egrp)
+        display_grp = Group(mean_grp,
+                            an_grp,
+                            inset_grp,
+                            label_grp,
+                            info_grp,
+                            errbar_grp,
+                            show_border=True,
+                            label='Display')
 
-        orgp = Group(main_grp,
-                     # label_grp,
-                     # layout='tabbed',
-                     label='Options')
+        optgrp = VGroup(self._get_title_group(),
+                        HGroup(xgrp, calcgrp),
 
+                        # HGroup(xgrp, Tabbed(grp_grp, g,g2,egrp)),
+                        # HGroup(g, g2, egrp),
+
+                        label='Options')
         # axis_grp = VGroup(self._get_x_axis_group(),
         #                   self._get_y_axis_group(),
         #                   label='Axes')
@@ -314,7 +307,7 @@ class IdeogramOptions(AgeOptions):
         # label_grp = VGroup(self._get_indicator_font_group(),
         #                    self._get_label_font_group(),
         #                    label='Fonts')
-        return orgp,  # axis_grp, label_grp
+        return optgrp, display_grp  # axis_grp, label_grp
 
     def _get_indicator_font_group(self):
         g = VGroup(HGroup(Item('mean_indicator_fontname', label='Mean Indicator'),
@@ -338,7 +331,7 @@ class IdeogramOptions(AgeOptions):
     #                  alpha=100) for i in range(10)]
 
     def _process_trait_change(self, name, new):
-        if name in ('asymptotic_width', 'asymptotic_percent', 'use_asymptotic_limits'):
+        if name in ('asymptotic_height_percent', 'use_asymptotic_limits'):
             for ap in self.aux_plots:
                 ap.clear_xlimits()
 
@@ -346,7 +339,7 @@ class IdeogramOptions(AgeOptions):
 
     def _get_refreshable_attrs(self):
         attrs = super(IdeogramOptions, self)._get_refreshable_attrs()
-        attrs.extend(['asymptotic_width', 'asymptotic_percent', 'use_asymptotic_limits'])
+        attrs.extend(['asymptotic_height_percent', 'use_asymptotic_limits'])
         return attrs
 
     # def _get_dump_attrs(self):

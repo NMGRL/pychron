@@ -35,6 +35,7 @@ class BasePlotterOptions(BaseOptions):
     xpadding = Property
     xpad = dumpable(Float)
     xpad_as_percent = dumpable(Bool)
+    use_xpad = dumpable(Bool)
 
     error_types = FIT_ERROR_TYPES
     fit_types = FIT_TYPES
@@ -135,7 +136,8 @@ class BasePlotterOptions(BaseOptions):
 
     # private
     def _get_xpadding(self):
-        return str(self.xpad) if self.xpad_as_percent else self.xpad
+        if self.use_xpad:
+            return str(self.xpad) if self.xpad_as_percent else self.xpad
 
     def _process_trait_change(self, name, new):
         return True
