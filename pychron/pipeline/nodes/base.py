@@ -25,6 +25,7 @@ class BaseNode(HasTraits):
     name = 'Base'
     enabled = Bool(True)
     visited = Bool(False)
+    skip_configure = Bool(False)
     options_klass = None
     options = Any
     auto_configure = Bool(True)
@@ -68,6 +69,9 @@ class BaseNode(HasTraits):
             self.unknowns = state.unknowns
         if state.references:
             self.references = state.references
+
+        if self.skip_configure:
+            return True
 
         if self.configure(refresh=False, pre_run=True):
             return True

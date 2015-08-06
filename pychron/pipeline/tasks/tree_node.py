@@ -39,9 +39,12 @@ class PipelineTreeNode(TreeNode):
 
     def get_background(self, obj):
         if isinstance(obj, ReviewNode):
-            return QColor(Qt.cyan)
+            c = QColor(Qt.cyan)
+        elif obj.skip_configure:
+            c = QColor('purple')
         else:
-            return super(PipelineTreeNode, self).get_background(obj)
+            c = super(PipelineTreeNode, self).get_background(obj)
+        return c
 
     def get_status_color(self, obj):
         c = QColor(Qt.lightGray)
@@ -50,7 +53,6 @@ class PipelineTreeNode(TreeNode):
             c = QColor(Qt.green)
         elif obj.active:
             c = QColor('orange')
-
         # if obj.status == 'ran':
         #     c = QColor('green')
         # elif obj.status == 'paused':

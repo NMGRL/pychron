@@ -23,6 +23,7 @@ from traits.api import Instance, Bool, on_trait_change
 from itertools import groupby
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import list_gits
+from pychron.core.pdf.save_pdf_dialog import save_pdf
 from pychron.dvc.dvc import experiment_has_staged, push_experiments
 from pychron.globals import globalv
 from pychron.paths import paths
@@ -30,7 +31,8 @@ from pychron.pipeline.engine import PipelineEngine
 from pychron.pipeline.plot.editors.interpreted_age_editor import InterpretedAgeEditor
 from pychron.pipeline.state import EngineState
 from pychron.pipeline.tasks.actions import RunAction, SavePipelineTemplateAction, ResumeAction, ResetAction, \
-    ConfigureRecallAction, GitRollbackAction, TagAction, SetInterpretedAgeAction, ClearAction, RunFromAction
+    ConfigureRecallAction, GitRollbackAction, TagAction, SetInterpretedAgeAction, ClearAction, RunFromAction, \
+    SavePDFAction
 from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane
 from pychron.envisage.browser.browser_task import BaseBrowserTask
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
@@ -60,10 +62,12 @@ class PipelineTask(BaseBrowserTask):
                           ResetAction(),
                           ClearAction(),
                           ConfigureRecallAction(),
-                          SavePipelineTemplateAction()),
-                 SToolBar(GitRollbackAction()),
+                          SavePipelineTemplateAction(), label='Run Toolbar'),
+                 SToolBar(SavePDFAction(), label='Save Toolbar'),
+                 SToolBar(GitRollbackAction(), label='Git Toolbar'),
                  SToolBar(TagAction(),
-                          SetInterpretedAgeAction())]
+                          SetInterpretedAgeAction(),
+                          label='Misc Toolbar')]
 
     state = Instance(EngineState)
     resume_enabled = Bool(False)
@@ -116,6 +120,14 @@ class PipelineTask(BaseBrowserTask):
         return panes
 
     # toolbar actions
+    def save_figure_pdf(self):
+        ed = self.active_editor
+        if ed is not None:
+            if ed.component:
+                save_pdf(ed.component,
+                         # path='/Users/ross/Documents/test.pdf',
+                         view=True)
+
     def run(self):
         self._run_pipeline()
 

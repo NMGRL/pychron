@@ -71,6 +71,11 @@ class PipelineHandler(Handler):
         # info.object.run_needed = True
         info.object.refresh_all_needed = True
 
+    def toggle_skip_configure(self, info, obj):
+        obj.skip_configure = not obj.skip_configure
+        # info.object.refresh_all_needed = True
+        info.object.update_needed = True
+
     def configure(self, info, obj):
         info.object.configure(obj)
 
@@ -157,6 +162,12 @@ class PipelinePane(TraitsDockPane):
                        action='disable',
                        visible_when='object.enabled'),
                 Action(name='Configure', action='configure'),
+                Action(name='Enable Auto Configure',
+                       action='toggle_skip_configure',
+                       visible_when='object.skip_configure'),
+                Action(name='Disable Auto Configure',
+                       action='toggle_skip_configure',
+                       visible_when='not object.skip_configure'),
                 Action(name='Move Up', action='move_up'),
                 Action(name='Move Down', action='move_down'),
                 Action(name='Delete', action='delete_node'),

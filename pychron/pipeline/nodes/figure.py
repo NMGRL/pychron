@@ -145,6 +145,7 @@ class FigureNode(BaseNode):
 
 
 class IdeogramNode(FigureNode):
+    skip_configure = Bool(True)
     name = 'Ideogram'
     editor_klass = 'pychron.pipeline.plot.editors.ideogram_editor,IdeogramEditor'
     plotter_options_manager_klass = IdeogramOptionsManager

@@ -146,4 +146,9 @@ class SetInterpretedAgeAction(TaskAction):
     method = 'set_interpreted_age'
     enabled_name = 'set_interpreted_enabled'
 
+
+class SavePDFAction(TaskAction):
+    name = 'Save PDF'
+    method = 'save_figure_pdf'
+    image = icon('file_pdf')
 # ============= EOF =============================================

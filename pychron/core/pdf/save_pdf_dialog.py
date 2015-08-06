@@ -17,15 +17,15 @@ import os
 
 from reportlab.lib.pagesizes import landscape, letter
 from reportlab.lib.pagesizes import A4
-
 from reportlab.lib.units import inch, cm
 
 from pychron.core.helpers.filetools import view_file, add_extension
+from pychron.core.pdf.pdf_graphics_context import PdfPlotGraphicsContext
 from pychron.core.ui import set_qt
 
 set_qt()
 # ============= enthought library imports =======================
-from chaco.pdf_graphics_context import PdfPlotGraphicsContext
+# from chaco.pdf_graphics_context import PdfPlotGraphicsContext
 from pyface.constant import OK
 from pyface.file_dialog import FileDialog
 from traits.api import HasTraits, Instance, Enum, \
@@ -66,7 +66,9 @@ class FigurePDFOptions(BasePDFOptions):
 
             fw = page[0]
             w = fw - width_margins * units
-            b = [w * COLUMN_MAP[self.columns], self.fixed_height * units]
+            # print 'cw', w, fw, width_margins, width_margins * units, COLUMN_MAP[self.columns]
+            nw = w * COLUMN_MAP[self.columns]
+            b = [nw, nw]
 
         elif self.fit_to_page:
             b = [page[0], page[1]]
@@ -82,11 +84,16 @@ class FigurePDFOptions(BasePDFOptions):
 
     @property
     def dest_box(self):
+        units = UNITS_MAP[self.units]
         if self.orientation == 'landscape':
-            lbrt = self.bottom_margin, self.right_margin, -self.top_margin, -self.left_margin
+            w, h = self.bounds
+            lbrt = self.bottom_margin, self.right_margin, h / units, w / units
         else:
-            lbrt = self.left_margin, self.bottom_margin, -self.right_margin, -self.top_margin
-
+            w, h = self.bounds
+            lbrt = self.left_margin, self.bottom_margin, w / units, h / units
+            # lbrt = self.left_margin, self.bottom_margin, -self.right_margin, -self.top_margin
+        # print map(lambda x: x*units, lbrt)
+        # print 'lbrt', lbrt
         return lbrt
 
 
@@ -119,13 +126,14 @@ class SavePDFDialog(Controller):
         return v
 
 
-def save_pdf(component, path=None, default_directory=None):
+def save_pdf(component, path=None, default_directory=None, view=False):
     if default_directory is None:
         default_directory = os.path.join(os.path.expanduser('~'), 'Documents')
     m = FigurePDFOptions()
     m.load()
     dlg = SavePDFDialog(model=m)
     info = dlg.edit_traits(kind='livemodal')
+    # path = '/Users/ross/Documents/pdftest.pdf'
     if info.result:
         m.dump()
         if path is None:
@@ -142,17 +150,20 @@ def save_pdf(component, path=None, default_directory=None):
             # component.inset_border = False
             # component.padding = 0
             # component.border_visible = True
+            # component.border_width = 2
             # component.fill_padding = True
             # component.bgcolor = 'green'
             obounds = component.bounds
-            component.bounds = m.bounds
-            component.do_layout(force=True)
-
+            size = None
+            if not obounds[0] and not obounds[1]:
+                size = m.bounds
+            component.do_layout(size=size, force=True)
             gc.render_component(component,
                                 valign='center')
-            component.bounds = obounds
             gc.save()
-            view_file(path)
+            if view:
+                view_file(path)
+            component.do_layout(size=obounds, force=True)
 
 
 # def render_pdf(component, options):
