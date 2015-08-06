@@ -44,11 +44,10 @@ class ValveProtocol(ServiceProtocol):
         for k, v in FUNC_REGISTRY.items():
             self.register_service(k, make_wrapper(*v))
 
-        # self._application = application
+        self._application = application
         man = application.get_service(EL_PROTOCOL)
         self._manager = man
         self._addr = addr
-
         services = (('Read', '_read'),
                     ('Set', '_set'),
                     ('Open', '_open'),
@@ -65,7 +64,7 @@ class ValveProtocol(ServiceProtocol):
                     # ('GetFaults', 'GetFaults'),
                     # ('GetCoolantOutTemperature', 'GetCoolantOutTemperature'),
                     # ('GetPneumaticsPressure', 'GetPneumaticsPressure')
-                    )
+        )
 
         self._register_services(services)
 
@@ -77,10 +76,10 @@ class ValveProtocol(ServiceProtocol):
 
     def _get_device(self, name, protocol=None, owner=None):
         dev = None
-        if self.application is not None:
+        if self._application is not None:
             if protocol is None:
                 protocol = 'pychron.hardware.core.i_core_device.ICoreDevice'
-            dev = self.application.get_service(protocol, 'name=="{}"'.format(name))
+            dev = self._application.get_service(protocol, 'name=="{}"'.format(name))
             if dev is None:
                 # possible we are trying to get a flag
                 m = self._manager
@@ -90,17 +89,19 @@ class ValveProtocol(ServiceProtocol):
                         dev = m.get_mass_spec_param(name)
                     else:
                         if owner:
-                            dev.set_owner(owner)
+                            dev.set_owner(str(owner))
         return dev
 
     def _get_error(self, data):
         return self._manager.get_error()
 
-    def _set(self, dname, value):
+    def _set(self, data):
+        dname, value = data.split(' ')
+        # dname, value = data
         d = self._get_device(dname, owner=self._addr)
+        # self.debug('Set {name} {value}', name=dname, value=value)
         if d is not None:
-            self.info('Set {} to {}'.format(d.name,
-                                            value))
+            # self.info('Set {name} to {value}', name=dname, value=value)
             result = d.set(value)
         else:
             result = DeviceConnectionErrorCode(dname, logger=self)
@@ -108,6 +109,7 @@ class ValveProtocol(ServiceProtocol):
         return result
 
     def _read(self, data):
+        # self.debug('Read {data}', data=data)
         d = self._get_device(data, owner=self._addr)
         if d is not None:
             result = d.get(current=True)

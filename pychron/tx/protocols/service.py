@@ -47,7 +47,7 @@ def response_err(failure):
 
 def nargs_err(failure):
     failure.trap(ValueError)
-    return InvalidArgumentsErrorCode(str(failure.value))
+    return InvalidArgumentsErrorCode('Foo', str(failure.value))
 
 
 path = os.path.join(paths.log_dir, 'pps.log.json')
