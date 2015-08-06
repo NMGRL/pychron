@@ -245,7 +245,7 @@ class EthernetCommunicator(Communicator):
             else:
                 self.simulation = True
 
-        return not self.simulation
+        return not self.simulation and handler
 
     def get_handler(self, timeout=3):
         try:
