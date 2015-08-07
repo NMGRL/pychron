@@ -32,7 +32,7 @@ from pychron.paths import paths
 from pychron.pychron_constants import DVC_PROTOCOL
 
 
-def format_project(project):
+def format_experiment_identifier(project):
     return project.replace('/', '_').replace('\\', '_')
 
 
@@ -61,7 +61,7 @@ class DVCPersister(BasePersister):
 
         self.dvc.initialize()
 
-        experiment = format_project(experiment)
+        experiment = format_experiment_identifier(experiment)
         self.experiment_repo = repo = GitRepoManager()
 
         root = os.path.join(paths.experiment_dataset_dir, experiment)

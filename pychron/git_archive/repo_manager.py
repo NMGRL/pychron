@@ -491,9 +491,9 @@ class GitRepoManager(Loggable):
         if index:
             index.commit(msg)
 
-    def add(self, p, msg=None, msg_prefix=None, verbose=True, **kw):
+    def add(self, p, msg=None, msg_prefix=None, verbose=True, untracked_files=False, **kw):
         repo = self._repo
-        if not repo.is_dirty():
+        if not repo.is_dirty() and not len(repo.untracked_files):
             return
 
         bp = os.path.basename(p)
