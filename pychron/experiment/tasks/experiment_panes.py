@@ -38,6 +38,9 @@ from pychron.experiment.plot_panel import PlotPanel
 # ===============================================================================
 # editing
 # ===============================================================================
+from pychron.stylesheeets import default_sheet
+
+
 def spacer(w):
     return Spring(width=w, springy=False)
 
@@ -66,28 +69,8 @@ class ExperimentFactoryPane(TraitsDockPane):
     def _get_info_label(self):
         return '<font size="12" color="green"><b>{}</b></font>'.format(self.model.run_factory.info_label)
 
+    @property
     def traits_view(self):
-        # QLabel {font-size: 10px}
-
-        ss = '''
-QLineEdit {font-size: 10px}
-QGroupBox {
-    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                                      stop: 0 #E0E0E0, stop: 1 #FFFFFF);
-    border: 2px solid gray;
-    border-radius: 5px;
-    margin-top: 1ex; /* leave space at the top for the title */
-}
-QGroupBox::title {
-    subcontrol-origin: margin;
-    subcontrol-position: top left; /* position at the top center */
-    padding: 0 3px;
-    color: blue;
-}
-QComboBox {font-size: 10px}
-
-'''
-
         add_button = icon_button_editor('add_button', 'add',
                                         # enabled_when='ok_add',
                                         tooltip='Add run')
@@ -120,10 +103,8 @@ QComboBox {font-size: 10px}
                                       tooltip='Edit user group')),
             HGroup(queue_factory_item('experiment_identifier',
                                       label='Experiment ID',
-                                      editor=ComboboxEditor(name=queue_factory_name('experiment_identifiers'))
-                                      ),
-                   icon_button_editor(queue_factory_name('add_experiment_identifier'), 'add')
-                   ),
+                                      editor=ComboboxEditor(name=queue_factory_name('experiment_identifiers'))),
+                   icon_button_editor(queue_factory_name('add_experiment_identifier'), 'add')),
             HGroup(
                 queue_factory_item('mass_spectrometer',
                                    show_label=False,
@@ -169,29 +150,16 @@ QComboBox {font-size: 10px}
                 enabled_when=queue_factory_name('ok_make'),
                 label='General'),
             self._get_script_group(),
-            self._get_truncate_group(),
-            #
-        )
+            self._get_truncate_group())
 
-        # lower_button_bar = HGroup(
-        # add_button,
-        # clear_button,
-        # Label('Auto Increment'),
-        # Item('auto_increment_id', label='L#'),
-        # Item('auto_increment_position', label='Position'))
         v = View(
             VGroup(
-                # queue_grp,
                 button_bar,
                 button_bar2,
                 UItem('pane.info_label', style='readonly'),
-                # CustomLabel(run_factory_name('info_label'), size=14, color='green'),
                 edit_grp,
+                style_sheet=default_sheet))
 
-                # lower_button_bar,
-                style_sheet=ss),
-            kind='live',
-            width=225)
         return v
 
     def _get_info_group(self):
@@ -269,7 +237,7 @@ QComboBox {font-size: 10px}
                                       'delete',
                                       tooltip='Clear Conditionals from selected runs'
                                       # enabled_when=run_factory_name('edit_mode')
-                   )),
+                                      )),
             HGroup(
                 run_factory_item('trunc_attr',
                                  editor=EnumEditor(name=run_factory_name('trunc_attrs')),
@@ -443,7 +411,7 @@ Quick=   measure_iteration stopped at current step
                       tooltip=truncate_style_tt),
                 UItem('show_conditionals_button',
                       # enabled_when='measuring'
-                ),
+                      ),
                 spacer(-75),
                 CustomLabel('extraction_state_label',
                             color_name='extraction_state_color',

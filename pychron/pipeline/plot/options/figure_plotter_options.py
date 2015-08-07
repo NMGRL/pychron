@@ -30,6 +30,7 @@ from pychron.core.ui.table_editor import myTableEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.pipeline.plot.options.base import BasePlotterOptions, dumpable
 from pychron.pychron_constants import NULL_STR, ALPHAS
+from pychron.stylesheeets import default_sheet
 
 FONTS = ['Helvetica', ]  # 'Courier','Times-Roman']#['modern', 'arial']
 SIZES = [10, 6, 8, 9, 10, 11, 12, 14, 15, 18, 24, 36]
@@ -494,6 +495,7 @@ class FigurePlotterOptions(BasePlotterOptions):
             g = Group(main_grp,
                       appear_grp,
                       *grps,
+                      style_sheet=default_sheet,
                       layout='tabbed')
 
             # # temp for debugging

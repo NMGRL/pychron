@@ -41,7 +41,7 @@ class PipelineTreeNode(TreeNode):
         if isinstance(obj, ReviewNode):
             c = QColor(Qt.cyan)
         elif obj.skip_configure:
-            c = QColor('purple')
+            c = QColor('#D05BFF')
         else:
             c = super(PipelineTreeNode, self).get_background(obj)
         return c
