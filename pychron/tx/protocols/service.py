@@ -16,16 +16,16 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-import io
-import os
+import json
+import re
 import traceback
 
 from twisted.internet import defer
 from twisted.internet.protocol import Protocol
 
+
 # ============= local library imports  ==========================
-from twisted.logger import Logger, jsonFileLogObserver
-from pychron.paths import paths
+from twisted.logger import Logger
 from pychron.tx.errors import InvalidArgumentsErrorCode
 from pychron.tx.exceptions import ServiceNameError, ResponseError
 
@@ -50,12 +50,15 @@ def nargs_err(failure):
     return InvalidArgumentsErrorCode('Foo', str(failure.value))
 
 
-path = os.path.join(paths.log_dir, 'pps.log.json')
-obs = jsonFileLogObserver(io.open(path, 'w'))
-logger = Logger(observer=obs)
+# path = os.path.join(paths.log_dir, 'pps.log.json')
+# obs = jsonFileLogObserver(io.open(path, 'w'))
+# logger = Logger(observer=obs)
+logger = Logger()
+
+regex = re.compile(r'^(?P<command>\w+) {0,1}(?P<args>.*)')
 
 
-class ServiceProtocol(object, Protocol):
+class ServiceProtocol(Protocol):
     def __init__(self, *args, **kw):
         # super(ServiceProtocol, self).__init__(*args, **kw)
         self._services = {}
@@ -70,14 +73,10 @@ class ServiceProtocol(object, Protocol):
     def dataReceived(self, data):
         self.debug('Received n={n}: {data!r}', n=len(data), data=data)
         data = data.strip()
-        service = self._get_service(data)
-        if service:
+        args = self._get_service(data)
+        if args:
+            service, data = args
             self._get_response(service, data)
-
-            # else:
-            # self.transport.write('Invalid request: {}'.format(data))
-
-            # self.transport.loseConnection()
 
     def register_service(self, service_name, success, err=None):
         """
@@ -118,34 +117,37 @@ class ServiceProtocol(object, Protocol):
         self.transport.loseConnection()
 
     def _get_service(self, data):
-
-        if self._cmd_delim in data:
-            args = data.split(self._cmd_delim)
-            name = args[0]
+        m = regex.match(data)
+        if m:
+            name = m.group('command')
+            jd = data
         else:
-            name = data
+            jd = json.loads(data)
+            name = jd['command']
 
         try:
             service = self._services[name]
-            return service
+            return service, jd
         except KeyError, e:
             traceback.print_exc()
             raise ServiceNameError(name, data)
 
     def _get_response(self, service, data):
-
-        delim = self._cmd_delim
-        data = delim.join(data.split(delim)[1:])
-        # service.callback(*tuple(data.split(',')))
-        data = data.split(self._arg_delim)
-        if len(data) == 1:
-            data = data[0]
+        if isinstance(data, dict):
+            cdata = data
         else:
-            data = tuple(data)
-        # elif data:
-        #     data = data[0]
-        self.debug('Data {data!r}', data=data)
-        service.callback(data)
+            delim = self._cmd_delim
+            data = delim.join(data.split(delim)[1:])
+
+            data = data.split(self._arg_delim)
+            if len(data) == 1:
+                data = data[0]
+            else:
+                data = tuple(data)
+            cdata = data
+
+        self.debug('Data {cdata!r}', cdata=cdata)
+        service.callback(cdata)
 
 # ============= EOF =============================================
 # def sleep(secs):
