@@ -89,7 +89,6 @@ class DashboardDevice(Loggable):
             elif dt > value.period:
                 self._trigger(value)
 
-
     def _trigger(self, value, **kw):
         try:
             self.debug('triggering value device={} value={} func={}'.format(self.hardware_device.name,

@@ -207,11 +207,6 @@ class EthernetCommunicator(Communicator):
         self.test_cmd = self.config_get(config, 'Communications', 'test_cmd', optional=True, default='')
         self.use_end = self.config_get(config, 'Communications', 'use_end', cast='boolean', optional=True,
                                        default=False)
-        # self.use_message_len_checking = self.config_get(config, 'Communications', 'use_message_len_checking',
-        # cast='boolean', optional=True,
-        # default=True)
-        # self.use_checksum = self.config_get(config, 'Communications', 'use_checksum', cast='boolean', optional=True,
-        # default=True)
         self.message_frame = self.config_get(config, 'Communications', 'message_frame', optional=True, default='')
 
         if self.kind is None:
@@ -284,39 +279,14 @@ class EthernetCommunicator(Communicator):
 
         cmd = '{}{}'.format(cmd, self.write_terminator)
 
-        def _ask():
-            timeout = 2
-            if self.error_mode:
-                self.handler = None
-                timeout = 0.25
-
-            handler = self.get_handler(timeout)
-            # print self.handler, handler, timeout, self.error_mode, cmd
-            if not handler:
-                self.error_mode = True
-                # self.simulation = True
-                return
-            else:
-                self.error_mode = False
-                # self.simulation = False
-
-            if handler.send_packet(cmd):
-                try:
-                    return handler.get_packet(cmd)
-                except socket.error:
-                    self.error_mode = True
-
         if self.error_mode:
             retries = 1
 
         r = None
         with self._lock:
             re = 'ERROR: Connection refused {}:{}'.format(self.host, self.port)
-            # if self.simulation:
-            # return 'simulation'
-
-            for _ in range(retries):
-                r = _ask()
+            for _ in xrange(retries):
+                r = self._ask(cmd)
                 if r is not None:
                     break
                 else:
@@ -336,6 +306,28 @@ class EthernetCommunicator(Communicator):
             self.log_response(cmd, re, info)
 
         return r
+
+    def _ask(self, cmd):
+        timeout = 1
+        if self.error_mode:
+            self.handler = None
+            timeout = 0.25
+
+        handler = self.get_handler(timeout)
+        # print self.handler, handler, timeout, self.error_mode, cmd
+        if not handler:
+            self.error_mode = True
+            # self.simulation = True
+            return
+        else:
+            self.error_mode = False
+            # self.simulation = False
+
+        if handler.send_packet(cmd):
+            try:
+                return handler.get_packet(cmd)
+            except socket.error:
+                self.error_mode = True
 
     def tell(self, cmd, verbose=True, quiet=False, info=None):
         self._lock.acquire()

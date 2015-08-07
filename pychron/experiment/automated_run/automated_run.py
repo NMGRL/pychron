@@ -1720,6 +1720,7 @@ anaylsis_type={}
                         # do we need to cancel the experiment or will the subsequent pre run
                         # checks sufficient to catch spectrometer communication errors.
                         self.cancel_run(state='failed')
+                        yield None
                 else:
                     # reset the counter
                     cnt = 0
