@@ -66,20 +66,7 @@ class PychronTasksPlugin(BasePlugin):
 
     def start(self):
         self.info('Writing plugin file defaults')
-        for p, d, o in self.file_defaults:
-            try:
-                mod = __import__('pychron.file_defaults', fromlist=[d])
-                d = getattr(mod, d)
-            except BaseException, e:
-                print p, e
-                pass
-            try:
-                p = getattr(paths, p)
-            except AttributeError:
-                pass
-
-            if paths.write_default_file(p, d, o):
-                self.info('Wrote default file {} (overwrite: {})'.format(p, o))
+        paths.write_file_defaults(self.file_defaults)
 
         self._random_tip()
 

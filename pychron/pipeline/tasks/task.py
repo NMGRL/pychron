@@ -281,6 +281,19 @@ class PipelineTask(BaseBrowserTask):
         sas = (('MenuBar/data.menu', RunAction, {}),)
         return [self._sa_factory(path, factory, **kw) for path, factory, kw in sas]
 
+    def _file_defaults_default(self):
+        return paths.plot_factory_defaults
+
+    def _help_tips_default(self):
+        return ['Use <b>Data>Ideogram</b> to plot an Ideogram',
+                'Use <b>Data>Spectrum</b> to plot a Spectrum',
+                'Use <b>Data>Series</b> to plot a Time series of Analyses',
+
+                # 'Use <b>Data>XY Scatter</b> to plot a XY Scatter plot of '
+                # 'any Analysis value versus any other Analysis value',
+                # 'Use <b>Data>Recall</b> to view analytical data for individual analyses',
+                ]
+
     # handlers
     @on_trait_change('engine:reset_event')
     def _handle_reset(self):

@@ -29,7 +29,7 @@ from pychron.core.helpers.filetools import add_extension
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.paths import paths
 from pychron.pipeline.tasks.actions import ConfigureRecallAction, IdeogramAction, IsochronAction, SpectrumAction, \
-    SeriesAction, BlanksAction, ICFactorAction
+    SeriesAction, BlanksAction, ICFactorAction, ResetFactoryDefaultsAction
 from pychron.pipeline.tasks.browser_task import BrowserTask
 from pychron.pipeline.tasks.preferences import PipelinePreferencesPane
 from pychron.pipeline.tasks.task import PipelineTask
@@ -109,6 +109,8 @@ class PipelinePlugin(BaseTaskPlugin):
                                             path=rg),
                              SchemaAddition(factory=ICFactorAction,
                                             path=rg)]
+        help_actions = [SchemaAddition(factory=ResetFactoryDefaultsAction,
+                                       path='MenuBar/help.menu')]
         configure_recall = SchemaAddition(factory=ConfigureRecallAction,
                                           path='MenuBar/Edit')
         browser_actions = [configure_recall]
@@ -117,7 +119,7 @@ class PipelinePlugin(BaseTaskPlugin):
                               actions=[configure_recall]),
                 TaskExtension(task_id='pychron.browser.task',
                               actions=browser_actions),
-                TaskExtension(actions=plotting_actions + reduction_actions)]
+                TaskExtension(actions=plotting_actions + reduction_actions + help_actions)]
 
     def _tasks_default(self):
         return [TaskFactory(id='pychron.pipeline.task',

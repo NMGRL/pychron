@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.confirmation_dialog import confirm
 from pyface.tasks.action.task_action import TaskAction
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -101,6 +102,15 @@ class ICFactorAction(PipelineAction):
 
 
 # ============= Plotting Actions =============================================
+class ResetFactoryDefaultsAction(Action):
+    name = 'Reset Factory Defaults'
+
+    def perform(self, event):
+        from pychron.paths import paths
+        if confirm(None, 'Are you sure you want to reset to Factory Default settings'):
+            paths.reset_plot_factory_defaults()
+
+
 class PlotAction(PipelineAction):
     pass
 
@@ -151,4 +161,5 @@ class SavePDFAction(TaskAction):
     name = 'Save PDF'
     method = 'save_figure_pdf'
     image = icon('file_pdf')
+
 # ============= EOF =============================================

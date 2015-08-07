@@ -193,6 +193,14 @@ class Paths(object):
     duration_tracker = None
     experiment_launch_history = None
 
+    plot_factory_defaults = (('ideogram_defaults', 'IDEOGRAM_DEFAULTS', False),
+                             ('spectrum_defaults', 'SPECTRUM_DEFAULTS', False),
+                             ('inverse_isochron_defaults', 'INVERSE_ISOCHRON_DEFAULTS', False),
+                             ('composites_defaults', 'COMPOSITE_DEFAULTS', False),
+                             ('screen_formatting_options', 'SCREEN_FORMATTING_DEFAULTS', False),
+                             ('presentation_formatting_options', 'PRESENTATION_FORMATTING_DEFAULTS', False),
+                             ('display_formatting_options', 'DISPLAY_FORMATTING_DEFAULTS', False))
+
     def write_default_file(self, p, default, overwrite=False):
         return self._write_default_file(p, default, overwrite)
 
@@ -389,6 +397,26 @@ class Paths(object):
     def write_defaults(self):
         if os.environ.get('TRAVIS_CI', 'False') == 'False' and os.environ.get('RTD', 'False') == 'False':
             self._write_default_files()
+
+    def reset_plot_factory_defaults(self):
+        self.write_file_defaults(self.plot_factory_defaults, force=True)
+
+    def write_file_defaults(self, fs, force=False):
+        for p, d, o in fs:
+            try:
+                mod = __import__('pychron.file_defaults', fromlist=[d])
+                d = getattr(mod, d)
+            except BaseException, e:
+                print p, e
+                pass
+            try:
+                p = getattr(paths, p)
+            except AttributeError:
+                pass
+
+            self.write_default_file(p, d, o or force)
+            # if paths.write_default_file(p, d, o):
+            # self.info('Wrote default file {} (overwrite: {})'.format(p, o))
 
     def _write_default_files(self):
         from pychron.file_defaults import DEFAULT_INITIALIZATION, DEFAULT_STARTUP_TESTS, \
