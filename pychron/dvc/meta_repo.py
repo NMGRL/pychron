@@ -168,7 +168,7 @@ class Production(MetaObject):
         # return {t: getattr(self, t) for a in keys for t in (a, '{}_err'.format(a))}
 
     def dump(self):
-        with open(paths.meta_dir, 'w') as wfile:
+        with open(self.path, 'w') as wfile:
             for a in self.attrs:
                 row = ','.join(map(str, (a, getattr(self, a), getattr(self, '{}_err'.format(a)))))
                 wfile.write('{}\n'.format(row))
@@ -323,7 +323,8 @@ class MetaRepo(GitRepoManager):
     def add_chronology(self, irrad, doses):
         p = os.path.join(paths.meta_dir, irrad, 'chronology.txt')
 
-        Chronology.dump(p, doses)
+        # Chronology.dump(p, doses)
+        dump_chronology(p, doses)
         self.add(p, commit=False)
 
     def add_irradiation(self, name):

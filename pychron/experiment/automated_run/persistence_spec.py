@@ -67,4 +67,5 @@ class PersistenceSpec(HasTraits):
     timestamp = None
     use_experiment_association = False
     tag = 'ok'
+    peak_center = None
 # ============= EOF =============================================

@@ -39,15 +39,18 @@ class DVCPersister(BasePersister):
     experiment_repo = Instance(GitRepoManager)
     dvc = Instance('pychron.dvc.dvc.DVC')
 
-    def per_spec_save(self, pr, commit=False, msg_prefix=None):
+    def per_spec_save(self, pr, experiment_id=None, commit=False, msg_prefix=None):
         self.per_spec = pr
-        self.initialize(False)
+
+        if experiment_id:
+            self.initialize(experiment_id, False)
+
         self.pre_extraction_save()
         self.pre_measurement_save()
         self.post_extraction_save('', '', None)
         self.post_measurement_save(commit=commit, msg_prefix=msg_prefix)
 
-    def initialize(self, experiment, sync=True):
+    def initialize(self, experiment, pull=True):
         """
         setup git repos.
 
@@ -56,11 +59,20 @@ class DVCPersister(BasePersister):
 
         :return:
         """
+        self.debug('^^^^^^^^^^^^^ Initialize DVCPersister {} pull={}'.format(experiment, pull))
+
+        self.dvc.initialize()
+
         experiment = format_project(experiment)
-        self.experiment_repo = GitRepoManager()
-        self.experiment_repo.open_repo(os.path.join(paths.experiment_dataset_dir, experiment))
-        self.info('pulling changes from experiment repo: {}'.format(experiment))
-        self.experiment_repo.pull()
+        self.experiment_repo = repo = GitRepoManager()
+
+        root = os.path.join(paths.experiment_dataset_dir, experiment)
+        repo.open_repo(root)
+
+        remote = 'origin'
+        if repo.has_remote(remote) and pull:
+            self.info('pulling changes from experiment repo: {}'.format(experiment))
+            self.experiment_repo.pull(remote=remote)
 
     def pre_extraction_save(self):
         pass
@@ -106,10 +118,15 @@ class DVCPersister(BasePersister):
         pass
 
     def _save_peak_center(self, pc):
+        self.info('DVC saving peakcenter')
         p = self._make_path(modifier='peakcenter')
-        xx, yy = pc.graph.get_data(), pc.graph.get_data(axis=1)
-
-        xs, ys, _mx, _my = pc.result
+        if pc:
+            xx, yy = pc.graph.get_data(), pc.graph.get_data(axis=1)
+            if pc.result:
+                xs, ys, _mx, _my = pc.result
+        else:
+            xx, yy = [], []
+            xs, ys = (0, 0, 0), (0, 0, 0)
         fmt = '>ff'
         obj = {'low_dac': xs[0],
                'center_dac': xs[1],
@@ -118,7 +135,7 @@ class DVCPersister(BasePersister):
                'center_signal': ys[1],
                'high_signal': ys[2],
                'fmt': fmt,
-               'data': ''.join([struct.pack(fmt, di) for di in zip(xx, yy)])}
+               'data': base64.b64encode(''.join([struct.pack(fmt, *di) for di in zip(xx, yy)]))}
         jdump(obj, p)
 
     def post_measurement_save(self, commit=True, msg_prefix='Collection'):
@@ -149,6 +166,9 @@ class DVCPersister(BasePersister):
 
         # save monitor
         self._save_monitor()
+
+        # save peak center
+        self._save_peak_center(self.per_spec.peak_center)
 
         # stage files
         paths = [spec_path, ] + [self._make_path(modifier=m) for m in PATH_MODIFIERS]
@@ -189,7 +209,7 @@ class DVCPersister(BasePersister):
             # # special associations are handled by the ExperimentExecutor._retroactive_experiment_identifiers
             # if not is_special(rs.runid):
             if self.per_spec.use_experiment_association:
-                db.add_experiment_association(rs.experiment_identifier, rs)
+                db.add_experiment_association(rs.experiment_identifier, an)
 
             # pos = db.get_irradiation_position(rs.irradiation, rs.irradiation_level, rs.irradiation_position)
 

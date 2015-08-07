@@ -18,9 +18,10 @@
 import glob
 import os
 import subprocess
-from datetime import datetime
 import shutil
 import re
+
+from datetime import datetime
 
 
 def subdirize(root, name, n=1, l=2, mode='r'):
@@ -29,7 +30,7 @@ def subdirize(root, name, n=1, l=2, mode='r'):
         n, name = name[:l], name[l:]
         path = os.path.join(root, n)
         if not os.path.isdir(path):
-            print 'asdfasdf', path
+            print 'subdirize {}'.format(path)
             if mode == 'r':
                 return
 

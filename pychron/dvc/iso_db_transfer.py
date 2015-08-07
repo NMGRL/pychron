@@ -94,8 +94,8 @@ class IsoDBTransfer(Loggable):
         self.meta_repo = MetaRepo(os.path.join(self.root, 'meta'))
 
         conn = dict(host='129.138.12.160', username='root', password='DBArgon', kind='mysql')
-        # dest = DVCDatabase('/Users/ross/Sandbox/dvc/meta/testdb.sqlite')
-        dest = DVCDatabase(name='pychronmeta', **conn)
+        dest = DVCDatabase('/Users/ross/Sandbox/dvc/meta/testdb.sqlite')
+        # dest = DVCDatabase(name='pychronmeta', **conn)
         dest.connect()
         src = IsotopeAdapter(name='pychrondata', **conn)
         # src.trait_set()
@@ -109,7 +109,7 @@ class IsoDBTransfer(Loggable):
                 self.meta_repo.add_production(prodname, dbprod)
                 self.meta_repo.commit('added production {}'.format(prodname))
 
-    def do_export(self, create_repo=False):
+    def do_export_monitors(self, path, experiment_id, creator, create_repo=False):
         self.root = os.path.join(os.path.expanduser('~'), 'Pychron_dev', 'data', '.dvc')
         self.meta_repo = MetaRepo()
         self.meta_repo.open_repo(os.path.join(self.root, 'meta'))
@@ -137,47 +137,111 @@ class IsoDBTransfer(Loggable):
         # src.trait_set()
         src.connect()
         with src.session_ctx():
+            with open(path, 'r') as rfile:
+                runs = [line.strip() for line in rfile if line.strip()]
+
+            key = lambda x: x.split('-')[0]
+            runs = sorted(runs, key=key)
+
+            for r in runs:
+                args = r.split('-')
+                idn = '-'.join(args[:-1])
+                t = args[-1]
+                try:
+                    aliquot = int(t)
+                    step = None
+                except ValueError:
+                    aliquot = int(t[:-1])
+                    step = t[-1]
+                try:
+                    int(idn)
+                except:
+                    continue
+                dban = src.get_analysis_runid(idn, aliquot, step)
+                if dban:
+                    print idn, dban.labnumber.irradiation_position.level.irradiation.name
+                    # runs = proc.make_analyses(runs)
+                    # iv = IsotopeRecordView()
+                    # iv.uuid = dban.uuid
+                    # an = proc.make_analysis(iv, unpack=True, use_cache=False)
+
+                    # key = lambda x: x.irradiation
+                    # runs = sorted(runs, key=key)
+                    # for irrad, ais in groupby(runs, key=key):
+                    #     print irrad, len(list(ais))
+
+    def do_export(self, path, experiment_id, creator, create_repo=False):
+        self.root = os.path.join(os.path.expanduser('~'), 'Pychron_dev', 'data', '.dvc')
+        self.meta_repo = MetaRepo()
+        self.meta_repo.open_repo(os.path.join(self.root, 'meta'))
+
+        conn = dict(host=os.environ.get('ARGONSERVER_HOST'),
+                    username=os.environ.get('ARGONSERVER_DB_USER'),
+                    password=os.environ.get('ARGONSERVER_DB_PWD'),
+                    kind='mysql')
+
+        # conn = dict(host='129.138.12.160', username='root', password='DBArgon', kind='mysql')
+        # dest = DVCDatabase('/Users/ross/Sandbox/dvc/meta/testdb.sqlite')
+        # dest = DVCDatabase(name='pychronmeta', **conn)
+        self.dvc = DVC(bind=False,
+                       meta_repo_name='meta')
+        self.dvc.db.trait_set(name='pychronmeta',
+                              **conn)
+        if not self.dvc.initialize():
+            self.warning_dialog('Failed to initialize DVC')
+            return
+
+        self.persister = DVCPersister(dvc=self.dvc)
+
+        dest = self.dvc.db
+
+        proc = IsotopeDatabaseManager(bind=False, connect=False)
+        proc.db.trait_set(name='pychrondata', **conn)
+        src = proc.db
+        # src = IsotopeAdapter(name='pychrondata', **conn)
+        # src.trait_set()
+        src.connect()
+        with src.session_ctx():
             # for pr in yd:
             # p = '/Users/ross/Sandbox/bustoswell_transfer.txt'
             # experiment_id = 'J-Curve'
             # experiment_id = 'Bustoswell'
 
             # p = '/Users/ross/Sandbox/bustosJ.txt'
-            p = '/Users/ross/Sandbox/bustosunknowns.txt'
-            experiment_id = 'BustosWell'
+            # p = '/Users/ross/Sandbox/bustosunknowns.txt'
+            # experiment_id = 'BustosWell'
 
-            with open(p, 'r') as rfile:
+            with open(path, 'r') as rfile:
                 runs = [line.strip() for line in rfile if line.strip()]
 
             key = lambda x: x.split('-')[0]
             runs = sorted(runs, key=key)
+            with dest.session_ctx():
+                repo = self._add_experiment(dest, experiment_id, creator, create_repo)
 
-            repo = self._add_experiment(dest, experiment_id, create_repo)
+            # return
             self.persister.experiment_repo = repo
             self.dvc.experiment_repo = repo
             commit = False
+            total = len(runs)
+            j = 0
             for ln, ans in groupby(runs, key=key):
-                # print ln, len(list(ans))
-                # # try:
-                # #     int(ln)
-                # # except ValueError:
-                # #     self.debug('skipping {}'.format(ln))
-                # #     continue
-                # #
-                if ln not in ('4359',):
-                    continue
+                # if ln not in ('4359',):
+                #     continue
                 #
                 # if ln not in ('bu', 'a', 'ba', 'c'):
                 #     continue
 
-                with dest.session_ctx():
-
-                    for a in ans:
+                with dest.session_ctx() as sess:
+                    ans = list(ans)
+                    n = len(ans)
+                    for i, a in enumerate(ans):
                         st = time.time()
                         if self._transfer_analysis(proc, src, dest, a, exp=experiment_id):
                             commit = True
-                            print 'transfer time {:0.3f}'.format(time.time() - st)
-                            # break
+                            print '{}/{} transfer time {:0.3f}'.format(j, total, time.time() - st)
+                        j += 1
+
             if commit:
                 repo.commit('<IMPORT> src= {}'.format(src.public_url))
 
@@ -205,9 +269,11 @@ class IsoDBTransfer(Loggable):
 
             self.meta_repo.add_irradiation_holder(name, holder.geometry)
 
-    def _add_experiment(self, dest, experiment_id, create_repo):
+    def _add_experiment(self, dest, experiment_id, creator, create_repo):
         experiment_id = format_project(experiment_id)
+        print 'asdfsdf', experiment_id
 
+        # sys.exit()
         proot = os.path.join(paths.experiment_dataset_dir, experiment_id)
         if not os.path.isdir(proot):
             os.mkdir(proot)
@@ -224,9 +290,10 @@ class IsoDBTransfer(Loggable):
             url = 'https://github.com/{}/{}.git'.format(ORG, experiment_id)
             repo.create_remote(url)
 
-        if not dest.get_experiment(experiment_id):
-            dest.add_experiment(name=experiment_id)
-            dest.flush()
+        dbexp = dest.get_experiment(experiment_id)
+        if not dbexp:
+            dest.add_experiment(experiment_id, creator)
+            dest.commit()
 
         return self.repo_man
         # def _transfer_labnumber(self, ln, src, dest, exp=None, create_repo=False):
@@ -387,12 +454,6 @@ class IsoDBTransfer(Loggable):
             #     json.dump(yd, wfile, indent=4)
 
     def _transfer_analysis(self, proc, src, dest, rec, exp=None, overwrite=True):
-        # args = rec.split(',')
-        # if len(args) == 2:
-        #     idn, aliquot = args
-        #     step = None
-        # else:
-        #     idn, aliquot, step = args
         args = rec.split('-')
         idn = '-'.join(args[:-1])
         t = args[-1]
@@ -405,6 +466,8 @@ class IsoDBTransfer(Loggable):
 
         if idn == '4359':
             idn = 'c-01-j'
+        elif idn == '4358':
+            idn = 'c-01-o'
 
         if dest.get_analysis_runid(idn, aliquot, step):
             self.warning('{} already exists'.format(make_runid(idn, aliquot, step)))
@@ -469,7 +532,7 @@ class IsoDBTransfer(Loggable):
                               irradiation=irrad,
                               irradiation_level=level,
                               irradiation_position=irradpos,
-                              experiment_id=exp or project,
+                              experiment_identifier=exp,
                               mass_spectrometer=ms,
                               uuid=dban.uuid,
                               _step=inc,
@@ -624,20 +687,34 @@ def experiment_id_modifier(root, expid):
             if write:
                 jdump(jd, p)
 
+
 if __name__ == '__main__':
     from pychron.core.helpers.logger_setup import logging_setup
 
     paths.build('_dev')
     logging_setup('de', root=os.path.join(os.path.expanduser('~'), 'Desktop', 'logs'))
-    experiment_id_modifier('/Users/ross/Pychron_dev/data/.dvc/experiments/Irradiation-NM-272', 'Irradiation-NM-272')
+    # experiment_id_modifier('/Users/ross/Pychron_dev/data/.dvc/experiments/Irradiation-NM-274', 'Irradiation-NM-276')
 
     # create_github_repo('Irradiation-NM-272')
     # exp = 'J-Curve'
     # url = 'https://github.com/{}/{}.git'.format(org.name, exp)
-    # e = IsoDBTransfer()
-    # e.transfer_holder('40_no_spokes')
-    # e.transfer_holder('40_hole')
-    # e.transfer_holder('24_hole')
-    # e.do_export(create_repo=False)
+    e = IsoDBTransfer()
+    # # e.transfer_holder('40_no_spokes')
+    # # e.transfer_holder('40_hole')
+    # # e.transfer_holder('24_hole')
+    #
+    # path = '/Users/ross/Sandbox/dvc_imports/NM-275.txt'
+    # expid = 'Irradiation-NM-275'
+    # creator = 'mcintosh'
+    # e.do_export(path, expid, creator, create_repo=False)
+
+    path = '/Users/ross/Sandbox/dvc_imports/NM-276.txt'
+    expid = 'Irradiation-NM-276'
+    creator = 'mcintosh'
+    e.do_export(path, expid, creator, create_repo=False)
+
+    # e.do_export_monitors(path, expid, creator, create_repo=False)
+    # e.check_experiment(path, expid)
+    # e.do_export(path, expid, creator, create_repo=False)
     # e.export_production('Triga PR 275', db=False)
 # ============= EOF =============================================
