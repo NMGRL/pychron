@@ -89,13 +89,17 @@ class LabspyClient(Loggable):
                 # remove Communicator for name. e.g SerialCommunicator to Serial
                 cname = dev.communicator.__class__.__name__
                 com_name = cname[:-12]
-                self.update_connection(ts, dev.name,
-                                       com_name,
-                                       dev.communicator.address,
-                                       dev.communicator.test_connection(),
-                                       verbose=verbose)
+                try:
+                    self.update_connection(ts, dev.name,
+                                           com_name,
+                                           dev.communicator.address,
+                                           dev.communicator.test_connection(),
+                                           verbose=verbose)
+                except BaseException, e:
+                    self.debug('Connection status. update connection failed: error={}'.format(e))
+                    break
 
-        t = Timer(self.connection_status_period, self._connection_status, kwargs={'verbose':verbose})
+        t = Timer(self.connection_status_period, self._connection_status, kwargs={'verbose': verbose})
         t.start()
 
     @auto_connect
@@ -131,7 +135,7 @@ class LabspyClient(Loggable):
         self.db.set_connection(ts,
                                appname.strip(),
                                user.strip(),
-            devname, com, addr, status)
+                               devname, com, addr, status)
 
     @auto_connect
     def update_status(self, **kw):
