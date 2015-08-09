@@ -15,16 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from traits.api import Any, Str, List, Event
+# ============= standard library imports ========================
 import hashlib
 
-from datetime import datetime
-from traits.api import Any, Str, List, Event
-
-# ============= standard library imports ========================
+import subprocess
+import re
 import os
+import time
 import shutil
 from cStringIO import StringIO
-import time
+from datetime import datetime
 from git.exc import GitCommandError
 from git import Repo, Diff
 # ============= local library imports  ==========================
@@ -33,9 +34,16 @@ from pychron.core.helpers.filetools import fileiter
 from pychron.core.progress import open_progress
 from pychron.envisage.view_util import open_view
 from pychron.git_archive.diff_view import DiffView, DiffModel
+from pychron.git_archive.merge_view import MergeModel, MergeView
 from pychron.git_archive.views import NewBranchView
 from pychron.loggable import Loggable
 from pychron.git_archive.commit import Commit
+
+
+def grep(arg, name):
+    process = subprocess.Popen(['grep', '-lr', arg, name], stdout=subprocess.PIPE)
+    stdout, stderr = process.communicate()
+    return stdout, stderr
 
 
 def format_date(d):
@@ -48,6 +56,10 @@ def isoformat_date(d):
 
     return d.strftime('%Y-%m-%d %H:%M:%S')
     # return time.mktime(time.gmtime(d))
+
+
+aregex = re.compile(r'\[ahead (?P<count>\d+)')
+bregex = re.compile(r'behind (?P<count>\d+)')
 
 
 class GitRepoManager(Loggable):
@@ -144,6 +156,7 @@ class GitRepoManager(Loggable):
         repo = self._repo
         origin = repo.remotes.origin
         pd.change_message('Fetching {} {}'.format(origin, branchname))
+
         repo.git.fetch(origin, branchname)
         pd.change_message('Complete')
         # try:
@@ -446,8 +459,7 @@ class GitRepoManager(Loggable):
                                      title='Pull Repository', close_at_end=False)
                 prog.change_message('Fetching branch:"{}" from "{}"'.format(branch, remote))
             try:
-
-                repo.git.fetch(remote)
+                self.fetch(remote)
             except GitCommandError, e:
                 self.debug(e)
                 if not handled:
@@ -477,6 +489,58 @@ class GitRepoManager(Loggable):
             repo.git.push(remote, branch)
         else:
             self.warning('No remote called "{}"'.format(remote))
+
+    def smart_pull(self, branch='master', remote='origin', accept_our=False, accept_their=False):
+        ahead, behind = self.ahead_behind(remote)
+        repo = self._repo
+        if behind:
+            if ahead:
+                # potentially conflicts
+
+                # do merge
+                try:
+                    repo.git.merge('FETCH_HEAD')
+                except BaseException:
+                    pass
+
+                # get conflicted files
+                out, err = grep('<<<<<<<', self.path)
+                conflict_paths = [os.path.relpath(x, self.path) for x in out.splitlines()]
+                if conflict_paths:
+                    mm = MergeModel(conflict_paths, repo=self)
+                    if accept_our:
+                        mm.accept_our()
+                    elif accept_their:
+                        mm.accept_their()
+                    else:
+                        mv = MergeView(model=mm)
+                        # mv.configure_traits()
+                        mv.edit_traits()
+
+            else:
+                repo.git.merge('FETCH_HEAD')
+        else:
+            self.debug('Up-to-date with {}'.format(remote))
+
+    def fetch(self, remote='origin'):
+        return self._repo.git.fetch(remote)
+
+    def ahead_behind(self, remote='origin'):
+        ahead = 0
+        behind = 0
+        repo = self._repo
+
+        # repo.git.rev_list('origin..')
+        self.fetch(remote)
+        status = repo.git.status('-sb')
+        ma = aregex.search(status)
+        mb = bregex.search(status)
+        if ma:
+            ahead = int(ma.group('count'))
+        if mb:
+            behind = int(mb.group('count'))
+
+        return ahead, behind
 
     def merge(self, src, dest):
         repo = self._repo
@@ -647,9 +711,13 @@ class GitRepoManager(Loggable):
 
 
 if __name__ == '__main__':
-    rp = GitRepoManager()
-    rp.init_repo('/Users/ross/Pychrondata_dev/scripts')
-    rp.commit_dialog()
+    repo = GitRepoManager()
+    repo.open_repo('/Users/ross/Sandbox/mergetest/alocal')
+    repo.smart_pull()
+
+    # rp = GitRepoManager()
+    # rp.init_repo('/Users/ross/Pychrondata_dev/scripts')
+    # rp.commit_dialog()
 
     # ============= EOF =============================================
     # repo manager protocol

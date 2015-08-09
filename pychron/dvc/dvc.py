@@ -427,6 +427,12 @@ class DVC(Loggable):
         self.meta_repo.update_chronology(name, doses)
         self.meta_commit('updated chronology for {}'.format(name))
 
+    def meta_pull(self, **kw):
+        self.meta_repo.smart_pull(**kw)
+
+    def meta_push(self):
+        self.meta_repo.push()
+
     def meta_commit(self, msg):
         changes = self.meta_repo.has_staged()
         if changes:
