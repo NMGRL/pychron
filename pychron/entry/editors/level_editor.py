@@ -15,15 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from datetime import datetime
 import os
 
+from datetime import datetime
 from enable.component_editor import ComponentEditor
 from pyface.constant import OK, YES, NO
 from pyface.file_dialog import FileDialog
 from traits.api import List, Instance, Str, Float, Any, Button, Property, HasTraits
 from traitsui.api import View, Item, TabularEditor, HGroup, UItem, VSplit, Group, VGroup, \
     HSplit
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter

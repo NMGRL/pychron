@@ -22,7 +22,6 @@ from itertools import groupby
 from pychron.dvc.dvc_irradiationable import DVCIrradiationable
 from pychron.experiment.queue.experiment_queue import ExperimentQueue
 from pychron.experiment.factory import ExperimentFactory
-from pychron.experiment.utilities.aliquot_numbering import renumber_aliquots
 from pychron.experiment.stats import StatsGroup
 from pychron.experiment.experiment_executor import ExperimentExecutor
 
@@ -126,8 +125,8 @@ class Experimentor(DVCIrradiationable):
         self.debug('get all runs n={}'.format(len(ans)))
 
         # for qi in self.experiment_queues:
-            # aruns = self._get_all_automated_runs([qi])
-            # renumber_aliquots(aruns)
+        # aruns = self._get_all_automated_runs([qi])
+        # renumber_aliquots(aruns)
 
         self._set_analysis_metadata()
 

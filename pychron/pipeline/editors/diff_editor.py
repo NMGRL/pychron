@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from traits.api import Property, Instance, List, Either, Int, Float, HasTraits, \
     Str, Dict, Bool
-from traitsui.api import View, Item, UItem, VGroup, HGroup
+from traitsui.api import View, Item, UItem, VGroup, HGroup, spring
 from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -145,6 +145,8 @@ class DiffEditor(BaseTraitsEditor):
     diffs_only = Bool(True)
     adapter = None
 
+    record_id = ''
+
     def _diffs_only_changed(self, new):
         if new:
             self.values = [vi for vi in self.ovalues if vi.enabled]
@@ -154,6 +156,7 @@ class DiffEditor(BaseTraitsEditor):
             self.values = self.ovalues
 
     def setup(self, left):
+        self.record_id = left.record_id
         right = self._find_right(left)
         self.adapter = ValueTabularAdapter()
         if right:
@@ -196,9 +199,9 @@ class DiffEditor(BaseTraitsEditor):
         vs.append(Value(name=err,
                         lvalue=left.age_err,
                         rvalue=right.age_err))
-        vs.append(Value(name=u'\u00b1 w/o JEr',
-                        lvalue=std_dev(left.uage_wo_j_err),
-                        rvalue=right.age_err_wo_j))
+        # vs.append(Value(name=u'\u00b1 w/o JEr',
+        #                 lvalue=std_dev(left.uage_w_j_err),
+        #                 rvalue=right.age_err_w_j))
         vs.append(Value(name='40Ar* %',
                         lvalue=nominal_value(left.rad40_percent),
                         rvalue=nominal_value(right.rad40_percent)))
@@ -241,7 +244,7 @@ class DiffEditor(BaseTraitsEditor):
         rifc = right.interference_corrections
         for k, v in left.interference_corrections.iteritems():
             vs.append(Value(name=k, lvalue=nominal_value(v),
-                            rvalue=nominal_value(rifc[k])))
+                            rvalue=nominal_value(rifc[k.lower()])))
 
         # self.values = vs
         self.ovalues = vs[:]
@@ -249,7 +252,7 @@ class DiffEditor(BaseTraitsEditor):
 
     def traits_view(self):
         v = View(VGroup(
-            HGroup(Item('diffs_only')),
+            HGroup(Item('diffs_only'), spring, UItem('record_id', style='readonly'), spring),
             UItem('values', editor=myTabularEditor(adapter=self.adapter,
                                                    editable=False,
                                                    selected_row='selected_row'))))

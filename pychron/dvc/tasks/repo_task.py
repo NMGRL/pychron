@@ -49,7 +49,7 @@ class ExperimentRepoTask(BaseTask):
                           AddBranchAction(),
                           CheckoutBranchAction(),
                           PushAction(),
-                          
+
                           PullAction())]
 
     commits = List

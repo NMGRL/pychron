@@ -114,6 +114,7 @@ class SimpleCrosshairsOverlay(AbstractOverlay):
 
 class CrosshairsOverlay(SimpleCrosshairsOverlay):
     circle_only = False
+
     def overlay(self, component, gc, *args, **kw):
         with gc:
             gc.clip_to_rect(component.x, component.y, component.width, component.height)

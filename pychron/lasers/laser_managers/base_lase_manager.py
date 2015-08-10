@@ -16,7 +16,9 @@
 
 # ============= enthought library imports =======================
 import time
+
 from traits.api import Instance, Event, Bool, Any, Property, Str, Float, provides
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.strtools import to_bool
@@ -218,7 +220,7 @@ class BaseLaserManager(Manager):
             if resp is not None:
                 try:
                     if not cmpfunc(resp):
-                    # if not to_bool(resp):
+                        # if not to_bool(resp):
                         cnt += 1
                 except (ValueError, TypeError):
                     cnt = 0

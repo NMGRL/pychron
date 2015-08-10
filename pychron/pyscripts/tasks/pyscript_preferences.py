@@ -22,6 +22,7 @@ from envisage.ui.tasks.preferences_pane import PreferencesPane
 from pychron.envisage.tasks.base_preferences_helper import GitRepoPreferencesHelper, \
     remote_status_item
 
+
 # from pychron.pychron_constants import PLUSMINUS
 # ============= standard library imports ========================
 # ============= local library imports  ==========================

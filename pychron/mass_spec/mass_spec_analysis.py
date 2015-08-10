@@ -21,7 +21,7 @@
 from uncertainties import ufloat
 
 from pychron.processing.analyses.analysis import Analysis
-from pychron.processing.isotope import Isotope, Blank, Baseline
+from pychron.processing.isotope import Isotope, Baseline
 from pychron.pychron_constants import IRRADIATION_KEYS
 
 
@@ -53,18 +53,23 @@ class MassSpecAnalysis(Analysis):
             iso.n = n
 
             iso.ic_factor = ufloat(det.ICFactor, det.ICFactorEr)
-            iso.fit = r.fit.Label.lower()
-
-            iso.baseline = Baseline(name=key,
-                                    reverse_unpack=True,
-                                    dbrecord=dbiso.baseline,
-                                    unpack=True,
-                                    unpacker=lambda x: x.PeakTimeBlob,
-                                    error_type='SEM',
-                                    fit='average')
+            if r.fit:
+                iso.fit = r.fit.Label.lower()
+            else:
+                iso.fit = ''
+            # iso.baseline = Baseline(name=key,
+            #                         reverse_unpack=True,
+            #                         dbrecord=dbiso.baseline,
+            #                         unpack=True,
+            #                         unpacker=lambda x: x.PeakTimeBlob,
+            #                         error_type='SEM',
+            #                         fit='average')
+            iso.baseline = Baseline(key, det.Label)
+            iso.baseline.fit = 'average'
             iso.baseline.set_filter_outliers_dict()
 
-            iso.blank = Blank(name=key, value=bv, error=be)
+            iso.blank.set_uvalue((bv, be))
+            # iso.blank = Blank(name=key, value=bv, error=be)
             self.isotopes[key] = iso
 
     def sync_irradiation(self, irrad):

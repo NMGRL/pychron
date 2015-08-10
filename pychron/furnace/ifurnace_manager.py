@@ -21,7 +21,6 @@ from traits.api import Interface
 
 
 class IFurnaceManager(Interface):
-    
     def set_setpoint(self, v):
         pass
 

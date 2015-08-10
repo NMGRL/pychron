@@ -415,36 +415,36 @@ class DataCollector(Consoleable):
         return self.automated_run.cancelation_conditionals
 
 # ============= EOF =============================================
-        # def _iter(self, con, evt, i, prev=0):
-        #
-        #     result = self._check_iteration(evt, i)
-        #
-        #     if not result:
-        #         try:
-        #             if i <= 1:
-        #                 self.automated_run.plot_panel.counts = 1
-        #             else:
-        #                 self.automated_run.plot_panel.counts += 1
-        #         except AttributeError:
-        #             pass
-        #
-        #         if not self._iter_hook(con, i):
-        #             evt.set()
-        #             return
-        #
-        #         ot = time.time()
-        #         p = self.period_ms * 0.001
-        #         t = Timer(max(0, p - prev), self._iter, args=(con, evt, i + 1,
-        #                                                       time.time() - ot))
-        #
-        #         t.name = 'iter_{}'.format(i + 1)
-        #         t.start()
-        #
-        #     else:
-        #         if result == 'cancel':
-        #             self.canceled = True
-        #         elif result == 'terminate':
-        #             self.terminated = True
-        #
-        #         # self.debug('no more iter')
-        #         evt.set()
+    # def _iter(self, con, evt, i, prev=0):
+    #
+    #     result = self._check_iteration(evt, i)
+    #
+    #     if not result:
+    #         try:
+    #             if i <= 1:
+    #                 self.automated_run.plot_panel.counts = 1
+    #             else:
+    #                 self.automated_run.plot_panel.counts += 1
+    #         except AttributeError:
+    #             pass
+    #
+    #         if not self._iter_hook(con, i):
+    #             evt.set()
+    #             return
+    #
+    #         ot = time.time()
+    #         p = self.period_ms * 0.001
+    #         t = Timer(max(0, p - prev), self._iter, args=(con, evt, i + 1,
+    #                                                       time.time() - ot))
+    #
+    #         t.name = 'iter_{}'.format(i + 1)
+    #         t.start()
+    #
+    #     else:
+    #         if result == 'cancel':
+    #             self.canceled = True
+    #         elif result == 'terminate':
+    #             self.terminated = True
+    #
+    #         # self.debug('no more iter')
+    #         evt.set()

@@ -22,7 +22,6 @@ from pyface.constant import CANCEL, YES, NO
 from pyface.timer.do_later import do_after
 from traits.trait_errors import TraitError
 # ============= standard library imports ========================
-from datetime import datetime
 from threading import Thread, Event as Flag, Lock, currentThread
 from datetime import datetime
 from itertools import groupby
@@ -1605,7 +1604,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     def _pre_execute_check(self, prog=None, inform=True):
         if prog:
             prog.change_message('Checking queue length')
-        
+
         exp = self.experiment_queue
         runs = exp.cleaned_automated_runs
         if not len(runs):
@@ -1619,7 +1618,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                                                 'Required for sending email notifications. '
                                                 'Are you sure you want to continue?'):
                     return
-                
+
         if not self.datahub.secondary_connect():
             if not self.confirmation_dialog(
                     'Not connected to a Mass Spec database. Do you want to continue with pychron only?'):

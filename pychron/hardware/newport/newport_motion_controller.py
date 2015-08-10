@@ -24,7 +24,7 @@ import math
 import cPickle as pickle
 # =============local library imports  ==========================
 from pychron.hardware.core.data_helper import make_bitarray
-from pychron.hardware.motion_controller import MotionController, PositionError, TargetPositionError
+from pychron.hardware.motion_controller import MotionController, TargetPositionError
 from newport_axis import NewportAxis
 from newport_joystick import Joystick
 from newport_group import NewportGroup

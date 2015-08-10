@@ -25,6 +25,9 @@ import datetime
 from uncertainties import ufloat, std_dev, nominal_value
 
 
+
+
+
 # ============= local library imports  ==========================
 from pychron.core.helpers.datetime_tools import make_timef
 from pychron.core.helpers.filetools import add_extension, subdirize
@@ -208,7 +211,7 @@ class DVCAnalysis(Analysis):
         for det, v in jd.iteritems():
             self.set_ic_factor(det, v['value'], v['error'])
 
-    def load_raw_data(self, keys):
+    def load_raw_data(self, keys=None):
         def format_blob(blob):
             return base64.b64decode(blob)
 
@@ -223,7 +226,8 @@ class DVCAnalysis(Analysis):
 
             for sd in signals:
                 isok = sd['isotope']
-
+                if keys and isok not in keys:
+                    continue
                 try:
                     iso = isotopes[isok]
                 except KeyError:
@@ -238,7 +242,7 @@ class DVCAnalysis(Analysis):
 
             for sn in sniffs:
                 isok = sn['isotope']
-                if isok not in keys:
+                if keys and isok not in keys:
                     continue
 
                 try:

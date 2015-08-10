@@ -37,7 +37,7 @@ class MassSpecRecaller(Loggable):
         db = self.db
         with db.session_ctx():
             if 1:
-                labnumber, aliquot, step = 'a-01-O', 1127, ''
+                labnumber, aliquot, step = '4375', 40, ''
 
             dbrec = db.get_analysis(labnumber, aliquot, step)
             if dbrec:

@@ -42,7 +42,7 @@ class DVCPersister(BasePersister):
 
     def per_spec_save(self, pr, experiment_id=None, commit=False, msg_prefix=None):
         self.per_spec = pr
-   
+
         if experiment_id:
             self.initialize(experiment_id, False)
 

@@ -16,8 +16,6 @@
 
 # ============= enthought library imports =======================
 import time
-from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change
-from traitsui.api import View, UItem, Item, HGroup, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.hardware.pychron_device import EthernetDeviceMixin

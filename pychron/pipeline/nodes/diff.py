@@ -23,19 +23,21 @@ from pychron.pipeline.editors.diff_editor import DiffEditor
 
 
 class DiffNode(BaseNode):
+    name = 'Diff'
+
     auto_configure = False
     recaller = Any
 
     def run(self, state):
-        print state.unknowns
         if state.unknowns:
+            self.unknowns = state.unknowns
             self.recaller.connect()
-            editor = DiffEditor(recaller=self.recaller)
-            left = state.unknowns[0]
-
-            if editor.setup(left):
-                # self.manager.load_raw_data(left)
-                editor.set_diff(left)
-                state.editors.append(editor)
+            for left in state.unknowns:
+                editor = DiffEditor(recaller=self.recaller)
+                left.load_raw_data()
+                if editor.setup(left):
+                    # self.manager.load_raw_data(left)
+                    editor.set_diff(left)
+                    state.editors.append(editor)
 
 # ============= EOF =============================================

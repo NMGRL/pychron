@@ -645,8 +645,8 @@ class AutomatedRunFactory(PersistenceLoggable):
             except TraitError, e:
                 self.debug(e)
 
-        # if run.user_defined_aliquot:
-            # self.aliquot = int(run.aliquot)
+                # if run.user_defined_aliquot:
+                # self.aliquot = int(run.aliquot)
 
         for si in SCRIPT_KEYS:
             skey = '{}_script'.format(si)
@@ -1402,7 +1402,7 @@ post_equilibration_script:name''')
     def _edit_script_handler(self, obj, name, new):
         self.debug('name={}, new={}, suppress={}'.format(obj.label, new, self.suppress_update))
         if obj.label == 'Measurement':
-            self.default_fits_enabled = bool(new and new not in (NULL_STR, ))
+            self.default_fits_enabled = bool(new and new not in (NULL_STR,))
 
         if self.edit_mode and not self.suppress_update:
             self._auto_save()
@@ -1537,6 +1537,7 @@ post_equilibration_script:name''')
         self.suppress_update = True
         self.aliquot = 0
         self.suppress_update = False
+
     # @on_trait_change('mass_spectrometer, can_edit')
     # def _update_value(self, name, new):
     #     for si in SCRIPT_NAMES:

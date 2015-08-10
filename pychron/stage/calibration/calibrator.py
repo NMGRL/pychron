@@ -58,6 +58,7 @@ class BaseCalibrator(Loggable):
 
         return View()
 
+
 class LinearCalibrator(BaseCalibrator):
     def handle(self, step, x, y, canvas):
         if step == 'Calibrate':
@@ -81,11 +82,11 @@ class TrayCalibrator(BaseCalibrator):
         if step == 'Calibrate':
             canvas.new_calibration_item()
             return dict(calibration_step='Locate Center')
-        #            return 'Locate Center', None, None, None, 1
+        # return 'Locate Center', None, None, None, 1
         elif step == 'Locate Center':
             canvas.calibration_item.set_center(x, y)
             return dict(calibration_step='Locate Right', cx=x, cy=y)
-        #            return 'Locate Right', x, y, None, 1
+        # return 'Locate Right', x, y, None, 1
         elif step == 'Locate Right':
             canvas.calibration_item.set_right(x, y)
             self.save(canvas.calibration_item)

@@ -424,7 +424,7 @@ class KerrMotor(KerrDevice, ConsumerMixin):
 
             if not self._test_status_byte(status, setbits=[7]):
                 break
-            if self._test_status_byte(status, setbits=[7,hbit]):
+            if self._test_status_byte(status, setbits=[7, hbit]):
                 break
             time.sleep(0.25)
 
@@ -441,7 +441,7 @@ class KerrMotor(KerrDevice, ConsumerMixin):
 
     def _test_status_byte(self, status, setbits):
         b = '{:08b}'.format(int(status[:2], 16))
-        bb = [bool(int(b[7-si])) for si in setbits]
+        bb = [bool(int(b[7 - si])) for si in setbits]
 
         return all(bb)
 

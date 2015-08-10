@@ -61,53 +61,53 @@ HOME_SEARCH_MODES = ['Find +0 Position Count',
                      'Find Negative Limit and Index Signals']
 
 COMMAND_MAP_ORDERED = (('kind', 'QM'),
-               ('units', 'SN'),
-               # ('encoder_resolution', 'SU'),
-               ('encoder_full_step_resolution', 'FR'),
-               ('microstep_factor', 'QS'),
-               ('average_motor_voltage', 'QV'),
-               ('maximum_motor_current', 'QI'),
-               ('gear_constant', 'QG'),
-               ('tachometer_gain', 'QT'),
-               ('software_negative_limit', 'SL'),
-               ('software_positive_limit', 'SR'),
-               ('trajectory_mode', 'TJ'),
-               ('home_search_mode', 'OM'),
-               ('maximum_velocity', 'VU'),
-               ('velocity', 'VA'),
-               ('jog_high_speed', 'JH'),
-               ('jog_low_speed', 'JW'),
-               ('home_search_high_speed', 'OH'),
-               ('home_search_low_speed', 'OL'),
-               ('base_velocity', 'VB'),
-               ('maximum_acceleration_deceleration', 'AU'),
-               ('acceleration', 'AC'),
-               ('deceleration', 'AG'),
-               ('estop_deceleration', 'AE'),
-               ('jerk_rate', 'JK'),
-               ('proportional_gain', 'KP'),
-               ('integral_gain', 'KI'),
-               ('derivative_gain', 'KD'),
-               ('velocity_feed_forward_gain', 'VF'),
-               ('acceleration_feed_forward_gain', 'AF'),
-               ('integral_saturation_level', 'KS'),
-               ('maximum_following_error_threshold', 'FE'),
-               ('position_deadband', 'DB'),
-               ('update_interval', 'CL'),
-               ('reduce_motor_torque_time', 'QR'),
-               ('reduce_motor_torque_percent', 'QR'),
-               ('slave_axis', 'SS'),
-               ('master_slave_reduction_ratio', 'GR'),
-               # ('master_slave_jog_velocity_update', 'SI'),
-               # ('master_slave_jog_velocity_scaling_coefficients', 'SK'),
-               ('backlash_compensation', 'BA'),
-               ('linear_compensation', 'CO'),
-               ('amplifier_io_configuration', 'ZA'),
-               ('feedback_configuration', 'ZB'),
-               ('estop_configuration', 'ZE'),
-               ('following_error_configuration', 'ZF'),
-               ('hardware_limit_configuration', 'ZH'),
-               ('software_limit_configuration', 'ZS'))
+                       ('units', 'SN'),
+                       # ('encoder_resolution', 'SU'),
+                       ('encoder_full_step_resolution', 'FR'),
+                       ('microstep_factor', 'QS'),
+                       ('average_motor_voltage', 'QV'),
+                       ('maximum_motor_current', 'QI'),
+                       ('gear_constant', 'QG'),
+                       ('tachometer_gain', 'QT'),
+                       ('software_negative_limit', 'SL'),
+                       ('software_positive_limit', 'SR'),
+                       ('trajectory_mode', 'TJ'),
+                       ('home_search_mode', 'OM'),
+                       ('maximum_velocity', 'VU'),
+                       ('velocity', 'VA'),
+                       ('jog_high_speed', 'JH'),
+                       ('jog_low_speed', 'JW'),
+                       ('home_search_high_speed', 'OH'),
+                       ('home_search_low_speed', 'OL'),
+                       ('base_velocity', 'VB'),
+                       ('maximum_acceleration_deceleration', 'AU'),
+                       ('acceleration', 'AC'),
+                       ('deceleration', 'AG'),
+                       ('estop_deceleration', 'AE'),
+                       ('jerk_rate', 'JK'),
+                       ('proportional_gain', 'KP'),
+                       ('integral_gain', 'KI'),
+                       ('derivative_gain', 'KD'),
+                       ('velocity_feed_forward_gain', 'VF'),
+                       ('acceleration_feed_forward_gain', 'AF'),
+                       ('integral_saturation_level', 'KS'),
+                       ('maximum_following_error_threshold', 'FE'),
+                       ('position_deadband', 'DB'),
+                       ('update_interval', 'CL'),
+                       ('reduce_motor_torque_time', 'QR'),
+                       ('reduce_motor_torque_percent', 'QR'),
+                       ('slave_axis', 'SS'),
+                       ('master_slave_reduction_ratio', 'GR'),
+                       # ('master_slave_jog_velocity_update', 'SI'),
+                       # ('master_slave_jog_velocity_scaling_coefficients', 'SK'),
+                       ('backlash_compensation', 'BA'),
+                       ('linear_compensation', 'CO'),
+                       ('amplifier_io_configuration', 'ZA'),
+                       ('feedback_configuration', 'ZB'),
+                       ('estop_configuration', 'ZE'),
+                       ('following_error_configuration', 'ZF'),
+                       ('hardware_limit_configuration', 'ZH'),
+                       ('software_limit_configuration', 'ZS'))
 
 COMMAND_MAP = dict(kind='QM',
                  units='SN',
@@ -156,7 +156,7 @@ COMMAND_MAP = dict(kind='QM',
                  estop_configuration='ZE',
                  following_error_configuration='ZF',
                  hardware_limit_configuration='ZH',
-                 software_limit_configuration='ZS')
+                   software_limit_configuration='ZS')
 SIGNS = ['Positive',
          'Negative']
 
@@ -614,7 +614,7 @@ class NewportAxis(Axis):
             cmd = self.parent._build_query(c, xx=self.id)
             result = self.parent.ask(cmd)
             results.add(name, c, result)
-        #            results.append((name, c, cmd, result))
+        # results.append((name, c, cmd, result))
         #        return results
         results.edit_traits()
 
@@ -638,26 +638,26 @@ class NewportAxis(Axis):
 
 
 
-            #            print name
-            #        print 'ca', name, old, new
-            #        print name
-            #        if self.loaded and name not in ['selected', 'text', 'position', 'sign',
-            #
-            #                                        '_velocity', 'velocity',
-            #                                        'load_button'
-            #                                        ]:
-            #            if 'configuration' in name:
-            #                new = '{}H'.fomrat(hex(new)[2:])
-            #
-            #            if name[0] == '_':
-            #                name = name[1:]
-            #                if name == 'trajectory_mode':
-            #                    new += 1
-            #            try:
-            #                com = self.parent._build_command(COMMAND_MAP[name], xx = self.id, nn = new)
-            #                self.parent.tell(com)
-            #            except KeyError, e:
-            #                print self, e
+                #            print name
+                #        print 'ca', name, old, new
+                #        print name
+                #        if self.loaded and name not in ['selected', 'text', 'position', 'sign',
+                #
+                #                                        '_velocity', 'velocity',
+                #                                        'load_button'
+                #                                        ]:
+                #            if 'configuration' in name:
+                #                new = '{}H'.fomrat(hex(new)[2:])
+                #
+                #            if name[0] == '_':
+                #                name = name[1:]
+                #                if name == 'trajectory_mode':
+                #                    new += 1
+                #            try:
+                #                com = self.parent._build_command(COMMAND_MAP[name], xx = self.id, nn = new)
+                #                self.parent.tell(com)
+                #            except KeyError, e:
+                #                print self, e
 
     def save(self):
 
@@ -684,9 +684,9 @@ class NewportAxis(Axis):
                     val = '{:X}'.format(val)
 
                 cp.set(sect, attr, val)
-            #            for items in cp.items(sect):
-            #                print sect, items, hasattr(self, items[0])
-            #                cp.set(sect, key, getattr(self, key))
+                #            for items in cp.items(sect):
+                #                print sect, items, hasattr(self, items[0])
+                #                cp.set(sect, key, getattr(self, key))
 
         with open(self.config_path, 'w') as f:
             cp.write(f)
