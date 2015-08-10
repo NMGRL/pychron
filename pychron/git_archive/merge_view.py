@@ -15,12 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
+
 from traits.api import HasTraits, Button, Str, Any, List
 from traitsui.api import View, UItem, HGroup, VGroup, Controller, TabularEditor
 
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from traitsui.editors import TextEditor
 from traitsui.tabular_adapter import TabularAdapter
 
 
@@ -30,8 +34,8 @@ class Conflict(HasTraits):
 
 class MergeModel(HasTraits):
     conflicts = List
-    left_text = Str
-    right_text = Str
+    our_text = Str
+    their_text = Str
 
     def __init__(self, paths, *args, **kw):
         super(MergeModel, self).__init__(*args, **kw)
@@ -39,12 +43,33 @@ class MergeModel(HasTraits):
 
     def set_conflict(self, c):
         repo = self.repo._repo
-        return
+        ourtext = []
+        theirtext = []
+        with open(os.path.join(self.repo.path, c.path), 'r') as rfile:
+            oflag = False
+            tflag = False
+            for line in rfile:
+                if line.startswith('<<<<<<<'):
+                    oflag = True
 
-        cc = repo.rev_parse(ourhexsha)
-        self.left_text = cc.data_stream.read()
-        cc = repo.rev_parse(theirhexsha)
-        self.right_text = cc.data_stream.read()
+                elif line.strip() == '=======':
+                    oflag = False
+                    tflag = True
+                elif line.startswith('>>>>>>>'):
+                    tflag = False
+                elif oflag:
+                    ourtext.append(line)
+                elif tflag:
+                    theirtext.append(line)
+
+        self.our_text = ''.join(ourtext)
+        self.their_text = ''.join(theirtext)
+
+        # return
+        # cc = repo.rev_parse(ourhexsha)
+        # self.left_text = cc.data_stream.read()
+        # cc = repo.rev_parse(theirhexsha)
+        # self.right_text = cc.data_stream.read()
 
     def accept_their(self, fl=None):
         self._merge_accept(fl, 'theirs')
@@ -69,8 +94,8 @@ class ConflictAdapter(TabularAdapter):
 class MergeView(Controller):
     dclicked = Any
     selected = List
-    accept_their_button = Button('Accept Our')
-    accept_our_button = Button('Accept Their')
+    accept_their_button = Button('Accept Their')
+    accept_our_button = Button('Accept Our')
 
     def controller_accept_their_button_changed(self, info):
         if self.selected:
@@ -95,25 +120,19 @@ class MergeView(Controller):
                       UItem('controller.accept_their_button'),
                       enabled_when='controller.selected')
 
-        v = View(HGroup(cgrp, bgrp))
+        tgrp = HGroup(VGroup(UItem('our_text',
+                                   style='custom',
+                                   editor=TextEditor(read_only=True)),
+                             show_border=True,
+                             label='Our'),
+                      VGroup(UItem('their_text',
+                                   style='custom',
+                                   editor=TextEditor(read_only=True)),
+                             show_border=True,
+                             label='Their'))
 
-        # VGroup(UItem('controller.accept_our_button'),
-        #        UItem('controller.accept_their_button')),
-        #
-        # HGroup(UItem('left_text',
-        #              style='custom',
-        #              editor=TextEditor(read_only=True)),
-        #        UItem('right_text',
-        #              style='custom',
-        #              editor=TextEditor(read_only=True)))))
+        v = View(VGroup(HGroup(cgrp, bgrp),
+                        tgrp))
         return v
-
-
-
-        # mm = MergeModel()
-        #
-        # # mm = repo.merge_model()
-        # mv = MergeView(model=mm)
-        # mv.configure_traits()
 
 # ============= EOF =============================================

@@ -492,6 +492,7 @@ class GitRepoManager(Loggable):
 
     def smart_pull(self, branch='master', remote='origin', accept_our=False, accept_their=False):
         ahead, behind = self.ahead_behind(remote)
+        self.debug('Smart pull ahead:{} behind: {}'.format(ahead, behind))
         repo = self._repo
         if behind:
             if ahead:
@@ -506,6 +507,7 @@ class GitRepoManager(Loggable):
                 # get conflicted files
                 out, err = grep('<<<<<<<', self.path)
                 conflict_paths = [os.path.relpath(x, self.path) for x in out.splitlines()]
+                self.debug('conflict_paths: {}'.format(conflict_paths))
                 if conflict_paths:
                     mm = MergeModel(conflict_paths, repo=self)
                     if accept_our:
@@ -514,7 +516,6 @@ class GitRepoManager(Loggable):
                         mm.accept_their()
                     else:
                         mv = MergeView(model=mm)
-                        # mv.configure_traits()
                         mv.edit_traits()
 
             else:
@@ -712,7 +713,7 @@ class GitRepoManager(Loggable):
 
 if __name__ == '__main__':
     repo = GitRepoManager()
-    repo.open_repo('/Users/ross/Sandbox/mergetest/alocal')
+    repo.open_repo('/Users/ross/Sandbox/mergetest/blocal')
     repo.smart_pull()
 
     # rp = GitRepoManager()
