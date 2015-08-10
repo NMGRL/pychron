@@ -21,12 +21,13 @@ from traits.api import Any, Bool, Tuple
 # ============= standard library imports ========================
 import os
 import cStringIO
-# ============= local library imports  ==========================
-from pychron.envisage.view_util import open_view
-from pychron.paths import paths
-from pychron.lasers.pattern.patternable import Patternable
 import time
 from threading import Thread
+# ============= local library imports  ==========================
+from pychron.envisage.view_util import open_view
+from pychron.hardware.motion_controller import PositionError
+from pychron.paths import paths
+from pychron.lasers.pattern.patternable import Patternable
 
 
 class PeriodCTX:
@@ -179,19 +180,26 @@ class PatternExecutor(Patternable):
             self.info('starting pattern {}'.format(pat.name))
             st = time.time()
             pat.cx, pat.cy = self.controller.x, self.controller.y
-            for ni in xrange(pat.niterations):
-                if not self.isPatterning():
-                    break
+            try:
+                for ni in xrange(pat.niterations):
+                    if not self.isPatterning():
+                        break
 
-                self.info('doing pattern iteration {}'.format(ni))
-                self._execute_iteration()
+                    self.info('doing pattern iteration {}'.format(ni))
+                    self._execute_iteration()
 
-            self.controller.linear_move(pat.cx, pat.cy)
-            if pat.disable_at_end:
-                self.laser_manager.disable_device()
+                self.controller.linear_move(pat.cx, pat.cy)
+                if pat.disable_at_end:
+                    self.laser_manager.disable_device()
+                self.finish()
+                self.info('finished pattern: transit time={:0.1f}s'.format(time.time() - st))
 
-            self.finish()
-            self.info('finished pattern: transit time={:0.1f}s'.format(time.time() - st))
+            except PositionError, e:
+                self.finish()
+                # self.laser_manager.disable_device()
+                self.controller.stop()
+                self.laser_manager.emergency_shutoff(str(e))
+                # self.warning(str(e))
 
     def _execute_iteration(self):
         controller = self.controller
@@ -209,12 +217,12 @@ class PatternExecutor(Patternable):
             elif kind == 'DegasPattern':
                 self._execute_lumen_degas(controller, pattern)
             else:
-                self._execute_points(controller, pattern)
+                self._execute_points(controller, pattern, multipoint=False)
 
     def _execute_points(self, controller, pattern, multipoint=False):
         pts = pattern.points_factory()
         if multipoint:
-            controller.multiple_point_move(pts)
+            controller.multiple_point_move(pts, velocity=pattern.velocity)
         else:
             for x, y in pts:
                 if not self.isPatterning():

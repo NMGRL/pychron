@@ -17,15 +17,9 @@
 # ============= enthought library imports =======================
 from traits.api import Bool
 from pyface.tasks.traits_editor import TraitsEditor
-
-from pychron.loggable import Loggable
-
-
-
-
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.loggable import Loggable
 
 
 def grouped_name(names, delimiter='-'):
@@ -52,12 +46,13 @@ def grouped_name(names, delimiter='-'):
 
 class BaseTraitsEditor(TraitsEditor, Loggable):
     dirty = Bool(False)
-    # save_required = Bool(False)
+    _destroyed = False
 
     def prepare_destroy(self):
         pass
 
     def destroy(self):
+        self._destroyed = True
         self.prepare_destroy()
         super(BaseTraitsEditor, self).destroy()
 

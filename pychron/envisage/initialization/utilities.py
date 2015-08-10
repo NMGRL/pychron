@@ -46,6 +46,7 @@ DESCRIPTION_MAP = {'Experiment': 'Execute sets of automated runs',
                    'ExtractionLine': 'Control extraction line components',
                    'ClientExtractionLine': 'Remotely control extraction line components',
                    'ArgusSpectrometer': 'Thermo ArgusVI plugin',
+                   'NMGRLFurnace': "NMGRL's resistance furnace plugin",
                    'FusionsCO2': 'Photon Machines Fusions CO2',
                    'FusionsDiode': 'Photon Machines Fusions Diode',
                    'FusionsUV': "NMGRL's custom Fusions UV",
@@ -85,6 +86,7 @@ DEFAULT_PLUGINS = (('General', ('Experiment',
                    ('Hardware', ('ArgusSpectrometer',
                                  'ExtractionLine',
                                  'ClientExtractionLine',
+                                 'NMGRLFurnace',
                                  'FusionsCO2',
                                  'FusionsDiode',
                                  'FusionsUV',
@@ -97,6 +99,7 @@ DEFAULT_GLOBALS = (('Use IPC', 'use_ipc'),
                    ('Ignore Initialization Warnings', 'ignore_initialization_warnings'),
                    ('Ignore Initialization Questions', 'ignore_initialization_questions'),
                    ('Ignore Initialization Required', 'ignore_initialization_required'),
+                   ('Ignore Connection Warnings', 'ignore_connection_warnings'),
                    ('Communication Simulation', 'communication_simulation'),
                    ('Dashboard Simulation', 'dashboard_simulation'),)
 
@@ -203,5 +206,3 @@ def get_initialization_model():
     return model
 
 # ============= EOF =============================================
-
-

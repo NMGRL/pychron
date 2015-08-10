@@ -936,7 +936,7 @@ class IsotopeAdapter(DatabaseAdapter):
     def make_gains_hash(self, gains):
         h = hashlib.md5()
 
-        for d, v in gains.items():
+        for d, v in gains.iteritems():
             h.update(d)
             h.update(str(v))
 

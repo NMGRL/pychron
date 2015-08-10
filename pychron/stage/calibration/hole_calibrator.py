@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2011 Jake Ross
+# Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,38 +14,29 @@
 # limitations under the License.
 # ===============================================================================
 
-
-
 # ============= enthought library imports =======================
-# from traitsui.api import View,Item,Group,HGroup,VGroup
-
+from traits.api import Any
 # ============= standard library imports ========================
-
 # ============= local library imports  ==========================
-
-from subsystem import Subsystem
-
-class ArduinoSubsystem(Subsystem):
-    def load_additional_args(self, config):
-        '''
-
-        '''
+from pychron.core.geometry.reference_point import ReferenceHole
+from pychron.stage.calibration.free_calibrator import FreeCalibrator
 
 
+class HoleCalibrator(FreeCalibrator):
+    stage_map = Any
 
-        modules = self.config_get(config, 'General', 'modules')
+    def _get_point(self, sp):
+        smap = self.stage_map
+        vs = [si.id for si in smap.sample_holes]
+        rp = ReferenceHole(sp, valid_holes=vs)
+        info = rp.edit_traits()
+        if info.result:
+            #             refp = rp.x, rp.y
+            hole = rp.hole
+            # get the x,y position for this hole
+            if hole in vs:
+                h = smap.get_hole(hole)
+                refp = h.x, h.y
+                return refp, sp
 
-        if modules is not None:
-            for m in modules.split(','):
-                _class_ = 'Arduino{}'.format(m)
-                gdict = globals()
-                if _class_ in gdict:
-                    module = gdict[_class_](name=_class_,
-                                            configuration_dir_name=self.configuration_dir_name
-                                    )
-                    module.load()
-                    module._communicator = self._communicator
-                    self.modules[m] = module
-        return True
-
-# ============= EOF ====================================
+# ============= EOF =============================================

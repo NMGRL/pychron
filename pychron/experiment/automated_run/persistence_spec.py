@@ -17,6 +17,8 @@
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Int, Bool, Any, Float, \
     Dict, Instance, List, Date, Time, Long
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 

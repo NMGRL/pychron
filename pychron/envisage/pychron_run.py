@@ -62,7 +62,8 @@ PACKAGE_DICT = dict(
     LabBookPlugin='pychron.labbook.tasks.labbook_plugin',
     LabspyClientPlugin='pychron.labspy.tasks.plugin',
     UpdatePlugin='pychron.updater.tasks.update_plugin',
-    ImagePlugin='pychron.image.tasks.image_plugin')
+    ImagePlugin='pychron.image.tasks.image_plugin',
+    NMGRLFurnacePlugin='pychron.furnace.tasks.furnace_plugin')
 
 
 def get_module_name(klass):

@@ -24,15 +24,6 @@ from pyface.file_dialog import FileDialog
 from traits.api import List, Instance, Str, Float, Any, Button, Property, HasTraits
 from traitsui.api import View, Item, TabularEditor, HGroup, UItem, VSplit, Group, VGroup, \
     HSplit
-
-
-
-
-
-
-
-
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter

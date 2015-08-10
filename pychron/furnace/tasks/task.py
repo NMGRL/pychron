@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2014 Jake Ross
+# Copyright 2015 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,22 +15,30 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Button
-from traitsui.api import View, Item
+from pyface.tasks.task_layout import TaskLayout
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.loggable import Loggable
+from pychron.envisage.tasks.base_task import BaseManagerTask
+from pychron.furnace.tasks.panes import FurnacePane
 
 
-class TestBot(Loggable):
-    def run(self):
-        app = self.application
-        for p in app.plugin_manager:
-            if hasattr(p, 'testbot_run'):
-                p.testbot_run()
+class FurnaceTask(BaseManagerTask):
+    id = 'pychron.furnace.task'
+    name = 'Furnace'
 
+    def activated(self):
+        self.manager.activate()
+
+    def prepare_destroy(self):
+        self.manager.prepare_destroy()
+
+    def create_dock_panes(self):
+        return []
+
+    def create_central_pane(self):
+        return FurnacePane(model=self.manager)
+
+    def _default_layout_default(self):
+        return TaskLayout()
 
 # ============= EOF =============================================
-
-
-

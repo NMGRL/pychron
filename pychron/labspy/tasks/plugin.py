@@ -28,7 +28,7 @@ class LabspyClientPlugin(BaseTaskPlugin):
     id = 'pychron.labspy_client.plugin'
 
     def _labspy_client_factory(self, *args, **kw):
-        return LabspyClient()
+        return LabspyClient(application=self.application)
 
     def _service_offers_default(self):
         so = self.service_offer_factory(protocol=LabspyClient,

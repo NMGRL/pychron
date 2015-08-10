@@ -97,6 +97,7 @@ class MetaHandler(MetaHasTraits):
     def __call__(cls, *args, **kw):
         for k, v in FUNC_REGISTRY.items():
             setattr(cls, k, make_wrapper(*v))
+
         return MetaHasTraits.__call__(cls, *args, **kw)
 
 

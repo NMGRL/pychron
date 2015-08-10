@@ -135,7 +135,7 @@ class LabnumberEntry(DVCIrradiationable):
         bind_preference(self, 'j_multiplier',
                         'pychron.entry.j_multiplier')
 
-        bind_preference(self, 'use_dvc', 'pychron.dvc.enabled')
+        # bind_preference(self, 'use_dvc', 'pychron.dvc.enabled')
 
     def activated(self):
         pass
@@ -275,8 +275,8 @@ class LabnumberEntry(DVCIrradiationable):
             return True
 
     def generate_identifiers(self):
-        # self.warning('GENERATE LABNUMBERS DISABLED')
-        # return
+        self.warning('GENERATE LABNUMBERS DISABLED')
+        return
 
         if self.check_monitor_name():
             return
@@ -625,9 +625,6 @@ THIS CHANGE CANNOT BE UNDONE')
                 ir.j_err = dbpos.j_err or 0
                 ir.note = dbpos.note or ''
                 ir.weight = dbpos.weight or 0
-
-                # item = self.canvas.scene.get_item(str(ir.hole))
-                # item.fill = bool(ir.identifier)
 
     def _get_irradiation_editor(self, **kw):
         ie = self._irradiation_editor

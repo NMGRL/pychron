@@ -264,7 +264,7 @@ class ProcessingPlugin(BaseTaskPlugin):
 
     def _browser_model_factory(self):
         return BrowserModel(
-            # manager=self._processor_factory(),
+            manager=self._processor_factory(),
                             application=self.application)
 
     # defaults

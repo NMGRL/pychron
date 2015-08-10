@@ -52,10 +52,11 @@ class DVCPlugin(BaseTaskPlugin):
         self._fetched = True
 
     def _service_offers_default(self):
+        p = {'dvc': self.dvc_factory()}
+        self.debug('DDDDD {}'.format(p))
         so = self.service_offer_factory(protocol=DVCPersister,
                                         factory=DVCPersister,
-                                        properties={'dvc': self.dvc_factory()}
-                                        )
+                                        properties={'dvc': self.dvc_factory()})
         # so1 = self.service_offer_factory(protocol=DVCDatabase,
         # factory=DVCDatabase)
         # so2 = self.service_offer_factory(protocol=MetaRepo,

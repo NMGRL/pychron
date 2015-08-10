@@ -15,11 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from gitdb.util import hex_to_bin
 from traits.api import HasTraits, Str, Bool, Date
 # ============= standard library imports ========================
 from datetime import datetime
 import os
+from git.exc import GitCommandError
+from gitdb.util import hex_to_bin
 from git import Repo, Blob, Diff
 # ============= local library imports  ==========================
 
@@ -67,8 +68,13 @@ def get_commits(repo, branch, path, tag, *args):
     cmd.extend(args)
     if path:
         cmd.extend(['--', path])
+
     proc = repo.git.execute(cmd, as_process=True)
-    proc.wait()
+    try:
+        proc.wait()
+    except GitCommandError:
+        return []
+
     if not proc.returncode:
         return [from_gitlog(l.strip(), path, tag) for l in proc.stdout]
 

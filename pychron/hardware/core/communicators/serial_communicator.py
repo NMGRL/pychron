@@ -65,6 +65,10 @@ class SerialCommunicator(Communicator):
     read_terminator = None
     clear_output = False
 
+    @property
+    def address(self):
+        return self.port
+
     def test_connection(self):
         return self.handle is not None
 

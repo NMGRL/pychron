@@ -18,14 +18,10 @@ from pychron.core.ui import set_qt
 set_qt()
 # ============= enthought library imports =======================
 from math import isnan
-from datetime import datetime
 
+from datetime import datetime
 from traits.api import Instance, Str, Set, List, provides
 from apptools.preferences.preference_binding import bind_preference
-
-
-
-
 
 # ============= standard library imports ========================
 import shutil
@@ -36,7 +32,7 @@ import os
 # ============= local library imports  ==========================
 from uncertainties import nominal_value
 from uncertainties import std_dev
-from pychron.core.IDatastore import IDatastore
+from pychron.core.i_datastore import IDatastore
 from pychron.core.helpers.filetools import remove_extension
 from pychron.core.progress import progress_loader
 from pychron.dvc import jdump
@@ -153,9 +149,11 @@ class DVC(Loggable):
             # self._defaults()
 
     def initialize(self, inform=False):
+        self.debug('Initialize DVC')
         mrepo = self.meta_repo
         root = os.path.join(paths.dvc_dir, self.meta_repo_name)
         if os.path.isdir(os.path.join(root, '.git')):
+            self.debug('Opening Meta Repo')
             mrepo.open_repo(root)
         else:
             url = 'https://github.com/{}/{}.git'.format(self.organization, self.meta_repo_name)
@@ -431,6 +429,12 @@ class DVC(Loggable):
         self.meta_repo.update_chronology(name, doses)
         self.meta_commit('updated chronology for {}'.format(name))
 
+    def meta_pull(self, **kw):
+        self.meta_repo.smart_pull(**kw)
+
+    def meta_push(self):
+        self.meta_repo.push()
+
     def meta_commit(self, msg):
         changes = self.meta_repo.has_staged()
         if changes:
@@ -601,7 +605,7 @@ class DVC(Loggable):
 
                 st = time.time()
                 j, lambda_k = meta_repo.get_flux(record.irradiation, record.irradiation_level,
-                                         record.irradiation_position_position)
+                                                 record.irradiation_position_position)
                 a.j = j
                 if lambda_k:
                     a.arar_constants.lambda_k = lambda_k

@@ -31,7 +31,7 @@ from pychron.core.helpers.datetime_tools import ISO_FORMAT_STR
 from pychron.core.helpers.filetools import list_directory2, ilist_directory2, add_extension
 from pychron.dvc import jdump
 from pychron.git_archive.repo_manager import GitRepoManager
-from pychron.paths import paths
+from pychron.paths import paths, r_mkdir
 from pychron.pychron_constants import INTERFERENCE_KEYS, RATIO_KEYS
 
 
@@ -168,7 +168,7 @@ class Production(MetaObject):
         # return {t: getattr(self, t) for a in keys for t in (a, '{}_err'.format(a))}
 
     def dump(self):
-        with open(self.path, 'w') as wfile:
+        with open(paths.meta_dir, 'w') as wfile:
             for a in self.attrs:
                 row = ','.join(map(str, (a, getattr(self, a), getattr(self, '{}_err'.format(a)))))
                 wfile.write('{}\n'.format(row))
@@ -264,11 +264,11 @@ class MetaRepo(GitRepoManager):
         if self.add_paths(p):
             self.commit('Updated gains')
 
-    def update_script(self, name, path_or_blob):
-        self._update_text('scripts', name, path_or_blob)
+    def update_script(self, rootname, name, path_or_blob):
+        self._update_text(os.path.join('scripts', rootname), name, path_or_blob)
 
-    def update_experiment_queue(self, name, path_or_blob):
-        self._update_text('experiments', name, path_or_blob)
+    def update_experiment_queue(self, rootname, name, path_or_blob):
+        self._update_text(os.path.join('experiments', rootname), name, path_or_blob)
 
     def add_production(self, name, obj, commit=False):
         p = self.get_production(name, force=True)
@@ -474,7 +474,7 @@ class MetaRepo(GitRepoManager):
 
         root = os.path.join(paths.meta_dir, tag)
         if not os.path.isdir(root):
-            os.mkdir(root)
+            r_mkdir(root)
 
         p = os.path.join(root, name)
         # action = 'updated' if os.path.isfile(p) else 'added'

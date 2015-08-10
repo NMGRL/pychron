@@ -17,6 +17,8 @@
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Str
 from traitsui.api import View, UItem
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 class NewBranchView(HasTraits):

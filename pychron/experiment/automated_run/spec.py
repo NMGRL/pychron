@@ -15,24 +15,21 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import hashlib
-import os
-
 from traits.api import Str, Int, Bool, Float, Property, \
     Enum, on_trait_change, CStr, Long, HasTraits
-
-
 # ============= standard library imports ========================
+import hashlib
 from datetime import datetime
 import uuid
 # ============= local library imports  ==========================
-from pychron.core.helpers.filetools import add_extension
+from pychron.core.helpers.filetools import remove_extension
 from pychron.core.helpers.logger_setup import new_logger
 from pychron.experiment.utilities.identifier import get_analysis_type, make_rid, make_runid, is_special, \
     convert_extract_device
 from pychron.experiment.utilities.position_regex import XY_REGEX
 from pychron.paths import paths
 from pychron.pychron_constants import SCRIPT_KEYS, SCRIPT_NAMES, ALPHAS
+
 
 logger = new_logger('AutomatedRunSpec')
 
@@ -42,10 +39,6 @@ class AutomatedRunSpec(HasTraits):
         this class is used to as a simple container and factory for
         an AutomatedRun. the AutomatedRun does the actual work. ie extraction and measurement
     """
-    # shared_logger = True
-
-    #     automated_run = Instance(AutomatedRun)
-    #    state = Property(depends_on='_state')
     state = Enum('not run', 'extraction',
                  'measurement', 'success',
                  'failed', 'truncated', 'canceled',
@@ -251,7 +244,7 @@ class AutomatedRunSpec(HasTraits):
                    ramp_duration=self.ramp_duration)
         return ctx
 
-    def get_estimated_duration(self, script_context, warned, force=False):
+    def get_estimated_duration(self, script_context=None, warned=None, force=False):
         """
             use the pyscripts to calculate etd
 
@@ -298,21 +291,16 @@ class AutomatedRunSpec(HasTraits):
             setattr(self, k, v)
 
         for k, v in params.iteritems():
+            print 'load', hasattr(self, k), k, v
             if hasattr(self, k):
                 setattr(self, k, v)
 
         self._changed = False
 
-    def _remove_mass_spectrometer_name(self, name):
-        if self.mass_spectrometer:
-            name = name.replace('{}_'.format(self.mass_spectrometer.lower()), '')
-        return name
-
-    def _remove_file_extension(self, name, ext='.py'):
-        if name.endswith(ext):
-            name = name[:-3]
-
-        return name
+    # def _remove_mass_spectrometer_name(self, name):
+    #     if self.mass_spectrometer:
+    #         name = name.replace('{}_'.format(self.mass_spectrometer.lower()), '')
+    #     return name
 
     def to_string_attrs(self, attrs):
         def get_attr(attrname):
@@ -324,8 +312,9 @@ class AutomatedRunSpec(HasTraits):
             elif attrname.endswith('script'):
                 # remove mass spectrometer name
                 v = getattr(self, attrname)
-                v = self._remove_mass_spectrometer_name(v)
-                v = self._remove_file_extension(v)
+                # v = self._remove_mass_spectrometer_name(v)
+                v = remove_extension(v)
+
             elif attrname == 'overlap':
                 o, m = self.overlap
                 if m:
@@ -498,14 +487,8 @@ class AutomatedRunSpec(HasTraits):
     @property
     def script_hash(self):
         ctx = self.make_script_context()
-        for k, d in (('measurement', paths.measurement_dir), ('extraction', paths.extraction_dir)):
-            s = getattr(self, '{}_script'.format(k))
-            if s:
-                s = '{}_{}'.format(self.mass_spectrometer.lower(), s)
-                p = os.path.join(d, add_extension(s, '.py'))
-                with open(p, 'r') as rfile:
-                    txt = rfile.read()
-                    ctx[k] = txt
+        ctx['measurement'] = self.measurement_script
+        ctx['extraction'] = self.extraction_script
 
         md5 = hashlib.md5()
         for k, v in sorted(ctx.items()):

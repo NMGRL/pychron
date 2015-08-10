@@ -65,7 +65,6 @@ class DashboardServer(Loggable):
     devices = List
     values = List
     selected_device = Instance(DashboardDevice)
-    # db_manager = Instance(DashboardDBManager, ())
     extraction_line_manager = Instance('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
     clear_button = Button('Clear')
 
@@ -73,7 +72,6 @@ class DashboardServer(Loggable):
     emailer = Instance('pychron.social.emailer.Emailer')
     labspy_client = Instance('pychron.labspy.client.LabspyClient')
 
-    # url = Str
     use_db = False
     _alive = False
 
@@ -85,8 +83,6 @@ class DashboardServer(Loggable):
 
         self.load_devices()
         if self.devices:
-            # if self.use_db:
-            # self.setup_database()
             self.start_poll()
 
     def deactivate(self):
@@ -200,8 +196,7 @@ class DashboardServer(Loggable):
             dd = {'name': name,
                   'device': dname.text.strip(),
                   'enabled': bool(denabled),
-                  'values': vs
-            }
+                  'values': vs}
             yield dd
 
     def _load_devices(self, dev_dicts):
@@ -230,7 +225,134 @@ class DashboardServer(Loggable):
 
         self.devices = ds
 
-    # def _load_devices(self):
+    def _handle_config(self):
+        """
+            called by subscribers requesting the dashboard configuration
+
+            return a pickled dictionary string
+        """
+        config = [pv for dev in self.devices
+                  for pv in dev.values]
+
+        return pickle.dumps(config)
+
+    def _poll(self):
+        if any((v.period == 'on_change' for dev in self.devices for v in dev.values)):
+            mperiod = 1
+        else:
+            mperiod = min((v.period for dev in self.devices for v in dev.values))
+
+        self.debug('min period {}'.format(mperiod))
+        while self._alive:
+            sst = time.time()
+            # self.debug('============= poll iteration start ============')
+            for dev in self.devices:
+                if not dev.use:
+                    continue
+
+                dev.trigger()
+
+            st = time.time()
+            pp = mperiod - (st - sst)
+            if pp >= 3:
+                self.debug('sleeping for {}'.format(pp))
+
+            while self._alive:
+                if time.time() - st >= pp:
+                    break
+                time.sleep(0.1)
+
+            # dur = time.time() - sst
+            # self.debug('============= poll iteration finished dur={:0.1f}============'.format(dur))
+
+    # def _set_error_flag(self, obj, msg):
+    # self.notifier.send_message('error {}'.format(msg))
+
+    def _validate_script(self, script_name):
+        if self.extraction_line_manager:
+            script = self._script_factory(script_name)
+            if script:
+                return script.syntax_ok()
+        else:
+            self.warning('Extraction Line Manager not available. Cannot execute pyscript')
+
+    def _script_factory(self, script_name):
+        if os.path.isfile(os.path.join(paths.extraction_dir, add_extension(script_name, '.py'))):
+            runner = self.application.get_service('pychron.extraction_line.ipyscript_runner.IPyScriptRunner')
+            script = ExtractionPyScript(root=paths.extraction_dir,
+                                        name=script_name,
+                                        manager=self.extraction_line_manager,
+                                        allow_lock=True,
+                                        runner=runner)
+            return script
+
+    def _do_script(self, script_name):
+        self.info('doing script "{}"'.format(script_name))
+        script = self._script_factory(script_name)
+        if script:
+            script.execute()
+
+    def _send_email(self, emails, message):
+        if self.emailer and emails:
+            emails = emails.split(',')
+            self.emailer.send_message(emails, message)
+
+    def _get_device(self, name):
+        return next((di for di in self.devices if di.name == name), None)
+
+    def _update_labspy_device(self, dev, tag, val, units):
+        if self.labspy_client:
+            self.labspy_client.add_measurement(dev, tag, val, units)
+
+    def _update_labspy_error(self, error):
+        if self.labspy_client:
+            self.labspy_client.update_status(error=error)
+
+    # handlers
+    def _clear_button_fired(self):
+        self.info('Clear Dashboard errors')
+        fname = lambda x: 'Warning' if x == WARNING else 'Critical'
+        for d in self.devices:
+            for pv in d.values:
+                if pv.flag:
+                    self.info('clearing {} flag for {}'.format(fname(pv.flag), pv.name))
+                pv.flag = NOERROR
+
+    @on_trait_change('devices:conditional_event')
+    def _handle_conditional(self, obj, name, old, new):
+        action, script, emails, message = new.split('|')
+
+        self.notifier.send_message(message)
+        if action == WARNING:
+            self._send_email(emails, message)
+        elif action == CRITICAL:
+            self.notifier.send_message('error {}'.format(message))
+            self._do_script(script)
+            self._send_email(emails, message)
+
+    @on_trait_change('devices:update_value_event')
+    def _handle_publish(self, obj, name, old, new):
+        self.notifier.send_message('{} {}'.format(*new))
+        self._update_labspy_device(obj.name, *new)
+        # self._update_labspy_devices()
+        # if self.use_db:
+        #     self.db_manager.publish_device(obj)
+
+        # @on_trait_change('devices:error_event')
+        # def _handle_error(self, obj, name, old, new):
+        # self._set_error_flag(obj, new)
+        # self.notifier.send_message(new)
+
+        # @on_trait_change('devices:values:+')
+        # def _value_changed(self, obj, name, old, new):
+        #     if name.startswith('last_'):
+        #         return
+        #
+        #     print obj, name, old, new
+
+
+# ============= EOF =============================================
+ # def _load_devices(self):
     # # read devices from config
     # app = self.application
     #
@@ -323,148 +445,3 @@ class DashboardServer(Loggable):
     #         ds.append(d)
     #
     #     self.devices = ds
-
-    def _handle_config(self):
-        """
-            called by subscribers requesting the dashboard configuration
-
-            return a pickled dictionary string
-        """
-        config = [pv for dev in self.devices
-                  for pv in dev.values]
-
-        return pickle.dumps(config)
-
-    def _poll(self):
-        if any((v.period == 'on_change' for dev in self.devices for v in dev.values)):
-            mperiod = 1
-        else:
-            mperiod = min((v.period for dev in self.devices for v in dev.values))
-        # mperiod = min([v.period for dev in self.devices
-        #                for v in dev.values])
-        # if mperiod == 'on_change':
-        #     mperiod = 1
-
-        self.debug('min period {}'.format(mperiod))
-        while self._alive:
-            sst = time.time()
-            # self.debug('============= poll iteration start ============')
-            for dev in self.devices:
-                if not dev.use:
-                    continue
-
-                dev.trigger()
-
-            st = time.time()
-            pp = mperiod - (st - sst)
-            if pp >= 3:
-                self.debug('sleeping for {}'.format(pp))
-
-            while self._alive:
-                if time.time() - st >= pp:
-                    break
-                time.sleep(0.1)
-            # dur = time.time() - sst
-            # self.debug('============= poll iteration finished dur={:0.1f}============'.format(dur))
-
-    # def _set_error_flag(self, obj, msg):
-    # self.notifier.send_message('error {}'.format(msg))
-
-    def _validate_script(self, script_name):
-        if self.extraction_line_manager:
-            script = self._script_factory(script_name)
-            if script:
-                return script.syntax_ok()
-        else:
-            self.warning('Extraction Line Manager not available. Cannot execute pyscript')
-
-    def _script_factory(self, script_name):
-        if os.path.isfile(os.path.join(paths.extraction_dir, add_extension(script_name, '.py'))):
-            runner = self.application.get_service('pychron.extraction_line.ipyscript_runner.IPyScriptRunner')
-            script = ExtractionPyScript(root=paths.extraction_dir,
-                                        name=script_name,
-                                        manager=self.extraction_line_manager,
-                                        allow_lock=True,
-                                        runner=runner)
-            return script
-
-    def _do_script(self, script_name):
-        self.info('doing script "{}"'.format(script_name))
-        script = self._script_factory(script_name)
-        if script:
-            script.execute()
-
-    def _send_email(self, emails, message):
-        if self.emailer and emails:
-            emails = emails.split(',')
-            self.emailer.send_message(emails, message)
-
-    def _get_device(self, name):
-        return next((di for di in self.devices if di.name == name), None)
-
-    # def _update_labspy_devices(self):
-    # if self.labspy_client:
-    # # a = Dev('pneumatic', ('pressure',), ('torr',))
-    #         # b = Dev('environment',
-    #         #         ('temperature', 'humidity'), ('C', '%'))
-    #         # c = Dev('gauge', ('bone_ig',), ('torr',))
-    #         # d = Dev('gauge', ('microbone_ig',), ('torr',))
-    #         # devs = [self._get_device('AirPressure'),
-    #         #         self._get_device('EnvironmentalMonitor')]
-    #         #
-    #         # self.labspy_client.add_device_post(devs)
-    #         for dev in ('AirPressure',):
-    #             cdev = self._get_device(dev)
-    #             self.labspy_client.add_measurement(cdev)
-    def _update_labspy_device(self, dev, tag, val, units):
-        if self.labspy_client:
-            self.labspy_client.add_measurement(dev, tag, val, units)
-
-    def _update_labspy_error(self, error):
-        if self.labspy_client:
-            self.labspy_client.update_status(error=error)
-
-    # handlers
-    def _clear_button_fired(self):
-        self.info('Clear Dashboard errors')
-        fname = lambda x: 'Warning' if x == WARNING else 'Critical'
-        for d in self.devices:
-            for pv in d.values:
-                if pv.flag:
-                    self.info('clearing {} flag for {}'.format(fname(pv.flag), pv.name))
-                pv.flag = NOERROR
-
-    @on_trait_change('devices:conditional_event')
-    def _handle_conditional(self, obj, name, old, new):
-        action, script, emails, message = new.split('|')
-
-        self.notifier.send_message(message)
-        if action == WARNING:
-            self._send_email(emails, message)
-        elif action == CRITICAL:
-            self.notifier.send_message('error {}'.format(message))
-            self._do_script(script)
-            self._send_email(emails, message)
-
-    @on_trait_change('devices:update_value_event')
-    def _handle_publish(self, obj, name, old, new):
-        self.notifier.send_message('{} {}'.format(*new))
-        self._update_labspy_device(obj.name, *new)
-        # self._update_labspy_devices()
-        # if self.use_db:
-        #     self.db_manager.publish_device(obj)
-
-        # @on_trait_change('devices:error_event')
-        # def _handle_error(self, obj, name, old, new):
-        # self._set_error_flag(obj, new)
-        # self.notifier.send_message(new)
-
-        # @on_trait_change('devices:values:+')
-        # def _value_changed(self, obj, name, old, new):
-        #     if name.startswith('last_'):
-        #         return
-        #
-        #     print obj, name, old, new
-
-
-# ============= EOF =============================================

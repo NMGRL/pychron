@@ -18,7 +18,7 @@
 from traits.api import Color, Instance, DelegatesTo, List, Any, Property
 from traitsui.api import View, Item, UItem, VGroup, HGroup, spring, \
     EnumEditor, Group, Spring, VFold, Label, InstanceEditor, \
-    VSplit, TabularEditor, UReadonly, ListEditor, RangeEditor
+    VSplit, TabularEditor, UReadonly, ListEditor, RangeEditor, Readonly
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traitsui.editors import TableEditor
 from traitsui.table_column import ObjectColumn
@@ -26,6 +26,7 @@ from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.ui.combobox_editor import ComboboxEditor
+from pychron.core.ui.led_editor import LEDEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.experiment.utilities.identifier import SPECIAL_NAMES
 from pychron.pychron_constants import MEASUREMENT_COLOR, EXTRACTION_COLOR, \
@@ -187,10 +188,10 @@ class ExperimentFactoryPane(TraitsDockPane):
             # HGroup(run_factory_item('labnumber',
             # tooltip='Enter a Labnumber',
             # width=100, ),
-            #        run_factory_item('_labnumber', show_label=False,
-            #                         editor=CheckListEditor(name=run_factory_name('labnumbers')),
-            #                         width=-20),
-            #        run_factory_item('aliquot',
+            # run_factory_item('_labnumber', show_label=False,
+            # editor=CheckListEditor(name=run_factory_name('labnumbers')),
+            # width=-20),
+            # run_factory_item('aliquot',
             #                         width=50),
             #        spring),
 
@@ -333,8 +334,8 @@ class WaitPane(TraitsDockPane):
         # def traits_view(self):
         # v = View(
         # UItem('wait_group',
-        #               style='custom'))
-        #     return v
+        # style='custom'))
+        # return v
 
 
 class ConnectionStatusPane(TraitsDockPane):
@@ -356,9 +357,27 @@ class StatsPane(TraitsDockPane):
     name = 'Stats'
 
     def traits_view(self):
-        v = View(
-            UItem('stats', style='custom'))
+        gen_grp = VGroup(Readonly('nruns', width=350, label='Total Runs'),
+                         Readonly('nruns_finished', label='Completed'),
+                         Readonly('total_time'),
+                         Readonly('elapsed'),
+                         Readonly('etf', label='Est. finish'),
+                         show_border=True, label='General')
+        cur_grp = VGroup(Readonly('current_run_duration', ),
+                         Readonly('run_elapsed'),
+                         show_border=True,
+                         label='Current')
+        sel_grp = VGroup(Readonly('start_at'),
+                         Readonly('end_at'),
+                         Readonly('run_duration'),
+
+                         label='Selection', show_border=True)
+        v = View(VGroup(gen_grp, cur_grp, sel_grp))
         return v
+
+        # def traits_view(self):
+        # v = View(UItem('stats', style='custom'))
+        # return v
 
 
 class ControlsPane(TraitsDockPane):
@@ -384,6 +403,7 @@ Quick=   measure_iteration stopped at current step
 
         v = View(
             HGroup(
+                UItem('executing_led', editor=LEDEditor()),
                 spacer(-20),
                 icon_button_editor('start_button',
                                    'start',
@@ -409,14 +429,12 @@ Quick=   measure_iteration stopped at current step
                 UItem('truncate_style',
                       enabled_when='measuring',
                       tooltip=truncate_style_tt),
-                UItem('show_conditionals_button',
-                      # enabled_when='measuring'
-                      ),
+                UItem('show_conditionals_button'),
                 spacer(-75),
                 CustomLabel('extraction_state_label',
                             color_name='extraction_state_color',
                             size=24,
-                            weight='bold')))
+                            weight='bold'), spring))
         return v
 
 

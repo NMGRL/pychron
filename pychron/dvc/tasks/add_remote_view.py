@@ -20,6 +20,7 @@ from traitsui.api import View, UItem
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
+
 class AddRemoteView(HasTraits):
     url = Str('https://github.com/')
     name = 'origin'

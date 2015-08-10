@@ -20,6 +20,8 @@ from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traitsui.api import View, UItem, VGroup, ListStrEditor, TabularEditor, EnumEditor
 from traitsui.tabular_adapter import TabularAdapter
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -42,10 +44,10 @@ class CommitAdapter(TabularAdapter):
     def _get_hexsha_text(self):
         return self.item.hexsha[:8]
 
+
 class RepoCentralPane(TraitsTaskPane):
     def traits_view(self):
-        v = View(VGroup(UItem('selected_repository_name', style='readonly'),
-                        UItem('branch',
+        v = View(VGroup(UItem('branch',
                               editor=EnumEditor(name='branches')),
                         UItem('commits',
                               editor=TabularEditor(adapter=CommitAdapter(),
@@ -58,12 +60,16 @@ class SelectionPane(TraitsDockPane):
     name = 'Repositories'
 
     def traits_view(self):
-        v = View(VGroup(UItem('repository_names',
-                              editor=ListStrEditor(selected='selected_repository_name',
-                                                   editable=False)),
-                        UItem('local_names',
-                              editor=ListStrEditor(selected='selected_local_repository_name',
-                                                   editable=False))))
+        repo_grp = VGroup(UItem('repository_names',
+                                editor=ListStrEditor(selected='selected_repository_name',
+                                                     editable=False)),
+                          show_border=True, label='Repository')
+        local_grp = VGroup(UItem('local_names',
+                                 editor=ListStrEditor(selected='selected_local_repository_name',
+                                                      editable=False)),
+                           show_border=True, label='Local')
+
+        v = View(VGroup(repo_grp, local_grp))
         return v
 
 # ============= EOF =============================================

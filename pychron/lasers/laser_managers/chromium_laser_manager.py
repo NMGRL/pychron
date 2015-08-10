@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import time
 from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change
 from traitsui.api import View, UItem, Item, HGroup, VGroup
 # ============= standard library imports ========================
@@ -24,9 +25,50 @@ from pychron.lasers.laser_managers.base_lase_manager import BaseLaserManager
 
 
 class ChromiumLaserManager(BaseLaserManager, EthernetDeviceMixin):
-    pass
+    def enable_laser(self, **kw):
+        self.ask('laser.enable 1')
+
+    def disable_laser(self):
+        self.ask('laser.enable 0')
+
+    def get_position(self):
+        x, y, z = 0, 0, 0
+        xyz_microns = self.ask('stage.pos?')
+        if xyz_microns:
+            x, y, z = map(lambda v: float(v) / 1000., xyz_microns.split(','))
+
+        return x, y, z
+
+    def _move_to_position(self, pos, *args, **kw):
+        if isinstance(pos, tuple):
+            x, y = pos
+
+        else:
+            x, y = self.stage_manager.get_hole_xy(pos)
+
+        z = self.stage_manager.z
+        xs = 0
+        ys = 0
+        zs = 0
+
+        xm, ym, zm = x * 1000, y * 1000, z * 1000
+        cmd = 'stage.moveto {},{},{},{},{},{}'.format(xm, ym, zm, xs, ys, zs)
+        self.info('sending {}'.format(cmd))
+        self._ask(cmd)
+
+        time.sleep(0.5)
+
+        def cmpfunc(xyz):
+            try:
+                return all(map(lambda a, b: abs(a - b) < 1e5,
+                               zip(map(float, xyz.split(',')),
+                                   (xm, ym, zm))))
+            except ValueError:
+                pass
+
+        r = self._block(cmd='stage.pos?', cmpfunc=cmpfunc)
+
+        self.update_position()
+        return r
 
 # ============= EOF =============================================
-
-
-

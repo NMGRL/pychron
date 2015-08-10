@@ -125,9 +125,9 @@ class Experimentor(DVCIrradiationable):
 
         self.debug('get all runs n={}'.format(len(ans)))
 
-        for qi in self.experiment_queues:
-            aruns = self._get_all_automated_runs([qi])
-            renumber_aliquots(aruns)
+        # for qi in self.experiment_queues:
+            # aruns = self._get_all_automated_runs([qi])
+            # renumber_aliquots(aruns)
 
         self._set_analysis_metadata()
 
@@ -292,10 +292,10 @@ class Experimentor(DVCIrradiationable):
 
             self._set_factory_runs(new)
 
-            if self.executor.is_alive():
-                a = new[-1]
-                if not a.skip:
-                    self.stats.calculate_at(a)
+            # if self.executor.is_alive():
+            a = new[-1]
+            if not a.skip:
+                self.stats.calculate_at(a, at_times=self.executor.is_alive())
                     # self.stats.calculate()
 
     @on_trait_change('experiment_factory:queue_factory:delay_between_analyses')
@@ -311,6 +311,7 @@ class Experimentor(DVCIrradiationable):
 
         rf.suppress_update = True
         rf.set_selected_runs(new)
+        rf.suppress_update = False
 
     def _executor_factory(self):
         e = ExperimentExecutor(

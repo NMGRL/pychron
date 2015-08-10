@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 
 from traits.api import Instance, Bool, Float, Str, \
-    Interface, provides
+    Interface, provides, Long
 # ============= standard library imports ========================
 import binascii
 import os
@@ -217,6 +217,7 @@ class AutomatedRunPersister(BasePersister):
     #. use the ``Datahub`` to save data to databases
 
     """
+    dbexperiment_identifier = Long
     local_lab_db = Instance(LocalLabAdapter)
     datahub = Instance('pychron.experiment.datahub.Datahub')
 
@@ -551,8 +552,8 @@ class AutomatedRunPersister(BasePersister):
                 self.debug('pychron save time= {:0.3f} '.format(pt))
                 # file_log(pt)
 
-        self.debug('$$$$$$$$$$$$$$$ auto_save_detector_ic={}'.format(self.auto_save_detector_ic))
-        if self.auto_save_detector_ic:
+        self.debug('$$$$$$$$$$$$$$$ auto_save_detector_ic={}'.format(self.per_spec.auto_save_detector_ic))
+        if self.per_spec.auto_save_detector_ic:
             try:
                 self._save_detector_ic_csv()
             except BaseException, e:
@@ -811,7 +812,7 @@ class AutomatedRunPersister(BasePersister):
             else:
                 dbpos = db.add_analysis_position(ext, pp)
                 try:
-                    ep = self.extraction_positions[i]
+                    ep = self.per_spec.extraction_positions[i]
                     dbpos.x = ep[0]
                     dbpos.y = ep[1]
                     if len(ep) == 3:
@@ -854,7 +855,8 @@ class AutomatedRunPersister(BasePersister):
                 user = self.per_spec.run_spec.username
                 user = user if user else NULL_STR
 
-                self.info('{} adding detector intercalibration history for {}'.format(user, self.per_spec.run_spec.runid))
+                self.info(
+                    '{} adding detector intercalibration history for {}'.format(user, self.per_spec.run_spec.runid))
 
                 if history is None:
                     history = db.add_detector_intercalibration_history(analysis,
@@ -930,7 +932,8 @@ class AutomatedRunPersister(BasePersister):
         if ms.add_analysis(exp):
             self.info('analysis added to mass spec database')
         else:
-            self.secondary_database_fail = 'Could not save {} to Mass Spec database'.format(self.per_spec.run_spec.runid)
+            self.secondary_database_fail = 'Could not save {} to Mass Spec database'.format(
+                self.per_spec.run_spec.runid)
 
     def _export_spec_factory(self):
         # dc = self.collector
@@ -981,7 +984,6 @@ class AutomatedRunPersister(BasePersister):
     def _local_db_save(self):
         ldb = self._local_lab_db_factory()
         with ldb.session_ctx():
-
             spec = self.per_spec.run_spec
             ln = spec.labnumber
             aliquot = spec.aliquot

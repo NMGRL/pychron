@@ -21,7 +21,7 @@ SPECTROMETER_PROTOCOL = 'pychron.spectrometer.base_spectrometer_manager.BaseSpec
 ION_OPTICS_PROTOCOL = 'pychron.spectrometer.ion_optics_manager.IonOpticsManager'
 SCAN_PROTOCOL = 'pychron.spectrometer.scan_manager.ScanManager'
 EL_PROTOCOL = 'pychron.extraction_line.extraction_line_manager.ExtractionLineManager'
-
+DVC_PROTOCOL = 'pychron.dvc.dvc.DVC'
 
 PLUSMINUS = u'\u00b1'
 try:

@@ -800,6 +800,7 @@ class CheckboxRenderer(TableDelegate):
         return style.sizeFromContents(QtGui.QStyle.CT_CheckBox, box,
                                       QtCore.QSize(), None)
 
+
 # monkey patch CheckboxColumn
 checkbox_renderer.CheckboxRenderer = CheckboxRenderer
 

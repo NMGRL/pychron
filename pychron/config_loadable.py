@@ -120,6 +120,16 @@ class ConfigLoadable(ConfigMixin):
     """
     """
 
+    def update_configuration(self, **kw):
+        config = self.get_configuration()
+        for section, options in kw.iteritems():
+            if not config.has_section(section):
+                config.add_section(section)
+
+            for option, value in options.iteritems():
+                config.set(section, option, value)
+        self.write_configuration(config)
+
     def bootstrap(self, *args, **kw):
         """
         """

@@ -505,11 +505,15 @@ class Spectrometer(SpectrometerDevice):
         """
         data = self.get_intensities()
         if data is not None:
+
             keys, signals = data
+            func = lambda k: signals[keys.index(k)] if key in keys else 0
+
             if isinstance(dkeys, (tuple, list)):
-                return [signals[keys.index(key)] for key in dkeys]
+                return [func(key) for key in dkeys]
             else:
-                return signals[keys.index(dkeys)]
+                return func(dkeys)
+                # return signals[keys.index(dkeys)] if dkeys in keys else 0
 
     def get_hv_correction(self, dac, uncorrect=False, current=False):
         """

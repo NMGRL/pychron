@@ -33,17 +33,19 @@ class ConsumerMixin(object):
     _buftime = 0
     _consumer = None
     _timeout = 0
+    _delay = 0
 
-    def __init__(self, func=None, buftime=None, auto_start=True, main=False, timeout=None):
-        self.setup_consumer(func, buftime, auto_start, main, timeout)
+    def __init__(self, func=None, buftime=None, auto_start=True, main=False, timeout=None, delay=1):
+        self.setup_consumer(func, buftime, auto_start, main, timeout, delay)
 
-    def setup_consumer(self, func=None, buftime=None, auto_start=True, main=False, timeout=None):
+    def setup_consumer(self, func=None, buftime=None, auto_start=True, main=False, timeout=None, delay=1):
+        self._delay = delay  # ms
         self._consume_func = func
         self._main = main
         self._buftime = buftime  # ms
         self._consumer_queue = Queue()
         self._consumer = Thread(target=self._consume,
-                                args=(timeout, ),
+                                args=(timeout,),
                                 name='consumer')
         self._timeout = timeout
         self._should_consume = True
@@ -65,7 +67,7 @@ class ConsumerMixin(object):
         self._should_consume = True
         if not self._consumer:
             self._consumer = Thread(target=self._consume,
-                                    args=(self._timeout, ),
+                                    args=(self._timeout,),
                                     name='consumer')
         if not self._consumer.isAlive():
             self._consumer.setDaemon(1)
@@ -88,7 +90,7 @@ class ConsumerMixin(object):
     def _consume(self, timeout):
         bt = self._buftime
         if bt:
-            bt /= 1000.
+            bt *= 1e-3
 
             def get_func():
                 q = self._consumer_queue
@@ -102,6 +104,8 @@ class ConsumerMixin(object):
         else:
             def get_func():
                 try:
+                    if self._consumer_queue is None:
+                        print self
                     return self._consumer_queue.get(timeout=1)
                 except Empty:
                     return
@@ -109,7 +113,10 @@ class ConsumerMixin(object):
         cfunc = self._consume_func
 
         st = time.time()
+        d = self._delay * 1e-3
         while self._should_consume:
+            if d:
+                time.sleep(d)
             if timeout:
                 if time.time() - st > timeout:
                     self._should_consume = False
@@ -135,7 +142,7 @@ class ConsumerMixin(object):
                             kw = {}
 
                         if not isinstance(args, tuple):
-                            args = (args, )
+                            args = (args,)
 
                         if self._main:
                             from pychron.core.ui.gui import invoke_in_main_thread
@@ -171,6 +178,5 @@ class consumable(object):
 
         self._consumer = None
         self._func = None
-
 
 # ============= EOF =============================================

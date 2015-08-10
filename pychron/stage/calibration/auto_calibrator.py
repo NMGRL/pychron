@@ -19,17 +19,17 @@
 # ============= local library imports  ==========================
 import time
 
-from pychron.lasers.stage_managers.calibration.calibrator import TrayCalibrator
+from pychron.stage.calibration.calibrator import TrayCalibrator
 
 
 class SemiautoCalibrator(TrayCalibrator):
-    '''
+    """
         1a. user move to center
          b. record position
         2a. user move to right
          b. record position
         3. traverse holes finding autocenter position
-    '''
+    """
 
     _alive = False
 
@@ -47,11 +47,11 @@ class SemiautoCalibrator(TrayCalibrator):
 #            return 'Calibrate', None, None, None, None
 
     def _traverse(self, holes):
-        '''
-            visit each hole in holes 
+        """
+            visit each hole in holes
             record autocenter position
             warn user about failures
-        '''
+        """
         sm = self.stage_manager
 
         for hi in holes:
@@ -74,11 +74,12 @@ class SemiautoCalibrator(TrayCalibrator):
     def isAlive(self):
         return self._alive
 
+
 class AutoCalibrator(TrayCalibrator):
-    '''
+    """
         1a. move to center position automatically
          b. autocenter
         2a. move to right position automatically
          b. autocenter
-    '''
+    """
 # ============= EOF =============================================

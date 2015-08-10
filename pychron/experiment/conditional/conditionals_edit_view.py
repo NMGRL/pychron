@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from pychron.core.helpers.formatting import floatfmt
 from pychron.core.ui import set_qt
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.resources import icon
@@ -46,10 +47,14 @@ class BaseConditionalsAdapter(TabularAdapter):
     level_text = Property
     tripped_text = Property
     tripped_image = Property
+    value_text = Property
 
     def get_bg_color(self, obj, trait, row, column=0):
         item = getattr(obj, trait)[row]
         return level_color(item.level)
+
+    def _get_value_text(self):
+        return floatfmt(self.item.value)
 
     def _get_level_text(self):
         return level_text(self.item.level)

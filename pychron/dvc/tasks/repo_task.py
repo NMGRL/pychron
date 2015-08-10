@@ -25,7 +25,7 @@ from git import Repo
 import os
 # ============= local library imports  ==========================
 from pychron.core.progress import open_progress
-from pychron.dvc.tasks.actions import CloneAction, AddBranchAction, CheckoutBranchAction, PushAction
+from pychron.dvc.tasks.actions import CloneAction, AddBranchAction, CheckoutBranchAction, PushAction, PullAction
 from pychron.dvc.tasks.panes import RepoCentralPane, SelectionPane
 from pychron.envisage.tasks.base_task import BaseTask
 # from pychron.git_archive.history import from_gitlog
@@ -48,8 +48,9 @@ class ExperimentRepoTask(BaseTask):
     tool_bars = [SToolBar(CloneAction(),
                           AddBranchAction(),
                           CheckoutBranchAction(),
-                          PushAction()
-                          )]
+                          PushAction(),
+                          
+                          PullAction())]
 
     commits = List
     _repo = None
@@ -74,6 +75,9 @@ class ExperimentRepoTask(BaseTask):
                 ns.append(i)
 
         self.local_names = ns
+
+    def pull(self):
+        self._repo.smart_pull(quiet=False)
 
     def push(self):
         if not self._repo.has_remote():
@@ -136,7 +140,7 @@ class ExperimentRepoTask(BaseTask):
     def _selected_local_repository_name_changed(self, new):
         if new:
             root = os.path.join(paths.experiment_dataset_dir, new)
-            print root, new, os.path.isdir(root)
+            # print root, new, os.path.isdir(root)
             if os.path.isdir(root):
                 repo = GitRepoManager()
                 repo.open_repo(root)

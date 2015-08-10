@@ -46,7 +46,7 @@ class ViewableDevice(ConfigLoadable):
 
     display_address = Property
 
-    _communicator = None
+    communicator = None
 
     def get_control_group(self):
         pass
@@ -105,10 +105,10 @@ class ViewableDevice(ConfigLoadable):
         self._reinitialize()
 
     def _get_display_address(self):
-        if hasattr(self._communicator, 'host'):
-            return self._communicator.host
+        if hasattr(self.communicator, 'host'):
+            return self.communicator.host
         elif hasattr(self, 'port'):
-            return self._communicator.port
+            return self.communicator.port
 
         return ''
 
@@ -126,15 +126,15 @@ class ViewableDevice(ConfigLoadable):
         return self.__class__.__name__
 
     def _get_com_class(self):
-        if self._communicator:
-            return self._communicator.__class__.__name__
+        if self.communicator:
+            return self.communicator.__class__.__name__
 
     def _get_connected(self):
         return 'Yes' if not self._get_simulation() else 'No'
 
     def _get_simulation(self):
-        if self._communicator is not None:
-            return self._communicator.simulation
+        if self.communicator is not None:
+            return self.communicator.simulation
         else:
             return True
 

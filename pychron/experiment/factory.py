@@ -272,7 +272,7 @@ queue_conditionals_name, experiment_identifier]''')
 
         self.run_factory.remote_patterns = self._get_patterns(ed)
         self.run_factory.setup_files()
-        self.run_factory.set_mass_spectrometer(self.mass_spectrometer)
+        # self.run_factory.set_mass_spectrometer(self.mass_spectrometer)
 
         if self._load_persistence_flag:
             self.run_factory.load()

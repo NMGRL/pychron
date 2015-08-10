@@ -29,19 +29,20 @@ from pychron.dvc.dvc_analysis import META_ATTRS, EXTRACTION_ATTRS, analysis_path
 from pychron.experiment.automated_run.persistence import BasePersister
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths
+from pychron.pychron_constants import DVC_PROTOCOL
 
 
-def format_project(project):
+def format_experiment_identifier(project):
     return project.replace('/', '_').replace('\\', '_')
 
 
 class DVCPersister(BasePersister):
     experiment_repo = Instance(GitRepoManager)
-    dvc = Instance('pychron.dvc.dvc.DVC')
+    dvc = Instance(DVC_PROTOCOL)
 
     def per_spec_save(self, pr, experiment_id=None, commit=False, msg_prefix=None):
         self.per_spec = pr
-
+   
         if experiment_id:
             self.initialize(experiment_id, False)
 
@@ -63,7 +64,7 @@ class DVCPersister(BasePersister):
 
         self.dvc.initialize()
 
-        experiment = format_project(experiment)
+        experiment = format_experiment_identifier(experiment)
         self.experiment_repo = repo = GitRepoManager()
 
         root = os.path.join(paths.experiment_dataset_dir, experiment)
@@ -180,12 +181,18 @@ class DVCPersister(BasePersister):
                 self.debug('not at valid file {}'.format(p))
 
         if commit:
+            self.experiment_repo.smart_pull(accept_their=True)
+            
             # commit files
             self.experiment_repo.commit('added analysis {}'.format(self.per_spec.run_spec.runid))
+
+            # update meta
+            self.dvc.meta_pull(accept_our=True)
+
             self.dvc.meta_commit('repo updated for analysis {}'.format(self.per_spec.run_spec.runid))
 
             # push commit
-            self.dvc.synchronize(pull=False)
+            self.dvc.meta_push()
 
     # private
     def _save_analysis_db(self, timestamp):
@@ -319,10 +326,13 @@ class DVCPersister(BasePersister):
         obj.update(**kw)
 
         # save the scripts
+        ms = self.per_spec.run_spec.mass_spectrometer
         for si in ('measurement', 'extraction'):
             name = getattr(self.per_spec, '{}_name'.format(si))
             blob = getattr(self.per_spec, '{}_blob'.format(si))
             self.dvc.update_script(name, blob)
+
+            self.dvc.meta_repo.update_script(ms, blob)
 
         # save experiment
         self.dvc.update_experiment_queue(self.per_spec.experiment_queue_name,

@@ -16,12 +16,11 @@
 
 # ============= enthought library imports =======================
 from traits.api import Int, on_trait_change, Str, Property, cached_property, \
-    Float, Bool, HasTraits, Instance, TraitError, Button, List
-from traitsui.api import View, Item, EnumEditor, VGroup, HGroup
+    Float, Bool, HasTraits, Instance, TraitError, Button, List, Enum
+from traitsui.api import View, Item, EnumEditor, VGroup, HGroup, CheckListEditor
 # ============= standard library imports ========================
 import os
 import ast
-from traitsui.editors import ListEditor, CheckListEditor
 import yaml
 # ============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
@@ -29,6 +28,7 @@ from pychron.core.helpers.filetools import list_directory2
 from pychron.core.ui.qt.combobox_editor import ComboboxEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.paths import paths
+from pychron.pychron_constants import QTEGRA_INTEGRATION_TIMES
 from pychron.pyscripts.context_editors.context_editor import ContextEditor
 from pychron.pyscripts.hops_editor import HopEditorModel, HopEditorView
 
@@ -90,6 +90,7 @@ class PeakCenter(IsotopeDetectorObject):
     before = Bool
     after = Bool
     detectors = List
+    integration_time = Enum(QTEGRA_INTEGRATION_TIMES)
 
 
 class Equilibration(YamlObject):
@@ -105,6 +106,8 @@ class PeakHop(YamlObject):
     name = 'peakhop'
     use_peak_hop = Bool
     hops_name = Str
+    ncycles = Int
+    generate_ic_table = Bool
 
 
 class MeasurementContextEditor(ContextEditor):
@@ -222,6 +225,7 @@ class MeasurementContextEditor(ContextEditor):
                                Item('object.multicollect.detector',
                                     editor=ComboboxEditor(name='available_detectors'))),
                         Item('object.multicollect.counts'),
+                        enabled_when='not object.peakhop.use_peak_hop',
                         show_border=True, label='Multicollect')
 
         bs_grp = VGroup(HGroup(Item('object.baseline.mass'),
@@ -240,6 +244,7 @@ class MeasurementContextEditor(ContextEditor):
                    Item('object.peakcenter.detector',
                         label='Det.',
                         editor=ComboboxEditor(name='available_detectors'))),
+            Item('object.peakcenter.integration_time'),
             HGroup(Item('object.peakcenter.before'),
                    Item('object.peakcenter.after')),
             Item('object.peakcenter.detectors', style='custom',
@@ -257,6 +262,8 @@ class MeasurementContextEditor(ContextEditor):
                              label='Duration'),
                         show_border=True, label='Equilibration')
         ph_grp = VGroup(Item('object.peakhop.use_peak_hop'),
+                        Item('object.peakhop.ncycles'),
+                        Item('object.peakhop.generate_ic_table'),
                         HGroup(Item('object.peakhop.hops_name',
                                     label='Hops',
                                     editor=EnumEditor(name='available_hops')),
@@ -271,7 +278,7 @@ class MeasurementContextEditor(ContextEditor):
 
         # using VFold causing crash. just use VGroup for now
         # v = View(VFold(gen_grp, mc_grp, bs_grp, pc_grp, eq_grp, ph_grp))
-        v = View(VGroup(gen_grp, mc_grp, bs_grp, pc_grp, eq_grp, ph_grp))
+        v = View(VGroup(gen_grp, ph_grp, mc_grp, bs_grp, pc_grp, eq_grp))
         return v
 
 # ============= EOF =============================================

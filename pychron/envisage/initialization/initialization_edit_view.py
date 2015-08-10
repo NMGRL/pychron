@@ -16,7 +16,6 @@
 
 # ============= enthought library imports =======================
 from pyface.constant import YES
-from pyface.timer.do_later import do_after
 from traits.api import HasTraits, Str, List, Event, Instance, Dict, Button
 from pyface.confirmation_dialog import confirm
 from pyface.action.menu_manager import MenuManager
@@ -28,7 +27,6 @@ import os
 import pickle
 # ============= local library imports  ==========================
 from pychron.core.ui.tree_editor import TreeEditor
-from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.initialization.nodes import Plugin, PluginTree, PluginTreeNode, GlobalsTreeNode, GlobalTree, \
     InitializationModel, PackageTreeNode, GlobalValue, BaseNode
 from pychron.envisage.initialization.utilities import DESCRIPTION_MAP, get_initialization_model, NOMINAL_DEFAULTS, \

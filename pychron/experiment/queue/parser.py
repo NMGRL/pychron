@@ -106,28 +106,12 @@ class RunParser(Loggable):
 
     def _load_booleans(self, header, args, params):
 
-        for attr in [
-            'autocenter',
-            'use_cdd_warming',
-            ('disable_between_positions', 'dis_btw_pos')]:
+        for attr in ['autocenter',
+                     'use_cdd_warming',
+                     ('disable_between_positions', 'dis_btw_pos')]:
             v = self._get_attr_value(header, args, attr, cast=lambda x: to_bool(x.strip()))
             if v is not None:
                 params[v[0]] = v[1]
-
-                #     def _validate_truncate_condition(self, t):
-                #         if t.endswith('.yaml'):
-                #             return True
-                #
-                #         try:
-                #             c, start = t.split(',')
-                #             pat = '<=|>=|[<>=]'
-                #             attr, value = re.split(pat, c)
-                #             m = re.search(pat, c)
-                #             comp = m.group(0)
-                # #             self.py_add_truncation(attr, comp, value, int(start))
-                #             return True
-                #         except Exception, e:
-                #             self.debug('truncate_condition parse failed {} {}'.format(e, t))
 
     def _get_attr(self, attr):
         if isinstance(attr, tuple):

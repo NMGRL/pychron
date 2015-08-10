@@ -156,17 +156,18 @@ class NameView(HasTraits):
         return self.name
 
 
+class ExperimentRecordView(NameView):
+    pass
+
+
 class ProjectRecordView(RecordView, NameView):
+    name = Str
 
     def _create(self, dbrecord):
         if not isinstance(dbrecord, str):
             self.name = dbrecord.name
         else:
             self.name = dbrecord
-
-
-class ExperimentRecordView(NameView):
-    pass
 
 
 class AnalysisGroupRecordView(RecordView):

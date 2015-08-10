@@ -49,6 +49,7 @@ class BaseLaserTask(BaseHardwareTask):
 
 
 class FusionsTask(BaseLaserTask):
+
     def _default_layout_default(self):
         return TaskLayout(left=PaneItem('{}.stage'.format(self.id)),
                           top=Splitter(PaneItem('{}.control'.format(self.id),
@@ -61,6 +62,10 @@ class FusionsTask(BaseLaserTask):
     # ===============================================================================
     # action handlers
     # ===============================================================================
+    def show_motion_configure(self):
+        if self.manager:
+            self.manager.show_motion_controller_manager()
+
     def open_power_calibration(self):
         if self.manager:
             pc = self.manager.power_calibration_manager

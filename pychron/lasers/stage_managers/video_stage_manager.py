@@ -247,9 +247,9 @@ class VideoStageManager(StageManager):
 
         # if self.use_video_server:
         #            self.video_server.stop()
-        if self._stage_maps:
-            for s in self._stage_maps:
-                s.dump_correction_file()
+        # if self._stage_maps:
+        #     for s in self._stage_maps:
+        #         s.dump_correction_file()
 
         self.clean_video_archive()
 
@@ -402,7 +402,7 @@ class VideoStageManager(StageManager):
     def _autocenter(self, holenum=None, ntries=1, save=False, use_interpolation=False):
         rpos = None
         interp = False
-        sm = self._stage_map
+        sm = self.stage_map
 
         if self.autocenter_manager.use_autocenter:
             time.sleep(0.75)
@@ -413,7 +413,7 @@ class VideoStageManager(StageManager):
                     self.stage_controller.x,
                     self.stage_controller.y,
                     holenum,
-                    dim=self._stage_map.g_dimension)
+                    dim=self.stage_map.g_dimension)
 
                 if rpos:
                     self.linear_move(*rpos, block=True,

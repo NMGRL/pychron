@@ -17,12 +17,17 @@
 # ============= enthought library imports =======================
 from traits.api import Any, Dict, List, provides
 # ============= standard library imports ========================
-from threading import Event, Lock
+from threading import _Event, Lock
 # ============= local library imports  ==========================
 from pychron.core.helpers.logger_setup import logging_setup
 from pychron.extraction_line.ipyscript_runner import IPyScriptRunner
 from pychron.loggable import Loggable
 from pychron.hardware.core.communicators.ethernet_communicator import EthernetCommunicator
+
+
+class LocalResource(_Event):
+    def read(self, *args, **kw):
+        return self.is_set()
 
 
 @provides(IPyScriptRunner)
@@ -49,7 +54,7 @@ class PyScriptRunner(Loggable):
             return r
 
     def _get_resource(self, name):
-        return Event()
+        return LocalResource()
 
         # def traits_view(self):
         #
@@ -108,11 +113,13 @@ class RemoteResource(object):
 class RemotePyScriptRunner(PyScriptRunner):
     handle = None
 
-    def __init__(self, host, port, kind, *args, **kw):
+    def __init__(self, host, port, kind, frame, *args, **kw):
         super(RemotePyScriptRunner, self).__init__(*args, **kw)
         self.kind = kind
         self.port = port
         self.host = host
+        self.frame = frame
+
         self.handle = self._handle_factory()
 
     def reset_connection(self):
@@ -128,7 +135,7 @@ class RemotePyScriptRunner(PyScriptRunner):
         handle.host = self.host
         handle.port = self.port
         handle.kind = self.kind
-        handle.message_frame = 'L4,-,C4'
+        handle.message_frame = self.frame
         return handle
 
     def _get_resource(self, name):

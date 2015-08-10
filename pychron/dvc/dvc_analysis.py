@@ -18,14 +18,14 @@
 # ============= standard library imports ========================
 import base64
 import os
-
 import time
+import json
 
-# ============= local library imports  ==========================
 import datetime
 from uncertainties import ufloat, std_dev, nominal_value
-# import yaml
-import json
+
+
+# ============= local library imports  ==========================
 from pychron.core.helpers.datetime_tools import make_timef
 from pychron.core.helpers.filetools import add_extension, subdirize
 from pychron.core.helpers.iterfuncs import partition
@@ -127,81 +127,41 @@ class DVCAnalysis(Analysis):
     def __init__(self, record_id, experiment_id, *args, **kw):
         super(DVCAnalysis, self).__init__(*args, **kw)
         self.record_id = record_id
-        # print record_id, experiment_id
         path = analysis_path(record_id, experiment_id)
         self.experiment_identifier = experiment_id
-        # self.irradiation='NM-272'
-        # self.irradiation_level = 'A'
-        # self.irradiation_position = 2
         self.rundate = datetime.datetime.now()
-
-
         root = os.path.dirname(path)
         bname = os.path.basename(path)
         head, ext = os.path.splitext(bname)
-        # st=time.time()
         with open(os.path.join(root, 'extraction', '{}.extr{}'.format(head, ext))) as rfile:
-            yd = json.load(rfile)
+            jd = json.load(rfile)
             for attr in EXTRACTION_ATTRS:
                 tag = attr
                 if attr == 'cleanup_duration':
-                    if attr not in yd:
+                    if attr not in jd:
                         tag = 'cleanup'
                 elif attr == 'extract_duration':
-                    if attr not in yd:
+                    if attr not in jd:
                         tag = 'duration'
-                # tag = attr
-                # if attr == 'cleanup':
-                #     tag = 'cleanup_duration'
-                # elif attr == 'duration':
-                #     tag = 'extract_duration'
 
-                v = yd.get(tag)
-                # print attr, tag, v
+                v = jd.get(tag)
                 if v is not None:
                     setattr(self, attr, v)
-        # print '  extraction {}'.format(time.time()-st)
-        # st=time.time()
+
         with open(path, 'r') as rfile:
-            # sst =time.time()
-
-            yd = json.load(rfile)
-            # print '    load {}'.format(time.time()-sst)
-
-            # sst =time.time()
+            jd = json.load(rfile)
             for attr in META_ATTRS:
-                v = yd.get(attr)
+                v = jd.get(attr)
                 if v is not None:
-                    # print attr, v
                     setattr(self, attr, v)
-            # print '    attr {}'.format(time.time()-sst)
 
-            # sst=time.time()
             try:
-                self.rundate = datetime.datetime.strptime(yd['timestamp'], '%Y-%m-%dT%H:%M:%S')
+                self.rundate = datetime.datetime.strptime(jd['timestamp'], '%Y-%m-%dT%H:%M:%S')
             except ValueError:
-                self.rundate = datetime.datetime.strptime(yd['timestamp'], '%Y-%m-%dT%H:%M:%S.%f')
+                self.rundate = datetime.datetime.strptime(jd['timestamp'], '%Y-%m-%dT%H:%M:%S.%f')
 
-            self.collection_version = yd['collection_version']
-            # print '    timestamps {}'.format(time.time()-sst)
-            # sst=time.time()
-            self._set_isotopes(yd)
-
-            # print '    isotopes {}'.format(time.time()-sst)
-
-            # try:
-            #     self.source_parameters = yd['source']
-            # except KeyError:
-            #     pass
-            # print '  meta {}'.format(time.time()-st)
-
-            # st=time.time()
-            # with open(analysis_path(record_id, experiment_id, modifier='changeable', extension='.json')) as rfile:
-            # sst=time.time()
-            # yd = json.load(rfile)
-            # print '    load time {}'.format(time.time()-sst)
-            # self._set_changeables(yd)
-            # print '  changeables {}'.format(time.time()-st)
+            self.collection_version = jd['collection_version']
+            self._set_isotopes(jd)
 
         self.timestamp = make_timef(self.rundate)
 
@@ -244,13 +204,6 @@ class DVCAnalysis(Analysis):
                                                           iterations=v.get('iterations', 0),
                                                           std_devs=v.get('std_devs', 0))
 
-                    # self.set_ic_factor(det, v['value'], v['error'])
-                    # if iso in self.isotopes:
-                    #     i = self.isotopes[iso]
-                    #     i.baseline.value = v['value']
-                    #     i.baseline.error = v['error']
-                    #     i.baseline.set_fit(v['fit'])
-
     def _load_icfactors(self, jd):
         for det, v in jd.iteritems():
             self.set_ic_factor(det, v['value'], v['error'])
@@ -258,25 +211,18 @@ class DVCAnalysis(Analysis):
     def load_raw_data(self, keys):
         def format_blob(blob):
             return base64.b64decode(blob)
-            # return unhexlify(base64.b64decode(blob))
 
         path = self._analysis_path(modifier='.data')
         isotopes = self.isotopes
-        # isos = [i for i in isotopes.itervalues() if i.name in keys and not i.xs.shape[0]]
-        # if not isos:
-        #     return
 
         with open(path, 'r') as rfile:
-            yd = json.load(rfile)
-            signals = yd['signals']
-            baselines = yd['baselines']
-            sniffs = yd['sniffs']
+            jd = json.load(rfile)
+            signals = jd['signals']
+            baselines = jd['baselines']
+            sniffs = jd['sniffs']
 
-            # isotopes = self.isotopes
             for sd in signals:
                 isok = sd['isotope']
-                # if isok not in keys:
-                #     continue
 
                 try:
                     iso = isotopes[isok]
@@ -292,7 +238,6 @@ class DVCAnalysis(Analysis):
 
             for sn in sniffs:
                 isok = sn['isotope']
-                # print isok, keys
                 if isok not in keys:
                     continue
 
@@ -323,13 +268,6 @@ class DVCAnalysis(Analysis):
         self.chron_dosages = doses
         self.calculate_decay_factors()
 
-        # age = 10 + 0.4 - random.random()
-        # age_err = random.random()
-        # self.age = age
-        # self.age_err = age_err
-        # self.uage = ufloat(age, age_err)
-        # self.uage_wo_j_err = ufloat(age, age_err_wo_j)
-
     def set_fits(self, fitobjs):
         isos = self.isotopes
         for fi in fitobjs:
@@ -359,7 +297,7 @@ class DVCAnalysis(Analysis):
 
         # save intercepts
         if isoks:
-            isos, path = self._get_yd('intercepts')
+            isos, path = self._get_json('intercepts')
             for k in isoks:
                 try:
                     iso = isos[k]
@@ -372,7 +310,7 @@ class DVCAnalysis(Analysis):
 
         # save baselines
         if dks:
-            baselines, path = self._get_yd('baselines')
+            baselines, path = self._get_json('baselines')
             for di in dks:
                 try:
                     det = baselines[di]
@@ -382,33 +320,18 @@ class DVCAnalysis(Analysis):
 
                 bs = next((iso.baseline for iso in sisos.itervalues() if iso.detector == di), None)
                 update(det, bs)
-                # det.update(fit=bs.fit, value=float(bs.value), error=float(bs.error))
 
             self._dump(baselines, path)
 
-            # for k in keys:
-            #     if k in isos and k in sisos:
-            #         iso = isos[k]
-            #         siso = sisos[k]
-            #         iso['fit'] = siso.fit
-            #         iso['value'] = float(siso.value)
-            #         iso['error'] = float(siso.error)
-            #         isos[k] = iso
-
     def dump_blanks(self, keys, refs):
-        isos, path = self._get_yd('blanks')
+        isos, path = self._get_json('blanks')
         sisos = self.isotopes
-        # isos = yd['isotopes']
-        # print keys
+
         for k in keys:
-            # print k, k in isos,  k in sisos
             if k in isos and k in sisos:
                 blank = isos[k]
                 siso = sisos[k]
-                # print siso.temporary_blank
                 if siso.temporary_blank is not None:
-                    # blank = iso.get('blank', {})
-                    # print blank, float(siso.temporary_blank.value)
                     blank['value'] = v = float(siso.temporary_blank.value)
                     blank['error'] = e = float(siso.temporary_blank.error)
                     blank['fit'] = f = siso.temporary_blank.fit
@@ -418,142 +341,47 @@ class DVCAnalysis(Analysis):
                     siso.blank.value = v
                     siso.blank.error = e
                     siso.blank.fit = f
-                    # iso['blank'] = blank
 
         self._dump(isos, path)
 
     def dump_icfactors(self, dkeys, fits, refs):
-        yd, path = self._get_yd('icfactors')
-        # print 'fasf', dkeys, fits
-        # dets = yd.get('detectors', {})
+        jd, path = self._get_json('icfactors')
+
         for dk, fi in zip(dkeys, fits):
             v = self.temporary_ic_factors.get(dk)
             if v is None:
                 v, e = 1, 0
             else:
                 v, e = nominal_value(v), std_dev(v)
-            # print dk, fi
-            yd[dk] = {'value': float(v), 'error': float(e),
+
+            jd[dk] = {'value': float(v), 'error': float(e),
                       'fit': fi,
                       'references': make_ref_list(refs)}
-            # det = dets.get(dk, {})
-            # icf = det.get('ic_factor', {})
-            # icf['ic_factor'] = float(v)
-            # icf['ic_factor_err'] = float(e)
-            # icf['fit'] = fi
-            # icf['references'] = make_ref_list(refs)
-            # det['ic_factor'] = icf
 
-            # dets[dk] = det
-
-        # yd['detectors'] = dets
-        self._dump(yd, path)
+        self._dump(jd, path)
 
     def make_path(self, modifier):
         return self._analysis_path(modifier=modifier)
 
-    # def get_commits(self, tag, path):
-    #     from pychron.git_archive.utils import get_commits
-    #     repo = Repo(os.path.join(paths.experiment_dataset_dir, self.experiment_id))
-    #
-    #     return get_commits(repo, repo.active_branch.name, path,
-    #                        '--grep={}'.format(tag))
-    #
-    # def get_tag_commits(self, tag):
-    #     path = self._analysis_path(modifier='tag')
-    #     return self.get_commits(tag, path)
-    #
-    # def get_tag_diff(self):
-    #     path = self._analysis_path(modifier='tag')
-
-    # private
-    # def _get_repo(self,):
-    #     if not repo:
-    #         repo = Repo(os.path.join(paths.experiment_dataset_dir, self.experiment_id))
-    #         self._repo = repo
-    #     return repo
-
-    # def _set_changeables(self, yd):
-    #     isos = yd.get('isotopes')
-    #     if not isos:
-    #         return
-    #
-    #     dets = yd.get('detectors')
-    #     if not dets:
-    #         return
-    #
-    #     isotopes = self.isotopes
-    #     for k, v in isos.iteritems():
-    #         try:
-    #             iso = isotopes[k]
-    #         except KeyError, e:
-    #             print e
-    #             continue
-    #
-    #         if iso:
-    #             iso.set_fit(v.get('fit'))
-    #             b = v.get('blank')
-    #             if b:
-    #                 iso.blank.value = b['value']
-    #                 iso.blank.error = b['error']
-    #
-    #             r = v.get('raw_intercept')
-    #             if r:
-    #                 iso.value = r['value']
-    #                 iso.error = r['error']
-    #
-    #             det = dets.get(iso.detector)
-    #             if det:
-    #                 bs = det['baseline']
-    #                 if bs:
-    #                     iso.baseline.value = bs['value']
-    #                     iso.baseline.error = bs['error']
-    #                     iso.baseline.set_fit(bs['fit'])
-    #
-    #                 ic = det['ic_factor']
-    #                 if ic:
-    #                     self.set_ic_factor(iso.detector, ic['value'], ic['error'])
-
-    def _get_yd(self, modifier):
+    def _get_json(self, modifier):
         path = self._analysis_path(modifier=modifier)
-        # path = analysis_path(self.record_id, self.experiment_id, modifier=modifier)
         with open(path, 'r') as rfile:
-            yd = json.load(rfile)
-        return yd, path
+            jd = json.load(rfile)
+        return jd, path
 
-    def _set_isotopes(self, yd):
-        isos = yd.get('isotopes')
+    def _set_isotopes(self, jd):
+        isos = jd.get('isotopes')
         if not isos:
             return
 
         isos = {k: Isotope(k, v['detector']) for k, v in isos.iteritems()}
-        # baselines = yd.get('baselines')
-        # for iso in isos:
         self.isotopes = isos
-
-        # self.isotopes = {k: TIsotope(k, v['detector']) for k,v in isos.iteritems()}
-        # nisos = {}
-        # for k, v in isos.items():
-        # bsc = v['baseline_corrected']
-        # raw = v['raw_intercept']
-        # detname = v['detector']
-        # TIsotope(k, detname)
-        # self.isotopes[k] = TIsotope(k, detname)
-        # self.isotopes[k] = Isotope(name=k,
-        #                            detector=detname)
-        # _value=raw['value'],
-        # _error=raw['error']
-        # )
-        # if detname not in self.deflections:
-        # self.deflections[detname] = det['deflection']
 
     def _dump(self, obj, path=None, modifier=None):
         if path is None:
             path = self._analysis_path(modifier)
 
         jdump(obj, path)
-        # with open(path, 'w') as wfile:
-        #     json.dump(obj, wfile, indent=4)
 
     def _analysis_path(self, experiment_id=None, modifier=None, mode='r', extension='.json'):
         if experiment_id is None:

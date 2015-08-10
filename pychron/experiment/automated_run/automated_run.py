@@ -113,7 +113,7 @@ class AutomatedRun(Loggable):
     multi_collector = Instance('pychron.experiment.automated_run.multi_collector.MultiCollector')
     peak_hop_collector = Instance('pychron.experiment.automated_run.peak_hop_collector.PeakHopCollector')
     persister = Instance('pychron.experiment.automated_run.persistence.AutomatedRunPersister', ())
-    dvc_persister = Instance('pychron.dvc.dvc_persister.DVCPersister', ())
+    dvc_persister = Instance('pychron.dvc.dvc_persister.DVCPersister')
 
     xls_persister = Instance('pychron.experiment.automated_run.persistence.ExcelPersister')
     # system_health = Instance('pychron.experiment.health.series.SystemHealthSeries')
@@ -144,7 +144,7 @@ class AutomatedRun(Loggable):
     measuring = Bool(False)
     dirty = Bool(False)
     update = Event
-    use_dvc = Bool(False)
+    use_dvc_persistence = Bool(False)
 
     measurement_script = Instance('pychron.pyscripts.measurement_pyscript.MeasurementPyScript')
     post_measurement_script = Instance('pychron.pyscripts.extraction_line_pyscript.ExtractionPyScript')
@@ -198,7 +198,7 @@ class AutomatedRun(Loggable):
                 p.per_spec = self.persistence_spec
 
     def _persister_action(self, func, *args, **kw):
-        # getattr(self.persister, func)(*args, **kw)
+        getattr(self.persister, func)(*args, **kw)
         for i, p in enumerate((self.xls_persister, self.dvc_persister)):
             if p is None:
                 continue
@@ -505,7 +505,8 @@ class AutomatedRun(Loggable):
 
         return ret
 
-    def py_peak_center(self, detector=None, save=True, isotope=None, check_intensity=True, **kw):
+    def py_peak_center(self, detector=None, save=True, isotope=None, check_intensity=True,
+                       directions='Increase', **kw):
         if not self._alive:
             return
 
@@ -536,14 +537,15 @@ class AutomatedRun(Loggable):
             pc = ion.setup_peak_center(detector=[detector] + ad,
                                        plot_panel=self.plot_panel,
                                        isotope=isotope,
+                                       directions=directions,
                                        **kw)
             self.peak_center = pc
-            self.debug('do peak center')
+            self.debug('do peak center. {}'.format(pc))
 
             ion.do_peak_center(new_thread=False, save=save, message='automated run peakcenter', timeout=300)
-
-            if pc.result:
-                self._persister_action('save_peak_center_to_file', pc)
+            self._update_persister_spec(peak_center=pc)
+            # if pc.result:
+            #     self._persister_action('save_peak_center_to_file', pc)
                 # self.persister.save_peak_center_to_file(pc)
 
     def py_coincidence_scan(self):
@@ -590,6 +592,7 @@ class AutomatedRun(Loggable):
         self._conditional_appender('truncation', kw, TruncationConditional)
 
     def py_clear_conditionals(self):
+        self.debug('$$$$$ Clearing conditionals')
         self.py_clear_terminations()
         self.py_clear_truncations()
         self.py_clear_actions()
@@ -623,9 +626,9 @@ class AutomatedRun(Loggable):
         self.collector.canceled = True
 
         # self.aliquot='##'
-        # self.persister.save_enabled = False
-        # if self.use_dvc:
-        self.dvc_persister.save_enabled = False
+        self.persister.save_enabled = False
+        if self.use_dvc_persistence:
+            self.dvc_persister.save_enabled = False
 
         for s in ('extraction', 'measurement'):
             script = getattr(self, '{}_script'.format(s))
@@ -678,7 +681,7 @@ class AutomatedRun(Loggable):
         if self.measurement_script:
             self.measurement_script.automated_run = None
 
-        self.py_clear_conditionals()
+            # self.py_clear_conditionals()
 
     def finish(self):
 
@@ -848,6 +851,12 @@ class AutomatedRun(Loggable):
             # save to database
             self._persister_action('post_measurement_save')
             # self.persister.post_measurement_save()
+
+            # save analysis. don't cancel immediately
+            ret = None
+            if self.system_health:
+                ret = self.system_health.add_analysis(self)
+
             if self.persister.secondary_database_fail:
                 self.cancel(cancel_run=True,
                             msg=self.persister.secondary_database_fail)
@@ -1067,8 +1076,8 @@ class AutomatedRun(Loggable):
             self.info_color = None
 
             self._measured = True
-            return self.post_measurement_save()
-
+            # return self.post_measurement_save()
+            return True
         else:
             if use_post_on_fail:
                 self.do_post_equilibration()
@@ -1709,6 +1718,7 @@ anaylsis_type={}
                         # do we need to cancel the experiment or will the subsequent pre run
                         # checks sufficient to catch spectrometer communication errors.
                         self.cancel_run(state='failed')
+                        yield None
                 else:
                     # reset the counter
                     cnt = 0
@@ -1853,6 +1863,10 @@ anaylsis_type={}
         if m.terminated:
             self.debug('measurement terminated')
             self.cancel_run()
+        if m.canceled:
+            self.debug('measurement collection canceled')
+            self.cancel_run()
+            self.experiment_executor.cancel(confirm=False, err=m.err_message)
 
         return not m.canceled
 

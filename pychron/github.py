@@ -103,7 +103,6 @@ if __name__ == '__main__':
         usr = rfile.readline().strip()
         pwd = rfile.readline().strip()
     # print get_organization_repositiories('NMGRL')
-    # create_organization_repository('NMGRL', 'test', 'jirhiker', 'jross4039')
     org = Organization('NMGRLData', usr, pwd)
     print org.repos, len(org.repos)
     # print org.create_repo('test2', auto_init=True)

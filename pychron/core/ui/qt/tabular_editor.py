@@ -256,6 +256,10 @@ class _TableView(TableView):
             else:
                 data = [di for _, di in data]
                 with no_update(self._editor.object):
+                    for i, di in enumerate(reversed(data)):
+                        if isinstance(di, tuple):
+                            di = di[1]
+                        model.insertRow(row=row, obj=df(di))
 
                     for i, di in enumerate(reversed(df(data))):
                         model.insertRow(row=row, obj=di)

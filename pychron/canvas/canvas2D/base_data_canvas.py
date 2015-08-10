@@ -33,6 +33,7 @@ class BaseDataCanvas(DataView):
     #    border_visible = True
     # use_backbuffer = True
     #    bgcolor = 'lightblue'
+    unified_draw = True
     x_range = Tuple
     y_range = Tuple
     view_x_range = Tuple
@@ -147,7 +148,6 @@ class BaseDataCanvas(DataView):
         self.x_grid.visible = self.show_grids
         self.y_grid.visible = self.show_grids
 
-
     @on_trait_change('view_x_range')
     def _update_xrange(self):
         self.set_mapper_limits('x', self.view_x_range)
@@ -241,13 +241,17 @@ class BaseDataCanvas(DataView):
         gc.line_to(*p2)
         gc.draw_path()
 
-    def _draw_hook(self, gc, *args, **kw):
-        """
-        """
-        pass
+        # def _draw_underlay(self, gc, *args, **kw):
+        #     """
+        #     """
+        #     pass
+        #
+        # def _draw_underlay(self, *args, **kw):
+        #     super(BaseDataCanvas, self)._draw_underlay(*args, **kw)
+        #     self._draw_hook(*args, **kw)
 
         # def draw(self, *args, **kw):
-        # """
+        #     """
         #     """
         #
         #     super(BaseDataCanvas, self).draw(*args, **kw)

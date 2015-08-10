@@ -197,7 +197,7 @@ class ArgusSpectrometerManager(BaseSpectrometerManager):
 
         #    def _spectrometer_microcontroller_default(self):
 
-# return ArgusController()
+#        return ArgusController()
 
 if __name__ == '__main__':
     from pychron.core.helpers.logger_setup import logging_setup

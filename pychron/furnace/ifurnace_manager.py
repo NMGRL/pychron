@@ -15,13 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change
-from traitsui.api import View, UItem, Item, HGroup, VGroup
+from traits.api import Interface
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
 
+class IFurnaceManager(Interface):
+    
+    def set_setpoint(self, v):
+        pass
+
+    def read_setpoint(self, force=False):
+        pass
+
 # ============= EOF =============================================
-
-
-

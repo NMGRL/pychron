@@ -25,7 +25,7 @@ import os
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import list_directory2
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
-from pychron.envisage.tasks.list_actions import PatternAction
+from pychron.envisage.tasks.list_actions import PatternAction, ShowMotionConfigureAction
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.envisage.initialization.initialization_parser import InitializationParser
 from pychron.paths import paths
@@ -63,8 +63,7 @@ class CoreLaserPlugin(BaseTaskPlugin):
 
 
 class BaseLaserPlugin(BaseTaskPlugin):
-    MANAGERS = 'pychron.hardware.managers'
-
+    managers = List(contributes_to='pychron.hardware.managers')
     klass = None
     # name = None
 
@@ -117,8 +116,6 @@ class BaseLaserPlugin(BaseTaskPlugin):
 
         return m
 
-    managers = List(contributes_to=MANAGERS)
-
     def _managers_default(self):
         """
         """
@@ -132,7 +129,7 @@ class BaseLaserPlugin(BaseTaskPlugin):
         return d
 
     def _get_manager(self):
-        print 'get manager', self.name
+        # print 'get manager', self.name
         return self.application.get_service(ILaserManager, 'name=="{}"'.format(self.name))
 
         # def execute_pattern(self, name):
@@ -195,7 +192,8 @@ class FusionsPlugin(BaseLaserPlugin):
 
         exts = [TaskExtension(actions=actions)]
 
-        actions = []
+        actions = [SchemaAddition(factory=ShowMotionConfigureAction,
+                                  path='MenuBar/laser.menu')]
         for f in list_directory2(paths.pattern_dir, extension='.lp', remove_extension=True):
             actions.append(SchemaAddition(id='pattern.{}'.format(f),
                                           factory=pattern_action(f, self.application, self.name),

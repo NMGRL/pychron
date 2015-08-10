@@ -117,7 +117,7 @@ class FusionsLogicBoard(CoreDevice):
             resp = True if self.ask(';LB.VER') else False
 
         #        resp = self._disable_laser_()
-        if self._communicator.handle is None or resp is not True:
+        if self.communicator.handle is None or resp is not True:
             if not globalv.ignore_initialization_warnings:
             #                    warning(None, 'Laser not connected. Power cycle USB hub.')
                 result = self.confirmation_dialog('Laser not connected. To reconnect select "Yes", '

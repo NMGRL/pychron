@@ -56,6 +56,12 @@ class PushAction(LocalRepositoryAction):
     image = icon('arrow_up')
 
 
+class PullAction(LocalRepositoryAction):
+    name = 'Pull'
+    method = 'pull'
+    image = icon('arrow_down')
+
+
 class PullAnalysesAction(Action):
     name = 'Pull Analyses'
     image = icon('arrow_down')

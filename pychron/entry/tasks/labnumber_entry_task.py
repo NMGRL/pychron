@@ -100,7 +100,7 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
             gm.srcpath = p
             # gm.xmlpath=p
             # p = make_xml(p,
-            #              default_radius=radius,
+            # default_radius=radius,
             #              default_bounds=bounds,
             #              convert_mm=convert_mm,
             #              use_label=use_label,
@@ -156,7 +156,7 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
 
     def import_sample_from_file(self):
         # path = self.open_file_dialog(default_directory=paths.root_dir,
-        #                              wildcard='*.xls')
+        # wildcard='*.xls')
         path = '/Users/ross/Desktop/sample_import.xls'
         if path:
             from pychron.entry.loaders.xls_sample_loader import XLSSampleLoader

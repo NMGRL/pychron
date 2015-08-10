@@ -22,7 +22,6 @@ HW_PACKAGE_MAP = {
     'CommandProcessor': 'pychron.messaging.command_processor',
     'RemoteCommandServer': 'pychron.messaging.remote_command_server',
 
-    'ArduinoSubsystem': 'pychron.hardware.subsystems.arduino_subsystem',
     'DPi32TemperatureMonitor': 'pychron.hardware.temperature_monitor',
     'SwitchController': 'pychron.hardware.actuators.switch_controller',
     'AnalogPowerMeter': 'pychron.hardware.analog_power_meter',
@@ -45,10 +44,10 @@ HW_PACKAGE_MAP = {
     'PychronPneumatics': 'pychron.hardware.pneumatics',
     'PychronChiller': 'pychron.hardware.pychron_chiller',
 
-    #'RemoteThermoRack': 'pychron.hardware.remote.thermorack',
+    # 'RemoteThermoRack': 'pychron.hardware.remote.thermorack',
     'RemoteNewportMotionController': 'pychron.hardware.remote.newport_motion_controller',
 
-    'TempHumMicroServer':'pychron.hardware.environmental_probe',
-    'AirTransducer':'pychron.hardware.transducer'
+    'TempHumMicroServer': 'pychron.hardware.environmental_probe',
+    'AirTransducer': 'pychron.hardware.transducer'
     # 'ControlModule': 'pychron.hardware.fusions.vue_diode_control_module'
 }

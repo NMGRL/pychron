@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from difflib import ndiff
+
 from traits.api import HasTraits, Float, Enum, List, Int, \
     File, Property, Button, on_trait_change, Any, Event, cached_property
 from traits.trait_errors import TraitError
@@ -22,15 +24,17 @@ from traitsui.api import View, UItem, HGroup, Item, spring, EnumEditor
 from pyface.file_dialog import FileDialog
 from pyface.constant import OK
 from traitsui.tabular_adapter import TabularAdapter
+
 # ============= standard library imports ========================
 import csv
 import os
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import list_directory
 from pychron.core.ui.tabular_editor import myTabularEditor
-from pychron.paths import paths
 from pychron.viewable import Viewable
 from pychron.pychron_constants import alphas
+
+
 # paths.build('_experiment')
 # build_directories(paths)
 
@@ -92,7 +96,7 @@ class IncrementalHeatStep(HasTraits):
         return ','.join(map(str, self.make_row()))
 
 
-#    def _get_is_ok(self):
+# def _get_is_ok(self):
 #        return self.value and (self.duration or self.cleanup)
 
 
@@ -204,32 +208,44 @@ class IncrementalHeatTemplate(Viewable):
             self.steps.append(step)
 
     def _calculate_similarity(self, template2):
-        n = max(len(self.steps), len(template2.steps))
-        A = 1
-        B = 1
-        C = 1
+        with open(self.path, 'r') as rfile:
+            s1 = rfile.read()
+
+        with open(template2.path, 'r') as rfile:
+            s2 = rfile.read()
+
         e = 0
-        for i in range(n):
-            try:
-                tt1 = self.steps[i]
-                d1 = tt1.duration
-                c1 = tt1.cleanup
-                T1 = tt1.value
-            except IndexError:
-                d1, T1, c1 = 0, 0, 0
+        diff = ndiff(s1.splitlines(), s2.splitlines())
+        for line in diff:
+            if line[0] in ('+', '-'):
+                e += 1
 
-            try:
-                tt2 = template2.steps[i]
-                d2 = tt2.duration
-                c2 = tt1.cleanup
-                T2 = tt2.value
-            except IndexError:
-                d2, T2, c2 = 0, 0, 0
-
-            a = A * (d1 - d2) ** 2
-            b = B * (T1 - T2) ** 2
-            c = C * (c1 - c2) ** 2
-            e += (a + b + c) ** 0.5
+        # n = max(len(self.steps), len(template2.steps))
+        # A = 1
+        # B = 1
+        # C = 1
+        # e = 0
+        # for i in range(n):
+        #     try:
+        #         tt1 = self.steps[i]
+        #         d1 = tt1.duration
+        #         c1 = tt1.cleanup
+        #         T1 = tt1.value
+        #     except IndexError:
+        #         d1, T1, c1 = 0, 0, 0
+        #
+        #     try:
+        #         tt2 = template2.steps[i]
+        #         d2 = tt2.duration
+        #         c2 = tt2.cleanup
+        #         T2 = tt2.value
+        #     except IndexError:
+        #         d2, T2, c2 = 0, 0, 0
+        #
+        #     a = A * (d1 - d2) ** 2
+        #     b = B * (T1 - T2) ** 2
+        #     c = C * (c1 - c2) ** 2
+        #     e += (a + b + c) ** 0.5
 
         return e
 
@@ -241,7 +257,14 @@ class IncrementalHeatTemplate(Viewable):
                 continue
 
             t = IncrementalHeatTemplate()
-            t.load(os.path.join(paths.incremental_heat_template_dir, ti))
+            p = os.path.join(paths.incremental_heat_template_dir, ti)
+            try:
+                t.load(p)
+            except BaseException:
+                self.debug('invalid template {}. removing this file'.format(p))
+                os.remove(p)
+                continue
+
             e = self._calculate_similarity(t)
             if e < 10:
                 sims.append(ti)
@@ -250,8 +273,8 @@ class IncrementalHeatTemplate(Viewable):
     def _save_button_fired(self):
         sims = self._check_similarity()
         if sims:
-            if not self.confirmation_dialog('Similar templates already exist. {}\n '
-                                            'Are you sure you want to save this template?'.format(','.join(sims))):
+            if not self.confirmation_dialog('Similar templates already exist. \n{}\n'
+                                            'Are you sure you want to save this template?'.format('\n'.join(sims))):
                 return
 
         self.dump(self.path)
@@ -314,9 +337,12 @@ class IncrementalHeatTemplate(Viewable):
 
 
 if __name__ == '__main__':
+    from pychron.paths import paths
+
+    paths.build('_dev')
     im = IncrementalHeatTemplate()
     im.load(os.path.join(paths.incremental_heat_template_dir,
-                         'asdf.txt'
+                         'a.txt'
                          ))
 
     #    for i in range(10):

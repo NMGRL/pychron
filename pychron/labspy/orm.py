@@ -15,11 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, BLOB, func
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, func, Boolean
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.orm import relationship
-from traits.api import HasTraits, Button
-from traitsui.api import View, Item
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -29,88 +27,117 @@ stringcolumn = lambda w=80, **kw: Column(String(w), **kw)
 
 
 class BaseMixin(object):
+    id = Column(Integer, primary_key=True)
     @declared_attr
     def __tablename__(self):
         return self.__name__
 
 
-class Version(Base, BaseMixin):
-    VersionID = Column(Integer, primary_key=True)
+class StatusMixin(object):
+    id = Column(Integer, primary_key=True)
+
+    @declared_attr
+    def __tablename__(self):
+        return 'status_{}'.format(self.__name__.lower())
 
 
-class Device(Base, BaseMixin):
-    DeviceID = Column(Integer, primary_key=True)
-    Name = stringcolumn()
+class Device(Base, StatusMixin):
+    name = stringcolumn()
     processes = relationship('ProcessInfo', backref='device')
 
 
-class ProcessInfo(Base, BaseMixin):
-    ProcessInfoID = Column(Integer, primary_key=True)
-    Name = stringcolumn()
-    Units = stringcolumn()
-    DeviceID = Column(Integer, ForeignKey('Device.DeviceID'))
+class ProcessInfo(Base, StatusMixin):
+    name = stringcolumn()
+    units = stringcolumn()
+    device_id = Column(Integer, ForeignKey('status_device.id'))
     measurements = relationship('Measurement', backref='process')
 
 
-class Measurement(Base, BaseMixin):
-    MeasureID = Column(Integer, primary_key=True)
-    Value = Column(Float(32))
-    ProcessInfoID = Column(Integer, ForeignKey('ProcessInfo.ProcessInfoID'))
+class Measurement(Base, StatusMixin):
+    value = Column(Float(32))
+    process_info_id = Column(Integer, ForeignKey('status_processinfo.id'))
+    pub_date = Column(DateTime, default=func.now())
+
+
+class Connections(Base, StatusMixin):
+    appname = stringcolumn()
+    username = stringcolumn()
+    devname = stringcolumn()
+    com = stringcolumn()
+    address = stringcolumn()
+    status = Column(Boolean)
+    timestamp = Column(DateTime)
+
+
+class Version(Base):
+    __tablename__ = 'django_migrations'
+
+    id = Column(Integer, primary_key=True)
+    app = stringcolumn()
+    name = stringcolumn()
+
+
+# Experiment klasses
+class Analysis(Base, BaseMixin):
+    experiment_id = Column(Integer, ForeignKey('Experiment.id'))
+    runid = stringcolumn()
+    start_time = Column(DateTime)
+    analysis_type = stringcolumn()
 
 
 class Experiment(Base, BaseMixin):
-    ExpID = Column(Integer, primary_key=True)
-    Name = stringcolumn()
-    Spectrometer = stringcolumn()
-    ExtractionDevice = stringcolumn()
-    StartTime = Column(DateTime)
-    EndTime = Column(DateTime)
-    State = stringcolumn(default='Running')
-    LastUpdate = Column(DateTime, default=func.now())
-    User = stringcolumn()
+    name = stringcolumn()
+    system = stringcolumn()
+    user = stringcolumn()
+    start_time = Column(DateTime)
+    state = stringcolumn()
+    # ExpID = Column(Integer, primary_key=True)
+    # ExtractionDevice = stringcolumn()
+    # StartTime = Column(DateTime)
+    # EndTime = Column(DateTime)
+    # State = stringcolumn(default='Running')
+    # LastUpdate = Column(DateTime, default=func.now())
+    # User = stringcolumn()
 
-    HashID = stringcolumn()
+    # HashID = stringcolumn()
     analyses = relationship('Analysis', backref='experiment')
-
-
-class AnalysisType(Base,BaseMixin):
-    AnalysisTypeID = Column(Integer, primary_key=True)
-    Name = stringcolumn(45)
-    analyses = relationship('Analysis', backref='analysis_type')
-
-
-class Analysis(Base, BaseMixin):
-    AnalysisID = Column(Integer, primary_key=True)
-    Runid = stringcolumn(20)
-    Project = stringcolumn()
-    Sample = stringcolumn()
-    TimeStamp = Column(DateTime)
-    State = stringcolumn(20)
-    Comment = Column(BLOB)
-    Material = stringcolumn()
-
-    Position = stringcolumn()
-    Cleanup = Column(Float)
-    Duration = Column(Float)
-    ExtractValue = Column(Float)
-    ExtractUnits = stringcolumn()
-    Measurement = stringcolumn(100)
-    PostMeasurement = stringcolumn(100)
-    PostEquilibration = stringcolumn(100)
-    Extraction = stringcolumn(100)
-
-    ExpID = Column(Integer, ForeignKey('Experiment.ExpID'))
-    AnalysisTypeID = Column(Integer, ForeignKey('AnalysisType.AnalysisTypeID'))
-
-
-class Status(Base, BaseMixin):
-    StatusID = Column(Integer, primary_key=True)
-    ShortMessage = stringcolumn(140)
-    Error = stringcolumn(140)
-    Message = Column(BLOB)
-    LastUpdate = Column(DateTime, default=func.now())
+#
+#
+# class AnalysisType(Base,BaseMixin):
+#     AnalysisTypeID = Column(Integer, primary_key=True)
+#     Name = stringcolumn(45)
+#     analyses = relationship('Analysis', backref='analysis_type')
+#
+#
+# class Analysis(Base, BaseMixin):
+#     AnalysisID = Column(Integer, primary_key=True)
+#     Runid = stringcolumn(20)
+#     Project = stringcolumn()
+#     Sample = stringcolumn()
+#     TimeStamp = Column(DateTime)
+#     State = stringcolumn(20)
+#     Comment = Column(BLOB)
+#     Material = stringcolumn()
+#
+#     Position = stringcolumn()
+#     Cleanup = Column(Float)
+#     Duration = Column(Float)
+#     ExtractValue = Column(Float)
+#     ExtractUnits = stringcolumn()
+#     Measurement = stringcolumn(100)
+#     PostMeasurement = stringcolumn(100)
+#     PostEquilibration = stringcolumn(100)
+#     Extraction = stringcolumn(100)
+#
+#     ExpID = Column(Integer, ForeignKey('Experiment.ExpID'))
+#     AnalysisTypeID = Column(Integer, ForeignKey('AnalysisType.AnalysisTypeID'))
+#
+#
+# class Status(Base, BaseMixin):
+#     StatusID = Column(Integer, primary_key=True)
+#     ShortMessage = stringcolumn(140)
+#     Error = stringcolumn(140)
+#     Message = Column(BLOB)
+#     LastUpdate = Column(DateTime, default=func.now())
 
 # ============= EOF =============================================
-
-
-

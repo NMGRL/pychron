@@ -102,9 +102,9 @@ def load_isotopedb_defaults(db):
 
 
 def _load_tray_map(db, p, name):
-    from pychron.lasers.stage_managers.stage_map import StageMap
+    from pychron.stage.maps.laser_stage_map import LaserStageMap
 
-    sm = StageMap(file_path=p)
+    sm = LaserStageMap(file_path=p)
 
     r = sm.g_dimension
     # blob = ''.join([struct.pack('>fff', si.x, si.y, r)

@@ -106,10 +106,9 @@ class FigureTask(AnalysisEditTask):
     # task protocol
     # ===============================================================================
     def activated(self):
-        from pychron.globals import globalv
 
-        if globalv.recall_debug:
-            self.manager.set_xml_dataset()
+        # if globalv.recall_debug:
+        #     self.manager.set_xml_dataset()
 
         super(FigureTask, self).activated()
 

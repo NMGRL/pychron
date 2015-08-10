@@ -1205,6 +1205,7 @@ class Graph(ContextMenuMixin):
 
         l = GuideOverlay(plot, value=v, **kw)
         plot.underlays.append(l)
+        return l
 
     def add_opposite_ticks(self, plotid=0, key=None):
         """

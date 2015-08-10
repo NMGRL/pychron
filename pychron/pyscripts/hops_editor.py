@@ -25,9 +25,9 @@ from traitsui.handler import Controller
 from traitsui.table_column import ObjectColumn
 from pyface.constant import OK, CANCEL, YES
 from pyface.file_dialog import FileDialog
-from traits.api import HasTraits, Str, List, Int, Any, Button, Bool, on_trait_change
+from traits.api import HasTraits, Str, List, Int, Any, Button, Bool, on_trait_change, Instance
 from traitsui.menu import Action
-from traitsui.api import View, Item, UItem, HGroup, InstanceEditor, HSplit, VGroup, EnumEditor, Tabbed
+from traitsui.api import View, Item, UItem, HGroup, InstanceEditor, HSplit, VGroup, EnumEditor
 
 # ============= standard library imports ========================
 import os
@@ -127,12 +127,12 @@ class Hop(HasTraits):
         self.positions.append(Position())
 
     def _remove_position_button_fired(self):
-        idx=self.positions.index(self.selected)
+        idx = self.positions.index(self.selected)
 
         self.positions.remove(self.selected)
 
-        if len(self.positions)>0:
-            self.selected=self.positions[idx-1]
+        if len(self.positions) > 0:
+            self.selected = self.positions[idx - 1]
         else:
             self.selected = None
 
@@ -190,7 +190,7 @@ class HopSequence(HasTraits):
             hi.name = str(i + 1)
             print hi.name
             for j, pi in enumerate(hi.positions):
-                pi.name = str(j+1)
+                pi.name = str(j + 1)
 
     def remove_hop(self, idx):
         self.hops.pop(idx)
@@ -201,7 +201,7 @@ class HopSequence(HasTraits):
 
 
 class HopEditorModel(Loggable):
-    hop_sequence = HopSequence
+    hop_sequence = Instance(HopSequence)
     selected = Any
     path = Str
     detectors = List
@@ -275,18 +275,25 @@ class HopEditorModel(Loggable):
 
     def _save_file(self, p):
 
-        header = '#hopstr e.i iso:det[:defl][,iso:det....], count, settle\n'
-        txt = self.hop_sequence.to_string()
+        # header = '#hopstr e.i iso:det[:defl][,iso:det....], count, settle\n'
+        # txt = self.hop_sequence.to_string()
         self.info('saving hop to {}'.format(p))
         with open(p, 'w') as wfile:
-            wfile.write(header)
-            wfile.write(txt)
+            wfile.write(self.to_string())
+            # wfile.write(header)
+            # wfile.write(txt)
 
         # self.saveable = True
 
         with open(p, 'r') as rfile:
             self.text = rfile.read()
-        self.dirty=False
+        self.dirty = False
+
+    def to_string(self):
+        header1 = "#hopstr ('iso:det[:defl][,iso:det....]', count, settle)"
+        header2 = "#e.g ('Ar40:H1, Ar41:H2, Ar38:L1, Ar37:L2, Ar36:CDD:110', 15, 3)"
+
+        return '\n'.join((header1, header2, self.hop_sequence.to_string()))
 
     def _add_hop_button_fired(self):
         idx = None
@@ -300,10 +307,10 @@ class HopEditorModel(Loggable):
     def _remove_hop_button_fired(self):
         hops = self.hop_sequence.hops
         idx = hops.index(self.selected)
-        if len(hops)>1:
-            self.selected=hops[0]
+        if len(hops) > 1:
+            self.selected = hops[0]
         else:
-            self.selected=None
+            self.selected = None
 
         self.hop_sequence.remove_hop(idx)
         self.dirty = True
@@ -316,29 +323,29 @@ class HopEditorView(Controller):
     model = HopEditorModel
     title = Str('Peak Hops Editor')
 
-    def close( self, info, is_ok ):
+    def close(self, info, is_ok):
         if self.model.dirty:
-            dlg=ConfirmationDialog( message='Save changes to Hops file', cancel=True,
-                                    default=CANCEL, title='Save Changes?')
-            ret=dlg.open()
-            if ret==CANCEL:
+            dlg = ConfirmationDialog(message='Save changes to Hops file', cancel=True,
+                                     default=CANCEL, title='Save Changes?')
+            ret = dlg.open()
+            if ret == CANCEL:
                 return False
-            elif ret==YES:
+            elif ret == YES:
                 self.model.save()
         return True
 
     @on_trait_change('model:hop_sequence:hops:[counts,settle, positions:[isotope,detector,deflection]]')
     def _handle_edit(self):
-        self.model.dirty=True
+        self.model.dirty = True
+        self.model.text = self.model.to_string()
 
     @on_trait_change('model.[path,dirty]')
     def _handle_path_change(self):
-        print 'pascd', self.model.dirty
         p = self.model.path
 
         n = os.path.basename(p)
         if self.model.dirty:
-            n='*{}'.format(n)
+            n = '*{}'.format(n)
 
         d = os.path.dirname(p)
         d = d.replace(os.path.expanduser('~'), '')
@@ -395,7 +402,7 @@ class HopEditorView(Controller):
                                wrap=False,
                                tab_width=15)
 
-        v = View(Tabbed(VGroup(grp, label='Editor'),
+        v = View(VGroup(VGroup(grp, label='Editor'),
                         VGroup(UItem('object.text',
                                      editor=teditor,
                                      style='custom'), label='Text')),
@@ -409,7 +416,7 @@ class HopEditorView(Controller):
 
 if __name__ == '__main__':
     m = HopEditorModel()
-    m.detectors=['H2','H1','CDD']
+    m.detectors = ['H2', 'H1', 'CDD']
     m.open()
     h = HopEditorView(model=m)
     # m.new()
@@ -417,4 +424,3 @@ if __name__ == '__main__':
 
 
 # ============= EOF =============================================
-
