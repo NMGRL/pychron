@@ -36,8 +36,8 @@ class DVCPlugin(BaseTaskPlugin):
         super(DVCPlugin, self).start()
 
         dvc = self.application.get_service(DVC)
-        if not self._fetched:
-            dvc.meta_repo.smart_pull()
+        # if not self._fetched:
+        #     dvc.meta_repo.smart_pull()
 
     # def stop(self):
     #     dvc = self.application.get_service(DVC)
