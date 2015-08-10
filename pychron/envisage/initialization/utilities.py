@@ -25,6 +25,7 @@ from pychron.envisage.initialization.nodes import Plugin, PluginTree, GlobalTree
 
 
 DESCRIPTION_MAP = {'Experiment': 'Execute sets of automated runs',
+                   'MassSpec': 'Mass Spec plugin',
                    'PyScript': "Edit PyScripts; pychron's internal scripting language",
                    'ArArConstants': 'List of Ar/Ar geochronology constants',
                    'Database': 'SQL database interface',
@@ -62,6 +63,7 @@ DESCRIPTION_MAP = {'Experiment': 'Execute sets of automated runs',
                    'Dashboard Simulation': 'Use a dummy device if none available'}
 
 DEFAULT_PLUGINS = (('General', ('Experiment',
+                                'MassSpec',
                                 'PyScript',
                                 'ArArConstants',
                                 'Loading',

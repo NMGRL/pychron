@@ -25,7 +25,7 @@ from uncertainties import nominal_value, std_dev
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 from pychron.core.helpers.formatting import floatfmt
-from pychron.processing.tasks.recall.mass_spec_recaller import MassSpecRecaller
+from pychron.mass_spec.mass_spec_recaller import MassSpecRecaller
 
 DIFF_TOLERANCE = 1e-8
 

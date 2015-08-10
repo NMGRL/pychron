@@ -25,12 +25,8 @@ from uncertainties import std_dev, nominal_value
 
 
 
-
-
-
-
 # =============local library imports  ==========================
-from pychron.database.orms.massspec_orm import IsotopeResultsTable, \
+from pychron.mass_spec.database.massspec_orm import IsotopeResultsTable, \
     AnalysesChangeableItemsTable, BaselinesTable, DetectorTable, \
     IsotopeTable, AnalysesTable, \
     IrradiationPositionTable, SampleTable, \
@@ -151,7 +147,6 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
             r = self._query_one(q)
             return r is not None
 
-
     def get_irradiation_names(self):
         with self.session_ctx() as sess:
             q = sess.query(distinct(IrradiationLevelTable.IrradBaseID))
@@ -228,6 +223,10 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         return self._retrieve_item(AnalysesTable, rid, key='RID')
 
     def get_analysis(self, value, aliquot=None, step=None, **kw):
+        if value.startswith('a'):
+            value = -2
+        elif value.startswith('ba'):
+            value = -1
         #        key = 'RID'
         key = 'IrradPosition'
         if aliquot:
@@ -665,370 +664,6 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         a = AnalysisPositionTable(Hole=pi, PositionOrder=po)
         analysis.positions.append(a)
 
-# ==================EOF======================================================
-# #    def add_detector(self, detector_id, kw):
-# #        '''
-# #        '''
-# ##        if sess is None:
-# ##            sess = self.session_factory()
-# #
-# ##        print det_args, sess, detector_id
-# #        if detector_id is not None:
-# ##            #get the detector row
-# #            det, sess = self.get_detector(detector_id, )
-# #            #print det
-# #            for a in kw:
-# #                setattr(det, a, kw[a])
-# #        else:
-# #            det = DetectorTable(**kw)
-# #            sess.add(det)
-# #
-# #        return det, sess
-# def add_detector(self, args):
-#        return self._add_tableitem(DetectorTable(**args))
-#
-#    def add_analysis_changeable(self, args, dbanalysis=None):
-#        anal = self._get_dbrecord(dbanalysis, 'get_analysis')
-#        if anal:
-#            c = AnalysesChangeableItemsTable(**args)
-#            anal.changeable = c
-#            return c
-#
-#    def add_isotope_result(self, args, dbisotope=None):
-# #        if sess is None:
-# #            sess = self.session_factory()
-#
-#        iso = self._get_dbrecord(dbisotope, 'get_isotope')
-#        if iso is not None:
-#            iso_result = IsotopeResultsTable(**args)
-#            iso.results.append(iso_result)
-#            return iso_result
-#
-#    def add_isotope(self, args, dbanalysis=None, dbdetector=None, dbbaseline=None):
-#        '''
-#
-
-#        '''
-# #        if sess is None:
-# #            sess = self.session_factory()
-#
-#        analysis = self._get_dbrecord(dbanalysis, 'get_analysis')
-#
-#        if analysis is not None:
-#            detector = self._get_dbrecord(dbdetector, 'get_detector')
-#            if detector is not None:
-#                iso = IsotopeTable(**args)
-#
-#                analysis.isotopes.append(iso)
-#                detector.isotopes.append(iso)
-#
-#                return iso
-# #
-#    def add_peaktimeblob(self, blob, dbisotope=None):
-#        iso = self._get_dbrecord(dbisotope, 'get_isotope')
-#        if iso is not None:
-#            pk = PeakTimeTable(PeakTimeBlob=blob)
-#            iso.peak_time_series.append(pk)
-#            return pk
-#    def _get_tables(self):
-#        return globals()
-#
-#    def clear_table(self, tablename):
-#        sess = self.get_session()
-#        try:
-#            table = globals()[tablename]
-#        except KeyError, e:
-# print 'exception', e
-#            a = None
-#
-#        try:
-#            a = sess.query(table)
-#        except Exception, e:
-# print 'exception', e
-#            a = None
-#        if a is not None:
-#            a.delete()
-#
-#    def get_rids(self, limit=1000):
-#        '''
-#        '''
-# #        if sess is None:
-# #            sess = self.session_factory()
-#        sess = self.get_session()
-#        q = sess.query(AnalysesTable.AnalysisID, AnalysesTable.RID)
-#        p = q.limit(limit)
-#        return p
-#
-#    def get_project(self, project):
-#        '''
-#        '''
-#        return self._get_one(ProjectTable, dict(Project=project))
-#
-#    def get_araranalysis(self, aid):
-#        '''
-#        '''
-#        return self._get_one(ArArAnalysisTable, dict(AnalysisID=aid))
-#
-#    def get_araranalyses(self, aid):
-#        '''
-#        '''
-#        return self._get(ArArAnalysisTable, dict(AnalysisID=aid), func='all')
-
-#    def get_analyses(self, **kw):
-#        '''
-#        '''
-#        table = AnalysesTable
-
-
-#        return self._get_all((AnalysesTable.RID,))
-#        if sess is None:
-#            sess = self.session_factory()
-#        p = sess.query(AnalysesTable.RID).all()
-
-#        return p, sess
-
-#    def get_detector(self, did):
-#        '''
-#        '''
-#        return self._get_one(DetectorTable, dict(DetectorID=did))
-
-#    def get_material(self, material):
-#        '''
-#        '''
-#        return self._get_one(MaterialTable, dict(Material=material))
-
-#    def get_sample(self, sample):
-#        '''
-#        '''
-#        return self._get_one(SampleTable, dict(Sample=sample))
-
-
-#    def get_isotopes(self, aid):
-#        '''
-#        '''
-#        sess = self.get_session()
-#        isos = sess.query(IsotopeTable).filter_by(AnalysisID=aid).all()
-#        return isos
-
-#    def get_irradiation_position(self, irp):
-#        return self._get_one(IrradiationPositionTable, dict(IrradPosition=irp))
-
-#    def get_peaktimeblob(self, isoid):
-#        '''
-#        '''
-#        return self._get_one(PeakTimeTable, dict(IsotopeID=isoid))
-#        if sess is None:
-#            sess = self.session_factory()
-#        try:
-#            q = sess.query(PeakTimeTable)
-#            ptb = q.filter_by(IsotopeID=IsotopeID).one()
-#        except:
-#            ptb = None
-#        return ptb, sess
-
-#    def _get_dbrecord(self, record_or_id, func):
-#        '''
-#        '''
-#        if record_or_id is not None:
-#            if isinstance(record_or_id, (long, int)):
-#                record_or_id = getattr(self, func)(record_or_id)
-#
-#        return record_or_id
-
-# #    def add_peaktimeblob(self, iso_id, blob, dbisotope=None):
-# #        '''
-# #        '''
-# ##        if sess is None:
-# ##            sess = self.session_factory()
-# #
-# #        isotope = dbisotope
-# #        if dbisotope is None:
-# #            isotope, sess = self.get_isotope(iso_id, )
-# #
-# #        if isotope is not None:
-# #            pk = PeakTimeTable(PeakTimeBlob=blob)
-# #            isotope.peak_time_series.append(pk)
-# #
-# #        return sess
-
-#    def add_project(self, args):
-#        '''
-#        '''
-#        p = self.get_project(args['Project'])
-#        if p is None:
-#            return self._add_tableitem(ProjectTable(**args))
-# #        if sess is None:
-# #            sess = self.session_factory()
-#
-# #        p, sess = self.get_project(args['Project'], )
-# #        if p is None:
-# #        p = ProjectTable(**args)
-# #        sess.add(p)
-# #        return p
-#
-#    def add_sample(self, args, project=None):
-#        '''
-#        '''
-#        s = self.get_sample(args['Sample'])
-#        if s is None:
-#            p = self.get_project(project)
-# #            self._add_tableitem(SampleTable(**args))
-#            if p is not None:
-#                s = SampleTable(**args)
-#                p.samples.append(s)
-#
-#        return s
-# #        if sess is None:
-# #            sess = self.session_factory()
-# #        #check to see if sample already exists
-# #        s, sess = self.get_sample(args['Sample'], )
-# #        if s is None:
-# #            p, sess = self.get_project(args['Project'], )
-# #
-# #            s = SampleTable(**args)
-# #            p.samples.append(s)
-# #            sess.add(s)
-# #        return s, sess
-#
-#    def add_material(self, args):
-#        '''
-#
-#        '''
-# #        if sess is None:
-# #            sess = self.session_factory()
-# #        m = MaterialTable(**args)
-# #        sess.add(m)
-# #        return m, sess
-#        return self._add_tableitem(MaterialTable(**args))
-#
-# #    def add_irradiation_position(self, args):
-# #        '''
-# #        '''
-# #
-# #
-# #        ip, sess = self.get_irradiation_position((args['IrradiationLevel'],
-# #                                                 args['HoleNumber']),
-# #                                                 )
-# #        if ip is None:
-# #            material, sess = self.get_material(args['Material'], )
-# #            #if the material doesnt exist add it
-# #            if material is None:
-# #                material, sess = self.add_material(dict(Material=args['Material']),
-# #                                                   )
-# #            sample, sess = self.get_sample(args['Sample'], )
-# #            args.pop('Sample')
-# #
-# #            ip = IrradiationPositionTable(**args)
-# #            sample.irradpositions.append(ip)
-# #            material.irradpositions.append(ip)
-# #
-# #        return ip, sess
-#
-#    def debug_delete_table(self, table):
-#        def _delete_table(t):
-#            rows = sess.query(t).all()
-#            for r in rows:
-#                sess.delete(r)
-#
-#        if sess is None:
-#            sess = self.session_factory()
-#
-#        if isinstance(table, list):
-#            for ti in table:
-#                _delete_table(ti)
-#        else:
-#            _delete_table(table)
-
-#    def get_data_reduction_session_dates(self, data_reduction_id_list, sess = None):
-#        if sess is None:
-#            sess = Session()
-#        p = sess.query(DataReductionSessionTable.SessionDate).filter(
-#                                DataReductionSessionTable.DataReductionSessionID.in_(data_reduction_id_list)).order_by(DataReductionSessionTable.DataReductionSessionID).all()
-#        return p, sess
-#    def get_discrimination(self, detector_ids, sess = None):
-#        if sess is None:
-#            sess = Session()
-#        p = sess.query(DetectorTable.DetectorID, DetectorTable.Disc).filter(DetectorTable.DetectorID.in_(detector_ids)).all()
-#        return p, sess
-#    def get_isotopes(self, iso_ids, sess = None):
-#        if sess is None:
-#            sess = Session()
-#        p = sess.query(IsotopeResultsTable.IsotopeID,
-#                     IsotopeResultsTable.Intercept,
-#                     IsotopeResultsTable.Bkgd).filter(IsotopeResultsTable.IsotopeID.in_(iso_ids)).\
-#        order_by(IsotopeResultsTable.DataReductionSessionID).\
-#                     order_by(IsotopeResultsTable.IsotopeID).all()
-#        return p, sess
-#    def get_isotope_ids(self, aids, sess = None):
-#        if sess is None:
-#            sess = Session()
-#
-#        p = sess.query(IsotopeTable.IsotopeID,
-#                    IsotopeTable.Label,
-#                    IsotopeTable.DetectorID
-#                     ).filter(IsotopeTable.AnalysisID.in_(aids)).all()
-#        return p, sess
-#    def get_analysis_by_ln(self, ln, sess = None):
-#        '''
-#        like syntax
-#        % allows you to match any string of any length (including zero length)
-#
-#        _ allows you to match on a single character
-#        '''
-#        if sess is None:
-#            sess = Session()
-#
-#        p = sess.query(AnalysesTable.AnalysisID,
-#                     AnalysesTable.RID).filter(AnalysesTable.RID.like(ln)).all()
-#        return p, sess
-#    def get_analysis_by_rid(self, rid, sess = None):
-#        if sess is None:
-#            sess = Session()
-#        p = sess.query(AnalysesTable.AnalysisID).filter_by(RID = rid).first()
-#        return p, sess
-#    def get_araranalysis_rids(self, run_list):
-#        sess = Session()
-#        p = sess.query(AnalysesTable.AnalysisID,
-#                     AnalysesTable.RID
-#                     ).filter(AnalysesTable.RID.in_(run_list)).all()
-#        return p, sess
-#    def get_araranalyses(self, aid_list, sess = None):
-#        if sess is None:
-#            sess = Session()
-#        p = sess.query(ArArAnalysisTable.AnalysisID,
-#                     ArArAnalysisTable.DataReductionSessionID,
-#                     ArArAnalysisTable.Tot40,
-#                     ArArAnalysisTable.Tot39,
-#                     ArArAnalysisTable.Tot38,
-#                     ArArAnalysisTable.Tot37,
-#                     ArArAnalysisTable.Tot36,
-#                     ArArAnalysisTable.Tot40Er,
-#                     ArArAnalysisTable.Tot39Er,
-#                     ArArAnalysisTable.Tot38Er,
-#                     ArArAnalysisTable.Tot37Er,
-#                     ArArAnalysisTable.Tot36Er,
-#                     ArArAnalysisTable.JVal,
-#                     ArArAnalysisTable.JEr,
-#
-#                     ).filter(ArArAnalysisTable.AnalysisID.in_(aid_list)).order_by(ArArAnalysisTable.DataReductionSessionID).\
-#                     order_by(ArArAnalysisTable.AnalysisID).all()
-#        return p, sess
-#    def get_araranalysis(self,a_id,sess=None):
-#        if sess is None:
-#            ion()
-#        p=sess.query(ArArAnalysisTable.Tot40,
-#                     ArArAnalysisTable.Tot39,
-#                     ArArAnalysisTable.Tot38,
-#                     ArArAnalysisTable.Tot37,
-#                     ArArAnalysisTable.Tot36,
-#                     ArArAnalysisTable.Tot40Er,
-#                     ArArAnalysisTable.Tot39Er,
-#                     ArArAnalysisTable.Tot38Er,
-#                     ArArAnalysisTable.Tot37Er,
-#                     ArArAnalysisTable.Tot36Er,
-#                     ArArAnalysisTable.DataReductionSessionID,
-#                     ).filter_by(AnalysisID=a_id).all()
-#        return p,sess
 if __name__ == '__main__':
     from pychron.core.helpers.logger_setup import logging_setup
 
@@ -1037,7 +672,7 @@ if __name__ == '__main__':
     ia.connect()
 
     #    ia.selector_factory()
-    dbs = ia.selector
-    dbs.load_recent()
-
-    dbs.configure_traits()
+    # dbs = ia.selector
+    # dbs.load_recent()
+    # dbs.configure_traits()
+# ==================EOF======================================================

@@ -28,7 +28,6 @@ from numpy import array, Inf, polyfit
 
 
 
-
 # ============= local library imports  ==========================
 from pychron.core.helpers.fits import natural_name_fit, fit_to_degree
 from pychron.core.regression.mean_regressor import MeanRegressor
@@ -56,13 +55,22 @@ class BaseMeasurement(object):
     unpack_error = None
     endianness = '>'
     reverse_unpack = False
+
+    _n = None
     # time_zero_offset = Float
     # offset_xs = Property
 
     # __slots__ = ['xs', 'ys', 'n', 'name', 'mass', 'detector', 'time_zero_offset']
     @property
     def n(self):
+        if self._n:
+            return self._n
+
         return self.xs.shape[0]
+
+    @n.setter
+    def n(self, v):
+        self._n = v
 
     @property
     def offset_xs(self):

@@ -15,7 +15,6 @@
 # ===============================================================================
 
 
-
 # =============enthought library imports=======================
 
 # =============standard library imports ========================
@@ -57,8 +56,6 @@ class AnalysisPositionTable(Base):
 
 
 class AnalysesTable(Base):
-    """
-    """
     __tablename__ = 'AnalysesTable'
     AnalysisID = Column(Integer, primary_key=True)
     RID = Column(String(40))
@@ -107,23 +104,22 @@ class AnalysesTable(Base):
     #    araranalyses = relation('ArArAnalysisTable', backref='AnalysesTable')
     changeable = relationship('AnalysesChangeableItemsTable',
                               backref='AnalysesTable',
-                              uselist=False,
-    )
+                              uselist=False, )
     positions = relationship('AnalysisPositionTable')
     runscript = relationship('RunScriptTable', uselist=False)
 
 
 class ArArAnalysisTable(Base):
-    '''
+    """
     WARNING
     the totals are not raw values and have been blank, discrimination and decay corrected already
-    '''
+    """
     __tablename__ = 'ArArAnalysisTable'
     #    AnalysisID = Column(Integer, primary_key=True)
     AnalysisID = Column(Integer, ForeignKey('AnalysesTable.AnalysisID'))
     DataReductionSessionID = Column(Integer)
-    JVal = doublecolumn()#Column(Float, default=0)
-    JEr = doublecolumn()#Column(Float, default=0)
+    JVal = doublecolumn()  # Column(Float, default=0)
+    JEr = doublecolumn()  # Column(Float, default=0)
     Tot40 = doublecolumn()
     Tot39 = doublecolumn()
     Tot38 = doublecolumn()
@@ -142,6 +138,7 @@ class ArArAnalysisTable(Base):
     PctRad = doublecolumn()
     PctRadEr = doublecolumn()
 
+
 class BaselinesChangeableItemsTable(Base):
     __tablename__ = 'baselineschangeableitemstable'
     BslnID = Column(Integer, primary_key=True)
@@ -154,8 +151,6 @@ class BaselinesChangeableItemsTable(Base):
 
 
 class BaselinesTable(Base):
-    '''
-    '''
     __tablename__ = 'baselinestable'
     BslnID = Column(Integer, primary_key=True)
     Label = Column(String(40))
@@ -164,7 +159,7 @@ class BaselinesTable(Base):
     isotope = relationship('IsotopeTable', backref='baseline', uselist=False)
 
 
-#    changeable_item = relationship('baselineschangeableitemstable', uselist=False)
+# changeable_item = relationship('baselineschangeableitemstable', uselist=False)
 
 class DatabaseVersionTable(Base):
     __tablename__ = 'databaseversiontable'
@@ -172,8 +167,6 @@ class DatabaseVersionTable(Base):
 
 
 class DataReductionSessionTable(Base):
-    '''
-    '''
     __tablename__ = 'datareductionsessiontable'
     DataReductionSessionID = Column(Integer, primary_key=True)
     SessionDate = Column(DateTime)
@@ -181,8 +174,6 @@ class DataReductionSessionTable(Base):
 
 
 class DetectorTable(Base):
-    """
-    """
     __tablename__ = 'DetectorTable'
     DetectorID = Column(Integer, primary_key=True)
     DetectorTypeID = Column(Integer, ForeignKey('DetectorTypeTable.DetectorTypeID'))
@@ -210,8 +201,6 @@ class DetectorTypeTable(Base):
 
 
 class IrradiationPositionTable(Base):
-    """
-    """
     __tablename__ = 'IrradiationPositionTable'
 
     IrradPosition = Column(Integer, primary_key=True)
@@ -281,9 +270,9 @@ class IrradiationChronologyTable(Base):
 
 
 class IsotopeResultsTable(Base):
-    '''
+    """
     iso = intercept - bkgrd
-    '''
+    """
     __tablename__ = 'IsotopeResultsTable'
     Counter = Column(Integer, primary_key=True)
     LastSaved = Column(DateTime)
@@ -313,9 +302,6 @@ class IsotopeResultsTable(Base):
 
 
 class IsotopeTable(Base):
-    '''
-    '''
-
     __tablename__ = 'IsotopeTable'
     IsotopeID = Column(Integer, primary_key=True)
     AnalysisID = Column(Integer, ForeignKey('AnalysesTable.AnalysisID'))
@@ -335,21 +321,17 @@ class IsotopeTable(Base):
     #    peak_time_series = relation('PeakTimeTable', uselist=False)
     peak_time_series = relation('PeakTimeTable')
 
-    results = relationship('IsotopeResultsTable', backref='isotope',
-                           #                          uselist=False
-    )
+    results = relationship('IsotopeResultsTable', backref='isotope')
 
 
 class FittypeTable(Base):
     __tablename__ = 'fittypetable'
     Fit = Column(Integer, primary_key=True)
     Label = Column(String(40))
-    results = relationship('IsotopeResultsTable', backref='fit',
-                           #                          uselist=False
-    )
+    results = relationship('IsotopeResultsTable', backref='fit')
 
 
-#    baseline_results = relationship('baselineschangeableitemstable', backref='fit',
+# baseline_results = relationship('baselineschangeableitemstable', backref='fit',
 # #                          uselist=False
 #                          )
 
@@ -370,8 +352,6 @@ class MachineTable(Base):
 
 
 class MaterialTable(Base):
-    '''
-    '''
     __tablename__ = 'MaterialTable'
     ID = Column(Integer, primary_key=True)
     Material = Column(String(40))
@@ -387,8 +367,6 @@ class MolecularWeightTable(Base):
 
 
 class PeakTimeTable(Base):
-    '''
-    '''
     __tablename__ = 'PeakTimeTable'
     Counter = Column(Integer, primary_key=True)
     PeakTimeBlob = Column(BLOB)
@@ -403,8 +381,6 @@ class PreferencesTable(Base):
 
 
 class ProjectTable(Base):
-    '''
-    '''
     __tablename__ = 'projecttable'
     ProjectID = Column(Integer, primary_key=True)
     Project = Column(String(40))
@@ -420,8 +396,6 @@ class RunScriptTable(Base):
 
 
 class SampleTable(Base):
-    '''
-    '''
     __tablename__ = 'SampleTable'
     SampleID = Column(Integer, primary_key=True)
     Sample = Column(String(40))

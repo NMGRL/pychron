@@ -21,6 +21,7 @@ from traits.api import HasTraits
 # ============= standard library imports ========================
 import yaml
 # ============= local library imports  ==========================
+from pychron.pipeline.nodes import DiffNode
 from pychron.pipeline.nodes.data import DataNode, UnknownNode
 from pychron.pipeline.nodes.find import FindNode
 from pychron.pipeline.nodes.gain import GainCalibrationNode
@@ -34,7 +35,7 @@ class PipelineTemplate(HasTraits):
         self.name = name
         self.path = path
 
-    def render(self, pipeline, bmodel, dvc, clear=False):
+    def render(self, application, pipeline, bmodel, dvc, clear=False):
         # if first node is an unknowns node
         # render into template
 
@@ -66,6 +67,9 @@ class PipelineTemplate(HasTraits):
                 node.trait_set(browser_model=bmodel, dvc=dvc)
             elif isinstance(node, (FindNode, PersistNode, GainCalibrationNode)):
                 node.trait_set(dvc=dvc)
+            elif isinstance(node, DiffNode):
+                recaller = application.get_service('pychron.mass_spec.mass_spec_recaller.MassSpecRecaller')
+                node.trait_set(recaller=recaller)
             node.finish_load()
             # elif isinstance(node, FitICFactorNode):
             #     node.set_detectors()

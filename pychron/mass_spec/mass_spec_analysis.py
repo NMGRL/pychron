@@ -27,14 +27,14 @@ from pychron.pychron_constants import IRRADIATION_KEYS
 
 class MassSpecAnalysis(Analysis):
     def _sync(self, obj):
-
-        arar = obj.araranalyses[-1]
-        if arar:
-            self.j = ufloat(arar.JVal, arar.JEr)
-            self.age = arar.Age
-            self.age_err = arar.ErrAge
-            self.age_err_wo_j = arar.ErrAgeWOErInJ
-            self.rad40_percent = ufloat(arar.PctRad, arar.PctRadEr)
+        if obj.araranalyses:
+            arar = obj.araranalyses[-1]
+            if arar:
+                self.j = ufloat(arar.JVal, arar.JEr)
+                self.age = arar.Age
+                self.age_err = arar.ErrAge
+                self.age_err_wo_j = arar.ErrAgeWOErInJ
+                self.rad40_percent = ufloat(arar.PctRad, arar.PctRadEr)
 
         for dbiso in obj.isotopes:
             r = dbiso.results[-1]
@@ -46,9 +46,13 @@ class MassSpecAnalysis(Analysis):
 
             key = dbiso.Label
             n = dbiso.NumCnts
-            iso = Isotope(name=key, value=uv, error=ee, n=n)
-            det =dbiso.detector
-            iso.ic_factor=ufloat(det.ICFactor, det.ICFactorEr)
+            # iso = Isotope(name=key, value=uv, error=ee, n=n)
+            det = dbiso.detector
+            iso = Isotope(key, det.Label)
+            iso.set_uvalue((uv, ee))
+            iso.n = n
+
+            iso.ic_factor = ufloat(det.ICFactor, det.ICFactorEr)
             iso.fit = r.fit.Label.lower()
 
             iso.baseline = Baseline(name=key,
@@ -65,12 +69,12 @@ class MassSpecAnalysis(Analysis):
 
     def sync_irradiation(self, irrad):
         production = irrad.production
-        self.production_ratios['Ca_K']=ufloat(production.CaOverKMultiplier,
-                                              production.CaOverKMultiplierEr)
-        self.production_ratios['Cl_K']=ufloat(production.ClOverKMultiplier,
-                                              production.ClOverKMultiplierEr)
+        self.production_ratios['Ca_K'] = ufloat(production.CaOverKMultiplier,
+                                                production.CaOverKMultiplierEr)
+        self.production_ratios['Cl_K'] = ufloat(production.ClOverKMultiplier,
+                                                production.ClOverKMultiplierEr)
 
-        for k,_ in IRRADIATION_KEYS:
-            self.interference_corrections[k]=getattr(production,k.capitalize())
+        for k, _ in IRRADIATION_KEYS:
+            self.interference_corrections[k] = getattr(production, k.capitalize())
 
 # ============= EOF =============================================

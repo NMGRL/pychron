@@ -38,9 +38,6 @@ from pychron.pipeline.nodes.persist import PDFFigureNode, IsotopeEvolutionPersis
 from pychron.pipeline.state import EngineState
 from pychron.pipeline.template import PipelineTemplate
 
-TEMPLATE_NAMES = ('Iso Evo', 'Icfactor', 'Blanks', 'Flux', 'Ideogram', 'Spectrum',
-                  'Isochron', 'Series', 'Table', 'Auto Ideogram')
-
 
 class ActiveCTX(object):
     def __init__(self, node):
@@ -496,7 +493,7 @@ class PipelineEngine(Loggable):
             return
 
         pt = PipelineTemplate(name, path)
-        pt.render(self.pipeline, self.browser_model, self.dvc)
+        pt.render(self.application, self.pipeline, self.browser_model, self.dvc)
         self.update_detectors()
         if self.pipeline.nodes:
             self.selected = self.pipeline.nodes[0]
@@ -511,8 +508,9 @@ class PipelineEngine(Loggable):
             return ' '.join(map(str.capitalize, t.split('_')))
 
         templates = map(formatter, templates)
-
-        ns = [pt for pt in TEMPLATE_NAMES if pt in templates]
+        with open(paths.pipeline_template_file, 'r') as rfile:
+            tnames = yaml.load(rfile)
+        ns = [pt for pt in tnames if pt in templates]
         self.available_pipeline_templates = ns
 
     def _add_find_node(self, node, run, analysis_type):

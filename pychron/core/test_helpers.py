@@ -44,8 +44,8 @@ def isotope_db_factory(path, remove=True):
 
 
 def massspec_db_factory(path, remove=True):
-    from pychron.database.adapters.massspec_database_adapter import MassSpecDatabaseAdapter
-    from pychron.database.orms.massspec_orm import Base
+    from pychron.mass_spec.database.massspec_database_adapter import MassSpecDatabaseAdapter
+    from pychron.mass_spec.database.massspec_orm import Base
 
     if remove and os.path.isfile(path):
         os.remove(path)

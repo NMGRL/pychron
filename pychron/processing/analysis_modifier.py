@@ -21,6 +21,7 @@ import os
 from traits.api import Instance, HasTraits, List, Str, Bool, Event, Int
 from traitsui.api import View, VGroup, Item, EnumEditor
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.editors import TabularEditor
@@ -28,7 +29,7 @@ from traitsui.group import HGroup
 from traitsui.item import UItem
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.database.adapters.isotope_adapter import IsotopeAdapter
-from pychron.database.adapters.massspec_database_adapter import MassSpecDatabaseAdapter
+from pychron.mass_spec.database.massspec_database_adapter import MassSpecDatabaseAdapter
 from pychron.experiment.utilities.identifier import make_runid
 from pychron.loggable import Loggable
 from pychron.paths import paths

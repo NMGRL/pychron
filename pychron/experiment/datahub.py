@@ -20,7 +20,7 @@ from apptools.preferences.preference_binding import bind_preference
 from traits.api import Instance, Bool
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.database.adapters.massspec_database_adapter import MissingAliquotPychronException
+from pychron.mass_spec.database.massspec_database_adapter import MissingAliquotPychronException
 from pychron.dvc.dvc import DVC
 from pychron.experiment.utilities.identifier import make_aliquot_step, make_step, get_analysis_type
 from pychron.experiment.utilities.mass_spec_database_importer import MassSpecDatabaseImporter

@@ -22,6 +22,9 @@ from pychron.loggable import Loggable
 
 
 class BasePlugin(Plugin, Loggable):
+    def check(self):
+        return True
+
     def _set_preference_defaults(self, defaults, prefid):
         """
 

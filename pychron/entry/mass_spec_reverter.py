@@ -26,7 +26,7 @@ from numpy import array
 from pychron.core.helpers.filetools import pathtolist
 from pychron.loggable import Loggable
 from pychron.core.helpers.logger_setup import logging_setup
-from pychron.database.adapters.massspec_database_adapter import MassSpecDatabaseAdapter
+from pychron.mass_spec.database.massspec_database_adapter import MassSpecDatabaseAdapter
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.experiment.utilities.identifier import convert_identifier_to_int, strip_runid
 
@@ -128,11 +128,11 @@ class MassSpecReverter(Loggable):
         return array(sx), array(sy)
 
     def _get_analysis_from_source(self, rid):
-        if rid.count('-')>1:
-            args=rid.split('-')
-            step=None
-            lan='-'.join(args[:-1])
-            aliquot=args[-1]
+        if rid.count('-') > 1:
+            args = rid.split('-')
+            step = None
+            lan = '-'.join(args[:-1])
+            aliquot = args[-1]
         else:
             lan, aliquot, step = strip_runid(rid)
             lan = convert_identifier_to_int(lan)
@@ -217,6 +217,3 @@ if __name__ == '__main__':
 # db = self.source.db
 # with db.session_ctx():
 #         pass
-
-
-

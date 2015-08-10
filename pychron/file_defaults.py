@@ -24,6 +24,19 @@ Values are used in pychron.paths when building directory structure
 """
 from pychron.core.helpers.strtools import to_bool
 
+PIPELINE_TEMPLATES = '''- Iso Evo
+- Icfactor
+- Blanks
+- Flux
+- Ideogram
+- Spectrum
+- Isochron
+- Series
+- Table
+- Auto Ideogram
+- Diff
+'''
+
 IDENTIFIERS_DEFAULT = """
 - name: Blank Air
   shortname: ba
@@ -191,7 +204,7 @@ actions = []
 for line in TASK_EXTENSION_DEFAULT.split('\n'):
     line = line.strip()
     if line.startswith('- pychron.'):
-        a,b = line.split(',')
+        a, b = line.split(',')
         if to_bool(b):
             actions.append(a)
 
@@ -228,7 +241,9 @@ DEFAULT_STARTUP_TESTS = '''
   tests:
     - test_pychron
     - test_pychron_version
-    - test_massspec
+- plugin: MassSpec
+  tests:
+    - test_database
 - plugin: LabBook
   tests:
 - plugin: ArArConstants
@@ -455,6 +470,3 @@ plot_bgcolor: 208,243,241
 label_font: Helvetica 14
 '''
 # ============= EOF =============================================
-
-
-

@@ -16,8 +16,7 @@
 # ============= enthought library imports =======================
 from pyface.message_dialog import warning
 from pyface.timer.do_later import do_later, do_after
-from traits.api import Str, Password, Enum, Button, Bool, \
-    on_trait_change, Color, String, List, Event
+from traits.api import Str, Password, Enum, Button, on_trait_change, Color, String, List, Event
 from traits.has_traits import HasTraits
 from traitsui.api import View, Item, Group, VGroup, HGroup, ListStrEditor, spring, Label, Spring
 from envisage.ui.tasks.preferences_pane import PreferencesPane
@@ -26,8 +25,10 @@ from traitsui.editors import TextEditor
 from pychron.core.pychron_traits import IPAddress
 from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
-from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper, \
-    FavoritesPreferencesHelper, FavoritesAdapter
+from pychron.envisage.tasks.base_preferences_helper import FavoritesPreferencesHelper, FavoritesAdapter
+
+
+
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -233,60 +234,5 @@ class ConnectionPreferencesPane(PreferencesPane):
                        label='Pychron DB')
 
         return View(db_grp)
-
-
-class MassSpecConnectionPreferences(BasePreferencesHelper, ConnectionMixin):
-    preferences_path = 'pychron.massspec.database'
-    name = Str
-    username = Str
-    password = Password
-    host = Str
-    _adapter_klass = 'pychron.database.adapters.massspec_database_adapter.MassSpecDatabaseAdapter'
-    enabled = Bool
-
-    def _anytrait_changed(self, name, old, new):
-        if name not in ('_connected_label', '_connected_color',
-                        '_connected_color_',
-                        'test_connection'):
-            self._reset_connection_label(False)
-        super(MassSpecConnectionPreferences, self)._anytrait_changed(name, old, new)
-
-    def _get_connection_dict(self):
-        return dict(username=self.username,
-                    host=self.host,
-                    password=self.password,
-                    name=self.name,
-                    kind='mysql')
-
-
-class MassSpecConnectionPane(PreferencesPane):
-    model_factory = MassSpecConnectionPreferences
-    category = 'Database'
-
-    def traits_view(self):
-        cgrp = HGroup(Spring(width=10, springy=False),
-                      icon_button_editor('test_connection_button', 'database_connect',
-                                         tooltip='Test connection'),
-                      Spring(width=10, springy=False),
-                      Label('Status:'),
-                      CustomLabel('_connected_label',
-                                  label='Status',
-                                  weight='bold',
-                                  color_name='_connected_color'))
-
-        massspec_grp = VGroup(Item('enabled', label='Use MassSpec'),
-                              VGroup(
-                                  cgrp,
-                                  Item('name', label='Database'),
-                                  Item('host', label='Host'),
-                                  Item('username', label='Name'),
-                                  Item('password', label='Password'),
-                                  enabled_when='enabled',
-                                  show_border=True,
-                                  label='Authentication'),
-                              label='MassSpec DB',
-                              show_border=True)
-
-        return View(massspec_grp)
 
 # ============= EOF =============================================

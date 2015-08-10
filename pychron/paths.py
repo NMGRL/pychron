@@ -24,7 +24,7 @@ from os import path, mkdir
 import os
 
 from pychron.file_defaults import TASK_EXTENSION_DEFAULT, SIMPLE_UI_DEFAULT, \
-    EDIT_UI_DEFAULT, IDENTIFIERS_DEFAULT
+    EDIT_UI_DEFAULT, IDENTIFIERS_DEFAULT, PIPELINE_TEMPLATES
 
 
 class Paths(object):
@@ -166,6 +166,7 @@ class Paths(object):
     # ===========================================================================
     # files
     # ===========================================================================
+    pipeline_template_file = None
     identifiers_file = None
     backup_recovery_file = None
     last_experiment = None
@@ -366,6 +367,7 @@ class Paths(object):
         # =======================================================================
         # files
         # =======================================================================
+        self.pipeline_template_file = join(self.pipeline_dir, 'template_order.yaml')
         self.identifiers_file = join(self.hidden_dir, 'identifiers.yaml')
         self.backup_recovery_file = join(self.hidden_dir, 'backup_recovery')
         self.last_experiment = join(self.hidden_dir, 'last_experiment')
@@ -428,7 +430,8 @@ class Paths(object):
                      (self.simple_ui_file, SIMPLE_UI_DEFAULT),
                      (self.edit_ui_defaults, EDIT_UI_DEFAULT),
                      (self.task_extensions_file, TASK_EXTENSION_DEFAULT),
-                     (self.identifiers_file, IDENTIFIERS_DEFAULT)):
+                     (self.identifiers_file, IDENTIFIERS_DEFAULT),
+                     (self.pipeline_template_file, PIPELINE_TEMPLATES)):
             overwrite = d in (SYSTEM_HEALTH, SIMPLE_UI_DEFAULT,)
             # overwrite = d in (SYSTEM_HEALTH, SIMPLE_UI_DEFAULT,)
             # print p

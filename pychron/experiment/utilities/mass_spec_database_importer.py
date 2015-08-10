@@ -29,7 +29,7 @@ from pychron.core.i_datastore import IDatastore
 from pychron.core.helpers.isotope_utils import sort_isotopes
 from pychron.experiment.utilities.identifier import make_runid
 from pychron.loggable import Loggable
-from pychron.database.adapters.massspec_database_adapter import MassSpecDatabaseAdapter
+from pychron.mass_spec.database.massspec_database_adapter import MassSpecDatabaseAdapter
 from pychron.experiment.utilities.info_blob import encode_infoblob
 import time
 from pychron.pychron_constants import ALPHAS
@@ -64,7 +64,7 @@ class MassSpecDatabaseImporter(Loggable):
     def make_multipe_runs_sequence(self, exptxt):
         pass
 
-    #IDatastore protocol
+    # IDatastore protocol
     def get_greatest_step(self, identifier, aliquot):
 
         ret = 0
@@ -75,7 +75,7 @@ class MassSpecDatabaseImporter(Loggable):
             if ret:
                 _, s = ret
                 if s is not None and s in ALPHAS:
-                    ret = ALPHAS.index(s) #if s is not None else -1
+                    ret = ALPHAS.index(s)  # if s is not None else -1
                 else:
                     ret = -1
         return ret
@@ -101,7 +101,7 @@ class MassSpecDatabaseImporter(Loggable):
             db = self.db
             with db.session_ctx() as sess:
                 sl = db.add_sample_loading(ms, tray)
-                #sess.flush()
+                # sess.flush()
                 #             db.flush()
                 sess.flush()
                 self.sample_loading_id = sl.SampleLoadingID
@@ -218,14 +218,14 @@ class MassSpecDatabaseImporter(Loggable):
                     return ret
                 except Exception, e:
                     self.debug('Mass Spec save exception. {}'.format(e))
-                    if i==2:
+                    if i == 2:
                         import traceback
                         tb = traceback.format_exc()
                         self.message('Could not save spec.runid={} rid={} '
                                      'to Mass Spec database.\n {}'.format(spec.runid, rid, tb))
                     else:
                         self.debug('retry mass spec save')
-                    #if commit:
+                    # if commit:
                     sess.rollback()
                 finally:
                     self.db.reraise = True
@@ -323,7 +323,7 @@ class MassSpecDatabaseImporter(Loggable):
             self.debug('adding isotope {} {}'.format(iso, det))
             dbiso, dbdet = self._add_isotope(analysis, spec, iso, det, refdet)
 
-            if not dbdet.Label in bs:
+            if dbdet.Label not in bs:
                 self._add_baseline(spec, dbiso, dbdet, det)
                 bs.append(dbdet.Label)
 
@@ -385,7 +385,7 @@ class MassSpecDatabaseImporter(Loggable):
         blob2 = ''.join([struct.pack('>f', v) for v in vb])
         db.add_peaktimeblob(blob1, blob2, dbiso)
 
-        #@todo: add filtered points blob
+        # @todo: add filtered points blob
 
         # in mass spec the intercept is already baseline corrected
         # mass spec also doesnt propagate baseline errors
@@ -611,8 +611,8 @@ if __name__ == '__main__':
     #            # isotopes
     #            # ===================================================================
     #
-    ##            db_iso = timethis(db.add_isotope, args=(analysis, det, isok),
-    ##                              msg='add_isotope', log=self.debug, decorate='^')
+    #            #db_iso = timethis(db.add_isotope, args=(analysis, det, isok),
+    #            #                  msg='add_isotope', log=self.debug, decorate='^')
     #
     #            # add detector
     #            if det == analysis.ReferenceDetectorLabel:

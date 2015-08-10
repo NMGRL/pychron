@@ -19,9 +19,9 @@ from traits.api import Instance
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.database.adapters.massspec_database_adapter import MassSpecDatabaseAdapter
+from pychron.mass_spec.database.massspec_database_adapter import MassSpecDatabaseAdapter
 from pychron.loggable import Loggable
-from pychron.processing.analyses.mass_spec_analysis import MassSpecAnalysis
+from pychron.mass_spec.mass_spec_analysis import MassSpecAnalysis
 
 
 class MassSpecRecaller(Loggable):
@@ -36,6 +36,9 @@ class MassSpecRecaller(Loggable):
     def find_analysis(self, labnumber, aliquot, step):
         db = self.db
         with db.session_ctx():
+            if 1:
+                labnumber, aliquot, step = 'a-01-O', 1127, ''
+
             dbrec = db.get_analysis(labnumber, aliquot, step)
             if dbrec:
                 rec = MassSpecAnalysis()

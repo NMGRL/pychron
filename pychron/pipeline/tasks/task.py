@@ -55,7 +55,7 @@ def select_experiment_repo():
 
 class PipelineTask(BaseBrowserTask):
     name = 'Pipeline Processing'
-    engine = Instance(PipelineEngine, ())
+    engine = Instance(PipelineEngine)
     tool_bars = [SToolBar(RunAction(),
                           ResumeAction(),
                           RunFromAction(),
@@ -94,6 +94,7 @@ class PipelineTask(BaseBrowserTask):
         # self.engine.add_data()
         self.engine.select_default()
         self.engine.set_template('ideogram')
+        # self.engine.set_template('diff')
         # self.engine.set_template('gain')
         # self.engine.set_template('series')
         # self.engine.set_template('blanks')
@@ -462,6 +463,10 @@ class PipelineTask(BaseBrowserTask):
         info = tv.edit_traits()
         if info.result:
             return tv.model
+
+    def _engine_default(self):
+        e = PipelineEngine(application=self.application)
+        return e
 
 # ============= EOF =============================================
 #  _delete_flag = False

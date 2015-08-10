@@ -157,6 +157,10 @@ def save_pdf(component, path=None, default_directory=None, view=False):
             size = None
             if not obounds[0] and not obounds[1]:
                 size = m.bounds
+
+            if m.fit_to_page:
+                size = m.bounds
+
             component.do_layout(size=size, force=True)
             gc.render_component(component,
                                 valign='center')
