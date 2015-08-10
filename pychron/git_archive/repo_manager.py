@@ -490,12 +490,19 @@ class GitRepoManager(Loggable):
         else:
             self.warning('No remote called "{}"'.format(remote))
 
-    def smart_pull(self, branch='master', remote='origin', accept_our=False, accept_their=False):
+    def smart_pull(self, branch='master', remote='origin',
+                   quiet=True,
+                   accept_our=False, accept_their=False):
         ahead, behind = self.ahead_behind(remote)
-        self.debug('Smart pull ahead:{} behind: {}'.format(ahead, behind))
+        self.debug('Smart pull ahead: {} behind: {}'.format(ahead, behind))
         repo = self._repo
         if behind:
             if ahead:
+                if not quiet:
+                    if not self.confirmation_dialog('You are {} behind and {} commits ahead. '
+                                                    'Their is potential for conflicts that you will have to resolve.'
+                                                    'Would you like to Continue?'.format(behind, ahead)):
+                        return
                 # potentially conflicts
 
                 # do merge
@@ -509,7 +516,10 @@ class GitRepoManager(Loggable):
                 conflict_paths = [os.path.relpath(x, self.path) for x in out.splitlines()]
                 self.debug('conflict_paths: {}'.format(conflict_paths))
                 if conflict_paths:
-                    mm = MergeModel(conflict_paths, repo=self)
+                    mm = MergeModel(conflict_paths,
+                                    branch=branch,
+                                    remote=remote,
+                                    repo=self)
                     if accept_our:
                         mm.accept_our()
                     elif accept_their:
@@ -519,9 +529,12 @@ class GitRepoManager(Loggable):
                         mv.edit_traits()
 
             else:
+                self.debug('merging {} commits'.format(behind))
                 repo.git.merge('FETCH_HEAD')
         else:
             self.debug('Up-to-date with {}'.format(remote))
+            if not quiet:
+                self.information_dialog('Up-to-date with {}'.format(remote))
 
     def fetch(self, remote='origin'):
         return self._repo.git.fetch(remote)
@@ -556,7 +569,7 @@ class GitRepoManager(Loggable):
         if index:
             index.commit(msg)
 
-    def add(self, p, msg=None, msg_prefix=None, verbose=True, untracked_files=False, **kw):
+    def add(self, p, msg=None, msg_prefix=None, verbose=True, **kw):
         repo = self._repo
         if not repo.is_dirty() and not len(repo.untracked_files):
             return

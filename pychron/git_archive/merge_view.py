@@ -37,6 +37,9 @@ class MergeModel(HasTraits):
     our_text = Str
     their_text = Str
 
+    branch = Str
+    remote = Str
+
     def __init__(self, paths, *args, **kw):
         super(MergeModel, self).__init__(*args, **kw)
         self.conflicts = [Conflict(path=p) for p in paths]
@@ -77,6 +80,9 @@ class MergeModel(HasTraits):
     def accept_our(self, fl=None):
         self._merge_accept(fl, 'ours')
 
+    def commit(self):
+        self.repo.commit('merged {}/{} with local/{}'.format(self.remote, self.branch, self.branch))
+
     def _merge_accept(self, fl, k):
         if fl is None:
             fl = self.conflicts
@@ -84,6 +90,7 @@ class MergeModel(HasTraits):
         repo = self.repo._repo
         for fi in fl:
             repo.git.checkout('--{}'.format(k), fi.path)
+            self.repo.add(fi.path, commit=False)
             self.conflicts.remove(fi)
 
 
@@ -96,6 +103,9 @@ class MergeView(Controller):
     selected = List
     accept_their_button = Button('Accept Their')
     accept_our_button = Button('Accept Our')
+
+    def closed(self, info, is_ok):
+        self.model.commit()
 
     def controller_accept_their_button_changed(self, info):
         if self.selected:
@@ -132,7 +142,10 @@ class MergeView(Controller):
                              label='Their'))
 
         v = View(VGroup(HGroup(cgrp, bgrp),
-                        tgrp))
+                        tgrp),
+                 buttons=['OK'],
+                 title='Merge',
+                 resizable=True)
         return v
 
 # ============= EOF =============================================
