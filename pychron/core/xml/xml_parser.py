@@ -142,17 +142,17 @@ class XMLParser(object):
             self._root = Element('root')
 
     def _parse_file(self, p):
-        path = None
+        txt = None
         if isinstance(p, (str, unicode)):
             if os.path.isfile(p):
-                if isinstance(p, str):
-                    path = open(p, 'r')
+                with open(p, 'r') as rfile:
+                    txt = p.read()
 
-        if path:
-            txt = path.read()
-            self._root = XML(txt)
-            path.close()
-            return True
+        if txt is None:
+            txt = p.read()
+
+        self._root = XML(txt)
+        return True
 
     def load(self, rfile):
         return self._parse_file(rfile)
