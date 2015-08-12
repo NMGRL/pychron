@@ -105,21 +105,7 @@ class Spectrum(BaseArArFigure):
         if not ls == 'No Line':
             spec.line_style = ls
         else:
-            # group = self.options.get_group(self.group_id)
-            # print 'lc',group.line_color
-            # print 'a', group.alpha
-            # print 'ccc', group.color
-            # c = group.color
-            # r,g,b,a = c.toTuple()
-            # ct = (r,g,b, group.alpha*255/100.)
-            # print ct
-            # spec.color = r,g,b, group.alpha *0.01
-            # spec.color = group.line_color
             spec.line_width = 0
-
-        # add inspector
-        # sp=SpectrumInspector(component=spec)
-        # spec.tools.append(sp)
 
         ag = self.analysis_group
         ag.include_j_error_in_plateau = self.options.include_j_error_in_plateau
@@ -138,18 +124,11 @@ class Spectrum(BaseArArFigure):
         if plateau_age:
             platbounds = ag.plateau_steps
 
-            # plateau_age = ag.plateau_age
-            # plateau_mswd, valid_mswd, nsteps = ag.get_plateau_mswd_tuple()
-            #
-            # e = plateau_age.std_dev * self.options.nsigma
-            # info_txt = self._build_label_text(plateau_age.nominal_value, e,
-            # plateau_mswd, valid_mswd, nsteps,
-            # sig_figs=self.options.plateau_sig_figs)
             txt = self._make_plateau_text()
             overlay = self._add_plateau_overlay(spec, platbounds, plateau_age,
                                                 ys[::2], es[::2],
                                                 txt)
-            pma = plateau_age.nominal_value * 1.25
+            pma = plateau_age.nominal_value
             overlay.id = 'plateau'
             if overlay.id in po.overlay_positions:
                 y = po.overlay_positions[overlay.id]
@@ -202,7 +181,6 @@ class Spectrum(BaseArArFigure):
 
         print 'setting', _mi, _ma
         self.graph.set_y_limits(min_=_mi, max_=_ma, pad=pad, plotid=pid)
-        # self._set_y_limits(_mi, _ma, pad=pad)
         return spec
 
     def _add_info(self, g, plot):
@@ -344,7 +322,7 @@ class Spectrum(BaseArArFigure):
     # self._update_graph_metadata(gid, None, name, old, new)
 
     def _update_graph_metadata(self, obj, name, old, new):
-
+        print 'update graph metadata, {} {} {} {}'.format(obj, name, old, new)
         sel = obj.metadata['selections']
         for sp in self.spectrum_overlays:
             sp.selections = sel
