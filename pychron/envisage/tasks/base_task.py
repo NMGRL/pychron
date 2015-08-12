@@ -41,7 +41,7 @@ from pychron.envisage.tasks.actions import GenericSaveAction, GenericSaveAsActio
     GenericFindAction, RaiseAction, RaiseUIAction, ResetLayoutAction, \
     MinimizeAction, PositionAction, IssueAction, CloseAction, CloseOthersAction, AboutAction, OpenAdditionalWindow, \
     NoteAction, RestartAction, DocumentationAction, CopyPreferencesAction, SwitchUserAction, KeyBindingsAction, \
-    ChangeLogAction, StartupTestsAction
+    ChangeLogAction, StartupTestsAction, WaffleAction
 from pychron.loggable import Loggable
 
 
@@ -430,6 +430,7 @@ class BaseTask(Task, Loggable, PreferenceMixin):
             AboutAction(),
             DocumentationAction(),
             ChangeLogAction(),
+            WaffleAction(),
             RestartAction(),
             KeyBindingsAction(),
             SwitchUserAction(),
