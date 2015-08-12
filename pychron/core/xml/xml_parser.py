@@ -146,7 +146,7 @@ class XMLParser(object):
         if isinstance(p, (str, unicode)):
             if os.path.isfile(p):
                 with open(p, 'r') as rfile:
-                    txt = p.read()
+                    txt = rfile.read()
 
         if txt is None:
             txt = p.read()

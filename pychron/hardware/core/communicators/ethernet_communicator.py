@@ -144,26 +144,25 @@ class UDPHandler(Handler):
         self.sock.settimeout(timeout)
 
     def get_packet(self, cmd):
-        r = None
+        # r = None
         # cnt = 3
-        cnt = 1
+        # cnt = 1
 
         def recv(ds):
-            r, _ = self.sock.recvfrom(ds)
-            return r
+            rx, _ = self.sock.recvfrom(ds)
+            return rx
 
-        for _ in range(cnt):
-            try:
-                r = self._recvall(recv)
-                # r, _address = self.sock.recvfrom(self.datasize)
-                break
-            except socket.error, e:
-                self.debug('get_packet {}'.format(e))
-            # self.error_mode = True
-        else:
-            self.warning('get packet for {} error: {}'.format(cmd, e))
-
-        return r
+        # for _ in range(cnt):
+        #     try:
+        #         r = self._recvall(recv)
+        #         # r, _address = self.sock.recvfrom(self.datasize)
+        #         break
+        #     except socket.error, e:
+        #         self.debug('get_packet {}'.format(e))
+        #         self.error_mode = True
+        # else:
+        #     self.warning('get packet for {} error: {}'.format(cmd, e))
+        return self._recvall(recv)
 
     def send_packet(self, p):
         # self.sock.sendto(p, self.address)
