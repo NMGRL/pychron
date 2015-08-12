@@ -16,11 +16,10 @@
 
 
 # ============= enthought library imports =======================
-import random
-
-# ============= standard library imports ========================
 from traits.has_traits import HasTraits
-from uncertainties import ufloat
+# ============= standard library imports ========================
+import random
+from uncertainties import ufloat, std_dev, nominal_value
 from numpy import hstack
 from ConfigParser import ConfigParser
 from copy import copy
@@ -746,8 +745,8 @@ class ArArAge(MLoggable):
         age = age_equation(j, f, include_decay_error=include_decay_error,
                            arar_constants=arc)
 
-        self.age = age.nominal_value
-        self.age_err = age.std_dev
+        self.age = nominal_value(age)
+        self.age_err = std_dev(age)
         self.age_err_wo_j = float(age.std_dev)
         self.uage = ufloat(self.age, self.age_err)
 

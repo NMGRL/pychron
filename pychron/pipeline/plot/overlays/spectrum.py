@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from chaco.data_label import draw_arrow
 from chaco.label import Label
 from chaco.plot_label import PlotLabel
 from enable.colors import convert_from_pyqt_color
@@ -279,6 +280,7 @@ class PlateauOverlay(BasePlateauOverlay):
     line_color = Color('red')
     line_width = Float(1.0)
     selections = List
+    arrow_visible = Bool
 
     def hittest(self, pt, threshold=7):
         x, y = pt
@@ -383,8 +385,8 @@ class PlateauOverlay(BasePlateauOverlay):
             with gc:
                 comp = self.component
                 gc.clip_to_rect(comp.x, comp.y, comp.width, comp.height)
-
-                gc.set_stroke_color(convert_from_pyqt_color(None, None, self.line_color))
+                color = convert_from_pyqt_color(None, None, self.line_color)
+                gc.set_stroke_color(color)
                 gc.set_line_width(self.line_width)
 
                 y = pt1[1]
@@ -394,6 +396,9 @@ class PlateauOverlay(BasePlateauOverlay):
 
                 self._draw_end_caps(gc, x1, x2, y)
                 gc.draw_path()
+                if self.arrow_visible:
+                    draw_arrow(gc, (x1 + 5, y), (x1, y), color)
+                    draw_arrow(gc, (x2 - 5, y), (x2, y), color)
 
                 # add end caps
                 if self.extend_end_caps:

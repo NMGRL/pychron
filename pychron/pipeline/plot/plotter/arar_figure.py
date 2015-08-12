@@ -666,7 +666,7 @@ class BaseArArFigure(HasTraits, SelectionFigure):
                 axp.set_overlay_position(obj.id, new)
 
     def _handle_overlay_move(self, obj, name, old, new):
-        axps = [a for a in self.options.aux_plots if a.use][::-1]
+        axps = [a for a in self.options.aux_plots if a.plot_enabled][::-1]
         for i, p in enumerate(self.graph.plots):
             if next((pp for pp in p.plots.itervalues()
                      if obj.component == pp[0]), None):

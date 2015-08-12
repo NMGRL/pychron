@@ -161,6 +161,7 @@ class FigurePanel(HasTraits):
 
                 for i, p in enumerate(plots):
                     if p.has_ylimits():
+                        print 'setting ylimits', p.ylimits[0], p.ylimits[1]
                         g.set_y_limits(p.ylimits[0], p.ylimits[1], plotid=i)
 
             if mi is None and ma is None:

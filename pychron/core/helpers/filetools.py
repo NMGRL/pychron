@@ -30,7 +30,7 @@ def subdirize(root, name, n=1, l=2, mode='r'):
         n, name = name[:l], name[l:]
         path = os.path.join(root, n)
         if not os.path.isdir(path):
-            print 'subdirize {}'.format(path)
+            # print 'subdirize {}'.format(path)
             if mode == 'r':
                 return
 

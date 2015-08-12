@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from traits.api import Int, Property, Bool, Enum, Float, Color, Range, Button, on_trait_change
-from traitsui.api import View, Item, Group, HGroup, UItem, EnumEditor, spring, VGroup, InstanceEditor
+from traitsui.api import View, Item, Group, HGroup, UItem, EnumEditor, spring, VGroup
 
 # ============= standard library imports ========================
 import re
@@ -49,7 +49,7 @@ class SpectrumOptions(AgeOptions):
     plateau_age_error_kind = dumpable(Enum, *ERROR_TYPES)
 
     display_extract_value = dumpable(Bool, False)
-    display_step = dumpable(Bool, False),
+    display_step = dumpable(Bool, False)
     display_plateau_info = dumpable(Bool, True)
     display_integrated_info = dumpable(Bool, True)
     plateau_sig_figs = dumpable(Int)
@@ -63,6 +63,7 @@ class SpectrumOptions(AgeOptions):
     user_envelope_color = dumpable(Bool)
     center_line_style = dumpable(Enum, 'No Line', 'solid', 'dash', 'dot dash', 'dot', 'long dash')
     extend_plateau_end_caps = dumpable(Bool, True)
+    plateau_arrow_visible = dumpable(Bool)
     # plateau_line_width = Float
     # plateau_line_color = Color
     # user_plateau_line_color = Bool
@@ -181,9 +182,112 @@ class SpectrumOptions(AgeOptions):
                            label='Extend End Caps'),
                       icon_button_editor('edit_plateau_criteria', 'cog',
                                          tooltip='Edit Plateau Criteria'), )
-        plat_grp = HGroup(lgrp, rgrp,
-                          show_border=True,
+        plat_grp = HGroup(lgrp, rgrp)
+
+        # grp_grp = VGroup(UItem('group',
+        #                        style='custom',
+        #                        editor=InstanceEditor(view='simple_view')),
+        #                  show_border=True,
+        #                  label='Group Attributes')
+
+        error_grp = VGroup(HGroup(Item('step_nsigma',
+                                       editor=EnumEditor(values=[1, 2, 3]),
+                                       tooltip='Set the size of the error envelope in standard deviations',
+                                       label='N. Sigma')),
+                           show_border=True,
+                           label='Error Envelope')
+
+        display_grp = Group(HGroup(UItem('show_info',
+                                         tooltip='Show general info in the upper right corner'),
+                                   show_border=True,
+                                   label='General'),
+                            VGroup(Item('include_legend', label='Show'),
+                                   Item('include_sample_in_legend', label='Include Sample'),
+                                   Item('legend_location', label='Location'),
+                                   label='Legend', show_border=True),
+
+                            HGroup(Item('display_step', label='Step'),
+                                   Item('display_extract_value', label='Power/Temp'),
+                                   spring,
+                                   Item('step_label_font_size', label='Size'),
+                                   show_border=True,
+                                   label='Labels'),
+                            VGroup(HGroup(UItem('display_plateau_info',
+                                                tooltip='Display plateau info'),
+                                          Item('plateau_font_size', label='Size',
+                                               enabled_when='display_plateau_info'),
+                                          Item('plateau_sig_figs', label='SigFigs')),
+                                   HGroup(Item('include_plateau_sample',
+                                               tooltip='Add the Sample name to the Plateau indicator',
+                                               label='Sample'),
+                                          Item('include_plateau_identifier',
+                                               tooltip='Add the Identifier to the Plateau indicator',
+                                               label='Identifier')),
+                                   Item('plateau_arrow_visible'),
+                                   show_border=True,
+                                   label='Plateau'),
+                            HGroup(UItem('display_integrated_info',
+                                         tooltip='Display integrated age info'),
+                                   Item('integrated_font_size', label='Size',
+                                        enabled_when='display_integrated_info'),
+                                   Item('integrated_sig_figs', label='SigFigs'),
+                                   show_border=True,
+                                   label='Integrated'),
+                            show_border=True,
+                            label='Display')
+        plat_grp = VGroup(plat_grp, error_grp,
                           label='Plateau')
+        return plat_grp, display_grp
+        # g = Group(
+        #     self._get_title_group(),
+        #     grp_grp,
+        #     plat_grp,
+        #     error_grp,
+        #     display_grp,
+        # self._get_info_group(),
+        # label='Options')
+
+        # label_grp = VGroup(self._get_x_axis_group(),
+        #                    self._get_y_axis_group(),
+        #                    label='Fonts')
+        # return g,
+
+    def _load_factory_defaults(self, yd):
+        super(SpectrumOptions, self)._load_factory_defaults(yd)
+
+        self._set_defaults(yd, 'legend', ('legend_location',
+                                          'include_legend',
+                                          'include_sample_in_legend'))
+
+        self._set_defaults(yd, 'plateau', ('plateau_line_width',
+                                           'plateau_line_color',
+                                           'plateau_font_size',
+                                           'plateau_sig_figs',
+                                           # 'calculate_fixed_plateau',
+                                           # 'calculate_fixed_plateau_start',
+                                           # 'calculate_fixed_plateau_end',
+                                           'pc_nsteps',
+                                           'pc_gas_fraction'))
+
+        self._set_defaults(yd, 'integrated', ('integrated_font_size',
+                                              'integrated_sig_figs',))
+        self._set_defaults(yd, 'labels', ('display_step',
+                                          'display_extract_value',
+                                          'step_label_font_size'))
+
+        # ============= EOF =============================================
+        # HGroup(UItem('error_envelope',
+        #              style='custom',
+        #              editor=InstanceEditor(view='simple_view')),
+        #        icon_button_editor('edit_envelopes_button', 'cog')),
+        # HGroup(UItem('user_envelope_color'),
+        #        Item('envelope_color',
+        #             label='Color',
+        #             enabled_when='user_envelope_color'),
+        #        Item('envelope_alpha',
+        #             label='Opacity',
+        #             enabled_when='use_error_envelope_fill',
+        #             tooltip='Set the opacity (alpha-value) for the error envelope')),
 
         # plat_grp = Group(
         #     HGroup(Item('plateau_method', label='Method'),
@@ -231,103 +335,3 @@ class SpectrumOptions(AgeOptions):
         #                         icon_button_editor('edit_groups_button', 'cog')),
         #                  show_border=True,
         #                  label='Group Attributes')
-        grp_grp = VGroup(UItem('group',
-                               style='custom',
-                               editor=InstanceEditor(view='simple_view')),
-                         show_border=True,
-                         label='Group Attributes')
-
-        error_grp = VGroup(HGroup(Item('step_nsigma',
-                                       editor=EnumEditor(values=[1, 2, 3]),
-                                       tooltip='Set the size of the error envelope in standard deviations',
-                                       label='N. Sigma')),
-                           # HGroup(UItem('error_envelope',
-                           #              style='custom',
-                           #              editor=InstanceEditor(view='simple_view')),
-                           #        icon_button_editor('edit_envelopes_button', 'cog')),
-                           # HGroup(UItem('user_envelope_color'),
-                           #        Item('envelope_color',
-                           #             label='Color',
-                           #             enabled_when='user_envelope_color'),
-                           #        Item('envelope_alpha',
-                           #             label='Opacity',
-                           #             enabled_when='use_error_envelope_fill',
-                           #             tooltip='Set the opacity (alpha-value) for the error envelope')),
-                           show_border=True,
-                           label='Error Envelope')
-
-        display_grp = Group(HGroup(UItem('show_info',
-                                         tooltip='Show general info in the upper right corner'),
-                                   show_border=True,
-                                   label='General'),
-                            VGroup(Item('include_legend', label='Show'),
-                                   Item('include_sample_in_legend', label='Include Sample'),
-                                   Item('legend_location', label='Location'),
-                                   label='Legend', show_border=True),
-
-                            HGroup(Item('display_step', label='Step'),
-                                   Item('display_extract_value', label='Power/Temp'),
-                                   spring,
-                                   Item('step_label_font_size', label='Size'),
-                                   show_border=True,
-                                   label='Labels'),
-                            VGroup(HGroup(UItem('display_plateau_info',
-                                                tooltip='Display plateau info'),
-                                          Item('plateau_font_size', label='Size',
-                                               enabled_when='display_plateau_info'),
-                                          Item('plateau_sig_figs', label='SigFigs')),
-                                   HGroup(Item('include_plateau_sample',
-                                               tooltip='Add the Sample name to the Plateau indicator',
-                                               label='Sample'),
-                                          Item('include_plateau_identifier',
-                                               tooltip='Add the Identifier to the Plateau indicator',
-                                               label='Identifier')),
-                                   show_border=True,
-                                   label='Plateau'),
-                            HGroup(UItem('display_integrated_info',
-                                         tooltip='Display integrated age info'),
-                                   Item('integrated_font_size', label='Size',
-                                        enabled_when='display_integrated_info'),
-                                   Item('integrated_sig_figs', label='SigFigs'),
-                                   show_border=True,
-                                   label='Integrated'),
-                            show_border=True,
-                            label='Display')
-        g = Group(
-            self._get_title_group(),
-            grp_grp,
-            plat_grp,
-            error_grp,
-            display_grp,
-            # self._get_info_group(),
-            label='Options')
-
-        # label_grp = VGroup(self._get_x_axis_group(),
-        #                    self._get_y_axis_group(),
-        #                    label='Fonts')
-        return g,
-
-    def _load_factory_defaults(self, yd):
-        super(SpectrumOptions, self)._load_factory_defaults(yd)
-
-        self._set_defaults(yd, 'legend', ('legend_location',
-                                          'include_legend',
-                                          'include_sample_in_legend'))
-
-        self._set_defaults(yd, 'plateau', ('plateau_line_width',
-                                           'plateau_line_color',
-                                           'plateau_font_size',
-                                           'plateau_sig_figs',
-                                           # 'calculate_fixed_plateau',
-                                           # 'calculate_fixed_plateau_start',
-                                           # 'calculate_fixed_plateau_end',
-                                           'pc_nsteps',
-                                           'pc_gas_fraction'))
-
-        self._set_defaults(yd, 'integrated', ('integrated_font_size',
-                                              'integrated_sig_figs',))
-        self._set_defaults(yd, 'labels', ('display_step',
-                                          'display_extract_value',
-                                          'step_label_font_size'))
-
-# ============= EOF =============================================

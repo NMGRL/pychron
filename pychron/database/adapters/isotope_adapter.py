@@ -1338,6 +1338,8 @@ class IsotopeAdapter(DatabaseAdapter):
 
     def get_analyses_date_range(self, mi, ma,
                                 labnumber=None,
+                                samples=None,
+                                irradiations=None,
                                 limit=None,
                                 analysis_type=None,
                                 mass_spectrometers=None,
@@ -1349,17 +1351,40 @@ class IsotopeAdapter(DatabaseAdapter):
             q = self._analysis_query(sess, meas_MeasurementTable)
             if labnumber:
                 q = q.join(gen_LabTable)
+            elif samples:
+                q = q.join(gen_LabTable, gen_SampleTable)
+                # if irradiations:
+                #     q = q.join(irrad_PositionTable, irrad_LevelTable, irrad_IrradiationTable)
+            elif project:
+                q = q.join(gen_SampleTable, gen_ProjectTable)
+
             if mass_spectrometers:
                 q = q.join(gen_MassSpectrometerTable)
             if extract_device:
                 q = q.join(meas_ExtractionTable, gen_ExtractionDeviceTable)
             if analysis_type:
                 q = q.join(gen_AnalysisTypeTable)
-            if project:
-                q = q.join(gen_SampleTable, gen_ProjectTable)
 
             if labnumber:
                 q = q.filter(gen_LabTable.identifier == labnumber)
+
+            if samples:
+                if isinstance(samples, (tuple, list)):
+                    q = q.filter(gen_SampleTable.name.in_(samples))
+                else:
+                    q = q.filter(gen_SampleTable.name == samples)
+
+            # if irradiations:
+            #     if isinstance(irradiations, (tuple, list)):
+            #         if None in irradiations:
+            #             irradiations.remove(None)
+            #             q = q.filter(or_(gen_LabTable.irradiation_id.is_(None),
+            #                              irrad_IrradiationTable.name.in_(irradiations)))
+            #         else:
+            #             q = q.filter(irrad_IrradiationTable.name.in_(irradiations))
+            #     else:
+            #         q = q.filter(irrad_IrradiationTable.name == irradiations)
+
             if mass_spectrometers:
                 if hasattr(mass_spectrometers, '__iter__'):
                     q = q.filter(gen_MassSpectrometerTable.name.in_(mass_spectrometers))
@@ -1383,7 +1408,7 @@ class IsotopeAdapter(DatabaseAdapter):
             if limit:
                 q = q.limit(limit)
 
-            return self._query_all(q)
+            return self._query_all(q, verbose_query=False)
 
     # ===========================================================================
     # getters single

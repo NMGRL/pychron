@@ -29,12 +29,19 @@ from pychron.pipeline.plot.options.fit import FitAuxPlot, FitOptions
 
 
 # class SeriesOptions(GroupablePlotterOptions):
-from pychron.pychron_constants import ARGON_KEYS
+from pychron.pychron_constants import ARGON_KEYS, FIT_TYPES
+
+
+class SeriesFitAuxPlot(FitAuxPlot):
+    def _get_fit_types(self):
+        return FIT_TYPES
 
 
 class SeriesOptions(FitOptions):
+    aux_plot_klass = SeriesFitAuxPlot
     # groups = List
     # aux_plot_klass = FitAuxPlot
+
     def _aux_plots_default(self):
         def f(kii):
             ff = FitAuxPlot(name=kii)

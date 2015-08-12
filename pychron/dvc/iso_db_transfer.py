@@ -20,8 +20,13 @@ from itertools import groupby
 import time
 import os
 import json
+
+from datetime import timedelta
+
 # ============= local library imports  ==========================
+from numpy import array, array_split
 from pychron.canvas.utils import make_geom
+from pychron.core.helpers.datetime_tools import make_timef, bin_timestamps, get_datetime
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.dvc import jdump
@@ -54,41 +59,105 @@ class IsoDBTransfer(Loggable):
     # meta_repo = Instance(MetaRepo)
     # root = None
     # repo_man = Instance(GitRepoManager)
+    quiet = False
 
-    def _init_src_dest(self):
-        conn = dict(host=os.environ.get('ARGONSERVER_HOST'),
-                    username=os.environ.get('ARGONSERVER_DB_USER'),
-                    password=os.environ.get('ARGONSERVER_DB_PWD'),
-                    kind='mysql')
+    def init(self):
+        self._init_src_dest()
 
-        self.dvc = DVC(bind=False, meta_repo_name='meta')
-        self.dvc.db.trait_set(name='pychronmeta', **conn)
-        if not self.dvc.initialize():
-            self.warning_dialog('Failed to initialize DVC')
-            return
+    def bulk_import_irradiations(self, creator, dry=True):
+        src = self.processor.db
+        # with src.session_ctx() as sess:
+        #     irradnames = [i.name for i in src.get_irradiations()]
 
-        self.dvc.meta_repo.smart_pull(quiet=False)
-        self.persister = DVCPersister(dvc=self.dvc)
+        # for i in xrange(251, 277):
+        # for i in xrange(258, 259):
+        for i in (258, 259,):
+            irradname = 'NM-{}'.format(i)
+            runs = self.bulk_import_irradiation(irradname, creator, dry=dry)
+            # if runs:
+            #     with open('/Users/ross/Sandbox/bulkimport/irradiation_runs.txt', 'a') as wfile:
+            #         for o in runs:
+            #             wfile.write('{}\n'.format(o))
 
-        proc = IsotopeDatabaseManager(bind=False, connect=False)
-        proc.db.trait_set(name='pychrondata', **conn)
-        src = proc.db
-        src.connect()
-        self.processor = proc
+    def get_irradiation_timestamps(self, irradname, tol_hrs=6):
+        src = self.processor.db
+        with src.session_ctx() as sess:
+            sql = """SELECT ant.analysis_timestamp from meas_analysistable as ant
+join gen_labtable as lt on lt.id = ant.lab_id
+join gen_sampletable as st on lt.sample_id = st.id
+join irrad_PositionTable as irp on lt.irradiation_id = irp.id
+join irrad_leveltable as il on irp.level_id = il.id
+join irrad_irradiationtable as ir on il.irradiation_id = ir.id
 
-    def runlist_load(self, path):
-        with open(path, 'r') as rfile:
-            runs = [li.strip() for li in rfile]
-            # runs = [line.strip() for line in rfile if line.strip()]
-            return filter(None, runs)
+where ir.name = "{}" and st.name ="FC-2"
+order by ant.analysis_timestamp ASC
 
-    def runlist_loads(self, txt):
-        runs = [li.strip() for li in txt.striplines()]
-        return filter(None, runs)
+""".format(irradname)
+            result = sess.execute(sql)
+            ts = array([make_timef(ri[0]) for ri in result.fetchall()])
+
+            idxs = bin_timestamps(ts, tol_hrs=tol_hrs)
+            return ts, idxs
+
+    def bulk_import_irradiation(self, irradname, creator, dry=True):
+
+        src = self.processor.db
+        tol_hrs = 6
+        self.debug('bulk import irradiation {}'.format(irradname))
+        oruns = []
+        ts, idxs = self.get_irradiation_timestamps(irradname, tol_hrs=tol_hrs)
+        prev = None
+        experiment_id = 'Irradiation-{}'.format(irradname)
+
+        def filterfunc(x):
+            a = x.labnumber.irradiation_position is None
+            b = False
+            if not a:
+                b = x.labnumber.irradiation_position.level.irradiation.name == irradname
+
+            d = False
+            if x.extraction:
+                ed = x.extraction.extraction_device
+                if not ed:
+                    d = True
+                else:
+                    d = ed.name == 'Fusions CO2'
+
+            return (a or b) and d
+
+        for ms in ('jan', 'obama'):
+            for i, ais in enumerate(array_split(ts, idxs + 1)):
+                if not ais.shape[0]:
+                    self.debug('skipping {}'.format(i))
+                    continue
+
+                low = get_datetime(ais[0]) - timedelta(hours=tol_hrs / 2.)
+                high = get_datetime(ais[-1]) + timedelta(hours=tol_hrs / 2.)
+                with src.session_ctx():
+                    ans = src.get_analyses_date_range(low, high,
+                                                      mass_spectrometers=(ms,),
+                                                      samples=('FC-2',
+                                                               'blank_unknown', 'blank_air', 'blank_cocktail', 'air',
+                                                               'cocktail'))
+
+                    # runs = filter(lambda x: x.labnumber.irradiation_position is None or
+                    #                         x.labnumber.irradiation_position.level.irradiation.name == irradname, ans)
+
+                    runs = filter(filterfunc, ans)
+                    if dry:
+                        for ai in runs:
+                            oruns.append(ai.record_id)
+                            # print ms, ai.record_id
+                    else:
+                        self.debug('================= Do Export i: {} low: {} high: {}'.format(i, low, high))
+                        self.debug('N runs: {}'.format(len(runs)))
+                        self.do_export([ai.record_id for ai in runs], experiment_id, creator)
+
+        return oruns
 
     def do_export(self, runs, experiment_id, creator, create_repo=False):
 
-        self._init_src_dest()
+        # self._init_src_dest()
         src = self.processor.db
         dest = self.dvc.db
 
@@ -101,11 +170,11 @@ class IsoDBTransfer(Loggable):
             self.persister.experiment_repo = repo
             self.dvc.experiment_repo = repo
 
-            commit = False
             total = len(runs)
             j = 0
 
             for ln, ans in groupby(runs, key=key):
+                commit = False
                 with dest.session_ctx() as sess:
                     ans = list(ans)
                     n = len(ans)
@@ -113,13 +182,46 @@ class IsoDBTransfer(Loggable):
                         st = time.time()
                         if self._transfer_analysis(a, experiment_id):
                             commit = True
-                            print '{}/{} transfer time {:0.3f}'.format(j, total, time.time() - st)
+                            self.debug('************* {}/{} transfer time {:0.3f}'.format(j, total, time.time() - st))
                         j += 1
 
-            if commit:
-                repo.commit('<IMPORT> src= {}'.format(src.public_url))
+                        # if commit:
+                        #     repo.commit('<IMPORT> src= {}'.format(src.public_url))
+
+    def runlist_load(self, path):
+        with open(path, 'r') as rfile:
+            runs = [li.strip() for li in rfile]
+            # runs = [line.strip() for line in rfile if line.strip()]
+            return filter(None, runs)
+
+    def runlist_loads(self, txt):
+        runs = [li.strip() for li in txt.striplines()]
+        return filter(None, runs)
 
     # private
+    def _init_src_dest(self):
+        conn = dict(host=os.environ.get('ARGONSERVER_HOST'),
+                    username=os.environ.get('ARGONSERVER_DB_USER'),
+                    password=os.environ.get('ARGONSERVER_DB_PWD'),
+                    kind='mysql')
+
+        self.dvc = DVC(bind=False,
+                       organization='NMGRLData',
+                       meta_repo_name='meta')
+        self.dvc.db.trait_set(name='pychronmeta1', **conn)
+        if not self.dvc.initialize():
+            self.warning_dialog('Failed to initialize DVC')
+            return
+
+        self.dvc.meta_repo.smart_pull(quiet=self.quiet)
+        self.persister = DVCPersister(dvc=self.dvc, stage_files=False)
+
+        proc = IsotopeDatabaseManager(bind=False, connect=False)
+        proc.db.trait_set(name='pychrondata', **conn)
+        src = proc.db
+        src.connect()
+        self.processor = proc
+
     def _add_experiment(self, dest, experiment_id, creator, create_repo):
         experiment_id = format_experiment_identifier(experiment_id)
 
@@ -224,12 +326,13 @@ class IsoDBTransfer(Loggable):
 
             irradname = dbirrad.name
             levelname = dblevel.name
-            holder = dblevel.holder.name
-            prodname = dblevel.production.name
+
+            holder = dblevel.holder.name if dblevel.holder else ''
+            geom = dblevel.holder.geometry if dblevel.holder else ''
+            prod = dblevel.production
+            prodname = dblevel.production.name if dblevel.production else ''
             pos = dbirradpos.position
             doses = dbchron.get_doses()
-            prod = dblevel.production
-            geom = dblevel.holder.geometry
 
         meta_repo = self.dvc.meta_repo
         # save db irradiation
@@ -240,7 +343,7 @@ class IsoDBTransfer(Loggable):
 
             meta_repo.add_irradiation(irradname)
             meta_repo.add_chronology(irradname, doses)
-            meta_repo.commit('added irradiation {}'.format(irradname))
+            # meta_repo.commit('added irradiation {}'.format(irradname))
 
         # save production name to db
         if not dest.get_production(prodname):
@@ -249,7 +352,7 @@ class IsoDBTransfer(Loggable):
             dest.flush()
 
             meta_repo.add_production(prodname, prod)
-            meta_repo.commit('added production {}'.format(prodname))
+            # meta_repo.commit('added production {}'.format(prodname))
 
         # save db level
         if not dest.get_irradiation_level(irradname, levelname):
@@ -259,7 +362,7 @@ class IsoDBTransfer(Loggable):
 
             meta_repo.add_irradiation_holder(holder, geom)
             meta_repo.add_level(irradname, levelname)
-            meta_repo.commit('added empty level {}{}'.format(irradname, levelname))
+            # meta_repo.commit('added empty level {}{}'.format(irradname, levelname))
 
         if pos is None:
             pos = self._get_irradpos(dest, irradname, levelname, identifier)
@@ -315,7 +418,11 @@ class IsoDBTransfer(Loggable):
         iv.uuid = dban.uuid
 
         self.debug('make analysis idn:{}, aliquot:{} step:{}'.format(idn, aliquot, step))
-        an = proc.make_analysis(iv, unpack=True, use_cache=False)
+        try:
+            an = proc.make_analysis(iv, unpack=True, use_cache=False)
+        except:
+            self.warning('Failed to make {}'.format(make_runid(idn, aliquot, step)))
+            return
 
         self._transfer_meta(dest, dban)
 
@@ -367,9 +474,9 @@ class IsoDBTransfer(Loggable):
                               mass_spectrometer=ms,
                               uuid=dban.uuid,
                               _step=inc,
-                              comment=dban.comment,
+                              comment=dban.comment or '',
                               aliquot=int(aliquot),
-                              extract_device=extraction.extraction_device.name,
+                              extract_device=extraction.extraction_device.name if extraction.extraction_device else '',
                               duration=extraction.extract_duration,
                               cleanup=extraction.cleanup_duration,
                               beam_diameter=extraction.beam_diameter,
@@ -484,9 +591,13 @@ if __name__ == '__main__':
     logging_setup('de', root=os.path.join(os.path.expanduser('~'), 'Desktop', 'logs'))
 
     e = IsoDBTransfer()
+    e.quiet = True
+    e.init()
 
     runs, expid, creator = load_path()
     runs, expid, creator = load_import_request()
+    e.bulk_import_irradiations('root', dry=False)
+    # e.bulk_import_irradiation('NM-261')
 
     # e.do_export(runs, expid, creator, create_repo=False)
 

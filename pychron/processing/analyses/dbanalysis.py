@@ -173,7 +173,7 @@ class DBAnalysis(Analysis):
         self.peak_center = ufloat(pc, 0)
         self.peak_center_data = data
 
-    def sync_aux(self, dbrecord_tuple, load_changes=True):
+    def sync_aux(self, dbrecord_tuple, load_changes=False):
         if isinstance(dbrecord_tuple, meas_AnalysisTable):
             meas_analysis = dbrecord_tuple
         else:

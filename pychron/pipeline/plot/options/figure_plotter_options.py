@@ -19,7 +19,7 @@ from enable.markers import marker_names
 from kiva.fonttools import str_to_font
 from traits.api import Str, Int, Bool, Property, on_trait_change, \
     Button, TraitError, Enum, List
-from traitsui.api import View, Item, HGroup, VGroup, Spring, Group, EnumEditor, spring, UItem, InstanceEditor
+from traitsui.api import View, Item, HGroup, VGroup, Spring, Group, EnumEditor, spring, UItem, InstanceEditor, Tabbed
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
 # ============= standard library imports ========================
@@ -483,13 +483,16 @@ class FigurePlotterOptions(BasePlotterOptions):
         main_grp = self._get_main_group()
         bg_grp = self._get_bg_group()
         pd_grp = self._get_padding_group()
-        a_grp = self._get_axes_group()
+        # a_grp = self._get_axes_group()
         g_grp = self._get_groups_group()
         grps = self._get_groups()
 
         if grps:
             appear_grp = VGroup(HGroup(bg_grp, pd_grp),
-                                a_grp, g_grp,
+                                Tabbed(self._get_x_axis_group(),
+                                       self._get_y_axis_group(),
+                                       g_grp),
+                                # a_grp, g_grp,
                                 label='Appearance',
                                 show_border=True)
             g = Group(main_grp,

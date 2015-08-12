@@ -42,13 +42,13 @@ class SpectrumGroupOptions(BaseGroupOptions):
         return v
 
     def _get_groups(self):
-        envelope_grp = VGroup(HGroup(UItem('use_fill'),
+        envelope_grp = HGroup(HGroup(UItem('use_fill'),
                                      Item('color')),
                               Item('alpha', label='Opacity'),
                               show_border=True,
                               label='Error Envelope')
 
-        line_grp = VGroup(UItem('line_color'),
+        line_grp = HGroup(UItem('line_color'),
                           Item('line_width',
                                label='Width'),
                           show_border=True,

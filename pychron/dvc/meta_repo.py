@@ -168,7 +168,7 @@ class Production(MetaObject):
         # return {t: getattr(self, t) for a in keys for t in (a, '{}_err'.format(a))}
 
     def dump(self):
-        with open(paths.meta_dir, 'w') as wfile:
+        with open(self.path, 'w') as wfile:
             for a in self.attrs:
                 row = ','.join(map(str, (a, getattr(self, a), getattr(self, '{}_err'.format(a)))))
                 wfile.write('{}\n'.format(row))
@@ -334,7 +334,11 @@ class MetaRepo(GitRepoManager):
             # self.add(p, commit=False)
 
     def add_irradiation_holder(self, name, blob, commit=False, overwrite=False):
-        p = os.path.join(paths.meta_dir, 'irradiation_holders', add_extension(name))
+        root = os.path.join(paths.meta_dir, 'irradiation_holders')
+        if not os.path.isdir(root):
+            os.mkdir(root)
+        p = os.path.join(root, add_extension(name))
+
         if not os.path.isfile(p) or overwrite:
             with open(p, 'w') as wfile:
                 holes = list(iter_geom(blob))

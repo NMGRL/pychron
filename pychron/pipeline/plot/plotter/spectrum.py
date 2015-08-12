@@ -48,8 +48,8 @@ class Spectrum(BaseArArFigure):
         graph = self.graph
 
         ag = self.analysis_group
-        for pid, (plotobj, po) in enumerate(zip(graph.plots, plots)):
 
+        for pid, (plotobj, po) in enumerate(zip(graph.plots, plots)):
             plot = getattr(self, '_plot_{}'.format(po.plot_name))(po, plotobj, pid)
             if legend and po.plot_name == 'age_spectrum':
                 ident = ag.identifier
@@ -94,6 +94,7 @@ class Spectrum(BaseArArFigure):
         op = self.options
 
         xs, ys, es, c39s, s39, vs = self._calculate_spectrum()
+
         self.xs = c39s
         ref = self.analyses[0]
         au = ref.arar_constants.age_units
@@ -198,8 +199,8 @@ class Spectrum(BaseArArFigure):
             _mi, _ma = po.ylimits
             print 'using previous limits', _mi, _ma
             pad = None
-        # print 'setting', _mi, _ma
 
+        print 'setting', _mi, _ma
         self.graph.set_y_limits(min_=_mi, max_=_ma, pad=pad, plotid=pid)
         # self._set_y_limits(_mi, _ma, pad=pad)
         return spec
@@ -265,8 +266,13 @@ class Spectrum(BaseArArFigure):
                                   alpha=group.alpha,
                                   use_fill=group.use_fill,
                                   nsigma=ns)
-
         ds.underlays.append(sp)
+
+        omit = self._get_omitted(self.sorted_analyses,
+                                 omit='omit_spec',
+                                 include_value_filtered=False)
+        sp.selections = omit
+        # self.plateau_overlay = sp
         self.spectrum_overlays.append(sp)
 
         if po.show_labels:
@@ -316,7 +322,7 @@ class Spectrum(BaseArArFigure):
                             extend_end_caps=opt.extend_plateau_end_caps,
                             label_visible=opt.display_plateau_info,
                             label_font_size=opt.plateau_font_size,
-
+                            arrow_visible=opt.plateau_arrow_visible,
                             # label_offset=plateau_age.std_dev*self.options.step_nsigma,
                             # y=plateau_age.nominal_value * 1.25)
                             y=plateau_age.nominal_value)
@@ -413,9 +419,8 @@ class Spectrum(BaseArArFigure):
             excludes = []
 
         analyses = self.sorted_analyses
-
-        # values = [getattr(a, value_key) for a in analyses]
         values = [a.get_value(value_key) for a in analyses]
+        # values = [ufloat(10, 0.1) for vi in values]
         ar39s = [a.get_computed_value(index_key).nominal_value for a in analyses]
 
         xs = []

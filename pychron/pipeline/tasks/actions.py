@@ -124,6 +124,7 @@ class IdeogramAction(PlotAction):
 class SpectrumAction(PlotAction):
     name = 'Spectrum'
     action = 'set_spectrum_template'
+    accelerator = 'Ctrl+D'
     # image = icon('histogram')
 
 

@@ -35,8 +35,14 @@ class LogViewerAction(TaskAction):
     def perform(self, event):
         path = self.path
         if path is None:
+            try:
+                import twisted._version
+                wildcard = '*.log;*.json|log|*.json'
+            except ImportError:
+                wildcard = '*.log'
+
             dlg = FileDialog(action='open',
-                             wildcard='*.log;*.json|log|*.json',
+                             wildcard=wildcard,
                              default_directory=paths.log_dir)
             if dlg.open() == OK:
                 path = dlg.path

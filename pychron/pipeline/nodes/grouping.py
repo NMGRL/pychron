@@ -17,9 +17,10 @@
 # ============= enthought library imports =======================
 from traits.api import Str
 from traitsui.api import View, UItem, EnumEditor
-from numpy import array, ediff1d, where, array_split
+from numpy import array, array_split
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.helpers.datetime_tools import bin_timestamps
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.processing.utils.grouping import group_analyses_by_key
 
@@ -69,11 +70,12 @@ class BinNode(BaseNode):
         unks = sorted(unks, key=key)
 
         tol_hrs = 1
-        tol = 60 * 60 * tol_hrs
+        # tol = 60 * 60 * tol_hrs
 
         ts = array([ai.timestamp for ai in unks])
-        dts = ediff1d(ts)
-        idxs = where(dts > tol)[0]
+        # dts = ediff1d(ts)
+        # idxs = where(dts > tol)[0]
+        idxs = bin_timestamps(ts, tol_hrs)
         if idxs:
             unks = array(unks)
             for i, ais in enumerate(array_split(unks, idxs + 1)):

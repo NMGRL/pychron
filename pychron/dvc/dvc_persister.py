@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Instance
+from traits.api import Instance, Bool
 # ============= standard library imports ========================
 import base64
 import hashlib
@@ -39,6 +39,7 @@ def format_experiment_identifier(project):
 class DVCPersister(BasePersister):
     experiment_repo = Instance(GitRepoManager)
     dvc = Instance(DVC_PROTOCOL)
+    stage_files = Bool(True)
 
     def per_spec_save(self, pr, experiment_id=None, commit=False, msg_prefix=None):
         self.per_spec = pr
@@ -172,27 +173,28 @@ class DVCPersister(BasePersister):
         self._save_peak_center(self.per_spec.peak_center)
 
         # stage files
-        paths = [spec_path, ] + [self._make_path(modifier=m) for m in PATH_MODIFIERS]
+        if self.stage_files:
+            paths = [spec_path, ] + [self._make_path(modifier=m) for m in PATH_MODIFIERS]
 
-        for p in paths:
-            if os.path.isfile(p):
-                self.experiment_repo.add(p, commit=False, msg_prefix=msg_prefix)
-            else:
-                self.debug('not at valid file {}'.format(p))
+            for p in paths:
+                if os.path.isfile(p):
+                    self.experiment_repo.add(p, commit=False, msg_prefix=msg_prefix)
+                else:
+                    self.debug('not at valid file {}'.format(p))
 
-        if commit:
-            self.experiment_repo.smart_pull(accept_their=True)
-            
-            # commit files
-            self.experiment_repo.commit('added analysis {}'.format(self.per_spec.run_spec.runid))
+            if commit:
+                self.experiment_repo.smart_pull(accept_their=True)
 
-            # update meta
-            self.dvc.meta_pull(accept_our=True)
+                # commit files
+                self.experiment_repo.commit('added analysis {}'.format(self.per_spec.run_spec.runid))
 
-            self.dvc.meta_commit('repo updated for analysis {}'.format(self.per_spec.run_spec.runid))
+                # update meta
+                self.dvc.meta_pull(accept_our=True)
 
-            # push commit
-            self.dvc.meta_push()
+                self.dvc.meta_commit('repo updated for analysis {}'.format(self.per_spec.run_spec.runid))
+
+                # push commit
+                self.dvc.meta_push()
 
     # private
     def _save_analysis_db(self, timestamp):
@@ -227,10 +229,13 @@ class DVCPersister(BasePersister):
             if t:
                 dbtag = db.get_tag(t)
                 if not dbtag:
-                    dbtag = db.add_tag(t)
+                    dbtag = db.add_tag(name=t)
 
             db.flush()
-            an.change.tag_item = dbtag
+
+            change = db.add_analysis_change(tag=t)
+            an.change = change
+            # an.change.tag_item = dbtag
             # self._save_measured_positions()
 
     def _save_measured_positions(self):
@@ -330,12 +335,10 @@ class DVCPersister(BasePersister):
         for si in ('measurement', 'extraction'):
             name = getattr(self.per_spec, '{}_name'.format(si))
             blob = getattr(self.per_spec, '{}_blob'.format(si))
-            self.dvc.update_script(name, blob)
-
-            self.dvc.meta_repo.update_script(ms, blob)
+            self.dvc.meta_repo.update_script(ms, name, blob)
 
         # save experiment
-        self.dvc.update_experiment_queue(self.per_spec.experiment_queue_name,
+        self.dvc.update_experiment_queue(ms, self.per_spec.experiment_queue_name,
                                          self.per_spec.experiment_queue_blob)
 
         hexsha = str(self.dvc.get_meta_head())
