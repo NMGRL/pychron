@@ -17,13 +17,19 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 import os
+import re
 
 import yaml
+
+
 
 # ============= local library imports  ==========================
 from pychron.file_defaults import IDENTIFIERS_DEFAULT
 from pychron.pychron_constants import LINE_STR, ALPHAS
 from pychron.paths import paths
+
+IDENTIFIER_REGEX = re.compile(r'(?P<identifier>\d+)-(?P<aliquot>\d+)(?P<step>\w*)')
+SPECIAL_IDENTIFIER_REGEX = re.compile(r'(?P<identifier>\w{1,2}-[\d\w]+-\w{1})-(?P<aliquot>\d+)')
 
 ANALYSIS_MAPPING_UNDERSCORE_KEY = dict()  # blank_air: ba
 ANALYSIS_MAPPING = dict()  # ba: 'Blank Air'
@@ -373,7 +379,7 @@ def pretty_extract_device(ident):
             n = '{} {}'.format(n, args[-1].upper())
         else:
             n = ' '.join(map(str.capitalize, args))
-            #n=ident.replace(' ', '_')
+            # n=ident.replace(' ', '_')
     return n
 
 # ============= EOF =============================================

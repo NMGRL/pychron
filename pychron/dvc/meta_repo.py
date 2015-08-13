@@ -270,7 +270,7 @@ class MetaRepo(GitRepoManager):
     def update_experiment_queue(self, rootname, name, path_or_blob):
         self._update_text(os.path.join('experiments', rootname), name, path_or_blob)
 
-    def add_production(self, name, obj, commit=False):
+    def add_production(self, name, obj, commit=False, add=True):
         p = self.get_production(name, force=True)
 
         p.attrs = attrs = INTERFERENCE_KEYS + RATIO_KEYS
@@ -288,7 +288,8 @@ class MetaRepo(GitRepoManager):
             setattr(p, ke, e)
 
         p.dump()
-        self.add(p.path, commit=commit)
+        if add:
+            self.add(p.path, commit=commit)
 
     def update_production(self, prod, irradiation=None):
         # ip = db.get_irradiation_production(prod.name)
@@ -312,29 +313,32 @@ class MetaRepo(GitRepoManager):
         self.add(ip.path, commit=False)
         self.commit('updated production {}'.format(prod.name))
 
-    def add_level(self, irrad, level):
+    def get_level_path(self, irrad, level):
+        return os.path.join(paths.meta_root, irrad, '{}.json'.format(level))
+
+    def add_level(self, irrad, level, add=True):
         p = self.get_level_path(irrad, level)
         jdump([], p)
-        self.add(p, commit=False)
+        if add:
+            self.add(p, commit=False)
 
-    def get_level_path(self, irrad, level):
-        return os.path.join(paths.meta_dir, irrad, '{}.json'.format(level))
-
-    def add_chronology(self, irrad, doses):
-        p = os.path.join(paths.meta_dir, irrad, 'chronology.txt')
+    def add_chronology(self, irrad, doses, add=True):
+        p = os.path.join(paths.meta_root, irrad, 'chronology.txt')
 
         # Chronology.dump(p, doses)
         dump_chronology(p, doses)
-        self.add(p, commit=False)
+        if add:
+            self.add(p, commit=False)
 
-    def add_irradiation(self, name):
-        p = os.path.join(paths.meta_dir, name)
+    def add_irradiation(self, name, add=True):
+        p = os.path.join(paths.meta_root, name)
         if not os.path.isdir(p):
             os.mkdir(p)
-            # self.add(p, commit=False)
+            if add:
+                self.add(p, commit=False)
 
-    def add_irradiation_holder(self, name, blob, commit=False, overwrite=False):
-        root = os.path.join(paths.meta_dir, 'irradiation_holders')
+    def add_irradiation_holder(self, name, blob, commit=False, overwrite=False, add=True):
+        root = os.path.join(paths.meta_root, 'irradiation_holders')
         if not os.path.isdir(root):
             os.mkdir(root)
         p = os.path.join(root, add_extension(name))
@@ -346,16 +350,18 @@ class MetaRepo(GitRepoManager):
                 wfile.write('{},0.0175\n'.format(n))
                 for idx, (x, y, r) in holes:
                     wfile.write('{:0.4f},{:0.4f},{:0.4f}\n'.format(x, y, r))
-            self.add(p, commit=commit)
+            if add:
+                self.add(p, commit=commit)
 
-    def add_load_holder(self, name, path_or_txt, commit=False):
-        p = os.path.join(paths.meta_dir, 'load_holders', name)
+    def add_load_holder(self, name, path_or_txt, commit=False, add=True):
+        p = os.path.join(paths.meta_root, 'load_holders', name)
         if os.path.isfile(path_or_txt):
             shutil.copyfile(path_or_txt, p)
         else:
             with open(p, 'w') as wfile:
                 wfile.write(path_or_txt)
-        self.add(p, commit=commit)
+        if add:
+            self.add(p, commit=commit)
 
     def update_flux(self, irradiation, level, pos, identifier, j, e, decay, analyses, add=True):
         p = self.get_level_path(irradiation, level)
@@ -391,7 +397,7 @@ class MetaRepo(GitRepoManager):
         #         self.push()
 
     def get_irradiation_holder_names(self):
-        return list_directory2(os.path.join(paths.meta_dir, 'irradiation_holders'),
+        return list_directory2(os.path.join(paths.meta_root, 'irradiation_holders'),
                                extension='.txt',
                                remove_extension=True)
 
@@ -399,14 +405,14 @@ class MetaRepo(GitRepoManager):
         # list_directory2(os.path.join(paths.meta_dir, 'productions'),
         # remove_extension=True)
         prs = []
-        root = os.path.join(paths.meta_dir, 'productions')
+        root = os.path.join(paths.meta_root, 'productions')
         for di in ilist_directory2(root, extension='.txt'):
             pr = Production(os.path.join(root, di))
             prs.append(pr)
         return prs
 
     def get_flux(self, irradiation, level, position):
-        path = os.path.join(paths.meta_dir, irradiation, add_extension(level, '.json'))
+        path = os.path.join(paths.meta_root, irradiation, add_extension(level, '.json'))
         j, e, lambda_k = 0, 0, None
 
         if os.path.isfile(path):
@@ -429,7 +435,7 @@ class MetaRepo(GitRepoManager):
         return g.gains
 
     def _gain_path(self, name):
-        root = os.path.join(paths.meta_dir, 'spectrometers')
+        root = os.path.join(paths.meta_root, 'spectrometers')
         if not os.path.isdir(root):
             os.mkdir(root)
 
@@ -443,7 +449,7 @@ class MetaRepo(GitRepoManager):
 
     @cached('clear_cache')
     def get_production(self, pname, **kw):
-        root = os.path.join(paths.meta_dir, 'productions')
+        root = os.path.join(paths.meta_root, 'productions')
         if not os.path.isdir(root):
             os.mkdir(root)
         p = os.path.join(root, add_extension(pname))
@@ -457,26 +463,26 @@ class MetaRepo(GitRepoManager):
 
     @cached('clear_cache')
     def get_irradiation_holder_holes(self, name, **kw):
-        p = os.path.join(paths.meta_dir, 'irradiation_holders', add_extension(name))
+        p = os.path.join(paths.meta_root, 'irradiation_holders', add_extension(name))
         holder = IrradiationHolder(p)
         return holder.holes
 
     @cached('clear_cache')
     def get_load_holder_holes(self, name, **kw):
-        p = os.path.join(paths.meta_dir, 'load_holders', add_extension(name))
+        p = os.path.join(paths.meta_root, 'load_holders', add_extension(name))
         holder = LoadHolder(p)
         return holder.holes
 
     # private
     def _chron_name(self, name):
-        return os.path.join(paths.meta_dir, name, 'chronology.txt')
+        return os.path.join(paths.meta_root, name, 'chronology.txt')
 
     def _update_text(self, tag, name, path_or_blob):
         if not name:
             self.debug('cannot update text with no name. tag={} name={}'.format(tag, name))
             return
 
-        root = os.path.join(paths.meta_dir, tag)
+        root = os.path.join(paths.meta_root, tag)
         if not os.path.isdir(root):
             r_mkdir(root)
 

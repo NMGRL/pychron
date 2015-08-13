@@ -51,6 +51,7 @@ def create_organization_repository(org, name, usr, pwd, **kw):
     auth = base64.encodestring('{}:{}'.format(usr, pwd)).replace('\n', '')
     headers = {"Authorization": "Basic {}".format(auth)}
     r = requests.post(cmd, data=json.dumps(payload), headers=headers)
+    return r
 
 
 class GithubObject(object):

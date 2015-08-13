@@ -23,6 +23,8 @@ import json
 
 from datetime import timedelta
 
+
+
 # ============= local library imports  ==========================
 from numpy import array, array_split
 from pychron.canvas.utils import make_geom
@@ -34,7 +36,7 @@ from pychron.dvc.dvc import DVC
 from pychron.dvc.dvc_persister import DVCPersister, format_experiment_identifier
 from pychron.experiment.automated_run.persistence_spec import PersistenceSpec
 from pychron.experiment.automated_run.spec import AutomatedRunSpec
-from pychron.experiment.utilities.identifier import make_runid
+from pychron.experiment.utilities.identifier import make_runid, IDENTIFIER_REGEX, SPECIAL_IDENTIFIER_REGEX
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.github import Organization
 from pychron.loggable import Loggable
@@ -71,7 +73,9 @@ class IsoDBTransfer(Loggable):
 
         # for i in xrange(251, 277):
         # for i in xrange(258, 259):
-        for i in (258, 259,):
+        # for i in (258, 259, 260, 261,):
+        # for i in (262, 263, 264, 265):
+        for i in (266, 267, 268, 269):
             irradname = 'NM-{}'.format(i)
             runs = self.bulk_import_irradiation(irradname, creator, dry=dry)
             # if runs:
@@ -180,9 +184,17 @@ order by ant.analysis_timestamp ASC
                     n = len(ans)
                     for i, a in enumerate(ans):
                         st = time.time()
-                        if self._transfer_analysis(a, experiment_id):
-                            commit = True
-                            self.debug('************* {}/{} transfer time {:0.3f}'.format(j, total, time.time() - st))
+                        try:
+                            if self._transfer_analysis(a, experiment_id):
+                                commit = True
+                                self.debug(
+                                    '************* {}/{} transfer time {:0.3f}'.format(j, total, time.time() - st))
+                        except BaseException, e:
+
+                            import traceback
+                            traceback.print_exc()
+
+                            self.warning('failed transfering {}. {}'.format(a, e))
                         j += 1
 
                         # if commit:
@@ -341,8 +353,8 @@ order by ant.analysis_timestamp ASC
             dest.add_irradiation(irradname)
             dest.flush()
 
-            meta_repo.add_irradiation(irradname)
-            meta_repo.add_chronology(irradname, doses)
+            meta_repo.add_irradiation(irradname, add=False)
+            meta_repo.add_chronology(irradname, doses, add=False)
             # meta_repo.commit('added irradiation {}'.format(irradname))
 
         # save production name to db
@@ -351,7 +363,7 @@ order by ant.analysis_timestamp ASC
             dest.add_production(prodname)
             dest.flush()
 
-            meta_repo.add_production(prodname, prod)
+            meta_repo.add_production(prodname, prod, add=False)
             # meta_repo.commit('added production {}'.format(prodname))
 
         # save db level
@@ -360,8 +372,8 @@ order by ant.analysis_timestamp ASC
             dest.add_irradiation_level(levelname, irradname, holder, prodname)
             dest.flush()
 
-            meta_repo.add_irradiation_holder(holder, geom)
-            meta_repo.add_level(irradname, levelname)
+            meta_repo.add_irradiation_holder(holder, geom, add=False)
+            meta_repo.add_level(irradname, levelname, add=False)
             # meta_repo.commit('added empty level {}{}'.format(irradname, levelname))
 
         if pos is None:
@@ -393,15 +405,29 @@ order by ant.analysis_timestamp ASC
         proc = self.processor
         src = proc.db
 
-        args = rec.split('-')
-        idn = '-'.join(args[:-1])
-        t = args[-1]
-        try:
-            aliquot = int(t)
-            step = None
-        except ValueError:
-            aliquot = int(t[:-1])
-            step = t[-1]
+        # args = rec.split('-')
+        # idn = '-'.join(args[:-1])
+        # t = args[-1]
+        # try:
+        #     aliquot = int(t)
+        #     step = None
+        # except ValueError:
+        #     aliquot = int(t[:-1])
+        #     step = t[-1]
+        m = IDENTIFIER_REGEX.match(rec)
+        if not m:
+            m = SPECIAL_IDENTIFIER_REGEX.match(rec)
+
+        if not m:
+            self.warning('invalid runid {}'.format(rec))
+            return
+        else:
+            idn = m.group('identifier')
+            aliquot = m.group('aliquot')
+            try:
+                step = m.group('step') or None
+            except IndexError:
+                step = None
 
         if idn == '4359':
             idn = 'c-01-j'

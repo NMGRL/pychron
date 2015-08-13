@@ -162,7 +162,7 @@ class DVC(Loggable):
 
         # self.synchronize()
         if self.db.connect():
-            self._defaults()
+            # self._defaults()
             return True
 
     def git_session_ctx(self, experiment_id, message):
