@@ -108,11 +108,13 @@ class RemoteResource(object):
 class RemotePyScriptRunner(PyScriptRunner):
     handle = None
 
-    def __init__(self, host, port, kind, *args, **kw):
+    def __init__(self, host, port, kind, frame, *args, **kw):
         super(RemotePyScriptRunner, self).__init__(*args, **kw)
         self.kind = kind
         self.port = port
         self.host = host
+        self.frame = frame
+
         self.handle = self._handle_factory()
 
     def reset_connection(self):
@@ -128,7 +130,7 @@ class RemotePyScriptRunner(PyScriptRunner):
         handle.host = self.host
         handle.port = self.port
         handle.kind = self.kind
-        handle.message_frame = 'L4,-,C4'
+        handle.message_frame = self.frame
         return handle
 
     def _get_resource(self, name):
