@@ -18,7 +18,7 @@
 from traits.api import Instance
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.pipeline.options.plotter_options_manager import CompositeOptionsManager
+from zobs.options.plotter_options_manager import CompositeOptionsManager
 from pychron.pipeline.plot.models.composite_model import CompositeModel
 from pychron.pipeline.plot.figure_container import FigureContainer
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor

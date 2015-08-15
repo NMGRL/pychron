@@ -17,6 +17,8 @@
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Bool, Any, List
 from traitsui.api import View
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -45,6 +47,11 @@ class BaseNode(HasTraits):
         self.visited = False
         self._manual_configured = False
         self.active = False
+
+    def pre_load(self, nodedict):
+        for k, v in nodedict.iteritems():
+            if hasattr(self, k):
+                setattr(self, k, v)
 
     def load(self, nodedict):
         pass

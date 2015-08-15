@@ -15,15 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import os
-
 import apptools.sweet_pickle as pickle
+from pyface.message_dialog import warning
 from traits.api import Str, List, Button, Instance, Tuple
 from traitsui.api import Controller
-
-
 # ============= standard library imports ========================
+import os
 # ============= local library imports  ==========================
+from pychron.core.helpers.filetools import list_directory2
+from pychron.file_defaults import SPECTRUM_SCREEN, IDEOGRAM_SCREEN, IDEOGRAM_PRESENTATION, SERIES_SCREEN, BLANKS_SCREEN, \
+    ICFACTOR_SCREEN, INVERSE_ISOCHRON_SCREEN, INVERSE_ISOCHRON_PRESENTATION
+from pychron.file_defaults import SPECTRUM_PRESENTATION
 from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.options.blanks import BlanksOptions
@@ -49,7 +51,8 @@ class OptionsManager(Loggable):
     options_klass = None
 
     id = ''
-    _defaults_path = Str
+    # _defaults_path = Str
+    _defaults = None
 
     _cached_names = List
     _cached_detectors = List
@@ -84,7 +87,7 @@ class OptionsManager(Loggable):
             if obj.name == name:
                 self.selected_options = obj
 
-    def save(self):
+    def save(self, name=None, obj=None):
         # dump the default plotter options
         if not os.path.isdir(self.persistence_root):
             try:
@@ -93,11 +96,14 @@ class OptionsManager(Loggable):
                 os.mkdir(os.path.dirname(self.persistence_root))
                 os.mkdir(self.persistence_root)
 
-        with open(self.selected_options_path, 'w') as wfile:
-            pickle.dump(self.selected, wfile)
+        if self.selected:
+            obj = self.selected_options
+            name = self.selected
+            with open(self.selected_options_path, 'w') as wfile:
+                pickle.dump(self.selected, wfile)
 
-        with open(os.path.join(self.persistence_root, '{}.p'.format(self.selected)), 'w') as wfile:
-            pickle.dump(self.selected_options, wfile)
+        with open(os.path.join(self.persistence_root, '{}.p'.format(name)), 'w') as wfile:
+            pickle.dump(obj, wfile)
             #
             # self.plotter_options.dump(self.persistence_root)
             # self._plotter_options_list_dirty = True
@@ -106,8 +112,11 @@ class OptionsManager(Loggable):
             # self._dump()
 
     def factory_default(self):
-        if os.path.isfile(self._defaults_path):
-            self.selected_options.load_factory_defaults(self._defaults_path)
+        warning(None, 'Factory defaults temporarily disabled')
+        # print  os.path.isfile(self._defaults_path), self._defaults_path
+        # if os.path.isfile(self._defaults_path):
+        #     self.debug('load factory defaults {}'.format(self._defaults_path))
+        #     self.selected_options.load_factory_defaults(self._defaults_path)
 
     def _initialize(self):
         selected = self._load_selected_po()
@@ -125,16 +134,27 @@ class OptionsManager(Loggable):
         return n
 
     def _populate(self):
-        self.names = ['Default', 'Foo', 'Bar']
+        # write some defaults
+        if self._defaults:
+            for name, txt in self._defaults:
+                dp = os.path.join(self.persistence_root, '{}.p'.format(name))
+                if not os.path.isfile(dp):
+                    p = self.options_klass()
+                    p.load_factory_defaults(txt)
+                    self.save(name, p)
+
+        self._load_names()
+
+    def _load_names(self):
+        self.names = [n for n in list_directory2(self.persistence_root, extension='.p', remove_extension=True) \
+                      if n != 'selected']
 
     def _selected_subview_changed(self, new):
-        print 'subview changed {}'.format(new)
-        v = self.selected_options.get_subview(new)
-        print v
-        self.subview = v
+        if new:
+            v = self.selected_options.get_subview(new)
+            self.subview = v
 
     def _selected_changed(self, new):
-        print 'selected change {}'.format(new)
         if new:
             obj = None
             p = os.path.join(self.persistence_root, '{}.p'.format(new.lower()))
@@ -152,8 +172,14 @@ class OptionsManager(Loggable):
             obj.name = new
             self.subview_names = obj.subview_names
             self.selected_options = obj
-            self.selected_subview = 'Main'
-            # self.selected_options = self.options_klass.open(self.persistence_root, self.id, new)
+
+            o = self.selected_subview
+            if not o:
+                o = 'Main'
+
+            self.selected_subview = ''
+            self.selected_subview = o
+
         else:
             self.selected_options = None
 
@@ -188,36 +214,9 @@ class FigureOptionsManager(OptionsManager):
     pass
 
 
-class IdeogramOptionsManager(FigureOptionsManager):
-    id = 'ideogram'
-    options_klass = IdeogramOptions
-    _defaults_path = paths.ideogram_defaults
-
-
-class SpectrumOptionsManager(FigureOptionsManager):
-    id = 'spectrum'
-    options_klass = SpectrumOptions
-    _defaults_path = paths.spectrum_defaults
-
-
-class SeriesOptionsManager(FigureOptionsManager):
-    id = 'series'
-    options_klass = SeriesOptions
-
-
 class IsotopeEvolutionOptionsManager(FigureOptionsManager):
     id = 'iso_evo'
     options_klass = IsotopeEvolutionOptions
-
-
-class BlanksOptionsManager(FigureOptionsManager):
-    id = 'blanks'
-    options_klass = BlanksOptions
-
-
-class ICFactorOptionsManager(FigureOptionsManager):
-    id = 'icfactor'
-    options_klass = ICFactorOptions
 
 
 class FluxOptionsManager(FigureOptionsManager):
@@ -225,9 +224,43 @@ class FluxOptionsManager(FigureOptionsManager):
     options_klass = FluxOptions
 
 
+class IdeogramOptionsManager(FigureOptionsManager):
+    id = 'ideogram'
+    options_klass = IdeogramOptions
+    _defaults = (('screen', IDEOGRAM_SCREEN),
+                 ('presentation', IDEOGRAM_PRESENTATION))
+
+
+class SpectrumOptionsManager(FigureOptionsManager):
+    id = 'spectrum'
+    options_klass = SpectrumOptions
+    _defaults = (('screen', SPECTRUM_SCREEN),
+                 ('presentation', SPECTRUM_PRESENTATION))
+
+
+class SeriesOptionsManager(FigureOptionsManager):
+    id = 'series'
+    options_klass = SeriesOptions
+    _defaults = (('screen', SERIES_SCREEN),)
+
+
+class BlanksOptionsManager(FigureOptionsManager):
+    id = 'blanks'
+    options_klass = BlanksOptions
+    _defaults = (('screen', BLANKS_SCREEN),)
+
+
+class ICFactorOptionsManager(FigureOptionsManager):
+    id = 'icfactor'
+    options_klass = ICFactorOptions
+    _defaults = (('screen', ICFACTOR_SCREEN),)
+
+
 class InverseIsochronOptionsManager(FigureOptionsManager):
     id = 'inverse_isochron'
     options_klass = InverseIsochronOptions
+    _defaults = (('screen', INVERSE_ISOCHRON_SCREEN),
+                 ('presentation', INVERSE_ISOCHRON_PRESENTATION))
 
 
 class OptionsController(Controller):
@@ -246,7 +279,6 @@ class OptionsController(Controller):
         self.model.save()
 
     def controller_factory_default_changed(self, info):
-        print 'factory'
         self.model.factory_default()
 
 

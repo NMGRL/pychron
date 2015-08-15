@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import os
 
 from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.task_factory import TaskFactory
@@ -25,34 +24,41 @@ from envisage.ui.tasks.task_factory import TaskFactory
 # ============= local library imports  ==========================
 from pyface.tasks.action.schema import SMenu, SGroup
 from pyface.tasks.action.schema_addition import SchemaAddition
-from pychron.core.helpers.filetools import add_extension
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
-from pychron.paths import paths
 from pychron.pipeline.tasks.actions import ConfigureRecallAction, IdeogramAction, IsochronAction, SpectrumAction, \
     SeriesAction, BlanksAction, ICFactorAction, ResetFactoryDefaultsAction
 from pychron.pipeline.tasks.browser_task import BrowserTask
 from pychron.pipeline.tasks.preferences import PipelinePreferencesPane
 from pychron.pipeline.tasks.task import PipelineTask
 from pychron.envisage.browser.browser_model import BrowserModel
-from pychron.pipeline.template import ICFACTOR, BLANKS, ISOEVO, SPEC, IDEO, ISOCHRON
 
 
 class PipelinePlugin(BaseTaskPlugin):
-    def start(self):
-        super(PipelinePlugin, self).start()
-        ov = False
-        for p, t, overwrite in (('icfactor', ICFACTOR, ov),
-                                ('blanks', BLANKS, ov),
-                                ('iso_evo', ISOEVO, ov),
-                                ('ideogram', IDEO, ov),
-                                ('spectrum', SPEC, ov),
-                                ('isochron', ISOCHRON, ov)):
-            pp = os.path.join(paths.pipeline_template_dir,
-                              add_extension(p, '.yaml'))
+    # def start(self):
+    # super(PipelinePlugin, self).start()
+    # ov = False
+    # for p, t, overwrite in (('icfactor', ICFACTOR, ov),
+    #                         ('blanks', BLANKS, ov),
+    #                         ('iso_evo', ISOEVO, ov),
+    #                         ('ideogram', IDEO, ov),
+    #                         ('spectrum', SPEC, ov),
+    #                         ('isochron', ISOCHRON, ov)):
+    #     pp = os.path.join(paths.pipeline_template_dir,
+    #                       add_extension(p, '.yaml'))
+    #
+    #     if not os.path.isfile(pp) or overwrite:
+    #         with open(pp, 'w') as wfile:
+    #             wfile.write(t)
+    def _file_defaults_default(self):
+        # fd = paths.plot_factory_defaults
 
-            if not os.path.isfile(pp) or overwrite:
-                with open(pp, 'w') as wfile:
-                    wfile.write(t)
+        ov = False
+        return [('icfactor_template', 'ICFACTOR', ov),
+                ('blanks_template', 'BLANKS', ov),
+                ('iso_evo_template', 'ISOEVO', ov),
+                ('ideogram_template', 'IDEO', ov),
+                ('spectrum_template', 'SPEC', ov),
+                ('isochron_template', 'ISOCHRON', ov)]
 
     def _pipeline_factory(self):
         model = self.application.get_service(BrowserModel)

@@ -52,11 +52,11 @@ class ExtractionLinePlugin(BaseTaskPlugin):
     def _preferences_default(self):
         return [self._make_preferences_path('extractionline')]
 
-    def set_preference_defaults(self):
-        self._set_preference_defaults((('canvas_path', os.path.join(paths.canvas2D_dir, 'canvas.xml')),
-                                       ('canvas_config_path', os.path.join(paths.canvas2D_dir, 'canvas_config.xml')),
-                                       ('valves_path', os.path.join(paths.extraction_line_dir, 'valves.xml'))),
-                                       'pychron.extraction_line')
+    # def set_preference_defaults(self):
+    #     self._set_preference_defaults((('canvas_path', os.path.join(paths.canvas2D_dir, 'canvas.xml')),
+    #                                    ('canvas_config_path', os.path.join(paths.canvas2D_dir, 'canvas_config.xml')),
+    #                                    ('valves_path', os.path.join(paths.extraction_line_dir, 'valves.xml'))),
+    #                                    'pychron.extraction_line')
 
     def test_gauge_communication(self):
         return self._test('test_gauge_communication')

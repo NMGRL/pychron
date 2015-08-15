@@ -56,13 +56,13 @@ class PychronTasksPlugin(BasePlugin):
 
     my_tips = List(contributes_to='pychron.plugin.help_tips')
 
-    def _application_changed(self):
-        # defaults = (('use_advanced_ui', False), ('show_random_tip', True))
-        defaults = (('show_random_tip', True),)
-        try:
-            self._set_preference_defaults(defaults, 'pychron.general')
-        except AttributeError, e:
-            print 'exception', e
+    # def _application_changed(self):
+    #     # defaults = (('use_advanced_ui', False), ('show_random_tip', True))
+    #     defaults = (('show_random_tip', True),)
+    #     try:
+    #         self._set_preference_defaults(defaults, 'pychron.general')
+    #     except AttributeError, e:
+    #         print 'exception', e
 
     def start(self):
         self.info('Writing plugin file defaults')

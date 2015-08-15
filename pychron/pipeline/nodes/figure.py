@@ -22,11 +22,6 @@ from traitsui.api import View
 from pychron.envisage.tasks.base_editor import grouped_name
 from pychron.options.views import view
 from pychron.pipeline.nodes.base import BaseNode
-# from pychron.processing.plot.editors.ideogram_editor import IdeogramEditor
-
-# from zobs.options.plotter_options_manager import SpectrumOptionsManager, \
-#     SeriesOptionsManager
-
 from pychron.options.options_manager import IdeogramOptionsManager, OptionsController, SeriesOptionsManager, \
     SpectrumOptionsManager, InverseIsochronOptionsManager
 
@@ -43,27 +38,15 @@ class FigureNode(BaseNode):
     plotter_options_manager_klass = Any
     plotter_options_manager = Any
     no_analyses_warning = Bool(False)
-    # _configured = Bool(False)
     editors = List
     auto_set_items = True
 
     def refresh(self):
         if self.editor:
-            # self.editor.force_update()
-            # print 'editor refres'
             self.editor.refresh_needed = True
-            # if self.editor.save_required:
-            #     if confirm(None, 'Save Changes') == YES:
-            #         self.editor.save_needed = True
 
     def run(self, state):
-        # self._configured = True
         self.plotter_options = self.plotter_options_manager.selected_options
-
-        # if not self.plotter_options or not self._configured:
-        #     if not self.configure(refresh=False):
-        #         state.canceled = True
-        #         return
         po = self.plotter_options
         if not po:
             state.canceled = True
@@ -118,17 +101,17 @@ class FigureNode(BaseNode):
             self._manual_configured = True
 
         pom = self.plotter_options_manager
-        # pom = self.plotter_options_manager_klass()
         if self.editor:
             pom.set_selected(self.editor.plotter_options)
-            # pom.plotter_options = self.editor.plotter_options
 
         self._configure_hook()
         info = OptionsController(model=pom).edit_traits(view=self.options_view,
                                                         kind='livemodal')
-        # info = pom.edit_traits(kind='livemodal')
         if info.result:
             self.plotter_options = pom.selected_options
+            if self.editor:
+                self.editor.plotter_options = pom.selected_options
+
             if refresh:
                 self.refresh()
 
@@ -157,7 +140,6 @@ class FigureNode(BaseNode):
 
 
 class IdeogramNode(FigureNode):
-    skip_configure = Bool(True)
     name = 'Ideogram'
     editor_klass = 'pychron.pipeline.plot.editors.ideogram_editor,IdeogramEditor'
     plotter_options_manager_klass = IdeogramOptionsManager

@@ -25,26 +25,26 @@ class BasePlugin(Plugin, Loggable):
     def check(self):
         return True
 
-    def _set_preference_defaults(self, defaults, prefid):
-        """
-
-        :param defaults: list(tuple) [(str, object),]
-        :param prefid: str preference_path e.g pychron.update
-        :return:
-        """
-        change = False
-        prefs = self.application.preferences
-        self.debug('setting default preferences for {} {}'.format(self.name, self.id))
-        for k, d in defaults:
-            if k not in prefs.keys(prefid):
-                self.debug('Setting default preference {}={}'.format(k, d))
-                prefs.set('{}.{}'.format(prefid, k), d)
-                change = True
-
-        if change:
-            prefs.flush()
-        else:
-            self.debug('defaults already set')
+        # def _set_preference_defaults(self, defaults, prefid):
+        #     """
+        #
+        #     :param defaults: list(tuple) [(str, object),]
+        #     :param prefid: str preference_path e.g pychron.update
+        #     :return:
+        #     """
+        #     change = False
+        #     prefs = self.application.preferences
+        #     self.debug('setting default preferences for {} {}'.format(self.name, self.id))
+        #     for k, d in defaults:
+        #         if k not in prefs.keys(prefid):
+        #             self.debug('Setting default preference {}={}'.format(k, d))
+        #             prefs.set('{}.{}'.format(prefid, k), d)
+        #             change = True
+        #
+        #     if change:
+        #         prefs.flush()
+        #     else:
+        #         self.debug('defaults already set')
 
 # ============= EOF =============================================
 

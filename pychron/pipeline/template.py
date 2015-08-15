@@ -79,50 +79,10 @@ class PipelineTemplate(HasTraits):
     def _node_factory(self, klass, ni):
         mod = __import__('pychron.pipeline.nodes', fromlist=[klass])
         node = getattr(mod, klass)()
+        node.pre_load(ni)
         node.load(ni)
         return node
 
 
-ICFACTOR = """
-- klass: UnknownNode
-- klass: FindReferencesNode
-  threshold: 10
-  analysis_type: Air
-- klass: ReferenceNode
-- klass: FitICFactorNode
-  fits:
-    - numerator: H1
-      denominator: CDD
-      standard_ratio: 295.5
-      analysis_type: Air
-- klass: ICFactorPersistNode
-"""
 
-ISOEVO = """
-- klass: UnknownNode
-- klass: FitIsotopeEvolutionNode
-- klass: IsotopeEvolutionPersistNode
-"""
-
-BLANKS = """
-- klass: UnknownNode
-- klass: FindReferencesNode
-  threshold: 10
-  analysis_type: Blank Unknown
-- klass: ReferenceNode
-- klass: FitBlanksNode
-- klass: BlanksPersistNode
-"""
-
-IDEO = """- klass: UnknownNode
-- klass: IdeogramNode
-"""
-
-ISOCHRON = """- klass: UnknownNode
-- klass: IsochronNode
-"""
-
-SPEC = """- klass: UnknownNode
-- klass: SpectrumNode
-"""
 # ============= EOF =============================================

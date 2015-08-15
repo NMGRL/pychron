@@ -22,6 +22,8 @@ This file defines the text for various default files.
 
 Values are used in pychron.paths when building directory structure
 """
+import yaml
+
 from pychron.core.helpers.strtools import to_bool
 
 PIPELINE_TEMPLATES = '''- Iso Evo
@@ -276,197 +278,249 @@ columns:
   - Comment
 '''
 
-IDEOGRAM_DEFAULTS = '''
-padding:
- padding_left: 100
- padding_right: 100
- padding_top: 100
- padding_bottom: 100
-
-calculations:
- probability_curve_kind: cumulative
- mean_calculation_kind: 'weighted mean'
-display:
- mean_indicator_fontsize: 12
- mean_sig_figs: 2
-
-general:
- index_attr: uage
-
-axes:
- xtick_in: 1
- xtick_out: 5
- ytick_in: 1
- ytick_out: 5
- use_xgrid: False
- use_ygrid: False
-
-background:
- bgcolor: 239,238,185
- plot_bgcolor: 208,243,241
-
-'''
-
-SPECTRUM_DEFAULTS = '''
-padding:
- padding_left: 100
- padding_right: 100
- padding_top: 100
- padding_bottom: 100
-plateau:
- plateau_line_width: 1
- plateau_line_color: black
- plateau_font_size: 12
- plateau_sig_figs: 2
- # calculate_fixed_plateau: False
- # calculate_fixed_plateau_start: ''
- # calculate_fixed_plateau_end: ''
- pc_nsteps: 3
- pc_gas_fraction: 50
-integrated:
- integrated_font_size: 12
- integrated_sig_figs: 2
-legend:
- legend_location: Upper Right
- include_legend: False
- include_sample_in_legend: False
-labels:
- display_step: True
- display_extract_value: False
- step_label_font_size: 10
-axes:
- xtick_in: 1
- xtick_out: 5
- ytick_in: 1
- ytick_out: 5
- use_xgrid: False
- use_ygrid: False
-background:
- bgcolor: 239,238,185
- plot_bgcolor: 208,243,241
-'''
-ISOCHRON_DEFAULTS = '''
-background:
- bgcolor: 239,238,185
- plot_bgcolor: 208,243,241
-'''
-
-INVERSE_ISOCHRON_DEFAULTS = '''
-nominal_intercept:
-  nominal_intercept_label: Atm
-  nominal_intercept_value: 295.5
-  show_nominal_intercept: True
-  invert_nominal_intercept: True
-inset:
-  inset_marker_size: 2.5
-  inset_marker_color: black
-axes:
- xtick_in: 1
- xtick_out: 5
- ytick_in: 1
- ytick_out: 5
- use_xgrid: False
- use_ygrid: False
-'''
-
-COMPOSITE_DEFAULTS = '''
-- padding:
-   padding_left: 100
-   padding_right: 50
-   padding_top: 100
-   padding_bottom: 100
-- padding:
-   padding_left: 50
-   padding_right: 100
-   padding_top: 100
-   padding_bottom: 100
-
-'''
-
 SYSTEM_HEALTH = '''
-values:
- - Ar40/Ar36
- - uAr40/Ar36
- - ysymmetry
- - extraction_lens
- - ysymmetry
- - zsymmetry
- - zfocus
- - H2_deflection
- - H1_deflection
- - AX_deflection
- - L1_deflection
- - L2_deflection
- - CDD_deflection
-general:
- limit: 100
-conditionals:
- -
-  attribute: Ar40/Ar36
-  function: std
-  comparison: x>1
-  action: cancel
-  min_n: 10
-  bin_hours: 6
-  analysis_types:
-   - air
- -
-  attribute: ysymmetry
-  function: value
-  action: cancel
-  analysis_types:
-   - air
-
 '''
 
-SCREEN_FORMATTING_DEFAULTS = '''
-x_tick_in: 2
-x_tick_out: 5
-x_title_font: Helvetica 12
-x_tick_label_font: Helvetica 10
 
-y_tick_in: 2
-y_tick_out: 5
-y_title_font: Helvetica 12
-y_tick_label_font: Helvetica 10
+def make_screen(**kw):
+    obj = {'padding_left': 100,
+           'padding_right': 100,
+           'padding_top': 100,
+           'padding_bottom': 100,
+           'bgcolor': 'white',
+           'plot_bgcolor': 'white',
+           'xtick_in': 1,
+           'xtick_out': 5,
+           'ytick_in': 1,
+           'ytick_out': 5,
+           'use_xgrid': True,
+           'use_ygrid': True,
+           }
 
-bgcolor: white
-plot_bgcolor: white
+    obj.update(kw)
+    return yaml.dump(obj, default_flow_style=False)
 
-label_font: Helvetica 10
-'''
 
-PRESENTATION_FORMATTING_DEFAULTS = '''
-x_tick_in: 2
-x_tick_out: 5
-x_title_font: Helvetica 22
-x_tick_label_font: Helvetica 14
+def make_presentation(**kw):
+    obj = {'padding_left': 40,
+           'padding_right': 40,
+           'padding_top': 40,
+           'padding_bottom': 40,
+           'bgcolor': (239, 238, 185),
+           'plot_bgcolor': (208, 243, 241),
+           'xtick_in': 1,
+           'xtick_out': 5,
+           'ytick_in': 1,
+           'ytick_out': 5,
+           'use_xgrid': True,
+           'use_ygrid': True, }
 
-y_tick_in: 2
-y_tick_out: 5
-y_title_font: Helvetica 22
-y_tick_label_font: Helvetica 14
+    obj.update(kw)
+    return yaml.dump(obj, default_flow_style=False)
 
-bgcolor: 239,238,185
-plot_bgcolor: 208,243,241
 
-label_font: Helvetica 14
-'''
+SERIES_SCREEN = make_screen()
+BLANKS_SCREEN = make_screen()
+ICFACTOR_SCREEN = make_screen()
 
-DISPLAY_FORMATTING_DEFAULTS = '''
-x_tick_in: 2
-x_tick_out: 5
-x_title_font: Helvetica 22
-x_tick_label_font: Helvetica 14
+iso_d = dict(use_xgrid=False, use_ygrid=False)
+inv_iso_d = dict(use_xgrid=False, use_ygrid=False,
+                 nominal_intercept_label='Atm',
+                 nominal_intercept_value=295.5,
+                 show_nominal_intercept=True,
+                 invert_nominal_intercept=True,
+                 inset_marker_size=2.5,
+                 inset_marker_color='black')
 
-y_tick_in: 2
-y_tick_out: 5
-y_title_font: Helvetica 22
-y_tick_label_font: Helvetica 14
+ISOCHRON_SCREEN = make_screen(**iso_d)
+ISOCHRON_PRESENTATION = make_presentation(**iso_d)
 
-bgcolor: 239,238,185
-plot_bgcolor: 208,243,241
+INVERSE_ISOCHRON_SCREEN = make_screen(**inv_iso_d)
+INVERSE_ISOCHRON_PRESENTATION = make_presentation(**inv_iso_d)
 
-label_font: Helvetica 14
-'''
+ideo_d = dict(probability_curve_kind='cumulative',
+              mean_calculation_kind='weighted mean',
+              mean_sig_figs=2,
+              index_attr='uage')
+
+IDEOGRAM_SCREEN = make_screen(mean_indicator_fontsize=12,
+                              **ideo_d)
+IDEOGRAM_PRESENTATION = make_presentation(mean_indicator_fontsize=24,
+                                          **ideo_d)
+
+spec_d = dict(plateau_line_width=1,
+              plateau_line_color='black',
+              plateau_sig_figs=2,
+              # calculate_fixed_plateau= False,
+              # calculate_fixed_plateau_start= '',
+              # calculate_fixed_plateau_end= '',
+              pc_nsteps=3,
+              pc_gas_fraction=50,
+              integrated_sig_figs=2,
+              legend_location='Upper Right',
+              include_legend=False,
+              include_sample_in_legend=False,
+              display_step=True,
+              display_extract_value=False)
+
+SPECTRUM_PRESENTATION = make_presentation(**spec_d)
+SPECTRUM_SCREEN = make_screen(**spec_d)
+
+# ===============================================================
+# Pipeline Templates
+# ===============================================================
+ICFACTOR = """
+- klass: UnknownNode
+- klass: FindReferencesNode
+  threshold: 10
+  analysis_type: Air
+- klass: ReferenceNode
+- klass: FitICFactorNode
+  fits:
+    - numerator: H1
+      denominator: CDD
+      standard_ratio: 295.5
+      analysis_type: Air
+- klass: ICFactorPersistNode
+"""
+
+ISOEVO = """
+- klass: UnknownNode
+- klass: FitIsotopeEvolutionNode
+- klass: IsotopeEvolutionPersistNode
+"""
+
+BLANKS = """
+- klass: UnknownNode
+- klass: FindReferencesNode
+  threshold: 10
+  analysis_type: Blank Unknown
+- klass: ReferenceNode
+- klass: FitBlanksNode
+- klass: BlanksPersistNode
+"""
+
+IDEO = """- klass: UnknownNode
+- klass: IdeogramNode
+"""
+
+ISOCHRON = """- klass: UnknownNode
+- klass: IsochronNode
+"""
+
+SPEC = """- klass: UnknownNode
+- klass: SpectrumNode
+"""
+
+# SYSTEM_HEALTH = '''
+# values:
+#  - Ar40/Ar36
+#  - uAr40/Ar36
+#  - ysymmetry
+#  - extraction_lens
+#  - ysymmetry
+#  - zsymmetry
+#  - zfocus
+#  - H2_deflection
+#  - H1_deflection
+#  - AX_deflection
+#  - L1_deflection
+#  - L2_deflection
+#  - CDD_deflection
+# general:
+#  limit: 100
+# conditionals:
+#  -
+#   attribute: Ar40/Ar36
+#   function: std
+#   comparison: x>1
+#   action: cancel
+#   min_n: 10
+#   bin_hours: 6
+#   analysis_types:
+#    - air
+#  -
+#   attribute: ysymmetry
+#   function: value
+#   action: cancel
+#   analysis_types:
+#    - air
+#
+# '''
+#
+# # SCREEN_FORMATTING_DEFAULTS = '''
+# # x_tick_in: 2
+# # x_tick_out: 5
+# # x_title_font: Helvetica 12
+# # x_tick_label_font: Helvetica 10
+# #
+# # y_tick_in: 2
+# # y_tick_out: 5
+# # y_title_font: Helvetica 12
+# # y_tick_label_font: Helvetica 10
+# #
+# # bgcolor: white
+# # plot_bgcolor: white
+# #
+# # label_font: Helvetica 10
+# # '''
+# #
+# # PRESENTATION_FORMATTING_DEFAULTS = '''
+# # x_tick_in: 2
+# # x_tick_out: 5
+# # x_title_font: Helvetica 22
+# # x_tick_label_font: Helvetica 14
+# #
+# # y_tick_in: 2
+# # y_tick_out: 5
+# # y_title_font: Helvetica 22
+# # y_tick_label_font: Helvetica 14
+# #
+# # bgcolor: 239,238,185
+# # plot_bgcolor: 208,243,241
+# #
+# # label_font: Helvetica 14
+# # '''
+# #
+# # DISPLAY_FORMATTING_DEFAULTS = '''
+# # x_tick_in: 2
+# # x_tick_out: 5
+# # x_title_font: Helvetica 22
+# # x_tick_label_font: Helvetica 14
+# #
+# # y_tick_in: 2
+# # y_tick_out: 5
+# # y_title_font: Helvetica 22
+# # y_tick_label_font: Helvetica 14
+# #
+# # bgcolor: 239,238,185
+# # plot_bgcolor: 208,243,241
+# #
+# # label_font: Helvetica 14
+# # '''
 # ============= EOF =============================================
+# IDEOGRAM_DEFAULTS = '''
+# padding_left: 100
+# padding_right: 100
+# padding_top: 100
+# padding_bottom: 100
+#
+# probability_curve_kind: cumulative
+# mean_calculation_kind: 'weighted mean'
+#
+# mean_indicator_fontsize: 12
+# mean_sig_figs: 2
+#
+# index_attr: uage
+#
+# xtick_in: 1
+# xtick_out: 5
+# ytick_in: 1
+# ytick_out: 5
+# use_xgrid: False
+# use_ygrid: False
+#
+# bgcolor: 239,238,185
+# plot_bgcolor: 208,243,241
+#
+# '''

@@ -76,11 +76,7 @@ class PipelineTask(BaseBrowserTask):
     # run_to = None
 
     modified = False
-    # dbmodified = False
     projects = None
-
-    # _temp_state = None
-    # reset_enabled = Bool(False)
 
     def activated(self):
         super(PipelineTask, self).activated()
@@ -99,9 +95,9 @@ class PipelineTask(BaseBrowserTask):
         # self.engine.set_template('gain')
         # self.engine.set_template('series')
         # self.engine.set_template('icfactor')
-        # self.engine.set_template('blanks')
+        self.engine.set_template('blanks')
         # self.engine.set_template('flux')
-        self.engine.set_template('inverse_isochron')
+        # self.engine.set_template('inverse_isochron')
 
         # self.engine.add_is
         # self.engine.add_grouping(run=False)
@@ -226,47 +222,6 @@ class PipelineTask(BaseBrowserTask):
 
     def _run_pipeline(self):
         self._run('run pipeline', 'run_pipeline', close_all=True)
-        # self.debug('run pipeline')
-        # self.close_all()
-        # self.engine.run_pipeline()
-        #
-        # for editor in self.engine.state.editors:
-        #     self._open_editor(editor)
-        # self.debug('pipeline finished')
-
-        # if self.state:
-        #     self.debug('using previous state')
-        #     state = self.state
-        # else:
-        #     state = EngineState()
-        #     self.close_all()
-
-        # self.state = state
-        # self._temp_state = state
-
-        # if not self.engine.pre_run(state, self.run_to):
-        #     self.state = None
-        #     self._temp_state = None
-
-        # if not self.engine.run(state, self.run_to):
-        #     self._toggle_run(True)
-        # else:
-        #     self.engine.post_run(state)
-        #
-        #     self._toggle_run(False)
-        #     self.state = None
-        #     self.engine.state = None
-        #
-        # for editor in state.editors:
-        #     self._open_editor(editor)
-
-        # self.engine.selected = None
-        # self.engine.update_needed = True
-        # self.engine.update_needed = True
-        # self.engine.refresh_analyses()
-        #
-        # if state.dbmodified:
-        #     self.dbmodified = True
 
     def _toggle_run(self, v):
         self.resume_enabled = v
@@ -285,9 +240,6 @@ class PipelineTask(BaseBrowserTask):
     def _extra_actions_default(self):
         sas = (('MenuBar/data.menu', RunAction, {}),)
         return [self._sa_factory(path, factory, **kw) for path, factory, kw in sas]
-
-    def _file_defaults_default(self):
-        return paths.plot_factory_defaults
 
     def _help_tips_default(self):
         return ['Use <b>Data>Ideogram</b> to plot an Ideogram',
@@ -442,13 +394,10 @@ class PipelineTask(BaseBrowserTask):
         from pychron.processing.tagging.analysis_tags import AnalysisTagModel
         from pychron.processing.tagging.views import AnalysisTagView
 
-        # tv = self._tag_table_view
-        # if not tv:
         tv = AnalysisTagView(model=AnalysisTagModel())
 
         db = self.dvc.db
         with db.session_ctx():
-            # tv = TagTableView(items=items)
             tv.model.db = db
             tv.model.items = items
             tv.model.load()
@@ -456,7 +405,6 @@ class PipelineTask(BaseBrowserTask):
         info = tv.edit_traits()
         if info.result:
             tag = tv.model.selected
-            # self._tag_table_view = tv
             return tag, tv.model.items, tv.model.use_filter
 
     def _get_dr_tagname(self, items):
@@ -473,41 +421,3 @@ class PipelineTask(BaseBrowserTask):
         return e
 
 # ============= EOF =============================================
-#  _delete_flag = False
-#     _delete_cnt = 0
-#     _cnt = 0
-#
-#     def _handle_items(self, sel, items):
-#         if self.active_editor:
-#             if not self._delete_flag:
-#                 self._delete_cnt = len(sel) + 1
-#                 self._cnt = 1
-#                 refresh = False
-#                 self._delete_flag = True
-#             else:
-#                 self._cnt += 1
-#                 refresh = self._cnt >= self._delete_cnt
-#
-#             if refresh:
-#                 self.active_editor.set_items(items)
-#                 self.active_editor.refresh_needed = True
-#                 self._delete_flag = False
-#                 self._delete_cnt = 0
-# @on_trait_change('engine:unknowns')
-# def _handle_unknowns(self, obj, name, old, new):
-#     print 'ffsaafa', name, old, new
-#     if name == 'unknowns_items':
-#         self._handle_items(self.engine.selected_unknowns, self.engine.unknowns)
-#     self.engine.update_detectors()
-
-# @on_trait_change('engine:references')
-# def _handle_references(self, name, old, new):
-#     if name == 'references_items':
-#         self._handle_items(self.engine.selected_references, self.engine.references)
-#     self.engine.update_detectors()
-# if self.active_editor:
-#     # only update if deletion
-#     if not new:
-#         self.active_editor.set_references(self.engine.references)
-#         self.active_editor.refresh_needed = True
-# self.engine.update_detectors()

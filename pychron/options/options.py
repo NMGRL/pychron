@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
+
 from enable.markers import marker_names
 from traits.api import HasTraits, Str, Int, Bool, Float, Property, on_trait_change, Enum, List, Range, \
     Color
@@ -22,8 +24,10 @@ from traitsui.api import View, Item, HGroup, VGroup, EnumEditor, Spring, Group, 
 from traitsui.handler import Controller
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+import yaml
 from pychron.core.helpers.color_generators import colornames
 from pychron.core.ui.table_editor import myTableEditor
 from pychron.options.aux_plot import AuxPlot
@@ -126,6 +130,7 @@ class MainOptions(SubOptions):
                                show_border=True,
                                label='Y Limits'),
                         show_border=True))
+        return v
 
     def traits_view(self):
         aux_plots_grp = Item('aux_plots',
@@ -149,6 +154,15 @@ class MainOptions(SubOptions):
 
 class BaseOptions(HasTraits):
     fontname = Enum(*FONTS)
+
+    def load_factory_defaults(self, path):
+        if not os.path.isfile(path):
+            yd = yaml.load(path)
+        else:
+            with open(path, 'r') as rfile:
+                yd = yaml.load(rfile)
+
+        self._load_factory_defaults(yd)
 
     def initialize(self):
         pass
@@ -184,6 +198,12 @@ class BaseOptions(HasTraits):
 
     def _get_subview(self, name):
         raise NotImplementedError
+
+    def _load_factory_defaults(self, yd):
+        for k, v in yd.items():
+            if hasattr(self, k):
+                setattr(self, k, v)
+
 
 
 class FigureOptions(BaseOptions):

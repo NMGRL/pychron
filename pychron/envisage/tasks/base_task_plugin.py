@@ -54,49 +54,46 @@ class BaseTaskPlugin(BasePlugin):
     def service_offer_factory(self, **kw):
         return ServiceOffer(**kw)
 
-    def check(self):
-        return True
-
     def startup_test(self):
         if globalv.use_startup_tests:
             self.debug('doing start up tests')
             self.application.startup_tester.test_plugin(self)
 
-    def set_preference_defaults(self):
-        """
-            children should override and use self._set_preference_defaults(defaults, prefid)
-            to set preferences
-        :return:
-        """
-        pass
+    # def set_preference_defaults(self):
+    #     """
+    #         children should override and use self._set_preference_defaults(defaults, prefid)
+    #         to set preferences
+    #     :return:
+    #     """
+    #     pass
 
     def start(self):
         self.startup_test()
-        try:
-            self.set_preference_defaults()
-        except AttributeError, e:
-            print 'exception', e
+        # try:
+        #     self.set_preference_defaults()
+        # except AttributeError, e:
+        #     print 'exception', e
 
-    def _set_preference_defaults(self, defaults, prefid):
-        """
-
-        :param defaults: list(tuple) [(str, object),]
-        :param prefid: str preference_path e.g pychron.update
-        :return:
-        """
-        change = False
-        prefs = self.application.preferences
-        self.debug('setting default preferences for {} {}'.format(self.name, self.id))
-        for k, d in defaults:
-            if k not in prefs.keys(prefid):
-                self.debug('Setting default preference {}={}'.format(k, d))
-                prefs.set('{}.{}'.format(prefid, k), d)
-                change = True
-
-        if change:
-            prefs.flush()
-        else:
-            self.debug('defaults already set')
+    # def _set_preference_defaults(self, defaults, prefid):
+    #     """
+    #
+    #     :param defaults: list(tuple) [(str, object),]
+    #     :param prefid: str preference_path e.g pychron.update
+    #     :return:
+    #     """
+    #     change = False
+    #     prefs = self.application.preferences
+    #     self.debug('setting default preferences for {} {}'.format(self.name, self.id))
+    #     for k, d in defaults:
+    #         if k not in prefs.keys(prefid):
+    #             self.debug('Setting default preference {}={}'.format(k, d))
+    #             prefs.set('{}.{}'.format(prefid, k), d)
+    #             change = True
+    #
+    #     if change:
+    #         prefs.flush()
+    #     else:
+    #         self.debug('defaults already set')
 
     # # defaults
     # def _preferences_panes_default(self):

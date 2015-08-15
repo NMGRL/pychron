@@ -19,9 +19,9 @@ from itertools import groupby
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 # from pychron.database.interpreted_age import InterpretedAge
+from pychron.options.isochron import InverseIsochronOptions
+from pychron.options.spectrum import SpectrumOptions
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
-from pychron.pipeline.plot.options.isochron import InverseIsochronOptions
-from pychron.pipeline.plot.options.spectrum import SpectrumOptions
 from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
 
 

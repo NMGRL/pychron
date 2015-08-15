@@ -23,6 +23,8 @@ make sure directory exists and build if not
 from os import path, mkdir
 import os
 
+from pyface.message_dialog import warning
+
 from pychron.file_defaults import TASK_EXTENSION_DEFAULT, SIMPLE_UI_DEFAULT, \
     EDIT_UI_DEFAULT, IDENTIFIERS_DEFAULT, PIPELINE_TEMPLATES
 
@@ -184,9 +186,9 @@ class Paths(object):
     inverse_isochron_defaults = None
     composites_defaults = None
     sys_mon_ideogram_defaults = None
-    screen_formatting_options = None
-    presentation_formatting_options = None
-    display_formatting_options = None
+    # screen_formatting_options = None
+    # presentation_formatting_options = None
+    # display_formatting_options = None
     plotter_options = None
     task_extensions_file = None
     simple_ui_file = None
@@ -195,13 +197,21 @@ class Paths(object):
     duration_tracker = None
     experiment_launch_history = None
 
-    plot_factory_defaults = (('ideogram_defaults', 'IDEOGRAM_DEFAULTS', False),
-                             ('spectrum_defaults', 'SPECTRUM_DEFAULTS', False),
-                             ('inverse_isochron_defaults', 'INVERSE_ISOCHRON_DEFAULTS', False),
-                             ('composites_defaults', 'COMPOSITE_DEFAULTS', False),
-                             ('screen_formatting_options', 'SCREEN_FORMATTING_DEFAULTS', False),
-                             ('presentation_formatting_options', 'PRESENTATION_FORMATTING_DEFAULTS', False),
-                             ('display_formatting_options', 'DISPLAY_FORMATTING_DEFAULTS', False))
+    # plot_factory_defaults = (('ideogram_defaults', 'IDEOGRAM_DEFAULTS', True),
+    #                          ('spectrum_defaults', 'SPECTRUM_DEFAULTS', True))
+
+    # ('inverse_isochron_defaults', 'INVERSE_ISOCHRON_DEFAULTS', False),
+    # ('composites_defaults', 'COMPOSITE_DEFAULTS', False))
+    # ('screen_formatting_options', 'SCREEN_FORMATTING_DEFAULTS', False),
+    # ('presentation_formatting_options', 'PRESENTATION_FORMATTING_DEFAULTS', False),
+    # ('display_formatting_options', 'DISPLAY_FORMATTING_DEFAULTS', False))
+    icfactor_template = None
+    blanks_template = None
+    iso_evo_template = None
+    ideogram_template = None
+    spectrum_template = None
+    isochron_template = None
+    inverse_isochron_template = None
 
     def write_default_file(self, p, default, overwrite=False):
         return self._write_default_file(p, default, overwrite)
@@ -358,7 +368,7 @@ class Paths(object):
         # ==============================================================================
         # processing
         # ==============================================================================
-        self.formatting_dir = join(self.setup_dir, 'formatting')
+        # self.formatting_dir = join(self.setup_dir, 'formatting')
         self.pipeline_dir = join(self.setup_dir, 'pipeline')
         self.pipeline_template_dir = join(self.pipeline_dir, 'templates')
         # ==============================================================================
@@ -385,9 +395,9 @@ class Paths(object):
         self.inverse_isochron_defaults = join(self.hidden_dir, 'inverse_isochron_defaults.yaml')
         self.composites_defaults = join(self.hidden_dir, 'composite_defaults.yaml')
         self.system_health = join(self.setup_dir, 'system_health.yaml')
-        self.screen_formatting_options = join(self.formatting_dir, 'screen.yaml')
-        self.presentation_formatting_options = join(self.formatting_dir, 'presentation.yaml')
-        self.display_formatting_options = join(self.formatting_dir, 'display.yaml')
+        # self.screen_formatting_options = join(self.formatting_dir, 'screen.yaml')
+        # self.presentation_formatting_options = join(self.formatting_dir, 'presentation.yaml')
+        # self.display_formatting_options = join(self.formatting_dir, 'display.yaml')
         self.plotter_options = join(self.plotter_options_dir, 'plotter_options.p')
         self.task_extensions_file = join(self.hidden_dir, 'task_extensions.yaml')
         self.simple_ui_file = join(self.hidden_dir, 'simple_ui.yaml')
@@ -395,6 +405,18 @@ class Paths(object):
 
         self.duration_tracker = join(self.hidden_dir, 'duration_tracker.txt')
         self.experiment_launch_history = join(self.hidden_dir, 'experiment_launch_history.txt')
+
+        # =======================================================================
+        # templates
+        # =======================================================================
+        self.icfactor_template = join(self.pipeline_template_dir, 'icfactor.yaml')
+        self.blanks_template = join(self.pipeline_template_dir, 'blanks.yaml')
+        self.iso_evo_template = join(self.pipeline_template_dir, 'iso_evo.yaml')
+        self.ideogram_template = join(self.pipeline_template_dir, 'ideogram.yaml')
+        self.spectrum_template = join(self.pipeline_template_dir, 'spectrum.yaml')
+        self.isochron_template = join(self.pipeline_template_dir, 'isochron.yaml')
+        self.inverse_isochron_template = join(self.pipeline_template_dir, 'inverse_isochron.yaml')
+
         build_directories()
 
     def write_defaults(self):
@@ -402,28 +424,26 @@ class Paths(object):
             self._write_default_files()
 
     def reset_plot_factory_defaults(self):
-        self.write_file_defaults(self.plot_factory_defaults, force=True)
+        warning(None, 'Reset plot factor defaults not enabled')
+        # self.write_file_defaults(self.plot_factory_defaults, force=True)
 
     def write_file_defaults(self, fs, force=False):
+        # print fs
         for p, d, o in fs:
             try:
                 mod = __import__('pychron.file_defaults', fromlist=[d])
                 d = getattr(mod, d)
             except BaseException, e:
-                print p, e
+                print 'dddddd', p, e
                 pass
             try:
                 p = getattr(paths, p)
             except AttributeError:
                 pass
-
             self.write_default_file(p, d, o or force)
-            # if paths.write_default_file(p, d, o):
-            # self.info('Wrote default file {} (overwrite: {})'.format(p, o))
 
     def _write_default_files(self):
-        from pychron.file_defaults import DEFAULT_INITIALIZATION, DEFAULT_STARTUP_TESTS, \
-            SYSTEM_HEALTH
+        from pychron.file_defaults import DEFAULT_INITIALIZATION, DEFAULT_STARTUP_TESTS, SYSTEM_HEALTH
 
         for p, d in ((path.join(self.setup_dir, 'initialization.xml'), DEFAULT_INITIALIZATION),
                      (self.startup_tests, DEFAULT_STARTUP_TESTS),
