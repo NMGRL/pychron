@@ -59,6 +59,8 @@ class IdeogramOptions(AgeOptions):
     y_end_caps = dumpable(Bool, False)
     error_bar_nsigma = dumpable(Enum, 1, 2, 3)
     analysis_number_sorting = dumpable(Enum, 'Oldest @Top', 'Youngest @Top')
+
+    # mean_indicator_font = Font
     mean_indicator_font = Property
     mean_indicator_fontname = dumpable(Enum, *FONTS)
     mean_indicator_fontsize = dumpable(Enum, *SIZES)
@@ -263,6 +265,7 @@ class IdeogramOptions(AgeOptions):
                         style='readonly'),
                    icon_button_editor('edit_label_format', 'cog',
                                       tooltip='Open Label maker')),
+            self._get_label_font_group(),
             show_border=True, label='Label')
         inset_grp = VGroup(HGroup(Item('display_inset', label='Use'),
                                   Item('inset_location', label='Location'),
@@ -276,6 +279,7 @@ class IdeogramOptions(AgeOptions):
                                  Item('display_percent_error', label='%Error',
                                       enabled_when='display_mean_indicator'),
                                  Item('mean_sig_figs', label='SigFigs')),
+                          self._get_indicator_font_group(),
                           show_border=True,
                           label='Mean')
         info_grp = HGroup(Item('show_info', label='Show'),

@@ -203,12 +203,14 @@ class BaseArArFigure(HasTraits, SelectionFigure):
         pp.value_range.tight_bounds = False
 
         options = self.options
-        pp.x_grid.visible = options.use_xgrid
-        pp.y_grid.visible = options.use_ygrid
+        self._set_options_format(pp)
+
+        # pp.x_grid.visible = options.use_xgrid
+        # pp.y_grid.visible = options.use_ygrid
         # pp.x_grid.visible = self.x_grid_visible
         # pp.y_grid.visible = self.y_grid_visible
 
-        self._set_formatting(pp)
+        # self._set_formatting(pp)
 
         # pp.bgcolor = options.plot_bgcolor
         for attr in ('left', 'right', 'top'):
@@ -230,49 +232,49 @@ class BaseArArFigure(HasTraits, SelectionFigure):
             else:
                 pp.value_axis.tick_generator = SparseTicks()
 
-    def _set_formatting(self, pp):
-
-        # implement a formatting_options object.
-        # this object defines the fonts, sizes and some colors.
-        # there will be 5 default formatting_object objects
-        # the user may save more. a single formatting object maybe applied to any of the options types
-        # e.g ideogram, spectrum, etc. therefore the formatting_options object should be defined
-        # at the PlotterOptionsManager level and not PlotterOptions.
-        # defaults
-        # 1. screen
-        # 2. pdf
-        # 3. poster
-        # 4. projector
-        # 5. publication
-        #
-        # in the future publication may be divided into various formats. e.g. 1/2 column, 2/3 column etc.
-        # a Null formatting option should be available. If null is used the the fonts etc are defined by
-        # the options object.
-
-        options = self.options
-
-        # self.formatting_options = None
-        # from pychron.paths import paths
-        # self.formatting_options = FormattingOptions(paths.presentation_formatting_options)
-
-        if options.formatting_options is None:
-            self._set_options_format(pp)
-        else:
-
-            if self.options.has_changes():
-                self._set_options_format(pp)
-            else:
-                # print 'using formatting options'
-                fmt_opt = options.formatting_options
-                for name, axis in (('x', pp.x_axis), ('y', pp.y_axis)):
-                    for attr in ('title_font', 'tick_label_font', 'tick_in', 'tick_out'):
-                        value = fmt_opt.get_value(name, attr)
-                        setattr(axis, attr, value)
-
-                pp.bgcolor = fmt_opt.plot_bgcolor
-
-            options.set_hash()
-
+    # def _set_formatting(self, pp):
+    #
+    #     # implement a formatting_options object.
+    #     # this object defines the fonts, sizes and some colors.
+    #     # there will be 5 default formatting_object objects
+    #     # the user may save more. a single formatting object maybe applied to any of the options types
+    #     # e.g ideogram, spectrum, etc. therefore the formatting_options object should be defined
+    #     # at the PlotterOptionsManager level and not PlotterOptions.
+    #     # defaults
+    #     # 1. screen
+    #     # 2. pdf
+    #     # 3. poster
+    #     # 4. projector
+    #     # 5. publication
+    #     #
+    #     # in the future publication may be divided into various formats. e.g. 1/2 column, 2/3 column etc.
+    #     # a Null formatting option should be available. If null is used the the fonts etc are defined by
+    #     # the options object.
+    #
+    #     options = self.options
+    #
+    #     # self.formatting_options = None
+    #     # from pychron.paths import paths
+    #     # self.formatting_options = FormattingOptions(paths.presentation_formatting_options)
+    #
+    #     if options.formatting_options is None:
+    #         self._set_options_format(pp)
+    #     else:
+    #
+    #         if self.options.has_changes():
+    #             self._set_options_format(pp)
+    #         else:
+    #             # print 'using formatting options'
+    #             fmt_opt = options.formatting_options
+    #             for name, axis in (('x', pp.x_axis), ('y', pp.y_axis)):
+    #                 for attr in ('title_font', 'tick_label_font', 'tick_in', 'tick_out'):
+    #                     value = fmt_opt.get_value(name, attr)
+    #                     setattr(axis, attr, value)
+    #
+    #             pp.bgcolor = fmt_opt.plot_bgcolor
+    #
+    #         options.set_hash()
+    #
     def _set_options_format(self, pp):
         # print 'using options format'
 
@@ -288,6 +290,8 @@ class BaseArArFigure(HasTraits, SelectionFigure):
         pp.y_axis.tick_out = options.ytick_out
 
         pp.bgcolor = options.plot_bgcolor
+        pp.x_grid.visible = options.use_xgrid
+        pp.y_grid.visible = options.use_ygrid
 
     def _get_omitted(self, ans, omit=None, include_value_filtered=True):
         return [i for i, ai in enumerate(ans)

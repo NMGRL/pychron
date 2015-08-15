@@ -23,6 +23,9 @@ SCAN_PROTOCOL = 'pychron.spectrometer.scan_manager.ScanManager'
 EL_PROTOCOL = 'pychron.extraction_line.extraction_line_manager.ExtractionLineManager'
 DVC_PROTOCOL = 'pychron.dvc.dvc.DVC'
 
+FONTS = ['Helvetica', 'Arial', 'Courier', 'Menlo', 'Consolas']  # 'Courier','Times-Roman']#['modern', 'arial']
+SIZES = [10, 6, 8, 9, 10, 11, 12, 14, 15, 18, 24, 36]
+
 PLUSMINUS = u'\u00b1'
 try:
     PLUSMINUS_ERR = u'{}Err.'.format(PLUSMINUS)

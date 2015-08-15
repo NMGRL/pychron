@@ -97,12 +97,12 @@ class FigurePanel(HasTraits):
         st = time.time()
         po = self.plot_options
 
-        bgcolor = po.get_formatting_value('bgcolor')
+        # bgcolor = po.get_formatting_value('bgcolor')
         g = self._graph_klass(panel_height=200,
                               equi_stack=self.equi_stack,
                               container_dict=dict(padding=0,
                                                   spacing=self.plot_spacing or po.plot_spacing,
-                                                  bgcolor=bgcolor))
+                                                  bgcolor=po.bgcolor))
         center, mi, ma = self._get_init_xlimits()
         plots = list(po.get_plotable_aux_plots())
         if plots:

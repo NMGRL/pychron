@@ -32,7 +32,7 @@ from pychron.pipeline.plot.options.base import BasePlotterOptions, dumpable
 from pychron.pychron_constants import NULL_STR, ALPHAS
 from pychron.stylesheeets import default_sheet
 
-FONTS = ['Helvetica', ]  # 'Courier','Times-Roman']#['modern', 'arial']
+FONTS = ['Helvetica', 'Arial', 'Courier', 'Menlo', 'Consolas']  # 'Courier','Times-Roman']#['modern', 'arial']
 SIZES = [10, 6, 8, 9, 10, 11, 12, 14, 15, 18, 24, 36]
 
 

@@ -18,7 +18,6 @@
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.plot_label import PlotLabel
 from chaco.scatterplot import render_markers
-from kiva.trait_defs.kiva_font_trait import KivaFont
 from traits.api import Color, Instance, Str, Float, Int, HasTraits, Any
 
 # ============= standard library imports ========================
@@ -121,7 +120,7 @@ class MeanIndicatorOverlay(AbstractOverlay, Movable):
     color = Color
     label = Instance(PlotLabel)
     text = Str
-    font = KivaFont('modern 15')
+    # font = KivaFont('modern 15')
     x = Float
     error = Float
     nsigma = Int
@@ -146,7 +145,7 @@ class MeanIndicatorOverlay(AbstractOverlay, Movable):
 
         if label is None:
             label = XYPlotLabel(component=self.component,
-                                # font=self.font,
+                                font=self.font,
                                 text=self.text,
                                 color=self.color,
                                 id='{}_label'.format(self.id))
@@ -167,8 +166,8 @@ class MeanIndicatorOverlay(AbstractOverlay, Movable):
         # self._color=color
 
     def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
-        if self.label:
-            self.label.font.face_name = ''
+        # if self.label:
+        #     print self.label.font
 
         with gc:
             oc = other_component

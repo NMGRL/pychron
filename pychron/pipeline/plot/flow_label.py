@@ -27,7 +27,7 @@ class FlowPlotLabel(PlotLabel):
     def overlay(self, component, gc, *args, **kw):
         # face name was getting set to "Helvetica" by reportlab during pdf generation
         # set face_name back to "" to prevent font display issue. see issue #72
-        self._label.font.face_name = ''
+        # self._label.font.face_name = ''
 
         super(FlowPlotLabel, self).overlay(component, gc, *args, **kw)
 
