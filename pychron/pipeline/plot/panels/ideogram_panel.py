@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from numpy import Inf
 
 from pychron.pipeline.plot.plotter.ideogram import Ideogram
 from pychron.pipeline.plot.panels.figure_panel import FigurePanel
@@ -27,4 +28,24 @@ class IdeogramPanel(FigurePanel):
     _figure_klass = Ideogram
     # _index_attr = 'uage'
 
+    def _get_init_xlimits(self):
+        po = self.plot_options
+        attr = po.index_attr
+        center = None
+        mi, ma = Inf, -Inf
+        if attr:
+            if po.use_static_limits:
+                mi, ma = po.xlow, po.xhigh
+            else:
+                xmas, xmis = zip(*[(i.max_x(attr), i.min_x(attr))
+                                   for i in self.figures])
+                mi, ma = min(xmis), max(xmas)
+
+                cs = [i.mean_x(attr) for i in self.figures]
+                center = sum(cs) / len(cs)
+                if po.use_centered_range:
+                    w2 = po.centered_range / 2.0
+                    mi, ma = center - w2, center + w2
+
+        return center, mi, ma
 # ============= EOF =============================================

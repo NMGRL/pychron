@@ -27,4 +27,7 @@ class IsoEvoPanel(FigurePanel):
     _graph_klass = AnalysisStackedRegressionGraph
     equi_stack = True
 
+    # def _get_init_xlimits(self):
+    #     return None, 0, 100
+
 # ============= EOF =============================================

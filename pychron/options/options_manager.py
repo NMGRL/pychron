@@ -16,18 +16,25 @@
 
 # ============= enthought library imports =======================
 import os
-import pickle
 
+import apptools.sweet_pickle as pickle
 from traits.api import Str, List, Button, Instance, Tuple
 from traitsui.api import Controller
+
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.globals import globalv
 from pychron.loggable import Loggable
+from pychron.options.blanks import BlanksOptions
+from pychron.options.flux import FluxOptions
+from pychron.options.icfactor import ICFactorOptions
 from pychron.options.ideogram import IdeogramOptions
+from pychron.options.iso_evo import IsotopeEvolutionOptions
 from pychron.options.options import BaseOptions, SubOptions
-from pychron.options.views import IdeogramOptionsView
+from pychron.options.series import SeriesOptions
+from pychron.options.spectrum import SpectrumOptions
+from pychron.options.views import view
 from pychron.paths import paths
 
 
@@ -43,10 +50,33 @@ class OptionsManager(Loggable):
     id = ''
     _defaults_path = Str
 
+    _cached_names = List
+    _cached_detectors = List
+
     def __init__(self, *args, **kw):
         super(OptionsManager, self).__init__(*args, **kw)
         self._populate()
         self._initialize()
+
+    def set_detectors(self, dets):
+        self._cached_detectors = dets
+        if self.selected_options:
+            self.selected_options.set_detectors(dets)
+
+    def set_names(self, names):
+        self._cached_names = names
+        if self.selected_options:
+            self.selected_options.set_names(names)
+
+            # for p in self.plotter_options_list:
+            #     p.set_names(names)
+
+    def _selected_options_changed(self, new):
+        if new:
+            if self._cached_names:
+                new.set_names(self._cached_names)
+            if self._cached_detectors:
+                new.set_detectors(self._cached_detectors)
 
     def set_selected(self, obj):
         for name in self.names:
@@ -98,7 +128,9 @@ class OptionsManager(Loggable):
 
     def _selected_subview_changed(self, new):
         print 'subview changed {}'.format(new)
-        self.subview = self.selected_options.get_subview(new)
+        v = self.selected_options.get_subview(new)
+        print v
+        self.subview = v
 
     def _selected_changed(self, new):
         print 'selected change {}'.format(new)
@@ -115,6 +147,7 @@ class OptionsManager(Loggable):
             if obj is None:
                 obj = self.options_klass()
 
+            obj.initialize()
             obj.name = new
             self.subview_names = obj.subview_names
             self.selected_options = obj
@@ -160,15 +193,42 @@ class IdeogramOptionsManager(FigureOptionsManager):
     _defaults_path = paths.ideogram_defaults
 
 
+class SpectrumOptionsManager(FigureOptionsManager):
+    id = 'spectrum'
+    options_klass = SpectrumOptions
+    _defaults_path = paths.spectrum_defaults
+
+
+class SeriesOptionsManager(FigureOptionsManager):
+    id = 'series'
+    options_klass = SeriesOptions
+
+
+class IsotopeEvolutionOptionsManager(FigureOptionsManager):
+    id = 'iso_evo'
+    options_klass = IsotopeEvolutionOptions
+
+
+class BlanksOptionsManager(FigureOptionsManager):
+    id = 'blanks'
+    options_klass = BlanksOptions
+
+
+class ICFactorOptionsManager(FigureOptionsManager):
+    id = 'icfactor'
+    options_klass = ICFactorOptions
+
+
+class FluxOptionsManager(FigureOptionsManager):
+    id = 'flux'
+    options_klass = FluxOptions
+
+
 class OptionsController(Controller):
     delete_options = Button
     add_options = Button
     save_options = Button
     factory_default = Button
-
-    def closed(self, info, is_ok):
-        if is_ok:
-            self.model.save()
 
     def controller_delete_options_changed(self, info):
         print 'delete'
@@ -177,7 +237,6 @@ class OptionsController(Controller):
         print 'add'
 
     def controller_save_options_changed(self, info):
-        print 'save'
         self.model.save()
 
     def controller_factory_default_changed(self, info):
@@ -188,6 +247,7 @@ class OptionsController(Controller):
 if __name__ == '__main__':
     paths.build('_dev')
     # om = IdeogramOptionsManager()
-    om = OptionsController(model=IdeogramOptionsManager())
-    om.configure_traits(view=IdeogramOptionsView)
+    om = OptionsController(model=SeriesOptionsManager())
+    om.configure_traits(view=view('Seires'))
+
 # ============= EOF =============================================

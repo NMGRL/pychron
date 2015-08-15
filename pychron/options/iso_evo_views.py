@@ -15,13 +15,21 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Int
+from traitsui.api import View
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.pipeline.plot.options.fit import FitOptions
+from pychron.options.options import AppearanceSubOptions, SubOptions
 
 
-class BlanksOptions(FitOptions):
-    nsigma = Int(1)
+class IsoEvoSubOptions(SubOptions):
+    def traits_view(self):
+        return View()
 
+
+class IsoEvoAppearanceOptions(AppearanceSubOptions):
+    pass
+
+
+VIEWS = {'isoevo': IsoEvoSubOptions,
+         'appearance': IsoEvoAppearanceOptions}
 # ============= EOF =============================================

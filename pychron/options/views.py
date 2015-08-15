@@ -15,39 +15,59 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traitsui.api import View, UItem, Item, HGroup, VGroup, EnumEditor, ListStrEditor
+from traits.api import Property
+from traitsui.api import View, UItem, Item, HGroup, VGroup, EnumEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from traitsui.editors import TabularEditor
+from traitsui.tabular_adapter import TabularAdapter
 from pychron.envisage.icon_button_editor import icon_button_editor
 
-agrp = HGroup(Item('selected', show_label=False,
-                   editor=EnumEditor(name='names'),
-                   tooltip='List of available plot options'),
-              icon_button_editor('controller.add_options',
-                                 'add',
-                                 tooltip='Add new plot options', ),
-              icon_button_editor('controller.delete_options',
-                                 'delete',
-                                 tooltip='Delete current plot options',
-                                 enabled_when='object.plotter_options.name!="Default"', ),
-              icon_button_editor('controller.save_options', 'disk',
-                                 tooltip='Save changes to options'),
-              icon_button_editor('controller.factory_default', 'edit-bomb',
-                                 tooltip='Apply factory defaults')),
-# sgrp = VGroup(UItem('selected_subview',
-#                     editor=ListStrEditor(name='subview_names')))
-sgrp = UItem('subview_names',
-             width=0.1,
-             editor=ListStrEditor(editable=False,
-                                  selected='selected_subview'))
-ogrp = UItem('subview',
-             width=0.9,
-             style='custom')
-bgrp = HGroup(sgrp, ogrp)
-IdeogramOptionsView = View(VGroup(agrp, bgrp),
-                           # width=800,
-                           height=700,
-                           resizable=True,
-                           title='Ideogram Options',
-                           buttons=['OK', 'Cancel'])
+
+class SubviewAdapter(TabularAdapter):
+    columns = [('', 'name')]
+    name_text = Property
+    font = '10'
+
+    def _get_name_text(self):
+        return self.item
+
+
+def view(title):
+    agrp = HGroup(Item('selected', show_label=False,
+                       editor=EnumEditor(name='names'),
+                       tooltip='List of available plot options'),
+                  icon_button_editor('controller.add_options',
+                                     'add',
+                                     tooltip='Add new plot options', ),
+                  icon_button_editor('controller.delete_options',
+                                     'delete',
+                                     tooltip='Delete current plot options',
+                                     enabled_when='object.plotter_options.name!="Default"', ),
+                  icon_button_editor('controller.save_options', 'disk',
+                                     tooltip='Save changes to options'),
+                  icon_button_editor('controller.factory_default', 'edit-bomb',
+                                     tooltip='Apply factory defaults')),
+    # sgrp = VGroup(UItem('selected_subview',
+    #                     editor=ListStrEditor(name='subview_names')))
+    sgrp = UItem('subview_names',
+                 width=0.1,
+                 editor=TabularEditor(editable=False,
+                                      adapter=SubviewAdapter(),
+                                      selected='selected_subview'))
+    # sgrp = VGroup(UItem('selected_subview', editor=EnumEditor(name='subview_names')))
+
+    ogrp = UItem('subview',
+                 width=0.9,
+                 style='custom')
+    bgrp = HGroup(sgrp, ogrp)
+
+    v = View(VGroup(agrp, bgrp),
+             # width=800,
+             height=700,
+             resizable=True,
+             title=title,
+             buttons=['OK', 'Cancel'])
+    return v
+
 # ============= EOF =============================================

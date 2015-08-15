@@ -1,11 +1,11 @@
 # ===============================================================================
-# Copyright 2013 Jake Ross
+# Copyright 2015 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,35 +15,26 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-
+from traits.api import List
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.pipeline.plot.options.system_monitor import SystemMonitorPlotOptions
-from pychron.pipeline.plot.options.series import SeriesOptions
+from pychron.options.aux_plot import AuxPlot
+from pychron.options.fit import FitOptions
+from pychron.options.iso_evo_views import VIEWS
+from pychron.processing.fits.fit import IsoFilterFit
 
 
-class DashboardOptions(SeriesOptions):
-    aux_plot_klass = SystemMonitorPlotOptions
+class IsoFilterFitAuxPlot(AuxPlot, IsoFilterFit):
+    names = List
+    height = 0
+    ofit = None
 
-    def load_aux_plots(self, keys):
-        def f(kii):
-            ff = self.aux_plot_klass()
-            ff.trait_set(use=False, fit='',
-                         name=kii,
-                         trait_change_notify=False)
 
-            return ff
+class IsotopeEvolutionOptions(FitOptions):
+    aux_plot_klass = IsoFilterFitAuxPlot
+    subview_names = List(['Main', 'IsoEvo', 'Appearance'])
 
-        aps = []
-        for k in keys:
-            pp = next((ni for ni in self.aux_plots
-                       if ni.name == k), None)
-            if pp is None:
-                pp = f(k)
-
-            # pp.use=False
-            aps.append(pp)
-
-        self.aux_plots = aps
+    def _get_subview(self, name):
+        return VIEWS[name]
 
 # ============= EOF =============================================

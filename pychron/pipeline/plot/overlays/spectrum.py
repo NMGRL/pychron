@@ -20,6 +20,7 @@ from chaco.label import Label
 from chaco.plot_label import PlotLabel
 from enable.colors import convert_from_pyqt_color
 from enable.font_metrics_provider import font_metrics_provider
+from kiva.trait_defs.kiva_font_trait import KivaFont
 from traits.api import Array, Int, Float, Str, Color, Bool, List
 from chaco.abstract_overlay import AbstractOverlay
 from enable.tools.drag_tool import DragTool
@@ -272,7 +273,8 @@ class PlateauOverlay(BasePlateauOverlay):
     info_txt = Str
     label_visible = True
     label_offset = 0
-    label_font_size = 10
+    label_font = KivaFont
+    # label_font_size = 10
     extend_end_caps = True
     ages_errors = Array
     ages = Array
@@ -434,7 +436,8 @@ class PlateauOverlay(BasePlateauOverlay):
 
             x = max(comp.x, x)
             p = PlotLabel(text=self.info_txt,
-                          font='modern {}'.format(self.label_font_size),
+                          font=self.label_font,
+                          # font='modern {}'.format(self.label_font_size),
                           color=self.line_color,
                           hjustify=hjustify,
                           border_visible=True,

@@ -20,7 +20,7 @@ from chaco.legend import Legend
 from traits.api import HasTraits, Any, List, Int, Str
 # ============= standard library imports ========================
 from itertools import groupby
-from numpy import Inf, inf
+from numpy import inf
 from math import isinf
 import time
 
@@ -68,25 +68,7 @@ class FigurePanel(HasTraits):
     #     self.graph.load_metadata(md)
 
     def _get_init_xlimits(self):
-        po = self.plot_options
-        attr = po.index_attr
-        center = None
-        mi, ma = Inf, -Inf
-        if attr:
-            if po.use_static_limits:
-                mi, ma = po.xlow, po.xhigh
-            else:
-                xmas, xmis = zip(*[(i.max_x(attr), i.min_x(attr))
-                                   for i in self.figures])
-                mi, ma = min(xmis), max(xmas)
-
-                cs = [i.mean_x(attr) for i in self.figures]
-                center = sum(cs) / len(cs)
-                if po.use_centered_range:
-                    w2 = po.centered_range / 2.0
-                    mi, ma = center - w2, center + w2
-
-        return center, mi, ma
+        return None, 0, 0
 
     def _make_graph_hook(self, g):
         pass
@@ -103,7 +85,9 @@ class FigurePanel(HasTraits):
                               container_dict=dict(padding=0,
                                                   spacing=self.plot_spacing or po.plot_spacing,
                                                   bgcolor=po.bgcolor))
+
         center, mi, ma = self._get_init_xlimits()
+
         plots = list(po.get_plotable_aux_plots())
         if plots:
             xpad = None

@@ -15,20 +15,41 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits
+from traitsui.api import View
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.options.options import SubOptions, AppearanceSubOptions
 
 
-def dumpable(klass, *args, **kw):
-    return klass(dump=True, *args, **kw)
+class BlanksSubOptions(SubOptions):
+    def traits_view(self):
+        v = View()
+        return v
 
 
-class BaseOptions(HasTraits):
+class BlanksAppearance(AppearanceSubOptions):
     pass
+    # def traits_view(self):
+    #     fgrp = VGroup(UItem('fontname'),
+    #                   self._get_xfont_group(),
+    #                   self._get_yfont_group(),
+    #                   label='Fonts', show_border=True)
+    #
+    #     v = View(VGroup(self._get_bg_group(),
+    #                     self._get_padding_group(),
+    #                     fgrp))
+    #     return v
 
 
-class BaseTableOptions(BaseOptions):
-    pass
+# ===============================================================
+# ===============================================================
+VIEWS = {}
+VIEWS['blanks'] = BlanksSubOptions
+VIEWS['appearance'] = BlanksAppearance
+
+
+# ===============================================================
+# ===============================================================
+
 
 # ============= EOF =============================================

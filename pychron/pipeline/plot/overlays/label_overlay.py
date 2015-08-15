@@ -17,7 +17,9 @@
 # ============= enthought library imports =======================
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.plot_label import PlotLabel
+from kiva.trait_defs.kiva_font_trait import KivaFont
 from traits.api import List, Bool, Int, on_trait_change, Color
+
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -67,7 +69,7 @@ class SpectrumLabelOverlay(AbstractOverlay):
     display_extract_value = Bool(True)
     display_step = Bool(True)
     nsigma = Int
-    font_size = Int
+    font = KivaFont
     _cached_labels = List
     use_user_color = Bool
     user_color = Color
@@ -118,7 +120,8 @@ class SpectrumLabelOverlay(AbstractOverlay):
                 txt = self._assemble_text(analysis)
 
                 labels.append(PlotLabel(text=txt,
-                                        font='modern {}'.format(self.font_size),
+                                        font=self.font,
+                                        # font='modern {}'.format(self.font_size),
                                         color=color,
                                         x=x,
                                         y=y))

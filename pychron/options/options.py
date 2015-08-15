@@ -17,8 +17,8 @@
 # ============= enthought library imports =======================
 from enable.markers import marker_names
 from traits.api import HasTraits, Str, Int, Bool, Float, Property, on_trait_change, Enum, List, Range, \
-    Color, Event
-from traitsui.api import View, Item, HGroup, VGroup, EnumEditor, Spring, Group, spring
+    Color
+from traitsui.api import View, Item, HGroup, VGroup, EnumEditor, Spring, Group, spring, UItem
 from traitsui.handler import Controller
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
@@ -85,9 +85,20 @@ class AppearanceSubOptions(SubOptions):
                     label='Background')
         return grp
 
+    def traits_view(self):
+        fgrp = VGroup(UItem('fontname'),
+                      self._get_xfont_group(),
+                      self._get_yfont_group(),
+                      label='Fonts', show_border=True)
+
+        v = View(VGroup(self._get_bg_group(),
+                        self._get_padding_group(),
+                        fgrp))
+        return v
+
 
 class MainOptions(SubOptions):
-    def traits_view(self):
+    def _get_columns(self):
         cols = [checkbox_column(name='plot_enabled', label='Use'),
                 object_column(name='name',
                               width=130,
@@ -103,6 +114,9 @@ class MainOptions(SubOptions):
                 # object_column(name='filter_str', label='Filter')
                 ]
 
+        return cols
+
+    def _get_edit_view(self):
         v = View(VGroup(Item('name', editor=EnumEditor(name='names')),
                         Item('marker', editor=EnumEditor(values=marker_names)),
                         Item('marker_size'),
@@ -112,18 +126,19 @@ class MainOptions(SubOptions):
                                label='Y Limits'),
                         show_border=True))
 
+    def traits_view(self):
         aux_plots_grp = Item('aux_plots',
                              style='custom',
                              width=525,
                              show_label=False,
-                             editor=myTableEditor(columns=cols,
+                             editor=myTableEditor(columns=self._get_columns(),
                                                   sortable=False,
                                                   deletable=False,
                                                   clear_selection_on_dclicked=True,
                                                   # edit_on_first_click=False,
                                                   # on_select=lambda *args: setattr(self, 'selected', True),
                                                   # selected='selected',
-                                                  edit_view=v,
+                                                  edit_view=self._get_edit_view(),
                                                   reorderable=False))
         return View(aux_plots_grp)
 
@@ -131,15 +146,17 @@ class MainOptions(SubOptions):
 # ===============================================================
 # ===============================================================
 
-
-# ===============================================================
-# ===============================================================
-# ===============================================================
-# ===============================================================
-
-
 class BaseOptions(HasTraits):
     fontname = Enum(*FONTS)
+
+    def initialize(self):
+        pass
+
+    def set_names(self, names):
+        pass
+
+    def set_detectors(self, dets):
+        pass
 
     def _fontname_changed(self):
         print 'setting font name', self.fontname
@@ -153,17 +170,16 @@ class BaseOptions(HasTraits):
 
     def get_subview(self, name):
         name = name.lower()
-        if hasattr(self, name):
-            return getattr(self, name)
+        # if hasattr(self, name):
+        #     return getattr(self, name)
+        # else:
+        if name == 'main':
+            klass = MainOptions
         else:
-            if name == 'main':
-                klass = MainOptions
-            else:
-                klass = self._get_subview(name)
-            obj = klass(model=self)
-            # obj = self._views[name](model=self)
-            setattr(self, name, obj)
-            return obj
+            klass = self._get_subview(name)
+        obj = klass(model=self)
+        # obj = self._views[name](model=self)
+        return obj
 
     def _get_subview(self, name):
         raise NotImplementedError
@@ -214,12 +230,16 @@ class FigureOptions(BaseOptions):
     group = Property
     group_editor_klass = None
     group_options_klass = None
-    refresh_colors = Event
+    # refresh_colors = Event
 
     xpadding = Property
     xpad = Float
     xpad_as_percent = Bool
     use_xpad = Bool
+
+    def initialize(self):
+        if not self.groups:
+            self.groups = self._groups_default()
 
     def get_group_colors(self):
         return [gi.color for gi in self.groups]
@@ -280,6 +300,7 @@ class FigureOptions(BaseOptions):
 
 class AuxPlotFigureOptions(FigureOptions):
     aux_plots = List
+    aux_plot_klass = None
 
     def get_loadable_aux_plots(self):
         return reversed([pi for pi in self.aux_plots

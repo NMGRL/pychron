@@ -38,6 +38,8 @@ def calc_limits(ys, ye, n):
 
 
 class ReferenceLegend(Legend):
+    bgcolor = 'transparent'
+
     def get_preferred_size(self):
         """
         Computes the size and position of the legend based on the maximum size of

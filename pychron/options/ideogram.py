@@ -16,209 +16,14 @@
 
 # ============= enthought library imports =======================
 from matplotlib.cm import cmap_d
-from traits.api import Int, Bool, Float, Property, on_trait_change, Enum, List, Dict, Button
-from traitsui.api import View, UItem, Item, HGroup, VGroup, EnumEditor, Group
+from traits.api import Int, Bool, Float, Property, on_trait_change, Enum, List, Dict
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.options.aux_plot import AuxPlot
 from pychron.options.group.ideogram_group_options import IdeogramGroupEditor, IdeogramGroupOptions
-from pychron.options.options import SubOptions, AppearanceSubOptions, AgeOptions
+from pychron.options.ideogram_views import VIEWS
+from pychron.options.options import AgeOptions
 from pychron.pychron_constants import NULL_STR, FONTS, SIZES
-
-
-class DisplaySubOptions(SubOptions):
-    def traits_view(self):
-        errbar_grp = VGroup(HGroup(Item('x_end_caps', label='X End Caps'),
-                                   Item('y_end_caps', label='Y End Caps'),
-                                   Item('error_bar_nsigma', label='NSigma')),
-                            show_border=True,
-                            label='Error Bars')
-
-        an_grp = VGroup(Item('analysis_number_sorting', label='Analysis# Sort'),
-                        Item('use_cmap_analysis_number'),
-                        Item('cmap_analysis_number'),
-                        Item('use_latest_overlay'), show_border=True, label='Analysis #')
-        label_grp = VGroup(
-            HGroup(Item('label_box'),
-                   Item('analysis_label_display',
-                        label='Label Format',
-                        width=100,
-                        style='readonly'),
-                   icon_button_editor('edit_label_format', 'cog',
-                                      tooltip='Open Label maker')),
-            show_border=True, label='Label')
-        inset_grp = VGroup(HGroup(Item('display_inset', label='Use'),
-                                  Item('inset_location', label='Location'),
-                                  Item('inset_width', label='Width'),
-                                  Item('inset_height', label='Height')),
-                           show_border=True,
-                           label='Inset')
-        mean_grp = VGroup(HGroup(Item('display_mean_indicator', label='Indicator'),
-                                 Item('display_mean', label='Value',
-                                      enabled_when='display_mean_indicator'),
-                                 Item('display_percent_error', label='%Error',
-                                      enabled_when='display_mean_indicator'),
-                                 Item('mean_sig_figs', label='SigFigs')),
-                          show_border=True,
-                          label='Mean')
-        info_grp = HGroup(Item('show_info', label='Show'),
-                          Item('show_mean_info', label='Mean', enabled_when='show_info'),
-                          Item('show_error_type_info', label='Error Type', enabled_when='show_info'),
-                          show_border=True,
-                          label='Info')
-
-        display_grp = Group(mean_grp,
-                            an_grp,
-                            inset_grp,
-                            label_grp,
-                            info_grp,
-                            errbar_grp,
-                            show_border=True,
-                            label='Display')
-        return View(display_grp)
-
-
-class CalculationSubOptions(SubOptions):
-    def traits_view(self):
-        calcgrp = Group(
-            Item('probability_curve_kind',
-                 width=-150,
-                 label='Probability Curve Method'),
-            Item('mean_calculation_kind',
-                 width=-150,
-                 label='Mean Calculation Method'),
-            Item('error_calc_method',
-                 width=-150,
-                 label='Error Calculation Method'),
-            Item('nsigma', label='Age Error NSigma'),
-            HGroup(
-                Item('include_j_error',
-                     label='Include in Analyses'),
-                Item('include_j_error_in_mean',
-                     label='Include in Mean',
-                     enabled_when='not include_j_error'),
-                show_border=True, label='J Error'),
-
-            Item('include_irradiation_error'),
-            Item('include_decay_error'),
-            show_border=True,
-            label='Calculations')
-
-        v = View(calcgrp)
-        return v
-
-
-class IdeogramSubOptions(SubOptions):
-    def traits_view(self):
-        xgrp = VGroup(Item('index_attr',
-                           editor=EnumEditor(name='index_attrs'),
-                           label='X Value'),
-                      HGroup(UItem('use_static_limits'),
-                             Item('xlow', label='Min.',
-                                  enabled_when='object.use_static_limits'),
-                             Item('xhigh', label='Max.',
-                                  enabled_when='object.use_static_limits'),
-                             show_border=True,
-                             label='Static Limits'),
-                      HGroup(UItem('use_asymptotic_limits'),
-                             # Item('asymptotic_width', label='% Width',
-                             #      tooltip='Width of asymptotic section that is less than the Asymptotic %'),
-                             Item('asymptotic_height_percent',
-                                  tooltip='Percent of Max probability',
-                                  label='% Height'),
-                             # icon_button_editor('refresh_asymptotic_button', 'refresh',
-                             #                    enabled_when='object.use_asymptotic_limits',
-                             #                    tooltip='Refresh plot with defined asymptotic limits'),
-                             enabled_when='not object.use_centered_range and not object.use_static_limits',
-                             show_border=True,
-                             label='Asymptotic Limits'),
-                      HGroup(UItem('use_centered_range'),
-                             UItem('centered_range',
-                                   enabled_when='object.use_centered_range'),
-                             label='Center on fixed range',
-                             show_border=True,
-                             enabled_when='not object.use_static_limits'),
-                      HGroup(UItem('use_xpad'),
-                             Item('xpad', label='Pad', enabled_when='use_xpad'),
-                             Item('xpad_as_percent',
-                                  tooltip='Treat Pad as a percent of the nominal width, otherwise Pad is in Ma. '
-                                          'e.g if width=10 Ma, Pad=0.5 '
-                                          'the final width will be 10 + (10*0.5)*2 = 20 Ma.',
-                                  enabled_when='use_xpad',
-                                  label='%'),
-                             label='X Pad',
-                             show_border=True),
-                      show_border=True,
-                      label='X')
-
-        calcgrp = Group(
-            Item('probability_curve_kind',
-                 width=-150,
-                 label='Probability Curve Method'),
-            Item('mean_calculation_kind',
-                 width=-150,
-                 label='Mean Calculation Method'),
-            Item('error_calc_method',
-                 width=-150,
-                 label='Error Calculation Method'),
-            Item('nsigma', label='Age Error NSigma'),
-            HGroup(
-                Item('include_j_error',
-                     label='Include in Analyses'),
-                Item('include_j_error_in_mean',
-                     label='Include in Mean',
-                     enabled_when='not include_j_error'),
-                show_border=True, label='J Error'),
-
-            Item('include_irradiation_error'),
-            Item('include_decay_error'),
-            show_border=True,
-            label='Calculations')
-
-        v = View(xgrp)
-        return v
-
-        # traits_view = View(Item('index_attr', editor=EnumEditor(name='index_attrs')),
-        #
-        #
-        #
-        #                    )
-
-
-class IdeogramAppearance(AppearanceSubOptions):
-    def traits_view(self):
-        mi = HGroup(Item('mean_indicator_fontname', label='Mean Indicator'),
-                    Item('mean_indicator_fontsize', show_label=False))
-        ee = HGroup(Item('error_info_fontname', label='Error Info'),
-                    Item('error_info_fontsize', show_label=False))
-
-        ll = HGroup(Item('label_fontname', label='Labels'),
-                    Item('label_fontsize', show_label=False))
-        fgrp = VGroup(UItem('fontname'),
-                      mi, ee, ll,
-                      self._get_xfont_group(),
-                      self._get_yfont_group(),
-                      label='Fonts', show_border=True)
-
-        v = View(VGroup(self._get_bg_group(),
-                        self._get_padding_group(),
-
-                        fgrp))
-        return v
-
-
-# ===============================================================
-# ===============================================================
-VIEWS = {}
-VIEWS['ideogram'] = IdeogramSubOptions
-VIEWS['appearance'] = IdeogramAppearance
-VIEWS['calculations'] = CalculationSubOptions
-VIEWS['display'] = DisplaySubOptions
-
-
-# ===============================================================
-# ===============================================================
 
 
 class IdeogramAuxPlot(AuxPlot):
@@ -229,11 +34,11 @@ class IdeogramAuxPlot(AuxPlot):
 
 
 class IdeogramOptions(AgeOptions):
-    subview_names = ('Main', 'Ideogram', 'Appearance', 'Calculations', 'Display')
+    subview_names = List(['Main', 'Ideogram', 'Appearance', 'Calculations', 'Display'])
     aux_plot_klass = IdeogramAuxPlot
 
-    edit_label_format = Button
-    refresh_asymptotic_button = Button
+    # edit_label_format = Button
+    # refresh_asymptotic_button = Button
     index_attrs = Dict
     probability_curve_kind = Enum('cumulative', 'kernel')
     mean_calculation_kind = Enum('weighted mean', 'kernel')
@@ -336,10 +141,10 @@ class IdeogramOptions(AgeOptions):
             else:
                 self.trait_set(use_centered_range=self._use_centered_range)
 
-    def _refresh_asymptotic_button_fired(self):
-        for ap in self.aux_plots:
-            ap.clear_xlimits()
-        self.refresh_plot_needed = True
+    # def _refresh_asymptotic_button_fired(self):
+    #     for ap in self.aux_plots:
+    #         ap.clear_xlimits()
+    #     self.refresh_plot_needed = True
 
     @on_trait_change('xlow, xhigh')
     def _handle_static_limits(self):

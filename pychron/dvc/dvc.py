@@ -289,8 +289,9 @@ class DVC(Loggable):
         repo.commit(msg)
 
     def save_icfactors(self, ai, dets, fits, refs):
-        self.info('Saving icfactors for {}'.format(ai))
-        ai.dump_icfactors(dets, fits, refs)
+        if fits and dets:
+            self.info('Saving icfactors for {}'.format(ai))
+            ai.dump_icfactors(dets, fits, refs)
 
     def save_blanks(self, ai, keys, refs):
         if keys:

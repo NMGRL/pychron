@@ -20,7 +20,7 @@ from traitsui.api import View, UItem, Item, HGroup, VGroup, ListEditor, Instance
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.icon_button_editor import icon_button_editor
-from pychron.pipeline.plot.options.base_group_options import BaseGroupOptions
+from pychron.options.group.base_group_options import BaseGroupOptions
 
 
 class SpectrumGroupOptions(BaseGroupOptions):

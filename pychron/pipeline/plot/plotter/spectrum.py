@@ -156,13 +156,14 @@ class Spectrum(BaseArArFigure):
 
         if op.display_integrated_info:
             text = self._make_integrated_text()
-            fs = op.integrated_font_size
-            if not fs:
-                fs = 10
+            # fs = op.integrated_font_size
+            # if not fs:
+            #     fs = 10
 
             self._add_integrated_label(plot,
                                        text,
-                                       font='modern {}'.format(fs),
+                                       # font='modern {}'.format(fs),
+                                       font=op.integrated_font,
                                        relative_position=self.group_id,
                                        color=spec.color)
 
@@ -262,8 +263,8 @@ class Spectrum(BaseArArFigure):
                                       # spectrum=self,
                                       use_user_color=True,
                                       user_color=grp.line_color,
-
-                                      font_size=self.options.step_label_font_size,
+                                      font=self.options.label_font,
+                                      # font_size=self.options.step_label_font_size,
                                       display_extract_value=self.options.display_extract_value,
                                       display_step=self.options.display_step)
 
@@ -299,7 +300,8 @@ class Spectrum(BaseArArFigure):
 
                             extend_end_caps=opt.extend_plateau_end_caps,
                             label_visible=opt.display_plateau_info,
-                            label_font_size=opt.plateau_font_size,
+                            label_font=opt.plateau_font,
+                            # label_font_size=opt.plateau_font_size,
                             arrow_visible=opt.plateau_arrow_visible,
                             # label_offset=plateau_age.std_dev*self.options.step_nsigma,
                             # y=plateau_age.nominal_value * 1.25)

@@ -22,12 +22,17 @@ from itertools import groupby
 from uncertainties import nominal_value, std_dev
 from pychron.core.helpers.isotope_utils import sort_isotopes
 from pychron.core.progress import progress_loader
+from pychron.options.options_manager import BlanksOptionsManager, ICFactorOptionsManager, \
+    IsotopeEvolutionOptionsManager, \
+    FluxOptionsManager
+from pychron.options.views import view
 from pychron.pipeline.editors.flux_results_editor import FluxResultsEditor
 from pychron.pipeline.editors.results_editor import IsoEvolutionResultsEditor
 from pychron.pipeline.nodes.figure import FigureNode
-from pychron.pipeline.options.plotter_options_manager import IsotopeEvolutionOptionsManager, BlanksOptionsManager, \
-    ICFactorOptionsManager, FluxOptionsManager
 
+
+# from zobs.options.plotter_options_manager import IsotopeEvolutionOptionsManager, BlanksOptionsManager, \
+#     ICFactorOptionsManager, FluxOptionsManager
 
 class FitNode(FigureNode):
     use_save_node = Bool(True)
@@ -61,7 +66,7 @@ class FitReferencesNode(FitNode):
 
                 unks = [u for u in state.unknowns if u.group_id == gid]
                 editor.set_items(unks)
-                editor.set_references(len(refs))
+                editor.set_references(list(refs))
 
         self._set_saveable(state)
         self.editor.force_update(force=True)
@@ -72,6 +77,9 @@ class FitBlanksNode(FitReferencesNode):
     plotter_options_manager_klass = BlanksOptionsManager
     name = 'Fit Blanks'
     basename = 'Blanks'
+
+    def _options_view_default(self):
+        return view('Blanks Options')
 
     def _configure_hook(self):
         pom = self.plotter_options_manager
@@ -96,6 +104,9 @@ class FitICFactorNode(FitReferencesNode):
 
     predefined = List
 
+    def _options_view_default(self):
+        return view('ICFactor Options')
+
     def set_detectors(self, dets):
         self.plotter_options_manager.set_detectors(dets)
 
@@ -114,7 +125,7 @@ class FitICFactorNode(FitReferencesNode):
             return
 
         pom = self.plotter_options_manager
-        self.plotter_options = pom.plotter_options
+        self.plotter_options = pom.selected_options
         self.plotter_options.set_aux_plots(fits)
 
 
@@ -149,6 +160,9 @@ class FitIsotopeEvolutionNode(FitNode):
     plotter_options_manager_klass = IsotopeEvolutionOptionsManager
     name = 'Fit IsoEvo'
     _fits = List
+
+    def _options_view_default(self):
+        return view('Iso Evo Options')
 
     def _configure_hook(self):
         pom = self.plotter_options_manager
@@ -220,6 +234,9 @@ class FitFluxNode(FitNode):
     name = 'Fit Flux'
     editor_klass = FluxResultsEditor
     plotter_options_manager_klass = FluxOptionsManager
+
+    def _options_view_default(self):
+        return view('Flux Options')
 
     # options = Instance(FluxOptions, ())
 

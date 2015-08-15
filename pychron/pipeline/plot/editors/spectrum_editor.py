@@ -20,10 +20,13 @@ from traits.api import Instance
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.options.options_manager import SpectrumOptionsManager
 from pychron.processing.analyses.file_analysis import SpectrumFileAnalysis
 from pychron.pipeline.plot.models.spectrum_model import SpectrumModel
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
-from pychron.pipeline.options.plotter_options_manager import SpectrumOptionsManager
+
+
+# from zobs.options.plotter_options_manager import SpectrumOptionsManager
 
 
 class SpectrumEditor(FigureEditor):

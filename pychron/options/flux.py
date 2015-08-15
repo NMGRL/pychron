@@ -17,10 +17,10 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.loggable import Loggable
+from pychron.options.options import BaseOptions
 
 
-class BaseOptionsManager(Loggable):
+class FluxOptions(BaseOptions):
     pass
 
 # ============= EOF =============================================

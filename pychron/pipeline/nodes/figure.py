@@ -20,13 +20,15 @@ from traitsui.api import View
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.base_editor import grouped_name
-from pychron.options.views import IdeogramOptionsView
+from pychron.options.views import view
 from pychron.pipeline.nodes.base import BaseNode
 # from pychron.processing.plot.editors.ideogram_editor import IdeogramEditor
 
-from pychron.pipeline.options.plotter_options_manager import SpectrumOptionsManager, \
-    SeriesOptionsManager
-from pychron.options.options_manager import IdeogramOptionsManager, OptionsController
+# from zobs.options.plotter_options_manager import SpectrumOptionsManager, \
+#     SeriesOptionsManager
+
+from pychron.options.options_manager import IdeogramOptionsManager, OptionsController, SeriesOptionsManager, \
+    SpectrumOptionsManager
 
 
 class NoAnalysesError(BaseException):
@@ -36,6 +38,7 @@ class NoAnalysesError(BaseException):
 class FigureNode(BaseNode):
     editor = Any
     editor_klass = Any
+    options_view = Instance(View)
     plotter_options = Any
     plotter_options_manager_klass = Any
     plotter_options_manager = Any
@@ -155,10 +158,10 @@ class IdeogramNode(FigureNode):
     name = 'Ideogram'
     editor_klass = 'pychron.pipeline.plot.editors.ideogram_editor,IdeogramEditor'
     plotter_options_manager_klass = IdeogramOptionsManager
-    options_view = Instance(View)
 
     def _options_view_default(self):
-        return IdeogramOptionsView
+        return view('Ideogram Options')
+
 
 class SpectrumNode(FigureNode):
     name = 'Spectrum'
@@ -166,27 +169,34 @@ class SpectrumNode(FigureNode):
     editor_klass = 'pychron.pipeline.plot.editors.spectrum_editor,SpectrumEditor'
     plotter_options_manager_klass = SpectrumOptionsManager
 
+    def _options_view_default(self):
+        return view('Spectrum Options')
+
 
 class SeriesNode(FigureNode):
     name = 'Series'
     editor_klass = 'pychron.pipeline.plot.editors.series_editor,SeriesEditor'
     plotter_options_manager_klass = SeriesOptionsManager
 
-    def configure(self, refresh=True, pre_run=False, **kw):
-        # self._configured = True
-        if not pre_run:
-            self._manual_configured = True
+    def _options_view_default(self):
+        return view('Series Options')
 
-        pom = self.plotter_options_manager
-        # pom = self.plotter_options_manager_klass()
-        if self.editor:
-            pom.plotter_options = self.editor.plotter_options
+        # def configure(self, refresh=True, pre_run=False, **kw):
+        #     # self._configured = True
+        #     if not pre_run:
+        #         self._manual_configured = True
+        #
+        #     pom = self.plotter_options_manager
+        #     # pom = self.plotter_options_manager_klass()
+        #     if self.editor:
+        #         pom.plotter_options = self.editor.plotter_options
+        #
+        #     info = pom.edit_traits(kind='livemodal')
+        #     if info.result:
+        #         self.plotter_options = pom.plotter_options
+        #         if refresh:
+        #             self.refresh()
+        #
+        #         return True
 
-        info = pom.edit_traits(kind='livemodal')
-        if info.result:
-            self.plotter_options = pom.plotter_options
-            if refresh:
-                self.refresh()
-
-            return True
 # ============= EOF =============================================

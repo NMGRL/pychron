@@ -15,18 +15,21 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Int, Bool, Float, Property, on_trait_change, Dict, Tuple, Enum
+from traits.api import HasTraits, Str, Int, Bool, \
+    Float, Property, on_trait_change, Dict, Tuple, Enum, List
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.pychron_constants import NULL_STR
 
 
 class AuxPlot(HasTraits):
+    names = List
+    _plot_names = List
+
     save_enabled = Bool
     plot_enabled = Bool
     name = Str(NULL_STR)
     plot_name = Property(Str, depends_on='name')
-
     scale = Enum('linear', 'log')
     height = Int(100, enter_set=True, auto_set=False)
     x_error = Bool(False)
@@ -91,11 +94,12 @@ class AuxPlot(HasTraits):
 
     def _name_changed(self):
         # if self.initialized:
-        if self.name != NULL_STR:
+        if self.name and self.name != NULL_STR:
             self.plot_enabled = True
 
     def _get_plot_name(self):
-        if self.name in self.names:
+
+        if self._plot_names and self.name in self.names:
             return self._plot_names[self.names.index(self.name)]
         else:
             return self.name
