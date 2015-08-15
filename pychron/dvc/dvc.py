@@ -37,7 +37,8 @@ from pychron.core.helpers.filetools import remove_extension
 from pychron.core.progress import progress_loader
 from pychron.dvc import jdump
 from pychron.dvc.defaults import TRIGA, HOLDER_24_SPOKES, LASER221, LASER65
-from pychron.dvc.dvc_analysis import DVCAnalysis, experiment_path, analysis_path, PATH_MODIFIERS
+from pychron.dvc.dvc_analysis import DVCAnalysis, experiment_path, analysis_path, PATH_MODIFIERS, \
+    AnalysisNotAnvailableError
 from pychron.dvc.dvc_database import DVCDatabase
 from pychron.dvc.meta_repo import MetaRepo
 from pychron.git_archive.repo_manager import GitRepoManager, format_date
@@ -125,6 +126,10 @@ class GitSessionCTX(object):
                 self._parent.experiment_commit(self._experiment_id, self._message)
 
 
+def make_remote_url(org, name):
+    return '{}/{}/{}.git'.format(paths.git_base_origin, org, name)
+
+
 @provides(IDatastore)
 class DVC(Loggable):
     db = Instance('pychron.dvc.dvc_database.DVCDatabase')
@@ -156,7 +161,7 @@ class DVC(Loggable):
             self.debug('Opening Meta Repo')
             mrepo.open_repo(root)
         else:
-            url = 'https://github.com/{}/{}.git'.format(self.organization, self.meta_repo_name)
+            url = self.make_url(self.meta_repo_name)
             path = os.path.join(paths.dvc_dir, self.meta_repo_name)
             self.meta_repo.clone(url, path)
 
@@ -164,6 +169,9 @@ class DVC(Loggable):
         if self.db.connect():
             # self._defaults()
             return True
+
+    def make_url(self, name):
+        return make_remote_url(self.organization, name)
 
     def git_session_ctx(self, experiment_id, message):
         return GitSessionCTX(self, experiment_id, message)
@@ -391,8 +399,8 @@ class DVC(Loggable):
                 org.create_repo(identifier, self.github_user, self.github_password,
                                 auto_init=True)
 
-                url = '{}/{}/{}.git'.format(paths.git_base_origin, self.organization, identifier)
-                Repo.clone_from(url, root)
+                # url = '{}/{}/{}.git'.format(paths.git_base_origin, self.organization, identifier)
+                Repo.clone_from(self.make_url(identifier), root)
                 self.db.add_experiment(identifier)
                 return True
 
@@ -450,21 +458,18 @@ class DVC(Loggable):
 
     def sync_repo(self, name):
         """
-        1. open the repo or create and empty one
-        2. create the origin remote
-        3. pull changes from origin
+        pull or clone an experiment repo
 
         """
-        return True
-
-        url = 'https://github.com/{}/{}.git'.format(self.organization, name)
-
-        repo = self._get_experiment_repo(name)
+        url = self.make_url(name)
         root = os.path.join(paths.experiment_dataset_dir, name)
-        if os.path.isdir(os.path.join(root, '.git')):
+        exists = os.path.isdir(os.path.join(root, '.git'))
+
+        if exists:
+            repo = self._get_experiment_repo(name)
             repo.pull()
         else:
-            repo.clone(url, root)
+            GitRepoManager.clone_from(url, root)
 
         return True
 
@@ -581,7 +586,16 @@ class DVC(Loggable):
             # record = record.record_view
 
             st = time.time()
-            a = DVCAnalysis(record.record_id, expid)
+            try:
+                a = DVCAnalysis(record.record_id, expid)
+            except AnalysisNotAnvailableError:
+                self.info('Analysis not available. Trying to clone repository {}'.format(expid))
+                self.sync_repo(expid)
+                try:
+                    a = DVCAnalysis(record.record_id, expid)
+                except AnalysisNotAnvailableError:
+                    return
+
             cot = time.time() - st
             # cot = time.time() - st
             # if cot>0.1:
@@ -626,6 +640,7 @@ class DVC(Loggable):
                 print 'chronology {}'.format(ct)
                 print 'production {}'.format(pt)
                 print 'flux {}'.format(ft)
+
         return a
 
     def _get_experiment_repo(self, experiment_id):

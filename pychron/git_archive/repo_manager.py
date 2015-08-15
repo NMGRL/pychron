@@ -192,6 +192,34 @@ class GitRepoManager(Loggable):
         local_commit = branch.commit
         return local_commit, remote_commit
 
+    @classmethod
+    def clone_from(cls, url, path):
+        n = 150
+        prog = open_progress(n=n)
+        from threading import Event as TE, Thread
+
+        evt = TE()
+        prog.change_message('Cloning repository {}'.format(url))
+
+        def foo():
+            Repo.clone_from(url, path)
+            evt.set()
+
+        t = Thread(target=foo)
+        t.start()
+        period = 0.1
+        while not evt.is_set():
+            st = time.time()
+            v = prog.get_value()
+            if v == n - 2:
+                prog.increase_max(50)
+                n += 50
+
+            prog.increment()
+            time.sleep(max(0, period - time.time() + st))
+
+        prog.close()
+
     def clone(self, url, path):
         self._repo = Repo.clone_from(url, path)
 

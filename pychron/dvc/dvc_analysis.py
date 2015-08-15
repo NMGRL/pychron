@@ -25,9 +25,6 @@ import datetime
 from uncertainties import ufloat, std_dev, nominal_value
 
 
-
-
-
 # ============= local library imports  ==========================
 from pychron.core.helpers.datetime_tools import make_timef
 from pychron.core.helpers.filetools import add_extension, subdirize
@@ -57,6 +54,15 @@ PATH_MODIFIERS = (
     None, '.data', 'blanks', 'intercepts', 'icfactors', 'baselines', 'tags', 'peakcenter', 'extraction', 'monitor')
 
 
+class AnalysisNotAnvailableError(BaseException):
+    def __init__(self, root, runid):
+        self._root = root
+        self._runid = runid
+
+    def __str__(self):
+        return 'Analysis Not Available. {} - {}'.format(self._root, self._runid)
+
+
 def analysis_path(runid, experiment, modifier=None, extension='.json', mode='r'):
     root = os.path.join(paths.experiment_dataset_dir, experiment)
 
@@ -68,7 +74,10 @@ def analysis_path(runid, experiment, modifier=None, extension='.json', mode='r')
         else:
             l = 5
 
-    root, tail = subdirize(root, runid, l=l, mode=mode)
+    try:
+        root, tail = subdirize(root, runid, l=l, mode=mode)
+    except TypeError:
+        raise AnalysisNotAnvailableError(root, runid)
 
     # head, tail = runid[:3], runid[3:]
     # # if modifier:
