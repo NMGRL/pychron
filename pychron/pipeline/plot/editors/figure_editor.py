@@ -62,9 +62,10 @@ class FigureEditor(GraphEditor):
 
     def clear_aux_plot_limits(self):
         po = self.plotter_options
-        for ap in po.aux_plots:
-            ap.clear_ylimits()
-            ap.clear_xlimits()
+        if hasattr(po, 'aux_plots'):
+            for ap in po.aux_plots:
+                ap.clear_ylimits()
+                ap.clear_xlimits()
 
     def set_items(self, *args, **kw):
         self.clear_aux_plot_limits()

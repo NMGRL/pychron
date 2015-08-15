@@ -26,6 +26,7 @@ from traitsui.table_column import ObjectColumn
 # ============= local library imports  ==========================
 from pychron.core.helpers.color_generators import colornames
 from pychron.core.ui.table_editor import myTableEditor
+from pychron.options.aux_plot import AuxPlot
 from pychron.pychron_constants import NULL_STR, ERROR_TYPES, FONTS, SIZES
 
 
@@ -300,7 +301,7 @@ class FigureOptions(BaseOptions):
 
 class AuxPlotFigureOptions(FigureOptions):
     aux_plots = List
-    aux_plot_klass = None
+    aux_plot_klass = AuxPlot
 
     def get_loadable_aux_plots(self):
         return reversed([pi for pi in self.aux_plots

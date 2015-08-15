@@ -28,7 +28,7 @@ from pychron.pipeline.nodes.base import BaseNode
 #     SeriesOptionsManager
 
 from pychron.options.options_manager import IdeogramOptionsManager, OptionsController, SeriesOptionsManager, \
-    SpectrumOptionsManager
+    SpectrumOptionsManager, InverseIsochronOptionsManager
 
 
 class NoAnalysesError(BaseException):
@@ -152,15 +152,15 @@ class FigureNode(BaseNode):
     def _configure_hook(self):
         pass
 
+    def _options_view_default(self):
+        return view('{} Options'.format(self.name))
+
 
 class IdeogramNode(FigureNode):
     skip_configure = Bool(True)
     name = 'Ideogram'
     editor_klass = 'pychron.pipeline.plot.editors.ideogram_editor,IdeogramEditor'
     plotter_options_manager_klass = IdeogramOptionsManager
-
-    def _options_view_default(self):
-        return view('Ideogram Options')
 
 
 class SpectrumNode(FigureNode):
@@ -169,34 +169,15 @@ class SpectrumNode(FigureNode):
     editor_klass = 'pychron.pipeline.plot.editors.spectrum_editor,SpectrumEditor'
     plotter_options_manager_klass = SpectrumOptionsManager
 
-    def _options_view_default(self):
-        return view('Spectrum Options')
-
 
 class SeriesNode(FigureNode):
     name = 'Series'
     editor_klass = 'pychron.pipeline.plot.editors.series_editor,SeriesEditor'
     plotter_options_manager_klass = SeriesOptionsManager
 
-    def _options_view_default(self):
-        return view('Series Options')
 
-        # def configure(self, refresh=True, pre_run=False, **kw):
-        #     # self._configured = True
-        #     if not pre_run:
-        #         self._manual_configured = True
-        #
-        #     pom = self.plotter_options_manager
-        #     # pom = self.plotter_options_manager_klass()
-        #     if self.editor:
-        #         pom.plotter_options = self.editor.plotter_options
-        #
-        #     info = pom.edit_traits(kind='livemodal')
-        #     if info.result:
-        #         self.plotter_options = pom.plotter_options
-        #         if refresh:
-        #             self.refresh()
-        #
-        #         return True
-
+class InverseIsochronNode(FigureNode):
+    name = 'Inverse Isochron'
+    editor_klass = 'pychron.pipeline.plot.editors.isochron_editor,InverseIsochronEditor'
+    plotter_options_manager_klass = InverseIsochronOptionsManager
 # ============= EOF =============================================

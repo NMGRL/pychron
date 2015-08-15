@@ -31,6 +31,7 @@ from pychron.options.flux import FluxOptions
 from pychron.options.icfactor import ICFactorOptions
 from pychron.options.ideogram import IdeogramOptions
 from pychron.options.iso_evo import IsotopeEvolutionOptions
+from pychron.options.isochron import InverseIsochronOptions
 from pychron.options.options import BaseOptions, SubOptions
 from pychron.options.series import SeriesOptions
 from pychron.options.spectrum import SpectrumOptions
@@ -222,6 +223,11 @@ class ICFactorOptionsManager(FigureOptionsManager):
 class FluxOptionsManager(FigureOptionsManager):
     id = 'flux'
     options_klass = FluxOptions
+
+
+class InverseIsochronOptionsManager(FigureOptionsManager):
+    id = 'inverse_isochron'
+    options_klass = InverseIsochronOptions
 
 
 class OptionsController(Controller):
