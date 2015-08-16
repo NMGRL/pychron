@@ -262,6 +262,9 @@ class FigureOptions(BaseOptions):
         if not self.groups:
             self.groups = self._groups_default()
 
+    def paddings(self):
+        return self.padding_left, self.padding_right, self.padding_top, self.padding_bottom
+
     def get_group_colors(self):
         return [gi.color for gi in self.groups]
 

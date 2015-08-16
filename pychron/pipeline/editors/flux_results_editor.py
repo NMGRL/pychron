@@ -130,7 +130,9 @@ class FluxPosition(HasTraits):
     was_altered = Bool
 
     def set_mean_j(self):
+
         ans = [a for a in self.analyses if not a.is_omitted()]
+
         if ans:
             j = mean_j(ans, self.error_kind, self.monitor_age, self.lambda_k)
             self.mean_j = nominal_value(j)
@@ -223,7 +225,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
                              error_kind=ek,
                              monitor_age=monage,
                              analyses=ais,
-                             lambdak=lk,
+                             lambda_k=lk,
                              x=x, y=y,
                              n=n)
             # ans.extend(ais)

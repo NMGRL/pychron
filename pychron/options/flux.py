@@ -15,12 +15,45 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from traits.api import List, Str, Int, Enum, Float, Property, Bool
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.options.options import BaseOptions
+from pychron.options.flux_views import VIEWS
+from pychron.options.options import FigureOptions
+from pychron.pychron_constants import K_DECAY_CONSTANTS, ERROR_TYPES
 
 
-class FluxOptions(BaseOptions):
-    pass
+class FluxOptions(FigureOptions):
+    subview_names = List(['Main'])
+    color_map_name = Str('jet')
+    marker_size = Int(5)
+    levels = Int(50, auto_set=False, enter_set=True)
+
+    error_kind = Str('SD')
+
+    selected_decay = Enum(K_DECAY_CONSTANTS.keys())
+    monitor_age = Float(28.201)
+    lambda_k = Property(depends_on='selected_decay')
+
+    model_kind = Enum('Plane', 'Bowl')
+    predicted_j_error_type = Enum(*ERROR_TYPES)
+    use_weighted_fit = Bool(False)
+    monte_carlo_ntrials = Int(10)
+    use_monte_carlo = Bool(False)
+    monitor_sample_name = Str
+    plot_kind = Enum('1D', '2D')
+
+    def _get_lambda_k(self):
+        dc = K_DECAY_CONSTANTS[self.selected_decay]
+        return dc[0] + dc[2]
+
+    def get_subview(self, name):
+        name = name.lower()
+        klass = self._get_subview(name)
+        obj = klass(model=self)
+        return obj
+
+    def _get_subview(self, name):
+        return VIEWS[name]
 
 # ============= EOF =============================================
