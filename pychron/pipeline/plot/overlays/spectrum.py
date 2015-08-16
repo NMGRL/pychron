@@ -190,6 +190,7 @@ class SpectrumErrorOverlay(AbstractOverlay):
             else:
                 selection_color = color[0], color[1], color[2], 0.3
 
+            n = len(xs)
             for i, ((xa, xb), (ya, yb), (ea, eb)) in enumerate(zip(xs, ys, es)):
                 ea *= self.nsigma
                 # eb *= self.nsigma
@@ -204,27 +205,27 @@ class SpectrumErrorOverlay(AbstractOverlay):
                 h = p2[1] - p1[1]
 
                 c = selection_color if i in sels else color
-                # if i in sels:
-
-                # gc.set_fill_color((0.75, 0, 0))
-                # gc.set_stroke_color((0.75, 0, 0))
-                # else:
-                # if self.use_user_color:
-                # c = map(lambda x: x/255., self.user_color.toTuple())
-
-                # else:
-                # c = comp.color
-                # if isinstance(c, str):
-                # c = color_table[c]
-
-                # c = c[0], c[1], c[2], alpha
 
                 gc.set_fill_color(c)
                 gc.set_stroke_color(c)
 
                 gc.rect(x, y, w, h)
                 func()
-                # gc.fill_path()
+                if i > 0 and i <= n:
+                    # draw verticals
+                    px, y, e = pp
+                    y1 = min((y - e), ya - ea)
+                    y2 = max((y + e), ya + ea)
+                    p1, p2 = comp.map_screen([(px, y1), (px, y2)])
+                    with gc:
+                        gc.begin_path()
+                        gc.move_to(*p1)
+                        gc.line_to(*p2)
+
+                        gc.close_path()
+                        gc.stroke_path()
+
+                pp = (xb, ya, ea)
 
 
 class PlateauTool(DragTool):

@@ -107,14 +107,16 @@ class OptionsManager(Loggable):
                 os.mkdir(self.persistence_root)
 
         if self.selected:
-            obj = self.selected_options
-            name = self.selected
             with open(self.selected_options_path, 'w') as wfile:
                 pickle.dump(self.selected, wfile)
 
     def save(self, name=None, obj=None):
         # dump the default plotter options
         self.save_selection()
+
+        if self.selected:
+            obj = self.selected_options
+            name = self.selected
 
         with open(os.path.join(self.persistence_root, '{}.p'.format(name)), 'w') as wfile:
             pickle.dump(obj, wfile)
