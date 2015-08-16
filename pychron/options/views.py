@@ -38,10 +38,10 @@ def view(title):
                        editor=EnumEditor(name='names'),
                        tooltip='List of available plot options'),
                   icon_button_editor('controller.save_options', 'disk',
-                                     tooltip='Save changes to options'))
-    # icon_button_editor('controller.add_options',
-    #                    'add',
-    #                    tooltip='Add new plot options', ),
+                                     tooltip='Save changes to options'),
+                  icon_button_editor('controller.add_options',
+                                     'add',
+                                     tooltip='Add new plot options', ))
     # icon_button_editor('controller.delete_options',
     #                    'delete',
     #                    tooltip='Delete current plot options',

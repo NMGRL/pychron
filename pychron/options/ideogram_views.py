@@ -146,38 +146,8 @@ class IdeogramSubOptions(SubOptions):
                       show_border=True,
                       label='X')
 
-        calcgrp = Group(
-            Item('probability_curve_kind',
-                 width=-150,
-                 label='Probability Curve Method'),
-            Item('mean_calculation_kind',
-                 width=-150,
-                 label='Mean Calculation Method'),
-            Item('error_calc_method',
-                 width=-150,
-                 label='Error Calculation Method'),
-            Item('nsigma', label='Age Error NSigma'),
-            HGroup(
-                Item('include_j_error',
-                     label='Include in Analyses'),
-                Item('include_j_error_in_mean',
-                     label='Include in Mean',
-                     enabled_when='not include_j_error'),
-                show_border=True, label='J Error'),
-
-            Item('include_irradiation_error'),
-            Item('include_decay_error'),
-            show_border=True,
-            label='Calculations')
-
         v = View(xgrp)
         return v
-
-        # traits_view = View(Item('index_attr', editor=EnumEditor(name='index_attrs')),
-        #
-        #
-        #
-        #                    )
 
 
 class IdeogramAppearance(AppearanceSubOptions):

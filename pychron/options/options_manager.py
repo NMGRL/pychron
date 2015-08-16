@@ -13,12 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-
 # ============= enthought library imports =======================
 import apptools.sweet_pickle as pickle
 from pyface.message_dialog import warning
-from traits.api import Str, List, Button, Instance, Tuple
-from traitsui.api import Controller
+from traits.api import Str, List, Button, Instance, Tuple, Property
+from traitsui.api import Controller, View, Item
 # ============= standard library imports ========================
 import os
 # ============= local library imports  ==========================
@@ -49,18 +48,30 @@ class OptionsManager(Loggable):
     selected_subview = Str
     selected_options = Instance(BaseOptions)
     options_klass = None
-
+    new_name = Property
+    _new_name = Str
     id = ''
     # _defaults_path = Str
     _defaults = None
 
     _cached_names = List
     _cached_detectors = List
+    _default_options_txt = None
 
     def __init__(self, *args, **kw):
         super(OptionsManager, self).__init__(*args, **kw)
         self._populate()
         self._initialize()
+
+    def _get_new_name(self):
+        return self._new_name
+
+    def _set_new_name(self, v):
+        self._new_name = v
+
+    def _validate_new_name(self, v):
+        if v not in self.names:
+            return v
 
     def set_detectors(self, dets):
         self._cached_detectors = dets
@@ -87,8 +98,7 @@ class OptionsManager(Loggable):
             if obj.name == name:
                 self.selected_options = obj
 
-    def save(self, name=None, obj=None):
-        # dump the default plotter options
+    def save_selection(self):
         if not os.path.isdir(self.persistence_root):
             try:
                 os.mkdir(self.persistence_root)
@@ -102,14 +112,19 @@ class OptionsManager(Loggable):
             with open(self.selected_options_path, 'w') as wfile:
                 pickle.dump(self.selected, wfile)
 
+    def save(self, name=None, obj=None):
+        # dump the default plotter options
+        self.save_selection()
+
         with open(os.path.join(self.persistence_root, '{}.p'.format(name)), 'w') as wfile:
             pickle.dump(obj, wfile)
-            #
-            # self.plotter_options.dump(self.persistence_root)
-            # self._plotter_options_list_dirty = True
-            #
-            # self.plotter_options = next((pp for pp in self.plotter_options_list if pp.name == name), None)
-            # self._dump()
+
+    def add(self, name):
+        p = self.options_klass()
+        p.load_factory_defaults(self._default_options_txt)
+        self.save(name, p)
+        self._load_names()
+        self.selected = name
 
     def factory_default(self):
         warning(None, 'Factory defaults temporarily disabled')
@@ -146,8 +161,9 @@ class OptionsManager(Loggable):
         self._load_names()
 
     def _load_names(self):
-        self.names = [n for n in list_directory2(self.persistence_root, extension='.p', remove_extension=True) \
-                      if n != 'selected']
+        self.names = [n for n in list_directory2(self.persistence_root,
+                                                 extension='.p',
+                                                 remove_extension=True) if n != 'selected']
 
     def _selected_subview_changed(self, new):
         if new:
@@ -229,6 +245,7 @@ class IdeogramOptionsManager(FigureOptionsManager):
     options_klass = IdeogramOptions
     _defaults = (('screen', IDEOGRAM_SCREEN),
                  ('presentation', IDEOGRAM_PRESENTATION))
+    _default_options_txt = IDEOGRAM_SCREEN
 
 
 class SpectrumOptionsManager(FigureOptionsManager):
@@ -236,24 +253,28 @@ class SpectrumOptionsManager(FigureOptionsManager):
     options_klass = SpectrumOptions
     _defaults = (('screen', SPECTRUM_SCREEN),
                  ('presentation', SPECTRUM_PRESENTATION))
+    _default_options_txt = SPECTRUM_SCREEN
 
 
 class SeriesOptionsManager(FigureOptionsManager):
     id = 'series'
     options_klass = SeriesOptions
     _defaults = (('screen', SERIES_SCREEN),)
+    _default_options_txt = SERIES_SCREEN
 
 
 class BlanksOptionsManager(FigureOptionsManager):
     id = 'blanks'
     options_klass = BlanksOptions
     _defaults = (('screen', BLANKS_SCREEN),)
+    _default_options_txt = BLANKS_SCREEN
 
 
 class ICFactorOptionsManager(FigureOptionsManager):
     id = 'icfactor'
     options_klass = ICFactorOptions
     _defaults = (('screen', ICFACTOR_SCREEN),)
+    _default_options_txt = ICFACTOR_SCREEN
 
 
 class InverseIsochronOptionsManager(FigureOptionsManager):
@@ -261,6 +282,7 @@ class InverseIsochronOptionsManager(FigureOptionsManager):
     options_klass = InverseIsochronOptions
     _defaults = (('screen', INVERSE_ISOCHRON_SCREEN),
                  ('presentation', INVERSE_ISOCHRON_PRESENTATION))
+    _default_options_txt = INVERSE_ISOCHRON_SCREEN
 
 
 class OptionsController(Controller):
@@ -269,11 +291,20 @@ class OptionsController(Controller):
     save_options = Button
     factory_default = Button
 
+    def closed(self, info, is_ok):
+        if is_ok:
+            self.model.save_selection()
+
     def controller_delete_options_changed(self, info):
         print 'delete'
 
     def controller_add_options_changed(self, info):
-        print 'add'
+        info = self.edit_traits(view=View(Item('new_name', label='Name'),
+                                          title='New Options',
+                                          kind='livemodal',
+                                          buttons=['OK', 'Cancel']))
+        if info.result:
+            self.model.add(self.model.new_name)
 
     def controller_save_options_changed(self, info):
         self.model.save()
@@ -286,6 +317,6 @@ if __name__ == '__main__':
     paths.build('_dev')
     # om = IdeogramOptionsManager()
     om = OptionsController(model=SeriesOptionsManager())
-    om.configure_traits(view=view('Seires'))
+    om.configure_traits(view=view('Series'))
 
 # ============= EOF =============================================
