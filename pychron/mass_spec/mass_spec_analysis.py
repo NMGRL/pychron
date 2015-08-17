@@ -53,23 +53,15 @@ class MassSpecAnalysis(Analysis):
             iso.n = n
 
             iso.ic_factor = ufloat(det.ICFactor, det.ICFactorEr)
-            if r.fit:
-                iso.fit = r.fit.Label.lower()
-            else:
-                iso.fit = ''
-            # iso.baseline = Baseline(name=key,
-            #                         reverse_unpack=True,
-            #                         dbrecord=dbiso.baseline,
-            #                         unpack=True,
-            #                         unpacker=lambda x: x.PeakTimeBlob,
-            #                         error_type='SEM',
-            #                         fit='average')
+
+            iso.fit = r.fit.Label.lower() if r.fit else ''
+
             iso.baseline = Baseline(key, det.Label)
             iso.baseline.fit = 'average'
             iso.baseline.set_filter_outliers_dict()
+            iso.baseline.n = dbiso.baseline.NumCnts
 
             iso.blank.set_uvalue((bv, be))
-            # iso.blank = Blank(name=key, value=bv, error=be)
             self.isotopes[key] = iso
 
     def sync_irradiation(self, irrad):

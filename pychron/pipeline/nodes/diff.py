@@ -36,8 +36,6 @@ class DiffNode(BaseNode):
                 editor = DiffEditor(recaller=self.recaller)
                 left.load_raw_data()
                 if editor.setup(left):
-                    # self.manager.load_raw_data(left)
                     editor.set_diff(left)
                     state.editors.append(editor)
-
 # ============= EOF =============================================
