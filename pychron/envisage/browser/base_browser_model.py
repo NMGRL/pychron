@@ -238,10 +238,12 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     def load_experiments(self):
         db = self.db
         with db.session_ctx():
-            es = [e.record_view() for e in db.get_experiments()]
+            es = db.get_experiments()
+            if es:
+                es = [e.record_view() for e in es]
 
-            self.experiments = es
-            self.oexperiments = es
+                self.experiments = es
+                self.oexperiments = es
 
     def load_projects(self, include_recent=True):
         db = self.db
