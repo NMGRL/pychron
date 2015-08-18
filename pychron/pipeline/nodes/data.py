@@ -173,7 +173,7 @@ class ListenUnknownNode(UnknownNode):
             unks = self._load_unknowns()
             if unks:
                 self.unknowns = unks
-                self.exclude_uuids = [u.uuid for u in unks]
+                # self.exclude_uuids = [u.uuid for u in unks]
                 self.engine.refresh_unknowns(unks)
 
             do_after(self.period * 1000, self._iter)
@@ -185,7 +185,7 @@ class ListenUnknownNode(UnknownNode):
 
         with self.dvc.session_ctx():
             unks = self.dvc.get_analyses_by_date_range(low, high,
-                                                       exclude_uuids=self.exclude_uuids,
+                                                       # exclude_uuids=self.exclude_uuids,
                                                        analysis_type='unknown',
                                                        mass_spectrometers=self.mass_spectrometer, verbose=True)
             return self.dvc.make_analyses(unks)

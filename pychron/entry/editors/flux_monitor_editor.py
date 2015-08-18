@@ -21,7 +21,7 @@ from traitsui.api import View, Item, HGroup, VGroup, UItem, ListStrEditor, VSpli
 
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.envisage.icon_button_editor import icon_button_editor
-from pychron.pychron_constants import PLUSMINUS, SIGMA
+from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
 
 # ============= standard library imports ========================
@@ -45,8 +45,8 @@ class FluxMonitor(HasTraits):
     def traits_view(self):
         v = View(VGroup(
             HGroup(Item('name',enabled_when='added')),
-            HGroup(Item('age'), Item('age_err', label='{}1{}'.format(PLUSMINUS, SIGMA))),
-            HGroup(Item('decay_constant'), Item('decay_constant_err', label='{}1{}'.format(PLUSMINUS, SIGMA))),
+            HGroup(Item('age'), Item('age_err', label=PLUSMINUS_ONE_SIGMA)),
+            HGroup(Item('decay_constant'), Item('decay_constant_err', label=PLUSMINUS_ONE_SIGMA)),
             ))
         return v
 

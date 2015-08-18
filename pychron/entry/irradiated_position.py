@@ -71,7 +71,7 @@ class BaseIrradiatedPositionAdapter(TabularAdapter):
         ('Sample', 'sample'),
         ('Project', 'project'),
         ('J', 'j'),
-        ('{}J'.format(PLUSMINUS), 'j_err'),
+        (u'{}J'.format(PLUSMINUS), 'j_err'),
         ('Note', 'note')]
 
     hole_width = Int(45)
@@ -87,7 +87,7 @@ class IrradiatedPositionAdapter(TabularAdapter):
         #               ('Size', 'size'),
         ('Weight', 'weight'),
         ('J', 'j'),
-        ('{}J'.format(PLUSMINUS), 'j_err'),
+        (u'{}J'.format(PLUSMINUS), 'j_err'),
         ('Note', 'note')]
 
     labnumber_width = Int(80)

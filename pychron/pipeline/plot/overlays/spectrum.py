@@ -29,7 +29,7 @@ from numpy import where, array
 # ============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
 from pychron.graph.tools.info_inspector import InfoOverlay, InfoInspector
-from pychron.pychron_constants import PLUSMINUS
+from pychron.pychron_constants import PLUSMINUS, SIGMA
 
 
 class BasePlateauOverlay(AbstractOverlay):
@@ -111,8 +111,8 @@ class SpectrumTool(InfoInspector, BasePlateauOverlay):
         return ['RunID={}'.format(an.record_id),
                 'Tag={}'.format(an.tag),
                 'Status={}'.format(an.status_text),
-                '{}={} {}{} (1\u03c3)'.format(comp.container.y_axis.title, floatfmt(v), PLUSMINUS,
-                                               floatfmt(e)),
+                u'{}={} {}{} (1{})'.format(comp.container.y_axis.title, floatfmt(v), PLUSMINUS,
+                                           floatfmt(e), SIGMA),
                 'Cumulative. Ar39={}-{}'.format(floatfmt(low_c),
                                                 floatfmt(self.cumulative39s[idx]))]
 

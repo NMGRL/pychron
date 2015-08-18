@@ -148,8 +148,8 @@ class RegressionContextMenuMixin(ContextMenuMixin):
             ('linear', 'cm_linear'),
             ('parabolic', 'cm_parabolic'),
             ('cubic', 'cm_cubic'),
-            ('average {}SD'.format(PLUSMINUS), 'cm_average_std'),
-            ('average {}SEM'.format(PLUSMINUS), 'cm_average_sem')
+            (u'average {}SD'.format(PLUSMINUS), 'cm_average_std'),
+            (u'average {}SEM'.format(PLUSMINUS), 'cm_average_sem')
         ]
         menu = MenuManager(
             *[self.action_factory(name, func) for name, func in actions],

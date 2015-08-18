@@ -26,18 +26,18 @@ DVC_PROTOCOL = 'pychron.dvc.dvc.DVC'
 FONTS = ['Helvetica', 'Arial', 'Courier', 'Menlo', 'Consolas']  # 'Courier','Times-Roman']#['modern', 'arial']
 SIZES = [10, 6, 8, 9, 10, 11, 12, 14, 15, 18, 24, 36]
 
-PLUSMINUS = '\xc2\xb1'
+PLUSMINUS = u'\u00b1'
 try:
     # PLUSMINUS_ERR = PLUSMINUS + 'Err.'
-    PLUSMINUS_ERR = '{}Err.'.format(PLUSMINUS)
+    PLUSMINUS_ERR = u'{}Err.'.format(PLUSMINUS)
 except UnicodeEncodeError:
     PLUSMINUS = '+/-'
     PLUSMINUS_ERR = '{}Err.'.format(PLUSMINUS)
 
-SIGMA = '\xcf\x83'
+SIGMA = u'\u03c3'
 
-PLUSMINUS_ONE_SIGMA = '{}1{}'.format(PLUSMINUS, SIGMA)
-PLUSMINUS_PERCENT = '{}%  '.format(PLUSMINUS)
+PLUSMINUS_ONE_SIGMA = u'{}1{}'.format(PLUSMINUS, SIGMA)
+PLUSMINUS_PERCENT = u'{}%  '.format(PLUSMINUS)
 
 NULL_STR = '---'
 LINE_STR = '---------'

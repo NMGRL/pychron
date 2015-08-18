@@ -42,20 +42,20 @@ class SignalAdapter(MultiTextTableAdapter):
                 ('Det.', 'detector', str, 5),
                 ('Fit', 'fit', str, 4),
                 ('Intercept', 'intercept_value', None, VALUE_WIDTH),
-                ('{}1s'.format(PLUSMINUS), 'intercept_error', None, ERROR_WIDTH),
-                ('{}%'.format(PLUSMINUS), 'intercept_error_percent', str, ERROR_WIDTH - 1),
+                (u'{}1s'.format(PLUSMINUS), 'intercept_error', None, ERROR_WIDTH),
+                (u'{}%'.format(PLUSMINUS), 'intercept_error_percent', str, ERROR_WIDTH - 1),
                 ('Raw(fA)', 'raw_value', None, VALUE_WIDTH),
-                ('{}1s'.format(PLUSMINUS), 'raw_error', None, ERROR_WIDTH),
-                ('{}%'.format(PLUSMINUS), 'raw_error_percent', str, ERROR_WIDTH - 1)],
+                (u'{}1s'.format(PLUSMINUS), 'raw_error', None, ERROR_WIDTH),
+                (u'{}%'.format(PLUSMINUS), 'raw_error_percent', str, ERROR_WIDTH - 1)],
                [('Iso.', 'isotope', str, 6),
                 ('Det.', 'detector', str, 5),
                 ('Fit', 'baseline_fit', str, 4),
                 ('Baseline', 'baseline_value', None, VALUE_WIDTH),
-                ('{}1s'.format(PLUSMINUS), 'baseline_error', None, ERROR_WIDTH),
-                ('{}%'.format(PLUSMINUS), 'baseline_error_percent', str, ERROR_WIDTH - 1),
+                (u'{}1s'.format(PLUSMINUS), 'baseline_error', None, ERROR_WIDTH),
+                (u'{}%'.format(PLUSMINUS), 'baseline_error_percent', str, ERROR_WIDTH - 1),
                 ('Blank', 'blank_value', None, VALUE_WIDTH),
-                ('{}1s'.format(PLUSMINUS), 'blank_error', None, ERROR_WIDTH),
-                ('{}%'.format(PLUSMINUS), 'blank_error_percent', str, ERROR_WIDTH - 1)]]
+                (u'{}1s'.format(PLUSMINUS), 'blank_error', None, ERROR_WIDTH),
+                (u'{}%'.format(PLUSMINUS), 'blank_error_percent', str, ERROR_WIDTH - 1)]]
 
 
 class TraitsContainer(HasTraits):

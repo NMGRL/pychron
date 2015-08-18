@@ -224,7 +224,7 @@ class BaseRegressor(HasTraits):
             fmt = '{{:0.{}e}}' if abs(ei) < math.pow(10, -sig_figs) else '{{:0.{}f}}'
             ei = fmt.format(sig_figs).format(ei)
 
-            vfmt = '{{}}= {{}} {} {{}} {{}}'.format(PLUSMINUS)
+            vfmt = u'{{}}= {{}} {} {{}} {{}}'.format(PLUSMINUS)
             coeffs.append(vfmt.format(a, ci, ei, pp))
 
         s = u', '.join(coeffs)

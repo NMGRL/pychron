@@ -634,16 +634,16 @@ class BaseArArFigure(HasTraits, SelectionFigure):
         swe = floatfmt(we, sig_figs)
 
         if self.options.index_attr in ('uF', 'Ar40/Ar36'):
-            me = '{} {}{}'.format(sx, PLUSMINUS, swe)
+            me = u'{} {}{}'.format(sx, PLUSMINUS, swe)
         else:
             age_units = self._get_age_units()
             pe = ''
             if percent_error:
                 pe = '({})'.format(format_percent_error(x, we, include_percent_sign=True))
 
-            me = '{} {}{}{} {}'.format(sx, PLUSMINUS, swe, pe, age_units)
+            me = u'{} {}{}{} {}'.format(sx, PLUSMINUS, swe, pe, age_units)
 
-        return '{} {} {}'.format(me, mswd, n)
+        return u'{} {} {}'.format(me, mswd, n)
 
     def _get_age_units(self):
         a = 'Ma'
