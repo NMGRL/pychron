@@ -58,17 +58,17 @@ class MassSpecExtractor(Extractor):
     # def _dbconn_spec_default(self):
     # #        return DBConnectionSpec(database='massspecdata_minnabluff',
     # #                                username='root',
-    # #                                password='Argon',
+    # #                                password='',
     # #                                host='localhost'
     # #                                )
     #     return DBConnectionSpec(database='massspecdata',
     #                             username='root',
-    #                             password='DBArgon',
-    #                             host='129.138.12.160')
+    #                             password='',
+    #                             host=os.environ.get('HOST'))
     #
     #     return DBConnectionSpec(database='massspecdata_minnabluff',
     #                             username='root',
-    #                             password='Argon',
+    #                             password='',
     #                             host='localhost')
     def __init__(self, *args, **kw):
         super(MassSpecExtractor, self).__init__(*args, **kw)

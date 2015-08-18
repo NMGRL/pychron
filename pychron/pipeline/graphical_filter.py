@@ -16,7 +16,7 @@
 # ============= enthought library imports =======================
 from datetime import timedelta
 from traits.api import HasTraits, Instance, List, Int, Bool, on_trait_change, Button, Str, Any, Float
-from traitsui.api import View, Controller, UItem, HGroup, CheckListEditor, VGroup, Item, spring
+from traitsui.api import View, Controller, UItem, HGroup, VGroup, Item, spring
 from chaco.scales.api import CalendarScaleSystem
 from chaco.scales_tick_generator import ScalesTickGenerator
 from chaco.tools.broadcaster import BroadcasterTool
@@ -365,9 +365,9 @@ class GraphicalFilterView(Controller):
 #     db = man.db
 #     db.trait_set(name='pychrondata',
 #                  kind='mysql',
-#                  host='129.138.12.160',
+#                  host=os.environ.get('HOST'),
 #                  username='root',
-#                  password='DBArgon',
+#                  password='',
 #                  echo=False)
 #     db.connect()
 #

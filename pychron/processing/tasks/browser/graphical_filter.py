@@ -14,9 +14,9 @@
 # limitations under the License.
 # ===============================================================================
 from itertools import groupby
+import os
 
 from pychron.core.ui import set_qt
-
 
 set_qt()
 
@@ -320,9 +320,9 @@ if __name__ == '__main__':
     db = man.db
     db.trait_set(name='pychrondata',
                  kind='mysql',
-                 host='129.138.12.160',
+                 host=os.environ.get('HOST'),
                  username='root',
-                 password='DBArgon',
+                 password=os.environ.get('DB_PWD'),
                  echo=False)
     db.connect()
 

@@ -75,7 +75,8 @@ class IsoDBTransfer(Loggable):
         # for i in xrange(258, 259):
         # for i in (258, 259, 260, 261,):
         # for i in (262, 263, 264, 265):
-        for i in (266, 267, 268, 269):
+        # for i in (266, 267, 268, 269):
+        for i in (270, 271, 272, 273):
             irradname = 'NM-{}'.format(i)
             runs = self.bulk_import_irradiation(irradname, creator, dry=dry)
             # if runs:
@@ -678,8 +679,8 @@ if __name__ == '__main__':
     # def transfer_holder(self, name):
     #     self.root = os.path.join(os.path.expanduser('~'), 'Pychron_dev', 'data', '.dvc')
     #
-    #     conn = dict(host='129.138.12.160', username='root', password='DBArgon', kind='mysql')
-    #     # conn = dict(host='129.138.12.160', username='root', password='DBArgon', kind='mysql')
+    #     conn = dict(host=os.environ.get('HOST'), username='root', password='', kind='mysql')
+    #     # conn = dict(host=os.environ.get('HOST'), username='root', password='', kind='mysql')
     #     # dest = DVCDatabase('/Users/ross/Sandbox/dvc/meta/testdb.sqlite')
     #     # dest = DVCDatabase(name='pychronmeta', **conn)
     #     # self.dvc = DVC(bind=False)
@@ -705,7 +706,7 @@ if __name__ == '__main__':
     #     # self.root = os.path.join(os.path.expanduser('~'), 'Pychron_dev', 'data', '.dvc')
     #     self.meta_repo = MetaRepo(os.path.join(self.root, 'meta'))
     #
-    #     conn = dict(host='129.138.12.160', username='root', password='DBArgon', kind='mysql')
+    #     conn = dict(host=os.environ.get('HOST'), username='root', password='', kind='mysql')
     #     dest = DVCDatabase('/Users/ross/Sandbox/dvc/meta/testdb.sqlite')
     #     # dest = DVCDatabase(name='pychronmeta', **conn)
     #     dest.connect()
@@ -725,8 +726,8 @@ if __name__ == '__main__':
     #     self.meta_repo = MetaRepo()
     #     self.meta_repo.open_repo(os.path.join(self.root, 'meta'))
     #
-    #     conn = dict(host='129.138.12.160', username='root', password='DBArgon', kind='mysql')
-    #     # conn = dict(host='129.138.12.160', username='root', password='DBArgon', kind='mysql')
+    #     conn = dict(host=os.environ.get('HOST'), username='root', password='', kind='mysql')
+    #     # conn = dict(host=os.environ.get('HOST'), username='root', password='', kind='mysql')
     #     # dest = DVCDatabase('/Users/ross/Sandbox/dvc/meta/testdb.sqlite')
     #     # dest = DVCDatabase(name='pychronmeta', **conn)
     #     self.dvc = DVC(bind=False,

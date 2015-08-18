@@ -20,6 +20,7 @@ set_qt()
 # ============= enthought library reverts =======================
 from traits.api import Any, Str
 # ============= standard library imports ========================
+import os
 import struct
 from numpy import array
 # ============= local library imports  ==========================
@@ -61,9 +62,9 @@ class MassSpecReverter(Loggable):
         db = src.db
         db.trait_set(name='pychrondata',
                      kind='mysql',
-                     host='129.138.12.160',
+                     host=os.environ.get('HOST'),
                      username='root',
-                     password='DBArgon')
+                     password=os.environ.get('DB_PWD'))
         self.source = src
 
     def setup_destination(self):
@@ -71,7 +72,7 @@ class MassSpecReverter(Loggable):
         dest.trait_set(name='massspecdata_crow',
                        kind='mysql',
                        username='root',
-                       password='Argon')
+                       password=os.environ.get('DB_PWD'))
         self.destination = dest
 
     def _connect_to_source(self):
