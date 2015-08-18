@@ -26,7 +26,7 @@ from pychron.core.helpers.formatting import floatfmt
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.processing.tasks.browser.panes import AnalysisGroupAdapter
 from pychron.processing.tasks.recall.base_summary_editor import BaseSummaryEditor
-from pychron.pychron_constants import PLUSMINUS_SIGMA
+from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
 
 class AnalysisGroupAdapter(TabularAdapter):
@@ -34,7 +34,7 @@ class AnalysisGroupAdapter(TabularAdapter):
                ('Sample', 'sample'),
                ('N','nanalyses'),
                ('Wtd. Mean', 'weighted_age'),
-               (PLUSMINUS_SIGMA, 'weighted_age_error')]
+               (PLUSMINUS_ONE_SIGMA, 'weighted_age_error')]
 
     weighted_age_text = Property
     weighted_age_error_text = Property

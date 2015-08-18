@@ -22,8 +22,6 @@ from uncertainties import std_dev, nominal_value
 from pychron.core.helpers.formatting import floatfmt
 
 
-
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 class TableBlank(HasTraits):
@@ -46,9 +44,6 @@ def swidth(v=60):
 
 def ewidth(v=50):
     return Int(v)
-
-
-PM = u'\u00b1 1\u03c3'
 
 
 class BaseAdapter(TabularAdapter):

@@ -25,7 +25,7 @@ from numpy import where, delete
 # ============= local library imports  ==========================
 from tinv import tinv
 from pychron.core.stats.core import calculate_mswd, validate_mswd
-from pychron.pychron_constants import ALPHAS
+from pychron.pychron_constants import ALPHAS, PLUSMINUS
 
 import logging
 
@@ -224,7 +224,7 @@ class BaseRegressor(HasTraits):
             fmt = '{{:0.{}e}}' if abs(ei) < math.pow(10, -sig_figs) else '{{:0.{}f}}'
             ei = fmt.format(sig_figs).format(ei)
 
-            vfmt = u'{}= {} +/- {} {}'
+            vfmt = '{{}}= {{}} {} {{}} {{}}'.format(PLUSMINUS)
             coeffs.append(vfmt.format(a, ci, ei, pp))
 
         s = u', '.join(coeffs)

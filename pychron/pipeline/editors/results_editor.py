@@ -22,13 +22,13 @@ from traitsui.api import View, UItem, TabularEditor
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.core.helpers.formatting import floatfmt
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor, grouped_name
-from pychron.pychron_constants import PLUSMINUS_SIGMA
+from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
 
 class IsoEvolutionResultsAdapter(TabularAdapter):
     columns = [('RunID', 'record_id'), ('Isotope', 'isotope'), ('Fit', 'fit'),
                ('Intercept', 'intercept_value'),
-               (PLUSMINUS_SIGMA, 'intercept_error'),
+               (PLUSMINUS_ONE_SIGMA, 'intercept_error'),
                ('Regression', 'regression_str')]
     font = '10'
     record_id_width = Int(80)

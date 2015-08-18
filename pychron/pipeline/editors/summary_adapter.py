@@ -22,8 +22,13 @@ from pychron.core.helpers.formatting import floatfmt
 
 
 
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
+
+
 class SummaryTabularAdapter(TabularAdapter):
     columns = [
                ('Sample', 'sample'),
@@ -34,9 +39,9 @@ class SummaryTabularAdapter(TabularAdapter):
                ('N', 'nanalyses'),
                ('MSWD', 'mswd'),
                ('K/Ca', 'kca'),
-               (u'\u00b1 1\u03c3', 'kca_error'),
+        (PLUSMINUS_ONE_SIGMA, 'kca_error'),
                ('Age', 'age'),
-               (u'\u00b1 1\u03c3', 'age_error'),
+        (PLUSMINUS_ONE_SIGMA, 'age_error'),
                ('', 'blank')
 
                ]

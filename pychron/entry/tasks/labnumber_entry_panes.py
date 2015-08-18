@@ -30,7 +30,7 @@ from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.pane_helpers import spacer
 from pychron.entry.irradiated_position import IrradiatedPositionAdapter
 from pychron.envisage.browser.adapters import ProjectAdapter, SampleAdapter
-from pychron.pychron_constants import PLUSMINUS_SIGMA
+from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
 
 class LevelInfoPane(TraitsDockPane):
@@ -124,7 +124,7 @@ class IrradiationEditorPane(TraitsDockPane):
                       stretch_last_section=False)),
             show_border=True, label='Sample')
 
-        jgrp = HGroup(UItem('j'), Label(PLUSMINUS_SIGMA), UItem('j_err'),
+        jgrp = HGroup(UItem('j'), Label(PLUSMINUS_ONE_SIGMA), UItem('j_err'),
                       icon_button_editor('estimate_j_button', 'cog',
                                          tooltip='Apply a nominal J to the selected positions'),
                       show_border=True, label='J')

@@ -22,7 +22,7 @@ from traitsui.tabular_adapter import TabularAdapter
 # ============= local library imports  ==========================
 from uncertainties import ufloat
 from pychron.experiment.utilities.detector_ic import make_items, get_columns
-from pychron.pychron_constants import PLUSMINUS_SIGMA
+from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
 
 class DetectorICTabularAdapter(TabularAdapter):
@@ -47,7 +47,7 @@ class DetectorICView(HasTraits):
 
         self.tabular_adapter.columns = [('', 'name'),
                                         ('Intensity', 'intensity'),
-                                        (PLUSMINUS_SIGMA, 'intensity_err')] + detcols
+                                        (PLUSMINUS_ONE_SIGMA, 'intensity_err')] + detcols
 
         # self.items = items
         self.items = make_items(an.isotopes)

@@ -634,16 +634,16 @@ class BaseArArFigure(HasTraits, SelectionFigure):
         swe = floatfmt(we, sig_figs)
 
         if self.options.index_attr in ('uF', 'Ar40/Ar36'):
-            me = u'{} {}{}'.format(sx, PLUSMINUS, swe)
+            me = '{} {}{}'.format(sx, PLUSMINUS, swe)
         else:
             age_units = self._get_age_units()
             pe = ''
             if percent_error:
                 pe = '({})'.format(format_percent_error(x, we, include_percent_sign=True))
 
-            me = u'{} {}{}{} {}'.format(sx, PLUSMINUS, swe, pe, age_units)
+            me = '{} {}{}{} {}'.format(sx, PLUSMINUS, swe, pe, age_units)
 
-        return u'{} {} {}'.format(me, mswd, n)
+        return '{} {} {}'.format(me, mswd, n)
 
     def _get_age_units(self):
         a = 'Ma'
@@ -658,7 +658,7 @@ class BaseArArFigure(HasTraits, SelectionFigure):
                                  trait_change_notify=False)
 
     def _handle_label_move(self, obj, name, old, new):
-        axps = [a for a in self.options.aux_plots if a.use][::-1]
+        axps = [a for a in self.options.aux_plots if a.plot_enabled][::-1]
         for i, p in enumerate(self.graph.plots):
             if next((pp for pp in p.plots.itervalues()
                      if obj.component == pp[0]), None):

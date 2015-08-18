@@ -367,7 +367,7 @@ class ReferencesSeries(BaseSeries):
 
             def af(i, x, y, analysis):
                 v, e = self._get_interpolated_value(po, analysis)
-                return (u'Interpolated: {}{}{}'.format(floatfmt(v), PLUSMINUS, floatfmt(e)),
+                return ('Interpolated: {}{}{}'.format(floatfmt(v), PLUSMINUS, floatfmt(e)),
                         'Run Date: {}'.format(analysis.rundate.strftime('%m-%d-%Y %H:%M')),
                         'Rel. Time: {:0.4f}'.format(x))
 

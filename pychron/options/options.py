@@ -90,14 +90,23 @@ class AppearanceSubOptions(SubOptions):
                     label='Background')
         return grp
 
+    def _get_grid_group(self):
+        grid_grp = VGroup(Item('use_xgrid',
+                               label='XGrid Visible'),
+                          Item('use_ygrid', label='YGrid Visible'),
+                          show_border=True,
+                          label='Grid')
+        return grid_grp
+
     def traits_view(self):
         fgrp = VGroup(UItem('fontname'),
-                      self._get_xfont_group(),
-                      self._get_yfont_group(),
+                      HGroup(self._get_xfont_group(),
+                             self._get_yfont_group()),
                       label='Fonts', show_border=True)
 
         v = View(VGroup(self._get_bg_group(),
                         self._get_padding_group(),
+                        self._get_grid_group(),
                         fgrp))
         return v
 

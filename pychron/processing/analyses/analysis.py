@@ -369,7 +369,7 @@ class Analysis(ArArAge):
                 v = v.get_intensity()
             a, e = v.nominal_value, v.std_dev
         pe = format_percent_error(a, e)
-        return u'{} {}{} ({}%)'.format(floatfmt(a), PLUSMINUS, floatfmt(e), pe)
+        return '{} {}{} ({}%)'.format(floatfmt(a), PLUSMINUS, floatfmt(e), pe)
 
     @property
     def age_string(self):
@@ -377,7 +377,7 @@ class Analysis(ArArAge):
         e = self.age_err
         pe = format_percent_error(a, e)
 
-        return u'{} +/-{} ({}%)'.format(floatfmt(a), floatfmt(e), pe)
+        return '{} {}{} ({}%)'.format(floatfmt(a), PLUSMINUS, floatfmt(e), pe)
 
     @property
     def status_text(self):

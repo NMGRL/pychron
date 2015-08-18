@@ -114,7 +114,7 @@ class AnalysisPointInspector(PointInspector):
                             if self.value_format:
                                 y = self.value_format(y)
 
-                            y = u'{} {}{} {}'.format(y, PLUSMINUS, ye, pe)
+                            y = '{} {}{} {}'.format(y, PLUSMINUS, ye, pe)
                         except IndexError:
                             pass
 
@@ -125,7 +125,7 @@ class AnalysisPointInspector(PointInspector):
                     tag = analysis.tag
                     info = ['Analysis= {}'.format(rid),
                             'Tag= {}'.format(tag),
-                            u'{}= {}'.format(name, y)]
+                            '{}= {}'.format(name, y)]
 
                     # if index_tag:
                     # if index_attr:

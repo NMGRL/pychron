@@ -111,7 +111,7 @@ class SpectrumTool(InfoInspector, BasePlateauOverlay):
         return ['RunID={}'.format(an.record_id),
                 'Tag={}'.format(an.tag),
                 'Status={}'.format(an.status_text),
-                u'{}={} {}{} (1\u03c3)'.format(comp.container.y_axis.title, floatfmt(v), PLUSMINUS,
+                '{}={} {}{} (1\u03c3)'.format(comp.container.y_axis.title, floatfmt(v), PLUSMINUS,
                                                floatfmt(e)),
                 'Cumulative. Ar39={}-{}'.format(floatfmt(low_c),
                                                 floatfmt(self.cumulative39s[idx]))]

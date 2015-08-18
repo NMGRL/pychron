@@ -17,7 +17,8 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.pipeline.editors.base_adapter import BaseAdapter, PM, BaseGroupAdapter
+from pychron.pipeline.editors.base_adapter import BaseAdapter, BaseGroupAdapter
+from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
 
 class FusionTableAdapter(BaseAdapter):
@@ -27,28 +28,27 @@ class FusionTableAdapter(BaseAdapter):
         ('Power', 'extract_value'),
         ('Mol. Ar40', 'moles_Ar40'),
         ('Ar40', 'ar40'),
-        (PM, 'ar40_err'),
+        (PLUSMINUS_ONE_SIGMA, 'ar40_err'),
 
         ('Ar39', 'ar39'),
-        (PM, 'ar39_err'),
+        (PLUSMINUS_ONE_SIGMA, 'ar39_err'),
 
         ('Ar38', 'ar38'),
-        (PM, 'ar38_err'),
+        (PLUSMINUS_ONE_SIGMA, 'ar38_err'),
 
         ('Ar37', 'ar37'),
-        (PM, 'ar37_err'),
+        (PLUSMINUS_ONE_SIGMA, 'ar37_err'),
 
         ('Ar36', 'ar36'),
-        (PM, 'ar36_err'),
+        (PLUSMINUS_ONE_SIGMA, 'ar36_err'),
         ('%40Ar*', 'rad40_percent'),
 
         ('40Ar*/39ArK', 'F'),
         ('Age', 'age'),
-        (PM, 'age_error'),
+        (PLUSMINUS_ONE_SIGMA, 'age_error'),
         ('K/Ca', 'kca'),
-        (PM, 'kca_error'),
-        ('', 'blank_column')
-    ]
+        (PLUSMINUS_ONE_SIGMA, 'kca_error'),
+        ('', 'blank_column')]
 
 
 class FusionGroupTableAdapter(BaseGroupAdapter):

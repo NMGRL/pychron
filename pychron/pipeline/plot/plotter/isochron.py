@@ -228,7 +228,7 @@ class InverseIsochron(Isochron):
             except ZeroDivisionError:
                 pe = '(Inf%)'
 
-            return u'39Ar/40Ar = {} {}{} {}'.format(floatfmt(v, n=6), PLUSMINUS, floatfmt(e, n=7), pe)
+            return '39Ar/40Ar = {} {}{} {}'.format(floatfmt(v, n=6), PLUSMINUS, floatfmt(e, n=7), pe)
 
         if self.group_id == 0:
             if self.options.display_inset:
@@ -308,7 +308,7 @@ class InverseIsochron(Isochron):
         except ZeroDivisionError:
             v, e, p, mse = 'NaN', 'NaN', 'NaN', 'NaN'
 
-        ratio_line = u'Ar40/Ar36= {} {}{} ({}%) mse= {}'.format(v, PLUSMINUS, e, p, mse)
+        ratio_line = 'Ar40/Ar36= {} {}{} ({}%) mse= {}'.format(v, PLUSMINUS, e, p, mse)
 
         u = self._ref_age_units
 
@@ -326,7 +326,7 @@ class InverseIsochron(Isochron):
             mswd = '*{}'.format(mswd)
             # n = len([ai for ai in self.analyses if ai.temp_status == 0])
         # mswd = 'NaN'
-        age_line = u'Age= {} {}{} ({}%) {}. mse= {}'.format(floatfmt(v, n=3),
+        age_line = 'Age= {} {}{} ({}%) {}. mse= {}'.format(floatfmt(v, n=3),
                                                             PLUSMINUS,
                                                             floatfmt(e, n=4, s=3), p, u,
                                                             floatfmt(mse_age, s=3))

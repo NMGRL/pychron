@@ -161,13 +161,13 @@ class IdeogramAppearance(AppearanceSubOptions):
                     Item('label_fontsize', show_label=False))
         fgrp = VGroup(UItem('fontname'),
                       mi, ee, ll,
-                      self._get_xfont_group(),
-                      self._get_yfont_group(),
+                      HGroup(self._get_xfont_group(),
+                             self._get_yfont_group()),
                       label='Fonts', show_border=True)
 
         v = View(VGroup(self._get_bg_group(),
                         self._get_padding_group(),
-
+                        self._get_grid_group(),
                         fgrp))
         return v
 

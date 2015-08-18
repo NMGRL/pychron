@@ -39,6 +39,7 @@ from pychron.pipeline.plot.overlays.mean_indicator_overlay import MeanIndicatorO
 from pychron.core.stats.peak_detection import find_peaks
 # from pychron.pipeline.plot import OverlayMoveTool
 from pychron.pipeline.plot.point_move_tool import OverlayMoveTool
+from pychron.pychron_constants import PLUSMINUS, SIGMA
 
 N = 500
 
@@ -327,7 +328,7 @@ class Ideogram(BaseArArFigure):
         else:
             name = ia
 
-        f = lambda i, x, y, ai: u'{}= {}'.format(name, ai.value_string(ia))
+        f = lambda i, x, y, ai: '{}= {}'.format(name, ai.value_string(ia))
         return f
 
     def _plot_relative_probability(self, po, plot, pid):
@@ -453,9 +454,9 @@ class Ideogram(BaseArArFigure):
                     m = self.options.mean_calculation_kind
                     s = self.options.nsigma
                     es = self.options.error_bar_nsigma
-                    ts.append('Mean: {} +/-{}s Data: +/-{}s'.format(m, s, es))
+                    ts.append('Mean: {} {}{}{} Data: {}{}{}'.format(m, PLUSMINUS, s, SIGMA, PLUSMINUS, es, SIGMA))
                 if self.options.show_error_type_info:
-                    ts.append('Error Type:{}'.format(self.options.error_calc_method))
+                    ts.append('Error Type: {}'.format(self.options.error_calc_method))
 
                 if ts:
                     # font = self.options.get_formatting_value('label_font', 'error_info_font')

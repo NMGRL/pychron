@@ -33,7 +33,7 @@ from pychron.envisage.view_util import open_view
 from pychron.git_archive.repo_manager import isoformat_date
 from pychron.git_archive.utils import get_commits, get_diff
 from pychron.paths import paths
-from pychron.pychron_constants import LIGHT_RED, PLUSMINUS_SIGMA, LIGHT_YELLOW
+from pychron.pychron_constants import LIGHT_RED, PLUSMINUS_ONE_SIGMA, LIGHT_YELLOW
 
 TAGS = 'TAG', 'BLANK', 'ISOEVO', 'ICFactor'
 TAG_COLORS = {'TAG': '#f5f7c8', 'BLANKS': '#cac8f7',
@@ -147,7 +147,7 @@ class BlanksDiffView(DiffView):
         # print bj
         blanks = [DiffValue(t, aj[name][k], bj[name][k])
                   for name in aj.keys()
-                  for t, k in ((name, 'value'), (PLUSMINUS_SIGMA, 'error'), ('Fit', 'fit'))]
+                  for t, k in ((name, 'value'), (PLUSMINUS_ONE_SIGMA, 'error'), ('Fit', 'fit'))]
 
         self.ovalues = [DiffValue('ID', lh, rh, matchable=False),
                         DiffValue('Date', ld, rd, matchable=False)] + blanks
@@ -208,17 +208,17 @@ class ImportDiffView(DiffView):
     def set_intercepts(self, aj, bj):
         self.oisoevos = [DiffValue(t, aj[name][k], bj[name][k])
                          for name in aj.keys()
-                         for t, k in ((name, 'value'), (PLUSMINUS_SIGMA, 'error'), ('Fit', 'fit'))]
+                         for t, k in ((name, 'value'), (PLUSMINUS_ONE_SIGMA, 'error'), ('Fit', 'fit'))]
 
     def set_blanks(self, aj, bj):
         self.oblanks = [DiffValue(t, aj[name][k], bj[name][k])
                         for name in aj.keys()
-                        for t, k in ((name, 'value'), (PLUSMINUS_SIGMA, 'error'), ('Fit', 'fit'))]
+                        for t, k in ((name, 'value'), (PLUSMINUS_ONE_SIGMA, 'error'), ('Fit', 'fit'))]
 
     def set_icfactors(self, aj, bj):
         self.oicfactors = [DiffValue(t, aj[name][k], bj[name][k])
                            for name in aj.keys()
-                           for t, k in ((name, 'value'), (PLUSMINUS_SIGMA, 'error'), ('Fit', 'fit'))]
+                           for t, k in ((name, 'value'), (PLUSMINUS_ONE_SIGMA, 'error'), ('Fit', 'fit'))]
 
     def set_tags(self, aj, bj):
         self.otags = [DiffValue(name, aj[name], bj[name]) for name in ('name',)]

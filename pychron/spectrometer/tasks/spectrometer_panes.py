@@ -25,6 +25,7 @@ from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn, TableColumn
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.pane_helpers import spacer
+from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
 
 class ColorColumn(TableColumn):
@@ -68,7 +69,7 @@ class IntensitiesPane(TraitsDockPane):
         cols = [ColorColumn(cell_color_name='color', label='Color'),
                 ObjectColumn(name='name', width=175),
                 ObjectColumn(name='intensity', width=100),
-                ObjectColumn(name='std', label=u'\u00b11\u03c3', width=100)]
+                ObjectColumn(name='std', label=PLUSMINUS_ONE_SIGMA, width=100)]
         g = UItem('detectors', editor=TableEditor(columns=cols,
                                                   sortable=False,
                                                   editable=False))

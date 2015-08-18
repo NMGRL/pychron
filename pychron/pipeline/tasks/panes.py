@@ -42,6 +42,7 @@ from pychron.pipeline.nodes.grouping import GroupingNode
 from pychron.pipeline.nodes.persist import PDFNode, DVCPersistNode
 from pychron.pipeline.tasks.tree_node import SeriesTreeNode, PDFTreeNode, GroupingTreeNode, SpectrumTreeNode, \
     IdeogramTreeNode, FilterTreeNode, DataTreeNode, DBSaveTreeNode, FindTreeNode, FitTreeNode, PipelineTreeNode
+from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
 
 def node_adder(func):
@@ -283,7 +284,7 @@ class UnknownsAdapter(TabularAdapter):
                # ('Class','klass'),
                ('Sample', 'sample'),
                ('Age', 'age'),
-               (u'\u00b11\u03c3', 'error'),
+               (PLUSMINUS_ONE_SIGMA, 'error'),
                ('Tag', 'tag'),
                ('GroupID', 'group_id'),
                ('GID', 'graph_id')]

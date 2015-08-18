@@ -21,6 +21,7 @@ from numpy import where, vstack, zeros_like
 # ============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
 from pychron.graph.tools.info_inspector import InfoInspector, InfoOverlay
+from pychron.pychron_constants import PLUSMINUS
 
 
 class PointInspector(InfoInspector):
@@ -65,7 +66,7 @@ class PointInspector(InfoInspector):
                         pe = self.percent_error(y, ye)
 
                         ye = floatfmt(ye, n=6, s=3)
-                        sy = u'{} {}{} ({})'.format(y, '+/-', ye, pe)
+                        sy = '{} {}{} ({})'.format(y, PLUSMINUS, ye, pe)
                     else:
                         sy = floatfmt(y, n=6, s=3)
 
@@ -74,10 +75,10 @@ class PointInspector(InfoInspector):
                     else:
                         x = '{:0.5f}'.format(x)
 
-                    lines.extend([u'pt={:03d}, x= {}, y= {}'.format(i+1, x, sy)])
+                    lines.extend(['pt={:03d}, x= {}, y= {}'.format(i + 1, x, sy)])
                     if hasattr(comp, 'display_index'):
                         x = comp.display_index.get_data()[i]
-                        lines.append(u'{}'.format(x))
+                        lines.append('{}'.format(x))
 
                     if self.additional_info is not None:
                         ad = self.additional_info(i)

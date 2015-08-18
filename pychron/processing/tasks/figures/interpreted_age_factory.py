@@ -23,7 +23,7 @@ from traitsui.api import View, Item, TableEditor, EnumEditor
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
 from pychron.loggable import Loggable
-from pychron.pychron_constants import ERROR_TYPES, PLUSMINUS_SIGMA
+from pychron.pychron_constants import ERROR_TYPES, PLUSMINUS_ONE_SIGMA
 
 
 class InterpretedAgeFactory(Loggable):
@@ -41,14 +41,14 @@ class InterpretedAgeFactory(Loggable):
                              format='%0.3f', editable=False,
                              label='Age'),
                 ObjectColumn(name='preferred_age_error', format='%0.4f', editable=False,
-                             label=PLUSMINUS_SIGMA),
+                             label=PLUSMINUS_ONE_SIGMA),
                 ObjectColumn(name='preferred_kca_kind',
                              label='K/Ca Type',
                              editor=EnumEditor(values=['Weighted Mean', 'Arithmetic Mean'])),
                 ObjectColumn(name='preferred_kca_value', format='%0.3f', editable=False,
                              label='K/Ca'),
                 ObjectColumn(name='preferred_kca_error', format='%0.4f', editable=False,
-                             label=PLUSMINUS_SIGMA),
+                             label=PLUSMINUS_ONE_SIGMA),
 
                 ObjectColumn(name='nanalyses',
                              label='N',

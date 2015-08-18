@@ -37,6 +37,7 @@ from pychron.graph.tools.analysis_inspector import AnalysisPointInspector
 from pychron.pipeline.editors.irradiation_tray_overlay import IrradiationTrayOverlay
 from pychron.pipeline.plot.plotter.arar_figure import SelectionFigure
 from pychron.processing.flux.utilities import mean_j
+from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
 
 def make_grid(r, n):
@@ -571,14 +572,14 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
             column(name='n', label='N'),
             column(name='saved_j', label='Saved J',
                    format_func=lambda x: floatfmt(x, n=6, s=4)),
-            column(name='saved_jerr', label=u'\u00b1\u03c3',
+            column(name='saved_jerr', label=PLUSMINUS_ONE_SIGMA,
                    format_func=lambda x: floatfmt(x, n=6, s=4)),
             column(name='percent_saved_error',
                    label='%',
                    format_func=lambda x: floatfmt(x, n=2)),
             column(name='mean_j', label='Mean J',
                    format_func=lambda x: floatfmt(x, n=6, s=4) if x else ''),
-            column(name='mean_jerr', label=u'\u00b1\u03c3',
+            column(name='mean_jerr', label=PLUSMINUS_ONE_SIGMA,
                    format_func=lambda x: floatfmt(x, n=6, s=4) if x else ''),
             column(name='percent_mean_error',
                    label='%',
@@ -588,7 +589,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
                    width=75),
             column(name='jerr',
                    format_func=lambda x: floatfmt(x, n=10, s=4),
-                   label=u'\u00b1\u03c3',
+                   label=PLUSMINUS_ONE_SIGMA,
                    width=75),
             column(name='percent_pred_error',
                    label='%',
@@ -604,7 +605,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
                     column(name='sample', label='Sample', width=115),
                     column(name='saved_j', label='Saved J',
                            format_func=lambda x: floatfmt(x, n=7, s=5)),
-                    column(name='saved_jerr', label=u'\u00b1\u03c3',
+                    column(name='saved_jerr', label=PLUSMINUS_ONE_SIGMA,
                            format_func=lambda x: floatfmt(x, n=7, s=5)),
                     column(name='percent_saved_error',
                            label='%',
@@ -614,7 +615,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
                            width=75),
                     column(name='jerr',
                            format_func=lambda x: floatfmt(x, n=10, s=5),
-                           label=u'\u00b1\u03c3',
+                           label=PLUSMINUS_ONE_SIGMA,
                            width=75),
                     column(name='percent_pred_error',
                            label='%',

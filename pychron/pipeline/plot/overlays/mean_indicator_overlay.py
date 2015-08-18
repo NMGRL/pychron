@@ -168,7 +168,6 @@ class MeanIndicatorOverlay(AbstractOverlay, Movable):
     def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
         # if self.label:
         #     print self.label.font
-
         with gc:
             oc = other_component
             gc.clip_to_rect(oc.x, oc.y, oc.x2, oc.y2)
