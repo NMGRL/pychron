@@ -1004,7 +1004,7 @@ def build_sys_path():
         need to launch from terminal
     """
 
-    sys.path.insert(0, os.getcwd())
+    sys.path.insert(0, os.path.dirname(os.getcwd()))
 
 
 def add_eggs(root):

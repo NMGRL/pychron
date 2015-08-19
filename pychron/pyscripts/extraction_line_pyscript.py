@@ -22,6 +22,7 @@ import time
 import inspect
 import re
 # ============= local library imports  ==========================
+from pychron.core.ramper import Ramper
 from pychron.external_pipette.protocol import IPipetteManager
 from pychron.hardware.core.exceptions import TimeoutError
 from pychron.hardware.core.i_core_device import ICoreDevice
@@ -50,40 +51,6 @@ class RecordingCTX(object):
 
     def __exit__(self, *args, **kw):
         self._script.stop_video_recording()
-
-
-class Ramper(object):
-    def ramp(self, func, start, end, duration, rate=0, period=1):
-        """
-            rate = units/s
-            duration= s
-
-            use rate if specified
-        """
-        st = time.time()
-        if end is not None:
-            if rate:
-                duration = abs(start - end) / float(rate)
-
-            if duration:
-                self._ramp(func, start, end, duration, period)
-
-        return time.time() - st
-
-    def _ramp(self, func, start, end, duration, period):
-        st = time.time()
-        i = 1
-
-        step = period * (end - start) / float(duration)
-
-        while (time.time() - st) < duration:
-            ct = time.time()
-            v = start + i * step
-            if func(i, v):
-                time.sleep(max(0, period - (time.time() - ct)))
-                i += 1
-            else:
-                break
 
 
 class ExtractionPyScript(ValvePyScript):

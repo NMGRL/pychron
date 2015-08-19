@@ -425,7 +425,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         self.datahub.add_experiment(exp)
 
-
         # reset conditionals result file
         reset_conditional_results()
 
@@ -701,6 +700,15 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self._report_execution_state(run)
         run.teardown()
 
+    def _cancel_run(self):
+        self.set_extract_state(False)
+        self.wait_group.stop()
+        self._canceled = True
+        for arun in (self.measuring_run, self.extracting_run):
+            if arun:
+                arun.cancel_run(state='canceled')
+        self._err_message = 'User Canceled'
+
     def _cancel(self, style='queue', cancel_run=False, msg=None, confirm=True, err=None):
         # arun = self.current_run
         aruns = (self.measuring_run, self.extracting_run)
@@ -742,7 +750,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                                 state = 'canceled'
                         else:
                             state = 'canceled'
-                            arun.aliquot = 0
+                            # arun.aliquot = 0
 
                         arun.cancel_run(state=state)
 
@@ -886,7 +894,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self._err_message = 'Pre Extraction Check Failed'
             return
 
-        self.extracting_run = ai
+        # self.extracting_run = ai
         ret = True
         if ai.start_extraction():
             self.extracting = True
@@ -1777,8 +1785,9 @@ Use Last "blank_{}"= {}
                                (self.extracting_run, 'extracting')):
                 if crun:
                     self.debug('cancel {} run {}'.format(kind, crun.runid))
-                    t = Thread(target=self.cancel, kwargs={'style': 'run'})
+                    t = Thread(target=self._cancel_run)
                     t.start()
+                    break
 
     def _truncate_button_fired(self):
         if self.measuring_run:

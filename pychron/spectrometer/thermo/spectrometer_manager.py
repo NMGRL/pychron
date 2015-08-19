@@ -133,6 +133,7 @@ class ArgusSpectrometerManager(BaseSpectrometerManager):
         return True
 
     def finish_loading(self):
+        self.debug('                  Finish loading')
         # integration_time = 1.048576
 
         # set device microcontrollers
