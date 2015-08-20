@@ -23,20 +23,10 @@ from pychron.canvas.canvas2D.scene.layer import Layer
 from canvas_parser import CanvasParser
 
 
-# class PrimitiveNode(TreeNode):
-#    add = List([Primitive])
-#    move = List([Primitive])
-
-#    def can_insert(self, obj):
-#        print obj, 'asdf'
-
-
 class Scene(HasTraits):
     layers = List
     overlays = List
     parser = None
-    #     parser = Instance(CanvasParser)
-    #     scene_browser = Instance(SceneBrowser)
     selected = Any
     layout_needed = Event
     font = None
@@ -62,8 +52,8 @@ class Scene(HasTraits):
         self.layers = [Layer(name='0'), Layer(name='1')]
 
     def load(self, pathname):
-        '''
-        '''
+        """
+        """
         pass
 
     def render_overlays(self, gc, canvas):
@@ -83,16 +73,6 @@ class Scene(HasTraits):
         self._render(gc, canvas, (ci for li in self.layers if li.visible
                                   for ci in li.components
                                   if ci.scene_visible and ci.visible), bounds)
-
-        # for li in self.layers:
-        # if li.visible:
-
-        # for ci in li.components:
-        # if ci.is_in_region(x1, x2, y1, y2):
-        #         if self.font:
-        #             ci.font = self.font
-        #         ci.set_canvas(canvas)
-        #         ci.render(gc)
 
     def _render(self, gc, canvas, components, bounds):
         for ci in components:
@@ -209,11 +189,15 @@ class Scene(HasTraits):
         for li in layers:
             li.pop_item(v, klass=klass)
 
-            #        layer[key] = v
-            # ===============================================================================
-            # handlers
-            # ===============================================================================
+    def get_xrange(self):
+        return self._xrange
 
+    def get_yrange(self):
+        return self._yrange
+
+    # ===============================================================================
+    # handlers
+    # ===============================================================================
     def _selected_changed(self, name, old, new):
         if issubclass(type(new), Primitive):
             if issubclass(type(old), Primitive):
@@ -247,41 +231,4 @@ class Scene(HasTraits):
 
         return xv, yv
 
-    def get_xrange(self):
-        return self._xrange
-
-    def get_yrange(self):
-        return self._yrange
-
-#     def traits_view(self):
-#         nodes = [TreeNode(node_for=[SceneBrowser],
-#                           children='layers',
-#                           label='=layers',
-#                           auto_open=True
-#                           ),
-#                  TreeNode(node_for=[Layer],
-#                           label='label',
-#                           children='components',
-#                           auto_open=True
-#                           ),
-#                  PrimitiveNode(node_for=[Primitive],
-#                                children='primitives',
-#                                label='label',
-# #                               auto_open=True
-#                           ),
-#                  ]
-#
-#         editor = TreeEditor(nodes=nodes,
-#                             selected='selected',
-#                             orientation='vertical')
-#         v = View(Item('scene_browser',
-#                       show_label=False,
-#                       editor=editor))
-#         return v
-
-
-#     def _scene_browser_default(self):
-#         sb = SceneBrowser(layers=self.layers)
-# #        self.on_trait_change(sb._update_layers, 'layers, layers[]')
-#         return sb
 # ============= EOF =============================================
