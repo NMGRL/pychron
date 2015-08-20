@@ -114,7 +114,7 @@ class ServiceProtocol(Protocol):
         resp = str(resp)
         self.debug('Response {data!r}', data=resp)
         self.transport.write(resp)
-        self.transport.loseConnection()
+        # self.transport.loseConnection()
 
     def _get_service(self, data):
         m = regex.match(data)

@@ -199,7 +199,7 @@ class ExtractionLineScene(Scene):
         ekey = end.text.strip()
         try:
             orient = conn.get('orientation')
-        except KeyError:
+        except AttributeError:
             orient = None
 
         x, y = 0, 0
@@ -208,7 +208,7 @@ class ExtractionLineScene(Scene):
             x, y = sanchor.x, sanchor.y
             try:
                 ox, oy = map(float, start.get('offset').split(','))
-            except KeyError:
+            except AttributeError:
                 ox = 1
                 oy = sanchor.height / 2.0
 
@@ -222,7 +222,7 @@ class ExtractionLineScene(Scene):
 
             try:
                 ox, oy = map(float, end.get('offset').split(','))
-            except KeyError:
+            except AttributeError:
                 ox = 1
                 oy = eanchor.height / 2.0
 

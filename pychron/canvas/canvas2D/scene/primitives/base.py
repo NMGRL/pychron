@@ -97,8 +97,6 @@ class Primitive(HasTraits):
 
                 self._render_(gc)
 
-        del self.canvas
-
     def set_stroke_color(self, gc):
         if self.state:
             c = self._convert_color(self.active_color)
