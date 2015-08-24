@@ -25,6 +25,25 @@ from pychron.lasers.laser_managers.base_lase_manager import BaseLaserManager
 
 
 class ChromiumLaserManager(BaseLaserManager, EthernetDeviceMixin):
+    def end_extract(self, *args, **kw):
+        self.info('ending extraction. set laser power to 0')
+        self.set_laser_power(0)
+
+        if self._patterning:
+            self.stop_pattern()
+
+    def extract(self, value, units=None, tol=0.1):
+        if units is None:
+            units = 'watts'
+
+        self.info('set laser output to {} {}'.format(value, units))
+        value = self._watts_to_percent(value)
+        resp = self.ask('laser.output {}'.format(value))
+        try:
+            return abs(float(resp) - value) < tol
+        except BaseException:
+            pass
+
     def enable_laser(self, **kw):
         self.ask('laser.enable 1')
 
@@ -39,6 +58,7 @@ class ChromiumLaserManager(BaseLaserManager, EthernetDeviceMixin):
 
         return x, y, z
 
+    # private
     def _move_to_position(self, pos, *args, **kw):
         if isinstance(pos, tuple):
             x, y = pos
