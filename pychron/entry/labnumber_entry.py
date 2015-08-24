@@ -558,7 +558,7 @@ THIS CHANGE CANNOT BE UNDONE')
                 return
 
             self.level_note = level.note or ''
-            # self.level_production_name = level.production.name
+            self.level_production_name = level.production.name if level.production else ''
 
             holes = self.dvc.meta_repo.get_irradiation_holder_holes(level.holder)
             self._load_holder_positions(holes)
@@ -687,27 +687,16 @@ THIS CHANGE CANNOT BE UNDONE')
 
     @cached_property
     def _get_trays(self):
-        return self.dvc.meta_repo.get_irradiation_holder_names()
-        # db = self.dvc.db
-        # with db.session_ctx():
-        # hs = db.get_irradiation_holders()
-        #     ts = [h.name for h in hs]
-
-        #p = os.path.join(self._get_map_path(), 'images')
-        #if not os.path.isdir(p):
-        # self.warning_dialog('{} does not exist'.format(p))
-        # return Undefined
-        #
-        # ts = [os.path.splitext(pi)[0] for pi in os.listdir(p) if not pi.startswith('.')
-        #      #                    if not (pi.endswith('.png')
-        #      #                            or pi.endswith('.pct')
-        #      #                            or pi.startswith('.'))
-        #]
-        #if ts:
-        #     self.tray = ts[-1]
-        #
-        # return ts
-
+        db = self.db
+        ts = []
+        if db.connected:
+            with db.session_ctx():
+                hs = db.get_irradiation_holders()
+                ts = [h.name for h in hs]
+            if ts:
+                self.tray = ts[-1]
+        return ts
+    
     # def _get_map_path(self):
     # return os.path.join(paths.setup_dir, 'irradiation_tray_maps')
 
