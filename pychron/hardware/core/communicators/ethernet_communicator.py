@@ -118,6 +118,7 @@ class TCPHandler(Handler):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         if globalv.communication_simulation:
             timeout = 0.01
+
         self.sock.settimeout(timeout)
         self.sock.connect(addr)
 
@@ -184,7 +185,7 @@ class EthernetCommunicator(Communicator):
     handler = None
     kind = 'UDP'
     test_cmd = None
-    use_end = True
+    use_end = False
     verbose = False
     error = None
     error_mode = False
@@ -257,7 +258,7 @@ class EthernetCommunicator(Communicator):
             self.handler = h
             return h
         except socket.error, e:
-            self.debug(str(e))
+            self.debug('Get Handler {}'.format(str(e)))
             self.error = True
             self.handler = None
 
