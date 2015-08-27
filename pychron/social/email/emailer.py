@@ -83,21 +83,24 @@ class Emailer(Loggable):
 
         return self._server
 
-    def send(self, addr, sub, msg):
+    def send(self, addrs, sub, msg):
         server = self.connect()
         if server:
-            msg = self._message_factory(addr, sub, msg)
+            if isinstance(addrs, (str, unicode)):
+                addrs = [addrs]
+
+            msg = self._message_factory(addrs, sub, msg)
             try:
-                server.sendmail(self.sender, [addr], msg.as_string())
+                server.sendmail(self.sender, addrs, msg.as_string())
                 server.close()
                 return True
             except BaseException:
                 pass
 
-    def _message_factory(self, addr, sub, txt):
+    def _message_factory(self, addrs, sub, txt):
         msg = MIMEMultipart()
         msg['From'] = self.sender  # 'nmgrl@gmail.com'
-        msg['To'] = addr
+        msg['To'] = ','.join(addrs)
         msg['Subject'] = sub
 
         msg.attach(MIMEText(txt))

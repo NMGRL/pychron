@@ -26,6 +26,7 @@ from threading import Timer
 import hashlib
 import time
 # ============= local library imports  ==========================
+import yaml
 from pychron.core.helpers.logger_setup import logging_setup
 from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.labspy.database_adapter import LabspyDatabaseAdapter
@@ -43,6 +44,32 @@ def auto_connect(func):
                 return func(obj, *args, **kw)
 
     return wrapper
+
+
+class NotificationTrigger(object):
+    def __init__(self, params):
+        self._params = params
+
+    def test(self, dev, tag, val):
+        mdev = self._params['device']
+        mtag = self._params['tag']
+        mcmp = self._params['cmp']
+
+        if dev == mdev and mtag == tag:
+            return eval(mcmp, {'x': val})
+
+    def notify(self, val, unit):
+        addrs = self._params['addresses']
+        dev = self._params['device']
+        tag = self._params['tag']
+        mcmp = self._params['cmp']
+
+        sub = self._params['subject']
+        message = '''device: {}
+tag: {}
+cmp: {}
+test_value: {} ({})'''.format(dev, tag, mcmp, val, unit)
+        return addrs, sub, message
 
 
 class LabspyClient(Loggable):
@@ -159,13 +186,36 @@ class LabspyClient(Loggable):
         val = float(val)
         self.debug('adding measurement dev={} process={} value={} ({})'.format(dev, tag, val, unit))
         self.db.add_measurement(dev, tag, val, unit)
+        self._check_notifications(dev, tag, val, unit)
 
     def connect(self):
         self.warning('not connected to db {}'.format(self.db.url))
         self.db.connect()
 
+    def notification_triggers(self):
+        p = paths.notification_triggers
+        with open(p, 'r') as rfile:
+            return [NotificationTrigger(i) for i in yaml.load(rfile)]
+
     # @cached_property
     # def _get_db(self):
+    def _check_notifications(self, dev, tag, val, unit):
+        if not os.path.isfile(paths.notification_triggers):
+            self.debug('no notification trigger file available. {}'.format(paths.notification_triggers))
+            return
+
+        ns = []
+        for nt in self.notification_triggers:
+            if nt.test(dev, tag, val, unit):
+                ns.append(nt.notify(val, unit))
+        if ns:
+            emailer = self.application.get_service('pychron.social.email.emailer.Emailer')
+            if emailer:
+                for addrs, sub, message in ns:
+                    emailer.send(addrs, sub, message)
+            else:
+                self.warning('Email Plugin not enabled')
+
     def _db_default(self):
         return LabspyDatabaseAdapter()
 
