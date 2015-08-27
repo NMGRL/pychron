@@ -25,13 +25,14 @@ import os
 from threading import Timer
 import hashlib
 import time
-# ============= local library imports  ==========================
 import yaml
+# ============= local library imports  ==========================
 from pychron.core.helpers.logger_setup import logging_setup
 from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.labspy.database_adapter import LabspyDatabaseAdapter
 from pychron.loggable import Loggable
 from pychron.pychron_constants import SCRIPT_NAMES
+from pychron.paths import paths
 
 
 def auto_connect(func):
@@ -50,12 +51,13 @@ class NotificationTrigger(object):
     def __init__(self, params):
         self._params = params
 
-    def test(self, dev, tag, val):
+    def test(self, dev, tag, val, unit):
         mdev = self._params['device']
         mtag = self._params['tag']
         mcmp = self._params['cmp']
+        munit = self._params['units']
 
-        if dev == mdev and mtag == tag:
+        if dev == mdev and mtag == tag and munit == unit:
             return eval(mcmp, {'x': val})
 
     def notify(self, val, unit):
@@ -132,7 +134,7 @@ class LabspyClient(Loggable):
     @auto_connect
     def add_experiment(self, exp):
         # if self.db.connected:
-        #     with self.db.session_ctx():
+        # with self.db.session_ctx():
         hid = self._generate_hid(exp)
         self.db.add_experiment(name=exp.name,
                                start_time=exp.starttime,
@@ -144,7 +146,7 @@ class LabspyClient(Loggable):
     @auto_connect
     def update_experiment(self, exp, err_msg):
         # if self.db.connected:
-        #     with self.db.session_ctx():
+        # with self.db.session_ctx():
         #         hid = self._generate_hid(exp)
         #         exp = self.db.get_experiment(hid)
         #         # exp.EndTime = exp.endtime
@@ -192,6 +194,7 @@ class LabspyClient(Loggable):
         self.warning('not connected to db {}'.format(self.db.url))
         self.db.connect()
 
+    @property
     def notification_triggers(self):
         p = paths.notification_triggers
         with open(p, 'r') as rfile:
@@ -206,7 +209,9 @@ class LabspyClient(Loggable):
 
         ns = []
         for nt in self.notification_triggers:
+            self.debug('testing {} {} {} {}'.format(dev, tag, val, unit))
             if nt.test(dev, tag, val, unit):
+                self.debug('notification triggered')
                 ns.append(nt.notify(val, unit))
         if ns:
             emailer = self.application.get_service('pychron.social.email.emailer.Emailer')
@@ -257,13 +262,13 @@ class LabspyClient(Loggable):
 
 if __name__ == '__main__':
     from random import random
-    from pychron.paths import paths
+    # from pychron.paths import paths
 
     paths.build('_dev')
 
 
     # def add_runs(c, e):
-    #     class Spec():
+    # class Spec():
     #         def __init__(self, record_id):
     #             self.runid = record_id
     #             # self.mass_spectrometer = 'jan'
@@ -348,7 +353,7 @@ if __name__ == '__main__':
 # ============= EOF =============================================
 # class MeteorLabspyClient(LabspyClient):
 # host = Str
-#     port = Int
+# port = Int
 #     database_name = Str
 #
 #     _client = None
