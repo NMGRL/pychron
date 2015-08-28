@@ -213,6 +213,7 @@ class LabspyClient(Loggable):
             if nt.test(dev, tag, val, unit):
                 self.debug('notification triggered')
                 ns.append(nt.notify(val, unit))
+        self.debug('notifications: {}'.format(ns))
         if ns:
             emailer = self.application.get_service('pychron.social.email.emailer.Emailer')
             if emailer:
