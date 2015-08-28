@@ -93,6 +93,8 @@ class Emailer(Loggable):
                 return True
             except BaseException:
                 pass
+        else:
+            self.warning('Failed connecting to server')
 
     def _message_factory(self, addrs, sub, txt):
         msg = MIMEMultipart()
