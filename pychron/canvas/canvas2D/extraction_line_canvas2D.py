@@ -123,7 +123,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
             valves_path = self.manager.application.preferences.get('pychron.extraction_line.valves_path')
 
         if os.path.isfile(canvas_path):
-            self.scene.load(canvas_path, canvas_config_path, valves_path, weakref.ref(self)())
+            self.scene.load(canvas_path, canvas_config_path, valves_path, self)
             self.invalidate_and_redraw()
 
     def _over_item(self, event):
@@ -297,7 +297,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
             menu.show()
 
     def _scene_default(self):
-        s = ExtractionLineScene(canvas=weakref.ref(self)())
+        s = ExtractionLineScene(canvas=self)
         return s
 
 # ============= EOF ====================================

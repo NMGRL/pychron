@@ -34,6 +34,7 @@ class Primitive(HasTraits):
     oy = Float
     offset_x = Float
     offset_y = Float
+    force_layout = False
 
     state = False
     selected = False
@@ -176,6 +177,10 @@ class Primitive(HasTraits):
     def set_canvas(self, canvas):
         if canvas:
             self._layout_needed = canvas != self.canvas or self.bounds != canvas.bounds
+
+        if self.force_layout:
+            self._layout_needed = True
+            self.force_layout = False
 
         self.canvas = canvas
         if canvas:
