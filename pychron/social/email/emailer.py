@@ -64,24 +64,21 @@ class Emailer(Loggable):
         return bool(self.connect(warn=False, test=True))
 
     def connect(self, warn=True, test=False):
-        if self._server is None:
-            try:
-                server = smtplib.SMTP(self.server_host, self.server_port, timeout=5)
-                server.ehlo()
-                server.starttls()
-                server.ehlo()
-                server.login(self.server_username, self.server_password)
-                if test:
-                    server.quit()
-                    return True
-            except (smtplib.SMTPServerDisconnected, BaseException), e:
-                if warn:
-                    self.warning('SMTPServer not properly configured')
-                server = None
+        try:
+            server = smtplib.SMTP(self.server_host, self.server_port, timeout=5)
+            server.ehlo()
+            server.starttls()
+            server.ehlo()
+            server.login(self.server_username, self.server_password)
+            if test:
+                server.quit()
+                return True
+        except (smtplib.SMTPServerDisconnected, BaseException), e:
+            if warn:
+                self.warning('SMTPServer not properly configured')
+            server = None
 
-            self._server = server
-
-        return self._server
+        return server
 
     def send(self, addrs, sub, msg):
         server = self.connect()
@@ -92,7 +89,7 @@ class Emailer(Loggable):
             msg = self._message_factory(addrs, sub, msg)
             try:
                 server.sendmail(self.sender, addrs, msg.as_string())
-                server.close()
+                server.quit()
                 return True
             except BaseException:
                 pass
