@@ -196,6 +196,7 @@ class Paths(object):
 
     duration_tracker = None
     experiment_launch_history = None
+    notification_triggers = None
 
     # plot_factory_defaults = (('ideogram_defaults', 'IDEOGRAM_DEFAULTS', True),
     #                          ('spectrum_defaults', 'SPECTRUM_DEFAULTS', True))
@@ -405,6 +406,7 @@ class Paths(object):
 
         self.duration_tracker = join(self.hidden_dir, 'duration_tracker.txt')
         self.experiment_launch_history = join(self.hidden_dir, 'experiment_launch_history.txt')
+        self.notification_triggers = join(self.setup_dir, 'notification_triggers.yaml')
 
         # =======================================================================
         # templates

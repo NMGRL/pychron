@@ -18,6 +18,7 @@
 from apptools.preferences.preference_binding import bind_preference
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from sqlalchemy import and_
 from pychron.database.core.database_adapter import DatabaseAdapter
 from pychron.labspy.orm import Measurement, ProcessInfo, Version, \
     Device, Experiment, Analysis, Connections  # , Version, Status, Experiment, Analysis, AnalysisType
@@ -69,9 +70,8 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
     def get_connection(self, appname, devname):
         with self.session_ctx() as sess:
             q = sess.query(Connections)
-            q = q.filter(Connections.appname == appname)
-            q = q.filter(Connections.devname == devname)
-            return self._query_one(q)
+            q = q.filter(and_(Connections.appname == appname, Connections.devname == devname))
+            return self._query_first(q)
 
     def update_experiment(self, hashid, **kw):
         exp = self.get_experiment(hashid)

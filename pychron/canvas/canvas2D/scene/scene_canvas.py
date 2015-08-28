@@ -17,13 +17,10 @@
 # ============= enthought library imports =======================
 from kiva import JOIN_ROUND
 from traits.api import Instance
-
-from pychron.canvas.canvas2D.base_data_canvas import BaseDataCanvas
-from pychron.canvas.canvas2D.scene.scene import Scene
-
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.canvas.canvas2D.base_data_canvas import BaseDataCanvas
+from pychron.canvas.canvas2D.scene.scene import Scene
 
 
 class SceneCanvas(BaseDataCanvas):
@@ -34,14 +31,6 @@ class SceneCanvas(BaseDataCanvas):
         self.border_visible = True
         self.border_color = 'lightgray'
         self.border_width = 5
-
-    def _scene_changed(self, name, old, new):
-
-        self.scene.on_trait_change(self.request_redraw,
-                                   'layout_needed')
-        if old:
-            old.on_trait_change(self.request_redraw,
-                                'layout_needed', remove=True)
 
     def clear_all(self):
         if self.scene:
@@ -59,6 +48,7 @@ class SceneCanvas(BaseDataCanvas):
                 li.visible = False
             self.request_redraw()
 
+    # private
     def _draw_underlay(self, gc, view_bounds=None, mode="normal"):
         if self.scene:
             self.scene.render_components(gc, self)
@@ -89,29 +79,11 @@ class SceneCanvas(BaseDataCanvas):
             gc.line_to(self.x+offset, self.y2-offset)
             gc.close_path()
             gc.stroke_path()
-            # gc.draw_rect((self.x+10, self.y+100, 50,50))
-            # gc.draw_rect((self.x + border_width / 2.0 - 0.5,
-            #               self.y + border_width / 2.0 - 0.5,
-            #               self.width - border_width / 2.0 - 0.5,
-            #               self.height - border_width / 2.0 - 0.5), STROKE)
-    # def _draw_inset_border(self, gc, view_bounds=None, mode="default"):
-    #     """ Draws the border of a component.
-    #
-    #     Unlike the default Enable border, this one is drawn on the inside of
-    #     the plot instead of around it.
-    #     """
-    #     if not self.border_visible:
-    #         return
-    #
-    #     border_width = self.border_width
-    #     with gc:
-    #         gc.set_line_width(border_width)
-    #         gc.set_line_dash(self.border_dash_)
-    #         gc.set_stroke_color(self.border_color_)
-    #         gc.set_antialias(0)
-    #         gc.set_line_join(JOIN_ROUND)
-    #         gc.draw_rect((self.x + border_width / 2.0 - 0.5,
-    #                       self.y + border_width / 2.0 - 0.5,
-    #                       self.width - border_width / 2.0 - 0.5,
-    #                       self.height - border_width / 2.0 - 0.5), STROKE)
+
+    # handlers
+    def _scene_changed(self, name, old, new):
+        if new:
+            new.on_trait_change(self.request_redraw, 'layout_needed')
+        if old:
+            old.on_trait_change(self.request_redraw, 'layout_needed', remove=True)
 # ============= EOF =============================================

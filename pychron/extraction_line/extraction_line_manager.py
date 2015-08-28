@@ -82,14 +82,12 @@ class ExtractionLineManager(Manager, Consoleable):
     _active = False
     file_listener = None
 
-
     def activate(self):
         self._active = True
 
         # need to wait until now to load the ptrackers
         # this way our canvases are created
         self.reload_canvas()
-
 
         self._activate_hook()
 
@@ -101,15 +99,12 @@ class ExtractionLineManager(Manager, Consoleable):
             self.info('start gauge scans')
             self.gauge_manager.start_scans()
 
-        if self.use_hardware_update:
+        if self.use_hardware_update and self.switch_manager:
             do_after(self.hardware_update_period * 1000, self._update_states)
-            # t = Thread(target=self._update_states)
-            # t.start()
 
     def _update_states(self):
-        if self.switch_manager:
-            self.switch_manager.load_hardware_states()
-            do_after(self.hardware_update_period * 1000, self._update_states)
+        self.switch_manager.load_hardware_states()
+        do_after(self.hardware_update_period * 1000, self._update_states)
 
     def _refresh_canvas(self):
         self.refresh_canvas()
@@ -221,47 +216,6 @@ class ExtractionLineManager(Manager, Consoleable):
                 self._handle_console_message(('===== Finish Sample Change =====', 'maroon'))
                 sc.finish_chamber_change()
 
-    # def isolate_chamber(self):
-    # # get chamber name
-    # sc = self._sample_changer_factory()
-    # if sc:
-    # sc.isolate_chamber()
-    #
-    # def evacuate_chamber(self):
-    # sc = self.sample_changer
-    # # confirm evacuation if sample chamber is not (not isolated)
-    #     # or check for evacuation fails
-    #     msg = None
-    #     if sc is None:
-    #         msg = 'Are you sure you want to evacuate a chamber. No chamber has been isolated'
-    #     else:
-    #         err = sc.check_evacuation()
-    #         if err:
-    #             name = sc.chamber
-    #             msg = 'Are you sure you want to evacuate the {} chamber. {}'.format(name, err)
-    #
-    #     if msg:
-    #         if self.confirmation_dialog(msg):
-    #             sc = self._sample_changer_factory()
-    #
-    #     if sc:
-    #         sc.evacuate_chamber()
-    #
-    # def finish_chamber_change(self):
-    #     sc = self.sample_changer
-    #     if sc is None:
-    #         msg = 'Sample change procedure was not started for any chamber'
-    #     else:
-    #         msg = sc.check_finish()
-    #
-    #     if msg:
-    #         if self.confirmation_dialog('{}. Are sure you want to finish?'.format(msg)):
-    #             sc = self._sample_changer_factory()
-    #     if sc:
-    #         sc.finish_chamber_change()
-    #
-    #     self.sample_changer = None
-
     def get_volume(self, node_name):
         v = 0
         if self.use_network:
@@ -295,7 +249,6 @@ class ExtractionLineManager(Manager, Consoleable):
 
     def finish_loading(self):
         if self.use_network:
-            # p = os.path.join(paths.canvas2D_dir, 'canvas.xml')
             self.network.load(self.canvas_path)
 
     def reload_canvas(self, load_states=False):
@@ -304,29 +257,12 @@ class ExtractionLineManager(Manager, Consoleable):
         if self.use_network:
             self.network.load(self.canvas_path)
 
-        # net = self.network
-        # if net:
-        #     # p = os.path.join(paths.canvas2D_dir, 'canvas.xml')
-        #     net.load(self.canvas_path)
-
-        # if net:
-        # net.suppress_changes = True
-        # if vm:
-        #     vm.load_valve_states(refresh=False, force_network_change=False)
-        #     vm.load_valve_lock_states(refresh=False)
-
-        # if net:
-        # net.suppress_changes = False
-
         sm = self.switch_manager
         if sm:
             sm.refresh_network()
-            # self.valve_manager.load_valve_states(force_network_change=True)
             for p in sm.pipette_trackers:
                 p.load()
 
-        # vm.load_valve_states(refresh=False, force_network_change=True)
-        # if vm:
             for p in sm.pipette_trackers:
                 self._set_pipette_counts(p.name, p.counts)
 
@@ -350,7 +286,6 @@ class ExtractionLineManager(Manager, Consoleable):
                             vc.state = v.state
 
     def update_switch_state(self, name, state, *args, **kw):
-        # self.debug('update valve state {} {}'.format(name, state))
         if self.use_network:
             self.network.set_valve_state(name, state)
             for c in self._canvases:
@@ -593,7 +528,7 @@ class ExtractionLineManager(Manager, Consoleable):
                     self._log_spec_event(name, action)
 
                     self.info('{:<6s} {} ({})'.format(action.upper(), valve.name, description),
-                        color='red' if action == 'close' else 'green')
+                              color='red' if action == 'close' else 'green')
 
                     vm.actuate_children(name, action, mode)
                     ld = self.link_valve_actuation_dict
@@ -674,7 +609,7 @@ class ExtractionLineManager(Manager, Consoleable):
             package = 'pychron.rpc.manager'
         else:
             package = 'pychron.managers.{}'.format(manager)
-        # print manager, manager in ('switch_manager', 'gauge_manager', 'multiplexer_manager')
+
         if manager in ('switch_manager', 'gauge_manager', 'multiplexer_manager'):
             if manager == 'switch_manager':
                 man = self._switch_manager_factory()
@@ -699,8 +634,6 @@ class ExtractionLineManager(Manager, Consoleable):
     # ===============================================================================
     # handlers
     # ===============================================================================
-
-
     @on_trait_change('switch_manager:pipette_trackers:counts')
     def _update_pipette_counts(self, obj, name, old, new):
         self._set_pipette_counts(obj.name, new)
@@ -763,7 +696,6 @@ class ExtractionLineManager(Manager, Consoleable):
         return GaugeManager(application=self.application)
 
     def _switch_manager_factory(self):
-        # def _valve_manager_default(self):
         klass = self._get_switch_manager_klass()
         vm = klass(application=self.application)
         vm.on_trait_change(self._handle_state, 'refresh_state')
@@ -787,8 +719,6 @@ class ExtractionLineManager(Manager, Consoleable):
         return e
 
     def _canvas_default(self):
-        """
-        """
         return self.new_canvas()
 
     def _network_default(self):
@@ -802,77 +732,3 @@ if __name__ == '__main__':
     elm.configure_traits()
 
 # =================== EOF ================================
-# def _valve_manager_changed(self):
-# if self.valve_manager is not None:
-# self.status_monitor.valve_manager = self.valve_manager
-# e = self.explanation
-# if e is not None:
-# e.load(self.valve_manager.explanable_items)
-# self.valve_manager.on_trait_change(e.load_item, 'explanable_items[]')
-
-# def _pumping_monitor_default(self):
-# '''
-# '''
-# return PumpingMonitor(gauge_manager=self.gauge_manager,
-# parent=self)
-
-#    def _multruns_report_manager_default(self):
-#        return MultrunsReportManager(application=self.application)
-#     def _view_controller_factory(self):
-#         if self.canvas.canvas3D:
-#             v = ViewController(scene_graph=self.canvas.canvas3D.scene_graph)
-#             self.canvas.canvas3D.user_views = v.views
-#             return v
-
-#    def add_extraction_line_macro_delay(self):
-#        global Macro
-#        if Macro is None:
-#            from macro import _Macro_ as Macro
-#
-#        info = Macro.edit_traits()
-#        if info.result:
-#            Macro.record_action(('delay', Macro.delay))
-#
-#    def stop_extraction_line_macro_recording(self):
-#        global stop_recording
-#        if stop_recording is None:
-#            from macro import stop_recording
-#        stop_recording()
-#
-#    def start_extraction_line_macro_recording(self):
-#        global start_recording
-#        if start_recording is None:
-#            from macro import start_recording
-#        start_recording()
-#
-#    def play_extraction_line_macro_recording(self):
-#        #lazy pre_start time and Thread
-#        global time
-#        if time is None:
-#            import time
-#
-#        global Thread
-#        if Thread is None:
-#            from threading import Thread
-#
-#        global play_macro
-#        if play_macro is None:
-#            from macro import play_macro
-#
-#        def _play_():
-#            for c in play_macro():
-#                args = c[0]
-#                kw = c[1]
-#
-#                if args == 'delay':
-#
-#                    time.sleep(kw)
-#                else:
-#                    action = args[3]
-#                    name = args[1]
-#
-#                    func = getattr(self, '%s_valve' % action)
-#                    func(name, mode = 'manual')
-#
-#        t = Thread(target = _play_)
-#        t.start()

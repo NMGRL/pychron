@@ -15,25 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import random
-import time
-
 from traits.api import Instance, Int, Property, List, \
     Any, Enum, Str, DelegatesTo, Bool, TraitError, cached_property
-
-
-
-
-
-
-
-
-
-
 # ============= standard library imports ========================
-import os
 from numpy import array, argmin
+import random
+import time
+import os
 # ============= local library imports  ==========================
+from pychron.core.progress import open_progress
 from pychron.globals import globalv
 from pychron.spectrometer.thermo.source import ArgusSource
 from pychron.spectrometer.thermo.magnet import ArgusMagnet
@@ -41,6 +31,7 @@ from pychron.spectrometer.thermo.detector import Detector
 from pychron.spectrometer.thermo.spectrometer_device import SpectrometerDevice
 from pychron.pychron_constants import NULL_STR, QTEGRA_INTEGRATION_TIMES, DEFAULT_INTEGRATION_TIME
 from pychron.paths import paths
+from pychron.core.ramper import Ramper, calculate_steps
 
 
 def normalize_integration_time(it):
@@ -229,11 +220,11 @@ class Spectrometer(SpectrometerDevice):
 
         return it
 
-    def send_configuration(self):
+    def send_configuration(self, **kw):
         """
             send the configuration values to the device
         """
-        self._send_configuration()
+        self._send_configuration(**kw)
 
     def set_parameter(self, name, v):
         cmd = '{} {}'.format(name, v)
@@ -424,12 +415,13 @@ class Spectrometer(SpectrometerDevice):
         self.magnet.finish_loading()
 
         # if self.send_config_on_startup:
-            # write configuration to spectrometer
-            # self._send_configuration()
+        # write configuration to spectrometer
+        # self._send_configuration()
 
     def start(self):
+        self.debug('********** Spectrometer start. send configuration: {}'.format(self.send_config_on_startup))
         if self.send_config_on_startup:
-            self._send_configuration()
+            self.send_configuration(use_ramp=True)
 
     def load_detectors(self):
         """
@@ -649,7 +641,7 @@ class Spectrometer(SpectrometerDevice):
         keys = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
         return keys, signals
 
-    def _send_configuration(self):
+    def _send_configuration(self, use_ramp=False):
         self.debug('Sending configuration')
         command_map = dict(ionrepeller='IonRepeller',
                            electronenergy='ElectronEnergy',
@@ -658,7 +650,7 @@ class Spectrometer(SpectrometerDevice):
                            zfocus='ZFocus',
                            extractionlens='ExtractionLens',
                            ioncountervoltage='IonCounterVoltage', )
-
+        print self.microcontroller
         if self.microcontroller:
             specparams, defl = self._get_cached_config()
             for k, v in defl.items():
@@ -672,30 +664,40 @@ class Spectrometer(SpectrometerDevice):
                     self.set_parameter(cmd, v)
                 except KeyError:
                     self.debug('$$$$$$$$$$ Not setting {}. Not in command_map'.format(k))
+
+            # set the trap current
+            v = specparams.get('trap_current')
+            self.debug('send trap current {}'.format(v))
+            if v is not None:
+                r = specparams.get('trap_current_ramp_duration', 30)
+                if not self._ramp_trap_current(v, r, use_ramp):
+                    self.set_parameter('SetParameter', 'Trap Current Set,{}'.format(v))
+
             self.source.sync_parameters()
-            # p = os.path.join(paths.spectrometer_dir, 'config.cfg')
-            # if not os.path.isfile(p):
-            # self.warning('Spectrometer configuration file {} not found'.format(p))
-            # return
-            #
-            # self.info('Sending configuration "{}" to spectrometer'.format(p))
-            # config = self.get_configuration_writer(p)
-            #
-            # for section in config.sections():
-            # if section in ['Default', 'Protection']:
-            #         continue
-            #
-            #     for attr in config.options(section):
-            #         v = config.getfloat(section, attr)
-            #         if v is not None:
-            #
-            #             if section == 'Deflections':
-            #                 cmd = 'SetDeflection'
-            #                 v = '{},{}'.format(attr.upper(), v)
-            #             else:
-            #                 cmd = 'Set{}'.format(command_map[attr])
-            #
-            #             self.set_parameter(cmd, v)
+
+    def _ramp_trap_current(self, v, duration, use_ramp=False, tol=100):
+        if use_ramp:
+            current = self.source.read_trap_current()
+            if current is None:
+                current = 0
+
+            if v - current >= tol:
+                if self.confirmation_dialog('Would you like to ramp up the '
+                                            'Trap current from {} to {}'.format(current, v)):
+                    prog = open_progress(1)
+
+                    def func(i, x):
+                        cmd = 'SetParameter Trap Current Set,{:0.5f}'.format(x)
+                        prog.change_message(cmd)
+                        self.ask(cmd)
+                        return True
+
+                    r = Ramper()
+                    steps = calculate_steps(duration)
+                    prog.max = steps
+                    r.ramp(func, current, v, duration)
+                    prog.close()
+                    return True
 
     # ===============================================================================
     # defaults

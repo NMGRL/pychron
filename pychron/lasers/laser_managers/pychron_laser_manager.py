@@ -60,7 +60,7 @@ class PychronLaserManager(BaseLaserManager, EthernetDeviceMixin):
     # communicator = None
     # port = CInt
     # host = Str
-
+    stage_manager_id = 'fusions.pychron'
     _cancel_blocking = False
 
     position = String(enter_set=True, auto_set=False)

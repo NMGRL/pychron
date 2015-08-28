@@ -29,6 +29,7 @@ from pychron.pychron_constants import LIGHT_GREEN
 
 class LogAdapter(TabularAdapter):
     columns = [('Timestamp', 'timestamp'),
+               ('Name', 'name'),
                ('Level', 'level'),
                ('Message', 'message'), ]
     timestamp_width = Int(175)
@@ -46,6 +47,7 @@ class LogAdapter(TabularAdapter):
 
 
 class LogItem:
+    name = ''
     message = ''
     timestamp = ''
     level = ''
@@ -204,7 +206,8 @@ class LogViewer(Controller):
 if __name__ == '__main__':
     m = LogModel()
     # m.parse()
-    m.open_file('/Users/ross/Pychron_dev/logs/pychron.current.log')
+    # m.open_file('/Users/ross/Pychron_dev/logs/pychron.current.log')
+    m.open_file('/Users/ross/Sandbox/pychron.current.log')
     # m = TwistedLogModel()
     # m.open_file('/Users/ross/Documents/pps.log.json')
     lv = LogViewer(model=m)

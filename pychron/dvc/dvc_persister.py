@@ -27,6 +27,7 @@ from uncertainties import std_dev, nominal_value
 from pychron.dvc import jdump
 from pychron.dvc.dvc_analysis import META_ATTRS, EXTRACTION_ATTRS, analysis_path, PATH_MODIFIERS
 from pychron.experiment.automated_run.persistence import BasePersister
+from pychron.experiment.classifier.isotope_classifier import IsotopeClassifier
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths
 from pychron.pychron_constants import DVC_PROTOCOL
@@ -39,6 +40,7 @@ def format_experiment_identifier(project):
 class DVCPersister(BasePersister):
     experiment_repo = Instance(GitRepoManager)
     dvc = Instance(DVC_PROTOCOL)
+    isotope_classifier = Instance(IsotopeClassifier, ())
     stage_files = Bool(True)
 
     def per_spec_save(self, pr, experiment_id=None, commit=False, msg_prefix=None):
@@ -209,6 +211,10 @@ class DVCPersister(BasePersister):
         else:
             d['timestamp'] = self.per_spec.timestamp
 
+        # save script names
+        d['measurementName'] = self.per_spec.measurement_name
+        d['extractionName'] = self.per_spec.extraction_name
+
         db = self.dvc.db
         with db.session_ctx():
             an = db.add_analysis(**d)
@@ -220,9 +226,6 @@ class DVCPersister(BasePersister):
             if self.per_spec.use_experiment_association:
                 db.add_experiment_association(rs.experiment_identifier, an)
 
-            # pos = db.get_irradiation_position(rs.irradiation, rs.irradiation_level, rs.irradiation_position)
-
-            # print rs.irradiation, rs.irradiation_level, rs.irradiation_position, pos
             pos = db.get_identifier(rs.identifier)
             an.irradiation_position = pos
             t = self.per_spec.tag
@@ -237,6 +240,8 @@ class DVCPersister(BasePersister):
             an.change = change
             # an.change.tag_item = dbtag
             # self._save_measured_positions()
+
+            self._save_measured_positions()
 
     def _save_measured_positions(self):
         dvc = self.dvc
@@ -283,6 +288,7 @@ class DVCPersister(BasePersister):
         cbaselines = {}
         icfactors = {}
 
+        clf = self.isotope_classifier
         endianness = '>'
         for iso in self.per_spec.arar_age.isotopes.values():
 
@@ -291,7 +297,10 @@ class DVCPersister(BasePersister):
             signals.append({'isotope': iso.name, 'detector': iso.detector, 'blob': sblob})
             sniffs.append({'isotope': iso.name, 'detector': iso.detector, 'blob': snblob})
 
-            isos[iso.name] = {'detector': iso.detector}
+            klass, prob = clf.predict_isotope(iso)
+            isos[iso.name] = {'detector': iso.detector,
+                              'classification': klass,
+                              'classification_probability': prob}
 
             if iso.detector not in dets:
                 bblob = base64.b64encode(iso.baseline.pack(endianness, as_hex=False))
@@ -336,6 +345,7 @@ class DVCPersister(BasePersister):
             name = getattr(self.per_spec, '{}_name'.format(si))
             blob = getattr(self.per_spec, '{}_blob'.format(si))
             self.dvc.meta_repo.update_script(ms, name, blob)
+            obj[si] = name
 
         # save experiment
         self.dvc.update_experiment_queue(ms, self.per_spec.experiment_queue_name,

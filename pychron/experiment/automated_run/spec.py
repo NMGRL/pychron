@@ -485,7 +485,16 @@ class AutomatedRunSpec(HasTraits):
 
     @property
     def script_hash(self):
-        ctx = self.make_script_context()
+        ctx = dict(nposition=len(self.get_position_list()),
+                   disable_between_positions=self.disable_between_positions,
+                   duration=self.duration,
+                   extract_value=self.extract_value,
+                   extract_units=self.extract_units,
+                   cleanup=self.cleanup,
+                   ramp_rate=self.ramp_rate,
+                   pattern=self.pattern,
+                   ramp_duration=self.ramp_duration)
+
         ctx['measurement'] = self.measurement_script
         ctx['extraction'] = self.extraction_script
 

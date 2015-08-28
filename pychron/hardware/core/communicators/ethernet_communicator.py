@@ -118,6 +118,7 @@ class TCPHandler(Handler):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         if globalv.communication_simulation:
             timeout = 0.01
+
         self.sock.settimeout(timeout)
         self.sock.connect(addr)
 
@@ -144,26 +145,25 @@ class UDPHandler(Handler):
         self.sock.settimeout(timeout)
 
     def get_packet(self, cmd):
-        r = None
+        # r = None
         # cnt = 3
-        cnt = 1
+        # cnt = 1
 
         def recv(ds):
-            r, _ = self.sock.recvfrom(ds)
-            return r
+            rx, _ = self.sock.recvfrom(ds)
+            return rx
 
-        for _ in range(cnt):
-            try:
-                r = self._recvall(recv)
-                # r, _address = self.sock.recvfrom(self.datasize)
-                break
-            except socket.error, e:
-                self.debug('get_packet {}'.format(e))
-            # self.error_mode = True
-        else:
-            self.warning('get packet for {} error: {}'.format(cmd, e))
-
-        return r
+        # for _ in range(cnt):
+        #     try:
+        #         r = self._recvall(recv)
+        #         # r, _address = self.sock.recvfrom(self.datasize)
+        #         break
+        #     except socket.error, e:
+        #         self.debug('get_packet {}'.format(e))
+        #         self.error_mode = True
+        # else:
+        #     self.warning('get packet for {} error: {}'.format(cmd, e))
+        return self._recvall(recv)
 
     def send_packet(self, p):
         # self.sock.sendto(p, self.address)
@@ -185,7 +185,7 @@ class EthernetCommunicator(Communicator):
     handler = None
     kind = 'UDP'
     test_cmd = None
-    use_end = True
+    use_end = False
     verbose = False
     error = None
     error_mode = False
@@ -258,7 +258,7 @@ class EthernetCommunicator(Communicator):
             self.handler = h
             return h
         except socket.error, e:
-            self.debug(str(e))
+            self.debug('Get Handler {}'.format(str(e)))
             self.error = True
             self.handler = None
 
