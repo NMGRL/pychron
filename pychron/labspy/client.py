@@ -122,7 +122,7 @@ class LabspyClient(Loggable):
                     self.update_connection(ts, dev.name,
                                            com_name,
                                            dev.communicator.address,
-                                           dev.communicator.test_connection(),
+                                           dev.test_connection(),
                                            verbose=verbose)
                 except BaseException, e:
                     self.debug('Connection status. update connection failed: error={}'.format(e))

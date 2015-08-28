@@ -253,9 +253,9 @@ class EthernetCommunicator(Communicator):
                 else:
                     h = TCPHandler()
 
-            h.open_socket((self.host, self.port), timeout=timeout)
-            h.set_frame(self.message_frame)
-            self.handler = h
+                h.open_socket((self.host, self.port), timeout=timeout)
+                h.set_frame(self.message_frame)
+                self.handler = h
             return h
         except socket.error, e:
             self.debug('Get Handler {}'.format(str(e)))
