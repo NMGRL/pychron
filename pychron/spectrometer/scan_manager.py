@@ -126,16 +126,19 @@ class ScanManager(Manager):
                                          '_low_value, _high_value', remove=True)
         self.readout_view.stop()
 
+    def stop(self):
+        self.prepare_destroy()
+
     def stop_scan(self):
         self.dump_settings()
         self._stop_timer()
 
         # clear our graph settings so on reopen events will fire
-        del self.graph_scale
-        del self._graph_ymax
-        del self._graph_ymin
-        del self.graph_y_auto
-        del self.graph_scan_width
+        # del self.graph_scale
+        # del self._graph_ymax
+        # del self._graph_ymin
+        # del self.graph_y_auto
+        # del self.graph_scan_width
 
     def activate(self):
         self.bind_preferences()
@@ -167,16 +170,17 @@ class ScanManager(Manager):
         bind_preference(self, 'use_vertical_markers', '{}.use_vertical_markers'.format(pref_id))
 
     def setup_scan(self):
+        # force update
+        self.load_settings()
+
         self._reset_graph()
+        self._graph_scan_width_changed()
+
+        self._detector_changed(None, self.detector)
+        self._isotope_changed(None, self.isotope)
 
         # bind
         self._bind_listeners()
-        # # listen to detector for enabling
-        # self.on_trait_change(self._toggle_detector, 'detectors:active')
-        # self.on_trait_change(self._update_magnet, 'magnet:dac_changed')
-
-        # force update
-        self.load_settings()
 
         # force position update
         self._set_position()
@@ -196,6 +200,8 @@ class ScanManager(Manager):
                     if det.kind == 'Faraday':
                         self.detector = det
                         self.isotope = params['isotope']
+
+                    self.integration_time = params.get('integration_time', 1.048576)
 
                     for pi in self.graph_attr_keys:
                         try:
@@ -223,7 +229,8 @@ class ScanManager(Manager):
                 det = self.detectors[0]
 
             d = dict(isotope=iso,
-                     detector=det.name)
+                     detector=det.name,
+                     integration_time=self.integration_time)
 
             for ki in self.graph_attr_keys:
                 d[ki] = getattr(self, ki)
@@ -261,7 +268,7 @@ class ScanManager(Manager):
             self._graph_ymin = min(new, self._graph_ymax)
 
     def _toggle_detector(self, obj, name, old, new):
-        self.graph.set_series_visiblity(new, series=obj.name)
+        self.graph.set_series_visibility(new, series=obj.name)
 
     def _update_magnet(self, obj, name, old, new):
         # print obj, name, old, new

@@ -38,8 +38,10 @@ class SpectrometerTask(EditorTask):
     def stop_scan(self):
         self.debug('stop scan fired')
         editor = self.active_editor
+        self.debug('active editor {}'.format(editor))
         if editor:
-            if isinstance(editor, ScanEditor):
+            if isinstance(editor, (ScanEditor, PeakCenterEditor, CoincidenceEditor)):
+                self.debug('editor stop')
                 editor.stop()
 
     def do_coincidence(self):
@@ -77,12 +79,10 @@ class SpectrometerTask(EditorTask):
     def _on_peak_center_start(self):
         self.scan_manager.log_events_enabled = False
         self.scan_manager.scan_enabled = False
-        self.scan_manager.stop_scan()
 
     def _on_peak_center_end(self):
         self.scan_manager.log_events_enabled = True
         self.scan_manager.scan_enabled = True
-        self.scan_manager.reset_scan_timer()
 
     def send_configuration(self):
         self.scan_manager.spectrometer.send_configuration()

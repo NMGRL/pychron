@@ -203,30 +203,36 @@ class IonOpticsManager(Manager):
                           integration_time=1.04,
                           directions='Increase',
                           center_dac=None, plot_panel=None, new=False,
-                          standalone_graph=True, name='', show_label=False):
+                          standalone_graph=True, name='', show_label=False,
+                          window=0.015, step_width=0.0005, min_peak_height=1.0):
 
-        self.spectrometer.save_integration()
+        spec = self.spectrometer
+
+        spec.save_integration()
         self.debug('setup peak center. detector={}, isotope={}'.format(detector, isotope))
         if detector is None or isotope is None:
             self.debug('ask user for peak center configuration')
 
             pcc = self.peak_center_config
-            pcc.dac = self.spectrometer.magnet.dac
+            pcc.dac = spec.magnet.dac
 
             info = pcc.edit_traits()
             if not info.result:
                 return
             else:
-
                 detector = pcc.detector.name
                 isotope = pcc.isotope
                 directions = pcc.directions
                 integration_time = pcc.integration_time
 
+                window = pcc.window
+                min_peak_height = pcc.min_peak_height
+                step_width = pcc.step_width
+
                 if not pcc.use_current_dac:
                     center_dac = pcc.dac
 
-        self.spectrometer.set_integration_time(integration_time)
+        spec.set_integration_time(integration_time)
         period = int(integration_time * 1000 * 0.9)
 
         if isinstance(detector, (tuple, list)):
@@ -238,17 +244,6 @@ class IonOpticsManager(Manager):
 
         if center_dac is None:
             center_dac = self.get_center_dac(ref, isotope)
-
-        self._setup_peak_center(detectors, isotope, period,
-                                center_dac, directions, plot_panel, new,
-                                standalone_graph, name, show_label)
-        return self.peak_center
-
-    def _setup_peak_center(self, detectors, isotope, period,
-                           center_dac, directions, plot_panel, new,
-                           standalone_graph, name, show_label):
-
-        spec = self.spectrometer
 
         ref = detectors[0]
         self.reference_detector = ref
@@ -265,6 +260,9 @@ class IonOpticsManager(Manager):
 
         pc.trait_set(center_dac=center_dac,
                      period=period,
+                     window = window,
+                     min_peak_height = min_peak_height,
+                     step_width = step_width,
                      directions=directions,
                      reference_detector=ref,
                      additional_detectors=ad,
@@ -280,14 +278,13 @@ class IonOpticsManager(Manager):
         else:
             graph.close_func = self.close
             if standalone_graph:
-                # bind to the graphs close_func
-                # self.close is called when graph window is closed
-                # use so we can stop the timer
                 # set graph window attributes
                 graph.window_title = 'Peak Center {}({}) @ {:0.3f}'.format(ref, isotope, center_dac)
                 graph.window_width = 300
                 graph.window_height = 250
                 self.open_view(graph)
+
+        return self.peak_center
 
     def _timeout_func(self, timeout, evt):
         st = time.time()

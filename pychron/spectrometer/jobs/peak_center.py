@@ -30,9 +30,9 @@ class BasePeakCenter(MagnetSweep):
     title = 'Base Peak Center'
     center_dac = Float
     reference_isotope = Str
-    window = Float(0.015)
-    step_width = Float(0.0005)
-    min_peak_height = Float(1.0)
+    window = Float #(0.015)
+    step_width = Float #(0.0005)
+    min_peak_height = Float #(1.0)
     canceled = False
     show_label = False
     result = None
@@ -52,12 +52,11 @@ class BasePeakCenter(MagnetSweep):
         self._alive = True
         self.canceled = False
 
-        graph = self.graph
+
         center_dac = self.center_dac
         self.info('starting peak center. center dac= {}'.format(center_dac))
 
-        graph.clear()
-        self._graph_factory(graph)
+        self._graph_factory()
         # invoke_in_main_thread(self._graph_factory, graph=graph)
 
         width = self.step_width
@@ -74,8 +73,7 @@ class BasePeakCenter(MagnetSweep):
                 break
 
             if i > 0:
-                graph.clear()
-                self._graph_factory(graph)
+                self._graph_factory()
                 # invoke_in_main_thread(self._graph_factory, graph=graph)
 
             start, end = self._get_scan_parameters(i, center, smart_shift)
@@ -102,15 +100,15 @@ class BasePeakCenter(MagnetSweep):
         self.info('Moving to starting dac {}'.format(start))
         spec.magnet.set_dac(start)
 
-        tol = 1
+        tol = 50
         timeout = 10
         self.info('Wait until signal near baseline. tol= {}. timeout= {}'.format(tol, timeout))
+        spec.save_integration()
         spec.set_integration_time(0.5)
 
         st = time.time()
         while 1:
             keys, signals = spec.get_intensities()
-
             idx = keys.index(self.reference_detector)
             signal = signals[idx]
             if signal < tol:
@@ -123,7 +121,7 @@ class BasePeakCenter(MagnetSweep):
                 break
             time.sleep(0.5)
 
-        spec.set_integration_time(self.integration_time)
+        spec.restore_integration()
 
         # self.info('moving to starting dac {}. delay {} before continuing'.format(start, delay))
         # delay = 3
@@ -209,16 +207,17 @@ class BasePeakCenter(MagnetSweep):
     # factories
     # ===============================================================================
     def _graph_factory(self, graph=None):
-        if graph is None:
-            graph = Graph(
-                window_title=self.title,
-                container_dict=dict(padding=5,
-                                    bgcolor='lightgray'))
+        # if graph is None:
+        graph = Graph(
+            window_title=self.title,
+            container_dict=dict(padding=5,
+                                bgcolor='lightgray'))
 
         graph.new_plot(
             padding=[50, 5, 5, 50],
             xtitle='DAC (V)',
             ytitle='Intensity (fA)',
+            zoom=False,
             show_legend='ul',
             legend_kw=dict(
                 font='modern 8',

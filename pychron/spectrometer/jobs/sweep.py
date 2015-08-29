@@ -84,12 +84,15 @@ class BaseSweep(SpectrometerTask):
             self._make_pseudo(values)
             self.integration_time = 0.065536
 
-        for v in values[1]:
-            self._step(v)
-            intensity = self._step_intensity()
-            invoke_in_main_thread(self._graph_hook, v, intensity)
+        for v in values:
+            if self._alive:
+                self._step(v)
+                intensity = self._step_intensity()
+                invoke_in_main_thread(self._graph_hook, v, intensity)
 
-            time.sleep(self.integration_time)
+                time.sleep(self.integration_time)
+
+        return self._alive
 
     def _post_execute(self):
         self.debug('sweep finished')

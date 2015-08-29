@@ -34,14 +34,15 @@ class MessageFrame(object):
         """
         L4,-,C4
         """
-        args = s.split(',')
-        if len(args) == 3:
-            ml = args[0]
-            cs = args[2]
-            self.nmessage_len = int(ml[1:])
-            self.nchecksum = int(cs[1:])
-            self.checksum = True
-            self.message_len = True
+        if s:
+            args = s.split(',')
+            if len(args) == 3:
+                ml = args[0]
+                cs = args[2]
+                self.nmessage_len = int(ml[1:])
+                self.nchecksum = int(cs[1:])
+                self.checksum = True
+                self.message_len = True
 
 
 class Handler(object):

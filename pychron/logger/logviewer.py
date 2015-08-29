@@ -23,7 +23,6 @@ import re
 # ============= local library imports  ==========================
 from traitsui.editors.check_list_editor import CheckListEditor
 from traitsui.tabular_adapter import TabularAdapter
-from twisted.logger import eventsFromJSONLogFile
 from pychron.core.helpers.datetime_tools import get_datetime
 from pychron.pychron_constants import LIGHT_GREEN
 
@@ -101,6 +100,7 @@ def tostr(vv):
 
 class TwistedLogModel(LogModel):
     def _file(self, r):
+        from twisted.logger import eventsFromJSONLogFile
         return eventsFromJSONLogFile(r)
 
     def _factory(self, ii):

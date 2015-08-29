@@ -40,7 +40,7 @@ def multi_peak_generator(values):
         yield m + random.random() / 5.0
 
 
-def psuedo_peak(center, start, stop, step, magnitude=500, peak_width=0.008):
+def pseudo_peak(center, start, stop, step, magnitude=500, peak_width=0.008):
     x = linspace(start, stop, step)
     gaussian = lambda x: magnitude * exp(-((center - x) / peak_width) ** 2)
 
@@ -57,123 +57,11 @@ class MagnetSweep(BaseSweep):
     step_mass = Float(1)
 
     # _peak_generator = None
-    # def _scan_dac(self, values):
-    #
-    #     self.graph.set_x_limits(values[0], values[-1])
-    #     if self.spectrometer.simulation:
-    #         self._peak_generator = psuedo_peak(values[len(values) / 2] + 0.001, values[0], values[-1], len(values))
-    #         # self._peak_generator = multi_peak_generator(values)
-    #         self.integration_time = 0.065536
-    #
-    #     self._iter_dac(values)
-    #
-    #     # gen = (vi for vi in values)
-    #     # evt = Event()
-    #     # intensities = []
-    #     #
-    #     # invoke_in_main_thread(self._iter_dac, gen.next(),
-    #     #                       gen, evt, intensities)
-    #     #
-    #     # while not evt.isSet():
-    #     #     time.sleep(0.01)
-    #
-    #     return True
-
-    # def _iter_dac(self, values):
-    #     mag = self.spectrometer.magnet
-    #
-    #     for dac in values[1]:
-    #         mag.set_dac(dac, verbose=self.verbose)
-    #         intensity = self._magnet_step_hook()
-    #         invoke_in_main_thread(self._graph_hook, dac, intensity)
-    #
-    #         time.sleep(self.integration_time)
-
     def _make_pseudo(self, values):
-        self._peak_generator = psuedo_peak(values[len(values) / 2] + 0.001, values[0], values[-1], len(values))
+        self._peak_generator = pseudo_peak(values[len(values) / 2] + 0.001, values[0], values[-1], len(values))
 
     def _step(self, v):
         self.spectrometer.magnet.set_dac(v, verbose=self.verbose)
-
-    # def _iter_dac2(self, di, gen, evt, intensities):
-    #     # self.debug('iter dac {}'.format(di))
-    #     mag = self.spectrometer.magnet
-    #     mag.set_dac(di, verbose=self.verbose, settling_time=0.1)
-    #
-    #     d = self._magnet_step_hook()
-    #
-    #     self._graph_hook(di, d)
-    #     intensities.append(d)
-    #
-    #     try:
-    #         di = gen.next()
-    #     except StopIteration:
-    #         di = None
-    #
-    #     if di is not None and self.isAlive():
-    #         p = int(self.integration_time * 1000 * 0.9)
-    #         do_after(p, self._iter_dac, di, gen, evt, intensities)
-    #     else:
-    #         evt.set()
-
-    # def _update_graph_data(self, plot, di, intensity, **kw):
-    #     """
-    #         add and scale scans
-    #     """
-    #
-    #     def set_data(k, v):
-    #         plot.data.set_data(k, v)
-    #
-    #     def get_data(k):
-    #         return plot.data.get_data(k)
-    #
-    #     R = None
-    #     r = None
-    #     mi, ma = Inf, -Inf
-    #     for i, v in enumerate(intensity):
-    #         oys = None
-    #         k = 'odata{}'.format(i)
-    #         if hasattr(plot, k):
-    #             oys = getattr(plot, k)
-    #
-    #         oys = array([v]) if oys is None else hstack((oys, v))
-    #         setattr(plot, k, oys)
-    #
-    #         if self.normalize:
-    #             if i == 0:
-    #                 # calculate ref range
-    #                 miR = min(oys)
-    #                 maR = max(oys)
-    #                 R = maR - miR
-    #             else:
-    #                 mir = min(oys)
-    #                 mar = max(oys)
-    #                 r = mar - mir
-    #
-    #             if r and R:
-    #                 oys = (oys - mir) * R / r + miR
-    #
-    #         xs = get_data('x{}'.format(i))
-    #         xs = hstack((xs, di))
-    #         set_data('x{}'.format(i), xs)
-    #         set_data('y{}'.format(i), oys)
-    #         mi, ma = min(mi, min(oys)), max(ma, max(oys))
-    #
-    #     self.graph.set_y_limits(min_=mi, max_=ma, pad='0.05',
-    #                             pad_style='upper')
-
-    # def _graph_hook(self, di, intensity, **kw):
-    #     graph = self.graph
-    #     if graph:
-    #         plot = graph.plots[0]
-    #         self._update_graph_data(plot, di, intensity)
-
-    # def _magnet_step_hook(self):
-    #     spec = self.spectrometer
-    #     ds = [str(self.reference_detector)] + self.additional_detectors
-    #     intensity = spec.get_intensity(ds)
-    #
-    #     return intensity
 
     def _execute(self):
         sm = self.start_mass
@@ -204,51 +92,7 @@ class MagnetSweep(BaseSweep):
             stm = stm / float(massdev) * dacdev
             sm, em = ds, de
 
-        super(MagnetSweep, self)._do_sweep(sm, em, stm, directions)
-
-    # def _do_scan(self, sm, em, stm, directions=None, map_mass=True):
-    #     self.debug('_do_scan')
-    #     # default to forward scan
-    #     if directions is None:
-    #         directions = [1]
-    #     elif isinstance(directions, str):
-    #         if directions == 'Decrease':
-    #             directions = [-1]
-    #         elif directions == 'Oscillate':
-    #             directions = oscillate()
-    #         else:
-    #             directions = [1]
-    #
-    #     spec = self.spectrometer
-    #     mag = spec.magnet
-    #     if map_mass:
-    #         detname = self.reference_detector.name
-    #         ds = spec.correct_dac(self.reference_detector,
-    #                               mag.map_mass_to_dac(sm, detname))
-    #         de = spec.correct_dac(self.reference_detector,
-    #                               mag.map_mass_to_dac(em, detname))
-    #
-    #         massdev = abs(sm - em)
-    #         dacdev = abs(ds - de)
-    #
-    #         stm = stm / float(massdev) * dacdev
-    #         sm, em = ds, de
-    #
-    #     osm, oem = sm, em
-    #     for di in directions:
-    #         if not self._alive:
-    #             return
-    #
-    #         if di == -1:
-    #             sm, em = oem, osm
-    #         else:
-    #             sm, em = osm, oem
-    #
-    #         values = self._calc_step_values(sm, em, stm)
-    #         if not self._scan_dac(values):
-    #             return
-    #
-    #     return True
+        return super(MagnetSweep, self)._do_sweep(sm, em, stm, directions)
 
     def edit_view(self):
         v = View(Group(Item('reference_detector', editor=EnumEditor(name='detectors')),
