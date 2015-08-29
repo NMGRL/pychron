@@ -73,6 +73,8 @@ class ScanManager(Manager):
     _graph_ymax = Float
     graph_scan_width = Float(enter_set=True, auto_set=False)  # in minutes
     clear_button = Event
+
+    scan_enabled = Bool(True)
     # record_button = Event
     # record_button = ToggleButton(image_on=icon('media-record'),
     # image_off=icon('media-playback-stop'),
@@ -140,7 +142,7 @@ class ScanManager(Manager):
 
         self.load_event_marker_config()
         self.setup_scan()
-        # self.readout_view.start()
+        self.readout_view.start()
 
     def load_event_marker_config(self):
         if self.use_log_events:
@@ -230,40 +232,17 @@ class ScanManager(Manager):
 
     def reset_scan_timer(self):
         self.info('reset scan timer')
-
-        # self.graph.set_scan_delay(self.integration_time)
         self.timer = self._timer_factory()
 
     def add_spec_event_marker(self, msg, mode=None, extra=None, bgcolor='white'):
         if self.use_log_events and self.log_events_enabled:
             if mode == 'valve' and self._valve_event_list:
                 # check valve name is configured to be displayed
-                if not extra in self._valve_event_list:
+                if extra not in self._valve_event_list:
                     return
 
             self.debug('add spec event marker. {}'.format(msg))
             self.graph.add_visual_marker(msg, bgcolor)
-
-    # def peak_center(self):
-    #
-    # man = self.ion_optics_manager
-    #     # if len(self.graphs) > 1:
-    #     #     i = int(self.graphs[-1].split(' ')[2]) + 1
-    #     # else:
-    #     #     i = 1
-    #
-    #     i = 1
-    #     self._log_events_enabled = False
-    #     if man.setup_peak_center(new=True, standalone_graph=False,
-    #                              name='Peak Center {:02n}'.format(i)):
-    #         # self.graphs.append(man.peak_center.graph)
-    #
-    #         def func():
-    #             setattr(self, '_log_events_enabled', True)
-    #
-    #         man.do_peak_center(confirm_save=True, warn=True,
-    #                            message='manual peakcenter',
-    #                            on_end=func)
 
     # private
     def _reset_graph(self):
@@ -272,7 +251,7 @@ class ScanManager(Manager):
         #     self.graphs.pop(0)
         # self.graphs.insert(0, self.graph)
 
-        #trigger a timer reset. set to 0 then default
+        # trigger a timer reset. set to 0 then default
         self.reset_scan_timer()
 
     def _update_graph_limits(self, name, new):
@@ -351,9 +330,10 @@ class ScanManager(Manager):
                 self.queue.put((x, keys, signals))
 
     def _update_scan_graph(self):
-        data = self.spectrometer.get_intensities()
-        if data:
-            self._update(data)
+        if self.scan_enabled:
+            data = self.spectrometer.get_intensities()
+            if data:
+                self._update(data)
 
     def _stop_timer(self):
         self.info('stopping scan timer')

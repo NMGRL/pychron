@@ -56,14 +56,6 @@ class SpectrometerTask(EditorTask):
             man.do_coincidence_scan()
 
     def do_peak_center(self):
-        # man = self.ion_optics_manager
-        # if len(self.graphs) > 1:
-        # i = int(self.graphs[-1].split(' ')[2]) + 1
-        # else:
-        # i = 1
-
-        # i = 1
-        self.scan_manager.log_events_enabled = False
         es = [int(e.name.split(' ')[-1])
               for e in self.editor_area.editors
               if isinstance(e, PeakCenterEditor)]
@@ -73,15 +65,24 @@ class SpectrometerTask(EditorTask):
         man = self.scan_manager.ion_optics_manager
         name = 'Peak Center {:02d}'.format(i)
         if man.setup_peak_center(new=True, standalone_graph=False):
-            def func():
-                setattr(self.scan_manager, 'log_events_enabled', True)
+            self._on_peak_center_start()
 
             self._open_editor(PeakCenterEditor(model=man.peak_center,
                                                name=name))
 
             man.do_peak_center(confirm_save=True, warn=True,
                                message='manual peakcenter',
-                               on_end=func)
+                               on_end=self._on_peak_center_end)
+
+    def _on_peak_center_start(self):
+        self.scan_manager.log_events_enabled = False
+        self.scan_manager.scan_enabled = False
+        self.scan_manager.stop_scan()
+
+    def _on_peak_center_end(self):
+        self.scan_manager.log_events_enabled = True
+        self.scan_manager.scan_enabled = True
+        self.scan_manager.reset_scan_timer()
 
     def send_configuration(self):
         self.scan_manager.spectrometer.send_configuration()

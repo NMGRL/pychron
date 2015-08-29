@@ -27,7 +27,7 @@ from pychron.managers.manager import Manager
 from pychron.graph.graph import Graph
 from pychron.spectrometer.ion_optics.coincidence_config import CoincidenceConfig
 from pychron.spectrometer.ion_optics.peak_center_config import PeakCenterConfig
-from pychron.spectrometer.jobs.coincidence_scan import CoincidenceScan
+from pychron.spectrometer.jobs.coincidence import Coincidence
 from pychron.spectrometer.jobs.peak_center import PeakCenter
 # from threading import Thread
 from pychron.pychron_constants import NULL_STR
@@ -47,7 +47,7 @@ class IonOpticsManager(Manager):
     spectrometer = Any
 
     peak_center = Instance(PeakCenter)
-    coincidence = Instance(CoincidenceScan)
+    coincidence = Instance(Coincidence)
     peak_center_config = Instance(PeakCenterConfig)
     coincidence_config = Instance(CoincidenceConfig)
     canceled = False
@@ -156,7 +156,7 @@ class IonOpticsManager(Manager):
         # self.spectrometer.save_integration()
         # self.spectrometer.set_integration(integration_time)
 
-        cs = CoincidenceScan(spectrometer=self.spectrometer,
+        cs = Coincidence(spectrometer=self.spectrometer,
                              center_dac=center_dac,
                              reference_detector=detector,
                              reference_isotope=isotope,

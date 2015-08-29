@@ -29,7 +29,7 @@ import struct
 from pychron.core.helpers.filetools import unique_path
 from pychron.core.helpers.isotope_utils import sort_isotopes
 from pychron.paths import paths
-from pychron.spectrometer.jobs.magnet_scan import MagnetScan
+from pychron.spectrometer.jobs.magnet_sweep import MagnetSweep
 from pychron.core.stats.peak_detection import find_peaks, calculate_peak_center, PeakCenterError
 from pychron.core.ui.gui import invoke_in_main_thread
 
@@ -44,7 +44,7 @@ class CalibrationPeak(HasTraits):
     ruler = Any
 
 
-class MassCalibratorScan(MagnetScan):
+class MassCalibratorSweep(MagnetSweep):
     db = Any
 
     start_dac = Float(4)
@@ -56,7 +56,7 @@ class MassCalibratorScan(MagnetScan):
 
     selected = Any
 
-    #peak detection tuning parameters
+    # peak detection tuning parameters
     min_peak_height = Float(1)
     min_peak_separation = Range(0.0001, 1000)
     # if the next point is less than delta from the current point than this is not a peak
@@ -126,12 +126,12 @@ class MassCalibratorScan(MagnetScan):
             spectrometer = 'Obama'
             hist = db.add_mass_calibration_history(spectrometer)
 
-            #add coarse scan
+            # add coarse scan
             d = self._get_coarse_data()
             data = self._pack(d)
             db.add_mass_calibration_scan(hist, blob=data)
 
-            #add fine scans
+            # add fine scans
             plot = self.graph.plots[1]
             cps = [cp for cp in self.calibration_peaks if cp.isotope]
             for cp, ki in zip(cps, sorted(plot.plots.keys())):
@@ -145,7 +145,6 @@ class MassCalibratorScan(MagnetScan):
                                              cp.isotope,
                                              blob=data,
                                              center=cp.dac, )
-
 
     def _apply_calibration(self):
         """
@@ -167,23 +166,23 @@ class MassCalibratorScan(MagnetScan):
         steps = self._calc_step_values(c - w, c + w, self.fstep_dac)
         self._scan_dac(steps)
 
-        #get last scan
+        # get last scan
         xs = line.index.get_data()
         ys = line.value.get_data()
 
         try:
             center = calculate_peak_center(xs, ys)
 
-        # if not isinstance(center, str):
+            # if not isinstance(center, str):
             [lx, cx, hx], [ly, cy, hy], mx, my = center
             self.graph.add_vertical_rule(cx, plotid=1)
             self.info('new peak center. {} nominal={} dx={}'.format(cp.isotope, cp.dac, cx))
             cp.dac += cx
             self._redraw()
-        except PeakCenterError,e:
+        except PeakCenterError, e:
             self.warning(e)
-        # else:
-        #     self.warning(center)
+            # else:
+            #     self.warning(center)
 
     def _update_graph_data(self, *args, **kw):
         """
@@ -192,12 +191,12 @@ class MassCalibratorScan(MagnetScan):
         if self._fine_scanning:
             self._update_fine_graph_data(*args, **kw)
         else:
-            super(MassCalibratorScan, self)._update_graph_data(*args, **kw)
+            super(MassCalibratorSweep, self)._update_graph_data(*args, **kw)
 
     def _update_fine_graph_data(self, plot, di, intensities, **kw):
-        #print di, intensities
+        # print di, intensities
 
-        #convert dac to a relative dac
+        # convert dac to a relative dac
         di -= self.selected.dac
 
         ks = sorted(plot.plots.keys())
@@ -216,7 +215,7 @@ class MassCalibratorScan(MagnetScan):
         cur.index.set_data(xs)
 
         _R = -Inf
-        #get the max range and normalize all series
+        # get the max range and normalize all series
         for p in plot.plots.itervalues():
             p = p[0]
             high, low = max(p.odata), min(p.odata)
@@ -243,7 +242,7 @@ class MassCalibratorScan(MagnetScan):
         if self._fine_scanning:
             self._fine_graph_hook(*args, **kw)
         else:
-            super(MassCalibratorScan, self)._graph_hook(*args, **kw)
+            super(MassCalibratorSweep, self)._graph_hook(*args, **kw)
 
     def _dump_scan(self):
         root = os.path.join(paths.data_dir, 'mass_calibration_scans')
@@ -266,7 +265,7 @@ class MassCalibratorScan(MagnetScan):
 
     def _find_peaks(self):
         if self.graph.plots:
-            #clear peaks
+            # clear peaks
             self.graph.remove_rulers()
 
             data = self.graph.plots[0].data
@@ -313,14 +312,14 @@ class MassCalibratorScan(MagnetScan):
 
         self.verbose = True
         if abs(sm - em) > stm:
-            #do initial scan
-            self._do_scan(sm, em, stm, map_mass=False)
+            # do initial scan
+            self._do_sweep(sm, em, stm, map_mass=False)
             self._alive = False
 
-            #write data to file for testing
+            # write data to file for testing
             self._dump_scan()
 
-            #find peaks
+            # find peaks
             self._find_peaks()
 
             self._post_execute()
@@ -384,7 +383,7 @@ class MassCalibratorScan(MagnetScan):
                  editor=TextEditor(evaluate=float)),
             Item('delta',
                  tooltip=DELTA_TOOLTIP
-            ),
+                 ),
             label='Peak Detection')
 
         fine_grp = Group(
@@ -392,7 +391,7 @@ class MassCalibratorScan(MagnetScan):
                  tooltip='+/- volts centered at peak_i'),
             Item('fperiod', label='Scan Period (ms)',
                  tooltip='fine scan integration time'
-            ),
+                 ),
             HGroup(spring, Item('fexecute_button',
                                 editor=ButtonEditor(label_value='fexecute_label'),
                                 show_label=False)),
@@ -406,9 +405,7 @@ class MassCalibratorScan(MagnetScan):
         return len([cp for cp in self.calibration_peaks
                     if cp.isotope]) > 2
 
-
     def _get_fexecute_label(self):
         return 'Stop' if self.isAlive() else 'Start'
 
         # ============= EOF =============================================
-

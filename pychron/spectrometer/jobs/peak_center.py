@@ -20,13 +20,13 @@ from traits.api import Float, Str
 import time
 from numpy import max, argmax
 # ============= local library imports  ==========================
-from magnet_scan import MagnetScan
+from magnet_sweep import MagnetSweep
 from pychron.graph.graph import Graph
 from pychron.core.stats.peak_detection import calculate_peak_center, PeakCenterError
 from pychron.core.ui.gui import invoke_in_main_thread
 
 
-class BasePeakCenter(MagnetScan):
+class BasePeakCenter(MagnetSweep):
     title = 'Base Peak Center'
     center_dac = Float
     reference_isotope = Str
@@ -48,6 +48,7 @@ class BasePeakCenter(MagnetScan):
         self.stop()
 
     def get_peak_center(self, ntries=2):
+
         self._alive = True
         self.canceled = False
 
@@ -56,7 +57,8 @@ class BasePeakCenter(MagnetScan):
         self.info('starting peak center. center dac= {}'.format(center_dac))
 
         graph.clear()
-        invoke_in_main_thread(self._graph_factory, graph=graph)
+        self._graph_factory(graph)
+        # invoke_in_main_thread(self._graph_factory, graph=graph)
 
         width = self.step_width
         try:
@@ -73,7 +75,8 @@ class BasePeakCenter(MagnetScan):
 
             if i > 0:
                 graph.clear()
-                invoke_in_main_thread(self._graph_factory, graph=graph)
+                self._graph_factory(graph)
+                # invoke_in_main_thread(self._graph_factory, graph=graph)
 
             start, end = self._get_scan_parameters(i, center, smart_shift)
 
@@ -87,27 +90,55 @@ class BasePeakCenter(MagnetScan):
             returns center, success (float/None, bool)
         """
         graph = self.graph
+        spec = self.spectrometer
 
-        invoke_in_main_thread(graph.set_x_limits,
-                              min_=min([start, end]),
-                              max_=max([start, end]))
+        # invoke_in_main_thread(graph.set_x_limits,
+        #                       min_=min([start, end]),
+        #                       max_=max([start, end]))
+        graph.set_x_limits(min_=min([start, end]),
+                           max_=max([start, end]))
 
         # move to start position
-        delay = 3
-        self.info('moving to starting dac {}. delay {} before continuing'.format(start, delay))
-        self.spectrometer.magnet.set_dac(start)
-        time.sleep(delay)
+        self.info('Moving to starting dac {}'.format(start))
+        spec.magnet.set_dac(start)
+
+        tol = 1
+        timeout = 10
+        self.info('Wait until signal near baseline. tol= {}. timeout= {}'.format(tol, timeout))
+        spec.set_integration_time(0.5)
+
+        st = time.time()
+        while 1:
+            keys, signals = spec.get_intensities()
+
+            idx = keys.index(self.reference_detector)
+            signal = signals[idx]
+            if signal < tol:
+                self.info('Peak center baseline intensity achieved')
+                break
+
+            et = time.time() - st
+            if et > timeout:
+                self.warning('Peak center failed to move to a baseline position')
+                break
+            time.sleep(0.5)
+
+        spec.set_integration_time(self.integration_time)
+
+        # self.info('moving to starting dac {}. delay {} before continuing'.format(start, delay))
+        # delay = 3
+        # time.sleep(delay)
 
         center, smart_shift, success = None, False, False
         # cdd has been tripping during the previous move on obama when moving H1 from 34.5 to 39.7
         # check if cdd is still active
-        if not self.spectrometer.get_detector_active('CDD'):
+        if not spec.get_detector_active('CDD'):
             self.warning('CDD has tripped!')
             self.cancel()
         else:
 
-            ok = self._do_scan(start, end, width, directions=self.directions, map_mass=False)
-            self.debug('result of _do_scan={}'.format(ok))
+            ok = self._do_sweep(start, end, width, directions=self.directions, map_mass=False)
+            self.debug('result of _do_sweep={}'.format(ok))
 
             if ok and self.directions != 'Oscillate':
                 if not self.canceled:

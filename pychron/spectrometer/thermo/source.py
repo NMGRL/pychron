@@ -44,6 +44,9 @@ class ArgusSource(SpectrometerDevice):
 
     _extraction_lens = Float  # Range(0.0, 100.)
 
+    def set_hv(self, v):
+        return self._set_value('SetHV', v)
+
     def read_trap_current(self):
         return self._read_value('GetParameter Trap Current Readback', '_trap_current')
 
