@@ -18,10 +18,9 @@
 # ============= standard library imports ========================
 import socket
 # ============= local library imports  ==========================
-from communicator import Communicator
 from pychron.globals import globalv
+from pychron.hardware.core.communicators.communicator import Communicator, process_response
 from pychron.hardware.core.checksum_helper import computeCRC
-from pychron.loggable import Loggable
 
 
 class MessageFrame(object):
@@ -45,13 +44,11 @@ class MessageFrame(object):
             self.message_len = True
 
 
-class Handler(Loggable):
+class Handler(object):
     sock = None
     datasize = 2 ** 12
     address = None
     message_frame = None
-    # use_message_len_checking = True
-    # use_checksum = True
 
     def set_frame(self, f):
         self.message_frame = MessageFrame()
@@ -66,7 +63,11 @@ class Handler(Loggable):
     def end(self):
         pass
 
+    # private
     def _recvall(self, recv):
+        """
+        recv: callable that accepts 1 argument (datasize). should return a str
+        """
         ss = []
         sum = 0
 
@@ -130,7 +131,6 @@ class TCPHandler(Handler):
 
     def send_packet(self, p):
         self.sock.send(p)
-        return True
 
     def end(self):
         self.sock.close()
@@ -145,40 +145,19 @@ class UDPHandler(Handler):
         self.sock.settimeout(timeout)
 
     def get_packet(self, cmd):
-        # r = None
-        # cnt = 3
-        # cnt = 1
-
         def recv(ds):
             rx, _ = self.sock.recvfrom(ds)
             return rx
 
-        # for _ in range(cnt):
-        #     try:
-        #         r = self._recvall(recv)
-        #         # r, _address = self.sock.recvfrom(self.datasize)
-        #         break
-        #     except socket.error, e:
-        #         self.debug('get_packet {}'.format(e))
-        #         self.error_mode = True
-        # else:
-        #     self.warning('get packet for {} error: {}'.format(cmd, e))
         return self._recvall(recv)
 
     def send_packet(self, p):
-        # self.sock.sendto(p, self.address)
-        ok = False
-        try:
-            self.sock.sendto(p, self.address)
-            ok = True
-        except (TypeError, socket.error), e:
-            self.warning('send packet {} {}'.format(e, self.address))
-
-        return ok
+        self.sock.sendto(p, self.address)
 
 
 class EthernetCommunicator(Communicator):
     """
+    Communicator of UDP or TCP.
     """
     host = None
     port = None
@@ -187,7 +166,6 @@ class EthernetCommunicator(Communicator):
     test_cmd = None
     use_end = False
     verbose = False
-    error = None
     error_mode = False
     message_frame = ''
 
@@ -259,16 +237,8 @@ class EthernetCommunicator(Communicator):
             return h
         except socket.error, e:
             self.debug('Get Handler {}'.format(str(e)))
-            self.error = True
+            self.error_mode = True
             self.handler = None
-
-    def _reset_connection(self):
-        self.handler = None
-        self.error = False
-
-    def read(self, *args, **kw):
-        handler = self.get_handler()
-        return handler.get_packet('')
 
     def ask(self, cmd, retries=3, verbose=True, quiet=False, info=None, *args, **kw):
         """
@@ -282,12 +252,12 @@ class EthernetCommunicator(Communicator):
 
         cmd = '{}{}'.format(cmd, self.write_terminator)
 
-        if self.error_mode:
-            retries = 1
-
         r = None
         with self._lock:
-            re = 'ERROR: Connection refused {}:{}'.format(self.host, self.port)
+            if self.error_mode:
+                retries = 1
+
+            re = 'ERROR: Connection refused: {}'.format(self.address)
             for _ in xrange(retries):
                 r = self._ask(cmd)
                 if r is not None:
@@ -296,9 +266,9 @@ class EthernetCommunicator(Communicator):
                     self._reset_connection()
 
         if r is not None:
-            re = self.process_response(r)
+            re = process_response(r)
         else:
-            self.error = True
+            self.error_mode = True
 
         if self.use_end:
             handler = self.get_handler()
@@ -310,6 +280,26 @@ class EthernetCommunicator(Communicator):
 
         return r
 
+    def read(self, *args, **kw):
+        handler = self.get_handler()
+        return handler.get_packet('')
+
+    def tell(self, cmd, verbose=True, quiet=False, info=None):
+        with self._lock:
+            handler = self.get_handler()
+            try:
+                handler.send_packet(cmd)
+                if verbose or self.verbose and not quiet:
+                    self.log_tell(cmd, info)
+            except socket.error, e:
+                self.warning('tell. send packet. error: {}'.format(e))
+                self.error_mode = True
+
+    # private
+    def _reset_connection(self):
+        self.handler = None
+        self.error_mode = False
+
     def _ask(self, cmd):
         timeout = 1
         if self.error_mode:
@@ -317,28 +307,21 @@ class EthernetCommunicator(Communicator):
             timeout = 0.25
 
         handler = self.get_handler(timeout)
-        # print self.handler, handler, timeout, self.error_mode, cmd
         if not handler:
             self.error_mode = True
-            # self.simulation = True
             return
         else:
             self.error_mode = False
-            # self.simulation = False
 
-        if handler.send_packet(cmd):
+        try:
+            handler.send_packet(cmd)
             try:
                 return handler.get_packet(cmd)
-            except socket.error:
+            except socket.error, e:
+                self.warning('ask. get packet. error: {} address: {}'.format(e, self.address))
                 self.error_mode = True
-
-    def tell(self, cmd, verbose=True, quiet=False, info=None):
-        self._lock.acquire()
-        handler = self.get_handler()
-
-        if handler.send_packet(cmd):
-            if verbose or self.verbose and not quiet:
-                self.log_tell(cmd, info)
-        self._lock.release()
+        except socket.error, e:
+            self.warning('ask. send packet. error: {} address: {}'.format(e, self.address))
+            self.error_mode = True
 
 # ============= EOF ====================================
