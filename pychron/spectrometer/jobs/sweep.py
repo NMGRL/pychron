@@ -35,6 +35,29 @@ def oscillate():
         flag = not flag
 
 
+def alternate(s, e, step, reverse=False):
+    i = 0
+    j = 0
+    flag = True
+    if reverse:
+        flag = False
+
+    while 1:
+        if flag:
+            v = s + step * i
+            i += 1
+            if v >= e:
+                break
+        else:
+            v = e - (step * j)
+            j += 1
+            if v <= s:
+                break
+        flag = not flag
+
+        yield v
+
+
 class BaseSweep(SpectrometerTask):
     detectors = DelegatesTo('spectrometer')
     integration_time = DelegatesTo('spectrometer')
@@ -45,13 +68,31 @@ class BaseSweep(SpectrometerTask):
     verbose = False
     normalize = Bool(True)
 
+    testing = True
+
     @property
     def active_detectors(self):
         return [self.reference_detector] + self.additional_detectors
 
     # private
+    def _test_sweep(self, s, e, step):
+        forward = self._calc_step_values(s, e, step)
+        backward = self._calc_step_values(e, s, step)
+        if not self._sweep(forward):
+            return
+        if not self._sweep(backward):
+            return
+
+        alt = alternate(s, e, step)
+        self._sweep(alt)
+        return True
+
     def _do_sweep(self, sm, em, stm, directions=None):
         self.debug('_do_sweep sm= {}, em= {}, stm= {}'.format(sm, em, stm))
+
+        if self.testing:
+            return self._test_sweep(sm, em, stm)
+
         if directions is None:
             directions = [1]
         elif isinstance(directions, str):

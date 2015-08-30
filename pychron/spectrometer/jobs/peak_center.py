@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Float, Str
+from traits.api import Float, Str, Int
 # ============= standard library imports ========================
 import time
 from numpy import max, argmax
@@ -30,9 +30,10 @@ class BasePeakCenter(MagnetSweep):
     title = 'Base Peak Center'
     center_dac = Float
     reference_isotope = Str
-    window = Float #(0.015)
-    step_width = Float #(0.0005)
-    min_peak_height = Float #(1.0)
+    window = Float  # (0.015)
+    step_width = Float  # (0.0005)
+    min_peak_height = Float  # (1.0)
+    percent = Int
     canceled = False
     show_label = False
     result = None
@@ -51,7 +52,6 @@ class BasePeakCenter(MagnetSweep):
 
         self._alive = True
         self.canceled = False
-
 
         center_dac = self.center_dac
         self.info('starting peak center. center dac= {}'.format(center_dac))
@@ -198,7 +198,8 @@ class BasePeakCenter(MagnetSweep):
     def _calculate_peak_center(self, x, y):
         try:
             result = calculate_peak_center(x, y,
-                                           min_peak_height=self.min_peak_height)
+                                           min_peak_height=self.min_peak_height,
+                                           percent=self.percent)
             return result
         except PeakCenterError, e:
             self.warning('Failed to find a valid peak. {}'.format(e))
@@ -223,7 +224,11 @@ class BasePeakCenter(MagnetSweep):
                 font='modern 8',
                 line_spacing=1))
 
-        graph.new_series(line_width=2)
+        kw = {'line_width': 2}
+        if self.testing:
+            kw['type'] = 'scatter'
+
+        graph.new_series(**kw)
 
         graph.set_series_label('*{}'.format(self.reference_detector))
         self._markup_idx = 1
@@ -274,4 +279,3 @@ class PeakCenter(BasePeakCenter):
 #        ntries = 2
 #        success = False
 #        result = None
-

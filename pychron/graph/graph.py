@@ -319,7 +319,6 @@ class Graph(Viewable, ContextMenuMixin):
         self.plotcontainer = self.container_factory()
         self.selected_plot = None
 
-
     def set_axis_label_color(self, *args, **kw):
         """
         """
@@ -457,7 +456,6 @@ class Graph(Viewable, ContextMenuMixin):
         self.plots[plotid].plots[label] = plots
         self.plots[plotid].plots.pop(series)
 
-
     def clear_legend(self, keys, plotid=0):
         """
         """
@@ -500,7 +498,6 @@ class Graph(Viewable, ContextMenuMixin):
             max_ = mmax
 
         self._set_limits(min_, max_, 'value', plotid, pad, **kw)
-
 
     def set_x_limits(self, min_=None, max_=None, pad=0, plotid=0, **kw):
         """
@@ -671,7 +668,6 @@ class Graph(Viewable, ContextMenuMixin):
 
         plotid = len(self.plots) - 1
 
-
         for t in ['x', 'y']:
             title = '{}title'.format(t)
             if title in kw:
@@ -697,34 +693,29 @@ class Graph(Viewable, ContextMenuMixin):
 
         if plotid is None:
             plotid = len(self.plots) - 1
+
         kw['plotid'] = plotid
         plotobj, names, rd = self._series_factory(x, y, yer=yer, **kw)
 
-
         if 'type' in rd:
-            if rd['type'] == 'line_scatter':
-
-                renderer = plotobj.plot(names,
-                                        type='scatter', marker_size=2,
-                                        marker='circle',
-                                        color=rd['color'],
-                                        outline_color=rd['color'])
+            ptype = rd['type']
+            if ptype == 'line_scatter':
+                plotobj.plot(names,
+                             type='scatter', marker_size=2,
+                             marker='circle',
+                             color=rd['color'],
+                             outline_color=rd['color'])
                 rd['type'] = 'line'
 
-            elif rd['type'] == 'scatter':
-                if 'outline_color' in rd:
+            elif ptype == 'scatter':
+                if 'outline_color' not in rd:
                     rd['outline_color'] = rd['color']
+                if 'selection_outline_color' not in rd:
+                    rd['selection_outline_color'] = rd['color']
 
-                rd['selection_color'] = rd['selection_color']
-                rd['selection_outline_color'] = rd['color']
-
-            if rd['type'] == 'cmap_scatter':
+            if ptype == 'cmap_scatter':
                 from chaco.default_colormaps import color_map_name_dict
-
                 rd['color_mapper'] = color_map_name_dict[color_map_name]
-                #                 rd['line_width'] = 1
-
-                #                    self.series[plotid][1] += (c,)
                 c = self.series[plotid][-1][0].replace('x', 'c')
                 self.plots[plotid].data.set_data(c, array(colors))
                 names += (c,)
@@ -1139,15 +1130,15 @@ class Graph(Viewable, ContextMenuMixin):
             plot.data.set_data(yername, yer)
 
         colorkey = 'color'
-        if not 'color' in kw.keys():
+        if 'color' not in kw.keys():
             color_gen = self.color_generators[plotid]
             c = color_gen.next()
         else:
             c = kw['color']
         if isinstance(c, str):
             c = c.replace(' ', '')
-        if 'type' in kw:
 
+        if 'type' in kw:
             if kw['type'] == 'bar':
                 colorkey = 'fill_color'
             elif kw['type'] == 'polygon':
@@ -1160,8 +1151,7 @@ class Graph(Viewable, ContextMenuMixin):
         for k, v in [
             ('render_style', 'connectedpoints'),
             (colorkey, c),
-            ('selection_color', 'white')
-        ]:
+            ('selection_color', 'white')]:
             if k not in kw.keys():
                 kw[k] = v
 
@@ -1278,8 +1268,6 @@ class Graph(Viewable, ContextMenuMixin):
             return ra.low, ra.high
         except AttributeError, e:
             print 'get_limits', e
-
-
 
     def _set_limits(self, mi, ma, axis, plotid, pad, pad_style='symmetric', force=False):
 
@@ -1411,112 +1399,112 @@ class Graph(Viewable, ContextMenuMixin):
             v.id = self.view_identifier
         return v
 
-# ============= EOF ====================================
-#     def _export_raw_data(self, path, header, plotid):
-#         def name_generator(base):
-#             i = 0
-#             while 1:
-#                 yield '%s%s%8s' % (base, i, '')
-#                 i += 1
-#
-#         xname_gen = name_generator('x')
-#         yname_gen = name_generator('y')
-#
-#         writer = csv.writer(open(path, 'w'))
-#         if plotid is None:
-#             plotid = self.selected_plotid
-#
-# #         xs = self.raw_x[plotid]
-# #         ys = self.raw_y[plotid]
-#
-#         cols = []
-#         nnames = []
-#         for xd, yd in zip(xs, ys):
-#             cols.append(fmt(xd))
-#             cols.append(fmt(yd))
-#             nnames.append(xname_gen.next())
-#             nnames.append(yname_gen.next())
-#
-#         if header is None:
-#             header = nnames
-#         writer.writerow(header)
-#         rows = zip(*cols)
-#         writer.writerows(rows)
-# def _assemble_plot_metadata(self, plot):
-#     meta = dict()
-#     pmeta = dict()
-#     if isinstance(plot, ScatterPlot):
-#         attrs = ['color', 'marker_size', 'marker']
-#     else:
-#         attrs = ['color', 'line_width', 'line_style']
-#
-#     for ai in attrs:
-#         v = getattr(plot, ai)
-#         #            if ai == 'color':
-#         #                print ai, v, type(v)
-#         #                if isinstance(v, str):
-#         #                    v = color_table[v]
-#         #                else:
-#         #                    v=map(lambda x:x*255, v)
-#
-#         meta[ai] = v
-#
-#     meta['plot'] = pmeta
-#
-#     return meta
-#
-# def _assemble_value_axis_metadata(self, v):
-#     vmeta = dict()
-#     vattrs = ['title_spacing', 'tick_visible', 'tick_label_formatter']
-#
-#     for ai in vattrs:
-#         vmeta[ai] = getattr(v, ai)
-#     return vmeta
-#
-# def dump_metadata(self):
-#     ps = []
-#
-#     for p in self.plots:
-#         d = dict()
-#         d['value_axis'] = self._assemble_value_axis_metadata(p.value_axis)
-#         d['xlimits'] = p.index_range.low, p.index_range.high
-#         for k, pp in p.plots.iteritems():
-#             pp = pp[0]
-#             d[k] = self._assemble_plot_metadata(pp)
-#
-#         ps.append(d)
-#
-#     return ps
-#
-# def load_metadata(self, metas):
-#     return
-#
-#     self.debug('loading metadata')
-#
-#     for i, meta in enumerate(metas):
-#         #print meta.keys()
-#         if not meta:
-#             continue
-#         try:
-#             plot = self.plots[i]
-#         except IndexError:
-#             continue
-#
-#         plots = plot.plots
-#         for k, d in meta.iteritems():
-#             obj = None
-#             if k == 'value_axis':
-#                 obj = plot.value_axis
-#             elif k in plots:
-#                 obj = plots[k][0]
-#
-#             if obj:
-#                 for ki, di in d.iteritems():
-#                     if 'color' in ki:
-#                         d[ki] = map(lambda x: x * 255, d[ki])
-#                 obj.trait_set(**d)
-#
-#         mi_, ma_ = meta['xlimits']
-#         self.set_x_limits(min_=mi_, max_=ma_, plotid=i)
-#
-#     self.redraw()
+        # ============= EOF ====================================
+        #     def _export_raw_data(self, path, header, plotid):
+        #         def name_generator(base):
+        #             i = 0
+        #             while 1:
+        #                 yield '%s%s%8s' % (base, i, '')
+        #                 i += 1
+        #
+        #         xname_gen = name_generator('x')
+        #         yname_gen = name_generator('y')
+        #
+        #         writer = csv.writer(open(path, 'w'))
+        #         if plotid is None:
+        #             plotid = self.selected_plotid
+        #
+        # #         xs = self.raw_x[plotid]
+        # #         ys = self.raw_y[plotid]
+        #
+        #         cols = []
+        #         nnames = []
+        #         for xd, yd in zip(xs, ys):
+        #             cols.append(fmt(xd))
+        #             cols.append(fmt(yd))
+        #             nnames.append(xname_gen.next())
+        #             nnames.append(yname_gen.next())
+        #
+        #         if header is None:
+        #             header = nnames
+        #         writer.writerow(header)
+        #         rows = zip(*cols)
+        #         writer.writerows(rows)
+        # def _assemble_plot_metadata(self, plot):
+        #     meta = dict()
+        #     pmeta = dict()
+        #     if isinstance(plot, ScatterPlot):
+        #         attrs = ['color', 'marker_size', 'marker']
+        #     else:
+        #         attrs = ['color', 'line_width', 'line_style']
+        #
+        #     for ai in attrs:
+        #         v = getattr(plot, ai)
+        #         #            if ai == 'color':
+        #         #                print ai, v, type(v)
+        #         #                if isinstance(v, str):
+        #         #                    v = color_table[v]
+        #         #                else:
+        #         #                    v=map(lambda x:x*255, v)
+        #
+        #         meta[ai] = v
+        #
+        #     meta['plot'] = pmeta
+        #
+        #     return meta
+        #
+        # def _assemble_value_axis_metadata(self, v):
+        #     vmeta = dict()
+        #     vattrs = ['title_spacing', 'tick_visible', 'tick_label_formatter']
+        #
+        #     for ai in vattrs:
+        #         vmeta[ai] = getattr(v, ai)
+        #     return vmeta
+        #
+        # def dump_metadata(self):
+        #     ps = []
+        #
+        #     for p in self.plots:
+        #         d = dict()
+        #         d['value_axis'] = self._assemble_value_axis_metadata(p.value_axis)
+        #         d['xlimits'] = p.index_range.low, p.index_range.high
+        #         for k, pp in p.plots.iteritems():
+        #             pp = pp[0]
+        #             d[k] = self._assemble_plot_metadata(pp)
+        #
+        #         ps.append(d)
+        #
+        #     return ps
+        #
+        # def load_metadata(self, metas):
+        #     return
+        #
+        #     self.debug('loading metadata')
+        #
+        #     for i, meta in enumerate(metas):
+        #         #print meta.keys()
+        #         if not meta:
+        #             continue
+        #         try:
+        #             plot = self.plots[i]
+        #         except IndexError:
+        #             continue
+        #
+        #         plots = plot.plots
+        #         for k, d in meta.iteritems():
+        #             obj = None
+        #             if k == 'value_axis':
+        #                 obj = plot.value_axis
+        #             elif k in plots:
+        #                 obj = plots[k][0]
+        #
+        #             if obj:
+        #                 for ki, di in d.iteritems():
+        #                     if 'color' in ki:
+        #                         d[ki] = map(lambda x: x * 255, d[ki])
+        #                 obj.trait_set(**d)
+        #
+        #         mi_, ma_ = meta['xlimits']
+        #         self.set_x_limits(min_=mi_, max_=ma_, plotid=i)
+        #
+        #     self.redraw()

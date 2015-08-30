@@ -34,6 +34,8 @@ from pychron.pychron_constants import NULL_STR
 from pychron.core.ui.thread import Thread
 from pychron.paths import paths
 from pychron.core.helpers.isotope_utils import sort_isotopes
+
+
 # from pychron.core.ui.gui import invoke_in_main_thread
 
 
@@ -53,6 +55,8 @@ class IonOpticsManager(Manager):
     canceled = False
 
     peak_center_result = None
+
+    _centering_thread = None
 
     def get_mass(self, isotope_key):
         spec = self.spectrometer
@@ -126,7 +130,7 @@ class IonOpticsManager(Manager):
         if new_thread:
             t = Thread(name='ion_optics.coincidence', target=self._coincidence)
             t.start()
-            self._thread = t
+            self._centering_thread = t
 
     def _coincidence(self):
         self.coincidence.get_peak_center()
@@ -144,7 +148,7 @@ class IonOpticsManager(Manager):
         detector = pcc.detector.name
         isotope = pcc.isotope
         detectors = [d for d in pcc.additional_detectors]
-        integration_time = pcc.integration_time
+        # integration_time = pcc.integration_time
 
         if pcc.use_nominal_dac:
             center_dac = self.get_position(isotope, detector)
@@ -157,10 +161,10 @@ class IonOpticsManager(Manager):
         # self.spectrometer.set_integration(integration_time)
 
         cs = Coincidence(spectrometer=self.spectrometer,
-                             center_dac=center_dac,
-                             reference_detector=detector,
-                             reference_isotope=isotope,
-                             additional_detectors=detectors)
+                         center_dac=center_dac,
+                         reference_detector=detector,
+                         reference_isotope=isotope,
+                         additional_detectors=detectors)
         self.coincidence = cs
         return cs
 
@@ -194,7 +198,7 @@ class IonOpticsManager(Manager):
             t = Thread(name='ion_optics.peak_center', target=self._peak_center,
                        args=args)
             t.start()
-            self._thread = t
+            self._centering_thread = t
             return t
         else:
             self._peak_center(*args)
@@ -204,7 +208,7 @@ class IonOpticsManager(Manager):
                           directions='Increase',
                           center_dac=None, plot_panel=None, new=False,
                           standalone_graph=True, name='', show_label=False,
-                          window=0.015, step_width=0.0005, min_peak_height=1.0):
+                          window=0.015, step_width=0.0005, min_peak_height=1.0, percent=80):
 
         spec = self.spectrometer
 
@@ -228,6 +232,7 @@ class IonOpticsManager(Manager):
                 window = pcc.window
                 min_peak_height = pcc.min_peak_height
                 step_width = pcc.step_width
+                percent = pcc.percent
 
                 if not pcc.use_current_dac:
                     center_dac = pcc.dac
@@ -246,8 +251,8 @@ class IonOpticsManager(Manager):
             center_dac = self.get_center_dac(ref, isotope)
 
         ref = detectors[0]
-        self.reference_detector = ref
-        self.reference_isotope = isotope
+        # self.reference_detector = ref
+        # self.reference_isotope = isotope
 
         if len(detectors) > 1:
             ad = detectors[1:]
@@ -260,9 +265,10 @@ class IonOpticsManager(Manager):
 
         pc.trait_set(center_dac=center_dac,
                      period=period,
-                     window = window,
-                     min_peak_height = min_peak_height,
-                     step_width = step_width,
+                     window=window,
+                     percent=percent,
+                     min_peak_height=min_peak_height,
+                     step_width=step_width,
                      directions=directions,
                      reference_detector=ref,
                      additional_detectors=ad,
