@@ -33,7 +33,8 @@ class LaserProtocol(ServiceProtocol):
         self._manager = man
         self._addr = addr
 
-        services = (('MachineVisionDegas', '_machine_vision_degas'),
+        services = (('GetError','_get_error'),
+                    ('MachineVisionDegas', '_machine_vision_degas'),
                     ('StartVideoRecording', '_start_video_recording'),
                     ('StopVideoRecording', '_stop_video_recording'),
                     ('ReadLaserPower', '_read_laser_power'),
@@ -91,10 +92,20 @@ class LaserProtocol(ServiceProtocol):
                     ('SetLight', '_set_light'))
         self._register_services(services)
 
+    def _get_response(self, service, data):
+        cdata = self._prepare_data(data)
+        service.callback(self._manager, cdata)
+
     # ===============================================================================
     # Machine Vision
     # ===============================================================================
-    def _machine_vision_degas(self, manager, lumens, duration):
+    def _machine_vision_degas(self, manager, data):
+        if isinstance(data, dict):
+            lumens, duration = data['lumens'], data['duration']
+        else:
+            lumens, duration = data.split(',')
+
+        lumens, duration = float(lumens), float(duration)
         manager.do_machine_vision_degas(lumens, duration, new_thread=True)
 
     def _get_auto_correcting(self, manager, data):
@@ -109,12 +120,16 @@ class LaserProtocol(ServiceProtocol):
     def _stop_video_recording(self, manager, data):
         manager.stop_video_recording()
 
-    def _snapshot(self, manager, name, pic_format):
+    def _snapshot(self, manager, data):
         """
             name: base name for file. saved in default directory
 
             returns: abs path to saved file in the media server
         """
+        if isinstance(data, dict):
+            name, pic_format = data['name'], data['pic_format']
+        else:
+            name, pic_format = data.split(',')
 
         sm = manager.stage_manager
         if hasattr(sm, 'video'):
@@ -133,6 +148,9 @@ class LaserProtocol(ServiceProtocol):
     # ===============================================================================
     # Laser
     # ===============================================================================
+    def _get_error(self, manager, data):
+        return manager.get_error()
+
     def _read_laser_power(self, manager, data):
         """
             return watts
@@ -173,7 +191,12 @@ class LaserProtocol(ServiceProtocol):
         manager.set_laser_power(p)
         return True
 
-    def _set_laser_output(self, manager, value, units):
+    def _set_laser_output(self, manager, data):
+        if isinstance(data, dict):
+            value, units = data['value'], data['units']
+        else:
+            value, units = data.split(',')
+
         try:
             p = float(value)
         except:
@@ -246,7 +269,11 @@ class LaserProtocol(ServiceProtocol):
     # ===============================================================================
     # Positioning
     # ===============================================================================
-    def _set_x_y(self, manager, x, y):
+    def _set_x_y(self, manager, data):
+        if isinstance(data, dict):
+            x,y=data['x'],data['y']
+        else:
+            x,y=data.split(',')
         # try:
         #     x, y = data.split(',')
         # except (ValueError, AttributeError):

@@ -132,7 +132,7 @@ class ServiceProtocol(Protocol):
             traceback.print_exc()
             raise ServiceNameError(name, data)
 
-    def _get_response(self, service, data):
+    def _prepare_data(self, data):
         if isinstance(data, dict):
             cdata = data
         else:
@@ -147,6 +147,10 @@ class ServiceProtocol(Protocol):
             cdata = data
 
         self.debug('Data {cdata!r}', cdata=cdata)
+        return cdata
+
+    def _get_response(self, service, data):
+        cdata = self._prepare_data(data)
         service.callback(cdata)
 
 # ============= EOF =============================================

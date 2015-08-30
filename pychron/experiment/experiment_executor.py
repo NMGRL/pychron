@@ -1432,13 +1432,17 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.heading('Pre Run Check Passed')
 
     def _check_for_errors(self):
+        self.debug('checking for connectable errors')
         for c in self.connectables:
+            self.debug('check connectable name: {} manager: {}'.format(c.name, c.manager))
             man = c.manager
             if man is None:
                 man = self.application.get_service(c.protocol, 'name=="{}"'.format(c.name))
 
+            self.debug('connectable manager: {}'.format(man))
             if man:
                 e = man.get_error()
+                self.debug('connectable get error {}'.format(e))
                 if e:
                     self._err_message = e
                     break

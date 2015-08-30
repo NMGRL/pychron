@@ -111,6 +111,9 @@ class PychronLaserManager(BaseLaserManager, EthernetDeviceMixin):
     def get_tray(self):
         return self._ask('GetSampleHolder')
 
+    def get_error(self):
+        return self._ask('GetError')
+
     # ===============================================================================
     # patterning
     # ===============================================================================
