@@ -251,8 +251,8 @@ class IonOpticsManager(Manager):
             center_dac = self.get_center_dac(ref, isotope)
 
         ref = detectors[0]
-        # self.reference_detector = ref
-        # self.reference_isotope = isotope
+        self.reference_detector = ref
+        self.reference_isotope = isotope
 
         if len(detectors) > 1:
             ad = detectors[1:]

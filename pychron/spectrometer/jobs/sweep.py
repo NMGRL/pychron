@@ -68,7 +68,7 @@ class BaseSweep(SpectrometerTask):
     verbose = False
     normalize = Bool(True)
 
-    testing = True
+    testing = False
 
     @property
     def active_detectors(self):
@@ -83,8 +83,8 @@ class BaseSweep(SpectrometerTask):
         if not self._sweep(backward):
             return
 
-        alt = alternate(s, e, step)
-        self._sweep(alt)
+        alt = list(alternate(s, e, step))
+        self._sweep(alt, set_limits=False)
         return True
 
     def _do_sweep(self, sm, em, stm, directions=None):
@@ -119,8 +119,10 @@ class BaseSweep(SpectrometerTask):
 
         return True
 
-    def _sweep(self, values):
-        self.graph.set_x_limits(values[0], values[-1])
+    def _sweep(self, values, set_limits=True):
+        if set_limits:
+            self.graph.set_x_limits(values[0], values[-1])
+
         if self.spectrometer.simulation:
             self._make_pseudo(values)
             self.integration_time = 0.065536

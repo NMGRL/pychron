@@ -227,6 +227,8 @@ class BasePeakCenter(MagnetSweep):
         kw = {'line_width': 2}
         if self.testing:
             kw['type'] = 'scatter'
+            kw['marker'] = 'circle'
+            kw['marker_size'] = 1
 
         graph.new_series(**kw)
 
