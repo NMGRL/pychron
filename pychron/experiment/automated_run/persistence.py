@@ -829,7 +829,7 @@ class AutomatedRunPersister(BasePersister):
 
         if self.per_spec.spec_dict:
             db.add_spectrometer_parameters(meas, self.per_spec.spec_dict)
-            for det, deflection in self.defl_dict.iteritems():
+            for det, deflection in self.per_spec.defl_dict.iteritems():
                 det = db.add_detector(det)
                 db.add_deflection(meas, det, deflection)
 

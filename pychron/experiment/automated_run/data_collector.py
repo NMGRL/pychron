@@ -132,7 +132,7 @@ class DataCollector(Consoleable):
         i = 1
         while not evt.is_set():
             st = time.time()
-            if self._iter(i):
+            if not self._iter(i):
                 break
 
             i += 1

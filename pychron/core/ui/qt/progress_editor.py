@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from traits.api import Int, Str
-from traitsui.qt4.basic_editor_factory import BasicEditorFactory
+from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.editor import Editor
 # ============= standard library imports ========================
 from PySide.QtGui import QProgressBar, QVBoxLayout, QLabel

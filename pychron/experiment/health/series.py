@@ -227,8 +227,8 @@ class SystemHealthSeries(Loggable):
                  'uuid': spec.uuid,
                  'timestamp': time.mktime(spec.analysis_timestamp.timetuple())}
 
-            spec_dict = an.persister.spec_dict
-            defl_dict = an.persister.defl_dict
+            spec_dict = an.persister.per_spec.spec_dict
+            defl_dict = an.persister.per_spec.defl_dict
 
             for v in self._values:
                 if v.endswith('_deflection'):

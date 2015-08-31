@@ -20,8 +20,6 @@ from numpy import ones, vstack, zeros, hstack
 from numpy.random import random
 # ============= local library imports  ==========================
 from pychron.experiment.classifier.base_classifier import BaseClassifier
-import matplotlib.pyplot as plt
-from pychron.loggable import Loggable
 
 
 def make_sample(iso):
