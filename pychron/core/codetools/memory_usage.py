@@ -31,6 +31,7 @@ if USE_MEM_LOG:
         os.mkdir(root)
     p, _ = unique_path(root, 'mem')
 
+
 def write_mem(msg, m, verbose):
     with open(os.path.join(root, p), 'a') as wfile:
         msg = '{:<50s}:{}\n'.format(msg, m)
@@ -40,17 +41,22 @@ def write_mem(msg, m, verbose):
 
 
 PID = None
+
+
 def mem_break():
     write_mem('#' + '=' * 49, '')
 
+
 def mem_log(msg, verbose=False):
     if USE_MEM_LOG:
-#        gc.collect()
+        #        gc.collect()
         mem = _get_current_mem()
         write_mem(msg, mem, verbose)
 
+
 def get_current_mem():
     return _get_current_mem()
+
 
 def mem_log_func(func, *args, **kw):
     n = func.func_name
@@ -59,9 +65,12 @@ def mem_log_func(func, *args, **kw):
     mem_log('post {}'.format(n))
     return r
 
+
 def mem_available():
-    mem = psutil.avail_phymem()
-    return mem * 1024.** -2
+    mem = psutil.phymem_usage().free
+    return mem * 1024. ** -2
+
+
 #     mem=_get_current_mem()
 
 
@@ -82,17 +91,19 @@ def mem_dump(path):
                     else:
                         name = obj.__class__.__name__
 
-                    wfile.write('id: {:<10s} name: {:<10s} class: {:<50s} size: {:<10s} referents:{}\n'.format(str(i), name,
-                                                                                                            cls,
-                                                                                                            str(size),
-                                                                                                            len(referents),
-                                                                                                            )
-                             )
+                    wfile.write(
+                        'id: {:<10s} name: {:<10s} class: {:<50s} size: {:<10s} referents:{}\n'.format(str(i), name,
+                                                                                                       cls,
+                                                                                                       str(size),
+                                                                                                       len(referents),
+                                                                                                       )
+                        )
                     if isinstance(obj, dict):
                         keys = ','.join(map(str, obj.keys()))
                         wfile.write('keys: {}'.format(keys))
 
-#                 cPickle.dump({'id': i, 'class': cls, 'size': size, 'referents': referents, 'name':name}, dump)
+
+# cPickle.dump({'id': i, 'class': cls, 'size': size, 'referents': referents, 'name':name}, dump)
 
 
 def mem_sort():
@@ -105,29 +116,31 @@ def mem_sort():
             objs.append(obj)
         except EOFError:
             pass
-#         if i>10000:
-#             break
+        #         if i>10000:
+        #             break
 
         i += 1
     with open(os.path.join(root, 'gcmem.pickle.sorted'), 'w') as wfile:
         for oi in sorted(objs, key=lambda x: x['size'], reverse=True):
             wfile.write('{name} {size} {referents}\n'.format(**oi))
 
-#     with open(os.path.join(root, 'gcmem.txt'), 'w') as fp:
+
+# with open(os.path.join(root, 'gcmem.txt'), 'w') as fp:
 
 def _get_current_mem():
     PID = os.getpid()
     proc = psutil.Process(PID)
     mem = proc.get_memory_info()
-    return mem.rss / 1024.**2
+    return mem.rss / 1024. ** 2
 
 
 class MemCTX(object):
     def __init__(self, cls):
         self._cls = cls
+
     def __enter__(self):
         print 'enter'
-#         self._before = [id(o) for o in gc.get_objects() if isinstance(o, self._cls)]
+        #         self._before = [id(o) for o in gc.get_objects() if isinstance(o, self._cls)]
         self._before = [id(o) for o in gc.get_objects() if self._cls in str(type(o))]
         print len(self._before)
 
@@ -137,9 +150,9 @@ class MemCTX(object):
         bf = self._before
         cls = self._cls
         objs = [o for o in gc.get_objects()
-                    if self._cls in str(type(o))
-#                     if isinstance(o, cls)
-                    ]
+                if self._cls in str(type(o))
+                #                     if isinstance(o, cls)
+                ]
 
         print len(objs), len(bf)
         objs = [o for o in objs if not id(o) in bf]
@@ -149,7 +162,9 @@ class MemCTX(object):
                 print oi, [type(oo) for oo in gc.get_referrers(oi)]
 
         return
-#         path = os.environ['PATH']
+
+
+# path = os.environ['PATH']
 #         os.environ['PATH'] = '{}:/usr/local/bin'.format(path)
 #         fn = '/Users/ross/Desktop/chain.png'
 #         objgraph.show_chain(
@@ -167,23 +182,23 @@ from collections import defaultdict
 
 
 def measure_type(cls=None, group=None, before=None):
-#     gc.collect()
+    #     gc.collect()
 
-#     d = defaultdict(list)
+    #     d = defaultdict(list)
     d = defaultdict(int)
 
     if before is None:
         before = tuple()
 
     if cls:
-#         else:
-#             before = before[cls]
-#
-#         print 'before', len(before)
+        #         else:
+        #             before = before[cls]
+        #
+        #         print 'before', len(before)
         d[cls] = set([id(o) for o in gc.get_objects()
                       if type(o) == cls])
-#         print 'xs', len(xs)
-#         d[cls] = filter(lambda x: not x in before, xs)
+    #         print 'xs', len(xs)
+    #         d[cls] = filter(lambda x: not x in before, xs)
     else:
         objs = gc.get_objects()
         if group:
@@ -191,11 +206,12 @@ def measure_type(cls=None, group=None, before=None):
 
         for o in objs:
             d[type(o)] += 1
-#             i = id(o)
-#             if before and not i in before:
-#                 d[type(o)].append(i)
+        #             i = id(o)
+        #             if before and not i in before:
+        #                 d[type(o)].append(i)
 
     return d
+
 
 # gp, _ = unique_path(root, 'growth')
 def calc_growth(before, cls=None, group=None, count=None, write=False, print_objs=False):
@@ -203,37 +219,37 @@ def calc_growth(before, cls=None, group=None, count=None, write=False, print_obj
 
     after = measure_type(cls, group)
     print 'after calcued'
-#     print len(after.keys())
-#     print len(before.keys())
-#     after = end_growth()
+    #     print len(after.keys())
+    #     print len(before.keys())
+    #     after = end_growth()
     ts = 0
-#     for k, v in sorted([(ki, len(after[ki]) - len(before[ki]))
-#                         for ki in after if len(after[ki]) - len(before[ki]) > 1],
-#                       key=lambda x:x[1],
-#                       reverse=True
-#                       ):
+    #     for k, v in sorted([(ki, len(after[ki]) - len(before[ki]))
+    #                         for ki in after if len(after[ki]) - len(before[ki]) > 1],
+    #                       key=lambda x:x[1],
+    #                       reverse=True
+    #                       ):
 
     for k, v in sorted([(ki, after[ki] - before[ki])
                         for ki in after if after[ki] - before[ki] > 1],
-                      key=lambda x:x[1],
-                      reverse=True
-                      ):
+                       key=lambda x: x[1],
+                       reverse=True
+                       ):
 
         ids = before[k]
-#         a = len(after[k])
-#         b = len(ids)
-#         print 'a-b', a - b
+        #         a = len(after[k])
+        #         b = len(ids)
+        #         print 'a-b', a - b
         if cls and v > 1 and print_objs:
-#             n = a - len(ids)
+            #             n = a - len(ids)
             cnt = 0
-#             for i in after[k]
+            #             for i in after[k]
             sb = set(ids)
             sa = set(after[k])
             ss = sa - sb
             print 'sa-sb', len(sa) - len(sb), len(ss)
-#             print len(sa) - a, len(sb) - len(ids), len(ss)
+            #             print len(sa) - a, len(sb) - len(ids), len(ss)
             for i in ss:
-#                 if not i in ids:
+                #                 if not i in ids:
                 obj = get_id(i)
                 if obj:
                     ks = obj.keys()
@@ -241,47 +257,48 @@ def calc_growth(before, cls=None, group=None, count=None, write=False, print_obj
                                      'handler', 'object',
                                      '_dispatch', '_remove', 'call_method'
                                      ):
-
                         print 'keys      :{}'.format(ks)
                         print 'referrers :{}'.format(gc.get_referrers(obj))
 
-#                 print i,
-#                 cnt += 1
-#                 if cnt == n:
-#                     break
+                    #                 print i,
+                    #                 cnt += 1
+                    #                 if cnt == n:
+                    #                     break
 
-#             for i in set(after[ki]) - set(ids):
-#                 if i not in ids:
-#                 o = get_id(i)
-#                 print gc.get_referrers(o)
+                    #             for i in set(after[ki]) - set(ids):
+                    #                 if i not in ids:
+                    #                 o = get_id(i)
+                    #                 print gc.get_referrers(o)
 
-#             for o in get_type(k):
-#                 if id(o) not in ids:
-#                     print o.keys()
+                    #             for o in get_type(k):
+                    #                 if id(o) not in ids:
+                    #                     print o.keys()
             print '----------- {}'.format(cnt)
 
 
-#             obj = get_type(k).next()
-#             print 'referrers'
-#             for ri in gc.get_referrers(obj):
-#                 print ri
-#
-#             print 'referrents'
-#             for ri in gc.get_referents(obj):
-#                 print ri
+        #             obj = get_type(k).next()
+        #             print 'referrers'
+        #             for ri in gc.get_referrers(obj):
+        #                 print ri
+        #
+        #             print 'referrents'
+        #             for ri in gc.get_referents(obj):
+        #                 print ri
 
         s = get_size(k)
         if group:
             ts += s
         msg = '{:<70s}: {} size: {}'.format(k, v, s)
         print msg
-#         if write:
-#             with open(gp, 'a') as fp:
-#                 fp.write('{}\n'.format(msg))
+    #         if write:
+    #             with open(gp, 'a') as fp:
+    #                 fp.write('{}\n'.format(msg))
 
     if ts:
         print 'total size: {}'.format(ts)
-#     gc.collect()
+
+
+# gc.collect()
 #         if cls == dict and count and count > 1:
 #             ds = get_type(cls)
 #             def test(ki):
@@ -299,7 +316,7 @@ def show_refs(cls):
     obj = next((o for o in gc.get_objects() if type(o) == cls), None)
     if obj:
         print '================= {} referrers ================'.format(cls)
-#         print '{} referrers'.format(obj)
+        #         print '{} referrers'.format(obj)
         for ri in gc.get_referrers(obj):
             keys = ''
             if isinstance(ri, dict):
@@ -308,7 +325,7 @@ def show_refs(cls):
             print '{:<30s} {} {}'.format(str(id(ri)), type(ri), ri, keys)
 
         print '================== {} referents ================'.format(cls)
-#         print '{} referents'.format(obj)
+        #         print '{} referents'.format(obj)
         for ri in gc.get_referents(obj):
             keys = ''
             if isinstance(ri, dict):
@@ -316,11 +333,14 @@ def show_refs(cls):
 
             print '{:<30s} {} {}'.format(str(id(ri)), type(ri), ri, keys)
 
+
 def get_type(cls):
     return (o for o in gc.get_objects() if type(o) == cls)
 
+
 def get_id(i):
     return next((o for o in gc.get_objects() if id(o) == i), None)
+
 
 def get_size(cls, show=False):
     vs = (sys.getsizeof(o) for o in get_type(cls))
@@ -329,15 +349,16 @@ def get_size(cls, show=False):
         print '{:<30s} {}'.format(cls, v)
     return v
 
+
 def count_instances(inst=None, group=None, referrers=False, referents=False, prev=0):
     gc.collect()
 
     if group:
-#         def t(x):
-#             try:
-#                 return group in x.__class__.__name__
-#             except:
-#                 pass
+        #         def t(x):
+        #             try:
+        #                 return group in x.__class__.__name__
+        #             except:
+        #                 pass
         t = lambda x: group in str(type(x))
         n = group
         objs = filter(t, gc.get_objects())
@@ -358,21 +379,20 @@ def count_instances(inst=None, group=None, referrers=False, referents=False, pre
         objs = gc.get_objects()
         key = lambda x: type(x)
         objs = sorted(objs, key=key)
-#         for g, aa in groupby(objs, key=key):
-#             d = [sys.getsizeof(ai) for ai in aa]
-#             s = sum(d)
-#             print '{} {} {}'.format(g, len(d), s)
+        #         for g, aa in groupby(objs, key=key):
+        #             d = [sys.getsizeof(ai) for ai in aa]
+        #             s = sum(d)
+        #             print '{} {} {}'.format(g, len(d), s)
 
         xx = [(g, [ai for ai in aa])
-                for g, aa in groupby(objs, key=key)]
+              for g, aa in groupby(objs, key=key)]
 
         xx = [(g, sum([sys.getsizeof(ai) for ai in aa]), len(aa))
               for g, aa in xx]
 
-        for g, s, n in sorted(xx, key=lambda x:x[1]):
+        for g, s, n in sorted(xx, key=lambda x: x[1]):
             if s > 1000:
                 print '{:<50s} {} {}'.format(g, s, n)
-
 
     if referrers:
         for obj in objs:
@@ -381,10 +401,12 @@ def count_instances(inst=None, group=None, referrers=False, referents=False, pre
         for obj in objs:
             show_referents(obj)
 
+
 def show_referrers(obj):
     print '============ {} referrers =========='.format(obj)
     for ri in gc.get_referrers(obj):
         print ri
+
 
 def show_referents(obj):
     print '============ {} referents =========='.format(obj)
@@ -392,8 +414,5 @@ def show_referents(obj):
         print ri
 
 
-
 if __name__ == '__main__':
     mem_sort()
-
-

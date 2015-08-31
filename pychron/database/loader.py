@@ -18,7 +18,7 @@
 #
 # import csv
 # from pychron.database.pychron_adapter import PychronAdapter
-# from tables import openFile
+# from tables import open_file
 # import os
 # from pychron.managers.data_managers.h5_data_manager import H5DataManager
 # import time

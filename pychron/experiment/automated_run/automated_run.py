@@ -200,7 +200,6 @@ class AutomatedRun(Loggable):
     def _persister_action(self, func, *args, **kw):
         getattr(self.persister, func)(*args, **kw)
         for i, p in enumerate((self.xls_persister, self.dvc_persister)):
-            print 'aaaa', i, p
             if p is None:
                 continue
 

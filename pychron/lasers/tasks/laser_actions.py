@@ -184,7 +184,7 @@ class OpenPowerMapAction(LaserCalibrationAction):
         task = app.get_task(task_id, activate=False)
         ps = task.get_power_maps()
         if ps:
-            if task.window.control.isVisible():
+            if task.window.control.isvisible():
                 task.window.control.raise_()
             else:
                 task.window.open()

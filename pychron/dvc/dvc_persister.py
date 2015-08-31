@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Instance
+from traits.api import Instance, Bool
 # ============= standard library imports ========================
 import base64
 import hashlib
@@ -40,6 +40,7 @@ def format_experiment_identifier(project):
 class DVCPersister(BasePersister):
     experiment_repo = Instance(GitRepoManager)
     dvc = Instance(DVC_PROTOCOL)
+    use_isotope_classifier = Bool(False)
     isotope_classifier = Instance(IsotopeClassifier, ())
 
     def per_spec_save(self, pr, commit=False, msg_prefix=None):
@@ -120,9 +121,10 @@ class DVCPersister(BasePersister):
     def _save_peak_center(self, pc):
         self.info('DVC saving peakcenter')
         p = self._make_path(modifier='peakcenter')
-        xx, yy = pc.graph.get_data(), pc.graph.get_data(axis=1)
-        if pc.result:
-            xs, ys, _mx, _my = pc.result
+        if pc:
+            xx, yy = pc.graph.get_data(), pc.graph.get_data(axis=1)
+            if pc.result:
+                xs, ys, _mx, _my = pc.result
         else:
             xs, ys = (0, 0, 0), (0, 0, 0)
         fmt = '>ff'
@@ -133,8 +135,7 @@ class DVCPersister(BasePersister):
                'center_signal': ys[1],
                'high_signal': ys[2],
                'fmt': fmt,
-               'data': base64.b64encode(''.join([struct.pack(fmt, *di) for di in zip(xx, yy)]))
-               }
+               'data': base64.b64encode(''.join([struct.pack(fmt, *di) for di in zip(xx, yy)]))}
         jdump(obj, p)
 
     def post_measurement_save(self, commit=True, msg_prefix='Collection'):
@@ -218,7 +219,7 @@ class DVCPersister(BasePersister):
             # # special associations are handled by the ExperimentExecutor._retroactive_experiment_identifiers
             # if not is_special(rs.runid):
             if self.per_spec.use_experiment_association:
-                db.add_experiment_association(rs.experiment_identifier, rs)
+                self.dvc.add_experiment_association(rs.experiment_identifier, rs)
 
             pos = db.get_identifier(rs.identifier)
             an.irradiation_position = pos
@@ -226,12 +227,15 @@ class DVCPersister(BasePersister):
             if t:
                 dbtag = db.get_tag(t)
                 if not dbtag:
-                    dbtag = db.add_tag(t)
+                    dbtag = db.add_tag(name=t)
 
             db.flush()
             an.change.tag_item = dbtag
 
-            self._save_measured_positions()
+            change = db.add_analysis_change(tag=t)
+            an.change = change
+            # an.change.tag_item = dbtag
+            # self._save_measured_positions()
 
     def _save_measured_positions(self):
         dvc = self.dvc
@@ -278,7 +282,9 @@ class DVCPersister(BasePersister):
         cbaselines = {}
         icfactors = {}
 
-        clf = self.isotope_classifier
+        if self.use_isotope_classifier:
+            clf = self.isotope_classifier
+
         endianness = '>'
         for iso in self.per_spec.arar_age.isotopes.values():
 
@@ -287,11 +293,13 @@ class DVCPersister(BasePersister):
             signals.append({'isotope': iso.name, 'detector': iso.detector, 'blob': sblob})
             sniffs.append({'isotope': iso.name, 'detector': iso.detector, 'blob': snblob})
 
-            klass, prob = clf.predict_isotope(iso)
-            isos[iso.name] = {'detector': iso.detector,
-                              'classification': klass,
-                              'classification_probability': prob}
+            isod = {'detector': iso.detector}
+            if self.use_isotope_classifier:
+                klass, prob = clf.predict_isotope(iso)
+                isod.update(classification=klass,
+                            classification_probability=prob)
 
+            isos[iso.name] = isod
             if iso.detector not in dets:
                 bblob = base64.b64encode(iso.baseline.pack(endianness, as_hex=False))
                 baselines.append({'detector': iso.detector, 'blob': bblob})
@@ -334,13 +342,11 @@ class DVCPersister(BasePersister):
         for si in ('measurement', 'extraction'):
             name = getattr(self.per_spec, '{}_name'.format(si))
             blob = getattr(self.per_spec, '{}_blob'.format(si))
-
-            self.dvc.meta_repo.update_script(ms, blob)
-            obj[si] = name
+            self.dvc.meta_repo.update_script(ms, name, blob)
 
         # save experiment
-        self.dvc.meta_repo.update_experiment_queue(ms, self.per_spec.experiment_queue_name,
-                                                   self.per_spec.experiment_queue_blob)
+        self.dvc.update_experiment_queue(ms, self.per_spec.experiment_queue_name,
+                                         self.per_spec.experiment_queue_blob)
 
         hexsha = str(self.dvc.get_meta_head())
         obj['commit'] = hexsha

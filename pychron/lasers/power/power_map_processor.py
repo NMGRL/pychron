@@ -20,7 +20,7 @@
 from traits.api import Bool, HasTraits, Instance
 # from traitsui.api import View, Item, Group, HGroup, VGroup, HSplit, VSplit
 # ============= standard library imports ========================
-# from tables import openFile
+# from tables import open_file
 from numpy import transpose, array, shape, max, linspace, rot90, \
     min
 # ============= local library imports  ==========================
