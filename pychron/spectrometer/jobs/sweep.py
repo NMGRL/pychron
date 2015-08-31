@@ -68,21 +68,24 @@ class BaseSweep(SpectrometerTask):
     verbose = False
     normalize = Bool(True)
 
-    testing = True
+    testing = False
 
     @property
     def active_detectors(self):
         return [self.reference_detector] + self.additional_detectors
 
     # private
-    def _series_factory(self, **kw):
-        kw['line_width'] = 2
-        if self.testing:
+    def _series_factory(self, graph, kind='line', **kw):
+        if 'line_width' not in kw:
+            kw['line_width'] = 2
+
+        if kind=='scatter':
             kw['type'] = 'scatter'
             kw['marker'] = 'circle'
             kw['marker_size'] = 1
 
-        self.graph.new_series(**kw)
+        graph.new_series(**kw)
+        self._markup_idx+=1
 
     def _test_sweep(self, s, e, step):
         forward = self._calc_step_values(s, e, step)
@@ -90,14 +93,14 @@ class BaseSweep(SpectrometerTask):
         if not self._sweep(forward):
             return
 
-        self._series_factory()
+        self._series_factory(self.graph, kind='scatter')
         if not self._sweep(backward, series=1):
             return
 
-        alt = alternate(s, e, step)
-        self._series_factory()
+        # alt = alternate(s, e, step)
+        # self._series_factory(self.graph)
 
-        self._sweep(alt, series=2, set_limits=False)
+        # self._sweep(alt, series=2, set_limits=False)
         return True
 
     def _do_sweep(self, sm, em, stm, directions=None):
@@ -171,7 +174,7 @@ class BaseSweep(SpectrometerTask):
         if graph:
             plot = graph.plots[0]
             if self.testing:
-                self._update_graph_data2(plot, di, intensity, series)
+                self._update_graph_data2(plot, di, intensity[0], series)
             else:
                 self._update_graph_data(plot, di, intensity)
 

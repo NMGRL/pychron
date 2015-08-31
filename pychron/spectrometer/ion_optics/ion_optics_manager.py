@@ -234,8 +234,8 @@ class IonOpticsManager(Manager):
                 step_width = pcc.step_width
                 percent = pcc.percent
 
-                if not pcc.use_current_dac:
-                    center_dac = pcc.dac
+                # if not pcc.use_current_dac:
+                center_dac = pcc.dac
 
         spec.set_integration_time(integration_time)
         period = int(integration_time * 1000 * 0.9)
@@ -327,8 +327,7 @@ class IonOpticsManager(Manager):
             det = spec.get_detector(ref)
 
             dac_a = spec.uncorrect_dac(det, dac_d)
-            self.info('converted to axial units {}'.format(dac_a))
-
+            self.info('dac uncorrected for HV and deflection {}'.format(dac_a))
             if save:
                 save = True
                 if confirm_save:
@@ -403,7 +402,7 @@ class IonOpticsManager(Manager):
                 with open(p) as rfile:
                     config = pickle.load(rfile)
                     config.detectors = dets = self.spectrometer.detectors
-                    config.detector = next((di for di in dets if di.name == config.detector), None)
+                    config.detector = next((di for di in dets if di.name == config.detector_name), None)
 
             except Exception, e:
                 print 'peak center config', e

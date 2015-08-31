@@ -75,6 +75,10 @@ class BasePeakCenter(MagnetSweep):
             if i > 0:
                 self._graph_factory()
                 # invoke_in_main_thread(self._graph_factory, graph=graph)
+            if i==0:
+                rule = self.graph.add_vertical_rule(self.center_dac, line_style='solid', color='black', line_width=1.5)
+            else:
+                rule.value = center
 
             start, end = self._get_scan_parameters(i, center, smart_shift)
 
@@ -143,8 +147,8 @@ class BasePeakCenter(MagnetSweep):
                     dac_values = graph.get_data()
                     intensities = graph.get_data(axis=1)
 
-                    n = sorted(zip(dac_values, intensities), key=lambda x: x[0])
-                    dac_values, intensities = zip(*n)
+                    # n = sorted(zip(dac_values, intensities), key=lambda x: x[0])
+                    # dac_values, intensities = zip(*n)
 
                     result = self._calculate_peak_center(dac_values, intensities)
                     self.debug('result of _calculate_peak_center={}'.format(result))
@@ -186,6 +190,14 @@ class BasePeakCenter(MagnetSweep):
 
     def _plot_center(self, xs, ys, mx, my, center):
         graph = self.graph
+
+        graph.new_series(type='scatter', marker='circle',
+                         marker_size=4,
+                         color='green')
+        graph.new_series(type='scatter', marker='circle',
+                         marker_size=4,
+                         color='green')
+
         graph.set_data(xs, series=self._markup_idx)
         graph.set_data(ys, series=self._markup_idx, axis=1)
 
@@ -223,7 +235,7 @@ class BasePeakCenter(MagnetSweep):
                 font='modern 8',
                 line_spacing=1))
 
-        self._series_factory()
+        self._series_factory(graph)
 
         graph.set_series_label('*{}'.format(self.reference_detector))
         self._markup_idx = 1
@@ -231,16 +243,17 @@ class BasePeakCenter(MagnetSweep):
         for di in self.additional_detectors:
             det = spec.get_detector(di)
             c = det.color
-            graph.new_series(line_color=c)
+            self._series_factory(graph, line_color=c)
+            # graph.new_series(line_color=c)
             graph.set_series_label(di)
-            self._markup_idx += 1
+            # self._markup_idx += 1
 
-        graph.new_series(type='scatter', marker='circle',
-                         marker_size=4,
-                         color='green')
-        graph.new_series(type='scatter', marker='circle',
-                         marker_size=4,
-                         color='green')
+        # graph.new_series(type='scatter', marker='circle',
+        #                  marker_size=4,
+        #                  color='green')
+        # graph.new_series(type='scatter', marker='circle',
+        #                  marker_size=4,
+        #                  color='green')
 
         if self.show_label:
             graph.add_plot_label('{}@{}'.format(self.reference_isotope,

@@ -22,7 +22,7 @@
 """
     https://gist.github.com/sixtenbe/1178136
 """
-from numpy import Inf, isscalar, array, argmax, polyfit, vstack, sort
+from numpy import Inf, isscalar, array, argmax, polyfit, vstack, argsort
 
 
 def _datacheck_peakdetect(x_axis, y_axis):
@@ -162,10 +162,12 @@ def calculate_peak_center(x, y, min_peak_height=1.0, percent=80):
 
             raises a PeakCenterError exception
     """
+
     x = array(x)
     y = array(y)
 
-    x,y = sort(vstack((x,y)).T, axis=0).T
+    xy = vstack((x,y)).T
+    x, y = xy[argsort(xy[:, 0])].T
 
     ma = max(y)
     max_i = argmax(y)
@@ -176,7 +178,7 @@ def calculate_peak_center(x, y, min_peak_height=1.0, percent=80):
     my = ma
 
     # look backward for point that is peak_percent% of max
-    for i in range(max_i, max_i - 50, -1):
+    for i in xrange(max_i, max_i - 50, -1):
         # this prevent looping around to the end of the list
         if i < 1:
             raise PeakCenterError('PeakCenterError: could not find a low pos')
@@ -192,7 +194,7 @@ def calculate_peak_center(x, y, min_peak_height=1.0, percent=80):
     ly = y[i] - (y[i] - y[i - 1]) / 2.
 
     # look forward for point that is 80% of max
-    for i in range(max_i, max_i + 50, 1):
+    for i in xrange(max_i, max_i + 50, 1):
         try:
             if y[i] < (ma * (1 - percent / 100.)):
                 break

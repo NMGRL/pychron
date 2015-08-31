@@ -575,10 +575,11 @@ class Spectrometer(SpectrometerDevice):
         """
                 inverse of correct_dac
         """
-        dac = self.get_hv_correction(dac, uncorrect=True, current=current)
+
+        ndac = self.get_hv_correction(dac, uncorrect=True, current=current)
         if self.use_deflection_correction:
-            dac -= det.get_deflection_correction(current=current)
-        return dac
+            ndac -= det.get_deflection_correction(current=current)
+        return ndac
 
     # ===============================================================================
     # private
@@ -650,7 +651,7 @@ class Spectrometer(SpectrometerDevice):
                            zfocus='ZFocus',
                            extractionlens='ExtractionLens',
                            ioncountervoltage='IonCounterVoltage', )
-        print self.microcontroller
+
         if self.microcontroller:
             specparams, defl = self._get_cached_config()
             for k, v in defl.items():
