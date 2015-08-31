@@ -207,8 +207,7 @@ class BasePeakCenter(MagnetSweep):
     # ===============================================================================
     # factories
     # ===============================================================================
-    def _graph_factory(self, graph=None):
-        # if graph is None:
+    def _graph_factory(self):
         graph = Graph(
             window_title=self.title,
             container_dict=dict(padding=5,
@@ -224,13 +223,7 @@ class BasePeakCenter(MagnetSweep):
                 font='modern 8',
                 line_spacing=1))
 
-        kw = {'line_width': 2}
-        if self.testing:
-            kw['type'] = 'scatter'
-            kw['marker'] = 'circle'
-            kw['marker_size'] = 1
-
-        graph.new_series(**kw)
+        self._series_factory()
 
         graph.set_series_label('*{}'.format(self.reference_detector))
         self._markup_idx = 1
@@ -253,6 +246,8 @@ class BasePeakCenter(MagnetSweep):
             graph.add_plot_label('{}@{}'.format(self.reference_isotope,
                                                 self.reference_detector), hjustify='center')
         return graph
+
+
 
 
 class PeakCenter(BasePeakCenter):

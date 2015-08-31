@@ -68,23 +68,36 @@ class BaseSweep(SpectrometerTask):
     verbose = False
     normalize = Bool(True)
 
-    testing = False
+    testing = True
 
     @property
     def active_detectors(self):
         return [self.reference_detector] + self.additional_detectors
 
     # private
+    def _series_factory(self, **kw):
+        kw['line_width'] = 2
+        if self.testing:
+            kw['type'] = 'scatter'
+            kw['marker'] = 'circle'
+            kw['marker_size'] = 1
+
+        self.graph.new_series(**kw)
+
     def _test_sweep(self, s, e, step):
         forward = self._calc_step_values(s, e, step)
         backward = self._calc_step_values(e, s, step)
         if not self._sweep(forward):
             return
-        if not self._sweep(backward):
+
+        self._series_factory()
+        if not self._sweep(backward, series=1):
             return
 
-        alt = list(alternate(s, e, step))
-        self._sweep(alt, set_limits=False)
+        alt = alternate(s, e, step)
+        self._series_factory()
+
+        self._sweep(alt, series=2, set_limits=False)
         return True
 
     def _do_sweep(self, sm, em, stm, directions=None):
@@ -119,7 +132,7 @@ class BaseSweep(SpectrometerTask):
 
         return True
 
-    def _sweep(self, values, set_limits=True):
+    def _sweep(self, values, series=0, set_limits=True):
         if set_limits:
             self.graph.set_x_limits(values[0], values[-1])
 
@@ -131,7 +144,7 @@ class BaseSweep(SpectrometerTask):
             if self._alive:
                 self._step(v)
                 intensity = self._step_intensity()
-                invoke_in_main_thread(self._graph_hook, v, intensity)
+                invoke_in_main_thread(self._graph_hook, v, intensity, series)
 
                 time.sleep(self.integration_time)
 
@@ -153,11 +166,34 @@ class BaseSweep(SpectrometerTask):
 
         return intensity
 
-    def _graph_hook(self, di, intensity, **kw):
+    def _graph_hook(self, di, intensity, series, **kw):
         graph = self.graph
         if graph:
             plot = graph.plots[0]
-            self._update_graph_data(plot, di, intensity)
+            if self.testing:
+                self._update_graph_data2(plot, di, intensity, series)
+            else:
+                self._update_graph_data(plot, di, intensity)
+
+    def _update_graph_data2(self, plot, di, intensity, series):
+        oys = None
+        k = 'odata{}'.format(series)
+        if hasattr(plot, k):
+            oys = getattr(plot, k)
+
+        oys = array([intensity]) if oys is None else hstack((oys, intensity))
+        setattr(plot, k, oys)
+
+        data = plot.data
+        xs = data.get_data('x{}'.format(series))
+        xs = hstack((xs, di))
+
+        data.set_data('x{}'.format(series), xs)
+        data.set_data('y{}'.format(series), oys)
+        mi, ma = min(oys), max(oys)
+
+        self.graph.set_y_limits(min_=mi, max_=ma, pad='0.05',
+                                pad_style='upper')
 
     def _update_graph_data(self, plot, di, intensity, **kw):
         """
