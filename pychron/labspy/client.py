@@ -22,7 +22,7 @@ from apptools.preferences.preference_binding import bind_preference
 
 # ============= standard library imports ========================
 import os
-from threading import Timer
+from threading import Timer, Thread
 import hashlib
 import time
 import yaml
@@ -104,14 +104,27 @@ class LabspyClient(Loggable):
         self.debug('Start Connection status timer')
         if self.application and self.use_connection_status:
             self.debug('timer started period={}'.format(self.connection_status_period))
-            t = Timer(self.connection_status_period, self._connection_status, kwargs={'verbose': True})
-            t.start()
+
+            devs = self.application.get_services(ICoreDevice)
+            if devs:
+                t = Thread(target=self._connection_status, name='ConnectionStatus')
+                t.start()
+            else:
+                self.debug('No devices to check for connection status')
+            # t = Timer(self.connection_status_period, self._connection_status, kwargs={'verbose': True})
+            # t.start()
 
     def _connection_status(self, verbose=False):
+
+        # if verbose:
+        #     self.debug('Connection Status. ndevs={}'.format(len(devs or ())))
+        # if devs:
+
         devs = self.application.get_services(ICoreDevice)
-        if verbose:
-            self.debug('Connection Status. ndevs={}'.format(len(devs or ())))
-        if devs:
+
+        period = self.connection_status_period
+        while 1:
+            st = time.time()
             ts = datetime.now()
             for dev in devs:
 
@@ -128,8 +141,10 @@ class LabspyClient(Loggable):
                     self.debug('Connection status. update connection failed: error={}'.format(e))
                     break
 
-        t = Timer(self.connection_status_period, self._connection_status, kwargs={'verbose': verbose})
-        t.start()
+            et = time.time() - st
+            time.sleep(max(0, period-et))
+        # t = Timer(self.connection_status_period, self._connection_status, kwargs={'verbose': verbose})
+        # t.start()
 
     @auto_connect
     def add_experiment(self, exp):

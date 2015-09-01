@@ -18,6 +18,7 @@
 # ============= standard library imports ========================
 import socket
 # ============= local library imports  ==========================
+import time
 from pychron.globals import globalv
 from pychron.hardware.core.communicators.communicator import Communicator, process_response
 from pychron.hardware.core.checksum_helper import computeCRC
@@ -211,15 +212,19 @@ class EthernetCommunicator(Communicator):
 
         if cmd:
             self.debug('sending test command {}'.format(cmd))
-            if handler:
-                if handler.send_packet(cmd):
-                    r = handler.get_packet(cmd)
-                    if r is None:
-                        self.simulation = True
-                else:
-                    self.simulation = True
-            else:
+            r = self.ask(cmd)
+            if r is None:
                 self.simulation = True
+
+            # if handler:
+            #     if handler.send_packet(cmd):
+            #         r = handler.get_packet(cmd)
+            #         if r is None:
+            #             self.simulation = True
+            #     else:
+            #         self.simulation = True
+            # else:
+            #     self.simulation = True
         ret = not self.simulation and handler is not None
         return ret
 
@@ -237,11 +242,13 @@ class EthernetCommunicator(Communicator):
                 self.handler = h
             return h
         except socket.error, e:
-            self.debug('Get Handler {}'.format(str(e)))
+            self.debug('Get Handler {}. timeout={}. comms simulation={}'.format(str(e),
+                                                                                timeout,
+                                                                                globalv.communication_simulation))
             self.error_mode = True
             self.handler = None
 
-    def ask(self, cmd, retries=3, verbose=True, quiet=False, info=None, *args, **kw):
+    def ask(self, cmd, retries=3, verbose=True, quiet=False, info=None, timeout=None, *args, **kw):
         """
 
         """
@@ -256,28 +263,31 @@ class EthernetCommunicator(Communicator):
         r = None
         with self._lock:
             if self.error_mode:
-                retries = 1
+                retries = 2
 
             re = 'ERROR: Connection refused: {}'.format(self.address)
             for _ in xrange(retries):
-                r = self._ask(cmd)
+                r = self._ask(cmd, timeout=timeout)
                 if r is not None:
                     break
                 else:
-                    self._reset_connection()
+                    time.sleep(0.025)
+                # else:
+                #     self._reset_connection()
 
-        if r is not None:
-            re = process_response(r)
-        else:
-            self.error_mode = True
+            if r is not None:
+                re = process_response(r)
+            # else:
+            #     self.error_mode = True
 
-        if self.use_end:
-            handler = self.get_handler()
-            handler.end()
-            self._reset_connection()
+            if self.use_end:
+                self.debug('ending connection. Handler: {}'.format(self.handler))
+                if self.handler:
+                    self.handler.end()
+                self._reset_connection()
 
-        if verbose or self.verbose and not quiet:
-            self.log_response(cmd, re, info)
+            if verbose or self.verbose and not quiet:
+                self.log_response(cmd, re, info)
 
         return r
 
@@ -301,11 +311,13 @@ class EthernetCommunicator(Communicator):
         self.handler = None
         self.error_mode = False
 
-    def _ask(self, cmd):
-        timeout = 1
+    def _ask(self, cmd, timeout=None):
+        if timeout is None:
+            timeout = 1
+
         if self.error_mode:
             self.handler = None
-            timeout = 0.25
+        #     timeout = 0.25
 
         handler = self.get_handler(timeout)
         if not handler:

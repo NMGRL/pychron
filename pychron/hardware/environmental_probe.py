@@ -27,11 +27,11 @@ class TempHumMicroServer(CoreDevice):
     scan_func = 'read_temperature'
 
     def read_temperature(self, **kw):
-        v = self.ask('*SRTF', **kw)
+        v = self.ask('*SRTF', timeout=2, **kw)
         return self._parse_response(v)
 
     def read_humidity(self, **kw):
-        v = self.ask('*SRH', **kw)
+        v = self.ask('*SRH', timeout=2, **kw)
         return self._parse_response(v)
 
     def _parse_response(self, v):
