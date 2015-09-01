@@ -200,8 +200,6 @@ class LabspyClient(Loggable):
         with open(p, 'r') as rfile:
             return [NotificationTrigger(i) for i in yaml.load(rfile)]
 
-    # @cached_property
-    # def _get_db(self):
     def _check_notifications(self, dev, tag, val, unit):
         if not os.path.isfile(paths.notification_triggers):
             self.debug('no notification trigger file available. {}'.format(paths.notification_triggers))

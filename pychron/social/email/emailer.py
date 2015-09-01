@@ -81,6 +81,12 @@ class Emailer(Loggable):
         return server
 
     def send(self, addrs, sub, msg):
+        self.debug('Send email. addrs: {}'.format(addrs, sub))
+        self.debug('========= Message ========')
+        for m in msg.split('\n'):
+            self.debug(m)
+        self.debug('==========================')
+
         server = self.connect()
         if server:
             if isinstance(addrs, (str, unicode)):
@@ -91,8 +97,8 @@ class Emailer(Loggable):
                 server.sendmail(self.sender, addrs, msg.as_string())
                 server.quit()
                 return True
-            except BaseException:
-                pass
+            except BaseException, e:
+                self.warning('Failed sending mail. {}'.format(e))
         else:
             self.warning('Failed connecting to server')
 
