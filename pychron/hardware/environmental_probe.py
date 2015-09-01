@@ -13,17 +13,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from pychron.core.ui import set_qt
-
-set_qt()
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.core.helpers.logger_setup import logging_setup
 from pychron.hardware.core.core_device import CoreDevice
 
 
 class TempHumMicroServer(CoreDevice):
+    """
+    http://www.omega.com/Manuals/manualpdf/M3861.pdf
+
+    iServer MicroServer
+
+    tested with iTHX-W
+    """
+
     scan_func = 'read_temperature'
 
     def read_temperature(self, **kw):
@@ -40,11 +44,6 @@ class TempHumMicroServer(CoreDevice):
         except (AttributeError, ValueError, TypeError):
             return self.get_random_value()
 
-if __name__ == '__main__':
-    logging_setup('eprobe')
-    dev = TempHumMicroServer(name='microserver')
-    dev.bootstrap()
-    dev.get_temperature()
 
 # ============= EOF =============================================
 
