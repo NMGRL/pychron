@@ -19,7 +19,7 @@ from traits.api import Instance, List, on_trait_change, Bool, Event
 # ============= standard library imports ========================
 from itertools import groupby
 # ============= local library imports  ==========================
-from pychron.database.isotope_database_manager import IsotopeDatabaseManager
+from pychron.dvc.dvc_irradiationable import DVCIrradiationable
 from pychron.experiment.queue.experiment_queue import ExperimentQueue
 from pychron.experiment.factory import ExperimentFactory
 from pychron.experiment.utilities.aliquot_numbering import renumber_aliquots
@@ -28,12 +28,13 @@ from pychron.experiment.experiment_executor import ExperimentExecutor
 from pychron.loggable import Loggable
 
 
-class Experimentor(Loggable):
+class Experimentor(DVCIrradiationable):
     experiment_factory = Instance(ExperimentFactory)
     experiment_queue = Instance(ExperimentQueue)
     executor = Instance(ExperimentExecutor)
     experiment_queues = List
     stats = Instance(StatsGroup, ())
+    dvc = Instance('pychron.dvc.dvc.DVC')
 
     mode = None
     # unique_executor_db = False
@@ -332,6 +333,7 @@ class Experimentor(Loggable):
                 dms = spec.name.capitalize()
 
         e = ExperimentFactory(application=self.application,
+                              dvc=self.dvc,
                               # dvc=self.iso_db_manager,
                               # db=self.iso_db_manager.db,
                               default_mass_spectrometer=dms)

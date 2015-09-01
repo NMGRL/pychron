@@ -121,21 +121,26 @@ class DVCPersister(BasePersister):
     def _save_peak_center(self, pc):
         self.info('DVC saving peakcenter')
         p = self._make_path(modifier='peakcenter')
+        obj = {}
         if pc:
-            xx, yy = pc.graph.get_data(), pc.graph.get_data(axis=1)
+            obj['reference_detector'] = pc.reference_detector
+            obj['reference_isotope'] = pc.reference_isotope
             if pc.result:
                 xs, ys, _mx, _my = pc.result
-        else:
-            xs, ys = (0, 0, 0), (0, 0, 0)
-        fmt = '>ff'
-        obj = {'low_dac': xs[0],
-               'center_dac': xs[1],
-               'high_dac': xs[2],
-               'low_signal': ys[0],
-               'center_signal': ys[1],
-               'high_signal': ys[2],
-               'fmt': fmt,
-               'data': base64.b64encode(''.join([struct.pack(fmt, *di) for di in zip(xx, yy)]))}
+                obj.update({'low_dac': xs[0],
+                            'center_dac': xs[1],
+                            'high_dac': xs[2],
+                            'low_signal': ys[0],
+                            'center_signal': ys[1],
+                            'high_signal': ys[2]})
+
+            data = pc.get_data()
+            if data:
+                fmt = '>ff'
+                obj['fmt'] = fmt
+                for det, pts in data:
+                    obj[det] = base64.b64encode(''.join([struct.pack(fmt, *di) for di in pts]))
+
         jdump(obj, p)
 
     def post_measurement_save(self, commit=True, msg_prefix='Collection'):
@@ -149,6 +154,7 @@ class DVCPersister(BasePersister):
         push changes
         :return:
         """
+        self.debug('================= post measurement started')
         # save spectrometer
         spec_sha = self._get_spectrometer_sha()
         spec_path = os.path.join(self.experiment_repo.path, '{}.json'.format(spec_sha))
@@ -192,6 +198,8 @@ class DVCPersister(BasePersister):
 
             # push commit
             self.dvc.meta_push()
+
+        self.debug('================= post measurement finished')
 
     # private
     def _save_analysis_db(self, timestamp):

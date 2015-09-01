@@ -294,7 +294,7 @@ class Graph(Viewable, ContextMenuMixin):
 
         self.clear_data()
 
-    def clear(self):
+    def clear(self, clear_container=True):
         """
         """
         self.clear_plots()

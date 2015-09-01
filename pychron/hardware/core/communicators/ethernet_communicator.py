@@ -280,11 +280,11 @@ class EthernetCommunicator(Communicator):
             # else:
             #     self.error_mode = True
 
-            if self.use_end:
-                self.debug('ending connection. Handler: {}'.format(self.handler))
-                if self.handler:
-                    self.handler.end()
-                self._reset_connection()
+                if self.use_end:
+                    # self.debug('ending connection. Handler: {}'.format(self.handler))
+                    if self.handler:
+                        self.handler.end()
+                    self._reset_connection()
 
             if verbose or self.verbose and not quiet:
                 self.log_response(cmd, re, info)
