@@ -470,7 +470,6 @@ class SerialCommunicator(Communicator):
 
         if ct - st > timeout:
             l = len(r) if r else 0
-            print 'time out'
             self.info('timed out. {}s r={}, len={}'.format(timeout, r, l))
 
         return r

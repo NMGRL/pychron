@@ -85,7 +85,6 @@ class DashboardDevice(Loggable):
             if value.period == 'on_change':
                 if value.timeout and dt > value.timeout:
                     self._trigger(value, force=True)
-                    # self._push_value(value, 'timeout')
             elif dt > value.period:
                 self._trigger(value)
 
@@ -171,7 +170,6 @@ class DashboardDevice(Loggable):
 
         with open(path, 'a') as wfile:
             wfile.write('{},{}\n'.format(time.time(), v))
-
 
     def _check_conditional(self, pv, new):
         conds = pv.conditionals

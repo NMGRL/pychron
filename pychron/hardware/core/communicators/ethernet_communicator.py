@@ -206,7 +206,9 @@ class EthernetCommunicator(Communicator):
     def test_connection(self):
         self.simulation = False
 
-        handler = self.get_handler()
+        with self._lock:
+            handler = self.get_handler()
+
         # send a test command so see if wer have connection
         cmd = self.test_cmd
 
@@ -317,14 +319,12 @@ class EthernetCommunicator(Communicator):
 
         if self.error_mode:
             self.handler = None
-        #     timeout = 0.25
+            timeout = 0.25
 
+        self.error_mode = False
         handler = self.get_handler(timeout)
         if not handler:
-            self.error_mode = True
             return
-        else:
-            self.error_mode = False
 
         try:
             handler.send_packet(cmd)

@@ -96,6 +96,7 @@ class Switch(BaseSwitch):
             if isinstance(result, bool):
                 self.set_state(result)
             else:
+                self.debug('Get hardware state err: {}'.format(result))
                 result = False
 
         return result
