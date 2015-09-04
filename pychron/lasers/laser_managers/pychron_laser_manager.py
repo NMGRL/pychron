@@ -172,7 +172,7 @@ class PychronLaserManager(BaseLaserManager, EthernetDeviceMixin):
     def do_machine_vision_degas(self, lumens, duration):
         if lumens and duration:
             self.info('Doing machine vision degas. lumens={}'.format(lumens))
-            self._ask('MachineVisionDegas {} {}'.format(lumens, duration))
+            self._ask('MachineVisionDegas {},{}'.format(lumens, duration))
         else:
             self.debug('lumens and duration not set {}, {}'.format(lumens, duration))
 
@@ -186,7 +186,7 @@ class PychronLaserManager(BaseLaserManager, EthernetDeviceMixin):
 
     def take_snapshot(self, name, pic_format, view_snapshot=False):
         self.info('Take snapshot')
-        resp = self._ask('Snapshot {} {}'.format(name, pic_format))
+        resp = self._ask('Snapshot {},{}'.format(name, pic_format))
         if resp:
             args = self._convert_snapshot_response(resp)
             if view_snapshot:
@@ -235,7 +235,7 @@ class PychronLaserManager(BaseLaserManager, EthernetDeviceMixin):
 
     def extract(self, value, units=''):
         self.info('set laser output')
-        return self._ask('SetLaserOutput {} {}'.format(value, units)) == 'OK'
+        return self._ask('SetLaserOutput {},{}'.format(value, units)) == 'OK'
 
     def enable_laser(self, *args, **kw):
         self.info('enabling laser')
@@ -252,12 +252,12 @@ class PychronLaserManager(BaseLaserManager, EthernetDeviceMixin):
     def set_motor_lock(self, name, value):
         v = 'YES' if value else 'NO'
         self.info('set motor {} lock to {}'.format(name, v))
-        self._ask('SetMotorLock {} {}'.format(name, int(value)))
+        self._ask('SetMotorLock {},{}'.format(name, int(value)))
         return True
 
     def set_motor(self, name, value):
         self.info('set motor {} to {}'.format(name, value))
-        self._ask('SetMotor {} {}'.format(name, value))
+        self._ask('SetMotor {},{}'.format(name, value))
         time.sleep(0.5)
         r = self._block(cmd='GetMotorMoving {}'.format(name))
         return r
@@ -377,7 +377,7 @@ class PychronLaserManager(BaseLaserManager, EthernetDeviceMixin):
         return s1, s2, s3
 
     def _move_to_position(self, pos, autocenter):
-        cmd = 'GoToHole {} {}'.format(pos, autocenter)
+        cmd = 'GoToHole {},{}'.format(pos, autocenter)
         if isinstance(pos, tuple):
             cmd = 'SetXY {}'.format(pos[:2])
             #            if len(pos) == 3:
@@ -489,7 +489,7 @@ class PychronUVLaserManager(PychronLaserManager):
         #        if not name.startswith('l'):
         #            name = 'l{}'.format(name)
 
-        cmd = 'TracePath {} {} {}'.format(value, name, kind)
+        cmd = 'TracePath {},{},{}'.format(value, name, kind)
         self.info('sending {}'.format(cmd))
         self._ask(cmd)
         return self._block(cmd='IsTracing')
@@ -549,7 +549,7 @@ class PychronUVLaserManager(PychronLaserManager):
                 cmd = 'GoToNamedPosition'
 
         if cmd:
-            cmd = '{} {}'.format(cmd, pos)
+            cmd = '{},{}'.format(cmd, pos)
             self.info('sending {}'.format(cmd))
             self._ask(cmd)
             time.sleep(0.5)

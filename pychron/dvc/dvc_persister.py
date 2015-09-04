@@ -73,7 +73,7 @@ class DVCPersister(BasePersister):
         remote = 'origin'
         if repo.has_remote(remote) and pull:
             self.info('pulling changes from experiment repo: {}'.format(experiment))
-            self.experiment_repo.pull(remote=remote)
+            self.experiment_repo.pull(remote=remote, use_progress=False)
 
     def pre_extraction_save(self):
         pass

@@ -67,7 +67,7 @@ def mem_log_func(func, *args, **kw):
 
 
 def mem_available():
-    mem = psutil.virtual_memory()
+    mem = psutil.virtual_memory().free
     return mem * 1024. ** -2
 
 

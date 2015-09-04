@@ -245,14 +245,15 @@ class ClientMixin(object):
                          Item('z', editor=RangeEditor(low=-25.0, high=25.0)),
                          label='Positioning')
 
-        ogrp = Group(UItem('optics_client', style='custom'),
-                     label='Optics')
-        cgrp = Group(UItem('controls_client', style='custom'),
-                     defined_when='controls_client',
-                     label='Controls')
+        # ogrp = Group(UItem('optics_client', style='custom'),
+        #              label='Optics')
+        # cgrp = Group(UItem('controls_client', style='custom'),
+        #              defined_when='controls_client',
+        #              label='Controls')
 
-        tgrp = Group(cgrp,
-                     ogrp,
+        tgrp = Group(
+                     # cgrp,
+                     # ogrp,
                      pos_grp, layout='tabbed')
 
         egrp = HGroup(UItem('enabled_led', editor=LEDEditor()),

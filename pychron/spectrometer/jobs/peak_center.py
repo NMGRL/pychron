@@ -71,8 +71,7 @@ class BasePeakCenter(MagnetSweep):
             if not self.isAlive():
                 break
 
-            if i > 0:
-                self._reset_graph()
+            self._reset_graph()
 
             if i == 0:
                 self.graph.add_vertical_rule(self.center_dac, line_style='solid', color='black', line_width=1.5)
