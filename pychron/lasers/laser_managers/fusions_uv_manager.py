@@ -38,7 +38,7 @@ from threading import Thread
 class FusionsUVManager(FusionsLaserManager):
     """
     """
-    stage_manager_id = 'fusions.uv.stage_map'
+    stage_manager_id = 'fusions.uv'
 
     name = 'FusionsUV'
     monitor_name = 'uv_laser_monitor'

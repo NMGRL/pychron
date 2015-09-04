@@ -257,7 +257,7 @@ class BaseLaserManager(Manager):
         coeffs = None
         nmapping = False
         if calibration == 'watts':
-            path = os.path.join(self.configuration_dir_path, 'calibrated_power.cfg')
+            path = os.path.join(paths.device_dir, self.configuration_dir_name, 'calibrated_power.cfg')
             config = self.get_configuration(path=path)
             coeffs, nmapping = self._get_watt_calibration(config)
 

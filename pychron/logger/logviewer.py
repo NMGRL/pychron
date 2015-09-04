@@ -84,7 +84,9 @@ class LogModel(HasTraits):
     def open_file(self, path):
         self.path = path
         with open(path, 'r') as rfile:
+            # print rfile.read()
             self.items = self.oitems = [self._factory(line) for line in self._file(rfile)]
+            print self.items
 
     def _file(self, r):
         return r
@@ -105,11 +107,21 @@ class TwistedLogModel(LogModel):
 
     def _factory(self, ii):
         li = LogItem()
-        li.level = ii.get('log_level')
+        li.name = 'foo'
+        json_level = str(ii.get('log_level'))
+        if 'debug' in json_level:
+            li.level = 'DEBUG'
+        elif 'info' in json_level:
+            li.level = 'WARNING'
+        else:
+            li.level = 'INFO'
+
         li.timestamp = get_datetime(ii.get('log_time'))
 
         fmt = ii.get('log_format')
         li.message = str(fmt.format(**{k: tostr(v) for k, v in ii.items()}))
+        print li.message
+
         return li
 
         # def open_file(self, path):
@@ -144,11 +156,11 @@ class LogViewer(Controller):
         info.ui.title = 'Log Viewer - {}'.format(os.path.basename(self.model.path))
         return True
 
-    def controller_levels_changed(self, info):
-        if self.levels:
-            items = filter(lambda x: x.level in self.levels, self.model.oitems)
-            regex = self._make_search_regex()
-            self._set_found(regex, items)
+    # def controller_levels_changed(self, info):
+    #     if self.levels:
+    #         items = filter(lambda x: x.level in self.levels, self.model.oitems)
+    #         regex = self._make_search_regex()
+    #         self._set_found(regex, items)
 
     def controller_search_entry_changed(self, info):
         regex = self._make_search_regex()
@@ -207,9 +219,10 @@ if __name__ == '__main__':
     m = LogModel()
     # m.parse()
     # m.open_file('/Users/ross/Pychron_dev/logs/pychron.current.log')
-    m.open_file('/Users/ross/Sandbox/pychron.current.log')
-    # m = TwistedLogModel()
-    # m.open_file('/Users/ross/Documents/pps.log.json')
+    # m.open_file('/Users/ross/Sandbox/pychron.current.log')
+    m = TwistedLogModel()
+    m.open_file('/Users/diode/Pychron_dev/logs/pps.log.json')
+
     lv = LogViewer(model=m)
     lv.configure_traits()
 # ============= EOF =============================================

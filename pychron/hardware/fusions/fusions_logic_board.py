@@ -123,8 +123,8 @@ class FusionsLogicBoard(CoreDevice):
             v = config.get('Motors', option)
             self.add_motor(option, v)
 
-        if not self._get_watt_calibration(config):
-            return
+        # if not self._get_watt_calibration(config):
+        #     return
 
         return True
 

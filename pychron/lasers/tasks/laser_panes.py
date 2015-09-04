@@ -176,7 +176,7 @@ class ControlPane(TraitsDockPane):
     name = 'Control'
 
     movable = False
-    closable = False
+    closable = True
     floatable = False
 
     def traits_view(self):

@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Float, Enum
+from traits.api import Float, Enum, Bool
 from chaco.abstract_overlay import AbstractOverlay
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -23,19 +23,14 @@ from chaco.abstract_overlay import AbstractOverlay
 
 class SimpleCrosshairsOverlay(AbstractOverlay):
     radius = Float
-    constrain = Enum('x', 'y')
-    circle_only = True
+    constrain = Enum('', 'x', 'y')
+    circle_only = Bool(True)
 
     def overlay(self, component, gc, *args, **kw):
         with gc:
             gc.clip_to_rect(component.x, component.y, component.width, component.height)
             comp = self.component
 
-            #         if comp.crosshairs_kind == 'UserRadius':
-            #             radius = comp.crosshairs_radius
-            #         else:
-            #             radius = comp.beam_radius
-            #
             sdp = comp.show_desired_position
             dp = comp.desired_position
             if sdp and dp is not None:
@@ -44,17 +39,6 @@ class SimpleCrosshairsOverlay(AbstractOverlay):
             if comp.show_current_position:
                 pos = comp.stage_position
                 self._draw_radius_ch(gc, component, pos, self.radius, color=comp.crosshairs_color)
-
-    # if comp.show_laser_position:
-    #             pos = (comp.x + (comp.x2 - comp.x) / 2.0, comp.y + (comp.y2 - comp.y) / 2.0)
-    #
-    #             # add the offset
-    # #            print comp.crosshairs_offset, comp.crosshairs_offset is not (0, 0)
-    #             if comp.crosshairs_offsetx or comp.crosshairs_offsety:
-    #                 pos_off = pos[0] + comp.crosshairs_offsetx, pos[1] + comp.crosshairs_offsety
-    #                 self._draw_radius_ch(gc, pos_off, radius, color=comp.crosshairs_offset_color, circle_only=True)
-    #
-    #             self._draw_radius_ch(gc, pos, radius, color=comp.crosshairs_color)
 
     def _draw_simple_ch(self, gc, pt, length=4, color=None):
         if color is not None:
@@ -67,10 +51,9 @@ class SimpleCrosshairsOverlay(AbstractOverlay):
         gc.line_to(mx, my + length)
         gc.stroke_path()
 
-    def _draw_radius_ch(self, gc, component, pt, radius, color=None):
+    def _draw_radius_ch(self, gc, component, pt, radius, color=None, circle_only=False):
         if color is not None:
             rgb = lambda x: 0 <= x <= 1.
-            #            print color
             if not isinstance(color, (list, tuple)):
                 color = color.toTuple()
 
@@ -91,12 +74,11 @@ class SimpleCrosshairsOverlay(AbstractOverlay):
         # mx += 1
         # my += 1
         if radius:
-            comp = self.component
-            radius = comp._get_wh(radius, 0)[0]
+            radius = component.get_wh(radius, 0)[0]
             gc.arc(mx, my, radius, 0, 360)
 
-            if not self.circle_only:
-                x, x2, y, y2 = comp.x, comp.x2, comp.y, comp.y2
+            if not self.circle_only or not circle_only:
+                x, x2, y, y2 = component.x, component.x2, component.y, component.y2
                 gc.move_to(x, my)
                 gc.line_to(mx - radius, my)
 
@@ -114,6 +96,7 @@ class SimpleCrosshairsOverlay(AbstractOverlay):
 
 class CrosshairsOverlay(SimpleCrosshairsOverlay):
     circle_only = False
+
     def overlay(self, component, gc, *args, **kw):
         with gc:
             gc.clip_to_rect(component.x, component.y, component.width, component.height)
@@ -128,15 +111,12 @@ class CrosshairsOverlay(SimpleCrosshairsOverlay):
                 self._draw_radius_ch(gc, component, dp, radius, color=component.desired_position_color)
 
             if component.show_laser_position:
-                pos = (
-                    component.x + (component.x2 - component.x) / 2.0, component.y + (component.y2 - component.y) / 2.0)
+                pos = (component.x + (component.x2 - component.x) / 2.0,
+                       component.y + (component.y2 - component.y) / 2.0)
 
-                # add the offset
-                #            print comp.crosshairs_offset, comp.crosshairs_offset is not (0, 0)
                 if component.crosshairs_offsetx or component.crosshairs_offsety:
                     pos_off = pos[0] + component.crosshairs_offsetx, pos[1] + component.crosshairs_offsety
-                    self._draw_radius_ch(gc, component, pos_off, radius, color=component.crosshairs_offset_color,
-                                         circle_only=True)
+                    self._draw_radius_ch(gc, component, pos_off, radius, color=component.crosshairs_offset_color)
 
                 self._draw_radius_ch(gc, component, pos, radius, color=component.crosshairs_color)
 

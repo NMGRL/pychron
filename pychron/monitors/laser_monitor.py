@@ -22,8 +22,7 @@ import time
 # ============= local library imports  ==========================
 from monitor import Monitor
 
-# NFAILURES = 3
-# NTRIES = 3
+
 class LaserMonitor(Monitor):
     """
     """
@@ -49,12 +48,14 @@ class LaserMonitor(Monitor):
     def _fcheck_duration(self):
         """
         """
+        ret = False
         if self._md_cnt % self.max_duration_period == 0:
-            self._check_duration()
+            ret = self._check_duration()
 
         self._md_cnt += 1
         if self._md_cnt > 100:
             self._md_cnt = 1
+        return ret
 
     def _check_duration(self, verbose=True):
         """
@@ -69,6 +70,6 @@ class LaserMonitor(Monitor):
             msg = 'Max duration {} (min) exceeded'.format(self.max_duration)
             self.warning(msg)
             manager.emergency_shutoff(reason=msg)
-
+            return True
 
 # ============= EOF ====================================

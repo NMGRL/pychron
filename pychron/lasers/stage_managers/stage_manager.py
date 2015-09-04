@@ -95,6 +95,9 @@ class StageManager(BaseStageManager):
         super(StageManager, self).__init__(*args, **kw)
         self.stage_controller = self._stage_controller_factory()
 
+    def shutdown(self):
+        self._save_stage_map()
+
     def create_device(self, *args, **kw):
         dev = super(StageManager, self).create_device(*args, **kw)
         dev.parent = self
@@ -157,8 +160,8 @@ class StageManager(BaseStageManager):
         # should have calibration files for each stage map
         self.tray_calibration_manager.load_calibration()
 
-    #    def finish_loading(self):
-    #        self.initialize_stage()
+    def finish_loading(self):
+        self.initialize_stage()
 
     def initialize_stage(self):
         self.update_axes()

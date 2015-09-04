@@ -76,12 +76,6 @@ class ValveProtocol(ServiceProtocol):
         v = random.random() + offset
         return str(v)
 
-    def _register_services(self, services):
-        for name, cb in services:
-            if isinstance(cb, str):
-                cb = getattr(self, cb)
-            self.register_service(name, cb)
-
     def _get_device(self, name, protocol=None, owner=None):
         dev = None
         if self._application is not None:
