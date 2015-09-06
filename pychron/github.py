@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 import base64
 import json
+import os
 import urllib2
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -36,6 +37,12 @@ def make_request(r):
     return '{}{}'.format(BASE_URL, r)
 
 
+def make_auth(usr, pwd):
+    auth = base64.encodestring('{}:{}'.format(usr, pwd)).replace('\n', '')
+    headers = {"Authorization": "Basic {}".format(auth)}
+    return headers
+
+
 def get_organization_repositiories(name):
     cmd = '/orgs/{}/repos'.format(name)
     cmd = make_request(cmd)
@@ -47,26 +54,41 @@ def create_organization_repository(org, name, usr, pwd):
     cmd = '/orgs/{}/repos'.format(org)
     cmd = make_request(cmd)
     payload = {'name': name}
-    auth = base64.encodestring('{}:{}'.format(usr, pwd)).replace('\n', '')
-    headers = {"Authorization": "Basic {}".format(auth)}
+    headers = make_auth(usr, pwd)
     r = requests.post(cmd, data=json.dumps(payload), headers=headers)
     print r.text
 
 
+def list_collaborators(owner, repo, usr, pwd):
+    cmd = '/repos/{}/{}/collaborators'
+    cmd = cmd.format(owner, repo)
+    cmd = make_request(cmd)
+    headers = make_auth(usr, pwd)
+    r = requests.get(cmd, headers=headers)
+    return json.loads(r.text)
+
+
 class GithubObject(object):
-    def __init__(self, usr='', pwd=''):
+    def __init__(self, usr=None, pwd=None):
+        if usr is None:
+            usr = os.environ.get('GITHUB_USR')
+        if pwd is None:
+            pwd = os.environ.get('GITHUB_PWD')
         self._pwd = pwd
         self._usr = usr
 
-    def _make_headers(self, auth=True):
-        headers = {}
-        if auth:
-            auth = base64.encodestring('{}:{}'.format(self._usr, self._pwd)).replace('\n', '')
-            headers['Authorization'] = 'Basic {}'.format(auth)
-        return headers
+    # def _make_headers(self, auth=True):
+    #     headers = {}
+    #     if auth:
+    #         auth = base64.encodestring('{}:{}'.format(self._usr, self._pwd)).replace('\n', '')
+    #         headers['Authorization'] = 'Basic {}'.format(auth)
+    #     return headers
 
     def _process_post(self, po):
         pass
+
+    def _make_auth(self):
+        return make_auth(self._usr, self._pwd)
 
 
 class Organization(GithubObject):
@@ -75,32 +97,67 @@ class Organization(GithubObject):
         self._name = name
 
     @property
-    def base_cmd(self):
-        return '/orgs/{}/repos'.format(self._name)
-
-    @property
     def repos(self):
-        cmd = make_request(self.base_cmd)
+        cmd = make_request('/orgs/{}/repos'.format(self._name))
         doc = requests.get(cmd)
         return [repo['name'] for repo in json.loads(doc.text)]
+
+    @property
+    def teams(self):
+        cmd = '/orgs/{}/teams'.format(self._name)
+        cmd = make_request(cmd)
+        headers = self._make_auth()
+        doc = requests.get(cmd, headers=headers)
+        return [Team(ti) for ti in json.loads(doc.text)]
+
+    def add_team_to_repository(self, team_name, repo, permission='push'):
+        cmd = '/teams/{}/repos/{}/{}'
+
+        team_id = self._get_team_id(team_name)
+
+        cmd = cmd.format(team_id, org, repo)
+        cmd = make_request(cmd)
+
+        headers = self._make_auth()
+        headers['Accept'] = 'application/vnd.github.ironman-preview+json'
+        payload = {'permission': permission}
+        r = requests.put(cmd, data=json.dumps(payload), headers=headers)
+        print r.text
 
     def create_repo(self, name, **payload):
         cmd = make_request(self.base_cmd)
         payload['name'] = name
 
-        headers = self._make_headers(auth=True)
+        headers = self._make_auth()
         r = requests.post(cmd, data=json.dumps(payload), headers=headers)
         self._process_post(r)
+
+    def _get_team_id(self, name):
+        return next((team.id for team in self.teams if team.name == name), None)
+
+
+class Team:
+    def __init__(self, ti):
+        self.id = ti['id']
+        self.name = ti['name']
 
 
 if __name__ == '__main__':
     # print get_organization_repositiories('NMGRL')
-    # create_organization_repository('NMGRL', 'test', 'jirhiker', 'jross4039')
-    org = Organization('NMGRL', '', '')
-    print org.repos, len(org.repos)
+    # org = Organization('NMGRL', '', '')
+    # print org.repos, len(org.repos)
     # print org.create_repo('test2', auto_init=True)
     # print org.repos, len(org.repos)
+
+    org = 'NMGRLData'
+    repo = 'Irradiation-NM-273'
+
+    organ = Organization(org)
+    organ.add_team_to_repository('Users', repo)
+
+    # print add_team_to_repository('Users', org, repo, usr, pwd)
+    #
+    # cs = list_collaborators('NMGRLData', repo, usr, pwd)
+    # for ci in cs:
+    #     print ci['login']
 # ============= EOF =============================================
-
-
-

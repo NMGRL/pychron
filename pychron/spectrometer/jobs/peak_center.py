@@ -207,6 +207,13 @@ class BasePeakCenter(MagnetSweep):
         graph.redraw()
 
     def _calculate_peak_center(self, x, y):
+        # from pychron.core.time_series.time_series import smooth
+        # graph = self.graph
+        # self._series_factory(graph)
+        # smooth_y = smooth(y)
+        # graph.set_data(x, series=self._markup_idx-1)
+        # graph.set_data(smooth_y, series=self._markup_idx-1, axis=1)
+
         try:
             result = calculate_peak_center(x, y,
                                            min_peak_height=self.min_peak_height,

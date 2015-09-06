@@ -30,6 +30,7 @@ class DVCPreferences(BasePreferencesHelper):
     organization = Str
     github_user = Str
     github_password = Password
+    default_team = Str
 
 
 class DVCDBConnectionPreferences(ConnectionPreferences):
@@ -51,7 +52,9 @@ class DVCPreferencesPane(PreferencesPane):
                       Item('github_password', label='Password'),
                       label='Credentials', show_border=True)
 
-        org = VGroup(UItem('organization'), label='Organization', show_border=True)
+        org = VGroup(UItem('organization'),
+                     Item('default_team', tooltip='Name of the GitHub Team to add to new repositories'),
+                     label='Organization', show_border=True)
         meta = VGroup(UItem('meta_repo_name'), label='Meta', show_border=True)
         # proj = VGroup(Item(''), label='Projects', show_border=True)
 

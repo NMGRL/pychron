@@ -357,7 +357,8 @@ class BaseExperimentQueue(RunBlock):
             self.delay_between_analyses,
             self.extract_device,
             self.tray or '',
-            self.load_name or '')
+            self.load_name or '',
+            self.experiment_identifier or '')
 
         if wfile:
             wfile.write(s)

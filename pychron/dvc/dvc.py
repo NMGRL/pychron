@@ -133,6 +133,7 @@ class DVC(Loggable):
     organization = Str
     github_user = Str
     github_password = Str
+    default_team = Str
 
     experiment_repo = Instance(GitRepoManager)
     auto_add = True
@@ -163,6 +164,9 @@ class DVC(Loggable):
         if self.db.connect():
             self._defaults()
             return True
+
+    def add_default_team(self, repo):
+        pass
 
     def git_session_ctx(self, experiment_id, message):
         return GitSessionCTX(self, experiment_id, message)
@@ -383,12 +387,10 @@ class DVC(Loggable):
                 self.warning_dialog('{} already exists.'.format(root))
             else:
                 self.info('Creating repository. {}'.format(identifier))
-                # with open('/Users/ross/Programming/githubauth.txt') as rfile:
-                #     usr = rfile.readline().strip()
-                #     pwd = rfile.readline().strip()
 
                 org.create_repo(identifier, self.github_user, self.github_password,
                                 auto_init=True)
+                org.add_team_to_repository(self.default_team, identifier)
 
                 url = '{}/{}/{}.git'.format(paths.git_base_origin, self.organization, identifier)
                 Repo.clone_from(url, root)
@@ -643,7 +645,7 @@ class DVC(Loggable):
     def _bind_preferences(self):
 
         prefid = 'pychron.dvc'
-        for attr in ('meta_repo_name', 'organization', 'github_user', 'github_password'):
+        for attr in ('meta_repo_name', 'organization', 'github_user', 'github_password', 'default_team'):
             bind_preference(self, attr, '{}.{}'.format(prefid, attr))
 
         prefid = 'pychron.dvc.db'

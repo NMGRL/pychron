@@ -24,6 +24,7 @@ from ConfigParser import ConfigParser
 from pychron.core.helpers.filetools import list_directory2
 from pychron.entry.entry_views.experiment_entry import ExperimentIdentifierEntry
 from pychron.entry.entry_views.user_entry import UserEntry
+from pychron.github import Organization
 from pychron.persistence_loggable import PersistenceLoggable
 from pychron.globals import globalv
 from pychron.pychron_constants import NULL_STR, LINE_STR
@@ -213,10 +214,12 @@ class ExperimentQueueFactory(PersistenceLoggable):
 
     @cached_property
     def _get_experiment_identifiers(self):
-        db = self.dvc
-        ids = []
-        if db and db.connected:
-            ids = self.dvc.get_experiment_identifiers()
+        # db = self.dvc
+        # ids = []
+        # print 'exasdf', db, db.connected
+        # if db and db.connected:
+
+        ids = self.dvc.get_experiment_identifiers()
         return ids
 
     def _get_names_from_config(self, cp, section):

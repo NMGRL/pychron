@@ -448,7 +448,10 @@ class AutomatedRunSpec(HasTraits):
 
     @property
     def display_irradiation(self):
-        return '{} {}:{}'.format(self.irradiation, self.irradiation_level, self.irradiation_position)
+        ret = ''
+        if self.irradiation:
+            ret = '{} {}:{}'.format(self.irradiation, self.irradiation_level, self.irradiation_position)
+        return ret
 
     @property
     def increment(self):

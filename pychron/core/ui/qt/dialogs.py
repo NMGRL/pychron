@@ -14,6 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
+from PySide.QtGui import QMessageBox
 
 from pyface.api import OK, YES
 from pyface.ui.qt4.confirmation_dialog import ConfirmationDialog
@@ -89,38 +90,26 @@ class myMessageDialog(myMessageMixin, MessageDialog):
 
 
 class _ConfirmationDialog(ConfirmationDialog):
+
+    default_button = 'yes'
+
     def _create_control(self, parent):
         dlg = super(_ConfirmationDialog, self)._create_control(parent)
-        # dlg.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         if self.size != (-1, -1):
             dlg.resize(*self.size)
-            # dlg.event = self._handle_evt
 
         dlg.buttonClicked.connect(self._handle_button)
+        if self.default_button == 'yes':
+            dlg.setDefaultButton(QMessageBox.Yes)
+        else:
+            dlg.setDefaultButton(QMessageBox.No)
+
         return dlg
 
     def _handle_button(self, evt):
         if self._closed_evt:
             self._closed_evt.set()
-
-    # def _handle_evt(self, evt):
-    #     return True
-
-    # def _show_modal(self):
-    #     self.control.setWindowTitle('asdfasdfasdfasdf')
-    #     self.control.resize(600,200)
-    #
-    #     # self.control.setModal(True)
-    #     # self.control.setWindowModality(QtCore.Qt.ApplicationModal)
-    #     retval = self.control.exec_()
-    #     clicked_button = self.control.clickedButton()
-    #     if clicked_button in self._button_result_map:
-    #         retval = self._button_result_map[clicked_button]
-    #         # else:
-    #         #     retva
-    #         # retval = _RESULT_MAP[retval]
-    #     return retval
 
 
 class myConfirmationDialog(myMessageMixin, _ConfirmationDialog):

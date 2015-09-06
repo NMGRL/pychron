@@ -13,42 +13,52 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-
-import numpy as np
-
-from pychron.core.helpers.datetime_tools import get_datetime  # , convert_timestamp
+from numpy import asarray, r_, ones, convolve, concatenate, mean
 
 
 def smooth(x, window_len=11, window='hanning'):
-    x = np.asarray(x)
-    s = np.r_[2 * x[0] - x[window_len - 1::-1], x, 2 * x[-1] - x[-1:-window_len:-1]]
-    if window == 'flat':  # moving average
-        w = np.ones(window_len, 'd')
-    else:
-        w = eval('np.' + window + '(window_len)')
+    x = asarray(x)
+    s = r_[2 * x[0] - x[window_len - 1::-1], x, 2 * x[-1] - x[-1:-window_len:-1]]
 
-    y = np.convolve(w / w.sum(), s, mode='same')
+    if window == 'flat':  # moving average
+        w = ones(window_len, 'd')
+    else:
+        mod = __import__('numpy', fromlist=[window])
+        func = getattr(mod, window)
+        w = func(window_len)
+        # w = eval('np.' + window + '(window_len)')
+
+    y = convolve(w / w.sum(), s, mode='same')
     return y[window_len:-window_len + 1]
 
+
 def seasonal_subseries(x, y, **kw):
+    from pychron.core.helpers.datetime_tools import get_datetime
+
     ybins = [[], [], [], [], [], [], [], [], [], [], [], [],
-            [], [], [], [], [], [], [], [], [], [], [], []]
+             [], [], [], [], [], [], [], [], [], [], [], []]
     xbins = [[], [], [], [], [], [], [], [], [], [], [], [],
-            [], [], [], [], [], [], [], [], [], [], [], []]
+             [], [], [], [], [], [], [], [], [], [], [], []]
     m = 3600 * 24. / len(x)
     for xi, yi in zip(x, y):
         i = get_datetime(xi).hour
         ybins[i - 1].append(yi)
         xbins[i - 1].append((i - 1) * 3600 + (len(xbins[i - 1])) * m)
-    ms = [np.mean(x) for x in ybins]
+    ms = [mean(x) for x in ybins]
 
     return xbins, ybins, ms
 
-def downsample_1d(data, factor=5, estimator=np.mean):
+
+def downsample_1d(data, factor=5, estimator=None):
+    if estimator is None:
+        estimator = mean
+
     n = data.shape[0]
     crarr = data[:n - (n % int(factor))]
     a = [crarr[i::factor] for i in range(factor)]
-    return estimator(np.concatenate([a]), axis=0)
+    return estimator(concatenate([a]), axis=0)
+
+
 # def aautocorrelation(x, **kw):
 #    result = np.correlate(x, x, mode = 'full')
 #    r = result[result.size / 2:]
@@ -60,7 +70,7 @@ def downsample_1d(data, factor=5, estimator=np.mean):
 #    return np.linspace(0, len(r) - 1, len(r)), r
 
 def autocorrelation(x, nlags=100):
-#    from autocorr import autocorr
+    #    from autocorr import autocorr
     from pychron.core.time_series import autocorr
     return autocorr(x, nlags=nlags)
 
@@ -87,4 +97,3 @@ def autocorrelation(x, nlags=100):
 #    plot(ys)
 #
 #    show()
-
