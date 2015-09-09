@@ -423,7 +423,7 @@ Quick=   measure_iteration stopped at current step
 
         v = View(
             HGroup(
-                UItem('executing_led', editor=LEDEditor()),
+                UItem('executing_led', editor=LEDEditor(radius=30)),
                 spacer(-20),
                 icon_button_editor('start_button',
                                    'start',
