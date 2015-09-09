@@ -115,7 +115,7 @@ class Organization(GithubObject):
 
         team_id = self._get_team_id(team_name)
 
-        cmd = cmd.format(team_id, org, repo)
+        cmd = cmd.format(team_id, self._name, repo)
         cmd = make_request(cmd)
 
         headers = self._make_auth()
@@ -125,7 +125,8 @@ class Organization(GithubObject):
         print r.text
 
     def create_repo(self, name, **payload):
-        cmd = make_request(self.base_cmd)
+
+        cmd = make_request('/orgs/{}/repos'.format(self._name))
         payload['name'] = name
 
         headers = self._make_auth()

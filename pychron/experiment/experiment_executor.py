@@ -1443,7 +1443,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if man:
                 e = man.get_error()
                 self.debug('connectable get error {}'.format(e))
-                if e:
+                if e and e.lower() != 'ok':
                     self._err_message = e
                     break
 

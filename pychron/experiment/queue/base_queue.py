@@ -151,6 +151,8 @@ class BaseExperimentQueue(RunBlock):
 
     def set_extract_device(self, v):
         self.extract_device = v
+        for a in self.automated_runs:
+            a.extract_device = v
 
     def is_updateable(self):
         return not self._no_update

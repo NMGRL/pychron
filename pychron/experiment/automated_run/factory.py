@@ -1355,6 +1355,7 @@ class AutomatedRunFactory(PersistenceLoggable):
                           app=self.application, root=paths.conditionals_dir,
                           title='Edit Run Conditionals',
                           kinds=('actions', 'cancelations', 'terminations', 'truncations'))
+        self.load_conditionals()
 
     @on_trait_change('trunc_+, conditionals_path')
     def _handle_conditionals(self, obj, name, old, new):

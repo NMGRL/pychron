@@ -14,6 +14,9 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
+from traits.api import Str
+from traitsui.api import Item, VGroup, UItem
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.entry.entry_views.entry import BaseEntry
@@ -21,11 +24,15 @@ from pychron.entry.entry_views.entry import BaseEntry
 
 class ExperimentIdentifierEntry(BaseEntry):
     tag = 'Experiment Identifier'
+    name = Str
+    description = Str
 
     def _add_item(self):
-        # db = self.dvc.db
-        return self.dvc.add_experiment(self.value)
-        # return True
+        return self.dvc.add_experiment(self.name, description=self.description)
 
-
+    def traits_view(self):
+        return self._new_view(Item('name'),
+                              VGroup(UItem('description', style='custom'),
+                                     show_border=True, label='Description (optional)'),
+                              title='New Experiment Identifier')
 # ============= EOF =============================================

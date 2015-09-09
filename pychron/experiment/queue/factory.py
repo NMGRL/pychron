@@ -214,12 +214,10 @@ class ExperimentQueueFactory(PersistenceLoggable):
 
     @cached_property
     def _get_experiment_identifiers(self):
-        # db = self.dvc
-        # ids = []
-        # print 'exasdf', db, db.connected
-        # if db and db.connected:
-
-        ids = self.dvc.get_experiment_identifiers()
+        dvc = self.dvc
+        ids = []
+        if dvc and dvc.connect():
+            ids = dvc.get_experiment_identifiers()
         return ids
 
     def _get_names_from_config(self, cp, section):
@@ -234,7 +232,7 @@ class ExperimentQueueFactory(PersistenceLoggable):
         a.available = self.dvc.get_experiment_identifiers()
         if a.do():
             self.experiment_identifier_dirty = True
-            self.experiment_identifier = a.value
+            self.experiment_identifier = a.name
 
     def _mass_spectrometer_changed(self, new):
         self.debug('mass spectrometer ="{}"'.format(new))

@@ -376,7 +376,7 @@ class DVC(Loggable):
         with self.db.session_ctx():
             self.db.add_irradiation_level(*args)
 
-    def add_experiment(self, identifier):
+    def add_experiment(self, identifier, **kw):
         org = Organization(self.organization, usr=self.github_user, pwd=self.github_password)
         if identifier in org.repos:
             self.warning_dialog('Experiment "{}" already exists'.format(identifier))
@@ -386,10 +386,14 @@ class DVC(Loggable):
             if os.path.isdir(root):
                 self.warning_dialog('{} already exists.'.format(root))
             else:
+                if not self.default_team:
+                    self.warning_dialog('No default team name set in Preferences.\n'
+                                        'Please set a value (e.g "Users") and try creating the repository again')
+                    return False
+
                 self.info('Creating repository. {}'.format(identifier))
 
-                org.create_repo(identifier, self.github_user, self.github_password,
-                                auto_init=True)
+                org.create_repo(identifier, **kw)
                 org.add_team_to_repository(self.default_team, identifier)
 
                 url = '{}/{}/{}.git'.format(paths.git_base_origin, self.organization, identifier)
