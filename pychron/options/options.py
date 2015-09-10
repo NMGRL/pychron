@@ -163,6 +163,7 @@ class MainOptions(SubOptions):
 
 class BaseOptions(HasTraits):
     fontname = Enum(*FONTS)
+    _main_options_klass = MainOptions
 
     def load_factory_defaults(self, path):
         if not os.path.isfile(path):
@@ -198,7 +199,7 @@ class BaseOptions(HasTraits):
         #     return getattr(self, name)
         # else:
         if name == 'main':
-            klass = MainOptions
+            klass = self._main_options_klass
         else:
             klass = self._get_subview(name)
         obj = klass(model=self)
@@ -212,7 +213,6 @@ class BaseOptions(HasTraits):
         for k, v in yd.items():
             if hasattr(self, k):
                 setattr(self, k, v)
-
 
 
 class FigureOptions(BaseOptions):

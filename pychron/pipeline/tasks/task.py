@@ -209,7 +209,13 @@ class PipelineTask(BaseBrowserTask):
         if close_all:
             self.close_all()
 
-        getattr(self.engine, func)()
+        if not getattr(self.engine, func)():
+            self.resume_enabled = True
+            self.run_enabled = False
+        else:
+            self.run_enabled = True
+            self.resume_enabled = False
+
         for editor in self.engine.state.editors:
             self._open_editor(editor)
 

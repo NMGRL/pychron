@@ -29,6 +29,7 @@ from numpy import array, Inf, polyfit
 
 
 
+
 # ============= local library imports  ==========================
 from pychron.core.helpers.fits import natural_name_fit, fit_to_degree
 from pychron.core.regression.mean_regressor import MeanRegressor
@@ -516,9 +517,12 @@ class BaseIsotope(IsotopicMeasurement):
         IsotopicMeasurement.__init__(self, name, detector)
         self.baseline = Baseline(name, detector)
 
-    def get_baseline_corrected_value(self):
+    def get_baseline_corrected_value(self, include_baseline_error=None):
+        if include_baseline_error is None:
+            include_baseline_error = self.include_baseline_error
+
         b = self.baseline.uvalue
-        if not self.include_baseline_error:
+        if not include_baseline_error:
             b = b.nominal_value
             nv = self.uvalue - b
             return ufloat(nv.nominal_value, nv.std_dev, tag=self.name)
@@ -600,6 +604,13 @@ class Isotope(BaseIsotope):
 
     def get_ic_corrected_value(self):
         return self.get_non_detector_corrected_value() * (self.ic_factor or 1.0)
+
+    def no_baseline_error(self):
+        v = self.get_baseline_corrected_value(include_baseline_error=False)
+
+        if self.correct_for_blank:
+            v = v - self.blank.value
+        return v
 
     def get_non_detector_corrected_value(self):
         v = self.get_baseline_corrected_value()

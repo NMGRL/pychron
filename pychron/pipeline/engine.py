@@ -401,7 +401,7 @@ class PipelineEngine(Loggable):
             self.run_pipeline(run_from=node)
 
     def resume_pipeline(self):
-        self.run_pipeline(self.state)
+        self.run_pipeline(state=self.state)
 
     def run_pipeline(self, run_from=None, state=None):
         if state is None:

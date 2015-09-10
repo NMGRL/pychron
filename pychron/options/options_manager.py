@@ -23,7 +23,7 @@ import os
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import list_directory2
 from pychron.file_defaults import SPECTRUM_SCREEN, IDEOGRAM_SCREEN, IDEOGRAM_PRESENTATION, SERIES_SCREEN, BLANKS_SCREEN, \
-    ICFACTOR_SCREEN, INVERSE_ISOCHRON_SCREEN, INVERSE_ISOCHRON_PRESENTATION
+    ICFACTOR_SCREEN, INVERSE_ISOCHRON_SCREEN, INVERSE_ISOCHRON_PRESENTATION, ISO_EVO_SCREEN
 from pychron.file_defaults import SPECTRUM_PRESENTATION
 from pychron.globals import globalv
 from pychron.loggable import Loggable
@@ -235,6 +235,7 @@ class FigureOptionsManager(OptionsManager):
 class IsotopeEvolutionOptionsManager(FigureOptionsManager):
     id = 'iso_evo'
     options_klass = IsotopeEvolutionOptions
+    _default_options_txt = ISO_EVO_SCREEN
 
 
 class FluxOptionsManager(FigureOptionsManager):
