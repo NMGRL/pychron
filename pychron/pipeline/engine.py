@@ -230,7 +230,6 @@ class PipelineEngine(Loggable):
         # self.run_needed = True
 
     def set_template(self, name):
-        self.reset_event = True
         self._set_template(name)
 
     def get_experiment_ids(self):
@@ -485,6 +484,7 @@ class PipelineEngine(Loggable):
     # private
     def _set_template(self, name):
         print 'set template', name
+        self.reset_event = True
         name = name.replace(' ', '_').lower()
 
         path = os.path.join(paths.pipeline_template_dir, add_extension(name, '.yaml'))
