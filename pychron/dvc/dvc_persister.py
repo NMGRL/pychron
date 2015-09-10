@@ -319,16 +319,17 @@ class DVCPersister(BasePersister):
                                            'fit': 'default',
                                            'references': []}
                 cbaselines[iso.detector] = {'fit': iso.baseline.fit,
-                                            'value': float(iso.baseline.value),
-                                            'error': float(iso.baseline.error)}
+                                            'value': float(nominal_value(iso.baseline.uvalue)),
+                                            'error': float(std_dev(iso.baseline.uvalue))}
 
             intercepts[iso.name] = {'fit': iso.fit,
-                                    'value': iso.value, 'error': iso.error}
+                                    'value': float(nominal_value(iso.uvalue)),
+                                    'error': float(std_dev(iso.uvalue))}
             blanks[iso.name] = {'fit': 'previous',
                                 'references': [{'runid': self.per_spec.previous_blank_runid,
                                                 'exclude': False}],
-                                'value': float(iso.blank.value),
-                                'error': float(iso.blank.error)}
+                                'value': float(nominal_value(iso.blank.uvalue)),
+                                'error': float(std_dev(iso.blank.uvalue))}
 
         obj = self._make_analysis_dict()
 
