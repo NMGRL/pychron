@@ -25,6 +25,7 @@ import datetime
 from uncertainties import ufloat, std_dev, nominal_value
 
 
+
 # ============= local library imports  ==========================
 from pychron.core.helpers.datetime_tools import make_timef
 from pychron.core.helpers.filetools import add_extension, subdirize
@@ -389,6 +390,14 @@ class DVCAnalysis(Analysis):
 
         isos = {k: Isotope(k, v['detector']) for k, v in isos.iteritems()}
         self.isotopes = isos
+
+        # set mass
+        path = os.path.join(paths.meta_root, 'molecular_weights.json')
+        with open(path, 'r') as rfile:
+            masses = json.load(rfile)
+
+        for k, v in isos.items():
+            v.mass = masses.get(k, 0)
 
     def _dump(self, obj, path=None, modifier=None):
         if path is None:

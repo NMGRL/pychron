@@ -28,6 +28,7 @@ from numpy import array, Inf, polyfit
 
 
 
+
 # ============= local library imports  ==========================
 from pychron.core.helpers.fits import natural_name_fit, fit_to_degree
 from pychron.core.regression.mean_regressor import MeanRegressor
@@ -496,6 +497,13 @@ class Whiff(BaseMeasurement):
 class BaseIsotope(IsotopicMeasurement):
     baseline = None
     # baseline_fit_abbreviation = Property(depends_on='baseline:fit')
+
+    @property
+    def intercept_percent_error(self):
+        try:
+            return self.error / self.value
+        except ZeroDivisionError:
+            return -1
 
     @property
     def baseline_fit_abbreviation(self):
