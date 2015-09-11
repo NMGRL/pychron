@@ -650,14 +650,37 @@ class DVCDatabase(DatabaseAdapter):
 
     def get_level_names(self, irrad):
         with self.session_ctx():
-            dbirrad = self.get_irradiation(irrad)
-            return [l.name for l in dbirrad.levels]
+            levels = self.get_irradiation_levels(irrad)
+            if levels:
+                return [l.name for l in levels]
+            else:
+                return []
+
+    def get_irradiation_levels(self, irradname):
+        with self.session_ctx() as sess:
+            q = sess.query(LevelTbl)
+            q = q.join(IrradiationTbl)
+            q = q.filter(IrradiationTbl.name == irradname)
+            q = q.order_by(LevelTbl.name.asc())
+            return self._query_all(q)
 
     def get_labnumbers(self, projects=None, experiments=None, mass_spectrometers=None,
                        irradiation=None, level=None,
                        analysis_types=None,
                        high_post=None,
                        low_post=None):
+
+        self.debug('------- Get Labnumbers -------')
+        self.debug('------- projects: {}'.format(projects))
+        self.debug('------- experiments: {}'.format(experiments))
+        self.debug('------- mass_spectrometers: {}'.format(mass_spectrometers))
+        self.debug('------- irradiation: {}'.format(irradiation))
+        self.debug('------- level: {}'.format(level))
+        self.debug('------- analysis_types: {}'.format(analysis_types))
+        self.debug('------- high_post: {}'.format(high_post))
+        self.debug('------- low_post: {}'.format(low_post))
+        self.debug('------------------------------')
+
         with self.session_ctx() as sess:
             q = sess.query(IrradiationPositionTbl)
             q = q.distinct(IrradiationPositionTbl.idirradiationpositionTbl)
@@ -666,7 +689,8 @@ class DVCDatabase(DatabaseAdapter):
             at = False
             if experiments:
                 at = True
-                q = q.join(AnalysisTbl, ExperimentAssociationTbl)
+                q = q.join(AnalysisTbl, ExperimentAssociationTbl, ExperimentTbl)
+
             if projects:
                 q = q.join(SampleTbl, ProjectTbl)
 
@@ -685,11 +709,11 @@ class DVCDatabase(DatabaseAdapter):
             if irradiation:
                 if not at:
                     q = q.join(AnalysisTbl)
-                q = q.join(IrradiationPositionTbl, LevelTbl, IrradiationTbl)
+                q = q.join(LevelTbl, IrradiationTbl)
 
             # filters
             if experiments:
-                q = q.filter(ExperimentAssociationTbl.experimentName.in_(experiments))
+                q = q.filter(ExperimentTbl.name.in_(experiments))
             if projects:
                 q = q.filter(ProjectTbl.name.in_(projects))
             if mass_spectrometers:
@@ -861,6 +885,14 @@ class DVCDatabase(DatabaseAdapter):
             kw = self._append_joins(ProjectTbl, kw)
         return self._retrieve_items(SampleTbl, verbose_query=False, **kw)
 
+    def get_irradiations_by_experiments(self, experiments):
+        with self.session_ctx() as sess:
+            q = sess.query(IrradiationTbl)
+            q = q.join(LevelTbl, IrradiationPositionTbl, AnalysisTbl, ExperimentAssociationTbl, ExperimentTbl)
+
+            q = in_func(q, ExperimentTbl.name, experiments)
+            return self._query_all(q)
+
     def get_irradiations(self, names=None, order_func='desc',
                          project_names=None,
                          mass_spectrometers=None, **kw):
@@ -896,7 +928,9 @@ class DVCDatabase(DatabaseAdapter):
                 q = q.join(SampleTbl, IrradiationPositionTbl)
                 if irradiation:
                     q = q.join(LevelTbl, IrradiationPositionTbl)
-                    q = q.filter(LevelTbl.name == level)
+                    if level:
+                        q = q.filter(LevelTbl.name == level)
+
                     q = q.filter(IrradiationTbl.name == irradiation)
 
                 else:

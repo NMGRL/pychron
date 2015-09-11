@@ -217,6 +217,15 @@ class BrowserModel(BaseBrowserModel):
             obj = self.manager
         return obj
 
+    def _selected_experiments_changed_hook(self, names):
+        self.irradiations = []
+        # get all irradiations contained within these experiments
+        db = self.db
+        with db.session_ctx():
+            irrads = db.get_irradiations_by_experiments(names)
+            if irrads:
+                self.irradiations = [i.name for i in irrads]
+
     def _selected_projects_change_hook(self, names):
 
         self.selected_samples = []
@@ -238,6 +247,7 @@ class BrowserModel(BaseBrowserModel):
             ms = self.mass_spectrometer_includes
 
         if self.irradiation:
+            self.debug('load projects for irradiation= {}, level= {}'.format(self.irradiation, self.level))
             db = self.db
             with db.session_ctx():
                 ps = db.get_projects(irradiation=self.irradiation,
@@ -245,7 +255,9 @@ class BrowserModel(BaseBrowserModel):
                                      mass_spectrometers=ms)
 
                 ps = self._make_project_records(ps, include_recent_first=True)
+                old_selection = [p.name for p in self.selected_projects]
                 self.projects = ps
+                self.selected_projects = [p for p in ps if p.name in old_selection]
 
     def _retrieve_labnumbers(self):
         es = []

@@ -312,7 +312,6 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
     def _load_associated_labnumbers(self):
         """
-            names: list of project names
         """
         db = self.db
         sams = []
@@ -586,8 +585,10 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
     def _selected_experiments_changed(self, old, new):
         if new and self.experiment_enabled:
-            self._load_experiment_date_range([n.name for n in new])
+            names = [n.name for n in new]
+            self._load_experiment_date_range(names)
             self._load_associated_labnumbers()
+            self._selected_experiments_changed_hook(names)
 
     def _selected_projects_changed(self, old, new):
 
