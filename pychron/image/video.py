@@ -60,7 +60,7 @@ def convert_to_video(path, fps, name_filter='snapshot%03d.jpg',
     if ffmpeg is None or not os.path.isfile(ffmpeg):
         ffmpeg = '/usr/local/bin/ffmpeg'
 
-    subprocess.call([ffmpeg, '-r', frame_rate, '-i', path, output, '-codec', codec])
+    subprocess.call([ffmpeg, '-r', frame_rate, '-i', path, output])
 
 
 class Video(Image):
@@ -154,7 +154,7 @@ class Video(Image):
         else:
             func = self._cv_record
 
-        fps = 5
+        fps = 12
         if self.cap is None:
             self.open()
 
@@ -231,6 +231,7 @@ class Video(Image):
         with consumable(func=save) as con:
             while not stop.is_set():
                 st = time.time()
+                # pn = os.path.join(image_dir, 'image_{:05d}.jpg'.format(cnt))
                 pn = os.path.join(image_dir, 'image_{:05d}.jpg'.format(cnt))
                 con.add_consumable(pn)
                 cnt += 1

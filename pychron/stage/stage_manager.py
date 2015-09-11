@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Event, Str, List, Instance, Bool
+from traits.api import Event, Str, List, Instance, Bool, String
 # ============= standard library imports ========================
 import os
 import pickle
@@ -42,7 +42,7 @@ class BaseStageManager(Manager):
     canvas = Instance(MapCanvas)
 
     root = Str(paths.map_dir)
-    calibrated_position_entry = Str(enter_set=True, auto_set=False)
+    calibrated_position_entry = String(enter_set=True, auto_set=False)
 
     move_thread = None
     temp_position = None
@@ -182,9 +182,9 @@ class BaseStageManager(Manager):
         raise NotImplementedError
 
     # handlers
-    def _calibrated_position_entry_changed(self):
-        v = self.calibrated_position_entry
-        self.goto_position(v)
+    def _calibrated_position_entry_changed(self, new):
+        self.debug('User entered calibrated position {}'.format(new))
+        self.goto_position(new)
 
     def _stage_map_name_changed(self, new):
         if new:

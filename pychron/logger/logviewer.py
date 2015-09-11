@@ -86,7 +86,6 @@ class LogModel(HasTraits):
         with open(path, 'r') as rfile:
             # print rfile.read()
             self.items = self.oitems = [self._factory(line) for line in self._file(rfile)]
-            print self.items
 
     def _file(self, r):
         return r
@@ -120,7 +119,6 @@ class TwistedLogModel(LogModel):
 
         fmt = ii.get('log_format')
         li.message = str(fmt.format(**{k: tostr(v) for k, v in ii.items()}))
-        print li.message
 
         return li
 

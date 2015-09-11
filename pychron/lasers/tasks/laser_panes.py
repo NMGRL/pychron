@@ -89,7 +89,7 @@ class StageControlPane(TraitsDockPane):
         #     return UItem('object.stage_manager.canvas.{}'.format(name), **kw)
 
         pgrp = Group(UItem('stage_manager.calibrated_position_entry',
-                           tooltip='Enter a positon e.g 1 for a hole, or 3,4 for X,Y'),
+                           tooltip='Enter a position e.g 1 for a hole, or 3,4 for X,Y'),
                      label='Calibrated Position',
                      show_border=True)
         hgrp = HGroup(UItem('stage_manager.stop_button'),
