@@ -27,7 +27,7 @@ from datetime import timedelta, datetime
 from sqlalchemy import not_, func, distinct, or_
 # ============= local library imports  ==========================
 from pychron.database.core.database_adapter import DatabaseAdapter
-from pychron.database.core.query import compile_query
+from pychron.database.core.query import compile_query, in_func
 from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, IrradiationTbl, LevelTbl, SampleTbl, \
     MaterialTbl, IrradiationPositionTbl, UserTbl, ExtractDeviceTbl, LoadTbl, LoadHolderTbl, LoadPositionTbl, \
     MeasuredPositionTbl, ProductionTbl, VersionTbl, ExperimentAssociationTbl, ExperimentTbl, TagTbl, AnalysisChangeTbl, \
@@ -471,22 +471,37 @@ class DVCDatabase(DatabaseAdapter):
                                low_post=None, high_post=None,
                                omit_key=None, exclude_uuids=None,
                                include_invalid=False,
-                               mass_spectrometers=None, order='asc',
+                               mass_spectrometers=None,
+                               experiments=None,
+                               order='asc',
                                **kw):
+
         with self.session_ctx() as sess:
             q = sess.query(AnalysisTbl)
             q = q.join(IrradiationPositionTbl)
             if omit_key or not include_invalid:
                 q = q.join(AnalysisChangeTbl)
 
-            if mass_spectrometers:
-                if not hasattr(mass_spectrometers, '__iter__'):
-                    mass_spectrometers = (mass_spectrometers,)
-                q = q.filter(AnalysisTbl.mass_spectrometer.in_(mass_spectrometers))
+            if experiments:
+                q = q.join(ExperimentAssociationTbl, ExperimentTbl)
 
-            if not hasattr(lns, '__iter__'):
-                lns = (lns,)
-            q = q.filter(IrradiationPositionTbl.identifier.in_(lns))
+            q = in_func(q, AnalysisTbl.mass_spectrometer, mass_spectrometers)
+            q = in_func(q, ExperimentTbl.name, experiments)
+            q = in_func(q, IrradiationPositionTbl.identifier, lns)
+
+            # if mass_spectrometers:
+            #     if not hasattr(mass_spectrometers, '__iter__'):
+            #         mass_spectrometers = (mass_spectrometers,)
+            #     q = q.filter(AnalysisTbl.mass_spectrometer.in_(mass_spectrometers))
+            #
+            # if experiments:
+            #     if not hasattr(experiments, '__iter__'):
+            #         q = q.filter(ExperimentTbl.name == experiments)
+            #     else:
+            #         q = q.filter(ExperimentTbl.name.in_(experiments))
+            # if not hasattr(lns, '__iter__'):
+            #     lns = (lns,)
+            # q = q.filter(IrradiationPositionTbl.identifier.in_(lns))
 
             if low_post:
                 q = q.filter(AnalysisTbl.timestamp >= str(low_post))

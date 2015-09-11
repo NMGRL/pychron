@@ -453,6 +453,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
                            exclude_uuids=None,
                            include_invalid=False,
                            mass_spectrometers=None,
+                           experiments=None,
                            make_records=True):
         db = self.db
         with db.session_ctx():
@@ -470,13 +471,15 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
                                                     exclude_identifiers=exclude_identifiers,
                                                     exclude_uuids=exclude_uuids,
                                                     include_invalid=include_invalid,
-                                                    mass_spectrometers=mass_spectrometers)
+                                                    mass_spectrometers=mass_spectrometers,
+                                                    experiments=experiments)
                 self.debug('retrieved analyses n={}'.format(tc))
             else:
                 ans = db.get_analyses_by_date_range(low_post, high_post,
-                                                 order=order,
-                                                 mass_spectrometers=mass_spectrometers,
-                                                 limit=limit)
+                                                    order=order,
+                                                    mass_spectrometers=mass_spectrometers,
+                                                    experiments=experiments,
+                                                    limit=limit)
 
             if make_records:
                 return self._make_records(ans)
@@ -754,4 +757,5 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
     def _labnumber_tabular_adapter_default(self):
         return LabnumberAdapter()
+
 # ============= EOF =============================================
