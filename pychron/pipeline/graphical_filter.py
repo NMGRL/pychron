@@ -70,9 +70,6 @@ def analysis_type_func(analyses, offset=True):
     return f
 
 
-# ANALYSIS_NAMES = [(a.split(':')[1] if ':' in a else a) for a in ANALYSIS_MAPPING.values()]
-
-
 class SelectionGraph(Graph):
     scatter = None
 
@@ -95,7 +92,6 @@ class SelectionGraph(Graph):
         p.x_axis.tick_generator = ScalesTickGenerator(scale=CalendarScaleSystem())
         p.x_grid.tick_generator = p.x_axis.tick_generator
         p.x_axis.title = 'Time'
-        # p.y_axis.tick_label_rotate_angle = 45
 
         scatter, _ = self.new_series(x, y, type='scatter',
                                      marker_size=1.5,
@@ -119,14 +115,15 @@ class SelectionGraph(Graph):
         rect_overlay = RectSelectionOverlay(component=scatter,
                                             tool=rect_tool)
 
-        scatter.overlays.append(rect_overlay)
         broadcaster.tools.append(rect_tool)
-        # range_selector = RangeSelection(scatter, left_button_selects=True)
         broadcaster.tools.append(point_inspector)
+
+        # range_selector = RangeSelection(scatter, left_button_selects=True)
         # broadcaster.tools.append(range_selector)
 
         # scatter.overlays.append(RangeSelectionOverlay(component=scatter))
         scatter.overlays.append(pinspector_overlay)
+        scatter.overlays.append(rect_overlay)
 
         self.scatter = scatter
 
@@ -185,8 +182,10 @@ class GraphicalFilterModel(HasTraits):
 
         # ans = self._filter_analysis_types(ans)
         if ans:
+            ans = sorted(ans, key=lambda x: x.timestamp)
+
             # todo: CalendarScaleSystem off by 1 hour. add 3600 as a temp hack
-            x, y = zip(*[(ai.timestamp + 3600, f(ai.analysis_type)) for ai in sorted(ans, key=lambda x: x.timestamp)])
+            x, y = zip(*[(ai.timestamp + 3600, f(ai.analysis_type)) for ai in ans])
             # x, y = zip(*[(ai.timestamp, f(ai.analysis_type)) for ai in ans])
         else:
             x, y, ans = [], [], []
@@ -248,6 +247,7 @@ class GraphicalFilterModel(HasTraits):
     @on_trait_change('use_offset_analyses, analysis_types[]')
     def handle_analysis_types(self):
         self.setup(set_atypes=False)
+
 
 class GraphicalFilterView(Controller):
     is_append = Bool
