@@ -80,6 +80,12 @@ class DVCPersister(BasePersister):
 
     def post_extraction_save(self, rblob, oblob, snapshots):
         p = self._make_path(modifier='extraction')
+
+        if rblob:
+            rblob = base64.b64encode(rblob[0])
+        if oblob:
+            oblob = base64.b64encode(oblob[0])
+
         obj = {'request': rblob,
                'response': oblob}
 
