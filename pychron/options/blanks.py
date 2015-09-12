@@ -16,14 +16,31 @@
 
 # ============= enthought library imports =======================
 from traits.api import List
+from traitsui.api import EnumEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.options.blanks_views import VIEWS
+from pychron.options.options import object_column, checkbox_column, MainOptions
 from pychron.options.series import SeriesOptions
+from pychron.pychron_constants import FIT_TYPES_INTERPOLATE, FIT_ERROR_TYPES
+
+
+class BlanksMainOptions(MainOptions):
+    def _get_columns(self):
+        return [object_column(name='name'),
+                checkbox_column(name='plot_enabled', label='Enabled'),
+                checkbox_column(name='save_enabled', label='Save'),
+                object_column(name='fit',
+                              editor=EnumEditor(values=FIT_TYPES_INTERPOLATE),
+                              width=75),
+                object_column(name='error_type',
+                              editor=EnumEditor(values=FIT_ERROR_TYPES),
+                              width=75, label='Error'), ]
 
 
 class BlanksOptions(SeriesOptions):
     subview_names = List(['Main', 'Blanks', 'Appearance'])
+    _main_options_klass = BlanksMainOptions
 
     def _get_subview(self, name):
         return VIEWS[name]
