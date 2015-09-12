@@ -62,10 +62,14 @@ class AnalysisTagModel(BaseTagModel):
             if invalid_tag:
                 dbtags.remove(invalid_tag)
                 f.append(invalid_tag)
+            else:
+                f.append(db.add_invalid_tag())
 
             if ok_tag:
                 dbtags.remove(ok_tag)
                 f.append(ok_tag)
+            else:
+                f.append(db.add_ok_tag())
 
             tags = f + dbtags
 

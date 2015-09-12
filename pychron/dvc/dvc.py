@@ -314,8 +314,8 @@ class DVC(Loggable):
             ip.j = j
             ip.j_err = e
 
-    def find_references(self, times, atypes, hours, exclude=None):
-        records = self.db.find_references(times, atypes, hours, exclude=exclude)
+    def find_references(self, times, atypes, hours, exclude=None, **kw):
+        records = self.db.find_references(times, atypes, hours, exclude=exclude, **kw)
         if records:
             return self.make_analyses(records)
 

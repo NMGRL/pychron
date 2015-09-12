@@ -114,6 +114,21 @@ class DVCDatabase(DatabaseAdapter):
                     if not self.get_users():
                         self.add_user('root')
 
+    def add_invalid_tag(self):
+        return self._add_default_tag('invalid', True)
+
+    def add_ok_tag(self):
+        return self._add_default_tag('ok', False)
+
+    def _add_default_tag(self, name, v):
+        with self.session_ctx():
+            tag = TagTbl(name=name,
+                         omit_ideo=v,
+                         omit_spec=v,
+                         omit_iso=v,
+                         omit_series=v)
+            return self._add_item(tag)
+
     def set_analysis_tag(self, uuid, tagname):
         with self.session_ctx():
             an = self.get_analysis_uuid(uuid)
@@ -121,7 +136,7 @@ class DVCDatabase(DatabaseAdapter):
             change.tag = tagname
             change.user = self.save_username
 
-    def find_references(self, times, atypes, hours=10, exclude=None):
+    def find_references(self, times, atypes, hours=10, exclude=None, exclude_invalid=True):
         with self.session_ctx() as sess:
             # delta = 60 * 60 * hours  # seconds
             delta = timedelta(hours=hours)
@@ -132,7 +147,10 @@ class DVCDatabase(DatabaseAdapter):
                 high = ti + delta
                 # rs = self.get_analyses_data_range(low, high, atypes, exclude=ex, exclude_uuids=exclude)
                 rs = self.get_analyses_by_date_range(low, high,
-                                                     analysis_type=atypes, exclude=ex, exclude_uuids=exclude)
+                                                     analysis_type=atypes,
+                                                     exclude=ex,
+                                                     exclude_uuids=exclude,
+                                                     exclude_invalid=exclude_invalid)
                 refs.update(rs)
                 ex = [r.idanalysisTbl for r in refs]
                 # print rs
