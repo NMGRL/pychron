@@ -261,11 +261,11 @@ class LaserProtocol(ServiceProtocol):
             name, value = data
 
         try:
-            data = float(data)
+            value = float(value)
         except ValueError:
             return InvalidArgumentsErrorCode('SetMotor', value)
 
-        return self._manager.set_motor(name, data, block=False)
+        return self._manager.set_motor(name, value, block=False)
 
     def _get_motor_moving(self, data):
         if isinstance(data, dict):

@@ -75,14 +75,14 @@ class FusionsLogicBoard(CoreDevice):
         # no handle or response is none
         resp = True
         if self._test_comms:
-        #            self.tell('\r')
-        #            self._communicator.write('\r')
             resp = True if self.ask(';LB.VER') else False
 
         #        resp = self._disable_laser_()
         if self.communicator.handle is None or resp is not True:
+            for m in self.motors:
+                m.set_homing_required(True)
+
             if not globalv.ignore_initialization_warnings:
-            #                    warning(None, 'Laser not connected. Power cycle USB hub.')
                 result = self.confirmation_dialog('Laser not connected. To reconnect select "Yes", '
                                                   'power cycle USB hub, and restart program.'
                                                   '\nYes=Quit Pychron.\nNo=Continue', title='Quit Pychron')
@@ -100,6 +100,8 @@ class FusionsLogicBoard(CoreDevice):
             if m.use_initialize:
                 m.initialize(*args, **kw)
             m.on_trait_change(lambda: self.trait_set(refresh_canvas=True), 'data_position')
+            m.set_homing_required(False)
+
         return True
 
     def _build_command(self, *args):
@@ -144,76 +146,6 @@ class FusionsLogicBoard(CoreDevice):
         self.motors.append(m)
         setattr(self, '{}_motor'.format(name), m)
 
-    #        if name == 'beam':
-    #            self.beam_motor = m
-    #        elif name == 'zoom':
-    #            self.zoom_motor = m
-
-    #    def __getattr__(self, attr):
-    #        if attr.endswith('_motor'):
-    #            return self.get_motor(attr.replace('_motor', ''))
-
-    #    def _motor_attr(self, attr, cb):
-    #        if 'min' in attr:
-    #            vattr = 'min'
-    #            mname = attr.replace(vattr, '')
-    #        elif 'max' in attr:
-    #            vattr = 'max'
-    #            mname = attr.replace(vattr, '')
-    #        elif 'update' in attr:
-    #            vattr = 'update_position'
-    #            mname = attr.replace('update_', '')
-    #        elif 'enabled' in attr:
-    #            vattr = 'enabled'
-    #            mname = attr.replace('_enabled', '')
-    #        else:
-    #            mname = attr
-    #            vattr = 'data_position'
-    #
-    #        motor = self.get_motor(mname)
-    #        if motor:
-    #            return cb(motor, vattr)
-    #
-    # #    def __setattr__(self, attr, v):
-    # #        print attr, v
-    # #        cb = lambda m, va:setattr(m, va, v)
-    # #        r = self._motor_attr(attr, cb)
-    # #        if not r:
-    # #            super(FusionsLogicBoard, self).__setattr__(attr, v)
-    #
-    #    def __getattr__(self, attr):
-    #        cb = lambda m, va:getattr(m, va)
-    #        return self._motor_attr(attr, cb)
-
-    #
-    #        if 'min' in attr:
-    #            vattr = 'min'
-    #            mname = attr.replace(vattr, '')
-    #        elif 'max' in attr:
-    #            vattr = 'max'
-    #            mname = attr.replace(vattr, '')
-    #        elif 'update' in attr:
-    #            vattr = 'update_position'
-    #            mname = attr.replace('update_', '')
-    #        elif 'enabled' in attr:
-    #            vattr = 'enabled'
-    #            mname = attr.replace('_enabled', '')
-    #        else:
-    #            mname = attr
-    #            vattr = 'data_position'
-    #
-    #        motor = self.get_motor(mname)
-    #        if motor:
-    #            return getattr(motor, vattr)
-    #        try:
-    #            motor = self.get_motor(mname)
-    #            if motor:
-    #                print mname, motor
-    #                return getattr(motor, vattr)
-    #        except Exception, e:
-    #            pass
-    #            pass
-
     def get_motor(self, name):
         return next((m for m in self.motors if m.name == name), None)
 
@@ -229,24 +161,12 @@ class FusionsLogicBoard(CoreDevice):
         m = getattr(m, klass)
         return m(parent=self, name=name)
 
-
-    #    def _configure_fired(self):
-    #        '''
-    #        '''
-    #        self.configure_motors()
-    #
-    #    def configure_motors(self):
-    #        '''
-    #        '''
-    #        fc = FusionsMotorConfigurer(motors=[self.zoom_motor, self.beam_motor])
-    #        fc.edit_traits()
-
     # ==============================================================================
     # laser methods
     # ==============================================================================
     def check_interlocks(self, verbose=True):
-        '''
-        '''
+        """
+        """
         lock_bits = []
         if verbose:
             self.info('checking interlocks')
@@ -274,8 +194,8 @@ class FusionsLogicBoard(CoreDevice):
         return lock_bits
 
     def _enable_laser(self, **kw):
-        '''
-        '''
+        """
+        """
         interlocks = self.check_interlocks()
         if not interlocks:
 
@@ -293,8 +213,8 @@ class FusionsLogicBoard(CoreDevice):
             return msg + ','.join(interlocks)
 
     def _disable_laser(self):
-        '''
-        '''
+        """
+        """
         ntries = 3
         for i in range(ntries):
             resp = self.repeat_command('ENBL 0', check_val='OK')
@@ -327,15 +247,15 @@ class FusionsLogicBoard(CoreDevice):
         self.ask(cmd)
 
     def _parse_response(self, resp):
-        '''
+        """
             remove the CR at EOL
-        '''
+        """
         if resp is not None:
             return resp.rstrip()
 
     def _motor_microcontroller_default(self):
-        '''
-        '''
+        """
+        """
         return KerrMicrocontroller(name='microcontroller',
                                    parent=self)
 
@@ -373,23 +293,17 @@ class FusionsLogicBoard(CoreDevice):
         self.info('setting {} to {}'.format(name, value))
         return motor.set_value(value, block)
 
-
-    #        if block:
-    #            self._block_(motor)
-    #        return True
-
     def _block_(self, motor):
-        '''
-
-        '''
+        """
+        """
         self.info('waiting for move to complete')
         if not self.simulation:
             motor.block()
         self.info('move complete')
 
     def _enable_motor_(self, motor, pos):
-        '''
-        '''
+        """
+        """
         if motor.data_position != pos:
             motor.enabled = False
 
