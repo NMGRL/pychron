@@ -613,7 +613,7 @@ class BrowserModel(BaseBrowserModel):
                       include_invalid=not at.omit_invalid,
                       mass_spectrometers=self._recent_mass_spectrometers,
                       exclude_uuids=uuids,
-                      experiments=[e.name for e in self.selected_experiments])
+                      experiments=[e.name for e in self.selected_experiments] if self.selected_experiments else None)
 
             lp, hp = self.low_post, self.high_post
             ans = self._retrieve_sample_analyses(new,

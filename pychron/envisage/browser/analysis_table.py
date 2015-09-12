@@ -20,8 +20,8 @@ from traits.api import List, Any, Str, Enum, Bool, Event, Property, cached_prope
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.column_sorter_mixin import ColumnSorterMixin
+from pychron.core.fuzzyfinder import fuzzyfinder
 from pychron.envisage.browser.adapters import AnalysisAdapter
-from pychron.envisage.browser.base_browser_model import filter_func
 from pychron.core.ui.table_configurer import AnalysisTableConfigurer
 
 
@@ -64,7 +64,7 @@ class AnalysisTable(ColumnSorterMixin):
             self.oanalyses = ans
 
         self.calculate_dts(self.analyses)
-        self._analysis_filter_parameter_changed(True)
+        # self._analysis_filter_parameter_changed(True)
 
     def calculate_dts(self, ans):
         if ans and len(ans) > 1:
@@ -88,32 +88,37 @@ class AnalysisTable(ColumnSorterMixin):
         self.table_configurer.edit_traits(kind='livemodal')
 
     # handlers
-    def _analyses_items_changed(self):
+    def _analyses_items_changed(self, old, new):
         if self.sort_suppress:
             return
 
         self.calculate_dts(self.analyses)
 
+        if new.removed:
+            for ai in new.removed:
+                self.oanalyses.remove(ai)
+
     def _analysis_filter_changed(self, new):
         if new:
             name = self.analysis_filter_parameter
-            self.analyses = filter(filter_func(new, name), self.oanalyses)
+            self.analyses = fuzzyfinder(new, self.oanalyses, name)
+            # self.analyses = filter(filter_func(new, name), self.oanalyses)
         else:
             self.analyses = self.oanalyses
 
     def _analysis_filter_comparator_changed(self):
         self._analysis_filter_changed(self.analysis_filter)
 
-    def _analysis_filter_parameter_changed(self, new):
-        if new:
-            vs = []
-            p = self._get_analysis_filter_parameter()
-            for si in self.oanalyses:
-                v = getattr(si, p)
-                if v not in vs:
-                    vs.append(v)
-
-            self.analysis_filter_values = vs
+    # def _analysis_filter_parameter_changed(self, new):
+    #     if new:
+    #         vs = []
+    #         p = self._get_analysis_filter_parameter()
+    #         for si in self.oanalyses:
+    #             v = getattr(si, p)
+    #             if v not in vs:
+    #                 vs.append(v)
+    #
+    #         self.analysis_filter_values = vs
 
     def _get_analysis_filter_parameter(self):
         p = self.analysis_filter_parameter

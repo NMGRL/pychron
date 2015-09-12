@@ -158,8 +158,9 @@ class BrowserSampleView(PaneModelView):
         analysis_tools = HGroup(UItem(make_name('analysis_filter_parameter'),
                                       width=-90,
                                       editor=EnumEditor(name=make_name('analysis_filter_parameters'))),
-                                UItem(make_name('analysis_filter'),
-                                      editor=ComboboxEditor(name=make_name('analysis_filter_values'))))
+                                UItem(make_name('analysis_filter')))
+        # UItem(make_name('analysis_filter'),
+        #       editor=ComboboxEditor(name=make_name('analysis_filter_values'))))
 
         agrp = VGroup(analysis_tools,
                       UItem(make_name('analyses'),
