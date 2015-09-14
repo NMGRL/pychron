@@ -181,7 +181,7 @@ class FitIsotopeEvolutionNode(FitNode):
         po = self.plotter_options
 
         self._fits = [pi for pi in po.get_loadable_aux_plots()]
-        fs = progress_loader(state.unknowns, self._assemble_result)
+        fs = progress_loader(state.unknowns, self._assemble_result, threshold=1)
 
         if self.editor:
             self.editor.analysis_groups = [(ai,) for ai in state.unknowns]
