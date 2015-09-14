@@ -593,7 +593,7 @@ class KerrMotor(KerrDevice, ConsumerMixin):
 
         hpos = max(self.min_steps, min(self.steps, hpos))
 
-        return hpos
+        return int(hpos)
 
     def _update_position(self):
         """
