@@ -314,10 +314,13 @@ class DVC(Loggable):
             ip.j = j
             ip.j_err = e
 
-    def find_references(self, times, atypes, hours, exclude=None, **kw):
+    def find_references(self, times, atypes, hours, exclude=None, make_records=True, **kw):
         records = self.db.find_references(times, atypes, hours, exclude=exclude, **kw)
+
         if records:
-            return self.make_analyses(records)
+            if make_records:
+                records = self.make_analyses(records)
+            return records
 
     def make_analyses(self, records, calculate_f_only=False):
         if not records:

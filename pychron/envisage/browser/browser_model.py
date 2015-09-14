@@ -15,20 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-
-from datetime import datetime, timedelta
-
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import Str, Bool, Property, on_trait_change, Button, Enum, List, Instance
-
-
 # ============= standard library imports ========================
+from datetime import datetime, timedelta
 import re
 # ============= local library imports  ==========================
 # from pychron.processing.tasks.browser.browser_task import NCHARS
 # from pychron.database.records.isotope_record import GraphicalRecordView
 from pychron.core.helpers.iterfuncs import partition
 from pychron.envisage.browser.base_browser_model import BaseBrowserModel, extract_mass_spectrometer_name
+from pychron.envisage.browser.find_references_config import FindReferencesConfigModel, FindReferencesConfigView
 from pychron.envisage.browser.record_views import ProjectRecordView
 from pychron.envisage.browser.analysis_table import AnalysisTable
 # from pychron.processing.tasks.browser.time_view import TimeViewModel
@@ -53,6 +50,7 @@ class BrowserModel(BaseBrowserModel):
 
     filter_by_button = Button
     graphical_filter_button = Button
+    find_references_button = Button
     toggle_view = Button
     toggle_focus = Button
 
@@ -188,6 +186,160 @@ class BrowserModel(BaseBrowserModel):
 
             self.analysis_table.set_analyses(xx)
 
+    def dump(self):
+        self.time_view_model.dump_filter()
+        super(BrowserModel, self).dump()
+
+    def select_sample(self, idx=None, name=None):
+        if idx is not None:
+            sams = self.samples[idx:idx + 2]
+            self.selected_samples = sams
+
+    def select_project(self, name):
+        for p in self.projects:
+            if p.name == name:
+                self.selected_projects = [p]
+                self.project_enabled = True
+                break
+
+    def select_experiment(self, exp):
+        for e in self.experiments:
+            if e.name == exp:
+                self.selected_experiments = [e]
+                self.experiment_enabled = True
+                break
+
+    # handlers
+    def _irradiation_enabled_changed(self, new):
+        if not new:
+            self._top_level_filter = None
+            print self.oprojects
+            self.projects = self.oprojects
+        else:
+            self._load_projects_for_irradiation()
+
+    def _project_enabled_changed(self, new):
+        if not new:
+            self._top_level_filter = None
+
+            # obj = self._get_manager()
+            # self.irradiations = obj.irradiations
+
+    @on_trait_change('irradiation,level')
+    def _handle_irradiation_change(self, name, new):
+        # obj = self._get_manager()
+        # setattr(obj, name, new)
+
+        if not self._top_level_filter:
+            self._top_level_filter = 'irradiation'
+
+        if self._top_level_filter == 'irradiation':
+            self._load_projects_for_irradiation()
+
+        if name == 'irradiation':
+            self.levels = self.db.get_level_names(new)
+
+        # if name == 'irradiation':
+        elif name == 'level':
+            self._load_associated_labnumbers()
+
+    def _use_analysis_type_filtering_changed(self):
+        self.refresh_samples()
+
+    def __analysis_include_types_changed(self, new):
+        if new:
+            if self.selected_projects:
+                self._filter_by_button_fired()
+            else:
+                self.refresh_samples()
+        else:
+            self.samples = []
+
+    def _use_mass_spectrometer_changed(self, new):
+        if new:
+            self.refresh_samples()
+            self._load_projects_and_irradiations()
+
+    def _mass_spectrometer_includes_changed(self):
+        if self.mass_spectrometer_includes:
+            if self.identifier:
+                self._identifier_changed(self.identifier)
+                return
+
+            self.refresh_samples()
+
+            # self._load_projects_and_irradiations()
+
+    def _find_references_button_fired(self):
+        self.debug('find references button fired')
+        if self.sample_view_active:
+            self._find_references_hook()
+
+    def _filter_by_button_fired(self):
+        self.debug('filter by button fired low_post={}, high_post={}'.format(self.low_post, self.high_post))
+        if self.sample_view_active:
+            self._filter_by_hook()
+
+            # def _toggle_focus_fired(self):
+            # self.filter_focus = not self.filter_focus
+
+    def _toggle_view_fired(self):
+        self.sample_view_active = not self.sample_view_active
+        if not self.sample_view_active:
+            self.time_view_model.load()
+        else:
+            self.activate_sample_browser()
+
+        self.dump()
+
+    def _selected_samples_changed(self, new):
+        self.analysis_table.selected = []
+
+        ans = []
+        uuids = []
+        if new:
+            at = self.analysis_table
+            lim = at.limit
+
+            uuids = [ai.uuid for ai in self.analysis_table.analyses]
+            kw = dict(limit=lim,
+                      include_invalid=not at.omit_invalid,
+                      mass_spectrometers=self._recent_mass_spectrometers,
+                      exclude_uuids=uuids,
+                      experiments=[e.name for e in self.selected_experiments] if self.selected_experiments else None)
+
+            lp, hp = self.low_post, self.high_post
+            ans = self._retrieve_sample_analyses(new,
+                                                 low_post=lp,
+                                                 high_post=hp,
+                                                 **kw)
+
+            self.debug('selected samples changed. loading analyses. '
+                       'low={}, high={}, limit={} n={}'.format(lp, hp, lim, len(ans)))
+
+        self.analysis_table.set_analyses(ans, selected_identifiers={ai.identifier for ai in new})
+        self.dump_browser()
+        # self.filter_focus = not bool(new)
+
+    # @on_trait_change('analysis_table:selected')
+    # def _handle_analysis_selected(self, new):
+    #     if self.use_focus_switching:
+    #         self.filter_focus = not bool(new)
+
+    # private
+    def _find_references_hook(self):
+        m = FindReferencesConfigModel()
+        v = FindReferencesConfigView(model=m)
+        info = v.edit_traits()
+        if info.result:
+            atypes = m.formatted_analysis_types
+            times = sorted((ai.rundate for ai in self.analysis_table.analyses))
+            refs = self.db.find_references(times, atypes, hours=m.threshold, make_records=False)
+            if refs:
+                self.analysis_table.add_analyses(refs)
+            else:
+                self.warning_dialog('No References found.\n\nAnalysis Types {}'.format(','.join(atypes)))
+
     def _project_date_bins(self, identifier):
         db = self.db
         hours = self.search_criteria.reference_hours_padding
@@ -241,24 +393,6 @@ class BrowserModel(BaseBrowserModel):
                     irrads = db.get_irradiations(project_names=names)
                     self.irradiations = [i.name for i in irrads]
 
-    def _load_projects_for_irradiation(self):
-        ms = None
-        if self.mass_spectrometers_enabled:
-            ms = self.mass_spectrometer_includes
-
-        if self.irradiation:
-            self.debug('load projects for irradiation= {}, level= {}'.format(self.irradiation, self.level))
-            db = self.db
-            with db.session_ctx():
-                ps = db.get_projects(irradiation=self.irradiation,
-                                     level=self.level,
-                                     mass_spectrometers=ms)
-
-                ps = self._make_project_records(ps, include_recent_first=True)
-                old_selection = [p.name for p in self.selected_projects]
-                self.projects = ps
-                self.selected_projects = [p for p in ps if p.name in old_selection]
-
     def _retrieve_labnumbers(self):
         es = []
         ps = []
@@ -297,85 +431,6 @@ class BrowserModel(BaseBrowserModel):
                                     low_post=self.low_post if self.use_low_post else None)
         return ls
 
-        # def _retrieve_labnumbers_hook(self, db):
-        #     low_post = self.low_post
-        #     high_post = self.high_post
-        #     ms = None
-        #     if self.use_mass_spectrometers:
-        #         ms = self.mass_spectrometer_includes
-        #
-        #     def get_labnumbers(ids=None):
-        #         return db.get_labnumbers(identifiers=ids,
-        #                                  low_post=low_post,
-        #                                  high_post=high_post,
-        #                                  mass_spectrometers=ms,
-        #                                  filter_non_run=self.filter_non_run_samples)
-        #
-        #     def atypes_func(obj, func):
-        #         func = getattr(man, func)
-        #         refs, unks = func(obj)
-        #         nls = []
-        #         if 'monitors' in atypes:
-        #             nls.extend(refs)
-        #         if 'unknown' in atypes:
-        #             nls.extend(unks)
-        #         return nls
-        #
-        #     man = self.manager
-        #     ls = []
-        #     atypes = self.analysis_include_types if self.use_analysis_type_filtering else None
-
-        # print self.project_enabled, self.irradiation_enabled
-
-        # if self.selected_experiments:
-        #     ls = db.get_experiment_labnumbers([e.name for e in self.selected_experiments])
-        # else:
-        #     elif self.project_enabled:
-        #         if not self.irradiation_enabled:
-        #             ls = super(BrowserModel, self)._retrieve_labnumbers_hook(db)
-        #         else:
-        #             if self.selected_projects and self.irradiation_enabled and self.irradiation:
-        #                 ls = db.get_project_irradiation_labnumbers([si.name for si in self.selected_projects],
-        #                                                            self.irradiation,
-        #                                                            self.level,
-        #                                                            low_post=low_post,
-        #                                                            high_post=high_post,
-        #                                                            mass_spectrometers=ms,
-        #                                                            filter_non_run=self.filter_non_run_samples,
-        #                                                            analysis_types=atypes)
-        #                 if atypes:
-        #                     ls = atypes_func(ls)
-        #
-        #     elif self.irradiation_enabled and self.irradiation:
-        #         if not self.level:
-        #             ls = db.get_irradiation_labnumbers(self.irradiation, self.level,
-        #                                                low_post=low_post,
-        #                                                high_post=high_post,
-        #                                                mass_spectrometers=ms,
-        #                                                filter_non_run=self.filter_non_run_samples,
-        #                                                analysis_types=atypes)
-        #         else:
-        #             # level = man.get_level(self.level)
-        #             level = db.get_irradiation_level(self.irradiation,
-        #                                              self.level)
-        #             if level:
-        #                 if atypes:
-        #                     xs = atypes_func(level, 'group_level')
-        #                 else:
-        #                     xs = [p.labnumber for p in level.positions]
-        #
-        #                 if xs:
-        #                     lns = [x.identifier for x in xs]
-        #                     ls = get_labnumbers(ids=lns)
-        #
-        #     elif low_post or high_post:
-        #         ls = get_labnumbers()
-        #         ans = db.get_analyses_date_range(low_post, high_post, mass_spectrometers=ms)
-        #         ans = self._make_records(ans)
-        #         self.analysis_table.set_analyses(ans)
-
-        return ls
-
     def _identifier_change_hook(self, db, new, lns):
         if len(new) > 2:
             if self.project_enabled:
@@ -404,135 +459,23 @@ class BrowserModel(BaseBrowserModel):
                 if irrads:
                     self.irradiation = irrads[0]
 
-    # handlers
-    # def _graphical_filter_button_fired(self):
-    #     # print 'ffffassdf'
-    #     self.debug('doing graphical filter')
-    #     from pychron.processing.tasks.browser.graphical_filter import GraphicalFilterModel, GraphicalFilterView
-    #
-    #     sams = self.selected_samples
-    #     if not sams:
-    #         sams = self.samples
-    #
-    #     db = self.db
-    #     with db.session_ctx():
-    #         if sams:
-    #             lns = [si.identifier for si in sams]
-    #             lpost, hpost = db.get_min_max_analysis_timestamp(lns)
-    #             ams = ms = db.get_analysis_mass_spectrometers(lns)
-    #             force = False
-    #         else:
-    #             force = True
-    #             lpost = datetime.now() - timedelta(hours=self.search_criteria.recent_hours)
-    #             hpost = datetime.now()
-    #             ams = [mi.name for mi in db.get_mass_spectrometers()]
-    #             ms = ams[:1]
-    #
-    #         # if date range > X days make user fine tune range
-    #         tdays = 3600 * 24 * max(1, self.search_criteria.graphical_filtering_max_days)
-    #
-    #         if force or (hpost - lpost).total_seconds() > tdays or len(ms) > 1:
-    #             d = GraphicalFilterSelector(lpost=lpost, hpost=hpost,
-    #                                         available_mass_spectrometers=ams,
-    #                                         mass_spectrometers=ms)
-    #             info = d.edit_traits(kind='livemodal')
-    #             if info.result:
-    #                 lpost, hpost, ms = d.lpost, d.hpost, d.mass_spectrometers
-    #                 if not ms:
-    #                     self.warning_dialog('Please select at least one Mass Spectrometer')
-    #                     return
-    #             else:
-    #                 return
-    #
-    #         ans = db.get_analyses_date_range(lpost, hpost, order='asc',
-    #                                          mass_spectrometers=ms)
-    #         # ans = db.get_date_range_analyses(lpost, hpost,
-    #         #                                  ordering='asc',
-    #         #                                  spectrometer=ms)
-    #
-    #         def func(xi, prog, i, n):
-    #             if prog:
-    #                 prog.change_message('Loading {}-{}. {}'.format(i, n, xi.record_id))
-    #             return GraphicalRecordView(xi)
-    #
-    #         ans = progress_loader(ans, func)
-    #         if not ans:
-    #             return
-    #
-    #     gm = GraphicalFilterModel(analyses=ans,
-    #                               projects=[p.name for p in self.selected_projects])
-    #     gm.setup()
-    #     gv = GraphicalFilterView(model=gm)
-    #     info = gv.edit_traits(kind='livemodal')
-    #     if info.result:
-    #         ans = gm.get_selection()
-    #         self.analysis_table.analyses = ans
-    #         self._graphical_filter_hook(ans, gm.is_append)
+    def _load_projects_for_irradiation(self):
+        ms = None
+        if self.mass_spectrometers_enabled:
+            ms = self.mass_spectrometer_includes
 
-    def _irradiation_enabled_changed(self, new):
-        if not new:
-            self._top_level_filter = None
-            print self.oprojects
-            self.projects = self.oprojects
-        else:
-            self._load_projects_for_irradiation()
+        if self.irradiation:
+            self.debug('load projects for irradiation= {}, level= {}'.format(self.irradiation, self.level))
+            db = self.db
+            with db.session_ctx():
+                ps = db.get_projects(irradiation=self.irradiation,
+                                     level=self.level,
+                                     mass_spectrometers=ms)
 
-    def _project_enabled_changed(self, new):
-        if not new:
-            self._top_level_filter = None
-
-            # obj = self._get_manager()
-            # self.irradiations = obj.irradiations
-
-    @on_trait_change('irradiation,level')
-    def _handle_irradiation_change(self, name, new):
-        # obj = self._get_manager()
-        # setattr(obj, name, new)
-
-        if not self._top_level_filter:
-            self._top_level_filter = 'irradiation'
-
-        if self._top_level_filter == 'irradiation':
-            self._load_projects_for_irradiation()
-
-        if name == 'irradiation':
-            self.levels = self.db.get_level_names(new)
-
-        # if name == 'irradiation':
-        elif name == 'level':
-            self._load_associated_labnumbers()
-            # self.set_samples(self._retrieve_labnumbers())
-
-    def _use_analysis_type_filtering_changed(self):
-        self.refresh_samples()
-
-    # def _level_changed(self):
-    #     if self.update_on_level_change:
-    #         self.refresh_samples()
-
-    def __analysis_include_types_changed(self, new):
-        if new:
-            if self.selected_projects:
-                self._filter_by_button_fired()
-            else:
-                self.refresh_samples()
-        else:
-            self.samples = []
-
-    def _use_mass_spectrometer_changed(self, new):
-        if new:
-            self.refresh_samples()
-            self._load_projects_and_irradiations()
-
-    def _mass_spectrometer_includes_changed(self):
-        if self.mass_spectrometer_includes:
-            if self.identifier:
-                self._identifier_changed(self.identifier)
-                return
-
-            self.refresh_samples()
-
-            # self._load_projects_and_irradiations()
+                ps = self._make_project_records(ps, include_recent_first=True)
+                old_selection = [p.name for p in self.selected_projects]
+                self.projects = ps
+                self.selected_projects = [p for p in ps if p.name in old_selection]
 
     def _load_projects_and_irradiations(self):
         ms = None
@@ -559,81 +502,6 @@ class BrowserModel(BaseBrowserModel):
             else:
                 self.debug('_load_projects_and_irradiations. no irradiations')
 
-    def _filter_by_button_fired(self):
-        self.debug('filter by button fired low_post={}, high_post={}'.format(self.low_post, self.high_post))
-        if self.sample_view_active:
-            self._filter_by_hook()
-
-            # def _toggle_focus_fired(self):
-            # self.filter_focus = not self.filter_focus
-
-    def _toggle_view_fired(self):
-        self.sample_view_active = not self.sample_view_active
-        if not self.sample_view_active:
-            self.time_view_model.load()
-        else:
-            self.activate_sample_browser()
-
-        self.dump()
-
-    def dump(self):
-        self.time_view_model.dump_filter()
-        super(BrowserModel, self).dump()
-
-    def select_sample(self, idx=None, name=None):
-        if idx is not None:
-            sams = self.samples[idx:idx + 2]
-            self.selected_samples = sams
-
-    def select_project(self, name):
-        for p in self.projects:
-            if p.name == name:
-                self.selected_projects = [p]
-                self.project_enabled = True
-                break
-
-    def select_experiment(self, exp):
-        for e in self.experiments:
-            if e.name == exp:
-                self.selected_experiments = [e]
-                self.experiment_enabled = True
-                break
-
-    def _selected_samples_changed(self, new):
-        self.analysis_table.selected = []
-
-        ans = []
-        uuids = []
-        if new:
-            at = self.analysis_table
-            lim = at.limit
-
-            uuids = [ai.uuid for ai in self.analysis_table.analyses]
-            kw = dict(limit=lim,
-                      include_invalid=not at.omit_invalid,
-                      mass_spectrometers=self._recent_mass_spectrometers,
-                      exclude_uuids=uuids,
-                      experiments=[e.name for e in self.selected_experiments] if self.selected_experiments else None)
-
-            lp, hp = self.low_post, self.high_post
-            ans = self._retrieve_sample_analyses(new,
-                                                 low_post=lp,
-                                                 high_post=hp,
-                                                 **kw)
-
-            self.debug('selected samples changed. loading analyses. '
-                       'low={}, high={}, limit={} n={}'.format(lp, hp, lim, len(ans)))
-
-        self.analysis_table.set_analyses(ans, selected_identifiers={ai.identifier for ai in new})
-        self.dump_browser()
-        # self.filter_focus = not bool(new)
-
-    # @on_trait_change('analysis_table:selected')
-    # def _handle_analysis_selected(self, new):
-    #     if self.use_focus_switching:
-    #         self.filter_focus = not bool(new)
-
-    # private
     def _load_mass_spectrometers(self):
         db = self.db
         ms = db.get_mass_spectrometers()
@@ -729,3 +597,145 @@ class BrowserModel(BaseBrowserModel):
         return TimeViewModel(db=self.db)
 
 # ============= EOF =============================================
+        # def _retrieve_labnumbers_hook(self, db):
+        #     low_post = self.low_post
+        #     high_post = self.high_post
+        #     ms = None
+        #     if self.use_mass_spectrometers:
+        #         ms = self.mass_spectrometer_includes
+        #
+        #     def get_labnumbers(ids=None):
+        #         return db.get_labnumbers(identifiers=ids,
+        #                                  low_post=low_post,
+        #                                  high_post=high_post,
+        #                                  mass_spectrometers=ms,
+        #                                  filter_non_run=self.filter_non_run_samples)
+        #
+        #     def atypes_func(obj, func):
+        #         func = getattr(man, func)
+        #         refs, unks = func(obj)
+        #         nls = []
+        #         if 'monitors' in atypes:
+        #             nls.extend(refs)
+        #         if 'unknown' in atypes:
+        #             nls.extend(unks)
+        #         return nls
+        #
+        #     man = self.manager
+        #     ls = []
+        #     atypes = self.analysis_include_types if self.use_analysis_type_filtering else None
+
+        # print self.project_enabled, self.irradiation_enabled
+
+        # if self.selected_experiments:
+        #     ls = db.get_experiment_labnumbers([e.name for e in self.selected_experiments])
+        # else:
+        #     elif self.project_enabled:
+        #         if not self.irradiation_enabled:
+        #             ls = super(BrowserModel, self)._retrieve_labnumbers_hook(db)
+        #         else:
+        #             if self.selected_projects and self.irradiation_enabled and self.irradiation:
+        #                 ls = db.get_project_irradiation_labnumbers([si.name for si in self.selected_projects],
+        #                                                            self.irradiation,
+        #                                                            self.level,
+        #                                                            low_post=low_post,
+        #                                                            high_post=high_post,
+        #                                                            mass_spectrometers=ms,
+        #                                                            filter_non_run=self.filter_non_run_samples,
+        #                                                            analysis_types=atypes)
+        #                 if atypes:
+        #                     ls = atypes_func(ls)
+        #
+        #     elif self.irradiation_enabled and self.irradiation:
+        #         if not self.level:
+        #             ls = db.get_irradiation_labnumbers(self.irradiation, self.level,
+        #                                                low_post=low_post,
+        #                                                high_post=high_post,
+        #                                                mass_spectrometers=ms,
+        #                                                filter_non_run=self.filter_non_run_samples,
+        #                                                analysis_types=atypes)
+        #         else:
+        #             # level = man.get_level(self.level)
+        #             level = db.get_irradiation_level(self.irradiation,
+        #                                              self.level)
+        #             if level:
+        #                 if atypes:
+        #                     xs = atypes_func(level, 'group_level')
+        #                 else:
+        #                     xs = [p.labnumber for p in level.positions]
+        #
+        #                 if xs:
+        #                     lns = [x.identifier for x in xs]
+        #                     ls = get_labnumbers(ids=lns)
+        #
+        #     elif low_post or high_post:
+        #         ls = get_labnumbers()
+        #         ans = db.get_analyses_date_range(low_post, high_post, mass_spectrometers=ms)
+        #         ans = self._make_records(ans)
+        #         self.analysis_table.set_analyses(ans)
+        #
+        # return ls
+
+        # def _graphical_filter_button_fired(self):
+        #     # print 'ffffassdf'
+        #     self.debug('doing graphical filter')
+        #     from pychron.processing.tasks.browser.graphical_filter import GraphicalFilterModel, GraphicalFilterView
+        #
+        #     sams = self.selected_samples
+        #     if not sams:
+        #         sams = self.samples
+        #
+        #     db = self.db
+        #     with db.session_ctx():
+        #         if sams:
+        #             lns = [si.identifier for si in sams]
+        #             lpost, hpost = db.get_min_max_analysis_timestamp(lns)
+        #             ams = ms = db.get_analysis_mass_spectrometers(lns)
+        #             force = False
+        #         else:
+        #             force = True
+        #             lpost = datetime.now() - timedelta(hours=self.search_criteria.recent_hours)
+        #             hpost = datetime.now()
+        #             ams = [mi.name for mi in db.get_mass_spectrometers()]
+        #             ms = ams[:1]
+        #
+        #         # if date range > X days make user fine tune range
+        #         tdays = 3600 * 24 * max(1, self.search_criteria.graphical_filtering_max_days)
+        #
+        #         if force or (hpost - lpost).total_seconds() > tdays or len(ms) > 1:
+        #             d = GraphicalFilterSelector(lpost=lpost, hpost=hpost,
+        #                                         available_mass_spectrometers=ams,
+        #                                         mass_spectrometers=ms)
+        #             info = d.edit_traits(kind='livemodal')
+        #             if info.result:
+        #                 lpost, hpost, ms = d.lpost, d.hpost, d.mass_spectrometers
+        #                 if not ms:
+        #                     self.warning_dialog('Please select at least one Mass Spectrometer')
+        #                     return
+        #             else:
+        #                 return
+        #
+        #         ans = db.get_analyses_date_range(lpost, hpost, order='asc',
+        #                                          mass_spectrometers=ms)
+        #         # ans = db.get_date_range_analyses(lpost, hpost,
+        #         #                                  ordering='asc',
+        #         #                                  spectrometer=ms)
+        #
+        #         def func(xi, prog, i, n):
+        #             if prog:
+        #                 prog.change_message('Loading {}-{}. {}'.format(i, n, xi.record_id))
+        #             return GraphicalRecordView(xi)
+        #
+        #         ans = progress_loader(ans, func)
+        #         if not ans:
+        #             return
+        #
+        #     gm = GraphicalFilterModel(analyses=ans,
+        #                               projects=[p.name for p in self.selected_projects])
+        #     gm.setup()
+        #     gv = GraphicalFilterView(model=gm)
+        #     info = gv.edit_traits(kind='livemodal')
+        #     if info.result:
+        #         ans = gm.get_selection()
+        #         self.analysis_table.analyses = ans
+        #         self._graphical_filter_hook(ans, gm.is_append)

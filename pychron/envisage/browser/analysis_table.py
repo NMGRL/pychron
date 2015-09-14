@@ -25,6 +25,10 @@ from pychron.envisage.browser.adapters import AnalysisAdapter
 from pychron.core.ui.table_configurer import AnalysisTableConfigurer
 
 
+def sort_items(ans):
+    return sorted(ans, key=lambda x: x.timestampf)
+
+
 class AnalysisTable(ColumnSorterMixin):
     analyses = List
     oanalyses = List
@@ -51,17 +55,27 @@ class AnalysisTable(ColumnSorterMixin):
     tabular_adapter = Instance(AnalysisAdapter)
     append_replace_enabled = Bool(True)
 
+    def add_analyses(self, ans):
+        items = self.analyses
+        items.extend(ans)
+        self.oanalyses = self.analyses = sort_items(items)
+        self.calculate_dts(self.analyses)
+
     def set_analyses(self, ans, tc=None, page=None, reset_page=False, selected_identifiers=None):
         if selected_identifiers:
             aa = self.analyses
             aa = [ai for ai in aa if ai.identifier in selected_identifiers]
             aa.extend(ans)
-            aa = sorted(aa, key=lambda x: x.timestampf)
-            self.oanalyses = self.analyses = aa  # sorted(aa, key=lambda x: (x.identifier, x.aliquot, x.step))
         else:
-            ans = sorted(ans, key=lambda x: x.timestampf)
-            self.analyses = ans
-            self.oanalyses = ans
+            aa = ans
+            # aa = sorted(aa, key=lambda x: x.timestampf)
+            # self.oanalyses = self.analyses = aa  # sorted(aa, key=lambda x: (x.identifier, x.aliquot, x.step))
+        # else:
+        #     ans = sorted(ans, key=lambda x: x.timestampf)
+        #     self.analyses = ans
+        #     self.oanalyses = ans
+
+        self.oanalyses = self.analyses = sort_items(aa)
 
         self.calculate_dts(self.analyses)
         # self._analysis_filter_parameter_changed(True)
