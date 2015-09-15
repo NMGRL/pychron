@@ -674,8 +674,9 @@ class AutomatedRun(Loggable):
     #
     # ===============================================================================
     def show_conditionals(self, tripped=None):
-        self.experiment_executor.show_conditionals(tripped=tripped,
-                                                   show_measuring=True, kind='live')
+        self.experiment_executor.show_conditionals(active_run=self,
+                                                   tripped=tripped,
+                                                   kind='live')
 
     def teardown(self):
         if self.measurement_script:

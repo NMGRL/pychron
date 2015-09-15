@@ -349,26 +349,6 @@ class DataCollector(Consoleable):
             return 'break'
 
         if self.check_conditionals:
-            termination_conditional = self._check_conditionals(self.termination_conditionals, i)
-            if termination_conditional:
-                self.info('termination conditional {}. measurement iteration executed {}/{} counts'.format(
-                    termination_conditional.message, j, original_counts), color='red')
-
-                key = repr(termination_conditional)
-                n = termination_conditional.nfails
-                if check_conditional_results(key, n):
-                    return 'cancel'
-                else:
-                    return 'terminated'
-
-            cancelation_conditional = self._check_conditionals(self.cancelation_conditionals, i)
-            if cancelation_conditional:
-                self.info('cancelation conditional {}. measurement iteration executed {}/{} counts'.format(
-                    cancelation_conditional.message, j, original_counts), color='red')
-                self.automated_run.show_conditionals(tripped=cancelation_conditional)
-
-                return 'cancel'
-
             truncation_conditional = self._check_conditionals(self.truncation_conditionals, i)
             if truncation_conditional:
                 self.info('truncation conditional {}. measurement iteration executed {}/{} counts'.format(
@@ -390,6 +370,28 @@ class DataCollector(Consoleable):
                 if not action_conditional.resume:
                     return 'break'
 
+            termination_conditional = self._check_conditionals(self.termination_conditionals, i)
+            if termination_conditional:
+                self.info('termination conditional {}. measurement iteration executed {}/{} counts'.format(
+                    termination_conditional.message, j, original_counts), color='red')
+
+                self.automated_run.show_conditionals(tripped=termination_conditional)
+                return 'terminate'
+
+                # key = repr(termination_conditional)
+                # n = termination_conditional.nfails
+                # if check_conditional_results(key, n):
+                #     return 'cancel'
+                # else:
+                #     return 'terminated'
+
+            cancelation_conditional = self._check_conditionals(self.cancelation_conditionals, i)
+            if cancelation_conditional:
+                self.info('cancelation conditional {}. measurement iteration executed {}/{} counts'.format(
+                    cancelation_conditional.message, j, original_counts), color='red')
+                self.automated_run.show_conditionals(tripped=cancelation_conditional)
+
+                return 'cancel'
     @property
     def arar_age(self):
         return self.automated_run.arar_age

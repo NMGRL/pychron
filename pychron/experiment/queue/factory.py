@@ -84,11 +84,6 @@ class ExperimentQueueFactory(PersistenceLoggable):
                    'delay_before_analyses',
                    'queue_conditionals_name')
 
-
-    # def _add_user_fired(self):
-    # a=UserEntry()
-    # a.    edit_user(self.username)
-    #     self.users_dirty=True
     def activate(self, load_persistence):
         """
             called by ExperimentFactory

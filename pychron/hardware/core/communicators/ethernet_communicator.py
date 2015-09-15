@@ -294,8 +294,9 @@ class EthernetCommunicator(Communicator):
         return r
 
     def read(self, *args, **kw):
-        handler = self.get_handler()
-        return handler.get_packet('')
+        with self._lock:
+            handler = self.get_handler()
+            return handler.get_packet('')
 
     def tell(self, cmd, verbose=True, quiet=False, info=None):
         with self._lock:

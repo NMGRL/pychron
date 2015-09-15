@@ -87,7 +87,6 @@ class BaseExperimentQueue(RunBlock):
     initialized = True
 
     load_name = Str
-    experiment_identifier = Str
 
     _no_update = False
     _frequency_group_counter = 0

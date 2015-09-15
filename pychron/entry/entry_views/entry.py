@@ -24,6 +24,7 @@ from pychron.loggable import Loggable
 
 class BaseEntry(Loggable):
     dvc = Instance('pychron.dvc.dvc.DVC')
+
     def do(self):
         return self._add_loop()
 
