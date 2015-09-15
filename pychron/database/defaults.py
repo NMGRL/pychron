@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -95,7 +95,10 @@ def load_isotopedb_defaults(db):
 
         mdir = paths.map_dir
         for p, name in iterdir(mdir):
-            _load_tray_map(db, p, name)
+            try:
+                _load_tray_map(db, p, name)
+            except BaseException:
+                print 'failed loading tray map "{}", "{}"'.format(p, name)
 
         for t in ('ok', 'invalid'):
             db.add_tag(t, user='default')

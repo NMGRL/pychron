@@ -39,10 +39,10 @@ class AerotechMotionController(MotionController):
     def initialize(self, *args, **kw):
         '''
         '''
-        self._communicator.write_terminator = None
+        self.communicator.write_terminator = None
         self.tell('##')
-        self._communicator.write_terminator = chr(13)
-        self._communicator.read_delay = 25
+        self.communicator.write_terminator = chr(13)
+        self.communicator.read_delay = 25
         self.enable()
 #        self.home()
 #        for a in self.axes.itervalues():

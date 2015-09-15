@@ -17,10 +17,14 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 import io
+import json
 import os
+import re
+import traceback
 
 from twisted.internet import defer
 from twisted.internet.protocol import Protocol
+
 
 # ============= local library imports  ==========================
 from twisted.logger import Logger, jsonFileLogObserver
@@ -46,20 +50,23 @@ def response_err(failure):
 
 def nargs_err(failure):
     failure.trap(ValueError)
-    return InvalidArgumentsErrorCode(str(failure.value))
+    return InvalidArgumentsErrorCode('Foo', str(failure.value))
 
 
 path = os.path.join(paths.log_dir, 'pps.log.json')
 obs = jsonFileLogObserver(io.open(path, 'w'))
 logger = Logger(observer=obs)
+# logger = Logger()
+
+regex = re.compile(r'^(?P<command>\w+) {0,1}(?P<args>.*)')
 
 
 class ServiceProtocol(Protocol):
     def __init__(self, *args, **kw):
         # super(ServiceProtocol, self).__init__(*args, **kw)
         self._services = {}
-        self._delim = ' '
-
+        self._cmd_delim = ' '
+        self._arg_delim = ','
         self.debug = logger.debug
         self.warning = logger.warn
         self.info = logger.info
@@ -68,14 +75,11 @@ class ServiceProtocol(Protocol):
 
     def dataReceived(self, data):
         self.debug('Received n={n}: {data!r}', n=len(data), data=data)
-        service = self._get_service(data)
-        if service:
+        data = data.strip()
+        args = self._get_service(data)
+        if args:
+            service, data = args
             self._get_response(service, data)
-
-            # else:
-            #     self.transport.write('Invalid request: {}'.format(data))
-
-            # self.transport.loseConnection()
 
     def register_service(self, service_name, success, err=None):
         """
@@ -101,6 +105,12 @@ class ServiceProtocol(Protocol):
 
         self._services[service_name] = d
 
+    def _register_services(self, services):
+        for name, cb in services:
+            if isinstance(cb, str):
+                cb = getattr(self, cb)
+            self.register_service(name, cb)
+
     def _prepare_response(self, data):
         if isinstance(data, bool) and data:
             return 'OK'
@@ -116,22 +126,45 @@ class ServiceProtocol(Protocol):
         self.transport.loseConnection()
 
     def _get_service(self, data):
-        args = data.split(self._delim)
-        name = args[0]
+        m = regex.match(data)
+        if m:
+            name = m.group('command')
+            jd = data
+        else:
+            jd = json.loads(data)
+            name = jd['command']
+
         try:
             service = self._services[name]
-            return service
-        except KeyError:
+            return service, jd
+        except KeyError, e:
+            traceback.print_exc()
             raise ServiceNameError(name, data)
 
+    def _prepare_data(self, data):
+        if isinstance(data, dict):
+            cdata = data
+        else:
+            delim = self._cmd_delim
+            data = delim.join(data.split(delim)[1:])
+
+            data = data.split(self._arg_delim)
+            if len(data) == 1:
+                data = data[0]
+            else:
+                data = tuple(data)
+            cdata = data
+
+        self.debug('Data {cdata!r}', cdata=cdata)
+        return cdata
+
     def _get_response(self, service, data):
-        delim = self._delim
-        data = delim.join(data.split(delim)[1:])
-        service.callback(*tuple(data.split(',')))
+        cdata = self._prepare_data(data)
+        service.callback(cdata)
 
 # ============= EOF =============================================
 # def sleep(secs):
-#     d = defer.Deferred()
+# d = defer.Deferred()
 #     reactor.callLater(secs, d.callback, None)
 #     return d
 

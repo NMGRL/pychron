@@ -95,12 +95,13 @@ class KeithleyADC(M1000):
 class OmegaADC(M1000):
     """
     """
+    @property
     def read_block(self):
         """
         """
         com = 'RB'
         r = self.ask(''.join((self.short_form_prompt, self.address, com)),
-                          remove_eol=False, replace=[chr(13), ','])
+                     remove_eol=False, replace=[chr(13), ','])
 
         return self._parse_response_(r, type_='block')
 # ============= EOF =====================================

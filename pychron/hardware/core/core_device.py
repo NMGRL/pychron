@@ -105,8 +105,8 @@ class CoreDevice(ScanableDevice, HasCommunicator, ConsumerMixin):
 
     # ICoreDevice protocol
     def close(self):
-        if self._communicator:
-            self._communicator.close()
+        if self.communicator:
+            self.communicator.close()
 
     def get(self, *args, **kw):
         return self.current_scan_value
@@ -115,16 +115,16 @@ class CoreDevice(ScanableDevice, HasCommunicator, ConsumerMixin):
         pass
 
     def is_connected(self):
-        if self._communicator:
-            return not self._communicator.simulation
+        if self.communicator:
+            return not self.communicator.simulation
 
     def test_connection(self):
-        if self._communicator:
-            return self._communicator.test_connection()
+        if self.communicator:
+            return self.communicator.test_connection()
 
     def set_simulation(self, tf):
-        if self._communicator:
-            self._communicator.simulation = tf
+        if self.communicator:
+            self.communicator.simulation = tf
 
     def load(self, *args, **kw):
         """
@@ -161,8 +161,8 @@ class CoreDevice(ScanableDevice, HasCommunicator, ConsumerMixin):
     def initialize(self, *args, **kw):
         a = super(CoreDevice, self).initialize(*args, **kw)
         b = False
-        if self._communicator is not None:
-            b = self._communicator.initialize(*args, **kw)
+        if self.communicator is not None:
+            b = self.communicator.initialize(*args, **kw)
 
         return a and b
 
@@ -203,7 +203,7 @@ class CoreDevice(ScanableDevice, HasCommunicator, ConsumerMixin):
     def ask(self, cmd, **kw):
         """
         """
-        comm = self._communicator
+        comm = self.communicator
         if comm is not None:
             if comm.scheduler:
                 r = comm.scheduler.schedule(comm.ask, args=(cmd,),
@@ -225,17 +225,17 @@ class CoreDevice(ScanableDevice, HasCommunicator, ConsumerMixin):
     def tell(self, *args, **kw):
         """
         """
-        if self._communicator is not None:
+        if self.communicator is not None:
             cmd = ' '.join(map(str, args) + map(str, kw.iteritems()))
             self._communicate_hook(cmd, '-')
-            return self._communicator.tell(*args, **kw)
+            return self.communicator.tell(*args, **kw)
 
     @crc_caller
     def read(self, *args, **kw):
         """
         """
-        if self._communicator is not None:
-            return self._communicator.read(*args, **kw)
+        if self.communicator is not None:
+            return self.communicator.read(*args, **kw)
 
     #        if self.simulation:
     #            return 'simulation'
@@ -279,8 +279,8 @@ class CoreDevice(ScanableDevice, HasCommunicator, ConsumerMixin):
                 self.set_scheduler(sc)
 
     def set_scheduler(self, s):
-        if self._communicator is not None:
-            self._communicator.scheduler = s
+        if self.communicator is not None:
+            self.communicator.scheduler = s
 
     def repeat_command(self, cmd, ntries=2, check_val=None, check_type=None,
                        verbose=True, **kw):

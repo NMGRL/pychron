@@ -15,23 +15,20 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import hashlib
-
 from traits.api import Str, Int, Bool, Float, Property, \
     Enum, on_trait_change, CStr, Long, HasTraits
-
 # ============= standard library imports ========================
+import hashlib
 from datetime import datetime
 import uuid
-import weakref
 # ============= local library imports  ==========================
-#
 from pychron.core.helpers.filetools import remove_extension
 from pychron.core.helpers.logger_setup import new_logger
-from pychron.experiment.utilities.identifier import get_analysis_type, make_rid, \
-    make_runid, is_special, convert_extract_device
+from pychron.experiment.utilities.identifier import get_analysis_type, make_rid, make_runid, is_special, \
+    convert_extract_device
 from pychron.experiment.utilities.position_regex import XY_REGEX
 from pychron.pychron_constants import SCRIPT_KEYS, SCRIPT_NAMES, ALPHAS
+
 
 logger = new_logger('AutomatedRunSpec')
 
@@ -41,11 +38,6 @@ class AutomatedRunSpec(HasTraits):
         this class is used to as a simple container and factory for
         an AutomatedRun. the AutomatedRun does the actual work. ie extraction and measurement
     """
-    # shared_logger = True
-
-    #     automated_run = Instance(AutomatedRun)
-    #    state = Property(depends_on='_state')
-    collection_version = '0.1:0.1'
     state = Enum('not run', 'extraction',
                  'measurement', 'success',
                  'failed', 'truncated', 'canceled',
@@ -53,6 +45,7 @@ class AutomatedRunSpec(HasTraits):
 
     skip = Bool(False)
     end_after = Bool(False)
+    collection_version = Str
     # ===========================================================================
     # queue globals
     # ===========================================================================
@@ -65,7 +58,7 @@ class AutomatedRunSpec(HasTraits):
     # run id
     # ===========================================================================
     labnumber = Str
-
+    uuid = Str
     aliquot = Property
     _aliquot = Int
     # assigned_aliquot = Int
@@ -122,6 +115,8 @@ class AutomatedRunSpec(HasTraits):
     project = Str
     sample = Str
     irradiation = Str
+    irradiation_level = Str
+    irradiation_position = Int
     material = Str
     data_reduction_tag = ''
 
@@ -141,6 +136,9 @@ class AutomatedRunSpec(HasTraits):
     rundate = Property
     _step_heat = False
     conflicts_checked = False
+
+    experiment_identifier = Str
+    identifier = Property
 
     def is_detector_ic(self):
         return self.analysis_type == 'detector_ic'
@@ -269,22 +267,20 @@ class AutomatedRunSpec(HasTraits):
             md, klass = '.'.join(args[:-1]), args[-1]
 
             md = __import__(md, fromlist=[klass])
-            # md = imp.find_module(md)
             run = getattr(md, klass)()
-
-            # run = self.run_klass()
 
         for si in SCRIPT_KEYS:
             setattr(run.script_info, '{}_script_name'.format(si),
                     getattr(self, '{}_script'.format(si)))
 
         if new_uuid:
-            run.uuid = str(uuid.uuid4())
-
+            run.uuid = u = str(uuid.uuid4())
+            self.uuid = u
             # self._step_heat = bool(self.aliquot)
             # print self._step_heat, bool(self.aliquot), self.aliquot
 
-        run.spec = weakref.ref(self)()
+        # run.spec = weakref.ref(self)()
+        run.spec = self
 
         return run
 
@@ -294,6 +290,7 @@ class AutomatedRunSpec(HasTraits):
             setattr(self, k, v)
 
         for k, v in params.iteritems():
+            # print 'load', hasattr(self, k), k, v
             if hasattr(self, k):
                 setattr(self, k, v)
 
@@ -365,9 +362,8 @@ class AutomatedRunSpec(HasTraits):
         else:
             self._changed = True
 
-    @on_trait_change('''extract_+, position, duration, cleanup, pattern, weight, comment,
-    beam_diameter, ramp_duration, ramp_rate, conditionals''')
-    def _handle_value_change(self):
+    @on_trait_change('''extract_+, position, duration, cleanup ''')
+    def _extract_changed(self):
         self._changed = True
 
     # ===============================================================================
@@ -389,20 +385,6 @@ class AutomatedRunSpec(HasTraits):
             if self.user_defined_aliquot:
                 return self.user_defined_aliquot
         return self._aliquot
-
-        # return a
-        # # a=self._aliquot
-        # a = self.user_defined_aliquot
-        # if not self.is_special():
-        #     if not a:
-        #         a = self._aliquot
-        #         # a = self.user_defined_aliquot
-        #
-        # return a
-        # a = self.assigned_aliquot
-        # if not a:
-        #    a = self._aliquot
-        # return a
 
     def _get_analysis_type(self):
         return get_analysis_type(self.labnumber)
@@ -458,9 +440,18 @@ class AutomatedRunSpec(HasTraits):
         return self._overlap, self._min_ms_pumptime
 
     # mirror labnumber for now. deprecate labnumber and replace with identifier
-    @property
-    def identifier(self):
+    def _get_identifier(self):
         return self.labnumber
+
+    def _set_identifier(self, v):
+        self.labnumber = v
+
+    @property
+    def display_irradiation(self):
+        ret = ''
+        if self.irradiation:
+            ret = '{} {}:{}'.format(self.irradiation, self.irradiation_level, self.irradiation_position)
+        return ret
 
     @property
     def increment(self):
@@ -486,11 +477,28 @@ class AutomatedRunSpec(HasTraits):
     def cleanup_duration(self):
         return self.cleanup
 
+    @cleanup_duration.setter
+    def set_cleanup(self, v):
+        self.cleanup = v
+
+    @extract_duration.setter
+    def set_duration(self, v):
+        self.duration = v
+
     @property
     def script_hash(self):
-        ctx = self.make_script_context()
+        ctx = dict(nposition=len(self.get_position_list()),
+                   disable_between_positions=self.disable_between_positions,
+                   duration=self.duration,
+                   extract_value=self.extract_value,
+                   extract_units=self.extract_units,
+                   cleanup=self.cleanup,
+                   ramp_rate=self.ramp_rate,
+                   pattern=self.pattern,
+                   ramp_duration=self.ramp_duration)
+
         ctx['measurement'] = self.measurement_script
-        ctx['extraction'] = self.measurement_script
+        ctx['extraction'] = self.extraction_script
 
         md5 = hashlib.md5()
         for k, v in sorted(ctx.items()):
@@ -498,6 +506,4 @@ class AutomatedRunSpec(HasTraits):
             md5.update(str(v))
         return md5.hexdigest()
 
-        # d = script.calculate_estimated_duration(ctx)
-
-        # ============= EOF =============================================
+# ============= EOF =============================================

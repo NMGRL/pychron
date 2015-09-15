@@ -24,6 +24,7 @@ from pyface.tasks.action.schema import SMenu
 import os
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import list_directory2
+from pychron.core.helpers.strtools import to_bool
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.envisage.tasks.list_actions import PatternAction, ShowMotionConfigureAction
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
@@ -95,9 +96,17 @@ class BaseLaserPlugin(BaseTaskPlugin):
             params = dict()
             try:
                 tag = ip.get_parameter(plugin, 'communications', element=True)
-                for attr in ['host', 'port', 'kind', 'message_frame']:
+                for attr in ['host', 'port', 'kind', 'message_frame', ('use_end', to_bool)]:
+                    func = None
+                    if isinstance(attr, tuple):
+                        attr, func = attr
+
                     try:
-                        params[attr] = tag.find(attr).text.strip()
+                        v = tag.find(attr).text.strip()
+                        if func:
+                            v = func(v)
+
+                        params[attr] = v
                     except Exception, e:
                         print 'client comms fail a', attr, e
             except Exception, e:

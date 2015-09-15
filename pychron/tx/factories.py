@@ -47,7 +47,7 @@ class FusionsUVFactory(LaserFactory):
 
 
 class ValveFactory(Factory):
-    def __init__(self, application):
+    def __init__(self, application=None):
         self._app = application
 
     def buildProtocol(self, addr):

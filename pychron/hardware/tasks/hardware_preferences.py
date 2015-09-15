@@ -67,7 +67,9 @@ class HardwarePreferences(BasePreferencesHelper):
 
     @on_trait_change('_protocols:[port,enabled]')
     def _handle_protocol(self, new):
-        self.pnames = [p.name for p in self._protocols]
+        ps = (p for p in self._protocols if p.enabled)
+
+        self.pnames = [p.name for p in ps]
         self.ports = {p.name: p.port for p in self._protocols}
         self.factories = {p.name: p.factory for p in self._protocols}
 

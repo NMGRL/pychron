@@ -15,26 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import ConfigParser
-import os
-
-from pyface.timer.do_later import do_after
 from traits.api import HasTraits, Str, List, Any, Event, Button, Int, Bool, Float
 from traitsui.api import View, Item, HGroup, spring
 from traitsui.handler import Handler
-import yaml
-
-from pychron.core.helpers.traitsui_shortcuts import listeditor
-
-
-
-
-
-
-
-
+from pyface.timer.do_later import do_after
 # ============= standard library imports ========================
+import ConfigParser
+import os
+import yaml
 # ============= local library imports  ==========================
+from pychron.core.helpers.traitsui_shortcuts import listeditor
 from pychron.loggable import Loggable
 from pychron.paths import paths
 
@@ -109,26 +99,10 @@ class Readout(BaseReadout):
         v = View(HGroup(Item('value', style='readonly', label=self.name)))
         return v
 
-
-        # self._set_value(v)
-
     def query_value(self):
         cmd = 'Get{}'.format(self.name)
         v = self.spectrometer.get_parameter(cmd)
         self.set_value(v)
-        # self._set_value(v)
-
-    # def _set_value(self, v):
-    # if v is not None:
-    # try:
-    #             self.fvalue = float(v)
-    #             v = self.format.format(self.fvalue)
-    #         except ValueError:
-    #             pass
-    #     else:
-    #         v = ''
-    #
-    #     self.value = v
 
     def get_percent_value(self):
         return (self.value - self.min_value) / (self.max_value - self.min_value)
@@ -174,8 +148,6 @@ class ReadoutView(Loggable):
 
         else:
             self._load_yaml(ypath)
-
-            # self._refresh()
 
     def _load_cfg(self, path):
         config = ConfigParser.ConfigParser()

@@ -89,7 +89,7 @@ class _ToggleButtonEditor(Editor):
         pass
 
 
-from traitsui.qt4.basic_editor_factory import BasicEditorFactory
+from traitsui.basic_editor_factory import BasicEditorFactory
 
 
 class ToggleButtonEditor(BasicEditorFactory):

@@ -21,7 +21,8 @@ from traits.api import provides
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.core.data_helper import make_bitarray
 from pychron.hardware.ichiller import IChiller
-from pychron.remote_hardware.registry import RHMixin, register
+# from pychron.remote_hardware.registry import register
+from pychron.tx.registry import tx_register_functions, register
 
 SET_BITS = '111'
 GET_BITS = '110'
@@ -40,7 +41,7 @@ FAULTS_TABLE = ['Tank Level Low',
 
 
 @provides(IChiller)
-class ThermoRack(CoreDevice, RHMixin):
+class ThermoRack(CoreDevice):
     """
     """
     convert_to_C = True
@@ -49,8 +50,8 @@ class ThermoRack(CoreDevice, RHMixin):
 
     def __init__(self, *args, **kw):
         super(ThermoRack, self).__init__(*args, **kw)
+        tx_register_functions(self)
 
-        self.register_functions()
     # ===========================================================================
     # icore device interface
     # ===========================================================================
@@ -107,11 +108,11 @@ class ThermoRack(CoreDevice, RHMixin):
         return sp
 
     @register(camel_case=True, postprocess=','.join)
-    def get_faults(self, **kw):
+    def get_faults(self, verbose=False, **kw):
         """
         """
         cmd = self._get_read_command_str(FAULT_BITS)
-        resp = self.ask(cmd, nbytes=1)
+        resp = self.ask(cmd, nbytes=1, verbose=verbose)
 
         if self.simulation:
             resp = '0'
@@ -127,15 +128,12 @@ class ThermoRack(CoreDevice, RHMixin):
         return faults
 
     @register(camel_case=True)
-    def get_coolant_out_temperature(self, force=False, **kw):
+    def get_coolant_out_temperature(self, force=False, verbose=False, **kw):
         """
         """
-        if not kw.has_key('verbose'):
-            kw['verbose'] = False
-
         cmd = self._get_read_command_str(COOLANT_BITS)
 
-        resp = self.ask(cmd, nbytes=2, **kw)
+        resp = self.ask(cmd, nbytes=2,verbose=verbose, **kw)
         if not self.simulation and resp is not None:
             temp = self._parse_response(resp, scale=0.1)
         else:

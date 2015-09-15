@@ -504,9 +504,9 @@ class AutomatedRunFactory(PersistenceLoggable):
                                           excludes=['position']))
         return arvs
 
-    def _make_irrad_level(self, ipos):
+    def _make_irrad_level(self, ln):
         il = ''
-        # ipos = ln.irradiation_position
+        ipos = ln.irradiation_position
         if ipos is not None:
             level = ipos.level
             irrad = level.irradiation
@@ -1023,8 +1023,11 @@ class AutomatedRunFactory(PersistenceLoggable):
                     level = db.get_irradiation_level(self.selected_irradiation,
                                                      self.selected_level)
                     if level:
-                        lns = [str(pi.identifier).strip()
-                               for pi in level.positions if pi.identifier]
+                        # lns = [str(pi.identifier).strip()
+                        #        for pi in level.positions if pi.identifier]
+
+                        lns = [str(pi.labnumber.identifier).strip()
+                               for pi in level.positions if pi.labnumber.identifier]
                         lns = [li for li in lns if li]
                         lns = sorted(lns)
 
@@ -1211,14 +1214,14 @@ class AutomatedRunFactory(PersistenceLoggable):
             if identifier:
                 with self.db.session_ctx():
                     self.debug('load flux')
-                    dbpos = self.db.get_identifier(identifier)
-                    if dbpos:
-                        j = getattr(dbpos, attr)
-                        # dbln = self.db.get_labnumber(self.labnumber)
-                        # if dbln:
-                        # if dbln.selected_flux_history:
-                        # f = dbln.selected_flux_history.flux
-                        #         j = getattr(f, attr)
+                    # dbpos = self.db.get_identifier(identifier)
+                    # if dbpos:
+                    #     j = getattr(dbpos, attr)
+                    dbln = self.db.get_labnumber(self.labnumber)
+                    if dbln:
+                        if dbln.selected_flux_history:
+                            f = dbln.selected_flux_history.flux
+                            j = getattr(f, attr)
         return j
 
     def _set_flux(self, a):
@@ -1352,6 +1355,7 @@ class AutomatedRunFactory(PersistenceLoggable):
                           app=self.application, root=paths.conditionals_dir,
                           title='Edit Run Conditionals',
                           kinds=('actions', 'cancelations', 'terminations', 'truncations'))
+        self.load_conditionals()
 
     @on_trait_change('trunc_+, conditionals_path')
     def _handle_conditionals(self, obj, name, old, new):

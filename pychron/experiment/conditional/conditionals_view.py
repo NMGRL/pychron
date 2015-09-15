@@ -61,7 +61,6 @@ class ConditionalsView(ConditionalsViewable):
                                         ('terminations', ConditionalGroup, TerminationConditional)):
                 items = ditems.get(name, [])
                 grp = next((gi for gi in self.groups if gi.label == name.capitalize()), None)
-
                 if not grp:
                     self._group_factory(items, klass, auto_select=False, label=name.capitalize())
                 else:

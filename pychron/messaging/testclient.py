@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from multiprocessing import Process
+import json
 
 from traits.api import HasTraits, String, Button, Int, Str, Enum, \
     Float, Bool, Event, Property, List
@@ -410,19 +410,23 @@ def get_data():
         pt = time.time()
         for i in range(30):
             t = time.time()
-            c.ask('GetValveState C')
+            c.ask('GetData -10')
+            obj = dict(command='GetData', value=10)
+            c.ask(json.dumps(obj))
             pt = t
 
     t = Thread(target=func1)
-
-    def func():
-        c2 = Client(host='localhost', port=8007, kind='TCP', ask_id='B')
-        for i in range(30):
-            c2.ask('GetValveState A')
-
-    p = Process(target=func)
-    p.start()
     t.start()
+
+    #
+    # def func():
+    #     c2 = Client(host='localhost', port=8007, kind='TCP', ask_id='B')
+    #     for i in range(30):
+    #         c2.ask('GetValveState A')
+    #
+    # p = Process(target=func)
+    # p.start()
+    # t.start()
 
     # c2 = Client(host='localhost', port=8007, kind='TCP', ask_id='B')
     #

@@ -15,12 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
 import time
 from traits.api import Instance, Event, Bool, Any, Property, Str, Float, provides
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.strtools import to_bool
 from pychron.core.ui.gui import wake_screen
+from pychron.hardware.meter_calibration import MeterCalibration
 from pychron.lasers.stage_managers.stage_manager import StageManager
 from pychron.lasers.pattern.pattern_executor import PatternExecutor
 from pychron.managers.manager import Manager
@@ -189,6 +191,12 @@ class BaseLaserManager(Manager):
     def get_achieved_output(self):
         pass
 
+    def calculate_calibrated_power(self, request, calibration='watts', verbose=True):
+        mc = self._calibration_factory(calibration)
+        if verbose:
+            self.info('using power coefficients  (e.g. ax2+bx+c) {}'.format(mc.print_string()))
+        return mc.get_input(request)
+
     # private
     def _move_to_position(self, *args, **kw):
         pass
@@ -218,7 +226,6 @@ class BaseLaserManager(Manager):
             if resp is not None:
                 try:
                     if not cmpfunc(resp):
-                    # if not to_bool(resp):
                         cnt += 1
                 except (ValueError, TypeError):
                     cnt = 0
@@ -246,6 +253,36 @@ class BaseLaserManager(Manager):
 
         return state
 
+    def _calibration_factory(self, calibration):
+        coeffs = None
+        nmapping = False
+        if calibration == 'watts':
+            path = os.path.join(paths.device_dir, self.configuration_dir_name, 'calibrated_power.cfg')
+            config = self.get_configuration(path=path)
+            coeffs, nmapping = self._get_watt_calibration(config)
+
+        if coeffs is None:
+            coeffs = [1, 0]
+
+        return MeterCalibration(coeffs, normal_mapping=bool(nmapping))
+
+    def _get_watt_calibration(self, config):
+        coeffs = [1, 0]
+        nmapping = False
+        section = 'PowerOutput'
+        if config.has_section(section):
+            cs = config.get(section, 'coefficients')
+            try:
+                coeffs = map(float, cs.split(','))
+            except ValueError:
+                self.warning_dialog('Invalid power calibration {}'.format(cs))
+                return
+
+            if config.has_option(section, 'normal_mapping'):
+                nmapping = config.getboolean(section, 'normal_mapping')
+
+        return coeffs, nmapping
+
     # ===============================================================================
     # getter/setters
     # ===============================================================================
@@ -257,7 +294,7 @@ class BaseLaserManager(Manager):
     def _get_calibrated_power(self, power, use_calibration=True, verbose=True):
         if power:
             if self.use_calibrated_power and use_calibration:
-                power = max(0, self.laser_controller.get_calibrated_power(power, verbose=verbose))
+                power = max(0, self.calculate_calibrated_power(power, verbose=verbose))
         return power
 
     def _get_requested_power(self):

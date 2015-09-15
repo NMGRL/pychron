@@ -24,7 +24,6 @@ from twisted.internet.endpoints import TCP4ServerEndpoint
 
 
 class TxServer:
-    port = 8000
     factory = None
 
     def bootstrap(self):

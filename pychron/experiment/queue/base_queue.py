@@ -53,6 +53,7 @@ delay_between_analyses: {}
 extract_device: {}
 tray: {}
 load: {}
+experiment_identifier: {}
 '''
 
 
@@ -86,6 +87,7 @@ class BaseExperimentQueue(RunBlock):
     initialized = True
 
     load_name = Str
+    experiment_identifier = Str
 
     _no_update = False
     _frequency_group_counter = 0
@@ -150,6 +152,8 @@ class BaseExperimentQueue(RunBlock):
 
     def set_extract_device(self, v):
         self.extract_device = v
+        for a in self.automated_runs:
+            a.extract_device = v
 
     def is_updateable(self):
         return not self._no_update
@@ -226,22 +230,20 @@ class BaseExperimentQueue(RunBlock):
         if self.selected:
             idx = aruns.index(self.selected[-1])
             for ri in reversed(runspecs):
+                if not ri.experiment_identifier:
+                    ri.experiment_identifier = self.experiment_identifier
+
                 aruns.insert(idx + 1, ri)
         else:
             aruns.extend(runspecs)
         return runspecs
 
     def _add_queue_meta(self, params):
-        for attr in ('extract_device', 'tray', 'username', 'email',
-                     'use_group_email', 'queue_conditionals_name'):
+        for attr in ('extract_device', 'tray', 'username',
+                     # 'email',
+                     # 'use_group_email',
+                     'queue_conditionals_name'):
             params[attr] = getattr(self, attr)
-
-            # params['extract_device'] = self.extract_device
-            # params['tray'] = self.tray
-            # params['username'] = self.username
-            # params['email'] = self.email
-            # params['use_group_email']
-            # params['queue_conditionals_name'] = self.queue_conditionals_name
 
     def _extract_meta(self, f):
         meta, metastr = extract_meta(f)
@@ -273,7 +275,7 @@ class BaseExperimentQueue(RunBlock):
         self._set_meta_param('use_group_email', meta, bool_default)
         self._set_meta_param('load_name', meta, default, metaname='load')
         self._set_meta_param('queue_conditionals_name', meta, default)
-
+        self._set_meta_param('experiment_identifier', meta, default)
         self._load_meta_hook(meta)
 
     def _load_meta_hook(self, meta):
@@ -329,7 +331,8 @@ class BaseExperimentQueue(RunBlock):
                ('s_opt', 'script_options'),
                ('dis_btw_pos', 'disable_between_positons'),
                'weight', 'comment',
-               'autocenter', 'frequency_group']
+               'autocenter', 'frequency_group',
+               'experiment_identifier']
 
         if self.extract_device == 'Fusions UV':
             # header.extend(('reprate', 'mask', 'attenuator', 'image'))
@@ -357,7 +360,8 @@ class BaseExperimentQueue(RunBlock):
             self.delay_between_analyses,
             self.extract_device,
             self.tray or '',
-            self.load_name or '')
+            self.load_name or '',
+            self.experiment_identifier or '')
 
         if wfile:
             wfile.write(s)

@@ -50,30 +50,30 @@ class AutomatedRunDurationTracker(Loggable):
 
     def update(self, rh, t):
         p = paths.duration_tracker
-        if not os.path.isfile(p):
-            return
 
         out = []
         exists = False
-        with open(p, 'r') as rfile:
-            for line in rfile:
-                line = line.strip()
-                if line:
-                    args = line.split(',')
 
-                    h, ct, ds = args[0], args[1], args[2:]
-                    # update the runs duration by taking running average of last 10
-                    if h == rh:
-                        exists = True
+        if os.path.isfile(p):
+            with open(p, 'r') as rfile:
+                for line in rfile:
+                    line = line.strip()
+                    if line:
+                        args = line.split(',')
 
-                        ds = map(float, ds)
-                        ds.append(t)
-                        ds = ds[-10:]
-                        if len(ds):
-                            args = [h, sum(ds) / len(ds)]
-                            args.extend(ds)
+                        h, ct, ds = args[0], args[1], args[2:]
+                        # update the runs duration by taking running average of last 10
+                        if h == rh:
+                            exists = True
 
-                    out.append(args)
+                            ds = map(float, ds)
+                            ds.append(t)
+                            ds = ds[-10:]
+                            if len(ds):
+                                args = [h, sum(ds) / len(ds)]
+                                args.extend(ds)
+
+                        out.append(args)
 
         if not exists:
             out.append((rh, t))

@@ -17,7 +17,6 @@
 # ============= enthought library imports =======================
 from traits.api import List, Int, Instance
 # ============= standard library imports ========================
-import time
 # ============= local library imports  ==========================
 from pychron.experiment.automated_run.data_collector import DataCollector
 from pychron.experiment.automated_run.hop_util import generate_hops
@@ -40,7 +39,7 @@ class PeakHopCollector(DataCollector):
         self.debug('make new hop generatior')
         self.hop_generator = generate_hops(self.hops)
 
-    def _iter_hook(self, con, i):
+    def _iter_hook(self, i):
         if i % 50 == 0:
             self.info('collecting point {}'.format(i))
 
@@ -55,14 +54,14 @@ class PeakHopCollector(DataCollector):
                     self.debug('failed getting data {}'.format(e))
                     return
 
-                con.add_consumable((time.time() - self.starttime,
-                                    data, dets, isos, i))
-            return True
+                if not data:
+                    return
 
-    def _iter_step(self, data):
-        x, k_s, dets, isos, i = data
-        self._save_data(x, *k_s)
-        self.plot_data(i, x, *k_s)
+                x = self._get_time()
+                self._save_data(x, *data)
+                self._plot_data(i, x, *data)
+
+            return True
 
     def _do_hop(self):
         """
@@ -70,14 +69,7 @@ class PeakHopCollector(DataCollector):
         """
         from pychron.core.ui.gui import invoke_in_main_thread
 
-        # try:
         cycle, is_baselines, dets, isos, defls, settle, count, pdets = self.hop_generator.next()
-
-        # except StopIteration:
-        # return
-
-        # update the iso/det in plotpanel
-        # self.plot_panel.set_detectors(isos, dets)
 
         detector = dets[0]
         isotope = isos[0]
@@ -91,8 +83,6 @@ class PeakHopCollector(DataCollector):
             # remember original settings. return to these values after baseline finished
             ocounts = self.measurement_script.ncounts
             self.parent.measurement_script.increment_series_count(2, 1)
-            # self.parent.measurement_script._series_count += 2
-            # self.parent.measurement_script._fit_series_count += 1
             ocycles = self.plot_panel.ncycles
             pocounts = self.plot_panel.ncounts
 
@@ -101,8 +91,6 @@ class PeakHopCollector(DataCollector):
             self.debug('BASELINE MEASUREMENT COMPLETE')
 
             self.parent.measurement_script.increment_series_count(-2, -1)
-            # self.parent.measurement_script._series_count -= 2
-            # self.parent.measurement_script._fit_series_count -= 1
 
             change = self.parent.set_magnet_position(isotope, detector,
                                                      update_detectors=False, update_labels=False,
@@ -172,16 +160,6 @@ class PeakHopCollector(DataCollector):
                                   current_cycle='{} cycle={} count={}'.format(isotope, cycle + 1, count + 1),
                                   current_color=d.color)
         return is_baseline, dets, isos
-
-        # def _generator_hops(self):
-        #     # for c in xrange(self.ncycles):
-        #     c=0
-        #     while 1:
-        #         for hopstr, counts, settle in self.hops:
-        #             is_baselines, isos, dets, defls = zip(*split_hopstr(hopstr))
-        #             for i in xrange(int(counts)):
-        #                 yield c, is_baselines, dets, isos, defls, settle, i
-        #         c+=1
 
     def _protect_detectors(self, pdets, protect=True):
         for pd in pdets:

@@ -92,7 +92,7 @@ class Monitor(ConfigLoadable):
         self.start_time = time.time()
 
     def check(self):
-        return all([fi() for fi in self._get_checks()])
+        return any([fi() for fi in self._get_checks()])
 
     def _get_checks(self):
         return [getattr(self, h) for h in dir(self)

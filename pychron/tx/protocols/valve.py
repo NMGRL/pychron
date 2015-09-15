@@ -17,44 +17,71 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+import random
+
 from pychron.pychron_constants import EL_PROTOCOL
 from pychron.tx.errors import InvalidValveErrorCode, ValveActuationErrorCode, ValveSoftwareLockErrorCode, \
     InvalidArgumentsErrorCode, DeviceConnectionErrorCode, InvalidGaugeErrorCode
 from pychron.tx.protocols.service import ServiceProtocol
+from pychron.tx.registry import FUNC_REGISTRY
+
+
+def make_wrapper(func, postprocess):
+    def wrapper(*args, **kw):
+        """
+        handler signature is self, manager, args, sender
+        """
+
+        ret = func(*args[1:], **kw)
+        if postprocess:
+            ret = postprocess(ret)
+        return ret
+
+    return wrapper
 
 
 class ValveProtocol(ServiceProtocol):
     def __init__(self, application, addr):
         ServiceProtocol.__init__(self)
-        # self._application = application
-        man = application.get_service(EL_PROTOCOL)
+        for k, v in FUNC_REGISTRY.items():
+            self.register_service(k, make_wrapper(*v))
+
+        self._application = application
+        man = None
+        if application:
+            man = application.get_service(EL_PROTOCOL)
+
         self._manager = man
         self._addr = addr
-
-        services = (('Read', '_read'),
+        services = (('GetData', '_get_data'),
+                    ('Read', '_read'),
                     ('Set', '_set'),
                     ('Open', '_open'),
                     ('Close', '_close'),
                     ('GetValveState', '_get_valve_state'),
+                    ('GetStateChecksum', '_get_state_checksum'),
                     ('GetValveStates', '_get_valve_states'),
                     ('GetValveLockStates', '_get_valve_lock_states'),
                     ('GetValveLockState', '_get_valve_lock_state'),
                     ('GetValveOwners', '_get_valve_owners'),
                     ('GetPressure', '_get_pressure'))
+
         self._register_services(services)
 
-    def _register_services(self, services):
-        for name, cb in services:
-            if isinstance(cb, str):
-                cb = getattr(self, cb)
-            self.register_service(name, cb)
+    def _get_data(self, data):
+        if isinstance(data, dict):
+            offset = data['value']
+        else:
+            offset = float(data)
+        v = random.random() + offset
+        return str(v)
 
     def _get_device(self, name, protocol=None, owner=None):
         dev = None
-        if self.application is not None:
+        if self._application is not None:
             if protocol is None:
                 protocol = 'pychron.hardware.core.i_core_device.ICoreDevice'
-            dev = self.application.get_service(protocol, 'name=="{}"'.format(name))
+            dev = self._application.get_service(protocol, 'name=="{}"'.format(name))
             if dev is None:
                 # possible we are trying to get a flag
                 m = self._manager
@@ -64,17 +91,22 @@ class ValveProtocol(ServiceProtocol):
                         dev = m.get_mass_spec_param(name)
                     else:
                         if owner:
-                            dev.set_owner(owner)
+                            dev.set_owner(str(owner))
         return dev
 
     def _get_error(self, data):
         return self._manager.get_error()
 
-    def _set(self, dname, value):
+    def _set(self, data):
+        if isinstance(data, dict):
+            dname, value = data['device'], data['value']
+        else:
+            dname, value = data.split(' ')
+
         d = self._get_device(dname, owner=self._addr)
+        # self.debug('Set {name} {value}', name=dname, value=value)
         if d is not None:
-            self.info('Set {} to {}'.format(d.name,
-                                            value))
+            # self.info('Set {name} to {value}', name=dname, value=value)
             result = d.set(value)
         else:
             result = DeviceConnectionErrorCode(dname, logger=self)
@@ -82,6 +114,9 @@ class ValveProtocol(ServiceProtocol):
         return result
 
     def _read(self, data):
+        if isinstance(data, dict):
+            data = data['value']
+        # self.debug('Read {data}', data=data)
         d = self._get_device(data, owner=self._addr)
         if d is not None:
             result = d.get(current=True)
@@ -90,12 +125,14 @@ class ValveProtocol(ServiceProtocol):
         return result
 
     def _get_valve_state(self, data):
+        if isinstance(data, dict):
+            data = data['value']
         result = self._manager.get_valve_state(data)
         if result is None:
             result = InvalidValveErrorCode(data)
         return result
 
-    def _open(self, vname):
+    def _open(self, data):
         """
         Open a valve. Valve name e.g. A
         if vname ends with 'Flag' interpret this command as ``Set``
@@ -103,26 +140,29 @@ class ValveProtocol(ServiceProtocol):
         :param vname: name of valve
         :return: OK or ErrorCode
         """
+        if isinstance(data, dict):
+            data = data['value']
+
         # intercept flags
-        if vname.endswith('Flag'):
-            r = self.set(vname, 1)
+        if data.endswith('Flag'):
+            r = self.set(data, 1)
             return bool(r)
 
         manager = self._manager
-        result, change = manager.open_valve(vname, sender_address=self._addr)
+        result, change = manager.open_valve(data, sender_address=self._addr)
 
         if result is True:
             result = 'OK' if change else 'ok'
         elif result is None:
-            result = InvalidArgumentsErrorCode('Open', vname)
+            result = InvalidArgumentsErrorCode('Open', data)
         elif result == 'software lock enabled':
-            result = ValveSoftwareLockErrorCode(vname)
+            result = ValveSoftwareLockErrorCode(data)
         else:
-            result = ValveActuationErrorCode(vname, 'open')
+            result = ValveActuationErrorCode(data, 'open')
 
         return result
 
-    def _close(self, vname):
+    def _close(self, data):
         """
         Close a valve. Valve name e.g. A
         if vname ends with 'Flag' interpret this command as ``Set``
@@ -130,28 +170,33 @@ class ValveProtocol(ServiceProtocol):
         :param vname: name of valve
         :return: OK or ErrorCode
         """
+        if isinstance(data, dict):
+            data = data['value']
+
         # intercept flags
-        if vname.endswith('Flag'):
-            r = self.set(vname, 0)
+        if data.endswith('Flag'):
+            r = self.set(data, 0)
             return bool(r)
 
-        result, change = self._manager.close_valve(vname, sender_address=self._addr)
+        result, change = self._manager.close_valve(data, sender_address=self._addr)
         if result is True:
             result = 'OK' if change else 'ok'
         elif result is None:
-            result = InvalidArgumentsErrorCode('Close', vname, logger=self)
+            result = InvalidArgumentsErrorCode('Close', data, logger=self)
         elif result == 'software lock enabled':
-            result = ValveSoftwareLockErrorCode(vname, logger=self)
+            result = ValveSoftwareLockErrorCode(data, logger=self)
         else:
-            result = ValveActuationErrorCode(vname, 'close', logger=self)
+            result = ValveActuationErrorCode(data, 'close', logger=self)
 
         return result
 
-    def _get_state_checksum(self, *vnames):
+    def _get_state_checksum(self, data):
         """
+        """
+        if isinstance(data, dict):
+            data = data['value']
 
-        """
-        result = self._manager.get_state_checksum(vnames)
+        result = self._manager.get_state_checksum(data)
         return result
 
     def _get_valve_state(self, data):
@@ -164,6 +209,9 @@ class ValveProtocol(ServiceProtocol):
         :param vname: name of valve
         :return: True, False, or InvalidValveErrorCode
         """
+        if isinstance(data, dict):
+            data = data['value']
+
         result = self._manager.get_valve_state(data)
         if result is None:
             result = InvalidValveErrorCode(data)
@@ -182,7 +230,7 @@ class ValveProtocol(ServiceProtocol):
         result = self._manager.get_valve_states()
         return result
 
-    def _get_valve_lock_states(self):
+    def _get_valve_lock_states(self, data):
         """
         Get all the valve lock states::
 
@@ -205,6 +253,9 @@ class ValveProtocol(ServiceProtocol):
         :param vname: name of valve
         :return: True, False
         """
+        if isinstance(data, dict):
+            data = data['value']
+
         result = self._manager.get_software_lock(data)
         return result
 
@@ -212,15 +263,17 @@ class ValveProtocol(ServiceProtocol):
         result = self._manager.get_valve_owners()
         return result
 
-    def _get_pressure(self, controller, gauge):
+    def _get_pressure(self, data):
         """
         Get the pressure from ``controller``'s ``gauge``
 
-        :param controller: name of gauge controller
-        :param gauge: name of gauge
-        :return: pressure
         """
+
         manager = self._manager
+        if isinstance(data, dict):
+            controller, gauge = data['controller'], data['gauge']
+        else:
+            controller, gauge = data
 
         p = None
         if manager:

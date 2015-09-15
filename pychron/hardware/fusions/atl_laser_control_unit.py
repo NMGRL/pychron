@@ -127,7 +127,7 @@ class ATLLaserControlUnit(CoreDevice):
 
     def initialize(self, *args, **kw):
         r = super(ATLLaserControlUnit, self).initialize(self, *args, **kw)
-        self._communicator.write_terminator = None
+        self.communicator.write_terminator = None
 
         self._burst_shot = self.get_nburst()
 

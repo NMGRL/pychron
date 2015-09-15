@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from apptools import sweet_pickle as pickle
-from traits.api import HasTraits, Str, Bool, Float, List, Instance, Enum
+from traits.api import HasTraits, Str, Bool, Float, List, Instance, Enum, Int
 from traitsui.api import View, Item, HGroup, Handler, EnumEditor
 # ============= standard library imports ========================
 import os
@@ -44,6 +44,10 @@ class PeakCenterConfig(HasTraits):
     integration_time = Enum(QTEGRA_INTEGRATION_TIMES)
     directions = Enum('Increase', 'Decrease', 'Oscillate')
     pickle_name = 'peak_center_config.p'
+    window = Float(0.015)
+    step_width = Float(0.0005)
+    min_peak_height = Float(1.0)
+    percent = Int(80)
 
     def _integration_time_default(self):
         return QTEGRA_INTEGRATION_TIMES[4]  # 1.048576
@@ -65,6 +69,10 @@ class PeakCenterConfig(HasTraits):
                         Item('dac', enabled_when='not use_current_dac')),
                  Item('integration_time'),
                  Item('directions'),
+                 Item('window', label='Peak Width (V)'),
+                 Item('step_width', label='Step Width (V)'),
+                 Item('min_peak_height', label='Min Peak Height (fA)'),
+                 Item('percent'),
                  buttons=['OK', 'Cancel'],
                  kind='livemodal',
                  title='Peak Center',

@@ -72,7 +72,7 @@ class ExtractionLineScene(Scene):
         self._load_connections(cp, origin, color_dict)
         self._load_legend(cp, origin, color_dict)
 
-        self.set_canvas(canvas)
+        # self.set_canvas(canvas)
 
     def get_is_in(self, px, py, exclude=None):
         if exclude is None:
@@ -146,44 +146,10 @@ class ExtractionLineScene(Scene):
         if type_tag in ('turbo', 'laser'):
             self.overlays.append(rect)
             rect.scene_visible = False
-        # else:
 
         self.add_item(rect, layer=layer)
 
         return rect
-
-    # def _new_tee(self, conn):
-    #     left = conn.find('left')
-    #     right = conn.find('right')
-    #     mid = conn.find('mid')
-    #     key = '{}-{}-{}'.format(left.text.strip(), mid.text.strip(), right.text.strip())
-    #
-    #     # klass = BorderLine
-    #     tt = Tee(10, 10,
-    #              default_color=(204, 204, 204),
-    #              name=key,
-    #              width=10)
-    #
-    #     lf = self.get_item(left.text.strip())
-    #     rt = self.get_item(right.text.strip())
-    #     mm = self.get_item(mid.text.strip())
-    #     lf.connections.append(('left', tt))
-    #     rt.connections.append(('right', tt))
-    #     mm.connections.append(('mid',tt))
-    #
-    #     def get_xy(item, elem):
-    #         offset = elem.get('offset')
-    #         ox, oy = 0, 0
-    #         if offset:
-    #             ox, oy = map(float, offset.split(','))
-    #
-    #         return item.x + ox, item.y + oy
-    #
-    #     lx, ly = get_xy(lf, left)
-    #     rx, ry = get_xy(rt, right)
-    #     mx, my = get_xy(mm, mid)
-    #     tt.set_points(lx, ly, rx, ry, mx, my)
-    #     self.add_item(tt, layer=0)
 
     def _new_fork(self, klass, conn):
         left = conn.find('left')
@@ -197,15 +163,15 @@ class ExtractionLineScene(Scene):
             height = float(dim.text.strip())
         # klass = BorderLine
         tt = klass(0, 0,
-                  default_color=(204, 204, 204),
-                  name=key, height=height)
+                   default_color=(204, 204, 204),
+                   name=key, height=height)
 
         lf = self.get_item(left.text.strip())
         rt = self.get_item(right.text.strip())
         mm = self.get_item(mid.text.strip())
         lf.connections.append(('left', tt))
         rt.connections.append(('right', tt))
-        mm.connections.append(('mid',tt))
+        mm.connections.append(('mid', tt))
 
         def get_xy(item, elem):
             offset = elem.get('offset')
@@ -233,7 +199,7 @@ class ExtractionLineScene(Scene):
         ekey = end.text.strip()
         try:
             orient = conn.get('orientation')
-        except Exception:
+        except AttributeError:
             orient = None
 
         x, y = 0, 0
@@ -242,7 +208,7 @@ class ExtractionLineScene(Scene):
             x, y = sanchor.x, sanchor.y
             try:
                 ox, oy = map(float, start.get('offset').split(','))
-            except Exception:
+            except AttributeError:
                 ox = 1
                 oy = sanchor.height / 2.0
 
@@ -256,7 +222,7 @@ class ExtractionLineScene(Scene):
 
             try:
                 ox, oy = map(float, end.get('offset').split(','))
-            except Exception:
+            except AttributeError:
                 ox = 1
                 oy = eanchor.height / 2.0
 
@@ -274,11 +240,10 @@ class ExtractionLineScene(Scene):
                   name=key,
                   width=10)
 
-        ref = weakref.ref(l)
         if sanchor:
-            sanchor.connections.append(('start', ref()))
+            sanchor.connections.append(('start', l))
         if eanchor:
-            eanchor.connections.append(('end', ref()))
+            eanchor.connections.append(('end', l))
 
         self.add_item(l, layer=0)
         return l
@@ -454,7 +419,7 @@ class ExtractionLineScene(Scene):
             corner = conn.find('corner')
             c = 'ul'
             if corner is not None:
-                c=corner.text.strip()
+                c = corner.text.strip()
             l.corner = c
 
         for i, conn in enumerate(cp.get_elements('tee_connection')):

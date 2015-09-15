@@ -89,7 +89,7 @@ class StageControlPane(TraitsDockPane):
         #     return UItem('object.stage_manager.canvas.{}'.format(name), **kw)
 
         pgrp = Group(UItem('stage_manager.calibrated_position_entry',
-                           tooltip='Enter a positon e.g 1 for a hole, or 3,4 for X,Y'),
+                           tooltip='Enter a position e.g 1 for a hole, or 3,4 for X,Y'),
                      label='Calibrated Position',
                      show_border=True)
         hgrp = HGroup(UItem('stage_manager.stop_button'),
@@ -176,7 +176,7 @@ class ControlPane(TraitsDockPane):
     name = 'Control'
 
     movable = False
-    closable = False
+    closable = True
     floatable = False
 
     def traits_view(self):
@@ -245,14 +245,15 @@ class ClientMixin(object):
                          Item('z', editor=RangeEditor(low=-25.0, high=25.0)),
                          label='Positioning')
 
-        ogrp = Group(UItem('optics_client', style='custom'),
-                     label='Optics')
-        cgrp = Group(UItem('controls_client', style='custom'),
-                     defined_when='controls_client',
-                     label='Controls')
+        # ogrp = Group(UItem('optics_client', style='custom'),
+        #              label='Optics')
+        # cgrp = Group(UItem('controls_client', style='custom'),
+        #              defined_when='controls_client',
+        #              label='Controls')
 
-        tgrp = Group(cgrp,
-                     ogrp,
+        tgrp = Group(
+                     # cgrp,
+                     # ogrp,
                      pos_grp, layout='tabbed')
 
         egrp = HGroup(UItem('enabled_led', editor=LEDEditor()),

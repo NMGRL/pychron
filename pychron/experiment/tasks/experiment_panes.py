@@ -119,6 +119,10 @@ QComboBox {font-size: 10px}
                                       label='Group'),
                    icon_button_editor(queue_factory_name('edit_emails'), 'cog',
                                       tooltip='Edit user group')),
+            HGroup(queue_factory_item('experiment_identifier',
+                                      label='Experiment ID',
+                                      editor=ComboboxEditor(name=queue_factory_name('experiment_identifiers'))),
+                   icon_button_editor(queue_factory_name('add_experiment_identifier'), 'add')),
             HGroup(
                 queue_factory_item('mass_spectrometer',
                                    show_label=False,
@@ -161,24 +165,16 @@ QComboBox {font-size: 10px}
             VGroup(
                 self._get_info_group(),
                 self._get_extract_group(),
+                enabled_when=queue_factory_name('ok_make'),
                 label='General'),
             self._get_script_group(),
-            self._get_truncate_group(),
-            enabled_when=queue_factory_name('ok_make'))
+            self._get_truncate_group())
 
-        # lower_button_bar = HGroup(
-        # add_button,
-        # clear_button,
-        # Label('Auto Increment'),
-        # Item('auto_increment_id', label='L#'),
-        # Item('auto_increment_position', label='Position'))
         v = View(
             VGroup(
-                # queue_grp,
                 button_bar,
                 button_bar2,
                 UItem('pane.info_label', style='readonly'),
-                # CustomLabel(run_factory_name('info_label'), size=14, color='green'),
                 edit_grp,
 
                 # lower_button_bar,
@@ -287,6 +283,7 @@ QComboBox {font-size: 10px}
                                            'selected file if applicable'),
                 show_border=True,
                 label='File'),
+            enabled_when=queue_factory_name('ok_make'),
             label='Run Conditionals')
         return grp
 
@@ -306,6 +303,7 @@ QComboBox {font-size: 10px}
                                     tooltip='load the default scripts for this analysis type',
                                     show_label=False,
                                     enabled_when=run_factory_name('labnumber'))),
+            enabled_when=queue_factory_name('ok_make'),
             show_border=True,
             label='Scripts')
         return script_grp
@@ -425,7 +423,7 @@ Quick=   measure_iteration stopped at current step
 
         v = View(
             HGroup(
-                UItem('executing_led', editor=LEDEditor()),
+                UItem('executing_led', editor=LEDEditor(radius=30)),
                 spacer(-20),
                 icon_button_editor('start_button',
                                    'start',

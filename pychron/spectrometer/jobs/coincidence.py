@@ -63,7 +63,7 @@ class DeflectionResult(HasTraits):
         self.new_deflection = n
 
 
-class CoincidenceScan(BasePeakCenter):
+class Coincidence(BasePeakCenter):
     title = 'Coincidence'
     inform = False
 
@@ -102,15 +102,13 @@ class CoincidenceScan(BasePeakCenter):
             return cx
 
         spec = self.spectrometer
-        # centers = dict([(di.name, get_peak_center(i, di))
-        # for i, di in enumerate(spec.detectors)])
+
         centers = {d: get_peak_center(d) for d in self.active_detectors}
         ref = self.reference_detector
         post = centers[ref]
         if post is None:
             return
 
-        # no_change = True
         results = []
         for di in self.active_detectors:
             di = spec.get_detector(di)
@@ -124,10 +122,7 @@ class CoincidenceScan(BasePeakCenter):
 
             if abs(dac_dev) < 0.001:
                 self.info('no offset detected between {} and {}'.format(ref, di.name))
-                no_change = True
                 continue
-
-            # no_change = False
 
             defl = di.map_dac_to_deflection(dac_dev)
             self.info('{} dac dev. {:0.5f}. converted to deflection voltage {:0.1f}.'.format(di.name, dac_dev, defl))
@@ -139,8 +134,6 @@ class CoincidenceScan(BasePeakCenter):
             if newdefl >= 0:
                 results.append(DeflectionResult(di.name, curdefl, newdefl))
 
-        # if no_change and self.inform:
-        # else:
         if not results:
             self.information_dialog('no deflection changes needed')
         else:
