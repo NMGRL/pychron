@@ -24,6 +24,7 @@ import re
 # from pychron.processing.tasks.browser.browser_task import NCHARS
 # from pychron.database.records.isotope_record import GraphicalRecordView
 from pychron.core.helpers.iterfuncs import partition
+from pychron.dvc.dvc import get_review_status
 from pychron.envisage.browser.base_browser_model import BaseBrowserModel, extract_mass_spectrometer_name
 from pychron.envisage.browser.find_references_config import FindReferencesConfigModel, FindReferencesConfigView
 from pychron.envisage.browser.record_views import ProjectRecordView
@@ -110,6 +111,14 @@ class BrowserModel(BaseBrowserModel):
 
             self.datasource_url = db.datasource_url
             self.load_browser_selection()
+
+    def load_review_status(self):
+        at = self.analysis_table
+        records = self.get_analysis_records()
+        if records:
+            for ri in records:
+                get_review_status(ri)
+            at.refresh_needed = True
 
     def get_analysis_records(self):
         records = self.analysis_table.selected
@@ -596,146 +605,146 @@ class BrowserModel(BaseBrowserModel):
     def _time_view_model_default(self):
         return TimeViewModel(db=self.db)
 
-# ============= EOF =============================================
-        # def _retrieve_labnumbers_hook(self, db):
-        #     low_post = self.low_post
-        #     high_post = self.high_post
-        #     ms = None
-        #     if self.use_mass_spectrometers:
-        #         ms = self.mass_spectrometer_includes
-        #
-        #     def get_labnumbers(ids=None):
-        #         return db.get_labnumbers(identifiers=ids,
-        #                                  low_post=low_post,
-        #                                  high_post=high_post,
-        #                                  mass_spectrometers=ms,
-        #                                  filter_non_run=self.filter_non_run_samples)
-        #
-        #     def atypes_func(obj, func):
-        #         func = getattr(man, func)
-        #         refs, unks = func(obj)
-        #         nls = []
-        #         if 'monitors' in atypes:
-        #             nls.extend(refs)
-        #         if 'unknown' in atypes:
-        #             nls.extend(unks)
-        #         return nls
-        #
-        #     man = self.manager
-        #     ls = []
-        #     atypes = self.analysis_include_types if self.use_analysis_type_filtering else None
+    # ============= EOF =============================================
+    # def _retrieve_labnumbers_hook(self, db):
+    #     low_post = self.low_post
+    #     high_post = self.high_post
+    #     ms = None
+    #     if self.use_mass_spectrometers:
+    #         ms = self.mass_spectrometer_includes
+    #
+    #     def get_labnumbers(ids=None):
+    #         return db.get_labnumbers(identifiers=ids,
+    #                                  low_post=low_post,
+    #                                  high_post=high_post,
+    #                                  mass_spectrometers=ms,
+    #                                  filter_non_run=self.filter_non_run_samples)
+    #
+    #     def atypes_func(obj, func):
+    #         func = getattr(man, func)
+    #         refs, unks = func(obj)
+    #         nls = []
+    #         if 'monitors' in atypes:
+    #             nls.extend(refs)
+    #         if 'unknown' in atypes:
+    #             nls.extend(unks)
+    #         return nls
+    #
+    #     man = self.manager
+    #     ls = []
+    #     atypes = self.analysis_include_types if self.use_analysis_type_filtering else None
 
-        # print self.project_enabled, self.irradiation_enabled
+    # print self.project_enabled, self.irradiation_enabled
 
-        # if self.selected_experiments:
-        #     ls = db.get_experiment_labnumbers([e.name for e in self.selected_experiments])
-        # else:
-        #     elif self.project_enabled:
-        #         if not self.irradiation_enabled:
-        #             ls = super(BrowserModel, self)._retrieve_labnumbers_hook(db)
-        #         else:
-        #             if self.selected_projects and self.irradiation_enabled and self.irradiation:
-        #                 ls = db.get_project_irradiation_labnumbers([si.name for si in self.selected_projects],
-        #                                                            self.irradiation,
-        #                                                            self.level,
-        #                                                            low_post=low_post,
-        #                                                            high_post=high_post,
-        #                                                            mass_spectrometers=ms,
-        #                                                            filter_non_run=self.filter_non_run_samples,
-        #                                                            analysis_types=atypes)
-        #                 if atypes:
-        #                     ls = atypes_func(ls)
-        #
-        #     elif self.irradiation_enabled and self.irradiation:
-        #         if not self.level:
-        #             ls = db.get_irradiation_labnumbers(self.irradiation, self.level,
-        #                                                low_post=low_post,
-        #                                                high_post=high_post,
-        #                                                mass_spectrometers=ms,
-        #                                                filter_non_run=self.filter_non_run_samples,
-        #                                                analysis_types=atypes)
-        #         else:
-        #             # level = man.get_level(self.level)
-        #             level = db.get_irradiation_level(self.irradiation,
-        #                                              self.level)
-        #             if level:
-        #                 if atypes:
-        #                     xs = atypes_func(level, 'group_level')
-        #                 else:
-        #                     xs = [p.labnumber for p in level.positions]
-        #
-        #                 if xs:
-        #                     lns = [x.identifier for x in xs]
-        #                     ls = get_labnumbers(ids=lns)
-        #
-        #     elif low_post or high_post:
-        #         ls = get_labnumbers()
-        #         ans = db.get_analyses_date_range(low_post, high_post, mass_spectrometers=ms)
-        #         ans = self._make_records(ans)
-        #         self.analysis_table.set_analyses(ans)
-        #
-        # return ls
+    # if self.selected_experiments:
+    #     ls = db.get_experiment_labnumbers([e.name for e in self.selected_experiments])
+    # else:
+    #     elif self.project_enabled:
+    #         if not self.irradiation_enabled:
+    #             ls = super(BrowserModel, self)._retrieve_labnumbers_hook(db)
+    #         else:
+    #             if self.selected_projects and self.irradiation_enabled and self.irradiation:
+    #                 ls = db.get_project_irradiation_labnumbers([si.name for si in self.selected_projects],
+    #                                                            self.irradiation,
+    #                                                            self.level,
+    #                                                            low_post=low_post,
+    #                                                            high_post=high_post,
+    #                                                            mass_spectrometers=ms,
+    #                                                            filter_non_run=self.filter_non_run_samples,
+    #                                                            analysis_types=atypes)
+    #                 if atypes:
+    #                     ls = atypes_func(ls)
+    #
+    #     elif self.irradiation_enabled and self.irradiation:
+    #         if not self.level:
+    #             ls = db.get_irradiation_labnumbers(self.irradiation, self.level,
+    #                                                low_post=low_post,
+    #                                                high_post=high_post,
+    #                                                mass_spectrometers=ms,
+    #                                                filter_non_run=self.filter_non_run_samples,
+    #                                                analysis_types=atypes)
+    #         else:
+    #             # level = man.get_level(self.level)
+    #             level = db.get_irradiation_level(self.irradiation,
+    #                                              self.level)
+    #             if level:
+    #                 if atypes:
+    #                     xs = atypes_func(level, 'group_level')
+    #                 else:
+    #                     xs = [p.labnumber for p in level.positions]
+    #
+    #                 if xs:
+    #                     lns = [x.identifier for x in xs]
+    #                     ls = get_labnumbers(ids=lns)
+    #
+    #     elif low_post or high_post:
+    #         ls = get_labnumbers()
+    #         ans = db.get_analyses_date_range(low_post, high_post, mass_spectrometers=ms)
+    #         ans = self._make_records(ans)
+    #         self.analysis_table.set_analyses(ans)
+    #
+    # return ls
 
-        # def _graphical_filter_button_fired(self):
-        #     # print 'ffffassdf'
-        #     self.debug('doing graphical filter')
-        #     from pychron.processing.tasks.browser.graphical_filter import GraphicalFilterModel, GraphicalFilterView
-        #
-        #     sams = self.selected_samples
-        #     if not sams:
-        #         sams = self.samples
-        #
-        #     db = self.db
-        #     with db.session_ctx():
-        #         if sams:
-        #             lns = [si.identifier for si in sams]
-        #             lpost, hpost = db.get_min_max_analysis_timestamp(lns)
-        #             ams = ms = db.get_analysis_mass_spectrometers(lns)
-        #             force = False
-        #         else:
-        #             force = True
-        #             lpost = datetime.now() - timedelta(hours=self.search_criteria.recent_hours)
-        #             hpost = datetime.now()
-        #             ams = [mi.name for mi in db.get_mass_spectrometers()]
-        #             ms = ams[:1]
-        #
-        #         # if date range > X days make user fine tune range
-        #         tdays = 3600 * 24 * max(1, self.search_criteria.graphical_filtering_max_days)
-        #
-        #         if force or (hpost - lpost).total_seconds() > tdays or len(ms) > 1:
-        #             d = GraphicalFilterSelector(lpost=lpost, hpost=hpost,
-        #                                         available_mass_spectrometers=ams,
-        #                                         mass_spectrometers=ms)
-        #             info = d.edit_traits(kind='livemodal')
-        #             if info.result:
-        #                 lpost, hpost, ms = d.lpost, d.hpost, d.mass_spectrometers
-        #                 if not ms:
-        #                     self.warning_dialog('Please select at least one Mass Spectrometer')
-        #                     return
-        #             else:
-        #                 return
-        #
-        #         ans = db.get_analyses_date_range(lpost, hpost, order='asc',
-        #                                          mass_spectrometers=ms)
-        #         # ans = db.get_date_range_analyses(lpost, hpost,
-        #         #                                  ordering='asc',
-        #         #                                  spectrometer=ms)
-        #
-        #         def func(xi, prog, i, n):
-        #             if prog:
-        #                 prog.change_message('Loading {}-{}. {}'.format(i, n, xi.record_id))
-        #             return GraphicalRecordView(xi)
-        #
-        #         ans = progress_loader(ans, func)
-        #         if not ans:
-        #             return
-        #
-        #     gm = GraphicalFilterModel(analyses=ans,
-        #                               projects=[p.name for p in self.selected_projects])
-        #     gm.setup()
-        #     gv = GraphicalFilterView(model=gm)
-        #     info = gv.edit_traits(kind='livemodal')
-        #     if info.result:
-        #         ans = gm.get_selection()
-        #         self.analysis_table.analyses = ans
-        #         self._graphical_filter_hook(ans, gm.is_append)
+    # def _graphical_filter_button_fired(self):
+    #     # print 'ffffassdf'
+    #     self.debug('doing graphical filter')
+    #     from pychron.processing.tasks.browser.graphical_filter import GraphicalFilterModel, GraphicalFilterView
+    #
+    #     sams = self.selected_samples
+    #     if not sams:
+    #         sams = self.samples
+    #
+    #     db = self.db
+    #     with db.session_ctx():
+    #         if sams:
+    #             lns = [si.identifier for si in sams]
+    #             lpost, hpost = db.get_min_max_analysis_timestamp(lns)
+    #             ams = ms = db.get_analysis_mass_spectrometers(lns)
+    #             force = False
+    #         else:
+    #             force = True
+    #             lpost = datetime.now() - timedelta(hours=self.search_criteria.recent_hours)
+    #             hpost = datetime.now()
+    #             ams = [mi.name for mi in db.get_mass_spectrometers()]
+    #             ms = ams[:1]
+    #
+    #         # if date range > X days make user fine tune range
+    #         tdays = 3600 * 24 * max(1, self.search_criteria.graphical_filtering_max_days)
+    #
+    #         if force or (hpost - lpost).total_seconds() > tdays or len(ms) > 1:
+    #             d = GraphicalFilterSelector(lpost=lpost, hpost=hpost,
+    #                                         available_mass_spectrometers=ams,
+    #                                         mass_spectrometers=ms)
+    #             info = d.edit_traits(kind='livemodal')
+    #             if info.result:
+    #                 lpost, hpost, ms = d.lpost, d.hpost, d.mass_spectrometers
+    #                 if not ms:
+    #                     self.warning_dialog('Please select at least one Mass Spectrometer')
+    #                     return
+    #             else:
+    #                 return
+    #
+    #         ans = db.get_analyses_date_range(lpost, hpost, order='asc',
+    #                                          mass_spectrometers=ms)
+    #         # ans = db.get_date_range_analyses(lpost, hpost,
+    #         #                                  ordering='asc',
+    #         #                                  spectrometer=ms)
+    #
+    #         def func(xi, prog, i, n):
+    #             if prog:
+    #                 prog.change_message('Loading {}-{}. {}'.format(i, n, xi.record_id))
+    #             return GraphicalRecordView(xi)
+    #
+    #         ans = progress_loader(ans, func)
+    #         if not ans:
+    #             return
+    #
+    #     gm = GraphicalFilterModel(analyses=ans,
+    #                               projects=[p.name for p in self.selected_projects])
+    #     gm.setup()
+    #     gv = GraphicalFilterView(model=gm)
+    #     info = gv.edit_traits(kind='livemodal')
+    #     if info.result:
+    #         ans = gm.get_selection()
+    #         self.analysis_table.analyses = ans
+    #         self._graphical_filter_hook(ans, gm.is_append)

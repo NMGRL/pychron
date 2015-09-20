@@ -72,22 +72,22 @@ def get_selected_history_item(sh, key):
 
 #
 class IsotopeRecordView(object):
-    __slots__ = ('sample', 'project', 'labnumber', 'identifier', 'aliquot', 'step',
-                 '_increment',
-                 'uuid', 'rundate',
-                 'timestampf', 'tag',
-                 'delta_time',
-                 'tag_dict',
-                 'irradiation_position_position',
-                 'irradiation', 'irradiation_level',
-                 'irradiation_info', 'mass_spectrometer', 'analysis_type',
-                 'meas_script_name', 'extract_script_name', 'extract_device', 'flux_fit_status',
-                 'extract_value', 'cleanup', 'duration',
-                 'blank_fit_status',
-                 'ic_fit_status',
-                 'experiment_identifier',
-                 'experiment_ids',
-                 'iso_fit_status', 'is_plateau_step', 'group_id', 'graph_id')
+    # __slots__ = ('sample', 'project', 'labnumber', 'identifier', 'aliquot', 'step',
+    #              '_increment',
+    #              'uuid', 'rundate',
+    #              'timestampf', 'tag',
+    #              'delta_time',
+    #              'tag_dict',
+    #              'irradiation_position_position',
+    #              'irradiation', 'irradiation_level',
+    #              'irradiation_info', 'mass_spectrometer', 'analysis_type',
+    #              'meas_script_name', 'extract_script_name', 'extract_device', 'flux_fit_status',
+    #              'extract_value', 'cleanup', 'duration',
+    #              'blank_fit_status',
+    #              'ic_fit_status',
+    #              'experiment_identifier',
+    #              'experiment_ids',
+    #              'iso_fit_status', 'is_plateau_step', 'group_id', 'graph_id')
 
     def __init__(self, *args, **kw):
         self.is_plateau_step = False
@@ -120,10 +120,12 @@ class IsotopeRecordView(object):
         self.mass_spectrometer = ''
         self.extract_device = ''
 
-        self.flux_fit_status = ''
-        self.blank_fit_status = ''
-        self.ic_fit_status = ''
-        self.iso_fit_status = ''
+        # self.flux_fit_status = ''
+        # self.blank_fit_status = ''
+        # self.ic_fit_status = ''
+        # self.iso_fit_status = ''
+
+        self.review_status = 0
 
         self.extract_value = 0
         self.cleanup = 0
@@ -222,12 +224,11 @@ class IsotopeRecordView(object):
                 else:
                     print 'extraction is None'
 
-                self.flux_fit_status = get_flux_fit_status(dbrecord)
-
-                sh = dbrecord.selected_histories
-                self.blank_fit_status = get_selected_history_item(sh, 'selected_blanks_id')
-                self.ic_fit_status = get_selected_history_item(sh, 'selected_det_intercal_id')
-                self.iso_fit_status = get_selected_history_item(sh, 'selected_fits_id')
+                    # self.flux_fit_status = get_flux_fit_status(dbrecord)
+                    # sh = dbrecord.selected_histories
+                    # self.blank_fit_status = get_selected_history_item(sh, 'selected_blanks_id')
+                    # self.ic_fit_status = get_selected_history_item(sh, 'selected_det_intercal_id')
+                    # self.iso_fit_status = get_selected_history_item(sh, 'selected_fits_id')
 
             return True
         except Exception, e:

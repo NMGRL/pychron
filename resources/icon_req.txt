@@ -92,6 +92,7 @@ green_ball
 gray_ball
 red_ball
 yellow_ball
+orange_ball
 project-open
 irc-server
 configure-2

@@ -22,6 +22,7 @@ from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.configurable_tabular_adapter import ConfigurableMixin
+from pychron.envisage.resources import icon
 
 
 class BrowserAdapter(TabularAdapter, ConfigurableMixin):
@@ -30,7 +31,9 @@ class BrowserAdapter(TabularAdapter, ConfigurableMixin):
     def get_tooltip(self, obj, trait, row, column):
         name = self.column_map[column]
         # name='_'.join(name.split('_')[:-1])
-        return '{}= {}'.format(name, getattr(self.item, name))
+        item = getattr(obj, trait)[row]
+
+        return '{}= {}'.format(name, getattr(item, name))
 
 
 class ProjectAdapter(BrowserAdapter):
@@ -96,15 +99,21 @@ class LabnumberAdapter(BrowserAdapter):
                                       action='plot_selected'))
 
 
+REVIEW_STATUS_ICONS = {'Default': icon('gray_ball'),
+                       'Intermediate': icon('orange_ball'),
+                       'All': icon('green_ball')}
+
+
 class AnalysisAdapter(BrowserAdapter):
-    all_columns = [('Run ID', 'record_id'),
+    all_columns = [('Review Status', 'review_status'),
+                   ('Run ID', 'record_id'),
                    ('Tag', 'tag'),
                    ('RunDate', 'rundate'),
                    ('Dt', 'delta_time'),
-                   ('Iso Fits', 'iso_fit_status'),
-                   ('Blank', 'blank_fit_status'),
-                   ('IC', 'ic_fit_status'),
-                   ('Flux', 'flux_fit_status'),
+                   # ('Iso Fits', 'iso_fit_status'),
+                   # ('Blank', 'blank_fit_status'),
+                   # ('IC', 'ic_fit_status'),
+                   # ('Flux', 'flux_fit_status'),
                    ('Spec.', 'mass_spectrometer'),
                    ('Meas.', 'meas_script_name'),
                    ('Ext.', 'extract_script_name'),
@@ -117,6 +126,8 @@ class AnalysisAdapter(BrowserAdapter):
                ('Tag', 'tag'),
                ('Dt', 'delta_time')]
 
+    review_status_image = Property
+    review_status_text = Property
     rundate_width = Int(120)
     delta_time_width = Int(65)
     delta_time_text = Property
@@ -124,6 +135,13 @@ class AnalysisAdapter(BrowserAdapter):
     tag_width = Int(65)
     odd_bg_color = 'lightgray'
     font = 'arial 10'
+
+    def _get_review_status_text(self):
+        return ''
+
+    def _get_review_status_image(self):
+        s = self.item.review_status
+        return REVIEW_STATUS_ICONS.get(s)
 
     def _get_delta_time_text(self):
         dt = self.item.delta_time

@@ -26,6 +26,7 @@ from uncertainties import ufloat, std_dev, nominal_value
 
 
 
+
 # ============= local library imports  ==========================
 from pychron.core.helpers.datetime_tools import make_timef
 from pychron.core.helpers.filetools import add_extension, subdirize
@@ -297,7 +298,7 @@ class DVCAnalysis(Analysis):
 
             iso.set_fit(fi)
 
-    def dump_fits(self, keys):
+    def dump_fits(self, keys, reviewed=False):
 
         sisos = self.isotopes
         isoks, dks = map(tuple, partition(keys, lambda x: x in sisos))
@@ -320,6 +321,7 @@ class DVCAnalysis(Analysis):
                 except KeyError:
                     pass
 
+            isos['reviewed'] = reviewed
             self._dump(isos, path)
 
         # save baselines
@@ -337,7 +339,7 @@ class DVCAnalysis(Analysis):
 
             self._dump(baselines, path)
 
-    def dump_blanks(self, keys, refs):
+    def dump_blanks(self, keys, refs, reviewed=False):
         isos, path = self._get_json('blanks')
         sisos = self.isotopes
 
@@ -356,9 +358,10 @@ class DVCAnalysis(Analysis):
                     siso.blank.error = e
                     siso.blank.fit = f
 
+        isos['reviewed'] = reviewed
         self._dump(isos, path)
 
-    def dump_icfactors(self, dkeys, fits, refs):
+    def dump_icfactors(self, dkeys, fits, refs, reviewed=False):
         jd, path = self._get_json('icfactors')
 
         for dk, fi in zip(dkeys, fits):
@@ -371,7 +374,7 @@ class DVCAnalysis(Analysis):
             jd[dk] = {'value': float(v), 'error': float(e),
                       'fit': fi,
                       'references': make_ref_list(refs)}
-
+        jd['reviewed'] = reviewed
         self._dump(jd, path)
 
     def make_path(self, modifier):

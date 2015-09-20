@@ -13,25 +13,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from pychron.core.ui import set_qt
-
-set_qt()
 # ============= enthought library imports =======================
-from math import isnan
-
-from datetime import datetime
 from traits.api import Instance, Str, Set, List, provides
 from apptools.preferences.preference_binding import bind_preference
-
 # ============= standard library imports ========================
-import shutil
-import time
-from git import Repo
-from itertools import groupby
-import os
-# ============= local library imports  ==========================
+from math import isnan
+from datetime import datetime
 from uncertainties import nominal_value
 from uncertainties import std_dev
+from git import Repo
+from itertools import groupby
+import shutil
+import time
+import os
+import json
+# ============= local library imports  ==========================
 from pychron.core.i_datastore import IDatastore
 from pychron.core.helpers.filetools import remove_extension
 from pychron.core.progress import progress_loader
@@ -82,6 +78,24 @@ def push_experiments(ps):
         pp = os.path.join(paths.experiment_dataset_dir, p)
         repo.open_repo(pp)
         repo.push()
+
+
+def get_review_status(record):
+    ms = 0
+    for m in ('blanks', 'intercepts', 'icfactors'):
+        p = analysis_path(record.record_id, record.experiment_identifier, modifier=m)
+        with open(p, 'r') as rfile:
+            obj = json.load(rfile)
+            if obj.get('reviewed'):
+                ms += 1
+
+    ret = 'Intermediate'  # intermediate
+    if not ms:
+        ret = 'Default'  # default
+    elif ms == 3:
+        ret = 'All'  # all
+
+    record.review_status = ret
 
 
 class Tag(object):
@@ -291,17 +305,17 @@ class DVC(Loggable):
     def save_icfactors(self, ai, dets, fits, refs):
         if fits and dets:
             self.info('Saving icfactors for {}'.format(ai))
-            ai.dump_icfactors(dets, fits, refs)
+            ai.dump_icfactors(dets, fits, refs, reviewed=True)
 
     def save_blanks(self, ai, keys, refs):
         if keys:
             self.info('Saving blanks for {}'.format(ai))
-            ai.dump_blanks(keys, refs)
+            ai.dump_blanks(keys, refs, reviewed=True)
 
     def save_fits(self, ai, keys):
         if keys:
             self.info('Saving fits for {}'.format(ai))
-            ai.dump_fits(keys)
+            ai.dump_fits(keys, reviewed=True)
 
     def save_j(self, irradiation, level, pos, identifier, j, e, decay, analyses, add=True):
         self.info('Saving j for {}{}:{} {}, j={} +/-{}'.format(irradiation, level,

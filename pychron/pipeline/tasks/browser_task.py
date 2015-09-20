@@ -23,7 +23,7 @@ from traits.api import Instance
 # ============= local library imports  ==========================
 from pychron.envisage.browser.browser_task import BaseBrowserTask
 from pychron.envisage.browser.view import PaneBrowserView
-from pychron.pipeline.tasks.actions import ConfigureRecallAction
+from pychron.pipeline.tasks.actions import ConfigureRecallAction, ConfigureAnalysesTableAction, LoadReviewStatusAction
 
 
 class BrowserPane(TraitsDockPane, PaneBrowserView):
@@ -48,7 +48,9 @@ class BrowserTask(BaseBrowserTask):
     name = 'Analysis Browser'
 
     model = Instance('pychron.envisage.browser.browser_model.BrowserModel')
-    tool_bars = [SToolBar(ConfigureRecallAction())]
+    tool_bars = [SToolBar(ConfigureRecallAction(),
+                          ConfigureAnalysesTableAction(),
+                          LoadReviewStatusAction())]
 
     # def switch_to_pipeline(self):
     #     self._activate_task('pychron.pipeline.task')

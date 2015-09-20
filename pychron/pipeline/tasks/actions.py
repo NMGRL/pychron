@@ -79,6 +79,18 @@ class ConfigureRecallAction(TaskAction):
     image = icon('cog')
 
 
+class ConfigureAnalysesTableAction(TaskAction):
+    name = 'Configure Analyses Table'
+    dname = 'Configure Analyses Table'
+    method = 'configure_analyses_table'
+    image = icon('cog')
+
+
+class LoadReviewStatusAction(TaskAction):
+    name = 'Review Status'
+    method = 'load_review_status'
+
+
 class PipelineAction(Action):
     def perform(self, event):
         app = event.task.window.application

@@ -183,6 +183,7 @@ class BaseBrowserTask(BaseEditorTask):
                     self.warning('failed making records')
 
     def configure_recall(self):
+        self.debug('configure recall')
         tc = self.recall_configurer
         info = tc.edit_traits()
         if info.result:
@@ -191,6 +192,15 @@ class BaseBrowserTask(BaseEditorTask):
 
             for e in self.get_recall_editors():
                 tc.set_fonts(e.analysis_view)
+
+    def configure_analyses_table(self):
+        self.debug('configure analyses table')
+        at = self.browser_model.analysis_table
+        at.configure_table()
+
+    def load_review_status(self):
+        self.debug('load review status')
+        self.browser_model.load_review_status()
 
     def get_recall_editors(self):
         es = self.editor_area.editors
