@@ -1,0 +1,201 @@
+# ===============================================================================
+# Copyright 2015 Jake Ross
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ===============================================================================
+
+# ============= enthought library imports =======================
+import base64
+
+import keyring as keyring
+from traits.api import HasTraits, Str, List
+from traitsui.api import View, UItem, Item, HGroup, VGroup, CheckListEditor, Controller
+from traitsui.menu import Action
+import traits.trait_notifiers
+from pyface.message_dialog import warning
+
+# ============= standard library imports ========================
+import json
+import requests
+import logging
+import traceback
+import sys
+import os
+import pickle
+# ============= local library imports  ==========================
+from pychron.paths import paths
+
+LABELS = ['Browser', 'DataReduction', 'Pipeline']
+
+SubmitAction = Action(name='Submit', action='submit')
+
+
+def submit_issue_github():
+    pass
+
+
+def submit_issue_offline():
+    pass
+
+
+def check_github_access():
+    try:
+        r = requests.get('https://api.github.com/')
+        return r.status_code == 200
+    except requests.ConnectionError:
+        pass
+
+
+class NoPasswordException(BaseException):
+    pass
+
+
+def report_issues():
+    if not check_github_access():
+        return
+
+    p = os.path.join(paths.hidden_dir, 'issues.p')
+    if os.path.isfile(p):
+        nonreported = []
+        with open(p, 'r') as rfile:
+            issues = pickle.load(rfile)
+
+            warn_no_password = False
+            for issue in issues:
+                result = create_issue(issue)
+
+                if not result:
+                    nonreported.append(issue)
+
+        if nonreported:
+            with open(p, 'w') as wfile:
+                pickle.dump(nonreported, wfile)
+        else:
+            os.remove(p)
+
+
+def create_issue(issue):
+    cmd = 'repos/NMGRL/pychron/issues'
+
+    usr = 'NO_USER'
+    pwd = keyring.get_password('github', usr)
+
+    if not pwd:
+        warning(None, 'No password set for "{}". Contact Developer.\n'
+                      'Pychron will quit when this window is closed'.format(usr))
+        sys.exit()
+
+    auth = base64.encodestring('{}:{}'.format(usr, pwd)).replace('\n', '')
+    headers = {"Authorization": "Basic {}".format(auth)}
+
+    r = requests.post(cmd, data=json.dumps(issue), headers=headers)
+    return r.status_code == 201
+
+
+class ExceptionModel(HasTraits):
+    title = Str
+    description = Str
+    labels = List
+    exctext = Str
+
+
+class ExceptionHandler(Controller):
+    def submit(self, info):
+        if not self.submit_issue_github():
+            self.submit_issue_offline()
+        info.ui.dispose()
+
+    def submit_issue_github(self):
+        issue = self._make_issue()
+        return create_issue(issue)
+
+    def submit_issue_offline(self):
+        p = os.path.join(paths.hidden_dir, 'issues.p')
+        if not os.path.isfile(p):
+            issues = []
+        else:
+            with open(p, 'r') as rfile:
+                issues = pickle.load(rfile)
+
+        issue = self._make_issue()
+
+        issues.append(issue)
+        with open(p, 'w') as wfile:
+            pickle.dump(issues, wfile)
+
+    def _make_issue(self):
+        m = self.model
+        issue = {'title': m.title,
+                 'labels': m.labels,
+                 'body': self._make_body()}
+        return issue
+
+    def _make_body(self):
+        m = self.model
+        return '{}\n\n```{}```'.format(m.description, m.exctext)
+
+    def traits_view(self):
+        v = View(VGroup(Item('title'),
+                        HGroup(
+                            VGroup(UItem('labels', style='custom', editor=CheckListEditor(values=LABELS)),
+                                   show_border=True, label='Labels'),
+                            VGroup(UItem('description', style='custom'), show_border=True, label='Description'))),
+                 buttons=[SubmitAction, 'Cancel'])
+
+        return v
+
+
+def except_handler(exctype, value, tb):
+    txt = traceback.format_exc()
+    em = ExceptionModel(exctext=txt)
+
+    ed = ExceptionHandler(model=em)
+
+    root = logging.getLogger()
+    root.critical('============ Exception ==============')
+    for ti in txt.split('\n'):
+        ti = ti.strip()
+        if ti:
+            root.critical(ti)
+    root.critical('============ End Exception ==========')
+
+    sys.__excepthook__(exctype, value, tb)
+    ed.edit_traits()
+
+
+def traits_except_handler(obj, name, old, new):
+    except_handler(*sys.exc_info())
+
+
+def set_exception_handler(func=None):
+    """
+        set sys.excepthook to func.  if func is None use a default handler
+
+        default handler formats and logs the traceback as critical and calls sys.__excepthook__
+        for normal exception handling
+
+    :return:
+    """
+
+    sys.excepthook = except_handler
+    traits.trait_notifiers.handle_exception = traits_except_handler
+
+
+if __name__ == '__main__':
+    # em = ExceptionModel()
+    # e = ExceptionHandler(model=em)
+    # e.configure_traits()
+    # print check_github_access()
+    print keyring.get_password('github', 'foo')
+    print keyring.get_password('github', 'foob')
+# ============= EOF =============================================

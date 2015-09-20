@@ -84,20 +84,20 @@ class PipelineTask(BaseBrowserTask):
         self.engine.dvc = self.dvc
         self.engine.browser_model = self.browser_model
 
-        self.engine.add_data()
+        # self.engine.add_data()
 
     def _debug(self):
         # self.engine.add_data()
-        self.engine.select_default()
+        # self.engine.select_default()
         # self.engine.set_template('iso_evo')
         # self.engine.set_template('diff')
-        # self.engine.set_template('ideogram')
+        self.engine.set_template('csv_ideogram')
         # self.engine.set_template('spectrum')
         # self.engine.set_template('gain')
         # self.engine.set_template('series')
         # self.engine.set_template('icfactor')
         # self.engine.set_template('blanks')
-        self.engine.set_template('flux')
+        # self.engine.set_template('flux')
         # self.engine.set_template('inverse_isochron')
 
         # self.engine.add_is

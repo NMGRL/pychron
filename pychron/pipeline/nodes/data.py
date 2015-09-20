@@ -23,8 +23,10 @@ from traitsui.api import View, Item, EnumEditor
 import weakref
 from datetime import datetime
 # ============= local library imports  ==========================
+from pychron.core.csv.csv_parser import CSVColumnParser
 from pychron.envisage.browser.view import BrowserView
 from pychron.pipeline.nodes.base import BaseNode
+from pychron.processing.analyses.file_analysis import FileAnalysis
 
 
 class DataNode(BaseNode):
@@ -57,6 +59,55 @@ class DataNode(BaseNode):
                     self.trait_set(**{self.analysis_kind: analyses})
 
                 return True
+
+
+class CSVNode(BaseNode):
+    path = Str
+
+    def configure(self, pre_run=False, **kw):
+        if not pre_run:
+            self._manual_configured = True
+
+        self.path = '/Users/ross/Sandbox/dvc_imports/csv_ideogram.txt'
+        return True
+        # dlg = FileDialog()
+        # if dlg.open() == OK:
+        #     self.path = dlg.path
+        #     return self.path is not None
+
+    def run(self, state):
+        if not self.unknowns:
+            if not self.configure():
+                state.canceled = True
+                return
+
+        unks = self._load_analyses()
+        print unks
+        if unks:
+            self.unknowns.extend(unks)
+
+        # add our analyses to the state
+        items = state.unknowns
+        items.extend(self.unknowns)
+
+    def _load_analyses(self):
+        par = CSVColumnParser(delimiter=',')
+        par.load(self.path)
+        return self._get_items_from_file(par)
+
+    def _get_items_from_file(self, parser):
+        def gen():
+            for d in parser.itervalues():
+                if d['age'] is not None:
+                    f = FileAnalysis(age=float(d['age']),
+                                     age_err=float(d['age_err']),
+                                     record_id=d['runid'],
+                                     sample=d.get('sample', ''),
+                                     aliquot=int(d.get('aliquot', 0)),
+                                     group_id=int(d.get('group', 0)))
+                    yield f
+
+        return tuple(gen())
 
 
 class UnknownNode(DataNode):

@@ -290,7 +290,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     def _set_posts(self, lp, hp):
         self.use_low_post, self.use_high_post = True, True
         ol, oh = self.use_low_post, self.use_high_post
-        print 'post range', lp, hp
+        self.debug('set posts lp={} hp={}'.format(lp, hp))
         self.low_post, self.high_post = lp, hp
 
         self._suppress_post_update = True

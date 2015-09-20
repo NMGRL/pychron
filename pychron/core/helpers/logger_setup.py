@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-
 # =============standard library imports ========================
 import os
 import logging
@@ -77,28 +76,6 @@ def tail(f, lines=20):
         block_number -= 1
     all_read_text = ''.join(reversed(blocks))
     return '\n'.join(all_read_text.splitlines()[-total_lines_wanted:])
-
-
-def set_exception_handler(func=None):
-    """
-        set sys.excepthook to func.  if func is None use a default handler
-
-        default handler formats and logs the traceback as critical and calls sys.__excepthook__
-        for normal exception handling
-
-    :return:
-    """
-    import sys
-    import traceback
-
-    root = logging.getLogger()
-    if func is None:
-        def func(exctype, value, tb):
-            for ti in traceback.format_exc():
-                root.critical(ti.strip())
-            sys.__excepthook__(exctype, value, tb)
-
-    sys.excepthook = func
 
 
 # def anomaly_setup(name):

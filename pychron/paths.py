@@ -415,6 +415,7 @@ class Paths(object):
         self.blanks_template = join(self.pipeline_template_dir, 'blanks.yaml')
         self.iso_evo_template = join(self.pipeline_template_dir, 'iso_evo.yaml')
         self.ideogram_template = join(self.pipeline_template_dir, 'ideogram.yaml')
+        self.csv_ideogram_template = join(self.pipeline_template_dir, 'csv_ideogram.yaml')
         self.spectrum_template = join(self.pipeline_template_dir, 'spectrum.yaml')
         self.isochron_template = join(self.pipeline_template_dir, 'isochron.yaml')
         self.inverse_isochron_template = join(self.pipeline_template_dir, 'inverse_isochron.yaml')

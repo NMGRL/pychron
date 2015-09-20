@@ -22,7 +22,7 @@ from traits.api import Instance
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.pipeline.plot.editors.interpreted_age_editor import InterpretedAgeEditor
-from pychron.processing.analyses.file_analysis import InterpretedAgeAnalysis, FileAnalysis
+from pychron.processing.analyses.file_analysis import InterpretedAgeAnalysis
 from pychron.pipeline.plot.models.ideogram_model import IdeogramModel
 
 
@@ -133,32 +133,32 @@ class IdeogramEditor(InterpretedAgeEditor):
     #
     #     return model, component
 
-    def _get_items_from_file(self, parser):
-        # ans = []
-        def gen():
-            for d in parser.itervalues():
-                if d['age'] is not None:
-                    f = FileAnalysis(age=float(d['age']),
-                                     age_err=float(d['age_err']),
-                                     record_id=d['runid'],
-                                     sample=d.get('sample', ''),
-                                     aliquot=int(d.get('aliquot', 0)),
-                                     group_id=int(d.get('group', 0)))
-                    yield f
-
-        ans = list(gen())
-        # ans.append(f)
-
-        # ans = [construct(args)
-        #        for args in par.itervalues()]
-
-        po = self.plotter_options_manager.plotter_options
-        for ap in po.aux_plots:
-            if ap.name.lower() not in ('ideogram', 'analysis number', 'analysis number nonsorted'):
-                ap.use = False
-                ap.enabled = False
-            else:
-                ap.enabled = True
-        return ans
+                # def _get_items_from_file(self, parser):
+                #     # ans = []
+                #     def gen():
+                #         for d in parser.itervalues():
+                #             if d['age'] is not None:
+                #                 f = FileAnalysis(age=float(d['age']),
+                #                                  age_err=float(d['age_err']),
+                #                                  record_id=d['runid'],
+                #                                  sample=d.get('sample', ''),
+                #                                  aliquot=int(d.get('aliquot', 0)),
+                #                                  group_id=int(d.get('group', 0)))
+                #                 yield f
+                #
+                #     ans = list(gen())
+                #     # ans.append(f)
+                #
+                #     # ans = [construct(args)
+                #     #        for args in par.itervalues()]
+                #
+                #     po = self.plotter_options_manager.plotter_options
+                #     for ap in po.aux_plots:
+                #         if ap.name.lower() not in ('ideogram', 'analysis number', 'analysis number nonsorted'):
+                #             ap.use = False
+                #             ap.enabled = False
+                #         else:
+                #             ap.enabled = True
+                #     return ans
 
 # ============= EOF =============================================

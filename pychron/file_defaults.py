@@ -401,6 +401,10 @@ BLANKS = """
 - klass: BlanksPersistNode
 """
 
+CSV_IDEO = """- klass: CSVNode
+- klass: IdeogramNode
+"""
+
 IDEO = """- klass: UnknownNode
 - klass: IdeogramNode
 """
