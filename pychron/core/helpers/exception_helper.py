@@ -15,16 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import base64
-
-import keyring as keyring
 from traits.api import HasTraits, Str, List
-from traitsui.api import View, UItem, Item, HGroup, VGroup, CheckListEditor, Controller
+from traitsui.api import View, UItem, Item, HGroup, VGroup, CheckListEditor, Controller, TextEditor
 from traitsui.menu import Action
 import traits.trait_notifiers
 from pyface.message_dialog import warning
-
 # ============= standard library imports ========================
+import keyring as keyring
+import base64
 import json
 import requests
 import logging
@@ -149,7 +147,10 @@ class ExceptionHandler(Controller):
                         HGroup(
                             VGroup(UItem('labels', style='custom', editor=CheckListEditor(values=LABELS)),
                                    show_border=True, label='Labels'),
-                            VGroup(UItem('description', style='custom'), show_border=True, label='Description'))),
+                            VGroup(UItem('description', style='custom'), show_border=True, label='Description')),
+                        UItem('exctext',
+                              style='custom',
+                              editor=TextEditor(read_only=True))),
                  title='Exception',
                  buttons=[SubmitAction, 'Cancel'])
 

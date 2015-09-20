@@ -29,7 +29,7 @@ import os
 import json
 # ============= local library imports  ==========================
 from pychron.core.i_datastore import IDatastore
-from pychron.core.helpers.filetools import remove_extension
+from pychron.core.helpers.filetools import remove_extension, list_subdirectories
 from pychron.core.progress import progress_loader
 from pychron.dvc import jdump
 from pychron.dvc.defaults import TRIGA, HOLDER_24_SPOKES, LASER221, LASER65
@@ -196,6 +196,9 @@ class DVC(Loggable):
     def git_session_ctx(self, experiment_id, message):
         return GitSessionCTX(self, experiment_id, message)
 
+    def get_local_experiment_repositories(self):
+        return list_subdirectories(paths.experiment_dataset_dir)
+
     def get_experiment_repo(self, exp):
         return self._get_experiment_repo(exp)
 
@@ -246,22 +249,24 @@ class DVC(Loggable):
                  include_j_error_in_plateau=ia.include_j_error_in_plateau,
                  include_j_error_in_individual_analyses=ia.include_j_error_in_individual_analyses)
 
-        db_ia = db.add_interpreted_age(**d)
+        # db_ia = db.add_interpreted_age(**d)
 
         d['analyses'] = [dict(uuid=ai.uuid, tag=ai.tag, plateau_step=ia.get_is_plateau_step(ai))
                          for ai in ia.all_analyses]
+
         self._add_interpreted_age(ia, d)
 
-        for ai in ia.all_analyses:
-            plateau_step = ia.get_is_plateau_step(ai)
-
-            db_ai = db.get_analysis_uuid(ai.uuid)
-            db.add_interpreted_age_set(db_ia, db_ai,
-                                       tag=ai.tag,
-                                       plateau_step=plateau_step)
+        # for ai in ia.all_analyses:
+        #     plateau_step = ia.get_is_plateau_step(ai)
+        #
+        #     db_ai = db.get_analysis_uuid(ai.uuid)
+        #     db.add_interpreted_age_set(db_ia, db_ai,
+        #                                tag=ai.tag,
+        #                                plateau_step=plateau_step)
 
     def _add_interpreted_age(self, ia, d):
-        p = analysis_path('{}.ia'.format(ia.identifier), ia.experiment_identifier)
+        p = analysis_path(ia.identifier, ia.experiment_identifier, modifier='ia', mode='w')
+        print p
         jdump(d, p)
 
     def analysis_has_review(self, ai, attr):

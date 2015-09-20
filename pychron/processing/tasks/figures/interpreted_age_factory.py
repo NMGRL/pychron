@@ -15,50 +15,45 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import List
-from traitsui.api import View, Item, TableEditor, EnumEditor
+from traits.api import List, HasTraits
+from traitsui.api import View, Item, TableEditor, EnumEditor, Controller
+from traitsui.extras.checkbox_column import CheckboxColumn
+from traitsui.table_column import ObjectColumn
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from traitsui.extras.checkbox_column import CheckboxColumn
-from traitsui.table_column import ObjectColumn
-from pychron.loggable import Loggable
 from pychron.pychron_constants import ERROR_TYPES, PLUSMINUS_ONE_SIGMA
 
 
-class InterpretedAgeFactory(Loggable):
+class InterpretedAgeFactoryModel(HasTraits):
     groups = List
 
+
+class UObjectColumn(ObjectColumn):
+    editable = False
+    width = 10
+
+
+class InterpretedAgeFactoryView(Controller):
+    experiment_identifiers = List
+
     def traits_view(self):
-        cols = [ObjectColumn(name='identifier', editable=False),
-                ObjectColumn(name='preferred_age_kind',
-                             editor=EnumEditor(name='preferred_ages'),
-                             label='Age Type'),
-                ObjectColumn(name='preferred_age_error_kind',
-                             editor=EnumEditor(values=ERROR_TYPES),
-                             label='Age Error Type'),
-                ObjectColumn(name='preferred_age_value',
-                             format='%0.3f', editable=False,
-                             label='Age'),
-                ObjectColumn(name='preferred_age_error', format='%0.4f', editable=False,
-                             label=PLUSMINUS_ONE_SIGMA),
-                ObjectColumn(name='preferred_kca_kind',
-                             label='K/Ca Type',
+        cols = [UObjectColumn(name='identifier'),
+                ObjectColumn(name='experiment_identifier',
+                             editor=EnumEditor(name='controller.experiment_identifiers')),
+                ObjectColumn(name='preferred_age_kind', label='Age Type',
+                             editor=EnumEditor(name='preferred_ages')),
+                ObjectColumn(name='preferred_age_error_kind', label='Age Error Type',
+                             editor=EnumEditor(values=ERROR_TYPES)),
+                UObjectColumn(name='preferred_age_value', format='%0.3f', label='Age'),
+                UObjectColumn(name='preferred_age_error', format='%0.4f', label=PLUSMINUS_ONE_SIGMA),
+                ObjectColumn(name='preferred_kca_kind', label='K/Ca Type',
                              editor=EnumEditor(values=['Weighted Mean', 'Arithmetic Mean'])),
-                ObjectColumn(name='preferred_kca_value', format='%0.3f', editable=False,
-                             label='K/Ca'),
-                ObjectColumn(name='preferred_kca_error', format='%0.4f', editable=False,
-                             label=PLUSMINUS_ONE_SIGMA),
-
-                ObjectColumn(name='nanalyses',
-                             label='N',
-                             editable=False),
-                ObjectColumn(name='preferred_mswd',
-                             label='MSWD',
-                             format='%0.3f',
-                             editable=False),
-
-                CheckboxColumn(name='use', label='Save DB')]
+                UObjectColumn(name='preferred_kca_value', format='%0.3f', label='K/Ca'),
+                UObjectColumn(name='preferred_kca_error', format='%0.4f', label=PLUSMINUS_ONE_SIGMA),
+                UObjectColumn(name='nanalyses', label='N'),
+                UObjectColumn(name='preferred_mswd', format='%0.3f', label='MSWD'),
+                CheckboxColumn(name='use', label='Save', width=10)]
         editor = TableEditor(columns=cols)
         v = View(Item('groups', show_label=False, editor=editor),
                  resizable=True,

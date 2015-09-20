@@ -135,66 +135,72 @@ class PipelineDelegate(QtGui.QStyledItemDelegate):
 
     def sizeHint(self, option, index):
         """ returns area taken by the text. """
-        return self.size_map[self._tree.itemFromIndex(index)]
+        try:
+            return self.size_map[self._tree.itemFromIndex(index)]
+        except KeyboardInterrupt:
+            pass
 
     def paint(self, painter, option, index):
-        QtGui.QStyledItemDelegate.paint(self, painter, option, index)
+        try:
+            QtGui.QStyledItemDelegate.paint(self, painter, option, index)
 
-        # print idx.row(), option
-        # painter.begin()
-        # painter.draw(0,0,'Fasdfe'
-        # painter.setPen(QColor('white'))
-        hint = painter.renderHints()
-        painter.setRenderHints(hint | QtGui.QPainter.Antialiasing)
+            # print idx.row(), option
+            # painter.begin()
+            # painter.draw(0,0,'Fasdfe'
+            # painter.setPen(QColor('white'))
+            hint = painter.renderHints()
+            painter.setRenderHints(hint | QtGui.QPainter.Antialiasing)
 
-        painter.setBrush(QColor(100, 100, 100, 100))
-        painter.setPen(QColor(100, 100, 100, 100))
-        rect = option.rect
-        painter.drawRoundedRect(rect, 5, 5)
+            painter.setBrush(QColor(100, 100, 100, 100))
+            painter.setPen(QColor(100, 100, 100, 100))
+            rect = option.rect
+            painter.drawRoundedRect(rect, 5, 5)
 
-        item = self._tree.itemFromIndex(index)
-        # print index, self.editor._tree.model().rowCount()
-        draw_line = index.row() != self._tree.model().rowCount() - 1
+            item = self._tree.itemFromIndex(index)
+            # print index, self.editor._tree.model().rowCount()
+            draw_line = index.row() != self._tree.model().rowCount() - 1
 
-        # expanded, node, object = self.editor._get_node_data(item)
-        expanded, node, object = item._py_data
-        text = node.get_label(object)
+            # expanded, node, object = self.editor._get_node_data(item)
+            expanded, node, object = item._py_data
+            text = node.get_label(object)
 
-        if self._show_icons:
-            iconwidth = 24  # FIXME: get width from actual
-        else:
-            iconwidth = 0
+            if self._show_icons:
+                iconwidth = 24  # FIXME: get width from actual
+            else:
+                iconwidth = 0
 
-        offset = 20
-        r = 13  # rect.height() - 10
-        r2 = r / 2.
-        status_color = node.get_status_color(object)
+            offset = 20
+            r = 13  # rect.height() - 10
+            r2 = r / 2.
+            status_color = node.get_status_color(object)
 
-        painter.setPen(status_color.darker())
-        pen = painter.pen()
-        pen.setWidth(2)
-        painter.setPen(pen)
+            painter.setPen(status_color.darker())
+            pen = painter.pen()
+            pen.setWidth(2)
+            painter.setPen(pen)
 
-        if draw_line:
-            x = rect.left() + 6 + r2
-            y = rect.bottom() - rect.height() / 2.  # status_color.setAlpha(150)
-            painter.drawLine(x, y, x, y + rect.height())
+            if draw_line:
+                x = rect.left() + 6 + r2
+                y = rect.bottom() - rect.height() / 2.  # status_color.setAlpha(150)
+                painter.drawLine(x, y, x, y + rect.height())
 
-        painter.setBrush(status_color)
-        painter.drawEllipse(rect.left() + 5, rect.bottom() - r - 4, r, r)
+            painter.setBrush(status_color)
+            painter.drawEllipse(rect.left() + 5, rect.bottom() - r - 4, r, r)
 
-        # draw text
-        painter.setPen(Qt.black)
-        rect = painter.drawText(rect.left() + iconwidth + offset,
-                                rect.top() + rect.height() / 3.,
-                                rect.width() - iconwidth,
-                                rect.height(),
-                                QtCore.Qt.TextWordWrap, text)
-        if self.size_map[item] != rect.size():
-            size = rect.size()
-            size.setHeight(size.height() + 10)
-            self.size_map[item] = size
-            self.sizeHintChanged.emit(index)
+            # draw text
+            painter.setPen(Qt.black)
+            rect = painter.drawText(rect.left() + iconwidth + offset,
+                                    rect.top() + rect.height() / 3.,
+                                    rect.width() - iconwidth,
+                                    rect.height(),
+                                    QtCore.Qt.TextWordWrap, text)
+            if self.size_map[item] != rect.size():
+                size = rect.size()
+                size.setHeight(size.height() + 10)
+                self.size_map[item] = size
+                self.sizeHintChanged.emit(index)
+        except KeyboardInterrupt:
+            pass
 
 
 class _PipelineEditor(SimpleEditor):

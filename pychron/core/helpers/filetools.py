@@ -118,6 +118,10 @@ def ilist_directory2(root, extension=None, filtername=None, remove_extension=Fal
             yield yi
 
 
+def list_subdirectories(root):
+    return [di for di in os.listdir(root) if os.path.isdir(os.path.join(root, di)) and not di.startswith('.')]
+
+
 def list_directory2(root, extension=None, filtername=None, remove_extension=False):
     return list(ilist_directory2(root, extension, filtername, remove_extension))
 

@@ -37,7 +37,8 @@ from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane
 from pychron.envisage.browser.browser_task import BaseBrowserTask
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.tasks.select_repo import SelectExperimentIDView
-from pychron.processing.tasks.figures.interpreted_age_factory import InterpretedAgeFactory
+from pychron.processing.tasks.figures.interpreted_age_factory import InterpretedAgeFactoryView, \
+    InterpretedAgeFactoryModel
 
 
 class DataMenu(SMenu):
@@ -87,11 +88,12 @@ class PipelineTask(BaseBrowserTask):
         # self.engine.add_data()
 
     def _debug(self):
-        # self.engine.add_data()
-        # self.engine.select_default()
+        self.engine.add_data()
+        self.engine.select_default()
         # self.engine.set_template('iso_evo')
         # self.engine.set_template('diff')
-        self.engine.set_template('csv_ideogram')
+        self.engine.set_template('ideogram')
+        # self.engine.set_template('csv_ideogram')
         # self.engine.set_template('spectrum')
         # self.engine.set_template('gain')
         # self.engine.set_template('series')
@@ -141,7 +143,12 @@ class PipelineTask(BaseBrowserTask):
 
     def set_interpreted_age(self):
         ias = self.active_editor.get_interpreted_ages()
-        iaf = InterpretedAgeFactory(groups=ias)
+
+        experiment_identifiers = self.dvc.get_local_experiment_repositories()
+        model = InterpretedAgeFactoryModel(groups=ias)
+
+        iaf = InterpretedAgeFactoryView(model=model,
+                                        experiment_identifiers=experiment_identifiers)
         info = iaf.edit_traits()
         if info.result:
             self._add_interpreted_ages(ias)
