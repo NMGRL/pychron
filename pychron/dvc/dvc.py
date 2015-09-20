@@ -84,10 +84,16 @@ def get_review_status(record):
     ms = 0
     for m in ('blanks', 'intercepts', 'icfactors'):
         p = analysis_path(record.record_id, record.experiment_identifier, modifier=m)
+        date = ''
         with open(p, 'r') as rfile:
             obj = json.load(rfile)
-            if obj.get('reviewed'):
+            reviewed = obj.get('reviewed', False)
+            if reviewed:
+                dt = datetime.fromtimestamp(os.path.getmtime(p))
+                date = dt.strftime('%m/%d/%Y')
                 ms += 1
+
+        setattr(record, '{}_review_status'.format(m), (reviewed, date))
 
     ret = 'Intermediate'  # intermediate
     if not ms:

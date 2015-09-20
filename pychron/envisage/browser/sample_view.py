@@ -190,9 +190,12 @@ class BrowserSampleView(PaneModelView):
         obj.selected = []
 
     def configure_analysis_table(self, info, obj):
-        self.model.analysis_table.configure_table()
+        # self.model.analysis_table.configure_table()
+        obj.configure_table()
 
     def recall_items(self, info, obj):
         obj.context_menu_event = ('open', {'open_copy': False})
 
+    def review_status_details(self, info, obj):
+        obj.review_status_details()
 # ============= EOF =============================================

@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from pyface.action.menu_manager import MenuManager
-from traits.api import Int, Property
+from traits.api import Int, Property, Str
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
@@ -33,7 +33,7 @@ class BrowserAdapter(TabularAdapter, ConfigurableMixin):
         # name='_'.join(name.split('_')[:-1])
         item = getattr(obj, trait)[row]
 
-        return '{}= {}'.format(name, getattr(item, name))
+        return '{}= {}'.format(name, getattr(self.item, name))
 
 
 class ProjectAdapter(BrowserAdapter):
@@ -127,7 +127,7 @@ class AnalysisAdapter(BrowserAdapter):
                ('Dt', 'delta_time')]
 
     review_status_image = Property
-    review_status_text = Property
+    review_status_text = Str('')
     rundate_width = Int(120)
     delta_time_width = Int(65)
     delta_time_text = Property
@@ -135,9 +135,6 @@ class AnalysisAdapter(BrowserAdapter):
     tag_width = Int(65)
     odd_bg_color = 'lightgray'
     font = 'arial 10'
-
-    def _get_review_status_text(self):
-        return ''
 
     def _get_review_status_image(self):
         s = self.item.review_status
@@ -162,6 +159,7 @@ class AnalysisAdapter(BrowserAdapter):
                    # Action(name='Replace', action='replace_items', enabled=e),
                    # Action(name='Append', action='append_items', enabled=e),
                    Action(name='Open', action='recall_items'),
+                   Action(name='Review Status Details', action='review_status_details')
                    # Action(name='Open Copy', action='recall_copies'),
                    # Action(name='Find References', action='find_refs')
                    ]
@@ -170,9 +168,11 @@ class AnalysisAdapter(BrowserAdapter):
 
     def get_bg_color(self, obj, trait, row, column=0):
         color = 'white'
-        if self.item.is_plateau_step:
+        item = getattr(obj, trait)[row]
+
+        if item.is_plateau_step:
             color = 'lightgreen'
-        elif self.item.delta_time > 1440:  # 24 hours
+        elif item.delta_time > 1440:  # 24 hours
             color = '#76C1E2'
 
         return color

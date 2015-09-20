@@ -101,6 +101,12 @@ class AnalysisTable(ColumnSorterMixin):
     def configure_table(self):
         self.table_configurer.edit_traits(kind='livemodal')
 
+    def review_status_details(self):
+        from pychron.envisage.browser.review_status_details import ReviewStatusDetailsView, ReviewStatusDetailsModel
+        m = ReviewStatusDetailsModel(self.selected[0])
+        rsd = ReviewStatusDetailsView(model=m)
+        rsd.edit_traits()
+
     # handlers
     def _analyses_items_changed(self, old, new):
         if self.sort_suppress:

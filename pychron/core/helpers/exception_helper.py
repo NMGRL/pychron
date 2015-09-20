@@ -150,26 +150,27 @@ class ExceptionHandler(Controller):
                             VGroup(UItem('labels', style='custom', editor=CheckListEditor(values=LABELS)),
                                    show_border=True, label='Labels'),
                             VGroup(UItem('description', style='custom'), show_border=True, label='Description'))),
+                 title='Exception',
                  buttons=[SubmitAction, 'Cancel'])
 
         return v
 
 
 def except_handler(exctype, value, tb):
-    txt = traceback.format_exc()
-    em = ExceptionModel(exctext=txt)
+    lines = traceback.format_exception(exctype, value, tb)
+    em = ExceptionModel(exctext=''.join(lines))
 
     ed = ExceptionHandler(model=em)
 
     root = logging.getLogger()
     root.critical('============ Exception ==============')
-    for ti in txt.split('\n'):
+    for ti in lines:
         ti = ti.strip()
         if ti:
             root.critical(ti)
     root.critical('============ End Exception ==========')
 
-    sys.__excepthook__(exctype, value, tb)
+    # sys.__excepthook__(exctype, value, tb)
     ed.edit_traits()
 
 
