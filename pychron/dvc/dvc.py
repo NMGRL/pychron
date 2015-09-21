@@ -692,7 +692,7 @@ class DVC(Loggable):
             bind_preference(self, attr, '{}.{}'.format(prefid, attr))
 
         prefid = 'pychron.dvc.db'
-        for attr in ('username', 'password', 'name', 'host'):
+        for attr in ('username', 'password', 'name', 'host', 'kind', 'path'):
             bind_preference(self.db, attr, '{}.{}'.format(prefid, attr))
 
     def _defaults(self):

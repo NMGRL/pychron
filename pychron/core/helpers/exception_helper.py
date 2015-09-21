@@ -35,22 +35,14 @@ from pychron.github import GITHUB_API_URL
 from pychron.paths import paths
 
 LABELS = ['Bug',
-          'Duplicate',
           'Enhancement',
-          'Invalid',
           'Question',
-          'Wontfix',
-          'Implemented',
-          'Laboratory',
-          'Fixed',
           'DataReduction',
           'DataCollection',
           'DiodeLaser',
           'CO2Laser',
           'UVLaser',
-          'Tested',
           'ExtactionLine',
-          'TestingRequired',
           'DataEntry',
           'Laser',
           'Spectrometer',
@@ -62,7 +54,6 @@ LABELS = ['Bug',
           'Recall',
           'LabBook',
           'Priority',
-          'HasTests',
           'UI']
 
 SubmitAction = Action(name='Submit', action='submit')

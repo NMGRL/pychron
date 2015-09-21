@@ -16,22 +16,18 @@
 # ============= enthought library imports =======================
 from pyface.message_dialog import warning
 from pyface.timer.do_later import do_later, do_after
-from traits.api import Str, Password, Enum, Button, on_trait_change, Color, String, List, Event
+from traits.api import Str, Password, Enum, Button, on_trait_change, Color, String, List, Event, File
 from traits.has_traits import HasTraits
 from traitsui.api import View, Item, Group, VGroup, HGroup, ListStrEditor, spring, Label, Spring
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traitsui.editors import TextEditor
 
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.core.pychron_traits import IPAddress
 from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.base_preferences_helper import FavoritesPreferencesHelper, FavoritesAdapter
-
-
-
-
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from pychron.core.ui.custom_label_editor import CustomLabel
 
 # IPREGEX = re.compile(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$')
@@ -111,6 +107,8 @@ class ConnectionPreferences(FavoritesPreferencesHelper, ConnectionMixin):
     password = Password
     host = IPAddress
     kind = Enum('---', 'mysql', 'sqlite')
+    path = File
+
     _progress_icon = Str('process-working-2')
     _progress_state = Event
 
@@ -225,11 +223,11 @@ class ConnectionPreferencesPane(PreferencesPane):
         db_grp = Group(HGroup(Item('kind', show_label=False),
                               Item('name',
                                    label='Database Name',
-                                   editor=ComboboxEditor(name='_names')),
-                              # UItem('progress_icon', editor=AnimatedPNGEditor(state='progress_state'))
-                              ),
-                       # Item('save_username', label='User'),
-                       HGroup(fav_grp, db_auth_grp),
+                                   editor=ComboboxEditor(name='_names'),
+                                   visible_when='kind=="mysql"')),
+                       HGroup(fav_grp, db_auth_grp, visible_when='kind=="mysql"'),
+                       VGroup(Item('path', label='Database File'),
+                              visible_when='kind=="sqlite"'),
                        show_border=True,
                        label='Pychron DB')
 

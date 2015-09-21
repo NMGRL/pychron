@@ -25,7 +25,7 @@ from envisage.ui.tasks.preferences_pane import PreferencesPane
 # ============= local library imports  ==========================
 from pychron.envisage.resources import icon
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
-from pychron.pychron_constants import PLUSMINUS, NULL_STR, K_DECAY_CONSTANTS
+from pychron.pychron_constants import PLUSMINUS, NULL_STR, K_DECAY_CONSTANTS, PLUSMINUS_ONE_SIGMA
 
 LAMBDA_K_ATTRS = ('lambda_e', 'lambda_e_error', 'lambda_b', 'lambda_b_error')
 ATM_ATTRS = ('Ar40_Ar36_atm', 'Ar40_Ar36_atm_error', 'Ar40_Ar36_atm_citation',
@@ -291,7 +291,7 @@ class ArArConstantsPreferencesPane(PreferencesPane):
             HGroup(Item('total_k_decay', style='readonly', label='Total Ar40K')),
             HGroup(spring, Label('Value'),
                    Spring(width=75, springy=False),
-                   Label('{}1s'.format(PLUSMINUS)),
+                   Label(PLUSMINUS_ONE_SIGMA),
                    Spring(width=75, springy=False)),
             *items,
             show_border=True,
@@ -314,7 +314,7 @@ class ArArConstantsPreferencesPane(PreferencesPane):
             HGroup(Spring(springy=False, width=125),
                    Label('Value'),
                    Spring(springy=False, width=55),
-                   Label('{}1s'.format(PLUSMINUS)),
+                   Label(PLUSMINUS_ONE_SIGMA),
                    Spring(springy=False, width=55),
                    Label('Citation')),
             HGroup(Item('Ar40_Ar36_atm', label='(40Ar/36Ar)atm'),
