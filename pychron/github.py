@@ -29,11 +29,11 @@ def get_branches(new):
     return [branch['name'] for branch in json.load(doc)]
 
 
-BASE_URL = 'https://api.github.com'
+GITHUB_API_URL = 'https://api.github.com'
 
 
 def make_request(r):
-    return '{}{}'.format(BASE_URL, r)
+    return '{}{}'.format(GITHUB_API_URL, r)
 
 
 def get_organization_repositiories(name):

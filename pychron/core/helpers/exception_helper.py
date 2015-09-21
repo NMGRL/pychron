@@ -31,9 +31,39 @@ import sys
 import os
 import pickle
 # ============= local library imports  ==========================
+from pychron.github import GITHUB_API_URL
 from pychron.paths import paths
 
-LABELS = ['Browser', 'DataReduction', 'Pipeline']
+LABELS = ['Bug',
+          'Duplicate',
+          'Enhancement',
+          'Invalid',
+          'Question',
+          'Wontfix',
+          'Implemented',
+          'Laboratory',
+          'Fixed',
+          'DataReduction',
+          'DataCollection',
+          'DiodeLaser',
+          'CO2Laser',
+          'UVLaser',
+          'Tested',
+          'ExtactionLine',
+          'TestingRequired',
+          'DataEntry',
+          'Laser',
+          'Spectrometer',
+          'ExperimentWriting',
+          'Browser',
+          'Loading',
+          'PyScripts',
+          'NoActionRequired',
+          'Recall',
+          'LabBook',
+          'Priority',
+          'HasTests',
+          'UI']
 
 SubmitAction = Action(name='Submit', action='submit')
 
@@ -48,7 +78,7 @@ def submit_issue_offline():
 
 def check_github_access():
     try:
-        r = requests.get('https://api.github.com/')
+        r = requests.get(GITHUB_API_URL)
         return r.status_code == 200
     except requests.ConnectionError:
         pass
@@ -83,7 +113,7 @@ def report_issues():
 
 
 def create_issue(issue):
-    cmd = 'repos/NMGRL/pychron/issues'
+    cmd = '{}/repos/NMGRL/pychron/issues'.format(GITHUB_API_URL)
 
     usr = 'NO_USER'
     pwd = keyring.get_password('github', usr)
@@ -111,6 +141,7 @@ class ExceptionHandler(Controller):
     def submit(self, info):
         if not self.submit_issue_github():
             self.submit_issue_offline()
+
         info.ui.dispose()
 
     def submit_issue_github(self):
@@ -140,7 +171,7 @@ class ExceptionHandler(Controller):
 
     def _make_body(self):
         m = self.model
-        return '{}\n\n```{}```'.format(m.description, m.exctext)
+        return '{}\n\n```\n{}\n```'.format(m.description, m.exctext)
 
     def traits_view(self):
         v = View(VGroup(Item('title'),
@@ -198,6 +229,7 @@ if __name__ == '__main__':
     # e = ExceptionHandler(model=em)
     # e.configure_traits()
     # print check_github_access()
-    print keyring.get_password('github', 'foo')
-    print keyring.get_password('github', 'foob')
+    # print keyring.get_password('github', 'foo')
+    # print keyring.get_password('github', 'foob')
+    pass
 # ============= EOF =============================================
