@@ -106,7 +106,7 @@ def report_issues():
 def create_issue(issue):
     cmd = '{}/repos/NMGRL/pychron/issues'.format(GITHUB_API_URL)
 
-    usr = 'NO_USER'
+    usr = os.environ.get('GITHUB_USER')
     pwd = keyring.get_password('github', usr)
 
     if not pwd:
