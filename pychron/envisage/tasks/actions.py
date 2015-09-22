@@ -232,7 +232,7 @@ class IssueAction(WebAction):
         app = event.task.window.application
         name = app.preferences.get('pychron.general.organization')
         if not name:
-            information(event.task.window, 'Please set an "Organziation" in General Preferences')
+            information(event.task.window.control, 'Please set an "Organziation" in General Preferences')
             return
 
         url = 'https://github.com/{}/pychron/issues/new'.format(name)
@@ -250,7 +250,7 @@ class NoteAction(WebAction):
         app = event.task.window.application
         name = app.preferences.get('pychron.general.remote')
         if not name:
-            information(event.task.window, 'Please set an "Laboratory Repo" in General Preferences')
+            information(event.task.window.control, 'Please set an "Laboratory Repo" in General Preferences')
             return
 
         url = 'https://github.com/{}/issues/new'.format(name)
