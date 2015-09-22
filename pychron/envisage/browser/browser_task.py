@@ -352,13 +352,13 @@ class BaseBrowserTask(BaseEditorTask):
     #     print 'asdf', new
     #     self._set_selected_analysis(new)
 
-    @on_trait_change('browser_model:dclicked_sample')
-    def _dclicked_sample_changed(self):
-        self._dclicked_sample_hook()
-
-        if self.active_editor:
-            ans = self.browser_model.analysis_table.analyses
-            self.active_editor.set_items(ans)
+    # @on_trait_change('browser_model:dclicked_sample')
+    # def _dclicked_sample_changed(self):
+    #     self._dclicked_sample_hook()
+    #
+    #     if self.active_editor:
+    #         ans = self.browser_model.analysis_table.analyses
+    #         self.active_editor.set_items(ans)
 
     def _dclicked_sample_hook(self):
         pass
