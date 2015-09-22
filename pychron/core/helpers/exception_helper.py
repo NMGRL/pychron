@@ -180,21 +180,22 @@ class ExceptionHandler(Controller):
 
 
 def except_handler(exctype, value, tb):
-    lines = traceback.format_exception(exctype, value, tb)
-    em = ExceptionModel(exctext=''.join(lines))
+    if exctype == RuntimeError:
+        warning(None, 'RunTimeError: {}'.format(value))
+    else:
+        if not exctype == KeyboardInterrupt:
+            lines = traceback.format_exception(exctype, value, tb)
+            em = ExceptionModel(exctext=''.join(lines))
+            ed = ExceptionHandler(model=em)
+            ed.edit_traits()
 
-    ed = ExceptionHandler(model=em)
-
-    root = logging.getLogger()
-    root.critical('============ Exception ==============')
-    for ti in lines:
-        ti = ti.strip()
-        if ti:
-            root.critical(ti)
-    root.critical('============ End Exception ==========')
-
-    # sys.__excepthook__(exctype, value, tb)
-    ed.edit_traits()
+        root = logging.getLogger()
+        root.critical('============ Exception ==============')
+        for ti in lines:
+            ti = ti.strip()
+            if ti:
+                root.critical(ti)
+        root.critical('============ End Exception ==========')
 
 
 def traits_except_handler(obj, name, old, new):

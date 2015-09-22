@@ -25,8 +25,8 @@ from traitsui.api import View, Item, HGroup, VGroup, Group, TextEditor
 
 AxisView = View(VGroup(
     Group(
-        Item("object.mapper.range.low", label="Low Range"),
-        Item("object.mapper.range.high", label="High Range")),
+        Item("object.mapper.range.high", label="Upper", editor=TextEditor(enter_set=True, auto_set=False))),
+    Item("object.mapper.range.low", label="Lower", editor=TextEditor(enter_set=True, auto_set=False)),
     Group(
         Item("title", label="Title", editor=TextEditor()),
         Item("title_font", label="Font", style="simple"),
