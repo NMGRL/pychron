@@ -75,7 +75,7 @@ class PointInspector(InfoInspector):
                     else:
                         x = '{:0.5f}'.format(x)
 
-                    lines.extend(['pt={:03d}, x= {}, y= {}'.format(i + 1, x, sy)])
+                    lines.extend([u'pt={:03d}, x= {}, y= {}'.format(i + 1, x, sy)])
                     if hasattr(comp, 'display_index'):
                         x = comp.display_index.get_data()[i]
                         lines.append('{}'.format(x))
