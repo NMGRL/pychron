@@ -27,6 +27,7 @@ from uncertainties import ufloat, std_dev, nominal_value
 
 
 
+
 # ============= local library imports  ==========================
 from pychron.core.helpers.datetime_tools import make_timef
 from pychron.core.helpers.filetools import add_extension, subdirize
@@ -161,6 +162,9 @@ class DVCAnalysis(Analysis):
                 v = jd.get(tag)
                 if v is not None:
                     setattr(self, attr, v)
+
+        if not self.extract_units:
+            self.extract_units = 'W'
 
         with open(path, 'r') as rfile:
             jd = json.load(rfile)
