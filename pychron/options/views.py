@@ -41,13 +41,14 @@ def view(title):
                                      tooltip='Save changes to options'),
                   icon_button_editor('controller.add_options',
                                      'add',
-                                     tooltip='Add new plot options', ))
+                                     tooltip='Add new plot options'),
+                  icon_button_editor('controller.factory_default', 'edit-bomb',
+                                     enabled_when='selected',
+                                     tooltip='Apply factory defaults'))
     # icon_button_editor('controller.delete_options',
     #                    'delete',
     #                    tooltip='Delete current plot options',
     #                    enabled_when='object.plotter_options.name!="Default"', ),
-    # icon_button_editor('controller.factory_default', 'edit-bomb',
-    #                    tooltip='Apply factory defaults')),
     # sgrp = VGroup(UItem('selected_subview',
     #                     editor=ListStrEditor(name='subview_names')))
     sgrp = UItem('subview_names',

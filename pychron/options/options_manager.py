@@ -15,7 +15,6 @@
 # ===============================================================================
 # ============= enthought library imports =======================
 import apptools.sweet_pickle as pickle
-from pyface.message_dialog import warning
 from traits.api import Str, List, Button, Instance, Tuple, Property
 from traitsui.api import Controller, View, Item
 # ============= standard library imports ========================
@@ -129,11 +128,24 @@ class OptionsManager(Loggable):
         self.selected = name
 
     def factory_default(self):
-        warning(None, 'Factory defaults temporarily disabled')
-        # print  os.path.isfile(self._defaults_path), self._defaults_path
-        # if os.path.isfile(self._defaults_path):
-        #     self.debug('load factory defaults {}'.format(self._defaults_path))
-        #     self.selected_options.load_factory_defaults(self._defaults_path)
+        self.debug('set factory default')
+        if self._defaults:
+            options_name = self.selected.lower()
+            for name, txt in self._defaults:
+                if name == options_name:
+                    self.debug('set factory default for {}'.format(name))
+                    dp = os.path.join(self.persistence_root, '{}.p'.format(name))
+                    p = self.options_klass()
+                    p.load_factory_defaults(txt)
+                    self.save(name, p)
+                    break
+
+                    # warning(None, 'Factory defaults temporarily disabled')
+
+                    # print  os.path.isfile(self._defaults_path), self._defaults_path
+                    # if os.path.isfile(self._defaults_path):
+                    #     self.debug('load factory defaults {}'.format(self._defaults_path))
+                    #     self.selected_options.load_factory_defaults(self._defaults_path)
 
     def _initialize(self):
         selected = self._load_selected_po()

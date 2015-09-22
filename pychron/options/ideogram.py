@@ -39,7 +39,7 @@ class IdeogramOptions(AgeOptions):
 
     # edit_label_format = Button
     # refresh_asymptotic_button = Button
-    index_attrs = Dict
+    index_attrs = Dict(transient=True)
     probability_curve_kind = Enum('cumulative', 'kernel')
     mean_calculation_kind = Enum('weighted mean', 'kernel')
     use_centered_range = Bool
@@ -191,6 +191,7 @@ class IdeogramOptions(AgeOptions):
                 'Ar39': '09:Ar39',
                 'Ar38': '10:Ar38',
                 'Ar37': '11:Ar37',
-                'Ar36': '12:Ar36', }
+                'Ar36': '12:Ar36',
+                'j': '13:J'}
 
 # ============= EOF =============================================
