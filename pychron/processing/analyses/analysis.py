@@ -27,6 +27,7 @@ from collections import namedtuple
 from traitsui.handler import Handler
 from uncertainties import ufloat
 from pychron.core.helpers.formatting import format_percent_error, floatfmt
+from pychron.core.helpers.isotope_utils import sort_isotopes
 from pychron.core.helpers.logger_setup import new_logger
 from pychron.envisage.view_util import open_view
 from pychron.processing.arar_age import ArArAge
@@ -74,8 +75,6 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_sniff=False
 
     from pychron.graph.stacked_regression_graph import StackedRegressionGraph
 
-    ymi, yma = Inf, -Inf
-
     if not show_evo:
         xmi = Inf
         xma = -Inf
@@ -83,14 +82,18 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_sniff=False
         xmi, xma = 0, -Inf
 
     g = StackedRegressionGraph(resizable=True)
+    g.plotcontainer.spacing = 10
     g.window_height = min(275 * len(isotopes), 800)
     g.window_x = OX + XOFFSET * WINDOW_CNT
     g.window_y = OY + YOFFSET * WINDOW_CNT
 
+    isotopes = sort_isotopes(isotopes, reverse=False, key=lambda x: x.name)
+
     for i, iso in enumerate(isotopes):
-        # iso = next((i for i in self.isotopes if i.name == ni.name))
-        # iso = next((i for i in self.isotopes.itervalues() if i.name == ni.name), None)
-        g.new_plot(padding=[60, 10, 10, 40])
+        ymi, yma = Inf, -Inf
+
+        p = g.new_plot(padding=[80, 10, 10, 40])
+        p.y_axis.title_spacing = 50
         if show_sniff:
             sniff = iso.sniff
             g.new_series(sniff.xs, sniff.ys,
@@ -121,12 +124,12 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_sniff=False
         # yma = max(yma, iso.ys.max())
 
         g.set_x_limits(min_=xmi, max_=xma * 1.1)
-        g.set_y_limits(min_=ymi, max_=yma, pad='0.05')
-        g.set_x_title('Time (s)')
-        g.set_y_title('{} Intensity (fA)'.format(iso.name))
+        g.set_y_limits(min_=ymi, max_=yma, pad='0.05', plotid=i)
+        g.set_x_title('Time (s)', plotid=i)
+        g.set_y_title('{} (fA)'.format(iso.name), plotid=i)
 
     g.refresh()
-    g.window_title = '{} {}'.format(record_id, ','.join([i.name for i in isotopes]))
+    g.window_title = '{} {}'.format(record_id, ','.join([i.name for i in reversed(isotopes)]))
 
     return g
 
