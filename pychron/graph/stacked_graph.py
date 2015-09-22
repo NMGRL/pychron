@@ -101,7 +101,7 @@ class StackedGraph(Graph):
 
         p = super(StackedGraph, self).new_plot(**kw)
         p.value_axis.ensure_labels_bounded = True
-        p.value_axis.title_spacing = 30
+        p.value_axis.title_spacing = 50
 
         if n >= 1:
             pm = self.plotcontainer.components[0]

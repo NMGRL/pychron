@@ -39,6 +39,7 @@ from pychron.pipeline.plot.overlays.mean_indicator_overlay import MeanIndicatorO
 from pychron.core.stats.peak_detection import find_peaks
 # from pychron.pipeline.plot import OverlayMoveTool
 from pychron.pipeline.plot.point_move_tool import OverlayMoveTool
+from pychron.pipeline.plot.ticks import IntTickGenerator
 from pychron.pychron_constants import PLUSMINUS, SIGMA
 
 N = 500
@@ -299,14 +300,15 @@ class Ideogram(BaseArArFigure):
         if po.show_labels:
             self._add_point_labels(scatter)
 
+        # set tick generator
+        gen = IntTickGenerator(interval=-5)
+        plot.y_axis.tick_generator = gen
+        plot.y_grid.tick_generator = gen
+
         my = max(ys) + 1
-        # if not po.has_ylimits():
-        # self._set_y_limits(0, my, pid=pid)
-        # else:
         plot.value_range.tight_bounds = True
-        # ly, uh = po.ylimits
-        # if uh < my:
         self._set_y_limits(0, my, min_=0, max_=my, pid=pid)
+
         # print 'setting ylimits {}'.format(my)
         omits = self._get_aux_plot_omits(po, ys)
 

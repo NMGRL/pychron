@@ -31,8 +31,8 @@ from pychron.graph.ml_label import MPlotAxis
 from pychron.graph.tools.axis_tool import AxisTool
 from pychron.graph.tools.limits_tool import LimitsTool, LimitOverlay
 from pychron.pipeline.plot.flow_label import FlowDataLabel
-from pychron.pipeline.plot.sparse_ticks import SparseLogTicks
-from pychron.pipeline.plot.sparse_ticks import SparseTicks
+from pychron.pipeline.plot.ticks import SparseLogTicks
+from pychron.pipeline.plot.ticks import SparseTicks
 from pychron.processing.analyses.analysis_group import AnalysisGroup
 from pychron.pipeline.plot.overlays.points_label_overlay import PointsLabelOverlay
 # from pychron.pipeline.plot import SparseLogTicks, SparseTicks
@@ -191,6 +191,7 @@ class BaseArArFigure(HasTraits, SelectionFigure):
 
     # private
     def _setup_plot(self, i, pp, po):
+
         # add limit tools
         self._add_limit_tool(pp, 'x')
         self._add_limit_tool(pp, 'y')
