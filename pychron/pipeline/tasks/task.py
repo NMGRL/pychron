@@ -136,6 +136,7 @@ class PipelineTask(BaseBrowserTask):
                     path = sfm.prepare_path(make=True)
                     save_pdf(ed.component,
                              path=path,
+                             options=sfm.pdf_options,
                              # path='/Users/ross/Documents/test.pdf',
                              view=True)
 

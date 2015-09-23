@@ -101,45 +101,53 @@ class FigurePDFOptions(BasePDFOptions):
         return lbrt
 
 
+mgrp = VGroup(HGroup(Spring(springy=False, width=100),
+                     Item('top_margin', label='Top'),
+                     spring, ),
+              HGroup(Item('left_margin', label='Left'),
+                     Item('right_margin', label='Right')),
+              HGroup(Spring(springy=False, width=100), Item('bottom_margin', label='Bottom'),
+                     spring),
+              label='Margins', show_border=True)
+cgrp = VGroup()
+
+sgrp = VGroup(Item('fit_to_page'),
+              HGroup(Item('use_column_width', enabled_when='not fit_to_page'),
+                     Item('columns', enabled_when='use_column_width')),
+              HGroup(Item('fixed_width', label='W', enabled_when='not use_column_width and not fit_to_page'),
+                     Item('fixed_height', label='H', enabled_when='not fit_to_page')),
+
+              label='Size', show_border=True)
+PDFLayoutView = View(Item('orientation'),
+                     mgrp,
+                     sgrp,
+                     cgrp,
+                     buttons=['OK', 'Cancel'],
+                     title='PDF Save Options',
+                     resizable=True)
+
+
 class SavePDFDialog(Controller):
     def traits_view(self):
-        mgrp = VGroup(HGroup(Spring(springy=False, width=100),
-                             Item('top_margin', label='Top'),
-                             spring, ),
-                      HGroup(Item('left_margin', label='Left'),
-                             Item('right_margin', label='Right')),
-                      HGroup(Spring(springy=False, width=100), Item('bottom_margin', label='Bottom'),
-                             spring),
-                      label='Margins', show_border=True)
-        cgrp = VGroup()
-
-        sgrp = VGroup(Item('fit_to_page'),
-                      HGroup(Item('use_column_width', enabled_when='not fit_to_page'),
-                             Item('columns', enabled_when='use_column_width')),
-                      HGroup(Item('fixed_width', label='W', enabled_when='not use_column_width and not fit_to_page'),
-                             Item('fixed_height', label='H', enabled_when='not fit_to_page')),
-
-                      label='Size', show_border=True)
-        v = View(Item('orientation'),
-                 mgrp,
-                 sgrp,
-                 cgrp,
-                 buttons=['OK', 'Cancel'],
-                 title='PDF Save Options',
-                 resizable=True)
-        return v
+        return PDFLayoutView
 
 
-def save_pdf(component, path=None, default_directory=None, view=False):
+def save_pdf(component, path=None, default_directory=None, view=False, options=None):
     if default_directory is None:
         default_directory = os.path.join(os.path.expanduser('~'), 'Documents')
-    m = FigurePDFOptions()
-    m.load()
-    dlg = SavePDFDialog(model=m)
-    info = dlg.edit_traits(kind='livemodal')
-    # path = '/Users/ross/Documents/pdftest.pdf'
-    if info.result:
-        m.dump()
+
+    ok = True
+    if options is None:
+        ok = False
+        options = FigurePDFOptions()
+        options.load()
+        dlg = SavePDFDialog(model=options)
+        info = dlg.edit_traits(kind='livemodal')
+        # path = '/Users/ross/Documents/pdftest.pdf'
+        if info.result:
+            options.dump()
+            ok = True
+    if ok:
         if path is None:
             dlg = FileDialog(action='save as', default_directory=default_directory)
 
@@ -150,8 +158,8 @@ def save_pdf(component, path=None, default_directory=None, view=False):
 
             path = add_extension(path, '.pdf')
             gc = PdfPlotGraphicsContext(filename=path,
-                                        dest_box=m.dest_box,
-                                        pagesize=m.page_size)
+                                        dest_box=options.dest_box,
+                                        pagesize=options.page_size)
             # component.inset_border = False
             # component.padding = 0
             # component.border_visible = True
@@ -161,10 +169,10 @@ def save_pdf(component, path=None, default_directory=None, view=False):
             obounds = component.bounds
             size = None
             if not obounds[0] and not obounds[1]:
-                size = m.bounds
+                size = options.bounds
 
-            if m.fit_to_page:
-                size = m.bounds
+            if options.fit_to_page:
+                size = options.bounds
 
             component.do_layout(size=size, force=True)
             gc.render_component(component,
@@ -173,7 +181,6 @@ def save_pdf(component, path=None, default_directory=None, view=False):
             if view:
                 view_file(path)
             component.do_layout(size=obounds, force=True)
-
 
 # def render_pdf(component, options):
 #     pass
