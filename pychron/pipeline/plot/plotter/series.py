@@ -72,6 +72,7 @@ class BaseSeries(BaseArArFigure):
     def _handle_limits(self):
         self.graph.refresh()
 
+
 class Series(BaseSeries):
     _omit_key = 'omit_series'
 
@@ -147,8 +148,8 @@ class Series(BaseSeries):
                 ys = array([ai.nominal_value for ai in self._unpack_attr(po.name)])
                 yerr = array([ai.std_dev for ai in self._unpack_attr(po.name)])
                 kw = dict(y=ys, yerror=yerr, type='scatter',
-                          fit='{}_{}'.format(po.fit, po.error_type))
-                set_ylimits = True
+                          fit='{}_{}'.format(po.fit, po.error_type),
+                          filter_outliers_dict=po.filter_outliers_dict)
 
             # print ys
             n = [ai.record_id for ai in self.sorted_analyses]

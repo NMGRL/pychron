@@ -90,7 +90,7 @@ class IsotopeEvolutionPersistNode(DVCPersistNode):
             return
 
         wrapper = lambda x, prog, i, n: self._save_fit(x, prog, i, n, state.saveable_keys)
-        progress_iterator(state.unknowns, wrapper)
+        progress_iterator(state.unknowns, wrapper, threshold=1)
         # for ai in state.unknowns:
         #     self.dvc.save_fits(ai, state.saveable_keys)
 

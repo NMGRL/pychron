@@ -21,8 +21,17 @@ from traitsui.api import EnumEditor
 # ============= local library imports  ==========================
 from pychron.options.blanks_views import VIEWS
 from pychron.options.options import object_column, checkbox_column, MainOptions
-from pychron.options.series import SeriesOptions
+from pychron.options.series import SeriesOptions, SeriesFitAuxPlot
+from pychron.processing.fits.fit import FilterFit
 from pychron.pychron_constants import FIT_TYPES_INTERPOLATE, FIT_ERROR_TYPES
+
+
+class BlanksFitAuxPlot(SeriesFitAuxPlot, FilterFit):
+    @property
+    def filter_outliers_dict(self):
+        return {'filter_outliers': self.filter_outliers,
+                'iterations': self.filter_outlier_iterations,
+                'std_devs': self.filter_outlier_std_devs}
 
 
 class BlanksMainOptions(MainOptions):
@@ -35,11 +44,15 @@ class BlanksMainOptions(MainOptions):
                               width=75),
                 object_column(name='error_type',
                               editor=EnumEditor(values=FIT_ERROR_TYPES),
-                              width=75, label='Error'), ]
+                              width=75, label='Error'),
+                checkbox_column(name='filter_outliers', label='Out.'),
+                object_column(name='filter_outlier_iterations', label='Iter.'),
+                object_column(name='filter_outlier_std_devs', label='SD')]
 
 
 class BlanksOptions(SeriesOptions):
     subview_names = List(['Main', 'Blanks', 'Appearance'])
+    aux_plot_klass = BlanksFitAuxPlot
     _main_options_klass = BlanksMainOptions
 
     def _get_subview(self, name):

@@ -27,6 +27,10 @@ class SeriesFitAuxPlot(FitAuxPlot):
     def _get_fit_types(self):
         return FIT_TYPES
 
+    @property
+    def filter_outliers_dict(self):
+        return {}
+
 
 class SeriesOptions(FitOptions):
     aux_plot_klass = SeriesFitAuxPlot

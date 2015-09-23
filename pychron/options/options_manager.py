@@ -22,7 +22,7 @@ import os
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import list_directory2
 from pychron.file_defaults import SPECTRUM_SCREEN, IDEOGRAM_SCREEN, IDEOGRAM_PRESENTATION, SERIES_SCREEN, BLANKS_SCREEN, \
-    ICFACTOR_SCREEN, INVERSE_ISOCHRON_SCREEN, INVERSE_ISOCHRON_PRESENTATION, ISO_EVO_SCREEN
+    ICFACTOR_SCREEN, INVERSE_ISOCHRON_SCREEN, INVERSE_ISOCHRON_PRESENTATION, ISO_EVO_SCREEN, BLANKS_PRESENTATION
 from pychron.file_defaults import SPECTRUM_PRESENTATION
 from pychron.globals import globalv
 from pychron.loggable import Loggable
@@ -135,6 +135,8 @@ class OptionsManager(Loggable):
                 if name == options_name:
                     self.debug('set factory default for {}'.format(name))
                     dp = os.path.join(self.persistence_root, '{}.p'.format(name))
+                    os.remove(dp)
+
                     p = self.options_klass()
                     p.load_factory_defaults(txt)
                     self.save(name, p)
@@ -281,7 +283,8 @@ class SeriesOptionsManager(FigureOptionsManager):
 class BlanksOptionsManager(FigureOptionsManager):
     id = 'blanks'
     options_klass = BlanksOptions
-    _defaults = (('screen', BLANKS_SCREEN),)
+    _defaults = (('screen', BLANKS_SCREEN),
+                 ('presentation', BLANKS_PRESENTATION))
     _default_options_txt = BLANKS_SCREEN
 
 

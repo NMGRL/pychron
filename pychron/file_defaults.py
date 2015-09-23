@@ -324,6 +324,8 @@ SERIES_SCREEN = make_screen()
 BLANKS_SCREEN = make_screen()
 ICFACTOR_SCREEN = make_screen()
 
+BLANKS_PRESENTATION = make_presentation()
+
 iso_d = dict(use_xgrid=False, use_ygrid=False)
 inv_iso_d = dict(use_xgrid=False, use_ygrid=False,
                  nominal_intercept_label='Atm',
