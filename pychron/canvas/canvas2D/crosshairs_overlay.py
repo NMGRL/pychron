@@ -117,7 +117,7 @@ class CrosshairsOverlay(SimpleCrosshairsOverlay):
                 if component.crosshairs_offsetx or component.crosshairs_offsety:
                     pos_off = pos[0] + component.crosshairs_offsetx, pos[1] + component.crosshairs_offsety
                     self._draw_radius_ch(gc, component, pos_off, radius, color=component.crosshairs_offset_color)
-
-                self._draw_radius_ch(gc, component, pos, radius, color=component.crosshairs_color)
+                else:
+                    self._draw_radius_ch(gc, component, pos, radius, color=component.crosshairs_color)
 
 # ============= EOF ============================================

@@ -119,10 +119,6 @@ QComboBox {font-size: 10px}
                                       label='Group'),
                    icon_button_editor(queue_factory_name('edit_emails'), 'cog',
                                       tooltip='Edit user group')),
-            HGroup(queue_factory_item('experiment_identifier',
-                                      label='Experiment ID',
-                                      editor=ComboboxEditor(name=queue_factory_name('experiment_identifiers'))),
-                   icon_button_editor(queue_factory_name('add_experiment_identifier'), 'add')),
             HGroup(
                 queue_factory_item('mass_spectrometer',
                                    show_label=False,
@@ -222,7 +218,10 @@ QComboBox {font-size: 10px}
                    run_factory_item('aliquot',
                                     width=50),
                    spring),
-
+            HGroup(run_factory_item('experiment_identifier',
+                                    label='Experiment ID',
+                                    editor=ComboboxEditor(name=run_factory_name('experiment_identifiers'))),
+                   icon_button_editor(run_factory_name('add_experiment_identifier'), 'add')),
             HGroup(
                 run_factory_item('weight',
                                  label='Weight (mg)',
@@ -258,7 +257,7 @@ QComboBox {font-size: 10px}
                                       'delete',
                                       tooltip='Clear Conditionals from selected runs'
                                       # enabled_when=run_factory_name('edit_mode')
-                   )),
+                                      )),
             HGroup(
                 run_factory_item('trunc_attr',
                                  editor=EnumEditor(name=run_factory_name('trunc_attrs')),
