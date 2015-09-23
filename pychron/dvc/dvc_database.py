@@ -598,7 +598,7 @@ class DVCDatabase(DatabaseAdapter):
             if extract_device:
                 q = q.filter(AnalysisTbl.extract_device == extract_device)
             if analysis_type:
-                q = q.filter(AnalysisTbl.analysis_type == analysis_type)
+                q = in_func(q, AnalysisTbl.analysis_type, analysis_type)
             if project:
                 q = q.filter(ProjectTbl.name == project)
             if lpost:
