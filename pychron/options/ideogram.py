@@ -20,7 +20,8 @@ from traits.api import Int, Bool, Float, Property, on_trait_change, Enum, List, 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.options.aux_plot import AuxPlot
-from pychron.options.group.ideogram_group_options import IdeogramGroupEditor, IdeogramGroupOptions
+# from pychron.options.group.ideogram_group_options import IdeogramGroupEditor, IdeogramGroupOptions
+from pychron.options.group.ideogram_group_options import IdeogramGroupOptions
 from pychron.options.ideogram_views import VIEWS
 from pychron.options.options import AgeOptions
 from pychron.pychron_constants import NULL_STR, FONTS, SIZES
@@ -34,7 +35,8 @@ class IdeogramAuxPlot(AuxPlot):
 
 
 class IdeogramOptions(AgeOptions):
-    subview_names = List(['Main', 'Ideogram', 'Appearance', 'Calculations', 'Display'])
+    subview_names = List(['Main', 'Ideogram', 'Appearance', 'Calculations', 'Display', 'Groups'],
+                         transient=True)
     aux_plot_klass = IdeogramAuxPlot
 
     # edit_label_format = Button
@@ -72,17 +74,11 @@ class IdeogramOptions(AgeOptions):
     cmap_analysis_number = Enum(*[m for m in cmap_d if not m.endswith("_r")])
     use_latest_overlay = Bool(False)
 
-    group_editor_klass = IdeogramGroupEditor
     group_options_klass = IdeogramGroupOptions
 
     _use_centered_range = Bool
     _use_asymptotic_limits = Bool
     _suppress_xlimits_clear = Bool
-
-    # def __init__(self, *args, **kw):
-    #     super(IdeogramOptions, self).__init__(*args, **kw)
-    # print 'asfasfdasfd', VIEWS
-    # self._views = VIEWS
 
     def _get_subview(self, name):
         return VIEWS[name]

@@ -15,19 +15,19 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import os
 
 from enable.markers import marker_names
-from traits.api import HasTraits, Str, Int, Bool, Float, Property, on_trait_change, Enum, List, Range, \
+from traits.api import HasTraits, Str, Int, Bool, Float, Property, Enum, List, Range, \
     Color
-from traitsui.api import View, Item, HGroup, VGroup, EnumEditor, Spring, Group, spring, UItem
+from traitsui.api import View, Item, HGroup, VGroup, EnumEditor, Spring, Group, \
+    spring, UItem, ListEditor, InstanceEditor
 from traitsui.handler import Controller
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
-
 # ============= standard library imports ========================
-# ============= local library imports  ==========================
+import os
 import yaml
+# ============= local library imports  ==========================
 from pychron.core.helpers.color_generators import colornames
 from pychron.core.ui.table_editor import myTableEditor
 from pychron.options.aux_plot import AuxPlot
@@ -50,6 +50,20 @@ def checkbox_column(*args, **kw):
 class SubOptions(Controller):
     # traits_view = View(Item('index_attr', label='Foo'))
     pass
+
+
+class GroupSubOptions(SubOptions):
+    def traits_view(self):
+        v = View(UItem('groups',
+                       style='custom',
+                       editor=ListEditor(mutable=False,
+                                         style='custom',
+                                         editor=InstanceEditor())),
+                 buttons=['OK', 'Cancel', 'Revert'],
+                 kind='livemodal', resizable=True,
+                 height=700,
+                 title='Group Attributes')
+        return v
 
 
 class AppearanceSubOptions(SubOptions):
@@ -281,12 +295,12 @@ class FigureOptions(BaseOptions):
         n = len(self.groups)
         return self.groups[gid % n]
 
-    @on_trait_change('groups:edit_button')
-    def _handle_edit_groups(self):
-        eg = self.group_editor_klass(option_groups=self.groups)
-        info = eg.edit_traits()
-        if info.result:
-            self.refresh_plot_needed = True
+    # @on_trait_change('groups:edit_button')
+    # def _handle_edit_groups(self):
+    #     eg = self.group_editor_klass(option_groups=self.groups)
+    #     info = eg.edit_traits()
+    #     if info.result:
+    #         self.refresh_plot_needed = True
 
     def _groups_default(self):
         if self.group_options_klass:

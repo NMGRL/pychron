@@ -18,7 +18,7 @@
 from traitsui.api import View, UItem, Item, HGroup, VGroup, Group, EnumEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.options.options import SubOptions, AppearanceSubOptions
+from pychron.options.options import SubOptions, AppearanceSubOptions, GroupSubOptions
 
 
 class DisplaySubOptions(SubOptions):
@@ -179,6 +179,7 @@ VIEWS['ideogram'] = IdeogramSubOptions
 VIEWS['appearance'] = IdeogramAppearance
 VIEWS['calculations'] = CalculationSubOptions
 VIEWS['display'] = DisplaySubOptions
+VIEWS['groups'] = GroupSubOptions
 
 
 # ===============================================================

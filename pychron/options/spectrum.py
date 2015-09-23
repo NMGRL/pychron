@@ -21,7 +21,6 @@ from traitsui.api import View, Item
 # ============= local library imports  ==========================
 from pychron.options.aux_plot import AuxPlot
 from pychron.options.group.spectrum_group_options import SpectrumGroupOptions
-from pychron.options.group.spectrum_group_options import SpectrumGroupEditor
 from pychron.options.options import AgeOptions
 from pychron.options.spectrum_views import VIEWS
 from pychron.pychron_constants import NULL_STR, ERROR_TYPES, SIZES, FONTS
@@ -36,7 +35,8 @@ class SpectrumAuxPlot(AuxPlot):
 
 
 class SpectrumOptions(AgeOptions):
-    subview_names = List(['Main', 'Spectrum', 'Appearance', 'Calculations', 'Display'])
+    subview_names = List(['Main', 'Spectrum', 'Appearance', 'Calculations', 'Display', 'Groups'],
+                         transient=True)
     aux_plot_klass = SpectrumAuxPlot
     edit_plateau_criteria = Button
 
@@ -79,8 +79,6 @@ class SpectrumOptions(AgeOptions):
     include_plateau_sample = Bool
     include_plateau_identifier = Bool
 
-    # edit_groups_button = Button
-    group_editor_klass = SpectrumGroupEditor
     group_options_klass = SpectrumGroupOptions
 
     def _get_subview(self, name):

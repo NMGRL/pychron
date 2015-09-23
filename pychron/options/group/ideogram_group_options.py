@@ -15,29 +15,18 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, List
-from traitsui.api import View, UItem, Item, HGroup, VGroup, ListEditor, InstanceEditor
+from traitsui.api import View, UItem, Item, HGroup, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.options.group.base_group_options import BaseGroupOptions
 
 
 class IdeogramGroupOptions(BaseGroupOptions):
     def traits_view(self):
-        grps = self._get_groups()
-
-        g = VGroup(Item('bind_colors'), *grps)
-
-        g.show_border = True
-        g.label = 'Group {}'.format(self.group_id + 1)
-        v = View(g)
-        return v
-
-    def _get_groups(self):
         fill_grp = VGroup(HGroup(UItem('use_fill'),
-                                 Item('color')),
+                                 UItem('color')),
                           Item('alpha', label='Opacity'),
+                          label='Fill',
                           show_border=True)
 
         line_grp = VGroup(UItem('line_color'),
@@ -46,29 +35,13 @@ class IdeogramGroupOptions(BaseGroupOptions):
                           show_border=True,
                           label='Line')
 
-        return HGroup(fill_grp, line_grp),
-
-    def simple_view(self):
-        grps = self._get_groups()
-        g = VGroup(HGroup(icon_button_editor('edit_button', 'cog', tooltip='Edit group attributes')),
-                   *grps)
+        g = VGroup(Item('bind_colors', label='Bind Colors',
+                        tooltip='Bind the Fill and Line colors, i.e changing the Fill color changes'
+                                'the line color and vice versa'),
+                   HGroup(fill_grp, line_grp),
+                   show_border=True,
+                   label='Group {}'.format(self.group_id + 1))
         v = View(g)
-        return v
-
-
-class IdeogramGroupEditor(HasTraits):
-    option_groups = List
-
-    def traits_view(self):
-        v = View(UItem('option_groups',
-                       style='custom',
-                       editor=ListEditor(mutable=False,
-                                         style='custom',
-                                         editor=InstanceEditor())),
-                 buttons=['OK', 'Cancel', 'Revert'],
-                 kind='livemodal', resizable=True,
-                 height=700,
-                 title='Group Attributes')
         return v
 
 # ============= EOF =============================================

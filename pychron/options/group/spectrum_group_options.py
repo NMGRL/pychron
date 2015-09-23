@@ -15,33 +15,20 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Bool, List
-from traitsui.api import View, UItem, Item, HGroup, VGroup, ListEditor, InstanceEditor
+from traits.api import Str, Bool
+from traitsui.api import View, UItem, Item, HGroup, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.options.group.base_group_options import BaseGroupOptions
 
 
 class SpectrumGroupOptions(BaseGroupOptions):
-    # color = Color
-    # group_id = Int
 
     calculate_fixed_plateau = Bool(False)
     calculate_fixed_plateau_start = Str
     calculate_fixed_plateau_end = Str
 
     def traits_view(self):
-        grps = self._get_groups()
-
-        g = VGroup(Item('bind_colors'), *grps)
-
-        g.show_border = True
-        g.label = 'Group {}'.format(self.group_id + 1)
-        v = View(g)
-        return v
-
-    def _get_groups(self):
         envelope_grp = HGroup(HGroup(UItem('use_fill'),
                                      Item('color')),
                               Item('alpha', label='Opacity'),
@@ -61,30 +48,36 @@ class SpectrumGroupOptions(BaseGroupOptions):
                           Item('calculate_fixed_plateau_end', label='End', enabled_when='calculate_fixed_plateau'),
                           show_border=True, label='Calculate Plateau')
 
-        return envelope_grp, line_grp, plat_grp
+        g = VGroup(Item('bind_colors'),
+                   envelope_grp, line_grp, plat_grp,
+                   show_border=True,
+                   label='Group {}'.format(self.group_id + 1))
 
-    def simple_view(self):
-        grps = self._get_groups()
-        g = VGroup(HGroup(Item('bind_colors', tooltip='Link line color and error envelope color'),
-                          icon_button_editor('edit_button', 'cog', tooltip='Edit group attributes')),
-                   *grps)
         v = View(g)
         return v
 
-
-class SpectrumGroupEditor(HasTraits):
-    option_groups = List
-
-    def traits_view(self):
-        v = View(UItem('option_groups',
-                       style='custom',
-                       editor=ListEditor(mutable=False,
-                                         style='custom',
-                                         editor=InstanceEditor())),
-                 buttons=['OK', 'Cancel', 'Revert'],
-                 kind='livemodal', resizable=True,
-                 height=700,
-                 title='Group Attributes')
-        return v
+# def simple_view(self):
+#         grps = self._get_groups()
+#         g = VGroup(HGroup(Item('bind_colors', tooltip='Link line color and error envelope color'),
+#                           icon_button_editor('edit_button', 'cog', tooltip='Edit group attributes')),
+#                    *grps)
+#         v = View(g)
+#         return v
+#
+#
+# class SpectrumGroupEditor(HasTraits):
+#     option_groups = List
+#
+#     def traits_view(self):
+#         v = View(UItem('option_groups',
+#                        style='custom',
+#                        editor=ListEditor(mutable=False,
+#                                          style='custom',
+#                                          editor=InstanceEditor())),
+#                  buttons=['OK', 'Cancel', 'Revert'],
+#                  kind='livemodal', resizable=True,
+#                  height=700,
+#                  title='Group Attributes')
+#         return v
 
 # ============= EOF =============================================

@@ -183,8 +183,8 @@ def except_handler(exctype, value, tb):
     if exctype == RuntimeError:
         warning(None, 'RunTimeError: {}'.format(value))
     else:
+        lines = traceback.format_exception(exctype, value, tb)
         if not exctype == KeyboardInterrupt:
-            lines = traceback.format_exception(exctype, value, tb)
             em = ExceptionModel(exctext=''.join(lines))
             ed = ExceptionHandler(model=em)
             ed.edit_traits()
