@@ -13,34 +13,38 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-import os
-
-from reportlab.lib.pagesizes import landscape, letter
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.units import inch, cm
-
-from pychron.core.helpers.filetools import view_file, add_extension
-from pychron.core.pdf.pdf_graphics_context import PdfPlotGraphicsContext
-from pychron.core.ui import set_qt
-
-set_qt()
 # ============= enthought library imports =======================
 # from chaco.pdf_graphics_context import PdfPlotGraphicsContext
+from kiva.fonttools.font_manager import findfont, FontProperties
 from pyface.constant import OK
 from pyface.file_dialog import FileDialog
-from traits.api import HasTraits, Instance, Enum, \
-    Bool, Float, Button
+from traits.api import Enum, \
+    Bool, Float
 from traitsui.api import View, Item, HGroup, VGroup, Spring, spring
 from traitsui.handler import Controller
 # ============= standard library imports ========================
+import os
+from reportlab.lib.pagesizes import landscape, letter
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.units import inch, cm
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 # ============= local library imports  ==========================
 from pychron.core.pdf.options import BasePDFOptions, dumpable
-from pychron.graph.graph import Graph
-from pychron.paths import paths
+from pychron.core.helpers.filetools import view_file, add_extension
+from pychron.core.pdf.pdf_graphics_context import PdfPlotGraphicsContext
 
 PAGE_MAP = {'A4': A4, 'letter': letter}
 UNITS_MAP = {'inch': inch, 'cm': cm}
 COLUMN_MAP = {'1': 1, '2': 0.5, '3': 0.33, '2/3': 0.66}
+
+
+# register helvetica.
+# Enable sets the font name to lowercase but Reportlab fonts are case-sensitive
+
+pdfmetrics.registerFont(TTFont('helvetica', findfont(FontProperties(family='Helvetica',
+                                                                    style='normal',
+                                                                    weight='normal'))))
 
 
 class FigurePDFOptions(BasePDFOptions):
@@ -143,6 +147,7 @@ def save_pdf(component, path=None, default_directory=None, view=False):
                 path = dlg.path
 
         if path:
+
             path = add_extension(path, '.pdf')
             gc = PdfPlotGraphicsContext(filename=path,
                                         dest_box=m.dest_box,
@@ -173,27 +178,27 @@ def save_pdf(component, path=None, default_directory=None, view=False):
 # def render_pdf(component, options):
 #     pass
 
-if __name__ == '__main__':
-    paths.build('_dev')
-
-
-    class Demo(HasTraits):
-        test = Button('Test')
-        graph = Instance(Graph)
-
-        def _graph_default(self):
-            g = Graph()
-            p = g.new_plot()
-            g.new_series([1, 2, 3, 4, 5, 6], [10, 21, 34, 15, 133, 1])
-            return g
-
-        def _test_fired(self):
-            self.graph.edit_traits()
-            # self.graph.plotcontainer.bounds = [600, 600]
-            # self.graph.plotcontainer.do_layout(force=True)
-            # save_pdf(self.graph.plotcontainer, path='/Users/ross/Desktop/foop.pdf')
-
-
-    d = Demo()
-    d.configure_traits(view=View('test'))
+# if __name__ == '__main__':
+#     paths.build('_dev')
+#
+#
+#     class Demo(HasTraits):
+#         test = Button('Test')
+#         graph = Instance(Graph)
+#
+#         def _graph_default(self):
+#             g = Graph()
+#             p = g.new_plot()
+#             g.new_series([1, 2, 3, 4, 5, 6], [10, 21, 34, 15, 133, 1])
+#             return g
+#
+#         def _test_fired(self):
+#             self.graph.edit_traits()
+#             # self.graph.plotcontainer.bounds = [600, 600]
+#             # self.graph.plotcontainer.do_layout(force=True)
+#             # save_pdf(self.graph.plotcontainer, path='/Users/ross/Desktop/foop.pdf')
+#
+#
+#     d = Demo()
+#     d.configure_traits(view=View('test'))
 # ============= EOF =============================================

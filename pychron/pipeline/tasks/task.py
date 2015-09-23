@@ -29,6 +29,7 @@ from pychron.globals import globalv
 from pychron.paths import paths
 from pychron.pipeline.engine import PipelineEngine
 from pychron.pipeline.plot.editors.interpreted_age_editor import InterpretedAgeEditor
+from pychron.pipeline.save_figure import SaveFigureView, SaveFigureModel
 from pychron.pipeline.state import EngineState
 from pychron.pipeline.tasks.actions import RunAction, SavePipelineTemplateAction, ResumeAction, ResetAction, \
     ConfigureRecallAction, GitRollbackAction, TagAction, SetInterpretedAgeAction, ClearAction, RunFromAction, \
@@ -128,9 +129,15 @@ class PipelineTask(BaseBrowserTask):
         ed = self.active_editor
         if ed is not None:
             if ed.component:
-                save_pdf(ed.component,
-                         # path='/Users/ross/Documents/test.pdf',
-                         view=True)
+                sfm = SaveFigureModel(ed.analyses)
+                sfv = SaveFigureView(model=sfm)
+                info = sfv.edit_traits()
+                if info.result:
+                    path = sfm.prepare_path(make=True)
+                    save_pdf(ed.component,
+                             path=path,
+                             # path='/Users/ross/Documents/test.pdf',
+                             view=True)
 
     def run(self):
         self._run_pipeline()

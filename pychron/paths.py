@@ -141,6 +141,7 @@ class Paths(object):
     data_det_ic_dir = None
     sample_image_dir = None
     sample_image_backup_dir = None
+    figure_dir = None
 
     experiment_dataset_dir = None
     project_dir = None
@@ -343,11 +344,10 @@ class Paths(object):
         # self.arar_dir = join(data_dir, 'arar')
         self.device_scan_dir = join(data_dir, 'device_scans')
         self.isotope_dir = join(self.data_dir, 'isotopes')
-        self.workspace_root_dir = join(self.data_dir, 'workspaces')
-        self.default_workspace_dir = join(self.workspace_root_dir, 'collection')
-        self.processed_dir = join(self.data_dir, 'processed')
-        # initialization_dir = join(setup_dir, 'initializations')
-        # device_creator_dir = join(device_dir, 'device_creator')
+        # self.workspace_root_dir = join(self.data_dir, 'workspaces')
+        # self.default_workspace_dir = join(self.workspace_root_dir, 'collection')
+        # self.processed_dir = join(self.data_dir, 'processed')
+
         self.image_cache_dir = join(self.data_dir, 'image_cache')
         self.default_cache = join(self.data_dir, 'cache')
         self.loading_dir = join(self.data_dir, 'loads')
@@ -355,16 +355,11 @@ class Paths(object):
         self.labbook_dir = join(self.data_dir, 'labbook')
         self.sample_image_dir = join(self.data_dir, 'sample_image_dir')
         self.sample_image_backup_dir = join(self.sample_image_dir, 'backup')
+        self.figure_dir = join(self.data_dir, 'figures')
 
         self.dvc_dir = join(self.data_dir, '.dvc')
-        # self.project_dir = join(self.dvc_dir, 'projects')
         self.experiment_dataset_dir = join(self.dvc_dir, 'experiments')
         self.meta_root = join(self.dvc_dir, 'meta')
-        self.index_db = join(self.dvc_dir, 'index.db')
-
-        # self.meta_db = join(self.meta_dir, 'pychronmeta.sqlite')
-        # self.meta_txtdb = join(self.meta_dir, 'pychronmeta.txtdb')
-        # self.vcs_dir = join(self.data_dir, 'vcs')
 
         # ==============================================================================
         # processing
