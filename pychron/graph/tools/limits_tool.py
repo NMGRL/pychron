@@ -140,7 +140,6 @@ class LimitsTool(BaseTool):
         else:
             r = self.component.value_range
 
-        print 'setting', v
         if self._dsign == 'low':
             if getattr(r, 'high') > v:
                 r.trait_set(**{'{}_setting'.format(self._dsign): v})

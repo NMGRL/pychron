@@ -166,13 +166,10 @@ class MeanIndicatorOverlay(AbstractOverlay, Movable):
         # self._color=color
 
     def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
-        # if self.label:
-        #     print self.label.font
         with gc:
             oc = other_component
             gc.clip_to_rect(oc.x, oc.y, oc.x2, oc.y2)
             points = self._gather_data()
-            # print points, self.x, self.y
             marker = self.marker
 
             color = self._color
@@ -188,7 +185,6 @@ class MeanIndicatorOverlay(AbstractOverlay, Movable):
 
             x, y = self.get_current_point()
 
-            # e = self.error / 2.0 * max(1, self.nsigma)
             e = self.error * max(1, self.nsigma)
             p1, p2 = self.component.map_screen([(self.x - e, 0), (self.x + e, 0)])
 
@@ -201,15 +197,14 @@ class MeanIndicatorOverlay(AbstractOverlay, Movable):
 
     def get_current_point(self):
         data_pt = self.altered_screen_point
-        # print 'adsfsadf', data_pt, #len(data_pt)
         if data_pt is None:
             data_pt = self.current_screen_point
         return data_pt
 
     def _gather_data(self):
+        comp = self.component
+        x = comp.map_screen([(self.x, 0)])[0, 0]
         if self.altered_screen_point is None:
-            comp = self.component
-            x = comp.map_screen([(self.x, 0)])[0, 0]
             if self.label:
                 if not self.label.altered_screen_point:
                     self.label.sx = x
@@ -221,7 +216,7 @@ class MeanIndicatorOverlay(AbstractOverlay, Movable):
             if self.label:
                 if not self.label.altered_screen_point:
                     self.label.sx, self.label.sy = self.altered_screen_point
-            return [self.altered_screen_point]
+            return [(x, self.altered_screen_point[1])]
 
     def set_x(self, x):
         self.x = x
