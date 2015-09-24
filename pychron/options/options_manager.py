@@ -133,6 +133,7 @@ class OptionsManager(Loggable):
             options_name = self.selected.lower()
             for name, txt in self._defaults:
                 if name == options_name:
+                    self.selected = ''
                     self.debug('set factory default for {}'.format(name))
                     dp = os.path.join(self.persistence_root, '{}.p'.format(name))
                     os.remove(dp)
@@ -140,6 +141,8 @@ class OptionsManager(Loggable):
                     p = self.options_klass()
                     p.load_factory_defaults(txt)
                     self.save(name, p)
+
+                    self.selected = name
                     break
 
                     # warning(None, 'Factory defaults temporarily disabled')
