@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from matplotlib.cm import cmap_d
-from traits.api import Int, Bool, Float, Property, on_trait_change, Enum, List, Dict
+from traits.api import Int, Bool, Float, Property, on_trait_change, Enum, List, Dict, Button
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.options.aux_plot import AuxPlot
@@ -39,6 +39,7 @@ class IdeogramOptions(AgeOptions):
                          transient=True)
     aux_plot_klass = IdeogramAuxPlot
 
+    edit_label_format_button = Button
     # edit_label_format = Button
     # refresh_asymptotic_button = Button
     index_attrs = Dict(transient=True)
@@ -80,8 +81,23 @@ class IdeogramOptions(AgeOptions):
     _use_asymptotic_limits = Bool
     _suppress_xlimits_clear = Bool
 
-    def _get_subview(self, name):
-        return VIEWS[name]
+    def to_dict(self):
+        d = super(IdeogramOptions, self).to_dict()
+        aux_plots = self.to_dict_aux_plots()
+        groups = self.to_dict_groups()
+
+        d['aux_plots'] = aux_plots
+        d['groups'] = groups
+        return d
+
+    def to_dict_aux_plots(self):
+        return [ap.to_dict() for ap in self.aux_plots]
+
+    def to_dict_groups(self):
+        pass
+
+    def to_dict_test(self, k):
+        return k not in ('_suppress_xlimits_clear', 'aux_plots', 'groups', 'index_attrs')
 
     def get_plot_dict(self, group_id):
         # return {}
@@ -102,20 +118,11 @@ class IdeogramOptions(AgeOptions):
             d['type'] = 'filled_line'
         return d
 
-        # if fg.use_filled_line:
-        # color = fg.color
-        # color.setAlphaF(fg.alpha * 0.01)
-        # return dict(fill_color=fg.color,
-        #                 type='filled_line')
-        # else:
-        #     return {}
+    # private
+    def _get_subview(self, name):
+        return VIEWS[name]
 
-    # def _edit_group_fill_color_button_fired(self):
-    # eg = FillGroupEditor(fill_groups=self.fill_groups)
-    # info = eg.edit_traits()
-    # if info.result:
-    #         self.refresh_plot_needed = True
-
+    # handlers
     @on_trait_change('use_static_limits, use_centered_range')
     def _handle_use_limits(self, new):
         # persist use asymptotic limits
@@ -137,11 +144,6 @@ class IdeogramOptions(AgeOptions):
             else:
                 self.trait_set(use_centered_range=self._use_centered_range)
 
-    # def _refresh_asymptotic_button_fired(self):
-    #     for ap in self.aux_plots:
-    #         ap.clear_xlimits()
-    #     self.refresh_plot_needed = True
-
     @on_trait_change('xlow, xhigh')
     def _handle_static_limits(self):
         for ap in self.aux_plots:
@@ -160,7 +162,7 @@ class IdeogramOptions(AgeOptions):
         for ap in self.aux_plots:
             ap.clear_ylimits()
 
-    def _edit_label_format_fired(self):
+    def _edit_label_format_button_fired(self):
         from pychron.processing.label_maker import LabelTemplater, LabelTemplateView
 
         lm = LabelTemplater(label=self.analysis_label_display)

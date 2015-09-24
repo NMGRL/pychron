@@ -15,9 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traitsui.api import View, UItem, Item, HGroup, VGroup, Group, EnumEditor
+from traitsui.api import View, UItem, Item, HGroup, VGroup, Group, EnumEditor, spring
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.options.options import SubOptions, AppearanceSubOptions, GroupSubOptions
 
 
@@ -30,17 +31,28 @@ class DisplaySubOptions(SubOptions):
                             label='Error Bars')
 
         an_grp = VGroup(Item('analysis_number_sorting', label='Analysis# Sort'),
-                        Item('use_cmap_analysis_number'),
-                        Item('cmap_analysis_number'),
+                        HGroup(Item('use_cmap_analysis_number', label='Use Color Mapping'),
+                               UItem('cmap_analysis_number', enabled_when='use_cmap_analysis_number')),
                         Item('use_latest_overlay'), show_border=True, label='Analysis #')
+
+        title_grp = HGroup(Item('auto_generate_title',
+                                tooltip='Auto generate a title based on the analysis list'),
+                           Item('title', springy=False,
+                                enabled_when='not auto_generate_title',
+                                tooltip='User specified plot title'),
+                           icon_button_editor('edit_title_format_button', 'cog',
+                                              enabled_when='auto_generate_title'),
+                           label='Title', show_border=True)
+
         label_grp = VGroup(
             HGroup(Item('label_box'),
                    Item('analysis_label_display',
                         label='Label Format',
                         width=100,
-                        style='readonly')),
-            # icon_button_editor('controller.edit_label_format', 'cog',
-            #                    tooltip='Open Label maker')),
+                        style='readonly'),
+                   spring,
+                   icon_button_editor('edit_label_format_button', 'cog',
+                                      tooltip='Open Label maker')),
             show_border=True, label='Label')
         inset_grp = VGroup(HGroup(Item('display_inset', label='Use'),
                                   Item('inset_location', label='Location'),
@@ -65,6 +77,7 @@ class DisplaySubOptions(SubOptions):
         display_grp = Group(mean_grp,
                             an_grp,
                             inset_grp,
+                            title_grp,
                             label_grp,
                             info_grp,
                             errbar_grp,

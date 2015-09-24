@@ -15,10 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from itertools import groupby
 
 from enable.markers import marker_names
 from traits.api import HasTraits, Str, Int, Bool, Float, Property, Enum, List, Range, \
-    Color
+    Color, Button
 from traitsui.api import View, Item, HGroup, VGroup, EnumEditor, Spring, Group, \
     spring, UItem, ListEditor, InstanceEditor
 from traitsui.handler import Controller
@@ -31,7 +32,7 @@ import yaml
 from pychron.core.helpers.color_generators import colornames
 from pychron.core.ui.table_editor import myTableEditor
 from pychron.options.aux_plot import AuxPlot
-from pychron.pychron_constants import NULL_STR, ERROR_TYPES, FONTS, SIZES
+from pychron.pychron_constants import NULL_STR, ERROR_TYPES, FONTS, SIZES, ALPHAS
 
 
 def _table_column(klass, *args, **kw):
@@ -179,6 +180,21 @@ class BaseOptions(HasTraits):
     fontname = Enum(*FONTS)
     _main_options_klass = MainOptions
 
+    def to_dict(self):
+        keys = [trait for trait in self.traits() if
+                not trait.startswith('trait') and not trait.endswith('button') and self.to_dict_test(trait)]
+
+        return {key: self.formatted_attr(key) for key in keys}
+
+    def formatted_attr(self, key):
+        obj = getattr(self, key)
+        if 'color' in key:
+            obj = obj.toTuple()
+        return obj
+
+    def to_dict_test(self, k):
+        return True
+
     def load_factory_defaults(self, path):
         if not os.path.isfile(path):
             yd = yaml.load(path)
@@ -247,6 +263,7 @@ class FigureOptions(BaseOptions):
     title_delimiter = Str(',')
     title_leading_text = Str
     title_trailing_text = Str
+    edit_title_format_button = Button
 
     use_xgrid = Bool(True)
     use_ygrid = Bool(True)
@@ -271,8 +288,8 @@ class FigureOptions(BaseOptions):
     ytitle_fontname = Enum(*FONTS)
 
     groups = List
-    group = Property
-    group_editor_klass = None
+    # group = Property
+    # group_editor_klass = None
     group_options_klass = None
     # refresh_colors = Event
 
@@ -295,13 +312,54 @@ class FigureOptions(BaseOptions):
         n = len(self.groups)
         return self.groups[gid % n]
 
-    # @on_trait_change('groups:edit_button')
-    # def _handle_edit_groups(self):
-    #     eg = self.group_editor_klass(option_groups=self.groups)
-    #     info = eg.edit_traits()
-    #     if info.result:
-    #         self.refresh_plot_needed = True
+    def generate_title(self, analyses, n):
+        attrs = self.title_attribute_keys
+        ts = []
+        rref, ctx = None, {}
+        material_map = {'Groundmass concentrate': 'GMC',
+                        'Kaersutite': 'Kaer',
+                        'Plagioclase': 'Plag',
+                        'Sanidine': 'San'}
 
+        for gid, ais in groupby(analyses, key=lambda x: x.group_id):
+            ref = ais.next()
+            d = {}
+            for ai in attrs:
+                if ai == 'alphacounter':
+                    v = ALPHAS[n]
+                elif ai == 'numericcounter':
+                    v = n
+                else:
+                    v = getattr(ref, ai)
+                    if ai == 'material':
+                        try:
+                            v = material_map[v]
+                        except KeyError:
+                            pass
+                d[ai] = v
+
+            if not rref:
+                rref = ref
+                ctx = d
+
+            ts.append(self.title_formatter.format(**d))
+
+        t = self.title_delimiter.join(ts)
+        lt = self.title_leading_text
+        if lt:
+            if lt.lower() in ctx:
+                lt = ctx[lt.lower()]
+            t = '{} {}'.format(lt, t)
+
+        tt = self.title_trailing_text
+        if tt:
+            if tt.lower() in ctx:
+                tt = ctx[tt.lower()]
+            t = '{} {}'.format(t, tt)
+
+        return t
+
+    # private
     def _groups_default(self):
         if self.group_options_klass:
             return [self.group_options_klass(color=ci,
@@ -309,6 +367,24 @@ class FigureOptions(BaseOptions):
                                              group_id=i) for i, ci in enumerate(colornames)]
         else:
             return []
+
+    def _edit_title_format_button_fired(self):
+        from pychron.processing.label_maker import TitleTemplater, TitleTemplateView
+
+        tm = TitleTemplater(label=self.title,
+                            delimiter=self.title_delimiter,
+                            leading_text=self.title_leading_text,
+                            trailing_text=self.title_trailing_text)
+
+        tv = TitleTemplateView(model=tm)
+        info = tv.edit_traits()
+        if info.result:
+            self.title_formatter = tm.formatter
+            self.title_attribute_keys = tm.attribute_keys
+            self.title_leading_text = tm.leading_text
+            self.title_trailing_text = tm.trailing_text
+            self.title = tm.label
+            self.title_delimiter = tm.delimiter
 
     # ===============================================================================
     # property get/set
@@ -336,9 +412,9 @@ class FigureOptions(BaseOptions):
 
         # return str_to_font('{} {}'.format(xn, xs))
 
-    def _get_group(self):
-        if self.groups:
-            return self.groups[0]
+    # def _get_group(self):
+    #     if self.groups:
+    #         return self.groups[0]
 
     def _get_xpadding(self):
         if self.use_xpad:

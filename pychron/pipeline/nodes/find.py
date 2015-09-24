@@ -121,6 +121,7 @@ class FindReferencesNode(FindNode):
 
     def reset(self):
         self.user_choice = None
+        super(FindReferencesNode, self).reset()
 
     def load(self, nodedict):
         self.threshold = nodedict['threshold']

@@ -50,8 +50,8 @@ class AuxPlot(HasTraits):
     xlimits = Tuple(Float, Float, transient=True)
 
     overlay_positions = Dict(transient=True)
-    _has_ylimits = Bool(False)
-    _has_xlimits = Bool(False)
+    _has_ylimits = Bool(False, transient=True)
+    _has_xlimits = Bool(False, transient=True)
 
     # enabled = True
 
@@ -59,6 +59,10 @@ class AuxPlot(HasTraits):
     marker_size = Float(2)
 
     _suppress = False
+
+    def to_dict(self):
+        keys = [k for k in self.traits(transient=False)]
+        return {key: getattr(self, key) for key in keys}
 
     @on_trait_change('ylimits')
     def _handle_ylimits(self, new):

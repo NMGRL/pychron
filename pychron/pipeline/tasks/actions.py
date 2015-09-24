@@ -164,6 +164,11 @@ class TagAction(TaskAction):
     id = 'pychron.tag'
 
 
+class SaveStatusAction(TaskAction):
+    name = 'Save Status'
+    method = 'save_status'
+
+
 # ============= Interperted Age =================================
 class SetInterpretedAgeAction(TaskAction):
     name = 'Set Interpreted Age'
@@ -175,5 +180,10 @@ class SavePDFAction(TaskAction):
     name = 'Save PDF'
     method = 'save_figure_pdf'
     image = icon('file_pdf')
+
+
+class SaveFigureAction(TaskAction):
+    name = 'Save Figure'
+    method = 'save_figure'
 
 # ============= EOF =============================================

@@ -21,9 +21,11 @@ from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter
 from traits.api import Instance, Bool, on_trait_change
 # ============= standard library imports ========================
 from itertools import groupby
+import os
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import list_gits
 from pychron.core.pdf.save_pdf_dialog import save_pdf
+from pychron.dvc import jdump
 from pychron.dvc.dvc import experiment_has_staged, push_experiments
 from pychron.globals import globalv
 from pychron.paths import paths
@@ -33,7 +35,7 @@ from pychron.pipeline.save_figure import SaveFigureView, SaveFigureModel
 from pychron.pipeline.state import EngineState
 from pychron.pipeline.tasks.actions import RunAction, SavePipelineTemplateAction, ResumeAction, ResetAction, \
     ConfigureRecallAction, GitRollbackAction, TagAction, SetInterpretedAgeAction, ClearAction, RunFromAction, \
-    SavePDFAction
+    SavePDFAction, SaveFigureAction
 from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane
 from pychron.envisage.browser.browser_task import BaseBrowserTask
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
@@ -65,7 +67,9 @@ class PipelineTask(BaseBrowserTask):
                           ClearAction(),
                           ConfigureRecallAction(),
                           SavePipelineTemplateAction(), label='Run Toolbar'),
-                 SToolBar(SavePDFAction(), label='Save Toolbar'),
+                 SToolBar(SavePDFAction(),
+                          SaveFigureAction(),
+                          label='Save Toolbar'),
                  SToolBar(GitRollbackAction(), label='Git Toolbar'),
                  SToolBar(TagAction(),
                           SetInterpretedAgeAction(),
@@ -125,9 +129,25 @@ class PipelineTask(BaseBrowserTask):
         return panes
 
     # toolbar actions
+    def save_status(self):
+        ed = self.active_editor
+        if ed is not None:
+            self.debug('save status')
+            self.information_dialog('Save status not yet implemented')
+
+    def save_figure(self):
+        ed = self.active_editor
+        if ed is not None:
+            self.debug('save figure')
+            root = paths.figure_dir
+            path = os.path.join(root, 'test.json')
+            obj = self._make_save_figure_object(ed)
+            jdump(obj, path)
+
     def save_figure_pdf(self):
         ed = self.active_editor
         if ed is not None:
+            self.debug('save figure pdf')
             if ed.component:
                 sfm = SaveFigureModel(ed.analyses)
                 sfv = SaveFigureView(model=sfm)
@@ -205,6 +225,20 @@ class PipelineTask(BaseBrowserTask):
         self.run()
 
     # private
+    def _make_save_figure_object(self, editor):
+        po = editor.plotter_options
+        plotter_options = po.to_dict()
+
+        for k, v in plotter_options.iteritems():
+            print k, v
+        obj = {}
+        obj['plotter_options'] = plotter_options
+        obj['analyses'] = [{'record_id': ai.record_id,
+                            'uuid': ai.uuid,
+                            'status': ai.temp_status,
+                            'group_id': ai.group_id} for ai in editor.analyses]
+        return obj
+
     def _add_interpreted_ages(self, ias):
         dvc = self.dvc
         db = dvc.db
