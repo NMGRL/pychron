@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Str, Bool
+from traits.api import Str, Bool, Enum, Int
 from traitsui.api import View, UItem, Item, HGroup, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -27,6 +27,8 @@ class SpectrumGroupOptions(BaseGroupOptions):
     calculate_fixed_plateau = Bool(False)
     calculate_fixed_plateau_start = Str
     calculate_fixed_plateau_end = Str
+    center_line_style = Enum('No Line', 'solid', 'dash', 'dot dash', 'dot', 'long dash')
+    center_line_width = Int(1)
 
     def traits_view(self):
         envelope_grp = HGroup(HGroup(UItem('use_fill'),
@@ -39,7 +41,12 @@ class SpectrumGroupOptions(BaseGroupOptions):
                           Item('line_width',
                                label='Width'),
                           show_border=True,
-                          label='Line')
+                          label='Plateau Line')
+
+        center_line_grp = HGroup(UItem('center_line_style'),
+                                 Item('center_line_width', enabled_when='center_line_style!="No Line"'),
+                                 show_border=True,
+                                 label='Center Line')
 
         plat_grp = HGroup(Item('calculate_fixed_plateau',
                                label='Fixed',
@@ -49,7 +56,7 @@ class SpectrumGroupOptions(BaseGroupOptions):
                           show_border=True, label='Calculate Plateau')
 
         g = VGroup(Item('bind_colors'),
-                   envelope_grp, line_grp, plat_grp,
+                   envelope_grp, line_grp, plat_grp, center_line_grp,
                    show_border=True,
                    label='Group {}'.format(self.group_id + 1))
 

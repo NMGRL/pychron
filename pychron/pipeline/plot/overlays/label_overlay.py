@@ -74,8 +74,6 @@ class SpectrumLabelOverlay(AbstractOverlay):
     use_user_color = Bool
     user_color = Color
 
-    # _mlayout_needed = Bool
-
     def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
         labels = self._get_labels()
         for label in labels:
@@ -118,7 +116,6 @@ class SpectrumLabelOverlay(AbstractOverlay):
                         y = 50
 
                 txt = self._assemble_text(analysis)
-
                 labels.append(PlotLabel(text=txt,
                                         font=self.font,
                                         # font='modern {}'.format(self.font_size),

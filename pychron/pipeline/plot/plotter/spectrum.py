@@ -100,10 +100,13 @@ class Spectrum(BaseArArFigure):
         au = ref.arar_constants.age_units
         graph.set_y_title('Apparent Age ({})'.format(au), plotid=pid)
 
+        grp = self.options.get_group(self.group_id)
+
         spec = self._add_plot(xs, ys, es, pid, po)
-        ls = self.options.center_line_style
+        ls = grp.center_line_style
         if not ls == 'No Line':
             spec.line_style = ls
+            spec.line_width = grp.center_line_width
         else:
             spec.line_width = 0
 
@@ -113,7 +116,6 @@ class Spectrum(BaseArArFigure):
         ag.pc_nsteps = self.options.pc_nsteps
         ag.pc_gas_fraction = self.options.pc_gas_fraction
 
-        grp = self.options.get_group(self.group_id)
         if grp.calculate_fixed_plateau:
             ag.calculate_fixed_plateau_steps = grp.calculate_fixed_plateau_start, grp.calculate_fixed_plateau_end
         else:
@@ -194,6 +196,7 @@ class Spectrum(BaseArArFigure):
                     pl = FlowPlotLabel(text='\n'.join(ts),
                                        overlay_position='inside top',
                                        hjustify='left',
+                                       font=self.options.error_info_font,
                                        component=plot)
                     plot.overlays.append(pl)
 
@@ -209,8 +212,6 @@ class Spectrum(BaseArArFigure):
     def _add_plot(self, xs, ys, es, plotid, po):
         graph = self.graph
 
-        # color = self.options.get_group_color(self.group_id)
-        # color.setAlphaF(1.0)
         group = self.options.get_group(self.group_id)
 
         ds, p = graph.new_series(xs, ys,
@@ -221,23 +222,18 @@ class Spectrum(BaseArArFigure):
         ds.index.on_trait_change(self._update_graph_metadata, 'metadata_changed')
 
         ds.index.sort_order = 'ascending'
-        # ds.index.on_trait_change(self._update_graph, 'metadata_changed')
         ns = self.options.step_nsigma
-        # sp = SpectrumTool(ds, spectrum=self, group_id=group_id)
         sp = SpectrumTool(component=ds,
                           cumulative39s=self.xs,
                           nsigma=ns,
                           analyses=self.analyses)
 
-        # sp.on_trait_change('selection_changed')
         ov = SpectrumInspectorOverlay(tool=sp, component=ds)
         ds.tools.append(sp)
         ds.overlays.append(ov)
 
         # provide 1s errors use nsigma to control display
         ds.errors = es
-
-        # edict = self.options.get_envelope(self.group_id)
 
         sp = SpectrumErrorOverlay(component=ds,
                                   use_user_color=True,
@@ -251,28 +247,19 @@ class Spectrum(BaseArArFigure):
                                  omit='omit_spec',
                                  include_value_filtered=False)
         sp.selections = omit
-        # self.plateau_overlay = sp
         self.spectrum_overlays.append(sp)
-
         if po.show_labels:
-            # edict =self.options.get_envelope(self.group_id)
             grp = self.options.get_group(self.group_id)
             lo = SpectrumLabelOverlay(component=ds,
                                       nsigma=ns,
                                       sorted_analyses=self.sorted_analyses,
-                                      # spectrum=self,
                                       use_user_color=True,
                                       user_color=grp.line_color,
                                       font=self.options.label_font,
-                                      # font_size=self.options.step_label_font_size,
                                       display_extract_value=self.options.display_extract_value,
                                       display_step=self.options.display_step)
 
             ds.underlays.append(lo)
-        # if po.scale == 'log':
-        # p.value_axis.tick_generator = SparseLogTicks()
-        # else:
-        #     p.value_axis.tick_generator = SparseTicks()
         return ds
 
     # ===============================================================================

@@ -229,9 +229,13 @@ class BaseOptions(HasTraits):
         #     return getattr(self, name)
         # else:
         if name == 'main':
-            klass = self._main_options_klass
+            try:
+                klass = self._get_subview(name)
+            except KeyError:
+                klass = self._main_options_klass
         else:
             klass = self._get_subview(name)
+
         obj = klass(model=self)
         # obj = self._views[name](model=self)
         return obj

@@ -15,10 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traitsui.api import View
+from traitsui.api import View, EnumEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.options.options import SubOptions, AppearanceSubOptions
+from pychron.options.options import SubOptions, AppearanceSubOptions, MainOptions, object_column, checkbox_column
+from pychron.pychron_constants import FIT_TYPES_INTERPOLATE, FIT_ERROR_TYPES
 
 
 class BlanksSubOptions(SubOptions):
@@ -41,9 +42,25 @@ class BlanksAppearance(AppearanceSubOptions):
     #     return v
 
 
+class BlanksMainOptions(MainOptions):
+    def _get_columns(self):
+        return [object_column(name='name'),
+                checkbox_column(name='plot_enabled', label='Enabled'),
+                checkbox_column(name='save_enabled', label='Save'),
+                object_column(name='fit',
+                              editor=EnumEditor(values=FIT_TYPES_INTERPOLATE),
+                              width=75),
+                object_column(name='error_type',
+                              editor=EnumEditor(values=FIT_ERROR_TYPES),
+                              width=75, label='Error'),
+                checkbox_column(name='filter_outliers', label='Out.'),
+                object_column(name='filter_outlier_iterations', label='Iter.'),
+                object_column(name='filter_outlier_std_devs', label='SD')]
+
 # ===============================================================
 # ===============================================================
 VIEWS = {}
+VIEWS['main'] = BlanksMainOptions
 VIEWS['blanks'] = BlanksSubOptions
 VIEWS['appearance'] = BlanksAppearance
 

@@ -16,13 +16,11 @@
 
 # ============= enthought library imports =======================
 from traits.api import List
-from traitsui.api import EnumEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.options.aux_plot import AuxPlot
 from pychron.options.fit import FitOptions
 from pychron.options.iso_evo_views import VIEWS
-from pychron.options.options import checkbox_column, object_column, MainOptions
 from pychron.processing.fits.fit import IsoFilterFit
 
 
@@ -32,29 +30,10 @@ class IsoFilterFitAuxPlot(AuxPlot, IsoFilterFit):
     ofit = None
 
 
-class IsoEvoMainOptions(MainOptions):
-    def _get_columns(self):
-        cols = [object_column(name='name', editable=False),
-                checkbox_column(name='plot_enabled', label='Plot'),
-                checkbox_column(name='save_enabled', label='Save'),
-                object_column(name='fit',
-                              editor=EnumEditor(name='fit_types'),
-                              width=75),
-                object_column(name='error_type',
-                              editor=EnumEditor(name='error_types'),
-                              width=75, label='Error'),
-                checkbox_column(name='filter_outliers', label='Out.'),
-                object_column(name='filter_outlier_iterations', label='Iter.'),
-                object_column(name='filter_outlier_std_devs', label='SD'),
-                object_column(name='truncate', label='Trunc.'),
-                checkbox_column(name='include_baseline_error', label='Inc. BsErr')]
-        return cols
-
-
 class IsotopeEvolutionOptions(FitOptions):
     aux_plot_klass = IsoFilterFitAuxPlot
     subview_names = List(['Main', 'IsoEvo', 'Appearance'])
-    _main_options_klass = IsoEvoMainOptions
+    # _main_options_klass = IsoEvoMainOptions
 
     def _get_subview(self, name):
         return VIEWS[name]

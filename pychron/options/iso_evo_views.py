@@ -15,10 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traitsui.api import View
+from traitsui.api import View, EnumEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.options.options import AppearanceSubOptions, SubOptions
+from pychron.options.options import AppearanceSubOptions, SubOptions, MainOptions, object_column, checkbox_column
 
 
 class IsoEvoSubOptions(SubOptions):
@@ -30,6 +30,26 @@ class IsoEvoAppearanceOptions(AppearanceSubOptions):
     pass
 
 
-VIEWS = {'isoevo': IsoEvoSubOptions,
+class IsoEvoMainOptions(MainOptions):
+    def _get_columns(self):
+        cols = [object_column(name='name', editable=False),
+                checkbox_column(name='plot_enabled', label='Plot'),
+                checkbox_column(name='save_enabled', label='Save'),
+                object_column(name='fit',
+                              editor=EnumEditor(name='fit_types'),
+                              width=75),
+                object_column(name='error_type',
+                              editor=EnumEditor(name='error_types'),
+                              width=75, label='Error'),
+                checkbox_column(name='filter_outliers', label='Out.'),
+                object_column(name='filter_outlier_iterations', label='Iter.'),
+                object_column(name='filter_outlier_std_devs', label='SD'),
+                object_column(name='truncate', label='Trunc.'),
+                checkbox_column(name='include_baseline_error', label='Inc. BsErr')]
+        return cols
+
+
+VIEWS = {'main': IsoEvoMainOptions,
+         'isoevo': IsoEvoSubOptions,
          'appearance': IsoEvoAppearanceOptions}
 # ============= EOF =============================================

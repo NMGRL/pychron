@@ -19,7 +19,8 @@ from traitsui.api import View, UItem, Item, HGroup, VGroup, Group, EnumEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.icon_button_editor import icon_button_editor
-from pychron.options.options import SubOptions, AppearanceSubOptions, GroupSubOptions
+from pychron.options.options import SubOptions, AppearanceSubOptions, GroupSubOptions, checkbox_column, object_column, \
+    MainOptions
 
 
 class SpectrumSubOptions(SubOptions):
@@ -128,7 +129,27 @@ class CalculationSubOptions(SubOptions):
         return v
 
 
+class SpectrumMainOptions(MainOptions):
+    def _get_columns(self):
+        cols = [checkbox_column(name='plot_enabled', label='Use'),
+                object_column(name='name',
+                              width=130,
+                              editor=EnumEditor(name='names')),
+                object_column(name='scale'),
+                object_column(name='height',
+                              format_func=lambda x: str(x) if x else ''),
+                checkbox_column(name='show_labels', label='Labels'),
+                checkbox_column(name='y_error', label='Y Err.'),
+                checkbox_column(name='ytick_visible', label='Y Tick'),
+                checkbox_column(name='ytitle_visible', label='Y Title'),
+                # object_column(name='filter_str', label='Filter')
+                ]
+
+        return cols
+
+
 VIEWS = {}
+VIEWS['main'] = SpectrumMainOptions
 VIEWS['spectrum'] = SpectrumSubOptions
 VIEWS['appearance'] = SpectrumAppearance
 VIEWS['calculations'] = CalculationSubOptions

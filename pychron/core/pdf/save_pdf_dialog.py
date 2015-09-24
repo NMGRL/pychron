@@ -46,6 +46,10 @@ pdfmetrics.registerFont(TTFont('helvetica', findfont(FontProperties(family='Helv
                                                                     style='normal',
                                                                     weight='normal'))))
 
+pdfmetrics.registerFont(TTFont('arial', findfont(FontProperties(family='Arial',
+                                                                style='normal',
+                                                                weight='normal'))))
+
 
 class FigurePDFOptions(BasePDFOptions):
     fixed_width = dumpable(Float)
