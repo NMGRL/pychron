@@ -24,12 +24,19 @@ from pychron.processing.analyses.view.adapters import MeasurementTabularAdapter,
 
 
 class RecallEditor(BaseTraitsEditor):
+    analysis = Instance('pychron.processing.analyses.analysis.Analysis')
     analysis_view = Instance('pychron.processing.analyses.view.analysis_view.AnalysisView')
 
     measurement_adapter = Instance(MeasurementTabularAdapter, ())
     extraction_adapter = Instance(ExtractionTabularAdapter, ())
     basename = Str
     instance_id = Int
+
+    def __init__(self, analysis, av, *args, **kw):
+        self.analysis = analysis
+        self.analysis_view = av
+        self.basename = analysis.record_id
+        super(RecallEditor, self).__init__(*args, **kw)
 
     def set_name(self, record_id):
         r = record_id

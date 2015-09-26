@@ -34,25 +34,26 @@ class AnalysisGraph(Graph):
     #     s.extend([('Database', '_save_to_database', {})])
     #     return s
     #
-    # def get_child_context_menu_actions(self):
-    #     return [self.action_factory('Set tag', '_set_tag'),
-    #             self.action_factory('Set INVALID', '_set_invalid')]
+    def get_child_context_menu_actions(self):
+        return [self.action_factory('Set tag', '_set_tag'),
+                self.action_factory('Set INVALID', '_set_invalid')]
     #
     # def _save_to_database(self):
     #     print 'save to database'
     #     self.save_db_figure = True
     #
-    # def _set_tag(self):
-    #     """
-    #     open the tag dialog
-    #     :return:
-    #     """
-    #     print 'set tag'
-    #     self.tag = True
-    #
-    # def _set_invalid(self):
-    #     print 'set invalid'
-    #     self.invalid = True
+
+    def _set_tag(self):
+        """
+        open the tag dialog
+        :return:
+        """
+        print 'set tag'
+        self.tag = True
+
+    def _set_invalid(self):
+        print 'set invalid'
+        self.invalid = True
 
 
 class AnalysisStackedGraph(AnalysisGraph, StackedGraph):

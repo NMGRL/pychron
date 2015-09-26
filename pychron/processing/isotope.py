@@ -30,6 +30,7 @@ from numpy import array, Inf, polyfit
 
 
 
+
 # ============= local library imports  ==========================
 from pychron.core.helpers.fits import natural_name_fit, fit_to_degree
 from pychron.core.regression.mean_regressor import MeanRegressor
@@ -326,27 +327,25 @@ class IsotopicMeasurement(BaseMeasurement):
         # if not (self.name.endswith('bs') or self.name.endswith('bk')):
         #     print self.name, self.use_static,self.user_defined_value
         # print 'get value', self.name, self.use_static, self._value, self.user_defined_value
-        if self.use_static and self._value:
-            return self._value
-        elif self.user_defined_value:
-            return self._value
+        # if self.use_static and self._value:
+        #     return self._value
+        # elif self.user_defined_value:
+        #     return self._value
 
-        if self.xs.shape[0] > 1:
-            # print 'useing regressor'
+        if not self.user_defined_value and self.xs.shape[0] > 1:
             v = self.regressor.predict(0)
-            # print 'using regressor', self.regressor, v
             return v
         else:
             return self._value
 
     @property
     def error(self):
-        if self.use_static and self._error:
-            return self._error
-        elif self.user_defined_error:
-            return self._error
+        # if self.use_static and self._error:
+        #     return self._error
+        # elif self.user_defined_error:
+        #     return self._error
 
-        if self.xs.shape[0] > 1:
+        if not self.user_defined_value and self.xs.shape[0] > 1:
             v = self.regressor.predict_error(0)
             return v
         else:
@@ -356,7 +355,7 @@ class IsotopicMeasurement(BaseMeasurement):
     def error(self, v):
         self.user_defined_error = True
         try:
-            self._oerror = self._error
+            # self._oerror = self._error
             self._error = float(v)
         except ValueError:
             pass
@@ -365,7 +364,7 @@ class IsotopicMeasurement(BaseMeasurement):
     def value(self, v):
         self.user_defined_value = True
         try:
-            self._ovalue = self._value
+            # self._ovalue = self._value
             self._value = float(v)
         except ValueError:
             pass

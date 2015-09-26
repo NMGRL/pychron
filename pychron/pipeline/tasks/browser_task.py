@@ -23,7 +23,10 @@ from traits.api import Instance
 # ============= local library imports  ==========================
 from pychron.envisage.browser.browser_task import BaseBrowserTask
 from pychron.envisage.browser.view import PaneBrowserView
-from pychron.pipeline.tasks.actions import ConfigureRecallAction, ConfigureAnalysesTableAction, LoadReviewStatusAction
+from pychron.envisage.view_util import open_view
+from pychron.pipeline.tasks.actions import ConfigureRecallAction, ConfigureAnalysesTableAction, LoadReviewStatusAction, \
+    EditAnalysisAction
+from pychron.processing.analyses.view.edit_analysis_view import AnalysisEditView
 
 
 class BrowserPane(TraitsDockPane, PaneBrowserView):
@@ -50,10 +53,29 @@ class BrowserTask(BaseBrowserTask):
     model = Instance('pychron.envisage.browser.browser_model.BrowserModel')
     tool_bars = [SToolBar(ConfigureRecallAction(),
                           ConfigureAnalysesTableAction(),
-                          LoadReviewStatusAction())]
+                          LoadReviewStatusAction()),
+                 SToolBar(EditAnalysisAction(),
+                          name='Edit')]
 
-    # def switch_to_pipeline(self):
-    #     self._activate_task('pychron.pipeline.task')
+    # toolbar actions
+    def edit_analysis(self):
+        self.debug('Edit analysis data')
+        if not self.has_active_editor():
+            return
+        #
+        editor = self.active_editor
+        if hasattr(editor, 'edit_view') and editor.edit_view:
+            editor.edit_view.show()
+        else:
+
+            e = AnalysisEditView(editor)
+
+            # e.load_isotopes()
+            # info = e.edit_traits()
+            # info = timethis(e.edit_traits)
+            info = open_view(e)
+            e.control = info.control
+            editor.edit_view = e
 
     def create_dock_panes(self):
         return [BrowserPane(model=self.browser_model)]

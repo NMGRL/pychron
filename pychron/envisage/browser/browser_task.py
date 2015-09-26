@@ -25,7 +25,7 @@ from pychron.envisage.tasks.editor_task import BaseEditorTask
 # from pychron.processing.selection.data_selector import DataSelector
 # from pychron.processing.tasks.browser.panes import BrowserPane
 from pychron.processing.analyses.view.adapters import IsotopeTabularAdapter, IntermediateTabularAdapter
-from pychron.processing.tasks.recall.recall_editor import RecallEditor
+from pychron.envisage.browser.recall_editor import RecallEditor
 
 '''
 add toolbar action to open another editor tab
@@ -307,9 +307,10 @@ class BaseBrowserTask(BaseEditorTask):
 
                 self.recall_configurer.set_fonts(av)
 
-                editor = RecallEditor()
-                editor.analysis_view = av
-                editor.basename = rec.record_id
+                editor = RecallEditor(rec, av)
+
+                # editor.analysis_view = av
+                # editor.basename = rec.record_id
                 if existing and editor.basename in existing:
                     editor.instance_id = existing.count(editor.basename)
                 editor.set_name(rec.record_id)

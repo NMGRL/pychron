@@ -91,6 +91,11 @@ class LoadReviewStatusAction(TaskAction):
     method = 'load_review_status'
 
 
+class EditAnalysisAction(TaskAction):
+    name = 'Edit Analysis'
+    method = 'edit_analysis'
+
+
 class PipelineAction(Action):
     def perform(self, event):
         app = event.task.window.application

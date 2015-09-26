@@ -317,7 +317,7 @@ class LoadHolderTbl(Base, BaseMixin):
 
 class LoadPositionTbl(Base, BaseMixin):
     idloadpositionTbl = Column(Integer, primary_key=True)
-    identifier = Column(String(45), ForeignKey('IrradiationPositionTbl.identifier'))
+    identifier = Column(String(80), ForeignKey('IrradiationPositionTbl.identifier'))
     position = Column(Integer)
     loadName = Column(String(45), ForeignKey('LoadTbl.name'))
     weight = Column(Float)
