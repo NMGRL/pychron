@@ -24,10 +24,6 @@ import json
 import datetime
 from uncertainties import ufloat, std_dev, nominal_value
 
-
-
-
-
 # ============= local library imports  ==========================
 from pychron.core.helpers.datetime_tools import make_timef
 from pychron.core.helpers.filetools import add_extension, subdirize
@@ -183,14 +179,19 @@ class DVCAnalysis(Analysis):
 
         self.timestamp = make_timef(self.rundate)
 
-        for tag in ('intercepts', 'baselines', 'blanks', 'icfactors'):
+        for tag in ('intercepts', 'baselines', 'blanks', 'icfactors', 'tags'):
             # print tag
-            with open(self._analysis_path(modifier=tag), 'r') as rfile:
-                jd = json.load(rfile)
-                func = getattr(self, '_load_{}'.format(tag))
-                func(jd)
+            path = self._analysis_path(modifier=tag)
+            if path and os.path.isfile(path):
+                with open(path, 'r') as rfile:
+                    jd = json.load(rfile)
+                    func = getattr(self, '_load_{}'.format(tag))
+                    func(jd)
 
         self.aliquot_step_str = make_aliquot_step(self.aliquot, self.step)
+
+    def _load_tags(self, jd):
+        self.set_tag(jd)
 
     def _load_blanks(self, jd):
         for iso, v in jd.iteritems():

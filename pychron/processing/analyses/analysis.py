@@ -242,9 +242,14 @@ class Analysis(ArArAge):
             name = tag['name']
             self.tag = name
 
+            if 'omit_dict' in tag:
+                omit_dict = tag['omit_dict']
+            else:
+                omit_dict = tag
+
             omit = name == 'omit'
             for a in OMIT_KEYS:
-                v = tag[a]
+                v = omit_dict[a]
                 # v = getattr(tag, a)
                 setattr(self, a, v)
                 if v:

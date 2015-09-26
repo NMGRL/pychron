@@ -171,8 +171,6 @@ class AnalysisEditView(HasTraits):
 
         self.flux = FluxItem(analysis)
 
-        # self.isotopes = [isos[k] for k in self.editor.analysis.isotope_keys]
-
     # @on_trait_change('[isotopes,blanks,baselines]:[value,error]')
     @on_trait_change('[isotopes,blanks,baselines, flux]:recalculate_needed')
     def _handle_change(self, obj, name, old, new):
@@ -209,7 +207,6 @@ class AnalysisEditView(HasTraits):
     def _update_model(self):
         model = self.editor.analysis
         model.calculate_age(force=True)
-        # model.analysis_view.main_view.load(model, refresh=True)
         model.analysis_view.main_view.refresh_needed = True
 
     def _revert_button_fired(self):
@@ -226,6 +223,9 @@ class AnalysisEditView(HasTraits):
         self.control = None
 
     def revert(self):
+        if not self.dirty:
+            return
+
         for iso in self.isotopes:
             iso.revert()
 
@@ -244,8 +244,8 @@ class AnalysisEditView(HasTraits):
 
     def traits_view(self):
         cols = [ObjectColumn(name='name', editable=False),
-                ObjectColumn(name='value'),
-                ObjectColumn(name='error')]
+                ObjectColumn(name='value', format='%0.7f', width=100),
+                ObjectColumn(name='error', format='%0.7f', width=100)]
 
         iso_grp = VGroup(UItem('isotopes',
                                editor=TableEditor(columns=cols,

@@ -94,6 +94,7 @@ class LoadReviewStatusAction(TaskAction):
 class EditAnalysisAction(TaskAction):
     name = 'Edit Analysis'
     method = 'edit_analysis'
+    image = icon('application-form-edit')
 
 
 class PipelineAction(Action):
@@ -169,9 +170,9 @@ class TagAction(TaskAction):
     id = 'pychron.tag'
 
 
-class SaveStatusAction(TaskAction):
-    name = 'Save Status'
-    method = 'save_status'
+class SetInvalidAction(TaskAction):
+    name = 'Set Invalid'
+    method = 'set_invalid'
 
 
 # ============= Interperted Age =================================

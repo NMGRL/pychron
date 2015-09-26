@@ -35,7 +35,7 @@ from pychron.pipeline.save_figure import SaveFigureView, SaveFigureModel
 from pychron.pipeline.state import EngineState
 from pychron.pipeline.tasks.actions import RunAction, SavePipelineTemplateAction, ResumeAction, ResetAction, \
     ConfigureRecallAction, GitRollbackAction, TagAction, SetInterpretedAgeAction, ClearAction, RunFromAction, \
-    SavePDFAction, SaveFigureAction
+    SavePDFAction, SaveFigureAction, SetInvalidAction
 from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane
 from pychron.envisage.browser.browser_task import BaseBrowserTask
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
@@ -72,6 +72,7 @@ class PipelineTask(BaseBrowserTask):
                           label='Save Toolbar'),
                  SToolBar(GitRollbackAction(), label='Git Toolbar'),
                  SToolBar(TagAction(),
+                          SetInvalidAction(),
                           SetInterpretedAgeAction(),
                           label='Misc Toolbar')]
 
@@ -129,36 +130,106 @@ class PipelineTask(BaseBrowserTask):
         return panes
 
     # toolbar actions
-    def save_status(self):
-        ed = self.active_editor
-        if ed is not None:
-            self.debug('save status')
-            self.information_dialog('Save status not yet implemented')
+    def set_tag(self, tag=None, items=None, use_filter=True, warn=True):
+        """
+            set tag for either
+            analyses selected in unknowns pane
+            or
+            analyses selected in figure e.g temp_status!=0
+
+        """
+        if items is None:
+            items = self._get_selection()
+            if not items:
+                if warn:
+                    self.warning_dialog('No analyses selected to Tag')
+                return
+
+        if items:
+            name = None
+            if tag is None:
+                a = self._get_tagname(items)
+                if a:
+                    tag, items, use_filter = a
+                    if tag:
+                        name = tag.name
+            else:
+                name = tag['name']
+
+            # set tags for items
+            if name and items:
+                dvc = self.dvc
+                db = dvc.db
+                key = lambda x: x.experiment_identifier
+
+                for expid, ans in groupby(sorted(items, key=key), key=key):
+                    cs = []
+                    with db.session_ctx():
+                        for it in ans:
+                            self.debug('setting {} tag= {}'.format(it.record_id, name))
+                            db.set_analysis_tag(it.uuid, name)
+
+                            it.set_tag(tag)
+                            if dvc.update_tag(it):
+                                cs.append(it)
+                                # it.refresh_view()
+
+                    if cs:
+                        cc = [c.record_id for c in cs]
+                        if len(cc) > 1:
+                            cstr = '{} - {}'.format(cc[0], cc[-1])
+                        else:
+                            cstr = cc[0]
+                        dvc.experiment_commit(expid, '<TAG> {:<6s} {}'.format(name, cstr))
+                        for ci in cs:
+                            ci.refresh_view()
+
+                if use_filter:
+                    for e in self.editor_area.editors:
+                        if isinstance(e, FigureEditor):
+                            e.set_items([ai for ai in e.analyses if ai.tag != 'invalid'])
+                #
+                if self.active_editor:
+                    self.active_editor.refresh_needed = True
+
+                self.browser_model.analysis_table.remove_invalid()
+                self.browser_model.analysis_table.refresh_needed = True
+                self.engine.refresh_table_needed = True
+                # else:
+                #     # edit tags
+                #     self._get_tagname([])
+
+    def set_invalid(self):
+        items = self._get_selection()
+        self._set_invalid(items)
 
     def save_figure(self):
+        self.debug('save figure')
+        if not self.has_active_editor():
+            return
+
         ed = self.active_editor
-        if ed is not None:
-            self.debug('save figure')
-            root = paths.figure_dir
-            path = os.path.join(root, 'test.json')
-            obj = self._make_save_figure_object(ed)
-            jdump(obj, path)
+        root = paths.figure_dir
+        path = os.path.join(root, 'test.json')
+        obj = self._make_save_figure_object(ed)
+        jdump(obj, path)
 
     def save_figure_pdf(self):
+        self.debug('save figure pdf')
+        if not self.has_active_editor():
+            return
+
         ed = self.active_editor
-        if ed is not None:
-            self.debug('save figure pdf')
-            if ed.component:
-                sfm = SaveFigureModel(ed.analyses)
-                sfv = SaveFigureView(model=sfm)
-                info = sfv.edit_traits()
-                if info.result:
-                    path = sfm.prepare_path(make=True)
-                    save_pdf(ed.component,
-                             path=path,
-                             options=sfm.pdf_options,
-                             # path='/Users/ross/Documents/test.pdf',
-                             view=True)
+        sfm = SaveFigureModel(ed.analyses)
+        sfv = SaveFigureView(model=sfm)
+        info = sfv.edit_traits()
+        if info.result:
+            path = sfm.prepare_path(make=True)
+            save_pdf(ed.component,
+                     path=path,
+                     options=sfm.pdf_options,
+                     # path='/Users/ross/Documents/test.pdf',
+                     view=True)
 
     def run(self):
         self._run_pipeline()
@@ -286,6 +357,11 @@ class PipelineTask(BaseBrowserTask):
     def _sa_factory(self, path, factory, **kw):
         return SchemaAddition(path=path, factory=factory, **kw)
 
+    def _set_invalid(self, items):
+        tag = {'name': 'invalid', 'omit_ideo': True, 'omit_series': True,
+               'omit_spec': True, 'omit_iso': True}
+        self.set_tag(tag=tag, items=items, warn=True)
+
     # defaults
     def _default_layout_default(self):
         return TaskLayout(left=Splitter(PaneItem('pychron.pipeline.pane',
@@ -327,9 +403,7 @@ class PipelineTask(BaseBrowserTask):
         if name == 'tag_event':
             self.set_tag(items=new)
         elif name == 'invalid_event':
-            tag = {'name': 'invalid', 'omit_ideo': True, 'omit_series': True,
-                   'omit_spec': True, 'omit_iso': True}
-            self.set_tag(tag=tag, items=new, warn=True)
+            self._set_invalid(new)
         elif name == 'recall_event':
             self.recall(new)
 
@@ -362,88 +436,12 @@ class PipelineTask(BaseBrowserTask):
         if globalv.pipeline_debug:
             self._debug()
 
-    def set_tag(self, tag=None, items=None, use_filter=True, warn=False):
-        """
-            set tag for either
-            analyses selected in unknowns pane
-            or
-            analyses selected in figure e.g temp_status!=0
-
-        """
-        if items is None:
-            items = self._get_selection()
-            if not items:
-                if warn:
-                    self.warning_dialog('No analyses selected to Tag')
-                    return
-
-        if items:
-            name = None
-            if tag is None:
-                a = self._get_tagname(items)
-                if a:
-                    tag, items, use_filter = a
-                    if tag:
-                        name = tag.name
-            else:
-                name = tag['name']
-
-            # set tags for items
-            if name and items:
-                dvc = self.dvc
-                db = dvc.db
-                key = lambda x: x.experiment_identifier
-
-                for expid, ans in groupby(sorted(items, key=key), key=key):
-                    # repo = dvc.get_experiment_repo(expid)
-                    # with dvc.git_session_ctx(expid, 'Updated tags'):
-                    cs = []
-                    with db.session_ctx():
-                        for it in ans:
-                            self.debug('setting {} tag= {}'.format(it.record_id, name))
-                            db.set_analysis_tag(it.uuid, name)
-
-                            it.set_tag(tag)
-                            if dvc.update_tag(it):
-                                cs.append(it)
-                                # it.refresh_view()
-                    if cs:
-                        cc = [c.record_id for c in cs]
-                        if len(cc) > 1:
-                            cstr = '{} - {}'.format(cc[0], cc[-1])
-                        else:
-                            cstr = cc[0]
-                        dvc.experiment_commit(expid, '<TAG> {:<6s} {}'.format(name, cstr))
-                        for ci in cs:
-                            ci.refresh_view()
-
-                if use_filter:
-                    for e in self.editor_area.editors:
-                        if isinstance(e, FigureEditor):
-                            e.set_items([ai for ai in e.analyses if ai.tag != 'invalid'])
-                #
-                if self.active_editor:
-                    self.active_editor.refresh_needed = True
-
-                self.browser_model.analysis_table.refresh_needed = True
-                self.engine.refresh_table_needed = True
-        else:
-            # edit tags
-            self._get_tagname([])
-
     def _get_selection(self):
-        items = None
-        unks = self.engine.selected_unknowns
-        if unks:
-            if not items:
-                items = unks
-
-            if not items:
-                items = [i for i in unks if i.is_temp_omitted()]
-                self.debug('Temp omitted analyses {}'.format(len(items)))
-
-        if not items:
-            items = self.browser_model.analysis_table.selected
+        items = self.engine.selected.unknowns
+        items.extend(self.engine.selected.references)
+        items = [i for i in items if i.is_temp_omitted()]
+        items.extend(self.engine.selected_unknowns)
+        items.extend(self.engine.selected_references)
         return items
 
     def _get_tagname(self, items):

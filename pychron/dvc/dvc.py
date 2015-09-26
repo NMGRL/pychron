@@ -116,14 +116,14 @@ class Tag(object):
         tag.name = an.tag
         tag.record_id = an.record_id
         tag.experiment_identifier = an.experiment_identifier
-        tag.path = analysis_path(an.record_id, an.experiment_identifier, modifier='tag')
+        tag.path = analysis_path(an.record_id, an.experiment_identifier, modifier='tags')
 
         return tag
 
     def dump(self):
         obj = {'name': self.name, 'omit_dict': self.omit_dict}
         if not self.path:
-            self.path = analysis_path(self.record_id, self.experiment_identifier, modifier='tag', mode='w')
+            self.path = analysis_path(self.record_id, self.experiment_identifier, modifier='tags', mode='w')
 
         # with open(self.path, 'w') as wfile:
         #     json.dump(obj, wfile, indent=4)

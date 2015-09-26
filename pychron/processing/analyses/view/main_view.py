@@ -402,37 +402,20 @@ class MainView(HasTraits):
     def traits_view(self):
         ceditor, eeditor, meditor = self._get_editors()
 
-        v = View(
-            VGroup(
-                HGroup(
-                    UItem('measurement_values',
+        g1 = HGroup(UItem('measurement_values',
                           editor=meditor,
                           height=200,
                           width=0.4),
                     UItem('extraction_values',
                           editor=eeditor,
                           height=200,
-                          width=0.6)),
-                # VGroup(UItem('isotopes',
-                #       editor=teditor,
-                #       # height=0.25
-                #       ),
-                #        # springy=True
-                #        ),
-                # UItem('isotopes',
-                #       editor=ieditor,
-                #       # defined_when='show_intermediate',
-                #       visible_when='show_intermediate',
-                #       ),
-                HGroup(UItem('computed_values',
-                             editor=ceditor,
-                             # height=200
-                             ),
-                       UItem('corrected_values',
-                             # height=200,
-                             editor=ceditor))),
-            # handler=MainViewHandler()
-        )
+                          width=0.6))
+        g2 = HGroup(UItem('computed_values',
+                          editor=ceditor, ),
+                    UItem('corrected_values',
+                          editor=ceditor))
+        v = View(VGroup(g1, g2))
+
         return v
 
 # ============= EOF =============================================

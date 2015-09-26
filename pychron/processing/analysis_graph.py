@@ -34,9 +34,9 @@ class AnalysisGraph(Graph):
     #     s.extend([('Database', '_save_to_database', {})])
     #     return s
     #
-    def get_child_context_menu_actions(self):
-        return [self.action_factory('Set tag', '_set_tag'),
-                self.action_factory('Set INVALID', '_set_invalid')]
+    # def get_child_context_menu_actions(self):
+    #     return [self.action_factory('Set tag', '_set_tag'),
+    #             self.action_factory('Set INVALID', '_set_invalid')]
     #
     # def _save_to_database(self):
     #     print 'save to database'

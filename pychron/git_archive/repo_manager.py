@@ -120,14 +120,14 @@ class GitRepoManager(Loggable):
                 self._repo = Repo.init(path)
 
     def add_paths(self, apaths):
+        self.debug('add paths {}'.format(apaths))
         if not hasattr(apaths, '__iter__'):
             apaths = (apaths,)
 
         changes = self.get_local_changes()
-        if not changes:
-            changes = self.untracked_files()
-        else:
-            changes = [os.path.join(self.path, c) for c in changes]
+        changes = [os.path.join(self.path, c) for c in changes]
+        untracked = self.untracked_files()
+        changes.extend(untracked)
 
         ps = [p for p in apaths if p in changes]
         changed = bool(ps)
@@ -342,7 +342,6 @@ class GitRepoManager(Loggable):
     def untracked_files(self):
         lines = self._repo.git.status(porcelain=True,
                                       untracked_files=True)
-
         # Untracked files preffix in porcelain mode
         prefix = "?? "
         untracked_files = list()

@@ -79,10 +79,6 @@ tag-blue-add
 document-open
 application-form-edit
 window-new
-window-new
-window-new
-window-new
-window-new
 arrow-right-2
 arrow-left-2
 image_add

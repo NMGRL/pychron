@@ -311,6 +311,7 @@ class BrowserModel(BaseBrowserModel):
             lim = at.limit
 
             uuids = [ai.uuid for ai in self.analysis_table.analyses]
+
             kw = dict(limit=lim,
                       include_invalid=not at.omit_invalid,
                       mass_spectrometers=self._recent_mass_spectrometers,

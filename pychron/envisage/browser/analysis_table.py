@@ -55,6 +55,10 @@ class AnalysisTable(ColumnSorterMixin):
     tabular_adapter = Instance(AnalysisAdapter)
     append_replace_enabled = Bool(True)
 
+    def remove_invalid(self):
+        self.oanalyses = [ai for ai in self.oanalyses if ai.tag != 'invalid']
+        self.analyses = [ai for ai in self.analyses if ai.tag != 'invalid']
+
     def add_analyses(self, ans):
         items = self.analyses
         items.extend(ans)
