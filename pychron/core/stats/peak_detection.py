@@ -33,7 +33,7 @@ def _datacheck_peakdetect(x_axis, y_axis):
         raise (ValueError,
                'Input vectors y_axis and x_axis must have same length')
 
-    #needs to be a numpy array
+    # needs to be a numpy array
     y_axis = array(y_axis)
     x_axis = array(x_axis)
     return x_axis, y_axis
@@ -74,25 +74,24 @@ def find_peaks(y_axis, x_axis=None, lookahead=300, delta=0):
     """
     max_peaks = []
     min_peaks = []
-    dump = []   #Used to pop the first hit which almost always is false
+    dump = []  # Used to pop the first hit which almost always is false
 
     # check input data
     x_axis, y_axis = _datacheck_peakdetect(x_axis, y_axis)
     # store data length for later use
     length = len(y_axis)
 
-
-    #perform some checks
+    # perform some checks
     if lookahead < 1:
         raise ValueError, "Lookahead must be '1' or above in value"
     if not (isscalar(delta) and delta >= 0):
         raise ValueError, "delta must be a positive number"
 
-    #maxima and minima candidates are temporarily stored in
-    #mx and mn respectively
+    # maxima and minima candidates are temporarily stored in
+    # mx and mn respectively
     mn, mx = Inf, -Inf
 
-    #Only detect peak if there is 'lookahead' amount of points after it
+    # Only detect peak if there is 'lookahead' amount of points after it
     for index, (x, y) in enumerate(zip(x_axis[:-lookahead],
                                        y_axis[:-lookahead])):
         if y > mx:
@@ -102,43 +101,42 @@ def find_peaks(y_axis, x_axis=None, lookahead=300, delta=0):
             mn = y
             mnpos = x
 
-        ####look for max####
+        # look for max
         if y < mx - delta and mx != Inf:
-            #Maxima peak candidate found
-            #look ahead in signal to ensure that this is a peak and not jitter
+            # Maxima peak candidate found
+            # look ahead in signal to ensure that this is a peak and not jitter
             if y_axis[index:index + lookahead].max() < mx:
                 max_peaks.append([mxpos, mx])
                 dump.append(True)
-                #set algorithm to only find minima now
+                # set algorithm to only find minima now
                 mx = Inf
                 mn = Inf
                 if index + lookahead >= length:
-                    #end is within lookahead no more peaks can be found
+                    # end is within lookahead no more peaks can be found
                     break
                 continue
-                #else:  #slows shit down this does
+                # else:  #slows shit down this does
                 #    mx = ahead
                 #    mxpos = x_axis[np.where(y_axis[index:index+lookahead]==mx)]
 
-        ####look for min####
+        # look for min
         if y > mn + delta and mn != -Inf:
-            #Minima peak candidate found
-            #look ahead in signal to ensure that this is a peak and not jitter
+            # Minima peak candidate found
+            # look ahead in signal to ensure that this is a peak and not jitter
             if y_axis[index:index + lookahead].min() > mn:
                 min_peaks.append([mnpos, mn])
                 dump.append(False)
-                #set algorithm to only find maxima now
+                # set algorithm to only find maxima now
                 mn = -Inf
                 mx = -Inf
                 if index + lookahead >= length:
-                    #end is within lookahead no more peaks can be found
+                    # end is within lookahead no more peaks can be found
                     break
-                    #else:  #slows shit down this does
+                    # else:  #slows shit down this does
                     #    mn = ahead
                     #    mnpos = x_axis[np.where(y_axis[index:index+lookahead]==mn)]
 
-
-    #Remove the false hit on the first value of the y_axis
+    # Remove the false hit on the first value of the y_axis
     try:
         if dump[0]:
             max_peaks.pop(0)
@@ -146,10 +144,46 @@ def find_peaks(y_axis, x_axis=None, lookahead=300, delta=0):
             min_peaks.pop(0)
         del dump
     except IndexError:
-        #no peaks were found, should the function return empty lists?
+        # no peaks were found, should the function return empty lists?
         pass
 
     return [max_peaks, min_peaks]
+
+
+def find_fine_peak(func, initial_limits=(0, 1), tol=1, **find_peak_kw):
+    """
+
+    :param func:
+    :param initial_limits:
+    :param tol: break loop if fine peak position is within tol% of the coarse peak position
+    :param find_peak_kw: keywords to pass to find_peaks
+    :return:
+    """
+    xs, ys = func(*initial_limits)
+    maxp, minp = find_peaks(ys, xs, **find_peak_kw)
+    p = maxp[0][0]
+
+    alpha = 0.1
+
+    # convert tol from percent to decimal e.g 1% = 0.01
+    tol = tol * 0.01
+    for i in range(50):
+        alpha = alpha / 2.
+        ll, ul = p * (1 - alpha), p * (1 + alpha)
+        # print 'new limits {} {}'.format(ll, ul)
+        # rxs, rys = cumulative_probability(oxs, oes, ll, ul, n=500)
+        rxs, rys = func(ll, ul)
+        maxp, minp = find_peaks(rys, rxs, lookahead=1)
+
+        rp = maxp[0][0]
+        dev = abs(p - rp) / p
+        # print 'coarse peak: {}, fine peak: {}, dev={}%'.format(p, rp, dev*100)
+        if dev < tol:
+            break
+
+        p = rp
+
+    return rp
 
 
 class PeakCenterError(BaseException):
@@ -167,10 +201,8 @@ def calculate_peak_center(x, y, min_peak_height=1.0, percent=80):
 
     ma = max(y)
     max_i = argmax(y)
-    # pc=PeakCenterResult()
     if ma < min_peak_height:
         raise PeakCenterError('No peak greater than {}. max = {}'.format(min_peak_height, ma))
-        # return pc
 
     mx = x[max_i]
     my = ma
@@ -221,74 +253,67 @@ def calculate_peak_center(x, y, min_peak_height=1.0, percent=80):
 
     if std > 5 and abs(slope) < 1:
         raise PeakCenterError('No peak plateau std = {} (>5) slope = {} (<1)'.format(std, slope))
-        #        else:
-    #            self.info('peak plateau std = {} slope = {}'.format(std, slope)
 
     return [lx, cx, hx], [ly, cy, hy], mx, my
 
 
-#def find_peaks(v, delta, x=None):
-#    '''
-#     Eli Billauer, 3.4.05 (Explicitly not copyrighted).
-#
-#     This function is released to the public domain; Any use is allowed.
-#    '''
-#    if x is None:
-#        x = arange(len(v))
-#
-#    v = asarray(v)
-#
-#    mn, mx = Inf, -Inf
-#    mnpos, mxpos = NaN, NaN
-#    lookformax = True
-#    maxs = []
-#    mins = []
-#    for vi, xi in zip(v, x):
-#        if vi > mx:
-#            mx = vi
-#            mxpos = xi
-#        elif vi < mn:
-#            mn = vi
-#            mnpos = xi
-#
-#        if lookformax:
-#            if vi < mx - delta:
-#                maxs.append((mxpos, mx))
-#                mn = vi
-#                mnpos = xi
-#                lookformax = False
-#        else:
-#            if vi > mn + delta:
-#                mins.append((mnpos, mn))
-#                mx = vi
-#                mxpos = xi
-#                lookformax = False
-#    return array(maxs), array(mins)
+if __name__ == '__main__':
+    from pychron.core.stats.probability_curves import cumulative_probability
 
+    # oxs = [10, 10, 10, 20, 20, 20]
+    # oes = [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
+    oxs = [10, 10, 10]
+    oes = [0.1, 0.1, 0.1]
 
-
-#
-# if __name__ == '__main__':
-#     from pylab import *
-#
-#     def multi_peak_generator(values):
-#         for v in values:
-#             m = 0.5
-#             if 5.4 <= v <= 5.8:
-#                 m = 3
-#             elif 6.1 <= v <= 7:
-#                 m = 6
-#
-#             yield m + random() / 10.
-#
-#     xs = linspace(3, 10, 101)
-#     ys = list(multi_peak_generator(xs))
-#     print ys
-#     mxp, mip = find_peaks(ys, lookahead=2, delta=1.5)
-#
-#     plot(xs, ys)
-#     for i, v in mxp:
-#         print i, v, xs[i]
-#         axvline(xs[i])
-#     show()
+    p = find_fine_peak(lambda mi, ma: cumulative_probability(oxs, oes, mi, ma, n=500),
+                       tol=0.001, initial_limits=(5, 15), lookahead=1)
+    print p
+    # xs, ys = cumulative_probability(oxs, oes, 5, 15, n=500)
+    # maxp, minp = find_peaks(ys, xs, lookahead=1)
+    # plt.subplot(211)
+    # plt.plot(xs, ys)
+    #
+    # p = maxp[0][0]
+    # alpha = 0.1
+    # for i in range(5):
+    #     alpha = alpha/2.
+    #     ll, ul = p * (1 - alpha), p * (1 + alpha)
+    #     print 'new limits {} {}'.format(ll, ul)
+    #     rxs, rys = cumulative_probability(oxs, oes, ll, ul, n=500)
+    #     maxp, minp = find_peaks(rys, rxs, lookahead=1)
+    #
+    #     # plt.subplot(212)
+    #     # plt.plot(rxs, rys)
+    #     # plt.ylim(-1, max(rys))
+    #     rp = maxp[0][0]
+    #     print 'coarse peak: {}, fine peak: {}'.format(p, rp)
+    #     p = rp
+    # #     print maxp
+    # #     rp=0
+    # #
+    # #     # plt.axvline(xs[i])
+    # plt.show()
+    # from pylab import *
+    #
+    # def multi_peak_generator(values):
+    #     for v in values:
+    #         m = 0.5
+    #         if 5.5 <= v <= 6:
+    #             m = 3
+    #         elif 7 <= v <= 8:
+    #             m = 6
+    #
+    #         yield m  # + random() / 10.
+    #
+    #
+    # xs = linspace(3, 10, 101)
+    # ys = list(multi_peak_generator(xs))
+    # print ys
+    # mxp, mip = find_peaks(ys, lookahead=2, delta=1.5)
+    #
+    # plot(xs, ys, 'o')
+    # for i, v in mxp:
+    #     print i, v, xs[i]
+    #     axvline(xs[i])
+    # show()
 # ============= EOF =============================================

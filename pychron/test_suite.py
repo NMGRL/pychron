@@ -13,6 +13,7 @@ def suite():
         from pychron.core.helpers.logger_setup import logging_setup
         logging_setup('unittests')
 
+    from pychron.core.stats.tests.peak_detection_test import FinePeakDetectionTestCase, MultiPeakDetectionTestCase
     from pychron.experiment.tests.experiment_identifier import ExperimentIdentifierTestCase
     from pychron.entry.tests.sample_loader import SampleLoaderTestCase
     from pychron.core.helpers.tests.floatfmt import FloatfmtTestCase
@@ -41,7 +42,9 @@ def suite():
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
 
-    tests = (ExperimentIdentifierTestCase,
+    tests = (FinePeakDetectionTestCase,
+             MultiPeakDetectionTestCase,
+             ExperimentIdentifierTestCase,
              SampleLoaderTestCase,
              AnalysisModifierTestCase,
              BackupTestCase,

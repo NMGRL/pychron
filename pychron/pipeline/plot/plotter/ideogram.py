@@ -22,13 +22,12 @@ from enable.colors import ColorTrait
 from pyface.message_dialog import warning
 from traits.api import Array
 # ============= standard library imports ========================
-from numpy import linspace, zeros, ones, array, arange, \
+from numpy import array, arange, \
     Inf, argmax
-from numpy.core.umath import exp
 from numpy import max as np_max
-from math import pi
 # ============= local library imports  ==========================
 from uncertainties import nominal_value
+from pychron.core.stats.probability_curves import cumulative_probability, kernel_density
 from pychron.pipeline.plot.flow_label import FlowPlotLabel
 
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
@@ -415,7 +414,7 @@ class Ideogram(BaseArArFigure):
             # o.x_axis.visible = False
             plot.overlays.append(o)
 
-            cfunc = lambda x1, x2: self._cumulative_probability(self.xs, self.xes, x1, x2)
+            cfunc = lambda x1, x2: cumulative_probability(self.xs, self.xes, x1, x2, n=N)
             xs, ys, xmi, xma = self._calculate_asymptotic_limits(cfunc,
                                                                  # asymptotic_width=10,
                                                                  tol=self.options.asymptotic_height_percent)
@@ -686,11 +685,11 @@ class Ideogram(BaseArArFigure):
         opt = self.options
 
         if opt.probability_curve_kind == 'kernel':
-            return self._kernel_density(ages, errors, xmi, xma)
+            return kernel_density(ages, errors, xmi, xma, n=N)
 
         else:
             if opt.use_asymptotic_limits and calculate_limits:
-                cfunc = lambda x1, x2: self._cumulative_probability(ages, errors, x1, x2)
+                cfunc = lambda x1, x2: cumulative_probability(ages, errors, x1, x2, n=N)
                 # bins,probs=cfunc(xmi,xma)
                 # wa = self.analysis_group.weighted_age
                 # m, e = nominal_value(wa), std_dev(wa)
@@ -701,38 +700,7 @@ class Ideogram(BaseArArFigure):
 
                 return bins, probs
             else:
-                return self._cumulative_probability(ages, errors, xmi, xma)
-
-    def _kernel_density(self, ages, errors, xmi, xma):
-        from scipy.stats.kde import gaussian_kde
-
-        pdf = gaussian_kde(ages)
-        x = linspace(xmi, xma, N)
-        y = pdf(x)
-
-        return x, y
-
-    def _cumulative_probability(self, ages, errors, xmi, xma):
-        bins = linspace(xmi, xma, N)
-        probs = zeros(N)
-
-        for ai, ei in zip(ages, errors):
-            if abs(ai) < 1e-10 or abs(ei) < 1e-10:
-                continue
-
-            # calculate probability curve for ai+/-ei
-            # p=1/(2*pi*sigma2) *exp (-(x-u)**2)/(2*sigma2)
-            # see http://en.wikipedia.org/wiki/Normal_distribution
-            ds = (ones(N) * ai - bins) ** 2
-            es = ones(N) * ei
-            es2 = 2 * es * es
-            gs = (es2 * pi) ** -0.5 * exp(-ds / es2)
-
-            # cumulate probabilities
-            # numpy element_wise addition
-            probs += gs
-
-        return bins, probs
+                return cumulative_probability(ages, errors, xmi, xma, n=N)
 
     def _calculate_nominal_xlimits(self):
         return self.min_x(self.options.index_attr), self.max_x(self.options.index_attr)
