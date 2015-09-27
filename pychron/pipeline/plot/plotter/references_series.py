@@ -323,6 +323,7 @@ class ReferencesSeries(BaseSeries):
             p_uys, p_ues = self.set_interpolated_values(iso, reg, fit)
             scatter.value.set_data(p_uys)
             scatter.yerror.set_data(p_ues)
+            scatter._layout_needed = True
 
     def reference_data(self, po):
         rs = self._get_reference_data(po)
@@ -425,6 +426,7 @@ class ReferencesSeries(BaseSeries):
                   marker=po.marker,
                   marker_size=po.marker_size, )
 
+        update_meta_func = None
         if efit in ['preceding', 'bracketing interpolate', 'bracketing average']:
             reg = InterpolationRegressor(xs=r_xs,
                                          ys=r_ys,
@@ -435,6 +437,8 @@ class ReferencesSeries(BaseSeries):
                                            type='scatter',
                                            fit=False,
                                            **kw)
+            update_meta_func = lambda a, b, c, d: self.update_interpolation_regressor(reg, a, b, c, d)
+
             self._add_error_bars(scatter, r_es, 'y', self.options.nsigma, True)
         else:
             _, scatter, l = graph.new_series(r_xs, r_ys,
@@ -450,6 +454,7 @@ class ReferencesSeries(BaseSeries):
                     'Rel. Time: {:0.4f}'.format(x))
 
         self._add_scatter_inspector(scatter,
+                                    update_meta_func=update_meta_func,
                                     add_selection=True,
                                     additional_info=af,
                                     items=self.sorted_references)
@@ -462,5 +467,12 @@ class ReferencesSeries(BaseSeries):
 
     def _set_interpolated_values(self, iso, fit, ans, p_uys, p_ues):
         pass
+
+    def update_interpolation_regressor(self, reg, obj, name, old, new):
+        sel = self._filter_metadata_changes(obj, lambda x: x, self.sorted_references)
+        reg.user_excluded = sel
+        key = 'Unknowns-predicted0'
+        for plotobj in self.graph.plots:
+            self._set_values(plotobj, reg, key)
 
 # ============= EOF =============================================

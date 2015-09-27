@@ -535,8 +535,8 @@ class BaseArArFigure(HasTraits, SelectionFigure):
                                index_tag=None,
                                index_attr=None,
                                convert_index=None,
-                               items=None
-                               ):
+                               items=None,
+                               update_meta_func=None):
         if add_tool:
             broadcaster = BroadcasterTool()
             scatter.tools.append(broadcaster)
@@ -569,9 +569,10 @@ class BaseArArFigure(HasTraits, SelectionFigure):
 
             scatter.overlays.append(pinspector_overlay)
             broadcaster.tools.append(point_inspector)
-
+            if update_meta_func is None:
+                update_meta_func = self.update_graph_metadata
             # u = lambda a, b, c, d: self.update_graph_metadata(a, b, c, d)
-            scatter.index.on_trait_change(self.update_graph_metadata, 'metadata_changed')
+            scatter.index.on_trait_change(update_meta_func, 'metadata_changed')
 
     def update_graph_metadata(self, obj, name, old, new):
         pass

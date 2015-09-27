@@ -208,23 +208,23 @@ class Series(BaseSeries):
         else:
             return super(Series, self)._unpack_attr(attr)
 
-    def update_graph_metadata(self, obj, name, old, new):
-        sorted_ans = self.sorted_analyses
-        if obj:
-            hover = obj.metadata.get('hover')
-            if hover:
-                hoverid = hover[0]
-                try:
-                    self.selected_analysis = sorted_ans[hoverid]
-
-                except IndexError, e:
-                    print 'asaaaaa', e
-                    return
-            else:
-                self.selected_analysis = None
-
-            sel = self._filter_metadata_changes(obj, lambda x: x, sorted_ans)
-            print sel
+            # def update_graph_metadata(self, obj, name, old, new):
+            #     sorted_ans = self.sorted_analyses
+            #     if obj:
+            #         hover = obj.metadata.get('hover')
+            #         if hover:
+            #             hoverid = hover[0]
+            #             try:
+            #                 self.selected_analysis = sorted_ans[hoverid]
+            #
+            #             except IndexError, e:
+            #                 print 'asaaaaa', e
+            #                 return
+            #         else:
+            #             self.selected_analysis = None
+            #
+            #         sel = self._filter_metadata_changes(obj, lambda x: x, sorted_ans)
+            #         print 'ssss', sel
             # self._set_renderer_selection()
             # self._set_selected(sorted_ans, sel)
             # set the temp_status for all the analyses
