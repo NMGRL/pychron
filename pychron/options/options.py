@@ -146,9 +146,12 @@ class MainOptions(SubOptions):
         return cols
 
     def _get_edit_view(self):
-        v = View(VGroup(Item('name', editor=EnumEditor(name='names')),
-                        Item('marker', editor=EnumEditor(values=marker_names)),
-                        Item('marker_size'),
+        v = View(VGroup(HGroup(Item('name', editor=EnumEditor(name='names')),
+                               Item('scale', editor=EnumEditor(values=['linear', 'log']))),
+                        Item('height'),
+                        HGroup(UItem('marker', editor=EnumEditor(values=marker_names)),
+                               Item('marker_size', label='Size'),
+                               show_border=True, label='Marker'),
                         HGroup(Item('ymin', label='Min'),
                                Item('ymax', label='Max'),
                                show_border=True,

@@ -39,14 +39,15 @@ class FluxSubOptions(SubOptions):
         grp = VGroup(Item('plot_kind'),
                      twodgrp,
                      onedgrp,
-                     Item('selected_decay', label='Total K Decay'),
-                     Readonly('lambda_k'),
+                     Item('selected_decay', label='Decay Const.'),
+                     Readonly('lambda_k', label=u'Total \u03BB K'),
                      Item('monitor_age'),
                      Item('predicted_j_error_type', ),
                      Item('use_weighted_fit', ),
                      Item('monte_carlo_ntrials', ),
                      Item('use_monte_carlo', ),
-                     label='Fits')
+                     label='Fits',
+                     show_border=True)
 
         v = View(grp)
         return v

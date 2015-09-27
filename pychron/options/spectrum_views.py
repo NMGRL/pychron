@@ -147,6 +147,16 @@ class SpectrumMainOptions(MainOptions):
 
         return cols
 
+    def _get_edit_view(self):
+        v = View(VGroup(HGroup(Item('name', editor=EnumEditor(name='names')),
+                               Item('scale', editor=EnumEditor(values=['linear', 'log']))),
+                        Item('height'),
+                        HGroup(Item('ymin', label='Min'),
+                               Item('ymax', label='Max'),
+                               show_border=True,
+                               label='Y Limits'),
+                        show_border=True))
+        return v
 
 VIEWS = {}
 VIEWS['main'] = SpectrumMainOptions

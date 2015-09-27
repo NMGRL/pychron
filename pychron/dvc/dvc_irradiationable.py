@@ -35,7 +35,8 @@ class DVCIrradiationable(Loggable):
     def verify_database_connection(self, inform=True):
         # return self.dvc.initialize(inform)
         self.debug('Verify database connection')
-        return self.dvc.db.connect(warn=inform)
+
+        return self.dvc.initialize(inform)
 
     def load(self):
         pass
@@ -62,7 +63,7 @@ class DVCIrradiationable(Loggable):
             with self.dvc.db.session_ctx():
                 irrad = self.dvc.db.get_irradiation(self.irradiation)
                 if irrad:
-                    names = [li.name for li in irrad.levels]
+                    names = sorted([li.name for li in irrad.levels])
                     if names:
                         self.level = names[0]
                     return names

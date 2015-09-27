@@ -238,12 +238,6 @@ class FitFluxNode(FitNode):
     def _options_view_default(self):
         return view('Flux Options')
 
-    # options = Instance(FluxOptions, ())
-
-    # def configure(self, refresh=True):
-    #
-    #     return True
-
     def run(self, state):
         editor = super(FitFluxNode, self).run(state)
         if not editor:
@@ -253,49 +247,11 @@ class FitFluxNode(FitNode):
         self.name = 'Fit Flux {}'.format(state.irradiation, state.level)
         geom = state.geometry
         monitors = state.flux_monitors
-        # editor.analyses = monitors
-        # monitor_positions = []
+
         if monitors:
             lk = self.plotter_options.lambda_k
             state.decay_constants = {'lambda_k_total': lk, 'lambda_k_total_error': 0}
-            # editor = FluxResultsEditor(options=self.options,
-            #                            plotter_options=self.plotter_options)
 
-            # poss = []
-            # for identifier, ais in groupby(sorted(monitors, key=key), key=key):
-            #     ais = list(ais)
-            #     n = len(ais)
-            #
-            #     ref = ais[0]
-            #     j = ref.j
-            #     ip = ref.irradiation_position
-            #     sample = ref.sample
-            #
-            #     x, y, r, idx = geom[ip - 1]
-            #     # mj = mean_j(ais, ek, monage, lk)
-            #
-            #     p = FluxPosition(identifier=identifier,
-            #                      irradiation=state.irradiation,
-            #                      level=state.level,
-            #                      sample=sample, hole_id=ip,
-            #                      saved_j=nominal_value(j),
-            #                      saved_jerr=std_dev(j),
-            #                      # mean_j=nominal_value(mj),
-            #                      # mean_jerr=std_dev(mj),
-            #                      error_kind=ek,
-            #                      monitor_age=monage,
-            #                      analyses=ais,
-            #                      lambdak=lk,
-            #                      x=x, y=y,
-            #                      n=n)
-            #     p.set_mean_j()
-            #     poss.append(p)
-
-            # for unk_pos in state.unknown_positions:
-            # print unk_pos
-
-            # print identifier, irradiation_position, j, mj, n
-            # editor.add_position(identifier, ip, sample, j, mj, n)
             editor.plotter_options = self.plotter_options
             editor.geometry = geom
             editor.irradiation = state.irradiation
@@ -304,12 +260,5 @@ class FitFluxNode(FitNode):
             editor.set_positions(monitors, state.unknown_positions)
             state.saveable_irradiation_positions = editor.monitor_positions + state.unknown_positions
             editor.predict_values()
-
-            # if self.has_save_node and self.plotter_options.confirm_save:
-            #     if confirmation_dialog('Would you like to review the flux fits before saving?'):
-            # state.veto = self
-
-            # state.editors.append(editor)
-            # state.prev_node_label = 'Flux'
 
 # ============= EOF =============================================

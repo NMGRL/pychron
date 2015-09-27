@@ -271,6 +271,11 @@ class ReferencesSeries(BaseSeries):
         key = key.format(0)
         for plotobj, reg in new:
             if isinstance(reg, BaseRegressor):
+
+                excluded = reg.get_excluded()
+                for i, r in enumerate(self.sorted_references):
+                    r.temp_status = 1 if i in excluded else 0
+
                 self._set_values(plotobj, reg, key)
 
     def _calc_limits(self, ys, ye):
@@ -361,9 +366,9 @@ class ReferencesSeries(BaseSeries):
             else:
                 p, scatter, l = args
 
-            sel = scatter.index.metadata.get('selections', [])
+            # sel = scatter.index.metadata.get('selections', [])
             # sel += omits
-            scatter.index.metadata['selections'] = list(set(sel))
+            # scatter.index.metadata['selections'] = list(set(sel))
 
             def af(i, x, y, analysis):
                 v, e = self._get_interpolated_value(po, analysis)
@@ -429,27 +434,15 @@ class ReferencesSeries(BaseSeries):
                                            yerror=r_es,
                                            type='scatter',
                                            fit=False,
-                                           **kw
-                                           )
-            # self._add_inspector(s, self.sorted_references)
+                                           **kw)
             self._add_error_bars(scatter, r_es, 'y', self.options.nsigma, True)
-            # series_id = (series_id+1) * 2
         else:
-
-            # series_id = (series_id+1) * 3
             _, scatter, l = graph.new_series(r_xs, r_ys,
-                                             # display_index=ArrayDataSource(data=display_xs),
                                              yerror=ArrayDataSource(data=r_es),
                                              fit='{}_{}'.format(po.fit, po.error_type),
                                              **kw)
-            # print self.graph, po.fit, args
-            # print l
             if hasattr(l, 'regressor'):
                 reg = l.regressor
-
-                # l.regression_bounds = regression_bounds
-
-                # self._add_inspector(s, self.sorted_references)
             self._add_error_bars(scatter, r_es, 'y', self.options.nsigma, True)
 
         def af(i, x, y, analysis):
@@ -463,8 +456,8 @@ class ReferencesSeries(BaseSeries):
         plot = self.graph.plots[pid]
         plot.isotope = po.name
         plot.fit = '{}_{}'.format(po.fit, po.error_type)
-        # scatter.index.on_trait_change(self._update_metadata, 'metadata_changed')
 
+        scatter.index.metadata['selections'] = [i for i, r in enumerate(self.sorted_references) if r.temp_status]
         return reg, ymi, yma
 
     def _set_interpolated_values(self, iso, fit, ans, p_uys, p_ues):

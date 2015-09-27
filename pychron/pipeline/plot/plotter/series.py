@@ -224,6 +224,7 @@ class Series(BaseSeries):
                 self.selected_analysis = None
 
             sel = self._filter_metadata_changes(obj, lambda x: x, sorted_ans)
+            print sel
             # self._set_renderer_selection()
             # self._set_selected(sorted_ans, sel)
             # set the temp_status for all the analyses

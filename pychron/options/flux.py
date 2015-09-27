@@ -20,18 +20,18 @@ from traits.api import List, Str, Int, Enum, Float, Property, Bool
 # ============= local library imports  ==========================
 from pychron.options.flux_views import VIEWS
 from pychron.options.options import FigureOptions
-from pychron.pychron_constants import K_DECAY_CONSTANTS, ERROR_TYPES
+from pychron.pychron_constants import FLUX_CONSTANTS, ERROR_TYPES
 
 
 class FluxOptions(FigureOptions):
-    subview_names = List(['Main'])
+    subview_names = List(['Main', 'Appearance'], transient=True)
     color_map_name = Str('jet')
     marker_size = Int(5)
     levels = Int(50, auto_set=False, enter_set=True)
 
     error_kind = Str('SD')
 
-    selected_decay = Enum(K_DECAY_CONSTANTS.keys())
+    selected_decay = Enum(FLUX_CONSTANTS.keys())
     monitor_age = Float(28.201)
     lambda_k = Property(depends_on='selected_decay')
 
@@ -43,8 +43,11 @@ class FluxOptions(FigureOptions):
     monitor_sample_name = Str
     plot_kind = Enum('1D', '2D')
 
+    def _selected_decay_changed(self, new):
+        self.monitor_age = FLUX_CONSTANTS[new][4]
+
     def _get_lambda_k(self):
-        dc = K_DECAY_CONSTANTS[self.selected_decay]
+        dc = FLUX_CONSTANTS[self.selected_decay]
         return dc[0] + dc[2]
 
     def get_subview(self, name):

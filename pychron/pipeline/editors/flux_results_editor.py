@@ -561,6 +561,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
 
         cols = [
             column(klass=CheckboxColumn, name='use', label='Use', editable=True, width=30),
+            column(klass=CheckboxColumn, name='save', label='Save', editable=True, width=30),
             column(name='hole_id', label='Hole'),
             column(name='identifier', label='Identifier'),
             column(name='sample', label='Sample', width=115),
@@ -596,10 +597,10 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
                    format_func=lambda x: floatfmt(x, n=2) if x else ''),
             column(name='dev', label='dev',
                    format='%0.2f',
-                   width=70),
-            column(klass=CheckboxColumn, name='save', label='Save', editable=True, width=30)]
+                   width=70)]
 
         unk_cols = [column(klass=CheckboxColumn, name='use', label='Use', editable=True, width=30),
+                    column(klass=CheckboxColumn, name='save', label='Save', editable=True, width=30),
                     column(name='hole_id', label='Hole'),
                     column(name='identifier', label='Identifier'),
                     column(name='sample', label='Sample', width=115),
@@ -622,8 +623,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
                            format_func=lambda x: floatfmt(x, n=2) if x else ''),
                     column(name='dev', label='dev',
                            format='%0.2f',
-                           width=70),
-                    column(klass=CheckboxColumn, name='save', label='Save', editable=True, width=30)]
+                           width=70)]
         mon_editor = TableEditor(columns=cols, sortable=False,
                                  reorderable=False)
 

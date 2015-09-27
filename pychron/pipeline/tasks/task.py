@@ -34,8 +34,8 @@ from pychron.pipeline.plot.editors.interpreted_age_editor import InterpretedAgeE
 from pychron.pipeline.save_figure import SaveFigureView, SaveFigureModel
 from pychron.pipeline.state import EngineState
 from pychron.pipeline.tasks.actions import RunAction, SavePipelineTemplateAction, ResumeAction, ResetAction, \
-    ConfigureRecallAction, GitRollbackAction, TagAction, SetInterpretedAgeAction, ClearAction, RunFromAction, \
-    SavePDFAction, SaveFigureAction, SetInvalidAction
+    ConfigureRecallAction, TagAction, SetInterpretedAgeAction, ClearAction, SavePDFAction, SaveFigureAction, \
+    SetInvalidAction
 from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane
 from pychron.envisage.browser.browser_task import BaseBrowserTask
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
@@ -62,7 +62,7 @@ class PipelineTask(BaseBrowserTask):
     engine = Instance(PipelineEngine)
     tool_bars = [SToolBar(RunAction(),
                           ResumeAction(),
-                          RunFromAction(),
+                          # RunFromAction(),
                           ResetAction(),
                           ClearAction(),
                           ConfigureRecallAction(),
@@ -70,7 +70,7 @@ class PipelineTask(BaseBrowserTask):
                  SToolBar(SavePDFAction(),
                           SaveFigureAction(),
                           label='Save Toolbar'),
-                 SToolBar(GitRollbackAction(), label='Git Toolbar'),
+                 # SToolBar(GitRollbackAction(), label='Git Toolbar'),
                  SToolBar(TagAction(),
                           SetInvalidAction(),
                           SetInterpretedAgeAction(),
@@ -98,13 +98,13 @@ class PipelineTask(BaseBrowserTask):
         self.engine.select_default()
         # self.engine.set_template('iso_evo')
         # self.engine.set_template('diff')
-        self.engine.set_template('ideogram')
+        # self.engine.set_template('ideogram')
         # self.engine.set_template('csv_ideogram')
         # self.engine.set_template('spectrum')
         # self.engine.set_template('gain')
         # self.engine.set_template('series')
         # self.engine.set_template('icfactor')
-        # self.engine.set_template('blanks')
+        self.engine.set_template('blanks')
         # self.engine.set_template('flux')
         # self.engine.set_template('inverse_isochron')
 
