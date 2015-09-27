@@ -41,7 +41,7 @@ setup(name='pychron',
                 'pychron.pyscripts',
 
                 # test packages
-                'pychron.cores.stats.tests',
+                'pychron.core.stats.tests',
                 'pychron.core.regression.tests',
                 'pychron.processing.tests',
                 'pychron.external_pipette.tests',
