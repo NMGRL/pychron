@@ -27,15 +27,14 @@ from chaco.ticks import DefaultTickGenerator
 # from numpy import log10
 # ============= local library imports  ==========================
 class IntTickGenerator(DefaultTickGenerator):
-    interval = Int
-
     def get_ticks(self, data_low, data_high, bounds_low,
                   bounds_high, interval, use_endpoints=False,
                   scale='linear'):
         ticks = super(IntTickGenerator, self).get_ticks(data_low, data_high, bounds_low,
-                                                        bounds_high, self.interval, use_endpoints=use_endpoints,
+                                                        bounds_high, interval, use_endpoints=use_endpoints,
                                                         scale=scale)
-
+        # filter out non integer ticks
+        ticks = filter(lambda x: x % 1 == 0, ticks)
         return ticks
 
 

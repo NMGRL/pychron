@@ -24,6 +24,8 @@
 """
 from numpy import Inf, isscalar, array, argmax, polyfit
 
+from pychron.core.codetools.simple_timeit import timethis
+
 
 def _datacheck_peakdetect(x_axis, y_axis):
     if x_axis is None:
@@ -187,10 +189,13 @@ def find_fine_peak(func, initial_limits=(0, 1), tol=1, **find_peak_kw):
 
 
 class PeakCenterError(BaseException):
-    pass
+    def __init__(self, *args, **kw):
+        super(PeakCenterError, self).__init__(*args)
+        self.low_pos_error = kw.get('low_pos_error')
+        self.high_pos_error = kw.get('high_pos_error')
 
 
-def calculate_peak_center(x, y, min_peak_height=1.0, percent=80):
+def calculate_peak_center(x, y, test_peak_flat=True, min_peak_height=1.0, percent=80):
     """
         returns: 1. error string
                     or
@@ -211,13 +216,13 @@ def calculate_peak_center(x, y, min_peak_height=1.0, percent=80):
     for i in range(max_i, max_i - 50, -1):
         # this prevent looping around to the end of the list
         if i < 1:
-            raise PeakCenterError('PeakCenterError: could not find a low pos')
+            raise PeakCenterError('PeakCenterError: could not find a low pos', low_pos_error=True)
 
         try:
             if y[i] < (ma * (1 - percent / 100.)):
                 break
         except IndexError:
-            raise PeakCenterError('PeakCenterError: could not find a low pos')
+            raise PeakCenterError('PeakCenterError: could not find a low pos', low_pos_error=True)
 
     xstep = (x[i] - x[i - 1]) / 2.
     lx = x[i] - xstep
@@ -229,7 +234,7 @@ def calculate_peak_center(x, y, min_peak_height=1.0, percent=80):
             if y[i] < (ma * (1 - percent / 100.)):
                 break
         except IndexError:
-            raise PeakCenterError('PeakCenterError: could not find a high pos')
+            raise PeakCenterError('PeakCenterError: could not find a high pos', high_pos_error=True)
 
     try:
         hx = x[i + 1] - xstep
@@ -242,17 +247,17 @@ def calculate_peak_center(x, y, min_peak_height=1.0, percent=80):
 
     cx = (hx + lx) / 2.0
     cy = ma
+    if test_peak_flat:
+        # find index in x closest to cx
+        ccx = abs(x - cx).argmin()
+        # check to see if were on a plateau
+        yppts = y[ccx - 2:ccx + 2]
 
-    # find index in x closest to cx
-    ccx = abs(x - cx).argmin()
-    # check to see if were on a plateau
-    yppts = y[ccx - 2:ccx + 2]
+        slope, _ = polyfit(range(len(yppts)), yppts, 1)
+        std = yppts.std()
 
-    slope, _ = polyfit(range(len(yppts)), yppts, 1)
-    std = yppts.std()
-
-    if std > 5 and abs(slope) < 1:
-        raise PeakCenterError('No peak plateau std = {} (>5) slope = {} (<1)'.format(std, slope))
+        if std > 5 and abs(slope) < 1:
+            raise PeakCenterError('No peak plateau std = {} (>5) slope = {} (<1)'.format(std, slope))
 
     return [lx, cx, hx], [ly, cy, hy], mx, my
 
@@ -265,9 +270,34 @@ if __name__ == '__main__':
     oxs = [10, 10, 10]
     oes = [0.1, 0.1, 0.1]
 
-    p = find_fine_peak(lambda mi, ma: cumulative_probability(oxs, oes, mi, ma, n=500),
-                       tol=0.001, initial_limits=(5, 15), lookahead=1)
+    # p = find_fine_peak(lambda mi, ma: cumulative_probability(oxs, oes, mi, ma, n=500),
+    #                    tol=0.001, initial_limits=(5, 15), lookahead=1)
+    p = timethis(find_fine_peak, args=(lambda mi, ma: cumulative_probability(oxs, oes, mi, ma, n=500),),
+                 kwargs=dict(tol=0.001, initial_limits=(5, 15), lookahead=1))
     print p
+
+    ll = 5
+    ul = 15
+
+    cp = None
+    for i in range(10):
+        print ll, ul
+        xs, ys = cumulative_probability(oxs, oes, ll, ul, n=500)
+        try:
+            cp = calculate_peak_center(xs, ys, test_peak_flat=False)
+            break
+        except PeakCenterError, e:
+            print e
+            if e.low_pos_error:
+                ll *= 0.5
+            elif e.high_pos_error:
+                ul *= 1.5
+            else:
+                break
+
+    print cp
+
+
     # xs, ys = cumulative_probability(oxs, oes, 5, 15, n=500)
     # maxp, minp = find_peaks(ys, xs, lookahead=1)
     # plt.subplot(211)

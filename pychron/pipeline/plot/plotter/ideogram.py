@@ -306,7 +306,7 @@ class Ideogram(BaseArArFigure):
             self._add_point_labels(scatter)
 
         # set tick generator
-        gen = IntTickGenerator(interval=-5)
+        gen = IntTickGenerator()
         plot.y_axis.tick_generator = gen
         plot.y_grid.tick_generator = gen
 
@@ -456,7 +456,7 @@ class Ideogram(BaseArArFigure):
             func = lambda mi, ma: cumulative_probability(ages, errors, mi, ma, n=N)
             limits = (age * 0.99, age * 1.01)
             p = find_fine_peak(func=func, initial_limits=limits, tol=0.001, lookahead=1)
-            label = DataLabel(line,
+            label = PeakLabel(line,
                               data_point=(p, relative_prob),
                               label_text=floatfmt(p, n=3),
                               border_visible=False,
@@ -593,11 +593,15 @@ class Ideogram(BaseArArFigure):
             # print a, i not in sel, sel
             return i not in sel
 
-        d = zip(self.xs, self.xes)
-        oxs, oxes = zip(*d)
-        d = filter(f, enumerate(d))
-        if d:
-            fxs, fxes = zip(*[(a, b) for _, (a, b) in d])
+        # d = zip(self.xs, self.xes)
+        # oxs, oxes = zip(*d)
+        # d = filter(f, enumerate(d))
+
+        _, fxs = zip(*filter(f, enumerate(self.xs)))
+        _, fxes = zip(*filter(f, enumerate(self.xes)))
+        n = len(fxs)
+        if n:
+            # fxs, fxes = zip(*[(a, b) for _, (a, b) in d])
 
             xs, ys = self._calculate_probability_curve(fxs, fxes)
             wm, we, mswd, valid_mswd = self._calculate_stats(xs, ys)
@@ -605,14 +609,7 @@ class Ideogram(BaseArArFigure):
             lp.value.set_data(ys)
             lp.index.set_data(xs)
 
-            # sp.index.set_data([wm])
-            # sp.xerror.set_data([we])
-
-            # mi = min(ys)
-            # ma = max(ys)
-            # self._set_y_limits(mi, ma, min_=0)
-
-            n = len(fxs)
+            # n = len(fxs)
             total_n = self.xs.shape[0]
             for ov in lp.overlays:
                 if isinstance(ov, MeanIndicatorOverlay):
@@ -627,6 +624,9 @@ class Ideogram(BaseArArFigure):
                                                                percent_error=self.options.display_percent_error,
                                                                sig_figs=self.options.mean_sig_figs)
 
+            lp.overlays = [o for o in lp.overlays if not isinstance(o, PeakLabel)]
+            self._add_peak_labels(lp, fxs, fxes)
+
             # update the data label position
             # for ov in sp.overlays:
             # if isinstance(ov, DataLabel):
@@ -637,9 +637,9 @@ class Ideogram(BaseArArFigure):
 
             if sel:
                 dp.visible = True
-                xs, ys = self._calculate_probability_curve(oxs, oxes)
-                dp.value.set_data(ys)
-                dp.index.set_data(xs)
+                # xs, ys = self._calculate_probability_curve(oxs, oxes)
+                # dp.value.set_data(ys)
+                # dp.index.set_data(xs)
             else:
                 dp.visible = False
         graph.redraw()
