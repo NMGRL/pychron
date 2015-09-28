@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
+from pympler import tracker
 from traits.api import Event, Button, String, Bool, Enum, Property, Instance, Int, List, Any, Color, Dict, \
     on_trait_change, Long, Float, Str
 from pyface.constant import CANCEL, YES, NO
@@ -614,14 +615,16 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         mem_log('> end join')
 
     def _do_run(self, run):
+        print 'pre run'
+        memory_tracker = tracker.SummaryTracker()
+        memory_tracker.print_diff()
+
         st = time.time()
 
         self.debug('do run')
 
         if self.stats:
             self.stats.start_run(run)
-
-        mem_log('< start')
 
         run.state = 'not run'
 
@@ -676,12 +679,13 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if self.labspy_enabled:
             self.labspy_client.add_run(run, self.experiment_queue)
 
-        mem_log('end run')
         if self.stats:
             self.stats.finish_run()
             if run.state == 'success':
                 self.stats.update_run_duration(run, t)
                 self.stats.calculate()
+        print 'post run'
+        tracker.print_diff()
 
     def _overlapped_run(self, v):
         self._overlapping = True

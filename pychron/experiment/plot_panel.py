@@ -92,8 +92,8 @@ class PlotPanel(Loggable):
 
     arar_age = Instance(ArArAge)
 
-    isotope_graph = Instance(Graph, ())
-    peak_center_graph = Instance(Graph, ())
+    isotope_graph = Instance(Graph)
+    peak_center_graph = Instance(Graph)
     selected_graph = Any
 
     graphs = Tuple
@@ -130,6 +130,7 @@ class PlotPanel(Loggable):
     # refresh_age = True
 
     def set_peak_center_graph(self, graph):
+        graph.page_name = 'Peak Center'
         self.peak_center_graph = graph
         self.show_graph(graph)
 
@@ -228,14 +229,14 @@ class PlotPanel(Loggable):
     # ===============================================================================
     # handlers
     # ===============================================================================
-    @on_trait_change('isotope_graph, peak_center_graph')
-    def _update_graphs(self):
-        if self.isotope_graph and self.peak_center_graph:
-            g, p = self.isotope_graph, self.peak_center_graph
-
-            g.page_name = 'Isotopes'
-            p.page_name = 'Peak Center'
-            self.graphs = [g, p]
+    # @on_trait_change('isotope_graph, peak_center_graph')
+    # def _update_graphs(self):
+    #     if self.isotope_graph and self.peak_center_graph:
+    #         g, p = self.isotope_graph, self.peak_center_graph
+    #
+    #         g.page_name = 'Isotopes'
+    #         p.page_name = 'Peak Center'
+    #         self.graphs = [g, p]
 
     def _plot_title_changed(self, new):
         self.graph_container.label = new

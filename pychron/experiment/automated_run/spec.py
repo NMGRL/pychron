@@ -330,41 +330,18 @@ class AutomatedRunSpec(HasTraits):
 
         return [get_attr(ai) for ai in attrs]
 
-    # def _get_run_attrs(self):
-    #     return ('labnumber', 'aliquot', 'step',
-    #             'extract_value', 'extract_units', 'ramp_duration',
-    #             'position', 'duration', 'cleanup', 'collection_time_zero_offset',
-    #             'pattern',
-    #             'beam_diameter',
-    #             'truncate_condition',
-    #             'syn_extraction',
-    #             'mass_spectrometer', 'extract_device',
-    #             'analysis_type',
-    #             'sample', 'irradiation', 'username', 'comment', 'skip', 'end_after')
-
     # ===============================================================================
     # handlers
     # ===============================================================================
-    #     @on_trait_change('automated_run:state')
-    #     def _update_state(self, new):
-    #         self.state = new
-
-    #     def _update_aliquot(self, new):
-    #         print 'upda', new
-    #         self.aliquot = new
-
     @on_trait_change('''measurement_script, post_measurement_script,
-    post_equilibration_script, extraction_script, script_options''')
-    def _script_changed(self, name, new):
+post_equilibration_script, extraction_script, script_options,
+extract_+, position, duration, cleanup''')
+    def _change_handler(self, name, new):
         if new == 'None':
             #            self.trait_set(trait_change_notify=False, **{name: ''})
             self.trait_set(**{name: ''})
         else:
             self._changed = True
-
-    @on_trait_change('''extract_+, position, duration, cleanup ''')
-    def _extract_changed(self):
-        self._changed = True
 
     # ===============================================================================
     # property get/set
