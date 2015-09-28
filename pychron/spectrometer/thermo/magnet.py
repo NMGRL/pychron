@@ -41,7 +41,7 @@ class ArgusMagnet(BaseMagnet, SpectrometerDevice):
     # ===============================================================================
     # ##positioning
     # ===============================================================================
-    def set_dac(self, v, verbose=False, settling_time=None):
+    def set_dac(self, v, verbose=True, settling_time=None):
         self.debug('setting magnet DAC')
         self.debug('current  : {:0.6f}'.format(self._dac))
         self.debug('requested: {:0.6f}'.format(v))
@@ -57,10 +57,10 @@ class ArgusMagnet(BaseMagnet, SpectrometerDevice):
             self.debug('Checking detector protection. dv={:0.5f}'.format(dv))
             for pd in self.protected_detectors:
                 det = self.spectrometer.get_detector(pd)
-                self.debug('Checking detector "{}". Protection Threshold: {}'.format(pd, det.protection_threshold))
+                self.debug('Checking detector "{}". Protection Threshold: {} (V)'.format(pd, det.protection_threshold))
                 if det.protection_threshold and dv > det.protection_threshold:
                     self.ask('ProtectDetector {},On'.format(pd), verbose=verbose)
-                    self.ask('GetDeflection {}'.format(pd, verbose=verbose))
+                    self.ask('GetDeflection {}'.format(pd), verbose=verbose)
                     unprotect.append(pd)
 
         if self.use_beam_blank:
@@ -80,8 +80,8 @@ class ArgusMagnet(BaseMagnet, SpectrometerDevice):
             st = time.time()
             if unprotect:
                 for d in unprotect:
-                    self.ask('ProtectDetector {},Off'.format(d), verbose=v)
-                    self.ask('GetDeflection {}'.format(d, verbose=verbose))
+                    self.ask('ProtectDetector {},Off'.format(d), verbose=verbose)
+                    self.ask('GetDeflection {}'.format(d), verbose=verbose)
 
             if unblank:
                 self.ask('BlankBeam False', verbose=verbose)

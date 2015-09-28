@@ -220,8 +220,10 @@ QComboBox {font-size: 10px}
                    spring),
             HGroup(run_factory_item('experiment_identifier',
                                     label='Experiment ID',
+
                                     editor=ComboboxEditor(name=run_factory_name('experiment_identifiers'))),
-                   icon_button_editor(run_factory_name('add_experiment_identifier'), 'add')),
+                   icon_button_editor(run_factory_name('add_experiment_identifier'), 'add'),
+                   enabled_when='0'),
             HGroup(
                 run_factory_item('weight',
                                  label='Weight (mg)',

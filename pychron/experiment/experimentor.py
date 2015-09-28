@@ -152,7 +152,7 @@ class Experimentor(DVCIrradiationable):
         if not dbln:
             return None
         else:
-            project, sample, material, irradiation = '', '', '', ''
+            project, sample, material, irradiation, level, pos = '', '', '', '', '', 0
             sample = dbln.sample
             if sample:
                 if sample.project:
@@ -165,10 +165,12 @@ class Experimentor(DVCIrradiationable):
             dbpos = dbln.irradiation_position
             if dbpos:
                 level = dbpos.level
-                irradiation = '{} {}:{}'.format(level.irradiation.name,
-                                                level.name, dbpos.position)
 
-        return project, sample, material, irradiation
+                irradiation = level.irradiation.name
+                level = level.name
+                pos = dbpos.position
+
+        return project, sample, material, irradiation, level, pos
 
     def _set_analysis_metadata(self):
         cache = dict()
@@ -190,11 +192,14 @@ class Experimentor(DVCIrradiationable):
                     if not info:
                         cache[ln] = dict(identifier_error=True)
                     else:
-                        project, sample, material, irrad = info
+                        project, sample, material, irrad, level, pos = info
 
                         cache[ln] = dict(project=project or '', sample=sample or '',
                                          material=material or '',
-                                         irradiation=irrad or '', identifier_error=False)
+                                         irradiation=irrad or '',
+                                         irradiation_level=level or '',
+                                         irradiation_position=pos or 0,
+                                         identifier_error=False)
 
                 ai.trait_set(**cache[ln])
 

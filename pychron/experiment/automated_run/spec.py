@@ -353,7 +353,7 @@ class AutomatedRunSpec(HasTraits):
     #         print 'upda', new
     #         self.aliquot = new
 
-    @on_trait_change('''measurment_script, post_measurment_script,
+    @on_trait_change('''measurement_script, post_measurement_script,
     post_equilibration_script, extraction_script, script_options''')
     def _script_changed(self, name, new):
         if new == 'None':
