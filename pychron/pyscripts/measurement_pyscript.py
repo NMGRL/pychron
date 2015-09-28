@@ -799,6 +799,9 @@ class MeasurementPyScript(ValvePyScript):
         return self._automated_run_call(lambda: self.automated_run.spec.use_cdd_warming)
 
     # private
+    def _finish(self):
+        self.automated_run = None
+
     def _get_deflection_from_file(self, name):
         config = self._get_config()
         section = 'Deflections'

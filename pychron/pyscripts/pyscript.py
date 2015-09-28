@@ -169,7 +169,7 @@ named_register = makeNamedRegistry(command_register)
 @todo: cancel script if action fails. eg fatal comm. error
 '''
 
-__CACHED_DURATIONS__ = {}
+# __CACHED_DURATIONS__ = {}
 
 
 class PyScript(Loggable):
@@ -247,21 +247,22 @@ class PyScript(Loggable):
             calc_dur()
             return self.get_estimated_duration()
 
-        h = self._generate_ctx_hash(ctx)
+        # h = self._generate_ctx_hash(ctx)
+        calc_dur()
 
         # self.debug('calculate estimated duration force={}, syntax_checked={}'.format(force, self.syntax_checked))
 
-        if force or not self.syntax_checked:
-            calc_dur()
-        else:
-            try:
-                self._get_cached_duration(h)
-                # self.debug('current context in the cached durations')
-            except KeyError:
-                calc_dur()
+        # if force or not self.syntax_checked:
+        #     calc_dur()
+        # else:
+        #     try:
+        #         self._get_cached_duration(h)
+        #         # self.debug('current context in the cached durations')
+        #     except KeyError:
+        #         calc_dur()
 
         d = self.get_estimated_duration()
-        self._update_cached_duration(h, d)
+        # self._update_cached_duration(h, d)
         return d
 
     def traceit(self, frame, event, arg):
@@ -328,14 +329,14 @@ class PyScript(Loggable):
 
             self.testing_syntax = False
 
-    def compile_snippet(self, snippet):
-        try:
-            code = compile(snippet, '<string>', 'exec')
-        except Exception, e:
-            self.debug(traceback.format_exc())
-            return e
-        else:
-            return code
+    # def compile_snippet(self, snippet):
+    #     try:
+    #         code = compile(snippet, '<string>', 'exec')
+    #     except Exception, e:
+    #         self.debug(traceback.format_exc())
+    #         return e
+    #     else:
+    #         return code
 
     def execute_snippet(self, snippet=None, trace=False, argv=None):
         safe_dict = self.get_context()
@@ -363,25 +364,47 @@ class PyScript(Loggable):
                 return MainError
 
         else:
-            # sys.settrace(self._tracer)
-            code_or_err = self.compile_snippet(snippet)
-            if not isinstance(code_or_err, Exception):
-                try:
-                    exec code_or_err in safe_dict
-                    func = safe_dict['main']
-                except KeyError, e:
-                    print 'exception', e, safe_dict.keys()
-                    self.debug('{} {}'.format(e, traceback.format_exc()))
-                    return MainError()
 
-                try:
-                    if argv is None:
-                        argv = tuple()
-                    func(*argv)
-                except Exception, e:
-                    return traceback.format_exc()
-            else:
-                return code_or_err
+            try:
+                code = compile(snippet, '<string>', 'exec')
+            except BaseException, e:
+                self.debug(traceback.format_exc())
+                return e
+
+            try:
+                exec code in safe_dict
+                func = safe_dict['main']
+            except KeyError, e:
+                print 'exception', e, safe_dict.keys()
+                self.debug('{} {}'.format(e, traceback.format_exc()))
+                return MainError()
+
+            try:
+                if argv is None:
+                    argv = tuple()
+                func(*argv)
+            except Exception, e:
+                return traceback.format_exc()
+
+            # sys.settrace(self._tracer)
+            # code_or_err = self.compile_snippet(snippet)
+            # if not isinstance(code_or_err, Exception):
+            #     try:
+            #         exec code_or_err in safe_dict
+            #         func = safe_dict['main']
+            #     except KeyError, e:
+            #         print 'exception', e, safe_dict.keys()
+            #         self.debug('{} {}'.format(e, traceback.format_exc()))
+            #         return MainError()
+            #
+            #     try:
+            #         if argv is None:
+            #             argv = tuple()
+            #         func(*argv)
+            #     except Exception, e:
+            #         return traceback.format_exc()
+            # else:
+            #     return code_or_err
 
     def syntax_ok(self, warn=True):
         try:
@@ -456,7 +479,8 @@ class PyScript(Loggable):
         return []
 
     def get_commands(self):
-        return self.get_command_register() + command_register.commands.items()
+        cmds = self.get_command_register() + command_register.commands.items()
+        return cmds
 
     def get_command_register(self):
         return []
@@ -886,16 +910,16 @@ class PyScript(Loggable):
         h = sha1.hexdigest()
         return h
 
-    def _update_cached_duration(self, h, d):
-        global __CACHED_DURATIONS__
-        if len(__CACHED_DURATIONS__) > 100:
-            self.debug('clearing global cached durations dict')
-            __CACHED_DURATIONS__ = {}
-
-        __CACHED_DURATIONS__[h] = d
-
-    def _get_cached_duration(self, h):
-        return __CACHED_DURATIONS__[h]
+    # def _update_cached_duration(self, h, d):
+    #     global __CACHED_DURATIONS__
+    #     if len(__CACHED_DURATIONS__) > 100:
+    #         self.debug('clearing global cached durations dict')
+    #         __CACHED_DURATIONS__ = {}
+    #
+    #     __CACHED_DURATIONS__[h] = d
+    #
+    # def _get_cached_duration(self, h):
+    #     return __CACHED_DURATIONS__[h]
 
     def _cancel_hook(self, **kw):
         pass

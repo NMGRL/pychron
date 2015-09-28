@@ -132,6 +132,7 @@ class PlotPanel(Loggable):
     def set_peak_center_graph(self, graph):
         graph.page_name = 'Peak Center'
         self.peak_center_graph = graph
+        self.graphs = [self.isotope_graph, self.peak_center_graph]
         self.show_graph(graph)
 
     def show_graph(self, g):
@@ -250,13 +251,17 @@ class PlotPanel(Loggable):
     # ===============================================================================
     # defaults
     # ===============================================================================
+    def _peak_center_graph_default(self):
+        g = Graph()
+        g.page_name = 'Peak Center'
+        return g
+
     def _isotope_graph_default(self):
-        return self._graph_factory()
+        g = self._graph_factory()
+        g.page_name = 'Isotopes'
+        return g
 
     def _graph_container_default(self):
-        self.isotope_graph.page_name = 'Isotopes'
-        self.peak_center_graph.page_name = 'Peak Center'
-
         return GraphContainer(model=self)
 
     def _graphs_default(self):

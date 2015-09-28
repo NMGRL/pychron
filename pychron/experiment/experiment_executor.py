@@ -615,9 +615,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         mem_log('> end join')
 
     def _do_run(self, run):
-        print 'pre run'
-        memory_tracker = tracker.SummaryTracker()
-        memory_tracker.print_diff()
+        # print 'pre run'
+        # memory_tracker = tracker.SummaryTracker()
+        # memory_tracker.print_diff()
 
         st = time.time()
 
@@ -684,8 +684,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if run.state == 'success':
                 self.stats.update_run_duration(run, t)
                 self.stats.calculate()
-        print 'post run'
-        tracker.print_diff()
+        # print 'post run'
+        # memory_tracker.print_diff()
 
     def _overlapped_run(self, v):
         self._overlapping = True
