@@ -176,7 +176,8 @@ class AutomatedRun(Loggable):
     peak_center_threshold2 = Int(1.25)
     peak_center_threshold_window = Int(10)
 
-    persistence_spec = Instance(PersistenceSpec, ())
+    persistence_spec = Instance(PersistenceSpec)
+
     # ===============================================================================
     # pyscript interface
     # ===============================================================================
@@ -192,10 +193,6 @@ class AutomatedRun(Loggable):
 
     def _update_persister_spec(self, **kw):
         self.persistence_spec.trait_set(**kw)
-        for p in (self.persister, self.xls_persister, self.dvc_persister):
-            # for p in (self.xls_persister, self.dvc_persister):
-            if p is not None:
-                p.per_spec = self.persistence_spec
 
     def _persister_action(self, func, *args, **kw):
         getattr(self.persister, func)(*args, **kw)
@@ -674,8 +671,9 @@ class AutomatedRun(Loggable):
     #
     # ===============================================================================
     def show_conditionals(self, tripped=None):
-        self.experiment_executor.show_conditionals(tripped=tripped,
-                                                   show_measuring=True, kind='live')
+        self.experiment_executor.show_conditionals(active_run=self,
+                                                   tripped=tripped,
+                                                   kind='live')
 
     def teardown(self):
         if self.measurement_script:
@@ -698,6 +696,10 @@ class AutomatedRun(Loggable):
         self.collector.stop()
 
     def start(self):
+        self.persistence_spec = PersistenceSpec()
+        for p in (self.persister, self.xls_persister, self.dvc_persister):
+            if p is not None:
+                p.per_spec = self.persistence_spec
 
         if self.monitor is None:
             return self._start()

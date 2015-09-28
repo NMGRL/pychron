@@ -53,7 +53,6 @@ delay_between_analyses: {}
 extract_device: {}
 tray: {}
 load: {}
-experiment_identifier: {}
 '''
 
 
@@ -87,7 +86,6 @@ class BaseExperimentQueue(RunBlock):
     initialized = True
 
     load_name = Str
-    experiment_identifier = Str
 
     _no_update = False
     _frequency_group_counter = 0
@@ -230,9 +228,6 @@ class BaseExperimentQueue(RunBlock):
         if self.selected:
             idx = aruns.index(self.selected[-1])
             for ri in reversed(runspecs):
-                if not ri.experiment_identifier:
-                    ri.experiment_identifier = self.experiment_identifier
-
                 aruns.insert(idx + 1, ri)
         else:
             aruns.extend(runspecs)
@@ -360,8 +355,7 @@ class BaseExperimentQueue(RunBlock):
             self.delay_between_analyses,
             self.extract_device,
             self.tray or '',
-            self.load_name or '',
-            self.experiment_identifier or '')
+            self.load_name or '')
 
         if wfile:
             wfile.write(s)

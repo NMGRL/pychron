@@ -69,26 +69,16 @@ class ExperimentQueueFactory(PersistenceLoggable):
     load_name = Str
     load_names = Property
 
-    experiment_identifier = Str
-    experiment_identifiers = Property(depends_on='experiment_identifier_dirty, db_refresh_needed')
-    add_experiment_identifier = Event
-    experiment_identifier_dirty = Event
 
     ok_make = Property(depends_on='mass_spectrometer, username')
 
     pattributes = ('mass_spectrometer',
                    'extract_device',
-                   'experiment_identifier',
                    'use_group_email',
                    'delay_between_analyses',
                    'delay_before_analyses',
                    'queue_conditionals_name')
 
-
-    # def _add_user_fired(self):
-    # a=UserEntry()
-    # a.    edit_user(self.username)
-    #     self.users_dirty=True
     def activate(self, load_persistence):
         """
             called by ExperimentFactory
@@ -212,14 +202,6 @@ class ExperimentQueueFactory(PersistenceLoggable):
 
         return ['Spectrometer', LINE_STR] + names
 
-    @cached_property
-    def _get_experiment_identifiers(self):
-        dvc = self.dvc
-        ids = []
-        if dvc and dvc.connect():
-            ids = dvc.get_experiment_identifiers()
-        return ids
-
     def _get_names_from_config(self, cp, section):
         config = ConfigParser()
         config.read(cp)
@@ -227,13 +209,6 @@ class ExperimentQueueFactory(PersistenceLoggable):
             return [config.get(section, option) for option in config.options(section)]
 
     # handlers
-    def _add_experiment_identifier_fired(self):
-        a = ExperimentIdentifierEntry(dvc=self.dvc)
-        a.available = self.dvc.get_experiment_identifiers()
-        if a.do():
-            self.experiment_identifier_dirty = True
-            self.experiment_identifier = a.name
-
     def _mass_spectrometer_changed(self, new):
         self.debug('mass spectrometer ="{}"'.format(new))
 

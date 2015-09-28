@@ -42,6 +42,7 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
         ('Labnumber', 'labnumber'),
         ('Aliquot', 'aliquot'),
         ('Sample', 'sample'),
+        ('ExperimentID', 'experiment_identifier'),
         ('Position', 'position'),
         ('Extract', 'extract_value'),
         ('Units', 'extract_units'),

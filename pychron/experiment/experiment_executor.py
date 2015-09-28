@@ -801,7 +801,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     pv = PushExperimentsView(model=pm)
                     open_view(pv)
 
-    def _show_conditionals(self, show_measuring=False, tripped=None, kind='livemodal'):
+    def _show_conditionals(self, active_run=None, tripped=None, kind='livemodal'):
         try:
             if self._cv_info:
                 if self._cv_info.control:
@@ -820,33 +820,61 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
             v.add_post_run_terminations(self._load_system_conditionals('post_run_terminations'))
             v.add_post_run_terminations(self._load_queue_conditionals('post_run_terminations'))
-
-            run = self.selected_run
-            if run and not show_measuring:
-                # in this case run is an instance of AutomatedRunSpec
-                p = get_path(paths.conditionals_dir, self.selected_run.conditionals, ['.yaml', '.yml'])
-                if p:
-                    v.add_conditionals(conditionals_from_file(p, level=RUN))
-
-                if run.aliquot:
-                    runid = run.runid
-                else:
-                    runid = run.identifier
-
-                if run.position:
-                    id2 = 'position={}'.format(run.position)
-                else:
-                    idx = self.active_editor.queue.automated_runs.index(run) + 1
-                    id2 = 'RowIdx={}'.format(idx)
-
-                v.title = '{} ({}, {})'.format(v.title, runid, id2)
+            self.debug('Show conditionals active run: {}'.format(active_run))
+            self.debug('Show conditionals measuring run: {}'.format(self.measuring_run))
+            self.debug('active_run same as measuring_run: {}'.format(self.measuring_run == active_run))
+            if active_run:
+                v.add_conditionals({'{}s'.format(tag): getattr(active_run, '{}_conditionals'.format(tag))
+                                    for tag in CONDITIONAL_GROUP_TAGS},
+                                   level=RUN)
+                v.title = '{} ({})'.format(v.title, active_run.spec.runid)
             else:
-                run = self.measuring_run
-
+                run = self.selected_run
                 if run:
-                    v.add_conditionals({'{}s'.format(tag): getattr(run, '{}_conditionals'.format(tag))
-                                        for tag in CONDITIONAL_GROUP_TAGS})
-                    v.title = '{} ({})'.format(v.title, run.spec.runid)
+                    # in this case run is an instance of AutomatedRunSpec
+                    p = get_path(paths.conditionals_dir, self.selected_run.conditionals, ['.yaml', '.yml'])
+                    if p:
+                        v.add_conditionals(conditionals_from_file(p, level=RUN))
+
+                    if run.aliquot:
+                        runid = run.runid
+                    else:
+                        runid = run.identifier
+
+                    if run.position:
+                        id2 = 'position={}'.format(run.position)
+                    else:
+                        idx = self.active_editor.queue.automated_runs.index(run) + 1
+                        id2 = 'RowIdx={}'.format(idx)
+
+                    v.title = '{} ({}, {})'.format(v.title, runid, id2)
+
+            # run = self.selected_run
+            # if run and not show_measuring:
+            #     # in this case run is an instance of AutomatedRunSpec
+            #     p = get_path(paths.conditionals_dir, self.selected_run.conditionals, ['.yaml', '.yml'])
+            #     if p:
+            #         v.add_conditionals(conditionals_from_file(p, level=RUN))
+            #
+            #     if run.aliquot:
+            #         runid = run.runid
+            #     else:
+            #         runid = run.identifier
+            #
+            #     if run.position:
+            #         id2 = 'position={}'.format(run.position)
+            #     else:
+            #         idx = self.active_editor.queue.automated_runs.index(run) + 1
+            #         id2 = 'RowIdx={}'.format(idx)
+            #
+            #     v.title = '{} ({}, {})'.format(v.title, runid, id2)
+            # else:
+            #     run = self.measuring_run
+            #
+            #     if run:
+            #         v.add_conditionals({'{}s'.format(tag): getattr(run, '{}_conditionals'.format(tag))
+            #                             for tag in CONDITIONAL_GROUP_TAGS})
+            #         v.title = '{} ({})'.format(v.title, run.spec.runid)
 
             if tripped:
                 v.select_conditional(tripped, tripped=True)

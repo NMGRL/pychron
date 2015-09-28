@@ -388,10 +388,10 @@ class DVC(Loggable):
             else:
                 if not self.default_team:
                     self.warning_dialog('No default team name set in Preferences.\n'
-                                        'Please set a value (e.g "Users") and try creating the repository again')
+                                        'Please set a value (e.g "Users") and try creating the experiment again')
                     return False
 
-                self.info('Creating repository. {}'.format(identifier))
+                self.info('Creating experiment repository. {}'.format(identifier))
 
                 org.create_repo(identifier, **kw)
                 org.add_team_to_repository(self.default_team, identifier)

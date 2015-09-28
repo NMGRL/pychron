@@ -28,6 +28,8 @@ import yaml
 import os
 # ============= local library imports  ==========================
 from pychron.core.helpers.iterfuncs import partition
+from pychron.dvc.dvc import DVC
+from pychron.entry.entry_views.experiment_entry import ExperimentIdentifierEntry
 from pychron.experiment.conditional.conditionals_edit_view import edit_conditionals
 from pychron.experiment.datahub import Datahub
 from pychron.experiment.queue.run_block import RunBlock
@@ -120,6 +122,7 @@ def generate_positions(pos):
 
 class AutomatedRunFactory(PersistenceLoggable):
     db = Any
+    dvc = Instance(DVC)
     datahub = Instance(Datahub)
     undoer = Any
     edit_event = Event
@@ -158,6 +161,11 @@ class AutomatedRunFactory(PersistenceLoggable):
 
     project = Any
     projects = Property(depends_on='db, db_refresh_needed')
+
+    experiment_identifier = Str
+    experiment_identifiers = Property(depends_on='experiment_identifier_dirty, db_refresh_needed')
+    add_experiment_identifier = Event
+    experiment_identifier_dirty = Event
 
     selected_irradiation = Str('Irradiation')
     irradiations = Property(depends_on='db, db_refresh_needed')
@@ -618,8 +626,8 @@ class AutomatedRunFactory(PersistenceLoggable):
             except TraitError, e:
                 self.debug(e)
 
-        # if run.user_defined_aliquot:
-            # self.aliquot = int(run.aliquot)
+                # if run.user_defined_aliquot:
+                # self.aliquot = int(run.aliquot)
 
         for si in SCRIPT_KEYS:
             skey = '{}_script'.format(si)
@@ -899,10 +907,12 @@ class AutomatedRunFactory(PersistenceLoggable):
         if labnumber in self._meta_cache:
             self.debug('using cached meta values for {}'.format(labnumber))
             d = self._meta_cache[labnumber]
-            for attr in ('sample', 'irradiation', 'comment'):
+            for attr in ('sample', 'irradiation', 'comment', 'experiment_identifier'):
                 setattr(self, attr, d[attr])
             return True
         else:
+            # get a default experiment_identifier
+
             d = dict(sample='')
             db = self.db
             with db.session_ctx():
@@ -914,14 +924,25 @@ class AutomatedRunFactory(PersistenceLoggable):
                     try:
                         self.sample = ln.sample.name
                         d['sample'] = self.sample
+
+                        project = ln.sample.project
+                        print 'fff', project.name
+                        if project.name == 'J-Curve':
+                            irrad = ln.irradiation_position.level.irradiation.name
+                            self.experiment_identifier = 'Irradiation-{}'.format(irrad)
+                        elif project.name != 'REFERENCES':
+                            pi_name = project.principal_investigators[0].name
+                            pi_name = pi_name.replace(' ', '_').replace('/', '_')
+
+                            project_name = project.name
+                            project_name = project_name.replace(' ', '_').replace('/', '_')
+
+                            self.experiment_identifier = '{}_{}'.format(pi_name, project_name)
+
                     except AttributeError:
                         pass
 
-                    # a = db.get_greatest_aliquot(labnumber)
-                    # a = a or 1
-                    # self._aliquot = a
-                    # d['_aliquot'] = a
-
+                    d['experiment_identifier'] = self.experiment_identifier
                     self.irradiation = self._make_irrad_level(ln)
                     d['irradiation'] = self.irradiation
 
@@ -964,6 +985,14 @@ class AutomatedRunFactory(PersistenceLoggable):
             ln = ln.split('-')[0]
 
         return not ln in NON_EXTRACTABLE
+
+    @cached_property
+    def _get_experiment_identifiers(self):
+        dvc = self.dvc
+        ids = []
+        if dvc and dvc.connect():
+            ids = dvc.get_experiment_identifiers()
+        return ids
 
     @cached_property
     def _get_irradiations(self):
@@ -1063,33 +1092,6 @@ class AutomatedRunFactory(PersistenceLoggable):
 
         if ok:
             return pos
-
-    # def _validate_extract_value(self, d):
-    # return self._validate_float(d)
-    #
-    # def _validate_float(self, d):
-    # try:
-    #         return float(d)
-    #     except ValueError:
-    #         pass
-    #
-    # def _get_extract_value(self):
-    #     return self._extract_value
-    #
-    # def _set_extract_value(self, t):
-    #     if t is not None:
-    #         self._extract_value = t
-    #         if not t:
-    #             self.extract_units = NULL_STR
-    #         elif self.extract_units == NULL_STR:
-    #             self.extract_units = self._default_extract_units
-    #     else:
-    #         self.extract_units = NULL_STR
-
-    def _extract_value_changed(self, new):
-        if new:
-            if self.extract_units == NULL_STR:
-                self.extract_units = self._default_extract_units
 
     def _get_edit_pattern_label(self):
         return 'Edit' if self._use_pattern() else 'New'
@@ -1268,6 +1270,18 @@ class AutomatedRunFactory(PersistenceLoggable):
     # ===============================================================================
     # handlers
     # ===============================================================================
+    def _extract_value_changed(self, new):
+        if new:
+            if self.extract_units == NULL_STR:
+                self.extract_units = self._default_extract_units
+
+    def _add_experiment_identifier_fired(self):
+        a = ExperimentIdentifierEntry(dvc=self.dvc)
+        a.available = self.dvc.get_experiment_identifiers()
+        if a.do():
+            self.experiment_identifier_dirty = True
+            self.experiment_identifier = a.name
+
     @on_trait_change('use_name_prefix, name_prefix')
     def _handle_prefix(self, name, new):
         for si in self._iter_scripts():
@@ -1376,7 +1390,7 @@ use_cdd_warming,
 extract_units,
 pattern,
 position,
-weight, comment, skip, overlap''')
+weight, comment, skip, overlap, experiment_identifier''')
     def _edit_handler(self, name, new):
         # self._auto_save()
 
@@ -1393,7 +1407,7 @@ post_equilibration_script:name''')
     def _edit_script_handler(self, obj, name, new):
         self.debug('name={}, new={}, suppress={}'.format(obj.label, new, self.suppress_update))
         if obj.label == 'Measurement':
-            self.default_fits_enabled = bool(new and new not in (NULL_STR, ))
+            self.default_fits_enabled = bool(new and new not in (NULL_STR,))
 
         if self.edit_mode and not self.suppress_update:
             self._auto_save()
@@ -1528,6 +1542,7 @@ post_equilibration_script:name''')
         self.suppress_update = True
         self.aliquot = 0
         self.suppress_update = False
+
     # @on_trait_change('mass_spectrometer, can_edit')
     # def _update_value(self, name, new):
     #     for si in SCRIPT_NAMES:
