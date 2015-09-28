@@ -46,11 +46,9 @@ class SpectrumAppearance(AppearanceSubOptions):
                              self._get_yfont_group()),
                       label='Fonts', show_border=True)
 
-        v = View(VGroup(self._get_bg_group(),
-                        self._get_padding_group(),
-
-                        fgrp))
-        return v
+        g = VGroup(self._get_bg_group(),
+                   self._get_padding_group())
+        return self._make_view(VGroup(g, fgrp))
 
 
 class DisplaySubOptions(SubOptions):
@@ -93,8 +91,7 @@ class DisplaySubOptions(SubOptions):
                                    label='Integrated'),
                             show_border=True,
                             label='Display')
-        v = View(display_grp)
-        return v
+        return self._make_view(display_grp)
 
 
 class CalculationSubOptions(SubOptions):
@@ -125,8 +122,7 @@ class CalculationSubOptions(SubOptions):
                                        label='N. Sigma')),
                            show_border=True,
                            label='Error Envelope')
-        v = View(VGroup(plat_grp, error_grp))
-        return v
+        return self._make_view(VGroup(plat_grp, error_grp))
 
 
 class SpectrumMainOptions(MainOptions):
@@ -157,6 +153,7 @@ class SpectrumMainOptions(MainOptions):
                                label='Y Limits'),
                         show_border=True))
         return v
+
 
 VIEWS = {}
 VIEWS['main'] = SpectrumMainOptions

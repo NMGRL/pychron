@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from chaco.default_colormaps import color_map_name_dict
-from traitsui.api import View, Item, HGroup, VGroup, Readonly, EnumEditor
+from traitsui.api import Item, HGroup, VGroup, Readonly, EnumEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.options.options import SubOptions, AppearanceSubOptions
@@ -49,8 +49,7 @@ class FluxSubOptions(SubOptions):
                      label='Fits',
                      show_border=True)
 
-        v = View(grp)
-        return v
+        return self._make_view(grp)
 
 
 class FluxAppearanceSubOptions(AppearanceSubOptions):

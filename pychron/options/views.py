@@ -52,19 +52,18 @@ def view(title):
     # sgrp = VGroup(UItem('selected_subview',
     #                     editor=ListStrEditor(name='subview_names')))
     sgrp = UItem('subview_names',
-                 width=0.1,
+                 width=-120,
                  editor=TabularEditor(editable=False,
                                       adapter=SubviewAdapter(),
                                       selected='selected_subview'))
     # sgrp = VGroup(UItem('selected_subview', editor=EnumEditor(name='subview_names')))
 
     ogrp = UItem('subview',
-                 width=0.9,
                  style='custom')
     bgrp = HGroup(sgrp, ogrp)
 
     v = View(VGroup(agrp, bgrp),
-             # width=800,
+             width=750,
              height=700,
              resizable=True,
              title=title,

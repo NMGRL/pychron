@@ -29,23 +29,14 @@ class SeriesSubOptions(SubOptions):
 
 class SeriesAppearance(AppearanceSubOptions):
     def traits_view(self):
-        # mi = HGroup(Item('mean_indicator_fontname', label='Mean Indicator'),
-        #             Item('mean_indicator_fontsize', show_label=False))
-        # ee = HGroup(Item('error_info_fontname', label='Error Info'),
-        #             Item('error_info_fontsize', show_label=False))
-        #
-        # ll = HGroup(Item('label_fontname', label='Labels'),
-        #             Item('label_fontsize', show_label=False))
         fgrp = VGroup(UItem('fontname'),
-                      # mi, ee, ll,
                       self._get_xfont_group(),
                       self._get_yfont_group(),
                       label='Fonts', show_border=True)
 
-        v = View(VGroup(self._get_bg_group(),
-                        self._get_padding_group(),
-                        fgrp))
-        return v
+        g = VGroup(self._get_bg_group(),
+                   self._get_padding_group())
+        return self._make_view(VGroup(g, fgrp))
 
 
 # ===============================================================

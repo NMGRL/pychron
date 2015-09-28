@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.array_data_source import ArrayDataSource
+from chaco.data_label import DataLabel
 from chaco.scatterplot import render_markers
 from enable.colors import ColorTrait
 from pyface.message_dialog import warning
@@ -27,6 +28,7 @@ from numpy import array, arange, \
 from numpy import max as np_max
 # ============= local library imports  ==========================
 from uncertainties import nominal_value
+from pychron.core.helpers.formatting import floatfmt
 from pychron.core.stats.probability_curves import cumulative_probability, kernel_density
 from pychron.pipeline.plot.flow_label import FlowPlotLabel
 
@@ -35,13 +37,17 @@ from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
 from pychron.pipeline.plot.overlays.ideogram_inset_overlay import IdeogramInset, IdeogramPointsInset
 
 from pychron.pipeline.plot.overlays.mean_indicator_overlay import MeanIndicatorOverlay
-from pychron.core.stats.peak_detection import find_peaks
+from pychron.core.stats.peak_detection import find_peaks, find_fine_peak
 # from pychron.pipeline.plot import OverlayMoveTool
 from pychron.pipeline.plot.point_move_tool import OverlayMoveTool
 from pychron.pipeline.plot.ticks import IntTickGenerator
 from pychron.pychron_constants import PLUSMINUS, SIGMA
 
 N = 500
+
+
+class PeakLabel(DataLabel):
+    pass
 
 
 class LatestOverlay(AbstractOverlay):
@@ -339,18 +345,13 @@ class Ideogram(BaseArArFigure):
         ogid = self.group_id
         gid = ogid + 1
         sgid = ogid * 2
-        # print 'ogid={} gid={} sgid={}'.format(ogid, gid, sgid)
-        plotkw = dict()
-        # if self.group_id==0:
-        # if self.options.use_filled_line:
-        plotkw.update(**self.options.get_plot_dict(ogid))
-        # color= self.options.fill_color
-        # color.setAlphaF(self.options.fill_alpha*0.01)
-        # plotkw['fill_color']=self.options.fill_color
-        # plotkw['type']='filled_line'
-        # else:
+
+        plotkw = self.options.get_plot_dict(ogid)
 
         line, _ = graph.new_series(x=bins, y=probs, plotid=pid, **plotkw)
+
+        if self.options.label_all_peaks:
+            self._add_peak_labels(line, self.xs, self.xes)
 
         graph.set_series_label('Current-{}'.format(gid), series=sgid, plotid=pid)
 
@@ -374,7 +375,6 @@ class Ideogram(BaseArArFigure):
         d = lambda a, b, c, d: self.update_index_mapper(a, b, c, d)
         plot.index_mapper.on_trait_change(d, 'updated')
 
-        # if self.group_id == 0:
         if self.options.display_inset:
             xs = self.xs
             n = xs.shape[0]
@@ -446,6 +446,23 @@ class Ideogram(BaseArArFigure):
                 elif isinstance(ov, IdeogramPointsInset):
                     ov.set_x_limits(xmi, xma)
                     ov.set_y_limits(0, yma2)
+
+    def _add_peak_labels(self, line, ages, errors):
+        xs = line.index.get_data()
+        ys = line.value.get_data()
+
+        maxp, minp = find_peaks(ys, xs, lookahead=1)
+        for age, relative_prob in maxp:
+            func = lambda mi, ma: cumulative_probability(ages, errors, mi, ma, n=N)
+            limits = (age * 0.99, age * 1.01)
+            p = find_fine_peak(func=func, initial_limits=limits, tol=0.001, lookahead=1)
+            label = DataLabel(line,
+                              data_point=(p, relative_prob),
+                              label_text=floatfmt(p, n=3),
+                              border_visible=False,
+                              marker_visible=False,
+                              show_label_coords=False)
+            line.overlays.append(label)
 
     def _add_info(self, g, plot):
         if self.group_id == 0:

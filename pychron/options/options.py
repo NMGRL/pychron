@@ -50,21 +50,24 @@ def checkbox_column(*args, **kw):
 
 class SubOptions(Controller):
     # traits_view = View(Item('index_attr', label='Foo'))
-    pass
+    def _make_view(self, *args, **kw):
+        if 'scrollable' not in kw:
+            kw['scrollable'] = True
+        return View(*args, **kw)
 
 
 class GroupSubOptions(SubOptions):
     def traits_view(self):
-        v = View(UItem('groups',
-                       style='custom',
-                       editor=ListEditor(mutable=False,
-                                         style='custom',
-                                         editor=InstanceEditor())),
-                 buttons=['OK', 'Cancel', 'Revert'],
-                 kind='livemodal', resizable=True,
-                 height=700,
-                 title='Group Attributes')
-        return v
+        g = UItem('groups',
+                  style='custom',
+                  editor=ListEditor(mutable=False,
+                                    style='custom',
+                                    editor=InstanceEditor())),
+        # buttons=['OK', 'Cancel', 'Revert'],
+        # kind='livemodal', resizable=True,
+        # height=700,
+        # title='Group Attributes')
+        return self._make_view(g)
 
 
 class AppearanceSubOptions(SubOptions):
@@ -119,11 +122,11 @@ class AppearanceSubOptions(SubOptions):
                              self._get_yfont_group()),
                       label='Fonts', show_border=True)
 
-        v = View(VGroup(self._get_bg_group(),
-                        self._get_padding_group(),
-                        self._get_grid_group(),
-                        fgrp))
-        return v
+        g = VGroup(self._get_bg_group(),
+                   self._get_padding_group(),
+                   self._get_grid_group())
+
+        return self._make_view(VGroup(g, fgrp))
 
 
 class MainOptions(SubOptions):
@@ -173,7 +176,7 @@ class MainOptions(SubOptions):
                                                   # selected='selected',
                                                   edit_view=self._get_edit_view(),
                                                   reorderable=False))
-        return View(aux_plots_grp)
+        return self._make_view(aux_plots_grp)
 
 
 # ===============================================================

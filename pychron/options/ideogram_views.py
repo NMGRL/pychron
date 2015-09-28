@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traitsui.api import View, UItem, Item, HGroup, VGroup, Group, EnumEditor, spring
+from traitsui.api import UItem, Item, HGroup, VGroup, Group, EnumEditor, spring
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.icon_button_editor import icon_button_editor
@@ -53,6 +53,7 @@ class DisplaySubOptions(SubOptions):
                    spring,
                    icon_button_editor('edit_label_format_button', 'cog',
                                       tooltip='Open Label maker')),
+            Item('label_all_peaks', label='Label Peaks', tooltip='Label each peak with its calculated age'),
             show_border=True, label='Label')
         inset_grp = VGroup(HGroup(Item('display_inset', label='Use'),
                                   Item('inset_location', label='Location'),
@@ -74,16 +75,18 @@ class DisplaySubOptions(SubOptions):
                           show_border=True,
                           label='Info')
 
-        display_grp = Group(mean_grp,
-                            an_grp,
-                            inset_grp,
-                            title_grp,
-                            label_grp,
-                            info_grp,
-                            errbar_grp,
-                            show_border=True,
-                            label='Display')
-        return View(display_grp)
+        display_grp = VGroup(mean_grp,
+                             an_grp,
+                             inset_grp,
+                             title_grp,
+                             label_grp,
+                             info_grp,
+                             errbar_grp,
+                             scrollable=True,
+                             show_border=True,
+                             label='Display')
+
+        return self._make_view(display_grp)
 
 
 class CalculationSubOptions(SubOptions):
@@ -112,8 +115,7 @@ class CalculationSubOptions(SubOptions):
             show_border=True,
             label='Calculations')
 
-        v = View(calcgrp)
-        return v
+        return self._make_view(calcgrp)
 
 
 class IdeogramSubOptions(SubOptions):
@@ -159,8 +161,7 @@ class IdeogramSubOptions(SubOptions):
                       show_border=True,
                       label='X')
 
-        v = View(xgrp)
-        return v
+        return self._make_view(xgrp)
 
 
 class IdeogramAppearance(AppearanceSubOptions):
@@ -178,11 +179,10 @@ class IdeogramAppearance(AppearanceSubOptions):
                              self._get_yfont_group()),
                       label='Fonts', show_border=True)
 
-        v = View(VGroup(self._get_bg_group(),
-                        self._get_padding_group(),
-                        self._get_grid_group(),
-                        fgrp))
-        return v
+        g = VGroup(self._get_bg_group(),
+                   self._get_padding_group(),
+                   self._get_grid_group())
+        return self._make_view(VGroup(g, fgrp))
 
 
 # ===============================================================

@@ -60,8 +60,7 @@ class InverseIsochronMainOptions(SubOptions):
                           label='Inset'),
                    show_border=True,
                    label='Display')
-        v = View(VGroup(g, g2))
-        return v
+        return self._make_view(VGroup(g, g2))
 
 
 class InverseIsochronAppearance(AppearanceSubOptions):

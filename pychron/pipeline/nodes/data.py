@@ -15,10 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
+
+from pyface.constant import OK
+from pyface.file_dialog import FileDialog
 from pyface.message_dialog import information
 from pyface.timer.do_later import do_after
 from traits.api import Instance, Bool, Int, Str, List, Enum
 from traitsui.api import View, Item, EnumEditor
+
 # ============= standard library imports ========================
 import weakref
 from datetime import datetime
@@ -63,17 +68,18 @@ class DataNode(BaseNode):
 
 class CSVNode(BaseNode):
     path = Str
+    name = 'CSV Data'
 
     def configure(self, pre_run=False, **kw):
         if not pre_run:
             self._manual_configured = True
 
-        self.path = '/Users/ross/Sandbox/dvc_imports/csv_ideogram.txt'
-        return True
-        # dlg = FileDialog()
-        # if dlg.open() == OK:
-        #     self.path = dlg.path
-        #     return self.path is not None
+        if not self.path or not os.path.isfile(self.path):
+            dlg = FileDialog()
+            if dlg.open() == OK:
+                self.path = dlg.path
+
+        return self.path is not None
 
     def run(self, state):
         if not self.unknowns:
@@ -82,7 +88,6 @@ class CSVNode(BaseNode):
                 return
 
         unks = self._load_analyses()
-        print unks
         if unks:
             self.unknowns.extend(unks)
 
