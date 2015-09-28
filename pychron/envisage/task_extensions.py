@@ -13,13 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-import hashlib
-import os
-
-from pychron.core.ui import set_qt
-
-set_qt()
-
 # ============= enthought library imports =======================
 from pyface.action.menu_manager import MenuManager
 from traitsui.menu import Action
@@ -28,9 +21,10 @@ from pyface.constant import YES
 from pyface.tasks.action.schema_addition import SchemaAddition
 from traits.api import HasTraits, Str, Instance, Event, Bool, List, Enum, Any
 from traitsui.api import View, UItem, VGroup, TreeNode, Handler, HGroup, TextEditor
-
 # ============= standard library imports ========================
 import yaml
+import hashlib
+import os
 # ============= local library imports  ==========================
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.paths import paths
@@ -353,27 +347,26 @@ def edit_task_extensions(ts):
         e.dump()
         return confirm(None, 'Restart?') == YES
 
-
-if __name__ == '__main__':
-    from traits.api import Button
-    from pychron.processing.tasks.actions.processing_actions import RecallAction
-    from pychron.updater.tasks.actions import CheckForUpdatesAction, ManageBranchAction
-
-    class Demo(HasTraits):
-        test = Button
-        traits_view = View('test')
-
-        def _test_fired(self):
-            a = [('pychron.update', '', 'Update', [SchemaAddition(id='pychron.update.check_for_updates',
-                                                                  factory=CheckForUpdatesAction),
-                                                   SchemaAddition(id='pychron.update.manage_branch',
-                                                                  factory=ManageBranchAction)]),
-                 ('pychron.recall', '', 'Recall', [SchemaAddition(id='pychron.recall',
-                                                                  factory=RecallAction),
-                                                   SchemaAddition(id='pychron.update.manage_branch',
-                                                                  factory=ManageBranchAction)])]
-            edit_task_extensions(a)
-
-    d = Demo()
-    d.configure_traits()
+# if __name__ == '__main__':
+#     from traits.api import Button
+#     from pychron.processing.tasks.actions.processing_actions import RecallAction
+#     from pychron.updater.tasks.actions import CheckForUpdatesAction, ManageBranchAction
+#
+#     class Demo(HasTraits):
+#         test = Button
+#         traits_view = View('test')
+#
+#         def _test_fired(self):
+#             a = [('pychron.update', '', 'Update', [SchemaAddition(id='pychron.update.check_for_updates',
+#                                                                   factory=CheckForUpdatesAction),
+#                                                    SchemaAddition(id='pychron.update.manage_branch',
+#                                                                   factory=ManageBranchAction)]),
+#                  ('pychron.recall', '', 'Recall', [SchemaAddition(id='pychron.recall',
+#                                                                   factory=RecallAction),
+#                                                    SchemaAddition(id='pychron.update.manage_branch',
+#                                                                   factory=ManageBranchAction)])]
+#             edit_task_extensions(a)
+#
+#     d = Demo()
+#     d.configure_traits()
 # ============= EOF =============================================

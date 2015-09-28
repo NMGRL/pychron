@@ -17,23 +17,15 @@
 # ============= enthought library imports =======================
 from traits.api import List, Any, Event, Bool
 from pyface.file_dialog import FileDialog
-
-from pychron.envisage.tasks.base_editor import grouped_name
-from pychron.processing.tasks.editor import BaseUnknownsEditor
-from pychron.pipeline.editors.base_adapter import TableBlank, \
-    TableSeparator
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
+from pychron.envisage.tasks.base_editor import grouped_name, BaseTraitsEditor
+from pychron.pipeline.editors.base_adapter import TableBlank, TableSeparator
 from pychron.core.helpers.filetools import add_extension
 from pychron.paths import paths
 
 
-
-
-
-
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
-
-class BaseTableEditor(BaseUnknownsEditor):
+class BaseTableEditor(BaseTraitsEditor):
     items = List
     # oitems = List
     col_widths = List

@@ -20,7 +20,7 @@ from traitsui.api import View, UItem
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.processing.tagging.base_tags import BaseTagModel
+from pychron.pipeline.tagging.base_tags import BaseTagModel
 
 
 class DataReductionTag(HasTraits):
@@ -29,6 +29,7 @@ class DataReductionTag(HasTraits):
     comment = Str
     analyses = List
     id = Long
+
 
 class SelectDataReductionTagModel(HasTraits):
     tags = List

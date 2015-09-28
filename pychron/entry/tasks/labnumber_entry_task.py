@@ -33,11 +33,10 @@ from pychron.envisage.browser.base_browser_model import BaseBrowserModel
 from pychron.entry.entry_views.project_entry import ProjectEntry
 from pychron.entry.entry_views.sample_entry import SampleEntry
 from pychron.entry.labnumber_entry import LabnumberEntry
-from pychron.entry.tasks.actions import SavePDFAction
+from pychron.entry.tasks.actions import SavePDFAction, DatabaseSaveAction
 # from pychron.entry.tasks.importer_panes import ImporterPane
 from pychron.entry.tasks.labnumber_entry_panes import LabnumbersPane, \
     IrradiationPane, IrradiationEditorPane, IrradiationCanvasPane, LevelInfoPane, ChronologyPane
-from pychron.processing.tasks.actions.edit_actions import DatabaseSaveAction
 from pychron.envisage.tasks.base_task import BaseManagerTask
 
 

@@ -30,8 +30,8 @@ from traitsui.tabular_adapter import TabularAdapter
 
 # ============= EOF =============================================
 from pychron.envisage.icon_button_editor import icon_button_editor
-from pychron.processing.tagging.analysis_tags import AnalysisTagModel
-from pychron.processing.tagging.data_reduction_tags import DataReductionTagModel, SelectDataReductionTagModel
+from pychron.pipeline.tagging.analysis_tags import AnalysisTagModel
+from pychron.pipeline.tagging.data_reduction_tags import DataReductionTagModel, SelectDataReductionTagModel
 
 
 class DataReductionItemAdapter(TabularAdapter):

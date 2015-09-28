@@ -20,7 +20,7 @@ from traitsui.api import View, Item, HGroup, VGroup
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.processing.tagging.base_tags import BaseTagModel
+from pychron.pipeline.tagging.base_tags import BaseTagModel
 
 
 class Tag(HasTraits):

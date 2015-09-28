@@ -40,7 +40,7 @@ from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane
 from pychron.envisage.browser.browser_task import BaseBrowserTask
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.tasks.select_repo import SelectExperimentIDView
-from pychron.processing.tasks.figures.interpreted_age_factory import InterpretedAgeFactoryView, \
+from pychron.pipeline.tasks.interpreted_age_factory import InterpretedAgeFactoryView, \
     InterpretedAgeFactoryModel
 
 
@@ -445,8 +445,8 @@ class PipelineTask(BaseBrowserTask):
         return items
 
     def _get_tagname(self, items):
-        from pychron.processing.tagging.analysis_tags import AnalysisTagModel
-        from pychron.processing.tagging.views import AnalysisTagView
+        from pychron.pipeline.tagging.analysis_tags import AnalysisTagModel
+        from pychron.pipeline.tagging.views import AnalysisTagView
 
         tv = AnalysisTagView(model=AnalysisTagModel())
 
@@ -462,8 +462,8 @@ class PipelineTask(BaseBrowserTask):
             return tag, tv.model.items, tv.model.use_filter
 
     def _get_dr_tagname(self, items):
-        from pychron.processing.tagging.data_reduction_tags import DataReductionTagModel
-        from pychron.processing.tagging.views import DataReductionTagView
+        from pychron.pipeline.tagging.data_reduction_tags import DataReductionTagModel
+        from pychron.pipeline.tagging.views import DataReductionTagView
 
         tv = DataReductionTagView(model=DataReductionTagModel(items=items))
         info = tv.edit_traits()

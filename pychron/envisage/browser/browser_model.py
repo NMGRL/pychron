@@ -31,7 +31,7 @@ from pychron.envisage.browser.record_views import ProjectRecordView
 from pychron.envisage.browser.analysis_table import AnalysisTable
 # from pychron.processing.tasks.browser.time_view import TimeViewModel
 from pychron.envisage.browser.time_view import TimeViewModel
-from pychron.processing.tasks.browser.util import get_pad
+from pychron.envisage.browser.util import get_pad
 
 NCHARS = 60
 REG = re.compile(r'.' * NCHARS)

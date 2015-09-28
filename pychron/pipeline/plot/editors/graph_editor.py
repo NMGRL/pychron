@@ -23,11 +23,10 @@ from enable.component_editor import ComponentEditor as EnableComponentEditor
 import os
 from itertools import groupby
 # ============= local library imports  ==========================
-from pychron.envisage.tasks.base_editor import grouped_name
-from pychron.processing.tasks.editor import BaseUnknownsEditor
+from pychron.envisage.tasks.base_editor import grouped_name, BaseTraitsEditor
 
 
-class GraphEditor(BaseUnknownsEditor):
+class GraphEditor(BaseTraitsEditor):
     analyses = List
     refresh_needed = Event
     save_needed = Event

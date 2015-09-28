@@ -81,6 +81,14 @@ class AddSensitivityAction(TaskAction):
     method = 'add'
 
 
+class DatabaseSaveAction(TaskAction):
+    name = 'Database Save'
+    dname = 'Database Save'
+    description = 'Save current changes to the database'
+    method = 'save_to_db'
+    image = icon('database_save')
+
+
 class SavePDFAction(TaskAction):
     name = 'Save PDF'
     dname = 'Save PDF'
