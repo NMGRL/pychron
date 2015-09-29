@@ -289,6 +289,8 @@ class AutomatedRunPersister(BasePersister):
 
         def write_data(dets, x, keys, signals):
             # todo: test whether saving data to h5 in real time is expansive
+
+            # disable H5 data writer
             # self.unique_warning('NOT Writing data to H5 in real time')
             # return
 
@@ -408,7 +410,6 @@ class AutomatedRunPersister(BasePersister):
         """
 
         self.info('pre measurement save')
-
         dm = self.data_manager
         # make a new frame for saving data
 

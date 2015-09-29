@@ -592,6 +592,7 @@ class PyScript(Loggable):
                 self._gosub_script = None
                 if not self._cancel:
                     self.console_info('gosub finished')
+                return s
 
     @verbose_skip
     @command_register
@@ -955,7 +956,7 @@ class PyScript(Loggable):
         self._text = t
 
     def __str__(self):
-        return self.name
+        return '{}, 0x{:x} name: {}'.format(type(self), id(self), self.name)
 
     def __getattr__(self, item):
         ctx = self._get_interpolation_context()

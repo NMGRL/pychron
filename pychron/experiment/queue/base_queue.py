@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Instance, Str, Property, Event, Bool, String, List, CInt
+from traits.api import Instance, Str, Property, Event, Bool, String, List, CInt, cached_property
 # ============= standard library imports ========================
 import yaml
 import os

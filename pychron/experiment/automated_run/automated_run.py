@@ -188,6 +188,7 @@ class AutomatedRun(Loggable):
         return self._whiff(ncounts, conditionals, starttime, starttime_offset, series, fit_series)
 
     def py_reset_data(self):
+        self.debug('reset data')
         self.persister.pre_measurement_save()
         self._persister_action('pre_measurement_save')
 
@@ -623,9 +624,7 @@ class AutomatedRun(Loggable):
         self.collector.canceled = True
 
         # self.aliquot='##'
-        self.persister.save_enabled = False
-        if self.use_dvc_persistence:
-            self.dvc_persister.save_enabled = False
+        self._persister_action('trait_set', save_enabled=False)
 
         for s in ('extraction', 'measurement'):
             script = getattr(self, '{}_script'.format(s))
@@ -676,12 +675,35 @@ class AutomatedRun(Loggable):
                                                    kind='live')
 
     def teardown(self):
+        self.debug('tear down')
+        script = self.measurement_script
         if self.measurement_script:
             self.measurement_script.automated_run = None
+            self.measurement_script.runner = None
+            self.measurement_script._detectors = None
+            self.measurement_script = None
 
-            # self.py_clear_conditionals()
+        if self.experiment_executor:
+            self.experiment_executor.automated_run = None
+
+        if self.collector:
+            self.collector.automated_run = None
+            self.collector.data_generator = None
+            self.collector.data_writer = None
+            self.collector.measurement_script = None
+
+        if self.plot_panel:
+            self.plot_panel.info_func = None
+            self.plot_panel.automated_run = None
+
+        if self.monitor:
+            self.monitor.automated_run = None
+
+        self.spec = None
+        # self.py_clear_conditionals()
 
     def finish(self):
+        self.debug('----------------- finish -----------------')
 
         if self.monitor:
             self.monitor.stop()
@@ -692,10 +714,12 @@ class AutomatedRun(Loggable):
         self.stop()
 
     def stop(self):
+        self.debug('----------------- stop -----------------')
         self._alive = False
         self.collector.stop()
 
     def start(self):
+        self.debug('----------------- start -----------------')
         self.persistence_spec = PersistenceSpec()
         for p in (self.persister, self.xls_persister, self.dvc_persister):
             if p is not None:
@@ -1065,7 +1089,6 @@ class AutomatedRun(Loggable):
         self.state = 'measurement'
 
         self._persister_action('pre_measurement_save')
-        self.persister.pre_measurement_save()
 
         self.measuring = True
         self._persister_action('trait_set', save_enabled=True)
@@ -1260,7 +1283,7 @@ anaylsis_type={}
             ip = os.path.join(paths.scripts_dir, 'options', add_extension(ip, '.yaml'))
 
         if self.measurement_script:
-            self.measurement_script.reset(weakref.ref(self)())
+            self.measurement_script.reset(self)
             # set the interpolation path
             self.measurement_script.interpolation_path = ip
 
@@ -1839,7 +1862,7 @@ anaylsis_type={}
 
         m.trait_set(
             console_display=self.experiment_executor.console_display,
-            automated_run=weakref.ref(self)(),
+            automated_run=self,
             measurement_script=script,
             detectors=self._active_detectors,
             collection_kind=grpname,
@@ -1873,7 +1896,6 @@ anaylsis_type={}
 
         return not m.canceled
 
-    #
     def _setup_isotope_graph(self, starttime_offset, color, grpname):
         """
             execute in main thread is necessary.
@@ -1974,25 +1996,25 @@ anaylsis_type={}
         sname = getattr(self.script_info, '{}_script_name'.format(name))
         if sname and sname != NULL_STR:
             sname = self._make_script_name(sname)
-            skey = '{}{}'.format(name, sname)
-            if skey in SCRIPTS:
-                script = SCRIPTS[skey]
-                if script.check_for_modifications() or self.is_alive():
-                    self.debug('script {} modified/overlapping. reloading'.format(sname))
-                    script = self._bootstrap_script(sname, name)
-            else:
-                script = self._bootstrap_script(sname, name)
+            # skey = '{}{}'.format(name, sname)
+            # if skey in SCRIPTS:
+            #     script = SCRIPTS[skey]
+            #     if script.check_for_modifications() or self.is_alive():
+            #         self.debug('script {} modified/overlapping. reloading'.format(sname))
+            #         script = self._bootstrap_script(sname, name)
+            # else:
+            script = self._bootstrap_script(sname, name)
 
         return script
 
     def _bootstrap_script(self, fname, name):
-        global SCRIPTS
+        # global SCRIPTS
         global WARNED_SCRIPTS
 
         def warn(fn, e):
             self.spec.executable = False
 
-            if not fn in WARNED_SCRIPTS:
+            if fn not in WARNED_SCRIPTS:
                 WARNED_SCRIPTS.append(fn)
                 self.warning_dialog('Invalid Script {}\n{}'.format(fn, e))
 
@@ -2010,8 +2032,8 @@ anaylsis_type={}
             e = 'Not a file'
             warn(fname, e)
 
-        if valid:
-            SCRIPTS[fname] = s
+        # if valid:
+        #     SCRIPTS[fname] = s
         return s
 
     def _measurement_script_factory(self):
@@ -2139,17 +2161,17 @@ anaylsis_type={}
     # ===============================================================================
     # defaults
     # ===============================================================================
-    def _measurement_script_default(self):
-        return self._load_script('measurement')
-
-    def _post_measurement_script_default(self):
-        return self._load_script('post_measurement')
-
-    def _post_equilibration_script_default(self):
-        return self._load_script('post_equilibration')
-
-    def _extraction_script_default(self):
-        return self._load_script('extraction')
+    # def _measurement_script_default(self):
+    #     return self._load_script('measurement')
+    #
+    # def _post_measurement_script_default(self):
+    #     return self._load_script('post_measurement')
+    #
+    # def _post_equilibration_script_default(self):
+    #     return self._load_script('post_equilibration')
+    #
+    # def _extraction_script_default(self):
+    #     return self._load_script('extraction')
 
     #
     def _peak_hop_collector_default(self):

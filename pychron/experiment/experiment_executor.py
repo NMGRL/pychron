@@ -16,7 +16,6 @@
 
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
-from pympler import tracker
 from traits.api import Event, Button, String, Bool, Enum, Property, Instance, Int, List, Any, Color, Dict, \
     on_trait_change, Long, Float, Str
 from pyface.constant import CANCEL, YES, NO
@@ -25,7 +24,6 @@ from traits.trait_errors import TraitError
 # ============= standard library imports ========================
 from datetime import datetime
 from threading import Thread, Event as Flag, Lock, currentThread
-import weakref
 import time
 import os
 import yaml
@@ -69,7 +67,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     connectables = List
     active_editor = Any
     console_bgcolor = 'black'
-    selected_run = Instance('pychron.experiment.automated_run.spec.AutomatedRunSpec', )
+    selected_run = Instance('pychron.experiment.automated_run.spec.AutomatedRunSpec')
+    run_completed = Event
 
     # ===========================================================================
     # control
@@ -562,8 +561,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 yl = yaml.load(rfile)
 
                 items = [(i['name'], i['email']) for i in yl if i['enabled'] and i['email'] != email]
+            if items:
+                names, addrs = zip(*items)
 
-            names, addrs = zip(*items)
         return names, addrs
 
     def _wait_for(self, predicate, period=1, invert=False):
@@ -610,7 +610,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     self.debug('previous blanks ={}'.format(pb))
 
         self._report_execution_state(run)
+
         run.teardown()
+
         self.measuring_run = None
         mem_log('> end join')
 
@@ -1035,15 +1037,18 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         arun.use_dvc_persistence = self.use_dvc_persistence
         if self.use_dvc_persistence:
-            arun.dvc_persister = self.application.get_service('pychron.dvc.dvc_persister.DVCPersister')
-            arun.dvc_persister.load_name = exp.load_name
+            dvcp = self.application.get_service('pychron.dvc.dvc_persister.DVCPersister')
+            if dvcp:
+                dvcp.load_name = exp.load_name
 
-            expid = spec.experiment_identifier
-            arun.dvc_persister.initialize(expid)
+                expid = spec.experiment_identifier
+                dvcp.initialize(expid)
+
+                arun.dvc_persister = dvcp
 
         mon = self.monitor
         if mon is not None:
-            mon.automated_run = weakref.ref(arun)()
+            mon.automated_run = arun
             arun.monitor = mon
             arun.persister.monitor = mon
 
