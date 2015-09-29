@@ -138,10 +138,9 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
                 color = SKIP_COLOR  # '#33CCFF'  # light blue
             elif item.state in self.colors:
                 color = self.colors[item.state]
-            # elif item.end_after:
-            #     color = COLORS['end_after']
+            elif item.end_after:
+                color = END_AFTER_COLOR
             else:
-
                 if row % 2 == 0:
                     # color = 'white'
                     # color = self.even_bg_color

@@ -676,12 +676,18 @@ class AutomatedRun(Loggable):
 
     def teardown(self):
         self.debug('tear down')
-        script = self.measurement_script
         if self.measurement_script:
             self.measurement_script.automated_run = None
             self.measurement_script.runner = None
             self.measurement_script._detectors = None
             self.measurement_script = None
+
+        if self.extraction_script:
+            self.extraction_script = None
+        if self.post_equilibration_script:
+            self.post_equilibration_script = None
+        if self.post_measurement_script:
+            self.post_measurement_script = None
 
         if self.experiment_executor:
             self.experiment_executor.automated_run = None
@@ -695,10 +701,20 @@ class AutomatedRun(Loggable):
         if self.plot_panel:
             self.plot_panel.info_func = None
             self.plot_panel.automated_run = None
+            self.plot_panel.arar_age = None
 
         if self.monitor:
             self.monitor.automated_run = None
 
+        a = self.arar_age
+        if self.arar_age:
+            self.arar_age = None
+
+        if self.persistence_spec:
+            self.persistence_spec.spec = None
+            self.persistence_spec.arar_age = None
+
+        self._persister_action('trait_set', persistence_spec=None)
         self.spec = None
         # self.py_clear_conditionals()
 
@@ -1217,6 +1233,9 @@ anaylsis_type={}
 
     def setup_context(self, *args, **kw):
         self._setup_context(*args, **kw)
+
+    def refresh_scripts(self):
+        self._refresh_scripts()
 
     # ===============================================================================
     # private
@@ -2021,13 +2040,12 @@ anaylsis_type={}
         self.debug('loading script "{}"'.format(fname))
         func = getattr(self, '_{}_script_factory'.format(name))
         s = func()
-        valid = True
+        # valid = True
         if s and os.path.isfile(s.filename):
             if s.bootstrap():
-                self.debug('%%%%%%%%%%%%%%%%%%%%%%%%%%%% setting default context for {}'.format(fname))
                 s.set_default_context()
         else:
-            valid = False
+            # valid = False
             fname = s.filename if s else fname
             e = 'Not a file'
             warn(fname, e)

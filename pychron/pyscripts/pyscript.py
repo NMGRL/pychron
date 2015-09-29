@@ -28,12 +28,12 @@ import yaml
 import sys
 import weakref
 # ============= local library imports  ==========================
+from pychron.core.codetools.inspection import caller
 from pychron.paths import paths
 from pychron.loggable import Loggable
 from pychron.globals import globalv
 from pychron.pyscripts.error import PyscriptError, IntervalError, GosubError, \
     KlassError, MainError
-
 
 BLOCK_LOCK = Lock()
 
@@ -169,6 +169,7 @@ named_register = makeNamedRegistry(command_register)
 @todo: cancel script if action fails. eg fatal comm. error
 '''
 
+
 # __CACHED_DURATIONS__ = {}
 
 
@@ -237,33 +238,36 @@ class PyScript(Loggable):
             ctx = self._ctx
 
         def calc_dur():
+            self.debug('calculate duration')
             self.setup_context(**ctx)
-            self.syntax_checked = False
+            # self.syntax_checked = False
             # self.debug('calculate_estimated duration. syntax requires testing')
             self.test()
             # self.debug('pyscript estimated duration= {}'.format(self._estimated_duration))
 
-        if not ctx:
-            calc_dur()
-            return self.get_estimated_duration()
+        # if not ctx:
+        # calc_dur()
+        # return self.get_estimated_duration()
 
         # h = self._generate_ctx_hash(ctx)
-        calc_dur()
+        # calc_dur()
 
         # self.debug('calculate estimated duration force={}, syntax_checked={}'.format(force, self.syntax_checked))
+        if force or not self.syntax_checked or not ctx:
+            calc_dur()
 
-        # if force or not self.syntax_checked:
-        #     calc_dur()
-        # else:
+        return self.get_estimated_duration()
+
         #     try:
         #         self._get_cached_duration(h)
         #         # self.debug('current context in the cached durations')
         #     except KeyError:
         #         calc_dur()
 
-        d = self.get_estimated_duration()
+        # d = self.get_estimated_duration()
+        # print 'get estafsdas {}'.format(d)
         # self._update_cached_duration(h, d)
-        return d
+        # return d
 
     def traceit(self, frame, event, arg):
         if event == "line":
@@ -383,28 +387,29 @@ class PyScript(Loggable):
                 if argv is None:
                     argv = tuple()
                 func(*argv)
+                self.debug('executed {}'.format(self._estimated_duration))
             except Exception, e:
                 return traceback.format_exc()
 
-            # sys.settrace(self._tracer)
-            # code_or_err = self.compile_snippet(snippet)
-            # if not isinstance(code_or_err, Exception):
-            #     try:
-            #         exec code_or_err in safe_dict
-            #         func = safe_dict['main']
-            #     except KeyError, e:
-            #         print 'exception', e, safe_dict.keys()
-            #         self.debug('{} {}'.format(e, traceback.format_exc()))
-            #         return MainError()
-            #
-            #     try:
-            #         if argv is None:
-            #             argv = tuple()
-            #         func(*argv)
-            #     except Exception, e:
-            #         return traceback.format_exc()
-            # else:
-            #     return code_or_err
+                # sys.settrace(self._tracer)
+                # code_or_err = self.compile_snippet(snippet)
+                # if not isinstance(code_or_err, Exception):
+                #     try:
+                #         exec code_or_err in safe_dict
+                #         func = safe_dict['main']
+                #     except KeyError, e:
+                #         print 'exception', e, safe_dict.keys()
+                #         self.debug('{} {}'.format(e, traceback.format_exc()))
+                #         return MainError()
+                #
+                #     try:
+                #         if argv is None:
+                #             argv = tuple()
+                #         func(*argv)
+                #     except Exception, e:
+                #         return traceback.format_exc()
+                # else:
+                #     return code_or_err
 
     def syntax_ok(self, warn=True):
         try:
@@ -567,14 +572,14 @@ class PyScript(Loggable):
                   name=name,
                   manager=self.manager,
                   application=self.application,
-                  parent_script=weakref.ref(self)(),
-                  syntax_checked=self.syntax_checked,
+                  parent_script=self,
+                  # syntax_checked=self.syntax_checked,
                   _ctx=self._ctx,
                   **kw)
 
         if calc_time:
             s.bootstrap()
-            s.calculate_estimated_duration()
+            s.calculate_estimated_duration(force=True)
             self._estimated_duration += s.get_estimated_duration()
             return
 
@@ -627,10 +632,12 @@ class PyScript(Loggable):
         if not self._cancel:
             f.clear()
 
+    @count_verbose_skip
     @command_register
-    def begin_interval(self, duration, name=None):
-
-        self._estimated_duration += duration
+    def begin_interval(self, duration, name=None, calc_time=False):
+        duration = float(duration)
+        if calc_time:
+            self._estimated_duration += duration
 
         if self._cancel:
             return
@@ -640,8 +647,6 @@ class PyScript(Loggable):
             if not self._cancel:
                 self.console_info('{} finished'.format(n))
                 flag.set()
-
-        duration = float(duration)
 
         t, f = None, None
         if name is None:
@@ -656,22 +661,25 @@ class PyScript(Loggable):
 
         self._interval_stack.put((t, f, name))
 
+    @count_verbose_skip
     @command_register
-    def delay(self, duration=0, message=None):
-        self.sleep(duration, message)
+    def delay(self, duration=0, message=None, calc_time=False):
+        self.sleep(duration, message, calc_time=calc_time)
 
+    @count_verbose_skip
     @command_register
-    def sleep(self, duration=0, message=None):
+    def sleep(self, duration=0, message=None, calc_time=False):
+        duration = round(duration, 1)
         # dont add to duration if within an interval
-        if not self._interval_stack.qsize() % 2:
+        if calc_time:
+            if not self._interval_stack.qsize() % 2:
+                self._estimated_duration += duration
+                # if self.parent_script is not None:
+                # self.parent_script._estimated_duration += self._estimated_duration
             self._estimated_duration += duration
-            # if self.parent_script is not None:
-            # self.parent_script._estimated_duration += self._estimated_duration
 
         if self.testing_syntax or self._cancel:
             return
-
-        duration = round(duration, 1)
 
         self.console_info('SLEEP {}'.format(duration))
         if globalv.experiment_debug:
@@ -793,7 +801,7 @@ class PyScript(Loggable):
     # ==============================================================================
     def _sleep(self, v, message=None):
         v = float(v)
-
+        self._estimated_duration += v
         if v > 1:
             self._block(v, message=message, dialog=True)
         else:

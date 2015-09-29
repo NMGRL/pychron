@@ -151,9 +151,7 @@ QComboBox {font-size: 10px}
             CustomLabel(run_factory_name('edit_mode_label'),
                         color='red',
                         width=40),
-            spring,
-            run_factory_item('end_after', width=30),
-            run_factory_item('skip'))
+            spring)
         button_bar2 = HGroup(Item('auto_increment_id', label='Auto Increment L#'),
                              Item('auto_increment_position', label='Position'), )
         edit_grp = VFold(

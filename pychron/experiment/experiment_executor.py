@@ -37,9 +37,8 @@ from pychron.core.ui.led_editor import LED
 from pychron.database.selectors.isotope_selector import IsotopeAnalysisSelector
 from pychron.envisage.consoleable import Consoleable
 from pychron.envisage.preference_mixin import PreferenceMixin
-# from pychron.experiment.conditional.conditionals_edit_view import TAGS
 from pychron.envisage.view_util import open_view
-from pychron.experiment.automated_run.persistence import ExcelPersister
+from pychron.experiment.automated_run.persistence import ExcelPersister, AutomatedRunPersister
 from pychron.experiment.conditional.conditional import conditionals_from_file
 from pychron.experiment.datahub import Datahub
 from pychron.experiment.health.series import SystemHealthSeries
@@ -440,6 +439,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         total_cnt = 0
         is_first_flag = True
         is_first_analysis = True
+
         with consumable(func=self._overlapped_run) as con:
             while 1:
                 if not self.is_alive():
@@ -617,10 +617,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         mem_log('> end join')
 
     def _do_run(self, run):
-        # print 'pre run'
-        # memory_tracker = tracker.SummaryTracker()
-        # memory_tracker.print_diff()
-
         st = time.time()
 
         self.debug('do run')
@@ -686,8 +682,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if run.state == 'success':
                 self.stats.update_run_duration(run, t)
                 self.stats.calculate()
-        # print 'post run'
-        # memory_tracker.print_diff()
 
     def _overlapped_run(self, v):
         self._overlapping = True

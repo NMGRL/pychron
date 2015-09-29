@@ -81,6 +81,7 @@ class AutomatedRunDurationTracker(Loggable):
         with open(p, 'w') as wfile:
             for line in out:
                 wfile.write('{}\n'.format(','.join(map(str, line))))
+        self.load()
 
     def __contains__(self, v):
         return next((True for h, d in self.items if h == v), False)
@@ -241,7 +242,7 @@ class ExperimentStats(Loggable):
             self.debug('using duration tracker value')
             rd = self.duration_tracker[sh]
         else:
-            rd = run.get_estimated_duration()
+            rd = run.get_estimated_duration(force=True)
         rd = round(rd)
         if as_str:
             rd = str(timedelta(seconds=rd))
@@ -283,9 +284,9 @@ class StatsGroup(ExperimentStats):
 
     def reset(self):
         ExperimentStats.reset(self)
-        self.calculate()
+        self.calculate(force=True)
 
-    def calculate(self):
+    def calculate(self, force=False):
         """
             calculate the total duration
             calculate the estimated time of finish
@@ -299,18 +300,19 @@ class StatsGroup(ExperimentStats):
         # for ei in self.experiment_queues:
         #     dur=ei.stats.calculate_duration(ei.cleaned_automated_runs)
         #     if
-        self.debug('calculating experiment stats')
-        tt = sum([ei.stats.calculate_duration(ei.cleaned_automated_runs)
-                  for ei in self.experiment_queues])
+        if force or not self._total_time:
+            self.debug('calculating experiment stats')
+            tt = sum([ei.stats.calculate_duration(ei.cleaned_automated_runs)
+                      for ei in self.experiment_queues])
 
-        self.debug('total_time={}'.format(tt))
-        self._total_time = tt
-        # offset = 0
-        # if self._start_time:
-        #     offset = time.time() - self._start_time
+            self.debug('total_time={}'.format(tt))
+            self._total_time = tt
+            # offset = 0
+            # if self._start_time:
+            #     offset = time.time() - self._start_time
 
-        # self.etf = self.format_duration(tt - offset)
-        self.etf = self.format_duration(tt)
+            # self.etf = self.format_duration(tt - offset)
+            self.etf = self.format_duration(tt)
 
     def calculate_at(self, sel, at_times=True):
         """

@@ -326,8 +326,8 @@ class MeasurementPyScript(ValvePyScript):
         """
 
         if calc_time:
-            n = 40
-            self._estimated_duration += n * integration_time
+            n = 31
+            self._estimated_duration += n * integration_time * 2
             return
 
         self._automated_run_call('py_peak_center', detector=detector,

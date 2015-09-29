@@ -184,12 +184,14 @@ class AutomatedRunSpec(HasTraits):
                         # arun.setup_context(script)
                         ctx = self.make_script_context()
                         d = script.calculate_estimated_duration(ctx)
+                        logger.debug('script duration name:{} seconds:{}'.format(name, d))
                         s += d
                 script_oks.append(ok)
             else:
                 if arun is None:
                     arun = self.make_run(new_uuid=False)
 
+                arun.refresh_scripts()
                 # arun.invalid_script = False
                 script = getattr(arun, si)
                 if script is not None:
@@ -203,6 +205,7 @@ class AutomatedRunSpec(HasTraits):
                         if si in ('measurement_script', 'extraction_script'):
                             ctx = self.make_script_context()
                             d = script.calculate_estimated_duration(ctx)
+                            logger.debug('script duration name:{} seconds:{}'.format(name, d))
                             s += d
         if arun:
             arun.spec = None
@@ -253,7 +256,7 @@ class AutomatedRunSpec(HasTraits):
         """
         if not self._estimated_duration or self._changed or force:
             s = self.test_scripts(script_context, warned)
-
+            logger.debug('Script duration {}'.format(s))
             db_save_time = 1
             self._estimated_duration = s + db_save_time
 
