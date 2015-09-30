@@ -22,6 +22,7 @@ setup(name='pychron',
                   'pychron.processing.ratio',
                   'pychron.core.ui.__init__',
                   'pychron.core.test_helpers',
+                  'pychron.core.filtering',
 
                   'pychron.experiment.automated_run.spec',
                   'pychron.experiment.utilities.experiment_identifier',
@@ -41,6 +42,7 @@ setup(name='pychron',
                 'pychron.pyscripts',
 
                 # test packages
+                'pychron.core.tests',
                 'pychron.core.stats.tests',
                 'pychron.core.regression.tests',
                 'pychron.processing.tests',
