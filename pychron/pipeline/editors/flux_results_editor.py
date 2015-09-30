@@ -599,8 +599,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
                    format='%0.2f',
                    width=70)]
 
-        unk_cols = [column(klass=CheckboxColumn, name='use', label='Use', editable=True, width=30),
-                    column(klass=CheckboxColumn, name='save', label='Save', editable=True, width=30),
+        unk_cols = [column(klass=CheckboxColumn, name='save', label='Save', editable=True, width=30),
                     column(name='hole_id', label='Hole'),
                     column(name='identifier', label='Identifier'),
                     column(name='sample', label='Sample', width=115),

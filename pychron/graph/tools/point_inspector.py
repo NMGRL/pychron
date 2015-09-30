@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from traits.api import Callable
 # ============= standard library imports ========================
-from numpy import where, vstack, zeros_like
+from numpy import where, vstack
 # ============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
 from pychron.graph.tools.info_inspector import InfoInspector, InfoOverlay
@@ -28,15 +28,23 @@ class PointInspector(InfoInspector):
     convert_index = Callable
     additional_info = Callable
 
-    def get_selected_index(self):
-        xxyy = self.component.hittest(self.current_position)
+    single_point = True
 
-        if xxyy:
-            d = self.component.index.get_data()
-            d = vstack((d, zeros_like(d))).T
+    def get_selected_index(self, threshold=5):
+        if self.single_point:
+            idx = self.component.map_index(self.current_position, threshold=threshold)
+            if idx is not None:
+                return (idx,)
+        else:
+            xs = self.component.index.get_data()
+            ys = self.component.value.get_data()
+
+            d = vstack((xs, ys)).T
             spts = self.component.map_screen(d)
-            tol = 2
-            return where(abs(spts[:,0] - xxyy[0]) < tol)[0]
+
+            cx, cy = self.current_position
+            distances = ((spts[:, 0] - cx) ** 2 + (spts[:, 1] - cy) ** 2) ** 0.5
+            return where(distances <= threshold * 2)[0]
 
     def percent_error(self, s, e):
         v = '(Inf%)'
@@ -97,5 +105,5 @@ class PointInspector(InfoInspector):
 class PointInspectorOverlay(InfoOverlay):
     pass
 
-#            print comp
+# print comp
 # ============= EOF =============================================

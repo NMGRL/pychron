@@ -52,7 +52,7 @@ class FindFluxMonitorsNode(FindNode):
         if self.irradiation:
             with self.dvc.session_ctx():
                 irrad = self.dvc.get_irradiation(self.irradiation)
-                return [l.name for l in irrad.levels]
+                return sorted([l.name for l in irrad.levels])
         else:
             return []
 

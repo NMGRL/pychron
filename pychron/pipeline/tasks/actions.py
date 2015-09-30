@@ -175,6 +175,11 @@ class SetInvalidAction(TaskAction):
     method = 'set_invalid'
 
 
+class SetFilteringTagAction(TaskAction):
+    name = 'Set Filtering Tag'
+    method = 'set_filtering_tag'
+
+
 # ============= Interperted Age =================================
 class SetInterpretedAgeAction(TaskAction):
     name = 'Set Interpreted Age'

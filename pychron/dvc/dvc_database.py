@@ -30,7 +30,7 @@ from pychron.database.core.database_adapter import DatabaseAdapter
 from pychron.database.core.query import compile_query, in_func
 from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, IrradiationTbl, LevelTbl, SampleTbl, \
     MaterialTbl, IrradiationPositionTbl, UserTbl, ExtractDeviceTbl, LoadTbl, LoadHolderTbl, LoadPositionTbl, \
-    MeasuredPositionTbl, ProductionTbl, VersionTbl, ExperimentAssociationTbl, ExperimentTbl, TagTbl, AnalysisChangeTbl, \
+    MeasuredPositionTbl, ProductionTbl, VersionTbl, ExperimentAssociationTbl, ExperimentTbl, AnalysisChangeTbl, \
     InterpretedAgeTbl, InterpretedAgeSetTbl
 from pychron.pychron_constants import ALPHAS, alpha_to_int
 
@@ -114,20 +114,20 @@ class DVCDatabase(DatabaseAdapter):
                     if not self.get_users():
                         self.add_user('root')
 
-    def add_invalid_tag(self):
-        return self._add_default_tag('invalid', True)
-
-    def add_ok_tag(self):
-        return self._add_default_tag('ok', False)
-
-    def _add_default_tag(self, name, v):
-        with self.session_ctx():
-            tag = TagTbl(name=name,
-                         omit_ideo=v,
-                         omit_spec=v,
-                         omit_iso=v,
-                         omit_series=v)
-            return self._add_item(tag)
+    # def add_invalid_tag(self):
+    #     return self._add_default_tag('invalid', True)
+    #
+    # def add_ok_tag(self):
+    #     return self._add_default_tag('ok', False)
+    #
+    # def _add_default_tag(self, name, v):
+    #     with self.session_ctx():
+    #         tag = TagTbl(name=name,
+    #                      omit_ideo=v,
+    #                      omit_spec=v,
+    #                      omit_iso=v,
+    #                      omit_series=v)
+    #         return self._add_item(tag)
 
     def set_analysis_tag(self, uuid, tagname):
         with self.session_ctx():
@@ -192,10 +192,10 @@ class DVCDatabase(DatabaseAdapter):
                 obj = UserTbl(name=self.save_username)
                 self._add_item(obj)
 
-    def add_tag(self, **kw):
-        with self.session_ctx():
-            obj = TagTbl(**kw)
-            return self._add_item(obj)
+    # def add_tag(self, **kw):
+    #     with self.session_ctx():
+    #         obj = TagTbl(**kw)
+    #         return self._add_item(obj)
 
     def add_production(self, name):
         with self.session_ctx():
@@ -965,11 +965,11 @@ class DVCDatabase(DatabaseAdapter):
             ps = self._retrieve_items(ProjectTbl, order=order)
         return ps
 
-    def get_tag(self, name):
-        return self._retrieve_item(TagTbl, name)
+    # def get_tag(self, name):
+    #     return self._retrieve_item(TagTbl, name)
 
-    def get_tags(self):
-        return self._retrieve_items(TagTbl)
+    # def get_tags(self):
+    #     return self._retrieve_items(TagTbl)
 
     def get_experiments(self):
         return self._retrieve_items(ExperimentTbl)

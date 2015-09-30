@@ -22,10 +22,10 @@ from traits.api import HasTraits, Any, Int, Str, Property, \
 from chaco.tools.data_label_tool import DataLabelTool
 from chaco.tools.broadcaster import BroadcasterTool
 # ============= standard library imports ========================
-from numpy import Inf
-import re
+from numpy import Inf, vstack, zeros_like, ma
 from uncertainties import std_dev, nominal_value, ufloat
 # ============= local library imports  ==========================
+from pychron.core.filtering import filter_ufloats, sigma_filter
 from pychron.graph.error_bar_overlay import ErrorBarOverlay
 from pychron.graph.ml_label import MPlotAxis
 from pychron.graph.tools.axis_tool import AxisTool
@@ -53,8 +53,11 @@ class SelectionFigure(object):
 
     def _set_selected(self, ans, sel):
         for i, a in enumerate(ans):
-            if not (a.table_filter_omit or a.value_filter_omit or a.is_tag_omitted(self._omit_key)):
-                a.temp_status = 1 if i in sel else 0
+            if i in sel:
+                ts = a.otemp_status if a.otemp_status else 'omit'
+                a.temp_status = ts
+            else:
+                a.temp_status = 'ok'
 
     def _filter_metadata_changes(self, obj, func, ans):
         sel = obj.metadata.get('selections', [])
@@ -294,9 +297,13 @@ class BaseArArFigure(HasTraits, SelectionFigure):
         pp.x_grid.visible = options.use_xgrid
         pp.y_grid.visible = options.use_ygrid
 
-    def _get_omitted(self, ans, omit=None, include_value_filtered=True):
-        return [i for i, ai in enumerate(ans)
-                if ai.is_omitted(omit, include_value_filtered)]
+    # def _get_omitted(self, ans, omit=None, include_value_filtered=True):
+    #     # return [i for i, ai in enumerate(ans)
+    #     #         if ai.is_omitted(omit, include_value_filtered)]
+    #     return [i for i, ai in enumerate(ans)
+    #             if ai.is_omitted()]
+    def _get_omitted_by_tag(self, ans):
+        return [i for i, ai in enumerate(ans) if ai.is_omitted_by_tag()]
 
     def _set_selected(self, ans, sel):
         super(BaseArArFigure, self)._set_selected(ans, sel)
@@ -394,17 +401,42 @@ class BaseArArFigure(HasTraits, SelectionFigure):
     # ===========================================================================
     # aux plots
     # ===========================================================================
-    def _get_aux_plot_omits(self, po, ys):
+    def _get_aux_plot_filtered(self, po, vs, es=None):
         omits = []
-        fs = po.filter_str
-        if fs:
-            m = re.match(r'[A-Za-z]+', fs)
-            if m:
-                k = m.group(0)
-                ts = [(eval(fs, {k: yi}), i) for i, yi in enumerate(ys)]
-                omits = [idx for ti, idx in ts if ti]
+        invalids = []
+        outliers = []
 
-        return omits
+        fs = po.filter_str
+        nsigma = po.sigma_filter_n
+        if fs or nsigma:
+            if es is None:
+                es = zeros_like(vs)
+            ufs = vstack((vs, es)).T
+            if fs:
+                filter_str_idx = filter_ufloats(ufs, fs)
+                ftag = po.filter_str_tag.lower()
+
+                if ftag == 'invalid':
+                    invalids.extend(filter_str_idx)
+                elif ftag == 'outlier':
+                    outliers.extend(filter_str_idx)
+                else:
+                    omits.extend(filter_str_idx)
+
+            if nsigma:
+                vs = ma.array(vs, mask=False)
+                vs.mask[filter_str_idx] = True
+                sigma_idx = sigma_filter(vs, nsigma)
+
+                stag = po.sigma_filter_tag.lower()
+                if stag == 'invalid':
+                    invalids.extend(sigma_idx)
+                elif stag == 'outlier':
+                    outliers.extend(sigma_idx)
+                else:
+                    omits.extend(sigma_idx)
+
+        return omits, invalids, outliers
 
     def _plot_raw_40_36(self, po, plot, pid, **kw):
         k = 'uAr40/Ar36'

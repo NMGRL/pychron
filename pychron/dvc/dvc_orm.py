@@ -98,7 +98,8 @@ class ExperimentAssociationTbl(Base, BaseMixin):
 
 class AnalysisChangeTbl(Base, BaseMixin):
     idanalysischangeTbl = Column(Integer, primary_key=True)
-    tag = Column(String(40), ForeignKey('TagTbl.name'))
+    # tag = Column(String(40), ForeignKey('TagTbl.name'))
+    tag = Column(String(40))
     timestamp = Column(TIMESTAMP)
     user = Column(String(40))
     analysisID = Column(Integer, ForeignKey('AnalysisTbl.idanalysisTbl'))
@@ -211,9 +212,7 @@ class AnalysisTbl(Base, BaseMixin):
                     iv.project = irradpos.sample.project.name
 
             iv.timestampf = make_timef(self.timestamp)
-            tag = self.change.tag_item
-            iv.tag = tag.name
-            iv.tag_dict = {k: getattr(tag, k) for k in ('name',) + OMIT_KEYS}
+            iv.tag = self.change.tag
             self._record_view = iv
 
         return iv
@@ -276,14 +275,14 @@ class IrradiationPositionTbl(Base, BaseMixin):
     #     return self
 
 
-class TagTbl(Base, BaseMixin):
-    name = Column(String(40), primary_key=True)
-    omit_ideo = Column(Boolean)
-    omit_spec = Column(Boolean)
-    omit_iso = Column(Boolean)
-    omit_series = Column(Boolean)
-
-    analyses = relationship('AnalysisChangeTbl', backref='tag_item')
+# class TagTbl(Base, BaseMixin):
+#     name = Column(String(40), primary_key=True)
+#     omit_ideo = Column(Boolean)
+#     omit_spec = Column(Boolean)
+#     omit_iso = Column(Boolean)
+#     omit_series = Column(Boolean)
+#
+#     analyses = relationship('AnalysisChangeTbl', backref='tag_item')
 
 
 class MassSpectrometerTbl(Base, BaseMixin):

@@ -29,7 +29,7 @@ class InterpretedAgeEditor(FigureEditor):
     def get_interpreted_ages(self):
         key = lambda x: x.group_id
         unks = sorted(self.analyses, key=key)
-        ok = 'omit_{}'.format(self.basename)
+        # ok = 'omit_{}'.format(self.basename)
 
         po = self.plotter_options
         additional = {}
@@ -49,7 +49,7 @@ class InterpretedAgeEditor(FigureEditor):
             additional['include_j_error_in_mean'] = po.include_j_error_in_mean
 
         def func(aa):
-            return InterpretedAgeGroup(analyses=filter(lambda x: not x.is_omitted(ok), aa),
+            return InterpretedAgeGroup(analyses=filter(lambda x: not x.is_omitted(), aa),
                                        all_analyses=aa,
                                        preferred_age_kind=pk,
                                        preferred_age_error_kind=ek,

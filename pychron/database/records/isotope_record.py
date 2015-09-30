@@ -103,7 +103,6 @@ class IsotopeRecordView(object):
         self._increment = -1
         self.step = ''
         self.tag = ''
-        self.tag_dict = None
         self.uuid = ''
         self.experiment_identifier = ''
         self.experiment_ids = None
@@ -134,7 +133,7 @@ class IsotopeRecordView(object):
         # super(IsotopeRecordView, self).__init__(*args, **kw)
 
     def set_tag(self, tag):
-        self.tag = tag.name
+        self.tag = tag
 
     def create(self, dbrecord, fast_load=False):
         # print 'asdfsadfsdaf', dbrecord, dbrecord.labnumber, dbrecord.uuid
@@ -159,6 +158,7 @@ class IsotopeRecordView(object):
             # self.record_id = make_runid(self.labnumber, self.aliquot, self.step)
 
             self.uuid = dbrecord.uuid
+            print dbrecord, dbrecord.tag
             self.tag = dbrecord.tag or ''
             self.rundate = dbrecord.analysis_timestamp
 

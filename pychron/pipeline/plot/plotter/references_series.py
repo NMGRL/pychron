@@ -274,7 +274,7 @@ class ReferencesSeries(BaseSeries):
 
                 excluded = reg.get_excluded()
                 for i, r in enumerate(self.sorted_references):
-                    r.temp_status = 1 if i in excluded else 0
+                    r.temp_status = 'omit' if i in excluded else 'ok'
 
                 self._set_values(plotobj, reg, key)
 
@@ -462,7 +462,7 @@ class ReferencesSeries(BaseSeries):
         plot.isotope = po.name
         plot.fit = '{}_{}'.format(po.fit, po.error_type)
 
-        scatter.index.metadata['selections'] = [i for i, r in enumerate(self.sorted_references) if r.temp_status]
+        scatter.index.metadata['selections'] = [i for i, r in enumerate(self.sorted_references) if r.temp_selected]
         return reg, ymi, yma
 
     def _set_interpolated_values(self, iso, fit, ans, p_uys, p_ues):

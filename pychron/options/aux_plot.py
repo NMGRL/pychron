@@ -19,6 +19,7 @@ from traits.api import HasTraits, Str, Int, Bool, \
     Float, Property, on_trait_change, Dict, Tuple, Enum, List
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.pychron_traits import FilterPredicate
 from pychron.pychron_constants import NULL_STR
 
 
@@ -37,7 +38,12 @@ class AuxPlot(HasTraits):
     ytitle_visible = Bool(True)
     ytick_visible = Bool(True)
     show_labels = Bool(False)
-    filter_str = Str(enter_set=True, auto_set=False)
+
+    filter_str = FilterPredicate
+    sigma_filter_n = Int
+    has_filter = Property(depends_on='filter_str, sigma_filter_n')
+    filter_str_tag = Enum(('Omit', 'Outlier', 'Invalid'))
+    sigma_filter_tag = Enum(('Omit', 'Outlier', 'Invalid'))
 
     normalize = None
     use_time_axis = False
@@ -108,4 +114,9 @@ class AuxPlot(HasTraits):
         else:
             return self.name
 
+    def _set_has_filter(self, v):
+        pass
+
+    def _get_has_filter(self):
+        return self.filter_str or self.sigma_filter_n
 # ============= EOF =============================================

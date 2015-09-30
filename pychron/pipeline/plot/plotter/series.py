@@ -115,7 +115,7 @@ class Series(BaseSeries):
             plot data on plots
         """
 
-        omits = self._get_omitted(self.sorted_analyses, omit='omit_series')
+        omits = self._get_omitted(self.sorted_analyses)
         graph = self.graph
 
         if plots:

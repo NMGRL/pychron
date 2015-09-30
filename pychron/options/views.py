@@ -64,7 +64,7 @@ def view(title):
 
     v = View(VGroup(agrp, bgrp),
              width=750,
-             height=700,
+             height=750,
              resizable=True,
              title=title,
              buttons=['OK', 'Cancel'])

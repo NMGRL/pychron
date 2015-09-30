@@ -15,11 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traitsui.api import UItem, Item, HGroup, VGroup, Group, EnumEditor, spring
+from enable.markers import marker_names
+from traitsui.api import UItem, Item, HGroup, VGroup, Group, EnumEditor, spring, View
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.icon_button_editor import icon_button_editor
-from pychron.options.options import SubOptions, AppearanceSubOptions, GroupSubOptions
+from pychron.options.options import SubOptions, AppearanceSubOptions, GroupSubOptions, MainOptions
 
 
 class DisplaySubOptions(SubOptions):
@@ -185,9 +186,47 @@ class IdeogramAppearance(AppearanceSubOptions):
         return self._make_view(VGroup(g, fgrp))
 
 
+class IdeogramMainOptions(MainOptions):
+    def _get_edit_view(self):
+        tooltip = """'Omit analyses based on the provided criteria. For example x>10 will omit any analysis
+greater than 10. The value of x depends on the Auxiliary plot e.g. x is age for Analysis Number or K/Ca for KCa.
+x is simply a placeholder and can be replaced by any letter or word except for a few exceptions
+(i.e and, or, is, on, if, not...). To filter based on error or %error use "error" and "percent_error". Multiple predicates may be combined
+with "and", "or". Valid comparators are "<,<=,>,>=,==,!=". "==" means "equals" and "!=" means is not equal.
+Additional examples
+1. x<10
+2. age<10 or age>100
+3. age<10 or error>1
+4. x<=10 or percent_error>50
+5. xyz<=10 and error>=0.1"""
+        sigma_tooltip = """Omit analyses greater the N sigma from the arithmetic mean"""
+
+        fgrp = VGroup(HGroup(Item('filter_str', tooltip=tooltip, label='Filter'),
+                             UItem('filter_str_tag')),
+                      HGroup(Item('sigma_filter_n', label='Sigma Filter N', tooltip=sigma_tooltip),
+                             UItem('sigma_filter_tag')),
+                      show_border=True,
+                      label='Filtering')
+
+        v = View(VGroup(HGroup(Item('name', editor=EnumEditor(name='names')),
+                               Item('scale', editor=EnumEditor(values=['linear', 'log']))),
+                        Item('height'),
+                        HGroup(UItem('marker', editor=EnumEditor(values=marker_names)),
+                               Item('marker_size', label='Size'),
+                               show_border=True, label='Marker'),
+                        HGroup(Item('ymin', label='Min'),
+                               Item('ymax', label='Max'),
+                               show_border=True,
+                               label='Y Limits'),
+                        fgrp,
+                        show_border=True))
+        return v
+
+
 # ===============================================================
 # ===============================================================
 VIEWS = {}
+VIEWS['main'] = IdeogramMainOptions
 VIEWS['ideogram'] = IdeogramSubOptions
 VIEWS['appearance'] = IdeogramAppearance
 VIEWS['calculations'] = CalculationSubOptions

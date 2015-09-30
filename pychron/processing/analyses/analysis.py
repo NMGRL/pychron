@@ -19,7 +19,7 @@ from numpy import Inf
 from pyface.message_dialog import information
 from pyface.qt import QtCore
 
-from traits.api import Event, Int
+from traits.api import Event
 
 # ============= standard library imports ========================
 from collections import namedtuple
@@ -36,7 +36,7 @@ from pychron.processing.arar_age import ArArAge
 # from pychron.processing.analyses.db_summary import DBAnalysisSummary
 from pychron.experiment.utilities.identifier import make_runid, make_aliquot_step
 from pychron.processing.isotope import Isotope
-from pychron.pychron_constants import PLUSMINUS, OMIT_KEYS
+from pychron.pychron_constants import PLUSMINUS
 
 Fit = namedtuple('Fit', 'fit '
                         'filter_outliers filter_outlier_iterations filter_outlier_std_devs '
@@ -184,19 +184,20 @@ class Analysis(ArArAge):
 
     # processing
     is_plateau_step = False
-    temp_status = Int(0)
-    value_filter_omit = False
-    table_filter_omit = False
+    # temp_status = Int(0)
+    temp_status = 'ok'
+    # value_filter_omit = False
+    # table_filter_omit = False
     tag = ''
     data_reduction_tag = ''
 
     # status_text = Property
     # age_string = Property
 
-    omit_ideo = False
-    omit_spec = False
-    omit_iso = False
-    omit_series = False
+    # omit_ideo = False
+    # omit_spec = False
+    # omit_iso = False
+    # omit_series = False
 
     # blank_changes = List
     # fit_changes = List
@@ -231,31 +232,41 @@ class Analysis(ArArAge):
 
         return r
 
-    def set_tag(self, tag):
-        if isinstance(tag, str):
-            self.tag = tag
-            omit = tag == 'invalid'
+    def set_temp_status(self, tag):
+        tag = tag.lower()
+        if tag != 'ok':
+            self.otemp_status = tag
         else:
-            if not hasattr(tag, '__getitem__'):
-                tag = tag.to_dict()
+            self.otemp_status = 'omit'
 
-            name = tag['name']
-            self.tag = name
+        self.temp_status = tag
 
-            if 'omit_dict' in tag:
-                omit_dict = tag['omit_dict']
-            else:
-                omit_dict = tag
-
-            omit = name == 'omit'
-            for a in OMIT_KEYS:
-                v = omit_dict[a]
-                # v = getattr(tag, a)
-                setattr(self, a, v)
-                if v:
-                    omit = True
-
-        self.temp_status = 1 if omit else 0
+    def set_tag(self, tag):
+        self.tag = tag
+        # if isinstance(tag, str):
+        #     self.tag = tag
+        #     omit = tag == 'invalid'
+        # else:
+        #     if not hasattr(tag, '__getitem__'):
+        #         tag = tag.to_dict()
+        #
+        #     name = tag['name']
+        #     self.tag = name
+        #
+        #     if 'omit_dict' in tag:
+        #         omit_dict = tag['omit_dict']
+        #     else:
+        #         omit_dict = tag
+        #
+        #     omit = name == 'omit'
+        #     for a in OMIT_KEYS:
+        #         v = omit_dict[a]
+        #         # v = getattr(tag, a)
+        #         setattr(self, a, v)
+        #         if v:
+        #             omit = True
+        #
+        # self.temp_status = 1 if omit else 0
 
     def show_isotope_evolutions(self, isotopes, **kw):
         if isotopes and isinstance(isotopes[0], (str, unicode)):
@@ -287,19 +298,24 @@ class Analysis(ArArAge):
             analyses = [self, ]
         self.invalid_event = analyses
 
-    def is_temp_omitted(self, include_value_filtered=True):
-        return self.temp_status or self.table_filter_omit or self.value_filter_omit if include_value_filtered else False
+    # def is_temp_omitted(self, include_value_filtered=True):
+    #     return self.temp_status or self.table_filter_omit or self.value_filter_omit if include_value_filtered else False
+    #
+    # def is_tag_omitted(self, omit_key):
+    #     if omit_key:
+    #         return getattr(self, omit_key)
+    #
+    # def is_omitted(self, omit_key=None, include_value_filtered=True):
+    #     omit = False
+    #     if omit_key:
+    #         omit = getattr(self, omit_key)
+    #
+    #     return self.is_temp_omitted(include_value_filtered) or omit
+    def is_omitted(self):
+        return self.is_omitted_by_tag() or self.temp_selected
 
-    def is_tag_omitted(self, omit_key):
-        if omit_key:
-            return getattr(self, omit_key)
-
-    def is_omitted(self, omit_key=None, include_value_filtered=True):
-        omit = False
-        if omit_key:
-            omit = getattr(self, omit_key)
-
-        return self.is_temp_omitted(include_value_filtered) or omit
+    def is_omitted_by_tag(self):
+        return self.tag in ('omit', 'invalid', 'outlier')
 
     # def flush(self, *args, **kw):
     #     """
@@ -389,10 +405,7 @@ class Analysis(ArArAge):
 
     @property
     def status_text(self):
-        r = 'OK'
-        if self.is_omitted():
-            r = 'Omitted'
-        return r
+        return self.temp_status.lower()
 
     @property
     def identifier(self):
@@ -412,6 +425,10 @@ class Analysis(ArArAge):
     @record_id.setter
     def record_id(self, v):
         self._record_id = v
+
+    @property
+    def temp_selected(self):
+        return self.temp_status in ('omit', 'outlier', 'invalid')
 
     def __str__(self):
         return '{}<{}>'.format(self.record_id, self.__class__.__name__)

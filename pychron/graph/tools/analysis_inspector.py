@@ -30,6 +30,7 @@ class AnalysisPointInspector(PointInspector):
     additional_info = Callable
     _selected_indices = List
     index_tag = None
+    single_point = False
 
     def contextual_menu_contents(self):
         """

@@ -102,10 +102,9 @@ class Ideogram(BaseArArFigure):
             print 'asdfasdf', e, index_attr
             return
 
-        omit = self._get_omitted(self.sorted_analyses,
-                                 omit='omit_ideo',
-                                 include_value_filtered=False)
-        omit = set(omit)
+        # omit = self._get_omitted(self.sorted_analyses)
+        # omit = set(omit)
+        selection = self._get_omitted_by_tag(self.sorted_analyses)
         for pid, (plotobj, po) in enumerate(zip(graph.plots, plots)):
             try:
                 args = getattr(self, '_plot_{}'.format(po.plot_name))(po, plotobj, pid)
@@ -116,30 +115,32 @@ class Ideogram(BaseArArFigure):
                 continue
 
             if args:
-                scatter, omits = args
-                omit = omit.union(set(omits))
+                scatter, aux_selection, invalid = args
+                selection.extend(aux_selection)
+                # print omit, selection, invalid
+                # omit = omit.union(set(selection))
 
                 # self.update_options_limits(pid)
 
-        for i, ai in enumerate(self.sorted_analyses):
-            # print ai.record_id, i in omit
-            ai.value_filter_omit = i in omit
+                # for i, ai in enumerate(self.sorted_analyses):
+                #     # print ai.record_id, i in omit
+                #     ai.value_filter_omit = i in omit
 
-            # self._asymptotic_limit_flag = True
-            # opt = self.options
-            # xmi, xma = self.xmi, self.xma
-            # pad = '0.05'
+                # self._asymptotic_limit_flag = True
+                # opt = self.options
+                # xmi, xma = self.xmi, self.xma
+                # pad = '0.05'
 
-            # if opt.use_asymptotic_limits:
-            # xmi, xma = self.xmi, self.xma
-            # elif opt.use_centered_range:
-            # w2 = opt.centered_range / 2.0
-            # r = self.center
-            # xmi, xma = r - w2, w2 + r
-            # pad=False
-            # elif opt.xlow or opt.xhigh:
-            # xmi, xma = opt.xlow, opt.xhigh
-            # pad=False
+                # if opt.use_asymptotic_limits:
+                # xmi, xma = self.xmi, self.xma
+                # elif opt.use_centered_range:
+                # w2 = opt.centered_range / 2.0
+                # r = self.center
+                # xmi, xma = r - w2, w2 + r
+                # pad=False
+                # elif opt.xlow or opt.xhigh:
+                # xmi, xma = opt.xlow, opt.xhigh
+                # pad=False
 
         # print opt.use_centered_range, self.center, xmi, xma
 
@@ -162,8 +163,12 @@ class Ideogram(BaseArArFigure):
         plot.value_axis.tick_label_formatter = lambda x: ''
         plot.value_axis.tick_visible = False
 
-        if omit:
-            self._rebuild_ideo(list(omit))
+        if selection:
+            print 'selection {}'.format(selection)
+            self._rebuild_ideo(selection)
+
+            # if omit:
+            #     self._rebuild_ideo(list(omit))
 
     def mean_x(self, attr):
         # todo: handle other attributes
@@ -197,7 +202,10 @@ class Ideogram(BaseArArFigure):
     def _plot_aux(self, title, vk, ys, po, plot, pid,
                   es=None):
 
-        omits = self._get_aux_plot_omits(po, ys)
+        # omits = self._get_aux_plot_omits(po, ys, es)
+        # print 'plot aux {}'.format(omits)
+        selection = []
+        invalid = []
 
         scatter = self._add_aux_plot(ys,
                                      title, po, pid)
@@ -219,7 +227,7 @@ class Ideogram(BaseArArFigure):
         self._add_scatter_inspector(scatter,
                                     additional_info=func)
 
-        return scatter, omits
+        return scatter, selection, invalid
 
     def _plot_analysis_number(self, *args, **kw):
         return self.__plot_analysis_number(*args, **kw)
@@ -239,6 +247,7 @@ class Ideogram(BaseArArFigure):
 
     def __plot_analysis_number(self, po, plot, pid, nonsorted=False):
         xs = self.xs
+        xes = self.xes
         n = xs.shape[0]
 
         startidx = 1
@@ -298,7 +307,7 @@ class Ideogram(BaseArArFigure):
             scatter.overlays.append(LatestOverlay(component=scatter,
                                                   data_position=array([(dx, dy)])))
 
-        self._add_error_bars(scatter, self.xes, 'x', self.options.error_bar_nsigma,
+        self._add_error_bars(scatter, xes, 'x', self.options.error_bar_nsigma,
                              end_caps=self.options.x_end_caps,
                              visible=po.x_error)
 
@@ -315,7 +324,20 @@ class Ideogram(BaseArArFigure):
         self._set_y_limits(0, my, min_=0, max_=my, pid=pid)
 
         # print 'setting ylimits {}'.format(my)
-        omits = self._get_aux_plot_omits(po, ys)
+
+        omits, invalids, outliers = self._get_aux_plot_filtered(po, xs, xes)
+        for idx, item in enumerate(items):
+            if idx in omits:
+                s = 'omit'
+            elif idx in invalids:
+                s = 'invalid'
+            elif idx in outliers:
+                s = 'outlier'
+            else:
+                s = 'ok'
+            item.set_temp_status(s)
+
+        print 'plot aux {}'.format(omits)
 
         func = self._get_index_attr_label_func()
         self._add_scatter_inspector(scatter,
@@ -323,7 +345,9 @@ class Ideogram(BaseArArFigure):
                                     value_format=lambda x: '{:d}'.format(int(x)),
                                     additional_info=func)
 
-        return scatter, omits
+        selection = omits + outliers
+
+        return scatter, selection, invalids
 
     def _get_index_attr_label_func(self):
         ia = self.options.index_attr
@@ -451,11 +475,19 @@ class Ideogram(BaseArArFigure):
         xs = line.index.get_data()
         ys = line.value.get_data()
 
-        maxp, minp = find_peaks(ys, xs, lookahead=1)
+        try:
+            maxp, minp = find_peaks(ys, xs, lookahead=1)
+        except IndexError:
+            return
+
         for age, relative_prob in maxp:
             func = lambda mi, ma: cumulative_probability(ages, errors, mi, ma, n=N)
             limits = (age * 0.99, age * 1.01)
-            p = find_fine_peak(func=func, initial_limits=limits, tol=0.001, lookahead=1)
+            try:
+                p = find_fine_peak(func=func, initial_limits=limits, tol=0.001, lookahead=1)
+            except IndexError:
+                continue
+
             label = PeakLabel(line,
                               data_point=(p, relative_prob),
                               label_text=floatfmt(p, n=3),
@@ -563,15 +595,15 @@ class Ideogram(BaseArArFigure):
             # set the temp_status for all the analyses
             # for i, a in enumerate(sorted_ans):
             # a.temp_status = 1 if i in sel else 0
-        else:
+            # else:
             # sel = [i for i, a in enumerate(sorted_ans)
             # if a.temp_status]
-            sel = self._get_omitted(sorted_ans, omit='omit_ideo')
+            # sel = self._get_omitted(sorted_ans)
             # print 'update graph meta'
-            self._rebuild_ideo(sel)
+            # self._rebuild_ideo(sel)
 
     def _rebuild_ideo(self, sel):
-        # print 'rebuild ideo {}'.format(sel)
+        print 'rebuild ideo {}'.format(sel)
         graph = self.graph
 
         if len(graph.plots) > 1:
@@ -596,6 +628,8 @@ class Ideogram(BaseArArFigure):
         # d = zip(self.xs, self.xes)
         # oxs, oxes = zip(*d)
         # d = filter(f, enumerate(d))
+        if not self.xs.shape[0]:
+            return
 
         _, fxs = zip(*filter(f, enumerate(self.xs)))
         _, fxes = zip(*filter(f, enumerate(self.xes)))
@@ -625,6 +659,7 @@ class Ideogram(BaseArArFigure):
                                                                sig_figs=self.options.mean_sig_figs)
 
             lp.overlays = [o for o in lp.overlays if not isinstance(o, PeakLabel)]
+
             self._add_peak_labels(lp, fxs, fxes)
 
             # update the data label position

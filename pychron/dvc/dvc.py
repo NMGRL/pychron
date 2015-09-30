@@ -41,7 +41,7 @@ from pychron.git_archive.repo_manager import GitRepoManager, format_date
 from pychron.github import Organization
 from pychron.loggable import Loggable
 from pychron.paths import paths
-from pychron.pychron_constants import OMIT_KEYS, RATIO_KEYS, INTERFERENCE_KEYS
+from pychron.pychron_constants import RATIO_KEYS, INTERFERENCE_KEYS
 
 TESTSTR = {'blanks': 'auto update blanks', 'iso_evo': 'auto update iso_evo'}
 
@@ -105,14 +105,12 @@ def get_review_status(record):
 
 
 class Tag(object):
-    omit_dict = None
     name = None
     path = None
 
     @classmethod
     def from_analysis(cls, an):
         tag = cls()
-        tag.omit_dict = {k: getattr(an, k) for k in OMIT_KEYS}
         tag.name = an.tag
         tag.record_id = an.record_id
         tag.experiment_identifier = an.experiment_identifier
@@ -121,7 +119,7 @@ class Tag(object):
         return tag
 
     def dump(self):
-        obj = {'name': self.name, 'omit_dict': self.omit_dict}
+        obj = {'name': self.name}
         if not self.path:
             self.path = analysis_path(self.record_id, self.experiment_identifier, modifier='tags', mode='w')
 
@@ -654,7 +652,7 @@ class DVC(Loggable):
                     a.arar_constants.lambda_k = lambda_k
 
                 ft = time.time() - st
-                a.set_tag(record.tag_dict)
+                a.set_tag(record.tag)
                 if calculate_f_only:
                     a.calculate_F()
                 else:

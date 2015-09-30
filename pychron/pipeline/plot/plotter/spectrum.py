@@ -243,9 +243,7 @@ class Spectrum(BaseArArFigure):
                                   nsigma=ns)
         ds.underlays.append(sp)
 
-        omit = self._get_omitted(self.sorted_analyses,
-                                 omit='omit_spec',
-                                 include_value_filtered=False)
+        omit = self._get_omitted(self.sorted_analyses)
         sp.selections = omit
         self.spectrum_overlays.append(sp)
         if po.show_labels:
@@ -320,8 +318,8 @@ class Spectrum(BaseArArFigure):
             self.plateau_overlay.selections = sel
 
         ag = self.analysis_group
-        for i, ai in enumerate(ag.analyses):
-            ai.temp_status = i in sel
+        # for i, ai in enumerate(ag.analyses):
+        #     ai.temp_status = i in sel
 
         ag.dirty = True
         # tga = ag.integrated_age

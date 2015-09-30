@@ -143,6 +143,7 @@ class MainOptions(SubOptions):
                 checkbox_column(name='y_error', label='Y Err.'),
                 checkbox_column(name='ytick_visible', label='Y Tick'),
                 checkbox_column(name='ytitle_visible', label='Y Title'),
+                checkbox_column(name='has_filter', label='Filter', editable=False)
                 # object_column(name='filter_str', label='Filter')
                 ]
 
