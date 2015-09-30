@@ -149,8 +149,6 @@ class BaseSweep(SpectrometerTask):
                 intensity = self._step_intensity()
                 invoke_in_main_thread(self._graph_hook, v, intensity, series)
 
-                time.sleep(self.integration_time)
-
         return self._alive
 
     def _post_execute(self):

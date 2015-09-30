@@ -226,8 +226,8 @@ class BasePeakCenter(MagnetSweep):
     # factories
     # ===============================================================================
     def _reset_graph(self):
-        self.graph.clear(clear_container=True)
-        self._graph_factory(self.graph)
+        # self.graph.clear(clear_container=True)
+        self._graph_factory()
 
     def _graph_factory(self, graph=None):
         if graph is None:
