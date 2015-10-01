@@ -24,6 +24,7 @@ from traits.api import Instance
 from pychron.envisage.browser.browser_task import BaseBrowserTask
 from pychron.envisage.browser.view import PaneBrowserView
 from pychron.envisage.view_util import open_view
+from pychron.globals import globalv
 from pychron.pipeline.tasks.actions import ConfigureRecallAction, ConfigureAnalysesTableAction, LoadReviewStatusAction, \
     EditAnalysisAction
 from pychron.processing.analyses.view.edit_analysis_view import AnalysisEditView
@@ -59,8 +60,9 @@ class BrowserTask(BaseBrowserTask):
 
     def _opened_hook(self):
         super(BrowserTask, self)._opened_hook()
-        r = self.browser_model.analysis_table.analyses[0]
-        self.recall(r)
+        if globalv.browser_debug:
+            r = self.browser_model.analysis_table.analyses[0]
+            self.recall(r)
 
     # toolbar actions
     def edit_analysis(self):

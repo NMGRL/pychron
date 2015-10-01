@@ -70,6 +70,7 @@ class Globals(object):
     spectrometer_debug = False
     system_monitor_debug = False
     figure_debug = False
+    browser_debug = False
 
     load_valve_states = True
     load_soft_locks = True
@@ -109,6 +110,7 @@ class Globals(object):
                            ('recall_debug', to_bool),
                            ('pipeline_debug', to_bool),
                            ('figure_debug', to_bool),
+                           ('browser_debug', to_bool),
                            ('communication_simulation', to_bool),
                            ('dashboard_simulation', to_bool),
                            ('use_startup_tests', to_bool),
