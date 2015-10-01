@@ -33,29 +33,33 @@ class AnalysisEditViewHandler(Handler):
         info.object.clear()
 
 
-class ICFactor(HasTraits):
+# class ICFactor(HasTraits):
+#     value = Float(auto_set=False, enter_set=True)
+#     error = Float(auto_set=False, enter_set=True)
+#     name = Str
+#     ovalue = Float
+#     oerror = Float
+#     dirty = Bool
+
+class BaseEditItem(HasTraits):
     value = Float(auto_set=False, enter_set=True)
     error = Float(auto_set=False, enter_set=True)
     name = Str
-    ovalue = Float
-    oerror = Float
-    dirty = Bool
-
-
-class EditItem(HasTraits):
-    value = Float(auto_set=False, enter_set=True)
-    error = Float(auto_set=False, enter_set=True)
-    name = Str
+    edit_name = Str
     dirty = Bool
     recalculate_needed = Event
     _suppress_update = Bool
 
+
+class EditItem(BaseEditItem):
     def __init__(self, item, *args, **kw):
         self.item = item
+        self.ovalue = item.value
+        self.oerror = item.error
         self.item._ovalue = item.value
         self.item._oerror = item.error
 
-        self.trait_setq(value=item.value, error=item.error, name=item.name)
+        self.trait_setq(value=item.value, error=item.error, name=item.name, edit_name=item.name)
 
         super(EditItem, self).__init__(*args, **kw)
 
@@ -83,14 +87,43 @@ class EditItem(HasTraits):
         self._suppress_update = False
 
 
-class FluxItem(HasTraits):
-    value = Float(auto_set=False, enter_set=True)
-    error = Float(auto_set=False, enter_set=True)
+class DetectorEditItem(EditItem):
+    detector = Str
+
+    def __init__(self, item, *args, **kw):
+        super(DetectorEditItem, self).__init__(item, *args, **kw)
+        self.detector = item.detector
+        self.edit_name = self.detector
+
+
+class BaselineEditItem(DetectorEditItem):
+    pass
+
+
+class ICFactorEditItem(DetectorEditItem):
     ovalue = Float
     oerror = Float
-    dirty = Bool
-    recalculate_needed = Event
-    _suppress_update = Bool
+
+    def __init__(self, item, *args, **kw):
+        self.item = item
+        v = nominal_value(item.ic_factor)
+        e = std_dev(item.ic_factor)
+        self.trait_setq(value=v, error=e,
+                        ovalue=v, oerror=e,
+                        detector=item.detector,
+                        name=item.name, edit_name=item.detector)
+
+    def revert(self):
+        item = self.item
+        item.ic_factor = ufloat(self.ovalue, self.oerror, tag='ic_factor')
+        self._suppress_update = True
+        self.trait_set(value=self.ovalue, error=self.oerror)
+        self._suppress_update = False
+
+
+class FluxItem(BaseEditItem):
+    ovalue = Float
+    oerror = Float
 
     def __init__(self, item, *args, **kw):
         self.item = item
@@ -118,6 +151,7 @@ class FluxItem(HasTraits):
 
 
 class AnalysisEditView(HasTraits):
+    dvc = Instance('pychron.dvc.dvc.DVC')
     isotopes = List
     baselines = List
     blanks = List
@@ -126,6 +160,8 @@ class AnalysisEditView(HasTraits):
     flux = Instance(FluxItem)
 
     revert_button = Event
+    revert_original_button = Event
+    save_button = Event
     dirty = Bool
 
     control = None
@@ -153,16 +189,20 @@ class AnalysisEditView(HasTraits):
             blank = EditItem(iso.blank)
             bks.append(blank)
 
-            baseline = EditItem(iso.baseline)
+            baseline = BaselineEditItem(iso.baseline)
             bs.append(baseline)
 
-            det = iso.detector
-            if det not in dets:
-                v, e = nominal_value(iso.ic_factor), std_dev(iso.ic_factor)
-                ics.append(ICFactor(value=v, error=e,
-                                    ovalue=v, oerror=e,
-                                    name=det))
-            dets.append(det)
+            ic = ICFactorEditItem(iso)
+            ics.append(ic)
+
+            # det = iso.detector
+
+            # if det not in dets:
+            #     v, e = nominal_value(iso.ic_factor), std_dev(iso.ic_factor)
+            #     ics.append(ICFactorEditItem(value=v, error=e,
+            #                                 ovalue=v, oerror=e,
+            #                                 name=det))
+            # dets.append(det)
 
         self.isotopes = ns
         self.blanks = bks
@@ -170,47 +210,6 @@ class AnalysisEditView(HasTraits):
         self.ic_factors = ics
 
         self.flux = FluxItem(analysis)
-
-    # @on_trait_change('[isotopes,blanks,baselines]:[value,error]')
-    @on_trait_change('[isotopes,blanks,baselines, flux]:recalculate_needed')
-    def _handle_change(self, obj, name, old, new):
-        # self.dirty = True
-        # obj.dirty = True
-        # model = self.editor.analysis
-        # model.calculate_age(force=True)
-        # model.analysis_view.main_view.load(model, refresh=True)
-        self._set_dirty(obj)
-        self._update_model()
-
-    @on_trait_change('ic_factors:[value, error]')
-    def _handle_ic_change(self, obj, name, old, new):
-        if obj.ovalue == obj.value and obj.oerror == obj.error:
-            return
-
-        self._set_dirty(obj)
-
-        v = ufloat(obj.value, obj.error, tag='{} IC'.format(obj.name))
-        self._set_ic_factor(obj.name, v)
-
-        self._update_model()
-
-    def _set_ic_factor(self, det, v):
-        isos = self.editor.analysis.isotopes
-        for iso in isos.itervalues():
-            if iso.detector == det:
-                iso.ic_factor = v
-
-    def _set_dirty(self, obj):
-        self.dirty = True
-        obj.dirty = True
-
-    def _update_model(self):
-        model = self.editor.analysis
-        model.calculate_age(force=True)
-        model.analysis_view.main_view.refresh_needed = True
-
-    def _revert_button_fired(self):
-        self.revert()
 
     def show(self):
         self.control.raise_()
@@ -242,10 +241,95 @@ class AnalysisEditView(HasTraits):
         self.dirty = False
         self._update_model()
 
+    # private
+    def _set_ic_factor(self, det, v):
+        isos = self.editor.analysis.isotopes
+        for iso in isos.itervalues():
+            if iso.detector == det:
+                iso.ic_factor = v
+
+    def _set_dirty(self, obj):
+        self.dirty = True
+        obj.dirty = True
+
+    def _update_model(self):
+        model = self.editor.analysis
+        model.calculate_age(force=True)
+        model.analysis_view.main_view.refresh_needed = True
+
+    # handlers
+    def _save_button_fired(self):
+        model = self.editor.analysis
+
+        runid = model.record_id
+        experiment_identifier = model.experiment_identifier
+
+        dvc = self.dvc
+        ps = []
+        edited_items = []
+        for items, tag, modifier in ((self.isotopes, 'intercept', 'intercepts'),
+                                     (self.blanks, 'blank', 'blanks'),
+                                     (self.baselines, 'baseline', 'baselines'),
+                                     (self.ic_factors, 'icfactor', 'icfactors')):
+            updated_values = {}
+            updated_errors = {}
+            for item in items:
+                if item.dirty:
+                    name = item.edit_name
+                    if item.value != item.ovalue:
+                        updated_values[name] = item.value
+                        edited_items.append('{}.{}_value'.format(name, tag))
+                    if item.error != item.error:
+                        updated_errors[name] = item.error
+                        edited_items.append('{}.{}_error'.format(name, tag))
+
+            p = dvc.manual_edit(runid, experiment_identifier,
+                                updated_values, updated_errors, modifier)
+            ps.append(p)
+
+        msg = '<MANUAL> {}'.format(','.join(edited_items))
+        dvc.commit_manual_edits(experiment_identifier, ps)
+
+    def _revert_original_button_fired(self):
+        experiment_identifier = self.editor.analysis.experiment_identifier
+        runid = self.editor.analysis.record_id
+        self.dvc.revert_manual_edits(runid, experiment_identifier)
+
+    def _revert_button_fired(self):
+        self.revert()
+
+    @on_trait_change('[isotopes,blanks,baselines,flux]:recalculate_needed')
+    def _handle_change(self, obj, name, old, new):
+        # self.dirty = True
+        # obj.dirty = True
+        # model = self.editor.analysis
+        # model.calculate_age(force=True)
+        # model.analysis_view.main_view.load(model, refresh=True)
+        self._set_dirty(obj)
+        self._update_model()
+
+    @on_trait_change('ic_factors:[value, error]')
+    def _handle_ic_change(self, obj, name, old, new):
+        print obj, name, old, new
+        if obj.ovalue == obj.value and obj.oerror == obj.error:
+            return
+
+        self._set_dirty(obj)
+
+        v = ufloat(obj.value, obj.error, tag='{} IC'.format(obj.name))
+        self._set_ic_factor(obj.name, v)
+
+        self._update_model()
+
     def traits_view(self):
         cols = [ObjectColumn(name='name', editable=False),
                 ObjectColumn(name='value', format='%0.7f', width=100),
                 ObjectColumn(name='error', format='%0.7f', width=100)]
+
+        det_cols = [ObjectColumn(name='name', editable=False),
+                    ObjectColumn(name='detector', editable=False),
+                    ObjectColumn(name='value', format='%0.7f', width=100),
+                    ObjectColumn(name='error', format='%0.7f', width=100)]
 
         iso_grp = VGroup(UItem('isotopes',
                                editor=TableEditor(columns=cols,
@@ -254,7 +338,7 @@ class AnalysisEditView(HasTraits):
 
         baseline_grp = VGroup(UItem('baselines',
                                     editor=TableEditor(sortable=False,
-                                                       columns=cols)),
+                                                       columns=det_cols)),
                               label='Baselines', show_border=True)
 
         blank_grp = VGroup(UItem('blanks',
@@ -266,19 +350,29 @@ class AnalysisEditView(HasTraits):
         icgrp = VGroup(UItem('ic_factors',
                              editor=TableEditor(
                                  sortable=False,
-                                 columns=cols)),
+                                 columns=det_cols)),
                        label='IC Factors', show_border=True)
 
         bgrp = HGroup(icon_button_editor('revert_button',
                                          'arrow_undo',
                                          tooltip='Undo changes',
-                                         enabled_when='dirty'), spring)
+                                         enabled_when='dirty'),
+                      icon_button_editor('revert_original_button',
+                                         'arrow_left',
+                                         tooltip='Revert to original values'),
+                      icon_button_editor('save_button',
+                                         'disk',
+                                         enabled_when='dirty',
+                                         tooltip='Save changes'),
+                      spring)
         flux_grp = HGroup(UItem('object.flux.value'),
                           Label(PLUSMINUS),
                           UItem('object.flux.error'),
                           label='Flux (J)',
                           show_border=True)
-        v = View(VGroup(Group(iso_grp, baseline_grp, icgrp, layout='tabbed'),
+        v = View(VGroup(Group(iso_grp, baseline_grp,
+                              icgrp,
+                              layout='tabbed'),
                         blank_grp,
                         flux_grp,
                         bgrp),

@@ -24,6 +24,7 @@ import json
 import datetime
 from uncertainties import ufloat, std_dev, nominal_value
 
+
 # ============= local library imports  ==========================
 from pychron.core.helpers.datetime_tools import make_timef
 from pychron.core.helpers.filetools import add_extension, subdirize
@@ -197,27 +198,41 @@ class DVCAnalysis(Analysis):
         for iso, v in jd.iteritems():
             if iso in self.isotopes:
                 i = self.isotopes[iso]
-                i.blank.value = v['value']
-                i.blank.error = v['error']
+                self._load_value_error(i.blank, v)
+                # i.blank.value = v['value']
+                # i.blank.error = v['error']
                 i.blank.fit = v['fit']
 
     def _load_intercepts(self, jd):
         for iso, v in jd.iteritems():
             if iso in self.isotopes:
                 i = self.isotopes[iso]
-                i.value = v['value']
-                i.error = v['error']
+                self._load_value_error(i, v)
+
                 i.set_fit(v['fit'], notify=False)
                 i.set_filter_outliers_dict(filter_outliers=v.get('filter_outliers', False),
                                            iterations=v.get('iterations', 0),
                                            std_devs=v.get('std_devs', 0))
 
+    def _load_value_error(self, item, obj):
+        item.use_manual_value = obj.get('use_manual_value', False)
+        item.use_manual_error = obj.get('use_manual_error', False)
+        if item.use_manual_value:
+            item.value = obj['manual_value']
+        else:
+            item.value = obj['value']
+
+        if item.use_manual_error:
+            item.error = obj['manual_error']
+        else:
+            item.error = obj['error']
+
     def _load_baselines(self, jd):
         for det, v in jd.iteritems():
             for iso in self.isotopes.itervalues():
                 if iso.detector == det:
-                    iso.baseline.value = v['value']
-                    iso.baseline.error = v['error']
+                    self._load_value_error(iso.baseline, v)
+
                     iso.baseline.set_fit(v['fit'], notify=False)
                     iso.baseline.set_filter_outliers_dict(filter_outliers=v.get('filter_outliers', False),
                                                           iterations=v.get('iterations', 0),

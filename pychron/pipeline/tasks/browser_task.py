@@ -57,6 +57,11 @@ class BrowserTask(BaseBrowserTask):
                  SToolBar(EditAnalysisAction(),
                           name='Edit')]
 
+    def _opened_hook(self):
+        super(BrowserTask, self)._opened_hook()
+        r = self.browser_model.analysis_table.analyses[0]
+        self.recall(r)
+
     # toolbar actions
     def edit_analysis(self):
         self.debug('Edit analysis data')
@@ -68,7 +73,7 @@ class BrowserTask(BaseBrowserTask):
             editor.edit_view.show()
         else:
 
-            e = AnalysisEditView(editor)
+            e = AnalysisEditView(editor, dvc=self.dvc)
 
             # e.load_isotopes()
             # info = e.edit_traits()

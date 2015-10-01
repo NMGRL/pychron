@@ -225,6 +225,54 @@ class DVC(Loggable):
         return True
 
     # database
+    # analysis manual edit
+    # def manual_intercepts(self, runid, experiment_identifier, values, errors):
+    #     return self._manual_edit(runid, experiment_identifier, values, errors, 'intercepts')
+    #
+    # def manual_blanks(self, runid, experiment_identifier, values, errors):
+    #     return self._manual_edit(runid, experiment_identifier, values, errors, 'blanks')
+    #
+    # def manual_baselines(self, runid, experiment_identifier, values, errors):
+    #     return self._manual_edit(runid, experiment_identifier, values, errors, 'baselines')
+    #
+    # def manual_baselines(self, runid, experiment_identifier, values, errors):
+    #     return self._manual_edit(runid, experiment_identifier, values, errors, 'baselines')
+
+    def manual_edit(self, runid, experiment_identifier, values, errors, modifier):
+        path = analysis_path(runid, experiment_identifier, modifier=modifier)
+        with open(path, 'r') as rfile:
+            obj = json.load(rfile)
+            for k, v in values.iteritems():
+                o = obj[k]
+                o['manual_value'] = v
+                o['use_manual_value'] = True
+            for k, v in errors.iteritems():
+                o = obj[k]
+                o['manual_error'] = v
+                o['use_manual_error'] = True
+
+        jdump(obj, path)
+        return path
+
+    def revert_manual_edits(self, runid, experiment_identifier):
+        for mod in ('intercepts', 'blanks', 'baselines', 'icfactors'):
+            ps = []
+            path = analysis_path(runid, experiment_identifier, modifier=mod)
+            with open(path, 'r') as rfile:
+                obj = json.load(rfile)
+                for item in obj.itervalues():
+                    if isinstance(item, dict):
+                        item['use_manual_value'] = False
+                        item['use_manual_error'] = False
+            ps.append(path)
+            jdump(obj, path)
+
+        msg = '<MANUAL> reverted to non manually edited'
+        self.commit_manual_edits(experiment_identifier, ps, msg)
+
+    def commit_manual_edits(self, experiment_identifier, ps, msg):
+        if self.experiment_add_paths(experiment_identifier, ps):
+            self.experiment_commit(experiment_identifier, msg)
 
     # analysis processing
     def add_interpreted_age(self, ia):

@@ -383,23 +383,35 @@ class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
 
     def _get_value_text(self, *args, **kw):
         v = self.item.get_intensity()
-        return floatfmt(v.nominal_value, n=6)
+        return self._format(self.item, nominal_value(v), 'value')
 
     def _get_error_text(self, *args, **kw):
         v = self.item.get_intensity()
-        return floatfmt(v.std_dev, n=6)
+        return self._format(self.item, std_dev(v), 'error')
+
+    def _format(self, item, v, v_or_e, n=6):
+        if isinstance(item, str):
+            item = getattr(self.item, item)
+
+        if isinstance(v, str):
+            v = getattr(item, v)
+
+        t = floatfmt(v, n=n)
+        if getattr(item, 'use_manual_{}'.format(v_or_e)):
+            t = '#{}'.format(t)
+        return t
 
     def _get_base_value_text(self, *args, **kw):
-        return floatfmt(self.item.baseline.value, n=6)
+        return self._format('baseline', 'value', 'value')
 
     def _get_base_error_text(self, *args, **kw):
-        return floatfmt(self.item.baseline.error, n=6)
+        return self._format('baseline', 'error', 'error')
 
     def _get_blank_value_text(self, *args, **kw):
-        return floatfmt(self.item.blank.value, n=6)
+        return self._format('blank', 'value', 'value')
 
     def _get_blank_error_text(self, *args, **kw):
-        return floatfmt(self.item.blank.error, n=6)
+        return self._format('blank', 'error', 'error')
 
     def _get_baseline_percent_error_text(self, *args):
         b = self.item.baseline
