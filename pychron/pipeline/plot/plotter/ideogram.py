@@ -324,21 +324,7 @@ class Ideogram(BaseArArFigure):
         self._set_y_limits(0, my, min_=0, max_=my, pid=pid)
 
         # print 'setting ylimits {}'.format(my)
-
-        omits, invalids, outliers = self._get_aux_plot_filtered(po, xs, xes)
-        for idx, item in enumerate(items):
-            if idx in omits:
-                s = 'omit'
-            elif idx in invalids:
-                s = 'invalid'
-            elif idx in outliers:
-                s = 'outlier'
-            else:
-                s = 'ok'
-            item.set_temp_status(s)
-
-        print 'plot aux {}'.format(omits)
-
+        omits, invalids, outliers = self._do_aux_plot_filtering(scatter, po, xs, xes)
         func = self._get_index_attr_label_func()
         self._add_scatter_inspector(scatter,
                                     items=items,
@@ -590,7 +576,7 @@ class Ideogram(BaseArArFigure):
             # else:
             # self.selected_analysis = None
 
-            self._filter_metadata_changes(obj, self._rebuild_ideo, sorted_ans)
+            self._filter_metadata_changes(obj, sorted_ans, self._rebuild_ideo)
             # self._set_selected(sorted_ans, sel)
             # set the temp_status for all the analyses
             # for i, a in enumerate(sorted_ans):

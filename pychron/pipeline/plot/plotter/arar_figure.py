@@ -59,7 +59,7 @@ class SelectionFigure(object):
             else:
                 a.temp_status = 'ok'
 
-    def _filter_metadata_changes(self, obj, func, ans):
+    def _filter_metadata_changes(self, obj, ans, func=None):
         sel = obj.metadata.get('selections', [])
         if sel:
             obj.was_selected = True
@@ -70,14 +70,16 @@ class SelectionFigure(object):
 
             if prev != sel:
                 self._set_selected(ans, sel)
-                func(sel)
+                if func:
+                    func(sel)
 
             obj.prev_selection = sel
 
         elif hasattr(obj, 'was_selected'):
             if obj.was_selected:
                 self._set_selected(ans, sel)
-                func(sel)
+                if func:
+                    func(sel)
             obj.was_selected = False
             obj.prev_selection = None
         else:
@@ -302,8 +304,8 @@ class BaseArArFigure(HasTraits, SelectionFigure):
     #     #         if ai.is_omitted(omit, include_value_filtered)]
     #     return [i for i, ai in enumerate(ans)
     #             if ai.is_omitted()]
-    def _get_omitted_by_tag(self, ans):
-        return [i for i, ai in enumerate(ans) if ai.is_omitted_by_tag()]
+    def _get_omitted_by_tag(self, ans, tags=None):
+        return [i for i, ai in enumerate(ans) if ai.is_omitted_by_tag(tags)]
 
     def _set_selected(self, ans, sel):
         super(BaseArArFigure, self)._set_selected(ans, sel)
@@ -401,6 +403,24 @@ class BaseArArFigure(HasTraits, SelectionFigure):
     # ===========================================================================
     # aux plots
     # ===========================================================================
+    def _do_aux_plot_filtering(self, scatter, po, vs, es):
+        omits, invalids, outliers = self._get_aux_plot_filtered(po, vs, es)
+        for idx, item in enumerate(self.sorted_analyses):
+            if idx in omits:
+                s = 'omit'
+            elif idx in invalids:
+                s = 'invalid'
+            elif idx in outliers:
+                s = 'outlier'
+            else:
+                s = 'ok'
+            item.set_temp_status(s)
+
+        # if outliers:
+        #     self._add_outliers_overlay(scatter, outliers)
+
+        return omits, invalids, outliers
+
     def _get_aux_plot_filtered(self, po, vs, es=None):
         omits = []
         invalids = []

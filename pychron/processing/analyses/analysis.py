@@ -186,6 +186,7 @@ class Analysis(ArArAge):
     is_plateau_step = False
     # temp_status = Int(0)
     temp_status = 'ok'
+    otemp_status = None
     # value_filter_omit = False
     # table_filter_omit = False
     tag = ''
@@ -314,8 +315,10 @@ class Analysis(ArArAge):
     def is_omitted(self):
         return self.is_omitted_by_tag() or self.temp_selected
 
-    def is_omitted_by_tag(self):
-        return self.tag in ('omit', 'invalid', 'outlier')
+    def is_omitted_by_tag(self, tags=None):
+        if tags is None:
+            tags = ('omit', 'invalid', 'outlier')
+        return self.tag in tags
 
     # def flush(self, *args, **kw):
     #     """

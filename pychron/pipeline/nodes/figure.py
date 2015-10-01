@@ -157,6 +157,28 @@ class SeriesNode(FigureNode):
     editor_klass = 'pychron.pipeline.plot.editors.series_editor,SeriesEditor'
     plotter_options_manager_klass = SeriesOptionsManager
 
+    def _configure_hook(self):
+        pom = self.plotter_options_manager
+        if self.unknowns:
+            unk = self.unknowns[0]
+            names = []
+            iso_keys = unk.isotope_keys
+            if iso_keys:
+                names.extend(iso_keys)
+                names.extend(['{}bs'.format(ki) for ki in iso_keys])
+                names.extend(['{}ic'.format(ki) for ki in iso_keys])
+                if 'Ar40' in iso_keys:
+                    if 'Ar39' in iso_keys:
+                        names.append('Ar40/Ar39')
+                        names.append('uAr40/Ar39')
+                    if 'Ar36' in iso_keys:
+                        names.append('Ar40/Ar36')
+                        names.append('uAr40/Ar36')
+
+            names.append('Peak Center')
+            names.append('AnalysisType')
+            pom.set_names(names)
+
 
 class InverseIsochronNode(FigureNode):
     name = 'Inverse Isochron'

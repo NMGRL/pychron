@@ -399,7 +399,7 @@ class InverseIsochron(Isochron):
 
     def update_graph_metadata(self, obj, name, old, new):
         if obj:
-            self._filter_metadata_changes(obj, self._rebuild_iso, self.analyses)
+            self._filter_metadata_changes(obj, self.analyses, self._rebuild_iso)
 
     def update_index_mapper(self, obj, name, old, new):
         if new:

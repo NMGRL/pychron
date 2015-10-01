@@ -469,7 +469,7 @@ class ReferencesSeries(BaseSeries):
         pass
 
     def update_interpolation_regressor(self, reg, obj, name, old, new):
-        sel = self._filter_metadata_changes(obj, lambda x: x, self.sorted_references)
+        sel = self._filter_metadata_changes(obj, self.sorted_references)
         reg.user_excluded = sel
         key = 'Unknowns-predicted0'
         for plotobj in self.graph.plots:

@@ -42,6 +42,7 @@ class Globals(object):
     ignore_chiller_unavailable = False
     ignore_initialization_required = False
     ignore_initialization_questions = False
+    ignore_shareable = False
 
     video_test = False
     #    video_test = True
@@ -96,6 +97,7 @@ class Globals(object):
                            ('ignore_chiller_unavailable', to_bool),
                            ('ignore_initialization_required', to_bool),
                            ('ignore_initialization_questions', to_bool),
+                           ('ignore_shareable', to_bool),
                            ('show_infos', to_bool),
                            ('show_warnings', to_bool),
                            ('video_test', to_bool),

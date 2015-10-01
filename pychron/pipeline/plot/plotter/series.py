@@ -115,7 +115,9 @@ class Series(BaseSeries):
             plot data on plots
         """
 
-        omits = self._get_omitted(self.sorted_analyses)
+        omits = self._get_omitted_by_tag(self.sorted_analyses)
+        for o in omits:
+            self.sorted_analyses[o].set_temp_status('omit')
         graph = self.graph
 
         if plots:
@@ -238,6 +240,11 @@ class Series(BaseSeries):
             # self._rebuild_ideo(sel)
             # self.
 
+    def update_graph_metadata(self, obj, name, old, new):
+        # print obj, name, old,new
+        sorted_ans = self.sorted_analyses
+        if obj:
+            self._filter_metadata_changes(obj, sorted_ans)
 # ===============================================================================
 # plotters
 # ===============================================================================
