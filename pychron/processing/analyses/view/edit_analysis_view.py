@@ -172,44 +172,7 @@ class AnalysisEditView(HasTraits):
         self.editor = editor
         analysis = self.editor.analysis
         self.title = 'Edit Data - {}'.format(analysis.record_id)
-
-        isos = analysis.isotopes
-        ns = []
-        bks = []
-        bs = []
-        ics = []
-        dets = []
-        for k in analysis.isotope_keys:
-            iso = isos[k]
-            # iso.use_static = True
-
-            eiso = EditItem(iso)
-            ns.append(eiso)
-
-            blank = EditItem(iso.blank)
-            bks.append(blank)
-
-            baseline = BaselineEditItem(iso.baseline)
-            bs.append(baseline)
-
-            ic = ICFactorEditItem(iso)
-            ics.append(ic)
-
-            # det = iso.detector
-
-            # if det not in dets:
-            #     v, e = nominal_value(iso.ic_factor), std_dev(iso.ic_factor)
-            #     ics.append(ICFactorEditItem(value=v, error=e,
-            #                                 ovalue=v, oerror=e,
-            #                                 name=det))
-            # dets.append(det)
-
-        self.isotopes = ns
-        self.blanks = bks
-        self.baselines = bs
-        self.ic_factors = ics
-
-        self.flux = FluxItem(analysis)
+        self._load_items()
 
     def show(self):
         self.control.raise_()
@@ -242,6 +205,37 @@ class AnalysisEditView(HasTraits):
         self._update_model()
 
     # private
+    def _load_items(self):
+        analysis = self.editor.analysis
+        isos = analysis.isotopes
+        ns = []
+        bks = []
+        bs = []
+        ics = []
+        dets = []
+        for k in analysis.isotope_keys:
+            iso = isos[k]
+            # iso.use_static = True
+
+            eiso = EditItem(iso)
+            ns.append(eiso)
+
+            blank = EditItem(iso.blank)
+            bks.append(blank)
+
+            baseline = BaselineEditItem(iso.baseline)
+            bs.append(baseline)
+
+            ic = ICFactorEditItem(iso)
+            ics.append(ic)
+
+        self.isotopes = ns
+        self.blanks = bks
+        self.baselines = bs
+        self.ic_factors = ics
+
+        self.flux = FluxItem(analysis)
+
     def _set_ic_factor(self, det, v):
         isos = self.editor.analysis.isotopes
         for iso in isos.itervalues():
@@ -291,9 +285,16 @@ class AnalysisEditView(HasTraits):
         dvc.commit_manual_edits(experiment_identifier, ps)
 
     def _revert_original_button_fired(self):
-        experiment_identifier = self.editor.analysis.experiment_identifier
-        runid = self.editor.analysis.record_id
+        analysis = self.editor.analysis
+        experiment_identifier = analysis.experiment_identifier
+        runid = analysis.record_id
         self.dvc.revert_manual_edits(runid, experiment_identifier)
+
+        tags = ('intercepts', 'baselines', 'blanks', 'icfactors')
+        analysis.load_paths(tags)
+
+        self._load_items()
+        self._update_model()
 
     def _revert_button_fired(self):
         self.revert()

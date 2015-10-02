@@ -25,6 +25,7 @@ import datetime
 from uncertainties import ufloat, std_dev, nominal_value
 
 
+
 # ============= local library imports  ==========================
 from pychron.core.helpers.datetime_tools import make_timef
 from pychron.core.helpers.filetools import add_extension, subdirize
@@ -179,17 +180,21 @@ class DVCAnalysis(Analysis):
             self._set_isotopes(jd)
 
         self.timestamp = make_timef(self.rundate)
+        self.aliquot_step_str = make_aliquot_step(self.aliquot, self.step)
 
-        for tag in ('intercepts', 'baselines', 'blanks', 'icfactors', 'tags'):
-            # print tag
-            path = self._analysis_path(modifier=tag)
+        self.load_paths()
+
+    def load_paths(self, modifiers=None):
+        if modifiers is None:
+            modifiers = ('intercepts', 'baselines', 'blanks', 'icfactors', 'tags')
+
+        for modifier in modifiers:
+            path = self._analysis_path(modifier=modifier)
             if path and os.path.isfile(path):
                 with open(path, 'r') as rfile:
                     jd = json.load(rfile)
-                    func = getattr(self, '_load_{}'.format(tag))
+                    func = getattr(self, '_load_{}'.format(modifier))
                     func(jd)
-
-        self.aliquot_step_str = make_aliquot_step(self.aliquot, self.step)
 
     def _load_tags(self, jd):
         self.set_tag(jd)
