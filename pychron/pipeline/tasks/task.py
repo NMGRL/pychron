@@ -36,7 +36,7 @@ from pychron.pipeline.save_figure import SaveFigureView, SaveFigureModel
 from pychron.pipeline.state import EngineState
 from pychron.pipeline.tasks.actions import RunAction, SavePipelineTemplateAction, ResumeAction, ResetAction, \
     ConfigureRecallAction, TagAction, SetInterpretedAgeAction, ClearAction, SavePDFAction, SaveFigureAction, \
-    SetInvalidAction, SetFilteringTagAction
+    SetInvalidAction, SetFilteringTagAction, TabularViewAction
 from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane
 from pychron.envisage.browser.browser_task import BaseBrowserTask
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
@@ -78,6 +78,7 @@ class PipelineTask(BaseBrowserTask):
                           SetInvalidAction(),
                           SetFilteringTagAction(),
                           SetInterpretedAgeAction(),
+                          TabularViewAction(),
                           name='Misc')]
 
     state = Instance(EngineState)
@@ -116,6 +117,19 @@ class PipelineTask(BaseBrowserTask):
         return panes
 
     # toolbar actions
+    def tabular_view(self):
+        self.debug('open tabular view')
+        if not self.has_active_editor():
+            return
+
+        ed = self.active_editor
+        from pychron.pipeline.plot.editors.ideogram_editor import IdeogramEditor
+        if isinstance(ed, IdeogramEditor):
+            from pychron.pipeline.editors.fusion.fusion_table_editor import FusionTableEditor
+            ted = FusionTableEditor()
+            ted.items = ed.analyses
+            self._open_editor(ted)
+
     def set_filtering_tag(self):
         ans = self.engine.selected.unknowns
         refs = self.engine.selected.references

@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from traits.api import Int
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.pipeline.editors.base_adapter import BaseAdapter, BaseGroupAdapter
@@ -23,8 +24,9 @@ from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
 class FusionTableAdapter(BaseAdapter):
     columns = [
-        ('Identifier', 'labnumber'),
-        ('N', 'aliquot_step_str'),
+        # ('Identifier', 'labnumber'),
+        # ('N', 'aliquot_step_str'),
+        ('RunID', 'record_id'),
         ('Power', 'extract_value'),
         ('Mol. Ar40', 'moles_Ar40'),
         ('Ar40', 'ar40'),
@@ -50,6 +52,7 @@ class FusionTableAdapter(BaseAdapter):
         (PLUSMINUS_ONE_SIGMA, 'kca_error'),
         ('', 'blank_column')]
 
+    record_id_width = Int(60)
 
 class FusionGroupTableAdapter(BaseGroupAdapter):
     pass

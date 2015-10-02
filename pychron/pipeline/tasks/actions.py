@@ -104,6 +104,12 @@ class DiffViewAction(TaskAction):
     enabled_name = 'diff_enabled'
 
 
+class TabularViewAction(TaskAction):
+    name = 'Tabular View'
+    method = 'tabular_view'
+    image = icon('table')
+
+
 class PipelineAction(Action):
     def perform(self, event):
         app = event.task.window.application
