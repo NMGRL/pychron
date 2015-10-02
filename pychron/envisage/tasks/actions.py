@@ -461,11 +461,10 @@ class NewAction(PAction):
 #            manager = self._get_experimentor(event)
 #            manager.save_as_experiment_queues()
 
-class ToggleFullWindowAction(myTaskAction):
+class ToggleFullWindowAction(TaskAction):
     name = 'Toggle Full Window'
     method = 'toggle_full_window'
     image = icon('view-fullscreen-8')
-    task_ids = ['pychron.recall', 'pychron.labbook', 'pychron.processing.figures']
 
 
 class EditInitializationAction(Action):

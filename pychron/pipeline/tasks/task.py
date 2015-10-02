@@ -27,6 +27,7 @@ from pychron.core.helpers.filetools import list_gits
 from pychron.core.pdf.save_pdf_dialog import save_pdf
 from pychron.dvc import jdump
 from pychron.dvc.dvc import experiment_has_staged, push_experiments
+from pychron.envisage.tasks.actions import ToggleFullWindowAction
 from pychron.globals import globalv
 from pychron.paths import paths
 from pychron.pipeline.engine import PipelineEngine
@@ -35,7 +36,7 @@ from pychron.pipeline.save_figure import SaveFigureView, SaveFigureModel
 from pychron.pipeline.state import EngineState
 from pychron.pipeline.tasks.actions import RunAction, SavePipelineTemplateAction, ResumeAction, ResetAction, \
     ConfigureRecallAction, TagAction, SetInterpretedAgeAction, ClearAction, SavePDFAction, SaveFigureAction, \
-    SetInvalidAction
+    SetInvalidAction, SetFilteringTagAction
 from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane
 from pychron.envisage.browser.browser_task import BaseBrowserTask
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
@@ -60,21 +61,24 @@ def select_experiment_repo():
 class PipelineTask(BaseBrowserTask):
     name = 'Pipeline Processing'
     engine = Instance(PipelineEngine)
-    tool_bars = [SToolBar(RunAction(),
+    tool_bars = [SToolBar(ConfigureRecallAction(),
+                          ToggleFullWindowAction()),
+                 SToolBar(RunAction(),
                           ResumeAction(),
                           # RunFromAction(),
                           ResetAction(),
                           ClearAction(),
-                          ConfigureRecallAction(),
-                          SavePipelineTemplateAction(), label='Run Toolbar'),
+                          SavePipelineTemplateAction(),
+                          label='Pipeline'),
                  SToolBar(SavePDFAction(),
                           SaveFigureAction(),
-                          label='Save Toolbar'),
+                          name='Save'),
                  # SToolBar(GitRollbackAction(), label='Git Toolbar'),
                  SToolBar(TagAction(),
                           SetInvalidAction(),
+                          SetFilteringTagAction(),
                           SetInterpretedAgeAction(),
-                          label='Misc Toolbar')]
+                          name='Misc')]
 
     state = Instance(EngineState)
     resume_enabled = Bool(False)
@@ -95,31 +99,13 @@ class PipelineTask(BaseBrowserTask):
 
     def _debug(self):
         self.engine.add_data()
-        self.engine.select_default()
-        # self.engine.set_template('iso_evo')
-        # self.engine.set_template('diff')
-        # self.engine.set_template('ideogram')
-        # self.engine.set_template('csv_ideogram')
-        # self.engine.set_template('spectrum')
-        # self.engine.set_template('gain')
-        # self.engine.set_template('series')
-        # self.engine.set_template('icfactor')
-        self.engine.set_template('blanks')
-        # self.engine.set_template('flux')
-        # self.engine.set_template('inverse_isochron')
+        if globalv.select_default_data:
+            self.engine.select_default()
 
-        # self.engine.add_is
-        # self.engine.add_grouping(run=False)
-        # self.engine.add_test_filter()
-        # self.engine.add_ideogram(run=False)
-        # self.engine.add_series(run=False)
-
-        # self.engine.add_test_filter()
-        # self.engine.add_ideogram()
-        # self.engine.add_pdf_figure_node()
-        # self.engine.add_spectrum()
-
-        # self.run()
+        if globalv.pipeline_template:
+            self.engine.set_template(globalv.pipeline_template)
+            if globalv.run_pipeline:
+                self.run()
 
     def prepare_destroy(self):
         pass
@@ -130,6 +116,18 @@ class PipelineTask(BaseBrowserTask):
         return panes
 
     # toolbar actions
+    def set_filtering_tag(self):
+        ans = self.engine.selected.unknowns
+        refs = self.engine.selected.references
+        ans.extend(refs)
+
+        omit_ans = [ai for ai in ans if ai.temp_status == 'omit' and ai.tag != 'omit']
+        outlier_ans = [ai for ai in ans if ai.temp_status == 'outlier' and ai.tag != 'outlier']
+        invalid_ans = [ai for ai in ans if ai.temp_status == 'invalid' and ai.tag != 'invalid']
+        self.set_tag('omit', omit_ans, use_filter=False)
+        self.set_tag('outlier', outlier_ans, use_filter=False)
+        self.set_tag('invalid', invalid_ans)
+
     def set_tag(self, tag=None, items=None, use_filter=True, warn=True):
         """
             set tag for either
@@ -146,18 +144,16 @@ class PipelineTask(BaseBrowserTask):
                 return
 
         if items:
-            name = None
             if tag is None:
                 a = self._get_tagname(items)
                 if a:
                     tag, items, use_filter = a
-                    if tag:
-                        name = tag.name
-            else:
-                name = tag['name']
+
+            # tags stored as lowercase
+            tag = tag.lower()
 
             # set tags for items
-            if name and items:
+            if tag and items:
                 dvc = self.dvc
                 db = dvc.db
                 key = lambda x: x.experiment_identifier
@@ -166,8 +162,8 @@ class PipelineTask(BaseBrowserTask):
                     cs = []
                     with db.session_ctx():
                         for it in ans:
-                            self.debug('setting {} tag= {}'.format(it.record_id, name))
-                            db.set_analysis_tag(it.uuid, name)
+                            self.debug('setting {} tag= {}'.format(it.record_id, tag))
+                            db.set_analysis_tag(it.uuid, tag)
 
                             it.set_tag(tag)
                             if dvc.update_tag(it):
@@ -180,7 +176,7 @@ class PipelineTask(BaseBrowserTask):
                             cstr = '{} - {}'.format(cc[0], cc[-1])
                         else:
                             cstr = cc[0]
-                        dvc.experiment_commit(expid, '<TAG> {:<6s} {}'.format(name, cstr))
+                        dvc.experiment_commit(expid, '<TAG> {:<6s} {}'.format(tag, cstr))
                         for ci in cs:
                             ci.refresh_view()
 
@@ -192,6 +188,7 @@ class PipelineTask(BaseBrowserTask):
                 if self.active_editor:
                     self.active_editor.refresh_needed = True
 
+                self.browser_model.analysis_table.set_tags(tag, items)
                 self.browser_model.analysis_table.remove_invalid()
                 self.browser_model.analysis_table.refresh_needed = True
                 self.engine.refresh_table_needed = True
@@ -306,7 +303,7 @@ class PipelineTask(BaseBrowserTask):
         obj['plotter_options'] = plotter_options
         obj['analyses'] = [{'record_id': ai.record_id,
                             'uuid': ai.uuid,
-                            'status': ai.temp_status,
+                            # 'status': ai.temp_status,
                             'group_id': ai.group_id} for ai in editor.analyses]
         return obj
 
@@ -358,9 +355,7 @@ class PipelineTask(BaseBrowserTask):
         return SchemaAddition(path=path, factory=factory, **kw)
 
     def _set_invalid(self, items):
-        tag = {'name': 'invalid', 'omit_ideo': True, 'omit_series': True,
-               'omit_spec': True, 'omit_iso': True}
-        self.set_tag(tag=tag, items=items, warn=True)
+        self.set_tag(tag='invalid', items=items, warn=True)
 
     # defaults
     def _default_layout_default(self):
@@ -417,6 +412,9 @@ class PipelineTask(BaseBrowserTask):
         self.recall(new)
 
     def _prompt_for_save(self):
+        if globalv.ignore_shareable:
+            return True
+
         ret = True
         ps = self.engine.get_experiment_ids()
 
@@ -439,7 +437,7 @@ class PipelineTask(BaseBrowserTask):
     def _get_selection(self):
         items = self.engine.selected.unknowns
         items.extend(self.engine.selected.references)
-        items = [i for i in items if i.is_temp_omitted()]
+        items = [i for i in items if i.temp_selected]
         items.extend(self.engine.selected_unknowns)
         items.extend(self.engine.selected_references)
         return items
@@ -452,23 +450,23 @@ class PipelineTask(BaseBrowserTask):
 
         db = self.dvc.db
         with db.session_ctx():
-            tv.model.db = db
+            # tv.model.db = db
             tv.model.items = items
-            tv.model.load()
+            # tv.model.load()
 
         info = tv.edit_traits()
         if info.result:
-            tag = tv.model.selected
+            tag = tv.model.tag
             return tag, tv.model.items, tv.model.use_filter
 
-    def _get_dr_tagname(self, items):
-        from pychron.pipeline.tagging.data_reduction_tags import DataReductionTagModel
-        from pychron.pipeline.tagging.views import DataReductionTagView
-
-        tv = DataReductionTagView(model=DataReductionTagModel(items=items))
-        info = tv.edit_traits()
-        if info.result:
-            return tv.model
+    # def _get_dr_tagname(self, items):
+    #     from pychron.pipeline.tagging.data_reduction_tags import DataReductionTagModel
+    #     from pychron.pipeline.tagging.views import DataReductionTagView
+    #
+    #     tv = DataReductionTagView(model=DataReductionTagModel(items=items))
+    #     info = tv.edit_traits()
+    #     if info.result:
+    #         return tv.model
 
     def _engine_default(self):
         e = PipelineEngine(application=self.application)

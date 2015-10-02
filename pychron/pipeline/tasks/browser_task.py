@@ -23,10 +23,11 @@ from traits.api import Instance, Bool
 # ============= local library imports  ==========================
 from pychron.envisage.browser.browser_task import BaseBrowserTask
 from pychron.envisage.browser.view import PaneBrowserView
+from pychron.envisage.tasks.actions import ToggleFullWindowAction
 from pychron.envisage.view_util import open_view
 from pychron.globals import globalv
-from pychron.pipeline.tasks.actions import ConfigureRecallAction, ConfigureAnalysesTableAction, LoadReviewStatusAction, \
-    EditAnalysisAction, DiffViewAction
+from pychron.pipeline.tasks.actions import ConfigureRecallAction, ConfigureAnalysesTableAction, \
+    LoadReviewStatusAction, EditAnalysisAction, DiffViewAction
 from pychron.processing.analyses.view.edit_analysis_view import AnalysisEditView
 
 
@@ -54,8 +55,11 @@ class BrowserTask(BaseBrowserTask):
     model = Instance('pychron.envisage.browser.browser_model.BrowserModel')
     tool_bars = [SToolBar(ConfigureRecallAction(),
                           ConfigureAnalysesTableAction(),
+                          name='Configure'),
+                 SToolBar(ToggleFullWindowAction(),
                           LoadReviewStatusAction(),
-                          DiffViewAction()),
+                          DiffViewAction(),
+                          name='View'),
                  SToolBar(EditAnalysisAction(),
                           name='Edit')]
 
@@ -73,6 +77,7 @@ class BrowserTask(BaseBrowserTask):
             self.recall(r)
 
     # toolbar actions
+
     def diff_analysis(self):
         self.debug('Edit analysis data')
         if not self.has_active_editor():

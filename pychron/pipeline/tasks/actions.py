@@ -103,6 +103,7 @@ class DiffViewAction(TaskAction):
     image = icon('edit_diff')
     enabled_name = 'diff_enabled'
 
+
 class PipelineAction(Action):
     def perform(self, event):
         app = event.task.window.application

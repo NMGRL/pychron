@@ -82,6 +82,10 @@ class Globals(object):
     recall_debug = False
     pipeline_debug = False
 
+    pipeline_template = None
+    select_default_data = True
+    run_pipeline = False
+
     dev_confirm_exit = True
     username = 'root'
     communication_simulation = False
@@ -108,7 +112,12 @@ class Globals(object):
                            ('experiment_debug', to_bool),
                            ('experiment_savedb', to_bool),
                            ('recall_debug', to_bool),
+
                            ('pipeline_debug', to_bool),
+                           ('run_pipeline', to_bool),
+                           ('select_default_data', to_bool),
+                           ('pipeline_template', str),
+
                            ('figure_debug', to_bool),
                            ('browser_debug', to_bool),
                            ('communication_simulation', to_bool),
