@@ -246,10 +246,17 @@ class AnalysisEditView(HasTraits):
         self.dirty = True
         obj.dirty = True
 
-    def _update_model(self):
+    def _update_model(self, refresh_history=False):
         model = self.editor.analysis
         model.calculate_age(force=True)
         model.analysis_view.main_view.refresh_needed = True
+
+        if refresh_history:
+            self._refresh_history()
+
+    def _refresh_history(self):
+        model = self.editor.analysis
+        model.analysis_view.history_view.initialize(model)
 
     # handlers
     def _save_button_fired(self):
@@ -282,7 +289,8 @@ class AnalysisEditView(HasTraits):
             ps.append(p)
 
         msg = '<MANUAL> {}'.format(','.join(edited_items))
-        dvc.commit_manual_edits(experiment_identifier, ps)
+        dvc.commit_manual_edits(experiment_identifier, ps, msg)
+        self._refresh_history()
 
     def _revert_original_button_fired(self):
         analysis = self.editor.analysis
@@ -292,9 +300,8 @@ class AnalysisEditView(HasTraits):
 
         tags = ('intercepts', 'baselines', 'blanks', 'icfactors')
         analysis.load_paths(tags)
-
         self._load_items()
-        self._update_model()
+        self._update_model(refresh_history=True)
 
     def _revert_button_fired(self):
         self.revert()

@@ -24,11 +24,9 @@ from traits.api import Instance, Bool
 from pychron.envisage.browser.browser_task import BaseBrowserTask
 from pychron.envisage.browser.view import PaneBrowserView
 from pychron.envisage.tasks.actions import ToggleFullWindowAction
-from pychron.envisage.view_util import open_view
 from pychron.globals import globalv
 from pychron.pipeline.tasks.actions import ConfigureRecallAction, ConfigureAnalysesTableAction, \
     LoadReviewStatusAction, EditAnalysisAction, DiffViewAction
-from pychron.processing.analyses.view.edit_analysis_view import AnalysisEditView
 
 
 class BrowserPane(TraitsDockPane, PaneBrowserView):
@@ -96,25 +94,6 @@ class BrowserTask(BaseBrowserTask):
         if editor.setup(left):
             editor.set_diff(left)
             self._open_editor(editor)
-
-    def edit_analysis(self):
-        self.debug('Edit analysis data')
-        if not self.has_active_editor():
-            return
-        #
-        editor = self.active_editor
-        if hasattr(editor, 'edit_view') and editor.edit_view:
-            editor.edit_view.show()
-        else:
-
-            e = AnalysisEditView(editor, dvc=self.dvc)
-
-            # e.load_isotopes()
-            # info = e.edit_traits()
-            # info = timethis(e.edit_traits)
-            info = open_view(e)
-            e.control = info.control
-            editor.edit_view = e
 
     def create_dock_panes(self):
         return [BrowserPane(model=self.browser_model)]

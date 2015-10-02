@@ -36,7 +36,7 @@ from pychron.pipeline.save_figure import SaveFigureView, SaveFigureModel
 from pychron.pipeline.state import EngineState
 from pychron.pipeline.tasks.actions import RunAction, SavePipelineTemplateAction, ResumeAction, ResetAction, \
     ConfigureRecallAction, TagAction, SetInterpretedAgeAction, ClearAction, SavePDFAction, SaveFigureAction, \
-    SetInvalidAction, SetFilteringTagAction, TabularViewAction
+    SetInvalidAction, SetFilteringTagAction, TabularViewAction, EditAnalysisAction
 from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane
 from pychron.envisage.browser.browser_task import BaseBrowserTask
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
@@ -69,10 +69,12 @@ class PipelineTask(BaseBrowserTask):
                           ResetAction(),
                           ClearAction(),
                           SavePipelineTemplateAction(),
-                          label='Pipeline'),
+                          name='Pipeline'),
                  SToolBar(SavePDFAction(),
                           SaveFigureAction(),
                           name='Save'),
+                 SToolBar(EditAnalysisAction(),
+                          name='Edit'),
                  # SToolBar(GitRollbackAction(), label='Git Toolbar'),
                  SToolBar(TagAction(),
                           SetInvalidAction(),

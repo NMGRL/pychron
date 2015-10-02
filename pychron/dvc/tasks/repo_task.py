@@ -114,9 +114,8 @@ class ExperimentRepoTask(BaseTask):
         self.info('add branch')
         commit = self.selected_commit
 
-        self._repo.create_branch(commit=commit.hexsha if commit else 'HEAD')
-
-        self._refresh_branches()
+        if self._repo.create_branch(commit=commit.hexsha if commit else 'HEAD'):
+            self._refresh_branches()
 
     def checkout_branch(self):
         self.info('checkout branch {}'.format(self.branch))

@@ -15,19 +15,36 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str
+from traits.api import HasTraits, Str, Property, Any
 from traitsui.api import View, UItem
 
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+
+
 class NewBranchView(HasTraits):
-    name = Str
+    name = Property(depends_on='_name')
+    branches = Any
+    _name = Str
 
     def traits_view(self):
         v = View(UItem('name'),
                  kind='livemodal',
-                 buttons=['OK', 'Cancel'], title='New Branch')
+                 buttons=['OK', 'Cancel'],
+                 width=200,
+                 title='New Branch')
         return v
+
+    def _get_name(self):
+        return self._name
+
+    def _set_name(self, v):
+        self._name = v
+
+    def _validate_name(self, v):
+        if v not in self.branches:
+            if ' ' not in v:
+                return v
 
 # ============= EOF =============================================

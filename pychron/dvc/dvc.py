@@ -255,8 +255,8 @@ class DVC(Loggable):
         return path
 
     def revert_manual_edits(self, runid, experiment_identifier):
+        ps = []
         for mod in ('intercepts', 'blanks', 'baselines', 'icfactors'):
-            ps = []
             path = analysis_path(runid, experiment_identifier, modifier=mod)
             with open(path, 'r') as rfile:
                 obj = json.load(rfile)

@@ -24,8 +24,10 @@ from pychron.core.ui.table_configurer import RecallTableConfigurer
 from pychron.envisage.tasks.editor_task import BaseEditorTask
 # from pychron.processing.selection.data_selector import DataSelector
 # from pychron.processing.tasks.browser.panes import BrowserPane
+from pychron.envisage.view_util import open_view
 from pychron.processing.analyses.view.adapters import IsotopeTabularAdapter, IntermediateTabularAdapter
 from pychron.envisage.browser.recall_editor import RecallEditor
+from pychron.processing.analyses.view.edit_analysis_view import AnalysisEditView
 
 '''
 add toolbar action to open another editor tab
@@ -123,19 +125,6 @@ class BaseBrowserTask(BaseEditorTask):
                 self.browser_model.use_workspace = workspace.active
                 self.workspace = workspace
 
-    def _opened_hook(self):
-        self.dvc.initialize()
-
-        if not self.browser_model.is_activated:
-            self._setup_browser_model()
-
-        with no_update(self):
-            self.browser_model.current_task_name = self.default_task_name
-
-        self.browser_model.activated()
-        self._activate_sample_browser()
-        self.activate_workspace()
-
     def activated(self):
 
         # model = self._get_browser_model()
@@ -153,6 +142,25 @@ class BaseBrowserTask(BaseEditorTask):
         # else:
 
         # self._activate_query_browser()
+
+    def edit_analysis(self):
+        self.debug('Edit analysis data')
+        if not self.has_active_editor():
+            return
+        #
+        editor = self.active_editor
+        if hasattr(editor, 'edit_view') and editor.edit_view:
+            editor.edit_view.show()
+        else:
+
+            e = AnalysisEditView(editor, dvc=self.dvc)
+
+            # e.load_isotopes()
+            # info = e.edit_traits()
+            # info = timethis(e.edit_traits)
+            info = open_view(e)
+            e.control = info.control
+            editor.edit_view = e
 
     def recall(self, records, open_copy=False):
         """
@@ -207,6 +215,19 @@ class BaseBrowserTask(BaseEditorTask):
         return [e for e in es if isinstance(e, RecallEditor)]
 
     # private
+    def _opened_hook(self):
+        self.dvc.initialize()
+
+        if not self.browser_model.is_activated:
+            self._setup_browser_model()
+
+        with no_update(self):
+            self.browser_model.current_task_name = self.default_task_name
+
+        self.browser_model.activated()
+        self._activate_sample_browser()
+        self.activate_workspace()
+
     def _find_refs(self, an):
         self.information_dialog('Finding references not currently implemented')
 

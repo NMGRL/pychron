@@ -422,29 +422,33 @@ class GitRepoManager(Loggable):
     def checkout_branch(self, name):
         repo = self._repo
         branch = getattr(repo.heads, name)
-        branch.checkout()
+        try:
+            branch.checkout()
+            self.selected_branch = name
+            self._load_branch_history()
+            self.information_dialog('Repository now on branch "{}"'.format(name))
 
-        self.selected_branch = name
-        self._load_branch_history()
+        except BaseException, e:
+            self.warning_dialog('There was an issue trying to checkout branch "{}"'.format(name))
+            raise e
 
     def create_branch(self, name=None, commit='HEAD'):
+        repo = self._repo
+
         if name is None:
-            nb = NewBranchView()
+            print repo.branches, type(repo.branches)
+            nb = NewBranchView(branches=repo.branches)
             info = nb.edit_traits()
             if info.result:
                 name = nb.name
             else:
                 return
 
-        repo = self._repo
         if name not in repo.branches:
             branch = repo.create_head(name, commit=commit)
             branch.checkout()
-            self.information_dialog('Data set not on branch "{}"'.format(name))
-        else:
-            self.information_dialog('Branch "{}" already exists. Choose a different name'.format(name))
-            # branch.commit = repo.head.commit
-            # self.checkout_branch(name)
+            self.information_dialog('Repository now on branch "{}"'.format(name))
+            return True
 
     def create_remote(self, url, name='origin', force=False):
         repo = self._repo
