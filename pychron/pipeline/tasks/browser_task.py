@@ -18,7 +18,7 @@
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem
 from pyface.tasks.traits_dock_pane import TraitsDockPane
-from traits.api import Instance
+from traits.api import Instance, Bool
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.browser.browser_task import BaseBrowserTask
@@ -26,7 +26,7 @@ from pychron.envisage.browser.view import PaneBrowserView
 from pychron.envisage.view_util import open_view
 from pychron.globals import globalv
 from pychron.pipeline.tasks.actions import ConfigureRecallAction, ConfigureAnalysesTableAction, LoadReviewStatusAction, \
-    EditAnalysisAction
+    EditAnalysisAction, DiffViewAction
 from pychron.processing.analyses.view.edit_analysis_view import AnalysisEditView
 
 
@@ -54,9 +54,17 @@ class BrowserTask(BaseBrowserTask):
     model = Instance('pychron.envisage.browser.browser_model.BrowserModel')
     tool_bars = [SToolBar(ConfigureRecallAction(),
                           ConfigureAnalysesTableAction(),
-                          LoadReviewStatusAction()),
+                          LoadReviewStatusAction(),
+                          DiffViewAction()),
                  SToolBar(EditAnalysisAction(),
                           name='Edit')]
+
+    diff_enabled = Bool
+
+    def activated(self):
+        if self.application.get_plugin('pychron.mass_spec.plugin'):
+            self.diff_enabled = True
+        super(BrowserTask, self).activated()
 
     def _opened_hook(self):
         super(BrowserTask, self)._opened_hook()
@@ -65,6 +73,25 @@ class BrowserTask(BaseBrowserTask):
             self.recall(r)
 
     # toolbar actions
+    def diff_analysis(self):
+        self.debug('Edit analysis data')
+        if not self.has_active_editor():
+            return
+
+        recaller = self.application.get_service('pychron.mass_spec.mass_spec_recaller.MassSpecRecaller')
+        if recaller is None:
+            return
+
+        active_editor = self.active_editor
+        left = active_editor.analysis
+
+        from pychron.pipeline.editors.diff_editor import DiffEditor
+        editor = DiffEditor(recaller=recaller)
+        left.load_raw_data()
+        if editor.setup(left):
+            editor.set_diff(left)
+            self._open_editor(editor)
+
     def edit_analysis(self):
         self.debug('Edit analysis data')
         if not self.has_active_editor():

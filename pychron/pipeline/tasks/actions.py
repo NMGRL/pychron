@@ -97,6 +97,12 @@ class EditAnalysisAction(TaskAction):
     image = icon('application-form-edit')
 
 
+class DiffViewAction(TaskAction):
+    name = 'Diff View'
+    method = 'diff_analysis'
+    image = icon('edit_diff')
+    enabled_name = 'diff_enabled'
+
 class PipelineAction(Action):
     def perform(self, event):
         app = event.task.window.application
