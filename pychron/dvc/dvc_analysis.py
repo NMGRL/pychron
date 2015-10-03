@@ -24,8 +24,6 @@ import json
 import datetime
 from uncertainties import ufloat, std_dev, nominal_value
 
-
-
 # ============= local library imports  ==========================
 from pychron.core.helpers.datetime_tools import make_timef
 from pychron.core.helpers.filetools import add_extension, subdirize

@@ -40,6 +40,12 @@ from pychron.loggable import Loggable
 from pychron.git_archive.commit import Commit
 
 
+def get_repository_branch(path):
+    r = Repo(path)
+    b = r.active_branch
+    return b.name
+
+
 def grep(arg, name):
     process = subprocess.Popen(['grep', '-lr', arg, name], stdout=subprocess.PIPE)
     stdout, stderr = process.communicate()

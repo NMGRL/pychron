@@ -93,8 +93,10 @@ class MainView(HasTraits):
         a39 = ar.ar39decayfactor
         a37 = ar.ar37decayfactor
         ms = [
-            MeasurementValue(name='DR Version',
-                             value=an.data_reduction_tag),
+            # MeasurementValue(name='DR Version',
+            #                  value=an.data_reduction_tag),
+            MeasurementValue(name='Branch',
+                             value=an.branch),
             MeasurementValue(name='DAQ Version',
                              value=an.collection_version),
             MeasurementValue(name='ExperimentID',

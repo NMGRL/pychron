@@ -36,7 +36,7 @@ from pychron.processing.arar_age import ArArAge
 # from pychron.processing.analyses.db_summary import DBAnalysisSummary
 from pychron.experiment.utilities.identifier import make_runid, make_aliquot_step
 from pychron.processing.isotope import Isotope
-from pychron.pychron_constants import PLUSMINUS
+from pychron.pychron_constants import PLUSMINUS, NULL_STR
 
 Fit = namedtuple('Fit', 'fit '
                         'filter_outliers filter_outlier_iterations filter_outlier_std_devs '
@@ -191,6 +191,7 @@ class Analysis(ArArAge):
     # table_filter_omit = False
     tag = ''
     data_reduction_tag = ''
+    branch = NULL_STR
 
     # status_text = Property
     # age_string = Property

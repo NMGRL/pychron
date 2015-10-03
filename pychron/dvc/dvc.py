@@ -37,7 +37,7 @@ from pychron.dvc.dvc_analysis import DVCAnalysis, experiment_path, analysis_path
     AnalysisNotAnvailableError
 from pychron.dvc.dvc_database import DVCDatabase
 from pychron.dvc.meta_repo import MetaRepo
-from pychron.git_archive.repo_manager import GitRepoManager, format_date
+from pychron.git_archive.repo_manager import GitRepoManager, format_date, get_repository_branch
 from pychron.github import Organization
 from pychron.loggable import Loggable
 from pychron.paths import paths
@@ -675,6 +675,9 @@ class DVC(Loggable):
             # cot = time.time() - st
             # if cot>0.1:
             #     print 'constructor {}'.format(cot)
+
+            # get repository branch
+            a.branch = get_repository_branch(os.path.join(paths.experiment_dataset_dir, expid))
 
             # load irradiation
             if a.irradiation:
