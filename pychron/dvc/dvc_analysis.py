@@ -19,16 +19,16 @@
 import base64
 import os
 import time
-import json
 
 import datetime
 from uncertainties import ufloat, std_dev, nominal_value
+
 
 # ============= local library imports  ==========================
 from pychron.core.helpers.datetime_tools import make_timef
 from pychron.core.helpers.filetools import add_extension, subdirize
 from pychron.core.helpers.iterfuncs import partition
-from pychron.dvc import jdump
+from pychron.dvc import dvc_dump, dvc_load
 from pychron.experiment.utilities.identifier import make_aliquot_step
 from pychron.paths import paths
 from pychron.processing.analyses.analysis import Analysis
@@ -144,38 +144,37 @@ class DVCAnalysis(Analysis):
         root = os.path.dirname(path)
         bname = os.path.basename(path)
         head, ext = os.path.splitext(bname)
-        with open(os.path.join(root, 'extraction', '{}.extr{}'.format(head, ext))) as rfile:
-            jd = json.load(rfile)
-            for attr in EXTRACTION_ATTRS:
-                tag = attr
-                if attr == 'cleanup_duration':
-                    if attr not in jd:
-                        tag = 'cleanup'
-                elif attr == 'extract_duration':
-                    if attr not in jd:
-                        tag = 'duration'
 
-                v = jd.get(tag)
-                if v is not None:
-                    setattr(self, attr, v)
+        jd = dvc_load(os.path.join(root, 'extraction', '{}.extr{}'.format(head, ext)))
+        for attr in EXTRACTION_ATTRS:
+            tag = attr
+            if attr == 'cleanup_duration':
+                if attr not in jd:
+                    tag = 'cleanup'
+            elif attr == 'extract_duration':
+                if attr not in jd:
+                    tag = 'duration'
+
+            v = jd.get(tag)
+            if v is not None:
+                setattr(self, attr, v)
 
         if not self.extract_units:
             self.extract_units = 'W'
 
-        with open(path, 'r') as rfile:
-            jd = json.load(rfile)
-            for attr in META_ATTRS:
-                v = jd.get(attr)
-                if v is not None:
-                    setattr(self, attr, v)
+        jd = dvc_load(path)
+        for attr in META_ATTRS:
+            v = jd.get(attr)
+            if v is not None:
+                setattr(self, attr, v)
 
-            try:
-                self.rundate = datetime.datetime.strptime(jd['timestamp'], '%Y-%m-%dT%H:%M:%S')
-            except ValueError:
-                self.rundate = datetime.datetime.strptime(jd['timestamp'], '%Y-%m-%dT%H:%M:%S.%f')
+        try:
+            self.rundate = datetime.datetime.strptime(jd['timestamp'], '%Y-%m-%dT%H:%M:%S')
+        except ValueError:
+            self.rundate = datetime.datetime.strptime(jd['timestamp'], '%Y-%m-%dT%H:%M:%S.%f')
 
-            self.collection_version = jd['collection_version']
-            self._set_isotopes(jd)
+        self.collection_version = jd['collection_version']
+        self._set_isotopes(jd)
 
         self.timestamp = make_timef(self.rundate)
         self.aliquot_step_str = make_aliquot_step(self.aliquot, self.step)
@@ -189,10 +188,9 @@ class DVCAnalysis(Analysis):
         for modifier in modifiers:
             path = self._analysis_path(modifier=modifier)
             if path and os.path.isfile(path):
-                with open(path, 'r') as rfile:
-                    jd = json.load(rfile)
-                    func = getattr(self, '_load_{}'.format(modifier))
-                    func(jd)
+                jd = dvc_load(path)
+                func = getattr(self, '_load_{}'.format(modifier))
+                func(jd)
 
     def _load_tags(self, jd):
         self.set_tag(jd)
@@ -252,38 +250,37 @@ class DVCAnalysis(Analysis):
         path = self._analysis_path(modifier='.data')
         isotopes = self.isotopes
 
-        with open(path, 'r') as rfile:
-            jd = json.load(rfile)
-            signals = jd['signals']
-            baselines = jd['baselines']
-            sniffs = jd['sniffs']
+        jd = dvc_load(path)
+        signals = jd['signals']
+        baselines = jd['baselines']
+        sniffs = jd['sniffs']
 
-            for sd in signals:
-                isok = sd['isotope']
-                if keys and isok not in keys:
-                    continue
-                try:
-                    iso = isotopes[isok]
-                except KeyError:
-                    continue
+        for sd in signals:
+            isok = sd['isotope']
+            if keys and isok not in keys:
+                continue
+            try:
+                iso = isotopes[isok]
+            except KeyError:
+                continue
 
-                iso.unpack_data(format_blob(sd['blob']))
+            iso.unpack_data(format_blob(sd['blob']))
 
-                det = sd['detector']
-                bd = next((b for b in baselines if b['detector'] == det), None)
-                if bd:
-                    iso.baseline.unpack_data(format_blob(bd['blob']))
+            det = sd['detector']
+            bd = next((b for b in baselines if b['detector'] == det), None)
+            if bd:
+                iso.baseline.unpack_data(format_blob(bd['blob']))
 
-            for sn in sniffs:
-                isok = sn['isotope']
-                if keys and isok not in keys:
-                    continue
+        for sn in sniffs:
+            isok = sn['isotope']
+            if keys and isok not in keys:
+                continue
 
-                try:
-                    iso = isotopes[isok]
-                except KeyError:
-                    continue
-                iso.sniff.unpack_data(format_blob(sn['blob']))
+            try:
+                iso = isotopes[isok]
+            except KeyError:
+                continue
+            iso.sniff.unpack_data(format_blob(sn['blob']))
 
     def set_production(self, prod, r):
         self.production_name = prod
@@ -405,8 +402,7 @@ class DVCAnalysis(Analysis):
 
     def _get_json(self, modifier):
         path = self._analysis_path(modifier=modifier)
-        with open(path, 'r') as rfile:
-            jd = json.load(rfile)
+        jd = dvc_load(path)
         return jd, path
 
     def _set_isotopes(self, jd):
@@ -419,9 +415,7 @@ class DVCAnalysis(Analysis):
 
         # set mass
         path = os.path.join(paths.meta_root, 'molecular_weights.json')
-        with open(path, 'r') as rfile:
-            masses = json.load(rfile)
-
+        masses = dvc_load(path)
         for k, v in isos.items():
             v.mass = masses.get(k, 0)
 
@@ -429,12 +423,12 @@ class DVCAnalysis(Analysis):
         if path is None:
             path = self._analysis_path(modifier)
 
-        jdump(obj, path)
+        dvc_dump(obj, path)
 
-    def _analysis_path(self, experiment_id=None, modifier=None, mode='r', extension='.json'):
+    def _analysis_path(self, experiment_id=None, **kw):
         if experiment_id is None:
             experiment_id = self.experiment_identifier
 
-        return analysis_path(self.record_id, experiment_id, modifier=modifier, mode=mode, extension=extension)
+        return analysis_path(self.record_id, experiment_id, **kw)
 
 # ============= EOF ============================================

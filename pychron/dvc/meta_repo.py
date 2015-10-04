@@ -29,7 +29,7 @@ from uncertainties import ufloat
 from pychron.canvas.utils import iter_geom
 from pychron.core.helpers.datetime_tools import ISO_FORMAT_STR
 from pychron.core.helpers.filetools import list_directory2, ilist_directory2, add_extension
-from pychron.dvc import jdump
+from pychron.dvc import dvc_dump, dvc_load
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths, r_mkdir
 from pychron.pychron_constants import INTERFERENCE_KEYS, RATIO_KEYS
@@ -145,7 +145,7 @@ class Chronology(MetaObject):
         return d.strftime('%m-%d-%Y')
 
 
-class Production(MetaObject):
+class Production2(MetaObject):
     name = ''
     note = ''
 
@@ -172,6 +172,26 @@ class Production(MetaObject):
             for a in self.attrs:
                 row = ','.join(map(str, (a, getattr(self, a), getattr(self, '{}_err'.format(a)))))
                 wfile.write('{}\n'.format(row))
+
+
+class Production(MetaObject):
+    name = ''
+    note = ''
+
+    def _load_hook(self, path, rfile):
+        self.name = os.path.splitext(os.path.basename(path))[0]
+        obj = json.load(rfile)
+        for k, v in obj.iteritems():
+            setattr(self, k, float(v[0]))
+            setattr(self, '{}_err'.format(k), float(v[0]))
+
+    def to_dict(self, keys):
+        return {t: ufloat(getattr(self, t), getattr(self, '{}_err'.format(t))) for t in keys}
+
+    def dump(self):
+        obj = {}
+        for a in self.attrs:
+            obj[a] = (getattr(self, a), getattr(self, '{}_err'.format(a)))
 
 
 class BaseHolder(MetaObject):
@@ -259,7 +279,7 @@ class MetaRepo(GitRepoManager):
     def save_gains(self, ms, gains_dict):
         p = self._gain_path(ms)
         # with open(p, 'w') as wfile:
-        jdump(gains_dict, p)
+        dvc_dump(gains_dict, p)
 
         if self.add_paths(p):
             self.commit('Updated gains')
@@ -318,7 +338,7 @@ class MetaRepo(GitRepoManager):
 
     def add_level(self, irrad, level, add=True):
         p = self.get_level_path(irrad, level)
-        jdump([], p)
+        dvc_dump([], p)
         if add:
             self.add(p, commit=False)
 
@@ -379,7 +399,7 @@ class MetaRepo(GitRepoManager):
         # n = {'decay_constants': decay, 'positions': njd}
         # with open(p, 'w') as wfile:
         #     json.dump(njd, wfile, indent=4)
-        jdump(njd, p)
+        dvc_dump(njd, p)
         if add:
             self.add(p, commit=False)
 
@@ -406,7 +426,7 @@ class MetaRepo(GitRepoManager):
         # remove_extension=True)
         prs = []
         root = os.path.join(paths.meta_root, 'productions')
-        for di in ilist_directory2(root, extension='.txt'):
+        for di in ilist_directory2(root, extension='.json'):
             pr = Production(os.path.join(root, di))
             prs.append(pr)
         return prs
@@ -448,13 +468,14 @@ class MetaRepo(GitRepoManager):
         return Gains(p)
 
     @cached('clear_cache')
-    def get_production(self, pname, **kw):
-        root = os.path.join(paths.meta_root, 'productions')
-        if not os.path.isdir(root):
-            os.mkdir(root)
-        p = os.path.join(root, add_extension(pname))
+    def get_production(self, irrad, level):
+        path = os.path.join(paths.meta_root, irrad, 'productions.json')
+        obj = dvc_load(path)
+        pname = obj[level]
+        p = os.path.join(paths.meta_root, irrad, add_extension(pname, ext='.json'))
+
         ip = Production(p)
-        return ip
+        return pname, ip
 
     @cached('clear_cache')
     def get_chronology(self, name, **kw):

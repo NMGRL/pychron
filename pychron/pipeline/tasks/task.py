@@ -25,7 +25,7 @@ import os
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import list_gits
 from pychron.core.pdf.save_pdf_dialog import save_pdf
-from pychron.dvc import jdump
+from pychron.dvc import dvc_dump
 from pychron.dvc.dvc import experiment_has_staged, push_experiments
 from pychron.envisage.tasks.actions import ToggleFullWindowAction
 from pychron.globals import globalv
@@ -225,7 +225,7 @@ class PipelineTask(BaseBrowserTask):
         root = paths.figure_dir
         path = os.path.join(root, 'test.json')
         obj = self._make_save_figure_object(ed)
-        jdump(obj, path)
+        dvc_dump(obj, path)
 
     def save_figure_pdf(self):
         self.debug('save figure pdf')

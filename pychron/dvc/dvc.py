@@ -31,7 +31,7 @@ import json
 from pychron.core.i_datastore import IDatastore
 from pychron.core.helpers.filetools import remove_extension, list_subdirectories
 from pychron.core.progress import progress_loader
-from pychron.dvc import jdump
+from pychron.dvc import dvc_dump
 from pychron.dvc.defaults import TRIGA, HOLDER_24_SPOKES, LASER221, LASER65
 from pychron.dvc.dvc_analysis import DVCAnalysis, experiment_path, analysis_path, PATH_MODIFIERS, \
     AnalysisNotAnvailableError
@@ -125,7 +125,7 @@ class Tag(object):
 
         # with open(self.path, 'w') as wfile:
         #     json.dump(obj, wfile, indent=4)
-        jdump(obj, self.path)
+        dvc_dump(obj, self.path)
 
 
 class GitSessionCTX(object):
@@ -251,7 +251,7 @@ class DVC(Loggable):
                 o['manual_error'] = v
                 o['use_manual_error'] = True
 
-        jdump(obj, path)
+        dvc_dump(obj, path)
         return path
 
     def revert_manual_edits(self, runid, experiment_identifier):
@@ -265,7 +265,7 @@ class DVC(Loggable):
                         item['use_manual_value'] = False
                         item['use_manual_error'] = False
             ps.append(path)
-            jdump(obj, path)
+            dvc_dump(obj, path)
 
         msg = '<MANUAL> reverted to non manually edited'
         self.commit_manual_edits(experiment_identifier, ps, msg)
@@ -313,7 +313,7 @@ class DVC(Loggable):
     def _add_interpreted_age(self, ia, d):
         p = analysis_path(ia.identifier, ia.experiment_identifier, modifier='ia', mode='w')
         print p
-        jdump(d, p)
+        dvc_dump(d, p)
 
     def analysis_has_review(self, ai, attr):
         return True
@@ -689,9 +689,11 @@ class DVC(Loggable):
                 ct = time.time() - st
 
                 st = time.time()
-                pname = self.db.get_production_name(a.irradiation, a.irradiation_level)
 
-                prod = meta_repo.get_production(pname)
+                # pname = self.db.get_production_name(a.irradiation, a.irradiation_level)
+                # prod = meta_repo.get_production(pname)
+                pname, prod = meta_repo.get_production(a.irradiation, a.irradiation_level)
+
                 a.set_production(pname, prod)
                 pt = time.time() - st
 

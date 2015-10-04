@@ -24,7 +24,7 @@ import struct
 from datetime import datetime
 from uncertainties import std_dev, nominal_value
 # ============= local library imports  ==========================
-from pychron.dvc import jdump
+from pychron.dvc import dvc_dump
 from pychron.dvc.dvc_analysis import META_ATTRS, EXTRACTION_ATTRS, analysis_path, PATH_MODIFIERS
 from pychron.experiment.automated_run.persistence import BasePersister
 from pychron.experiment.classifier.isotope_classifier import IsotopeClassifier
@@ -116,7 +116,7 @@ class DVCPersister(BasePersister):
         hexsha = self.dvc.get_meta_head()
         obj['commit'] = str(hexsha)
 
-        jdump(obj, p)
+        dvc_dump(obj, p)
 
     def pre_measurement_save(self):
         pass
@@ -140,7 +140,7 @@ class DVCPersister(BasePersister):
                'high_signal': ys[2],
                'fmt': fmt,
                'data': base64.b64encode(''.join([struct.pack(fmt, *di) for di in zip(xx, yy)]))}
-        jdump(obj, p)
+        dvc_dump(obj, p)
 
     def post_measurement_save(self, commit=True, msg_prefix='Collection'):
         """
@@ -356,20 +356,20 @@ class DVCPersister(BasePersister):
 
         # dump runid.json
         p = self._make_path()
-        jdump(obj, p)
+        dvc_dump(obj, p)
 
         p = self._make_path(modifier='intercepts')
-        jdump(intercepts, p)
+        dvc_dump(intercepts, p)
 
         # dump runid.blank.json
         p = self._make_path(modifier='blanks')
-        jdump(blanks, p)
+        dvc_dump(blanks, p)
 
         p = self._make_path(modifier='baselines')
-        jdump(cbaselines, p)
+        dvc_dump(cbaselines, p)
 
         p = self._make_path(modifier='icfactors')
-        jdump(icfactors, p)
+        dvc_dump(icfactors, p)
 
         # dump runid.data.json
         p = self._make_path(modifier='.data')
@@ -377,7 +377,7 @@ class DVCPersister(BasePersister):
                 'encoding': 'base64',
                 'format': '{}ff'.format(endianness),
                 'signals': signals, 'baselines': baselines, 'sniffs': sniffs}
-        jdump(data, p)
+        dvc_dump(data, p)
 
     def _make_path(self, modifier=None, extension='.json'):
         runid = self.per_spec.run_spec.runid
@@ -422,7 +422,7 @@ class DVCPersister(BasePersister):
                               data=data)
                 checks.append(params)
 
-            jdump(checks, p)
+            dvc_dump(checks, p)
 
     def _save_spectrometer_file(self, path):
         obj = dict(spectrometer=dict(self.per_spec.spec_dict),
@@ -431,6 +431,6 @@ class DVCPersister(BasePersister):
         hexsha = self.dvc.get_meta_head()
         obj['commit'] = str(hexsha)
 
-        jdump(obj, path)
+        dvc_dump(obj, path)
 
 # ============= EOF =============================================
