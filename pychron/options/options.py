@@ -309,6 +309,8 @@ class FigureOptions(BaseOptions):
     xpad_as_percent = Bool
     use_xpad = Bool
 
+    omit_by_tag = Bool(True)
+
     def initialize(self):
         if not self.groups:
             self.groups = self._groups_default()

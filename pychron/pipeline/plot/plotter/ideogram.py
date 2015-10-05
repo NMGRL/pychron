@@ -104,7 +104,11 @@ class Ideogram(BaseArArFigure):
 
         # omit = self._get_omitted(self.sorted_analyses)
         # omit = set(omit)
-        selection = self._get_omitted_by_tag(self.sorted_analyses)
+        if self.options.omit_by_tag:
+            selection = self._get_omitted_by_tag(self.sorted_analyses)
+        else:
+            selection = []
+
         for pid, (plotobj, po) in enumerate(zip(graph.plots, plots)):
             try:
                 args = getattr(self, '_plot_{}'.format(po.plot_name))(po, plotobj, pid)

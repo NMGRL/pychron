@@ -161,8 +161,11 @@ class IdeogramSubOptions(SubOptions):
                              show_border=True),
                       show_border=True,
                       label='X')
+        tgrp = VGroup(Item('omit_by_tag', label='Omit Tags',
+                           tooltip='If selected only analyses tagged as "OK" are included in the calculations'),
+                      label='Tags', show_border=True)
 
-        return self._make_view(xgrp)
+        return self._make_view(VGroup(xgrp, tgrp))
 
 
 class IdeogramAppearance(AppearanceSubOptions):
