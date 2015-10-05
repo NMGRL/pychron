@@ -22,7 +22,7 @@ from traits.api import HasTraits, List, Property, cached_property, Str, Bool, In
 # ============= standard library imports ========================
 from numpy import array, nan
 # ============= local library imports  ==========================
-from uncertainties import ufloat
+from uncertainties import ufloat, nominal_value
 # from pychron.processing.analysis import Marker
 from pychron.processing.argon_calculations import calculate_plateau_age, age_equation, calculate_isochron
 from pychron.pychron_constants import ALPHAS, AGE_MA_SCALARS
@@ -306,30 +306,31 @@ class StepHeatAnalysisGroup(AnalysisGroup):
         except ZeroDivisionError:
             return nan
 
-    def _get_steps(self):
-
-        # for ai in self.analyses:
-        #     print ai.record_id, ai.age, ai.uage_wo_j_err
-        d = [(ai.age,
-              # ai.uage_wo_j_err.std_dev if ai.uage_wo_j_err else 0,
-              ai.age_err,
-              ai.get_computed_value('k39').nominal_value)
-             # ai.get_interference_corrected_value('Ar39').nominal_value)
-             for ai in self.clean_analyses()]
-
-        return zip(*d)
+    # def _get_steps(self):
+    #     d = [(ai.age,
+    #           ai.age_err,
+    #           nominal_value(ai.get_computed_value('k39')))
+    #          for ai in self.clean_analyses()]
+    #
+    #     return zip(*d)
 
     # @cached_property
     def _get_plateau_age(self):
-        ages, errors, k39 = self._get_steps()
+        # ages, errors, k39 = self._get_steps()
+
+        ages = [ai.age for ai in self.analyses]
+        errors = [ai.age_err for ai in self.analyses]
+        k39 = [nominal_value(ai.get_computed_value('k39')) for ai in self.analyses]
 
         options = {'nsteps': self.pc_nsteps,
                    'gas_fraction': self.pc_gas_fraction,
                    'force_steps': self.calculate_fixed_plateau_steps}
 
-        args = calculate_plateau_age(ages, errors, k39, options=options)
+        excludes = [i for i in enumerate(self.analyses) if ai.is_omitted()]
+        args = calculate_plateau_age(ages, errors, k39, options=options, excludes=excludes)
         if args:
             v, e, pidx = args
+            print 'dddd', pidx
             if pidx[0] == pidx[1]:
                 return
 
@@ -337,9 +338,12 @@ class StepHeatAnalysisGroup(AnalysisGroup):
             self.plateau_steps_str = '{}-{}'.format(ALPHAS[pidx[0]],
                                                     ALPHAS[pidx[1]])
 
-            self.nsteps = (pidx[1] - pidx[0]) + 1
-            # print pidx
-            pages, perrs = zip(*[(ages[i], errors[i]) for i in range(pidx[0], pidx[1])])
+            step_idxs = [i for i in xrange(pidx[0], pidx[1] + 1) if not self.analyses[i].is_omitted()]
+            self.nsteps = len(step_idxs)
+
+            pages = [ages[i] for i in step_idxs]
+            perrs = [errors[i] for i in step_idxs]
+
             mswd = calculate_mswd(pages, perrs)
             self.plateau_mswd_valid = validate_mswd(mswd, self.nsteps)
             self.plateau_mswd = mswd

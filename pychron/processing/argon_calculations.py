@@ -26,6 +26,7 @@ from numpy import array
 
 
 
+
 # ============= local library imports  ==========================
 from pychron.processing.arar_constants import ArArConstants
 from pychron.core.stats.core import calculate_weighted_mean
@@ -124,7 +125,7 @@ def isochron_regressor(xs, xes, ys, yes,
     return reg
 
 
-def calculate_plateau_age(ages, errors, k39, kind='inverse_variance', method='fleck 1977', options=None):
+def calculate_plateau_age(ages, errors, k39, kind='inverse_variance', method='fleck 1977', options=None, excludes=None):
     """
         ages: list of ages
         errors: list of corresponding  1sigma errors
@@ -167,6 +168,7 @@ def calculate_plateau_age(ages, errors, k39, kind='inverse_variance', method='fl
         p = Plateau(ages=ages,
                     errors=errors,
                     signals=k39,
+                    excludes=excludes,
                     nsteps=options.get('nsteps', 3),
                     gas_fraction=options.get('gas_fraction', 50))
 
@@ -326,10 +328,12 @@ def calculate_atmospheric(a38, a36, k38, ca38, ca36, decay_time,
         arar_constants = ArArConstants()
 
     pr = production_ratios
-    m = pr.get('Cl3638', 0) * arar_constants.lambda_Cl36.nominal_value * decay_time
-    atm36 = ufloat(0, 1e-20)
-    for _ in range(5):
-        ar38atm = arar_constants.atm3836.nominal_value * atm36
+    m = pr.get('Cl3638', 0) * nominal_value(arar_constants.lambda_Cl36) * decay_time
+    a3836 = nominal_value(arar_constants.atm3836)
+
+    atm36 = 0
+    for _ in range(3):
+        ar38atm = a3836 * atm36
         cl38 = a38 - ar38atm - k38 - ca38
         cl36 = cl38 * m
         atm36 = a36 - ca36 - cl36
@@ -348,8 +352,6 @@ def calculate_F(isotopes,
     """
     a40, a39, a38, a37, a36 = isotopes
 
-    # a37*=113
-
     if interferences is None:
         interferences = {}
 
@@ -357,10 +359,8 @@ def calculate_F(isotopes,
         arar_constants = ArArConstants()
 
     # make local copy of interferences
-    pr = dict(((k, v.__copy__()) for k, v in interferences.iteritems()))
+    pr = {k: v.__copy__() for k, v in interferences.iteritems()}
 
-    # for k,v in pr.iteritems():
-    #    print k, v
     k37, k38, k39, ca36, ca37, ca38, ca39 = interference_corrections(a40, a39, a38, a37, a36,
                                                                      pr, arar_constants, fixed_k3739)
     atm36, cl36 = calculate_atmospheric(a38, a36, k38, ca38, ca36,
@@ -370,7 +370,7 @@ def calculate_F(isotopes,
 
     # calculate radiogenic
     # dont include error in 40/36
-    atm40 = atm36 * arar_constants.atm4036.nominal_value
+    atm40 = atm36 * nominal_value(arar_constants.atm4036)
 
     k4039 = pr['K4039']
     k40 = k39 * k4039
@@ -382,7 +382,7 @@ def calculate_F(isotopes,
         f = ufloat(1.0, 0)
 
     rf = deepcopy(f)
-    # f = ufloat(f.nominal_value, f.std_dev, tag='F')
+
     non_ar_isotopes = dict(k40=k40,
                            ca39=ca39,
                            k38=k38,
@@ -399,12 +399,11 @@ def calculate_F(isotopes,
 
     computed = dict(rad40=rad40, rad40_percent=rp,
                     k39=k39, atm40=atm40)
-    # print 'Ar40', a40-k40, a40, k40
-    # print 'Ar39', a39-k39, a39, k39
+
     interference_corrected = dict(Ar40=a40 - k40,
                                   Ar39=k39,
-                                  Ar38=a38,  # - k38 - ca38,
-                                  Ar37=a37,  # - ca37 - k37,
+                                  Ar38=a38,
+                                  Ar37=a37,
                                   Ar36=atm36)
     # clear errors in irrad
     for pp in pr.itervalues():

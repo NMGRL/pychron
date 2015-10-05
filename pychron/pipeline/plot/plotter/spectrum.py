@@ -130,6 +130,9 @@ class Spectrum(BaseArArFigure):
             overlay = self._add_plateau_overlay(spec, platbounds, plateau_age,
                                                 ys[::2], es[::2],
                                                 txt)
+
+            selections = self._get_omitted_by_tag(self.sorted_analyses)
+            overlay.selections = selections
             pma = plateau_age.nominal_value
             overlay.id = 'plateau'
             if overlay.id in po.overlay_positions:
@@ -179,10 +182,10 @@ class Spectrum(BaseArArFigure):
         pad = '0.25'
         if po.has_ylimits():
             _mi, _ma = po.ylimits
-            print 'using previous limits', _mi, _ma
+            # print 'using previous limits', _mi, _ma
             pad = None
 
-        print 'setting', _mi, _ma
+        # print 'setting', _mi, _ma
         self.graph.set_y_limits(min_=_mi, max_=_ma, pad=pad, plotid=pid)
         return spec
 
@@ -243,8 +246,11 @@ class Spectrum(BaseArArFigure):
                                   nsigma=ns)
         ds.underlays.append(sp)
 
-        omit = self._get_omitted(self.sorted_analyses)
+        omit = self._get_omitted_by_tag(self.sorted_analyses)
         sp.selections = omit
+
+        self._set_renderer_selection((ds,), omit)
+
         self.spectrum_overlays.append(sp)
         if po.show_labels:
             grp = self.options.get_group(self.group_id)
@@ -290,7 +296,7 @@ class Spectrum(BaseArArFigure):
                             arrow_visible=opt.plateau_arrow_visible,
                             # label_offset=plateau_age.std_dev*self.options.step_nsigma,
                             # y=plateau_age.nominal_value * 1.25)
-                            y=plateau_age.nominal_value)
+                            y=nominal_value(plateau_age))
 
         # lp.underlays.append(ov)
         lp.overlays.append(ov)
@@ -311,6 +317,10 @@ class Spectrum(BaseArArFigure):
     def _update_graph_metadata(self, obj, name, old, new):
         print 'update graph metadata, {} {} {} {}'.format(obj, name, old, new)
         sel = obj.metadata['selections']
+
+        sel1 = self._filter_metadata_changes(obj, self.sorted_analyses)
+        print sel, sel1
+
         for sp in self.spectrum_overlays:
             sp.selections = sel
 
@@ -318,12 +328,8 @@ class Spectrum(BaseArArFigure):
             self.plateau_overlay.selections = sel
 
         ag = self.analysis_group
-        # for i, ai in enumerate(ag.analyses):
-        #     ai.temp_status = i in sel
-
         ag.dirty = True
-        # tga = ag.integrated_age
-        # mswd = ag.get_mswd_tuple()
+
         text = self._build_integrated_age_label(ag.integrated_age, ag.nanalyses)
         self.integrated_label.text = text
 
@@ -343,7 +349,7 @@ class Spectrum(BaseArArFigure):
         plateau_mswd, valid_mswd, nsteps = ag.get_plateau_mswd_tuple()
 
         e = plateau_age.std_dev * self.options.nsigma
-        text = self._build_label_text(plateau_age.nominal_value, e, nsteps,
+        text = self._build_label_text(nominal_value(plateau_age), e, nsteps,
                                       mswd_args=(plateau_mswd, valid_mswd, nsteps),
                                       sig_figs=self.options.plateau_sig_figs)
 

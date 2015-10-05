@@ -414,7 +414,8 @@ class DVC(Loggable):
         #     progress_iterator(exps, self._load_repository, threshold=1)
 
         st = time.time()
-        wrapper = lambda *args: self._make_record(calculate_f_only=calculate_f_only, *args)
+        wrapper = lambda *args: self._make_record(meta_repo=self.meta_repo,
+                                                  calculate_f_only=calculate_f_only, *args)
         # print 'records', records
         # records =ret= map(wrapper, records)
         ret = progress_loader(records, wrapper, threshold=1)
@@ -627,9 +628,7 @@ class DVC(Loggable):
 
         self.sync_repo(expid)
 
-    def _make_record(self, record, prog, i, n, calculate_f=False, calculate_f_only=False):
-        # def _make_record(self, record, calculate_f=False):
-        ost = time.time()
+    def _make_record(self, record, prog, i, n, meta_repo=None, calculate_f=False, calculate_f_only=False):
         if prog:
             prog.change_message('Loading analysis {}. {}/{}'.format(record.record_id, i, n))
 
@@ -650,17 +649,9 @@ class DVC(Loggable):
             if expid is None:
                 expid = self._get_requested_experiment_id(exps)
 
-        # func = lambda: DVCAnalysis(record.record_id, expid)
-        # a = timethis(func, )
-        # st = time.time()
-
         if isinstance(record, DVCAnalysis):
             a = record
         else:
-            # if isinstance(record, AnalysisTbl):
-            # record = record.record_view
-
-            st = time.time()
             try:
                 a = DVCAnalysis(record.record_id, expid)
             except AnalysisNotAnvailableError:
@@ -671,56 +662,29 @@ class DVC(Loggable):
                 except AnalysisNotAnvailableError:
                     return
 
-            cot = time.time() - st
-            # cot = time.time() - st
-            # if cot>0.1:
-            #     print 'constructor {}'.format(cot)
-
             # get repository branch
             a.branch = get_repository_branch(os.path.join(paths.experiment_dataset_dir, expid))
 
+            a.set_tag(record.tag)
+
             # load irradiation
             if a.irradiation:
-                st = time.time()
-                meta_repo = self.meta_repo
-
                 chronology = meta_repo.get_chronology(a.irradiation)
                 a.set_chronology(chronology)
-                ct = time.time() - st
 
-                st = time.time()
-
-                # pname = self.db.get_production_name(a.irradiation, a.irradiation_level)
-                # prod = meta_repo.get_production(pname)
                 pname, prod = meta_repo.get_production(a.irradiation, a.irradiation_level)
-
                 a.set_production(pname, prod)
-                pt = time.time() - st
 
-                st = time.time()
                 j, lambda_k = meta_repo.get_flux(record.irradiation, record.irradiation_level,
                                                  record.irradiation_position_position)
                 a.j = j
                 if lambda_k:
                     a.arar_constants.lambda_k = lambda_k
 
-                ft = time.time() - st
-                a.set_tag(record.tag)
                 if calculate_f_only:
                     a.calculate_F()
                 else:
                     a.calculate_age()
-
-            et = time.time() - ost
-            if et > 0.1:
-                f = '-------'
-
-                print '{} make run {} {} {}'.format(f, i, record.record_id, et)
-                print 'constructor {}'.format(cot)
-                print 'chronology {}'.format(ct)
-                print 'production {}'.format(pt)
-                print 'flux {}'.format(ft)
-
         return a
 
     def _get_experiment_repo(self, experiment_id):
