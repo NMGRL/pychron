@@ -73,7 +73,7 @@ class DVCDatabase(DatabaseAdapter):
     level = Str
     levels = List
 
-    def __init__(self, path=None, clear=False, auto_add=False, *args, **kw):
+    def __init__(self, clear=False, auto_add=False, *args, **kw):
         super(DVCDatabase, self).__init__(*args, **kw)
 
         # self._bind_preferences()
@@ -265,9 +265,12 @@ class DVCDatabase(DatabaseAdapter):
         a = IrradiationTbl(name=name)
         return self._add_item(a)
 
-    def add_irradiation_level(self, name, irradiation, holder, production, z=0, note=''):
+    def add_irradiation_level(self, name, irradiation, holder, production_name, z=0, note=''):
         irradiation = self.get_irradiation(irradiation)
-        production = self.get_production(production)
+        production = self.get_production(production_name)
+        if not production:
+            production = self.add_production(production_name)
+
         a = LevelTbl(name=name,
                      irradiation=irradiation,
                      holder=holder,

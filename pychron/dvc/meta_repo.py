@@ -28,7 +28,7 @@ import time
 from uncertainties import ufloat
 from pychron.canvas.utils import iter_geom
 from pychron.core.helpers.datetime_tools import ISO_FORMAT_STR
-from pychron.core.helpers.filetools import list_directory2, ilist_directory2, add_extension
+from pychron.core.helpers.filetools import list_directory2, add_extension
 from pychron.dvc import dvc_dump, dvc_load
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths, r_mkdir
@@ -177,13 +177,28 @@ class Production2(MetaObject):
 class Production(MetaObject):
     name = ''
     note = ''
+    attrs = None
 
     def _load_hook(self, path, rfile):
         self.name = os.path.splitext(os.path.basename(path))[0]
         obj = json.load(rfile)
+
+        attrs = []
         for k, v in obj.iteritems():
             setattr(self, k, float(v[0]))
             setattr(self, '{}_err'.format(k), float(v[0]))
+            attrs.append(k)
+
+        self.attrs = attrs
+
+    def update(self, d):
+        if self.attrs is None:
+            self.attrs = []
+
+        for k, v in d.iteritems():
+            setattr(self, k, v)
+            if not k.endswith('_err') and k not in self.attrs:
+                self.attrs.append(k)
 
     def to_dict(self, keys):
         return {t: ufloat(getattr(self, t), getattr(self, '{}_err'.format(t))) for t in keys}
@@ -192,6 +207,7 @@ class Production(MetaObject):
         obj = {}
         for a in self.attrs:
             obj[a] = (getattr(self, a), getattr(self, '{}_err'.format(a)))
+        dvc_dump(obj, self.path)
 
 
 class BaseHolder(MetaObject):
@@ -290,6 +306,14 @@ class MetaRepo(GitRepoManager):
     def update_experiment_queue(self, rootname, name, path_or_blob):
         self._update_text(os.path.join('experiments', rootname), name, path_or_blob)
 
+    def add_production_to_irradiation(self, irrad, name, params, add=True):
+        p = os.path.join(paths.meta_root, irrad, '{}.json'.format(name))
+        prod = Production(p)
+        prod.update(params)
+        prod.dump()
+        if add:
+            self.add(p)
+
     def add_production(self, name, obj, commit=False, add=True):
         p = self.get_production(name, force=True)
 
@@ -332,6 +356,14 @@ class MetaRepo(GitRepoManager):
 
         self.add(ip.path, commit=False)
         self.commit('updated production {}'.format(prod.name))
+
+    def update_productions(self, irrad, level, production, add=True):
+        p = os.path.join(paths.meta_root, irrad, 'productions.json')
+        obj = dvc_load(p)
+        obj[level] = production
+        dvc_dump(obj, p)
+        if add:
+            self.add(p, commit=False)
 
     def get_level_path(self, irrad, level):
         return os.path.join(paths.meta_root, irrad, '{}.json'.format(level))
@@ -421,15 +453,19 @@ class MetaRepo(GitRepoManager):
                                extension='.txt',
                                remove_extension=True)
 
-    def get_irradiation_productions(self):
-        # list_directory2(os.path.join(paths.meta_dir, 'productions'),
-        # remove_extension=True)
-        prs = []
-        root = os.path.join(paths.meta_root, 'productions')
-        for di in ilist_directory2(root, extension='.json'):
-            pr = Production(os.path.join(root, di))
-            prs.append(pr)
-        return prs
+    def get_default_productions(self):
+        with open(os.path.join(paths.meta_root, 'reactors.json'), 'r') as rfile:
+            return json.load(rfile)
+
+    # def get_irradiation_productions(self):
+    #     # list_directory2(os.path.join(paths.meta_dir, 'productions'),
+    #     # remove_extension=True)
+    #     prs = []
+    #     root = os.path.join(paths.meta_root, 'productions')
+    #     for di in ilist_directory2(root, extension='.json'):
+    #         pr = Production(os.path.join(root, di))
+    #         prs.append(pr)
+    #     return prs
 
     def get_flux(self, irradiation, level, position):
         path = os.path.join(paths.meta_root, irradiation, add_extension(level, '.json'))
@@ -472,7 +508,7 @@ class MetaRepo(GitRepoManager):
         path = os.path.join(paths.meta_root, irrad, 'productions.json')
         obj = dvc_load(path)
         pname = obj[level]
-        p = os.path.join(paths.meta_root, irrad, add_extension(pname, ext='.json'))
+        p = os.path.join(paths.meta_root, irrad, 'productions', add_extension(pname, ext='.json'))
 
         ip = Production(p)
         return pname, ip

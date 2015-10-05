@@ -255,7 +255,7 @@ class LevelTbl(Base, NameMixin):
 class IrradiationTbl(Base, NameMixin):
     idirradiationTbl = Column(Integer, primary_key=True)
     levels = relationship('LevelTbl', backref='irradiation')
-    production = Column(String(45))
+    # production = Column(String(45))
 
 
 class IrradiationPositionTbl(Base, BaseMixin):

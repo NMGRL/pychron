@@ -756,7 +756,6 @@ THIS CHANGE CANNOT BE UNDONE')
                                         irradiation=self.irradiation)
 
         new_level = editor.edit()
-        print 'asfdasd', new_level
         if new_level:
             self.level = new_level
 
