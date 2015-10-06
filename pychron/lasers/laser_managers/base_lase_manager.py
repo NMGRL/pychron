@@ -59,6 +59,9 @@ class BaseLaserManager(Manager):
     _calibrated_power = None
     _cancel_blocking = False
 
+    def bind_preferences(self, prefid):
+        pass
+
     def test_connection(self):
         if self.mode == 'client':
             return self._test_connection()
@@ -74,8 +77,9 @@ class BaseLaserManager(Manager):
         pos = self.get_position()
         self.debug('got position {}'.format(pos))
         if pos:
-            self.stage_manager.trait_set(**dict(zip(('_x_position', '_y_position', '_z_position'), pos)))
-            return True
+            if self.stage_manager:
+                self.stage_manager.trait_set(**dict(zip(('_x_position', '_y_position', '_z_position'), pos)))
+            return pos
 
     def wake(self):
         wake_screen()
@@ -227,7 +231,8 @@ class BaseLaserManager(Manager):
                 try:
                     if not cmpfunc(resp):
                         cnt += 1
-                except (ValueError, TypeError):
+                except (ValueError, TypeError), e:
+                    print '_blocking exception {}'.format(e)
                     cnt = 0
 
                 if position_callback:

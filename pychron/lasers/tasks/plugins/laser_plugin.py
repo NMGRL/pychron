@@ -85,6 +85,7 @@ class BaseLaserPlugin(BaseTaskPlugin):
 
         ip = InitializationParser()
         plugin = ip.get_plugin(self.klass[1].replace('Manager', ''), category='hardware')
+        print 'manager factory {}, {}'.format(plugin, self.klass[1].replace('Manager', ''))
         mode = ip.get_parameter(plugin, 'mode')
 
         if mode == 'client':
@@ -92,7 +93,8 @@ class BaseLaserPlugin(BaseTaskPlugin):
             if klass is None:
                 klass = 'PychronLaserManager'
 
-            pkg = 'pychron.lasers.laser_managers.pychron_laser_manager'
+            pkg = 'pychron.lasers.laser_managers'
+
             params = dict()
             try:
                 tag = ip.get_parameter(plugin, 'communications', element=True)
@@ -119,6 +121,7 @@ class BaseLaserPlugin(BaseTaskPlugin):
             factory = __import__(self.klass[0], fromlist=[self.klass[1]])
             m = getattr(factory, self.klass[1])()
 
+        m.mode = mode
         m.bootstrap()
         m.plugin_id = self.id
         m.bind_preferences(self.id)
@@ -138,7 +141,6 @@ class BaseLaserPlugin(BaseTaskPlugin):
         return d
 
     def _get_manager(self):
-        # print 'get manager', self.name
         return self.application.get_service(ILaserManager, 'name=="{}"'.format(self.name))
 
         # def execute_pattern(self, name):

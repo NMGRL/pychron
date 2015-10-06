@@ -29,12 +29,13 @@ from pychron.globals import globalv
 from pychron.hardware.pychron_device import EthernetDeviceMixin
 from pychron.lasers.laser_managers.client import UVLaserOpticsClient, UVLaserControlsClient, \
     LaserOpticsClient, LaserControlsClient
+from pychron.lasers.laser_managers.ethernet_laser_manager import EthernetLaserManager
 from pychron.lasers.laser_managers.laser_manager import BaseLaserManager
 from pychron.core.helpers.strtools import to_bool
 from pychron.paths import paths
 
 
-class PychronLaserManager(BaseLaserManager, EthernetDeviceMixin):
+class PychronLaserManager(EthernetLaserManager):
     """
     A PychronLaserManager is used to control an instance of
     pychron remotely.
@@ -62,18 +63,6 @@ class PychronLaserManager(BaseLaserManager, EthernetDeviceMixin):
     stage_manager_id = 'fusions.pychron'
     _cancel_blocking = False
 
-    position = String(enter_set=True, auto_set=False)
-    x = Property(depends_on='_x')
-    y = Property(depends_on='_y')
-    z = Property(depends_on='_z')
-    _x = Float
-    _y = Float
-    _z = Float
-    connected = Bool
-    test_connection_button = Button('Test Connection')
-    snapshot_button = Button('Test Snapshot')
-    use_autocenter = Bool(False)
-
     mode = 'client'
     optics_client = Instance(LaserOpticsClient)
     controls_client = Instance(LaserControlsClient)
@@ -100,11 +89,7 @@ class PychronLaserManager(BaseLaserManager, EthernetDeviceMixin):
     #
     #     return r
 
-    def opened(self):
-        self.debug('opened')
-        if self.update_position():
-            self._opened_hook()
-            return True
+
         # self.trait_set(**dict(zip(('_x', '_y', '_z'),
         #                           self.get_position())))
 
@@ -306,9 +291,6 @@ class PychronLaserManager(BaseLaserManager, EthernetDeviceMixin):
                 self.debug('test connection. connected= {}'.format(self.connected))
             return self.connected
 
-    def _opened_hook(self):
-        pass
-
     def _execute_pattern(self, pat, block):
         self.info('executing pattern {}'.format(pat))
 
@@ -397,13 +379,7 @@ class PychronLaserManager(BaseLaserManager, EthernetDeviceMixin):
     #     # self.communicator.get_handler()
     #     return self.communicator.ask(cmd, **kw)
 
-    def _enable_fired(self):
-        if self.enabled:
-            self.disable_laser()
-            self.enabled = False
-        else:
-            if self.enable_laser():
-                self.enabled = True
+
 
     def _set_x(self, v):
         self._ask('SetX {}'.format(v))
@@ -416,15 +392,6 @@ class PychronLaserManager(BaseLaserManager, EthernetDeviceMixin):
     def _set_z(self, v):
         self._ask('SetZ {}'.format(v))
         self.update_position()
-
-    def _get_x(self):
-        return self._x
-
-    def _get_y(self):
-        return self._y
-
-    def _get_z(self):
-        return self._z
 
     # defaults
     def _stage_manager_default(self):
