@@ -32,6 +32,7 @@ from pychron.canvas.canvas2D.scene.extraction_line_scene import ExtractionLineSc
 from pychron.canvas.canvas2D.scene.primitives.valves import RoughValve, \
     BaseValve, Switch, ManualSwitch
 import weakref
+from pychron.globals import globalv
 
 W = 2
 H = 2
@@ -280,7 +281,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
 
     def _show_menu(self, event, obj):
         actions = []
-        if self.manager.mode != 'client':
+        if self.manager.mode != 'client' or not globalv.client_only_locking:
             if isinstance(self.active_item, BaseValve):
                 t = 'Lock'
                 if obj.soft_lock:
