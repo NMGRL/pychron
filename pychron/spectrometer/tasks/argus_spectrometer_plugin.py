@@ -30,7 +30,7 @@ from pychron.spectrometer.tasks.base_spectrometer_plugin import BaseSpectrometer
 from pychron.spectrometer.thermo.spectrometer_manager import ArgusSpectrometerManager
 from pychron.spectrometer.tasks.spectrometer_actions import PeakCenterAction, \
     CoincidenceScanAction, SpectrometerParametersAction, MagnetFieldTableAction, MagnetFieldTableHistoryAction, \
-    ToggleSpectrometerTask, EditGainsAction, SendConfigAction, ViewReadoutAction
+    ToggleSpectrometerTask, EditGainsAction, SendConfigAction, ViewReadoutAction, DefinePeakCenterAction
 from pychron.spectrometer.tasks.spectrometer_preferences import SpectrometerPreferencesPane
 
 
@@ -108,7 +108,10 @@ class ArgusSpectrometerPlugin(BaseSpectrometerPlugin):
                                    path='MenuBar/spectrometer.menu'),
                     SchemaAddition(id='mftable_history',
                                    factory=MagnetFieldTableHistoryAction,
-                                   path='MenuBar/spectrometer.menu')]),
+                                   path='MenuBar/spectrometer.menu'),
+                    SchemaAddition(id='define_peak_center',
+                                   factory=DefinePeakCenterAction,
+                                   path='MenuBar/spectrometer.menu'),]),
             # SchemaAddition(id='db_mftable_history',
             # factory=DBMagnetFieldTableHistoryAction,
             #                path='MenuBar/spectrometer.menu')]),
@@ -127,6 +130,7 @@ class ArgusSpectrometerPlugin(BaseSpectrometerPlugin):
                     SchemaAddition(id='peak_center',
                                    factory=PeakCenterAction,
                                    path='MenuBar/spectrometer.menu'),
+
                     SchemaAddition(id='coincidence',
                                    factory=CoincidenceScanAction,
                                    path='MenuBar/spectrometer.menu'),
@@ -134,68 +138,4 @@ class ArgusSpectrometerPlugin(BaseSpectrometerPlugin):
                                    factory=SpectrometerParametersAction,
                                    path='MenuBar/spectrometer.menu')])]
 
-        # ============= EOF =============================================
-        # def _service_offers_default(self):
-        # """
-        #     """
-        #     so = self.service_offer_factory(
-        #         protocol=ArgusSpectrometerManager,
-        #         factory=self._factory_spectrometer)
-        #     #so1 = self.service_offer_factory(
-        #     #    protocol=ScanManager,
-        #     #    factory=self._factory_scan)
-        #     so2 = self.service_offer_factory(
-        #         protocol=IonOpticsManager,
-        #         factory=self._factory_ion_optics)
-        #
-        #     #return [so, so1, so2]
-        #     return [so, so2]
-        # def get_spectrometer(self):
-        #     spec = self.application.get_service('pychron.spectrometer.thermo.spectrometer_manager.ArgusSpectrometerManager')
-        #     return spec.spectrometer
-        #
-        # def get_ion_optics(self):
-        #     return self.application.get_service('pychron.spectrometer.ion_optics_manager.IonOpticsManager')
-
-        # def _factory_scan(self, *args, **kw):
-        #     return ScanManager(application=self.application,
-        #                        ion_optics_manager=self.get_ion_optics(),
-        #                        spectrometer=self.get_spectrometer())
-        #
-        # def _factory_ion_optics(self, *args, **kw):
-        #     return IonOpticsManager(application=self.application,
-        #                             spectrometer=self.get_spectrometer())
-
-        # def _factory_spectrometer(self, *args, **kw):
-        #     return ArgusSpectrometerManager(application=self.application)
-
-        # def _managers_default(self):
-        #     """
-        #     """
-        #     app = self.application
-        #     return [dict(name='argus_spectrometer_manager',
-        #                  manager=app.get_service(ArgusSpectrometerManager))]
-        # def _tasks_default(self):
-        #     ts = [TaskFactory(id='pychron.spectrometer',
-        #                       task_group='hardware',
-        #                       factory=self._task_factory,
-        #                       name='Spectrometer',
-        #                       image='prism'),
-        #           TaskFactory(id='pychron.mass_calibration',
-        #                       factory=self._mass_cal_task_factory,
-        #                       name='Mass Calibration',
-        #                       accelerator='Ctrl+Shift+M')]
-        #     return ts
-        #
-        # def _mass_cal_task_factory(self):
-        #     # sm = self.application.get_service(ArgusSpectrometerManager)
-        #     t = MassCalibrationTask(spectrometer_manager=self.spectrometer_manager)
-        #     return t
-        #
-        # def _task_factory(self):
-        #     # sm = self.application.get_service(ArgusSpectrometerManager)
-        #     #scm = self.application.get_service(ScanManager)
-        #     # scm = self._factory_scan()
-        #     t = SpectrometerTask(manager=self.spectrometer_manager,
-        #                          scan_manager=self.scan_manager)
-        #     return t
+# ============= EOF =============================================

@@ -145,7 +145,7 @@ class BasePeakCenter(MagnetSweep):
             self.debug('result of _do_sweep={}'.format(ok))
 
             # wait for graph to fully update
-            time.sleep(0.05)
+            time.sleep(0.1)
 
             if ok and self.directions != 'Oscillate':
                 if not self.canceled:
