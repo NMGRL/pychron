@@ -312,7 +312,7 @@ class Graph(Viewable, ContextMenuMixin):
 
         if clear_container:
             self.plotcontainer = pc = self.container_factory()
-            if self.add_context_menu:
+            if self.use_context_menu:
                 menu = ContextualMenuTool(parent=self,
                                           component=pc)
 
