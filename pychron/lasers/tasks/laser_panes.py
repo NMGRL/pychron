@@ -258,6 +258,9 @@ class ClientMixin(object):
 
         egrp = HGroup(UItem('enabled_led', editor=LEDEditor()),
                       UItem('enable', editor=ButtonEditor(label_value='enable_label')),
+                      UItem('fire_laser_button', enabled_when='enabled'),
+                      Item('output_power', label='Power'),
+                      UItem('units'),
                       spring,
                       icon_button_editor('snapshot_button', 'camera'),
                       icon_button_editor('test_connection_button',

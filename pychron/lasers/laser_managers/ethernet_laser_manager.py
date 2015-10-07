@@ -1,4 +1,4 @@
-from traits.api import Float, Property, Bool, Button, String
+from traits.api import Float, Property, Bool, Button, String, Enum
 from pychron.hardware.pychron_device import EthernetDeviceMixin
 from pychron.lasers.laser_managers.base_lase_manager import BaseLaserManager
 
@@ -15,6 +15,10 @@ class EthernetLaserManager(BaseLaserManager, EthernetDeviceMixin):
     test_connection_button = Button('Test Connection')
     snapshot_button = Button('Test Snapshot')
     use_autocenter = Bool(False)
+
+    output_power = Float(enter_set=True, auto_set=False)
+    fire_laser = Button('Fire')
+    units = Enum('watts', 'percent')
 
     def open(self, *args, **kw):
         return EthernetDeviceMixin.open(self)

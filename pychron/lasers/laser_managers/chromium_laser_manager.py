@@ -16,13 +16,8 @@
 
 # ============= enthought library imports =======================
 import time
-from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change, String, Button
-from traitsui.api import View, UItem, Item, HGroup, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.core.ui.gui import invoke_in_main_thread
-from pychron.hardware.pychron_device import EthernetDeviceMixin
-from pychron.lasers.laser_managers.base_lase_manager import BaseLaserManager
 from pychron.lasers.laser_managers.ethernet_laser_manager import EthernetLaserManager
 
 
@@ -41,7 +36,9 @@ class ChromiumLaserManager(EthernetLaserManager):
             units = 'watts'
 
         self.info('set laser output to {} {}'.format(value, units))
-        value = self._watts_to_percent(value)
+        if units == 'watts':
+            value = self.calculate_calibrated_power(value)
+
         resp = self.ask('laser.output {}'.format(value))
         try:
             return abs(float(resp) - value) < tol
@@ -63,9 +60,12 @@ class ChromiumLaserManager(EthernetLaserManager):
             x, y, z = map(lambda v: float(v) / 1000., xyz_microns.split(','))
         return x, y, z
 
-    # private
     def ask(self, cmd, **kw):
         return self._ask('{}\n'.format(cmd), **kw)
+
+    # private
+    def _output_power_changed(self, new):
+        self.extract(new, self.units)
 
     def _set_x(self, v):
         self.ask('stage.moveto {},{},{},{},{},{}'.format(v * 1000, self._y * 1000, self._z * 1000, 10, 10, 0))
@@ -104,8 +104,8 @@ class ChromiumLaserManager(EthernetLaserManager):
         def cmpfunc(xyz):
             try:
                 return not all(map(lambda ab: abs(ab[0] - ab[1]) <= 2,
-                               zip(map(float, xyz.split(',')),
-                                   (xm, ym, zm))))
+                                   zip(map(float, xyz.split(',')),
+                                       (xm, ym, zm))))
             except ValueError, e:
                 print '_moving exception {}'.format(e)
 
