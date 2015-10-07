@@ -735,7 +735,7 @@ class StageManager(BaseStageManager):
         self.update_axes()
 
     def get_hole_xy(self, key):
-        pos = self._stage_map.get_hole_pos(key)
+        pos = self.stage_map.get_hole_pos(key)
         # map the position to calibrated space
         pos = self.get_calibrated_position(pos)
         return pos

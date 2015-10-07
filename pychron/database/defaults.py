@@ -64,8 +64,8 @@ def load_isotopedb_defaults(db):
             #                           blank', 'air', 'cocktail', 'background', 'unknown']:
             db.add_analysis_type(at)
 
-        for mi in ['obama', 'jan', 'nmgrl map']:
-            db.add_mass_spectrometer(mi)
+        # for mi in ['obama', 'jan', 'nmgrl map']:
+        #     db.add_mass_spectrometer(mi)
 
         project = db.add_project('REFERENCES')
         # print project
@@ -78,7 +78,7 @@ def load_isotopedb_defaults(db):
             #            samp.project = project
             # samp.project_id=project.id
             # print samp.project_id
-            db.add_labnumber(i + 1, sample=samp)
+            # db.add_labnumber(i + 1, sample=samp)
         sess.commit()
 
         for hi, kind, make in [('Fusions CO2', '10.6um co2', 'photon machines'),

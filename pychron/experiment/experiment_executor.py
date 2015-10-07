@@ -1494,15 +1494,16 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if not self._set_run_aliquot(arv):
             return
 
-        no_exp = False
-        for i, ai in enumerate(runs):
-            if not ai.experiment_identifier:
-                self.warning('No experiment identifier for i={}, {}'.format(i + 1, ai.runid))
-                no_exp = True
+        if self.use_dvc_persistence:
+            no_exp = False
+            for i, ai in enumerate(runs):
+                if not ai.experiment_identifier:
+                    self.warning('No experiment identifier for i={}, {}'.format(i + 1, ai.runid))
+                    no_exp = True
 
-        if no_exp:
-            self.warning_dialog('No Experiment Identifiers')
-            return
+            if no_exp:
+                self.warning_dialog('No Experiment Identifiers')
+                return
 
         if globalv.experiment_debug:
             self.debug('********************** NOT DOING PRE EXECUTE CHECK ')

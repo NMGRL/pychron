@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+import time
 from pychron.hardware.gauges.granville_phillips.micro_ion_controller import MicroIonController
 
 
@@ -36,21 +37,27 @@ class PychronMicroIonController(MicroIonController):
 
 
 class QtegraMicroIonController(MicroIonController):
-    def get_pressure(self, name, **kw):
-        k=''
-        return self.ask('GetParameter {}'.format(k))
+    def get_pressures(self, verbose=False):
+        kw = {'verbose': verbose, 'force': True}
+        for d in self.gauges:
+            ig = self.ask('GetParameter {}'.format(d.name), **kw)
+            self._set_gauge_pressure(d.name, ig)
 
-    def get_ion_pressure(self, **kw):
-        k=''
-        return self.ask('GetParameter {}'.format(k))
-
-    def get_convectron_a_pressure(self, **kw):
-        k=''
-        return self.ask('GetParameter {}'.format(k))
-
-    def get_convectron_b_pressure(self, **kw):
-        k=''
-        return self.ask('GetParameter {}'.format(k))
+    # def get_pressure(self, name, **kw):
+    #     k=''
+    #     return self.ask('GetParameter {}'.format(k))
+    #
+    # def get_ion_pressure(self, **kw):
+    #     k=''
+    #     return self.ask('GetParameter {}'.format(k))
+    #
+    # def get_convectron_a_pressure(self, **kw):
+    #     k=''
+    #     return self.ask('GetParameter {}'.format(k))
+    #
+    # def get_convectron_b_pressure(self, **kw):
+    #     k=''
+    #     return self.ask('GetParameter {}'.format(k))
 # ============= EOF =============================================
 
 
