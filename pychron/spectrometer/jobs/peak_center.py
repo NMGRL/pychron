@@ -144,6 +144,9 @@ class BasePeakCenter(MagnetSweep):
             ok = self._do_sweep(start, end, width, directions=self.directions, map_mass=False)
             self.debug('result of _do_sweep={}'.format(ok))
 
+            # wait for graph to fully update
+            time.sleep(0.1)
+
             if ok and self.directions != 'Oscillate':
                 if not self.canceled:
                     dac_values = graph.get_data()
@@ -226,8 +229,8 @@ class BasePeakCenter(MagnetSweep):
     # factories
     # ===============================================================================
     def _reset_graph(self):
-        # self.graph.clear(clear_container=True)
-        self._graph_factory()
+        self.graph.clear(clear_container=True)
+        self._graph_factory(self.graph)
 
     def _graph_factory(self, graph=None):
         if graph is None:

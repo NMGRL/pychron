@@ -40,7 +40,7 @@ class PeakCenterEditor(ScanEditor):
 
 
 class CoincidenceEditor(PeakCenterEditor):
-    model = Instance('pychron.spectrometer.jobs.coincidence_scan.CoincidenceScan')
+    model = Instance('pychron.spectrometer.jobs.coincidence.Coincidence')
     stop_button = Button
 
     def _stop_button_fired(self):

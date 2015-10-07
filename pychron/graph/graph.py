@@ -308,14 +308,16 @@ class Graph(Viewable, ContextMenuMixin):
 
         self.series = []
         self.data_len = []
-
-        #         self.raw_x = []
-        #         self.raw_y = []
-        #         self.raw_yer = []
-
         self.data_limits = []
 
-        self.plotcontainer = self.container_factory()
+        if clear_container:
+            self.plotcontainer = pc = self.container_factory()
+            if self.add_context_menu:
+                menu = ContextualMenuTool(parent=self,
+                                          component=pc)
+
+                pc.tools.append(menu)
+
         self.selected_plot = None
 
     def set_axis_label_color(self, *args, **kw):

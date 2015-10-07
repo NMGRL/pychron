@@ -171,6 +171,12 @@ class PeakCenterAction(TaskAction):
     # man.do_peak_center(confirm_save=True, warn=True, message='manual peakcenter')
 
 
+class DefinePeakCenterAction(TaskAction):
+    description = 'Set peak center to specific DAC value'
+    name = 'Define Peak Center...'
+    method = 'define_peak_center'
+
+
 class CoincidenceScanAction(TaskAction):
     name = 'Coincidence...'
     method = 'do_coincidence'
