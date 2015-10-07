@@ -87,7 +87,7 @@ class SpectrometerTask(EditorTask):
         dpc = DefinePeakCenterView(detectors=dets,
                                    isotopes=isos,
                                    detector=dets[0],
-                                   isotopes=isos[0])
+                                   isotope=isos[0])
         info = dpc.edit_traits()
         if info.result:
             det = dpc.detector
