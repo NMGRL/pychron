@@ -32,7 +32,7 @@ class BasePeakCenter(MagnetSweep):
     reference_isotope = Str
     window = Float  # (0.015)
     step_width = Float  # (0.0005)
-    min_peak_height = Float  # (1.0)
+    min_peak_height = Float(5.0)
     percent = Int
     canceled = False
     show_label = False
