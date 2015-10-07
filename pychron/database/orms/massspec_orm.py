@@ -359,6 +359,8 @@ class LoginSessionTable(Base):
     LoginSessionID = Column(Integer, primary_key=True)
     SpecSysN = Column(Integer, ForeignKey('machinetable.SpecSysN'))
     analyses = relationship('AnalysesTable', backref='login_session')
+    UserID = Column(Integer, default=1)
+    SessionStart = Column(DateTime, default=func.now())
 
 
 class MachineTable(Base):
@@ -426,13 +428,13 @@ class SampleTable(Base):
     SampleID = Column(Integer, primary_key=True)
     Sample = Column(String(40))
 
-    Project = Column(String(40))  # , ForeignKey('projecttable.Project'))
+    # Project = Column(String(40))  # , ForeignKey('projecttable.Project'))
     #    Project = relation('ProjectTable', backref = 'SampleTable')
     ProjectID = Column(Integer, ForeignKey('projecttable.ProjectID'))
     Note = Column(String(40), default='NULL')
     AlternateUserID = Column(String(40), default='NULL')
     CollectionDateTime = Column(DateTime, default=func.now())
-    Coordinates = Column(BLOB, default='NULL')
+    # Coordinates = Column(BLOB, default='NULL')
     Latitude = Column(String(40), default='NULL')
     Longitude = Column(String(40), default='NULL')
     Salinity = Column(Float, default=0)

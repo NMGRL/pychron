@@ -16,15 +16,19 @@
 
 # ============= enthought library imports =======================
 import time
-from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change
+from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change, String, Button
 from traitsui.api import View, UItem, Item, HGroup, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.hardware.pychron_device import EthernetDeviceMixin
 from pychron.lasers.laser_managers.base_lase_manager import BaseLaserManager
+from pychron.lasers.laser_managers.ethernet_laser_manager import EthernetLaserManager
 
 
-class ChromiumLaserManager(BaseLaserManager, EthernetDeviceMixin):
+class ChromiumLaserManager(EthernetLaserManager):
+    stage_manager_id = 'chromium.pychron'
+
     def end_extract(self, *args, **kw):
         self.info('ending extraction. set laser power to 0')
         self.set_laser_power(0)
@@ -45,20 +49,36 @@ class ChromiumLaserManager(BaseLaserManager, EthernetDeviceMixin):
             pass
 
     def enable_laser(self, **kw):
-        self.ask('laser.enable 1')
+        # self.ask('laser.enable ON')
+        self.enabled = True
 
     def disable_laser(self):
-        self.ask('laser.enable 0')
+        self.ask('laser.stop')
+        self.enabled = False
 
     def get_position(self):
         x, y, z = 0, 0, 0
         xyz_microns = self.ask('stage.pos?')
         if xyz_microns:
             x, y, z = map(lambda v: float(v) / 1000., xyz_microns.split(','))
-
         return x, y, z
 
     # private
+    def ask(self, cmd, **kw):
+        return self._ask('{}\n'.format(cmd), **kw)
+
+    def _set_x(self, v):
+        self.ask('stage.moveto {},{},{},{},{},{}'.format(v * 1000, self._y * 1000, self._z * 1000, 10, 10, 0))
+        self._moving(v * 1000, self._y * 1000, self._z * 1000)
+
+    def _set_y(self, v):
+        self.ask('stage.moveto {},{},{},{},{},{}'.format(self._x * 1000, v * 1000, self._z * 1000, 10, 10, 0))
+        self._moving(self._x * 1000, v * 1000, self._z * 1000)
+
+    def _set_z(self, v):
+        self.ask('stage.moveto {},{},{},{},{},{}'.format(self._x * 1000, self._y * 1000, v * 1000, 10, 10, 0))
+        self._moving(self._x * 1000, self._y * 1000, v * 1000)
+
     def _move_to_position(self, pos, *args, **kw):
         if isinstance(pos, tuple):
             x, y = pos
@@ -74,21 +94,34 @@ class ChromiumLaserManager(BaseLaserManager, EthernetDeviceMixin):
         xm, ym, zm = x * 1000, y * 1000, z * 1000
         cmd = 'stage.moveto {},{},{},{},{},{}'.format(xm, ym, zm, xs, ys, zs)
         self.info('sending {}'.format(cmd))
-        self._ask(cmd)
+        self.ask(cmd)
 
-        time.sleep(0.5)
+        return self._moving(xm, ym, zm)
+
+    def _moving(self, xm, ym, zm):
+        time.sleep(0.05)
 
         def cmpfunc(xyz):
             try:
-                return all(map(lambda a, b: abs(a - b) < 1e5,
+                return not all(map(lambda ab: abs(ab[0] - ab[1]) <= 2,
                                zip(map(float, xyz.split(',')),
                                    (xm, ym, zm))))
-            except ValueError:
-                pass
+            except ValueError, e:
+                print '_moving exception {}'.format(e)
 
-        r = self._block(cmd='stage.pos?', cmpfunc=cmpfunc)
+        r = self._block(cmd='stage.pos?\n', cmpfunc=cmpfunc)
 
         self.update_position()
         return r
+
+    def _stage_manager_default(self):
+
+        name = 'chromium'
+        args = dict(name='stage',
+                    configuration_name='stage',
+                    # configuration_dir_name = self.configuration_dir_name,
+                    configuration_dir_name=name,
+                    parent=self)
+        return self._stage_manager_factory(args)
 
 # ============= EOF =============================================

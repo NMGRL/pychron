@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2011 Jake Ross
+# Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
+# ============= enthought library imports =======================
+from traitsui.api import View, Item, VGroup, InstanceEditor
 
+from pychron.lasers.tasks.laser_panes import ClientPane
 
-from chromium_laser_manager import ChromiumLaserManager
-from pychron_laser_manager import PychronLaserManager
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
+class ChromiumCO2ClientPane(ClientPane):
+    pass
+
+# ============= EOF =============================================
