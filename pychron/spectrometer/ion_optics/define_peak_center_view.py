@@ -31,7 +31,7 @@ class DefinePeakCenterView(HasTraits):
 
     def traits_view(self):
         v = View(VGroup(UItem('detector', editor=EnumEditor(name='detectors')),
-                        UItem('isotope', editore=EnumEditor(name='isotopes')),
+                        UItem('isotope', editor=EnumEditor(name='isotopes')),
                         Item('dac', label='DAC')),
                  title='Define Peak Center',
                  kind='live_modal')
