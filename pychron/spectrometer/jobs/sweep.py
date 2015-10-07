@@ -235,6 +235,7 @@ class BaseSweep(SpectrometerTask):
 
             xs = get_data('x{}'.format(i))
             xs = hstack((xs, di))
+
             set_data('x{}'.format(i), xs)
             set_data('y{}'.format(i), oys)
             mi, ma = min(mi, min(oys)), max(ma, max(oys))

@@ -544,7 +544,7 @@ class AutomatedRun(Loggable):
             self._update_persister_spec(peak_center=pc)
             # if pc.result:
             #     self._persister_action('save_peak_center_to_file', pc)
-                # self.persister.save_peak_center_to_file(pc)
+            # self.persister.save_peak_center_to_file(pc)
 
     def py_coincidence_scan(self):
         pass
@@ -900,8 +900,8 @@ class AutomatedRun(Loggable):
                 ret = self.system_health.add_analysis(self)
 
             if self.persister.secondary_database_fail:
-                self.cancel(cancel_run=True,
-                            msg=self.persister.secondary_database_fail)
+                self.experiment_executor.cancel(cancel_run=True,
+                                                msg=self.persister.secondary_database_fail)
             else:
                 return True
 

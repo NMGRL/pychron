@@ -48,6 +48,10 @@ ISO_LABELS = dict(H1='Ar40', AX='Ar39', L1='Ar38', L2='Ar37', CDD='Ar36')
 
 DEBUG = True
 
+PEAK_HOP_MAP = {'Ar41': 'H2', 'Ar40': 'H1',
+                'Ar39': 'AX', 'Ar38': 'L1',
+                'Ar37': 'L2', 'Ar36': 'CDD'}
+
 
 @provides(IDatastore)
 class MassSpecDatabaseImporter(Loggable):
@@ -60,11 +64,12 @@ class MassSpecDatabaseImporter(Loggable):
     login_session_id = None
     _current_spec = None
     _analysis = None
+    _database_version = 0
 
     def make_multipe_runs_sequence(self, exptxt):
         pass
 
-    #IDatastore protocol
+    # IDatastore protocol
     def get_greatest_step(self, identifier, aliquot):
 
         ret = 0
@@ -75,7 +80,7 @@ class MassSpecDatabaseImporter(Loggable):
             if ret:
                 _, s = ret
                 if s is not None and s in ALPHAS:
-                    ret = ALPHAS.index(s) #if s is not None else -1
+                    ret = ALPHAS.index(s)  # if s is not None else -1
                 else:
                     ret = -1
         return ret
@@ -94,15 +99,19 @@ class MassSpecDatabaseImporter(Loggable):
             return self.db.connected
 
     def connect(self, *args, **kw):
-        return self.db.connect(*args, **kw)
+        ret = self.db.connect(*args, **kw)
+        if ret:
+            ver = self.db.get_database_version()
+            if ver is not None:
+                self._database_version = ver
+
+        return ret
 
     def add_sample_loading(self, ms, tray):
         if self.sample_loading_id is None:
             db = self.db
             with db.session_ctx() as sess:
                 sl = db.add_sample_loading(ms, tray)
-                #sess.flush()
-                #             db.flush()
                 sess.flush()
                 self.sample_loading_id = sl.SampleLoadingID
 
@@ -218,14 +227,15 @@ class MassSpecDatabaseImporter(Loggable):
                     return ret
                 except Exception, e:
                     self.debug('Mass Spec save exception. {}'.format(e))
-                    if i==2:
+                    if i == 2:
                         import traceback
+
                         tb = traceback.format_exc()
                         self.message('Could not save spec.runid={} rid={} '
                                      'to Mass Spec database.\n {}'.format(spec.runid, rid, tb))
                     else:
                         self.debug('retry mass spec save')
-                    #if commit:
+                    # if commit:
                     sess.rollback()
                 finally:
                     self.db.reraise = True
@@ -237,6 +247,9 @@ class MassSpecDatabaseImporter(Loggable):
         db = self.db
 
         spectrometer = spec.mass_spectrometer
+        if spectrometer.lower() == 'argus':
+            spectrometer = 'UM'
+
         tray = spec.tray
 
         pipetted_isotopes = self._make_pipetted_isotopes(runtype)
@@ -265,7 +278,7 @@ class MassSpecDatabaseImporter(Loggable):
         self.create_import_session(spectrometer, tray)
 
         # add the reference detector
-        refdbdet = db.add_detector('H1', Label='H1')
+        refdbdet = db.add_detector('H1')
         sess.flush()
 
         spec.runid = rid
@@ -285,7 +298,6 @@ class MassSpecDatabaseImporter(Loggable):
                                    SecondStageDly=spec.second_stage_delay,
                                    PipettedIsotopes=pipetted_isotopes,
                                    RefDetID=refdbdet.DetectorID,
-                                   ReferenceDetectorLabel=refdbdet.Label,
                                    SampleLoadingID=self.sample_loading_id,
                                    LoginSessionID=self.login_session_id,
                                    RunScriptID=rs.RunScriptID)
@@ -323,32 +335,28 @@ class MassSpecDatabaseImporter(Loggable):
             self.debug('adding isotope {} {}'.format(iso, det))
             dbiso, dbdet = self._add_isotope(analysis, spec, iso, det, refdet)
 
-            if not dbdet.Label in bs:
+            if dbdet.detector_type.Label not in bs:
                 self._add_baseline(spec, dbiso, dbdet, det)
-                bs.append(dbdet.Label)
+                bs.append(dbdet.detector_type.Label)
 
             self._add_signal(spec, dbiso, dbdet, det, runtype)
 
     def _add_isotope(self, analysis, spec, iso, det, refdet):
         db = self.db
-        if det == analysis.ReferenceDetectorLabel:
+        if det == analysis.reference_detector.detector_type.Label:
             dbdet = refdet
         else:
-
-            """
+            if spec.is_peak_hop:
+                """
                 if is_peak_hop
                 fool mass spec. e.g Ar40 det = H1 not CDD
                 det=PEAK_HOP_MAP['Ar40']=='CDD'
-            """
-            PEAK_HOP_MAP = {'Ar41': 'H2', 'Ar40': 'H1',
-                            'Ar39': 'AX', 'Ar38': 'L1',
-                            'Ar37': 'L2', 'Ar36': 'CDD'}
+                """
 
-            if spec.is_peak_hop:
                 if iso in PEAK_HOP_MAP:
                     det = PEAK_HOP_MAP[iso]
 
-            dbdet = db.add_detector(det, Label=det)
+            dbdet = db.add_detector(det)
 
             if det == 'CDD':
                 dbdet.ICFactor = spec.ic_factor_v
@@ -372,7 +380,7 @@ class MassSpecDatabaseImporter(Loggable):
         db = self.db
 
         iso = dbiso.Label
-        det = dbdet.Label
+        det = dbdet.detector_type.Label
 
         tb, vb = spec.get_signal_data(iso, odet)
 
@@ -385,7 +393,7 @@ class MassSpecDatabaseImporter(Loggable):
         blob2 = ''.join([struct.pack('>f', v) for v in vb])
         db.add_peaktimeblob(blob1, blob2, dbiso)
 
-        #@todo: add filtered points blob
+        # @todo: add filtered points blob
 
         # in mass spec the intercept is already baseline corrected
         # mass spec also doesnt propagate baseline errors
@@ -410,7 +418,7 @@ class MassSpecDatabaseImporter(Loggable):
     def _add_baseline(self, spec, dbiso, dbdet, odet):
         iso = dbiso.Label
         self.debug('add baseline dbdet= {}. original det= {}'.format(iso, odet))
-        det = dbdet.Label
+        det = dbdet.detector_type.Label
         tb, vb = spec.get_baseline_data(iso, odet)
         pos = spec.get_baseline_position(iso)
         blob = self._build_timeblob(tb, vb)
