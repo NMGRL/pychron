@@ -246,6 +246,9 @@ class MassSpecDatabaseImporter(Loggable):
         db = self.db
 
         spectrometer = spec.mass_spectrometer
+        if spectrometer.lower() == 'argus':
+            spectrometer = 'UM'
+
         tray = spec.tray
 
         pipetted_isotopes = self._make_pipetted_isotopes(runtype)
@@ -274,7 +277,7 @@ class MassSpecDatabaseImporter(Loggable):
         self.create_import_session(spectrometer, tray)
 
         # add the reference detector
-        refdbdet = db.add_detector('H1', Label='H1')
+        refdbdet = db.add_detector('H1')
         sess.flush()
 
         spec.runid = rid
@@ -294,7 +297,6 @@ class MassSpecDatabaseImporter(Loggable):
                                    SecondStageDly=spec.second_stage_delay,
                                    PipettedIsotopes=pipetted_isotopes,
                                    RefDetID=refdbdet.DetectorID,
-                                   ReferenceDetectorLabel=refdbdet.Label,
                                    SampleLoadingID=self.sample_loading_id,
                                    LoginSessionID=self.login_session_id,
                                    RunScriptID=rs.RunScriptID)
@@ -332,15 +334,15 @@ class MassSpecDatabaseImporter(Loggable):
             self.debug('adding isotope {} {}'.format(iso, det))
             dbiso, dbdet = self._add_isotope(analysis, spec, iso, det, refdet)
 
-            if not dbdet.Label in bs:
+            if dbdet.detector_type.Label not in bs:
                 self._add_baseline(spec, dbiso, dbdet, det)
-                bs.append(dbdet.Label)
+                bs.append(dbdet.detector_type.Label)
 
             self._add_signal(spec, dbiso, dbdet, det, runtype)
 
     def _add_isotope(self, analysis, spec, iso, det, refdet):
         db = self.db
-        if det == analysis.ReferenceDetectorLabel:
+        if det == analysis.reference_detector.detector_type.Label:
             dbdet = refdet
         else:
             if spec.is_peak_hop:
@@ -353,7 +355,7 @@ class MassSpecDatabaseImporter(Loggable):
                 if iso in PEAK_HOP_MAP:
                     det = PEAK_HOP_MAP[iso]
 
-            dbdet = db.add_detector(det, Label=det)
+            dbdet = db.add_detector(det)
 
             if det == 'CDD':
                 dbdet.ICFactor = spec.ic_factor_v
@@ -377,7 +379,7 @@ class MassSpecDatabaseImporter(Loggable):
         db = self.db
 
         iso = dbiso.Label
-        det = dbdet.Label
+        det = dbdet.detector_type.Label
 
         tb, vb = spec.get_signal_data(iso, odet)
 
@@ -415,7 +417,7 @@ class MassSpecDatabaseImporter(Loggable):
     def _add_baseline(self, spec, dbiso, dbdet, odet):
         iso = dbiso.Label
         self.debug('add baseline dbdet= {}. original det= {}'.format(iso, odet))
-        det = dbdet.Label
+        det = dbdet.detector_type.Label
         tb, vb = spec.get_baseline_data(iso, odet)
         pos = spec.get_baseline_position(iso)
         blob = self._build_timeblob(tb, vb)

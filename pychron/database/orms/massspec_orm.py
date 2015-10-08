@@ -95,8 +95,8 @@ class AnalysesTable(Base):
     LoginSessionID = Column(Integer, ForeignKey('LoginSessionTable.LoginSessionID'))
     SpecRunType = Column(Integer)
 
-    ReferenceDetectorLabel = Column(String(40))
-    RefDetID = Column(Integer)
+    # ReferenceDetectorLabel = Column(String(40))
+    RefDetID = Column(Integer, ForeignKey('DetectorTable.DetectorID'))
 
     PipettedIsotopes = Column(BLOB)
 
@@ -111,10 +111,10 @@ class AnalysesTable(Base):
 
 
 class ArArAnalysisTable(Base):
-    '''
+    """
     WARNING
     the totals are not raw values and have been blank, discrimination and decay corrected already
-    '''
+    """
     __tablename__ = 'ArArAnalysisTable'
     #    AnalysisID = Column(Integer, primary_key=True)
     AnalysisID = Column(Integer, ForeignKey('AnalysesTable.AnalysisID'))
@@ -192,9 +192,9 @@ class DetectorTable(Base):
     ICFactorEr = Column(Float, default=0)
     ICFactorSource = Column(Integer, default=1)
     IonCounterDeadtimeSec = Column(Float, default=0)
-    Label = Column(String(40))
 
     isotopes = relationship('IsotopeTable', backref='detector')
+    analyses = relationship('AnalysesTable', backref='reference_detector')
 
 
 class DetectorTypeTable(Base):
@@ -316,6 +316,7 @@ class IsotopeTable(Base):
 
     __tablename__ = 'IsotopeTable'
     IsotopeID = Column(Integer, primary_key=True)
+    TypeID = Column(Integer, default=1)
     AnalysisID = Column(Integer, ForeignKey('AnalysesTable.AnalysisID'))
     DetectorID = Column(Integer, ForeignKey('DetectorTable.DetectorID'))
     BkgdDetectorID = Column(Integer, nullable=True)
@@ -412,8 +413,8 @@ class RunScriptTable(Base):
 
 
 class SampleTable(Base):
-    '''
-    '''
+    """
+    """
     __tablename__ = 'SampleTable'
     SampleID = Column(Integer, primary_key=True)
     Sample = Column(String(40))
