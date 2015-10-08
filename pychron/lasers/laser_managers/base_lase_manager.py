@@ -21,13 +21,9 @@ from traits.api import Instance, Event, Bool, Any, Property, Str, Float, provide
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.strtools import to_bool
-from pychron.core.ui.gui import wake_screen
 from pychron.hardware.meter_calibration import MeterCalibration
-from pychron.lasers.stage_managers.stage_manager import StageManager
-from pychron.lasers.pattern.pattern_executor import PatternExecutor
 from pychron.managers.manager import Manager
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
-from pychron.core.ui.led_editor import LED
 from pychron.core.helpers.filetools import list_directory
 from pychron.paths import paths
 
@@ -36,15 +32,15 @@ from pychron.paths import paths
 class BaseLaserManager(Manager):
     # implements(ILaserManager)
     # provides(ILaserManager)
-    pattern_executor = Instance(PatternExecutor)
+    pattern_executor = Instance('pychron.lasers.pattern.pattern_executor.PatternExecutor')
     use_video = Bool(False)
 
     enable = Event
     enable_label = Property(depends_on='enabled')
-    enabled_led = Instance(LED, ())
+    enabled_led = Instance('pychron.core.ui.led_editor.LED')
     enabled = Bool(False)
 
-    stage_manager = Instance(StageManager)
+    stage_manager = Instance('pychron.lasers.stage_managers.stage_manager.StageManager')
 
     requested_power = Any
     status_text = Str
@@ -82,6 +78,7 @@ class BaseLaserManager(Manager):
             return pos
 
     def wake(self):
+        from pychron.core.ui.gui import wake_screen
         wake_screen()
 
     def is_ready(self):
@@ -163,16 +160,6 @@ class BaseLaserManager(Manager):
     def isPatterning(self):
         if self.pattern_executor:
             return self.pattern_executor.isPatterning()
-
-    def _pattern_executor_default(self):
-        controller = None
-        if hasattr(self, 'stage_manager'):
-            controller = self.stage_manager.stage_controller
-
-        pm = PatternExecutor(application=self.application,
-                             controller=controller,
-                             laser_manager=self)
-        return pm
 
     def move_to_position(self, pos, *args, **kw):
         if not isinstance(pos, list):
@@ -346,10 +333,27 @@ class BaseLaserManager(Manager):
             from pychron.lasers.stage_managers.video_stage_manager import VideoStageManager
             klass = VideoStageManager
         else:
+            from pychron.lasers.stage_managers.stage_manager import StageManager
             klass = StageManager
 
         args['parent'] = self
         sm = klass(**args)
         sm.id = self.stage_manager_id
         return sm
+
+    # defaults
+    def _enabled_led_default(self):
+        from pychron.core.ui.led_editor import LED
+        return LED()
+
+    def _pattern_executor_default(self):
+        from pychron.lasers.pattern.pattern_executor import PatternExecutor
+        controller = None
+        if hasattr(self, 'stage_manager'):
+            controller = self.stage_manager.stage_controller
+
+        pm = PatternExecutor(application=self.application,
+                             controller=controller,
+                             laser_manager=self)
+        return pm
 # ============= EOF =============================================

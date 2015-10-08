@@ -85,17 +85,20 @@ class BaseLaserPlugin(BaseTaskPlugin):
 
         ip = InitializationParser()
         plugin = ip.get_plugin(self.klass[1].replace('Manager', ''), category='hardware')
-        print 'manager factory {}, {}'.format(plugin, self.klass[1].replace('Manager', ''))
         mode = ip.get_parameter(plugin, 'mode')
 
+        klass = ip.get_parameter(plugin, 'klass')
+        if klass is None:
+            klass = 'PychronLaserManager'
+            pkg = 'pychron.lasers.laser_managers.api'
+            factory = __import__(pkg, fromlist=[klass])
+            klassfactory = getattr(factory, klass)
+        else:
+            factory = __import__(self.klass[0], fromlist=[self.klass[1]])
+            klassfactory = getattr(factory, self.klass[1])
+
+        params = dict()
         if mode == 'client':
-            klass = ip.get_parameter(plugin, 'klass')
-            if klass is None:
-                klass = 'PychronLaserManager'
-
-            pkg = 'pychron.lasers.laser_managers'
-
-            params = dict()
             try:
                 tag = ip.get_parameter(plugin, 'communications', element=True)
                 for attr in ['host', 'port', 'kind', 'message_frame', ('use_end', to_bool)]:
@@ -115,12 +118,8 @@ class BaseLaserPlugin(BaseTaskPlugin):
                 print 'client comms fail b', e
 
             params['name'] = self.name
-            factory = __import__(pkg, fromlist=[klass])
-            m = getattr(factory, klass)(**params)
-        else:
-            factory = __import__(self.klass[0], fromlist=[self.klass[1]])
-            m = getattr(factory, self.klass[1])()
 
+        m = klassfactory(*params)
         m.mode = mode
         m.bootstrap()
         m.plugin_id = self.id
