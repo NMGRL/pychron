@@ -599,7 +599,7 @@ class PyScript(Loggable):
                     self.console_info('gosub finished')
                 return s
 
-    @verbose_skip
+    @calculate_duration
     @command_register
     def exit(self):
         self.console_info('doing EXIT')
