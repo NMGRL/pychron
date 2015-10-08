@@ -22,7 +22,6 @@ from traits.api import Instance, Event, Bool, Any, Property, Str, Float, provide
 # ============= local library imports  ==========================
 from pychron.core.helpers.strtools import to_bool
 from pychron.hardware.meter_calibration import MeterCalibration
-from pychron.lasers.stage_managers.stage_manager import StageManager
 from pychron.lasers.pattern.pattern_executor import PatternExecutor
 from pychron.managers.manager import Manager
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
@@ -43,7 +42,7 @@ class BaseLaserManager(Manager):
     enabled_led = Instance(LED, ())
     enabled = Bool(False)
 
-    stage_manager = Instance(StageManager)
+    stage_manager = Instance('pychron.lasers.stage_managers.stage_manager.StageManager')
 
     requested_power = Any
     status_text = Str
@@ -345,6 +344,7 @@ class BaseLaserManager(Manager):
             from pychron.lasers.stage_managers.video_stage_manager import VideoStageManager
             klass = VideoStageManager
         else:
+            from pychron.lasers.stage_managers.stage_manager import StageManager
             klass = StageManager
 
         args['parent'] = self
