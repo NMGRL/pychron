@@ -18,7 +18,6 @@
 from traits.api import Str, String, on_trait_change, Button, Float, \
     Property, Bool, Instance, Event, Enum, Int, Either, Range, cached_property
 # import apptools.sweet_pickle as pickle
-from apptools.preferences.preference_binding import bind_preference
 # ============= standard library imports ========================
 import cPickle as pickle
 import time
@@ -26,11 +25,9 @@ import os
 from threading import Thread
 # ============= local library imports  ==========================
 from pychron.globals import globalv
-from pychron.hardware.pychron_device import EthernetDeviceMixin
 from pychron.lasers.laser_managers.client import UVLaserOpticsClient, UVLaserControlsClient, \
     LaserOpticsClient, LaserControlsClient
 from pychron.lasers.laser_managers.ethernet_laser_manager import EthernetLaserManager
-from pychron.lasers.laser_managers.laser_manager import BaseLaserManager
 from pychron.core.helpers.strtools import to_bool
 from pychron.paths import paths
 
@@ -73,6 +70,7 @@ class PychronLaserManager(EthernetLaserManager):
     _patterning = False
 
     def bind_preferences(self, pref_id):
+        from apptools.preferences.preference_binding import bind_preference
         bind_preference(self, 'use_video', '{}.use_video'.format(pref_id))
         self.stage_manager.bind_preferences(pref_id)
 
