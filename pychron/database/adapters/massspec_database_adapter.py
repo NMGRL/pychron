@@ -166,9 +166,6 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
     def get_samples(self, **kw):
         return self._get_items(SampleTable, globals(), **kw)
 
-    # def get_database_version(self, **kw):
-    #     return self._retrieve_items(DatabaseVersionTable, **kw)
-
     def get_sample_loading(self, value):
         return self._retrieve_item(SampleLoadingTable, value,
                                    key='SampleLoadingID')

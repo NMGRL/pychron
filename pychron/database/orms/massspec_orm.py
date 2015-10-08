@@ -95,8 +95,8 @@ class AnalysesTable(Base):
     LoginSessionID = Column(Integer, ForeignKey('LoginSessionTable.LoginSessionID'))
     SpecRunType = Column(Integer)
 
-    # ReferenceDetectorLabel = Column(String(40))
-    RefDetID = Column(Integer, ForeignKey('DetectorTable.DetectorID'))
+    ReferenceDetectorLabel = Column(String(40))
+    RefDetID = Column(Integer)
 
     PipettedIsotopes = Column(BLOB)
 
@@ -192,9 +192,9 @@ class DetectorTable(Base):
     ICFactorEr = Column(Float, default=0)
     ICFactorSource = Column(Integer, default=1)
     IonCounterDeadtimeSec = Column(Float, default=0)
+    Label = Column(String(40))
 
     isotopes = relationship('IsotopeTable', backref='detector')
-    analyses = relationship('AnalysesTable', backref='reference_detector')
 
 
 class DetectorTypeTable(Base):
@@ -316,7 +316,6 @@ class IsotopeTable(Base):
 
     __tablename__ = 'IsotopeTable'
     IsotopeID = Column(Integer, primary_key=True)
-    TypeID = Column(Integer, default=1)
     AnalysisID = Column(Integer, ForeignKey('AnalysesTable.AnalysisID'))
     DetectorID = Column(Integer, ForeignKey('DetectorTable.DetectorID'))
     BkgdDetectorID = Column(Integer, nullable=True)
@@ -362,8 +361,8 @@ class MachineTable(Base):
 
 
 class MaterialTable(Base):
-    '''
-    '''
+    """
+    """
 
     __tablename__ = 'MaterialTable'
     ID = Column(Integer, primary_key=True)
@@ -380,8 +379,8 @@ class MolecularWeightTable(Base):
 
 
 class PeakTimeTable(Base):
-    '''
-    '''
+    """
+    """
     __tablename__ = 'PeakTimeTable'
     Counter = Column(Integer, primary_key=True)
     PeakTimeBlob = Column(BLOB)
@@ -396,8 +395,8 @@ class PreferencesTable(Base):
 
 
 class ProjectTable(Base):
-    '''
-    '''
+    """
+    """
     __tablename__ = 'projecttable'
     ProjectID = Column(Integer, primary_key=True)
     Project = Column(String(40))
