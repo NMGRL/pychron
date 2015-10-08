@@ -173,7 +173,7 @@ class AutomatedRun(Loggable):
     overlap_evt = None
 
     peak_center_threshold1 = Int(10)
-    peak_center_threshold2 = Int(1.25)
+    peak_center_threshold2 = Int(3)
     peak_center_threshold_window = Int(10)
 
     persistence_spec = Instance(PersistenceSpec)
@@ -516,12 +516,12 @@ class AutomatedRun(Loggable):
                 v = iso.get_intensity()
                 if v < self.peak_center_threshold1:
                     self.debug('peak center: {}={}<{}'.format(isotope, v, self.peak_center_threshold1))
-                    xs = iso.xs[-self.peak_center_threshold_window:]
-                    xm = xs.mean()
-                    self.debug('peak center: mean={} threshold={}'.format(xm, self.peak_center_threshold2))
-                    if xm < self.peak_center_threshold2:
+                    ys = iso.ys[-self.peak_center_threshold_window:]
+                    ym = ys.mean()
+                    self.debug('peak center: mean={} threshold={}'.format(ym, self.peak_center_threshold2))
+                    if ym < self.peak_center_threshold2:
                         self.warning(
-                            'Skipping peak center. intensities to small. {}<{}'.format(xm, self.peak_center_threshold2))
+                            'Skipping peak center. intensities to small. {}<{}'.format(ym, self.peak_center_threshold2))
                         return
 
             if not self.plot_panel:
