@@ -21,7 +21,6 @@ from traits.api import Instance, Event, Bool, Any, Property, Str, Float, provide
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.strtools import to_bool
-from pychron.core.ui.gui import wake_screen
 from pychron.hardware.meter_calibration import MeterCalibration
 from pychron.lasers.stage_managers.stage_manager import StageManager
 from pychron.lasers.pattern.pattern_executor import PatternExecutor
@@ -82,6 +81,7 @@ class BaseLaserManager(Manager):
             return pos
 
     def wake(self):
+        from pychron.core.ui.gui import wake_screen
         wake_screen()
 
     def is_ready(self):
