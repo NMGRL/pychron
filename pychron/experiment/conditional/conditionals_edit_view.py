@@ -13,17 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from pychron.core.helpers.formatting import floatfmt
-from pychron.core.ui import set_qt
-from pychron.envisage.icon_button_editor import icon_button_editor
-from pychron.envisage.resources import icon
-from pychron.experiment.conditional.conditional import conditional_from_dict, ActionConditional, TruncationConditional, \
-    CancelationConditional, TerminationConditional, BaseConditional
-from pychron.experiment.conditional.regexes import CP_REGEX, STD_REGEX, ACTIVE_REGEX, BASELINECOR_REGEX, BASELINE_REGEX, \
-    MAX_REGEX, MIN_REGEX, AVG_REGEX, COMP_REGEX, ARGS_REGEX, BETWEEN_REGEX, SLOPE_REGEX
-from pychron.experiment.utilities.conditionals import level_text, level_color
-
-set_qt()
 # ============= enthought library imports =======================
 from traitsui.menu import Action
 from traits.api import HasTraits, List, Instance, Any, \
@@ -40,29 +29,37 @@ import yaml
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.core.helpers.filetools import get_path
 from pychron.paths import paths
+from pychron.core.helpers.formatting import floatfmt
+from pychron.envisage.icon_button_editor import icon_button_editor
+from pychron.envisage.resources import icon
+from pychron.experiment.conditional.conditional import conditional_from_dict, ActionConditional, TruncationConditional, \
+    CancelationConditional, TerminationConditional, BaseConditional
+from pychron.experiment.conditional.regexes import CP_REGEX, STD_REGEX, ACTIVE_REGEX, BASELINECOR_REGEX, BASELINE_REGEX, \
+    MAX_REGEX, MIN_REGEX, AVG_REGEX, COMP_REGEX, ARGS_REGEX, BETWEEN_REGEX, SLOPE_REGEX
+from pychron.experiment.utilities.conditionals import level_text, level_color
+
+GREENBALL = icon('green_ball')
 
 
 class BaseConditionalsAdapter(TabularAdapter):
     level_text = Property
-    tripped_text = Property
+    tripped_text = Str('')
     tripped_image = Property
-    value_text = Property
+    # value_text = Property
 
     def get_bg_color(self, obj, trait, row, column=0):
         item = getattr(obj, trait)[row]
         return level_color(item.level)
 
-    def _get_value_text(self):
-        return floatfmt(self.item.value)
+    # def _get_value_text(self):
+    #     return floatfmt(self.item.value)
 
     def _get_level_text(self):
         return level_text(self.item.level)
 
-    def _get_tripped_text(self):
-        return ''
-
     def _get_tripped_image(self):
-        return icon('gray_ball' if not self.item.tripped else 'green_ball')
+        if self.item.tripped:
+            return GREENBALL
 
 
 class PRConditionalsAdapter(BaseConditionalsAdapter):
@@ -70,7 +67,7 @@ class PRConditionalsAdapter(BaseConditionalsAdapter):
                ('Level', 'level'),
                ('Attribute', 'attr'),
                ('Check', 'teststr'),
-               ('Value', 'value'),
+               ('Value', 'value_context'),
                ('Location', 'location')]
 
     attr_width = Int(100)
@@ -84,7 +81,7 @@ class ConditionalsAdapter(BaseConditionalsAdapter):
                ('Start', 'start_count'),
                ('Frequency', 'frequency'),
                ('Check', 'teststr'),
-               ('Value', 'value'),
+               ('Value', 'value_context'),
                ('Location', 'location')]
 
     attr_width = Int(100)
@@ -538,7 +535,6 @@ class ConditionalsViewable(HasTraits):
                                        selected='selected_group',
                                        page_name='.label'))
 
-
     # def _view_tabs2(self):
     # vs = []
     # for name in self.group_names:
@@ -712,7 +708,6 @@ if __name__ == '__main__':
         def _test_fired(self):
             edit_conditionals('normal', save_as=False)
 
+
     D().configure_traits(view=View('test'))
 # ============= EOF =============================================
-
-

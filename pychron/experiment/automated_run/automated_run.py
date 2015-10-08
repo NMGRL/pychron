@@ -128,7 +128,7 @@ class AutomatedRun(Loggable):
     arar_age = Instance('pychron.processing.arar_age.ArArAge')
 
     spec = Any
-    runid = Property
+    runid = Str
     uuid = Str
     analysis_id = Long
     fits = List
@@ -2128,8 +2128,8 @@ anaylsis_type={}
 
         return default
 
-    def _get_runid(self):
-        return self.spec.runid
+    # def _get_runid(self):
+    #     return self.spec.runid
         # return make_runid(self.spec.labnumber,
         # self.spec.aliquot,
         # self.spec.step)

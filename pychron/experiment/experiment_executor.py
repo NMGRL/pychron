@@ -825,8 +825,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.debug('active_run same as measuring_run: {}'.format(self.measuring_run == active_run))
             if active_run:
                 v.add_conditionals({'{}s'.format(tag): getattr(active_run, '{}_conditionals'.format(tag))
-                                    for tag in CONDITIONAL_GROUP_TAGS})
-                # v.title = '{}'.format(v.title)
+                                    for tag in CONDITIONAL_GROUP_TAGS}, level=RUN)
+                v.title = '{} ({})'.format(v.title, active_run.runid)
             else:
                 run = self.selected_run
                 if run:
