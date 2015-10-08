@@ -15,9 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Str, String, on_trait_change, Button, Float, \
-    Property, Bool, Instance, Event, Enum, Int, Either, Range, cached_property
-# import apptools.sweet_pickle as pickle
+from traits.api import Str, String, on_trait_change, Float, \
+    Property, Instance, Event, Enum, Int, Either, Range, cached_property
 # ============= standard library imports ========================
 import cPickle as pickle
 import time
@@ -25,8 +24,6 @@ import os
 from threading import Thread
 # ============= local library imports  ==========================
 from pychron.globals import globalv
-# from pychron.lasers.laser_managers.client import UVLaserOpticsClient, UVLaserControlsClient, \
-#     LaserOpticsClient, LaserControlsClient
 from pychron.lasers.laser_managers.ethernet_laser_manager import EthernetLaserManager
 from pychron.core.helpers.strtools import to_bool
 from pychron.paths import paths
