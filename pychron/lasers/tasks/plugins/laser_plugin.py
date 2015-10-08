@@ -119,7 +119,7 @@ class BaseLaserPlugin(BaseTaskPlugin):
 
             params['name'] = self.name
 
-        m = klassfactory(*params)
+        m = klassfactory(**params)
         m.mode = mode
         m.bootstrap()
         m.plugin_id = self.id

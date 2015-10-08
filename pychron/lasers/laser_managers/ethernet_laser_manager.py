@@ -21,9 +21,12 @@ class EthernetLaserManager(BaseLaserManager, EthernetDeviceMixin):
     fire_laser_button = Button('Fire')
     units = Enum('watts', 'percent')
 
+    _patterning = False
     _firing = False
 
     stage_stop_button = Button('Stage Stop')
+    move_enabled_button = Button('Enable Move')
+    _move_enabled = False
 
     def open(self, *args, **kw):
         return EthernetDeviceMixin.open(self)
@@ -55,6 +58,9 @@ class EthernetLaserManager(BaseLaserManager, EthernetDeviceMixin):
         else:
             if self.enable_laser():
                 self.enabled = True
+
+    def _move_enabled_button_fired(self):
+        self._move_enabled = not self._move_enabled
 
     def _opened_hook(self):
         pass

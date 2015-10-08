@@ -239,13 +239,15 @@ class ClientMixin(object):
         return n
 
     def traits_view(self):
-        pos_grp = VGroup(HGroup(Item('position'),
-                                UItem('object.stage_manager.stage_map_name',
-                                      editor=EnumEditor(name='object.stage_manager.stage_map_names')),
-                                UItem('stage_stop_button')),
-                         Item('x', editor=RangeEditor(low=-25.0, high=25.0)),
-                         Item('y', editor=RangeEditor(low=-25.0, high=25.0)),
-                         Item('z', editor=RangeEditor(low=-25.0, high=25.0)),
+        pos_grp = VGroup(UItem('move_enabled_button'),
+                         VGroup(HGroup(Item('position'),
+                                       UItem('object.stage_manager.stage_map_name',
+                                             editor=EnumEditor(name='object.stage_manager.stage_map_names')),
+                                       UItem('stage_stop_button')),
+                                Item('x', editor=RangeEditor(low=-25.0, high=25.0)),
+                                Item('y', editor=RangeEditor(low=-25.0, high=25.0)),
+                                Item('z', editor=RangeEditor(low=-25.0, high=25.0)),
+                                enabled_when='_move_enabled'),
                          label='Positioning')
 
         # ogrp = Group(UItem('optics_client', style='custom'),
@@ -255,9 +257,9 @@ class ClientMixin(object):
         #              label='Controls')
 
         tgrp = Group(
-                     # cgrp,
-                     # ogrp,
-                     pos_grp, layout='tabbed')
+            # cgrp,
+            # ogrp,
+            pos_grp, layout='tabbed')
 
         egrp = HGroup(UItem('enabled_led', editor=LEDEditor()),
                       UItem('enable', editor=ButtonEditor(label_value='enable_label')),
