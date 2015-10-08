@@ -64,7 +64,6 @@ class PychronLaserManager(EthernetLaserManager):
     # def shutdown(self):
     #     if self.communicator:
     #         self.communicator.close()
-    _patterning = False
 
     def bind_preferences(self, pref_id):
         from apptools.preferences.preference_binding import bind_preference
@@ -265,19 +264,6 @@ class PychronLaserManager(EthernetLaserManager):
 
     def _snapshot_button_fired(self):
         self.take_snapshot('test', view_snapshot=True)
-
-    def _test_connection_button_fired(self):
-        self.test_connection()
-        if self.connected:
-            self.opened()
-
-    def _test_connection(self):
-        if self.simulation:
-            return globalv.communication_simulation
-        else:
-            if self.setup_communicator():
-                self.debug('test connection. connected= {}'.format(self.connected))
-            return self.connected
 
     def _execute_pattern(self, pat, block):
         self.info('executing pattern {}'.format(pat))

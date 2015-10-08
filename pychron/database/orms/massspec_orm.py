@@ -86,6 +86,7 @@ class AnalysesTable(Base):
     ManifoldOpt = Column(Integer, default=0)
     OriginalImportID = Column(String(1), default=0)
     RedundantSampleID = Column(Integer, ForeignKey('SampleTable.SampleID'))
+    RedundantUserID = Column(Integer, ForeignKey('UserTable.UserID'))
 
     SampleLoadingID = Column(Integer, ForeignKey('sampleloadingtable.SampleLoadingID'))
     ChangeableItemsID = Column(Integer, default=0)
@@ -97,7 +98,7 @@ class AnalysesTable(Base):
 
     # ReferenceDetectorLabel = Column(String(40))
     RefDetID = Column(Integer, ForeignKey('DetectorTable.DetectorID'))
-
+    SignalRefIsot = Column(String(length=30))
     PipettedIsotopes = Column(BLOB)
 
     isotopes = relation('IsotopeTable', backref='AnalysesTable')
@@ -443,3 +444,9 @@ class SampleLoadingTable(Base):
     LoadingDate = Column(DateTime, default=func.now())
 
     analyses = relationship('AnalysesTable', backref='sample_loading')
+
+
+class UserTable(Base):
+    __tablename__ = 'UserTable'
+    UserID = Column(Integer, primary_key=True)
+    UserName = Column(String(length=60))

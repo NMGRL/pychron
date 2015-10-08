@@ -284,7 +284,10 @@ class MassSpecDatabaseImporter(Loggable):
         analysis = db.add_analysis(rid, spec.aliquot, spec.step,
                                    irradpos,
                                    RUN_TYPE_DICT[runtype],
-                                   #                                   'H1',
+
+                                   SignalRefIsot='Ar40',
+                                   RedundantUserID=1,
+
                                    RedundantSampleID=sample_id,
                                    HeatingItemName=spec.extract_device,
                                    PwrAchieved=spec.power_achieved,

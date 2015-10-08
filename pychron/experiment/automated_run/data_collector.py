@@ -394,27 +394,33 @@ class DataCollector(Consoleable):
                 return 'cancel'
     @property
     def arar_age(self):
-        return self.automated_run.arar_age
+        if self.automated_run:
+            return self.automated_run.arar_age
 
     @property
     def plot_panel(self):
-        return self.automated_run.plot_panel
+        if self.automated_run:
+            return self.automated_run.plot_panel
 
     @property
     def truncation_conditionals(self):
-        return self.automated_run.truncation_conditionals
+        if self.automated_run:
+            return self.automated_run.truncation_conditionals
 
     @property
     def termination_conditionals(self):
-        return self.automated_run.termination_conditionals
+        if self.automated_run:
+            return self.automated_run.termination_conditionals
 
     @property
     def action_conditionals(self):
-        return self.automated_run.action_conditionals
+        if self.automated_run:
+            return self.automated_run.action_conditionals
 
     @property
     def cancelation_conditionals(self):
-        return self.automated_run.cancelation_conditionals
+        if self.automated_run:
+            return self.automated_run.cancelation_conditionals
 
 # ============= EOF =============================================
         # def _iter(self, con, evt, i, prev=0):

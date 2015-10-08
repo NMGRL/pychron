@@ -104,10 +104,13 @@ def report_issues():
 
 
 def create_issue(issue):
-    cmd = '{}/repos/NMGRL/pychron/issues'.format(GITHUB_API_URL)
+    org = os.environ.get('GITHUB_ORGANIZATION')
+    cmd = '{}/repos/{}/pychron/issues'.format(GITHUB_API_URL, org)
 
     usr = os.environ.get('GITHUB_USER')
     pwd = keyring.get_password('github', usr)
+    if pwd is None:
+        pwd = os.environ.get('GITHUB_PASSWORD')
 
     if not pwd:
         warning(None, 'No password set for "{}". Contact Developer.\n'

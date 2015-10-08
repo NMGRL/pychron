@@ -81,12 +81,12 @@ def load_isotopedb_defaults(db):
             # db.add_labnumber(i + 1, sample=samp)
         sess.commit()
 
-        for hi, kind, make in [('Fusions CO2', '10.6um co2', 'photon machines'),
-                               ('Fusions Diode', '810nm diode', 'photon machines'),
-                               ('Fusions UV', '193nm eximer', 'photon machines')]:
-            db.add_extraction_device(name=hi,
-                                     kind=kind,
-                                     make=make)
+        # for hi, kind, make in [('Fusions CO2', '10.6um co2', 'photon machines'),
+        #                        ('Fusions Diode', '810nm diode', 'photon machines'),
+        #                        ('Fusions UV', '193nm eximer', 'photon machines')]:
+        #     db.add_extraction_device(name=hi,
+        #                              kind=kind,
+        #                              make=make)
 
         mdir = paths.irradiation_tray_maps_dir
         for p, name in iterdir(mdir, exclude=('.zip',)):
