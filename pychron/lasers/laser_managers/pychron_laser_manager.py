@@ -271,13 +271,6 @@ class PychronLaserManager(EthernetLaserManager):
         if self.connected:
             self.opened()
 
-    def _position_changed(self):
-        if self.position is not None:
-            t = Thread(target=self._move_to_position,
-                       args=(self.position, self.use_autocenter))
-            t.start()
-            self._position_thread = t
-
     def _test_connection(self):
         if self.simulation:
             return globalv.communication_simulation

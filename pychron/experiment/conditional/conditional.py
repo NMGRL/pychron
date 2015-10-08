@@ -227,9 +227,11 @@ class AutomatedRunConditional(BaseConditional):
 
         """
         teststr, ctx = self._make_context(run, data)
+
+        self.value_context = vc = pprint.pformat(ctx, width=1)
+
         self.debug('testing {}'.format(teststr))
-        msg = 'evaluate ot="{}" t="{}", ctx="{}"'.format(self.teststr, teststr,
-                                                         pprint.pformat(ctx, width=1))
+        msg = 'evaluate ot="{}" t="{}", ctx="{}"'.format(self.teststr, teststr, vc)
         self.debug(msg)
         if eval(teststr, ctx):
             self.trips += 1
@@ -254,7 +256,6 @@ class AutomatedRunConditional(BaseConditional):
 
             vv = std_dev(v) if STD_REGEX.match(teststr) else nominal_value(v)
             vv = self._map_value(vv)
-            self.value = vv
             ctx[attr] = vv
 
             ts = self._interpolate_teststr(ts, obj, data)

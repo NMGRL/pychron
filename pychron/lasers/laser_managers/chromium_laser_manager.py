@@ -23,6 +23,7 @@ from pychron.lasers.laser_managers.ethernet_laser_manager import EthernetLaserMa
 
 class ChromiumLaserManager(EthernetLaserManager):
     stage_manager_id = 'chromium.pychron'
+    configuration_dir_name = 'chromium'
 
     def end_extract(self, *args, **kw):
         self.info('ending extraction. set laser power to 0')
@@ -64,6 +65,18 @@ class ChromiumLaserManager(EthernetLaserManager):
         return self._ask('{}\n'.format(cmd), **kw)
 
     # private
+    def _stage_stop_button_fired(self):
+        self.ask('stage.stop')
+        self.update_position()
+
+    def _fire_laser_button_fired(self):
+        if self._firing:
+            cmd = 'laser.stop'
+        else:
+            cmd = 'laser.fire'
+        self._firing= not self._firing
+        self.ask(cmd)
+
     def _output_power_changed(self, new):
         self.extract(new, self.units)
 
@@ -86,7 +99,7 @@ class ChromiumLaserManager(EthernetLaserManager):
         else:
             x, y = self.stage_manager.get_hole_xy(pos)
 
-        z = self.stage_manager.z
+        z = self._z
         xs = 0
         ys = 0
         zs = 0

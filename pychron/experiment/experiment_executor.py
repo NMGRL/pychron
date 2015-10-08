@@ -825,9 +825,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.debug('active_run same as measuring_run: {}'.format(self.measuring_run == active_run))
             if active_run:
                 v.add_conditionals({'{}s'.format(tag): getattr(active_run, '{}_conditionals'.format(tag))
-                                    for tag in CONDITIONAL_GROUP_TAGS},
-                                   level=RUN)
-                v.title = '{} ({})'.format(v.title, active_run.spec.runid)
+                                    for tag in CONDITIONAL_GROUP_TAGS}, level=RUN)
+                v.title = '{} ({})'.format(v.title, active_run.runid)
             else:
                 run = self.selected_run
                 if run:
@@ -1494,15 +1493,16 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if not self._set_run_aliquot(arv):
             return
 
-        no_exp = False
-        for i, ai in enumerate(runs):
-            if not ai.experiment_identifier:
-                self.warning('No experiment identifier for i={}, {}'.format(i + 1, ai.runid))
-                no_exp = True
+        if self.use_dvc_persistence:
+            no_exp = False
+            for i, ai in enumerate(runs):
+                if not ai.experiment_identifier:
+                    self.warning('No experiment identifier for i={}, {}'.format(i + 1, ai.runid))
+                    no_exp = True
 
-        if no_exp:
-            self.warning_dialog('No Experiment Identifiers')
-            return
+            if no_exp:
+                self.warning_dialog('No Experiment Identifiers')
+                return
 
         if globalv.experiment_debug:
             self.debug('********************** NOT DOING PRE EXECUTE CHECK ')
@@ -1622,7 +1622,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             for ci in conditionals:
                 if ci.check(run, None, True):
                     self.info('{}. {}'.format(message2, ci.to_string()), color='yellow')
-                    self._show_conditionals(show_measuring=True, tripped=ci, kind='live')
+                    self._show_conditionals(active_run=run, tripped=ci, kind='live')
                     self._do_action(ci)
 
                     if self._cv_info:
@@ -1647,7 +1647,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
                     self.cancel(confirm=False)
 
-                    self.show_conditionals(show_measuring=True, tripped=ci)
+                    self.show_conditionals(active_run=run, tripped=ci)
                     return True
 
     def _do_action(self, action):

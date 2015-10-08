@@ -502,7 +502,9 @@ class Spectrometer(SpectrometerDevice):
         if data is not None:
 
             keys, signals = data
-            func = lambda k: signals[keys.index(k)] if key in keys else 0
+
+            def func(k):
+                return signals[keys.index(k)] if k in keys else 0
 
             if isinstance(dkeys, (tuple, list)):
                 return [func(key) for key in dkeys]

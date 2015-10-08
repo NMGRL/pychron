@@ -128,7 +128,7 @@ class AutomatedRun(Loggable):
     arar_age = Instance('pychron.processing.arar_age.ArArAge')
 
     spec = Any
-    runid = Property
+    runid = Str
     uuid = Str
     analysis_id = Long
     fits = List
@@ -518,6 +518,7 @@ class AutomatedRun(Loggable):
                     self.debug('peak center: {}={}<{}'.format(isotope, v, self.peak_center_threshold1))
                     xs = iso.xs[-self.peak_center_threshold_window:]
                     xm = xs.mean()
+                    self.debug('peak center: mean={} threshold={}'.format(xm, self.peak_center_threshold2))
                     if xm < self.peak_center_threshold2:
                         self.warning(
                             'Skipping peak center. intensities to small. {}<{}'.format(xm, self.peak_center_threshold2))
@@ -2127,8 +2128,8 @@ anaylsis_type={}
 
         return default
 
-    def _get_runid(self):
-        return self.spec.runid
+    # def _get_runid(self):
+    #     return self.spec.runid
         # return make_runid(self.spec.labnumber,
         # self.spec.aliquot,
         # self.spec.step)
