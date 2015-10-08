@@ -48,6 +48,10 @@ ISO_LABELS = dict(H1='Ar40', AX='Ar39', L1='Ar38', L2='Ar37', CDD='Ar36')
 
 DEBUG = True
 
+PEAK_HOP_MAP = {'Ar41': 'H2', 'Ar40': 'H1',
+                'Ar39': 'AX', 'Ar38': 'L1',
+                'Ar37': 'L2', 'Ar36': 'CDD'}
+
 
 @provides(IDatastore)
 class MassSpecDatabaseImporter(Loggable):
@@ -60,22 +64,22 @@ class MassSpecDatabaseImporter(Loggable):
     login_session_id = None
     _current_spec = None
     _analysis = None
+    _database_version = 0
 
     def make_multipe_runs_sequence(self, exptxt):
         pass
 
-    #IDatastore protocol
+    # IDatastore protocol
     def get_greatest_step(self, identifier, aliquot):
 
         ret = 0
         if self.db:
             identifier = self.get_identifier(identifier)
             ret = self.db.get_latest_analysis(identifier, aliquot)
-            print identifier, ret
             if ret:
                 _, s = ret
                 if s is not None and s in ALPHAS:
-                    ret = ALPHAS.index(s) #if s is not None else -1
+                    ret = ALPHAS.index(s)  # if s is not None else -1
                 else:
                     ret = -1
         return ret
@@ -94,15 +98,19 @@ class MassSpecDatabaseImporter(Loggable):
             return self.db.connected
 
     def connect(self, *args, **kw):
-        return self.db.connect(*args, **kw)
+        ret = self.db.connect(*args, **kw)
+        if ret:
+            ver = self.db.get_database_version()
+            if ver is not None:
+                self._database_version = ver
+
+        return ret
 
     def add_sample_loading(self, ms, tray):
         if self.sample_loading_id is None:
             db = self.db
             with db.session_ctx() as sess:
                 sl = db.add_sample_loading(ms, tray)
-                #sess.flush()
-                #             db.flush()
                 sess.flush()
                 self.sample_loading_id = sl.SampleLoadingID
 
@@ -218,14 +226,15 @@ class MassSpecDatabaseImporter(Loggable):
                     return ret
                 except Exception, e:
                     self.debug('Mass Spec save exception. {}'.format(e))
-                    if i==2:
+                    if i == 2:
                         import traceback
+
                         tb = traceback.format_exc()
                         self.message('Could not save spec.runid={} rid={} '
                                      'to Mass Spec database.\n {}'.format(spec.runid, rid, tb))
                     else:
                         self.debug('retry mass spec save')
-                    #if commit:
+                    # if commit:
                     sess.rollback()
                 finally:
                     self.db.reraise = True
@@ -334,17 +343,13 @@ class MassSpecDatabaseImporter(Loggable):
         if det == analysis.ReferenceDetectorLabel:
             dbdet = refdet
         else:
-
-            """
+            if spec.is_peak_hop:
+                """
                 if is_peak_hop
                 fool mass spec. e.g Ar40 det = H1 not CDD
                 det=PEAK_HOP_MAP['Ar40']=='CDD'
-            """
-            PEAK_HOP_MAP = {'Ar41': 'H2', 'Ar40': 'H1',
-                            'Ar39': 'AX', 'Ar38': 'L1',
-                            'Ar37': 'L2', 'Ar36': 'CDD'}
+                """
 
-            if spec.is_peak_hop:
                 if iso in PEAK_HOP_MAP:
                     det = PEAK_HOP_MAP[iso]
 
@@ -385,7 +390,7 @@ class MassSpecDatabaseImporter(Loggable):
         blob2 = ''.join([struct.pack('>f', v) for v in vb])
         db.add_peaktimeblob(blob1, blob2, dbiso)
 
-        #@todo: add filtered points blob
+        # @todo: add filtered points blob
 
         # in mass spec the intercept is already baseline corrected
         # mass spec also doesnt propagate baseline errors

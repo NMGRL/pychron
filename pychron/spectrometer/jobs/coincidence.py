@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import time
 from traits.api import List, HasTraits, Str, Bool, Float, Property
 from traitsui.api import View, UItem, TableEditor
 # ============= standard library imports ========================
@@ -87,6 +88,7 @@ class Coincidence(BasePeakCenter):
         """
         graph = self.graph
         plot = graph.plots[0]
+        time.sleep(0.05)
 
         # wait for graph to fully update
         time.sleep(0.1)
@@ -114,6 +116,7 @@ class Coincidence(BasePeakCenter):
         spec = self.spectrometer
 
         centers = {d: get_peak_center(d) for d in self.active_detectors}
+        print centers
         ref = self.reference_detector
         post = centers[ref]
         if post is None:

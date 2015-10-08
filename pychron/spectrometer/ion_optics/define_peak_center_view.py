@@ -34,7 +34,8 @@ class DefinePeakCenterView(HasTraits):
                         UItem('isotope', editor=EnumEditor(name='isotopes')),
                         Item('dac', label='DAC')),
                  title='Define Peak Center',
-                 kind='live_modal')
+                 kind='livemodal',
+                 buttons=['OK', 'Cancel'])
         return v
 
 # ============= EOF =============================================

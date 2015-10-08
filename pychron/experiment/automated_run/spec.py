@@ -279,11 +279,9 @@ class AutomatedRunSpec(HasTraits):
         if new_uuid:
             run.uuid = u = str(uuid.uuid4())
             self.uuid = u
-            # self._step_heat = bool(self.aliquot)
-            # print self._step_heat, bool(self.aliquot), self.aliquot
 
-        # run.spec = weakref.ref(self)()
         run.spec = self
+        run.runid = self.runid
 
         return run
 

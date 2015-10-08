@@ -1,4 +1,5 @@
 from traits.api import Float, Property, Bool, Button, String, Enum
+from pychron.core.ui.thread import Thread
 from pychron.hardware.pychron_device import EthernetDeviceMixin
 from pychron.lasers.laser_managers.base_lase_manager import BaseLaserManager
 
@@ -17,8 +18,12 @@ class EthernetLaserManager(BaseLaserManager, EthernetDeviceMixin):
     use_autocenter = Bool(False)
 
     output_power = Float(enter_set=True, auto_set=False)
-    fire_laser = Button('Fire')
+    fire_laser_button = Button('Fire')
     units = Enum('watts', 'percent')
+
+    _firing = False
+
+    stage_stop_button = Button('Stage Stop')
 
     def open(self, *args, **kw):
         return EthernetDeviceMixin.open(self)
@@ -36,6 +41,13 @@ class EthernetLaserManager(BaseLaserManager, EthernetDeviceMixin):
             return True
 
     # private
+    def _position_changed(self):
+        if self.position is not None:
+            t = Thread(target=self._move_to_position,
+                       args=(self.position, self.use_autocenter))
+            t.start()
+            self._position_thread = t
+
     def _enable_fired(self):
         if self.enabled:
             self.disable_laser()
