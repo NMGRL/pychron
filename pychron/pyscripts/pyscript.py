@@ -599,7 +599,7 @@ class PyScript(Loggable):
                     self.console_info('gosub finished')
                 return s
 
-    @calculate_duration
+    @verbose_skip
     @command_register
     def exit(self):
         self.console_info('doing EXIT')
@@ -632,7 +632,7 @@ class PyScript(Loggable):
         if not self._cancel:
             f.clear()
 
-    @verbose_skip
+    @calculate_duration
     @command_register
     def begin_interval(self, duration, name=None, calc_time=False):
         duration = float(duration)
