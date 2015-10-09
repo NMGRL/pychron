@@ -17,26 +17,20 @@
 # ============= enthought library imports =======================
 from envisage.ui.tasks.task_extension import TaskExtension
 from pyface.tasks.action.schema_addition import SchemaAddition
-
 from pyface.action.group import Group
 
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.lasers.tasks.plugins.laser_plugin import FusionsPlugin
 from pychron.lasers.tasks.laser_preferences import FusionsCO2PreferencesPane
 from pychron.lasers.tasks.laser_actions import PowerMapAction, \
     PowerCalibrationAction, ExecutePatternAction
 
 
-
-
-
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
-
-
-class ChromiumLaserPlugin(FusionsPlugin):
+class ChromiumCO2Plugin(FusionsPlugin):
     id = 'pychron.chromium.co2'
-    name = 'ChromiumLaser'
-    klass = ('pychron.lasers.laser_managers.chromium_laser_manager', 'ChromiumLaserManager')
+    name = 'ChromiumCO2'
+    klass = ('pychron.lasers.laser_managers.chromium_laser_manager', 'ChromiumCO2Manager')
     task_name = 'Chromium CO2'
     accelerator = 'Ctrl+Shift+]'
 
@@ -50,7 +44,7 @@ class ChromiumLaserPlugin(FusionsPlugin):
         return [FusionsCO2PreferencesPane]
 
     def _task_extensions_default(self):
-        exts = super(ChromiumLaserPlugin, self)._task_extensions_default()
+        exts = super(ChromiumCO2Plugin, self)._task_extensions_default()
 
         ext1 = TaskExtension(task_id='pychron.chromium.co2',
                              actions=[SchemaAddition(id='calibration',

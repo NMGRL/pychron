@@ -15,14 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import time
+from traits.api import Button, Bool
 # ============= standard library imports ========================
+import time
 # ============= local library imports  ==========================
 from pychron.globals import globalv
 from pychron.lasers.laser_managers.ethernet_laser_manager import EthernetLaserManager
 
 
-class ChromiumLaserManager(EthernetLaserManager):
+class ChromiumCO2Manager(EthernetLaserManager):
     stage_manager_id = 'chromium.pychron'
     configuration_dir_name = 'chromium'
 
