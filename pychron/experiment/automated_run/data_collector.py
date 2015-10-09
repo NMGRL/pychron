@@ -243,22 +243,21 @@ class DataCollector(Consoleable):
                 self._set_plot_data(cnt, iso, dn.name, x, signal)
 
     def _get_fit(self, cnt, det, iso):
-        fit,name=None,None
-        if self.arar_age:
-            isotopes = self.arar_age.isotopes
-            if self.is_baseline:
-                ix = isotopes[iso]
-                fit = ix.baseline.get_fit(cnt)
-                name = iso
-            else:
-                try:
-                    name = iso
-                    iso = isotopes[iso]
-                except KeyError:
-                    name = '{}{}'.format(iso, det)
-                    iso = isotopes[name]
 
-                fit = iso.get_fit(cnt)
+        isotopes = self.arar_age.isotopes
+        if self.is_baseline:
+            ix = isotopes[iso]
+            fit = ix.baseline.get_fit(cnt)
+            name = iso
+        else:
+            try:
+                name = iso
+                iso = isotopes[iso]
+            except KeyError:
+                name = '{}{}'.format(iso, det)
+                iso = isotopes[name]
+
+            fit = iso.get_fit(cnt)
 
         return fit, name
 
@@ -266,24 +265,27 @@ class DataCollector(Consoleable):
         """
             if is_baseline than use detector to get isotope
         """
+        try:
+            # get fit and name
+            fit, name = self._get_fit(cnt, det, iso)
+        except AttributeError, e:
+            self.debug('set_plot_data, get_fit {}'.format(e))
+            return
 
-        # get fit and name
-        fit, name = self._get_fit(cnt, det, iso)
-        if fit and name:
-            # print fit, name, det, iso
-            graph = self.plot_panel.isotope_graph
-            pid = graph.get_plotid_by_ytitle(name)
-            if pid is not None:
-                # print self.series_idx, self.fit_series_idx
-                # print graph.plots[pid].plots
-                graph.add_datum((x, signal),
-                                series=self.series_idx,
-                                plotid=pid,
-                                update_y_limits=True,
-                                ypadding='0.1')
+        # print fit, name, det, iso
+        graph = self.plot_panel.isotope_graph
+        pid = graph.get_plotid_by_ytitle(name)
+        if pid is not None:
+            # print self.series_idx, self.fit_series_idx
+            # print graph.plots[pid].plots
+            graph.add_datum((x, signal),
+                            series=self.series_idx,
+                            plotid=pid,
+                            update_y_limits=True,
+                            ypadding='0.1')
 
-                if fit:
-                    graph.set_fit(fit, plotid=pid, series=self.fit_series_idx)
+            if fit:
+                graph.set_fit(fit, plotid=pid, series=self.fit_series_idx)
 
     def _plot_data(self, i, x, keys, signals):
         if globalv.experiment_debug:
