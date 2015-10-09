@@ -97,7 +97,7 @@ class BaseLaserPlugin(BaseTaskPlugin):
             factory = __import__(self.klass[0], fromlist=[self.klass[1]])
             klassfactory = getattr(factory, self.klass[1])
 
-        params = dict()
+        params = dict(name=self.name)
         if mode == 'client':
             try:
                 tag = ip.get_parameter(plugin, 'communications', element=True)
@@ -117,14 +117,11 @@ class BaseLaserPlugin(BaseTaskPlugin):
             except Exception, e:
                 print 'client comms fail b', e
 
-            params['name'] = self.name
-
         m = klassfactory(**params)
         m.mode = mode
         m.bootstrap()
         m.plugin_id = self.id
         m.bind_preferences(self.id)
-
         return m
 
     def _managers_default(self):

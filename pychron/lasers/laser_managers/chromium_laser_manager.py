@@ -15,12 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Button, Bool
+from traits.api import HasTraits, provides
 # ============= standard library imports ========================
 import time
 # ============= local library imports  ==========================
 from pychron.globals import globalv
 from pychron.lasers.laser_managers.ethernet_laser_manager import EthernetLaserManager
+from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 
 
 class ChromiumCO2Manager(EthernetLaserManager):
@@ -35,6 +36,10 @@ class ChromiumCO2Manager(EthernetLaserManager):
 
         if self._patterning:
             self.stop_pattern()
+
+    def fire_laser(self):
+        self.info('fire laser')
+        self.ask('laser.fire')
 
     def extract(self, value, units=None, tol=0.1):
         if units is None:
@@ -51,7 +56,7 @@ class ChromiumCO2Manager(EthernetLaserManager):
 
         resp = self.set_laser_power(value)
 
-        self.ask('laser.fire')
+        self.fire()
 
         try:
             return abs(float(resp) - value) < tol
@@ -132,9 +137,9 @@ class ChromiumCO2Manager(EthernetLaserManager):
             x, y = self.stage_manager.get_hole_xy(pos)
 
         z = self._z
-        xs = 0
-        ys = 0
-        zs = 0
+        xs = 5000
+        ys = 5000
+        zs = 100
 
         xm, ym, zm = x * 1000, y * 1000, z * 1000
         cmd = 'stage.moveto {},{},{},{},{},{}'.format(xm, ym, zm, xs, ys, zs)
@@ -164,9 +169,39 @@ class ChromiumCO2Manager(EthernetLaserManager):
         name = 'chromium'
         args = dict(name='stage',
                     configuration_name='stage',
-                    # configuration_dir_name = self.configuration_dir_name,
                     configuration_dir_name=name,
                     parent=self)
         return self._stage_manager_factory(args)
 
+    def _stage_manager_factory(self, args):
+        from pychron.lasers.stage_managers.chromium_stage_manager import ChromiumStageManager
+
+        self.stage_args = args
+
+        klass = ChromiumStageManager
+        sm = klass(**args)
+        sm.id = self.stage_manager_id
+
+        return sm
+
+
+@provides(ILaserManager)
+class ChromiumUVManager(HasTraits):
+    def test_connection(self):
+        return True
+
+    def bootstrap(self):
+        pass
+
+    def bind_preferences(self, *args, **kw):
+        pass
+
+    def load(self):
+        pass
+
+    def kill(self):
+        pass
+
+    def finish_loading(self):
+        pass
 # ============= EOF =============================================
