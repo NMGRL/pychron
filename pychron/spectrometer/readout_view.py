@@ -228,32 +228,34 @@ class ReadoutView(Loggable):
         tol = 0.001
 
         spec = self.spectrometer
-        for nn, rs in ((ne, self.readouts), (nd, self.deflections)):
-            for r in rs:
-                if not r.compare:
-                    continue
+        if not spec.simulation:
+            for nn, rs in ((ne, self.readouts), (nd, self.deflections)):
+                for r in rs:
+                    if not r.compare:
+                        continue
 
-                name = r.name
-                rv = r.value
-                cv = spec.get_configuration_value(name)
-                if abs(rv - cv) > tol:
-                    nn.append((r.name, rv, cv))
-                    self.debug('{} does not match. Current:{:0.3f}, Config: {:0.3f}'.format(name, rv, cv))
-        ns = ''
-        if ne:
-            ns = '\n'.join(map(lambda n: '{:<16s}\t{:0.3f}\t{:0.3f}'.format(*n), ne))
+                    name = r.name
+                    rv = r.value
+                    cv = spec.get_configuration_value(name)
+                    if abs(rv - cv) > tol:
+                        nn.append((r.name, rv, cv))
+                        self.debug('{} does not match. Current:{:0.3f}, Config: {:0.3f}'.format(name, rv, cv))
 
-        if nd:
-            nnn = '\n'.join(map(lambda n: '{:<16s}\t\t{:0.0f}\t{:0.0f}'.format(*n), nd))
-            ns = '{}\n{}'.format(ns, nnn)
+            ns = ''
+            if ne:
+                ns = '\n'.join(map(lambda n: '{:<16s}\t{:0.3f}\t{:0.3f}'.format(*n), ne))
 
-        if ns:
-            msg = 'There is a mismatch between the current spectrometer values and the configuration.\n' \
-                  'Would you like to set the spectrometer to the configuration values?\n\n' \
-                  'Name\t\tCurrent\tConfig\n{}'.format(ns)
-            if self.confirmation_dialog(msg, size=(725, 300)):
-                self.spectrometer.send_configuration()
-                self.spectrometer.set_debug_configuration_values()
+            if nd:
+                nnn = '\n'.join(map(lambda n: '{:<16s}\t\t{:0.0f}\t{:0.0f}'.format(*n), nd))
+                ns = '{}\n{}'.format(ns, nnn)
+
+            if ns:
+                msg = 'There is a mismatch between the current spectrometer values and the configuration.\n' \
+                      'Would you like to set the spectrometer to the configuration values?\n\n' \
+                      'Name\t\tCurrent\tConfig\n{}'.format(ns)
+                if self.confirmation_dialog(msg, size=(725, 300)):
+                    spec.send_configuration()
+                    spec.set_debug_configuration_values()
 
     def traits_view(self):
         v = View(listeditor('readouts'),

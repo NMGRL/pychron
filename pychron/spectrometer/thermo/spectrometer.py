@@ -153,6 +153,7 @@ class Spectrometer(SpectrometerDevice):
             ret = True
 
         self._connection_status = ret
+        self.microcontroller.set_simulation(not ret)
         return ret
 
     def set_gains(self, history=None):
@@ -414,6 +415,7 @@ class Spectrometer(SpectrometerDevice):
 
         self.magnet.finish_loading()
 
+        self.test_connection()
         # if self.send_config_on_startup:
         # write configuration to spectrometer
         # self._send_configuration()
