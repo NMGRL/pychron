@@ -18,10 +18,10 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
-from chromium_laser_manager import ChromiumLaserManager
+from chromium_laser_manager import ChromiumCO2Manager, ChromiumUVManager
 from pychron_laser_manager import PychronLaserManager
 
-__all__ = (ChromiumLaserManager, PychronLaserManager)
+__all__ = (ChromiumCO2Manager, ChromiumUVManager, PychronLaserManager)
 # ============= EOF =============================================
 
 

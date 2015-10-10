@@ -15,22 +15,31 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import time
+from traits.api import HasTraits, provides
 # ============= standard library imports ========================
+import time
 # ============= local library imports  ==========================
+from pychron.globals import globalv
 from pychron.lasers.laser_managers.ethernet_laser_manager import EthernetLaserManager
+from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 
 
-class ChromiumLaserManager(EthernetLaserManager):
+class ChromiumCO2Manager(EthernetLaserManager):
     stage_manager_id = 'chromium.pychron'
     configuration_dir_name = 'chromium'
 
     def end_extract(self, *args, **kw):
+        self.ask('laser.stop')
+
         self.info('ending extraction. set laser power to 0')
         self.set_laser_power(0)
 
         if self._patterning:
             self.stop_pattern()
+
+    def fire_laser(self):
+        self.info('fire laser')
+        self.ask('laser.fire')
 
     def extract(self, value, units=None, tol=0.1):
         if units is None:
@@ -38,13 +47,25 @@ class ChromiumLaserManager(EthernetLaserManager):
 
         self.info('set laser output to {} {}'.format(value, units))
         if units == 'watts':
+            ovalue = value
             value = self.calculate_calibrated_power(value)
+            if value < 0:
+                self.warning('Consider changing you calibration curve. '
+                             '{} watts converted to {}%. % must be positive'.format(ovalue, value))
+                value = 0
 
-        resp = self.ask('laser.output {}'.format(value))
+        resp = self.set_laser_power(value)
+
+        self.fire()
+
         try:
             return abs(float(resp) - value) < tol
         except BaseException:
             pass
+
+    def set_laser_power(self, v):
+
+        return self.ask('laser.output {}'.format(v))
 
     def enable_laser(self, **kw):
         # self.ask('laser.enable ON')
@@ -65,6 +86,19 @@ class ChromiumLaserManager(EthernetLaserManager):
         return self._ask('{}\n'.format(cmd), **kw)
 
     # private
+    def _test_connection_button_fired(self):
+        self.test_connection()
+        if self.connected:
+            self.opened()
+
+    def _test_connection(self):
+        if self.simulation:
+            return globalv.communication_simulation
+        else:
+            if self.setup_communicator():
+                self.debug('test connection. connected= {}'.format(self.connected))
+            return self.connected
+
     def _stage_stop_button_fired(self):
         self.ask('stage.stop')
         self.update_position()
@@ -74,23 +108,26 @@ class ChromiumLaserManager(EthernetLaserManager):
             cmd = 'laser.stop'
         else:
             cmd = 'laser.fire'
-        self._firing= not self._firing
+        self._firing = not self._firing
         self.ask(cmd)
 
     def _output_power_changed(self, new):
         self.extract(new, self.units)
 
     def _set_x(self, v):
-        self.ask('stage.moveto {},{},{},{},{},{}'.format(v * 1000, self._y * 1000, self._z * 1000, 10, 10, 0))
-        self._moving(v * 1000, self._y * 1000, self._z * 1000)
+        if self._move_enabled:
+            self.ask('stage.moveto {},{},{},{},{},{}'.format(v * 1000, self._y * 1000, self._z * 1000, 10, 10, 0))
+            self._moving(v * 1000, self._y * 1000, self._z * 1000)
 
     def _set_y(self, v):
-        self.ask('stage.moveto {},{},{},{},{},{}'.format(self._x * 1000, v * 1000, self._z * 1000, 10, 10, 0))
-        self._moving(self._x * 1000, v * 1000, self._z * 1000)
+        if self._move_enabled:
+            self.ask('stage.moveto {},{},{},{},{},{}'.format(self._x * 1000, v * 1000, self._z * 1000, 10, 10, 0))
+            self._moving(self._x * 1000, v * 1000, self._z * 1000)
 
     def _set_z(self, v):
-        self.ask('stage.moveto {},{},{},{},{},{}'.format(self._x * 1000, self._y * 1000, v * 1000, 10, 10, 0))
-        self._moving(self._x * 1000, self._y * 1000, v * 1000)
+        if self._move_enabled:
+            self.ask('stage.moveto {},{},{},{},{},{}'.format(self._x * 1000, self._y * 1000, v * 1000, 10, 10, 0))
+            self._moving(self._x * 1000, self._y * 1000, v * 1000)
 
     def _move_to_position(self, pos, *args, **kw):
         if isinstance(pos, tuple):
@@ -100,9 +137,9 @@ class ChromiumLaserManager(EthernetLaserManager):
             x, y = self.stage_manager.get_hole_xy(pos)
 
         z = self._z
-        xs = 0
-        ys = 0
-        zs = 0
+        xs = 5000
+        ys = 5000
+        zs = 100
 
         xm, ym, zm = x * 1000, y * 1000, z * 1000
         cmd = 'stage.moveto {},{},{},{},{},{}'.format(xm, ym, zm, xs, ys, zs)
@@ -132,9 +169,39 @@ class ChromiumLaserManager(EthernetLaserManager):
         name = 'chromium'
         args = dict(name='stage',
                     configuration_name='stage',
-                    # configuration_dir_name = self.configuration_dir_name,
                     configuration_dir_name=name,
                     parent=self)
         return self._stage_manager_factory(args)
 
+    def _stage_manager_factory(self, args):
+        from pychron.lasers.stage_managers.chromium_stage_manager import ChromiumStageManager
+
+        self.stage_args = args
+
+        klass = ChromiumStageManager
+        sm = klass(**args)
+        sm.id = self.stage_manager_id
+
+        return sm
+
+
+@provides(ILaserManager)
+class ChromiumUVManager(HasTraits):
+    def test_connection(self):
+        return True
+
+    def bootstrap(self):
+        pass
+
+    def bind_preferences(self, *args, **kw):
+        pass
+
+    def load(self):
+        pass
+
+    def kill(self):
+        pass
+
+    def finish_loading(self):
+        pass
 # ============= EOF =============================================

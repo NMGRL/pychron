@@ -50,6 +50,7 @@ class StartupTester(Loggable):
             return
 
         if not tests:
+            self.debug('No tests for {}'.format(pname))
             return
 
         for ti in tests:

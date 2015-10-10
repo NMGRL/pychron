@@ -111,10 +111,10 @@ class AnalysesTable(Base):
 
 
 class ArArAnalysisTable(Base):
-    '''
+    """
     WARNING
     the totals are not raw values and have been blank, discrimination and decay corrected already
-    '''
+    """
     __tablename__ = 'ArArAnalysisTable'
     #    AnalysisID = Column(Integer, primary_key=True)
     AnalysisID = Column(Integer, ForeignKey('AnalysesTable.AnalysisID'))
@@ -412,8 +412,8 @@ class RunScriptTable(Base):
 
 
 class SampleTable(Base):
-    '''
-    '''
+    """
+    """
     __tablename__ = 'SampleTable'
     SampleID = Column(Integer, primary_key=True)
     Sample = Column(String(40))
@@ -442,3 +442,9 @@ class SampleLoadingTable(Base):
     LoadingDate = Column(DateTime, default=func.now())
 
     analyses = relationship('AnalysesTable', backref='sample_loading')
+
+
+class UserTable(Base):
+    __tablename__ = 'UserTable'
+    UserID = Column(Integer, primary_key=True)
+    UserName = Column(String(length=60))

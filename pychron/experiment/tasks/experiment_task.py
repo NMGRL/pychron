@@ -242,22 +242,21 @@ class ExperimentEditorTask(EditorTask):
 
         panes = self._add_canvas_pane(panes)
 
-        app = self.window.application
-        man = app.get_service('pychron.lasers.laser_managers.ilaser_manager.ILaserManager')
-        if man:
-            if hasattr(man.stage_manager, 'video'):
-                from pychron.image.tasks.video_pane import VideoDockPane
-
-                video = man.stage_manager.video
-                man.initialize_video()
-                pane = VideoDockPane(video=video)
-                panes.append(pane)
-
-            from pychron.lasers.tasks.laser_panes import ClientDockPane
-
-            lc = ClientDockPane(model=man)
-            self.laser_control_client_pane = lc
-            panes.append(lc)
+        # app = self.window.application
+        # man = app.get_service('pychron.lasers.laser_managers.ilaser_manager.ILaserManager')
+        # if man:
+        #     if hasattr(man.stage_manager, 'video'):
+        #         from pychron.image.tasks.video_pane import VideoDockPane
+        #
+        #         video = man.stage_manager.video
+        #         man.initialize_video()
+        #         pane = VideoDockPane(video=video)
+        #         panes.append(pane)
+        #
+        #     from pychron.lasers.tasks.laser_panes import ClientDockPane
+        #     lc = ClientDockPane(model=man)
+        #     self.laser_control_client_pane = lc
+        #     panes.append(lc)
 
         return panes
 
@@ -494,7 +493,8 @@ class ExperimentEditorTask(EditorTask):
                 ed = convert_extract_device(new)
                 man = app.get_service(ILaserManager, 'name=="{}"'.format(ed))
                 if man:
-                    self.laser_control_client_pane.model = man
+                    if self.laser_control_client_pane:
+                        self.laser_control_client_pane.model = man
 
         if new == 'Fusions UV':
             if self.active_editor and not isinstance(self.active_editor, UVExperimentEditor):

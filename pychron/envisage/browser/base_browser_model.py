@@ -27,6 +27,7 @@ import cPickle as pickle
 from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.core.codetools.inspection import caller
 from pychron.core.helpers.iterfuncs import partition
+from pychron.core.helpers.strtools import to_bool
 from pychron.core.progress import progress_loader
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.envisage.browser.date_selector import DateSelector

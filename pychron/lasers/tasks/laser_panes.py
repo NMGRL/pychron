@@ -29,10 +29,6 @@ from pychron.core.ui.led_editor import LEDEditor
 from enable.component_editor import ComponentEditor
 
 
-# def SUItem(name, **kw):
-#     return UItem('object.stage_manager.{}'.format(name), **kw)
-
-
 class BaseLaserPane(TraitsTaskPane):
     def trait_context(self):
         return {'object': self.model.stage_manager}
@@ -50,10 +46,6 @@ class BaseLaserPane(TraitsTaskPane):
             UItem('canvas', style='custom', editor=editor))
 
         return View(canvas_grp)
-        # v = View(UItem('stage_manager',
-        #                style='custom'),
-        #          HGroup(UItem('status_text', style='readonly'), spring))
-        # return v
 
 
 class AxesPane(TraitsDockPane):
@@ -73,21 +65,6 @@ class StageControlPane(TraitsDockPane):
                 'tray_calibration': self.model.stage_manager.tray_calibration_manager}
 
     def traits_view(self):
-        # =======================================================================
-        # convienience functions
-        # =======================================================================
-        # def make_sm_name(name):
-        #     return 'object.stage_manager.{}'.format(name)
-
-        # def SItem(name, **kw):
-        #     return Item(make_sm_name(name), **kw)
-
-        # def CItem(name, **kw):
-        #     return Item('object.stage_manager.canvas.{}'.format(name), **kw)
-        #
-        # def CUItem(name, **kw):
-        #     return UItem('object.stage_manager.canvas.{}'.format(name), **kw)
-
         pgrp = Group(UItem('stage_manager.calibrated_position_entry',
                            tooltip='Enter a position e.g 1 for a hole, or 3,4 for X,Y'),
                      label='Calibrated Position',
@@ -239,13 +216,15 @@ class ClientMixin(object):
         return n
 
     def traits_view(self):
-        pos_grp = VGroup(HGroup(Item('position'),
-                                UItem('object.stage_manager.stage_map_name',
-                                      editor=EnumEditor(name='object.stage_manager.stage_map_names')),
-                                UItem('stage_stop_button')),
-                         Item('x', editor=RangeEditor(low=-25.0, high=25.0)),
-                         Item('y', editor=RangeEditor(low=-25.0, high=25.0)),
-                         Item('z', editor=RangeEditor(low=-25.0, high=25.0)),
+        pos_grp = VGroup(UItem('move_enabled_button'),
+                         VGroup(HGroup(Item('position'),
+                                       UItem('object.stage_manager.stage_map_name',
+                                             editor=EnumEditor(name='object.stage_manager.stage_map_names')),
+                                       UItem('stage_stop_button')),
+                                Item('x', editor=RangeEditor(low=-25.0, high=25.0)),
+                                Item('y', editor=RangeEditor(low=-25.0, high=25.0)),
+                                Item('z', editor=RangeEditor(low=-25.0, high=25.0)),
+                                enabled_when='_move_enabled'),
                          label='Positioning')
 
         # ogrp = Group(UItem('optics_client', style='custom'),
@@ -255,9 +234,9 @@ class ClientMixin(object):
         #              label='Controls')
 
         tgrp = Group(
-                     # cgrp,
-                     # ogrp,
-                     pos_grp, layout='tabbed')
+            # cgrp,
+            # ogrp,
+            pos_grp, layout='tabbed')
 
         egrp = HGroup(UItem('enabled_led', editor=LEDEditor()),
                       UItem('enable', editor=ButtonEditor(label_value='enable_label')),

@@ -67,7 +67,7 @@ class PRConditionalsAdapter(BaseConditionalsAdapter):
                ('Level', 'level'),
                ('Attribute', 'attr'),
                ('Check', 'teststr'),
-               ('Value', 'value_context'),
+               # ('Value', 'value_context'),
                ('Location', 'location')]
 
     attr_width = Int(100)
@@ -81,7 +81,7 @@ class ConditionalsAdapter(BaseConditionalsAdapter):
                ('Start', 'start_count'),
                ('Frequency', 'frequency'),
                ('Check', 'teststr'),
-               ('Value', 'value_context'),
+               # ('Value', 'value_context'),
                ('Location', 'location')]
 
     attr_width = Int(100)
