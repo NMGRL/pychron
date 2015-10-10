@@ -104,7 +104,7 @@ def report_issues():
 
 
 def create_issue(issue):
-    org = os.environ.get('GITHUB_ORGANIZATION')
+    org = os.environ.get('GITHUB_ORGANIZATION', 'NMGRL')
     cmd = '{}/repos/{}/pychron/issues'.format(GITHUB_API_URL, org)
 
     usr = os.environ.get('GITHUB_USER')

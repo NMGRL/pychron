@@ -75,7 +75,7 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
 
     def activated(self):
         if self.db.connected:
-            # self.manager.activated()
+            self.manager.activated()
             self.load_projects(include_recent=False)
 
     def transfer_j(self):

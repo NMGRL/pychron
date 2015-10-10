@@ -111,19 +111,19 @@ ProjectUserAssociationTable = Table('ProjectUserAssociationTable', Base.metadata
                                     Column('pi_id', Integer, ForeignKey('gen_PrincipalInvestigatorTable.id')))
 
 
-# class gen_PrincipalInvestigatorTable(Base, NameMixin):
-#     affiliation = stringcolumn(140)
-#     category = Column(Integer)
-#     email = stringcolumn(140)
-#     projects = relationship('gen_ProjectTable', secondary='ProjectUserAssociationTable')
+class gen_PrincipalInvestigatorTable(Base, NameMixin):
+    affiliation = stringcolumn(140)
+    category = Column(Integer)
+    email = stringcolumn(140)
+    projects = relationship('gen_ProjectTable', secondary='ProjectUserAssociationTable')
 
 
 class gen_ProjectTable(Base, NameMixin):
     samples = relationship('gen_SampleTable', backref='project')
     figures = relationship('proc_FigureTable', backref='project')
-    # principal_investigators = relationship('gen_PrincipalInvestigatorTable',
-    #                                        backref='project',
-    #                                        secondary='ProjectUserAssociationTable')
+    principal_investigators = relationship('gen_PrincipalInvestigatorTable',
+                                           backref='project',
+                                           secondary='ProjectUserAssociationTable')
 
 
 class gen_SampleTable(Base, NameMixin):

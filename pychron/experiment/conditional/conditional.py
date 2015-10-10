@@ -228,7 +228,7 @@ class AutomatedRunConditional(BaseConditional):
         """
         teststr, ctx = self._make_context(run, data)
 
-        vc = pprint.pformat(ctx, width=1)
+        self.value_context = vc = pprint.pformat(ctx, width=1)
 
         self.debug('testing {}'.format(teststr))
         msg = 'evaluate ot="{}" t="{}", ctx="{}"'.format(self.teststr, teststr, vc)
