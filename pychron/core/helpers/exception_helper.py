@@ -104,10 +104,13 @@ def report_issues():
 
 
 def create_issue(issue):
-    cmd = '{}/repos/NMGRL/pychron/issues'.format(GITHUB_API_URL)
+    org = os.environ.get('GITHUB_ORGANIZATION', 'NMGRL')
+    cmd = '{}/repos/{}/pychron/issues'.format(GITHUB_API_URL, org)
 
     usr = os.environ.get('GITHUB_USER')
     pwd = keyring.get_password('github', usr)
+    if pwd is None:
+        pwd = os.environ.get('GITHUB_PASSWORD')
 
     if not pwd:
         warning(None, 'No password set for "{}". Contact Developer.\n'
@@ -126,6 +129,10 @@ class ExceptionModel(HasTraits):
     description = Str
     labels = List
     exctext = Str
+
+    helpstr = Str("""<p align="center"><br/> <font size="14" color="red"><b>There was an error<br/>
+Please consider submitting a bug report to the developer</b></font><br/>
+Enter a <b>Title</b>, select a few <b>Labels</b> and add a <b>Description</b> of the bug. Then click <b>Submit</b><br/></p>""")
 
 
 class ExceptionHandler(Controller):
@@ -165,11 +172,15 @@ class ExceptionHandler(Controller):
         return '{}\n\n```\n{}\n```'.format(m.description, m.exctext)
 
     def traits_view(self):
-        v = View(VGroup(Item('title'),
+        v = View(VGroup(
+            UItem('helpstr',
+                  style='readonly'),
+            Item('title'),
                         HGroup(
                             VGroup(UItem('labels', style='custom', editor=CheckListEditor(values=LABELS)),
-                                   show_border=True, label='Labels'),
-                            VGroup(UItem('description', style='custom'), show_border=True, label='Description')),
+                                   show_border=True, label='Labels (optional)'),
+                            VGroup(UItem('description', style='custom'), show_border=True,
+                                   label='Description (optional)')),
                         UItem('exctext',
                               style='custom',
                               editor=TextEditor(read_only=True))),
