@@ -130,7 +130,6 @@ class ExperimentQueueFactory(PersistenceLoggable):
     # @cached_property
     def _get_load_names(self):
         db = self.db
-        4+'a'
         if db is None or not db.connected:
             return []
 

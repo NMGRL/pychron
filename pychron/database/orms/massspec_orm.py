@@ -29,7 +29,7 @@ from pychron.database.orms.isotope.util import doublecolumn
 
 Base = declarative_base()
 
-DBVERSION = os.environ.get('MassSpecDBVersion', 16.3)
+DBVERSION = float(os.environ.get('MassSpecDBVersion', 16.3))
 
 
 class AnalysesChangeableItemsTable(Base):
@@ -87,7 +87,7 @@ class AnalysesTable(Base):
     ManifoldOpt = Column(Integer, default=0)
     OriginalImportID = Column(String(1), default=0)
     RedundantSampleID = Column(Integer, ForeignKey('SampleTable.SampleID'))
-    if DBVERSION>=16.3:
+    if DBVERSION >= 16.3:
         RedundantUserID = Column(Integer, ForeignKey('UserTable.UserID'))
 
     SampleLoadingID = Column(Integer, ForeignKey('sampleloadingtable.SampleLoadingID'))
@@ -98,7 +98,7 @@ class AnalysesTable(Base):
     LoginSessionID = Column(Integer, ForeignKey('LoginSessionTable.LoginSessionID'))
     SpecRunType = Column(Integer)
 
-    if DBVERSION>=16.3:
+    if DBVERSION >= 16.3:
         SignalRefIsot = Column(String(length=30))
     else:
         ReferenceDetectorLabel = Column(String(40))
@@ -126,8 +126,8 @@ class ArArAnalysisTable(Base):
     #    AnalysisID = Column(Integer, primary_key=True)
     AnalysisID = Column(Integer, ForeignKey('AnalysesTable.AnalysisID'))
     DataReductionSessionID = Column(Integer)
-    JVal = doublecolumn()#Column(Float, default=0)
-    JEr = doublecolumn()#Column(Float, default=0)
+    JVal = doublecolumn()  # Column(Float, default=0)
+    JEr = doublecolumn()  # Column(Float, default=0)
     Tot40 = doublecolumn()
     Tot39 = doublecolumn()
     Tot38 = doublecolumn()
@@ -169,7 +169,7 @@ class BaselinesTable(Base):
     isotope = relationship('IsotopeTable', backref='baseline', uselist=False)
 
 
-#    changeable_item = relationship('baselineschangeableitemstable', uselist=False)
+# changeable_item = relationship('baselineschangeableitemstable', uselist=False)
 
 class DatabaseVersionTable(Base):
     __tablename__ = 'databaseversiontable'
@@ -201,7 +201,7 @@ class DetectorTable(Base):
     IonCounterDeadtimeSec = Column(Float, default=0)
 
     isotopes = relationship('IsotopeTable', backref='detector')
-    if DBVERSION>=16.3:
+    if DBVERSION >= 16.3:
         analyses = relationship('AnalysesTable', backref='reference_detector')
 
 
@@ -324,7 +324,7 @@ class IsotopeTable(Base):
 
     __tablename__ = 'IsotopeTable'
     IsotopeID = Column(Integer, primary_key=True)
-    if DBVERSION>=16.3:
+    if DBVERSION >= 16.3:
         TypeID = Column(Integer, default=1)
     AnalysisID = Column(Integer, ForeignKey('AnalysesTable.AnalysisID'))
     DetectorID = Column(Integer, ForeignKey('DetectorTable.DetectorID'))

@@ -53,7 +53,7 @@ PEAK_HOP_MAP = {'Ar41': 'H2', 'Ar40': 'H1',
                 'Ar39': 'AX', 'Ar38': 'L1',
                 'Ar37': 'L2', 'Ar36': 'CDD'}
 
-DBVERSION = os.environ.get('MassSpecDBVersion', 16.3)
+DBVERSION = float(os.environ.get('MassSpecDBVersion', 16.3))
 
 
 @provides(IDatastore)
