@@ -86,19 +86,6 @@ class ChromiumCO2Manager(EthernetLaserManager):
         return self._ask('{}\n'.format(cmd), **kw)
 
     # private
-    def _test_connection_button_fired(self):
-        self.test_connection()
-        if self.connected:
-            self.opened()
-
-    def _test_connection(self):
-        if self.simulation:
-            return globalv.communication_simulation
-        else:
-            if self.setup_communicator():
-                self.debug('test connection. connected= {}'.format(self.connected))
-            return self.connected
-
     def _stage_stop_button_fired(self):
         self.ask('stage.stop')
         self.update_position()

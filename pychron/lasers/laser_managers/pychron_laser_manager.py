@@ -353,19 +353,20 @@ class PychronLaserManager(EthernetLaserManager):
     #     # self.communicator.get_handler()
     #     return self.communicator.ask(cmd, **kw)
 
-
-
     def _set_x(self, v):
-        self._ask('SetX {}'.format(v))
-        self.update_position()
+        if self._move_enabled:
+            self._ask('SetX {}'.format(v))
+            self.update_position()
 
     def _set_y(self, v):
-        self._ask('SetY {}'.format(v))
-        self.update_position()
+        if self._move_enabled:
+            self._ask('SetY {}'.format(v))
+            self.update_position()
 
     def _set_z(self, v):
-        self._ask('SetZ {}'.format(v))
-        self.update_position()
+        if self._move_enabled:
+            self._ask('SetZ {}'.format(v))
+            self.update_position()
 
     # defaults
     def _stage_manager_default(self):

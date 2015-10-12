@@ -1,5 +1,6 @@
 from traits.api import Float, Property, Bool, Button, String, Enum
 from pychron.core.ui.thread import Thread
+from pychron.globals import globalv
 from pychron.hardware.pychron_device import EthernetDeviceMixin
 from pychron.lasers.laser_managers.base_lase_manager import BaseLaserManager
 
@@ -44,6 +45,19 @@ class EthernetLaserManager(BaseLaserManager, EthernetDeviceMixin):
             return True
 
     # private
+    def _test_connection_button_fired(self):
+        self.test_connection()
+        if self.connected:
+            self.opened()
+
+    def _test_connection(self):
+        if self.simulation:
+            return globalv.communication_simulation
+        else:
+            if self.setup_communicator():
+                self.debug('test connection. connected= {}'.format(self.connected))
+            return self.connected
+
     def _position_changed(self):
         if self.position is not None:
             t = Thread(target=self._move_to_position,

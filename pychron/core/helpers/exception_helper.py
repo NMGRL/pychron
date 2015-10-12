@@ -130,6 +130,10 @@ class ExceptionModel(HasTraits):
     labels = List
     exctext = Str
 
+    helpstr = Str("""<p align="center"><br/> <font size="14" color="red"><b>There was an error<br/>
+Please consider submitting a bug report to the developer</b></font><br/>
+Enter a <b>Title</b>, select a few <b>Labels</b> and add a <b>Description</b> of the bug. Then click <b>Submit</b><br/></p>""")
+
 
 class ExceptionHandler(Controller):
     def submit(self, info):
@@ -168,11 +172,14 @@ class ExceptionHandler(Controller):
         return '{}\n\n```\n{}\n```'.format(m.description, m.exctext)
 
     def traits_view(self):
-        v = View(VGroup(Item('title'),
+        v = View(VGroup(
+            UItem('helpstr',
+                  style='readonly'),
+            Item('title'),
                         HGroup(
                             VGroup(UItem('labels', style='custom', editor=CheckListEditor(values=LABELS)),
-                                   show_border=True, label='Labels'),
-                            VGroup(UItem('description', style='custom'), show_border=True, label='Description')),
+                                   show_border=True, label='Labels (optional)'),
+                            VGroup(UItem('description', style='custom'), show_border=True, label='Description (optional)')),
                         UItem('exctext',
                               style='custom',
                               editor=TextEditor(read_only=True))),
