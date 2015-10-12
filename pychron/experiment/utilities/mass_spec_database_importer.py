@@ -23,6 +23,8 @@ from traits.has_traits import provides
 # ============= standard library imports ========================
 import struct
 from numpy import array
+import time
+import os
 # ============= local library imports  ==========================
 from uncertainties import nominal_value, std_dev
 from pychron.core.i_datastore import IDatastore
@@ -31,7 +33,6 @@ from pychron.experiment.utilities.identifier import make_runid
 from pychron.loggable import Loggable
 from pychron.database.adapters.massspec_database_adapter import MassSpecDatabaseAdapter
 from pychron.experiment.utilities.info_blob import encode_infoblob
-import time
 from pychron.pychron_constants import ALPHAS
 
 mkeys = ['l2 value', 'l1 value', 'ax value', 'h1 value', 'h2 value']
@@ -51,6 +52,8 @@ DEBUG = True
 PEAK_HOP_MAP = {'Ar41': 'H2', 'Ar40': 'H1',
                 'Ar39': 'AX', 'Ar38': 'L1',
                 'Ar37': 'L2', 'Ar36': 'CDD'}
+
+DBVERSION = os.environ.get('MassSpecDBVersion', 16.3)
 
 
 @provides(IDatastore)
@@ -277,32 +280,40 @@ class MassSpecDatabaseImporter(Loggable):
         self.create_import_session(spectrometer, tray)
 
         # add the reference detector
-        refdbdet = db.add_detector('H1')
+        if DBVERSION >= 16.3:
+            refdbdet = db.add_detector('H1')
+        else:
+            refdbdet = db.add_detector('H1', Label='H1')
+
         sess.flush()
 
         spec.runid = rid
+
+        params = dict(RedundantSampleID=sample_id,
+                      HeatingItemName=spec.extract_device,
+                      PwrAchieved=spec.power_achieved,
+                      PwrAchieved_Max=spec.power_achieved,
+                      PwrAchievedSD=0,
+                      FinalSetPwr=spec.power_requested,
+                      TotDurHeating=spec.duration,
+                      TotDurHeatingAtReqPwr=spec.duration_at_request,
+                      FirstStageDly=spec.first_stage_delay,
+                      SecondStageDly=spec.second_stage_delay,
+                      PipettedIsotopes=pipetted_isotopes,
+                      RefDetID=refdbdet.DetectorID,
+                      SampleLoadingID=self.sample_loading_id,
+                      LoginSessionID=self.login_session_id,
+                      RunScriptID=rs.RunScriptID)
+        if DBVERSION >=16.3:
+            params['SignalRefIsot'] = 'Ar40'
+            params['RedundantUserID'] = 1
+
+        else:
+            params['ReferenceDetectorLabel'] = refdbdet.Label
+
         analysis = db.add_analysis(rid, spec.aliquot, spec.step,
                                    irradpos,
-                                   RUN_TYPE_DICT[runtype],
-
-                                   SignalRefIsot='Ar40',
-                                   RedundantUserID=1,
-
-                                   RedundantSampleID=sample_id,
-                                   HeatingItemName=spec.extract_device,
-                                   PwrAchieved=spec.power_achieved,
-                                   PwrAchieved_Max=spec.power_achieved,
-                                   PwrAchievedSD=0,
-                                   FinalSetPwr=spec.power_requested,
-                                   TotDurHeating=spec.duration,
-                                   TotDurHeatingAtReqPwr=spec.duration_at_request,
-                                   FirstStageDly=spec.first_stage_delay,
-                                   SecondStageDly=spec.second_stage_delay,
-                                   PipettedIsotopes=pipetted_isotopes,
-                                   RefDetID=refdbdet.DetectorID,
-                                   SampleLoadingID=self.sample_loading_id,
-                                   LoginSessionID=self.login_session_id,
-                                   RunScriptID=rs.RunScriptID)
+                                   RUN_TYPE_DICT[runtype], **params)
         sess.flush()
         if spec.update_rundatetime:
             d = datetime.fromtimestamp(spec.timestamp)
@@ -358,7 +369,10 @@ class MassSpecDatabaseImporter(Loggable):
                 if iso in PEAK_HOP_MAP:
                     det = PEAK_HOP_MAP[iso]
 
-            dbdet = db.add_detector(det)
+            if DBVERSION>=16.3:
+                dbdet = db.add_detector(det)
+            else:
+                dbdet = db.add_detector(det, label=det)
 
             if det == 'CDD':
                 dbdet.ICFactor = spec.ic_factor_v
