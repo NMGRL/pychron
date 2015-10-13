@@ -1,11 +1,16 @@
 
 __author__ = 'ross'
+
 import unittest
+import os
 
 use_logger = False
 
 
 def suite():
+    # set env. variables
+    os.environ['MassSpecDBVersion'] = '16'
+
     from pychron.paths import paths
     paths.build('_dev')
 
