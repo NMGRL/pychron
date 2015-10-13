@@ -288,7 +288,7 @@ class ScanManager(Manager):
             # convert mass to isotope
             #            d = self.magnet.dac
             iso = self.magnet.map_dac_to_isotope(current=False)
-            if not iso in self.isotopes:
+            if iso is None or iso not in self.isotopes:
                 iso = NULL_STR
 
             if self.use_log_events:
