@@ -29,6 +29,27 @@ def calculate_steps(duration, period=1):
     return int(math.ceil(duration / float(period)))
 
 
+class StepRamper(object):
+    def ramp(self, func, start, end, step, period=1):
+        current = start
+        canceled = False
+        while 1:
+            ct = time.time()
+            if current >= end:
+                break
+
+            if not func(current):
+                canceled = True
+                break
+
+            current += step
+
+            time.sleep(max(0, period - (time.time() - ct)))
+
+        if not canceled:
+            func(end)
+
+
 class Ramper(object):
     def ramp(self, func, start, end, duration, rate=0, period=1):
         """
@@ -61,4 +82,5 @@ class Ramper(object):
                 i += 1
             else:
                 break
+
 # ============= EOF =============================================

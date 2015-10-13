@@ -18,7 +18,7 @@
 from pyface.timer.do_later import do_later
 from traits.api import Instance, Enum, Any, DelegatesTo, List, Property, \
     Bool, Button, String, cached_property, \
-    Float, Event
+    Float, Event, Str
 # ============= standard library imports ========================
 import os
 import pickle
@@ -75,14 +75,9 @@ class ScanManager(Manager):
     clear_button = Event
 
     scan_enabled = Bool(True)
-    # record_button = Event
-    # record_button = ToggleButton(image_on=icon('media-record'),
-    # image_off=icon('media-playback-stop'),
-    # tooltip_on='Start recording scan',
-    #                              tooltip_off='Stop recording scan',
-    #                              # height=22,
-    #                              # width=45
-    #                             )
+    use_default_scan_settings = Bool
+    default_isotope = Str
+    default_detector = Str
 
     start_record_button = Button
     stop_record_button = Button
@@ -169,6 +164,10 @@ class ScanManager(Manager):
         bind_preference(self, 'use_log_events', '{}.use_log_events'.format(pref_id))
         bind_preference(self, 'use_vertical_markers', '{}.use_vertical_markers'.format(pref_id))
 
+        bind_preference(self, 'use_default_scan_settings', '{}.use_default_scan_settings'.format(pref_id))
+        bind_preference(self, 'default_detector', '{}.default_detector'.format(pref_id))
+        bind_preference(self, 'default_isotope', '{}.default_isotope'.format(pref_id))
+
     def setup_scan(self):
         # force update
         self.load_settings()
@@ -195,24 +194,36 @@ class ScanManager(Manager):
             with open(p, 'rb') as f:
                 try:
                     params = pickle.load(f)
-
-                    det = spec.get_detector(params['detector'])
-                    if det.kind == 'Faraday':
-                        self.detector = det
-                        self.isotope = params['isotope']
-
-                    self.integration_time = params.get('integration_time', 1.048576)
-
-                    for pi in self.graph_attr_keys:
-                        try:
-                            setattr(self, pi, params[pi])
-                        except KeyError, e:
-                            print 'sm load settings', pi, e
-
-                except (pickle.PickleError, EOFError, KeyError):
-                    self.detector = self.detectors[-1]
-                    self.isotope = self.isotopes[-1]
+                except (pickle.PickleError, EOFError):
                     self.warning('Failed unpickling scan settings file {}'.format(p))
+                    return
+
+                if self.use_default_scan_settings:
+                    dd = self.default_detector
+                    iso = self.default_isotope
+                else:
+                    dd = params.get('detector')
+                    iso = params.get('isotope')
+
+                if dd:
+                    det = spec.get_detector(dd)
+
+                if det:
+                    self.detector = det
+                if iso:
+                    self.isotope = iso
+
+                self.integration_time = params.get('integration_time', 1.048576)
+
+                for pi in self.graph_attr_keys:
+                    try:
+                        setattr(self, pi, params[pi])
+                    except KeyError, e:
+                        print 'sm load settings', pi, e
+
+                    # self.detector = self.detectors[-1]
+                    # self.isotope = self.isotopes[-1]
+
         else:
             self.warning('No scan settings file {}'.format(p))
 

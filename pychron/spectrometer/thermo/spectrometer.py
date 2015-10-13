@@ -31,7 +31,7 @@ from pychron.spectrometer.thermo.detector import Detector
 from pychron.spectrometer.thermo.spectrometer_device import SpectrometerDevice
 from pychron.pychron_constants import NULL_STR, QTEGRA_INTEGRATION_TIMES, DEFAULT_INTEGRATION_TIME
 from pychron.paths import paths
-from pychron.core.ramper import Ramper, calculate_steps
+from pychron.core.ramper import Ramper, calculate_steps, StepRamper
 
 
 def normalize_integration_time(it):
@@ -329,7 +329,7 @@ class Spectrometer(SpectrometerDevice):
 
     def set_debug_configuration_values(self):
         if self.simulation:
-            d, _ = self._get_cached_config()
+            d, _, _ = self._get_cached_config()
             keys = ('ElectronEnergy', 'YSymmetry', 'ZSymmetry',
                     'ZFocus', 'IonRepeller', 'ExtractionLens')
             ds = [0] + [d[k.lower()] for k in keys]
@@ -620,8 +620,9 @@ class Spectrometer(SpectrometerDevice):
             config = self.get_configuration_writer(p)
             d = {}
             defl = {}
+            trap = {}
             for section in config.sections():
-                if section in ['Default', 'Protection', 'General']:
+                if section in ['Default', 'Protection', 'General', 'Trap']:
                     continue
 
                 for attr in config.options(section):
@@ -632,7 +633,12 @@ class Spectrometer(SpectrometerDevice):
                         else:
                             d[attr] = v
 
-            self._config = (d, defl)
+            section = 'Trap'
+            if config.has_section(section):
+                for attr in ('current', 'ramp_step', 'ramp_period'):
+                    if config.has_option(section, attr):
+                        trap[attr] = config.getfloat(section, attr)
+            self._config = (d, defl, trap)
 
         return self._config
 
@@ -657,7 +663,7 @@ class Spectrometer(SpectrometerDevice):
                            ioncountervoltage='IonCounterVoltage', )
 
         if self.microcontroller:
-            specparams, defl = self._get_cached_config()
+            specparams, defl, trap = self._get_cached_config()
             for k, v in defl.items():
                 cmd = 'SetDeflection'
                 v = '{},{}'.format(k, v)
@@ -671,16 +677,17 @@ class Spectrometer(SpectrometerDevice):
                     self.debug('$$$$$$$$$$ Not setting {}. Not in command_map'.format(k))
 
             # set the trap current
-            v = specparams.get('trap_current')
+            v = trap.get('current')
             self.debug('send trap current {}'.format(v))
             if v is not None:
-                r = specparams.get('trap_current_ramp_duration', 30)
-                if not self._ramp_trap_current(v, r, use_ramp):
+                step = trap.get('ramp_step', 1)
+                period = trap.get('ramp_period', 1)
+                if not self._ramp_trap_current(v, step, period, use_ramp):
                     self.set_parameter('SetParameter', 'Trap Current Set,{}'.format(v))
 
             self.source.sync_parameters()
 
-    def _ramp_trap_current(self, v, duration, use_ramp=False, tol=100):
+    def _ramp_trap_current(self, v, step, period, use_ramp=False, tol=100):
         if use_ramp:
             current = self.source.read_trap_current()
             if current is None:
@@ -691,16 +698,18 @@ class Spectrometer(SpectrometerDevice):
                                             'Trap current from {} to {}'.format(current, v)):
                     prog = open_progress(1)
 
-                    def func(i, x):
+                    def func(x):
                         cmd = 'SetParameter Trap Current Set,{:0.5f}'.format(x)
                         prog.change_message(cmd)
                         self.ask(cmd)
-                        return True
+                        if not prog.accepted and not prog.canceled:
+                            return True
 
-                    r = Ramper()
-                    steps = calculate_steps(duration)
-                    prog.max = steps
-                    r.ramp(func, current, v, duration)
+                    r = StepRamper()
+
+                    steps = (v - current) / step
+                    prog.max = int(steps)
+                    r.ramp(func, current, v, step, period)
                     prog.close()
                     return True
 
