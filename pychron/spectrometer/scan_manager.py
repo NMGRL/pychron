@@ -106,6 +106,7 @@ class ScanManager(Manager):
     _valve_event_list = List
     _prev_signals = None
     _no_intensity_change_cnt = 0
+    _suppress_isotope_change = False
 
     def _bind_listeners(self, remove=False):
         self.on_trait_change(self._update_magnet, 'magnet:dac_changed', remove=remove)
@@ -282,12 +283,12 @@ class ScanManager(Manager):
         self.graph.set_series_visibility(new, series=obj.name)
 
     def _update_magnet(self, obj, name, old, new):
-        # print obj, name, old, new
         if new and self.magnet.detector:
             # covnert dac into a mass
             # convert mass to isotope
             #            d = self.magnet.dac
             iso = self.magnet.map_dac_to_isotope(current=False)
+
             if iso is None or iso not in self.isotopes:
                 iso = NULL_STR
 
@@ -298,7 +299,10 @@ class ScanManager(Manager):
                     self.add_spec_event_marker('{}:{} ({:0.5f})'.format(self.detector,
                                                                         iso, self.magnet.dac))
 
-            self.trait_setq(isotope=iso)
+            self.debug('setting isotope: {}'.format(iso))
+            self._suppress_isotope_change = True
+            self.trait_set(isotope=iso)
+            self._suppress_isotope_change = False
 
     def _check_intensity_no_change(self, signals):
         if self.spectrometer.simulation:
@@ -433,6 +437,9 @@ class ScanManager(Manager):
         plot.value_range.on_trait_change(self._update_graph_limits, '_low_value, _high_value')
 
     def _isotope_changed(self, old, new):
+        if self._suppress_isotope_change:
+            return
+
         self.debug('isotope changed {}'.format(self.isotope))
         if self.isotope != NULL_STR and not self._check_detector_protection(old, False):
             t = Thread(target=self._set_position)

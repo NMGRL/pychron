@@ -192,6 +192,8 @@ class ExceptionHandler(Controller):
 def except_handler(exctype, value, tb):
     if exctype == RuntimeError:
         warning(None, 'RunTimeError: {}'.format(value))
+    elif value == "'NoneType' object has no attribute 'text'":
+        pass
     else:
         lines = traceback.format_exception(exctype, value, tb)
         if not exctype == KeyboardInterrupt:
