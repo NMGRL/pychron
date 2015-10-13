@@ -635,7 +635,7 @@ class Spectrometer(SpectrometerDevice):
 
             section = 'Trap'
             if config.has_section(section):
-                for attr in ('current', 'ramp_step', 'ramp_period'):
+                for attr in ('current', 'ramp_step', 'ramp_period', 'ramp_tolerance'):
                     if config.has_option(section, attr):
                         trap[attr] = config.getfloat(section, attr)
             self._config = (d, defl, trap)
@@ -682,12 +682,13 @@ class Spectrometer(SpectrometerDevice):
             if v is not None:
                 step = trap.get('ramp_step', 1)
                 period = trap.get('ramp_period', 1)
-                if not self._ramp_trap_current(v, step, period, use_ramp):
+                tol = trap.get('ramp_tolerance', 10)
+                if not self._ramp_trap_current(v, step, period, use_ramp, tol):
                     self.set_parameter('SetParameter', 'Trap Current Set,{}'.format(v))
 
             self.source.sync_parameters()
 
-    def _ramp_trap_current(self, v, step, period, use_ramp=False, tol=100):
+    def _ramp_trap_current(self, v, step, period, use_ramp=False, tol=10):
         if use_ramp:
             current = self.source.read_trap_current()
             if current is None:
