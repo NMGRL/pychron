@@ -24,7 +24,6 @@ from traits.trait_errors import TraitError
 # ============= standard library imports ========================
 from datetime import datetime
 from threading import Thread, Event as Flag, Lock, currentThread
-import weakref
 import time
 import os
 import yaml
@@ -38,9 +37,8 @@ from pychron.core.ui.led_editor import LED
 from pychron.database.selectors.isotope_selector import IsotopeAnalysisSelector
 from pychron.envisage.consoleable import Consoleable
 from pychron.envisage.preference_mixin import PreferenceMixin
-# from pychron.experiment.conditional.conditionals_edit_view import TAGS
 from pychron.envisage.view_util import open_view
-from pychron.experiment.automated_run.persistence import ExcelPersister
+from pychron.experiment.automated_run.persistence import ExcelPersister, AutomatedRunPersister
 from pychron.experiment.conditional.conditional import conditionals_from_file
 from pychron.experiment.datahub import Datahub
 from pychron.experiment.health.series import SystemHealthSeries
@@ -68,7 +66,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     connectables = List
     active_editor = Any
     console_bgcolor = 'black'
-    selected_run = Instance('pychron.experiment.automated_run.spec.AutomatedRunSpec', )
+    selected_run = Instance('pychron.experiment.automated_run.spec.AutomatedRunSpec')
+    run_completed = Event
 
     # ===========================================================================
     # control
@@ -440,6 +439,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         total_cnt = 0
         is_first_flag = True
         is_first_analysis = True
+
         with consumable(func=self._overlapped_run) as con:
             while 1:
                 if not self.is_alive():
@@ -561,8 +561,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 yl = yaml.load(rfile)
 
                 items = [(i['name'], i['email']) for i in yl if i['enabled'] and i['email'] != email]
+            if items:
+                names, addrs = zip(*items)
 
-            names, addrs = zip(*items)
         return names, addrs
 
     def _wait_for(self, predicate, period=1, invert=False):
@@ -609,7 +610,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     self.debug('previous blanks ={}'.format(pb))
 
         self._report_execution_state(run)
+
         run.teardown()
+
         self.measuring_run = None
         mem_log('> end join')
 
@@ -620,8 +623,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         if self.stats:
             self.stats.start_run(run)
-
-        mem_log('< start')
 
         run.state = 'not run'
 
@@ -676,7 +677,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if self.labspy_enabled:
             self.labspy_client.add_run(run, self.experiment_queue)
 
-        mem_log('end run')
         if self.stats:
             self.stats.finish_run()
             if run.state == 'success':
@@ -825,9 +825,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.debug('active_run same as measuring_run: {}'.format(self.measuring_run == active_run))
             if active_run:
                 v.add_conditionals({'{}s'.format(tag): getattr(active_run, '{}_conditionals'.format(tag))
-                                    for tag in CONDITIONAL_GROUP_TAGS},
-                                   level=RUN)
-                v.title = '{} ({})'.format(v.title, active_run.spec.runid)
+                                    for tag in CONDITIONAL_GROUP_TAGS}, level=RUN)
+                v.title = '{} ({})'.format(v.title, active_run.runid)
             else:
                 run = self.selected_run
                 if run:
@@ -1031,15 +1030,18 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         arun.use_dvc_persistence = self.use_dvc_persistence
         if self.use_dvc_persistence:
-            arun.dvc_persister = self.application.get_service('pychron.dvc.dvc_persister.DVCPersister')
-            arun.dvc_persister.load_name = exp.load_name
+            dvcp = self.application.get_service('pychron.dvc.dvc_persister.DVCPersister')
+            if dvcp:
+                dvcp.load_name = exp.load_name
 
-            expid = spec.experiment_identifier
-            arun.dvc_persister.initialize(expid)
+                expid = spec.experiment_identifier
+                dvcp.initialize(expid)
+
+                arun.dvc_persister = dvcp
 
         mon = self.monitor
         if mon is not None:
-            mon.automated_run = weakref.ref(arun)()
+            mon.automated_run = arun
             arun.monitor = mon
             arun.persister.monitor = mon
 
@@ -1491,15 +1493,16 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if not self._set_run_aliquot(arv):
             return
 
-        no_exp = False
-        for i, ai in enumerate(runs):
-            if not ai.experiment_identifier:
-                self.warning('No experiment identifier for i={}, {}'.format(i + 1, ai.runid))
-                no_exp = True
+        if self.use_dvc_persistence:
+            no_exp = False
+            for i, ai in enumerate(runs):
+                if not ai.experiment_identifier:
+                    self.warning('No experiment identifier for i={}, {}'.format(i + 1, ai.runid))
+                    no_exp = True
 
-        if no_exp:
-            self.warning_dialog('No Experiment Identifiers')
-            return
+            if no_exp:
+                self.warning_dialog('No Experiment Identifiers')
+                return
 
         if globalv.experiment_debug:
             self.debug('********************** NOT DOING PRE EXECUTE CHECK ')
@@ -1619,7 +1622,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             for ci in conditionals:
                 if ci.check(run, None, True):
                     self.info('{}. {}'.format(message2, ci.to_string()), color='yellow')
-                    self._show_conditionals(show_measuring=True, tripped=ci, kind='live')
+                    self._show_conditionals(active_run=run, tripped=ci, kind='live')
                     self._do_action(ci)
 
                     if self._cv_info:
@@ -1644,7 +1647,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
                     self.cancel(confirm=False)
 
-                    self.show_conditionals(show_measuring=True, tripped=ci)
+                    self.show_conditionals(active_run=run, tripped=ci)
                     return True
 
     def _do_action(self, action):

@@ -15,12 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import time
 from traits.api import List, HasTraits, Str, Bool, Float, Property
 from traitsui.api import View, UItem, TableEditor
 # ============= standard library imports ========================
-import os
-from ConfigParser import ConfigParser
 from random import random
+from ConfigParser import ConfigParser
+import os
+import time
 # ============= local library imports  ==========================
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
@@ -67,6 +69,12 @@ class Coincidence(BasePeakCenter):
     title = 'Coincidence'
     inform = False
 
+    def __init__(self, *args, **kw):
+        super(Coincidence, self).__init__(*args, **kw)
+        self.window = 0.015
+        self.step_width = 0.0005
+        self.percent = 80
+
     def _reference_detector_default(self):
         self.additional_detectors = [di.name for di in self.detectors[1:]]
         return self.detectors[0].name
@@ -80,6 +88,10 @@ class Coincidence(BasePeakCenter):
         """
         graph = self.graph
         plot = graph.plots[0]
+        time.sleep(0.05)
+
+        # wait for graph to fully update
+        time.sleep(0.1)
 
         # def get_peak_center(i, di):
         def get_peak_center(di):
@@ -104,6 +116,7 @@ class Coincidence(BasePeakCenter):
         spec = self.spectrometer
 
         centers = {d: get_peak_center(d) for d in self.active_detectors}
+        print centers
         ref = self.reference_detector
         post = centers[ref]
         if post is None:

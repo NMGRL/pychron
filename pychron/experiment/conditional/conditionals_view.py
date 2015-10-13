@@ -53,7 +53,7 @@ class ConditionalsView(ConditionalsViewable):
                 self._group_factory(items, klass, conditional_klass=cklass,
                                     auto_select=False, label=name.capitalize())
 
-    def add_conditionals(self, ditems):
+    def add_conditionals(self, ditems, **kw):
         if ditems:
             for name, klass, cklass in (('actions', ConditionalGroup, ActionConditional),
                                         ('truncations', ConditionalGroup, TruncationConditional),
@@ -62,21 +62,10 @@ class ConditionalsView(ConditionalsViewable):
                 items = ditems.get(name, [])
                 grp = next((gi for gi in self.groups if gi.label == name.capitalize()), None)
                 if not grp:
-                    self._group_factory(items, klass, auto_select=False, label=name.capitalize())
+                    self._group_factory(items, klass, auto_select=False,
+                                        label=name.capitalize(), **kw)
                 else:
                     grp.conditionals.extend(items)
-
-                    # for tag in CONDITIONAL_GROUP_TAGS:
-                    # tag = '{}s'.format(tag)
-                    #     print tag, [gi.label for gi in self.groups]
-                    #     # grp = getattr(self, '{}s_group'.format(tag))
-                    #     items = ditems.get(tag)
-                    #     if items:
-                    #         grp = next((gi for gi in self.groups if gi.label == tag.capitalize()), None)
-                    #         if grp:
-                    #             grp.conditionals.extend(items)
-                    #         else:
-
 
     def traits_view(self):
         v = View(self._view_tabs(),

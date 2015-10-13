@@ -984,7 +984,7 @@ def initialize_version(appname, debug):
     # build globals
     build_globals(debug)
 
-    from pychron.core.helpers.logger_setup import logging_setup, set_exception_handler
+    from pychron.core.helpers.logger_setup import logging_setup
     from pychron.paths import build_directories
 
     # build directories
@@ -993,8 +993,10 @@ def initialize_version(appname, debug):
 
     # setup logging. set a basename for log files and logging level
     logging_setup('pychron', level='DEBUG')
-    if not debug:
-        set_exception_handler()
+
+    from pychron.core.helpers.exception_helper import set_exception_handler, report_issues
+    set_exception_handler()
+    report_issues()
 
     return user
 

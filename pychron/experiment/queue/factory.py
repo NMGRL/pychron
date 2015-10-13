@@ -134,8 +134,10 @@ class ExperimentQueueFactory(PersistenceLoggable):
             return []
 
         with db.session_ctx():
+            names = []
             ts = db.get_loads()
-            names = [ti.name for ti in ts]
+            if ts:
+                names = [ti.name for ti in ts]
             return names
 
     @cached_property

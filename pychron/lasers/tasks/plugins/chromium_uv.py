@@ -1,11 +1,11 @@
 # ===============================================================================
-# Copyright 2011 Jake Ross
+# Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,17 +14,20 @@
 # limitations under the License.
 # ===============================================================================
 
-
 # ============= enthought library imports =======================
-# from traits.api import HasTraits, on_trait_change, Str, Int, Float, Button
-# from traitsui.api import View, Item, Group, HGroup, VGroup
+from envisage.ui.tasks.task_extension import TaskExtension
+from pyface.tasks.action.schema_addition import SchemaAddition
+from pyface.action.group import Group
 
 # ============= standard library imports ========================
-
 # ============= local library imports  ==========================
-from pychron.hardware.core.core_device import CoreDevice
+from pychron.lasers.tasks.plugins.laser_plugin import BaseLaserPlugin
 
 
-class ArgusController(CoreDevice):
-    pass
+class ChromiumUVPlugin(BaseLaserPlugin):
+    id = 'pychron.chromium.uv'
+    name = 'ChromiumUV'
+    klass = ('pychron.lasers.laser_managers.chromium_laser_manager', 'ChromiumUVManager')
+
+
 # ============= EOF =============================================

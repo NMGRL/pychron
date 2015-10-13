@@ -153,6 +153,7 @@ class Spectrometer(SpectrometerDevice):
             ret = True
 
         self._connection_status = ret
+        self.microcontroller.set_simulation(not ret)
         return ret
 
     def set_gains(self, history=None):
@@ -414,6 +415,7 @@ class Spectrometer(SpectrometerDevice):
 
         self.magnet.finish_loading()
 
+        self.test_connection()
         # if self.send_config_on_startup:
         # write configuration to spectrometer
         # self._send_configuration()
@@ -502,7 +504,9 @@ class Spectrometer(SpectrometerDevice):
         if data is not None:
 
             keys, signals = data
-            func = lambda k: signals[keys.index(k)] if key in keys else 0
+
+            def func(k):
+                return signals[keys.index(k)] if k in keys else 0
 
             if isinstance(dkeys, (tuple, list)):
                 return [func(key) for key in dkeys]

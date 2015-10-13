@@ -22,10 +22,8 @@ from itertools import groupby
 from pychron.dvc.dvc_irradiationable import DVCIrradiationable
 from pychron.experiment.queue.experiment_queue import ExperimentQueue
 from pychron.experiment.factory import ExperimentFactory
-from pychron.experiment.utilities.aliquot_numbering import renumber_aliquots
 from pychron.experiment.stats import StatsGroup
 from pychron.experiment.experiment_executor import ExperimentExecutor
-from pychron.loggable import Loggable
 
 
 class Experimentor(DVCIrradiationable):

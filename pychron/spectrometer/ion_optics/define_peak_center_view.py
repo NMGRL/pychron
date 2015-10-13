@@ -1,11 +1,11 @@
 # ===============================================================================
-# Copyright 2011 Jake Ross
+# Copyright 2015 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,17 +14,28 @@
 # limitations under the License.
 # ===============================================================================
 
-
 # ============= enthought library imports =======================
-# from traits.api import HasTraits, on_trait_change, Str, Int, Float, Button
-# from traitsui.api import View, Item, Group, HGroup, VGroup
+from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change, List
+from traitsui.api import View, UItem, Item, HGroup, VGroup, EnumEditor
+
 
 # ============= standard library imports ========================
-
 # ============= local library imports  ==========================
-from pychron.hardware.core.core_device import CoreDevice
 
+class DefinePeakCenterView(HasTraits):
+    detector = Str
+    isotope = Str
+    detectors = List
+    isotopes = List
+    dac = Float
 
-class ArgusController(CoreDevice):
-    pass
+    def traits_view(self):
+        v = View(VGroup(UItem('detector', editor=EnumEditor(name='detectors')),
+                        UItem('isotope', editor=EnumEditor(name='isotopes')),
+                        Item('dac', label='DAC')),
+                 title='Define Peak Center',
+                 kind='livemodal',
+                 buttons=['OK', 'Cancel'])
+        return v
+
 # ============= EOF =============================================
