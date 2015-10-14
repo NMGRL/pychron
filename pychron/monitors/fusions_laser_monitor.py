@@ -101,6 +101,11 @@ class FusionsLaserMonitor(LaserMonitor):
         if status is None:
             self._chiller_unavailable()
         else:
+            # temporary disable pump fail check
+            if 'Pump Fail' in status:
+                self.debug('skip pump fail')
+                return
+
             self._unavailable_cnt = 0
             if status and all(status):
                 if self._coolant_check_status_cnt > self.max_coolant_temp_tries:

@@ -16,9 +16,8 @@
 
 # ============= enthought library imports =======================
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traits.trait_types import Str
 from traitsui.api import View, Item, VGroup
-from traits.api import Directory, Bool
+from traits.api import Directory, Bool, String
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.base_preferences_helper import GitRepoPreferencesHelper, remote_status_item
@@ -33,10 +32,10 @@ class GeneralPreferences(GitRepoPreferencesHelper):
     show_random_tip = Bool
     # use_advanced_ui = Bool
 
-    organization = Str(enter_set=True, auto_set=False)
+    organization = String(enter_set=True, auto_set=False)
 
     def _organization_changed(self, new):
-        if not self.remote:
+        if not self.remote and new:
             self.remote = '{}/Laboratory'.format(new)
 
 
