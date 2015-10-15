@@ -130,7 +130,7 @@ class ExceptionModel(HasTraits):
     labels = List
     exctext = Str
 
-    helpstr = Str("""<p align="center"><br/> <font size="14" color="red"><b>There was an error<br/>
+    helpstr = Str("""<p align="center"><br/> <font size="14" color="red"><b>There was a Pychron error<br/>
 Please consider submitting a bug report to the developer</b></font><br/>
 Enter a <b>Title</b>, select a few <b>Labels</b> and add a <b>Description</b> of the bug. Then click <b>Submit</b><br/></p>""")
 
@@ -193,6 +193,8 @@ class ExceptionHandler(Controller):
 def except_handler(exctype, value, tb):
     if exctype == RuntimeError:
         warning(None, 'RunTimeError: {}'.format(value))
+    elif value == "'NoneType' object has no attribute 'text'":
+        pass
     else:
         lines = traceback.format_exception(exctype, value, tb)
         if not exctype == KeyboardInterrupt:

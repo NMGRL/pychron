@@ -40,7 +40,7 @@ from pychron.pipeline.plot.overlays.mean_indicator_overlay import MeanIndicatorO
 from pychron.core.stats.peak_detection import find_peaks, find_fine_peak
 # from pychron.pipeline.plot import OverlayMoveTool
 from pychron.pipeline.plot.point_move_tool import OverlayMoveTool
-from pychron.pipeline.plot.ticks import IntTickGenerator
+from pychron.graph.ticks import IntTickGenerator
 from pychron.pychron_constants import PLUSMINUS, SIGMA
 
 N = 500
