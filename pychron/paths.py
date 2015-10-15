@@ -192,6 +192,7 @@ class Paths(object):
 
     duration_tracker = None
     experiment_launch_history = None
+    notification_triggers = None
 
     def write_default_file(self, p, default, overwrite=False):
         return self._write_default_file(p, default, overwrite)
@@ -382,6 +383,7 @@ class Paths(object):
 
         self.duration_tracker = join(self.hidden_dir, 'duration_tracker.txt')
         self.experiment_launch_history = join(self.hidden_dir, 'experiment_launch_history.txt')
+        self.notification_triggers = join(self.setup_dir, 'notification_triggers.yaml')
         build_directories()
 
     def write_defaults(self):

@@ -16,13 +16,15 @@
 
 # ============= enthought library imports =======================
 from traits.api import Str, Property, cached_property, Int, \
-    Any, String, Event, Bool, Dict, List, Button
+    Any, String, Event, Bool, Dict, List, Button, Instance
 # ============= standard library imports ========================
 import os
 from ConfigParser import ConfigParser
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import list_directory2
+from pychron.entry.entry_views.experiment_entry import ExperimentIdentifierEntry
 from pychron.entry.entry_views.user_entry import UserEntry
+from pychron.github import Organization
 from pychron.persistence_loggable import PersistenceLoggable
 from pychron.globals import globalv
 from pychron.pychron_constants import NULL_STR, LINE_STR
@@ -31,6 +33,7 @@ from pychron.paths import paths
 
 class ExperimentQueueFactory(PersistenceLoggable):
     db = Any
+    dvc = Instance('pychron.dvc.dvc.DVC')
     application = Any
 
     username = String
@@ -66,19 +69,16 @@ class ExperimentQueueFactory(PersistenceLoggable):
     load_name = Str
     load_names = Property
 
+
     ok_make = Property(depends_on='mass_spectrometer, username')
 
-    pattributes = ('mass_spectrometer', 'extract_device',
+    pattributes = ('mass_spectrometer',
+                   'extract_device',
                    'use_group_email',
                    'delay_between_analyses',
                    'delay_before_analyses',
                    'queue_conditionals_name')
 
-
-    # def _add_user_fired(self):
-    # a=UserEntry()
-    # a.    edit_user(self.username)
-    #     self.users_dirty=True
     def activate(self, load_persistence):
         """
             called by ExperimentFactory
@@ -134,8 +134,10 @@ class ExperimentQueueFactory(PersistenceLoggable):
             return []
 
         with db.session_ctx():
+            names = []
             ts = db.get_loads()
-            names = [ti.name for ti in ts]
+            if ts:
+                names = [ti.name for ti in ts]
             return names
 
     @cached_property

@@ -15,8 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Bool, Float
-from traitsui.api import View, Item, VGroup
+from traits.api import Bool, Float, Enum
+from traitsui.api import View, Item, VGroup, HGroup
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -35,6 +35,9 @@ class SpectrometerPreferences(BasePreferencesHelper):
     use_log_events = Bool
     use_vertical_markers = Bool
     auto_open_readout = Bool
+    use_default_scan_settings = Bool
+    default_isotope = Enum(('Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36'))
+    default_detector = Enum(('H2', 'H1', 'AX', 'L1', 'L2', 'CDD'))
 
 
 class SpectrometerPreferencesPane(PreferencesPane):
@@ -66,6 +69,14 @@ class SpectrometerPreferencesPane(PreferencesPane):
                           Item('use_log_events', label='Event Logging',
                                tooltip='Display events such as valve open/close, magnet moves on Scan graph'),
                           Item('use_vertical_markers', label='Vertical Markers'),
+                          HGroup(Item('use_default_scan_settings',
+                                      label='Use Defaults'),
+                                 Item('default_detector',
+                                      label='Detector',
+                                      enabled_when='use_default_scan_settings'),
+                                 Item('default_isotope',
+                                      label='Isotope',
+                                      enabled_when='use_default_scan_settings')),
                           label='Scan',
                           show_border=True)
 

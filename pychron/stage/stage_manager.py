@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Event, Str, List, Instance, Bool
+from traits.api import Event, Str, List, Instance, Bool, String
 # ============= standard library imports ========================
 import os
 import pickle
@@ -42,7 +42,7 @@ class BaseStageManager(Manager):
     canvas = Instance(MapCanvas)
 
     root = Str(paths.map_dir)
-    calibrated_position_entry = Str(enter_set=True, auto_set=False)
+    calibrated_position_entry = String(enter_set=True, auto_set=False)
 
     move_thread = None
     temp_position = None
@@ -117,12 +117,12 @@ class BaseStageManager(Manager):
 
     def kill(self):
         r = super(BaseStageManager, self).kill()
-
-        p = os.path.join(paths.hidden_dir, 'stage_map')
-        self.info('saving stage_map {} to {}'.format(self.stage_map_name, p))
-        with open(p, 'wb') as f:
-            pickle.dump(self.stage_map_name, f)
+        self._save_stage_map()
         return r
+
+    @property
+    def stage_map_path(self):
+        return os.path.join(paths.hidden_dir, '{}.stage_map'.format(self.id))
 
     def canvas_editor_factory(self):
         return self.canvas_editor_klass(keyboard_focus='keyboard_focus')
@@ -182,9 +182,9 @@ class BaseStageManager(Manager):
         raise NotImplementedError
 
     # handlers
-    def _calibrated_position_entry_changed(self):
-        v = self.calibrated_position_entry
-        self.goto_position(v)
+    def _calibrated_position_entry_changed(self, new):
+        self.debug('User entered calibrated position {}'.format(new))
+        self.goto_position(new)
 
     def _stage_map_name_changed(self, new):
         if new:
@@ -205,11 +205,16 @@ class BaseStageManager(Manager):
     def _canvas_default(self):
         return self._canvas_factory()
 
-    def _load_previous_stage_map(self):
-        p = os.path.join(paths.hidden_dir, self.id)
+    def _save_stage_map(self):
+        p = self.stage_map_path
+        self.info('saving stage_map {} to {}'.format(self.stage_map_name, p))
+        with open(p, 'wb') as f:
+            pickle.dump(self.stage_map_name, f)
 
+    def _load_previous_stage_map(self):
+        p = self.stage_map_path
         if os.path.isfile(p):
-            self.info('loading previous stage map')
+            self.info('loading previous stage map from {}'.format(p))
             with open(p, 'rb') as f:
                 try:
                     return pickle.load(f)

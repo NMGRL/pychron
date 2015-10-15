@@ -27,13 +27,15 @@ from pychron.managers.manager import Manager
 from pychron.graph.graph import Graph
 from pychron.spectrometer.ion_optics.coincidence_config import CoincidenceConfig
 from pychron.spectrometer.ion_optics.peak_center_config import PeakCenterConfig
-from pychron.spectrometer.jobs.coincidence_scan import CoincidenceScan
+from pychron.spectrometer.jobs.coincidence import Coincidence
 from pychron.spectrometer.jobs.peak_center import PeakCenter
 # from threading import Thread
 from pychron.pychron_constants import NULL_STR
 from pychron.core.ui.thread import Thread
 from pychron.paths import paths
 from pychron.core.helpers.isotope_utils import sort_isotopes
+
+
 # from pychron.core.ui.gui import invoke_in_main_thread
 
 
@@ -47,12 +49,14 @@ class IonOpticsManager(Manager):
     spectrometer = Any
 
     peak_center = Instance(PeakCenter)
-    coincidence = Instance(CoincidenceScan)
+    coincidence = Instance(Coincidence)
     peak_center_config = Instance(PeakCenterConfig)
     coincidence_config = Instance(CoincidenceConfig)
     canceled = False
 
     peak_center_result = None
+
+    _centering_thread = None
 
     def get_mass(self, isotope_key):
         spec = self.spectrometer
@@ -126,7 +130,7 @@ class IonOpticsManager(Manager):
         if new_thread:
             t = Thread(name='ion_optics.coincidence', target=self._coincidence)
             t.start()
-            self._thread = t
+            self._centering_thread = t
 
     def _coincidence(self):
         self.coincidence.get_peak_center()
@@ -144,7 +148,7 @@ class IonOpticsManager(Manager):
         detector = pcc.detector.name
         isotope = pcc.isotope
         detectors = [d for d in pcc.additional_detectors]
-        integration_time = pcc.integration_time
+        # integration_time = pcc.integration_time
 
         if pcc.use_nominal_dac:
             center_dac = self.get_position(isotope, detector)
@@ -156,11 +160,11 @@ class IonOpticsManager(Manager):
         # self.spectrometer.save_integration()
         # self.spectrometer.set_integration(integration_time)
 
-        cs = CoincidenceScan(spectrometer=self.spectrometer,
-                             center_dac=center_dac,
-                             reference_detector=detector,
-                             reference_isotope=isotope,
-                             additional_detectors=detectors)
+        cs = Coincidence(spectrometer=self.spectrometer,
+                         center_dac=center_dac,
+                         reference_detector=detector,
+                         reference_isotope=isotope,
+                         additional_detectors=detectors)
         self.coincidence = cs
         return cs
 
@@ -194,7 +198,7 @@ class IonOpticsManager(Manager):
             t = Thread(name='ion_optics.peak_center', target=self._peak_center,
                        args=args)
             t.start()
-            self._thread = t
+            self._centering_thread = t
             return t
         else:
             self._peak_center(*args)
@@ -203,30 +207,37 @@ class IonOpticsManager(Manager):
                           integration_time=1.04,
                           directions='Increase',
                           center_dac=None, plot_panel=None, new=False,
-                          standalone_graph=True, name='', show_label=False):
+                          standalone_graph=True, name='', show_label=False,
+                          window=0.015, step_width=0.0005, min_peak_height=1.0, percent=80):
 
-        self.spectrometer.save_integration()
+        spec = self.spectrometer
+
+        spec.save_integration()
         self.debug('setup peak center. detector={}, isotope={}'.format(detector, isotope))
         if detector is None or isotope is None:
             self.debug('ask user for peak center configuration')
 
             pcc = self.peak_center_config
-            pcc.dac = self.spectrometer.magnet.dac
+            pcc.dac = spec.magnet.dac
 
             info = pcc.edit_traits()
             if not info.result:
                 return
             else:
-
                 detector = pcc.detector.name
                 isotope = pcc.isotope
                 directions = pcc.directions
                 integration_time = pcc.integration_time
 
-                if not pcc.use_current_dac:
-                    center_dac = pcc.dac
+                window = pcc.window
+                min_peak_height = pcc.min_peak_height
+                step_width = pcc.step_width
+                percent = pcc.percent
 
-        self.spectrometer.set_integration_time(integration_time)
+                # if not pcc.use_current_dac:
+                center_dac = pcc.dac
+
+        spec.set_integration_time(integration_time)
         period = int(integration_time * 1000 * 0.9)
 
         if isinstance(detector, (tuple, list)):
@@ -238,17 +249,6 @@ class IonOpticsManager(Manager):
 
         if center_dac is None:
             center_dac = self.get_center_dac(ref, isotope)
-
-        self._setup_peak_center(detectors, isotope, period,
-                                center_dac, directions, plot_panel, new,
-                                standalone_graph, name, show_label)
-        return self.peak_center
-
-    def _setup_peak_center(self, detectors, isotope, period,
-                           center_dac, directions, plot_panel, new,
-                           standalone_graph, name, show_label):
-
-        spec = self.spectrometer
 
         ref = detectors[0]
         self.reference_detector = ref
@@ -265,6 +265,10 @@ class IonOpticsManager(Manager):
 
         pc.trait_set(center_dac=center_dac,
                      period=period,
+                     window=window,
+                     percent=percent,
+                     min_peak_height=min_peak_height,
+                     step_width=step_width,
                      directions=directions,
                      reference_detector=ref,
                      additional_detectors=ad,
@@ -280,14 +284,13 @@ class IonOpticsManager(Manager):
         else:
             graph.close_func = self.close
             if standalone_graph:
-                # bind to the graphs close_func
-                # self.close is called when graph window is closed
-                # use so we can stop the timer
                 # set graph window attributes
                 graph.window_title = 'Peak Center {}({}) @ {:0.3f}'.format(ref, isotope, center_dac)
                 graph.window_width = 300
                 graph.window_height = 250
                 self.open_view(graph)
+
+        return self.peak_center
 
     def _timeout_func(self, timeout, evt):
         st = time.time()
@@ -324,8 +327,7 @@ class IonOpticsManager(Manager):
             det = spec.get_detector(ref)
 
             dac_a = spec.uncorrect_dac(det, dac_d)
-            self.info('converted to axial units {}'.format(dac_a))
-
+            self.info('dac uncorrected for HV and deflection {}'.format(dac_a))
             if save:
                 save = True
                 if confirm_save:
@@ -400,7 +402,7 @@ class IonOpticsManager(Manager):
                 with open(p) as rfile:
                     config = pickle.load(rfile)
                     config.detectors = dets = self.spectrometer.detectors
-                    config.detector = next((di for di in dets if di.name == config.detector), None)
+                    config.detector = next((di for di in dets if di.name == config.detector_name), None)
 
             except Exception, e:
                 print 'peak center config', e

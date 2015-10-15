@@ -40,6 +40,7 @@ from pychron.dvc.dvc_database import DVCDatabase
 from pychron.dvc.meta_repo import MetaRepo
 from pychron.git_archive.repo_manager import GitRepoManager, format_date
 from pychron.github import Organization
+from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.pychron_constants import OMIT_KEYS, RATIO_KEYS, INTERFERENCE_KEYS
@@ -132,6 +133,7 @@ class DVC(Loggable):
     organization = Str
     github_user = Str
     github_password = Str
+    default_team = Str
 
     experiment_repo = Instance(GitRepoManager)
     auto_add = True
@@ -162,6 +164,9 @@ class DVC(Loggable):
         if self.db.connect():
             self._defaults()
             return True
+
+    def add_default_team(self, repo):
+        pass
 
     def git_session_ctx(self, experiment_id, message):
         return GitSessionCTX(self, experiment_id, message)
@@ -371,7 +376,7 @@ class DVC(Loggable):
         with self.db.session_ctx():
             self.db.add_irradiation_level(*args)
 
-    def add_experiment(self, identifier):
+    def add_experiment(self, identifier, **kw):
         org = Organization(self.organization, usr=self.github_user, pwd=self.github_password)
         if identifier in org.repos:
             self.warning_dialog('Experiment "{}" already exists'.format(identifier))
@@ -381,13 +386,15 @@ class DVC(Loggable):
             if os.path.isdir(root):
                 self.warning_dialog('{} already exists.'.format(root))
             else:
-                self.info('Creating repository. {}'.format(identifier))
-                # with open('/Users/ross/Programming/githubauth.txt') as rfile:
-                #     usr = rfile.readline().strip()
-                #     pwd = rfile.readline().strip()
+                if not self.default_team:
+                    self.warning_dialog('No default team name set in Preferences.\n'
+                                        'Please set a value (e.g "Users") and try creating the experiment again')
+                    return False
 
-                org.create_repo(identifier, self.github_user, self.github_password,
-                                auto_init=True)
+                self.info('Creating experiment repository. {}'.format(identifier))
+
+                org.create_repo(identifier, **kw)
+                org.add_team_to_repository(self.default_team, identifier)
 
                 url = '{}/{}/{}.git'.format(paths.git_base_origin, self.organization, identifier)
                 Repo.clone_from(url, root)
@@ -642,7 +649,7 @@ class DVC(Loggable):
     def _bind_preferences(self):
 
         prefid = 'pychron.dvc'
-        for attr in ('meta_repo_name', 'organization', 'github_user', 'github_password'):
+        for attr in ('meta_repo_name', 'organization', 'github_user', 'github_password', 'default_team'):
             bind_preference(self, attr, '{}.{}'.format(prefid, attr))
 
         prefid = 'pychron.dvc.db'

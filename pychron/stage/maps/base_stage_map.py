@@ -75,9 +75,7 @@ class BaseStageMap(Loggable):
         self.load()
 
     def load(self):
-        # lines = parse_file(self.file_path)
-        # if not lines:
-        #     return
+
         with open(self.file_path, 'r') as rfile:
 
             line = rfile.readline()

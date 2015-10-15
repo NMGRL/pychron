@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Button, CInt, Str
+from traits.api import HasTraits, Button, CInt, Str, Bool
 from traitsui.api import View, Item
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -29,13 +29,17 @@ class EthernetDeviceMixin(Loggable):
     connected = False
     port = CInt
     host = Str
+    kind = Str
     message_frame = Str
+    use_end = Bool
 
     def setup_communicator(self):
         host = self.host
         port = self.port
         self.communicator = ec = EthernetCommunicator(host=host,
                                                       port=port,
+                                                      kind=self.kind,
+                                                      use_end=self.use_end,
                                                       message_frame=self.message_frame)
 
         r = ec.open()
@@ -74,6 +78,3 @@ class EthernetDeviceMixin(Loggable):
             return self.communicator.ask(*args, **kw)
 
 # ============= EOF =============================================
-
-
-

@@ -32,6 +32,7 @@ from pychron.canvas.canvas2D.scene.extraction_line_scene import ExtractionLineSc
 from pychron.canvas.canvas2D.scene.primitives.valves import RoughValve, \
     BaseValve, Switch, ManualSwitch
 import weakref
+from pychron.globals import globalv
 
 W = 2
 H = 2
@@ -46,7 +47,6 @@ class ExtractionLineCanvas2D(SceneCanvas):
     """
     use_backbuffer = True
     border_visible = False
-    #     valves = Dict
     active_item = Any
 
     selected_id = Str
@@ -96,7 +96,9 @@ class ExtractionLineCanvas2D(SceneCanvas):
         if switch is not None:
             switch.state = nstate
         self.draw_valid = False
-        self.request_redraw()
+
+        if refresh:
+            self.request_redraw()
 
     def update_switch_owned_state(self, name, owned):
         switch = self._get_switch_by_name(name)
@@ -113,14 +115,6 @@ class ExtractionLineCanvas2D(SceneCanvas):
         self.draw_valid = False
         self.request_redraw()
 
-    # def load_canvas_file(self, cname, setup_name='canvas', valve_name='valves'):
-    #
-    #     p = os.path.join(paths.canvas2D_dir, '{}.xml'.format(setup_name))
-    #     p2 = os.path.join(paths.canvas2D_dir, cname)
-    #     p3 = os.path.join(paths.extraction_line_dir, '{}.xml'.format(valve_name))
-    #     if os.path.isfile(p):
-    #         self.scene.load(p, p2, p3, self)
-
     def load_canvas_file(self, canvas_path=None, canvas_config_path=None, valves_path=None):
         if canvas_path is None:
             canvas_path = self.manager.application.preferences.get('pychron.extraction_line.canvas_path')
@@ -130,7 +124,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
             valves_path = self.manager.application.preferences.get('pychron.extraction_line.valves_path')
 
         if os.path.isfile(canvas_path):
-            self.scene.load(canvas_path, canvas_config_path, valves_path, weakref.ref(self)())
+            self.scene.load(canvas_path, canvas_config_path, valves_path, self)
             self.invalidate_and_redraw()
 
     def _over_item(self, event):
@@ -181,7 +175,6 @@ class ExtractionLineCanvas2D(SceneCanvas):
 
     def select_left_down(self, event):
         """
-
         """
         item = self.active_item
         if item is None:
@@ -201,7 +194,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
                 else:
                     ok, change = self.manager.close_valve(item.name, mode=mode)
             except TypeError:
-                ok, change=True, True
+                ok, change = True, True
 
         else:
             if not isinstance(item, BaseValve):
@@ -242,10 +235,8 @@ class ExtractionLineCanvas2D(SceneCanvas):
                     else:
                         ok, change = self.manager.close_valve(item.name, mode=mode)
                 except TypeError:
-                    ok, change=True, True
+                    ok, change = True, True
 
-        # print 'change, ok, state'
-        # print item, change, ok, state
         if ok:
             item.state = state
 
@@ -259,28 +250,20 @@ class ExtractionLineCanvas2D(SceneCanvas):
             self.manager.set_software_lock(item.name, lock)
             self.request_redraw()
 
-    # def OnSample(self):
-    # pass
-    #
-    # def OnCycle(self):
-    #     pass
-    #
-    # def OnProperties(self, event):
-    #     self.manager.show_valve_properties(self.active_item.name)
-
     def iter_valves(self):
-        # return (i for i in self.scene.valves.itervalues() if isinstance(i, Switch))
         return (i for i in self.scene.valves.itervalues())
 
     # private
+    @on_trait_change('display_volume, volume_key')
+    def _update_tool(self, name, new):
+        self.tool.trait_set(**{name: new})
+
     def _toggle_laser_state(self, item):
         item.toggle_animate()
         self.request_redraw()
 
     def _get_switch_by_name(self, name):
-        return next((i for i in self.iter_valves() if i.name==name), None)
-        # return next((i for i in self.scene.valves.itervalues()
-        #              if isinstance(i, BaseValve) and i.name == name), None)
+        return next((i for i in self.iter_valves() if i.name == name), None)
 
     def _get_object_by_name(self, name):
         return self.scene.get_item(name)
@@ -298,7 +281,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
 
     def _show_menu(self, event, obj):
         actions = []
-        if self.manager.mode != 'client':
+        if self.manager.mode != 'client' or not globalv.client_only_locking:
             if isinstance(self.active_item, BaseValve):
                 t = 'Lock'
                 if obj.soft_lock:
@@ -314,13 +297,8 @@ class ExtractionLineCanvas2D(SceneCanvas):
             menu = menu_manager.create_menu(event.window.control, None)
             menu.show()
 
-    @on_trait_change('display_volume, volume_key')
-    def _update_tool(self, name, new):
-        self.tool.trait_set(**{name: new})
-
     def _scene_default(self):
-        s = ExtractionLineScene(canvas=weakref.ref(self)())
+        s = ExtractionLineScene(canvas=self)
         return s
-
 
 # ============= EOF ====================================

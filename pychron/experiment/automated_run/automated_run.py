@@ -128,7 +128,7 @@ class AutomatedRun(Loggable):
     arar_age = Instance('pychron.processing.arar_age.ArArAge')
 
     spec = Any
-    runid = Property
+    runid = Str
     uuid = Str
     analysis_id = Long
     fits = List
@@ -173,10 +173,11 @@ class AutomatedRun(Loggable):
     overlap_evt = None
 
     peak_center_threshold1 = Int(10)
-    peak_center_threshold2 = Int(1.25)
+    peak_center_threshold2 = Int(3)
     peak_center_threshold_window = Int(10)
 
-    persistence_spec = Instance(PersistenceSpec, ())
+    persistence_spec = Instance(PersistenceSpec)
+
     # ===============================================================================
     # pyscript interface
     # ===============================================================================
@@ -187,20 +188,16 @@ class AutomatedRun(Loggable):
         return self._whiff(ncounts, conditionals, starttime, starttime_offset, series, fit_series)
 
     def py_reset_data(self):
+        self.debug('reset data')
         self.persister.pre_measurement_save()
         self._persister_action('pre_measurement_save')
 
     def _update_persister_spec(self, **kw):
         self.persistence_spec.trait_set(**kw)
-        for p in (self.persister, self.xls_persister, self.dvc_persister):
-            # for p in (self.xls_persister, self.dvc_persister):
-            if p is not None:
-                p.per_spec = self.persistence_spec
 
     def _persister_action(self, func, *args, **kw):
         getattr(self.persister, func)(*args, **kw)
         for i, p in enumerate((self.xls_persister, self.dvc_persister)):
-            print 'aaaa', i, p
             if p is None:
                 continue
 
@@ -519,11 +516,12 @@ class AutomatedRun(Loggable):
                 v = iso.get_intensity()
                 if v < self.peak_center_threshold1:
                     self.debug('peak center: {}={}<{}'.format(isotope, v, self.peak_center_threshold1))
-                    xs = iso.xs[-self.peak_center_threshold_window:]
-                    xm = xs.mean()
-                    if xm < self.peak_center_threshold2:
+                    ys = iso.ys[-self.peak_center_threshold_window:]
+                    ym = ys.mean()
+                    self.debug('peak center: mean={} threshold={}'.format(ym, self.peak_center_threshold2))
+                    if ym < self.peak_center_threshold2:
                         self.warning(
-                            'Skipping peak center. intensities to small. {}<{}'.format(xm, self.peak_center_threshold2))
+                            'Skipping peak center. intensities to small. {}<{}'.format(ym, self.peak_center_threshold2))
                         return
 
             if not self.plot_panel:
@@ -547,7 +545,7 @@ class AutomatedRun(Loggable):
             self._update_persister_spec(peak_center=pc)
             # if pc.result:
             #     self._persister_action('save_peak_center_to_file', pc)
-                # self.persister.save_peak_center_to_file(pc)
+            # self.persister.save_peak_center_to_file(pc)
 
     def py_coincidence_scan(self):
         pass
@@ -627,9 +625,7 @@ class AutomatedRun(Loggable):
         self.collector.canceled = True
 
         # self.aliquot='##'
-        self.persister.save_enabled = False
-        if self.use_dvc_persistence:
-            self.dvc_persister.save_enabled = False
+        self._persister_action('trait_set', save_enabled=False)
 
         for s in ('extraction', 'measurement'):
             script = getattr(self, '{}_script'.format(s))
@@ -675,16 +671,56 @@ class AutomatedRun(Loggable):
     #
     # ===============================================================================
     def show_conditionals(self, tripped=None):
-        self.experiment_executor.show_conditionals(tripped=tripped,
-                                                   show_measuring=True, kind='live')
+        self.experiment_executor.show_conditionals(active_run=self,
+                                                   tripped=tripped,
+                                                   kind='live')
 
     def teardown(self):
+        self.debug('tear down')
         if self.measurement_script:
             self.measurement_script.automated_run = None
+            self.measurement_script.runner = None
+            self.measurement_script._detectors = None
+            self.measurement_script = None
 
-            # self.py_clear_conditionals()
+        if self.extraction_script:
+            self.extraction_script = None
+        if self.post_equilibration_script:
+            self.post_equilibration_script = None
+        if self.post_measurement_script:
+            self.post_measurement_script = None
+
+        if self.experiment_executor:
+            self.experiment_executor.automated_run = None
+
+        if self.collector:
+            self.collector.automated_run = None
+            self.collector.data_generator = None
+            self.collector.data_writer = None
+            self.collector.measurement_script = None
+
+        if self.plot_panel:
+            self.plot_panel.info_func = None
+            self.plot_panel.automated_run = None
+            self.plot_panel.arar_age = None
+
+        if self.monitor:
+            self.monitor.automated_run = None
+
+        a = self.arar_age
+        if self.arar_age:
+            self.arar_age = None
+
+        if self.persistence_spec:
+            self.persistence_spec.spec = None
+            self.persistence_spec.arar_age = None
+
+        self._persister_action('trait_set', persistence_spec=None)
+        self.spec = None
+        # self.py_clear_conditionals()
 
     def finish(self):
+        self.debug('----------------- finish -----------------')
 
         if self.monitor:
             self.monitor.stop()
@@ -695,10 +731,16 @@ class AutomatedRun(Loggable):
         self.stop()
 
     def stop(self):
+        self.debug('----------------- stop -----------------')
         self._alive = False
         self.collector.stop()
 
     def start(self):
+        self.debug('----------------- start -----------------')
+        self.persistence_spec = PersistenceSpec()
+        for p in (self.persister, self.xls_persister, self.dvc_persister):
+            if p is not None:
+                p.per_spec = self.persistence_spec
 
         if self.monitor is None:
             return self._start()
@@ -859,8 +901,8 @@ class AutomatedRun(Loggable):
                 ret = self.system_health.add_analysis(self)
 
             if self.persister.secondary_database_fail:
-                self.cancel(cancel_run=True,
-                            msg=self.persister.secondary_database_fail)
+                self.experiment_executor.cancel(cancel_run=True,
+                                                msg=self.persister.secondary_database_fail)
             else:
                 return True
 
@@ -1064,7 +1106,6 @@ class AutomatedRun(Loggable):
         self.state = 'measurement'
 
         self._persister_action('pre_measurement_save')
-        self.persister.pre_measurement_save()
 
         self.measuring = True
         self._persister_action('trait_set', save_enabled=True)
@@ -1194,6 +1235,9 @@ anaylsis_type={}
     def setup_context(self, *args, **kw):
         self._setup_context(*args, **kw)
 
+    def refresh_scripts(self):
+        self._refresh_scripts()
+
     # ===============================================================================
     # private
     # ===============================================================================
@@ -1259,7 +1303,7 @@ anaylsis_type={}
             ip = os.path.join(paths.scripts_dir, 'options', add_extension(ip, '.yaml'))
 
         if self.measurement_script:
-            self.measurement_script.reset(weakref.ref(self)())
+            self.measurement_script.reset(self)
             # set the interpolation path
             self.measurement_script.interpolation_path = ip
 
@@ -1838,7 +1882,7 @@ anaylsis_type={}
 
         m.trait_set(
             console_display=self.experiment_executor.console_display,
-            automated_run=weakref.ref(self)(),
+            automated_run=self,
             measurement_script=script,
             detectors=self._active_detectors,
             collection_kind=grpname,
@@ -1872,7 +1916,6 @@ anaylsis_type={}
 
         return not m.canceled
 
-    #
     def _setup_isotope_graph(self, starttime_offset, color, grpname):
         """
             execute in main thread is necessary.
@@ -1973,44 +2016,43 @@ anaylsis_type={}
         sname = getattr(self.script_info, '{}_script_name'.format(name))
         if sname and sname != NULL_STR:
             sname = self._make_script_name(sname)
-            skey = '{}{}'.format(name, sname)
-            if skey in SCRIPTS:
-                script = SCRIPTS[skey]
-                if script.check_for_modifications() or self.is_alive():
-                    self.debug('script {} modified/overlapping. reloading'.format(sname))
-                    script = self._bootstrap_script(sname, name)
-            else:
-                script = self._bootstrap_script(sname, name)
+            # skey = '{}{}'.format(name, sname)
+            # if skey in SCRIPTS:
+            #     script = SCRIPTS[skey]
+            #     if script.check_for_modifications() or self.is_alive():
+            #         self.debug('script {} modified/overlapping. reloading'.format(sname))
+            #         script = self._bootstrap_script(sname, name)
+            # else:
+            script = self._bootstrap_script(sname, name)
 
         return script
 
     def _bootstrap_script(self, fname, name):
-        global SCRIPTS
+        # global SCRIPTS
         global WARNED_SCRIPTS
 
         def warn(fn, e):
             self.spec.executable = False
 
-            if not fn in WARNED_SCRIPTS:
+            if fn not in WARNED_SCRIPTS:
                 WARNED_SCRIPTS.append(fn)
                 self.warning_dialog('Invalid Script {}\n{}'.format(fn, e))
 
         self.debug('loading script "{}"'.format(fname))
         func = getattr(self, '_{}_script_factory'.format(name))
         s = func()
-        valid = True
+        # valid = True
         if s and os.path.isfile(s.filename):
             if s.bootstrap():
-                self.debug('%%%%%%%%%%%%%%%%%%%%%%%%%%%% setting default context for {}'.format(fname))
                 s.set_default_context()
         else:
-            valid = False
+            # valid = False
             fname = s.filename if s else fname
             e = 'Not a file'
             warn(fname, e)
 
-        if valid:
-            SCRIPTS[fname] = s
+        # if valid:
+        #     SCRIPTS[fname] = s
         return s
 
     def _measurement_script_factory(self):
@@ -2086,8 +2128,8 @@ anaylsis_type={}
 
         return default
 
-    def _get_runid(self):
-        return self.spec.runid
+    # def _get_runid(self):
+    #     return self.spec.runid
         # return make_runid(self.spec.labnumber,
         # self.spec.aliquot,
         # self.spec.step)
@@ -2138,17 +2180,17 @@ anaylsis_type={}
     # ===============================================================================
     # defaults
     # ===============================================================================
-    def _measurement_script_default(self):
-        return self._load_script('measurement')
-
-    def _post_measurement_script_default(self):
-        return self._load_script('post_measurement')
-
-    def _post_equilibration_script_default(self):
-        return self._load_script('post_equilibration')
-
-    def _extraction_script_default(self):
-        return self._load_script('extraction')
+    # def _measurement_script_default(self):
+    #     return self._load_script('measurement')
+    #
+    # def _post_measurement_script_default(self):
+    #     return self._load_script('post_measurement')
+    #
+    # def _post_equilibration_script_default(self):
+    #     return self._load_script('post_equilibration')
+    #
+    # def _extraction_script_default(self):
+    #     return self._load_script('extraction')
 
     #
     def _peak_hop_collector_default(self):

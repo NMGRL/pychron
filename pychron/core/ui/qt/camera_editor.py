@@ -22,7 +22,7 @@ from traits.api import HasTraits, Button, Int, Instance, Str, Event
 from traitsui.api import View, Item
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from traitsui.qt4.basic_editor_factory import BasicEditorFactory
+from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.editor import Editor
 
 

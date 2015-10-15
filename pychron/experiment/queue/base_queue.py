@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Instance, Str, Property, Event, Bool, String, List, CInt
+from traits.api import Instance, Str, Property, Event, Bool, String, List, CInt, cached_property
 # ============= standard library imports ========================
 import yaml
 import os
@@ -86,7 +86,6 @@ class BaseExperimentQueue(RunBlock):
     initialized = True
 
     load_name = Str
-    experiment_identifier = Str
 
     _no_update = False
     _frequency_group_counter = 0
@@ -151,6 +150,8 @@ class BaseExperimentQueue(RunBlock):
 
     def set_extract_device(self, v):
         self.extract_device = v
+        for a in self.automated_runs:
+            a.extract_device = v
 
     def is_updateable(self):
         return not self._no_update
@@ -227,9 +228,6 @@ class BaseExperimentQueue(RunBlock):
         if self.selected:
             idx = aruns.index(self.selected[-1])
             for ri in reversed(runspecs):
-                if not ri.experiment_identifier:
-                    ri.experiment_identifier = self.experiment_identifier
-
                 aruns.insert(idx + 1, ri)
         else:
             aruns.extend(runspecs)

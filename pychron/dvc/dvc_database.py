@@ -32,6 +32,7 @@ from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, Ir
     MaterialTbl, IrradiationPositionTbl, UserTbl, ExtractDeviceTbl, LoadTbl, LoadHolderTbl, LoadPositionTbl, \
     MeasuredPositionTbl, ProductionTbl, VersionTbl, ExperimentAssociationTbl, ExperimentTbl, TagTbl, AnalysisChangeTbl, \
     InterpretedAgeTbl, InterpretedAgeSetTbl
+from pychron.globals import globalv
 from pychron.pychron_constants import ALPHAS, alpha_to_int
 
 
@@ -208,7 +209,12 @@ class DVCDatabase(DatabaseAdapter):
         a = AnalysisTbl(**kw)
         return self._add_item(a)
 
+    def add_analysis_change(self, **kw):
+        a = AnalysisChangeTbl(**kw)
+        return self._add_item(a)
+
     def add_experiment_association(self, experiment, analysis):
+        self.debug('add association {}'.format(experiment))
         experiment = self.get_experiment(experiment)
         e = ExperimentAssociationTbl()
         e.experiment = experiment
@@ -270,8 +276,16 @@ class DVCDatabase(DatabaseAdapter):
         a = LoadPositionTbl(identifier=ln, position=position, weight=weight, note=note)
         return self._add_item(a)
 
-    def add_experiment(self, name, **kw):
-        a = ExperimentTbl(name=name, **kw)
+    def add_experiment(self, name, creator_name=None, **kw):
+        if creator_name is None:
+            creator_name = globalv.username
+
+        creator = self.get_user(creator_name)
+        if not creator:
+            creator = self.add_user(creator_name)
+            self.flush()
+
+        a = ExperimentTbl(name=name, creator=creator.name, **kw)
         return self._add_item(a)
 
     def add_interpreted_age(self, **kw):

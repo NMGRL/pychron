@@ -24,6 +24,7 @@ from pyface.tasks.action.schema import SMenu
 import os
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import list_directory2
+from pychron.core.helpers.strtools import to_bool
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.envisage.tasks.list_actions import PatternAction, ShowMotionConfigureAction
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
@@ -86,34 +87,41 @@ class BaseLaserPlugin(BaseTaskPlugin):
         plugin = ip.get_plugin(self.klass[1].replace('Manager', ''), category='hardware')
         mode = ip.get_parameter(plugin, 'mode')
 
-        if mode == 'client':
-            klass = ip.get_parameter(plugin, 'klass')
-            if klass is None:
-                klass = 'PychronLaserManager'
+        klass = ip.get_parameter(plugin, 'klass')
+        if klass is None and mode == 'client':
+            klass = 'PychronLaserManager'
+            pkg = 'pychron.lasers.laser_managers.api'
+            factory = __import__(pkg, fromlist=[klass])
+            klassfactory = getattr(factory, klass)
+        else:
+            factory = __import__(self.klass[0], fromlist=[self.klass[1]])
+            klassfactory = getattr(factory, self.klass[1])
 
-            pkg = 'pychron.lasers.laser_managers.pychron_laser_manager'
-            params = dict()
+        params = dict(name=self.name)
+        if mode == 'client':
             try:
                 tag = ip.get_parameter(plugin, 'communications', element=True)
-                for attr in ['host', 'port', 'kind', 'message_frame']:
+                for attr in ['host', 'port', 'kind', 'message_frame', ('use_end', to_bool)]:
+                    func = None
+                    if isinstance(attr, tuple):
+                        attr, func = attr
+
                     try:
-                        params[attr] = tag.find(attr).text.strip()
+                        v = tag.find(attr).text.strip()
+                        if func:
+                            v = func(v)
+
+                        params[attr] = v
                     except Exception, e:
                         print 'client comms fail a', attr, e
             except Exception, e:
                 print 'client comms fail b', e
 
-            params['name'] = self.name
-            factory = __import__(pkg, fromlist=[klass])
-            m = getattr(factory, klass)(**params)
-        else:
-            factory = __import__(self.klass[0], fromlist=[self.klass[1]])
-            m = getattr(factory, self.klass[1])()
-
+        m = klassfactory(**params)
+        m.mode = mode
         m.bootstrap()
         m.plugin_id = self.id
         m.bind_preferences(self.id)
-
         return m
 
     def _managers_default(self):
@@ -129,7 +137,6 @@ class BaseLaserPlugin(BaseTaskPlugin):
         return d
 
     def _get_manager(self):
-        # print 'get manager', self.name
         return self.application.get_service(ILaserManager, 'name=="{}"'.format(self.name))
 
         # def execute_pattern(self, name):

@@ -14,17 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-
-
 # =============enthought library imports=======================
 # ============= standard library imports ========================
 from threading import Event
 import time
 
 from PySide.QtCore import QThread
-
-
-
 # ============= local library imports  ==========================
 
 
@@ -43,11 +38,7 @@ class Timer(QThread):
 
         self.start()
 
-
     def run(self):
-
-    #         p = self._period
-    #         self._completed = False
         func = self.func
         flag = self._flag
         args = self._args
@@ -94,9 +85,9 @@ class Timer(QThread):
         self._period = v / 1000.
 
     def get_interval(self):
-        '''
+        """
             return period in s
-        '''
+        """
         return self._period
 
-    # ============= EOF =====================================
+# ============= EOF =====================================

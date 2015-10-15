@@ -16,7 +16,9 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+import io
 import json
+import os
 import re
 import traceback
 
@@ -25,7 +27,8 @@ from twisted.internet.protocol import Protocol
 
 
 # ============= local library imports  ==========================
-from twisted.logger import Logger
+from twisted.logger import Logger, jsonFileLogObserver
+from pychron.paths import paths
 from pychron.tx.errors import InvalidArgumentsErrorCode
 from pychron.tx.exceptions import ServiceNameError, ResponseError
 
@@ -50,10 +53,10 @@ def nargs_err(failure):
     return InvalidArgumentsErrorCode('Foo', str(failure.value))
 
 
-# path = os.path.join(paths.log_dir, 'pps.log.json')
-# obs = jsonFileLogObserver(io.open(path, 'w'))
-# logger = Logger(observer=obs)
-logger = Logger()
+path = os.path.join(paths.log_dir, 'pps.log.json')
+obs = jsonFileLogObserver(io.open(path, 'w'))
+logger = Logger(observer=obs)
+# logger = Logger()
 
 regex = re.compile(r'^(?P<command>\w+) {0,1}(?P<args>.*)')
 
@@ -102,6 +105,12 @@ class ServiceProtocol(Protocol):
 
         self._services[service_name] = d
 
+    def _register_services(self, services):
+        for name, cb in services:
+            if isinstance(cb, str):
+                cb = getattr(self, cb)
+            self.register_service(name, cb)
+
     def _prepare_response(self, data):
         if isinstance(data, bool) and data:
             return 'OK'
@@ -132,7 +141,7 @@ class ServiceProtocol(Protocol):
             traceback.print_exc()
             raise ServiceNameError(name, data)
 
-    def _get_response(self, service, data):
+    def _prepare_data(self, data):
         if isinstance(data, dict):
             cdata = data
         else:
@@ -147,6 +156,10 @@ class ServiceProtocol(Protocol):
             cdata = data
 
         self.debug('Data {cdata!r}', cdata=cdata)
+        return cdata
+
+    def _get_response(self, service, data):
+        cdata = self._prepare_data(data)
         service.callback(cdata)
 
 # ============= EOF =============================================

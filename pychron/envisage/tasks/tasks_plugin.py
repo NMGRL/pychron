@@ -32,6 +32,7 @@ from pyface.tasks.action.schema_addition import SchemaAddition
 # ============= standard library imports ========================
 import hashlib
 # ============= local library imports  ==========================
+from pychron.core.helpers.strtools import to_bool
 from pychron.envisage.tasks.base_plugin import BasePlugin
 from pychron.paths import paths
 from pychron.envisage.resources import icon
@@ -84,7 +85,7 @@ class PychronTasksPlugin(BasePlugin):
         self._random_tip()
 
     def _random_tip(self):
-        if globalv.random_tip_enabled and self.application.preferences.get('pychron.general.show_random_tip'):
+        if globalv.random_tip_enabled and to_bool(self.application.preferences.get('pychron.general.show_random_tip')):
             from pychron.envisage.tasks.tip_view import TipView
 
             t = random.choice(self.help_tips)

@@ -95,6 +95,9 @@ class StageManager(BaseStageManager):
         super(StageManager, self).__init__(*args, **kw)
         self.stage_controller = self._stage_controller_factory()
 
+    def shutdown(self):
+        self._save_stage_map()
+
     def create_device(self, *args, **kw):
         dev = super(StageManager, self).create_device(*args, **kw)
         dev.parent = self
@@ -157,8 +160,8 @@ class StageManager(BaseStageManager):
         # should have calibration files for each stage map
         self.tray_calibration_manager.load_calibration()
 
-    #    def finish_loading(self):
-    #        self.initialize_stage()
+    def finish_loading(self):
+        self.initialize_stage()
 
     def initialize_stage(self):
         self.update_axes()
@@ -246,27 +249,6 @@ class StageManager(BaseStageManager):
     def get_hole(self, name):
         if self.stage_map:
             return self.stage_map.get_hole(name)
-            #
-            #    def do_pattern(self, patternname):
-            #        return self.pattern_manager.execute_pattern(patternname)
-
-    def _update_axes(self):
-        if self.stage_controller:
-            self.stage_controller.update_axes()
-
-    # def update_axes(self, update_hole=True):
-    #     """
-    #     """
-    #     self.info('querying axis positions')
-    #     self.stage_controller.update_axes()
-
-    #        if update_hole:
-    #            #check to see if we are at a hole
-    #            hole = self.get_calibrated_hole(self.stage_controller._x_position,
-    #                                              self.stage_controller._y_position,
-    #                                              )
-    #            if hole is not None:
-    #                self._hole = str(hole.id)
 
     def move_to_load_position(self):
         """
@@ -342,6 +324,17 @@ class StageManager(BaseStageManager):
             return next((si for si in smap.sample_holes
                          if _filter(si, x, y)
                          ), None)
+
+    def get_hole_xy(self, key):
+        pos = self.stage_map.get_hole_pos(key)
+        # map the position to calibrated space
+        pos = self.get_calibrated_position(pos)
+        return pos
+
+    # private
+    def _update_axes(self):
+        if self.stage_controller:
+            self.stage_controller.update_axes()
 
     def _home(self):
         """
@@ -731,12 +724,6 @@ class StageManager(BaseStageManager):
         self.info('Move complete')
         self.update_axes()
 
-    def get_hole_xy(self, key):
-        pos = self._stage_map.get_hole_pos(key)
-        # map the position to calibrated space
-        pos = self.get_calibrated_position(pos)
-        return pos
-
     def _move_to_hole(self, key, correct_position=True):
         self.info('Move to hole {} type={}'.format(key, str(type(key))))
         self.temp_hole = key
@@ -745,7 +732,6 @@ class StageManager(BaseStageManager):
         pos = self.stage_map.get_corrected_hole_pos(key)
         self.info('position {}'.format(pos))
         if pos is not None:
-        #             self.visualizer.set_current_hole(key)
 
             if abs(pos[0]) < 1e-6:
                 pos = self.stage_map.get_hole_pos(key)
@@ -972,7 +958,7 @@ class StageManager(BaseStageManager):
     # ===============================================================================
     # factories
     # ===============================================================================
-    def motion_configure_factory(self, **kw):
+    def _motion_configure_factory(self, **kw):
         return MotionControllerManager(motion_controller=self.stage_controller,
                                        application=self.application,
                                        **kw)
@@ -1011,7 +997,7 @@ class StageManager(BaseStageManager):
     # ===============================================================================
 
     def _motion_controller_manager_default(self):
-        return self.motion_configure_factory()
+        return self._motion_configure_factory()
 
     def _title_default(self):
         return '%s Stage Manager' % self.name[:-5].capitalize()

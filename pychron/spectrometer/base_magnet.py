@@ -117,9 +117,12 @@ class BaseMagnet(HasTraits):
             c = list(p)
             c[-1] -= dac
             return mass_cal_func(c, x)
+        try:
+            mass = optimize.brentq(func, 0, 200)
+            return mass
 
-        mass = optimize.brentq(func, 0, 200)
-        return mass
+        except ValueError:
+            self.debug('DAC does not map to an isotope. DAC={}, Detector={}'.format(dac, detname))
 
     def map_mass_to_dac(self, mass, detname):
         """
@@ -161,8 +164,9 @@ class BaseMagnet(HasTraits):
             dac = self.spectrometer.uncorrect_dac(det, dac, current=current)
 
         m = self.map_dac_to_mass(dac, det.name)
-        molweights = self.spectrometer.molecular_weights
-        return next((k for k, v in molweights.iteritems() if abs(v - m) < 0.001), None)
+        if m is not None:
+            molweights = self.spectrometer.molecular_weights
+            return next((k for k, v in molweights.iteritems() if abs(v - m) < 0.001), None)
 
     def mass_change(self, m):
         """

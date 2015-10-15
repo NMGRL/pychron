@@ -33,7 +33,8 @@ class LaserProtocol(ServiceProtocol):
         self._manager = man
         self._addr = addr
 
-        services = (('MachineVisionDegas', '_machine_vision_degas'),
+        services = (('GetError', '_get_error'),
+                    ('MachineVisionDegas', '_machine_vision_degas'),
                     ('StartVideoRecording', '_start_video_recording'),
                     ('StopVideoRecording', '_stop_video_recording'),
                     ('ReadLaserPower', '_read_laser_power'),
@@ -83,7 +84,7 @@ class LaserProtocol(ServiceProtocol):
                     ('GetOutputBlob', '_get_output_blob'),
                     ('GoToNamedPosition', '_go_to_named_position'),
                     ('GoToPoint', '_go_to_point'),
-                    ('TracePath', '_trace_path'),
+                    # ('TracePath', '_trace_path'),
                     ('IsTracing', '_is_tracing'),
                     ('StopTrace', '_stop_trace'),
                     ('Prepare', '_prepare'),
@@ -94,29 +95,39 @@ class LaserProtocol(ServiceProtocol):
     # ===============================================================================
     # Machine Vision
     # ===============================================================================
-    def _machine_vision_degas(self, manager, lumens, duration):
-        manager.do_machine_vision_degas(lumens, duration, new_thread=True)
+    def _machine_vision_degas(self, data):
+        if isinstance(data, dict):
+            lumens, duration = data['lumens'], data['duration']
+        else:
+            lumens, duration = data
 
-    def _get_auto_correcting(self, manager, data):
-        return manager.stage_manager.is_auto_correcting()
+        lumens, duration = float(lumens), float(duration)
+        self._manager.do_machine_vision_degas(lumens, duration, new_thread=True)
+
+    def _get_auto_correcting(self, data):
+        return self._manager.stage_manager.is_auto_correcting()
 
     # ===============================================================================
     # Video
     # ===============================================================================
-    def _start_video_recording(self, manager, data):
-        manager.start_video_recording(data)
+    def _start_video_recording(self, data):
+        self._manager.start_video_recording(data)
 
-    def _stop_video_recording(self, manager, data):
-        manager.stop_video_recording()
+    def _stop_video_recording(self, data):
+        self._manager.stop_video_recording()
 
-    def _snapshot(self, manager, name, pic_format):
+    def _snapshot(self, data):
         """
             name: base name for file. saved in default directory
 
             returns: abs path to saved file in the media server
         """
+        if isinstance(data, dict):
+            name, pic_format = data['name'], data['pic_format']
+        else:
+            name, pic_format = data
 
-        sm = manager.stage_manager
+        sm = self._manager.stage_manager
         if hasattr(sm, 'video'):
             if pic_format not in ('.jpg', '.png'):
                 pic_format = '.jpg'
@@ -133,110 +144,135 @@ class LaserProtocol(ServiceProtocol):
     # ===============================================================================
     # Laser
     # ===============================================================================
-    def _read_laser_power(self, manager, data):
+    def _get_error(self, data):
+        return self._manager.get_error() or 'OK'
+
+    def _read_laser_power(self, data):
         """
             return watts
         """
-        return manager.get_laser_watts()
+        return self._manager.get_laser_watts()
 
-    def _get_laser_status(self, manager, data):
+    def _get_laser_status(self, data):
         return
 
-    def _prepare_laser(self, manager, data):
-        manager.prepare_laser()
+    def _prepare_laser(self, data):
+        self._manager.prepare_laser()
         return True
 
-    def _laser_ready(self, manager, data):
-        return manager.is_laser_ready()
+    def _laser_ready(self, data):
+        return self._manager.is_laser_ready()
 
-    def _enable(self, manager, data):
-        err = manager.enable_laser()
+    def _enable(self, data):
+        err = self._manager.enable_laser()
         if err is None:
             err = LogicBoardCommErrorCode()
         elif isinstance(err, str):
             err = EnableErrorCode(err)
-        return err
+        return err or 'OK'
 
-    def _disable(self, manager, data):
-        err = manager.disable_laser()
+    def _disable(self, data):
+        err = self._manager.disable_laser()
         if err is None:
             err = LogicBoardCommErrorCode()
         elif isinstance(err, str):
             err = EnableErrorCode(err)
+        return err or 'OK'
 
-    def _set_laser_power(self, manager, data):
+    def _set_laser_power(self, data):
         try:
             p = float(data)
         except:
             return InvalidArgumentsErrorCode('SetLaserPower', data)
 
-        manager.set_laser_power(p)
+        self._manager.set_laser_power(p)
         return True
 
-    def _set_laser_output(self, manager, value, units):
+    def _set_laser_output(self, data):
+        if isinstance(data, dict):
+            value, units = data['value'], data['units']
+        else:
+            value, units = data
+
         try:
             p = float(value)
         except:
             return InvalidArgumentsErrorCode('SetLaserOutput', value)
 
-        manager.set_laser_output(p, units)
+        self._manager.set_laser_output(p, units)
         return True
 
-    def _get_achieved_output(self, manager, data):
-        return manager.get_achieved_output()
+    def _get_achieved_output(self, data):
+        return self._manager.get_achieved_output()
 
-    def _get_response_blob(self, manager, data):
-        return manager.get_response_blob()
+    def _get_response_blob(self, data):
+        return self._manager.get_response_blob()
 
-    def _get_output_blob(self, manager, data):
-        return manager.get_output_blob()
+    def _get_output_blob(self, data):
+        return self._manager.get_output_blob()
 
     # ===============================================================================
     # Motors
     # ===============================================================================
-    def _set_beam_diameter(self, manager, data):
+    def _set_beam_diameter(self, data):
         try:
             bd = float(data)
         except ValueError:
             return InvalidArgumentsErrorCode('SetBeamDiameter', data)
-        return manager.set_beam_diameter(bd, block=False)
+        return self._manager.set_beam_diameter(bd, block=False)
 
-    def _get_beam_diameter(self, manager, data):
-        motor = manager.get_motor('beam')
+    def _get_beam_diameter(self, data):
+        motor = self._manager.get_motor('beam')
         pos = 'No Beam Motor'
         if motor:
             pos = motor.data_position
         return pos
 
-    def _set_zoom(self, manager, data):
+    def _set_zoom(self, data):
         try:
             zoom = float(data)
         except (ValueError, TypeError):
             return InvalidArgumentsErrorCode('SetZoom', data)
 
-        manager.zoom = zoom
+        self._manager.zoom = zoom
         return True
 
-    def _get_zoom(self, manager, data):
-        motor = manager.get_motor('zoom')
+    def _get_zoom(self, data):
+        motor = self._manager.get_motor('zoom')
         pos = 'No Zoom Motor'
         if motor:
             pos = motor.data_position
         return pos
 
-    def _set_motor_lock(self, manager, name, data):
-        return manager.set_motor_lock(name, data)
+    def _set_motor_lock(self, data):
+        if isinstance(data, dict):
+            name = data['name']
+            value = data['value']
+        else:
+            name, value = data
 
-    def _set_motor(self, manager, name, data):
+        return self._manager.set_motor_lock(name, value)
+
+    def _set_motor(self, data):
+        if isinstance(data, dict):
+            name = data['name']
+            value = data['value']
+        else:
+            name, value = data
+
         try:
-            data = float(data)
+            value = float(value)
         except ValueError:
-            return InvalidArgumentsErrorCode('SetMotor', data)
+            return InvalidArgumentsErrorCode('SetMotor', value)
 
-        return manager.set_motor(name, data, block=False)
+        return self._manager.set_motor(name, value, block=False)
 
-    def _get_motor_moving(self, manager, name):
-        motor = manager.get_motor(name)
+    def _get_motor_moving(self, data):
+        if isinstance(data, dict):
+            name = data['name']
+        else:
+            name = data
+        motor = self._manager.get_motor(name)
         if motor is None:
             r = InvalidMotorErrorCode(name)
         else:
@@ -246,9 +282,13 @@ class LaserProtocol(ServiceProtocol):
     # ===============================================================================
     # Positioning
     # ===============================================================================
-    def _set_x_y(self, manager, x, y):
+    def _set_x_y(self, data):
+        if isinstance(data, dict):
+            x, y = data['x'], data['y']
+        else:
+            x, y = data
         # try:
-        #     x, y = data.split(',')
+        #     x, y = data
         # except (ValueError, AttributeError):
         #     return InvalidArgumentsErrorCode('SetXY', '{}'.format(data))
 
@@ -263,21 +303,22 @@ class LaserProtocol(ServiceProtocol):
             return InvalidArgumentsErrorCode('SetXY', 'y{}'.format(y))
 
         # need to remember x,y so we can fool mass spec that we are at position
-        manager.stage_manager.temp_position = x, y
+        self._manager.stage_manager.temp_position = x, y
 
-        err = manager.stage_manager.set_xy(x, y)
+        err = self._manager.stage_manager.set_xy(x, y)
+        return err or 'OK'
 
-    def _set_x(self, manager, data):
-        return self._set_axis(manager, 'x', data)
+    def _set_x(self, data):
+        return self._set_axis('x', data)
 
-    def _set_y(self, manager, data):
-        return self._set_axis(manager, 'y', data)
+    def _set_y(self, data):
+        return self._set_axis('y', data)
 
-    def _set_z(self, manager, data):
-        return self._set_axis(manager, 'z', data)
+    def _set_z(self, data):
+        return self._set_axis('z', data)
 
-    def _get_position(self, manager, data):
-        smanager = manager.stage_manager
+    def _get_position(self, data):
+        smanager = self._manager.stage_manager
 
         z = smanager.get_z()
         if smanager.temp_position is not None and not smanager.moving():
@@ -288,119 +329,126 @@ class LaserProtocol(ServiceProtocol):
         pos = x, y, z
         return ','.join(['{:0.5f}'.format(i) for i in pos])
 
-    def _get_drive_moving(self, manager, data):
-        return manager.stage_manager.moving()
+    def _get_drive_moving(self, data):
+        return self._manager.stage_manager.moving()
 
-    def _get_x_moving(self, manager, data):
-        return manager.stage_manager.moving(axis='x')
+    def _get_x_moving(self, data):
+        return self._manager.stage_manager.moving(axis='x')
 
-    def _get_y_moving(self, manager, data):
-        return manager.stage_manager.moving(axis='y')
+    def _get_y_moving(self, data):
+        return self._manager.stage_manager.moving(axis='y')
 
-    def _get_z_moving(self, manager, data):
-        return manager.stage_manager.moving(axis='z')
+    def _get_z_moving(self, data):
+        return self._manager.stage_manager.moving(axis='z')
 
-    def _stop_drive(self, manager, data):
-        manager.stage_manager.stop()
+    def _stop_drive(self, data):
+        self._manager.stage_manager.stop()
         return True
 
-    def _set_drive_home(self, manager, data):
-        manager.stage_manager.define_home()
+    def _set_drive_home(self, data):
+        self._manager.stage_manager.define_home()
         return True
 
-    def _set_home_x(self, manager, data):
-        return self._set_home_(manager, axis='x')
+    def _set_home_x(self, data):
+        return self._set_home_(self._manager, axis='x')
 
-    def _set_home_y(self, manager, data):
-        return self._set_home_(manager, axis='y')
+    def _set_home_y(self, data):
+        return self._set_home_(self._manager, axis='y')
 
-    def _set_home_z(self, manager, data):
-        return self._set_home_(manager, axis='z')
+    def _set_home_z(self, data):
+        return self._set_home_(self._manager, axis='z')
 
-    def _set_sample_holder(self, manager, name):
+    def _set_sample_holder(self, name):
         if name is None:
             r = InvalidArgumentsErrorCode('SetSampleHolder', name)
         else:
-            err = manager.stage_manager._set_stage_map(name)
+            err = self._manager.stage_manager._set_stage_map(name)
             if not err:
                 r = InvalidSampleHolderErrorCode(name)
 
         return r
 
-    def _get_sample_holder(self, manager, data):
-        return manager.stage_manager.stage_map
+    def _get_sample_holder(self, data):
+        return self._manager.stage_manager.stage_map
 
-    def _go_to_hole(self, manager, hole, autocenter):
+    def _go_to_hole(self, data):
+        if isinstance(data, dict):
+            hole, autocenter = data['hole'], data['autocenter']
+        else:
+            hole, autocenter = data
+
         try:
             hole = int(hole)
             autocenter = to_bool(autocenter)
-            err = manager.stage_manager.move_to_hole(str(hole),
-                                                     correct_position=autocenter)
+            err = self._manager.stage_manager.move_to_hole(str(hole),
+                                                           correct_position=autocenter)
         except (ValueError, TypeError):
             err = InvalidArgumentsErrorCode('GoToHole', (hole, autocenter))
 
-    def _go_to_named_position(self, manager, data):
-        return manager.goto_named_position(data)
+        return err or 'OK'
 
-    def _go_to_point(self, manager, data):
-        return manager.goto_point(data)
+    def _go_to_named_position(self, data):
+        return self._manager.goto_named_position(data)
 
-    def _trace_path(self, manager, value, pathname, kind):
-        return manager.trace_path(value, pathname, kind)
+    def _go_to_point(self, data):
+        return self._manager.goto_point(data)
 
-    def _is_tracing(self, manager, data):
-        return manager.isTracing()
+    # def _trace_path(self, manager, value, pathname, kind):
+    #     return self._manager.trace_path(value, pathname, kind)
 
-    def _stop_trace(self, manager, data):
-        return manager.stop_trace()
+    def _is_tracing(self, data):
+        return self._manager.isTracing()
+
+    def _stop_trace(self, data):
+        return self._manager.stop_trace()
 
     # ===============================================================================
     # Patterning
     # ===============================================================================
-    def _get_pattern_names(self, manager, data):
+    def _get_pattern_names(self, data):
         ret = ''
-        jogs = manager.get_pattern_names()
+        jogs = self._manager.get_pattern_names()
         if jogs:
             ret = ','.join(jogs)
 
         return ret
 
-    def _do_pattern(self, manager, name):
-        return manager.execute_pattern(name)
+    def _do_pattern(self, name):
+        return self._manager.execute_pattern(name) or 'OK'
 
-    def _is_patterning(self, manager, data):
-        return manager.isPatterning()
+    def _is_patterning(self, data):
+        return self._manager.isPatterning()
 
-    def _abort_pattern(self, manager, data):
-        return manager.stop_pattern()
+    def _abort_pattern(self, data):
+        return self._manager.stop_pattern() or 'OK'
 
     # ===============================================================================
     # Misc
     # ===============================================================================
-    def _prepare(self, manager, data):
-        return manager.prepare()
+    def _prepare(self, data):
+        return self._manager.prepare()
 
-    def _is_ready(self, manager, data):
-        return manager.is_ready()
+    def _is_ready(self, data):
+        return self._manager.is_ready()
 
-    def _set_light(self, manager, data):
-        manager.set_light(data)
+    def _set_light(self, data):
+        self._manager.set_light(data)
         return True
 
     # helpers
-    def _set_axis(self, manager, axis, value):
+    def _set_axis(self, axis, value):
         try:
             d = float(value)
         except (ValueError, TypeError), err:
             return InvalidArgumentsErrorCode('Set{}'.format(axis.upper()), err)
 
-        err = manager.stage_manager.single_axis_move(axis, d)
-        return self.error_response(err)
+        err = self._manager.stage_manager.single_axis_move(axis, d)
+        return err or 'OK'
 
-    def _set_home_(self, manager, **kw):
+    def _set_home_(self, **kw):
         """
         """
-        err = manager.stage_manager.define_home(**kw)
-        return self.error_response(err)
+        err = self._manager.stage_manager.define_home(**kw)
+        return err or 'OK'
 
 # ============= EOF =============================================

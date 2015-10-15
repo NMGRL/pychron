@@ -108,12 +108,12 @@ class GitRepoPreferencesHelper(BasePreferencesHelper):
         self._remote_status_color = 'red'
         self._remote_status = 'Invalid'
 
-
     def _connection_hook(self):
         pass
 
     def _set_remote(self, v):
-        self._remote = v
+        if v is not None:
+            self._remote = v
 
     def _get_remote(self):
         return self._remote

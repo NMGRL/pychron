@@ -34,6 +34,7 @@ class Primitive(HasTraits):
     oy = Float
     offset_x = Float
     offset_y = Float
+    force_layout = False
 
     state = False
     selected = False
@@ -59,10 +60,7 @@ class Primitive(HasTraits):
     visible = True
 
     primitives = List
-    label = Property
     font = Str('modern 14')
-    gfont = Property(depends_on='font')
-    # font = str_to_font('modern 14')
 
     width = 0
     height = 0
@@ -72,22 +70,21 @@ class Primitive(HasTraits):
     _cached_xy = None
     _layout_needed = True
 
-    @cached_property
-    def _get_gfont(self):
-        return str_to_font(self.font)
-
-    def _get_label(self):
-        return '{} {} {}'.format(self.klass_name, self.name, self.identifier)
-
     def __init__(self, x, y, *args, **kw):
         self.x = x
         self.y = y
         self.ox = x
         self.oy = y
-        # self.default_color = (1, 0, 0)
-        # self.active_color = (0, 1, 0)
         super(Primitive, self).__init__(*args, **kw)
         self._initialized = True
+
+    @property
+    def gfont(self):
+        return str_to_font(self.font)
+
+    @property
+    def label(self):
+        return '{} {} {}'.format(self.klass_name, self.name, self.identifier)
 
     def render(self, gc):
 
@@ -100,12 +97,6 @@ class Primitive(HasTraits):
                 gc.set_line_width(self.line_width)
 
                 self._render_(gc)
-
-    def _convert_color(self, c):
-        if not isinstance(c, (list, tuple)):
-            c = c.red, c.green, c.blue
-        c = map(lambda x: x / 255., c)
-        return c
 
     def set_stroke_color(self, gc):
         if self.state:
@@ -121,9 +112,6 @@ class Primitive(HasTraits):
         else:
             c = self._convert_color(self.default_color)
         gc.set_fill_color(c)
-
-    def _render_(self, gc):
-        pass
 
     def adjust(self, dx, dy):
         args = self.canvas.map_data((dx, dy))
@@ -190,6 +178,10 @@ class Primitive(HasTraits):
         if canvas:
             self._layout_needed = canvas != self.canvas or self.bounds != canvas.bounds
 
+        if self.force_layout:
+            self._layout_needed = True
+            self.force_layout = False
+
         self.canvas = canvas
         if canvas:
             self.bounds = canvas.bounds
@@ -204,59 +196,6 @@ class Primitive(HasTraits):
 
     def set_selected(self, selected):
         self.selected = selected
-
-    def _render_name(self, gc, x, y, w, h):
-        if self.name and self.name_visible:
-            with gc:
-                # c = self.text_color if self.text_color else self.default_color
-                gc.set_fill_color(self._convert_color(self.name_color))
-                txt = str(self.name)
-                self._render_textbox(gc, x, y, w, h, txt)
-
-    def _render_textbox(self, gc, x, y, w, h, txt):
-
-        tw, th, _, _ = gc.get_full_text_extent(txt)
-        x = x + w / 2. - tw / 2.
-        y = y + h / 2. - th / 2.
-
-        self._render_text(gc, txt, x, y)
-
-    def _render_text(self, gc, t, x, y):
-        with gc:
-            gc.translate_ctm(x, y)
-            # gc.set_text_position(x, y)
-            gc.set_fill_color((0, 0, 0))
-            gc.set_text_position(0, 0)
-            gc.show_text(t)
-
-    @on_trait_change('default_color, active_color, x, y')
-    def _refresh_canvas(self):
-        self.request_redraw()
-
-    def request_redraw(self):
-        if self.canvas:
-            # self.canvas._layout_needed = True
-            self.canvas.request_redraw()
-            # self.canvas._layout_needed = False
-
-    def _get_klass_name(self):
-        return self.__class__.__name__.split('.')[-1]
-
-    def traits_view(self):
-        g = VGroup(Item('name'), Item('klass_name', label='Type'),
-                   Item('default_color'),
-                   Item('active_color'),
-                   HGroup(Item('x', format_str='%0.3f'),
-                          Item('y', format_str='%0.3f')))
-        cg = self._get_group()
-        if cg is not None:
-            g = VGroup(g, cg)
-
-        v = View(g)
-        return v
-
-    def _get_group(self):
-        return
 
     def is_in_region(self, x1, x2, y1, y2):
         """
@@ -278,11 +217,52 @@ class Primitive(HasTraits):
 
         return x1 <= self.x <= x2 and y1 <= self.y <= y2
 
+    # private
+    def _render_(self, gc):
+        pass
+
+    def _render_name(self, gc, x, y, w, h):
+        if self.name and self.name_visible:
+            with gc:
+                # c = self.text_color if self.text_color else self.default_color
+                gc.set_fill_color(self._convert_color(self.name_color))
+                txt = str(self.name)
+                self._render_textbox(gc, x, y, w, h, txt)
+
+    def _render_textbox(self, gc, x, y, w, h, txt):
+
+        tw, th, _, _ = gc.get_full_text_extent(txt)
+        x = x + w / 2. - tw / 2.
+        y = y + h / 2. - th / 2.
+
+        self._render_text(gc, txt, x, y)
+
+    def _render_text(self, gc, t, x, y):
+        with gc:
+            gc.translate_ctm(x, y)
+            gc.set_fill_color((0, 0, 0))
+            gc.set_text_position(0, 0)
+            gc.show_text(t)
+
+    def _convert_color(self, c):
+        if not isinstance(c, (list, tuple)):
+            c = c.red, c.green, c.blue
+        c = map(lambda x: x / 255., c)
+        return c
+
+    # handlers
+    @on_trait_change('default_color, active_color, x, y')
+    def _refresh_canvas(self):
+        self.request_redraw()
+
+    def request_redraw(self):
+        if self.canvas:
+            self.canvas.request_redraw()
+
 
 class QPrimitive(Primitive):
     def _convert_color(self, c):
         if not isinstance(c, (list, tuple)):
-            # c = c.red(), c.green(), c.blue()
             c = c.toTuple()
 
         c = map(lambda x: x / 255., c)
@@ -304,9 +284,6 @@ class Connectable(QPrimitive):
         if not self._initialized:
             return
 
-        # print self.x, self.ox, self.y,self.oy, self.x != self.ox or self.y != self.oy
-
-        # print self.connections
         cvo = self.x != self.ox
         cho = self.y != self.oy
 
@@ -320,8 +297,4 @@ class Connectable(QPrimitive):
 
         self.request_redraw()
 
-
 # ============= EOF =============================================
-
-
-

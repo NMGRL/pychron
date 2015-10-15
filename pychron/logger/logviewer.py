@@ -23,13 +23,13 @@ import re
 # ============= local library imports  ==========================
 from traitsui.editors.check_list_editor import CheckListEditor
 from traitsui.tabular_adapter import TabularAdapter
-from twisted.logger import eventsFromJSONLogFile
 from pychron.core.helpers.datetime_tools import get_datetime
 from pychron.pychron_constants import LIGHT_GREEN
 
 
 class LogAdapter(TabularAdapter):
     columns = [('Timestamp', 'timestamp'),
+               ('Name', 'name'),
                ('Level', 'level'),
                ('Message', 'message'), ]
     timestamp_width = Int(175)
@@ -47,6 +47,7 @@ class LogAdapter(TabularAdapter):
 
 
 class LogItem:
+    name = ''
     message = ''
     timestamp = ''
     level = ''
@@ -83,6 +84,7 @@ class LogModel(HasTraits):
     def open_file(self, path):
         self.path = path
         with open(path, 'r') as rfile:
+            # print rfile.read()
             self.items = self.oitems = [self._factory(line) for line in self._file(rfile)]
 
     def _file(self, r):
@@ -99,15 +101,25 @@ def tostr(vv):
 
 class TwistedLogModel(LogModel):
     def _file(self, r):
+        from twisted.logger import eventsFromJSONLogFile
         return eventsFromJSONLogFile(r)
 
     def _factory(self, ii):
         li = LogItem()
-        li.level = ii.get('log_level')
+        li.name = 'foo'
+        json_level = str(ii.get('log_level'))
+        if 'debug' in json_level:
+            li.level = 'DEBUG'
+        elif 'info' in json_level:
+            li.level = 'WARNING'
+        else:
+            li.level = 'INFO'
+
         li.timestamp = get_datetime(ii.get('log_time'))
 
         fmt = ii.get('log_format')
         li.message = str(fmt.format(**{k: tostr(v) for k, v in ii.items()}))
+
         return li
 
         # def open_file(self, path):
@@ -142,11 +154,11 @@ class LogViewer(Controller):
         info.ui.title = 'Log Viewer - {}'.format(os.path.basename(self.model.path))
         return True
 
-    def controller_levels_changed(self, info):
-        if self.levels:
-            items = filter(lambda x: x.level in self.levels, self.model.oitems)
-            regex = self._make_search_regex()
-            self._set_found(regex, items)
+    # def controller_levels_changed(self, info):
+    #     if self.levels:
+    #         items = filter(lambda x: x.level in self.levels, self.model.oitems)
+    #         regex = self._make_search_regex()
+    #         self._set_found(regex, items)
 
     def controller_search_entry_changed(self, info):
         regex = self._make_search_regex()
@@ -204,9 +216,11 @@ class LogViewer(Controller):
 if __name__ == '__main__':
     m = LogModel()
     # m.parse()
-    m.open_file('/Users/ross/Pychron_dev/logs/pychron.current.log')
-    # m = TwistedLogModel()
-    # m.open_file('/Users/ross/Documents/pps.log.json')
+    # m.open_file('/Users/ross/Pychron_dev/logs/pychron.current.log')
+    # m.open_file('/Users/ross/Sandbox/pychron.current.log')
+    m = TwistedLogModel()
+    m.open_file('/Users/diode/Pychron_dev/logs/pps.log.json')
+
     lv = LogViewer(model=m)
     lv.configure_traits()
 # ============= EOF =============================================

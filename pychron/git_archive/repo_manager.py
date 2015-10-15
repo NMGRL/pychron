@@ -493,7 +493,12 @@ class GitRepoManager(Loggable):
     def smart_pull(self, branch='master', remote='origin',
                    quiet=True,
                    accept_our=False, accept_their=False):
-        ahead, behind = self.ahead_behind(remote)
+        try:
+            ahead, behind = self.ahead_behind(remote)
+        except GitCommandError, e:
+            self.debug('Smart pull error: {}'.format(e))
+            return
+
         self.debug('Smart pull ahead: {} behind: {}'.format(ahead, behind))
         repo = self._repo
         if behind:

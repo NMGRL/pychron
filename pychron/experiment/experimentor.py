@@ -19,21 +19,20 @@ from traits.api import Instance, List, on_trait_change, Bool, Event
 # ============= standard library imports ========================
 from itertools import groupby
 # ============= local library imports  ==========================
-from pychron.database.isotope_database_manager import IsotopeDatabaseManager
+from pychron.dvc.dvc_irradiationable import DVCIrradiationable
 from pychron.experiment.queue.experiment_queue import ExperimentQueue
 from pychron.experiment.factory import ExperimentFactory
-from pychron.experiment.utilities.aliquot_numbering import renumber_aliquots
 from pychron.experiment.stats import StatsGroup
 from pychron.experiment.experiment_executor import ExperimentExecutor
-from pychron.loggable import Loggable
 
 
-class Experimentor(Loggable):
+class Experimentor(DVCIrradiationable):
     experiment_factory = Instance(ExperimentFactory)
     experiment_queue = Instance(ExperimentQueue)
     executor = Instance(ExperimentExecutor)
     experiment_queues = List
     stats = Instance(StatsGroup, ())
+    dvc = Instance('pychron.dvc.dvc.DVC')
 
     mode = None
     # unique_executor_db = False
@@ -147,12 +146,12 @@ class Experimentor(Loggable):
                 if ln not in exclude)
 
     def _get_analysis_info(self, li):
-        dbpos = self.dvc.db.get_identifier(li)
-        if not dbpos:
+        dbln = self.iso_db_manager.db.get_labnumber(li)
+        if not dbln:
             return None
         else:
-            project, sample, material, irradiation = '', '', '', ''
-            sample = dbpos.sample
+            project, sample, material, irradiation, level, pos = '', '', '', '', '', 0
+            sample = dbln.sample
             if sample:
                 if sample.project:
                     project = sample.project.name
@@ -161,15 +160,19 @@ class Experimentor(Loggable):
                     material = sample.material.name
                 sample = sample.name
 
-            level = dbpos.level
-            irradiation = '{} {}:{}'.format(level.irradiation.name,
-                                            level.name, dbpos.position)
+            dbpos = dbln.irradiation_position
+            if dbpos:
+                level = dbpos.level
 
-        return project, sample, material, irradiation
+                irradiation = level.irradiation.name
+                level = level.name
+                pos = dbpos.position
+
+        return project, sample, material, irradiation, level, pos
 
     def _set_analysis_metadata(self):
         cache = dict()
-        db = self.dvc.db
+        db = self.iso_db_manager.db
         aruns = self._get_all_automated_runs()
 
         with db.session_ctx():
@@ -187,11 +190,14 @@ class Experimentor(Loggable):
                     if not info:
                         cache[ln] = dict(identifier_error=True)
                     else:
-                        project, sample, material, irrad = info
+                        project, sample, material, irrad, level, pos = info
 
                         cache[ln] = dict(project=project or '', sample=sample or '',
                                          material=material or '',
-                                         irradiation=irrad or '', identifier_error=False)
+                                         irradiation=irrad or '',
+                                         irradiation_level=level or '',
+                                         irradiation_position=pos or 0,
+                                         identifier_error=False)
 
                 ai.trait_set(**cache[ln])
 
@@ -209,7 +215,7 @@ class Experimentor(Loggable):
         return self.executor.execute()
 
     def verify_database_connection(self, inform=True):
-        db = self.dvc.db
+        db = self.iso_db_manager.db
         if db is not None:
             if db.connect(force=True):
                 return True
@@ -330,8 +336,9 @@ class Experimentor(Loggable):
                 dms = spec.name.capitalize()
 
         e = ExperimentFactory(application=self.application,
-                              # dvc=self.dvc,
-                              db=self.dvc.db,
+                              dvc=self.dvc,
+                              # dvc=self.iso_db_manager,
+                              # db=self.iso_db_manager.db,
                               default_mass_spectrometer=dms)
         if self.iso_db_manager:
             e.db = self.iso_db_manager.db

@@ -289,6 +289,8 @@ class AutomatedRunPersister(BasePersister):
 
         def write_data(dets, x, keys, signals):
             # todo: test whether saving data to h5 in real time is expansive
+
+            # disable H5 data writer
             # self.unique_warning('NOT Writing data to H5 in real time')
             # return
 
@@ -408,7 +410,6 @@ class AutomatedRunPersister(BasePersister):
         """
 
         self.info('pre measurement save')
-
         dm = self.data_manager
         # make a new frame for saving data
 
@@ -829,7 +830,7 @@ class AutomatedRunPersister(BasePersister):
 
         if self.per_spec.spec_dict:
             db.add_spectrometer_parameters(meas, self.per_spec.spec_dict)
-            for det, deflection in self.defl_dict.iteritems():
+            for det, deflection in self.per_spec.defl_dict.iteritems():
                 det = db.add_detector(det)
                 db.add_deflection(meas, det, deflection)
 

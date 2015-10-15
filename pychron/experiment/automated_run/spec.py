@@ -184,12 +184,14 @@ class AutomatedRunSpec(HasTraits):
                         # arun.setup_context(script)
                         ctx = self.make_script_context()
                         d = script.calculate_estimated_duration(ctx)
+                        logger.debug('script duration name:{} seconds:{}'.format(name, d))
                         s += d
                 script_oks.append(ok)
             else:
                 if arun is None:
                     arun = self.make_run(new_uuid=False)
 
+                arun.refresh_scripts()
                 # arun.invalid_script = False
                 script = getattr(arun, si)
                 if script is not None:
@@ -203,6 +205,7 @@ class AutomatedRunSpec(HasTraits):
                         if si in ('measurement_script', 'extraction_script'):
                             ctx = self.make_script_context()
                             d = script.calculate_estimated_duration(ctx)
+                            logger.debug('script duration name:{} seconds:{}'.format(name, d))
                             s += d
         if arun:
             arun.spec = None
@@ -253,7 +256,7 @@ class AutomatedRunSpec(HasTraits):
         """
         if not self._estimated_duration or self._changed or force:
             s = self.test_scripts(script_context, warned)
-
+            logger.debug('Script duration {}'.format(s))
             db_save_time = 1
             self._estimated_duration = s + db_save_time
 
@@ -276,11 +279,9 @@ class AutomatedRunSpec(HasTraits):
         if new_uuid:
             run.uuid = u = str(uuid.uuid4())
             self.uuid = u
-            # self._step_heat = bool(self.aliquot)
-            # print self._step_heat, bool(self.aliquot), self.aliquot
 
-        # run.spec = weakref.ref(self)()
         run.spec = self
+        run.runid = self.runid
 
         return run
 
@@ -290,7 +291,7 @@ class AutomatedRunSpec(HasTraits):
             setattr(self, k, v)
 
         for k, v in params.iteritems():
-            print 'load', hasattr(self, k), k, v
+            # print 'load', hasattr(self, k), k, v
             if hasattr(self, k):
                 setattr(self, k, v)
 
@@ -330,41 +331,18 @@ class AutomatedRunSpec(HasTraits):
 
         return [get_attr(ai) for ai in attrs]
 
-    # def _get_run_attrs(self):
-    #     return ('labnumber', 'aliquot', 'step',
-    #             'extract_value', 'extract_units', 'ramp_duration',
-    #             'position', 'duration', 'cleanup', 'collection_time_zero_offset',
-    #             'pattern',
-    #             'beam_diameter',
-    #             'truncate_condition',
-    #             'syn_extraction',
-    #             'mass_spectrometer', 'extract_device',
-    #             'analysis_type',
-    #             'sample', 'irradiation', 'username', 'comment', 'skip', 'end_after')
-
     # ===============================================================================
     # handlers
     # ===============================================================================
-    #     @on_trait_change('automated_run:state')
-    #     def _update_state(self, new):
-    #         self.state = new
-
-    #     def _update_aliquot(self, new):
-    #         print 'upda', new
-    #         self.aliquot = new
-
-    @on_trait_change('''measurment_script, post_measurment_script,
-    post_equilibration_script, extraction_script, script_options''')
-    def _script_changed(self, name, new):
+    @on_trait_change('''measurement_script, post_measurement_script,
+post_equilibration_script, extraction_script, script_options,
+extract_+, position, duration, cleanup''')
+    def _change_handler(self, name, new):
         if new == 'None':
             #            self.trait_set(trait_change_notify=False, **{name: ''})
             self.trait_set(**{name: ''})
         else:
             self._changed = True
-
-    @on_trait_change('''extract_+, position, duration, cleanup ''')
-    def _extract_changed(self):
-        self._changed = True
 
     # ===============================================================================
     # property get/set
@@ -448,7 +426,10 @@ class AutomatedRunSpec(HasTraits):
 
     @property
     def display_irradiation(self):
-        return '{} {}:{}'.format(self.irradiation, self.irradiation_level, self.irradiation_position)
+        ret = ''
+        if self.irradiation:
+            ret = '{} {}:{}'.format(self.irradiation, self.irradiation_level, self.irradiation_position)
+        return ret
 
     @property
     def increment(self):

@@ -18,6 +18,8 @@
 from apptools.preferences.preference_binding import bind_preference
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from sqlalchemy import and_
+from sqlalchemy.exc import SQLAlchemyError
 from pychron.database.core.database_adapter import DatabaseAdapter
 from pychron.labspy.orm import Measurement, ProcessInfo, Version, \
     Device, Experiment, Analysis, Connections  # , Version, Status, Experiment, Analysis, AnalysisType
@@ -53,7 +55,12 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
         return self._add_item(an)
 
     def set_connection(self, ts, appname, username, devname, com, addr, status):
-        conn = self.get_connection(appname, devname)
+        try:
+            conn = self.get_connection(appname, devname)
+        except SQLAlchemyError, e:
+            self.warning('Error getting connection {}.{} exception: {}'.format(appname, devname, e))
+            return
+
         if conn is None:
             conn = Connections()
             self._add_item(conn)
@@ -69,9 +76,8 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
     def get_connection(self, appname, devname):
         with self.session_ctx() as sess:
             q = sess.query(Connections)
-            q = q.filter(Connections.appname == appname)
-            q = q.filter(Connections.devname == devname)
-            return self._query_one(q)
+            q = q.filter(and_(Connections.appname == appname, Connections.devname == devname))
+            return self._query_first(q, reraise=True)
 
     def update_experiment(self, hashid, **kw):
         exp = self.get_experiment(hashid)

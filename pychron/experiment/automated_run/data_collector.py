@@ -132,7 +132,7 @@ class DataCollector(Consoleable):
         i = 1
         while not evt.is_set():
             st = time.time()
-            if self._iter(i):
+            if not self._iter(i):
                 break
 
             i += 1
@@ -243,6 +243,7 @@ class DataCollector(Consoleable):
                 self._set_plot_data(cnt, iso, dn.name, x, signal)
 
     def _get_fit(self, cnt, det, iso):
+
         isotopes = self.arar_age.isotopes
         if self.is_baseline:
             ix = isotopes[iso]
@@ -264,9 +265,13 @@ class DataCollector(Consoleable):
         """
             if is_baseline than use detector to get isotope
         """
+        try:
+            # get fit and name
+            fit, name = self._get_fit(cnt, det, iso)
+        except AttributeError, e:
+            self.debug('set_plot_data, get_fit {}'.format(e))
+            return
 
-        # get fit and name
-        fit, name = self._get_fit(cnt, det, iso)
         # print fit, name, det, iso
         graph = self.plot_panel.isotope_graph
         pid = graph.get_plotid_by_ytitle(name)
@@ -349,26 +354,6 @@ class DataCollector(Consoleable):
             return 'break'
 
         if self.check_conditionals:
-            termination_conditional = self._check_conditionals(self.termination_conditionals, i)
-            if termination_conditional:
-                self.info('termination conditional {}. measurement iteration executed {}/{} counts'.format(
-                    termination_conditional.message, j, original_counts), color='red')
-
-                key = repr(termination_conditional)
-                n = termination_conditional.nfails
-                if check_conditional_results(key, n):
-                    return 'cancel'
-                else:
-                    return 'terminated'
-
-            cancelation_conditional = self._check_conditionals(self.cancelation_conditionals, i)
-            if cancelation_conditional:
-                self.info('cancelation conditional {}. measurement iteration executed {}/{} counts'.format(
-                    cancelation_conditional.message, j, original_counts), color='red')
-                self.automated_run.show_conditionals(tripped=cancelation_conditional)
-
-                return 'cancel'
-
             truncation_conditional = self._check_conditionals(self.truncation_conditionals, i)
             if truncation_conditional:
                 self.info('truncation conditional {}. measurement iteration executed {}/{} counts'.format(
@@ -390,29 +375,57 @@ class DataCollector(Consoleable):
                 if not action_conditional.resume:
                     return 'break'
 
+            termination_conditional = self._check_conditionals(self.termination_conditionals, i)
+            if termination_conditional:
+                self.info('termination conditional {}. measurement iteration executed {}/{} counts'.format(
+                    termination_conditional.message, j, original_counts), color='red')
+
+                self.automated_run.show_conditionals(tripped=termination_conditional)
+                return 'terminate'
+
+                # key = repr(termination_conditional)
+                # n = termination_conditional.nfails
+                # if check_conditional_results(key, n):
+                #     return 'cancel'
+                # else:
+                #     return 'terminated'
+
+            cancelation_conditional = self._check_conditionals(self.cancelation_conditionals, i)
+            if cancelation_conditional:
+                self.info('cancelation conditional {}. measurement iteration executed {}/{} counts'.format(
+                    cancelation_conditional.message, j, original_counts), color='red')
+                self.automated_run.show_conditionals(tripped=cancelation_conditional)
+
+                return 'cancel'
     @property
     def arar_age(self):
-        return self.automated_run.arar_age
+        if self.automated_run:
+            return self.automated_run.arar_age
 
     @property
     def plot_panel(self):
-        return self.automated_run.plot_panel
+        if self.automated_run:
+            return self.automated_run.plot_panel
 
     @property
     def truncation_conditionals(self):
-        return self.automated_run.truncation_conditionals
+        if self.automated_run:
+            return self.automated_run.truncation_conditionals
 
     @property
     def termination_conditionals(self):
-        return self.automated_run.termination_conditionals
+        if self.automated_run:
+            return self.automated_run.termination_conditionals
 
     @property
     def action_conditionals(self):
-        return self.automated_run.action_conditionals
+        if self.automated_run:
+            return self.automated_run.action_conditionals
 
     @property
     def cancelation_conditionals(self):
-        return self.automated_run.cancelation_conditionals
+        if self.automated_run:
+            return self.automated_run.cancelation_conditionals
 
 # ============= EOF =============================================
         # def _iter(self, con, evt, i, prev=0):

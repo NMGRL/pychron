@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-from error import ErrorCode  # , code_generator, get_code_decorator
+# from error import ErrorCode  # , code_generator, get_code_decorator
 
 
 # code_gen = code_generator(0, start=1)
@@ -23,6 +23,9 @@ from error import ErrorCode  # , code_generator, get_code_decorator
 #    return get_code_decorator(code_gen)(*args)
 
 # @generate_code
+from pychron.tx.errors import ErrorCode
+
+
 class LogicBoardCommErrorCode(ErrorCode):
     msg = 'Failed communication with logic board'
     code = '101'

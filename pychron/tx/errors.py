@@ -18,7 +18,7 @@
 # =============enthought library imports=======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-class ErrorCode:
+class ErrorCode(object):
     msg = ''
     code = None
     description = ''

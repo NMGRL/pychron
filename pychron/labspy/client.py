@@ -22,15 +22,17 @@ from apptools.preferences.preference_binding import bind_preference
 
 # ============= standard library imports ========================
 import os
-from threading import Timer
+from threading import Timer, Thread
 import hashlib
 import time
+import yaml
 # ============= local library imports  ==========================
 from pychron.core.helpers.logger_setup import logging_setup
 from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.labspy.database_adapter import LabspyDatabaseAdapter
 from pychron.loggable import Loggable
 from pychron.pychron_constants import SCRIPT_NAMES
+from pychron.paths import paths
 
 
 def auto_connect(func):
@@ -43,6 +45,33 @@ def auto_connect(func):
                 return func(obj, *args, **kw)
 
     return wrapper
+
+
+class NotificationTrigger(object):
+    def __init__(self, params):
+        self._params = params
+
+    def test(self, dev, tag, val, unit):
+        mdev = self._params['device']
+        mtag = self._params['tag']
+        mcmp = self._params['cmp']
+        munit = self._params['units']
+
+        if dev == mdev and mtag == tag and munit == unit:
+            return eval(mcmp, {'x': val})
+
+    def notify(self, val, unit):
+        addrs = self._params['addresses']
+        dev = self._params['device']
+        tag = self._params['tag']
+        mcmp = self._params['cmp']
+
+        sub = self._params['subject']
+        message = '''device: {}
+tag: {}
+cmp: {}
+test_value: {} ({})'''.format(dev, tag, mcmp, val, unit)
+        return addrs, sub, message
 
 
 class LabspyClient(Loggable):
@@ -75,14 +104,27 @@ class LabspyClient(Loggable):
         self.debug('Start Connection status timer')
         if self.application and self.use_connection_status:
             self.debug('timer started period={}'.format(self.connection_status_period))
-            t = Timer(self.connection_status_period, self._connection_status, kwargs={'verbose': True})
-            t.start()
+
+            devs = self.application.get_services(ICoreDevice)
+            if devs:
+                t = Thread(target=self._connection_status, name='ConnectionStatus')
+                t.start()
+            else:
+                self.debug('No devices to check for connection status')
+            # t = Timer(self.connection_status_period, self._connection_status, kwargs={'verbose': True})
+            # t.start()
 
     def _connection_status(self, verbose=False):
+
+        # if verbose:
+        #     self.debug('Connection Status. ndevs={}'.format(len(devs or ())))
+        # if devs:
+
         devs = self.application.get_services(ICoreDevice)
-        if verbose:
-            self.debug('Connection Status. ndevs={}'.format(len(devs or ())))
-        if devs:
+
+        period = self.connection_status_period
+        while 1:
+            st = time.time()
             ts = datetime.now()
             for dev in devs:
 
@@ -93,19 +135,21 @@ class LabspyClient(Loggable):
                     self.update_connection(ts, dev.name,
                                            com_name,
                                            dev.communicator.address,
-                                           dev.communicator.test_connection(),
+                                           dev.test_connection(),
                                            verbose=verbose)
                 except BaseException, e:
                     self.debug('Connection status. update connection failed: error={}'.format(e))
                     break
 
-        t = Timer(self.connection_status_period, self._connection_status, kwargs={'verbose': verbose})
-        t.start()
+            et = time.time() - st
+            time.sleep(max(0, period-et))
+        # t = Timer(self.connection_status_period, self._connection_status, kwargs={'verbose': verbose})
+        # t.start()
 
     @auto_connect
     def add_experiment(self, exp):
         # if self.db.connected:
-        #     with self.db.session_ctx():
+        # with self.db.session_ctx():
         hid = self._generate_hid(exp)
         self.db.add_experiment(name=exp.name,
                                start_time=exp.starttime,
@@ -117,7 +161,7 @@ class LabspyClient(Loggable):
     @auto_connect
     def update_experiment(self, exp, err_msg):
         # if self.db.connected:
-        #     with self.db.session_ctx():
+        # with self.db.session_ctx():
         #         hid = self._generate_hid(exp)
         #         exp = self.db.get_experiment(hid)
         #         # exp.EndTime = exp.endtime
@@ -159,13 +203,38 @@ class LabspyClient(Loggable):
         val = float(val)
         self.debug('adding measurement dev={} process={} value={} ({})'.format(dev, tag, val, unit))
         self.db.add_measurement(dev, tag, val, unit)
+        self._check_notifications(dev, tag, val, unit)
 
     def connect(self):
         self.warning('not connected to db {}'.format(self.db.url))
         self.db.connect()
 
-    # @cached_property
-    # def _get_db(self):
+    @property
+    def notification_triggers(self):
+        p = paths.notification_triggers
+        with open(p, 'r') as rfile:
+            return [NotificationTrigger(i) for i in yaml.load(rfile)]
+
+    def _check_notifications(self, dev, tag, val, unit):
+        if not os.path.isfile(paths.notification_triggers):
+            self.debug('no notification trigger file available. {}'.format(paths.notification_triggers))
+            return
+
+        ns = []
+        for nt in self.notification_triggers:
+            self.debug('testing {} {} {} {}'.format(dev, tag, val, unit))
+            if nt.test(dev, tag, val, unit):
+                self.debug('notification triggered')
+                ns.append(nt.notify(val, unit))
+        self.debug('notifications: {}'.format(ns))
+        if ns:
+            emailer = self.application.get_service('pychron.social.email.emailer.Emailer')
+            if emailer:
+                for addrs, sub, message in ns:
+                    emailer.send(addrs, sub, message)
+            else:
+                self.warning('Email Plugin not enabled')
+
     def _db_default(self):
         return LabspyDatabaseAdapter()
 
@@ -207,13 +276,13 @@ class LabspyClient(Loggable):
 
 if __name__ == '__main__':
     from random import random
-    from pychron.paths import paths
+    # from pychron.paths import paths
 
     paths.build('_dev')
 
 
     # def add_runs(c, e):
-    #     class Spec():
+    # class Spec():
     #         def __init__(self, record_id):
     #             self.runid = record_id
     #             # self.mass_spectrometer = 'jan'
@@ -298,7 +367,7 @@ if __name__ == '__main__':
 # ============= EOF =============================================
 # class MeteorLabspyClient(LabspyClient):
 # host = Str
-#     port = Int
+# port = Int
 #     database_name = Str
 #
 #     _client = None

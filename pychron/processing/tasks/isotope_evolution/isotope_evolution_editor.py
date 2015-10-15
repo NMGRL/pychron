@@ -478,7 +478,7 @@ class IsotopeEvolutionEditor(GraphEditor):
 
             set_xtitle = True if r == 1 else j >= (n / r)
 
-            g = self._graph_factory(add_context_menu=False)
+            g = self._graph_factory(use_context_menu=False)
 
             plot_kw = dict(padding=padding,
                            title=unk.record_id)

@@ -21,14 +21,15 @@ from pychron.canvas.canvas2D.video_canvas import VideoCanvas
 # from pychron.canvas.canvas2D.markup.markup_items import Rectangle
 from laser_tray_canvas import LaserTrayCanvas
 
+
 class VideoLaserTrayCanvas(LaserTrayCanvas, VideoCanvas):
-    '''
-    '''
+    """
+    """
     bgcolor = 'lightgray'
 
     def set_stage_position(self, x, y):
-        '''
-        '''
+        """
+        """
 
         super(VideoLaserTrayCanvas, self).set_stage_position(x, y)
         self.adjust_limits('x', x)
