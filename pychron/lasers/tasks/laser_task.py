@@ -21,7 +21,7 @@ from pychron.envisage.tasks.base_task import BaseHardwareTask
 from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter, Tabbed
 from pychron.lasers.pattern.pattern_maker_view import PatternMakerView
 # from pychron.lasers.tasks.panes.co2 import FusionsCO2Pane, FusionsCO2StagePane, \
-#     FusionsCO2ControlPane
+# FusionsCO2ControlPane
 # from pychron.lasers.tasks.laser_panes import PulsePane, OpticsPane, \
 #     AuxilaryGraphPane
 # from pychron.lasers.tasks.panes.diode import FusionsDiodeClientPane, \
@@ -48,7 +48,6 @@ class BaseLaserTask(BaseHardwareTask):
 
 
 class FusionsTask(BaseLaserTask):
-
     def _default_layout_default(self):
         return TaskLayout(left=PaneItem('{}.stage'.format(self.id)),
                           top=Splitter(PaneItem('{}.control'.format(self.id),
@@ -103,40 +102,41 @@ class FusionsTask(BaseLaserTask):
             #             v = self.manager.degasser_factory()
             #             self.window.application.open_view(v)
 
+
 class ChromiumCO2Task(FusionsTask):
     id = 'pychron.chromium.co2'
     name = 'Chromium CO2'
 
     def create_central_pane(self):
         from pychron.lasers.tasks.panes.chromium import ChromiumCO2ClientPane
+
         return ChromiumCO2ClientPane(model=self.manager)
 
     def create_dock_panes(self):
         return []
+
 
 class FusionsCO2Task(FusionsTask):
     id = 'pychron.fusions.co2'
     name = 'Fusions CO2'
 
     def create_central_pane(self):
-        # if self.manager.mode == 'client':
-        #             return FusionsCO2ClientPane(model=self.manager)
-        #         else:
-        #             return FusionsCO2Pane(model=self.manager)
+        if self.manager.mode == 'client':
+            from pychron.lasers.tasks.panes.co2 import FusionsCO2ClientPane
 
-        from pychron.lasers.tasks.panes.co2 import FusionsCO2Pane
+            return FusionsCO2ClientPane(model=self.manager)
+        else:
+            from pychron.lasers.tasks.panes.co2 import FusionsCO2Pane
 
-        return FusionsCO2Pane(model=self.manager)
+            return FusionsCO2Pane(model=self.manager)
 
     def create_dock_panes(self):
-        from pychron.lasers.tasks.panes.co2 import FusionsCO2StagePane
-        from pychron.lasers.tasks.panes.co2 import FusionsCO2ControlPane
-        if self.manager.mode == 'client':
-            return [
-                FusionsCO2StagePane(model=self.manager),
-                FusionsCO2ControlPane(model=self.manager)]
-        else:
 
+        if self.manager.mode == 'client':
+            return []
+        else:
+            from pychron.lasers.tasks.panes.co2 import FusionsCO2StagePane
+            from pychron.lasers.tasks.panes.co2 import FusionsCO2ControlPane
             from pychron.lasers.tasks.laser_panes import PulsePane
             from pychron.lasers.tasks.laser_panes import OpticsPane
             from pychron.lasers.tasks.laser_panes import AuxilaryGraphPane
@@ -190,9 +190,11 @@ class FusionsUVTask(FusionsTask):
     def create_central_pane(self):
         if self.manager.mode == 'client':
             from pychron.lasers.tasks.panes.uv import FusionsUVClientPane
+
             klass = FusionsUVClientPane
         else:
             from pychron.lasers.tasks.panes.uv import FusionsUVPane
+
             klass = FusionsUVPane
 
         return klass(model=self.manager)
