@@ -86,13 +86,13 @@ class VideoLaserTrayCanvas(LaserTrayCanvas, VideoCanvas):
 #                                                     )
 
     def _calc_relative_move_direction(self, char, direction):
-        '''
+        """
             correct for sense of camera
-        '''
+        """
         if char in ('Left', 'Right'):
             di = -1 if self.camera.hflip else 1
         else:
-            di = 1 if self.camera.vflip else -1
+            di = -1 if self.camera.vflip else 1
         return direction * di
 
 
