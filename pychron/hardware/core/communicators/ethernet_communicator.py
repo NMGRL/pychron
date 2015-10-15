@@ -55,7 +55,8 @@ class Handler(Loggable):
 
     def set_frame(self, f):
         self.message_frame = MessageFrame()
-        self.message_frame.set_str(f)
+        if f:
+            self.message_frame.set_str(f)
 
     def get_packet(self, cmd):
         raise NotImplementedError
@@ -252,8 +253,8 @@ class EthernetCommunicator(Communicator):
                 else:
                     h = TCPHandler()
 
-            h.open_socket((self.host, self.port), timeout=timeout)
-            h.set_frame(self.message_frame)
+                h.open_socket((self.host, self.port), timeout=timeout)
+                h.set_frame(self.message_frame)
             self.handler = h
             return h
         except socket.error, e:
@@ -301,7 +302,8 @@ class EthernetCommunicator(Communicator):
 
         if self.use_end:
             handler = self.get_handler()
-            handler.end()
+            if handler:
+                handler.end()
             self._reset_connection()
 
         if verbose or self.verbose and not quiet:

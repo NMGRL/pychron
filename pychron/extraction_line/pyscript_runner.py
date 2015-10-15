@@ -136,6 +136,7 @@ class RemotePyScriptRunner(PyScriptRunner):
         handle.port = self.port
         handle.kind = self.kind
         handle.message_frame = self.frame
+        handle.use_end = True
         return handle
 
     def _get_resource(self, name):
