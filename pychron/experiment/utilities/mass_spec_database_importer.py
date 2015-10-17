@@ -459,7 +459,7 @@ class MassSpecDatabaseImporter(Loggable):
         # sem = bs.std_dev / (fncnts) ** 0.5 if fncnts else 0
 
         bfit = spec.get_baseline_fit(iso)
-
+        self.debug('baseline {}. v={}, e={}'.format(iso, nominal_value(bs), std_dev(bs)))
         infoblob = self._make_infoblob(nominal_value(bs), std_dev(bs), fncnts, pos)
         db_changeable = db.add_baseline_changeable_item(self.data_reduction_session_id,
                                                         bfit,
