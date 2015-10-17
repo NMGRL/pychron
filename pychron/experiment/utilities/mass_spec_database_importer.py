@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -304,7 +304,7 @@ class MassSpecDatabaseImporter(Loggable):
                       SampleLoadingID=self.sample_loading_id,
                       LoginSessionID=self.login_session_id,
                       RunScriptID=rs.RunScriptID)
-        if DBVERSION >=16.3:
+        if DBVERSION >= 16.3:
             params['SignalRefIsot'] = 'Ar40'
             params['RedundantUserID'] = 1
 
@@ -356,7 +356,13 @@ class MassSpecDatabaseImporter(Loggable):
 
     def _add_isotope(self, analysis, spec, iso, det, refdet):
         db = self.db
-        if det == analysis.reference_detector.detector_type.Label:
+
+        if DBVERSION >= 16.3:
+            rdet = analysis.reference_detector.detector_type.Label
+        else:
+            rdet = analysis.ReferenceDetectorLabel
+
+        if det == rdet:
             dbdet = refdet
         else:
             if spec.is_peak_hop:
@@ -369,10 +375,10 @@ class MassSpecDatabaseImporter(Loggable):
                 if iso in PEAK_HOP_MAP:
                     det = PEAK_HOP_MAP[iso]
 
-            if DBVERSION>=16.3:
+            if DBVERSION >= 16.3:
                 dbdet = db.add_detector(det)
             else:
-                dbdet = db.add_detector(det, label=det)
+                dbdet = db.add_detector(det, Label=det)
 
             if det == 'CDD':
                 dbdet.ICFactor = spec.ic_factor_v
