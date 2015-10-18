@@ -93,6 +93,10 @@ class ExperimentPreferences(BasePreferencesHelper):
     end_after_color = Color
     invalid_color = Color
 
+    peak_center_threshold1 = Int(10)
+    peak_center_threshold2 = Int(3)
+    peak_center_threshold_window = Int(10)
+
     def _get_memory_threshold(self):
         return self._memory_threshold
 
@@ -224,6 +228,15 @@ class ExperimentPreferencesPane(PreferencesPane):
                             label='Overlap')
         persist_grp = Group(Item('use_xls_persister', label='Save analyses to Excel workbook'),
                             label='Persist', show_border=True)
+
+        pc_grp = Group(
+            Item('use_peak_center_threshold', label='Use Peak Center Threshold',
+                 tooltip='Only peak center if intensity is greater than the peak center threshold'),
+            Item('peak_center_threshold1', label='Threshold 1', enabled_when='use_peak_center_threshold'),
+            Item('peak_center_threshold2', label='Threshold 2', enabled_when='use_peak_center_threshold'),
+            Item('peak_center_threshold_window', label='Window', enabled_when='use_peak_center_threshold'),
+            label='Peak Center')
+
         automated_grp = Group(VGroup(Item('send_config_before_run',
                                           tooltip='Set the spectrometer configuration before each analysis',
                                           label='Set Spectrometer Configuration on Start'),
@@ -232,6 +245,7 @@ class ExperimentPreferencesPane(PreferencesPane):
                                           label='Set Integration Time on Start'),
                                      Item('default_integration_time',
                                           enabled_when='set_integration_time_on_start'),
+                                     pc_grp,
                                      persist_grp,
                                      monitor_grp, overlap_grp),
                               label='Automated Run')

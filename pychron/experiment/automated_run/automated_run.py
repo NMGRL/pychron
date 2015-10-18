@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # # ============= enthought library imports =======================
+from apptools.preferences.preference_binding import bind_preference
 from traits.api import Any, Str, List, Property, \
     Event, Instance, Bool, HasTraits, Float, Int, Long
 # ============= standard library imports ========================
@@ -172,11 +173,19 @@ class AutomatedRun(Loggable):
     min_ms_pumptime = Int(60)
     overlap_evt = None
 
+    use_peak_center_threshold = Bool
     peak_center_threshold1 = Int(10)
     peak_center_threshold2 = Int(3)
     peak_center_threshold_window = Int(10)
 
     persistence_spec = Instance(PersistenceSpec)
+
+    def bind_preferences(self):
+        prefid = 'pychron.experiment'
+        bind_preference(self, 'use_peak_center_threshold', '{}.use_peak_center_threshold'.format(prefid))
+        bind_preference(self, 'peak_center_threshold1', '{}.peak_center_threshold1'.format(prefid))
+        bind_preference(self, 'peak_center_threshold2', '{}.peak_center_threshold2'.format(prefid))
+        bind_preference(self, 'peak_center_threshold_window', '{}.peak_center_threshold_window'.format(prefid))
 
     # ===============================================================================
     # pyscript interface
@@ -511,7 +520,7 @@ class AutomatedRun(Loggable):
         ion = self.ion_optics_manager
 
         if ion is not None:
-            if self.arar_age and check_intensity:
+            if self.arar_age and check_intensity and self.use_peak_center_threshold:
                 iso = self.arar_age.get_isotope(isotope)
                 v = iso.get_intensity()
                 if v < self.peak_center_threshold1:
@@ -707,7 +716,6 @@ class AutomatedRun(Loggable):
         if self.monitor:
             self.monitor.automated_run = None
 
-        a = self.arar_age
         if self.arar_age:
             self.arar_age = None
 
