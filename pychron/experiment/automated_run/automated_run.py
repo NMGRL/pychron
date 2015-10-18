@@ -901,7 +901,9 @@ class AutomatedRun(Loggable):
 
             # save to database
             self._persister_action('post_measurement_save')
-            # self.persister.post_measurement_save()
+
+            if self.plot_panel:
+                self.plot_panel.analysis_view.refresh_needed = True
 
             # save analysis. don't cancel immediately
             ret = None
