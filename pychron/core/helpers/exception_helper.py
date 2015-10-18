@@ -194,6 +194,8 @@ def except_handler(exctype, value, tb):
         warning(None, 'RunTimeError: {}'.format(value))
     elif value == "'NoneType' object has no attribute 'text'":
         pass
+    elif value == "'NoneType' object has no attribute 'size'":
+        pass
     else:
         lines = traceback.format_exception(exctype, value, tb)
         if not exctype == KeyboardInterrupt:
