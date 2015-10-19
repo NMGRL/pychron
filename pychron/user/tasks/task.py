@@ -21,9 +21,8 @@ from pyface.tasks.task_layout import TaskLayout, PaneItem
 from traits.api import HasTraits, Button, List, Str, Bool, Enum, Property, cached_property, on_trait_change
 from traitsui.api import View, Item
 # ============= standard library imports ========================
-# ============= local library imports  ==========================
 import yaml
-from pychron.database.isotope_database_manager import IsotopeDatabaseManager
+# ============= local library imports  ==========================
 from pychron.envisage.tasks.base_task import BaseTask
 from pychron.paths import paths
 from pychron.user.tasks.panes import UsersPane
@@ -62,7 +61,7 @@ class UsersTask(BaseTask):
 
     def activated(self):
         db = self.db
-        if db:
+        if db and db.connected:
             with db.session_ctx():
                 users = [User(user) for user in db.get_users()]
                 self._sync(users)
@@ -134,5 +133,3 @@ class UsersTask(BaseTask):
         return TaskLayout()
 
 # ============= EOF =============================================
-
-

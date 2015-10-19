@@ -189,28 +189,38 @@ class ExceptionHandler(Controller):
         return v
 
 
-def except_handler(exctype, value, tb):
-    if exctype == RuntimeError:
-        warning(None, 'RunTimeError: {}'.format(value))
-    elif value == "'NoneType' object has no attribute 'text'":
-        pass
-    elif value == "'NoneType' object has no attribute 'size'":
-        pass
-    else:
-        lines = traceback.format_exception(exctype, value, tb)
-        if not exctype == KeyboardInterrupt:
-            em = ExceptionModel(exctext=''.join(lines),
-                                labels=['Bug'])
-            ed = ExceptionHandler(model=em)
-            ed.edit_traits()
+def ignored_exceptions(exctype, value, tb):
+    """
+        Do not open an Exception view for these exceptions
+    """
+    # if exception was not generated from pychron. This should obviate the subsequent if statements
+    tb = traceback.extract_tb(tb)
+    if 'pychron' not in tb[0][0] and 'pychron' not in tb[-1][0]:
+        return True
 
-        root = logging.getLogger()
-        root.critical('============ Exception ==============')
-        for ti in lines:
-            ti = ti.strip()
-            if ti:
-                root.critical(ti)
-        root.critical('============ End Exception ==========')
+    if exctype in (RuntimeError, KeyboardInterrupt):
+        return True
+
+    if value in ("'NoneType' object has no attribute 'text'",
+                 "'NoneType' object has no attribute 'size'"):
+        return True
+
+
+def except_handler(exctype, value, tb):
+    lines = traceback.format_exception(exctype, value, tb)
+    if not ignored_exceptions(exctype, value, tb):
+        em = ExceptionModel(exctext=''.join(lines),
+                            labels=['Bug'])
+        ed = ExceptionHandler(model=em)
+        ed.edit_traits()
+
+    root = logging.getLogger()
+    root.critical('============ Exception ==============')
+    for ti in lines:
+        ti = ti.strip()
+        if ti:
+            root.critical(ti)
+    root.critical('============ End Exception ==========')
 
 
 def traits_except_handler(obj, name, old, new):

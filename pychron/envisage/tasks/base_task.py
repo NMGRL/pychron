@@ -54,21 +54,11 @@ class WindowGroup(Group):
         while isinstance(manager, Group):
             manager = manager.parent
 
-
-
-        # application = self.manager.controller.task.window.application
-
-        #         t = 'active_window, window_opened, window_closed, windows, uis[]'
-        #         application.on_trait_change(self._rebuild, t)
         return manager
 
     def _items_default(self):
         application = self.manager.controller.task.window.application
-
-        t = 'active_window, window_opened, window_closed, windows, uis[]'
-        application.on_trait_change(self._rebuild, t)
-        # application = self.manager.controller.task.window.application
-        #         application.on_trait_change(self._rebuild, 'window_opened, window_closed, uis[]')
+        application.on_trait_change(self._rebuild, 'active_window, window_opened, window_closed, windows, uis[]')
         return []
 
     def _make_actions(self, vs):
@@ -121,14 +111,7 @@ class myTaskWindowLaunchAction(TaskWindowLaunchAction):
 
     def perform(self, event):
         application = event.task.window.application
-        import time
-
-        print 'start open task'
-        print time.time()
-        st = time.time()
         application.open_task(self.task_id)
-        print time.time()
-        print 'open task duration: {:0.3f}'.format(time.time() - st)
         self.checked = True
 
     @on_trait_change('task:window:opened')
@@ -141,85 +124,10 @@ class myTaskWindowLaunchAction(TaskWindowLaunchAction):
     def _window_closed(self):
         if self.task:
             if self.task_id == self.task.id:
-                #not having the desired effect. check on action remaims
+                # not having the desired effect. check on action remaims
                 self.checked = False
 
 
-                #def _checked_changed(self):
-                #    print self.checked, self.task_id
-
-
-# window = self.task.window
-#             print win, window
-#             print self.task_id, self.task.id
-#             self.checked=self.task.window==win
-#             print window.active_task, self.task
-#
-#             self.checked = (window is not None
-#                             and window.active_task == self.task)
-
-#     @on_trait_change('task:window:opened')
-#     def _window_o(self):
-#         self.checked=True
-
-#     @on_trait_change('task:window:closed')
-#     def _window_c(self):
-#         self.checked=False
-#         print 'asdfsafdasdf'
-
-#     @on_trait_change('foo')
-#     def _update_checked(self):
-#         print 'fffff'
-#         self.checked=True
-# #         if self.task:
-#             window = self.task.window
-#             self.checked = (window is not None
-#                             and window.active_task == self.task)
-#         print self.checked
-# class myTaskWindowLaunchGroup(TaskWindowLaunchGroup):
-#     '''
-#         uses myTaskWindowLaunchAction instead of enthoughts TaskWindowLaunchLaunchGroup
-#     '''
-#     def _items_default(self):
-#         manager = self
-#         while isinstance(manager, Group):
-#             manager = manager.parent
-#
-#         task = manager.controller.task
-#         application = task.window.application
-#
-#         groups = []
-#         def groupfunc(task_factory):
-#             gid = 0
-#             if hasattr(task_factory, 'task_group'):
-#                 gid = task_factory.task_group
-#
-#             return gid
-#
-#         for gi, factories in groupby(application.task_factories, groupfunc):
-#             items = []
-#             for factory in factories:
-# #         for factory in application.task_factories:
-#                 for win in application.windows:
-#                     if win.active_task:
-#                         if win.active_task.id == factory.id:
-#                             checked = True
-#                             break
-#                 else:
-#                     checked = False
-#
-#                 action = myTaskWindowLaunchAction(task_id=factory.id,
-#                                                   checked=checked)
-#
-#                 if hasattr(factory, 'accelerator'):
-#                     action.accelerator = factory.accelerator
-#                     print action.accelerator
-#                     items.append(ActionItem(action=action))
-#                 print items
-#             groups.append(Group(*items))
-#
-#         return groups
-#
 class TaskGroup(Group):
     items = List
 
@@ -276,13 +184,61 @@ class BaseTask(Task, Loggable, PreferenceMixin):
         if not menus:
             menus = []
 
+        edit_menu = SMenu(GenericFindAction(),
+                          id='Edit', name='&Edit')
+
+        # entry_menu = SMenu(
+        #     id='entry.menu',
+        #     name='&Entry')
+
+        file_menu = SMenu(
+            SGroup(id='Open'),
+            SGroup(id='New'),
+            SGroup(
+                GenericSaveAsAction(),
+                GenericSaveAction(),
+                id='Save'),
+            SGroup(),
+            id='file.menu', name='File')
+
+        tools_menu = SMenu(
+            CopyPreferencesAction(),
+            id='tools.menu', name='Tools')
+
+        window_menu = SMenu(
+            WindowGroup(),
+            Group(
+                CloseAction(),
+                CloseOthersAction(),
+                id='Close'),
+            OpenAdditionalWindow(),
+            Group(MinimizeAction(),
+                  ResetLayoutAction(),
+                  PositionAction()),
+
+            # SplitEditorAction(),
+            id='window.menu',
+            name='Window')
+        help_menu = SMenu(
+            IssueAction(),
+            NoteAction(),
+            AboutAction(),
+            DocumentationAction(),
+            ChangeLogAction(),
+            RestartAction(),
+            KeyBindingsAction(),
+            SwitchUserAction(),
+            StartupTestsAction(),
+            # DemoAction(),
+            id='help.menu',
+            name='Help')
         mb = SMenuBar(
-            self._file_menu(),
-            self._edit_menu(),
+            file_menu,
+            edit_menu,
             self._view_menu(),
-            self._tools_menu(),
-            self._window_menu(),
-            self._help_menu())
+            tools_menu,
+            window_menu,
+            help_menu)
         if menus:
             for mi in reversed(menus):
                 mb.items.insert(4, mi)
@@ -346,82 +302,6 @@ class BaseTask(Task, Loggable, PreferenceMixin):
             *grps,
             id='view.menu', name='&View')
         return view_menu
-
-    def _edit_menu(self):
-        m = SMenu(GenericFindAction(),
-            id='Edit', name='&Edit')
-        return m
-
-    def _entry_menu(self):
-        edit_menu = SMenu(
-            id='entry.menu',
-            name='&Entry')
-        return edit_menu
-
-    def _file_menu(self):
-        file_menu = SMenu(
-            SGroup(id='Open'),
-            SGroup(id='New'),
-            SGroup(
-                GenericSaveAsAction(),
-                GenericSaveAction(),
-                id='Save'),
-            SGroup(),
-            #                         SMenu(id='Open', name='Open',),
-            #                         SMenu(id='New', name='New'),
-
-            #                         Group(
-            #                                GenericSaveAsAction(),
-            #                                GenericSaveAction(),
-            #                                id='Save'
-            #                                ),
-            #
-            #                           SGroup(),
-            #
-            #                                 ),
-
-            id='file.menu', name='File')
-        return file_menu
-
-    def _tools_menu(self):
-        tools_menu = SMenu(
-            CopyPreferencesAction(),
-            id='tools.menu', name='Tools')
-        return tools_menu
-
-    def _window_menu(self):
-        window_menu = SMenu(
-            WindowGroup(),
-            Group(
-                CloseAction(),
-                CloseOthersAction(),
-                id='Close'),
-            OpenAdditionalWindow(),
-            Group(MinimizeAction(),
-                ResetLayoutAction(),
-                PositionAction()),
-
-            # SplitEditorAction(),
-            id='window.menu',
-            name='Window')
-
-        return window_menu
-
-    def _help_menu(self):
-        menu = SMenu(
-            IssueAction(),
-            NoteAction(),
-            AboutAction(),
-            DocumentationAction(),
-            ChangeLogAction(),
-            RestartAction(),
-            KeyBindingsAction(),
-            SwitchUserAction(),
-            StartupTestsAction(),
-            # DemoAction(),
-            id='help.menu',
-            name='Help')
-        return menu
 
     def _confirmation(self, message=''):
         dialog = ConfirmationDialog(parent=self.window.control,
@@ -493,7 +373,7 @@ class BaseManagerTask(BaseTask):
                 kw['wildcard'] = self.wildcard
 
         dialog = DirectoryDialog(
-            #parent=self.window.control,
+            # parent=self.window.control,
             action='open',
             **kw)
         if dialog.open() == OK:
