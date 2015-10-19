@@ -108,9 +108,7 @@ class GraphEditor(BaseTraitsEditor):
     @cached_property
     def _get_component(self):
         self.figure_model = None
-        ans = self.analyses
-        if ans:
-            return self._component_factory()
+        return self._component_factory()
 
     def _component_factory(self):
         raise NotImplementedError

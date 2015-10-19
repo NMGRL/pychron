@@ -144,6 +144,11 @@ class VerticalFluxNode(FigureNode):
     editor_klass = 'pychron.pipeline.plot.editors.vertical_flux_editor,VerticalFluxEditor'
     plotter_options_manager_klass = VerticalFluxOptionsManager
 
+    def run(self, state):
+        editor = super(VerticalFluxNode, self).run(state)
+        editor.irradiation = state.irradiation
+        editor.levels = state.levels
+
 
 class IdeogramNode(FigureNode):
     name = 'Ideogram'
@@ -190,4 +195,5 @@ class InverseIsochronNode(FigureNode):
     name = 'Inverse Isochron'
     editor_klass = 'pychron.pipeline.plot.editors.isochron_editor,InverseIsochronEditor'
     plotter_options_manager_klass = InverseIsochronOptionsManager
+
 # ============= EOF =============================================

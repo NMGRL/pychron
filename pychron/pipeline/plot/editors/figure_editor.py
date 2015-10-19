@@ -90,7 +90,6 @@ class FigureEditor(GraphEditor):
 
     def _component_factory(self):
         model = self._figure_model_factory()
-
         container = self.figure_container
         if not container:
             container = FigureContainer()

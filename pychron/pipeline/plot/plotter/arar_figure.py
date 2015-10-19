@@ -392,13 +392,14 @@ class BaseArArFigure(HasTraits, SelectionFigure):
         self.graph.set_y_limits(min_=mi, max_=ma, pad=pad, plotid=pid, pad_style='upper')
 
     def update_options_limits(self, pid):
-        n = len(self.options.aux_plots)
-        ap = self.options.aux_plots[n - pid - 1]
-        if not self.suppress_ylimits_update:
-            ap.ylimits = self.graph.get_y_limits(pid)
+        if hasattr(self.options, 'aux_plots'):
+            n = len(self.options.aux_plots)
+            ap = self.options.aux_plots[n - pid - 1]
+            if not self.suppress_ylimits_update:
+                ap.ylimits = self.graph.get_y_limits(pid)
 
-        if not self.suppress_xlimits_update:
-            ap.xlimits = self.graph.get_x_limits(pid)
+            if not self.suppress_xlimits_update:
+                ap.xlimits = self.graph.get_x_limits(pid)
 
     # ===========================================================================
     # aux plots

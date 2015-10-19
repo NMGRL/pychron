@@ -18,6 +18,7 @@
 from traits.api import List, Str, Int, Enum, Float, Property, Bool
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.options.aux_plot import AuxPlot
 
 from pychron.options.options import FigureOptions
 from pychron.pychron_constants import FLUX_CONSTANTS, ERROR_TYPES
@@ -61,8 +62,15 @@ class FluxOptions(FigureOptions):
         return VIEWS[name]
 
 
+class VerticalFluxAuxPlot(AuxPlot):
+    name = 'Height (cm)'
+
+
 class VerticalFluxOptions(FigureOptions):
     subview_names = List(['Main', 'Appearance'], transient=True)
+
+    def get_plotable_aux_plots(self):
+        return [VerticalFluxAuxPlot()]
 
     def _get_subview(self, name):
         from pychron.options.vertical_flux_views import VIEWS

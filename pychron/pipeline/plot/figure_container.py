@@ -40,7 +40,7 @@ class FigureContainer(HasTraits):
                     break
 
                 comp.add(p.make_graph())
-                if clear:
+                if clear and hasattr(p.plot_options, 'aux_plots'):
                     for ap in p.plot_options.aux_plots:
                         ap.clear_ylimits()
                         ap.clear_xlimits()
@@ -49,6 +49,7 @@ class FigureContainer(HasTraits):
         layout = self.model.layout
         self.model.refresh_panels()
         n = self.model.npanels
+
         comp, r, c = self._component_factory(n, layout)
         self.component = comp
         self.rows, self.cols = r, c

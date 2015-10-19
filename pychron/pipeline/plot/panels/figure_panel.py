@@ -68,7 +68,7 @@ class FigurePanel(HasTraits):
     #     self.graph.load_metadata(md)
 
     def _get_init_xlimits(self):
-        return None, 0, 0
+        return None, inf, -inf
 
     def _make_graph_hook(self, g):
         pass
@@ -87,7 +87,7 @@ class FigurePanel(HasTraits):
                                                   bgcolor=po.bgcolor))
 
         center, mi, ma = self._get_init_xlimits()
-
+        print center, mi, ma
         plots = list(po.get_plotable_aux_plots())
         if plots:
             xpad = None
@@ -120,7 +120,7 @@ class FigurePanel(HasTraits):
                 fig.plot(plots, legend)
                 fig.suppress_ylimits_update = False
                 fig.suppress_xlimits_update = False
-                # print fig.xma, fig.xmi
+                print fig.xma, fig.xmi
                 ma, mi = max(fig.xma, ma), min(fig.xmi, mi)
                 ymas, ymis = fig.ymas, fig.ymis
                 xpad = fig.xpad

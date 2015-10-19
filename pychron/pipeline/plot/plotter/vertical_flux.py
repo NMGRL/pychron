@@ -15,39 +15,37 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, List, Instance
-from traitsui.api import View, UItem, Controller
 # ============= standard library imports ========================
 import json
 import os
 # ============= local library imports  ==========================
-from pychron.paths import paths
-from pychron.graph.graph import Graph
 from pychron.graph.ticks import IntTickGenerator
+from pychron.paths import paths
+from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
 
 
-class VerticalFluxModel(HasTraits):
-    graph = Instance(Graph)
-    irradiation = Str
-    levels = List
+class VerticalFlux(BaseArArFigure):
+    def _setup_plot(self, i, pp, po):
+        super(VerticalFlux, self)._setup_plot(i, pp, po)
 
-    def load(self):
-        self.graph = g = Graph()
-        p = g.new_plot()
+        gen = IntTickGenerator()
+        pp.y_axis.tick_generator = gen
+        pp.y_grid.tick_generator = gen
+        self.graph.set_x_title('J')
+
+    def plot(self, plots, legend=None):
+        g = self.graph
 
         js, es, zs = self._gather_data()
         g.new_series(js, zs,
                      marker='circle',
                      type='scatter')
 
-        g.set_x_limits(pad='0.1')
         g.set_y_limits(pad='0.1')
-        g.set_x_title('J')
-        g.set_y_title('Z')
 
-        gen = IntTickGenerator()
-        p.y_axis.tick_generator = gen
-        p.y_grid.tick_generator = gen
+        self.xma = max(js)
+        self.xmi = min(js)
+        self.xpad = '0.1'
 
     def _gather_data(self):
         js, es, zs = [], [], []
@@ -63,19 +61,4 @@ class VerticalFluxModel(HasTraits):
                     zs.append(d.get('z', i))
         return js, es, zs
 
-
-class VerticalFluxView(Controller):
-    def traits_view(self):
-        v = View(UItem('graph', style='custom'),
-                 resizable=True)
-        return v
-
-
-if __name__ == '__main__':
-    paths.build('_dev')
-    m = VerticalFluxModel(irradiation='NM-258',
-                          levels=['A', 'B', 'C', 'D'])
-    m.load()
-    v = VerticalFluxView(model=m)
-    v.configure_traits()
 # ============= EOF =============================================
