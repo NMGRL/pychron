@@ -36,7 +36,8 @@ from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.paths import paths
 from pychron.pychron_constants import SPECTROMETER_PROTOCOL
 from pychron.experiment.tasks.experiment_panes import ExperimentFactoryPane, StatsPane, \
-    ControlsPane, WaitPane, IsotopeEvolutionPane, ConnectionStatusPane
+    ControlsPane, IsotopeEvolutionPane, ConnectionStatusPane
+from pychron.envisage.tasks.wait_pane import WaitPane
 
 
 class ExperimentEditorTask(EditorTask):
@@ -658,7 +659,7 @@ class ExperimentEditorTask(EditorTask):
     def _default_layout_default(self):
         return TaskLayout(
             left=Splitter(
-                PaneItem('pychron.experiment.wait', height=100),
+                PaneItem('pychron.wait', height=100),
                 Tabbed(
                     PaneItem('pychron.experiment.factory'),
                     PaneItem('pychron.experiment.isotope_evolution')),

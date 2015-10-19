@@ -88,7 +88,7 @@ class BaseLaserPlugin(BaseTaskPlugin):
         mode = ip.get_parameter(plugin, 'mode')
 
         klass = ip.get_parameter(plugin, 'klass')
-        if klass is None:
+        if klass is None and mode == 'client':
             klass = 'PychronLaserManager'
             pkg = 'pychron.lasers.laser_managers.api'
             factory = __import__(pkg, fromlist=[klass])

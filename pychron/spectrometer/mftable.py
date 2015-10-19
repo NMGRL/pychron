@@ -37,9 +37,6 @@ def get_detector_name(det):
     return det
 
 
-# def mass_cal_func(p, x):
-#     return p[2] + (p[0] ** 2 * x / p[1]) ** 0.5
-
 def mass_cal_func(p, x):
     return p[0]*x**2+p[1]*x+p[2]
 

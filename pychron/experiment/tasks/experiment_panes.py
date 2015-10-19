@@ -314,49 +314,6 @@ QComboBox {font-size: 10px}
 # ===============================================================================
 # execution
 # ===============================================================================
-class WaitPane(TraitsDockPane):
-    id = 'pychron.experiment.wait'
-    name = 'Wait'
-
-    def traits_view(self):
-        cview = View(VGroup(
-            CustomLabel('message',
-                        size=14,
-                        weight='bold',
-                        color_name='message_color'),
-
-            HGroup(Spring(width=-5, springy=False),
-                   Item('high', label='Set Max. Seconds'),
-                   spring,
-                   CustomLabel('current_time',
-                               size=14,
-                               weight='bold'),
-                   UItem('continue_button')),
-            HGroup(Spring(width=-5, springy=False),
-                   Item('current_time', show_label=False,
-                        editor=RangeEditor(mode='slider', low=1, high_name='duration')))))
-
-        v = View(UItem('active_control',
-                       style='custom',
-                       visible_when='single',
-                       editor=InstanceEditor(view=cview)),
-                 UItem('controls',
-                       editor=ListEditor(
-                           use_notebook=True,
-                           selected='active_control',
-                           page_name='.page_name',
-                           view=cview),
-                       style='custom',
-                       visible_when='not single'))
-        return v
-
-        # def traits_view(self):
-        # v = View(
-        # UItem('wait_group',
-        # style='custom'))
-        # return v
-
-
 class ConnectionStatusPane(TraitsDockPane):
     id = 'pychron.experiment.connection_status'
     name = 'Connection Status'

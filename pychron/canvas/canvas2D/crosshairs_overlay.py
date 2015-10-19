@@ -108,7 +108,8 @@ class CrosshairsOverlay(SimpleCrosshairsOverlay):
             sdp = component.show_desired_position
             dp = component.desired_position
             if sdp and dp is not None:
-                self._draw_radius_ch(gc, component, dp, radius, color=component.desired_position_color)
+                pos_off = dp[0] + component.crosshairs_offsetx, dp[1] + component.crosshairs_offsety
+                self._draw_radius_ch(gc, component, pos_off, radius, color=component.desired_position_color)
 
             if component.show_laser_position:
                 pos = (component.x + (component.x2 - component.x) / 2.0,

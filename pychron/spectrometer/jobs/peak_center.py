@@ -113,8 +113,8 @@ class BasePeakCenter(MagnetSweep):
         tol = 50
         timeout = 10
         self.info('Wait until signal near baseline. tol= {}. timeout= {}'.format(tol, timeout))
-        spec.save_integration()
-        spec.set_integration_time(0.5)
+        # spec.save_integration()
+        # spec.set_integration_time(0.5)
 
         st = time.time()
         while 1:
@@ -131,7 +131,7 @@ class BasePeakCenter(MagnetSweep):
                 break
             time.sleep(0.5)
 
-        spec.restore_integration()
+        # spec.restore_integration()
 
         center, smart_shift, success = None, False, False
         # cdd has been tripping during the previous move on obama when moving H1 from 34.5 to 39.7

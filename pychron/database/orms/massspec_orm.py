@@ -203,6 +203,8 @@ class DetectorTable(Base):
     isotopes = relationship('IsotopeTable', backref='detector')
     if DBVERSION >= 16.3:
         analyses = relationship('AnalysesTable', backref='reference_detector')
+    else:
+        Label = Column(String(40))
 
 
 class DetectorTypeTable(Base):

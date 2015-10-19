@@ -117,12 +117,12 @@ class HardwarePlugin(BaseTaskPlugin):
                     rhm.add_endpoint(port, factory(self.application))
                     self.debug('Added Pychron Proxy Service: {}:{}'.format(protocol, port))
 
-            # else:
-            #     from pychron.remote_hardware.remote_hardware_manager import RemoteHardwareManager
-            #     rhm = RemoteHardwareManager(application=self.application)
-            #
-            rhm.bootstrap()
+            else:
+                from pychron.remote_hardware.remote_hardware_manager import RemoteHardwareManager
+                rhm = RemoteHardwareManager(application=self.application)
+
             self._remote_hardware_manager = rhm
+            rhm.bootstrap()
 
     def stop(self):
         if self._remote_hardware_manager:

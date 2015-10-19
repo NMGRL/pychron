@@ -192,10 +192,15 @@ class ExceptionHandler(Controller):
 def except_handler(exctype, value, tb):
     if exctype == RuntimeError:
         warning(None, 'RunTimeError: {}'.format(value))
+    elif value == "'NoneType' object has no attribute 'text'":
+        pass
+    elif value == "'NoneType' object has no attribute 'size'":
+        pass
     else:
         lines = traceback.format_exception(exctype, value, tb)
         if not exctype == KeyboardInterrupt:
-            em = ExceptionModel(exctext=''.join(lines))
+            em = ExceptionModel(exctext=''.join(lines),
+                                labels=['Bug'])
             ed = ExceptionHandler(model=em)
             ed.edit_traits()
 

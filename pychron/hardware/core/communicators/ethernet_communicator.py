@@ -17,8 +17,8 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 import socket
-# ============= local library imports  ==========================
 import time
+# ============= local library imports  ==========================
 from pychron.globals import globalv
 from pychron.hardware.core.communicators.communicator import Communicator, process_response
 from pychron.hardware.core.checksum_helper import computeCRC
@@ -54,7 +54,8 @@ class Handler(object):
 
     def set_frame(self, f):
         self.message_frame = MessageFrame()
-        self.message_frame.set_str(f)
+        if f:
+            self.message_frame.set_str(f)
 
     def get_packet(self, cmd):
         raise NotImplementedError

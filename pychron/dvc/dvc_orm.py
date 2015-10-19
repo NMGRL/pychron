@@ -15,12 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from sqlalchemy.orm import relationship
-from sqlalchemy.sql.schema import ForeignKey
 # ============= standard library imports ========================
-# ============= local library imports  ==========================
+from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
-from sqlalchemy import Column, Integer, String, TIMESTAMP, Float, BLOB, func, Boolean
+from sqlalchemy import Column, Integer, String, TIMESTAMP, Float, BLOB, func, Boolean, ForeignKey
+# ============= local library imports  ==========================
 from pychron.core.helpers.datetime_tools import make_timef
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.experiment.utilities.identifier import make_runid

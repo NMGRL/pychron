@@ -611,7 +611,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         self._report_execution_state(run)
 
-        run.teardown()
+        do_after(1000, run.teardown)
+        # run.teardown()
 
         self.measuring_run = None
         mem_log('> end join')
@@ -698,7 +699,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 self._prev_blank_id = run.spec.analysis_dbid
                 self._prev_blanks = pb
         self._report_execution_state(run)
-        run.teardown()
+        # run.teardown()
+        do_after(1000, run.teardown)
 
     def _cancel_run(self):
         self.set_extract_state(False)
@@ -1012,6 +1014,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             used for analysis recovery
         '''
         self._add_backup(arun.uuid)
+
+        arun.bind_preferences()
 
         arun.integration_time = 1.04
 
