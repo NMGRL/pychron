@@ -17,11 +17,12 @@
 # ============= enthought library imports =======================
 from itertools import groupby
 
-from traits.api import Float, Str, List, Instance, Property, cached_property
-from traitsui.api import Item, EnumEditor
+from traits.api import Float, Str, List, Instance, Property, cached_property, Button
+from traitsui.api import Item, EnumEditor, UItem
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from traitsui.editors.check_list_editor import CheckListEditor
 from pychron.experiment.utilities.identifier import SPECIAL_MAPPING
 from pychron.pipeline.editors.flux_results_editor import FluxPosition
 from pychron.pipeline.graphical_filter import GraphicalFilterModel, GraphicalFilterView
@@ -32,20 +33,18 @@ class FindNode(BaseNode):
     dvc = Instance('pychron.dvc.dvc.DVC')
 
 
-class FindFluxMonitorsNode(FindNode):
-    name = 'Find Flux Monitors'
-
-    # monitor_sample_name = Str('BW-2014-3')
-    monitor_sample_name = Str('FC-2')
+class BaseFindFluxNode(FindNode):
     irradiation = Str
     irradiations = Property
 
-    level = Str
     levels = Property(depends_on='irradiation')
 
     def load(self, nodedict):
         self.irradiation = nodedict.get('irradiation', '')
-        self.level = nodedict.get('level', '')
+        self._load_hook(nodedict)
+
+    def _load_hook(self, nodedict):
+        pass
 
     @cached_property
     def _get_levels(self):
@@ -62,12 +61,37 @@ class FindFluxMonitorsNode(FindNode):
             irrads = self.dvc.get_irradiations()
             return [i.name for i in irrads]
 
+
+class FindVerticalFluxNode(BaseFindFluxNode):
+    select_all_button = Button('Select All')
+    selected_levels = List
+
+    def run(self, state):
+        state.levels = self.selected_levels
+        state.irradiation = self.irradiation
+
+    def _select_all_button_fired(self):
+        self.selected_levels = self.levels
+
     def traits_view(self):
         v = self._view_factory(Item('irradiation', editor=EnumEditor(name='irradiations')),
-                               Item('level', editor=EnumEditor(name='levels')),
+                               UItem('select_all_button'),
+                               UItem('selected_levels',
+                                     style='custom',
+                                     editor=CheckListEditor(name='levels')),
                                width=300,
-                               title='Select Irradiation and Level')
+                               title='Select Irradiation and Level',
+                               resizable=True)
         return v
+
+
+class FindFluxMonitorsNode(BaseFindFluxNode):
+    name = 'Find Flux Monitors'
+
+    # monitor_sample_name = Str('BW-2014-3')
+    monitor_sample_name = Str('FC-2')
+
+    level = Str
 
     def run(self, state):
         if not self.irradiation or not self.level:
@@ -108,6 +132,16 @@ class FindFluxMonitorsNode(FindNode):
                           # mean_jerr=std_dev(mj),
                           x=x, y=y)
         return fp
+
+    def _load_hook(self, nodedict):
+        self.level = nodedict.get('level', '')
+
+    def traits_view(self):
+        v = self._view_factory(Item('irradiation', editor=EnumEditor(name='irradiations')),
+                               Item('level', editor=EnumEditor(name='levels')),
+                               width=300,
+                               title='Select Irradiation and Level')
+        return v
 
 
 class FindReferencesNode(FindNode):

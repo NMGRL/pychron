@@ -23,7 +23,7 @@ from pyface.tasks.action.schema_addition import SchemaAddition
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.pipeline.tasks.actions import ConfigureRecallAction, IdeogramAction, IsochronAction, SpectrumAction, \
-    SeriesAction, BlanksAction, ICFactorAction, ResetFactoryDefaultsAction
+    SeriesAction, BlanksAction, ICFactorAction, ResetFactoryDefaultsAction, VerticalFluxAction
 from pychron.pipeline.tasks.browser_task import BrowserTask
 from pychron.pipeline.tasks.preferences import PipelinePreferencesPane
 from pychron.pipeline.tasks.task import PipelineTask
@@ -39,7 +39,8 @@ class PipelinePlugin(BaseTaskPlugin):
                 ('ideogram_template', 'IDEO', ov),
                 ('spectrum_template', 'SPEC', ov),
                 ('isochron_template', 'ISOCHRON', ov),
-                ('csv_ideogram_template', 'CSV_IDEO', ov)]
+                ('csv_ideogram_template', 'CSV_IDEO', ov),
+                ('vertical_flux_template', 'VERTICAL_FLUX', ov)]
 
     def _pipeline_factory(self):
         model = self.application.get_service(BrowserModel)
@@ -88,6 +89,8 @@ class PipelinePlugin(BaseTaskPlugin):
                             SchemaAddition(factory=IsochronAction,
                                            path=pg),
                             SchemaAddition(factory=SeriesAction,
+                                           path=pg),
+                            SchemaAddition(factory=VerticalFluxAction,
                                            path=pg)]
 
         reduction_actions = [SchemaAddition(factory=reduction_group,

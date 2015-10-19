@@ -23,7 +23,7 @@ from pychron.envisage.tasks.base_editor import grouped_name
 from pychron.options.views import view
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.options.options_manager import IdeogramOptionsManager, OptionsController, SeriesOptionsManager, \
-    SpectrumOptionsManager, InverseIsochronOptionsManager
+    SpectrumOptionsManager, InverseIsochronOptionsManager, VerticalFluxOptionsManager
 
 
 class NoAnalysesError(BaseException):
@@ -137,6 +137,12 @@ class FigureNode(BaseNode):
 
     def _options_view_default(self):
         return view('{} Options'.format(self.name))
+
+
+class VerticalFluxNode(FigureNode):
+    name = 'Vertical Flux'
+    editor_klass = 'pychron.pipeline.plot.editors.vertical_flux_editor,VerticalFluxEditor'
+    plotter_options_manager_klass = VerticalFluxOptionsManager
 
 
 class IdeogramNode(FigureNode):

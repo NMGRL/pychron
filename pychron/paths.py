@@ -414,6 +414,7 @@ class Paths(object):
         self.spectrum_template = join(self.pipeline_template_dir, 'spectrum.yaml')
         self.isochron_template = join(self.pipeline_template_dir, 'isochron.yaml')
         self.inverse_isochron_template = join(self.pipeline_template_dir, 'inverse_isochron.yaml')
+        self.vertical_flux_template = join(self.pipeline_template_dir, 'vertical_flux.yaml')
 
         build_directories()
 

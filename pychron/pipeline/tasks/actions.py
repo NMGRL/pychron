@@ -173,6 +173,11 @@ class SeriesAction(PlotAction):
     id = 'pychron.series'
 
 
+class VerticalFluxAction(PipelineAction):
+    name = 'Vertical Flux'
+    action = 'set_vertical_flux_template'
+
+
 # ============= tag =============================================
 class TagAction(TaskAction):
     name = 'Tag...'

@@ -27,7 +27,7 @@ from pychron.file_defaults import SPECTRUM_PRESENTATION
 from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.options.blanks import BlanksOptions
-from pychron.options.flux import FluxOptions
+from pychron.options.flux import FluxOptions, VerticalFluxOptions
 from pychron.options.icfactor import ICFactorOptions
 from pychron.options.ideogram import IdeogramOptions
 from pychron.options.iso_evo import IsotopeEvolutionOptions
@@ -258,6 +258,11 @@ class IsotopeEvolutionOptionsManager(FigureOptionsManager):
 class FluxOptionsManager(FigureOptionsManager):
     id = 'flux'
     options_klass = FluxOptions
+
+
+class VerticalFluxOptionsManager(FigureOptionsManager):
+    id = 'vertical_flux'
+    options_klass = VerticalFluxOptions
 
 
 class IdeogramOptionsManager(FigureOptionsManager):

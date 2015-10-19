@@ -304,8 +304,11 @@ class PipelineTask(BaseBrowserTask):
         self.run()
 
     def set_series_template(self):
-        print 'set series template'
         self.engine.set_template('series')
+        self.run()
+
+    def set_vertical_flux_template(self):
+        self.engine.set_template('vertical_flux')
         self.run()
 
     # private

@@ -419,6 +419,9 @@ SPEC = """- klass: UnknownNode
 - klass: SpectrumNode
 """
 
+VERTICAL_FLUX = """- klass: FindVerticalFluxNode
+- klass: VerticalFluxNode
+"""
 # SYSTEM_HEALTH = '''
 # values:
 #  - Ar40/Ar36

@@ -18,7 +18,7 @@
 from traits.api import List, Str, Int, Enum, Float, Property, Bool
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.options.flux_views import VIEWS
+
 from pychron.options.options import FigureOptions
 from pychron.pychron_constants import FLUX_CONSTANTS, ERROR_TYPES
 
@@ -50,13 +50,21 @@ class FluxOptions(FigureOptions):
         dc = FLUX_CONSTANTS[self.selected_decay]
         return dc[0] + dc[2]
 
-    def get_subview(self, name):
-        name = name.lower()
-        klass = self._get_subview(name)
-        obj = klass(model=self)
-        return obj
+    # def get_subview(self, name):
+    #     name = name.lower()
+    #     klass = self._get_subview(name)
+    #     obj = klass(model=self)
+    #     return obj
 
     def _get_subview(self, name):
+        from pychron.options.flux_views import VIEWS
         return VIEWS[name]
 
+
+class VerticalFluxOptions(FigureOptions):
+    subview_names = List(['Main', 'Appearance'], transient=True)
+
+    def _get_subview(self, name):
+        from pychron.options.vertical_flux_views import VIEWS
+        return VIEWS[name]
 # ============= EOF =============================================
