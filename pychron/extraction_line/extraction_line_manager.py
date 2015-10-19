@@ -33,6 +33,7 @@ from pychron.managers.manager import Manager
 from pychron.monitors.system_monitor import SystemMonitor
 from pychron.extraction_line.graph.extraction_line_graph import ExtractionLineGraph
 from pychron.pychron_constants import NULL_STR
+from pychron.wait.wait_group import WaitGroup
 
 
 class ExtractionLineManager(Manager, Consoleable):
@@ -82,7 +83,11 @@ class ExtractionLineManager(Manager, Consoleable):
     _active = False
     file_listener = None
 
+    wait_group = Instance(WaitGroup, ())
+    console_bgcolor = 'black'
+
     def activate(self):
+
         self._active = True
 
         # need to wait until now to load the ptrackers
@@ -442,6 +447,12 @@ class ExtractionLineManager(Manager, Consoleable):
                              volume_key=self.volume_key)
 
         return c
+
+    def get_wait_control(self):
+        wd = self.wait_group.active_control
+        if wd.is_active():
+            wd = self.wait_group.add_control()
+        return wd
 
     # ===============================================================================
     # private

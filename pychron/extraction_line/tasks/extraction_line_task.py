@@ -17,11 +17,11 @@
 # ============= enthought library imports =======================
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem
-# from pyface.tasks.action.schema import SMenu
-# from pychron.extraction_line.tasks.extraction_line_actions import RefreshCanvasAction
+from traits.api import Instance
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.pane_helpers import ConsolePane
+from pychron.envisage.tasks.wait_pane import WaitPane
 from pychron.extraction_line.tasks.extraction_line_actions import SampleLoadingAction, AutoReloadAction
 from pychron.extraction_line.tasks.extraction_line_pane import CanvasPane, GaugePane, \
     ExplanationPane
@@ -31,6 +31,7 @@ from pychron.envisage.tasks.base_task import BaseHardwareTask
 class ExtractionLineTask(BaseHardwareTask):
     id = 'pychron.extraction_line'
     name = 'Extraction Line'
+    wait_pane = Instance(WaitPane)
 
     def _tool_bars_default(self):
         tb = SToolBar(
@@ -60,9 +61,12 @@ class ExtractionLineTask(BaseHardwareTask):
         return g
 
     def create_dock_panes(self):
+        self.wait_pane = WaitPane(model=self.manager.wait_group)
         panes = [GaugePane(model=self.manager),
                  ExplanationPane(model=self.manager),
-                 ConsolePane(model=self.manager)]
+                 ConsolePane(model=self.manager),
+                 self.wait_pane
+                 ]
         return panes
 
     # =======================================================================

@@ -809,11 +809,12 @@ class PyScript(Loggable):
 
     def _setup_wait_control(self):
         from pychron.wait.wait_control import WaitControl
-
         if self.manager:
             wd = self.manager.get_wait_control()
         else:
             wd = self._wait_control
+
+        print self.manager, wd
 
         if wd is None:
             wd = WaitControl()
@@ -858,7 +859,7 @@ class PyScript(Loggable):
                 self.console_info('canceling script after {:0.3f} s'.format(time.time() - st))
             elif wd.is_continued():
                 self.console_info('continuing script after {:0.3f} s'.format(time.time() - st))
-                if self.manager:
+                if self.manager and hasattr(self.manager, 'continued'):
                     self.manager.continued()
 
         else:
