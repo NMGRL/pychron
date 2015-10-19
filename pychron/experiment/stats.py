@@ -251,7 +251,7 @@ class ExperimentStats(Loggable):
         return rd
 
     def finish_run(self):
-
+        self._run_start = 0
         self.nruns_finished += 1
         if self.clock:
             self.clock.stop()
