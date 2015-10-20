@@ -70,7 +70,9 @@ class WaitControl(Loggable):
         time.sleep(0.25)
         # while not self.end_evt.is_set():
         while not evt.is_set():
-            time.sleep(0.05)
+            # time.sleep(0.005)
+            evt.wait(0.005)
+
         self.debug('Join finished')
 
     def start(self, block=True, evt=None, duration=None, message=None):
@@ -101,6 +103,8 @@ class WaitControl(Loggable):
 
         if block:
             self.join(evt=evt)
+            if evt == self.end_evt:
+                self.end_evt = None
 
     def stop(self):
         self._end()
