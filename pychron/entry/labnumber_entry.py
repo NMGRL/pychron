@@ -158,7 +158,10 @@ class LabnumberEntry(DVCIrradiationable):
             items = self.irradiated_positions
 
         for item in items:
-            self.debug('Get IGSN for sample={}, position={}'.format(item.sample, item.hole))
+            if item.sample:
+                # need to check for existing IGSN for sample
+
+                self.debug('Get IGSN for sample={}, position={}'.format(item.sample, item.hole))
 
     def transfer_j(self):
         items = self.selected

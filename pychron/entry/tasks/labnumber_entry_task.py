@@ -73,7 +73,6 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     weight = Float
 
     def activated(self):
-        print 'labnumber entry activated', self.manager
         if self.manager.verify_database_connection(inform=True):
             if self.db.connected:
                 self.manager.activated()
@@ -86,8 +85,9 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
         if not igsn_repo.url:
             self.warning_dialog('No IGSN URL set in preferences. '
                                 'The url is required before proceeding. ')
+            return
 
-        self.manager.get_igsns()
+        self.manager.get_igsns(igsn_repo)
 
     def transfer_j(self):
         self.info('Transferring J Data')

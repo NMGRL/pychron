@@ -23,7 +23,7 @@ from pyface.tasks.action.schema_addition import SchemaAddition
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.entry.editors.flux_monitor_editor import FluxMonitorEditor
-from pychron.entry.preferences import LabnumberEntryPreferencesPane
+from pychron.entry.tasks.preferences import LabnumberEntryPreferencesPane
 from pychron.entry.tasks.actions import SaveLabbookPDFAction, MakeIrradiationTemplateAction, LabnumberEntryAction, \
     SensitivityEntryAction, AddMolecularWeightAction, AddFluxMonitorAction, \
     GenerateTrayAction, \
