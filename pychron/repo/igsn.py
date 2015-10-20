@@ -26,6 +26,7 @@ from pychron.repo.http_repository import HTTPRepository
 class IGSNRepository(HTTPRepository):
     # url = Str('http://matisse.kgs.ku.edu/geochronid')
     # url = Str('http://localhost:8080')
+    usercode = Str
 
     get_igsn_button = Button('Get IGSN')
 
@@ -45,6 +46,7 @@ class IGSNRepository(HTTPRepository):
         bind_preference(self, 'url', '{}.url'.format(prefid))
         bind_preference(self, 'username', '{}.username'.format(prefid))
         bind_preference(self, 'password', '{}.password'.format(prefid))
+        bind_preference(self, 'usercode', '{}.usercode'.format(prefid))
 
     # @on_trait_change('sample, username, password')
     # def _update_enabled(self):

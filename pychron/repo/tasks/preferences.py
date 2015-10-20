@@ -16,11 +16,19 @@
 
 # ============= enthought library imports =======================
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traits.api import Str, Password
+from traits.api import Str, Password, BaseStr
 from traitsui.api import View, Item, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
+
+
+class UserCodeStr(BaseStr):
+    def validate(self, obj, name, value):
+        if len(value) != 3:
+            self.error(obj, name, value)
+        else:
+            return value
 
 
 class IGSNPreferences(BasePreferencesHelper):
@@ -28,6 +36,7 @@ class IGSNPreferences(BasePreferencesHelper):
     url = Str
     username = Str
     password = Password
+    usercode = UserCodeStr
 
 
 class IGSNPreferencesPane(PreferencesPane):
@@ -41,6 +50,7 @@ class IGSNPreferencesPane(PreferencesPane):
                           label='Authentication')
 
         v = View(VGroup(Item('url', label='IGSN URL'),
+                        Item('usercode', tooltip='Three alphanumeric characters used as a sample prefix'),
                         auth_grp))
         return v
 
