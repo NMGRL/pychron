@@ -15,37 +15,48 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Str, Button, Property, Event
+from traits.api import Str, Button, Event
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.processing.repository.http_repository import HTTPRepository
-from traits.has_traits import on_trait_change
+from pychron.core.ui.preference_binding import bind_preference
+from pychron.repo.http_repository import HTTPRepository
 
 
-class IGSN(HTTPRepository):
-#     url = Str('http://matisse.kgs.ku.edu/geochronid')
-    url = Str('http://localhost:8080')
+class IGSNRepository(HTTPRepository):
+    # url = Str('http://matisse.kgs.ku.edu/geochronid')
+    # url = Str('http://localhost:8080')
+
     get_igsn_button = Button('Get IGSN')
 
     project = Str
     sample = Str
     parent_igsn = Str
 
-    display_str = Property(depends_on='sample, project')
+    # display_str = Property(depends_on='sample, project')
     new_igsn = Event
 
-    @on_trait_change('sample, username, password')
-    def _update_enabled(self):
-        self.enabled = all([getattr(self, a)
-                                 for a in ('sample', 'username', 'password')])
+    def __init__(self, *args, **kw):
+        super(IGSNRepository, self).__init__(*args, **kw)
+        self._bind_preferences()
 
-    def _get_display_str(self):
-        return '{} {}'.format(self.project, self.sample)
+    def _bind_preferences(self):
+        prefid = 'pychron.igsn'
+        bind_preference(self, 'url', '{}.url'.format(prefid))
+        bind_preference(self, 'username', '{}.username'.format(prefid))
+        bind_preference(self, 'password', '{}.password'.format(prefid))
 
-    def _get_igsn_button_fired(self):
-        self.debug('get igsn fired')
-        self.get_igsn()
+    # @on_trait_change('sample, username, password')
+    # def _update_enabled(self):
+    #     self.enabled = all([getattr(self, a)
+    #                              for a in ('sample', 'username', 'password')])
+    #
+    # def _get_display_str(self):
+    #     return '{} {}'.format(self.project, self.sample)
+    #
+    # def _get_igsn_button_fired(self):
+    #     self.debug('get igsn fired')
+    #     self.get_igsn()
 
     def get_igsn(self):
         form = self._new_form()

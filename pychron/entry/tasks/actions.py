@@ -210,4 +210,9 @@ class TransferJAction(TaskAction):
     name = 'Transfer J Data...'
     dname = 'Transfer J Data'
     method = 'transfer_j'
+
+
+class GetIGSNAction(TaskAction):
+    name = 'Get IGSNs'
+    method = 'get_igsns'
 # ============= EOF =============================================

@@ -71,8 +71,9 @@ class BrowserTask(BaseBrowserTask):
     def _opened_hook(self):
         super(BrowserTask, self)._opened_hook()
         if globalv.browser_debug:
-            r = self.browser_model.analysis_table.analyses[0]
-            self.recall(r)
+            if self.browser_model.analysis_table.analyses:
+                r = self.browser_model.analysis_table.analyses[0]
+                self.recall(r)
 
     # toolbar actions
 

@@ -21,6 +21,8 @@ import urllib2
 from traits.api import Str, Password, Button, on_trait_change, Bool
 
 from pychron.loggable import Loggable
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 class HTTPRepository(Loggable):

@@ -51,6 +51,7 @@ from pychron.entry.irradiated_position import IrradiatedPosition
 # def __exit__(self, exc_type, exc_val, exc_tb):
 # self._p.information_dialog('Changes saved to database')
 
+
 class NeutronDose(HasTraits):
     def __init__(self, power, start, end, *args, **kw):
         self.power = power
@@ -150,6 +151,14 @@ class LabnumberEntry(DVCIrradiationable):
         #     with self.dvc.session_ctx():
         #         self.dvc.add_sample('bar01', 'Foo', 'san')
         #     self.updated = True
+
+    def get_igsns(self, igsn_repo):
+        items = self.selected
+        if not items:
+            items = self.irradiated_positions
+
+        for item in items:
+            self.debug('Get IGSN for sample={}, position={}'.format(item.sample, item.hole))
 
     def transfer_j(self):
         items = self.selected
