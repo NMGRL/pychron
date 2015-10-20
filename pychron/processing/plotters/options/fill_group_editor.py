@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,19 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 from pychron.core.helpers.color_generators import colornames
 from pychron.core.ui import set_qt
 
 set_qt()
-#============= enthought library imports =======================
-from traitsui.menu import ModalButtons
-from traits.api import HasTraits, List, Enum, Float, Bool, String, Button, Property, Int, on_trait_change, Color, Range, \
-    Dict
-from traitsui.api import View, Item, HGroup, Group, VGroup, UItem, EnumEditor, ListEditor, InstanceEditor
+# ============= enthought library imports =======================
+from traits.api import HasTraits, List, Bool, Int, Color, Range
+from traitsui.api import View, Item, HGroup, VGroup, UItem, ListEditor, InstanceEditor
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 class Fill(HasTraits):
     use_filled_line = Bool
     color = Color
@@ -72,5 +70,5 @@ if __name__ == '__main__':
 
     #[Fill(group_id=0), Fill(group_id=1), Fill(group_id=2)]
     eg.configure_traits()
-#============= EOF =============================================
+# ============= EOF =============================================
 

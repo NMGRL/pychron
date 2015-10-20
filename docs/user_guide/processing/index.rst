@@ -13,4 +13,5 @@ Processing
   ..flux
   tagging
   permutator
+  workspace
 

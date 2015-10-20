@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,11 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 from collections import namedtuple
+
 from numpy import array, asarray, ndarray
 from scipy.ndimage.filters import laplace
 from numpy.lib.function_base import percentile
@@ -35,11 +36,11 @@ try:
         CV_8UC3, CV_RGB, CV_16UC1, CV_32FC3, CV_CHAIN_APPROX_NONE, CV_RETR_EXTERNAL, \
         CV_AA, CV_16UC3, CV_16SC1
 except ImportError, e:
-    print e
+    print 'exception', e
     print 'OpenCV required'
 
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.geometry.centroid import calculate_centroid
 
 
@@ -237,9 +238,9 @@ def new_video_writer(path, fps, size):
     v = VideoWriter(path, fourcc, fps, size)
     return v
 
-#===============================================================================
+# ===============================================================================
 # image manipulation
-#===============================================================================
+# ===============================================================================
 def sharpen(src):
     src = asarray(src)
     w, h = get_size(src)
@@ -251,9 +252,9 @@ def sharpen(src):
                       (3, 3), 3)
     addWeighted(src, 1.5, im, -0.5, 0, im)
     return im
-#===============================================================================
+# ===============================================================================
 # drawing
-#===============================================================================
+# ===============================================================================
 _new_point = namedtuple('Point', 'x y')
 def new_point(x, y, tt=False):
     x, y = map(int, (x, y))
@@ -324,9 +325,9 @@ def draw_contour_list(src, contours, hierarchy, external_color=(0, 255, 255),
 
 def get_centroid(pts):
     return calculate_centroid(pts)
-#===============================================================================
+# ===============================================================================
 # segmentation
-#===============================================================================
+# ===============================================================================
 def contour(src):
 
 #    return None, None
@@ -400,4 +401,4 @@ def get_polygons(src,
         centroids.append(cent)
 
     return polygons, areas, min_enclose, centroids
-#============= EOF =============================================
+# ============= EOF =============================================

@@ -1,37 +1,38 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from datetime import datetime
 
 from traits.api import Instance, Button, Int
 from traits.has_traits import provides
 
-
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import struct
 from numpy import array
-#============= local library imports  ==========================
+import time
+import os
+# ============= local library imports  ==========================
+from uncertainties import nominal_value, std_dev
 from pychron.core.i_datastore import IDatastore
 from pychron.core.helpers.isotope_utils import sort_isotopes
 from pychron.experiment.utilities.identifier import make_runid
 from pychron.loggable import Loggable
 from pychron.database.adapters.massspec_database_adapter import MassSpecDatabaseAdapter
 from pychron.experiment.utilities.info_blob import encode_infoblob
-import time
 from pychron.pychron_constants import ALPHAS
 
 mkeys = ['l2 value', 'l1 value', 'ax value', 'h1 value', 'h2 value']
@@ -48,6 +49,12 @@ ISO_LABELS = dict(H1='Ar40', AX='Ar39', L1='Ar38', L2='Ar37', CDD='Ar36')
 
 DEBUG = True
 
+PEAK_HOP_MAP = {'Ar41': 'H2', 'Ar40': 'H1',
+                'Ar39': 'AX', 'Ar38': 'L1',
+                'Ar37': 'L2', 'Ar36': 'CDD'}
+
+DBVERSION = float(os.environ.get('MassSpecDBVersion', 16.3))
+
 
 @provides(IDatastore)
 class MassSpecDatabaseImporter(Loggable):
@@ -60,21 +67,24 @@ class MassSpecDatabaseImporter(Loggable):
     login_session_id = None
     _current_spec = None
     _analysis = None
+    _database_version = 0
 
     def make_multipe_runs_sequence(self, exptxt):
         pass
 
-    #IDatastore protocol
+    # IDatastore protocol
     def get_greatest_step(self, identifier, aliquot):
 
         ret = 0
         if self.db:
             identifier = self.get_identifier(identifier)
             ret = self.db.get_latest_analysis(identifier, aliquot)
-            print identifier, ret
             if ret:
                 _, s = ret
-                ret = ALPHAS.index(s) if s is not None else -1
+                if s is not None and s in ALPHAS:
+                    ret = ALPHAS.index(s)  # if s is not None else -1
+                else:
+                    ret = -1
         return ret
 
     def get_greatest_aliquot(self, identifier):
@@ -91,7 +101,13 @@ class MassSpecDatabaseImporter(Loggable):
             return self.db.connected
 
     def connect(self, *args, **kw):
-        return self.db.connect(*args, **kw)
+        ret = self.db.connect(*args, **kw)
+        if ret:
+            ver = self.db.get_database_version()
+            if ver is not None:
+                self._database_version = ver
+
+        return ret
 
     def add_sample_loading(self, ms, tray):
         if self.sample_loading_id is None:
@@ -99,7 +115,6 @@ class MassSpecDatabaseImporter(Loggable):
             with db.session_ctx() as sess:
                 sl = db.add_sample_loading(ms, tray)
                 sess.flush()
-                #             db.flush()
                 self.sample_loading_id = sl.SampleLoadingID
 
     def add_login_session(self, ms):
@@ -185,43 +200,47 @@ class MassSpecDatabaseImporter(Loggable):
                 self.db.add_irradiation_chronology_segment(irrad, st, et)
 
     def add_analysis(self, spec, commit=True):
-        with self.db.session_ctx(commit=False) as sess:
-            irradpos = spec.irradpos
-            rid = spec.runid
-            trid = rid.lower()
-            identifier = spec.labnumber
+        for i in range(3):
+            with self.db.session_ctx(commit=False) as sess:
+                irradpos = spec.irradpos
+                rid = spec.runid
+                trid = rid.lower()
+                identifier = spec.labnumber
 
-            if trid.startswith('b'):
-                runtype = 'Blank'
-                irradpos = -1
-            elif trid.startswith('a'):
-                runtype = 'Air'
-                irradpos = -2
-            elif trid.startswith('c'):
-                runtype = 'Unknown'
-                identifier = irradpos = self.get_identifier(spec)
-            else:
-                runtype = 'Unknown'
+                if trid.startswith('b'):
+                    runtype = 'Blank'
+                    irradpos = -1
+                elif trid.startswith('a'):
+                    runtype = 'Air'
+                    irradpos = -2
+                elif trid.startswith('c'):
+                    runtype = 'Unknown'
+                    identifier = irradpos = self.get_identifier(spec)
+                else:
+                    runtype = 'Unknown'
 
-            # paliquot = self.db.get_latest_analysis_aliquot(identifier)
-            # if paliquot is None:
-            #     paliquot=0
-            #
-            #rid = '{}-{:02n}'.format(identifier, spec.aliquot, spec.step)
-            # self.info('Saving analysis {} to database as {}'.format(spec.rid, rid))
-            rid = make_runid(identifier, spec.aliquot, spec.step)
+                rid = make_runid(identifier, spec.aliquot, spec.step)
 
-            self._analysis = None
-            try:
-                return self._add_analysis(sess, spec, irradpos, rid, runtype)
-            except Exception, e:
-                import traceback
+                self._analysis = None
+                self.db.reraise = True
+                try:
+                    ret = self._add_analysis(sess, spec, irradpos, rid, runtype)
+                    sess.commit()
+                    return ret
+                except Exception, e:
+                    self.debug('Mass Spec save exception. {}'.format(e))
+                    if i == 2:
+                        import traceback
 
-                tb = traceback.format_exc()
-                self.message(
-                    'Could not save spec.runid={} rid={} to Mass Spec database.\n {}'.format(spec.runid, rid, tb))
-                if commit:
+                        tb = traceback.format_exc()
+                        self.message('Could not save spec.runid={} rid={} '
+                                     'to Mass Spec database.\n {}'.format(spec.runid, rid, tb))
+                    else:
+                        self.debug('retry mass spec save')
+                    # if commit:
                     sess.rollback()
+                finally:
+                    self.db.reraise = True
 
     def _add_analysis(self, sess, spec, irradpos, rid, runtype):
 
@@ -230,13 +249,16 @@ class MassSpecDatabaseImporter(Loggable):
         db = self.db
 
         spectrometer = spec.mass_spectrometer
+        if spectrometer.lower() == 'argus':
+            spectrometer = 'UM'
+
         tray = spec.tray
 
         pipetted_isotopes = self._make_pipetted_isotopes(runtype)
 
-        #=======================================================================
+        # =======================================================================
         # add analysis
-        #=======================================================================
+        # =======================================================================
         # get the sample_id
         sample_id = 0
         if runtype == 'Air':
@@ -258,44 +280,55 @@ class MassSpecDatabaseImporter(Loggable):
         self.create_import_session(spectrometer, tray)
 
         # add the reference detector
-        refdbdet = db.add_detector('H1', Label='H1')
+        if DBVERSION >= 16.3:
+            refdbdet = db.add_detector('H1')
+        else:
+            refdbdet = db.add_detector('H1', Label='H1')
+
+        sess.flush()
 
         spec.runid = rid
+
+        params = dict(RedundantSampleID=sample_id,
+                      HeatingItemName=spec.extract_device,
+                      PwrAchieved=spec.power_achieved,
+                      PwrAchieved_Max=spec.power_achieved,
+                      PwrAchievedSD=0,
+                      FinalSetPwr=spec.power_requested,
+                      TotDurHeating=spec.duration,
+                      TotDurHeatingAtReqPwr=spec.duration_at_request,
+                      FirstStageDly=spec.first_stage_delay,
+                      SecondStageDly=spec.second_stage_delay,
+                      PipettedIsotopes=pipetted_isotopes,
+                      RefDetID=refdbdet.DetectorID,
+                      SampleLoadingID=self.sample_loading_id,
+                      LoginSessionID=self.login_session_id,
+                      RunScriptID=rs.RunScriptID)
+        if DBVERSION >= 16.3:
+            params['SignalRefIsot'] = 'Ar40'
+            params['RedundantUserID'] = 1
+
+        else:
+            params['ReferenceDetectorLabel'] = refdbdet.Label
+
         analysis = db.add_analysis(rid, spec.aliquot, spec.step,
                                    irradpos,
-                                   RUN_TYPE_DICT[runtype],
-                                   #                                   'H1',
-                                   RedundantSampleID=sample_id,
-                                   HeatingItemName=spec.extract_device,
-                                   PwrAchieved=spec.power_achieved,
-                                   PwrAchieved_Max=spec.power_achieved,
-                                   PwrAchievedSD=0,
-                                   FinalSetPwr=spec.power_requested,
-                                   TotDurHeating=spec.duration,
-                                   TotDurHeatingAtReqPwr=spec.duration_at_request,
-                                   FirstStageDly=spec.first_stage_delay,
-                                   SecondStageDly=spec.second_stage_delay,
-                                   PipettedIsotopes=pipetted_isotopes,
-                                   RefDetID=refdbdet.DetectorID,
-                                   ReferenceDetectorLabel=refdbdet.Label,
-                                   SampleLoadingID=self.sample_loading_id,
-                                   LoginSessionID=self.login_session_id,
-                                   RunScriptID=rs.RunScriptID)
-
+                                   RUN_TYPE_DICT[runtype], **params)
+        sess.flush()
         if spec.update_rundatetime:
             d = datetime.fromtimestamp(spec.timestamp)
             analysis.RunDateTime = d
             analysis.LastSaved = d
 
         db.add_analysis_positions(analysis, spec.position)
-        #=======================================================================
+        # =======================================================================
         # add changeable items
-        #=======================================================================
+        # =======================================================================
         item = db.add_changeable_items(analysis, self.data_reduction_session_id)
 
         self.debug('%%%%%%%%%%%%%%%%%%%% Comment: {} %%%%%%%%%%%%%%%%%%%'.format(spec.comment))
         item.Comment = spec.comment
-        #sess.flush()
+        sess.flush()
         analysis.ChangeableItemsID = item.ChangeableItemsID
 
         self._add_isotopes(analysis, spec, refdbdet, runtype)
@@ -315,44 +348,49 @@ class MassSpecDatabaseImporter(Loggable):
             self.debug('adding isotope {} {}'.format(iso, det))
             dbiso, dbdet = self._add_isotope(analysis, spec, iso, det, refdet)
 
-            if not dbdet.Label in bs:
+            if dbdet.detector_type.Label not in bs:
                 self._add_baseline(spec, dbiso, dbdet, det)
-                bs.append(dbdet.Label)
+                bs.append(dbdet.detector_type.Label)
 
             self._add_signal(spec, dbiso, dbdet, det, runtype)
 
     def _add_isotope(self, analysis, spec, iso, det, refdet):
         db = self.db
-        if det == analysis.ReferenceDetectorLabel:
+
+        if DBVERSION >= 16.3:
+            rdet = analysis.reference_detector.detector_type.Label
+        else:
+            rdet = analysis.ReferenceDetectorLabel
+
+        if det == rdet:
             dbdet = refdet
         else:
-
-            """
+            if spec.is_peak_hop:
+                """
                 if is_peak_hop
                 fool mass spec. e.g Ar40 det = H1 not CDD
                 det=PEAK_HOP_MAP['Ar40']=='CDD'
-            """
-            PEAK_HOP_MAP = {'Ar41': 'H2', 'Ar40': 'H1',
-                            'Ar39': 'AX', 'Ar38': 'L1',
-                            'Ar37': 'L2', 'Ar36': 'CDD'}
+                """
 
-            if spec.is_peak_hop:
                 if iso in PEAK_HOP_MAP:
                     det = PEAK_HOP_MAP[iso]
 
-            dbdet = db.add_detector(det, Label=det)
+            if DBVERSION >= 16.3:
+                dbdet = db.add_detector(det)
+            else:
+                dbdet = db.add_detector(det, Label=det)
 
             if det == 'CDD':
                 dbdet.ICFactor = spec.ic_factor_v
                 dbdet.ICFactorEr = spec.ic_factor_e
-
+        db.flush()
         n = spec.get_ncounts(iso)
         return db.add_isotope(analysis, dbdet, iso, NumCnts=n), dbdet
 
     def _add_signal(self, spec, dbiso, dbdet, odet, runtype):
-        #===================================================================
+        # ===================================================================
         # peak time
-        #===================================================================
+        # ===================================================================
         """
             build two blobs
             blob 1 PeakTimeBlob
@@ -364,20 +402,20 @@ class MassSpecDatabaseImporter(Loggable):
         db = self.db
 
         iso = dbiso.Label
-        det = dbdet.Label
+        det = dbdet.detector_type.Label
 
         tb, vb = spec.get_signal_data(iso, odet)
 
         # baseline = spec.get_baseline_uvalue(iso)
         baseline, fncnts = spec.get_filtered_baseline_uvalue(iso)
 
-        vb = array(vb) - baseline.nominal_value
-        blob1 = self._build_timeblob(tb, vb)
+        cvb = array(vb) - baseline.nominal_value
+        blob1 = self._build_timeblob(tb, cvb)
 
-        blob2 = ''.join([struct.pack('>f', float(v)) for v in vb])
+        blob2 = ''.join([struct.pack('>f', v) for v in vb])
         db.add_peaktimeblob(blob1, blob2, dbiso)
 
-        #@todo: add filtered points blob
+        # @todo: add filtered points blob
 
         # in mass spec the intercept is already baseline corrected
         # mass spec also doesnt propagate baseline errors
@@ -385,8 +423,9 @@ class MassSpecDatabaseImporter(Loggable):
         signal = spec.get_signal_uvalue(iso, det)
         sfit = spec.get_signal_fit(iso)
 
-        if runtype == 'Blank':
-            ublank = signal - baseline
+        is_blank = runtype == 'Blank'
+        if is_blank:
+            ublank = signal - nominal_value(baseline)
         else:
             ublank = spec.get_blank_uvalue(iso)
 
@@ -395,12 +434,13 @@ class MassSpecDatabaseImporter(Loggable):
                               baseline,
                               ublank,
                               sfit,
-                              dbdet)
+                              dbdet,
+                              is_blank=is_blank)
 
     def _add_baseline(self, spec, dbiso, dbdet, odet):
         iso = dbiso.Label
         self.debug('add baseline dbdet= {}. original det= {}'.format(iso, odet))
-        det = dbdet.Label
+        det = dbdet.detector_type.Label
         tb, vb = spec.get_baseline_data(iso, odet)
         pos = spec.get_baseline_position(iso)
         blob = self._build_timeblob(tb, vb)
@@ -409,30 +449,31 @@ class MassSpecDatabaseImporter(Loggable):
         label = '{} Baseline'.format(det.upper())
         ncnts = len(tb)
         db_baseline = db.add_baseline(blob, label, ncnts, dbiso)
-
+        db.flush()
         # if spec.is_peak_hop:
         #     det = spec.peak_hop_detector
 
         # bs = spec.get_baseline_uvalue(iso)
         bs, fncnts = spec.get_filtered_baseline_uvalue(iso)
 
-        sem = bs.std_dev / (fncnts) ** 0.5 if fncnts else 0
+        # sem = bs.std_dev / (fncnts) ** 0.5 if fncnts else 0
 
         bfit = spec.get_baseline_fit(iso)
-
-        infoblob = self._make_infoblob(bs.nominal_value, sem, fncnts, pos)
+        self.debug('baseline {}. v={}, e={}'.format(iso, nominal_value(bs), std_dev(bs)))
+        infoblob = self._make_infoblob(nominal_value(bs), std_dev(bs), fncnts, pos)
         db_changeable = db.add_baseline_changeable_item(self.data_reduction_session_id,
                                                         bfit,
                                                         infoblob)
 
         # baseline and baseline changeable items need matching BslnID
         db_changeable.BslnID = db_baseline.BslnID
+        db.flush()
 
     def _make_pipetted_isotopes(self, runtype):
         blob = ''
         if runtype == 'Air':
             isos = []
-            for a, v in (('Ar40', 295.5e-13), ('Ar38', 0.19e-13), ('Ar36', 1e-13)):
+            for a, v in (('Ar40', 295.5e-13), ('Ar38', 0.18762e-13), ('Ar36', 1e-13)):
                 isos.append('{}\t{}'.format(a, v))
             blob = '\r'.join(isos)
         return blob
@@ -442,7 +483,7 @@ class MassSpecDatabaseImporter(Loggable):
         """
         blob = ''
         for ti, vi in zip(t, v):
-            blob += struct.pack('>ff', float(vi), float(ti))
+            blob += struct.pack('>ff', vi, ti)
         return blob
 
     def _make_infoblob(self, baseline, baseline_err, n, baseline_position):
@@ -456,13 +497,13 @@ class MassSpecDatabaseImporter(Loggable):
         return b
 
     def _db_default(self):
-        db = MassSpecDatabaseAdapter(kind='mysql')
+        db = MassSpecDatabaseAdapter(kind='mysql', autoflush=False)
 
         return db
 
-        #===========================================================================
+        # ===========================================================================
         # debugging
-        #===========================================================================
+        # ===========================================================================
         # def _test_fired(self):
         #     import numpy as np
         #
@@ -591,14 +632,14 @@ if __name__ == '__main__':
 
     d.configure_traits()
 
-    #============= EOF ====================================
+    # ============= EOF ====================================
     #        from pychron.core.codetools.simple_timeit import timethis
     #        for ((det, isok), si, bi, ublank, signal, baseline, sfit, bfit) in spec.iter():
     #            self.debug('msi {} {} {} {} {} {}'.format(det, isok, signal.nominal_value,
     #                                                      baseline.nominal_value, sfit, bfit))
-    #            #===================================================================
+    #            # ===================================================================
     #            # isotopes
-    #            #===================================================================
+    #            # ===================================================================
     #
     ##            db_iso = timethis(db.add_isotope, args=(analysis, det, isok),
     ##                              msg='add_isotope', log=self.debug, decorate='^')
@@ -614,9 +655,9 @@ if __name__ == '__main__':
     #                    sess.flush()
     #
     #            db_iso = db.add_isotope(analysis, dbdet, isok)
-    #            #===================================================================
+    #            # ===================================================================
     #            # baselines
-    #            #===================================================================
+    #            # ===================================================================
     #            self.debug(bi)
     #            tb, vb = zip(*bi)
     #            blob = self._build_timeblob(tb, vb)
@@ -633,9 +674,9 @@ if __name__ == '__main__':
     #
     #            # baseline and baseline changeable items need matching BslnID
     #            db_changeable.BslnID = db_baseline.BslnID
-    #            #===================================================================
+    #            # ===================================================================
     #            # peak time
-    #            #===================================================================
+    #            # ===================================================================
     #            '''
     #                build two blobs
     #                blob 1 PeakTimeBlob

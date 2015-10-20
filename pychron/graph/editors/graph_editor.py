@@ -1,4 +1,4 @@
-# #===============================================================================
+# # ===============================================================================
 # # Copyright 2011 Jake Ross
 # #
 # # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,18 +12,18 @@
 # # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # # See the License for the specific language governing permissions and
 # # limitations under the License.
-# #===============================================================================
+# # ===============================================================================
 #
-# #=============enthought library imports=======================
+# # =============enthought library imports=======================
 # from traits.api import DelegatesTo, \
 #     HasTraits, Any, Color, Property, Int, on_trait_change, \
 #     Enum
 # from traitsui.api import View, Item, \
 #     TextEditor, ColorEditor, Handler, Group, VGroup, HGroup
-# #=============standard library imports ========================
+# # =============standard library imports ========================
 # from wx import Colour
 # import sys
-# #=============local library imports  ==========================
+# # =============local library imports  ==========================
 # from pychron.graph.graph import VALID_FONTS
 #
 # class GraphEditorHandler(Handler):
@@ -243,7 +243,7 @@
 #             self.graph.redraw()
 #
 #         except Exception, e:
-#             print e
+# print 'exception', e
 #             pass
 #
 #     def traits_view(self):
@@ -295,4 +295,4 @@
 #                  y=0.1,
 #                )
 #         return v
-# #============= EOF =====================================
+# # ============= EOF =====================================

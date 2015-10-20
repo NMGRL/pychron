@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,32 +12,30 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Any, Int
 from chaco.plot_containers import GridPlotContainer
 
-from pychron.processing.plotters.graph_panel_info import GraphPanelInfo
+# from pychron.processing.plotters.graph_panel_info import GraphPanelInfo
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
+from pychron.core.codetools.inspection import caller
 
-
-
-#============= standard library imports ========================
-#============= local library imports  ==========================
 
 class FigureContainer(HasTraits):
     component = Any
     model = Any
-    nrows = Int(1)
-    ncols = Int(2)
+    # nrows = Int(1)
+    # ncols = Int(2)
 
-    def _model_changed(self):
-
-        gpi = GraphPanelInfo()
-
+    @caller
+    def refresh(self, clear=False):
+        layout = self.model.layout
         self.model.refresh_panels()
         n = self.model.npanels
-        comp, r, c = self._component_factory(n, gpi)
+        comp, r, c = self._component_factory(n, layout)
         for i in range(r):
             for j in range(c):
                 try:
@@ -46,19 +44,23 @@ class FigureContainer(HasTraits):
                     break
 
                 comp.add(p.make_graph())
-                for ap in p.plot_options.aux_plots:
-                    ap.clear_ylimits()
-                    ap.clear_xlimits()
+                if clear:
+                    for ap in p.plot_options.aux_plots:
+                        ap.clear_ylimits()
+                        ap.clear_xlimits()
 
         self.component = comp
 
-    def _component_factory(self, ngraphs, gpi):
+    def _model_changed(self):
+        self.refresh(clear=True)
 
-        r = gpi.nrows
-        c = gpi.ncols
+    def _component_factory(self, ngraphs, layout):
+
+        r = layout.rows
+        c = layout.columns
 
         while ngraphs > r * c:
-            if gpi.fixed == 'cols':
+            if layout.fixed == 'cols':
                 r += 1
             else:
                 c += 1
@@ -70,8 +72,8 @@ class FigureContainer(HasTraits):
                                bgcolor='white',
                                fill_padding=True,
                                use_backbuffer=True,
-                               padding_top=10)
+                               padding_top=0)
         return op, r, c
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

@@ -1,38 +1,32 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-from traits.api import on_trait_change, Any, List, Str
+# ============= enthought library imports =======================
+from traits.api import Any, List
 # from traitsui.api import View, Item
 from pyface.tasks.task_layout import PaneItem, TaskLayout
-from pyface.constant import CANCEL, NO
 from pyface.tasks.action.schema import SToolBar
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 from pychron.envisage.tasks.base_task import BaseManagerTask
+from pychron.globals import globalv
 from pychron.loading.panes import LoadPane, LoadControlPane, LoadTablePane
-from pychron.canvas.canvas2D.loading_canvas import LoadingCanvas
-from pychron.loading.actions import SaveLoadingAction
-from pychron.loading.loading_pdf_writer import LoadingPDFWriter
+from pychron.loading.actions import SaveLoadingAction, ConfigurePDFAction, EntryAction, InfoAction, EditAction
 from apptools.preferences.preference_binding import bind_preference
-import os
-from pychron.paths import paths
-from datetime import datetime
-from pyface.timer.do_later import do_later
 
 
 class LoadingTask(BaseManagerTask):
@@ -40,128 +34,134 @@ class LoadingTask(BaseManagerTask):
     load_pane = Any
 
     dirty = False
-    control_pane = Any
+    # control_pane = Any
     canvas = Any
     _positions = List
 
-    save_directory = Str
-
     tool_bars = [SToolBar(SaveLoadingAction(),
-                          image_size=(32, 32)
-    )]
+        ConfigurePDFAction()),
+                 SToolBar(EntryAction(), InfoAction(), EditAction())]
 
     def activated(self):
-    #         self.manager.tray = 'A'
-    #         self.manager.irradiation = 'NM-251'
-    #         self.manager.level = 'H'
-    #         self.manager.labnumber = '61311'
+        # self.manager.tray = 'bat'
+        # self.manager.irradiation = 'NM-256'
+        # self.manager.level = 'A'
+        # self.manager.labnumber = '23261'
+        # self.manager.load_name = '4'
 
-        if self.manager.setup():
-            bind_preference(self, 'save_directory', 'pychron.loading.save_directory')
-        else:
-            do_later(self.window.close)
-
-
-            #     def _manager_default(self):
-            #         return LoadingManager()
+        if self.manager.verify_database_connection(inform=True):
+            if self.manager.load():
+                self.manager.username = globalv.username
+                if self.manager.setup():
+                    bind_preference(self.manager, 'save_directory', 'pychron.loading.save_directory')
+                    # self.manager.load_name = ''
 
     def _default_layout_default(self):
         return TaskLayout(
             left=PaneItem('pychron.loading.controls'),
-            bottom=PaneItem('pychron.loading.positions')
-        )
+            right=PaneItem('pychron.loading.positions'))
 
     def prepare_destroy(self):
         pass
 
     def create_dock_panes(self):
 
-        self.control_pane = LoadControlPane(model=self.manager)
-        self.table_pane = LoadTablePane(model=self.manager)
-        #         self.irradiation_pane = LoadIrradiationPane(model=self.manager)
-        return [self.control_pane,
-                self.table_pane,
-                #                 self.irradiation_pane
+        control_pane = LoadControlPane(model=self.manager)
+        table_pane = LoadTablePane(model=self.manager)
 
-        ]
+        return [control_pane, table_pane]
 
     def create_central_pane(self):
-        self.load_pane = LoadPane()
+        self.load_pane = LoadPane(model=self.manager)
         return self.load_pane
 
     def save(self):
         self.manager.save()
 
+    # actions
+    def set_entry(self):
+        self.manager.set_entry()
+
+    def set_info(self):
+        self.manager.set_info()
+
+    def set_edit(self):
+        self.manager.set_edit()
+
+    def configure_pdf(self):
+        self.manager.configure_pdf()
+
     def save_loading(self):
-        p = LoadingPDFWriter()
-        root = self.save_directory
-        if not root or not os.path.isdir(root):
-            root = paths.loading_dir
+        self.manager.save_pdf()
 
-        positions = self.manager.positions
-        ln = self.manager.load_name
-        un = self.manager.loader_name
+        # self.manager.canvas.invalidate_and_redraw()
 
-        dt = datetime.now()
-        date_str = dt.strftime("%Y-%m-%d %H:%M:%S")
-        meta = dict(load_name=ln, username=un,
-                    load_date=date_str,
-                    projects='Ross, Test'
-        )
-        path = os.path.join(root, '{}.pdf'.format(ln))
-        p.build(path, positions, self.canvas, meta)
+    # @on_trait_change('manager:load_name')
+    # def _load_changed(self, new):
+    # if new:
+    # self.manager.tray = ''
+    # self.manager.load_load(new)
 
-    #     @on_trait_change('manager:load_name')
-    #     def _load_changed(self, new):
-    #         if new:
-    #             self.manager.tray = ''
-    #             self.manager.load_load(new)
+    # @on_trait_change('manager:tray')
+    # def _tray_changed(self, new):
+    #     if new:
+    #         # c = LoadingCanvas(
+    #         #     view_x_range=(-2.2, 2.2),
+    #         #     view_y_range=(-2.2, 2.2))
+    #
+    #         # c.load_scene(new,
+    #         #              show_hole_numbers=self.manager.show_hole_numbers)
+    #         print 'new', new
+    #         c = self.manager.make_canvas(new)
+    #         self.canvas = c
+    #         self.load_pane.component = c
+    #
+    #         self.manager.canvas = c
+    #         self.manager.positions = []
 
-    @on_trait_change('manager:tray')
-    def _tray_changed(self, new):
-        if new:
-            c = LoadingCanvas(
-                view_x_range=(-2.2, 2.2),
-                view_y_range=(-2.2, 2.2),
+        # @on_trait_change('manager:canvas')
+        # def _canvas_changed(self, new):
+        # self.load_pane.component = new
+        # self.canvas = new
+        # self.manager.canvas = c
+        # self.manager.positions = []
 
-            )
-            c.load_scene(new,
-                         show_hole_numbers=self.manager.show_hole_numbers)
+    def _prompt_for_save(self):
+        if self.manager.dirty:
+            message = 'You have unsaved changes. Save changes to Database?'
+            ret = self._handle_prompt_for_save(message)
+            if ret == 'save':
+                return self.manager.save()
+            return ret
+        return True
 
-            self.canvas = c
-            self.load_pane.component = c
+        # @on_trait_change('window:closing')
+        # def _prompt_on_close(self, event):
+        #     """
+        #         Prompt the user to save when exiting.
+        #     """
+        #     if self.dirty:
+        #
+        #         # result = self._confirmation('ffoo')
+        #
+        #         if result in (CANCEL, NO):
+        #             event.veto = True
+        #         else:
+        #             self._save()
 
-            self.manager.canvas = c
-
-            self.manager.positions = []
-
-
-    @on_trait_change('window:closing')
-    def _prompt_on_close(self, event):
-        '''
-            Prompt the user to save when exiting.
-        '''
-        if self.dirty:
-            result = self._confirmation('ffoo')
-
-            if result in (CANCEL, NO):
-                event.veto = True
-            else:
-                self._save()
-
-#============= EOF =============================================
-#     def save_loading2(self):
+# ============= EOF =============================================
+# def save_loading2(self):
 # #         path = self.save_file_dialog()
-#         path = '/Users/ross/Sandbox/load_001.pdf'
-#         if path:
+# path = '/Users/ross/Sandbox/load_001.pdf'
+# if path:
 #
-#             from chaco.pdf_graphics_context import PdfPlotGraphicsContext
+# from chaco.pdf_graphics_context import PdfPlotGraphicsContext
 #
 # #             doc = SimpleDocTemplate(path)
 # #             fl = [ComponentFlowable(component=self.canvas),
 # #                   ]
 # #             doc.save()
-#             w, h = letter
+# w, h = letter
 #             gc = PdfPlotGraphicsContext(filename=path,
 #                                         pagesize='letter',
 # #                                         dest_box=(0.5, hh / 2. - 0.5,

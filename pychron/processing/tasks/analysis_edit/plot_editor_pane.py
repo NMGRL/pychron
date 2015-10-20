@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Any, Event, Instance, List
 from traitsui.api import View, UItem, Group, VGroup
 from enable.base_tool import BaseTool
@@ -27,8 +27,9 @@ from pychron.processing.tasks.plot_editor import PlotEditor, AnnotationEditor
 
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 class SelectorTool(BaseTool):
     editor = Any
     editor_event = Event
@@ -100,7 +101,7 @@ class PlotEditorPane(TraitsDockPane):
     component = Any
     analyses = Any
 
-    name = 'Plot Editor'
+    name = 'Graph Editor'
     id = 'pychron.plot_editor'
     current_editor = Instance(PlotEditor)
     selectors = List
@@ -165,4 +166,4 @@ class PlotEditorPane(TraitsDockPane):
         v = View(VGroup(plot_grp, annotation_grp))
         return v
 
-#============= EOF =============================================
+# ============= EOF =============================================

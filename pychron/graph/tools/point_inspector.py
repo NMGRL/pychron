@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Callable
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import where, vstack, zeros_like
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
 from pychron.graph.tools.info_inspector import InfoInspector, InfoOverlay, intersperse
 
@@ -34,7 +34,7 @@ class PointInspector(InfoInspector):
             d = vstack((d, zeros_like(d))).T
             spts = self.component.map_screen(d)
             tol = 2
-            return where(abs(spts - xxyy[0]) < tol)[0]
+            return where(abs(spts[:,0] - xxyy[0]) < tol)[0]
 
     def percent_error(self, s, e):
         v = '(Inf%)'
@@ -73,7 +73,7 @@ class PointInspector(InfoInspector):
                     else:
                         x = '{:0.5f}'.format(x)
 
-                    lines.extend([u'pt={:03n}, x= {}, y= {}'.format(i+1, x, sy)])
+                    lines.extend([u'pt={:03d}, x= {}, y= {}'.format(i+1, x, sy)])
                     if hasattr(comp, 'display_index'):
                         x = comp.display_index.get_data()[i]
                         lines.append(u'{}'.format(x))
@@ -88,4 +88,4 @@ class PointInspectorOverlay(InfoOverlay):
     pass
 
 #            print comp
-#============= EOF =============================================
+# ============= EOF =============================================

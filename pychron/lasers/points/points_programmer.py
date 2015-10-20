@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,23 +12,23 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Button, Event, Property, \
     Any, Bool, Enum, Instance, cached_property, String
 from traitsui.api import View, Item, ButtonEditor, HGroup, VGroup
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import yaml
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.experiment.utilities.position_regex import TRANSECT_REGEX
 from pychron.paths import paths
 from pychron.managers.manager import Manager
 from pychron.lasers.points.maker import BaseMaker, LineMaker, PointMaker, \
     PolygonMaker, TransectMaker, GridMaker
 # from pychron.canvas.scene_viewer import LaserMineViewer
-#from pychron.regex import TRANSECT_REGEX
+# from pychron.regex import TRANSECT_REGEX
 maker_dict = dict(polygon=PolygonMaker,
                   point=PointMaker,
                   line=LineMaker,
@@ -39,9 +39,9 @@ maker_dict = dict(polygon=PolygonMaker,
 class PointsProgrammer(Manager):
     maker = Property(Instance(BaseMaker), depends_on='mode')
 
-    #===============================================================================
+    # ===============================================================================
     #
-    #===============================================================================
+    # ===============================================================================
 
     stage_manager = Any
     canvas = Any
@@ -118,11 +118,11 @@ class PointsProgrammer(Manager):
                 self.point = canvas.get_point(v)
                 print v, self.point
             except ValueError, e:
-                print e
+                print 'exception', e
 
-                #===============================================================================
+                # ===============================================================================
                 # handlers
-                #===============================================================================
+                # ===============================================================================
 
     def _position_entry_changed(self):
         self._set_entry(self.position_entry)
@@ -157,9 +157,9 @@ class PointsProgrammer(Manager):
     def _save_points_fired(self):
         self._dump()
 
-    #===============================================================================
+    # ===============================================================================
     # persistence
-    #===============================================================================
+    # ===============================================================================
     def _load(self, p=None):
         if p is None:
             p = self.open_file_dialog(default_directory=paths.user_points_dir)
@@ -181,16 +181,16 @@ class PointsProgrammer(Manager):
             with open(p, 'w') as f:
                 f.write(yaml.dump(d, default_flow_style=False))
 
-            self.stage_manager.add_stage_map(p)
+            self.stage_manager.refresh_stage_map_names()
             head, _tail = os.path.splitext(os.path.basename(p))
 
             self.stage_manager.save_calibration(head)
 
             self.stage_manager.set_stage_map(head)
 
-            #===============================================================================
+            # ===============================================================================
             # property get/set
-            #===============================================================================
+            # ===============================================================================
 
     @cached_property
     def _get_maker(self):
@@ -206,12 +206,13 @@ class PointsProgrammer(Manager):
         for li in lines:
             canvas._new_line = True
             for si in li:
-                mi = si['mask'] if si.has_key('mask') else 0
-                ai = si['attenuator'] if si.has_key('attenuator') else 0
-                if si.has_key('offset_x'):
-                    ptargs['offset_x'] = si['offset_x']
-                    ptargs['offset_y'] = si['offset_y']
-
+                # mi = si['mask'] if 'mask' in si else 0
+                # ai = si['attenuator'] if 'attenuator' in si else 0
+                # if 'offset_x' in si:
+                #     ptargs['offset_x'] = si['offset_x']
+                #     ptargs['offset_y'] = si['offset_y']
+                mi, ai = self._get_mask_attenuator(si)
+                self._set_offset(si, ptargs)
                 canvas.new_line_point(xy=si['xy'],
                                       z=si['z'],
                                       mask=mi, attenuator=ai,
@@ -226,11 +227,13 @@ class PointsProgrammer(Manager):
         #         ptargs['spot_color'] = convert_color(self.maker.spot_color, output='rgbF')
         ptargs['spot_color'] = self.maker.spot_color
         for pi in points:
-            mi = pi['mask'] if pi.has_key('mask') else 0
-            ai = pi['attenuator'] if pi.has_key('attenuator') else 0
-            if pi.has_key('offset_x'):
-                ptargs['offset_x'] = pi['offset_x']
-                ptargs['offset_y'] = pi['offset_y']
+            # mi = pi['mask'] if 'mask' in pi else 0
+            # ai = pi['attenuator'] if 'attenuator' in pi else 0
+            # if 'offset_x' in pi:
+            #     ptargs['offset_x'] = pi['offset_x']
+            #     ptargs['offset_y'] = pi['offset_y']
+            mi, ai = self._get_mask_attenuator(pi)
+            self._set_offset(pi, ptargs)
 
             canvas.new_point(xy=pi['xy'],
                              z=pi['z'],
@@ -246,13 +249,11 @@ class PointsProgrammer(Manager):
             v = po['velocity']
             use_convex_hull = po['use_convex_hull']
             scan_size = po['scan_size']
-            mi = po['mask'] if po.has_key('mask') else 0
-            ai = po['attenuator'] if po.has_key('attenuator') else 0
+            # mi = po['mask'] if po.has_key('mask') else 0
+            # ai = po['attenuator'] if po.has_key('attenuator') else 0
+            mi, ai = self._get_mask_attenuator(po)
             for pi in po['points']:
-                if pi.has_key('offset_x'):
-                    ptargs['offset_x'] = pi['offset_x']
-                    ptargs['offset_y'] = pi['offset_y']
-
+                self._set_offset(pi, ptargs)
                 canvas.new_polygon_point(xy=pi['xy'],
                                          z=pi['z'],
                                          velocity=v,
@@ -263,6 +264,16 @@ class PointsProgrammer(Manager):
                                          use_convex_hull=use_convex_hull,
                                          **ptargs)
 
+    def _set_offset(self, item, ptargs):
+        if 'offset_x' in item:
+            ptargs['offset_x'] = item['offset_x']
+            ptargs['offset_y'] = item['offset_y']
+
+    def _get_mask_attenuator(self, item):
+        mi = item['mask'] if 'mask' in item else 0
+        ai = item['attenuator'] if 'attenuator' in item else 0
+        return mi, ai
+
     def _load_transects(self, trans, ptargs):
         canvas = self.canvas
         point_color = self.maker.point_color
@@ -271,22 +282,16 @@ class PointsProgrammer(Manager):
             points = ti['points']
             step = ti['step']
             for pi in points:
-
-                if pi.has_key('mask'):
-                    ptargs['mask'] = pi['mask']
-
-                if pi.has_key('attenuator'):
-                    ptargs['attenuator'] = pi['attenuator']
-                if pi.has_key('offset_x'):
-                    ptargs['offset_x'] = pi['offset_x']
-                    ptargs['offset_y'] = pi['offset_y']
+                mi, ai = self._get_mask_attenuator(pi)
+                ptargs['mask'] = mi
+                ptargs['attenuator'] = ai
+                self._set_offset(pi, ptargs)
 
                 canvas.new_transect_point(xy=pi['xy'],
                                           z=pi['z'],
                                           step=step,
                                           point_color=point_color,
-                                          **ptargs
-                )
+                                          **ptargs)
 
     def _get_program_points_label(self):
         return 'End Program' if self.is_programming else 'Program Positions'
@@ -303,18 +308,18 @@ class PointsProgrammer(Manager):
     def traits_view(self):
         v = View(VGroup(
             Item('mode')),
-                 HGroup(Item('show_hide', show_label=False,
-                             editor=ButtonEditor(label_value='show_hide_label')),
-                        Item('program_points', show_label=False,
-                             editor=ButtonEditor(label_value='program_points_label'))),
-                 Item('maker', style='custom',
-                      enabled_when='is_programming',
-                      show_label=False),
-                 HGroup(Item('load_points', show_label=False),
-                        Item('save_points', show_label=False)))
+            HGroup(Item('show_hide', show_label=False,
+                        editor=ButtonEditor(label_value='show_hide_label')),
+                   Item('program_points', show_label=False,
+                        editor=ButtonEditor(label_value='program_points_label'))),
+            Item('maker', style='custom',
+                 enabled_when='is_programming',
+                 show_label=False),
+            HGroup(Item('load_points', show_label=False),
+                   Item('save_points', show_label=False)))
         return v
 
-#============= EOF =============================================
+# ============= EOF =============================================
 #    def _show_scene_viewer_fired(self):
 # #        from pychron.canvas.canvas2D.video_laser_tray_canvas import VideoLaserTrayCanvas
 #

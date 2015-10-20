@@ -13,10 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # '''
-##============= enthought library imports =======================
+## ============= enthought library imports =======================
 # from traits.api import Str, String, Date, Time, Instance
-##============= standard library imports ========================
-##============= local library imports  ==========================
+## ============= standard library imports ========================
+## ============= local library imports  ==========================
 # from pychron.database.core.database_selector import DBSelector, DBResult
 # from pychron.database.orms.co2laser_orm import PowerTable
 # #from pychron.managers.data_managers.h5_data_manager import H5DataManager
@@ -166,4 +166,4 @@
 #                    d.load()
 #                    self.results.append(d)
 #
-##============= EOF =============================================
+## ============= EOF =============================================

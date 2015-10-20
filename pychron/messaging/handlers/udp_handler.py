@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,28 +12,33 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from messaging_handler import MessagingHandler
 
 class UDPHandler(MessagingHandler):
     def get_packet(self):
-        '''
-        '''
+        """
+        """
         data = self.request[0].strip()
         return data
 
     def send_packet(self, response):
-        '''
+        """
 
-        '''
+        """
         sock = self.request[1]
-        sock.sendto(response + '\n', self.client_address)
+        send=lambda x: sock.sendto(x, self.client_address)
 
-#============= EOF ====================================
+        self._send_packet(response, send)
+
+
+
+
+# ============= EOF ====================================

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,15 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Int, Str, Property, Any
 from traitsui.tabular_adapter import TabularAdapter
 from uncertainties import std_dev, nominal_value
+
 from pychron.core.helpers.formatting import floatfmt
-#============= standard library imports ========================
-#============= local library imports  ==========================
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 class TableBlank(HasTraits):
     analysis = Any
 
@@ -96,31 +98,27 @@ class BaseAdapter(TabularAdapter):
     font = 'Arial 10'
 
     def _get_value(self, attr, n=3, **kw):
-        v = ''
-        item = self.item
-        if hasattr(item, attr):
-            v = getattr(self.item, attr)
-            if v:
-                v = floatfmt(nominal_value(v), n=n, **kw)
-        elif hasattr(item, 'isotopes'):
-            if attr in item.isotopes:
-                v = item.isotopes[attr].get_intensity()
-                v = floatfmt(nominal_value(v), n=n, **kw)
-
-        return v
+        return self._get_attribute_value(nominal_value, attr, n, **kw)
 
     def _get_error(self, attr, n=3, **kw):
+        return self._get_attribute_value(std_dev, attr, n, **kw)
+
+    def _get_attribute_value(self, func, attr, n, **kw):
         v = ''
         item = self.item
-        if hasattr(item, attr):
-            v = getattr(self.item, attr)
-            if v:
-                v = floatfmt(std_dev(v), n=n, **kw)
-        elif hasattr(item, 'isotopes'):
+        if hasattr(item, 'isotopes'):
+            # print attr in item.isotopes
             if attr in item.isotopes:
                 v = item.isotopes[attr].get_intensity()
-                v = floatfmt(std_dev(v), n=n, **kw)
-
+                v = floatfmt(func(v), n=n, **kw)
+            elif hasattr(item, attr):
+                v = getattr(self.item, attr)
+                if v:
+                    v = floatfmt(func(v), n=n, **kw)
+        elif hasattr(item, attr):
+            v = getattr(self.item, attr)
+            if v:
+                v = floatfmt(func(v), n=n, **kw)
         return v
 
     def get_bg_color(self, obj, trait, row, column):
@@ -136,7 +134,7 @@ class BaseAdapter(TabularAdapter):
         item = self.item
         r = ''
         if not isinstance(item, (TableBlank, TableSeparator)):
-            r = '{:02n}{}'.format(item.aliquot, item.step)
+            r = '{:02d}{}'.format(item.aliquot, item.step)
         return r
 
     def _get_extract_value_text(self):
@@ -263,7 +261,7 @@ class BaseGroupAdapter(BaseAdapter):
         #def _get_age_sd_text(self):
         #    return self._get_error('arith_age')
 
-#============= EOF =============================================
+# ============= EOF =============================================
 # class LaserTableBlankAdapter(LaserTableAdapter):
 #     columns = [
 #                ('N', 'aliquot_step_str'),

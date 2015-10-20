@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,15 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from collections import namedtuple
 import csv
+
 from traits.api import Str
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 import xlrd
 from pychron.loggable import Loggable
 
@@ -93,13 +95,13 @@ class XLSFluxParser(FluxParser):
 
 class CSVFluxParser(FluxParser):
     def _get_irradiation(self):
-        with open(self.path, 'r') as fp:
-            reader = csv.reader(fp)
+        with open(self.path, 'r') as rfile:
+            reader = csv.reader(rfile)
             return reader.next()
 
     def _iter_positions(self):
-        with open(self.path, 'r') as fp:
-            reader = csv.reader(fp)
+        with open(self.path, 'r') as rfile:
+            reader = csv.reader(rfile)
             _ = reader.next()
             header = reader.next()
 
@@ -115,4 +117,4 @@ class CSVFluxParser(FluxParser):
                                    line[jidx], line[jeidx])
 
 
-#=============EOF =============================================
+# =============EOF =============================================

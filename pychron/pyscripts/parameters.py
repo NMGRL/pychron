@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Bool, Str, Float, Int, Enum
 from traitsui.api import View, HGroup, UItem, EnumEditor
+
 from pychron.pychron_constants import NULL_STR, FIT_TYPES
-#============= standard library imports ========================
-#============= local library imports  ==========================
+
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class Detector(HasTraits):
     fit = Str
@@ -50,7 +53,7 @@ class Detector(HasTraits):
             self.fit = 'linear'
 
 
-class MeasurementCondition(HasTraits):
+class MeasurementConditional(HasTraits):
     name = Str
     use = Bool
     key = Enum('age', )
@@ -65,11 +68,10 @@ class MeasurementCondition(HasTraits):
                                                    self.comparator,
                                                    self.criterion,
                                                    self.start_count,
-                                                   self.frequency,
-        )
+                                                   self.frequency)
 
 
-class MeasurementAction(MeasurementCondition):
+class MeasurementAction(MeasurementConditional):
     action = Str
     resume = Bool(True)
 
@@ -81,15 +83,14 @@ class MeasurementAction(MeasurementCondition):
                                                            self.start_count,
                                                            self.frequency,
                                                            self.action,
-                                                           self.resume
-        )
+                                                           self.resume)
 
 
-class MeasurementTruncation(MeasurementCondition):
+class MeasurementTruncation(MeasurementConditional):
     pass
 
 
-class MeasurementTermination(MeasurementCondition):
+class MeasurementTermination(MeasurementConditional):
     pass
 
 
@@ -155,4 +156,4 @@ class Hop(HasTraits):
         )
         return v
 
-        #============= EOF =============================================
+        # ============= EOF =============================================

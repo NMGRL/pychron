@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
@@ -20,12 +20,12 @@
 Vue Metrix Vue-TEC controller 
 see http://www.vuemetrix.com/support/tech/tec_commands.html
 '''
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import Float
 from traitsui.api import VGroup, Item
-#=============standard library imports ========================
+# =============standard library imports ========================
 # import os
-#=============local library imports  =========================
+# =============local library imports  =========================
 from pychron.hardware.core.core_device import CoreDevice
 
 
@@ -207,6 +207,8 @@ class VueDiodeControlModule(CoreDevice):
         v = self.read_laser_voltage_adc(verbose=False)
         if v is not None:
             self.laser_voltage = v
+            
+        return any((a,t,p,v))
 
     def get_control_group(self):
         g = VGroup(
@@ -216,4 +218,4 @@ class VueDiodeControlModule(CoreDevice):
             Item('laser_voltage', format_str='%0.2f', style='readonly'))
         return g
 
-#============= EOF ====================================
+# ============= EOF ====================================

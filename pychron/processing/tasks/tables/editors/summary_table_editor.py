@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +12,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import os
 import cPickle as pickle
 
 from traits.api import Str
 from traitsui.api import View, UItem
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.paths import paths
 from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.core.ui.tabular_editor import myTabularEditor
@@ -61,18 +62,18 @@ class SummaryTableEditor(BaseTableEditor, ColumnSorterMixin):
         return cs
 
     def _load_widths(self):
-        p = os.path.join(paths.hidden_dir, 'summary_col_widths')
+        p = os.path.join(paths.hidden_dir, 'summary_col_widths.p')
         if os.path.isfile(p):
-            with open(p, 'r') as fp:
+            with open(p, 'r') as rfile:
                 try:
-                    return pickle.load(fp)
+                    return pickle.load(rfile)
                 except Exception, e :
                     print 'load_widths', e
 
     def _dump_widths(self):
-        p = os.path.join(paths.hidden_dir, 'summary_col_widths')
-        with open(p, 'w') as fp:
-            pickle.dump(self.col_widths, fp)
+        p = os.path.join(paths.hidden_dir, 'summary_col_widths.p')
+        with open(p, 'w') as wfile:
+            pickle.dump(self.col_widths, wfile)
 
     def traits_view(self):
 
@@ -94,4 +95,4 @@ class SummaryTableEditor(BaseTableEditor, ColumnSorterMixin):
         return v
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

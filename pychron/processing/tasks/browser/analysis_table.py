@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,15 +12,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
+from pyface.action.menu_manager import MenuManager
 from traits.api import HasTraits, List, Any, Str, Enum, Bool, Button, \
-    Event, Property, cached_property, Instance, DelegatesTo
-#============= standard library imports ========================
-#============= local library imports  ==========================
-from pychron.envisage.browser.browser_mixin import filter_func
-from pychron.envisage.browser.table_configurer import AnalysisTableConfigurer
+    Event, Property, cached_property, Instance, DelegatesTo, CStr, Int
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
+from traitsui.menu import Action
+from pychron.envisage.browser.adapters import BrowserAdapter, AnalysisAdapter
+from pychron.envisage.browser.base_browser_model import filter_func
+from pychron.core.ui.table_configurer import AnalysisTableConfigurer
+
+
 
 
 class AnalysisTable(HasTraits):
@@ -29,90 +34,41 @@ class AnalysisTable(HasTraits):
     selected = Any
     dclicked = Any
 
-    # replace_event = Event
-    # append_event = Event
     context_menu_event = Event
 
-    analysis_filter = Str
+    analysis_filter = CStr
     analysis_filter_values = List
     analysis_filter_comparator = Enum('=', '<', '>', '>=', '<=', 'not =', 'startswith')
     analysis_filter_parameter = Str
-    analysis_filter_parameters = Property(List, depends_on='tabular_adapter.columns')  #List(['Record_id', 'Tag',
-    # 'Age', 'Labnumber', 'Aliquot', 'Step'])
+    analysis_filter_parameters = Property(List, depends_on='tabular_adapter.columns')
 
-    omit_invalid = Bool(True)
-    configure_analysis_table = Button
+    # omit_invalid = Bool(True)
     table_configurer = Instance(AnalysisTableConfigurer)
 
-
-    # forward = Button
-    # backward = Button
-    # page_width = Int(1000)
-    # page = Int(1, enter_set=True, auto_set=False)
-    #
-    # forward_enabled = Bool
-    # backward_enabled = Bool
-    # n_all_analyses = Int
-    # npages = Property(depends_on='n_all_analyses,page_width')
-
     limit = DelegatesTo('table_configurer')
-    low_post = DelegatesTo('table_configurer')
-    high_post = DelegatesTo('table_configurer')
+    omit_invalid = DelegatesTo('table_configurer')
+
     no_update = False
     scroll_to_row = Event
     refresh_needed = Event
-    tabular_adapter = Any
+    tabular_adapter = Instance(AnalysisAdapter)
+    append_replace_enabled = Bool(True)
 
     def set_analyses(self, ans, tc=None, page=None, reset_page=False):
         self.analyses = ans
         self.oanalyses = ans
-        if tc is None:
-            tc = len(ans)
-
-        # self.n_all_analyses = tc
-        # if reset_page:
-        #     self.no_update = True
-        #     if page<0:
-        #         self.page=self.npages
-        #         self.scroll_to_row=self.page_width
-        #     else:
-        #         self.page = 1
-        #     self.no_update = False
-        # self.analysis_filter_values = vs
         self._analysis_filter_parameter_changed(True)
 
-        #self.selected = ans[-1:]
-        #invoke_in_main_thread(do_later, self.trait_set, scroll_to_row=tc - 1)
+    def configure_analysis_table(self):
+        self.table_configurer.edit_traits()
 
-    #handlers
-    def _tabular_adapter_changed(self):
-        self.table_configurer.adapter = self.tabular_adapter
-        self.table_configurer.load()
-
-    @cached_property
-    def _get_analysis_filter_parameters(self):
-        return dict([(ci[1], ci[0]) for ci in self.tabular_adapter.columns])
-
+    # handlers
     def _analysis_filter_changed(self, new):
         if new:
-            # self.analyses=[]
             name = self.analysis_filter_parameter
-            # comp = self.analysis_filter_comparator
-            # if name == 'Step':
-            #     new = new.upper()
-
             self.analyses = filter(filter_func(new, name), self.oanalyses)
         else:
             self.analyses = self.oanalyses
-
-    def _configure_analysis_table_fired(self):
-        self.table_configurer.edit_traits()
-
-    # def _get_npages(self):
-    #     try:
-    #         return int(math.ceil(self.n_all_analyses / float(self.page_width)))
-    #     except ZeroDivisionError:
-    #         return 0
 
     def _analysis_filter_comparator_changed(self):
         self._analysis_filter_changed(self.analysis_filter)
@@ -132,52 +88,22 @@ class AnalysisTable(HasTraits):
         p = self.analysis_filter_parameter
         return p.lower()
 
-    #defaults
+    @cached_property
+    def _get_analysis_filter_parameters(self):
+        return dict([(ci[1], ci[0]) for ci in self.tabular_adapter.columns])
+
+    # defaults
     def _table_configurer_default(self):
         return AnalysisTableConfigurer(id='analysis.table',
                                        title='Configure Analysis Table')
 
     def _analysis_filter_parameter_default(self):
         return 'record_id'
-#============= EOF =============================================
-#def filter_invalid(self, ans):
-#    if self.omit_invalid:
-#        ans = filter(self._omit_invalid_filter, ans)
-#    return ans
 
-#def _omit_invalid_filter(self, x):
-#    return x.tag != 'invalid'
+    def _tabular_adapter_default(self):
+        adapter = AnalysisAdapter()
+        self.table_configurer.adapter = adapter
+        self.table_configurer.load()
+        return adapter
 
-#def _omit_invalid_changed(self, new):
-#    if new:
-#        self._
-#        self.analyses = filter(self._omit_invalid_filter, self.oanalyses)
-#    else:
-#        self.analyses = self.oanalyses
-# def load(self):
-    #     p = os.path.join(paths.hidden_dir, 'analysis_table')
-    #     if os.path.isfile(p):
-    #         d={}
-    #         with open(p, 'r') as fp:
-    #             try:
-    #                d=pickle.load(fp)
-    #             except (pickle.PickleError, OSError, EOFError):
-    #                 pass
-    #
-    #         self.trait_set(**d)
-    #
-    # def dump(self):
-    #     p=os.path.join(paths.hidden_dir, 'analysis_table')
-    #     with open(p,'w') as fp:
-    #         pickle.dump({'page_width':self.page_width}, fp)
-
-    # def _forward_fired(self):
-    #     if self.page < self.npages:
-    #         self.page += 1
-    #         #if self.oanalyses:
-    #         #    self.page+=1
-    #
-    # def _backward_fired(self):
-    #     p = self.page
-    #     p -= 1
-    #     self.page = max(1, p)
+# ============= EOF =============================================

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,23 +12,23 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import HasTraits, \
     Str, Float, List, Any, Color, Property
 from traitsui.api import View, Item, Group, HGroup, \
     TableEditor, Handler, RangeEditor
 from traitsui.table_column import ObjectColumn
 
-#=============standard library imports ========================
+# =============standard library imports ========================
 import os
 import glob
-import apptools.sweet_pickle as pickle
+import cPickle as pickle
 import copy
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 
 from pychron.paths import paths
 

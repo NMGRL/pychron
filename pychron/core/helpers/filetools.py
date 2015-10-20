@@ -5,21 +5,67 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#========== standard library imports ==========
+# ========== standard library imports ==========
 import glob
 import os
 import subprocess
-import time
+import shutil
+import re
+
 from datetime import datetime
+
+
+def subdirize(root, name, n=1, l=2, mode='r'):
+    for i in xrange(n):
+
+        n, name = name[:l], name[l:]
+        path = os.path.join(root, n)
+        if not os.path.isdir(path):
+            if mode == 'r':
+                return
+
+            os.mkdir(path)
+
+        root = path
+
+    return root, name
+
+
+def backup(p, backupdir, **kw):
+    """
+
+    :param p: file to backup
+    :param backupdir: directory to add backed up file
+    :param kw: keyword args for unique_date_path
+    :return:
+    """
+    bp, _ = os.path.splitext(os.path.basename(p))
+    pp = unique_date_path(backupdir, bp, **kw)
+    shutil.copyfile(p, pp)
+    return bp, pp
+
+
+def modified_datetime(path, strformat='%m-%d-%Y %H:%M:%S'):
+    dt = datetime.fromtimestamp(os.path.getmtime(path))
+    if strformat:
+        dt = dt.strftime(strformat)
+    return dt
+
+
+def created_datetime(path, strformat='%m-%d-%Y %H:%M:%S'):
+    dt = datetime.fromtimestamp(os.path.getctime(path))
+    if strformat:
+        dt = dt.strftime(strformat)
+    return dt
 
 
 def view_file(p, application='Preview', logger=None):
@@ -57,7 +103,7 @@ def ilist_directory2(root, extension=None, filtername=None, remove_extension=Fal
     gfilter = root
     if extension:
         if not isinstance(extension, (list, tuple)):
-            extension = (extension, )
+            extension = (extension,)
 
         for ext in extension:
             if not ext.startswith('.'):
@@ -67,7 +113,7 @@ def ilist_directory2(root, extension=None, filtername=None, remove_extension=Fal
             for yi in gen(gfilter):
                 yield yi
     else:
-        for yi in gen(gfilter):
+        for yi in gen('{}/*'.format(gfilter)):
             yield yi
 
 
@@ -75,12 +121,23 @@ def list_directory2(root, extension=None, filtername=None, remove_extension=Fals
     return list(ilist_directory2(root, extension, filtername, remove_extension))
 
 
+def ilist_gits(root):
+    for p in os.listdir(root):
+        pp = os.path.join(root, p, '.git')
+        if os.path.isdir(pp):
+            yield p
+
+
+def list_gits(root):
+    return list(ilist_gits(root))
+
+
 def list_directory(p, extension=None, filtername=None, remove_extension=False):
     ds = []
-    #if extension:
+    # if extension:
 
-    #return any([path.endswith(ext) for ext in extension.split(',')])
-    #else:
+    # return any([path.endswith(ext) for ext in extension.split(',')])
+    # else:
     #    def test(path):
     #        return True
 
@@ -102,6 +159,11 @@ def list_directory(p, extension=None, filtername=None, remove_extension=False):
     return ds
 
 
+def replace_extension(p, ext='.txt'):
+    head, _ = os.path.splitext(p)
+    return add_extension(head, ext)
+
+
 def add_extension(p, ext='.txt'):
     if not p.endswith(ext):
         # p += ext
@@ -118,7 +180,7 @@ def unique_dir(root, base):
     p = os.path.join(root, '{}001'.format(base))
     i = 2
     while os.path.exists(p):
-        p = os.path.join(root, '{}{:03n}'.format(base, i))
+        p = os.path.join(root, '{}{:03d}'.format(base, i))
         i += 1
 
     os.mkdir(p)
@@ -129,14 +191,14 @@ def unique_dir(root, base):
 def unique_date_path(root, base, extension='.txt'):
     """
         make a unique path with the a timestamp appended
-        e.g foo_11-01-2012_12:00
+        e.g foo_11-01-2012-001
     """
-    base = '{}_{}'.format(base, datetime.strptime(time.time(), '%m-%d-Y_%H:%M'))
-    p, _ = unique_path2(root, base, extension)
+    base = '{}_{}'.format(base, datetime.now().strftime('%m-%d-%Y'))
+    p, _ = unique_path2(root, base, extension=extension)
     return p
 
 
-def unique_path2(root, base, extension='.txt'):
+def unique_path2(root, base, delimiter='-', extension='.txt', width=3):
     """
         unique_path suffers from the fact that it starts at 001.
         this is a problem for log files because the logs are periodically archived which means
@@ -145,16 +207,51 @@ def unique_path2(root, base, extension='.txt'):
         unique_path2 solves this by finding the max path then incrementing by 1
     """
     # find the max path in the root directory
-    basename = '{}-*{}'.format(base, extension)
+    # basename = '{}-*{}'.format(base, extension)
+    # cnt = 0
+    # for p in glob.iglob(os.path.join(root, basename)):
+    #     p = os.path.basename(p)
+    #     head, tail = os.path.splitext(p)
+    #     cnt = max(int(head.split('-')[1]), cnt)
+    #
+    # cnt += 1
+    cnt = max_path_cnt(root, '{}-'.format(base), delimiter=delimiter, extension=extension)
+    p = os.path.join(root, '{{}}-{{:0{}d}}{{}}'.format(width).format(base, cnt, extension))
+    return p, cnt
+
+
+def max_file_cnt(root, excludes=None):
+    def test(p):
+        if excludes and p in excludes:
+            return
+
+        if os.path.isfile(os.path.join(root, p)):
+            return True
+
+    ps = [p for p in os.listdir(root) if test(p)]
+
+    return len(ps) + 1
+
+
+def max_path_cnt(root, base, delimiter='-', extension='.txt'):
+    """
+
+    :param root:
+    :param base:
+    :param extension:
+    :return: int max+1
+    """
+    basename = '{}*{}'.format(base, extension)
     cnt = 0
+
     for p in glob.iglob(os.path.join(root, basename)):
         p = os.path.basename(p)
         head, tail = os.path.splitext(p)
-        cnt = max(int(head.split('-')[1]), cnt)
+
+        cnt = max(int(head.split(delimiter)[-1]), cnt)
 
     cnt += 1
-    p = os.path.join(root, '{}-{:03n}{}'.format(base, cnt, extension))
-    return p, cnt
+    return cnt
 
 
 def unique_path(root, base, extension='.txt'):
@@ -171,37 +268,11 @@ def unique_path(root, base, extension='.txt'):
     cnt = 1
     i = 2
     while os.path.isfile(p):
-        p = os.path.join(root, '{}-{:03n}{}'.format(base, i, extension))
+        p = os.path.join(root, '{}-{:03d}{}'.format(base, i, extension))
         i += 1
         cnt += 1
 
     return p, cnt
-
-
-def to_bool(a):
-    """
-        a: a str or bool object
-
-        if a is string
-            'true', 't', 'yes', 'y', '1', 'ok' ==> True
-            'false', 'f', 'no', 'n', '0' ==> False
-    """
-
-    if isinstance(a, bool):
-        return a
-    elif isinstance(a, (int, float)):
-        return bool(a)
-
-    tks = ['true', 't', 'yes', 'y', '1', 'ok']
-    fks = ['false', 'f', 'no', 'n', '0']
-
-    if a is not None:
-        a = str(a).strip().lower()
-
-    if a in tks:
-        return True
-    elif a in fks:
-        return False
 
 
 def parse_xy(p, delimiter=','):
@@ -231,8 +302,8 @@ def parse_file(p, delimiter=None, cast=None):
 
     """
     if os.path.exists(p) and os.path.isfile(p):
-        with open(p, 'U') as fp:
-            r = filetolist(fp)
+        with open(p, 'U') as rfile:
+            r = filetolist(rfile)
             if delimiter:
                 if cast is None:
                     cast = str
@@ -245,8 +316,8 @@ def parse_setupfile(p):
     """
     """
 
-    fp = parse_file(p)
-    if fp:
+    rfile = parse_file(p)
+    if rfile:
         return [line.split(',') for line in file]
 
 
@@ -257,10 +328,10 @@ def parse_canvasfile(p, kw):
     # kw=['origin','valvexy','valvewh','opencolor','closecolor']
 
     if os.path.exists(p) and os.path.isfile(p):
-        with open(p, 'r') as fp:
+        with open(p, 'r') as rfile:
             indices = {}
             i = 0
-            f = filetolist(fp)
+            f = filetolist(rfile)
             count = 1
             for i in range(len(f)):
                 if f[i][:1] == '!':
@@ -277,6 +348,17 @@ def parse_canvasfile(p, kw):
                             break
 
             return indices
+
+
+def pathtolist(p, **kw):
+    """
+        p: absolute path to file
+
+        kw: same keyword arguments accepted by filetolist
+        return: list
+    """
+    with open(p, 'r') as rfile:
+        return filetolist(rfile, **kw)
 
 
 def filetolist(f, commentchar='#'):
@@ -306,7 +388,7 @@ def filetolist(f, commentchar='#'):
     return r
 
 
-def fileiter(fp, commentchar='#', strip=False):
+def fileiter(rfile, commentchar='#', strip=False):
     def isNewLine(c):
         return c in ('\r', '\n')
 
@@ -314,9 +396,34 @@ def fileiter(fp, commentchar='#', strip=False):
         cc = li[:1]
         return not (cc == commentchar or isNewLine(cc))
 
-    for line in fp:
+    for line in rfile:
         if test(line):
             if strip:
                 line = line.strip()
             yield line
 
+
+def get_path(root, name, extensions):
+    """
+        return a valid file path ``p``
+        where ``p`` == root/name.extension
+
+        root: str. directory path
+        name: str. basename for file
+        extensions: list or tuple. list of file extensions to try e.g. ('.yml','.yaml')
+
+    """
+    for ext in extensions:
+        for f in os.listdir(root):
+            name = add_extension(name, ext)
+            if re.match(name, f):
+                return os.path.join(root, f)
+
+                # p = os.path.join(root, add_extension(name, ext))
+                # if os.path.isfile(p):
+                #     return p
+
+# if __name__ == '__main__':
+#     name = 'b60a449a-0f15-4554-a517-e0b421aaca97.h5'
+#     print name
+#     print subdirize('/Users/ross/.dvc/experiments', name)

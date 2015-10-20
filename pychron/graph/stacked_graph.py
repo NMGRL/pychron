@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import Bool, on_trait_change, Event
 from chaco.scatterplot import ScatterPlot
-#=============standard library imports ========================
+# =============standard library imports ========================
 
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 from graph import Graph
 
 
@@ -37,7 +37,7 @@ class StackedGraph(Graph):
     equi_stack = True
     panel_height = 100
     _has_title = False
-    padding_bottom = 40
+    # padding_bottom = 40
 
     metadata_updated = Event
     vertical_resize = Bool(True)
@@ -122,9 +122,10 @@ class StackedGraph(Graph):
             comps = reversed(comps)
 
         pt = 20 if self._has_title else 10
+        # print 'ffff', self.padding_bottom
         for i, pi in enumerate(comps):
             if n == 1:
-                pi.padding_bottom = self.padding_bottom
+                # pi.padding_bottom = self.padding_bottom
 
                 pi.padding_top = pt
                 pi.index_axis.visible = True
@@ -132,7 +133,7 @@ class StackedGraph(Graph):
             else:
                 pi.padding_top = 0
                 if i == 0:
-                    pi.padding_bottom = self.padding_bottom
+                    # pi.padding_bottom = self.padding_bottom
                     pi.index_axis.visible = True
                 else:
                     pi.index_axis.visible = False
@@ -242,4 +243,4 @@ class StackedGraph(Graph):
             #
             #    super(StackedGraph,self).clear()
 
-#============= EOF ====================================
+# ============= EOF ====================================

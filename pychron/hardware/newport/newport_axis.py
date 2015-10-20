@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,52 +12,102 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import Property, Str, Float, Int, Button
 from traitsui.api import View, Item, Group, EnumEditor, HGroup, VGroup, spring
 
-#=============standard library imports ========================
-#=============local library imports  ==========================
+# =============standard library imports ========================
+# =============local library imports  ==========================
 from pychron.hardware.axis import Axis
 from pychron.core.helpers.filetools import parse_file
 
 from pychron.hardware.results_report import ResultsReport
+
 KINDS = ['Undefined',
-              'DC servo motor',
-              'Step motor',
-              'Commutated step motor',
-              'Commutated brushless DC servo motor']
+         'DC servo motor',
+         'Step motor',
+         'Commutated step motor',
+         'Commutated brushless DC servo motor']
 UNITS = ['encoder count',
-       'motor step',
-       'millimeter',
-       'micrometer',
-       'inches',
-       'milli-inches',
-       'micro-inches',
-       'degree',
-       'gradian',
-       'radian',
-       'milliradian',
-       'microradian']
+         'motor step',
+         'millimeter',
+         'micrometer',
+         'inches',
+         'milli-inches',
+         'micro-inches',
+         'degree',
+         'gradian',
+         'radian',
+         'milliradian',
+         'microradian']
 TRAJECTORY_MODES = ['Trapezoidal',
-                 'S-curve',
-                 'Jog',
-                 'Slave desired position',
-                 'Slave actual position',
-                 'Slave actual velocity'
-                 ]
+                    'S-curve',
+                    'Jog',
+                    'Slave desired position',
+                    'Slave actual position',
+                    'Slave actual velocity'
+                    ]
 HOME_SEARCH_MODES = ['Find +0 Position Count',
-                   'Find Home and Index Signals',
-                   'Find Home Signal',
-                   'Find Positive Limit Signal',
-                   'Find Negative Limit Signal',
-                   'Find Positive Limit and Index',
-                   'Find Negative Limit and Index Signals']
+                     'Find Home and Index Signals',
+                     'Find Home Signal',
+                     'Find Positive Limit Signal',
+                     'Find Negative Limit Signal',
+                     'Find Positive Limit and Index',
+                     'Find Negative Limit and Index Signals']
+
+COMMAND_MAP_ORDERED = (('kind', 'QM'),
+               ('units', 'SN'),
+               # ('encoder_resolution', 'SU'),
+               ('encoder_full_step_resolution', 'FR'),
+               ('microstep_factor', 'QS'),
+               ('average_motor_voltage', 'QV'),
+               ('maximum_motor_current', 'QI'),
+               ('gear_constant', 'QG'),
+               ('tachometer_gain', 'QT'),
+               ('software_negative_limit', 'SL'),
+               ('software_positive_limit', 'SR'),
+               ('trajectory_mode', 'TJ'),
+               ('home_search_mode', 'OM'),
+               ('maximum_velocity', 'VU'),
+               ('velocity', 'VA'),
+               ('jog_high_speed', 'JH'),
+               ('jog_low_speed', 'JW'),
+               ('home_search_high_speed', 'OH'),
+               ('home_search_low_speed', 'OL'),
+               ('base_velocity', 'VB'),
+               ('maximum_acceleration_deceleration', 'AU'),
+               ('acceleration', 'AC'),
+               ('deceleration', 'AG'),
+               ('estop_deceleration', 'AE'),
+               ('jerk_rate', 'JK'),
+               ('proportional_gain', 'KP'),
+               ('integral_gain', 'KI'),
+               ('derivative_gain', 'KD'),
+               ('velocity_feed_forward_gain', 'VF'),
+               ('acceleration_feed_forward_gain', 'AF'),
+               ('integral_saturation_level', 'KS'),
+               ('maximum_following_error_threshold', 'FE'),
+               ('position_deadband', 'DB'),
+               ('update_interval', 'CL'),
+               ('reduce_motor_torque_time', 'QR'),
+               ('reduce_motor_torque_percent', 'QR'),
+               ('slave_axis', 'SS'),
+               ('master_slave_reduction_ratio', 'GR'),
+               # ('master_slave_jog_velocity_update', 'SI'),
+               # ('master_slave_jog_velocity_scaling_coefficients', 'SK'),
+               ('backlash_compensation', 'BA'),
+               ('linear_compensation', 'CO'),
+               ('amplifier_io_configuration', 'ZA'),
+               ('feedback_configuration', 'ZB'),
+               ('estop_configuration', 'ZE'),
+               ('following_error_configuration', 'ZF'),
+               ('hardware_limit_configuration', 'ZH'),
+               ('software_limit_configuration', 'ZS'))
 
 COMMAND_MAP = dict(kind='QM',
                  units='SN',
@@ -106,14 +156,16 @@ COMMAND_MAP = dict(kind='QM',
                  estop_configuration='ZE',
                  following_error_configuration='ZF',
                  hardware_limit_configuration='ZH',
-                 software_limit_configuration='ZS'
-                 )
+                 software_limit_configuration='ZS')
 SIGNS = ['Positive',
-       'Negative']
+         'Negative']
+
+
 def binstr_int(v):
     '''
     '''
     return int(v, 2)
+
 
 def int_binstr(n):
     '''
@@ -135,6 +187,7 @@ def int_binstr(n):
 
     return bStr
 
+
 # class NewportAxisHandler(Handler):
 #    '''
 #        G{classtree}
@@ -154,8 +207,6 @@ class NewportAxis(Axis):
     loaded = False
 
     loadposition = Float
-
-
 
     kind = Property(depends_on='_kind')
     _kind = Int
@@ -231,7 +282,6 @@ class NewportAxis(Axis):
     software_limit_configuration = Property(depends_on='_software_limit_configuration')
     _software_limit_configuration = Int
 
-
     read_parameters = Button
     configuring = False
 
@@ -268,9 +318,10 @@ class NewportAxis(Axis):
             self.parent.tell(com)
 
     def upload_parameters_to_device(self):
-        '''
-        '''
-        for key, cmd in COMMAND_MAP.items():
+        """
+        """
+        self.parent.destroy_group()
+        for key, cmd in COMMAND_MAP_ORDERED:
             if cmd == 'QR':
                 continue
             value = getattr(self, key)
@@ -287,11 +338,12 @@ class NewportAxis(Axis):
 
             cmd = self.parent._build_command(cmd, xx=self.id, nn=value)
             self.parent.tell(cmd)
+            self.parent.read_error()
 
         value = '{:n},{:n}'.format(
-                               self.reduce_motor_torque_time,
-                               self.reduce_motor_torque_percent
-                               )
+            self.reduce_motor_torque_time,
+            self.reduce_motor_torque_percent
+        )
         cmd = self.parent._build_command('QR', xx=self.id, nn=value)
         self.parent.tell(cmd)
 
@@ -300,7 +352,6 @@ class NewportAxis(Axis):
   
         '''
         self.loaded = False
-
 
         for key, value in self._get_parameters(path):
             if ',' not in value:
@@ -312,6 +363,7 @@ class NewportAxis(Axis):
                     value = int(value)
                 else:
                     value = float(value)
+            # print 'setting', self.name, key, value
             setattr(self, key, value)
 
         self.nominal_velocity = self.velocity
@@ -326,10 +378,10 @@ class NewportAxis(Axis):
         self.loaded = False
         # self.kind='Commutated step motor'
         parameters = parse_file(path)
-#        with open(path, 'r') as f:
-#            parameters = []
-#            for line in f:
-#                parameters.append(line.strip())
+        #        with open(path, 'r') as f:
+        #            parameters = []
+        #            for line in f:
+        #                parameters.append(line.strip())
 
         self._kind = int(parameters[0][-1:])  # QM
         self._unit = int(parameters[1][-1:])  # SN
@@ -399,6 +451,7 @@ class NewportAxis(Axis):
         self._software_limit_configuration = int(parameters[46][3:-1], 16)  # ZS
 
         self.loaded = True
+
     def _get_kind(self):
         '''
         '''
@@ -555,20 +608,20 @@ class NewportAxis(Axis):
         return self._validate_configuration('software_limit_configuration', v)
 
     def _read_parameters_fired(self):
-#        results = []
+        #        results = []
         results = ResultsReport(axis=self)
         for name, c in COMMAND_MAP.iteritems():
             cmd = self.parent._build_query(c, xx=self.id)
             result = self.parent.ask(cmd)
             results.add(name, c, result)
-#            results.append((name, c, cmd, result))
-#        return results
+        #            results.append((name, c, cmd, result))
+        #        return results
         results.edit_traits()
 
     def _anytrait_changed(self, name, old, new):
-#        '''
-#
-#        '''
+        #        '''
+        #
+        #        '''
         if self.loaded and self.configuring:
             try:
                 attr = COMMAND_MAP[name]
@@ -585,26 +638,26 @@ class NewportAxis(Axis):
 
 
 
-#            print name
-#        print 'ca', name, old, new
-#        print name
-#        if self.loaded and name not in ['selected', 'text', 'position', 'sign',
-#
-#                                        '_velocity', 'velocity',
-#                                        'load_button'
-#                                        ]:
-#            if 'configuration' in name:
-#                new = '{}H'.fomrat(hex(new)[2:])
-#
-#            if name[0] == '_':
-#                name = name[1:]
-#                if name == 'trajectory_mode':
-#                    new += 1
-#            try:
-#                com = self.parent._build_command(COMMAND_MAP[name], xx = self.id, nn = new)
-#                self.parent.tell(com)
-#            except KeyError, e:
-#                print self, e
+            #            print name
+            #        print 'ca', name, old, new
+            #        print name
+            #        if self.loaded and name not in ['selected', 'text', 'position', 'sign',
+            #
+            #                                        '_velocity', 'velocity',
+            #                                        'load_button'
+            #                                        ]:
+            #            if 'configuration' in name:
+            #                new = '{}H'.fomrat(hex(new)[2:])
+            #
+            #            if name[0] == '_':
+            #                name = name[1:]
+            #                if name == 'trajectory_mode':
+            #                    new += 1
+            #            try:
+            #                com = self.parent._build_command(COMMAND_MAP[name], xx = self.id, nn = new)
+            #                self.parent.tell(com)
+            #            except KeyError, e:
+            #                print self, e
 
     def save(self):
 
@@ -631,9 +684,9 @@ class NewportAxis(Axis):
                     val = '{:X}'.format(val)
 
                 cp.set(sect, attr, val)
-#            for items in cp.items(sect):
-#                print sect, items, hasattr(self, items[0])
-#                cp.set(sect, key, getattr(self, key))
+            #            for items in cp.items(sect):
+            #                print sect, items, hasattr(self, items[0])
+            #                cp.set(sect, key, getattr(self, key))
 
         with open(self.config_path, 'w') as f:
             cp.write(f)
@@ -642,100 +695,97 @@ class NewportAxis(Axis):
         '''
         '''
 
-
         encoder_group = Group(Item('encoder_resolution'),
-                            Item('encoder_full_step_resolution'),
-                            Item('microstep_factor'),
-                            label='Encoder'
-                            )
+                              Item('encoder_full_step_resolution'),
+                              Item('microstep_factor'),
+                              label='Encoder'
+                              )
         general_group = Group(Item('name', style='readonly'),
-                            Item('id', style='readonly'),
-                            Item('kind', editor=EnumEditor(values=KINDS)),
-                            Item('units', editor=EnumEditor(values=UNITS)),
-                            Item('sign', editor=EnumEditor(values=SIGNS)),
-                            Item('trajectory_mode', editor=EnumEditor(values=TRAJECTORY_MODES)),
-                            encoder_group,
-                            label='General')
+                              Item('id', style='readonly'),
+                              Item('kind', editor=EnumEditor(values=KINDS)),
+                              Item('units', editor=EnumEditor(values=UNITS)),
+                              Item('sign', editor=EnumEditor(values=SIGNS)),
+                              Item('trajectory_mode', editor=EnumEditor(values=TRAJECTORY_MODES)),
+                              encoder_group,
+                              label='General')
         motor_group = Group(Item('average_motor_voltage'),
-                          Item('maximum_motor_current'),
-                          Item('gear_constant'),
-                          Item('tachometer_gain'),
-                          label='Motor')
-
+                            Item('maximum_motor_current'),
+                            Item('gear_constant'),
+                            Item('tachometer_gain'),
+                            label='Motor')
 
         home_group = Group(Item('home_search_mode', editor=EnumEditor(values=HOME_SEARCH_MODES)),
-                         Item('home_search_low_speed'),
-                         Item('home_search_high_speed'),
-                         label='Home',
-                         )
-
+                           Item('home_search_low_speed'),
+                           Item('home_search_high_speed'),
+                           label='Home',
+                           )
 
         pid_group = Group(Item('proportional_gain'),
-                        Item('integral_gain'),
-                        Item('derivative_gain'),
-                        Item('integral_saturation_level'),
-                        Item('update_interval'),
-                        label='PID')
+                          Item('integral_gain'),
+                          Item('derivative_gain'),
+                          Item('integral_saturation_level'),
+                          Item('update_interval'),
+                          label='PID')
 
         feed_forward_group = Group(Item('velocity_feed_forward_gain'),
-                                 Item('acceleration_feed_forward_gain'),
-                                 label='Feed-Forward'
-                                 )
+                                   Item('acceleration_feed_forward_gain'),
+                                   label='Feed-Forward'
+                                   )
         loop_group = Group(pid_group, feed_forward_group,
-                         label='Loop')
+                           label='Loop')
         limit_group = Group(Item('software_negative_limit'),
-                          Item('software_positive_limit'),
-                          label='Limits')
+                            Item('software_positive_limit'),
+                            label='Limits')
 
         motion_group = Group(Item('maximum_velocity'),
-                           Item('velocity'),
-                           Item('base_velocity'),
-                           Item('maximum_acceleration_deceleration'),
-                           Item('acceleration'),
-                           Item('deceleration'),
-                           Item('estop_deceleration'),
-                           Item('jerk_rate'),
+                             Item('velocity'),
+                             Item('base_velocity'),
+                             Item('maximum_acceleration_deceleration'),
+                             Item('acceleration'),
+                             Item('deceleration'),
+                             Item('estop_deceleration'),
+                             Item('jerk_rate'),
 
-                           Group('jog_high_speed',
-                                 'jog_low_speed',
-                                 label='Jog'),
-                           limit_group,
-                           label='Motion'
-                           )
+                             Group('jog_high_speed',
+                                   'jog_low_speed',
+                                   label='Jog'),
+                             limit_group,
+                             label='Motion'
+                             )
         misc_group = Group(Item('maximum_following_error_threshold'),
-                         Item('position_deadband'),
-                         Item('reduce_motor_torque_time'),
-                         Item('reduce_motor_torque_percent'),
-                         Item('linear_compensation'),
-                         Item('backlash_compensation'),
-                         label='Misc.')
+                           Item('position_deadband'),
+                           Item('reduce_motor_torque_time'),
+                           Item('reduce_motor_torque_percent'),
+                           Item('linear_compensation'),
+                           Item('backlash_compensation'),
+                           label='Misc.')
         master_slave_group = Group(Item('slave_axis'),
-                                 Item('master_slave_reduction_ratio'),
-                                 Item('master_slave_jog_velocity_update'),
-                                 Item('master_slave_jog_velocity_scaling_coefficients'),
-                                 label='Master-Slave')
+                                   Item('master_slave_reduction_ratio'),
+                                   Item('master_slave_jog_velocity_update'),
+                                   Item('master_slave_jog_velocity_scaling_coefficients'),
+                                   label='Master-Slave')
         configuration_group = Group(Item('amplifier_io_configuration'),
-                                  Item('feedback_configuration'),
-                                  Item('estop_configuration'),
-                                  Item('following_error_configuration'),
-                                  Item('hardware_limit_configuration'),
-                                  Item('software_limit_configuration'),
-                                  label='Configuration')
+                                    Item('feedback_configuration'),
+                                    Item('estop_configuration'),
+                                    Item('following_error_configuration'),
+                                    Item('hardware_limit_configuration'),
+                                    Item('software_limit_configuration'),
+                                    label='Configuration')
         view = View(
-                    VGroup(
-                           HGroup(spring, Item('read_parameters', show_label=False)),
-                           Group(
-                               general_group,
-                               motion_group,
-                               motor_group,
-                               home_group,
-                               configuration_group,
-                               master_slave_group,
-                               loop_group,
-                               misc_group,
-                               layout='tabbed'
-                           )
-                          ),
-#                  handler = NewportAxisHandler
-                  )
+            VGroup(
+                HGroup(spring, Item('read_parameters', show_label=False)),
+                Group(
+                    general_group,
+                    motion_group,
+                    motor_group,
+                    home_group,
+                    configuration_group,
+                    master_slave_group,
+                    loop_group,
+                    misc_group,
+                    layout='tabbed'
+                )
+            ),
+            #                  handler = NewportAxisHandler
+        )
         return view

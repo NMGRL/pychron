@@ -12,14 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, List, Array
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import argmax, array
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 # from pychron.core.helpers.logger_setup import logging_setup, new_logger
 # logging_setup('plateau', use_archiver=False)
 # log = new_logger('foo')
@@ -46,6 +46,7 @@ class Plateau(HasTraits):
 
     nsteps = 3
     overlap_sigma = 2
+    gas_fraction = 50
 
     use_overlap = True  # fleck criterion
     use_mswd = False  #mahon criterion
@@ -120,7 +121,7 @@ class Plateau(HasTraits):
 
         # log.debug('percent {} {} {}'.format(start, end, ss / self.total_signal))
 
-        return ss / self.total_signal >= 0.5
+        return ss / self.total_signal >= self.gas_fraction/100.
 
     def check_mswd(self, start, end):
         """
@@ -154,11 +155,10 @@ class Plateau(HasTraits):
         e2 *= overlap_sigma
 
         # log.debug('{}<{} {}>{}'.format(a1 - e1 , a2 + e2, a1 + e1 , a2 - e2))
-        if a1 - e1 < a2 + e2 and a1 + e1 > a2 - e2:
-            return True
+        return a1 - e1 < a2 + e2 and a1 + e1 > a2 - e2
 
     def check_nsteps(self, start, end):
         return end - start >= self.nsteps
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

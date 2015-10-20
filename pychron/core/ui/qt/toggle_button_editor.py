@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pyface.image_resource import ImageResource
 from traits.api import Int, Any, Instance, Bool, Str, Property
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 from pyface.qt import QtGui, QtCore
 from traitsui.qt4.editor import Editor
@@ -35,10 +35,10 @@ class _ToggleButtonEditor(Editor):
     def init(self, parent):
         self.icon_on = QtGui.QIcon(self.factory.image_on.absolute_path)
         self.icon_off = QtGui.QIcon(self.factory.image_off.absolute_path)
-        control = self.control = QtGui.QToolButton()
-        control.setAutoRaise(True)
+        control = self.control = QtGui.QPushButton()
+        # control.setAutoRaise(True)
         control.setIcon(self.icon_on)
-        control.setIconSize(QtCore.QSize(self.factory.width, self.factory.height))
+        # control.setIconSize(QtCore.QSize(self.factory.width, self.factory.height))
 
         self.tooltip_on = self.factory.tooltip_on
         self.tooltip_off = self.factory.tooltip_off
@@ -47,10 +47,10 @@ class _ToggleButtonEditor(Editor):
 
         control.setCheckable(True)
         control.toggled.connect(self._toggle_button)
-        if self.factory.label:
-            control.setToolButtonStyle(QtCore.Qt.ToolButtonTextUnderIcon)
-        else:
-            control.setToolButtonStyle(QtCore.Qt.ToolButtonIconOnly)
+        # if self.factory.label:
+        #     control.setToolButtonStyle(QtCore.Qt.ToolButtonTextUnderIcon)
+        # else:
+        #     control.setToolButtonStyle(QtCore.Qt.ToolButtonIconOnly)
 
         QtCore.QObject.connect(control, QtCore.SIGNAL('clicked()'),
                                self.update_object)
@@ -89,7 +89,7 @@ class _ToggleButtonEditor(Editor):
         pass
 
 
-from traitsui.qt4.basic_editor_factory import BasicEditorFactory
+from traitsui.basic_editor_factory import BasicEditorFactory
 
 
 class ToggleButtonEditor(BasicEditorFactory):
@@ -125,5 +125,5 @@ class ToggleButtonEditor(BasicEditorFactory):
                     pass
 
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

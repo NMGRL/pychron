@@ -17,14 +17,16 @@ Pychron Develop Guide
   :maxdepth: 1
 
   running_pychron
+  build
   hardware
-
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
+  database
+  database_analysis
+  automated_analysis
+  experiment_construction
+  communications
+  notification_network
+  figure
+  remote_hardware
+  errors/el_errors
+  errors/laser_errors
+  updater

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
 from traits.etsconfig.etsconfig import ETSConfig
 ETSConfig.toolkit = 'qt4'
@@ -26,8 +26,8 @@ from numpy import linspace, polyfit, polyval, where, hstack, exp, ones_like
 # from pylab import *
 from pychron.processing.argon_calculations import age_equation, calculate_flux
 from pychron.graph.stacked_graph import StackedGraph
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 class Iso(HasTraits):
     name = Str
     intensity = Float
@@ -299,4 +299,4 @@ if __name__ == '__main__':
     eq.Ar39.intensity = 25
     eq.configure_traits()
 #     main()
-#============= EOF =============================================
+# ============= EOF =============================================

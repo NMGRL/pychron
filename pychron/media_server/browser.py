@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,19 +12,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Any, List, Instance, String, on_trait_change, \
     Button, Tuple
 from traitsui.api import View, Item, VGroup
 from enable.component_editor import ComponentEditor
 from enable.base_tool import BaseTool
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 # import Image
 # from numpy import array
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.loggable import Loggable
 # from pychron.core.helpers.parsers.xml_parser import XMLParser
 # #from pychron.core.ui.custom_label_editor import CustomLabelEditor
@@ -76,9 +76,9 @@ class ReferencePointsOverlay(AbstractOverlay):
 #    files = List
 #    directories = List
 #    selected = String
-##===============================================================================
+## ===============================================================================
 # # handlers
-##===============================================================================
+## ===============================================================================
 #    def traits_view(self):
 #        v = View(Item('files',
 #                      show_label=False,
@@ -138,15 +138,15 @@ class MediaBrowser(Loggable):
 
         return True
 
-#===============================================================================
+# ===============================================================================
 # handlers
-#===============================================================================
+# ===============================================================================
     @on_trait_change('viewer:open_button')
     def _open_fired(self):
         dlg = FileDialog(action='open')
         if dlg.open() == OK:
-            with open(dlg.path, 'rb') as fp:
-                self.viewer.set_image(fp)
+            with open(dlg.path, 'rb') as rfile:
+                self.viewer.set_image(rfile)
                 self.hierarchy.files.append(os.path.basename(dlg.path))
 
             self.client.cache(dlg.path)
@@ -177,7 +177,7 @@ if __name__ == '__main__':
     mb = MediaBrowser(client=mc)
     mb.load_remote_directory('images')
     mb.configure_traits()
-#============= EOF =============================================
+# ============= EOF =============================================
 #    def modal_view(self):
 #        return self._view_factory(buttons=['OK', 'Cancel'])
 #
@@ -232,9 +232,9 @@ if __name__ == '__main__':
 # #
 # #        plot.overlays.append(zoom)
 
-##===============================================================================
+## ===============================================================================
 # # handlers
-##===============================================================================
+## ===============================================================================
 #
 #    def _set_reference_point(self, pt):
 #        '''

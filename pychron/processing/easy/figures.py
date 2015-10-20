@@ -12,14 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from itertools import groupby
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 #from pychron.experiment.easy_parser import EasyParser
 from pychron.core.helpers.filetools import unique_path
 from pychron.core.helpers.iterfuncs import partition
@@ -129,7 +129,7 @@ class EasyFigures(BaseEasy):
                 if groupby_aliquot:
                     key = lambda x: x.aliquot
                     for ali, ais in groupby(ans, key=key):
-                        if '{}-{:02n}'.format(li, ali) in excludes:
+                        if '{}-{:02d}'.format(li, ali) in excludes:
                             continue
                         yield ais
                 else:
@@ -188,7 +188,7 @@ class EasyFigures(BaseEasy):
         ident = ','.join([li for li in lns])
         li = ident
 
-        ident = '{:03n}-{}'.format(cnt, ident)
+        ident = '{:03d}-{}'.format(cnt, ident)
         ln_root = os.path.join(root, ident)
         r_mkdir(ln_root)
         ans = sorted(ans, key=pred)
@@ -344,4 +344,4 @@ class EasyFigures(BaseEasy):
                                project, lns)
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

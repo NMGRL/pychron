@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from chaco.abstract_overlay import AbstractOverlay
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import Image
 from numpy import array
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 class ImageUnderlay(AbstractOverlay):
     _cached_img = None
@@ -33,7 +33,7 @@ class ImageUnderlay(AbstractOverlay):
                 im = im.convert('RGB')
                 self._cached_img = array(im)
             except IOError, e:
-                print e
+                print 'exception', e
 
 
         super(ImageUnderlay, self).__init__(component, *args, **kw)
@@ -55,4 +55,4 @@ class ImageUnderlay(AbstractOverlay):
                 gc.scale_ctm(sw, sh)
                 gc.draw_image(self._cached_img)
 
-#============= EOF =============================================
+# ============= EOF =============================================

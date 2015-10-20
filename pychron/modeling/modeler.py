@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import  Any, Instance, Str, \
     Directory, List, on_trait_change, Property, Enum, Int, Button
 from traitsui.api import View, Item, VSplit, TableEditor, EnumEditor, HGroup, VGroup
@@ -25,13 +25,13 @@ from pyface.directory_dialog import DirectoryDialog
 # from enthought.pyface.timer import do_later
 # from traitsui.menu import Action, Menu, MenuBar
 # import apptools.sweet_pickle as pickle
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 from Queue import Queue
 from threading import Thread
 import time
 import sys
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.paths import paths
 # from pychron.core.helpers.paths import LOVERA_PATH
 from pychron.graph.diffusion_graph import DiffusionGraph  # , GROUPNAMES
@@ -91,9 +91,9 @@ class Modeler(Loggable):
     def _set_datum(self, d):
         self._datum = d
 
-#===============================================================================
+# ===============================================================================
 # fortran
-#===============================================================================
+# ===============================================================================
     def parse_autoupdate(self):
         '''
         '''
@@ -123,9 +123,9 @@ class Modeler(Loggable):
                                            block=True)
 
 
-        #=======================================================================
+        # =======================================================================
         # debug
-        #=======================================================================
+        # =======================================================================
         # path='/Users/Ross/Pychrondata_beta/data/modeling/ShapFurnace.txt'
         # self.data_loader.load_autoupdate(path)
 
@@ -152,7 +152,7 @@ class Modeler(Loggable):
 
     def _get_rid_root(self):
 
-        #=======================================================================
+        # =======================================================================
         # #debug
 
 #        d = DummyDirectoryDialog()
@@ -271,9 +271,9 @@ class Modeler(Loggable):
 
         t.state = pstate
 
-    #===========================================================================
+    # ===========================================================================
     # graph
-    #===========================================================================
+    # ===========================================================================
     def get_panel_plotids(self, name):
         return [i for i, p in enumerate(self.get_panels()) \
                     if p == name]
@@ -422,7 +422,7 @@ class Modeler(Loggable):
 
 #        except Exception, e:
 #            print 'sync groups', e
-#============= views ===================================
+# ============= views ===================================
 #
     def traits_view(self):
         return self.data_select_view()
@@ -563,9 +563,9 @@ class Modeler(Loggable):
         self.selected = None
         self.selected = d
 
-#===============================================================================
+# ===============================================================================
 # graph loaders
-#===============================================================================
+# ===============================================================================
     def _try(self, func, data):
         if data is not None:
             try:
@@ -771,7 +771,7 @@ if __name__ == '__main__':
     runfortran()
 #    r = RunConfiguration()
 #    r.configure_traits()
-#============= EOF ====================================
+# ============= EOF ====================================
 #    setup('modeler')
 #    m = Modeler()
 #    m.refresh_graph()

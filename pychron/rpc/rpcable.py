@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,12 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.config_loadable import ConfigLoadable
 class RPCable(ConfigLoadable):
     rpc_server = None
@@ -34,4 +34,4 @@ class RPCable(ConfigLoadable):
             if rpc_port:
                 self.load_rpc_server(rpc_port)
 
-#============= EOF =============================================
+# ============= EOF =============================================

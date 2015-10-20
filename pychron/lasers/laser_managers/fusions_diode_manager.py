@@ -1,27 +1,27 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 
 from traits.api import Instance, Button, Bool, Float
 from traitsui.api import VGroup, Item, InstanceEditor
 
-#=============standard library imports ========================
+# =============standard library imports ========================
 from threading import Timer
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 
 from pychron.hardware.fusions.fusions_diode_logic_board import FusionsDiodeLogicBoard
 # from pychron.hardware.fusions.vue_diode_control_module import VueDiodeControlModule
@@ -32,7 +32,6 @@ from pychron.hardware.pyrometer_temperature_monitor import PyrometerTemperatureM
 
 from pychron.lasers.laser_managers.vue_metrix_manager import VueMetrixManager
 from pychron.lasers.response_recorder import ResponseRecorder
-from pychron.paths import paths
 from pychron.monitors.fusions_diode_laser_monitor import FusionsDiodeLaserMonitor
 
 from fusions_laser_manager import FusionsLaserManager
@@ -41,8 +40,10 @@ from fusions_laser_manager import FusionsLaserManager
 class FusionsDiodeManager(FusionsLaserManager):
     """
     """
+    stage_manager_id = 'fusions.diode'
     id = 'pychron.fusions.diode'
-    name = 'fusions_diode'
+    # name = 'fusions_diode'
+    name = 'FusionsDiode'
     configuration_dir_name = 'fusions_diode'
 
     pyrometer = Instance(MikronGA140Pyrometer)
@@ -71,8 +72,8 @@ class FusionsDiodeManager(FusionsLaserManager):
     request_powermin = Float(0)
     request_powermax = Float(1500)
 
-    dbname = paths.diodelaser_db
-    db_root = paths.diodelaser_db_root
+    # dbname = paths.diodelaser_db
+    # db_root = paths.diodelaser_db_root
 
     use_calibrated_temperature = Bool(False)
 
@@ -81,7 +82,7 @@ class FusionsDiodeManager(FusionsLaserManager):
             self.temperature_controller.use_calibrated_temperature = new
 
     def map_temperature(self, v):
-        #if self.use_calibrated_temperature:
+        # if self.use_calibrated_temperature:
         v = self.temperature_controller.map_temperature(v)
         return v
 
@@ -90,7 +91,6 @@ class FusionsDiodeManager(FusionsLaserManager):
         """
         return self._try('pyrometer',
                          'read_temperature', kw)
-
 
     def get_laser_internal_temperature(self, **kw):
         """
@@ -120,11 +120,11 @@ class FusionsDiodeManager(FusionsLaserManager):
         if units == 'temp':
             self.set_laser_temperature(value)
         else:
-            self.set_laser_power(value)
+            self.set_laser_power(value, units)
 
     def set_laser_temperature(self, temp, set_pid=True):
         return self._set_laser_power_hook(temp, mode='closed', set_pid=set_pid)
-        #use_calibration=self.use_calibrated_temperature)
+        # use_calibration=self.use_calibrated_temperature)
 
     def get_response_blob(self):
         return self.response_recorder.get_response_blob() if self.response_recorder else ''
@@ -132,15 +132,15 @@ class FusionsDiodeManager(FusionsLaserManager):
     def get_output_blob(self):
         return self.response_recorder.get_output_blob() if self.response_recorder else ''
 
-    #===============================================================================
+    # ===============================================================================
     # private
-    #===============================================================================
+    # ===============================================================================
     def _set_laser_power_hook(self, power, mode='open', set_pid=True, **kw):
         tc = self.temperature_controller
         if tc.control_mode != mode:
             tc.set_control_mode(mode)
 
-        power=float(power)
+        power = float(power)
         if mode == 'closed' and set_pid and power:
             tc.set_pid(power)
 
@@ -153,7 +153,7 @@ class FusionsDiodeManager(FusionsLaserManager):
                 self.fiber_light.power_off()
 
             if clear_setpoint:
-                #disable the temperature_controller unit a value is set
+                # disable the temperature_controller unit a value is set
                 self.temperature_controller.disable()
 
             self.response_recorder.start()
@@ -188,11 +188,11 @@ class FusionsDiodeManager(FusionsLaserManager):
         except AttributeError:
             pass
 
-    #===============================================================================
+    # ===============================================================================
     # views
-    #===============================================================================
+    # ===============================================================================
     def get_additional_controls(self):
-    #        v = Group(
+        #        v = Group(
         gs = [VGroup(Item('temperature_controller', style='custom',
                           editor=InstanceEditor(view='control_view'),
                           show_label=False, ),
@@ -205,9 +205,9 @@ class FusionsDiodeManager(FusionsLaserManager):
                      label='FiberLight')]
         return gs
 
-    #===============================================================================
+    # ===============================================================================
     # defaults
-    #===============================================================================
+    # ===============================================================================
 
     def _response_recorder_default(self):
         r = ResponseRecorder(response_device=self.temperature_controller,
@@ -260,8 +260,7 @@ class FusionsDiodeManager(FusionsLaserManager):
 
 if __name__ == '__main__':
     from pychron.core.helpers.logger_setup import logging_setup
-    from pychron.initializer import Initializer
-
+    from pychron.envisage.initialization.initializer import Initializer
 
     logging_setup('fusions diode')
     f = FusionsDiodeManager()
@@ -275,23 +274,23 @@ if __name__ == '__main__':
     #    f.bootstrap()
     f.configure_traits()
 
-#======================= EOF ============================
+# ======================= EOF ============================
 #    def finish_loading(self):
 #        super(FusionsDiodeManager, self).finish_loading()
 #
 #        self.pyrometer.start_scan()
 # #        self.control_module_manager.start_scan()
-#def open_scanner(self):
+# def open_scanner(self):
 #    from pychron.lasers.scanner import PIDScanner
 #
 #    self._open_scanner(PIDScanner, 'scanner.yaml')
 #
-#def open_autotuner(self):
+# def open_autotuner(self):
 #    from pychron.lasers.autotuner import AutoTuner
 #
 #    self._open_scanner(AutoTuner, 'autotuner.yaml')
 #
-#def _open_scanner(self, klass, name):
+# def _open_scanner(self, klass, name):
 #    from pychron.lasers.scanner import ScannerController
 #
 #    p = os.path.join(paths.scripts_dir, name)

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,12 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-from traits.api import HasTraits, String, Str, Int
+# ============= enthought library imports =======================
+from traits.api import String, Str, Int
 # from traitsui.api import View, Item, TableEditor
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from cStringIO import StringIO
 import cgi
@@ -29,18 +29,18 @@ import sys
 import shutil
 import mimetypes
 from threading import Thread
-#============= local library imports  ==========================
-#===============================================================================
+# ============= local library imports  ==========================
+# ===============================================================================
 # for debugging
-#===============================================================================
+# ===============================================================================
 merc = os.path.join(os.path.expanduser('~'),
                         'Programming',
                         'mercurial')
 src = os.path.join(merc, 'pychron_uv')
 sys.path.insert(0, src)
-#===============================================================================
+# ===============================================================================
 #
-#===============================================================================s
+# ===============================================================================s
 
 from pychron.loggable import Loggable
 
@@ -261,6 +261,6 @@ def main():
 if __name__ == '__main__':
     main()
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 

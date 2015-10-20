@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.filetools import unique_path
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.paths import paths
@@ -110,8 +110,8 @@ class GeoProcessor(IsotopeDatabaseManager):
 
         import yaml
 
-        with open(p, 'w') as fp:
-            yaml.dump(yd, fp, default_flow_style=False)
+        with open(p, 'w') as wfile:
+            yaml.dump(yd, wfile, default_flow_style=False)
 
         from pychron.canvas.canvas2D.strat_canvas import StratCanvas
 
@@ -132,5 +132,5 @@ class GeoProcessor(IsotopeDatabaseManager):
 
 
 
-        #============= EOF =============================================
+        # ============= EOF =============================================
 

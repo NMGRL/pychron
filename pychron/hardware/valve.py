@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Str, Any, List, Float, Int, Property, Bool
 from traitsui.api import View, Item, VGroup
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.hardware.switch import Switch
 
 
@@ -47,13 +47,12 @@ class HardwareValve(Switch):
     sample_period = Float(1)
 
     evalve = Any
-    owner = Str
     prefix_name = 'VALVE'
 
-    def is_name(self, name):
-        if len(name) == 1:
-            name = 'VALVE-{}'.format(name)
-        return name == self.name
+    # def is_name(self, name):
+    #     if len(name) == 1:
+    #         name = '{}-{}'.format(self.prefix_name, name)
+    #     return name == self.name
 
     def _state_changed(self):
         if self.evalve:
@@ -120,7 +119,7 @@ class HardwareValve(Switch):
             #                    buttons=['OK', 'Cancel'],
             title='{} Properties'.format(self.name))
 
-#============= EOF ====================================
+# ============= EOF ====================================
 #    def open(self, mode='normal'):
 #        '''
 #

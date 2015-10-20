@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import sys
 
 from PySide import QtGui, QtCore
@@ -23,8 +23,8 @@ from pyface.ui.qt4.about_dialog import AboutDialog
 from traits.api import List,Str
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 _ABOUT_TEXT = '''
 <html>
   <body>
@@ -134,6 +134,6 @@ class myAboutDialog(AboutDialog):
         return c
 
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 

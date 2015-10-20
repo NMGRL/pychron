@@ -15,18 +15,23 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, List, Event, Button, Instance, Bool
-from traitsui.api import View, UItem, HSplit, VSplit
+from traits.api import HasTraits, Str, List, Event, Instance, Bool, Any, Property, cached_property
+from traitsui.api import View, UItem, HSplit, VSplit, Handler
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from uncertainties import std_dev, nominal_value, ufloat
 from pychron.core.helpers.formatting import floatfmt, format_percent_error
-from pychron.envisage.browser.table_configurer import RecallTableConfigurer
 from pychron.processing.analyses.view.adapters import IsotopeTabularAdapter, ComputedValueTabularAdapter, \
     DetectorRatioTabularAdapter, ExtractionTabularAdapter, MeasurementTabularAdapter, IntermediateTabularAdapter
 from pychron.processing.analyses.view.values import ExtractionValue, ComputedValue, MeasurementValue, DetectorRatio
 from pychron.core.ui.tabular_editor import myTabularEditor
+
+
+class MainViewHandler(Handler):
+    def show_isotope_evolution(self, uiinfo, obj):
+        isos = obj.selected
+        obj.show_iso_evo_needed = isos
 
 
 class MainView(HasTraits):
@@ -45,9 +50,16 @@ class MainView(HasTraits):
 
     _corrected_enabled = True
 
-    isotope_adapter = Instance(IsotopeTabularAdapter)
-    intermediate_adapter = Instance(IntermediateTabularAdapter)
+    isotope_adapter = Instance(IsotopeTabularAdapter, ())
+    intermediate_adapter = Instance(IntermediateTabularAdapter, ())
+    measurement_adapter = Instance(MeasurementTabularAdapter, ())
+    extraction_adapter = Instance(ExtractionTabularAdapter, ())
+    computed_adapter = Property(depends_on='analysis_type')
+
     show_intermediate = Bool(True)
+
+    selected = Any
+    show_iso_evo_needed = Event
 
     def __init__(self, analysis=None, *args, **kw):
         super(MainView, self).__init__(*args, **kw)
@@ -83,8 +95,10 @@ class MainView(HasTraits):
         a39 = ar.ar39decayfactor
         a37 = ar.ar37decayfactor
         ms = [
-            MeasurementValue(name='Version',
+            MeasurementValue(name='DR Version',
                              value=an.data_reduction_tag),
+            MeasurementValue(name='DAQ Version',
+                             value=an.collection_version),
             MeasurementValue(name='AnalysisID',
                              value=self.analysis_id),
             MeasurementValue(name='Spectrometer',
@@ -130,10 +144,10 @@ class MainView(HasTraits):
                             value=an.extract_value,
                             units=an.extract_units, ),
             ExtractionValue(name='Duration',
-                            value=an.duration,
+                            value=an.extract_duration,
                             units='s'),
             ExtractionValue(name='Cleanup',
-                            value=an.cleanup,
+                            value=an.cleanup_duration,
                             units='s'),
             ExtractionValue(name='T_o',
                             value=an.collection_time_zero_offset,
@@ -207,7 +221,7 @@ class MainView(HasTraits):
 
         if niso and diso:
             try:
-                return niso.get_corrected_value() / diso.get_corrected_value()
+                return niso.get_non_detector_corrected_value() / diso.get_non_detector_corrected_value()
             except ZeroDivisionError:
                 pass
 
@@ -331,6 +345,7 @@ class MainView(HasTraits):
                 return ComputedValue(name=n,
                                      tag=a,
                                      value=nominal_value(value) or 0,
+                                     value_tag=value_tag,
                                      display_value=display_value,
                                      error=e or 0)
 
@@ -343,27 +358,35 @@ class MainView(HasTraits):
                 attr = ci.tag
                 if attr == 'wo_j':
                     ci.error = an.age_err_wo_j
+                    ci.value = nominal_value(getattr(an, ci.value_tag))
                 elif attr == 'wo_irrad':
                     ci.error = an.F_err_wo_irrad
+                    ci.value = nominal_value(getattr(an, ci.value_tag))
                 else:
                     v = getattr(an, attr)
                     if v is not None:
                         ci.value = nominal_value(v)
                         ci.error = std_dev(v)
 
-    def _get_editors(self):
-        teditor = myTabularEditor(adapter=self.isotope_adapter,
-                                  drag_enabled=False,
-                                  stretch_last_section=False,
-                                  editable=False,
-                                  refresh='refresh_needed')
-
+    @cached_property
+    def _get_computed_adapter(self):
         adapter = ComputedValueTabularAdapter
         if self.analysis_type in ('air', 'cocktail',
                                   'blank_unknown', 'blank_air',
                                   'blank_cocktail'):
             adapter = DetectorRatioTabularAdapter
-        ceditor = myTabularEditor(adapter=adapter(),
+        return adapter()
+
+    def _get_editors(self):
+        teditor = myTabularEditor(adapter=self.isotope_adapter,
+                                  drag_enabled=False,
+                                  stretch_last_section=False,
+                                  editable=False,
+                                  multi_select=True,
+                                  selected='selected',
+                                  refresh='refresh_needed')
+
+        ceditor = myTabularEditor(adapter=self.computed_adapter,
                                   editable=False,
                                   drag_enabled=False,
                                   refresh='refresh_needed')
@@ -374,12 +397,15 @@ class MainView(HasTraits):
                                   stretch_last_section=False,
                                   refresh='refresh_needed')
 
-        eeditor = myTabularEditor(adapter=ExtractionTabularAdapter(),
+        eeditor = myTabularEditor(adapter=self.extraction_adapter,
                                   drag_enabled=False,
-                                  editable=False, )
-        meditor = myTabularEditor(adapter=MeasurementTabularAdapter(),
+                                  editable=False,
+                                  refresh='refresh_needed')
+
+        meditor = myTabularEditor(adapter=self.measurement_adapter,
                                   drag_enabled=False,
-                                  editable=False)
+                                  editable=False,
+                                  refresh='refresh_needed')
 
         return teditor, ieditor, ceditor, eeditor, meditor
 
@@ -409,8 +435,10 @@ class MainView(HasTraits):
                              height=200),
                        UItem('corrected_values',
                              height=200,
-                             editor=ceditor))))
+                             editor=ceditor))),
+            handler=MainViewHandler()
+        )
         return v
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

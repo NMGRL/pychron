@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,20 +12,70 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 import inspect
 import traceback
 
+import logging
+
+logger=logging.getLogger('Inspection')
 
 def caller(func):
     def dec(*args, **kw):
+        try:
+            stack = inspect.stack()
+
+            cstack = stack[0]
+            rstack = stack[1]
+
+            msg = '{} called by {}. parent call={} {}'.format(func.func_name, rstack[3],
+                                                              cstack[0].f_back.f_locals['self'],
+                                                              ''.join(map(str.strip, rstack[4])))
+
+            logger.debug(msg)
+        except BaseException:
+            pass
+        return func(*args, **kw)
+
+    return dec
+
+def conditional_caller(func):
+    def dec(*args, **kw):
+        ret = func(*args, **kw)
+        if ret is None:
+            stack = inspect.stack()
+            # traceback.print_stack()
+            cstack = stack[0]
+            rstack = stack[1]
+
+            msg = '{} called by {}. parent call={} {}'.format(func.func_name, rstack[3],
+                                                              cstack[0].f_back.f_locals['self'],
+                                                              ''.join(map(str.strip, rstack[4])))
+
+            logger.debug(msg)
+        return ret
+
+    return dec
+
+
+def pcaller(func):
+    def dec(*args, **kw):
         stack = inspect.stack()
-        print '{} called by {}'.format(func.func_name, stack[1][3])
+
+        cstack = stack[0]
+        rstack = stack[1]
+
+        msg = '{} called by {}. parent call={} {}'.format(func.func_name, rstack[3],
+                                                          'aaa',
+                                                          # cstack[0].f_back.f_locals['self'],
+                                                          ''.join(map(str.strip, rstack[4])))
+
+        print msg
         return func(*args, **kw)
 
     return dec
@@ -41,7 +91,4 @@ def caller_stack(func):
     return dec
 
 
-
-
-
-#============= EOF =============================================
+# ============= EOF =============================================

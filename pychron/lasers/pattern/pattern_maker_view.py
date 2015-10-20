@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 # from traits.etsconfig.etsconfig import ETSConfig
 # ETSConfig.toolkit = 'qt4'
@@ -22,12 +22,13 @@ from pychron.core.ui import set_qt
 set_qt()
 
 import os
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Property, Enum, Str, on_trait_change
 from traitsui.api import View, Item, InstanceEditor
-import apptools.sweet_pickle as pickle
-#============= standard library imports ========================
-#============= local library imports  ==========================
+import cPickle as pickle
+# import apptools.sweet_pickle as pickle
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.lasers.pattern.patternable import Patternable
 from pychron.saveable import Saveable, SaveableButtons
 from pychron.paths import paths
@@ -40,9 +41,11 @@ class PatternMakerView(Saveable, Patternable):
                          'LineSpiral',
                          'SquareSpiral',
                          'Random',
-                         'CircularContour', 'Trough', 'Rubberband', 'RasterRubberband'),
+                         'CircularContour', 'Trough',
+                         'Rubberband', 'RasterRubberband',
+                         'Seek'),
                     depends_on='_kind')
-    _kind = Str('Rubberband')
+    _kind = Str('Polygon')
 
     def load_pattern(self, path=None):
         if path is None:
@@ -51,8 +54,8 @@ class PatternMakerView(Saveable, Patternable):
             path = os.path.join(paths.pattern_dir, path)
 
         if path and os.path.isfile(path):
-            with open(path, 'r') as fp:
-                pattern = self._load_pattern(fp, path)
+            with open(path, 'r') as rfile:
+                pattern = self._load_pattern(rfile, path)
                 if pattern:
                     self._kind = pattern.__class__.__name__.replace('Pattern', '')
                     return True
@@ -98,33 +101,50 @@ class PatternMakerView(Saveable, Patternable):
             resizable=True)
         return v
 
-    #===============================================================================
+    # ===============================================================================
     # property get/set
-    #===============================================================================
+    # ===============================================================================
     def _get_kind(self):
         return self._kind
 
     def _set_kind(self, v):
         self._kind = v
-        self.pattern = self.pattern_factory(v)
 
-    #===============================================================================
+        pat = self.pattern_factory(v)
+        if pat:
+            self.pattern = pat
+
+    # ===============================================================================
     # factories
-    #===============================================================================
+    # ===============================================================================
     def pattern_factory(self, kind):
+        pattern = None
         name = '{}Pattern'.format(kind)
-        try:
-            factory = __import__('pychron.lasers.pattern.patterns',
-                                 fromlist=[name])
-            pattern = getattr(factory, name)()
+        for pkg in ('pychron.lasers.pattern.patterns',
+                    'pychron.lasers.pattern.seek_pattern',
+                    'pychron.lasers.pattern.degas_pattern'):
+            try:
+                factory = __import__(pkg, fromlist=[name])
+                pattern = getattr(factory, name)()
+                break
+            except (ImportError, AttributeError), e:
+                pass
+
+                #
+                # try:
+                #     factory = __import__('pychron.lasers.pattern.seek_pattern',
+                #                          fromlist=[name])
+                #     pattern = getattr(factory, name)()
+                # except ImportError, e:
+                #     print e
+
+        if pattern:
             pattern.replot()
             pattern.calculate_transit_time()
             return pattern
-        except ImportError, e:
-            print e
-            #===============================================================================
+            # ===============================================================================
             # defaults
-            #===============================================================================
+            # ===============================================================================
 
     def _pattern_default(self):
         p = self.pattern_factory(self.kind)
@@ -135,4 +155,4 @@ if __name__ == '__main__':
     pm = PatternMakerView()
     # pm.load_pattern()
     pm.configure_traits()
-#============= EOF =============================================
+# ============= EOF =============================================

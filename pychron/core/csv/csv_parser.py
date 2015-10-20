@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import csv
 
 from traits.api import HasTraits, provides
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.core.i_column_parser import IColumnParser
 
 
@@ -93,10 +93,12 @@ class BaseColumnParser(HasTraits):
                     print 'exep', e
 
 
-class CSVParser(BaseColumnParser):
+class CSVColumnParser(BaseColumnParser):
+    delimiter = ','
+
     def _load(self, p, header_idx):
-        with open(p, 'U') as fp:
-            reader = csv.reader(fp)
+        with open(p, 'U') as rfile:
+            reader = csv.reader(rfile, delimiter=self.delimiter)
             self._lines = list(reader)
             self._header = map(str.strip, self._lines[header_idx])
             self._nrows = len(self._lines)
@@ -114,4 +116,4 @@ class CSVParser(BaseColumnParser):
     def nrows(self):
         return self._nrows
 
-#============= EOF =============================================
+# ============= EOF =============================================

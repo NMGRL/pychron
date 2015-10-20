@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-from traits.api import HasTraits, Property, List, String
-#============= standard library imports ========================
-from numpy import poly1d
+# ============= enthought library imports =======================
+from traits.api import HasTraits, Property, List, String, Bool
+# ============= standard library imports ========================
+from numpy import poly1d, polyval
 from scipy import optimize
 from pychron.core.helpers.formatting import floatfmt
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 class MeterCalibration(HasTraits):
     coeff_string = Property(String(enter_set=True, auto_set=False))
@@ -30,6 +30,14 @@ class MeterCalibration(HasTraits):
 
     output_low = 0
     output_high = 100
+
+    normal_mapping = Bool(False)
+    # this flag determines if the coefficients are defined as X==Response, Y==Input
+    # or X==Input and Y==Response
+    # for example if mapping from watts to percent
+    # normal_mapping
+    # X==Watts
+    # Y==Percent
 
     def __init__(self, *args, **kw):
         if args:
@@ -65,41 +73,46 @@ class MeterCalibration(HasTraits):
         return ','.join(map(str, self.coefficients))
 
     def get_input(self, response):
-        '''
+        """
             return the input required to produce the requested response
-        '''
-        if self.bounds:
-            for c, b in zip(self.coefficients, self.bounds):
-                if b[0] < response <= b[1]:
-                    break
+        """
+
+        if self.normal_mapping:
+            power = polyval(self.coefficients, response)
+
+        else:
+            if self.bounds:
+                for c, b in zip(self.coefficients, self.bounds):
+                    if b[0] < response <= b[1]:
+                        break
+                else:
+                    closest = 0
+                    min_d = 1000
+                    for i, b in enumerate(self.bounds):
+                        d = min(abs(b[0] - response), abs(b[1] - response))
+                        if d < min_d:
+                            closest = i
+                    c = self.coefficients[closest]
             else:
-                closest = 0
-                min_d = 1000
-                for i, b in enumerate(self.bounds):
-                    d = min(abs(b[0] - response), abs(b[1] - response))
-                    if d < min_d:
-                        closest = i
-                c = self.coefficients[closest]
-        else:
-            c = self.coefficients
+                c = self.coefficients
 
-        # say y=ax+b (watts=a*power_percent+b)
-        # calculate x for a given y
-        # solvers solve x for y=0
-        # we want x for y=power, therefore
-        # subtract the requested power from the intercept coeff (b)
-        # find the root of the polynominal
+            # say y=ax+b (watts=a*power_percent+b)
+            # calculate x for a given y
+            # solvers solve x for y=0
+            # we want x for y=power, therefore
+            # subtract the requested power from the intercept coeff (b)
+            # find the root of the polynominal
 
-        if c is not None and len(c):
-            c[-1] -= response
-            power = optimize.brentq(poly1d(c), self.output_low,
-                                               self.output_high)
-            c[-1] += response
-        else:
-            power = response
+            if c is not None and len(c):
+                c[-1] -= response
+                power = optimize.brentq(poly1d(c), self.output_low,
+                                                   self.output_high)
+                c[-1] += response
+            else:
+                power = response
 
         return power
 
     def print_string(self):
         return ','.join(['{}={:0.3e}'.format(*c) for c in zip('abcdefg', self.coefficients)])
-#============= EOF =============================================
+# ============= EOF =============================================

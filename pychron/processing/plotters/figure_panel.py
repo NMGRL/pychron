@@ -1,26 +1,31 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-from numpy import Inf, inf, isinf
+# ============= enthought library imports =======================
+from math import isinf
+from chaco.legend import Legend
+
+from numpy import Inf, inf
 from traits.api import HasTraits, Any, on_trait_change, List, Int, Str
-#============= standard library imports ========================
+
+# ============= standard library imports ========================
 from itertools import groupby
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
+from pychron.core.codetools.inspection import caller
 from pychron.processing.analysis_graph import AnalysisStackedGraph
 
 
@@ -32,10 +37,12 @@ class FigurePanel(HasTraits):
     _index_attr = ''
     equi_stack = False
     graph_klass = AnalysisStackedGraph
-    graph_spacing = Int
+    plot_spacing = Int
     meta = Any
     title = Str
-    use_previous_limits=True
+    use_previous_limits = True
+
+    track_value = True
 
     @on_trait_change('analyses[]')
     def _analyses_items_changed(self):
@@ -50,17 +57,12 @@ class FigurePanel(HasTraits):
         return gs
 
     # def dump_metadata(self):
-    #     return self.graph.dump_metadata()
+    # return self.graph.dump_metadata()
     #
     # def load_metadata(self, md):
     #     self.graph.load_metadata(md)
 
-    def make_graph(self):
-
-        g = self.graph_klass(panel_height=200,
-                             equi_stack=self.equi_stack,
-                             container_dict=dict(padding=0, spacing=self.graph_spacing), )
-
+    def _get_init_xlimits(self):
         po = self.plot_options
         attr = po.index_attr
         center = None
@@ -79,10 +81,35 @@ class FigurePanel(HasTraits):
                     w2 = po.centered_range / 2.0
                     mi, ma = center - w2, center + w2
 
+        return center, mi, ma
+
+    @caller
+    def make_graph(self):
+        print '----------------------- make graph -----------------------'
+        po = self.plot_options
+
+        bgcolor = po.get_formatting_value('bgcolor')
+        g = self.graph_klass(panel_height=200,
+                             equi_stack=self.equi_stack,
+                             container_dict=dict(padding=0,
+                                                 spacing=self.plot_spacing or po.plot_spacing,
+                                                 bgcolor=bgcolor))
+        center, mi, ma = self._get_init_xlimits()
         plots = list(po.get_aux_plots())
         if plots:
+            if self.plot_options.include_legend:
+
+                align = self.plot_options.legend_location
+                a, b = align.split(' ')
+                align = '{}{}'.format(a[0].lower(), b[0].lower())
+                legend = Legend(align=align)
+            else:
+                legend = None
+
+            ymas, ymis = [], []
             for i, fig in enumerate(self.figures):
                 fig.trait_set(xma=ma, xmi=mi,
+                              ymas=ymas, ymis=ymis,
                               center=center,
                               options=po,
                               graph=g,
@@ -93,26 +120,41 @@ class FigurePanel(HasTraits):
 
                 fig.suppress_ylimits_update = True
                 fig.suppress_xlimits_update = True
-                fig.plot(plots)
+                fig.plot(plots, legend)
                 fig.suppress_ylimits_update = False
                 fig.suppress_xlimits_update = False
+                # print fig.xma, fig.xmi
                 ma, mi = max(fig.xma, ma), min(fig.xmi, mi)
+                ymas, ymis = fig.ymas, fig.ymis
+
+            if legend:
+                g.plots[0].overlays.append(legend)
+
+            if not self.track_value:
+                for p in g.plots:
+                    l, h = p.value_range.low, p.value_range.high
+                    p.value_range.low_setting = l
+                    p.value_range.high_setting = h
 
             if self.use_previous_limits:
-                # print plots[0], plots[0].has_xlimits(), plots[0].name
                 if plots[0].has_xlimits():
                     tmi, tma = plots[0].xlimits
                     if tmi != -inf and tma != inf:
                         mi, ma = tmi, tma
                         print 'using previous limits', mi, ma
 
+                for i, p in enumerate(plots):
+                    if p.has_ylimits():
+                        g.set_y_limits(p.ylimits[0], p.ylimits[1], plotid=i)
+
             if mi is None and ma is None:
                 mi, ma = 0, 100
 
             if not (isinf(mi) or isinf(ma)):
-                print 'setting xlimits', mi, ma
+                # print 'setting xlimits', mi, ma
                 g.set_x_limits(mi, ma, pad=fig.xpad or 0)
 
+            self.figures[0].post_make()
             for fig in self.figures:
                 for i in range(len(plots)):
                     fig.update_options_limits(i)
@@ -120,4 +162,4 @@ class FigurePanel(HasTraits):
         self.graph = g
         return g.plotcontainer
 
-        #============= EOF =============================================
+        # ============= EOF =============================================

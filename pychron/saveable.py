@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Bool
-from traitsui.api import Handler
 from traitsui.menu import Action
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.viewable import Viewable, ViewableHandler
 
 class SaveableHandler(ViewableHandler):
@@ -36,10 +35,9 @@ class Saveable(Viewable):
     handler_klass = SaveableHandler
     save_enabled = Bool(False)
 
-SaveButton = Action(name='Save', action='save',
-                                enabled_when='object.save_enabled')
+
+SaveButton = Action(name='Save', action='save', enabled_when='object.save_enabled')
 SaveAsButton = Action(name='Save As', action='save_as')
 
-SaveableButtons = [SaveButton,
-                          SaveAsButton]
-#============= EOF =============================================
+SaveableButtons = [SaveButton, SaveAsButton]
+# ============= EOF =============================================

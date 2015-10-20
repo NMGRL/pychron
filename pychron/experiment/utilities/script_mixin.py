@@ -1,4 +1,4 @@
-# #===============================================================================
+# # ===============================================================================
 # # Copyright 2012 Jake Ross
 # #
 # # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,15 +12,15 @@
 # # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # # See the License for the specific language governing permissions and
 # # limitations under the License.
-# #===============================================================================
+# # ===============================================================================
 #
-# #============= enthought library imports =======================
+# # ============= enthought library imports =======================
 # from traits.api import HasTraits, Any, String, Str, Instance, Bool, \
 #     on_trait_change
 # # from traitsui.api import View, Item, TableEditor
-# #============= standard library imports ========================
+# # ============= standard library imports ========================
 # import os
-# #============= local library imports  ==========================
+# # ============= local library imports  ==========================
 # from pychron.paths import paths
 # from pychron.pychron_constants import NULL_STR, SCRIPT_KEYS, SCRIPT_NAMES
 # from pychron.experiment.script.script import Script
@@ -134,15 +134,15 @@
 #             self.warning('Script defaults file does not exist {}'.format(p))
 #             return
 #
-#         with open(p, 'r') as fp:
-#             defaults = yaml.load(fp)
+#         with open(p, 'r') as rfile:
+#             defaults = yaml.load(rfile)
 #
 #         # convert keys to lowercase
 #         defaults = dict([(k.lower(), v) for k, v in defaults.iteritems()])
 #         return defaults
 #
 #
-# #============= EOF =============================================
+# # ============= EOF =============================================
 # def _load_default_scripts2(self, key):
 #         self.debug('load default scripts for {}'.format(key))
 #         setter = lambda ski, sci:setattr(getattr(self, '{}_script'.format(ski)), 'name', sci)
@@ -153,8 +153,8 @@
 #             self.warning('Script defaults file does not exist {}'.format(p))
 #             return
 #
-#         with open(p, 'r') as fp:
-#             defaults = yaml.load(fp)
+#         with open(p, 'r') as rfile:
+#             defaults = yaml.load(rfile)
 #
 #         # convert keys to lowercase
 #         defaults = dict([(k.lower(), v) for k, v in defaults.iteritems()])

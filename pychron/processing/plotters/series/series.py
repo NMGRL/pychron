@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import time
 
 from chaco.array_data_source import ArrayDataSource
@@ -22,9 +22,9 @@ from chaco.scales.time_scale import CalendarScaleSystem
 from chaco.scales_tick_generator import ScalesTickGenerator
 from traits.api import Array
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import array, Inf
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.experiment.utilities.identifier import ANALYSIS_MAPPING_INTS
 from pychron.processing.plotters.arar_figure import BaseArArFigure
 from pychron.processing.plotters.series.ticks import tick_formatter, StaticTickGenerator, analysis_type_formatter
@@ -55,7 +55,8 @@ class Series(BaseArArFigure):
         graph = self.graph
         plots = (pp for pp in plots if pp.use)
         for i, po in enumerate(plots):
-            p = graph.new_plot(padding=self.padding,
+            p = graph.new_plot(
+                               # padding=self.padding,
                                ytitle=po.name,
                                xtitle='Time')
 
@@ -69,7 +70,7 @@ class Series(BaseArArFigure):
             p.padding_left = 75
             p.value_range.tight_bounds = False
 
-    def plot(self, plots):
+    def plot(self, plots, legend=None):
         """
             plot data on plots
         """
@@ -143,24 +144,26 @@ class Series(BaseArArFigure):
 
             #p.value_scale = po.scale
             end_caps = True
-            if yerr is not None:
+            if po.y_error and yerr is not None:
                 self._add_error_bars(scatter, yerr, 'y', 2, end_caps, visible=True)
 
             if set_ylimits:
                 mi, mx = min(ys - 2 * yerr), max(ys + 2 * yerr)
                 graph.set_y_limits(min_=mi, max_=mx, pad='0.1', plotid=pid)
 
-        except (KeyError, ZeroDivisionError), e:
+        except (KeyError, ZeroDivisionError, AttributeError), e:
             print 'Series', e
 
     def _unpack_attr(self, attr):
-        if attr.endswith('bs'):
-            # f=lambda x: x.baseline.uvalue
-            return (ai.get_baseline(attr).uvalue for ai in self.sorted_analyses)
-        elif attr == 'AnalysisType':
+        # if attr.endswith('bs'):
+        #     # f=lambda x: x.baseline.uvalue
+        #     return (ai.get_baseline(attr).uvalue for ai in self.sorted_analyses)
+        if attr == 'AnalysisType':
             # amap={'unknown':1, 'blank_unknown':2, 'blank_air':3, 'blank_cocktail':4}
             f = lambda x: ANALYSIS_MAPPING_INTS[x] if x in ANALYSIS_MAPPING_INTS else -1
             return (f(ai.analysis_type) for ai in self.sorted_analyses)
+        elif attr == 'PC':
+            return (ai.peak_center for ai in self.sorted_analyses)
         else:
             return super(Series, self)._unpack_attr(attr)
 
@@ -193,20 +196,20 @@ class Series(BaseArArFigure):
             # self._rebuild_ideo(sel)
             # self.
 
-#===============================================================================
+# ===============================================================================
 # plotters
-#===============================================================================
+# ===============================================================================
 
-#===============================================================================
+# ===============================================================================
 # overlays
-#===============================================================================
+# ===============================================================================
 
-#===============================================================================
+# ===============================================================================
 # utils
-#===============================================================================
+# ===============================================================================
 
-#===============================================================================
+# ===============================================================================
 # labels
-#===============================================================================
+# ===============================================================================
 
-#============= EOF =============================================
+# ============= EOF =============================================

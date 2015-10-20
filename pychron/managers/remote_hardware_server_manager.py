@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,30 +12,30 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import List, Instance, on_trait_change
 from traitsui.api import View, Item, Group, HGroup, VGroup, \
     ListEditor, TableEditor, InstanceEditor
 from traitsui.table_column import ObjectColumn
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 import ConfigParser
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.messaging.command_repeater import CommandRepeater
 from pychron.messaging.remote_command_server import RemoteCommandServer
+from pychron.messaging.directory_server import DirectoryServer
 from pychron.managers.manager import Manager, AppHandler
 from pychron.paths import paths
 from pychron.core.helpers.timer import Timer
-from pychron.messaging.directory_server import DirectoryServer
 
 class RemoteHardwareServerManager(Manager):
-    '''
-    '''
+    """
+    """
 #    display = Any
     servers = List(RemoteCommandServer)
     selected = Instance(RemoteCommandServer)
@@ -57,14 +57,14 @@ class RemoteHardwareServerManager(Manager):
             self.repeater = self.selected.repeater
 
     def load(self):
-        '''
-        '''
+        """
+        """
         names, de, dh, dp, dr = self.read_configuration()
         if names:
             for s in names:
-                e = RemoteCommandServer(name=s,
-                               configuration_dir_name='servers',
-                               )
+                # e = RemoteCommandServer(name=s, configuration_dir_name='servers')
+                e = RemoteCommandServer(name=s, config_path = os.path.join(paths.root, 'servers', '{}.cfg'.format(s)))
+
 
                 e.bootstrap()
                 self.servers.append(e)
@@ -106,8 +106,11 @@ class RemoteHardwareServerManager(Manager):
 #        return names
 
         config = ConfigParser.ConfigParser()
+        # print paths.setup_dir
 
-        path = os.path.join(paths.setup_dir, 'rhs.cfg')
+        path = os.path.join(paths.root, 'rhs.cfg')
+        # print os.path.isfile(path), path
+
         config.read(path)
 
         servernames = [s.strip() for s in self.config_get(config, 'General', 'servers').split(',')]
@@ -166,4 +169,4 @@ class RemoteHardwareServerManager(Manager):
 
         return v
 
-#============= EOF ====================================
+# ============= EOF ====================================

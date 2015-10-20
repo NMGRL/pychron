@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from Queue import Empty
 
 from traits.api import Color, Str, Event, Int
@@ -23,8 +23,8 @@ from traitsui.basic_editor_factory import BasicEditorFactory
 from pyface.qt.QtGui import QPlainTextEdit, QTextCursor, QPalette, QColor, QFont
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 
 class _DisplayEditor(Editor):
@@ -64,11 +64,11 @@ class _DisplayEditor(Editor):
         p.setColor(QPalette.Base, self.bgcolor)
         self.control.setPalette(p)
 
-    def _font_size_changed(self):
-        fmt = self.control.currentCharFormat()
-        fmt.setFontPointSize(self.font_size)
-        self.control.setCurrentCharFormat(fmt)
-
+    # def _font_size_changed(self):
+    #     print 'asdfasdf', self.font_size
+        # fmt = self.control.currentCharFormat()
+        # fmt.setFontPointSize(self.font_size)
+        # self.control.setCurrentCharFormat(fmt)
 
     def _refresh_fired(self):
         self.update_editor()
@@ -96,15 +96,15 @@ class _DisplayEditor(Editor):
 
     def update_editor(self, *args, **kw):
         ctrl = self.control
-
         if self.value:
             while 1:
                 try:
-                    v, c, force, is_marker = self.value.get(timeout=0.0001)
+                    v, c, force, is_marker = self.value.get(timeout=0.01)
                 except Empty:
                     return
                 fmt = ctrl.currentCharFormat()
                 fmt.setForeground(QColor(c))
+                fmt.setFontPointSize(self.font_size)
                 ctrl.setCurrentCharFormat(fmt)
 
                 if is_marker:
@@ -126,7 +126,7 @@ class _DisplayEditor(Editor):
 class DisplayEditor(BasicEditorFactory):
     klass = _DisplayEditor
     font_name = Str
-    max_blocks = Int(0)
+    max_blocks = Int(50)
 
     #extended trait names
     bgcolor = Str
@@ -139,4 +139,4 @@ class DisplayEditor(BasicEditorFactory):
 class LoggerEditor(DisplayEditor):
     pass
 
-#============= EOF =============================================
+# ============= EOF =============================================

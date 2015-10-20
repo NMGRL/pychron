@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 '''
 http://www.scipy.org/Cookbook/Finding_Convex_Hull
 '''
-#============= enthought library imports =======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 import numpy as np
 
 def _angle_to_point(point, centre):
@@ -91,4 +91,4 @@ def convex_hull_area(pts):
     s = np.sum([x[ii] * y[ii + 1] - x[ii + 1] * y[ii] for ii in ind_arr])
     return abs(s) * 0.5
 
-#============= EOF =============================================
+# ============= EOF =============================================

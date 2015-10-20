@@ -1,25 +1,25 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.has_traits import HasTraits, on_trait_change
 from traits.trait_types import List, Event, Bool, Button, Str, Any
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from traits.traits import Property
 
 from traitsui.editors import EnumEditor, ButtonEditor
@@ -28,7 +28,7 @@ from traitsui.group import HGroup, VGroup
 from traitsui.item import UItem, spring, Item
 from traitsui.table_column import ObjectColumn as _ObjectColumn
 from traitsui.view import View
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.processing.fits.fit import Fit
 from pychron.core.ui.table_editor import myTableEditor
 from pychron.pychron_constants import FIT_TYPES, FIT_ERROR_TYPES
@@ -113,18 +113,17 @@ class FitSelector(HasTraits):
                 fi.error_type = self.global_error_type
 
     def _get_auto_group(self):
-        return HGroup(icon_button_editor('plot_button', 'refresh',
-                                         tooltip='Replot the isotope evolutions. '
-                                                 'This may take awhile if many analyses are selected'),
-                      icon_button_editor('save_event', 'database_save',
-                                         tooltip='Save fits to database'),
-                      UItem('global_fit', editor=EnumEditor(name='fit_types')),
-                      UItem('global_error_type', editor=EnumEditor(name='error_types')),
-                      spring,
-                      Item('auto_update',
-                           label='Auto Plot',
-                           tooltip='Should the plot refresh after each change ie. "fit" or "show". '
-                                   'It is not advisable to use this option with many analyses'))
+        return VGroup(HGroup(icon_button_editor('plot_button', 'refresh',
+                                                tooltip='Replot the isotope evolutions. '
+                                                        'This may take awhile if many analyses are selected'),
+                             icon_button_editor('save_event', 'database_save',
+                                                tooltip='Save fits to database'),
+                             Item('auto_update',
+                                  label='Auto Plot',
+                                  tooltip='Should the plot refresh after each change ie. "fit" or "show". '
+                                          'It is not advisable to use this option with many analyses')),
+                      HGroup(UItem('global_fit', editor=EnumEditor(name='fit_types')),
+                             UItem('global_error_type', editor=EnumEditor(name='error_types'))))
 
     def traits_view(self):
         v = View(VGroup(
@@ -160,6 +159,7 @@ class FitSelector(HasTraits):
                                selected='selected',
                                selection_mode='rows',
                                sortable=False,
+                               edit_on_first_click=False,
                                clear_selection_on_dclicked=True,
                                on_command_key=self._update_command_key,
                                cell_bg_color='red',
@@ -202,9 +202,9 @@ class FitSelector(HasTraits):
 
 
     # def load_baseline_fits(self, keys):
-    #     fits = self.fits
-    #     if not fits:
-    #         fits = []
+    # fits = self.fits
+    # if not fits:
+    # fits = []
     #
     #     fs = [
     #         self.fit_klass(name='{}bs'.format(ki), fit='average')
@@ -240,4 +240,4 @@ class FitSelector(HasTraits):
         self.command_key = new
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

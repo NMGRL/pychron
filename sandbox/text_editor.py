@@ -34,7 +34,7 @@ class A(HasTraits):
 if __name__ == '__main__':
     a = A()
     p = '/Users/ross/Pychrondata_dev/experiments/Current Experiment.txt'
-    with open(p, 'r') as fp:
-        a.text = fp.read()
+    with open(p, 'r') as rfile:
+        a.text = rfile.read()
     a.configure_traits()
 

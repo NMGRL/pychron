@@ -12,14 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Float
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from threading import Thread, Event
 import time
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 # from pychron.config_loadable import ConfigLoadable
 # from pychron.managers.manager import Manager
 from pychron.config_loadable import ConfigLoadable
@@ -92,7 +92,7 @@ class Monitor(ConfigLoadable):
         self.start_time = time.time()
 
     def check(self):
-        return all([fi() for fi in self._get_checks()])
+        return any([fi() for fi in self._get_checks()])
 
     def _get_checks(self):
         return [getattr(self, h) for h in dir(self)
@@ -121,7 +121,7 @@ class Monitor(ConfigLoadable):
             # sleep before running monitor again
             time.sleep(self.sample_delay)
 
-#============= EOF ====================================
+# ============= EOF ====================================
 #    def _monitor_(self, stop_signal):
 #        '''
 #        '''

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,11 +12,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 from pychron.core.ui import set_qt
 
 set_qt()
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, \
     Instance, Float, Int, Bool, DelegatesTo, Range
 from traitsui.api import View, Item, UItem, VGroup, \
@@ -33,8 +33,8 @@ from pychron.managers.data_managers.h5_data_manager import H5DataManager
 # from pychron.graph.contour_graph import ContourGraph
 # from chaco.plot_containers import HPlotContainer
 from pychron.lasers.tasks.editors.laser_editor import LaserEditor
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 
 class PowerMapControls(HasTraits):
@@ -144,4 +144,4 @@ if __name__ == '__main__':
     p = '/Users/ross/Sandbox/powermap/powermap-2013-07-27008.hdf5'
     e.load(p)
     e.configure_traits()
-#============= EOF =============================================
+# ============= EOF =============================================

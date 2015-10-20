@@ -5,71 +5,108 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from enable.component_editor import ComponentEditor
-from traits.api import Instance
-from traitsui.api import View, Item, TabularEditor, VGroup, spring, HGroup, \
-    EnumEditor, UItem, Label, VSplit
+from traits.api import Instance, Int
+from traitsui.api import View, Item, TabularEditor, VGroup, HGroup, \
+    EnumEditor, UItem, Label, VSplit, TextEditor
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from pyface.tasks.traits_dock_pane import TraitsDockPane
-#============= standard library imports ========================
-#============= local library imports  ==========================
-from pychron.core.ui.custom_label_editor import CustomLabel
-from pychron.envisage.tasks.pane_helpers import icon_button_editor, spacer
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
+from traitsui.tabular_adapter import TabularAdapter
+from pychron.core.ui.combobox_editor import ComboboxEditor
+from pychron.core.ui.qt.tabular_editors import FilterTabularEditor
+from pychron.envisage.icon_button_editor import icon_button_editor
+from pychron.envisage.tasks.pane_helpers import spacer
 from pychron.entry.irradiated_position import IrradiatedPositionAdapter
 from pychron.envisage.browser.adapters import ProjectAdapter, SampleAdapter
+from pychron.pychron_constants import PLUSMINUS_SIGMA
+
+
+class LevelInfoPane(TraitsDockPane):
+    id = 'pychron.entry.level'
+    name = 'Level'
+
+    def traits_view(self):
+        v = View(Item('level_production_name', label='Production', style='readonly'),
+                 Item('irradiation_tray', label='Irradiation Tray', style='readonly'),
+                 VGroup(UItem('level_note', style='custom', editor=TextEditor(read_only=True)),
+                        show_border=True, label='Note'))
+        return v
+
+
+class ChronologyAdapter(TabularAdapter):
+    columns = [('Start', 'start'), ('End', 'end')]
+    start_width = Int(150)
+    end_width = Int(150)
+
+
+class ChronologyPane(TraitsDockPane):
+    id = 'pychron.entry.chronology'
+    name = 'Chronology'
+
+    def traits_view(self):
+        v = View(VGroup(VGroup(Item('estimated_j_value',
+                                    style='readonly',
+                                    label='Est. J')),
+                        VGroup(UItem('chronology_items',
+                                     editor=TabularEditor(editable=False,
+                                                          adapter=ChronologyAdapter())))))
+        return v
 
 
 class IrradiationEditorPane(TraitsDockPane):
     id = 'pychron.labnumber.editor'
     name = 'Editor'
-    sample_tabular_adapter = Instance(SampleAdapter, ())
+    labnumber_tabular_adapter = Instance(SampleAdapter, ())
 
     def traits_view(self):
+        tgrp = HGroup(VGroup(icon_button_editor('add_project_button', 'database_add',
+                                                tooltip='Add project'),
+                             show_border=True,
+                             label='Project'),
+                      VGroup(icon_button_editor('add_material_button', 'database_add',
+                                                tooltip='Add material'),
+                             show_border=True,
+                             label='Material'),
+                      VGroup(icon_button_editor('add_sample_button', 'database_add',
+                                                tooltip='Add sample'),
+                             show_border=True,
+                             label='Sample'),
+                      icon_button_editor('generate_identifiers_button',
+                                         'table_lightning',
+                                         tooltip='Generate Identifiers for this irradiation'),
+                      icon_button_editor('preview_generate_identifiers_button',
+                                         'document-preview',
+                                         tooltip='Preview identifiers generated for this irradiation level'))
+
         project_grp = VGroup(
-            HGroup(spacer(),
-                   Label('Filter'),
-                   UItem('project_filter',
-                         width=75),
-                   icon_button_editor('clear_selection_button',
-                                      'cross',
-                                      tooltip='Clear selected'),
-                   icon_button_editor('edit_project_button', 'database_edit',
-                                      tooltip='Edit selected project in database'),
-                   icon_button_editor('add_project_button', 'database_add',
-                                      tooltip='Add project to database')
-            ),
             UItem('projects',
-                  editor=TabularEditor(editable=False,
-                                       selected='selected_projects',
-                                       adapter=ProjectAdapter(),
-                                       multi_select=False),
-                  width=75))
+                  editor=FilterTabularEditor(editable=False,
+                                             selected='selected_projects',
+                                             adapter=ProjectAdapter(),
+                                             multi_select=True),
+                  width=175),
+            show_border=True,
+            label='Projects')
 
         sample_grp = VGroup(
             HGroup(
-                #Label('Filter'),
                 UItem('sample_filter_parameter',
                       editor=EnumEditor(name='sample_filter_parameters')),
                 UItem('sample_filter',
+                      editor=ComboboxEditor(name='sample_filter_values'),
                       width=75),
-                UItem('sample_filter',
-                      editor=EnumEditor(name='sample_filter_values'),
-                      width=-25),
-                #UItem('filter_non_run_samples',
-                #      tooltip='Omit non-analyzed samples'),
-                icon_button_editor('configure_sample_table',
-                                   'cog',
-                                   tooltip='Configure Sample Table'),
                 icon_button_editor('edit_sample_button', 'database_edit',
                                    tooltip='Edit sample in database'),
                 icon_button_editor('add_sample_button', 'database_add',
@@ -77,17 +114,29 @@ class IrradiationEditorPane(TraitsDockPane):
 
             UItem('samples',
                   editor=TabularEditor(
-                      adapter=self.sample_tabular_adapter,
+                      adapter=self.labnumber_tabular_adapter,
                       editable=False,
-                      selected='selected_sample',
+                      selected='selected_samples',
                       multi_select=False,
                       column_clicked='column_clicked',
-                      stretch_last_section=False
-                  ),
-                  width=75
-            )
-        )
-        v = View(VSplit(project_grp,
+                      stretch_last_section=False),
+                  width=75))
+        jgrp = HGroup(UItem('j'), Label(PLUSMINUS_SIGMA), UItem('j_err'),
+                      icon_button_editor('estimate_j_button', 'cog'),
+                      show_border=True, label='J')
+        ngrp = HGroup(UItem('note'),
+                      UItem('weight'),
+                      show_border=True, label='Note')
+        # wgrp = HGroup(UItem('weight'), show_border=True, label='Weight')
+        sgrp = HGroup(UItem('invert_flag'),
+                      Item('selection_freq', label='Freq'),
+                      show_border=True,
+                      label='Selection')
+        v = View(VSplit(VGroup(tgrp,
+                               HGroup(sgrp, jgrp),
+                               # wgrp,
+                               ngrp,
+                               project_grp),
                         sample_grp))
         return v
 
@@ -108,8 +157,8 @@ class IrradiationCanvasPane(TraitsDockPane):
     id = 'pychron.entry.irradiation_canvas'
 
     def traits_view(self):
-        v = View(UItem('canvas',
-                       editor=ComponentEditor()))
+        v = View(VGroup(HGroup(Item('irradiation_tray', style='readonly')),
+                        UItem('canvas', editor=ComponentEditor())))
         return v
 
 
@@ -142,8 +191,7 @@ class IrradiationPane(TraitsDockPane):
             icon_button_editor('add_level_button', 'database_add',
                                tooltip='Add level'))
 
-        conn = HGroup(spring, CustomLabel('datasource_url', color='maroon'), spring)
-        v = View(VGroup(conn, irrad, level))
+        v = View(VGroup(irrad, level))
         return v
 
-#============= EOF =============================================
+# ============= EOF =============================================

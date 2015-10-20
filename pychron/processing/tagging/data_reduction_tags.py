@@ -12,14 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Str, Button, HasTraits, List, Long
 from traitsui.api import View, UItem
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.processing.tagging.base_tags import BaseTagModel
 
 
@@ -76,5 +76,5 @@ class DataReductionTagModel(BaseTagModel):
         return v
 
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

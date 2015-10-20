@@ -1,32 +1,40 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
+import pickle
+
+from apptools.preferences.preference_binding import bind_preference
 from traits.api import String, Str, Property, Any, Float, Instance, Int, List, \
-    cached_property, on_trait_change, Bool, Button, Event, Enum
-import apptools.sweet_pickle as pickle
-#============= standard library imports ========================
+    cached_property, on_trait_change, Bool, Button, Event, Enum, Dict
+
+
+# ============= standard library imports ========================
 from traits.trait_errors import TraitError
 import yaml
 import os
-#============= local library imports  ==========================
-from pychron.experiment.action_editor import ActionEditor, ActionModel
-from pychron.experiment.automated_run.measurement_fits_selector import MeasurementFitsSelector, \
-    MeasurementFitsSelectorView
+# ============= local library imports  ==========================
+from pychron.core.helpers.iterfuncs import partition
+from pychron.dvc.dvc import DVC
+from pychron.entry.entry_views.experiment_entry import ExperimentIdentifierEntry
+from pychron.experiment.conditional.conditionals_edit_view import edit_conditionals
 from pychron.experiment.datahub import Datahub
+from pychron.experiment.queue.run_block import RunBlock
+from pychron.experiment.utilities.frequency_edit_view import FrequencyModel
+from pychron.persistence_loggable import PersistenceLoggable
 from pychron.experiment.utilities.position_regex import SLICE_REGEX, PSLICE_REGEX, \
     SSLICE_REGEX, TRANSECT_REGEX, POSITION_REGEX, CSLICE_REGEX, XY_REGEX
 from pychron.pychron_constants import NULL_STR, SCRIPT_KEYS, SCRIPT_NAMES, LINE_STR
@@ -37,9 +45,8 @@ from pychron.experiment.automated_run.spec import AutomatedRunSpec
 from pychron.paths import paths
 from pychron.experiment.script.script import Script, ScriptOptions
 from pychron.experiment.queue.increment_heat_template import IncrementalHeatTemplate
-from pychron.loggable import Loggable
 from pychron.experiment.utilities.human_error_checker import HumanErrorChecker
-from pychron.core.helpers.filetools import list_directory, add_extension
+from pychron.core.helpers.filetools import list_directory, add_extension, list_directory2, remove_extension
 from pychron.lasers.pattern.pattern_maker_view import PatternMakerView
 from pychron.core.ui.gui import invoke_in_main_thread
 
@@ -86,8 +93,8 @@ def increment_value(m, increment=1):
 
 
 def increment_position(pos):
-    for regex, sfunc, ifunc in (SLICE_REGEX, SSLICE_REGEX,
-                                PSLICE_REGEX, CSLICE_REGEX, TRANSECT_REGEX):
+    for regex, sfunc, ifunc, _ in (SLICE_REGEX, SSLICE_REGEX,
+                                   PSLICE_REGEX, CSLICE_REGEX, TRANSECT_REGEX):
         if regex.match(pos):
             return ifunc(pos)
     else:
@@ -105,21 +112,22 @@ def increment_position(pos):
 
 
 def generate_positions(pos):
-    for regex, func, ifunc, name in (SLICE_REGEX, SSLICE_REGEX,
-                               PSLICE_REGEX, CSLICE_REGEX, TRANSECT_REGEX):
+    for regex, func, ifunc, _ in (SLICE_REGEX, SSLICE_REGEX,
+                                  PSLICE_REGEX, CSLICE_REGEX, TRANSECT_REGEX):
         if regex.match(pos):
             return func(pos)
     else:
         return [pos]
 
 
-class AutomatedRunFactory(Loggable):
+class AutomatedRunFactory(PersistenceLoggable):
     db = Any
-    datahub=Instance(Datahub)
+    dvc = Instance(DVC)
+    datahub = Instance(Datahub)
     undoer = Any
     edit_event = Event
 
-    #============== scripts =============
+    # ============== scripts =============
     extraction_script = Instance(Script)
     measurement_script = Instance(Script)
     post_measurement_script = Instance(Script)
@@ -129,8 +137,8 @@ class AutomatedRunFactory(Loggable):
     load_defaults_button = Button('Default')
 
     default_fits_button = Button
-    default_fits_enabled = Property(depends_on='measurement_script.name')
-    #===================================
+    default_fits_enabled = Bool
+    # ===================================
 
     human_error_checker = Instance(HumanErrorChecker, ())
     factory_view = Instance(FactoryView)
@@ -145,14 +153,22 @@ class AutomatedRunFactory(Loggable):
     aliquot = EKlass(Int)
     special_labnumber = Str('Special Labnumber')
 
+    db_refresh_needed = Event
+    auto_save_needed = Event
+
     _labnumber = String
     labnumbers = Property(depends_on='project, selected_level')
 
     project = Any
-    projects = Property(depends_on='db')
+    projects = Property(depends_on='db, db_refresh_needed')
+
+    experiment_identifier = Str
+    experiment_identifiers = Property(depends_on='experiment_identifier_dirty, db_refresh_needed')
+    add_experiment_identifier = Event
+    experiment_identifier_dirty = Event
 
     selected_irradiation = Str('Irradiation')
-    irradiations = Property(depends_on='db')
+    irradiations = Property(depends_on='db, db_refresh_needed')
     selected_level = Str('Level')
     levels = Property(depends_on='selected_irradiation, db')
 
@@ -170,17 +186,25 @@ class AutomatedRunFactory(Loggable):
     weight = Float
     comment = Str
     auto_fill_comment = Bool
+    comment_template = Str
+    comment_templates = List
+    edit_comment_template = Button
 
     position = Property(depends_on='_position')
     _position = String
 
+    # ===========================================================================
+    # measurement
+    # ===========================================================================
+    use_cdd_warming = Bool
     collection_time_zero_offset = Float(0)
-    #===========================================================================
+
+    # ===========================================================================
     # extract
-    #===========================================================================
+    # ===========================================================================
     # extract_value = Property(
-    #     EKlass(Float),
-    #     depends_on='_extract_value')
+    # EKlass(Float),
+    # depends_on='_extract_value')
     # _extract_value = Float
     extract_value = EKlass(Float)
     extract_units = Str(NULL_STR)
@@ -201,60 +225,66 @@ class AutomatedRunFactory(Loggable):
 
     edit_pattern = Event
     edit_pattern_label = Property(depends_on='pattern')
-    #===========================================================================
+    # ===========================================================================
     # templates
-    #===========================================================================
+    # ===========================================================================
     template = String('Step Heat Template')
     templates = List
 
     edit_template = Event
     edit_template_label = Property(depends_on='template')
 
-    #===========================================================================
-    # truncation
-    #===========================================================================
+    # ===========================================================================
+    # conditionals
+    # ===========================================================================
     trunc_attr = String('age')
     trunc_attrs = List(['age',
-                        'age_err',
                         'kca',
-                        'kca_err',
                         'kcl',
-                        'kcl_err',
+                        'age.std',
+                        'kca.std',
+                        'kcl.std',
                         'rad40_percent',
                         'Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36'])
     trunc_comp = Enum('>', '<', '>=', '<=', '=')
     trunc_crit = Float(enter_set=True, auto_set=False)
     trunc_start = Int(100, enter_set=True, auto_set=False)
+    use_simple_truncation = Bool
 
-    truncation_str = Property(depends_on='trunc_+')
-    truncation_path = String
-    truncations = List
-    clear_truncation = Button
-    edit_truncation_button = Button
-    new_truncation_button = Button
+    conditionals_str = Property(depends_on='trunc_+')
+    conditionals_path = String
+    conditionals = List
+    clear_conditionals = Button
+    edit_conditionals_button = Button
+    new_conditionals_button = Button
 
-    #===========================================================================
+    # ===========================================================================
+    # blocks
+    # ===========================================================================
+    run_block = Str('RunBlock')
+    run_blocks = List
+    edit_run_blocks = Button
+
+    # ===========================================================================
     # frequency
-    #===========================================================================
-    frequency = Int
-    freq_before = Bool(True)
-    freq_after = Bool(False)
-    #===========================================================================
+    # ===========================================================================
+    # frequency = Int
+    # freq_before = Bool(True)
+    # freq_after = Bool(False)
+    # freq_template = Str
+    frequency_model = Instance(FrequencyModel, ())
+    edit_frequency_button = Button
+    # ===========================================================================
     # readonly
-    #===========================================================================
+    # ===========================================================================
     sample = Str
     irradiation = Str
     irrad_level = Str
     irrad_hole = Str
 
     info_label = Property(depends_on='labnumber')
-    #===========================================================================
-    # private
-    #===========================================================================
-    _selected_runs = List
-    _spec_klass = AutomatedRunSpec
-
     extractable = Property(depends_on='labnumber')
+
     update_info_needed = Event
     refresh_table_needed = Event
     changed = Event
@@ -266,16 +296,61 @@ class AutomatedRunFactory(Loggable):
 
     mass_spectrometer = String
     extract_device = Str
+    username = Str
 
-    _default_attrs = ('collection_time_zero_offset',)
+    pattributes = ('collection_time_zero_offset',
+                   'selected_irradiation', 'selected_level',
+                   'extract_value', 'extract_units', 'cleanup',
+                   'duration', 'beam_diameter', 'ramp_duration', 'overlap',
+                   'pattern', 'labnumber', 'position',
+                   'weight', 'comment', 'template',
+                   'use_simple_truncation', 'conditionals_path')
+
+    suppress_meta = False
+
+    use_name_prefix = Bool
+    name_prefix = Str
+    # ===========================================================================
+    # private
+    # ===========================================================================
+    _current_loaded_default_scripts_key = None
+    _selected_runs = List
+    _spec_klass = AutomatedRunSpec
+    _set_defaults = True
     _no_clear_labnumber = False
+    _meta_cache = Dict
 
-    def activate(self):
-        self.load_truncations()
-        self.load_defaults()
+    def __init__(self, *args, **kw):
+        bind_preference(self, 'use_name_prefix', 'pychron.pyscript.use_name_prefix')
+        bind_preference(self, 'name_prefix', 'pychron.pyscript.name_prefix')
+        super(AutomatedRunFactory, self).__init__(*args, **kw)
+
+    def setup_files(self):
+        self.load_templates()
+        self.load_run_blocks()
+        # self.remote_patterns = self._get_patterns()
+        self.load_patterns()
+        self.load_conditionals()
+        # self.load_comment_templates()
+
+    def activate(self, load_persistence):
+
+        # self.load_run_blocks()
+        self.conditionals_path = NULL_STR
+        if load_persistence:
+            self.load()
+
+        self.setup_files()
+
+        # db = self.db
+        # with db.session_ctx():
+        # ms = db.get_mass_spectrometer(self.mass_spectrometer)
+        # ed = db.get_extraction_device(self.extract_device)
+        #     self._mass_spectrometers = ms
+        #     self._extract_devices = ed
 
     def deactivate(self):
-        self.dump_defaults()
+        self.dump(verbose=True)
 
     def set_end_after(self, v):
         self._update_run_values('end_after', v)
@@ -299,66 +374,50 @@ class AutomatedRunFactory(Loggable):
 
         return True
 
+    # def load_comment_templates(self):
+    # self.comment_templates = self._get_comment_templates()
+
+    def load_run_blocks(self):
+        self.run_blocks = self._get_run_blocks()
+
     def load_templates(self):
         self.templates = self._get_templates()
 
     def load_patterns(self):
         self.patterns = self._get_patterns()
 
-    def load_truncations(self):
-        self.truncations = self._get_truncations()
-
-    def load_defaults(self):
-        p = os.path.join(paths.hidden_dir, 'run_factory_defaults')
-        if os.path.isfile(p):
-            d = None
-            with open(p, 'r') as fp:
-                try:
-                    d = pickle.load(fp)
-                except BaseException, e:
-                    self.debug('could not load defaults Exception: {}'.format(e))
-            if d:
-                for attr in self._default_attrs:
-                    try:
-                        setattr(self, attr, d.get(attr))
-                    except (KeyError, TraitError), e:
-                        self.debug('load automated run factory defaults err={}'.format(e))
-
-    def dump_defaults(self):
-        d = {}
-        for attr in self._default_attrs:
-            d[attr] = getattr(self, attr)
-
-        p = os.path.join(paths.hidden_dir, 'run_factory_defaults')
-        with open(p, 'w') as fp:
-            try:
-                pickle.dump(d, fp)
-            except BaseException, e:
-                self.debug('failed dumping defaults Exception: {}'.format(e))
+    def load_conditionals(self):
+        self.conditionals = self._get_conditionals()
 
     def use_frequency(self):
-        return self.labnumber in ANALYSIS_MAPPING and self.frequency
+        return self.labnumber in ANALYSIS_MAPPING and self.frequency_model.frequency
 
     def load_from_run(self, run):
         self._clone_run(run)
 
     def set_selected_runs(self, runs):
         self.debug('len selected runs {}'.format(len(runs)))
-        if runs:
-            run = runs[0]
-            self._clone_run(run, set_labnumber=self.set_labnumber,
-                            set_position=self.set_position)
 
         self._selected_runs = runs
-        self.suppress_update = False
+
+        if runs:
+            run = runs[0]
+            self._set_defaults = False
+            self._clone_run(run, set_labnumber=self.set_labnumber,
+                            set_position=self.set_position)
+            self._set_defaults = True
+
+        # self.suppress_update = False
 
         if not runs:
             self.edit_mode = False
-            self.edit_enabled = False
+            # self.edit_enabled = False
         elif len(runs) == 1:
-            self.edit_enabled = True
+            pass
+            # self.edit_enabled = True
+            # self._aliquot_changed()
         else:
-            self.edit_enabled = False
+            # self.edit_enabled = False
             self.edit_mode = True
 
         if run and self.edit_mode:
@@ -367,15 +426,16 @@ class AutomatedRunFactory(Loggable):
     def set_mass_spectrometer(self, new):
         new = new.lower()
         self.mass_spectrometer = new
-        for s in SCRIPT_NAMES:
-            sc = getattr(self, s)
-            sc.mass_spectrometer = new
+        # print SCRIPT_NAMES
+        for s in self._iter_scripts():
+            # print s.kind, s, new
+            s.mass_spectrometer = new
+            s.refresh_lists = True
 
     def set_extract_device(self, new):
         new = new.lower()
         self.extract_device = new
-        for s in SCRIPT_KEYS:
-            s = getattr(self, '{}_script'.format(s))
+        for s in self._iter_scripts():
             s.extract_device = new
 
     def new_runs(self, exp_queue, positions=None, auto_increment_position=False,
@@ -384,33 +444,54 @@ class AutomatedRunFactory(Loggable):
             returns a list of runs even if its only one run
             also returns self.frequency if using special labnumber else None
         """
+        self._auto_save()
 
-        arvs, freq = self._new_runs(exp_queue, positions=positions)
+        if self.run_block not in ('RunBlock', LINE_STR):
+            arvs, freq = self._new_run_block()
+        else:
+            arvs, freq = self._new_runs(exp_queue, positions=positions)
 
         if auto_increment_id:
             v = increment_value(self.labnumber)
-            invoke_in_main_thread(self.trait_set, _labnumber=v)
+            # invoke_in_main_thread(self.trait_set, _labnumber=v)
+            invoke_in_main_thread(self.trait_set, labnumber=v)
 
         if auto_increment_position:
             pos = self.position
             if pos:
                 self.position = increment_position(pos)
 
+        self._auto_save()
         return arvs, freq
 
-    #===============================================================================
+    def refresh(self):
+        self.changed = True
+        self.refresh_table_needed = True
+        self._auto_save()
+
+    # ===============================================================================
     # private
-    #===============================================================================
+    # ===============================================================================
+
+    def _auto_save(self):
+        self.auto_save_needed = True
+
     # def _new_runs(self, positions, extract_group_cnt=0):
+    def _new_run_block(self):
+        p = os.path.join(paths.run_block_dir, add_extension(self.run_block, '.txt'))
+        block = RunBlock(extract_device=self.extract_device,
+                         mass_spectrometer=self.mass_spectrometer)
+        return block.make_runs(p), self.frequency_model.frequency
+
     def _new_runs(self, exp_queue, positions):
         _ln, special = self._make_short_labnumber()
-        freq = self.frequency if special else None
-
+        freq = self.frequency_model.frequency if special else None
+        self.debug('Frequency={}'.format(freq))
         if not special:
             if not positions:
                 positions = self.position
 
-            template = self._use_template() and not freq
+            template = self._use_template()  # and not freq
             arvs = self._new_runs_by_position(exp_queue, positions, template)
         else:
             arvs = [self._new_run()]
@@ -420,7 +501,7 @@ class AutomatedRunFactory(Loggable):
     def _new_runs_by_position(self, exp_queue, pos, template=False):
         arvs = []
         positions = generate_positions(pos)
-
+        # print positions, 'fff'
         for i, p in enumerate(positions):
             # if set_pos:
             p = str(p)
@@ -443,8 +524,8 @@ class AutomatedRunFactory(Loggable):
             self.irrad_level = str(level.name)
 
             self._no_clear_labnumber = True
-            self.selected_level = self.irrad_level
             self.selected_irradiation = irrad.name
+            self.selected_level = self.irrad_level
             self._no_clear_labnumber = False
 
             # self.trait_setq(selected_level=self.irrad_level, selected_irradiation=irrad.name)
@@ -459,7 +540,7 @@ class AutomatedRunFactory(Loggable):
         if excludes is None:
             excludes = []
 
-        if arv.analysis_type in ('blank_unknown', 'pause'):
+        if arv.analysis_type in ('blank_unknown', 'pause', 'blank_extractionline'):
             excludes.extend(('extract_value', 'extract_units', 'pattern', 'beam_diameter'))
             if arv.analysis_type == 'pause':
                 excludes.extend(('cleanup', 'position'))
@@ -473,10 +554,13 @@ class AutomatedRunFactory(Loggable):
     def _get_run_attr(self):
         return ['position',
                 'extract_value', 'extract_units', 'cleanup', 'duration',
+                'use_cdd_warming',
+                'conditionals_str',
                 'collection_time_zero_offset',
                 'pattern', 'beam_diameter',
                 'weight', 'comment',
                 'sample', 'irradiation',
+                'ramp_duration',
                 'skip', 'mass_spectrometer', 'extract_device']
 
     def _set_run_values(self, arv, excludes=None):
@@ -490,13 +574,18 @@ class AutomatedRunFactory(Loggable):
         for attr in self._get_run_attr():
             if attr in excludes:
                 continue
+
+            sattr = attr
+            if attr == 'conditionals_str':
+                sattr = 'conditionals'
+
             v = getattr(self, attr)
             if attr == 'pattern':
                 if not self._use_pattern():
                     v = ''
 
-            setattr(arv, attr, v)
-            setattr(arv, '_prev_{}'.format(attr), v)
+            setattr(arv, sattr, v)
+            setattr(arv, '_prev_{}'.format(sattr), v)
 
         if self.aliquot:
             self.debug('setting user defined aliquot')
@@ -525,6 +614,7 @@ class AutomatedRunFactory(Loggable):
                      'pattern', 'beam_diameter',
                      'position',
                      'collection_time_zero_offset',
+                     'use_cdd_warming',
                      'weight', 'comment'):
 
             if attr in excludes:
@@ -536,18 +626,23 @@ class AutomatedRunFactory(Loggable):
             except TraitError, e:
                 self.debug(e)
 
-        if run.user_defined_aliquot:
-            self.aliquot = int(run.aliquot)
+                # if run.user_defined_aliquot:
+                # self.aliquot = int(run.aliquot)
 
         for si in SCRIPT_KEYS:
-            name = '{}_script'.format(si)
-            s = getattr(run, name)
-            if name in excludes or si in excludes:
+            skey = '{}_script'.format(si)
+            if skey in excludes or si in excludes:
                 continue
 
-            setattr(self, name, Script(name=s,
-                                       label=si,
-                                       mass_spectrometer=self.mass_spectrometer))
+            ms = getattr(self, skey)
+            sname = getattr(run, skey)
+            # print sname
+            ms.name = sname
+            # ss = self._script_factory(label=si, name=s)
+            # setattr(self, name, ss)
+            # setattr(self, name, Script(name=s,
+            # label=si,
+            #                            mass_spectrometer=self.mass_spectrometer))
         self.script_options.name = run.script_options
 
     def _new_pattern(self):
@@ -562,10 +657,10 @@ class AutomatedRunFactory(Loggable):
     def _new_template(self):
         template = IncrementalHeatTemplate()
         if self._use_template():
-            t = self.template
-            if not t.endswith('.txt'):
-                t = '{}.txt'.format(t)
-            t = os.path.join(paths.incremental_heat_template_dir, t)
+            # t = self.template
+            # if not t.endswith('.txt'):
+            # t = '{}.txt'.format(t)
+            t = os.path.join(paths.incremental_heat_template_dir, add_extension(self.template))
             template.load(t)
 
         return template
@@ -576,18 +671,37 @@ class AutomatedRunFactory(Loggable):
         self.debug('rendering template {}'.format(template.name))
 
         al = self.datahub.get_greatest_aliquot(self.labnumber)
-        c = exp_queue.count_labnumber(self.labnumber)
+        if al is not None:
+            c = exp_queue.count_labnumber(self.labnumber)
+            for st in template.steps:
+                if st.value or st.duration or st.cleanup:
+                    arv = self._new_run(position=position,
+                                        excludes=['position'])
 
-        for st in template.steps:
-            if st.value or st.duration or st.cleanup:
-                arv = self._new_run(position=position,
-                                    excludes=['position'])
+                    arv.trait_set(user_defined_aliquot=al + 1 + offset + c,
+                                  **st.make_dict(self.duration, self.cleanup))
+                    arvs.append(arv)
 
-                arv.trait_set(user_defined_aliquot=al + 1 + offset + c,
-                              **st.make_dict(self.duration, self.cleanup))
-                arvs.append(arv)
+            self._increment_iht_count(template.name)
+        else:
+            self.debug('missing aliquot_pychron in mass spec secondary db')
+            self.warning_dialog('Missing aliquot_pychron in mass spec secondary db. seek help')
 
         return arvs
+
+    def _increment_iht_count(self, temp):
+        p = os.path.join(paths.hidden_dir, 'iht_counts.{}'.format(self.username))
+
+        ucounts = {}
+        if os.path.isfile(p):
+            with open(p, 'r') as rfile:
+                ucounts = pickle.load(rfile)
+
+        c = ucounts.get(temp, 0) + 1
+        ucounts[temp] = c
+        self.debug('incrementing users step_heat template count for {}. count= {}'.format(temp, c))
+        with open(p, 'w') as wfile:
+            pickle.dump(ucounts, wfile)
 
     def _make_short_labnumber(self, labnumber=None):
         if labnumber is None:
@@ -606,16 +720,17 @@ class AutomatedRunFactory(Loggable):
             mod = script.get_parameter('modifier')
             if mod is not None:
                 if isinstance(mod, int):
-                    mod = '{:02n}'.format(mod)
+                    mod = '{:02d}'.format(mod)
 
                 self.labnumber = self.labnumber.replace('##', str(mod))
 
     def _clear_labnumber(self):
+        self.debug('clear labnumber')
         if not self._no_clear_labnumber:
             self.labnumber = ''
-            self._labnumber = NULL_STR
 
-    def _template_closed(self):
+    def _template_closed(self, obj, name, new):
+        self.template = obj.name
         invoke_in_main_thread(self.load_templates)
 
     def _pattern_closed(self):
@@ -635,6 +750,8 @@ class AutomatedRunFactory(Loggable):
         if self.edit_mode and \
                 self._selected_runs and \
                 not self.suppress_update:
+
+            self._auto_save()
 
             self.edit_event = dict(attribute=attr, value=v,
                                    previous_state=[(ri, getattr(ri, attr)) for ri in self._selected_runs])
@@ -659,27 +776,41 @@ class AutomatedRunFactory(Loggable):
 
             # db = self.db
             # with db.session_ctx():
-            #     dbln = db.get_labnumber(self.labnumber)
-            #     if dbln:
-            #         dbpos = dbln.irradiation_position
+            # dbln = db.get_labnumber(self.labnumber)
+            # if dbln:
+            # dbpos = dbln.irradiation_position
             #         dbhist = db.add_flux_history(dbpos)
             #         dbflux = db.add_flux(float(v), float(e))
             #         dbflux.history = dbhist
             #         dbln.selected_flux_history = dbhist
             #         self.information_dialog(u'Flux for {} {} \u00b1{} saved to database'.format(self.labnumber, v, e))
 
-    #===============================================================================
+    # ===============================================================================
     #
-    #===============================================================================
-    def _load_extraction_defaults(self, ln):
+    # ===============================================================================
+    def _load_defaults(self, ln, attrs=None, overwrite=True):
+        if attrs is None:
+            attrs = ('extract_value', 'extract_units',
+                     'cleanup', 'duration', 'beam_diameter')
+
+        self.debug('loading defaults for {}. ed={} attrs={}'.format(ln, self.extract_device, attrs))
         defaults = self._load_default_file()
         if defaults:
             if ln in defaults:
                 grp = defaults[ln]
-                for attr in ('extract_value', 'extract_units'):
-                    v = grp.get(attr)
-                    if v is not None:
-                        setattr(self, attr, v)
+                ed = self.extract_device.replace(' ', '')
+                if ed in grp:
+                    grp = grp[ed]
+
+                for attr in attrs:
+                    if overwrite or not getattr(self, attr):
+                        v = grp.get(attr)
+                        if v is not None:
+                            setattr(self, attr, v)
+            else:
+                self.unique_warning('L# {} not in defaults.yaml'.format(ln))
+        else:
+            self.unique_warning('No defaults.yaml')
 
     def _load_scripts(self, old, new):
         """
@@ -703,7 +834,6 @@ class AutomatedRunFactory(Loggable):
 
     def _load_default_scripts(self, labnumber):
 
-        self.debug('load default scripts for {}'.format(labnumber))
         # if labnumber is int use key='U'
         try:
             _ = int(labnumber)
@@ -712,6 +842,11 @@ class AutomatedRunFactory(Loggable):
             pass
 
         labnumber = str(labnumber).lower()
+        if self._current_loaded_default_scripts_key == labnumber:
+            return
+
+        self.debug('load default scripts for {}'.format(labnumber))
+        self._current_loaded_default_scripts_key = labnumber
 
         defaults = self._load_default_file()
         if defaults:
@@ -721,7 +856,7 @@ class AutomatedRunFactory(Loggable):
                 if labnumber == 'dg':
                     keys = ['extraction']
 
-                #set options
+                # set options
                 self.script_options.name = default_scripts.get('options', '')
 
                 for skey in keys:
@@ -729,7 +864,7 @@ class AutomatedRunFactory(Loggable):
 
                     new_script_name = self._remove_file_extension(new_script_name)
                     if labnumber in ('u', 'bu') and \
-                        not self.extract_device in (NULL_STR, 'ExternalPipette'):
+                            not self.extract_device in (NULL_STR, 'ExternalPipette'):
 
                         # the default value trumps pychron's
                         if self.extract_device:
@@ -754,18 +889,92 @@ class AutomatedRunFactory(Loggable):
             self.warning('Script defaults file does not exist {}'.format(p))
             return
 
-        with open(p, 'r') as fp:
-            defaults = yaml.load(fp)
+        with open(p, 'r') as rfile:
+            defaults = yaml.load(rfile)
 
         # convert keys to lowercase
         defaults = dict([(k.lower(), v) for k, v in defaults.iteritems()])
         return defaults
 
-    #===============================================================================
+    def _load_labnumber_meta(self, labnumber):
+        if '-##-' in labnumber:
+            return True
+
+        if self.suppress_meta:
+            return True
+
+        # self._aliquot = 0
+        if labnumber in self._meta_cache:
+            self.debug('using cached meta values for {}'.format(labnumber))
+            d = self._meta_cache[labnumber]
+            for attr in ('sample', 'irradiation', 'comment', 'experiment_identifier'):
+                setattr(self, attr, d[attr])
+            return True
+        else:
+            # get a default experiment_identifier
+
+            d = dict(sample='')
+            db = self.db
+            with db.session_ctx():
+                # convert labnumber (a, bg, or 10034 etc)
+                self.debug('load meta')
+                ln = db.get_labnumber(labnumber)
+                if ln:
+                    # set sample and irrad info
+                    try:
+                        self.sample = ln.sample.name
+                        d['sample'] = self.sample
+
+                        project = ln.sample.project
+                        print 'fff', project.name
+                        if project.name == 'J-Curve':
+                            irrad = ln.irradiation_position.level.irradiation.name
+                            self.experiment_identifier = 'Irradiation-{}'.format(irrad)
+                        elif project.name != 'REFERENCES':
+                            pi_name = project.principal_investigators[0].name
+                            pi_name = pi_name.replace(' ', '_').replace('/', '_')
+
+                            project_name = project.name
+                            project_name = project_name.replace(' ', '_').replace('/', '_')
+
+                            self.experiment_identifier = '{}_{}'.format(pi_name, project_name)
+
+                    except AttributeError:
+                        pass
+
+                    d['experiment_identifier'] = self.experiment_identifier
+                    self.irradiation = self._make_irrad_level(ln)
+                    d['irradiation'] = self.irradiation
+
+                    if self.auto_fill_comment:
+                        self._set_auto_comment()
+                    d['comment'] = self.comment
+                    self._meta_cache[labnumber] = d
+                    return True
+                else:
+                    self.warning_dialog(
+                        '{} does not exist. Add using "Labnumber Entry" or "Utilities>>Import"'.format(labnumber))
+
+    def _load_labnumber_defaults(self, old, labnumber, special):
+        self.debug('load labnumber defaults {} {}'.format(labnumber, special))
+        if special:
+            ln = labnumber.split('-')[0]
+            if ln == 'dg':
+                # self._load_extraction_defaults(ln)
+                self._load_defaults(ln, attrs=('extract_value', 'extract_units'))
+            else:
+                self._load_defaults(ln, attrs=('cleanup', 'duration'), overwrite=False)
+        else:
+            self._load_defaults(labnumber if special else 'u')
+
+        self._load_scripts(old, labnumber)
+        self._load_extraction_info()
+
+    # ===============================================================================
     # property get/set
-    #===============================================================================
-    def _get_default_fits_enabled(self):
-        return self.measurement_script.name not in ('None', '')
+    # ===============================================================================
+    # def _get_default_fits_enabled(self):
+    # return self.measurement_script.name not in ('None', '')
 
     def _get_edit_mode_label(self):
         return 'Editing' if self.edit_mode else ''
@@ -778,7 +987,19 @@ class AutomatedRunFactory(Loggable):
         return not ln in NON_EXTRACTABLE
 
     @cached_property
+    def _get_experiment_identifiers(self):
+        dvc = self.dvc
+        ids = []
+        if dvc and dvc.connect():
+            ids = dvc.get_experiment_identifiers()
+        return ids
+
+    @cached_property
     def _get_irradiations(self):
+        db = self.db
+        if db is None or not db.connected:
+            return []
+
         irradiations = []
         if self.db:
             irradiations = [pi.name for pi in self.db.get_irradiations()]
@@ -788,6 +1009,10 @@ class AutomatedRunFactory(Loggable):
     @cached_property
     def _get_levels(self):
         levels = []
+        db = self.db
+        if db is None or not db.connected:
+            return []
+
         if self.db:
             with self.db.session_ctx():
                 if not self.selected_irradiation in ('IRRADIATION', LINE_STR):
@@ -803,6 +1028,10 @@ class AutomatedRunFactory(Loggable):
     def _get_projects(self):
 
         if self.db:
+            db = self.db
+            if not db.connected:
+                return dict()
+
             keys = [(pi, pi.name) for pi in self.db.get_projects()]
             keys = [(NULL_STR, NULL_STR)] + keys
             return dict(keys)
@@ -814,15 +1043,24 @@ class AutomatedRunFactory(Loggable):
         lns = []
         db = self.db
         if db:
+            # db=self.db
+            if not db.connected:
+                return []
+
             with db.session_ctx():
                 if self.selected_level and not self.selected_level in ('Level', LINE_STR):
                     level = db.get_irradiation_level(self.selected_irradiation,
                                                      self.selected_level)
                     if level:
-                        lns = [str(pi.labnumber.identifier)
-                               for pi in level.positions if pi.labnumber]
+                        # lns = [str(pi.identifier).strip()
+                        #        for pi in level.positions if pi.identifier]
 
-        return sorted(lns)
+                        lns = [str(pi.labnumber.identifier).strip()
+                               for pi in level.positions if pi.labnumber.identifier]
+                        lns = [li for li in lns if li]
+                        lns = sorted(lns)
+
+        return lns
 
     def _get_position(self):
         return self._position
@@ -855,62 +1093,86 @@ class AutomatedRunFactory(Loggable):
         if ok:
             return pos
 
-    # def _validate_extract_value(self, d):
-    #     return self._validate_float(d)
-    #
-    # def _validate_float(self, d):
-    #     try:
-    #         return float(d)
-    #     except ValueError:
-    #         pass
-    #
-    # def _get_extract_value(self):
-    #     return self._extract_value
-    #
-    # def _set_extract_value(self, t):
-    #     if t is not None:
-    #         self._extract_value = t
-    #         if not t:
-    #             self.extract_units = NULL_STR
-    #         elif self.extract_units == NULL_STR:
-    #             self.extract_units = self._default_extract_units
-    #     else:
-    #         self.extract_units = NULL_STR
-
-    def _extract_value_changed(self, new):
-        if new:
-            if self.extract_units == NULL_STR:
-                self.extract_units = self._default_extract_units
-
     def _get_edit_pattern_label(self):
         return 'Edit' if self._use_pattern() else 'New'
 
     def _get_edit_template_label(self):
         return 'Edit' if self._use_template() else 'New'
 
+    def _get_run_blocks(self):
+        p = paths.run_block_dir
+        blocks = list_directory2(p, '.txt', remove_extension=True)
+        return ['RunBlock', LINE_STR] + blocks
+
+    def _get_comment_templates(self):
+        p = paths.comment_templates
+        templates = list_directory(p)
+        return templates
+
     def _get_patterns(self):
-        p = paths.pattern_dir
-        extension = '.lp'
-        patterns = list_directory(p, extension)
-        return ['Pattern', 'None', LINE_STR, 'Remote Patterns'] + self.remote_patterns + \
-               [LINE_STR, 'Local Patterns'] + patterns
+        return ['Pattern', LINE_STR] + self.remote_patterns
+        # p = paths.pattern_dir
+        # extension = '.lp'
+        # patterns = list_directory(p, extension)
+        # return ['Pattern', 'None', LINE_STR, 'Remote Patterns'] + self.remote_patterns + \
+        #        [LINE_STR, 'Local Patterns'] + patterns
 
     def _get_templates(self):
         p = paths.incremental_heat_template_dir
         extension = '.txt'
         temps = list_directory(p, extension)
+
+        # filter temps
+        # sort by user_counts
+        # sort top ten alphabetically
+        # place separator between top ten and the rest
+
+        top_ten, rest = self._filter_templates(temps)
+        if top_ten:
+            top_ten.append(LINE_STR)
+            top_ten.extend(rest)
+            temps = top_ten
+        else:
+            temps = rest
+
         if self.template in temps:
             self.template = temps[temps.index(self.template)]
         else:
             self.template = 'Step Heat Template'
 
-        return ['Step Heat Template', 'None', ''] + temps
+        return ['Step Heat Template', LINE_STR] + temps
 
-    def _get_truncations(self):
-        p = paths.truncation_dir
+    def _filter_templates(self, temps):
+        """
+        filter templates based on user counts
+        :return:
+        """
+        p = os.path.join(paths.hidden_dir, 'iht_counts.{}'.format(self.username))
+        if os.path.isfile(p):
+            with open(p, 'r') as rfile:
+                ucounts = pickle.load(rfile)
+
+            cs = [(ti, ucounts.get(ti, 0)) for ti in temps]
+            cs = sorted(cs, key=lambda x: x[1], reverse=True)
+            top_ten, rest = cs[:10], cs[10:]
+            top_ten, rs = partition(top_ten, lambda x: x[1] > 0)
+
+            rest.extend(rs)
+            top_ten = [ti[0] for ti in top_ten]
+            rest = [ri[0] for ri in rest]
+
+        else:
+            rest = temps
+            top_ten = None
+        return top_ten, rest
+
+    def _get_conditionals(self):
+        p = paths.conditionals_dir
         extension = '.yaml'
         temps = list_directory(p, extension, remove_extension=True)
-        return ['', ] + temps
+        self.debug('loading conditionals from {}'.format(p))
+
+        return [NULL_STR] + temps
 
     def _get_beam_diameter(self):
         bd = ''
@@ -925,15 +1187,18 @@ class AutomatedRunFactory(Loggable):
         except (ValueError, TypeError):
             pass
 
-    def _get_truncation_str(self):
-
-        if self.trunc_attr is not None and \
+    def _get_conditionals_str(self):
+        r = ''
+        if self.conditionals_path != NULL_STR:
+            r = os.path.basename(self.conditionals_path)
+        elif self.use_simple_truncation and self.trunc_attr is not None and \
                         self.trunc_comp is not None and \
                         self.trunc_crit is not None:
-            return '{}{}{}, {}'.format(self.trunc_attr, self.trunc_comp,
-                                       self.trunc_crit, self.trunc_start)
-        else:
-            return ''
+            r = '{}{}{}, {}'.format(self.trunc_attr, self.trunc_comp,
+                                    self.trunc_crit, self.trunc_start)
+        return r
+        # elif self.truncation_path:
+        #     return os.path.basename(self.truncation_path)
 
     @cached_property
     def _get_flux(self):
@@ -945,13 +1210,20 @@ class AutomatedRunFactory(Loggable):
 
     def _get_flux_from_db(self, attr='j'):
         j = 0
-        if self.labnumber:
-            with self.db.session_ctx():
-                dbln = self.db.get_labnumber(self.labnumber)
-                if dbln:
-                    if dbln.selected_flux_history:
-                        f = dbln.selected_flux_history.flux
-                        j = getattr(f, attr)
+
+        identifier = self.labnumber
+        if not (self.suppress_meta or '-##-' in identifier):
+            if identifier:
+                with self.db.session_ctx():
+                    self.debug('load flux')
+                    # dbpos = self.db.get_identifier(identifier)
+                    # if dbpos:
+                    #     j = getattr(dbpos, attr)
+                    dbln = self.db.get_labnumber(self.labnumber)
+                    if dbln:
+                        if dbln.selected_flux_history:
+                            f = dbln.selected_flux_history.flux
+                            j = getattr(f, attr)
         return j
 
     def _set_flux(self, a):
@@ -969,92 +1241,163 @@ class AutomatedRunFactory(Loggable):
         self.set_end_after(v)
         self._end_after = v
 
-    #===============================================================================
+    def _set_auto_comment(self, temp=None):
+        if not temp:
+            from pychron.experiment.utilities.comment_template import CommentTemplater
+
+            temp = CommentTemplater()
+
+        c = temp.render(self)
+        self.debug('Comment template rendered = {}'.format(c))
+        self.comment = c
+
+    def _set_conditionals(self, t):
+        for s in self._selected_runs:
+            s.conditionals = t
+
+        self.changed = True
+        self.refresh_table_needed = True
+
+    def _update_script_lists(self):
+        self.debug('update script lists')
+        for si in SCRIPT_NAMES:
+            si = getattr(self, si)
+            si.refresh_lists = True
+
+    def _iter_scripts(self):
+        return (getattr(self, s) for s in SCRIPT_NAMES)
+
+    # ===============================================================================
     # handlers
-    #===============================================================================
+    # ===============================================================================
+    def _extract_value_changed(self, new):
+        if new:
+            if self.extract_units == NULL_STR:
+                self.extract_units = self._default_extract_units
+
+    def _add_experiment_identifier_fired(self):
+        a = ExperimentIdentifierEntry(dvc=self.dvc)
+        a.available = self.dvc.get_experiment_identifiers()
+        if a.do():
+            self.experiment_identifier_dirty = True
+            self.experiment_identifier = a.name
+
+    @on_trait_change('use_name_prefix, name_prefix')
+    def _handle_prefix(self, name, new):
+        for si in self._iter_scripts():
+            setattr(si, name, new)
+
+    def _edit_run_blocks(self):
+        from pychron.experiment.queue.run_block import RunBlockEditView
+
+        rbev = RunBlockEditView()
+        rbev.edit_traits()
+
+    def _edit_frequency_button_fired(self):
+        from pychron.experiment.utilities.frequency_edit_view import FrequencyEditView
+
+        fev = FrequencyEditView(model=self.frequency_model)
+        fev.edit_traits(kind='modal')
+
+    def _edit_comment_template_fired(self):
+        from pychron.experiment.utilities.comment_template import CommentTemplater
+        from pychron.experiment.utilities.template_view import CommentTemplateView
+
+        ct = CommentTemplater()
+
+        ctv = CommentTemplateView(model=ct)
+        info = ctv.edit_traits()
+        if info.result:
+            self._set_auto_comment(ct)
+
+    def _use_simple_truncation_changed(self, new):
+        if new:
+            self.conditionals_path = NULL_STR
+
+    def _conditionals_path_changed(self, new):
+        if not new == NULL_STR:
+            self.use_simple_con = False
+
     @on_trait_change('[measurement_script, post_measurement_script, '
                      'post_equilibration_script, extraction_script]:edit_event')
     def _handle_edit_script(self, new):
+        self._auto_save()
+
         app = self.application
-        task = app.open_task('pychron.pyscript')
+        task = app.open_task('pychron.pyscript.task')
         path, kind = new
         task.kind = kind
         task.open(path=path)
+        task.set_on_save_as_handler(self._update_script_lists)
+        task.set_on_close_handler(self._update_script_lists)
 
     def _load_defaults_button_fired(self):
         if self.labnumber:
             self._load_default_scripts(self.labnumber)
 
     def _default_fits_button_fired(self):
+        from pychron.experiment.automated_run.measurement_fits_selector import MeasurementFitsSelector, \
+            MeasurementFitsSelectorView
+        from pychron.pyscripts.tasks.pyscript_editor import PyScriptEdit
+        from pychron.pyscripts.context_editors.measurement_context_editor import MeasurementContextEditor
+
         m = MeasurementFitsSelector()
-        m.open(self.measurement_script.script_path())
+        sp = self.measurement_script.script_path()
+        m.open(sp)
         f = MeasurementFitsSelectorView(model=m)
-        f.edit_traits()
-
-    def _new_truncation_button_fired(self):
-
-        p = os.path.join(paths.truncation_dir,
-                         add_extension(self.truncation_path, '.yaml'))
-
-        e = ActionEditor()
-        if os.path.isfile(p):
-            e.load(p)
-            e.model.path = ''
-        else:
-            e.model = ActionModel()
-
-        info = e.edit_traits(kind='livemodal')
+        info = f.edit_traits(kind='livemodal')
         if info.result:
-            self.load_truncations()
-            p = e.model.path
-            d = os.path.splitext(os.path.basename(p))[0]
+            # update the default_fits entry in the docstr
+            ed = PyScriptEdit()
+            ed.context_editor = MeasurementContextEditor()
+            ed.open_script(sp)
+            ed.context_editor.default_fits = str(m.name)
+            ed.update_docstr()
 
-            self.truncation_path = d
+    def _new_conditionals_button_fired(self):
+        name = edit_conditionals(self.conditionals_path,
+                                 app=self.application, root=paths.conditionals_dir,
+                                 save_as=True,
+                                 title='Edit Run Conditionals',
+                                 kinds=('actions', 'cancelations', 'terminations', 'truncations'))
+        if name:
+            self.load_conditionals()
+            self.conditionals_path = os.path.splitext(name)[0]
 
-    def _edit_truncation_button_fired(self):
-        p = os.path.join(paths.truncation_dir,
-                         add_extension(self.truncation_path, '.yaml'))
+    def _edit_conditionals_button_fired(self):
+        edit_conditionals(self.conditionals_path,
+                          app=self.application, root=paths.conditionals_dir,
+                          title='Edit Run Conditionals',
+                          kinds=('actions', 'cancelations', 'terminations', 'truncations'))
+        self.load_conditionals()
 
-        if os.path.isfile(p):
-            e = ActionEditor()
-            e.load(p)
-            e.edit_traits(kind='livemodal')
-
-    @on_trait_change('trunc_+, truncation_path')
-    def _handle_truncation(self, obj, name, old, new):
+    @on_trait_change('trunc_+, conditionals_path')
+    def _handle_conditionals(self, obj, name, old, new):
         if self.edit_mode and \
                 self._selected_runs and \
                 not self.suppress_update:
+            # if name == 'truncation_path':
+            #     t = new
+            # t = add_extension(new, '.yaml') if new else None
+            # else:
+            self._auto_save()
+            t = self.conditionals_str
+            self._set_conditionals(t)
 
-            if name == 'truncation_path':
-                t = new
-                # t = add_extension(new, '.yaml') if new else None
-            else:
-                t = self.truncation_str
-
-            self._set_truncation(t)
-
-    def _set_truncation(self, t):
-        for s in self._selected_runs:
-            s.truncate_condition = t
-
-        self.changed = True
-        self.refresh_table_needed = True
-
-    def refresh(self):
-        self.changed = True
-        self.refresh_table_needed = True
-
-    @on_trait_change('''cleanup, duration, extract_value,ramp_duration,collection_time_zero_offset,
+    @on_trait_change('''cleanup, duration, extract_value,ramp_duration,
+collection_time_zero_offset,
+use_cdd_warming,
 extract_units,
 pattern,
 position,
-weight, comment, skip, overlap''')
+weight, comment, skip, overlap, experiment_identifier''')
     def _edit_handler(self, name, new):
+        # self._auto_save()
+
         if name == 'pattern':
             if not self._use_pattern():
                 new = ''
-                #print name, new, self._use_pattern()
+                # print name, new, self._use_pattern()
         self._update_run_values(name, new)
 
     @on_trait_change('''measurement_script:name, 
@@ -1062,19 +1405,23 @@ extraction_script:name,
 post_measurement_script:name,
 post_equilibration_script:name''')
     def _edit_script_handler(self, obj, name, new):
+        self.debug('name={}, new={}, suppress={}'.format(obj.label, new, self.suppress_update))
+        if obj.label == 'Measurement':
+            self.default_fits_enabled = bool(new and new not in (NULL_STR,))
+
         if self.edit_mode and not self.suppress_update:
+            self._auto_save()
             if obj.label == 'Extraction':
                 self._load_extraction_info(obj)
-
             if self._selected_runs:
                 for si in self._selected_runs:
-                    name = '{}_script'.format(obj.label)
+                    name = '{}_script'.format(obj.label.lower().replace(' ', '_'))
                     setattr(si, name, new)
                 self.refresh()
 
-
     @on_trait_change('script_options:name')
     def _edit_script_options_handler(self, new):
+        self._auto_save()
         if self.edit_mode and not self.suppress_update:
             if self._selected_runs:
                 for si in self._selected_runs:
@@ -1085,13 +1432,22 @@ post_equilibration_script:name''')
     def _skip_changed(self):
         self.update_info_needed = True
 
-    def __labnumber_changed(self):
-        if self._labnumber != NULL_STR:
-            self.labnumber = self._labnumber
+    def _labnumber_changed(self, old, new):
+        self.debug('labnumber changed old:{}, new:{}'.format(old, new))
+        if new:
+            special = False
+            try:
+                _ = int(new)
+            except ValueError:
+                special = True
 
-            #do go into edit mode if a run is selected
-            if not self._selected_runs:
-                self.edit_mode = True
+            if self._load_labnumber_meta(new):
+                if self._set_defaults:
+                    self._load_labnumber_defaults(old, new, special)
+                    # if not special:
+                    #     self.special_labnumber = 'Special Labnumber'
+        else:
+            self.sample = ''
 
     def _project_changed(self):
         self._clear_labnumber()
@@ -1103,170 +1459,117 @@ post_equilibration_script:name''')
         self._clear_labnumber()
 
     def _special_labnumber_changed(self):
-        if not self.special_labnumber in ('Special Labnumber', LINE_STR):
+        if self.special_labnumber not in ('Special Labnumber', LINE_STR, ''):
             ln = convert_special_name(self.special_labnumber)
             self.debug('special ln changed {}, {}'.format(self.special_labnumber, ln))
             if ln:
                 if ln in ('dg', 'pa'):
                     pass
                 else:
-                    db = self.db
-                    if not db:
-                        return
-                    with db.session_ctx():
-                        ms = db.get_mass_spectrometer(self.mass_spectrometer)
-                        ed = db.get_extraction_device(self.extract_device)
-                        if ln in SPECIAL_KEYS and not ln.startswith('bu'):
-                            ln = make_standard_identifier(ln, '##', ms.name[0].capitalize())
-                        else:
-                            msname = ms.name[0].capitalize()
-                            edname = ''
-                            if ed is not None:
-                                edname = ''.join(map(lambda x: x[0].capitalize(), ed.name.split(' ')))
-                            ln = make_special_identifier(ln, edname, msname)
+                    # ms,ed = self._mass_spectrometers, self._extract_devices
+                    msname = self.mass_spectrometer[0].capitalize()
+                    # edname = self.extract_device[0].capitalize()
+
+                    if ln in SPECIAL_KEYS and not ln.startswith('bu'):
+                        ln = make_standard_identifier(ln, '##', msname)
+                    else:
+                        # msname = ms.name[0].capitalize()
+                        edname = ''
+                        ed = self.extract_device
+                        if ed not in ('Extract Device', LINE_STR):
+                            edname = ''.join(map(lambda x: x[0].capitalize(), ed.split(' ')))
+                        ln = make_special_identifier(ln, edname, msname)
 
                 self.labnumber = ln
-                self._load_extraction_info()
 
-                self._labnumber = NULL_STR
             self._frequency_enabled = True
 
             if not self._selected_runs:
                 self.edit_mode = True
         else:
+            self.debug('special labnumber changed else')
+            self.labnumber = ''
             self._frequency_enabled = False
-
-    def _labnumber_changed(self, old, labnumber):
-        self.debug('old={}, new={}. {}'.format(old, labnumber, not labnumber or labnumber == NULL_STR))
-        if not labnumber or labnumber == NULL_STR:
-            return
-
-        db = self.db
-        if not db:
-            return
-        # self.update_labnumber = labnumber
-
-        special = False
-        try:
-            _ = int(labnumber)
-        except ValueError:
-            special = True
-
-        # if labnumber has a place holder load default script and return
-        if '##' in labnumber:
-            self._load_scripts(old, labnumber)
-            return
-
-        self.irradiation = ''
-        self.sample = ''
-
-        self._aliquot = 0
-        if labnumber:
-            with db.session_ctx():
-                # convert labnumber (a, bg, or 10034 etc)
-                ln = db.get_labnumber(labnumber)
-                if ln:
-                    # set sample and irrad info
-                    try:
-                        self.sample = ln.sample.name
-                    except AttributeError:
-                        pass
-
-                    try:
-                        a = int(ln.analyses[-1].aliquot + 1)
-                    except IndexError, e:
-                        a = 1
-
-                    self._aliquot = a
-
-                    self.irradiation = self._make_irrad_level(ln)
-
-                    if self.auto_fill_comment:
-                        self.set_auto_comment()
-
-                    self._load_scripts(old, labnumber)
-
-                elif special:
-                    ln = labnumber[:2]
-                    if ln == 'dg':
-                        self._load_extraction_defaults(ln)
-
-                    if not (ln in ('pa', 'dg')):
-                        '''
-                            don't add pause or degas to database
-                        '''
-                        if self.confirmation_dialog(
-                                'Lab Identifer {} does not exist. Would you like to add it?'.format(labnumber)):
-                            db.add_labnumber(labnumber)
-                            self._aliquot = 1
-                            self._load_scripts(old, labnumber)
-                        else:
-                            self.labnumber = ''
-                    else:
-                        self._load_scripts(old, labnumber)
-                else:
-                    self.warning_dialog(
-                        '{} does not exist. Add using "Labnumber Entry" or "Utilities>>Import"'.format(labnumber))
-
-    def set_auto_comment(self):
-        self.comment = '{}:{}'.format(self.irrad_level,
-                                      self.irrad_hole)
 
     def _auto_fill_comment_changed(self):
         if self.auto_fill_comment:
-            self.set_auto_comment()
+            self._set_auto_comment()
         else:
             self.comment = ''
 
     def _edit_template_fired(self):
         temp = self._new_template()
+        temp.names = list_directory(paths.incremental_heat_template_dir, extension='.txt')
         temp.on_trait_change(self._template_closed, 'close_event')
-
-        self.open_view(temp)
+        self.application.open_view(temp)
+        # self.open_view(temp)
 
     def _edit_pattern_fired(self):
         pat = self._new_pattern()
         pat.on_trait_change(self._pattern_closed, 'close_event')
-        self.open_view(pat)
+        self.application.open_view(pat)
+        # self.open_view(pat)
 
     def _edit_mode_button_fired(self):
         self.edit_mode = not self.edit_mode
 
-    def _clear_truncation_fired(self):
+    def _clear_conditionals_fired(self):
         if self.edit_mode and \
                 self._selected_runs and \
                 not self.suppress_update:
-            self._set_truncation('')
+            self._set_conditionals('')
 
     def _aliquot_changed(self):
-        if self.edit_mode:
-            for si in self._selected_runs:
-                a = None
-                if si.aliquot != self.aliquot:
-                    a = int(self.aliquot)
+        # print 'aliquot chhanged {} {}'.format(self.aliquot, self.suppress_update)
+        if self.suppress_update:
+            return
 
+        if self.edit_mode:
+            a = int(self.aliquot)
+            for si in self._selected_runs:
+                # a = 0
+                # if si.aliquot != self.aliquot:
                 si.user_defined_aliquot = a
 
-            self.update_info_needed = True
+            # self.update_info_needed = True
             self.refresh_table_needed = True
             self.changed = True
 
     def _save_flux_button_fired(self):
         self._save_flux()
 
-    @on_trait_change('mass_spectrometer, can_edit')
-    def _update_value(self, name, new):
-        for si in SCRIPT_NAMES:
-            script = getattr(self, si)
-            setattr(script, name, new)
+    def _edit_mode_changed(self):
+        self.suppress_update = True
+        self.aliquot = 0
+        self.suppress_update = False
 
-    #===============================================================================
+    # @on_trait_change('mass_spectrometer, can_edit')
+    # def _update_value(self, name, new):
+    #     for si in SCRIPT_NAMES:
+    #         script = getattr(self, si)
+    #         setattr(script, name, new)
+
+    # ===============================================================================
     # defaults
-    #================================================================================
-    def _script_factory(self, label, name, kind='ExtractionLine'):
-        return Script(label=label,
-                      mass_spectrometer=self.mass_spectrometer,
-                      kind=kind)
+    # ================================================================================
+    def _script_factory(self, label, name=NULL_STR, kind='ExtractionLine'):
+        s = Script(label=label,
+                   use_name_prefix=self.use_name_prefix,
+                   name_prefix=self.name_prefix,
+                   mass_spectrometer=self.mass_spectrometer,
+                   name=name,
+                   kind=kind)
+        return s
+        # if self.use_name_prefix:
+        #     if self.name_prefix:
+        #         prefix = self.name_prefix
+        #     else:
+        #         prefix = self.mass_spectrometer
+
+        # return Script(label=label,
+        #               name_prefix = prefix,
+        #               # mass_spectrometer=self.mass_spectrometer,
+        #               kind=kind)
 
     def _extraction_script_default(self):
         return self._script_factory('Extraction', 'extraction')
@@ -1280,53 +1583,125 @@ post_equilibration_script:name''')
     def _post_equilibration_script_default(self):
         return self._script_factory('Post Equilibration', 'post_equilibration')
 
-    def _clean_script_name(self, name):
-        name = self._remove_mass_spectrometer_name(name)
-        return self._remove_file_extension(name)
-
-    def _remove_file_extension(self, name, ext='.py'):
+    def _remove_file_extension(self, name):
         if not name:
             return name
 
         if name is NULL_STR:
             return NULL_STR
 
-        if name.endswith('.py'):
-            name = name[:-3]
-
-        return name
-
-    def _remove_mass_spectrometer_name(self, name):
-        if self.mass_spectrometer:
-            name = name.replace('{}_'.format(self.mass_spectrometer), '')
+        name = remove_extension(name)
         return name
 
     def _factory_view_default(self):
         return self.factory_view_klass(model=self)
 
     def _datahub_default(self):
-        dh=Datahub()
+        dh = Datahub()
         dh.bind_preferences()
         dh.secondary_connect()
         return dh
 
-#============= EOF =============================================
+    @property
+    def run_block_enabled(self):
+        return self.run_block not in ('RunBlock', LINE_STR)
+
+    @property
+    def persistence_path(self):
+        return os.path.join(paths.hidden_dir, 'run_factory')
+
+        # ============= EOF =============================================
+        # def _labnumber_changed(self, old, labnumber):
+        # def _load_labnumber_defaults(self, old, labnumber):
+        #     # self.debug('old={}, new={}. {}'.format(old, labnumber, not labnumber or labnumber == NULL_STR))
+        #     self.debug('load labnumber defaults L#={}'.format(labnumber))
+        #     if not labnumber or labnumber == NULL_STR:
+        #         return
+        #
+        #     db = self.db
+        #     if not db:
+        #         return
+        #     # self.update_labnumber = labnumber
+        #
+        #     special = False
+        #     try:
+        #         _ = int(labnumber)
+        #     except ValueError:
+        #         special = True
+        #
+        #     # if labnumber has a place holder load default script and return
+        #     if '##' in labnumber:
+        #         self._load_scripts(old, labnumber)
+        #         return
+        #
+        #     self.irradiation = ''
+        #     self.sample = ''
+        #
+        #     self._aliquot = 0
+        #     if labnumber:
+        #         with db.session_ctx():
+        #             # convert labnumber (a, bg, or 10034 etc)
+        #             ln = db.get_labnumber(labnumber)
+        #             if ln:
+        #                 # set sample and irrad info
+        #                 try:
+        #                     self.sample = ln.sample.name
+        #                 except AttributeError:
+        #                     pass
+        #
+        #                 try:
+        #                     a = int(ln.analyses[-1].aliquot + 1)
+        #                 except IndexError, e:
+        #                     a = 1
+        #
+        #                 self._aliquot = a
+        #
+        #                 self.irradiation = self._make_irrad_level(ln)
+        #
+        #                 if self.auto_fill_comment:
+        #                     self._set_auto_comment()
+        #
+        #                 self._load_scripts(old, labnumber)
+        #                 self._load_defaults(labnumber if special else 'u')
+        #             elif special:
+        #                 ln = labnumber[:2]
+        #                 if ln == 'dg':
+        #                     # self._load_extraction_defaults(ln)
+        #                     self._load_defaults(ln, attrs=('extract_value', 'extract_units'))
+        #
+        #                 if not (ln in ('pa', 'dg')):
+        #                     '''
+        #                         don't add pause or degas to database
+        #                     '''
+        #                     if self.confirmation_dialog(
+        #                             'Lab Identifer {} does not exist. Would you like to add it?'.format(labnumber)):
+        #                         db.add_labnumber(labnumber)
+        #                         self._aliquot = 1
+        #                         self._load_scripts(old, labnumber)
+        #                     else:
+        #                         self.labnumber = ''
+        #                 else:
+        #                     self._load_scripts(old, labnumber)
+        #             else:
+        #                 self.warning_dialog(
+        #                     '{} does not exist. Add using "Labnumber Entry" or "Utilities>>Import"'.format(labnumber))
+
 #
-#def _generate_positions(pos):
-#        s = None
-#        e = None
-#        #(SLICE_REGEX, SSLICE_REGEX, PSLICE_REGEX,
-#        #          TRANSECT_REGEX, POSITION_REGEX)
+# def _generate_positions(pos):
+# s = None
+# e = None
+# #(SLICE_REGEX, SSLICE_REGEX, PSLICE_REGEX,
+# #          TRANSECT_REGEX, POSITION_REGEX)
 #
-#        if SLICE_REGEX.match(pos):
-#            s, e = map(int, pos.split('-'))
-#        elif SSLICE_REGEX.match(pos):
-#            s, e, inc = map(int, pos.split(':'))
-#        elif PSLICE_REGEX.match(pos):
-#            s, e = map(int, pos.split(':'))[:2]
-#        elif CSLICE_REGEX.match(pos):
-#            args = pos.split(';')
-#            positions = []
+# if SLICE_REGEX.match(pos):
+# s, e = map(int, pos.split('-'))
+# elif SSLICE_REGEX.match(pos):
+# s, e, inc = map(int, pos.split(':'))
+# elif PSLICE_REGEX.match(pos):
+# s, e = map(int, pos.split(':'))[:2]
+# elif CSLICE_REGEX.match(pos):
+# args = pos.split(';')
+# positions = []
 #            for ai in args:
 #                if '-' in ai:
 #                    a, b = map(int, ai.split('-'))
@@ -1359,5 +1734,3 @@ post_equilibration_script:name''')
 #        #        set_pos = False
 #        #        positions = [0]
 #        return positions, set_pos
-
-

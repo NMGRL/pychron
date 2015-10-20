@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pyface.tasks.action.schema import SToolBar
 from traits.api import Property, Bool, Event, on_trait_change
 # from traitsui.api import View, Item, TextEditor
 from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.envisage.tasks.editor_task import EditorTask
 from pychron.lasers.tasks.editors.pid_tuning_editor import PIDTuningEditor
 from pychron.lasers.tasks.editors.power_map_editor import PowerMapEditor
@@ -111,7 +111,7 @@ class LaserCalibrationTask(BaseLaserTask):
         n = len([ed for ed in self.editor_area.editors
                  if isinstance(ed, PowerMapEditor)])
 
-        editor = PowerMapEditor(name='Power Map {:03n}'.format(n + 1))
+        editor = PowerMapEditor(name='Power Map {:03d}'.format(n + 1))
         if self.active_editor:
             editor.editor = self.control_pane.editor
 
@@ -121,7 +121,7 @@ class LaserCalibrationTask(BaseLaserTask):
         n = len([ed for ed in self.editor_area.editors
                  if isinstance(ed, PowerCalibrationEditor)])
 
-        editor = PowerCalibrationEditor(name='Power Calibration {:03n}'.format(n + 1))
+        editor = PowerCalibrationEditor(name='Power Calibration {:03d}'.format(n + 1))
         self._open_editor(editor)
 
     def new_pyrometer_calibration(self):
@@ -131,9 +131,9 @@ class LaserCalibrationTask(BaseLaserTask):
     def new_pid_tuner(self):
         editor=PIDTuningEditor(name='PID Tuning')
         self._open_editor(editor)
-    #===============================================================================
+    # ===============================================================================
     # handlers
-    #===============================================================================
+    # ===============================================================================
     def execute_active_editor(self, block=False):
         if self.active_editor.do_execute(self.manager):
             self.executing = True
@@ -177,9 +177,9 @@ class LaserCalibrationTask(BaseLaserTask):
             self.active_editor.was_executed = True
 
 
-#===============================================================================
+# ===============================================================================
 # action handlers
-#===============================================================================
+# ===============================================================================
 
 
 
@@ -196,4 +196,4 @@ class LaserCalibrationTask(BaseLaserTask):
 #
 #     def create_dock_panes(self):
 #         return []
-#============= EOF =============================================
+# ============= EOF =============================================

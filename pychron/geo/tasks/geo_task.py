@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,26 +12,26 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Button, List, Any, Event
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 from pyproj import Proj, transform
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.ui.preference_binding import bind_preference
 from pychron.envisage.tasks.base_task import BaseManagerTask
-from pychron.envisage.browser.browser_mixin import BrowserMixin
+from pychron.envisage.browser.base_browser_model import BaseBrowserModel
 from pychron.geo.primitives import AgePoint
 from pychron.geo.tasks.actions import ExportShapefileAction
 from pychron.paths import paths
 
 
-class GeoTask(BaseManagerTask, BrowserMixin):
+class GeoTask(BaseManagerTask, BaseBrowserModel):
     tool_bars = [SToolBar(ExportShapefileAction())]
 
     append_button = Button
@@ -117,4 +117,4 @@ class GeoTask(BaseManagerTask, BrowserMixin):
     def _default_layout_default(self):
         return TaskLayout(left=PaneItem('pychron.geo.browser'))
 
-#============= EOF =============================================
+# ============= EOF =============================================

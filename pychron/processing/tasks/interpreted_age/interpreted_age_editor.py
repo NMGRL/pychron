@@ -12,24 +12,25 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
 from traits.api import Any, List, Str, Button, Instance, on_trait_change, Int, Event
 from traitsui.api import View, EnumEditor, HGroup, spring, \
     UItem, VGroup, TabularEditor, InstanceEditor
 from traitsui.tabular_adapter import TabularAdapter
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.core.helpers.filetools import view_file, unique_path
 from pychron.core.helpers.iterfuncs import partition
-from pychron.database.adapters.isotope_adapter import InterpretedAge
+from pychron.database.interpreted_age import InterpretedAge
 from pychron.database.records.isotope_record import IsotopeRecordView
+from pychron.envisage.browser.adapters import AnalysisAdapter
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.core.pdf.options import PDFTableOptions
 from pychron.processing.analyses.analysis_group import StepHeatAnalysisGroup
 from pychron.processing.tables.fusion.pdf_writer import FusionPDFTableWriter
@@ -37,7 +38,7 @@ from pychron.processing.tables.fusion.xls_writer import FusionTableXLSWriter
 from pychron.processing.tables.step_heat.pdf_writer import StepHeatPDFTableWriter
 from pychron.processing.tables.step_heat.xls_writer import StepHeatTableXLSWriter
 from pychron.processing.tables.summary_table_pdf_writer import SummaryPDFTableWriter
-from pychron.processing.tasks.browser.panes import AnalysisAdapter
+# from pychron.processing.tasks.browser.panes import AnalysisAdapter
 from pychron.core.ui.custom_label_editor import CustomLabel
 
 
@@ -420,7 +421,7 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
                         interpreted_grp))
         return v
 
-        #============= EOF =============================================
+        # ============= EOF =============================================
         # def _save_recipe_file(self, p):
         #     head, ext=os.path.splitext(p)
         #     p='{}.{}'.format(head, 'yaml')
@@ -434,8 +435,8 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
         #         yaml.dump(d, fp)
         #
         # def _open_recipe_file(self, p):
-        #     with open(p, 'r') as fp:
-        #         d=yaml.load(fp)
+        #     with open(p, 'r') as rfile:
+        #         d=yaml.load(rfile)
         #
         #     db=self.processor.db
         #     with db.session_ctx():

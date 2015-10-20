@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from PySide import QtCore, QtGui
 from traits.api import Bool, Int, Color, Dict
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.text_editor import SimpleEditor
 
@@ -78,7 +78,7 @@ class _KeywordEditor(SimpleEditor):
 
     def update_cursor_position(self):
         user_object = self.context_object
-        print user_object
+        print 'uasdf', user_object
 
 
 class KeywordEditor(BasicEditorFactory):
@@ -89,7 +89,7 @@ class KeywordEditor(BasicEditorFactory):
     mapping = Dict
     evaluate = None
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,15 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import unittest
+
 from pychron.loading.load_task import LoadingTask
 from test.database import isotope_manager_factory
 from pychron.loading.loading_manager import LoadingManager
-#============= standard library imports ========================
-#============= local library imports  ==========================
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class LoadingTest(unittest.TestCase):
     def setUp(self):
@@ -39,4 +41,4 @@ class LoadingTest(unittest.TestCase):
         self.t.canvas = c
         self.t.save_loading()
 
-#============= EOF =============================================
+# ============= EOF =============================================

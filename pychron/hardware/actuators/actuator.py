@@ -12,17 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 # from traits.api import HasTraits, on_trait_change, Str, Int, Float, Button
 # from traitsui.api import View, Item, Group, HGroup, VGroup
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 # from agilent_gp_actuator import AgilentGPActuator
 # from pychron.hardware.arduino.arduino_gp_actuator import ArduinoGPActuator
 # from argus_gp_actuator import ArgusGPActuator
@@ -34,7 +34,7 @@ from pychron.hardware.core.abstract_device import AbstractDevice
 
 PACKAGES = dict(AgilentGPActuator='pychron.hardware.agilent.agilent_gp_actuator',
                 ArduinoGPActuator='pychron.hardware.arduino.arduino_gp_actuator',
-                ArgusGPActuator='pychron.hardware.actuators.argus_gp_actuator',
+                QtegraGPActuator='pychron.hardware.actuators.qtegra_gp_actuator',
                 PychronGPActuator='pychron.hardware.actuators.pychron_gp_actuator')
 
 
@@ -56,8 +56,8 @@ class Actuator(AbstractDevice):
 
         klass = name = self.config_get(config, 'General', 'type')
 
-        if 'Argus' in klass:
-            klass = 'ArgusGPActuator'
+        if 'qtegra' in klass.lower():
+            klass = 'QtegraGPActuator'
 
         self._type = klass
         if klass is not None:
@@ -107,4 +107,4 @@ class Actuator(AbstractDevice):
                 time.sleep(0.005)
             return r
 
-#============= EOF ====================================
+# ============= EOF ====================================

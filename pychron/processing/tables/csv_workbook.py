@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Any, Str, List, Callable, Either
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import csv
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 
 class CSVCell(HasTraits):
@@ -90,10 +90,10 @@ class CSVWorkbook(HasTraits):
         return sh
 
     def save(self, p, **kw):
-        with open(p, 'w') as fp:
-            writer = csv.writer(fp)
+        with open(p, 'w') as wfile:
+            writer = csv.writer(wfile)
 
             for sh in self.sheets:
                 sh.render(writer)
 
-#============= EOF =============================================
+# ============= EOF =============================================

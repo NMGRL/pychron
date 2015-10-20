@@ -5,30 +5,28 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
+from pyface.action.menu_manager import MenuManager
 from traits.trait_types import Int, Str
 from traits.traits import Property
-
-#============= standard library imports ========================
-#============= local library imports  ==========================
-
-
-
-#============= EOF =============================================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
+from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
+from pychron.core.configurable_tabular_adapter import ConfigurableMixin
 from pychron.core.helpers.formatting import format_percent_error
 from uncertainties import nominal_value, std_dev
-from pychron.core.helpers.formatting import floatfmt, calc_percent_error
-from pychron.envisage.browser.adapters import ConfigurableAdapterMixin
+from pychron.core.helpers.formatting import floatfmt
+
 
 SIGMA_1 = u'\u00b11\u03c3'
 TABLE_FONT = 'arial 11'
@@ -99,6 +97,7 @@ class ComputedValueTabularAdapter(BaseTabularAdapter):
     name_width = Int(80)
     value_width = Int(120)
     units_width = Int(40)
+    error_width = Int(60)
     error_text = Property
     percent_error_text = Property
     value_text = Property
@@ -125,7 +124,8 @@ class ComputedValueTabularAdapter(BaseTabularAdapter):
         return format_percent_error(v, e)
 
 
-class IntermediateTabularAdapter(BaseTabularAdapter, ConfigurableAdapterMixin):
+
+class IntermediateTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
     all_columns = [('Iso.', 'name'),
                    ('I', 'intercept'),
                    (SIGMA_1, 'intercept_error'),
@@ -228,20 +228,20 @@ class IntermediateTabularAdapter(BaseTabularAdapter, ConfigurableAdapterMixin):
         v = self.item.get_baseline_corrected_value()
         return format_percent_error(v.nominal_value, v.std_dev)
 
-    #============================================================
+    # ============================================================
     def _get_bs_bk_corrected_text(self):
-        v = self.item.get_corrected_value()
+        v = self.item.get_non_detector_corrected_value()
         return floatfmt(nominal_value(v), n=7)
 
     def _get_bs_bk_corrected_error_text(self):
-        v = self.item.get_corrected_value()
+        v = self.item.get_non_detector_corrected_value()
         return floatfmt(std_dev(v), n=7)
 
     def _get_bs_bk_corrected_percent_error_text(self):
-        v = self.item.get_corrected_value()
+        v = self.item.get_non_detector_corrected_value()
         return format_percent_error(v.nominal_value, v.std_dev)
 
-    #============================================================
+    # ============================================================
     def _get_disc_corrected_text(self):
         v = self.item.get_disc_corrected_value()
         return floatfmt(nominal_value(v), n=7)
@@ -254,7 +254,7 @@ class IntermediateTabularAdapter(BaseTabularAdapter, ConfigurableAdapterMixin):
         v = self.item.get_disc_corrected_value()
         return format_percent_error(v.nominal_value, v.std_dev)
 
-    #============================================================
+    # ============================================================
     def _get_interference_corrected_text(self):
         v = self.item.get_interference_corrected_value()
         return floatfmt(nominal_value(v), n=7)
@@ -268,7 +268,7 @@ class IntermediateTabularAdapter(BaseTabularAdapter, ConfigurableAdapterMixin):
         return format_percent_error(v.nominal_value, v.std_dev)
 
 
-class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableAdapterMixin):
+class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
     all_columns = [('Iso.', 'name'),
                    ('Det.', 'detector'),
                    ('Fit', 'fit_abbreviation'),
@@ -286,7 +286,24 @@ class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableAdapterMixin):
                    ('IC', 'ic_factor'),
                    ('Disc', 'discrimination'),
                    ('Error Comp.', 'age_error_component')]
-    columns = [('Iso.', 'name')]
+    columns = [('Iso.', 'name'),
+               ('Det.', 'detector'),
+               ('Fit', 'fit_abbreviation'),
+               ('Int.', 'value'),
+               (SIGMA_1, 'error'),
+               ('%', 'value_percent_error'),
+               # ('I. BsEr', 'include_baseline_error'),
+               ('Fit(Bs)', 'baseline_fit_abbreviation'),
+               ('Bs', 'base_value'),
+               (sigmaf('Bs'), 'base_error'),
+               ('%(Bs)', 'baseline_percent_error'),
+               ('Bk', 'blank_value'),
+               (sigmaf('Bk'), 'blank_error'),
+               ('%(Bk)', 'blank_percent_error'),
+               ('IC', 'ic_factor'),
+               # ('Disc', 'discrimination'),
+               # ('Error Comp.', 'age_error_component')
+                ]
 
     value_tooltip = Str('Baseline, Blank, IC and/or Discrimination corrected')
     value_text = Property
@@ -305,7 +322,7 @@ class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableAdapterMixin):
     age_error_component_text = Property
 
     name_width = Int(40)
-    fit_abbreviation_width = Int(25)
+    fit_abbreviation_width = Int(40)
     include_baseline_error_width = Int(40)
     baseline_fit_abbreviation_width = Int(40)
     detector_width = Int(40)
@@ -324,6 +341,9 @@ class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableAdapterMixin):
 
     ic_factor_width = Int(50)
     discrimination_width = Int(50)
+
+    def get_menu(self, object, trait, row, column):
+        return MenuManager(Action(name='Show Isotope Evolution', action='show_isotope_evolution'))
 
     def _get_ic_factor_text(self):
         ic = self.item.ic_factor
@@ -372,7 +392,7 @@ class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableAdapterMixin):
         return format_percent_error(b.value, b.error)
 
     def _get_value_percent_error_text(self, *args):
-        cv = self.item.get_corrected_value()
+        cv = self.item.get_non_detector_corrected_value()
         return format_percent_error(cv.nominal_value, cv.std_dev)
 
     def _get_age_error_component_text(self):
@@ -380,3 +400,5 @@ class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableAdapterMixin):
 
     def _get_include_baseline_error_text(self):
         return 'Yes' if self.item.include_baseline_error else 'No'
+
+# ============= EOF =============================================

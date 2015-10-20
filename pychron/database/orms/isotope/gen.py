@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy import Column, Integer, String, \
     ForeignKey, BLOB, Float, Boolean, DateTime, CHAR
 from sqlalchemy.orm import relationship
 from sqlalchemy.schema import Table
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 from pychron.database.core.base_orm import BaseMixin, NameMixin
 # from pychron.database.core.base_orm import PathMixin, ResultsMixin, ScriptTable
@@ -53,6 +53,7 @@ class gen_DetectorTable(Base, NameMixin):
     deflections = relationship('meas_SpectrometerDeflectionsTable', backref='detector')
     intercalibrations = relationship('proc_DetectorIntercalibrationTable', backref='detector')
     detector_parameters = relationship('proc_DetectorParamTable', backref='detector')
+    gains = relationship('meas_GainTable', backref='detector')
 
 
 class gen_ExtractionDeviceTable(Base, NameMixin):
@@ -73,18 +74,20 @@ class gen_ImportTable(Base, BaseMixin):
 
 class gen_LabTable(Base, BaseMixin):
     identifier = stringcolumn()
-    #    aliquot = Column(Integer)
+    note = stringcolumn(140)
+
     sample_id = foreignkey('gen_SampleTable')
 
     irradiation_id = foreignkey('irrad_PositionTable')
     selected_flux_id = foreignkey('flux_HistoryTable')
+
     selected_interpreted_age_id = foreignkey('proc_InterpretedAgeHistoryTable')
-    note = stringcolumn(140)
 
     analyses = relationship('meas_AnalysisTable',
                             backref='labnumber')
 
     figures = relationship('proc_FigureLabTable', backref='labnumber')
+    loads = relationship('loading_PositionsTable', backref='labnumber')
 
 
 class gen_MassSpectrometerTable(Base, NameMixin):
@@ -103,15 +106,24 @@ class gen_MolecularWeightTable(Base, NameMixin):
     mass = Column(Float)
 
 
-association_table = Table('association', Base.metadata,
-                          Column('project_id', Integer, ForeignKey('gen_ProjectTable.id')),
-                          Column('user_id', Integer, ForeignKey('gen_UserTable.id')))
+ProjectUserAssociationTable = Table('ProjectUserAssociationTable', Base.metadata,
+                                    Column('project_id', Integer, ForeignKey('gen_ProjectTable.id')),
+                                    Column('pi_id', Integer, ForeignKey('gen_PrincipalInvestigatorTable.id')))
+
+
+class gen_PrincipalInvestigatorTable(Base, NameMixin):
+    affiliation = stringcolumn(140)
+    category = Column(Integer)
+    email = stringcolumn(140)
+    projects = relationship('gen_ProjectTable', secondary='ProjectUserAssociationTable')
 
 
 class gen_ProjectTable(Base, NameMixin):
     samples = relationship('gen_SampleTable', backref='project')
     figures = relationship('proc_FigureTable', backref='project')
-    users = relationship('gen_UserTable', secondary=association_table)
+    principal_investigators = relationship('gen_PrincipalInvestigatorTable',
+                                           backref='project',
+                                           secondary='ProjectUserAssociationTable')
 
 
 class gen_SampleTable(Base, NameMixin):
@@ -119,6 +131,7 @@ class gen_SampleTable(Base, NameMixin):
     project_id = foreignkey('gen_ProjectTable')
     labnumbers = relationship('gen_LabTable', backref='sample')
     monitors = relationship('flux_MonitorTable', backref='sample')
+    images = relationship('med_SampleImageTable', backref='sample')
 
     igsn = Column(CHAR(9))
     location = stringcolumn(80)
@@ -150,8 +163,8 @@ class gen_SensitivityTable(Base, BaseMixin):
 class gen_UserTable(Base, NameMixin):
     analyses = relationship('meas_AnalysisTable', backref='user')
     dr_tags = relationship('proc_DataReductionTagTable', backref='user')
+    gain_histories = relationship('meas_GainHistoryTable', backref='user')
     #    project_id = foreignkey('gen_ProjectTable')
-    projects = relationship('gen_ProjectTable', secondary=association_table)
 
     password = stringcolumn(80)
     salt = stringcolumn(80)
@@ -160,10 +173,10 @@ class gen_UserTable(Base, NameMixin):
     affiliation = stringcolumn(140)
     category = Column(Integer, default=0)
 
-    #===========================================================================
+    # ===========================================================================
     # permissions
-    #===========================================================================
+    # ===========================================================================
     max_allowable_runs = Column(Integer, default=25)
     can_edit_scripts = Column(Boolean, default=False)
 
-#============= EOF =============================================
+# ============= EOF =============================================

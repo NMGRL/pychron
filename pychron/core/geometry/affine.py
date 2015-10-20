@@ -1,18 +1,18 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 import math
 
 from numpy import array, identity, sin, cos, radians
@@ -26,6 +26,7 @@ class AffineTransform(object):
         cumulative transform using augmented matrix A
         
     '''
+
     def __init__(self):
         self.A = array([[1, 0, 0],
                         [0, 1, 0],
@@ -101,6 +102,8 @@ class AffineTransform(object):
     Programming Computer Vision with Python:
     Tools and algorithms for analyzing images
 '''
+
+
 def calculate_rigid_transform(refpoints, points):
     '''
         A=[[x1 -y1  1 0]
@@ -127,38 +130,42 @@ def calculate_rigid_transform(refpoints, points):
              
     '''
 
+    # rows = []
+    # ys = []
+    # for (rx, ry), (x, y) in zip(refpoints, points):
+    # row = [x, -y, 1, 0]
+    # rows.append(row)
+    #     row = [y, x, 0, 1]
+    #     rows.append(row)
+    #     ys.append([rx])
+    #     ys.append([ry])
 
-    rows = []
-    ys = []
-    for (rx, ry), (x, y) in zip(refpoints, points):
-        row = [x, -y, 1, 0]
-        rows.append(row)
-        row = [y, x, 0, 1]
-        rows.append(row)
-        ys.append([rx])
-        ys.append([ry])
+    ys = [(a,) for args in refpoints for a in args]
+    rows = [row for x, y in points for row in ((x, -y, 1, 0), (y, x, 0, 1))]
 
     A = array(rows)
     y = array(ys)
-#    print A
-#    print y
+    # print A
+    #    print y
     soln = linalg.lstsq(A, y)
 #    print soln
     a, b, tx, ty = soln[0]
-    tx = tx[0]
-    ty = ty[0]
-    sum_residuals = soln[1][0]
+    tx = float(tx[0])
+    ty = float(ty[0])
+    sum_residuals = soln[1, 0]
 
-#    R = array([[a, -b], [b, a]])
-    scale = (a ** 2 + b ** 2) ** 0.5
+    #    R = array([[a, -b], [b, a]])
+    scale = float((a ** 2 + b ** 2) ** 0.5)
     theta = math.degrees(math.acos(a / scale))
-    err = (sum_residuals / len(points)) ** 0.5 / float(scale)
-#    print err
-#    print scale, float(scale)
-    return float(scale), theta, map(float, (tx, ty)), err
+    err = (sum_residuals / len(points)) ** 0.5 / scale
+    # print err
+    #    print scale, float(scale)
+    return scale, theta, (tx, ty), err
 
 
 import unittest
+
+
 class RigidTransformTest(unittest.TestCase):
     def testtransfrom(self):
         dpt1, spt1 = (-5.933, -6.22), (-19686, 21622)
@@ -177,19 +184,18 @@ class RigidTransformTest(unittest.TestCase):
         dpt8, spt8 = (0, -1), (0, -100)
         dpt9, spt9 = (1, -1), (100, -101)
 
-
         refpoints = [spt1, spt2, spt3, spt4, spt5, spt6, spt7, spt8, spt9]
         points = [dpt1, dpt2, dpt3, dpt4, dpt5, dpt6, dpt7, dpt8, dpt9]
-#        refpoints = list(map(lambda a: (a[0] / 10., a[1] / 10.), refpoints))
-#        print points
+        # refpoints = list(map(lambda a: (a[0] / 10., a[1] / 10.), refpoints))
+        # print points
         f, t, c, e = calculate_rigid_transform(refpoints, points)
         self.assertLess(e, 1e-10)
 
 
-#============= EOF ====================================
+# ============= EOF ====================================
 # import math
 # class AffineTransform2:
-#   "Represents a 2D + 1 affine transformation"
+# "Represents a 2D + 1 affine transformation"
 #   # use this for transforming points
 #   # A = [ a c e]
 #   #     [ b d f]

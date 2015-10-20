@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 '''
     http://pyright.blogspot.ch/2011/07/pyeuclid-vector-math-and-polygon-offset.html
 '''
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 from numpy import array, cross, vstack, dot, linalg
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.geometry.geometry import sort_clockwise
 from pychron.core.geometry.convex_hull import convex_hull
 # import euclid as eu
@@ -143,4 +143,4 @@ if __name__ == '__main__':
         plot(xs, ys, 'b')
 
     show()
-#============= EOF =============    ================================
+# ============= EOF =============    ================================

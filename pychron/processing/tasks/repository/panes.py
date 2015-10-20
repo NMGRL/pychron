@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,15 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traitsui.api import View, Item, Group, HGroup, spring, \
     UItem, VGroup, ButtonEditor
 from pyface.image_resource import ImageResource
 from pyface.tasks.traits_task_pane import TraitsTaskPane
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.paths import paths
 
@@ -88,4 +88,4 @@ class RepositoryPane(TraitsTaskPane):
                     )
 
         return grp
-#============= EOF =============================================
+# ============= EOF =============================================

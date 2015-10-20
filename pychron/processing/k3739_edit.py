@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,21 +12,23 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import os
 import pickle
 
 from traits.api import HasTraits, Bool, List, Any, Float
 from traitsui.api import View, Item,UItem, Controller, VGroup, HGroup, TabularEditor
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from uncertainties import ufloat
 from pychron.core.ui.progress_dialog import myProgressDialog
+from pychron.envisage.browser.adapters import AnalysisAdapter
 from pychron.paths import paths
-from pychron.processing.tasks.browser.panes import AnalysisAdapter
+# from pychron.processing.tasks.browser.panes import AnalysisAdapter
 from pychron.pychron_constants import PLUSMINUS_SIGMA
 
 
@@ -64,8 +66,8 @@ class K3739EditModel(HasTraits):
         p = self.pickle_path
         if os.path.isfile(p):
             try:
-                with open(p, 'rb') as fp:
-                    d = pickle.load(fp)
+                with open(p, 'rb') as rfile:
+                    d = pickle.load(rfile)
                     self.trait_set(**d)
             except BaseException:
                 pass
@@ -73,8 +75,8 @@ class K3739EditModel(HasTraits):
     def dump(self):
         d = dict(k3739=self.k3739, k3739_err=self.k3739_err)
         try:
-            with open(self.pickle_path, 'wb') as fp:
-                pickle.dump(d, fp)
+            with open(self.pickle_path, 'wb') as wfile:
+                pickle.dump(d, wfile)
         except BaseException:
             pass
 
@@ -113,5 +115,5 @@ class K3739EditView(Controller):
             kind='livemodal')
         return v
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

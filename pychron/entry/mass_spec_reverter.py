@@ -13,20 +13,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from pychron.core.helpers.logger_setup import logging_setup
 from pychron.core.ui import set_qt
-from pychron.database.adapters.massspec_database_adapter import MassSpecDatabaseAdapter
 
 set_qt()
-
-logging_setup('ms_reverter')
 
 # ============= enthought library reverts =======================
 from traits.api import Any, Str
 # ============= standard library imports ========================
+import struct
+from numpy import array
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import pathtolist
 from pychron.loggable import Loggable
+from pychron.core.helpers.logger_setup import logging_setup
+from pychron.database.adapters.massspec_database_adapter import MassSpecDatabaseAdapter
+from pychron.database.isotope_database_manager import IsotopeDatabaseManager
+from pychron.experiment.utilities.identifier import convert_identifier_to_int, strip_runid
+
+logging_setup('ms_reverter')
 
 
 class MassSpecReverter(Loggable):
@@ -47,15 +51,20 @@ class MassSpecReverter(Loggable):
         if self._connect_to_destination():
             self._do_revert()
 
-    # def setup_source(self):
-    #     src = IsotopeDatabaseManager(connect=False, bind=False)
-    #     db = src.db
-    #     db.trait_set(name='pychrondata',
-    #                  kind='mysql',
-    #                  host='129.138.12.160',
-    #                  username='root',
-    #                  password='DBArgon')
-    #     self.source = src
+    def do_reimport(self):
+        if self._connect_to_source():
+            if self._connect_to_destination():
+                self._do_reimport()
+
+    def setup_source(self):
+        src = IsotopeDatabaseManager(connect=False, bind=False)
+        db = src.db
+        db.trait_set(name='pychrondata',
+                     kind='mysql',
+                     host='129.138.12.160',
+                     username='root',
+                     password='DBArgon')
+        self.source = src
 
     def setup_destination(self):
         dest = MassSpecDatabaseAdapter()
@@ -71,14 +80,71 @@ class MassSpecReverter(Loggable):
     def _connect_to_destination(self):
         return self.destination.connect()
 
+    def _load_runids(self):
+        runids = pathtolist(self.path)
+        return runids
+
+    def _do_reimport(self):
+        rids = self._load_runids()
+        for rid in rids:
+            self._reimport_rid(rid)
+
+    def _reimport_rid(self, rid):
+        self.debug('========= Reimport {} ========='.format(rid))
+
+        db = self.source.db
+        dest = self.destination
+        with db.session_ctx():
+            src_an = self._get_analysis_from_source(rid)
+            if src_an is None:
+                self.warning('could not find {}'.format(rid))
+            else:
+                with dest.session_ctx():
+                    dest_an = dest.get_analysis_rid(rid)
+                    for iso in dest_an.isotopes:
+                        pb, pbnc = self._generate_blobs(src_an, iso.Label)
+                        pt = iso.peak_time_series[0]
+                        pt.PeakTimeBlob = pb
+                        pt.PeakNeverBslnCorBlob = pbnc
+
+    def _generate_blobs(self, src, isok):
+        dbiso = next((i for i in src.isotopes if i.molecular_weight.name == isok and i.kind == 'signal'), None)
+        dbiso_bs = next((i for i in src.isotopes if i.molecular_weight.name == isok and i.kind == 'baseline'), None)
+
+        xs, ys = self._unpack_data(dbiso.signal.data)
+        bsxs, bsys = self._unpack_data(dbiso_bs.signal.data)
+        bs = bsys.mean()
+        cys = ys - bs
+
+        ncblob = ''.join([struct.pack('>f', v) for v in ys])
+        cblob = ''.join([struct.pack('>ff', y, x) for y, x in zip(cys, xs)])
+
+        return cblob, ncblob
+
+    def _unpack_data(self, blob):
+        endianness = '>'
+        sx, sy = zip(*[struct.unpack('{}ff'.format(endianness),
+                                     blob[i:i + 8]) for i in xrange(0, len(blob), 8)])
+        return array(sx), array(sy)
+
+    def _get_analysis_from_source(self, rid):
+        if rid.count('-')>1:
+            args=rid.split('-')
+            step=None
+            lan='-'.join(args[:-1])
+            aliquot=args[-1]
+        else:
+            lan, aliquot, step = strip_runid(rid)
+            lan = convert_identifier_to_int(lan)
+
+        db = self.source.db
+        dban = db.get_unique_analysis(lan, aliquot, step)
+        return dban
+
     def _do_revert(self):
         rids = self._load_runids()
         for rid in rids:
             self._revert_rid(rid)
-
-    def _load_runids(self):
-        runids = pathtolist(self.path)
-        return runids
 
     def _revert_rid(self, rid):
         """
@@ -123,62 +189,33 @@ class MassSpecReverter(Loggable):
                 iso.NumCnts = n
 
                 nf = len(iso.peak_time_series)
-                if nf>1:
-                    self.debug('{} deleting {} refits'.format(isol, nf-1))
-                    #delete peak time blobs
+                if nf > 1:
+                    self.debug('{} deleting {} refits'.format(isol, nf - 1))
+                    # delete peak time blobs
                     for i, pt in enumerate(iso.peak_time_series[1:]):
-                        self.debug('{} A {:02n} deleting pt series {}'.format(isol, i+1, pt.Counter))
+                        self.debug('{} A {:02d} deleting pt series {}'.format(isol, i + 1, pt.Counter))
                         sess.delete(pt)
 
-                    #delete isotope results
+                    # delete isotope results
                     for i, ir in enumerate(iso.results[1:]):
-                        self.debug('{} B {:02n} deleting results {}'.format(isol, i+1, ir.Counter))
+                        self.debug('{} B {:02d} deleting results {}'.format(isol, i + 1, ir.Counter))
                         sess.delete(ir)
 
 
 if __name__ == '__main__':
-    m = MassSpecReverter(path='/Users/ross/Sandbox/crow_revert_test.txt')
-    # m.setup_source()
+    m = MassSpecReverter(path='/Users/ross/Sandbox/crow_revert.txt')
+    m.setup_source()
     m.setup_destination()
-    m.do_revert()
+    m.do_reimport()
+    # m.do_revert()
 
 
 # ============= EOF =============================================
-# src_an = self._get_analysis_from_source(l,a,s)
-# if src_an is None:
-#     self.warning('could not find {} ({},{},{})'.format(rid, l,a,s))
-# else:
 
-# for iso in src_an.isotopes:
-#     if iso.molecular_weight.name=='Ar40' and iso.kind=='signal':
-#         print iso
-
-# with dest.session_ctx():
-#     dest_an =dest.get_analysis_rid(rid)
-#     for iso in dest_an.isotopes:
-# if iso.Label=='Ar40':
-#     print iso.IsotopeID, iso, iso.peak_time_series
-#     for i,pt in enumerate(iso.peak_time_series):
-#         print '--------',i
-#         self._unpack_dest(pt.PeakTimeBlob)
-
-
-# def _unpack_dest(self, blob):
-#     endianness = '>'
-#     sy, sx = zip(*[struct.unpack('{}ff'.format(endianness),
-#                                  blob[i:i + 8]) for i in xrange(0, len(blob), 8)])
-#     print sx
-#     print sy
-
-# def _get_analysis_from_source(self, lan, aliquot, step):
-#     lan = convert_identifier_to_int(lan)
-#     db = self.source.db
-#     dban = db.get_unique_analysis(lan, aliquot, step)
-#     return dban
 #
 # def _get_analyses_from_source(self, labnumber):
-#     db = self.source.db
-#     with db.session_ctx():
+# db = self.source.db
+# with db.session_ctx():
 #         pass
 
 

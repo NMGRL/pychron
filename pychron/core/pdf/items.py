@@ -12,14 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, List, Int, Str, Any, Either, Callable
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from reportlab.platypus.paragraph import Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 STYLES = getSampleStyleSheet()
 
@@ -62,8 +62,12 @@ class BaseItem(HasTraits):
     value = Any
     fmt = Either(Str, Callable)
     fontsize = Int(8)
-    fontname = 'Helvetica'
+    fontname = Str#'Helvetica'
     italic = False
+
+    def __init__(self, value=None, *args, **kw):
+        self.value = value
+        super(BaseItem, self).__init__(*args, **kw)
 
     def render(self):
         v = self.value
@@ -88,7 +92,7 @@ class BaseItem(HasTraits):
                     frag.fontSize = size - 2
                 else:
                     frag.fontSize = size
-        else:
+        elif name:
             v = self._new_paragraph(u'<font size="{}" name="{}">{}</font>'.format(size, name, v))
 
         return v
@@ -144,4 +148,4 @@ class FootNoteRow(Row):
 class FooterRow(Row):
     pass
 
-#============= EOF =============================================
+# ============= EOF =============================================

@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,15 +13,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pychron.paths import paths
 from loggable import Loggable
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 import ConfigParser
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 class ConfigMixin(Loggable):
     configuration_dir_name = None
@@ -120,6 +120,16 @@ class ConfigLoadable(ConfigMixin):
     """
     """
 
+    def update_configuration(self, **kw):
+        config = self.get_configuration()
+        for section, options in kw.iteritems():
+            if not config.has_section(section):
+                config.add_section(section)
+
+            for option, value in options.iteritems():
+                config.set(section, option, value)
+        self.write_configuration(config)
+
     def bootstrap(self, *args, **kw):
         """
         """
@@ -136,7 +146,6 @@ class ConfigLoadable(ConfigMixin):
                 self.warning('failed opening')
         else:
             self.warning('failed loading')
-
 
     def open(self, *args, **kw):
         """
@@ -176,5 +185,5 @@ class ConfigLoadable(ConfigMixin):
             nname = name
         return nname
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

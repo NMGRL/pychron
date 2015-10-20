@@ -12,16 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import os
 
 from reportlab.lib import colors
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from reportlab.lib.units import inch
 import yaml
 from pychron.core.pdf.base_table_pdf_writer import BasePDFTableWriter
@@ -161,11 +161,11 @@ class SamplePDFTableWriter(BasePDFTableWriter):
     def _load_yaml_options(self):
         if self.yaml_options_path:
             if os.path.isfile(self.yaml_options_path):
-                with open(self.yaml_options_path, 'r') as fp:
+                with open(self.yaml_options_path, 'r') as rfile:
                     try:
-                        self._yaml_options = yaml.load(fp)
+                        self._yaml_options = yaml.load(rfile)
                     except yaml.YAMLError:
                         pass
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

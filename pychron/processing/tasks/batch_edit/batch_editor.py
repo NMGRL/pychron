@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, List, Property, Button, Float, Str, Bool
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.isotope_utils import sort_isotopes
 from pychron.loggable import Loggable
 
@@ -95,9 +95,9 @@ class BatchEditor(Loggable):
 
         self.values = discs + ics
 
-    #===============================================================================
+    # ===============================================================================
     # property get/set
-    #===============================================================================
+    # ===============================================================================
     def _get_sens_value(self):
         return self._sens_value
 
@@ -124,4 +124,4 @@ class BatchEditor(Loggable):
             UValue(name='Ar40'), ]
         return v
 
-    #============= EOF =============================================
+    # ============= EOF =============================================

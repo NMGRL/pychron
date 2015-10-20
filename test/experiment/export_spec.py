@@ -10,7 +10,7 @@ build_directories(paths)
 from pychron.core.helpers.logger_setup import logging_setup
 
 logging_setup('export_spec')
-from pychron.processing.export.export_spec import ExportSpec
+from pychron.processing.export.export_spec import MassSpecExportSpec
 from pychron.core.helpers.isotope_utils import sort_isotopes
 
 import unittest
@@ -19,7 +19,7 @@ import unittest
 class ExportSpecTestCase(unittest.TestCase):
     def setUp(self):
         data_path = '/Users/ross/Sandbox/aaaa_isotope.h5'
-        self.spec = ExportSpec(data_path=data_path)
+        self.spec = MassSpecExportSpec(data_path=data_path)
 
     def test_sorted_iter_isotopes(self):
         e = self.spec

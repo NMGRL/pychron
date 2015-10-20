@@ -12,13 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Int
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import time
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.hardware.core.core_device import CoreDevice
 
 
@@ -37,7 +37,7 @@ class AgilentUnit(CoreDevice):
 
         """
 
-        self._communicator.write_terminator = chr(10)
+        self.communicator.write_terminator = chr(10)
         cmds = (
             '*CLS',
             'FORM:READING:ALARM OFF',
@@ -83,7 +83,7 @@ class AgilentUnit(CoreDevice):
         if resp is not None and resp:
             return int(resp)
 
-#============= EOF =============================================
+# ============= EOF =============================================
 #    def read_device(self, **kw):
 #        '''
 #        '''

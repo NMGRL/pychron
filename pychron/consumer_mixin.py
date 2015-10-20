@@ -1,23 +1,23 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 # from pychron.core.ui.thread import Thread
 from threading import Thread
@@ -27,15 +27,27 @@ import time
 
 class ConsumerMixin(object):
     _consumer_queue = None
+    _should_consume = False
+    _consume_func = None
+    _main = False
+    _buftime = 0
+    _consumer = None
+    _timeout = 0
+    _delay = 0
 
-    def setup_consumer(self, func=None, buftime=None, auto_start=True, main=False, timeout=None):
+    def __init__(self, func=None, buftime=None, auto_start=True, main=False, timeout=None, delay=1):
+        self.setup_consumer(func, buftime, auto_start, main, timeout, delay)
+
+    def setup_consumer(self, func=None, buftime=None, auto_start=True, main=False, timeout=None, delay=1):
+        self._delay = delay  # ms
         self._consume_func = func
         self._main = main
         self._buftime = buftime  # ms
         self._consumer_queue = Queue()
         self._consumer = Thread(target=self._consume,
-                                args=(timeout, ),
+                                args=(timeout,),
                                 name='consumer')
+        self._timeout = timeout
         self._should_consume = True
         if auto_start:
             self._consumer.setDaemon(1)
@@ -52,13 +64,22 @@ class ConsumerMixin(object):
             return self._consumer_queue.empty()
 
     def start(self):
-        if self._consumer:
+        self._should_consume = True
+        if not self._consumer:
+            self._consumer = Thread(target=self._consume,
+                                    args=(self._timeout,),
+                                    name='consumer')
+        if not self._consumer.isAlive():
             self._consumer.setDaemon(1)
             self._consumer.start()
 
     def stop(self):
         if self._consumer:
             self._should_consume = False
+        self._consumer = None
+
+    start_consuming = start
+    stop_consuming = stop
 
     def add_consumable(self, v, timeout=None):
         if not self._consumer_queue:
@@ -69,7 +90,7 @@ class ConsumerMixin(object):
     def _consume(self, timeout):
         bt = self._buftime
         if bt:
-            bt = bt / 1000.
+            bt *= 1e-3
 
             def get_func():
                 q = self._consumer_queue
@@ -83,6 +104,8 @@ class ConsumerMixin(object):
         else:
             def get_func():
                 try:
+                    if self._consumer_queue is None:
+                        print self
                     return self._consumer_queue.get(timeout=1)
                 except Empty:
                     return
@@ -90,7 +113,10 @@ class ConsumerMixin(object):
         cfunc = self._consume_func
 
         st = time.time()
+        d = self._delay * 1e-3
         while self._should_consume:
+            if d:
+                time.sleep(d)
             if timeout:
                 if time.time() - st > timeout:
                     self._should_consume = False
@@ -100,7 +126,7 @@ class ConsumerMixin(object):
 
             try:
                 v = get_func()
-                if v:
+                if v is not None:
                     if cfunc:
                         if self._main:
                             from pychron.core.ui.gui import invoke_in_main_thread
@@ -109,22 +135,25 @@ class ConsumerMixin(object):
                         else:
                             cfunc(v)
                     elif isinstance(v, tuple):
-                        func, a = v
+                        if len(v) == 3:
+                            func, args, kw = v
+                        else:
+                            func, args = v
+                            kw = {}
+
+                        if not isinstance(args, tuple):
+                            args = (args,)
+
                         if self._main:
                             from pychron.core.ui.gui import invoke_in_main_thread
 
-                            invoke_in_main_thread(func, a)
+                            invoke_in_main_thread(func, *args, **kw)
                         else:
-                            func(a)
+                            func(*args)
             except Exception, e:
                 import traceback
 
                 traceback.print_exc()
-                #pass
-
-
-#             if not self._should_consume:
-#                 break
 
 
 class consumable(object):
@@ -137,7 +166,7 @@ class consumable(object):
         self._main = main
 
     def __enter__(self):
-        self._consumer = c = ConsumerMixin()
+        self._consumer = c = ConsumerMixin(auto_start=False)
         c.setup_consumer(func=self._func, main=self._main)
         return c
 
@@ -150,5 +179,4 @@ class consumable(object):
         self._consumer = None
         self._func = None
 
-
-#============= EOF =============================================
+# ============= EOF =============================================

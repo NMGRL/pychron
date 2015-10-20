@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,15 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, List, Any, Str
 from traitsui.api import View, Item, TabularEditor, UItem, HGroup, VGroup
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
-from pychron.envisage.browser.adapters import ProjectAdapter, SampleAdapter
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
+from pychron.envisage.browser.adapters import ProjectAdapter, LabnumberAdapter
 
 
 class SaveFigureDialog(HasTraits):
@@ -37,7 +37,7 @@ class SaveFigureDialog(HasTraits):
                                                    selected='selected_project',
                                                    editable=False)),
                         UItem('samples',
-                              editor=TabularEditor(adapter=SampleAdapter(),
+                              editor=TabularEditor(adapter=LabnumberAdapter(),
                                                    selected='selected_samples',
                                                    multi_select=True,
                                                    editable=False))),
@@ -46,5 +46,5 @@ class SaveFigureDialog(HasTraits):
                  title='Save Figure')
         return v
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

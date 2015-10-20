@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,15 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 # from traits.api import Instance, DelegatesTo
 from traits.api import Any, Int, Instance, Property, Event, \
     Enum, String
 from traitsui.api import View, Item, VGroup, ButtonEditor, HGroup, Spring
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from fusions_logic_board import FusionsLogicBoard
 from threading import Timer, Event as TEvent
 from pychron.hardware.kerr.kerr_device import KerrDevice
@@ -225,8 +225,8 @@ class NitrogenFlower(KerrDevice):
         return v
 
 class FusionsUVLogicBoard(FusionsLogicBoard):
-    '''
-    '''
+    """
+    """
     has_pointer = False
     _test_comms = False  # dont test comms on startup. UV doesn't really have logic board only kerr motor controllers
 
@@ -234,14 +234,14 @@ class FusionsUVLogicBoard(FusionsLogicBoard):
     def _nitrogen_flower_default(self):
         return NitrogenFlower(parent=self)
 
-    def _enable_laser(self):
-        '''
-        '''
+    def _enable_laser(self, **kw):
+        """
+        """
         return True
 
     def _disable_laser(self):
-        '''
-        '''
+        """
+        """
         return True
 
     def prepare(self):
@@ -279,6 +279,6 @@ class FusionsUVLogicBoard(FusionsLogicBoard):
                   )
         return ng
 
-#============= views ===================================
+# ============= views ===================================
 
-#============= EOF ====================================
+# ============= EOF ====================================

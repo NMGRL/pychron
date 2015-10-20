@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,32 +12,41 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Any, Property
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
-#============= local library imports  ==========================
-from pychron.database.isotope_database_manager import IsotopeDatabaseManager
-from pychron.managers.manager import Manager
+# ============= local library imports  ==========================
+from pychron.envisage.view_util import open_view
+from pychron.spectrometer.base_spectrometer_manager import BaseSpectrometerManager
 from pychron.spectrometer.thermo.spectrometer import Spectrometer
 from pychron.paths import paths
 from pychron.spectrometer.jobs.relative_detector_positions import RelativeDetectorPositions
-from pychron.spectrometer.jobs.coincidence_scan import CoincidenceScan
 from pychron.spectrometer.jobs.cdd_operating_voltage_scan import CDDOperatingVoltageScan
 from apptools.preferences.preference_binding import bind_preference
 from pychron.spectrometer.spectrometer_parameters import SpectrometerParameters, \
     SpectrometerParametersView
 
 
-class ArgusSpectrometerManager(Manager):
+class ArgusSpectrometerManager(BaseSpectrometerManager):
+    """
+    Top level interface to an Thermo Scientific Argus Mass Spectrometer
+
+    direct access provided by spectrometer_microcontroller; an instance
+    of thermo.spectrometer.Spectrometer
+
+    """
     spectrometer_klass = Spectrometer
     spectrometer_microcontroller = Any
     name = Property(depends_on='spectrometer_microcontroller')
 
-    def test_connection(self):
-        return self.spectrometer.test_connection()
+    def test_connection(self, **kw):
+        return self.spectrometer.test_connection(**kw)
+
+    def test_intensity(self, **kw):
+        return self.spectrometer.test_intensity(**kw)
 
     def open_parameters(self):
         p = SpectrometerParameters(spectrometer=self.spectrometer)
@@ -46,12 +55,24 @@ class ArgusSpectrometerManager(Manager):
         v = SpectrometerParametersView(model=p)
         v.edit_traits()
 
+    def make_gains_dict(self):
+        spec = self.spectrometer
+        return {di.name: di.get_gain() for di in spec.detectors}
+
+    def set_gains(self, *args, **kw):
+        spec = self.spectrometer
+
+        diff = any([di.gain_outdated for di in spec.detectors])
+        if diff:
+            return spec.set_gains(*args, **kw)
+
     def make_parameters_dict(self):
         spec = self.spectrometer
         d = dict()
-        for attr, cmd in [('extraction_lens', 'ExtractionLens'), ('ysymmetry', 'YSymmetry'),
-                          ('zsymmetry', 'ZSymmetry'), ('zfocus', 'ZFocus')
-        ]:
+        for attr, cmd in [('extraction_lens', 'ExtractionLens'),
+                          ('ysymmetry', 'YSymmetry'),
+                          ('zsymmetry', 'ZSymmetry'),
+                          ('zfocus', 'ZFocus')]:
             v = spec.get_parameter('Get{}'.format(cmd))
             if v is not None:
                 d[attr] = v
@@ -72,9 +93,10 @@ class ArgusSpectrometerManager(Manager):
         self.debug('******************************* LOAD Spec')
         if db_mol_weights:
             # get the molecular weights from the database
-            dbm = IsotopeDatabaseManager(application=self.application,
-                                         warn=False)
-            if dbm.is_connected():
+            # dbm = IsotopeDatabaseManager(application=self.application,
+            #                              warn=False)
+            dbm = self.application.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
+            if dbm and dbm.is_connected():
                 self.info('loading molecular_weights from database')
                 mws = dbm.db.get_molecular_weights()
                 # convert to a dictionary
@@ -111,7 +133,9 @@ class ArgusSpectrometerManager(Manager):
         return True
 
     def finish_loading(self):
-        #integration_time = 1.048576
+        self.debug('Finish loading')
+
+        # integration_time = 1.048576
 
         # set device microcontrollers
         self.spectrometer.set_microcontroller(self.spectrometer_microcontroller)
@@ -121,8 +145,8 @@ class ArgusSpectrometerManager(Manager):
 
         # set integration time
         self.spectrometer.get_integration_time()
-        #integration_time = self.spectrometer.get_integration_time()
-        #self.integration_time = integration_time
+        # integration_time = self.spectrometer.get_integration_time()
+        # self.integration_time = integration_time
 
         # self.integration_time = 0.065536
 
@@ -142,26 +166,25 @@ class ArgusSpectrometerManager(Manager):
     def relative_detector_positions_task_factory(self):
         return self._factory(RelativeDetectorPositions)
 
-    def do_coincidence_scan(self):
-        obj = self._factory(CoincidenceScan)
-        obj.inform = False
-        self.open_view(obj.graph)
-        t = obj.execute()
-        return obj, t
-
-    def coincidence_scan_task_factory(self):
-        obj = self._factory(CoincidenceScan)
-        info = obj.edit_traits(view='edit_view',
-                               kind='livemodal')
-        if info.result:
-            self.open_view(obj.graph)
-            obj.execute()
+        # def do_coincidence_scan(self):
+        #     obj = self._factory(CoincidenceScan)
+        #     obj.inform = False
+        #     self.open_view(obj.graph)
+        #     t = obj.execute()
+        #     return obj, t
+        # def coincidence_scan_task_factory(self):
+        # obj = self._factory(CoincidenceScan)
+        # info = obj.edit_traits(view='edit_view',
+        #                        kind='livemodal')
+        # if info.result:
+        #     self.open_view(obj.graph)
+        #     obj.execute()
 
     def cdd_operate_voltage_scan_task_factory(self):
         obj = CDDOperatingVoltageScan(spectrometer=self.spectrometer)
         info = obj.edit_traits(kind='livemodal')
         if info.result:
-            self.open_view(obj.graph)
+            open_view(obj.graph)
             obj.execute()
 
     def _factory(self, klass):
@@ -176,7 +199,8 @@ class ArgusSpectrometerManager(Manager):
 
         #    def _spectrometer_microcontroller_default(self):
 
-#        return ArgusController()
+
+# return ArgusController()
 
 if __name__ == '__main__':
     from pychron.core.helpers.logger_setup import logging_setup
@@ -190,7 +214,7 @@ if __name__ == '__main__':
 #    ini.run()
 # #    s.magnet_field_calibration()
 #    s.configure_traits()#kind = 'live')
-#============= EOF =============================================
+# ============= EOF =============================================
 #    def _update_hover(self, obj, name, old, new):
 #        if new is not None:
 #            g = Graph(container_dict=dict(padding=[30, 0, 0, 30]))

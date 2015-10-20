@@ -12,17 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 from pychron.core.ui import set_qt
 
 set_qt()
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 import csv
 import os
 import yaml
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.filetools import unique_path
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.paths import paths
@@ -35,8 +35,8 @@ class RawExporter(IsotopeDatabaseManager):
         ans = self.make_analyses(ans, unpack=True)
         root = os.path.join(paths.data_dir, 'apis')
         p, _ = unique_path(root, 'data', extension='.csv')
-        with open(p, 'w') as fp:
-            writer = csv.writer(fp)
+        with open(p, 'w') as wfile:
+            writer = csv.writer(wfile)
             for ai in ans:
                 self._write_analysis(ai, writer)
 
@@ -78,8 +78,8 @@ class RawExporter(IsotopeDatabaseManager):
 
     def _get_analyses(self, name):
         p = os.path.join(paths.data_dir, 'apis', '{}.yaml'.format(name))
-        with open(p, 'r') as fp:
-            yd = yaml.load(fp)
+        with open(p, 'r') as rfile:
+            yd = yaml.load(rfile)
 
         def gen():
             db = self.db
@@ -94,5 +94,5 @@ class RawExporter(IsotopeDatabaseManager):
         return gen()
 
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

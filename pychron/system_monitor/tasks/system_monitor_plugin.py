@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,29 +12,36 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from envisage.ui.tasks.task_factory import TaskFactory
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 #from pychron.processing.tasks.browser.browser_task import BrowserTask
+from pychron.dashboard.tasks.client.preferences import DashboardClientPreferencesPane
 from pychron.processing.tasks.processing_plugin import ProcessingPlugin
-from pychron.system_monitor.tasks.preferences import SystemMonitorPreferencesPane, ConsolePreferencesPane,\
-    DashboardPreferencesPane
+from pychron.system_monitor.tasks.preferences import SystemMonitorPreferencesPane, ConsolePreferencesPane
 from pychron.system_monitor.tasks.system_monitor_task import SystemMonitorTask
 
 
 class SystemMonitorPlugin(ProcessingPlugin):
+
     def start(self):
         pass
 
     def _task_factory(self):
         return SystemMonitorTask(manager=self._processor_factory())
 
-    def _my_task_extensions_default(self):
+    def _task_extensions_default(self):
         return []
+
+    def _help_tips_default(self):
+        return ['Open a System Monitor window using <b>View>System Monitor</b>. '
+                'Use this window to automatically plot Ar/Ar figures and time series '
+                'as new analyses are saved to the database.',
+                'Define the available system connections in <b>Preferences/System Monitor</b>']
 
     def _tasks_default(self):
         return [TaskFactory(name='System Monitor',
@@ -45,6 +52,8 @@ class SystemMonitorPlugin(ProcessingPlugin):
     def _preferences_panes_default(self):
         return [SystemMonitorPreferencesPane,
                 ConsolePreferencesPane,
-                DashboardPreferencesPane,]
+                DashboardClientPreferencesPane]
 
-        #============= EOF =============================================
+    # def _file_defaults_default(self):
+    #     return []
+        # ============= EOF =============================================

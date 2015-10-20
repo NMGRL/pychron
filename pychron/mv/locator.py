@@ -11,13 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Float
 
 # from pychron.core.geometry.centroid import centroid
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
 from numpy import array, histogram, argmax, zeros, asarray, ones_like, \
     nonzero, max
@@ -26,7 +26,7 @@ from skimage.morphology import watershed
 from skimage.draw import polygon
 from scipy import ndimage
 from skimage.exposure import rescale_intensity
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 # from pychron.core.geometry.centroid.calculate_centroid import calculate_centroid
 from pychron.loggable import Loggable
 from pychron.mv.segment.region import RegionSegmenter
@@ -170,9 +170,9 @@ class Locator(Loggable):
             if targets:
                 return targets
 
-#===============================================================================
+# ===============================================================================
 # filter
-#===============================================================================
+# ===============================================================================
     def _filter_targets(self, image, frame, dim, targets, fa, threshold=0.85):
         '''
             filter targets using the _filter_test function
@@ -290,9 +290,9 @@ class Locator(Loggable):
                                          ti, ct, mi, ma)):
                     return ti
 
-#===============================================================================
+# ===============================================================================
 # preprocessing
-#===============================================================================
+# ===============================================================================
     def _preprocess(self, frame,
                     contrast=True, denoise=0):
         '''
@@ -338,9 +338,9 @@ class Locator(Loggable):
 #        p98 = percentile(img, 98)
 
         return rescale_intensity(asarray(img))
-#===============================================================================
+# ===============================================================================
 # deviation calc
-#===============================================================================
+# ===============================================================================
     def _circle_minimization(self, src, target, dim):
         '''
             find cx,cy of a circle with r radius using the arc center method
@@ -390,9 +390,9 @@ class Locator(Loggable):
 
         devxs, devys = zip(*[r.dev_centroid for r in targets])
         return -dx, dy
-#===============================================================================
+# ===============================================================================
 # helpers
-#===============================================================================
+# ===============================================================================
     def _make_targets(self, pargs, origin):
         '''
          convenience function for assembling target list
@@ -443,9 +443,9 @@ class Locator(Loggable):
         y = float(h / 2)
 
         return x, y
-#===============================================================================
+# ===============================================================================
 # draw
-#===============================================================================
+# ===============================================================================
     def _draw_targets(self, src, targets, dim):
         '''
             draw a crosshairs indicator
@@ -513,7 +513,7 @@ class Locator(Loggable):
                    )
         else:
             draw_circle(src, center, r, color=color, thickness=thickness)
-#============= EOF =============================================
+# ============= EOF =============================================
 #  def _segment_polygon2(self, image, frame, target,
 #                          dim,
 #                          cthreshold, mi, ma):

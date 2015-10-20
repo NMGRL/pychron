@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 # from traits.api import HasTraits
 # from traitsui.api import View, Item
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from datetime import timedelta
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.processing.tasks.smart_project.base_smarter import BaseSmarter
 from pychron.core.helpers.filetools import unique_path
 from pychron.processing.tasks.smart_project.detector_intercalibration_pdf_writer import DetectorIntercalibrationPDFWriter
@@ -74,4 +74,4 @@ class SmartDetectorIntercalibration(BaseSmarter):
                     writer.build(p, ae.component, gs, refs)
                 else:
                     ae.graph.save_pdf(p)
-#============= EOF =============================================
+# ============= EOF =============================================

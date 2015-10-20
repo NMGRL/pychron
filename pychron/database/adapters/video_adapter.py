@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,11 +12,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.database.core.database_adapter import  PathDatabaseAdapter
 from pychron.database.orms.video_orm import VideoTable, VideoPathTable
 from pychron.database.selectors.video_selector import VideoSelector
@@ -27,15 +27,15 @@ class VideoAdapter(PathDatabaseAdapter):
     test_func = None
     selector_klass = VideoSelector
     path_table = VideoPathTable
-#==============================================================================
+# ==============================================================================
 #    getters
-#==============================================================================
+# ==============================================================================
 
     def get_video_records(self, **kw):
         return self._get_items(VideoTable, globals(), **kw)
-#=============================================================================
+# =============================================================================
 #   adder
-#=============================================================================
+# =============================================================================
     def add_video_record(self, **kw):
         b = self._add_timestamped_item(VideoTable, **kw)
         return b
@@ -59,5 +59,5 @@ if __name__ == '__main__':
 #    print db.get_bakeouts(join_table='ControllerTable',
 #                    filter_str='ControllerTable.script="---"'
 #                    )
-#============= EOF =============================================
+# ============= EOF =============================================
 

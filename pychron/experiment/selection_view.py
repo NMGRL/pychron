@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Instance, List, Bool
 from traitsui.api import View, Item, VGroup, HGroup, HSplit, InstanceEditor, spring
 from chaco.tools.zoom_tool import ZoomTool
@@ -22,10 +22,10 @@ from chaco.tools.scatter_inspector import ScatterInspector
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.data_label import DataLabel
 from kiva.fonttools import Font
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import numpy as np
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.viewable import Viewable
 from pychron.database.selectors.isotope_selector import IsotopeAnalysisSelector
 from pychron.graph.stacked_graph import StackedGraph
@@ -269,4 +269,4 @@ class SelectionView(Viewable):
                  title='Recent Analyses',
                  resizable=True)
         return v
-#============= EOF =============================================
+# ============= EOF =============================================

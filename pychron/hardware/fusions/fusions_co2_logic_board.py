@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,15 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import Float, Property
-import apptools.sweet_pickle as pickle
-#=============standard library imports ========================
+# import apptools.sweet_pickle as pickle
+# =============standard library imports ========================
 import os
-#=============local library imports  ==========================
+import cPickle as pickle
+# =============local library imports  ==========================
 from fusions_logic_board import FusionsLogicBoard
 from pychron.paths import paths
 from pychron.hardware.meter_calibration import MeterCalibration
@@ -135,7 +136,7 @@ class FusionsCO2LogicBoard(FusionsLogicBoard):
             self.warning(msg)
             return msg
 
-    def _enable_laser(self):
+    def _enable_laser(self, **kw):
         '''
         '''
         cmd = self._build_command('PWE', '1')
@@ -150,7 +151,7 @@ class FusionsCO2LogicBoard(FusionsLogicBoard):
             self.warning(msg)
             return msg
 
-    def _set_laser_power_(self, request_pwr, verbose=True):
+    def set_laser_power(self, request_pwr, verbose=True):
         '''
             
             see Photon Machines Logic Board Command Set Reference
@@ -176,7 +177,7 @@ class FusionsCO2LogicBoard(FusionsLogicBoard):
     def _set_request_power(self, v):
         '''
         '''
-        self._set_laser_power_(v)
+        self.set_laser_power(v)
 
-#====================== EOF ===========================================
+# ====================== EOF ===========================================
 

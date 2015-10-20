@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +12,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from sqlalchemy.ext.declarative import declared_attr, declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy import Column, Integer, String, BLOB, DateTime
 from sqlalchemy.sql.expression import func
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
+from pychron.database.orms.isotope.util import foreignkey
+
 Base = declarative_base()
+
 
 class MigrateVersionTable(Base):
     __tablename__ = 'migrate_version'
@@ -35,7 +38,6 @@ class AlembicVersionTable(Base):
     version_num = Column(String(32), primary_key=True)
 
 
-
 class BaseMixin(object):
     def __init__(self, *args, **kw):
         super(BaseMixin, self).__init__(*args, **kw)
@@ -45,6 +47,12 @@ class BaseMixin(object):
         return self.__name__
 
     id = Column(Integer, primary_key=True)
+
+
+class UserMixin(BaseMixin):
+    @declared_attr
+    def user_id(self):
+        return foreignkey('gen_UserTable')
 
 
 class NameMixin(BaseMixin):
@@ -68,10 +76,11 @@ class PathMixin(BaseMixin):
     root = Column(String(200))
     filename = Column(String(80))
 
+
 class ScriptTable(BaseMixin):
     script_name = Column(String(80))
     script_blob = Column(BLOB)
     hash = Column(String(32))
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

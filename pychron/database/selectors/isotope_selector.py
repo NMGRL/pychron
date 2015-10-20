@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Int, Property, Str, Bool
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.database.core.database_selector import DatabaseSelector
 # from pychron.database.core.base_db_result import DBResult
 
@@ -46,7 +46,8 @@ class IsotopeResultsAdapter(BaseResultsAdapter):
         ('Analysis Time', 'rundate'),
         ('Irradiation', 'irradiation_info'),
         ('Mass Spec.', 'mass_spectrometer'),
-        ('Type', 'analysis_type')]
+        ('Type', 'analysis_type'),
+        ('Project', 'project')]
 
     font = '10'
     #    rid_width = Int(50)
@@ -164,11 +165,9 @@ class IsotopeAnalysisSelector(DatabaseSelector):
 
     def _refresh_results(self):
         import inspect
-
         stack = inspect.stack()
         self.debug('refresh results by {}'.format(stack[1][3]))
-
-        self.execute_query(load=False)
+        self.execute_query()
 
     def _build_filters(self):
         ma = self.mass_spectrometer
@@ -185,5 +184,5 @@ class IsotopeAnalysisSelector(DatabaseSelector):
 
         return qs
 
-        #============= EOF =============================================
+        # ============= EOF =============================================
 

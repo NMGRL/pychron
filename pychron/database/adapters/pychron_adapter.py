@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 from pychron.database.core.database_adapter import DatabaseAdapter
 from pychron.database.orms.pychron_orm import Analyses, Paths, Intercepts, \
      AnalysisTypes, Spectrometers
@@ -21,9 +21,9 @@ from pychron.database.orms.pychron_orm import Analyses, Paths, Intercepts, \
 class PychronAdapter(DatabaseAdapter):
     test_func = 'get_rids'
 
-#===============================================================================
+# ===============================================================================
 #    getters
-#===============================================================================
+# ===============================================================================
     def get_analyses_path(self):
 #        sess = self.get_session()
 #        q = sess.query(Paths)
@@ -51,9 +51,9 @@ class PychronAdapter(DatabaseAdapter):
         q = q.filter_by(**clause)
         return q
 
-#==============================================================================
+# ==============================================================================
 #   adder
-#==============================================================================
+# ==============================================================================
     def add_intercepts(self, **kw):
         o = Intercepts(**kw)
         self._add_item(o)

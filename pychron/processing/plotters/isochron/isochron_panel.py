@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,19 +12,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 from pychron.processing.plotters.isochron.isochron import Isochron, InverseIsochron
 from pychron.processing.plotters.figure_panel import FigurePanel
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 class IsochronPanel(FigurePanel):
     _figure_klass = Isochron
+    track_value = False
 
 class InverseIsochronPanel(FigurePanel):
     _figure_klass = InverseIsochron
+    track_value = False
 
-
-#============= EOF =============================================
+# ============= EOF =============================================

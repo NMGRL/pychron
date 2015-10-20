@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Bool
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER
 from reportlab.lib.units import inch
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.canvas.canvas2D.irradiation_canvas import IrradiationCanvas
 # from pychron.entry.level import load_holder_canvas
 from pychron.entry.editors.level_editor import load_holder_canvas
@@ -161,7 +161,7 @@ class LabbookPDFWriter(IrradiationPDFWriter):
             doses = chron.get_doses()
             for pwr, st, en in doses:
                 dur += (en - st).total_seconds()
-            _, _, date = chron.get_doses(tofloat=False)[-1]
+            _, _, date = chron.get_doses(todatetime=False)[-1]
 
         dur /= (60 * 60.)
         date = 'Irradiation Date: {}'.format(date)
@@ -178,4 +178,4 @@ class LabbookPDFWriter(IrradiationPDFWriter):
 
         return p, self._page_break()
 
-#============= EOF =============================================
+# ============= EOF =============================================

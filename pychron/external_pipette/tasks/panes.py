@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,15 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traitsui.api import View, UItem, VGroup, HGroup, spring, EnumEditor, Item
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
+from pychron.envisage.icon_button_editor import icon_button_editor
 
 
 class ExternalPipettePane(TraitsTaskPane):
@@ -42,7 +42,7 @@ class ExternalPipettePane(TraitsTaskPane):
                           HGroup(UItem('test_script_button',
                                        enabled_when='not testing'), spring),
                           HGroup(icon_button_editor('clear_test_response_button',
-                                                    'edit-clear', tooltip='Clear console'),
+                                                    'clear', tooltip='Clear console'),
                                  Item('display_response_info', label='Display Debug Info.'),
                                  spring))
 
@@ -64,5 +64,5 @@ class ExternalPipettePane(TraitsTaskPane):
         #                       editor=ComponentEditor())))
         return v
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

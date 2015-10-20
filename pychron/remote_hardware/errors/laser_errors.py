@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +12,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-from error import ErrorCode  # , code_generator, get_code_decorator
+# from error import ErrorCode  # , code_generator, get_code_decorator
+
 
 # code_gen = code_generator(0, start=1)
 
@@ -22,9 +23,13 @@ from error import ErrorCode  # , code_generator, get_code_decorator
 #    return get_code_decorator(code_gen)(*args)
 
 # @generate_code
+from pychron.tx.errors import ErrorCode
+
+
 class LogicBoardCommErrorCode(ErrorCode):
     msg = 'Failed communication with logic board'
     code = '101'
+
 
 # @generate_code
 class EnableErrorCode(ErrorCode):
@@ -75,6 +80,7 @@ class SetpointErrorCode(ErrorCode):
         self.msg = self.msg.format(sh)
         super(SetpointErrorCode, self).__init__(*args, **kw)
 
+
 # @generate_code
 class InvalidMotorErrorCode(ErrorCode):
     msg = 'no motor named {} available'
@@ -84,3 +90,11 @@ class InvalidMotorErrorCode(ErrorCode):
         self.msg = self.msg.format(sh)
         super(InvalidMotorErrorCode, self).__init__(*args, **kw)
 
+
+class PositionErrorCode(ErrorCode):
+    msg = 'positioning error. {}'
+    code = '108'
+
+    def __init__(self, sh, *args, **kw):
+        self.msg = self.msg.format(sh)
+        super(LaserMonitorErrorCode, self).__init__(*args, **kw)

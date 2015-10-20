@@ -12,16 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-from traits.api import Instance, Unicode, Property, DelegatesTo
+# ============= enthought library imports =======================
+from traits.api import Instance, Unicode, Property, DelegatesTo, Color, Bool
 from traitsui.api import View, UItem
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.ui.qt.tabular_editor import TabularEditorHandler
+from pychron.core.ui.table_configurer import ExperimentTableConfigurer
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.experiment.automated_run.tabular_adapter import AutomatedRunSpecAdapter, UVAutomatedRunSpecAdapter, \
     ExecutedAutomatedRunSpecAdapter, ExecutedUVAutomatedRunSpecAdapter
@@ -32,6 +33,27 @@ from pychron.core.helpers.filetools import add_extension
 
 class ExperimentEditorHandler(TabularEditorHandler):
     refresh_name = 'refresh_table_needed'
+
+    def select_unknowns(self, info, obj):
+        obj.select_unknowns()
+
+    def select_same(self, info, obj):
+        obj.select_same()
+
+    def select_same_attr(self, info, obj):
+        obj.select_same_attr()
+
+    def make_block(self, info, obj):
+        obj.make_run_block()
+
+    def repeat_block(self, info, obj):
+        obj.repeat_block()
+
+    def toggle_end_after(self, info, obj):
+        obj.toggle_end_after()
+
+    def toggle_skip(self, info, obj):
+        obj.toggle_skip()
 
 
 class ExperimentEditor(BaseTraitsEditor):
@@ -44,12 +66,46 @@ class ExperimentEditor(BaseTraitsEditor):
     executed = DelegatesTo('queue')
     tabular_adapter_klass = AutomatedRunSpecAdapter
     executed_tabular_adapter_klass = ExecutedAutomatedRunSpecAdapter
+    bgcolor = Color
+    tabular_adapter = Instance(AutomatedRunSpecAdapter)
+    executed_tabular_adapter = Instance(ExecutedAutomatedRunSpecAdapter)
+
+    automated_runs_editable = Bool
+    table_configurer = Instance(ExperimentTableConfigurer)
+
+    def show_table_configurer(self):
+        t = self.table_configurer
+        t.edit_traits()
+
+    def refresh(self):
+        self.queue.refresh_table_needed = True
+
+    def setup_tabular_adapters(self, c, ec, colors):
+        self.bgcolor = c
+        self.tabular_adapter = self.tabular_adapter_klass()
+        self.executed_tabular_adapter = self.executed_tabular_adapter_klass()
+
+        self.executed_tabular_adapter.colors = colors
+        self.tabular_adapter.odd_bg_color = c
+        self.executed_tabular_adapter.odd_bg_color = c
+        self.tabular_adapter.even_bg_color = ec
+        self.executed_tabular_adapter.even_bg_color = ec
+
+        v = ExperimentTableConfigurer(adapter=self.tabular_adapter,
+                                      children=[self.executed_tabular_adapter],
+                                      auto_set=True,
+                                      refresh_func=self.refresh,
+                                      id='experiment.table')
+
+        self.table_configurer = v
 
     def new_queue(self, txt=None, **kw):
         queue = self.queue_factory(**kw)
         if txt:
             if queue.load(txt):
                 self.queue = queue
+            else:
+                self.warning('failed to load queue')
         else:
             self.queue = queue
 
@@ -69,32 +125,44 @@ class ExperimentEditor(BaseTraitsEditor):
                 return True
 
     def traits_view(self):
+        # show row titles is causing a layout issue when resetting queues
+        # disabling show_row_titles for the moment.
+        operations = ['delete', 'move']
+        if self.automated_runs_editable:
+            operations.append('edit')
+
         arun_grp = UItem('automated_runs',
-                         editor=myTabularEditor(adapter=self.tabular_adapter_klass(),
-                                                operations=['delete',
-                                                            'move', 'edit'],
+                         editor=myTabularEditor(adapter=self.tabular_adapter,
+                                                operations=operations,
+                                                bgcolor=self.bgcolor,
                                                 editable=True,
-                                                show_row_titles=True,
+                                                mime_type='pychron.automated_run_spec',
+                                                # show_row_titles=True,
                                                 dclicked='dclicked',
                                                 selected='selected',
                                                 paste_function='paste_function',
+                                                update='refresh_table_needed',
                                                 refresh='refresh_table_needed',
                                                 scroll_to_row='automated_runs_scroll_to_row',
-                                                copy_cache='linked_copy_cache',
+                                                # copy_cache='linked_copy_cache',
+                                                stretch_last_section=False,
                                                 multi_select=True),
                          height=200)
 
         executed_grp = UItem('executed_runs',
-                             editor=myTabularEditor(adapter=self.executed_tabular_adapter_klass(),
+                             editor=myTabularEditor(adapter=self.executed_tabular_adapter,
+                                                    bgcolor=self.bgcolor,
                                                     editable=False,
                                                     auto_update=True,
                                                     selectable=True,
                                                     pastable=False,
-                                                    link_copyable=False,
+                                                    mime_type='pychron.automated_run_spec',
+                                                    # link_copyable=False,
                                                     paste_function='executed_paste_function',
-                                                    copy_cache='linked_copy_cache',
+                                                    # copy_cache='linked_copy_cache',
                                                     selected='executed_selected',
                                                     multi_select=True,
+                                                    stretch_last_section=False,
                                                     scroll_to_row='executed_runs_scroll_to_row'),
                              height=500,
                              visible_when='executed')
@@ -113,17 +181,19 @@ class ExperimentEditor(BaseTraitsEditor):
             return {'object': self.queue}
         return super(ExperimentEditor, self).trait_context()
 
-    #===============================================================================
+    # ===============================================================================
     # handlers
-    #===============================================================================
-    def _dirty_changed(self):
-        self.debug('dirty changed {}'.format(self.dirty))
-
-    def _queue_changed(self):
+    # ===============================================================================
+    # def _dirty_changed(self):
+    #     self.debug('dirty changed {}'.format(self.dirty))
+    def _queue_changed(self, old, new):
         f = self._set_queue_dirty
-        self.queue.on_trait_change(f, 'automated_runs[]')
-        self.queue.on_trait_change(f, 'changed')
-        self.queue.path = self.path
+        if old:
+            old.on_trait_change(f, 'automated_runs[]', remove=True)
+            old.on_trait_change(f, 'changed', remove=True)
+        new.on_trait_change(f, 'automated_runs[]')
+        new.on_trait_change(f, 'changed')
+        new.path = self.path
 
     def _path_changed(self):
         self.queue.path = self.path
@@ -146,7 +216,7 @@ class ExperimentEditor(BaseTraitsEditor):
                 qi.executable = False
                 qi.initialized = False
                 hec.report_errors(err)
-                #self.information_dialog(err)
+                # self.information_dialog(err)
                 break
 
             err = hec.check_queue(qi)
@@ -164,20 +234,20 @@ class ExperimentEditor(BaseTraitsEditor):
         p = add_extension(p)
 
         self.info('saving experiment to {}'.format(p))
-        with open(p, 'wb') as fp:
+        with open(p, 'wb') as wfile:
             n = len(queues)
             for i, exp in enumerate(queues):
                 exp.path = p
-                exp.dump(fp)
+                exp.dump(wfile)
                 if i < (n - 1):
-                    fp.write('\n')
-                    fp.write('*' * 80)
+                    wfile.write('\n')
+                    wfile.write('*' * 80)
 
         return p
 
-    #===============================================================================
+    # ===============================================================================
     # property get/set
-    #===============================================================================
+    # ===============================================================================
     def _get_tooltip(self):
         return self.path
 
@@ -194,4 +264,4 @@ class UVExperimentEditor(ExperimentEditor):
     tabular_adapter_klass = UVAutomatedRunSpecAdapter
     executed_tabular_adapter_klass = ExecutedUVAutomatedRunSpecAdapter
 
-#============= EOF =============================================
+# ============= EOF =============================================

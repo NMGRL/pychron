@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.ui.progress_dialog import myProgressDialog
 
 
@@ -24,12 +24,11 @@ class CancelLoadingError(BaseException):
     pass
 
 
-def open_progress(n, close_at_end=True):
+def open_progress(n, close_at_end=True, **kw):
     pd = myProgressDialog(max=n - 1,
-                          #dialog_size=(0,0, 550, 15),
                           close_at_end=close_at_end,
                           can_cancel=True,
-                          can_ok=True)
+                          can_ok=True, **kw)
     pd.open()
     return pd
 
@@ -62,10 +61,22 @@ def progress_loader(xs, func, threshold=50, progress=None, reraise_cancel=False)
                     raise CancelLoadingError
                 elif prog.accepted:
                     break
-                yield func(x, prog, i, n)
+                r = func(x, prog, i, n)
+                if r:
+                    if isinstance(r, (list,tuple)):
+                        for ri in r:
+                            yield ri
+                    else:
+                        yield r
         else:
             for x in xs:
-                yield func(x, None, 0, 0)
+                r = func(x, None, 0, 0)
+                if r:
+                    if isinstance(r, (list,tuple)):
+                        for ri in r:
+                            yield ri
+                    else:
+                        yield r
 
     try:
         return list(gen(progress))
@@ -105,7 +116,7 @@ def progress_iterator(xs, func, threshold=50, progress=None, reraise_cancel=Fals
         if reraise_cancel:
             raise CancelLoadingError
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

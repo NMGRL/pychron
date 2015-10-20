@@ -1,4 +1,4 @@
-##===============================================================================
+## ===============================================================================
 # # Copyright 2011 Jake Ross
 # #
 # # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # # See the License for the specific language governing permissions and
 # # limitations under the License.
-##===============================================================================
+## ===============================================================================
 #
 #
 #
@@ -220,7 +220,7 @@
 #        ages = np.asarray(ages)
 #        wm, we = self._weighted_mean(ages, errors)
 #        print ages
-#        print errors
+# print 'exception', errors
 #        print 'waieht', wm, we
 #        for ai, ei in zip(ages, errors):
 #            for j, bj in enumerate(bins):

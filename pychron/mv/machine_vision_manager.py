@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,19 +12,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 from traits.etsconfig.etsconfig import ETSConfig
 ETSConfig.toolkit = 'qt4'
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Instance, Float, Any
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from threading import Timer
 from numpy import asarray
-#============= local library imports  ==========================
-from pychron.mv.test_image import TestImage
+# ============= local library imports  ==========================
 from pychron.managers.manager import Manager
 from pychron.image.video import Video
 # from pychron.image.image import StandAloneImage
@@ -50,9 +49,9 @@ class MachineVisionManager(Manager):
             src = self.video.get_frame()
             return src
 
-#===============================================================================
+# ===============================================================================
 # image manipulation
-#===============================================================================
+# ===============================================================================
     def _crop_image(self, src, cw, ch):
         CX, CY = 0, 0
         cw_px = int(cw * self.pxpermm)
@@ -116,4 +115,4 @@ class MachineVisionManager(Manager):
 
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

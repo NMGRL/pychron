@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,12 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 from pychron.database.selectors.power_map_selector import PowerMapSelector
 from pychron.database.orms.power_map_orm import PowerMapTable, PowerMapPathTable
@@ -34,17 +34,17 @@ class PowerMapAdapter(PathDatabaseAdapter):
     def manage_database(self):
         manage_database(self.url, 'powermapdb')
 
-#==============================================================================
+# ==============================================================================
 #    getters
-#==============================================================================
+# ==============================================================================
 
     def get_powermaps(self, **kw):
         return self._retrieve_items(PowerMapTable)
 #        return self._get_items(PowerMapTable, globals(), **kw)
 
-#=============================================================================
+# =============================================================================
 #   adder
-#=============================================================================
+# =============================================================================
     def add_powermap(self, **kw):
         b = PowerMapTable(**kw)
         self._add_item(b)
@@ -62,4 +62,4 @@ if __name__ == '__main__':
     dbs.configure_traits()
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

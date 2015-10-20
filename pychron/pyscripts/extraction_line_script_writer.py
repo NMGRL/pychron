@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 import os
 import re
 
@@ -24,13 +24,13 @@ from pychron.core.ui import set_qt
 set_qt()
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Instance, List, Button, Float, \
     on_trait_change, Str, Event, Bool
 from pyface.file_dialog import FileDialog
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.filetools import add_extension, fileiter
 from pychron.loggable import Loggable
 from pychron.paths import paths
@@ -171,8 +171,8 @@ class ExtractionLineScriptWriter(Loggable):
     def _save(self, p):
         p = add_extension(p, ext='.py')
         self.debug('saving script to path {}'.format(p))
-        with open(p, 'w') as fp:
-            fp.write(self.script_text)
+        with open(p, 'w') as wfile:
+            wfile.write(self.script_text)
 
     def _open_file(self, p):
 
@@ -188,11 +188,11 @@ class ExtractionLineScriptWriter(Loggable):
         sleep_re = re.compile(r'''(?P<action>(sleep\())+((?P<value>(\d+.*\d*)))\)''')
         info_re = re.compile(r'''(info\()+['"]{1}(?P<value>[\w\s\d'"]*)['"]{1}\)''')
         actions = []
-        with open(p, 'r') as fp:
+        with open(p, 'r') as rfile:
             _docstring_started = False
             has__docstring = False
             ds = []
-            for li in fileiter(fp):
+            for li in fileiter(rfile):
                 if not has__docstring and (li.startswith('"""') or li.startswith("'''")):
                     if _docstring_started:
                         has__docstring = True
@@ -294,7 +294,7 @@ def main():
     def _canvas_default(self):
         elc = ExtractionLineCanvas2D(manager=self,
                                      confirm_open=False)
-        elc.load_canvas_file('canvas_config.xml')
+        elc.load_canvas_file()
         return elc
 
     def _network_default(self):
@@ -374,5 +374,5 @@ if __name__ == '__main__':
     ew.set_default_states()
     e = ExtractionLineScriptWriterView(model=ew)
     e.configure_traits()
-#============= EOF =============================================
+# ============= EOF =============================================
 

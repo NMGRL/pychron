@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 from datetime import timedelta, datetime
 
 from pychron.core.ui import set_qt
@@ -20,14 +20,14 @@ from pychron.core.ui import set_qt
 
 set_qt()
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Instance, Date, Float, List, Property, Either, Time
 from traitsui.api import View, Item, UItem, CheckListEditor, HGroup, VGroup
 from traitsui.handler import Controller
-import apptools.sweet_pickle as pickle
-#============= standard library imports ========================
+import cPickle as pickle
+# ============= standard library imports ========================
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.paths import paths
 
 
@@ -120,11 +120,11 @@ class FindAssociatedParametersDialog(Controller):
 
     def __init__(self, *args, **kw):
         super(FindAssociatedParametersDialog, self).__init__(*args, **kw)
-        p = os.path.join(paths.hidden_dir, 'find_associated_parameters_dialog')
+        p = os.path.join(paths.hidden_dir, 'find_associated_parameters_dialog.p')
         if os.path.isfile(p):
-            with open(p, 'r') as fp:
+            with open(p, 'r') as rfile:
                 try:
-                    self.model = pickle.load(fp)
+                    self.model = pickle.load(rfile)
                 except (pickle.PickleError, AttributeError, OSError, EOFError):
                     pass
         if not self.model:
@@ -132,10 +132,10 @@ class FindAssociatedParametersDialog(Controller):
 
     def closed(self, info, is_ok):
         if is_ok:
-            p = os.path.join(paths.hidden_dir, 'find_associated_parameters_dialog')
-            with open(p, 'w') as fp:
+            p = os.path.join(paths.hidden_dir, 'find_associated_parameters_dialog.p')
+            with open(p, 'w') as wfile:
                 try:
-                    pickle.dump(self.model, fp)
+                    pickle.dump(self.model, wfile)
                 except pickle.PickleError:
                     pass
 
@@ -192,5 +192,5 @@ if __name__ == '__main__':
     print msg
     print f.model.get_posts()
     print f.model.get_mass_spectrometers()
-#============= EOF =============================================
+# ============= EOF =============================================
 

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 from mako.template import Template
 from traitsui.handler import Controller
 import yaml
@@ -25,12 +25,12 @@ set_qt()
 from pychron.core.helpers.logger_setup import logging_setup
 
 logging_setup('dcreator')
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Str
 from traitsui.api import View, Item
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 
 class DeviceModel(HasTraits):
@@ -40,8 +40,8 @@ class DeviceModel(HasTraits):
         tmp = self.get_template()
 
         p = '/Users/ross/Sandbox/device_creator.yaml'
-        with open(p, 'r') as fp:
-            yd = yaml.load(fp)
+        with open(p, 'r') as rfile:
+            yd = yaml.load(rfile)
             print yd
 
         print tmp.render(**yd)
@@ -62,5 +62,5 @@ if __name__ == '__main__':
     d.make_from_file()
     # d = DeviceFactory(model=DeviceModel())
     # d.configure_traits()
-#============= EOF =============================================
+# ============= EOF =============================================
 

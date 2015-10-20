@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,37 +12,38 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-from traits.api import HasTraits, Str, List, Instance, Any
+# ============= enthought library imports =======================
+from traits.api import HasTraits, Instance, Any
 from traitsui.api import View, Item
 from traitsui.tree_node import TreeNode
 from traitsui.editors.tree_editor import TreeEditor
 # from xml.etree.ElementTree import XMLParser
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
+from pychron.core.hierarchy import Hierarchy, FilePath
 from pychron.regex import make_image_regex
 # from pychron.core.xml.xml_parser import XMLParser
 
-class FilePath(HasTraits):
-    name = Str
-    root = Any
-    def make_path(self):
-        '''
-            recursively assemble the path to this resourse
-        '''
-        if self.root:
-            return '{}/{}'.format(self.root.make_path(), self.name)
-        else:
-            return self.name
-
-class Hierarchy(FilePath):
-    children = List
-
-    def _children_changed(self):
-        for ci in self.children:
-            ci.root = self
+# class FilePath(HasTraits):
+#     name = Str
+#     root = Any
+#     def make_path(self):
+#         '''
+#             recursively assemble the path to this resourse
+#         '''
+#         if self.root:
+#             return '{}/{}'.format(self.root.make_path(), self.name)
+#         else:
+#             return self.name
+#
+# class Hierarchy(FilePath):
+#     children = List
+#
+#     def _children_changed(self):
+#         for ci in self.children:
+#             ci.root = self
 
 
 class Finder(HasTraits):
@@ -78,7 +79,7 @@ class Finder(HasTraits):
 
     def _load_hierarchy(self, obj, levels=None, level=0):
         name = obj.name
-        resps = self.filesystem.ls(obj.make_path())
+        resps = self.filesystem.ls(obj.path)
         dirs, files = self._make_hierarchy(resps, name)
 
         obj.children = dirs + files
@@ -94,7 +95,7 @@ class Finder(HasTraits):
             self._load_hierarchy(obj)
 
     def _on_select(self, obj):
-        self.selected = obj.make_path()
+        self.selected = obj.path
 
     def traits_view(self):
 
@@ -132,4 +133,4 @@ if __name__ == '__main__':
 #                            children=fs + hs
                             )
     f.configure_traits()
-#============= EOF =============================================
+# ============= EOF =============================================

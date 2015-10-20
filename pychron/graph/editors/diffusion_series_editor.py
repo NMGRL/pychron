@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import Str, Bool
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.graph.editors.series_editor import SeriesEditor, PolygonPlotEditor, \
     ContourPolyPlotEditor
 
@@ -35,7 +35,7 @@ class DiffusionSeriesEditor(SeriesEditor):
 #    isspectrum = Bool(False)
 #    iscoolinghistory = Bool(False)
     def _show_model_changed(self):
-        self.graph.set_series_visiblity(self.show_model, plotid=self.plotid,
+        self.graph.set_series_visibility(self.show_model, plotid=self.plotid,
                                         series='{}.model'.format(self.series_name))
 
 class KineticsSeriesEditor(DiffusionSeriesEditor):
@@ -43,7 +43,7 @@ class KineticsSeriesEditor(DiffusionSeriesEditor):
 #        if self.isspectrum:
             # toggles visibility of the error envelope
         name = '{}.meas'.format(self.series_name)
-        self.graph.set_series_visiblity(self.show_sample, plotid=self.plotid,
+        self.graph.set_series_visibility(self.show_sample, plotid=self.plotid,
                                             series=name)
 class LogrroSeriesEditor(KineticsSeriesEditor):
     basename = '{}.logr_ro'
@@ -71,10 +71,10 @@ class SpectrumSeriesEditor(DiffusionSeriesEditor):
             # toggles visibility of the error envelope
         ename = '{}.meas.err'.format(self.series_name)
         name = '{}.meas'.format(self.series_name)
-        self.graph.set_series_visiblity(self.show_sample, plotid=self.plotid,
+        self.graph.set_series_visibility(self.show_sample, plotid=self.plotid,
                                             series=ename)
 
-        self.graph.set_series_visiblity(self.show_sample, plotid=self.plotid,
+        self.graph.set_series_visibility(self.show_sample, plotid=self.plotid,
                                         series=name)
 
 
@@ -85,12 +85,12 @@ class ChistSeriesEditor(PolygonPlotEditor, DiffusionSeriesEditor):
     outer = Bool(True)
 
     def _inner_changed(self):
-        self.graph.set_series_visiblity(self.inner, plotid=self.plotid,
+        self.graph.set_series_visibility(self.inner, plotid=self.plotid,
                                         series='{}.h'.format(self.name)
                                         )
 
     def _outer_changed(self):
-        self.graph.set_series_visiblity(self.outer, plotid=self.plotid,
+        self.graph.set_series_visibility(self.outer, plotid=self.plotid,
                                         series='{}.l'.format(self.name)
                                         )
     def _show_changed(self, name, old, new):
@@ -103,4 +103,4 @@ class UnchistSeriesEditor(ContourPolyPlotEditor, DiffusionSeriesEditor):
     pass
 # class ContourPolyDiffusionSeriesEditor(ContourPolyPlotEditor, DiffusionSeriesEditor):
 #    pass
-#============= EOF =====================================
+# ============= EOF =====================================

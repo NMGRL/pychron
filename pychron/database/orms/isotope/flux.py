@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,18 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
-from sqlalchemy import Column, Float, DateTime
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
+from sqlalchemy import Column, Float, DateTime, BLOB
 from sqlalchemy.orm import relationship
-#============= local library imports  ==========================
-
-from pychron.database.core.base_orm import BaseMixin, NameMixin
-# from pychron.database.core.base_orm import PathMixin, ResultsMixin, ScriptTable
 from sqlalchemy.sql.expression import func
-from pychron.database.orms.isotope.util import foreignkey
+# ============= local library imports  ==========================
+from pychron.database.core.base_orm import BaseMixin, NameMixin
+from pychron.database.orms.isotope.util import foreignkey, stringcolumn
 
 from util import Base
 
@@ -44,12 +42,14 @@ class flux_MonitorTable(Base, NameMixin):
 
 class flux_HistoryTable(Base, BaseMixin):
     irradiation_position_id = foreignkey('irrad_PositionTable')
+    note = Column(BLOB)
+    create_date = Column(DateTime, default=func.now())
+    source = stringcolumn(140)
     selected = relationship('gen_LabTable',
                             backref='selected_flux_history',
                             uselist=False)
     flux = relationship('flux_FluxTable',
                         backref='history',
                         uselist=False)
-    create_date = Column(DateTime, default=func.now())
 
-#============= EOF =============================================
+# ============= EOF =============================================

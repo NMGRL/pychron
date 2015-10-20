@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,26 +12,29 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-from traits.api import HasTraits
-from traitsui.api import View, Item, TableEditor
+# ============= enthought library imports =======================
 from pychron.lasers.laser_managers.extraction_device import IExtractionDevice
-#============= standard library imports ========================
-#============= local library imports  ==========================
+
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class ILaserManager(IExtractionDevice):
     def trace_path(self, *args, **kw):
         pass
+
     def drill_point(self, *args, **kw):
         pass
+
     def take_snapshot(self, *args, **kw):
         pass
-#    def extract(self, *args, **kw):
+
+# def extract(self, *args, **kw):
 #        pass
 #    def end_extract(self, *args, **kw):
 #        pass
 #    def move_to_position(self, *args, **kw):
 #        pass
-#============= EOF =============================================
+# ============= EOF =============================================

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 from pychron.core.ui import set_toolkit
 set_toolkit('qt4')
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import os
 from traits.api import HasTraits, Instance
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 import yaml
 from pychron.experiment.utilities.identifier import strip_runid
 from pychron.database.offline_bridge import DatabaseBridge
@@ -99,8 +99,8 @@ class DataSetGenerator(HasTraits):
     def generate_from_file(self):
         p = os.path.join(paths.data_dir, 'dataset.yaml')
 
-        with open(p, 'r') as fp:
-            yd = yaml.load(fp)
+        with open(p, 'r') as rfile:
+            yd = yaml.load(rfile)
             print yd
 
         pdataset = yd.get('pychron')
@@ -155,16 +155,16 @@ class DataSetGenerator(HasTraits):
 
     def _make_blank_pychron_database(self, sess):
         p = os.path.join(os.path.dirname(__file__), 'pychron_dataset.sql')
-        with open(p, 'r') as fp:
-            sql = fp.read()
+        with open(p, 'r') as rfile:
+            sql = rfile.read()
             sess.execute(sql)
 
             sess.execute('Insert into alembic_version version_num 123456')
 
     def _make_blank_massspec_database(self, sess):
         p = os.path.join(os.path.dirname(__file__), 'massspec_dataset.sql')
-        with open(p, 'r') as fp:
-            sql = fp.read()
+        with open(p, 'r') as rfile:
+            sql = rfile.read()
             sess.execute(sql)
 
 
@@ -172,5 +172,5 @@ if __name__ == '__main__':
     g = DataSetGenerator()
     g.generate_from_file()
     g.configure_traits()
-#============= EOF =============================================
+# ============= EOF =============================================
 

@@ -1,4 +1,4 @@
-##===============================================================================
+## ===============================================================================
 # # Copyright 2011 Jake Ross
 # #
 # # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +12,13 @@
 # # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # # See the License for the specific language governing permissions and
 # # limitations under the License.
-##===============================================================================
+## ===============================================================================
 #
 #
 #
 # import csv
 # from pychron.database.pychron_adapter import PychronAdapter
-# from tables import openFile
+# from tables import open_file
 # import os
 # from pychron.managers.data_managers.h5_data_manager import H5DataManager
 # import time

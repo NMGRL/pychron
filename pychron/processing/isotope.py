@@ -12,28 +12,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
+from traits.api import HasTraits, Str, Float, Property, Instance, \
+    Array, String, Either, Dict, cached_property, Event, List, Bool, Int
+# ============= standard library imports ========================
+from uncertainties import ufloat, Variable, AffineScalarFunc
+from numpy import array, Inf, polyfit
 from binascii import hexlify
 from itertools import izip
-import re
-
-from traits.api import HasTraits, Str, Float, Property, Instance, \
-    Array, String, Either, Dict, cached_property, Event, List, Bool
-
-
-
-
-
-#============= standard library imports ========================
-from uncertainties import ufloat, Variable, AffineScalarFunc
-from numpy import array, Inf
-from pychron.core.helpers.fits import natural_name_fit
-
 import struct
-#============= local library imports  ==========================
-#logger = new_logger('isotopes')
+import re
+# ============= local library imports  ==========================
+from pychron.core.helpers.fits import natural_name_fit
 
 
 def fit_abbreviation(fit, ):
@@ -44,10 +36,13 @@ def fit_abbreviation(fit, ):
 
 
 class BaseMeasurement(HasTraits):
-    xs = Array
-    ys = Array
+    # xs = Array
+    # ys = Array
+    xs = None
+    ys = None
 
     n = Property(depends_on='xs')
+    _n = Int
     name = Str
     mass = Float
     detector = Str
@@ -61,6 +56,7 @@ class BaseMeasurement(HasTraits):
     # __slots__ = ['xs', 'ys', 'n', 'name', 'mass', 'detector', 'time_zero_offset']
 
     def __init__(self, dbrecord=None, unpack=False, unpacker=None, *args, **kw):
+        self.xs, self.ys = array([]), array([])
         super(BaseMeasurement, self).__init__(*args, **kw)
         if dbrecord and unpack:
             if unpacker is None:
@@ -104,14 +100,30 @@ class BaseMeasurement(HasTraits):
             print 'unpack_blob', e
 
     def _get_n(self):
-        return len(self.xs)
+        if not self._n:
+            return len(self.xs)
+        else:
+            return self._n
+
+    def _set_n(self, v):
+        self._n = v
 
     def _get_offset_xs(self):
         return self.xs - self.time_zero_offset
 
+    def get_slope(self, n):
+        if len(self.xs) and len(self.ys) and len(self.xs) == len(self.ys):
+            xs = self.xs
+            ys = self.ys
+            if n != -1:
+                xs = xs[-n:]
+                ys = ys[-n:]
+
+            return polyfit(xs, ys, 1)[0]
+
 
 class IsotopicMeasurement(BaseMeasurement):
-    uvalue = Property(depends_on='dirty')  #depends_on='value, error, _value, _error, dirty')
+    uvalue = Property(depends_on='dirty')  # depends_on='value, error, _value, _error, dirty')
 
     # value = Property(depends_on='_value, dirty')
     # error = Property(depends_on='_error, dirty')
@@ -144,7 +156,7 @@ class IsotopicMeasurement(BaseMeasurement):
 
     # __slots__ = ['_fit', '_value', '_error', 'filter_outliers_dict',
     # 'include_baseline_error',
-    #              '_ovalue', '_oerror',
+    # '_ovalue', '_oerror',
     #              'include_baseline_error', 'use_static',
     #              'user_defined_value',
     #              'user_defined_error', 'fit_blocks', 'error_type']
@@ -219,6 +231,12 @@ class IsotopicMeasurement(BaseMeasurement):
                     if s < cnt < e:
                         return f
 
+    def set_filter_outliers_dict(self, filter_outliers=True, iterations=1, std_devs=2, notify=True):
+        self.filter_outliers_dict = {'filter_outliers': filter_outliers,
+                                     'iterations': iterations,
+                                     'std_devs': std_devs}
+        self.dirty = notify
+
     def set_fit(self, fit, notify=True):
         if fit is not None:
             if isinstance(fit, (int, str)):
@@ -270,7 +288,8 @@ class IsotopicMeasurement(BaseMeasurement):
     def _get_value(self):
         # if not (self.name.endswith('bs') or self.name.endswith('bk')):
         #     print self.name, self.use_static,self.user_defined_value
-        if self.use_static and self._value:
+
+        if self.use_static and self._value is not None:
             return self._value
         elif self.user_defined_value:
             return self._value
@@ -282,7 +301,7 @@ class IsotopicMeasurement(BaseMeasurement):
             return self._value
 
     def _get_error(self):
-        if self.use_static and self._error:
+        if self.use_static and self._error is not None:
             return self._error
         elif self.user_defined_error:
             return self._error
@@ -307,7 +326,10 @@ class IsotopicMeasurement(BaseMeasurement):
         if 'average' in self.fit.lower():
             reg = self._mean_regressor_factory()
         else:
+            # print 'doing import of regresor {}'.format(self.__class__)
+            # st=time.time()
             from pychron.core.regression.ols_regressor import PolynomialRegressor
+            # print 'doing import of regresor {}'.format(time.time()-st)
 
             reg = PolynomialRegressor(tag=self.name,
                                       xs=self.offset_xs,
@@ -340,9 +362,9 @@ class IsotopicMeasurement(BaseMeasurement):
     def _error_type_changed(self):
         self.regressor.error_calc_type = self.error_type
 
-    #===============================================================================
+    # ===============================================================================
     # arthmetic
-    #===============================================================================
+    # ===============================================================================
     def __add__(self, a):
         return self.uvalue + a
 
@@ -389,10 +411,13 @@ class Sniff(BaseMeasurement):
     pass
 
 
+class Whiff(BaseMeasurement):
+    pass
+
+
 class BaseIsotope(IsotopicMeasurement):
     baseline = Instance(Baseline, ())
     baseline_fit_abbreviation = Property(depends_on='baseline:fit')
-    # __slots__ = ['baseline']
 
     def get_baseline_corrected_value(self):
         b = self.baseline.uvalue
@@ -417,6 +442,7 @@ class Isotope(BaseIsotope):
     blank = Instance(Blank, ())
     background = Instance(Background)
     sniff = Instance(Sniff)
+    whiff = Instance(Whiff)
 
     correct_for_blank = True
     ic_factor = Either(Variable, AffineScalarFunc)
@@ -431,7 +457,7 @@ class Isotope(BaseIsotope):
 
     # __slots__ = ['interference_corrected_value',
     # 'discrimination', 'ic_factor',
-    #              'sniff', 'blank', 'background'
+    # 'sniff', 'blank', 'background'
     #                                'age_error_component']
 
     def get_filtered_data(self):
@@ -474,12 +500,12 @@ class Isotope(BaseIsotope):
         if disc is None:
             disc = 1
 
-        return self.get_corrected_value() * disc
+        return self.get_non_detector_corrected_value() * disc
 
     def get_ic_corrected_value(self):
-        return self.get_corrected_value() * (self.ic_factor or 1.0)
+        return self.get_non_detector_corrected_value() * (self.ic_factor or 1.0)
 
-    def get_corrected_value(self):
+    def get_non_detector_corrected_value(self):
         v = self.get_baseline_corrected_value()
 
         #this is a temporary hack for handling Minna bluff data
@@ -496,6 +522,9 @@ class Isotope(BaseIsotope):
 
     def set_baseline(self, v, e):
         self.baseline = Baseline(_value=v, _error=e)
+
+    def _whiff_default(self):
+        return Whiff()
 
     def _sniff_default(self):
         return Sniff()
@@ -524,4 +553,4 @@ class Isotope(BaseIsotope):
         except (OverflowError, ValueError, AttributeError, TypeError), e:
             return '{} {}'.format(self.name, e)
 
-#============= EOF =============================================
+# ============= EOF =============================================

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,32 +12,84 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pyface.tasks.action.task_action import TaskAction
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.envisage.resources import icon
+from pychron.processing.tasks.actions.processing_actions import myTaskAction
 
 
 class AddIsoEvoAction(TaskAction):
     name = 'Iso. Evo'
     method = 'add_iso_evo'
-    image = icon('chart_curve_add.png')
+    image = icon('chart_curve_add')
 
 
 
 class AddDiffAction(TaskAction):
     name = 'Diff'
     method = 'add_diff'
-    image = icon('edit_diff.png')
+    image = icon('edit_diff')
 
 
 class EditDataAction(TaskAction):
     name = 'Edit Data'
     method = 'edit_data'
-    image = icon('edit_diff.png')
+    image = icon('application-form-edit')
 
-#============= EOF =============================================
+
+class DatasetAction(TaskAction):
+    name = 'New Dataset'
+    method = 'new_dataset'
+
+
+class RatioEditorAction(TaskAction):
+    name='Ratio'
+    method = 'open_ratio_editor'
+    image = icon('window-new')
+class SummaryLabnumberAction(myTaskAction):
+    name = 'Summary L# View'
+    method = 'new_summary_labnumber_editor'
+    task_ids = ['pychron.recall']
+    image = icon('window-new')
+
+
+class CalculationViewAction(myTaskAction):
+    name = 'Calculation View'
+    task_ids = ['pychron.recall', ]
+    method = 'open_calculation_view'
+    image = icon('window-new')
+
+
+class SummaryProjectAction(myTaskAction):
+    name = 'Summary Project View'
+    method = 'new_summary_project_editor'
+    task_ids = ['pychron.recall']
+    image = icon('window-new')
+
+
+class ContextViewAction(myTaskAction):
+    name = 'Context View'
+    method = 'new_context_editor'
+    task_ids = ['pychron.recall']
+    image = icon('window-new')
+
+
+class NextAction(myTaskAction):
+    name = 'Next'
+    method = 'next_analysis'
+    image = icon('arrow-right-2')
+    task_ids = ['pychron.recall']
+
+
+class PreviousAction(myTaskAction):
+    name = 'Previous'
+    method = 'previous_analysis'
+    image = icon('arrow-left-2')
+    task_ids = ['pychron.recall']
+
+# ============= EOF =============================================

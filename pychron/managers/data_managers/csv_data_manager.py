@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,21 +12,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from data_manager import DataManager
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import csv
 from numpy import loadtxt
 
 # import time
 # from matplotlib.dates import num2date
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 class CSVDataManager(DataManager):
     '''
     '''
@@ -34,6 +34,7 @@ class CSVDataManager(DataManager):
     format_str = '{:0.6f}'
     _writer = None
     _file = None
+    delimiter = ','
     def load(self, frame_key=None):
         if frame_key is None:
             frame_key = self._current_frame
@@ -71,7 +72,7 @@ class CSVDataManager(DataManager):
             mode = 'a'
         with open(p, mode) as f:
 #            writer = self.writer
-            writer = csv.writer(f)
+            writer = csv.writer(f, delimiter=self.delimiter)
             if isinstance(datum[0], (list, tuple)):
                 writer.writerows(datum)
             else:
@@ -119,4 +120,4 @@ class CSVDataManager(DataManager):
 #    for xi in x:
 #        print num2date(xi).second
 
-#============= EOF ====================================
+# ============= EOF ====================================

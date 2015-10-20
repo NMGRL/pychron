@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from chaco.pdf_graphics_context import PdfPlotGraphicsContext
 from reportlab.platypus.flowables import Flowable
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class ComponentFlowable(Flowable):
     component = None
@@ -72,4 +72,4 @@ class ComponentFlowable(Flowable):
             gc.translate_ctm(-self.component.x, -self.component.y)
             self.component.draw(gc)
 
-#============= EOF =============================================
+# ============= EOF =============================================

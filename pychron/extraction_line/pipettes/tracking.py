@@ -12,16 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import cPickle as pickle
 
 from traits.api import Str, Int
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.core.helpers.datetime_tools import generate_datetimestamp
@@ -57,23 +57,23 @@ class PipetteTracker(Loggable):
         self.debug('increment shot count {}'.format(self.counts))
         self.dump()
 
-    #===============================================================================
+    # ===============================================================================
     # persistence
-    #===============================================================================
+    # ===============================================================================
     def load(self):
         p = self._get_path_id()
         if os.path.isfile(p):
-            with open(p, 'r') as fp:
+            with open(p, 'r') as rfile:
                 try:
-                    params = pickle.load(fp)
+                    params = pickle.load(rfile)
                     self._load(params)
                 except (pickle.PickleError, OSError):
                     pass
 
     def dump(self):
         p = self._get_path_id()
-        with open(p, 'w') as fp:
-            pickle.dump(self._dump(), fp)
+        with open(p, 'w') as wfile:
+            pickle.dump(self._dump(), wfile)
             self.debug('saved current shot count {}'.format(self.counts))
 
     def _load(self, params):
@@ -103,4 +103,4 @@ class PipetteTracker(Loggable):
 
         return p
 
-#============= EOF =============================================
+# ============= EOF =============================================

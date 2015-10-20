@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits
 # from traitsui.api import View, Item, TableEditor
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 import time
 import numpy as np
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.graph.regression_graph import RegressionGraph
 from pychron.paths import paths
 from pychron.core.helpers.filetools import unique_dir
@@ -92,7 +92,7 @@ class DeflectionCalibraiton(HasTraits):
                     break
                 self.info('Peak center ni = {}'.format(n + 1))
 
-                p = os.path.join(root_dir, 'peak_scan_{:02n}_{:02n}.csv'.format(int(ni), n))
+                p = os.path.join(root_dir, 'peak_scan_{:02d}_{:02d}.csv'.format(int(ni), n))
                 dm.new_frame(path=p)
                 dm.write_to_frame(['DAC (V)', 'Intensity (fA)'])
 
@@ -134,4 +134,4 @@ class DeflectionCalibraiton(HasTraits):
                 time.sleep(2)
 
         self.info('deflection calibration finished')
-#============= EOF =============================================
+# ============= EOF =============================================

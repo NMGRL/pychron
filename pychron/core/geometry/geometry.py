@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 import math
 
 from numpy import array, vstack, mean, average, hstack
 
 # from pychron.core.geometry.centroid.calculate_centroid import calculate_centroid
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 def sort_clockwise(pts, xy, reverse=False):
     """
         pts = list of points
@@ -267,4 +267,4 @@ def approximate_polygon_center2(pts, r=None):
         pys = hstack((pys[-5:], yf))
 
     return xf, yf, r
-#============= EOF =============================================
+# ============= EOF =============================================

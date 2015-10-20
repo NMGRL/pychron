@@ -12,18 +12,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-from pychron.core.helpers.filetools import to_bool
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= enthought library imports =======================
+from pychron.core.helpers.strtools import to_bool
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.loggable import Loggable
 from pychron.regex import ALIQUOT_REGEX
 
 
 class RunParser(Loggable):
-    def parse(self, header, line, meta, delim='\t'):
+    def parse(self, header, line, delim='\t'):
         params = dict()
         if not isinstance(line, list):
             line = line.split(delim)
@@ -33,7 +33,7 @@ class RunParser(Loggable):
         ln = args[header.index('labnumber')]
         if ALIQUOT_REGEX.match(ln):
             ln, a = ln.split('-')
-            #params['aliquot'] = int(a)
+            # params['aliquot'] = int(a)
             params['user_defined_aliquot'] = int(a)
 
         params['labnumber'] = ln
@@ -65,8 +65,8 @@ class RunParser(Loggable):
     def _get_attr_value(self, header, args, attr, cast=None):
         for hi, ai in self._get_attr(attr):
             idx = self._get_idx(header, ai)
-            #print header
-            #print hi, ai, idx
+            # print header
+            # print hi, ai, idx
             if idx:
                 try:
                     v = args[idx]
@@ -74,17 +74,17 @@ class RunParser(Loggable):
                         return hi, cast(v) if cast else v
                 except IndexError, e:
                     pass
-                    #print e, attr, idx, args
+                    # print 'exception', e, attr, idx, args
 
     def _load_strings(self, header, args, params):
-        for attr in [
-            'pattern',
-            'position',
-            'comment',
-            'syn_extraction',
-            'overlap',
-            ('truncate_condition', 'truncate'),
-            ('extract_units', 'e_units')]:
+        for attr in ['pattern',
+                     'position',
+                     'comment',
+                     'syn_extraction',
+                     'overlap',
+                     'experiment_identifier',
+                     ('conditionals', 'truncate'),
+                     ('extract_units', 'e_units')]:
             v = self._get_attr_value(header, args, attr)
             if v is not None:
                 params[v[0]] = v[1]
@@ -92,7 +92,7 @@ class RunParser(Loggable):
     def _load_numbers(self, header, args, params):
         for attr in ['duration',
                      'cleanup',
-                     'ramp_duration',
+                     ('ramp_duration', 'ramp'),
                      'weight',
                      ('time_zero_offset', 't_o'),
                      ('extract_value', 'e_value'),
@@ -105,27 +105,12 @@ class RunParser(Loggable):
 
     def _load_booleans(self, header, args, params):
 
-        for attr in [
-            'autocenter',
-            ('disable_between_positions', 'dis_btw_pos')]:
+        for attr in ['autocenter',
+                     'use_cdd_warming',
+                     ('disable_between_positions', 'dis_btw_pos')]:
             v = self._get_attr_value(header, args, attr, cast=lambda x: to_bool(x.strip()))
             if v is not None:
                 params[v[0]] = v[1]
-
-            #     def _validate_truncate_condition(self, t):
-            #         if t.endswith('.yaml'):
-            #             return True
-            #
-            #         try:
-            #             c, start = t.split(',')
-            #             pat = '<=|>=|[<>=]'
-            #             attr, value = re.split(pat, c)
-            #             m = re.search(pat, c)
-            #             comp = m.group(0)
-            # #             self.py_add_truncation(attr, comp, value, int(start))
-            #             return True
-            #         except Exception, e:
-            #             self.debug('truncate_condition parse failed {} {}'.format(e, t))
 
     def _get_attr(self, attr):
         if isinstance(attr, tuple):
@@ -142,8 +127,8 @@ class RunParser(Loggable):
 
 
 class UVRunParser(RunParser):
-    def parse(self, header, line, meta, delim='\t'):
-        script_info, params = super(UVRunParser, self).parse(header, line, meta, delim)
+    def parse(self, header, line, delim='\t'):
+        script_info, params = super(UVRunParser, self).parse(header, line, delim)
         if not isinstance(line, list):
             line = line.split(delim)
 
@@ -155,7 +140,7 @@ class UVRunParser(RunParser):
                 v = args[idx]
                 params[attr] = cast(v)
             except (IndexError, ValueError, TypeError), e:
-                #print e
+                # print 'exception', e
                 pass
 
         _set('reprate', int)
@@ -165,4 +150,4 @@ class UVRunParser(RunParser):
 
         return script_info, params
 
-        #============= EOF =============================================
+        # ============= EOF =============================================

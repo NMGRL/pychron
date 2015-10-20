@@ -1,100 +1,98 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-from chaco.array_data_source import ArrayDataSource
-from chaco.axis import PlotAxis
-from chaco.data_range_1d import DataRange1D
-from chaco.linear_mapper import LinearMapper
+# ============= enthought library imports =======================
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
+from chaco.array_plot_data import ArrayPlotData
 from chaco.lineplot import LinePlot
-from traits.api import Str
+from chaco.plot import Plot
+from chaco.plot_containers import VPlotContainer
+from chaco.scatterplot import ScatterPlot
+from pychron.graph.error_bar_overlay import ErrorBarOverlay
+from pychron.processing.plotters.base_inset import BaseInset
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
 GOLDEN_RATIO = 1.618
 
 
-class IdeogramInset(LinePlot):
-    location = Str
-    border_visible = True
+class BaseIdeogramInset(BaseInset):
+    # def set_limits(self):
+    #     l, h = self.value.get_bounds()
+    #     self.value_range.low = 0
+    #     self.value_range.high = h + 1
 
-    def __init__(self, xs, ys, index_bounds=None, value_bounds=None, *args, **kw):
+        # l, h = self.index.get_bounds()
+        # pad = (h - l) * 0.1
+        # self.index_range.low -= pad
+        # self.index_range.high += pad
+    def set_y_limits(self, y1, y2):
+        self.value_range.low = y1
+        self.value_range.high = y2
 
-        index = ArrayDataSource(xs)
-        value = ArrayDataSource(ys)
-        if index_bounds is not None:
-            index_range = DataRange1D(low=index_bounds[0], high=index_bounds[1])
-        else:
-            index_range = DataRange1D()
-        index_range.add(index)
-        index_mapper = LinearMapper(range=index_range)
+    def get_y_limits(self):
+        v = self.value_range
+        return v.low, v.high
 
-        if value_bounds is not None:
-            value_range = DataRange1D(low=value_bounds[0], high=value_bounds[1])
-        else:
-            value_range = DataRange1D()
-        value_range.add(value)
-        value_mapper = LinearMapper(range=value_range)
+    def set_x_limits(self, x1, x2):
+        self.index_range.low = x1
+        self.index_range.high = x2
 
-        self.index = index
-        self.value = value
-        self.index_mapper = index_mapper
-        self.value_mapper = value_mapper
-        # self.color = "red"
-        # self.line_width = 1.0
-        # self.line_style = "solid"
+    def get_x_limits(self):
+        r = self.index_range
+        return r.low, r.high
 
-        left = PlotAxis(orientation='left', mapper=value_mapper,
-                        tick_label_formatter=lambda x: '',
-                        tick_visible=False)
 
-        bottom = PlotAxis(orientation='bottom',
-                          mapper=index_mapper,
-                          tick_label_font='modern 8')
-        self.underlays.append(left)
-        self.underlays.append(bottom)
+class IdeogramInset(BaseIdeogramInset, LinePlot):
+    def __init__(self, *args, **kw):
+        self.border_visible = kw.get('border_visible', True)
+        BaseInset.__init__(self, *args, **kw)
+        LinePlot.__init__(self)
 
-        super(IdeogramInset, self).__init__(*args, **kw)
+        self.y_axis.trait_set(tick_label_formatter=lambda x: '',
+                              tick_visible=False)
+        # self.set_limits()
 
-    def _compute_location(self, component):
-        x1, y1 = component.x, component.y
-        x2, y2 = component.x2, component.y2
-        w = self.width
-        h = self.height
-        # w = h * GOLDEN_RATIO
-        loc = self.location
-        if 'Upper' in loc:
-            y = y2 - h - 2
-        else:
-            y = y1 + 2
-        if 'Right' in loc:
-            x = x2 - w - 2
-        else:
-            x = x1 + 2
 
-        self.x, self.y, self.width, self.height = x, y, w, h
-        # print self.x, self.y, self.width, self.height
+class IdeogramPointsInset(BaseIdeogramInset, ScatterPlot):
+    def __init__(self, *args, **kw):
+        BaseInset.__init__(self, *args, **kw)
+        ScatterPlot.__init__(self)
 
-    def overlay(self, component, gc, *args, **kw):
-        with gc:
-            gc.clip_to_rect(component.x, component.y, component.width, component.height)
-            self._compute_location(component)
-            self._draw_underlay(gc, *args, **kw)
-            self._draw_plot(gc, *args, **kw)
-            self._draw_border(gc, *args, **kw)
+        self.border_visible = kw.get('border_visible', True)
+        self.marker = 'circle'
+        # self.color = 'red'
+        self.marker_size = 1.5
+        if not self.visible_axes:
+            self.x_axis.visible = False
+            self.y_axis.visible = False
 
-#============= EOF =============================================
+        # self.set_limits()
+
+        nsigma = 1
+        orientation = 'x'
+        line_width = 1
+        visible = True
+        ebo = ErrorBarOverlay(component=self,
+                              orientation=orientation,
+                              nsigma=nsigma,
+                              line_width=line_width,
+                              use_end_caps=False,
+                              visible=visible)
+        self.overlays.append(ebo)
+
+# ============= EOF =============================================
 

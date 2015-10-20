@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,19 +12,23 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 # from traits.api import HasTraits
 # from pychron.core.ui import set_toolkit
 # set_toolkit('qt4')
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from unittest import TestCase
-#============= local library imports  ==========================
+
+from numpy import linspace, polyval
+
+# ============= local library imports  ==========================
 from pychron.core.regression.mean_regressor import MeanRegressor  #, WeightedMeanRegressor
+from pychron.core.regression.new_york_regressor import ReedYorkRegressor, NewYorkRegressor
 from pychron.core.regression.ols_regressor import OLSRegressor
 # from pychron.core.regression.york_regressor import YorkRegressor
-from pychron.core.regression.tests.standard_data import mean_data, filter_data, ols_data
+from pychron.core.regression.tests.standard_data import mean_data, filter_data, ols_data, pearson
 
 # class RegressionTestCase(TestCase):
 #     def setUp(self):
@@ -36,11 +40,7 @@ from pychron.core.regression.tests.standard_data import mean_data, filter_data, 
 class RegressionTestCase(object):
     @classmethod
     def setUpClass(cls):
-        cls.reg = cls.regressor_factory()
-
-    @staticmethod
-    def regressor_factory():
-        pass
+        cls.reg = cls.reg_klass()
 
     def testN(self):
         self.assertEqual(self.reg.n, self.solution['n'])
@@ -61,15 +61,9 @@ class MeanRegressionTest(RegressionTestCase, TestCase):
     def testStd(self):
         self.assertAlmostEqual(self.reg.std, self.solution['std'], 2)
 
-    @staticmethod
-    def regressor_factory():
-        return MeanRegressor()
-
 
 class OLSRegressionTest(RegressionTestCase, TestCase):
-    @staticmethod
-    def regressor_factory():
-        return OLSRegressor()
+    reg_klass = OLSRegressor
 
     def setUp(self):
         xs, ys, sol = ols_data()
@@ -90,12 +84,27 @@ class OLSRegressionTest(RegressionTestCase, TestCase):
         self.assertAlmostEqual(e, self.solution['pred_error'], 3)
 
 
-#
-#
+class OLSRegressionTest2(RegressionTestCase, TestCase):
+    reg_klass = OLSRegressor
+    def setUp(self):
+        n=100
+        coeffs=[2.12,1.13,5.14]
+        xs = linspace(0, 100, n)
+        ys = polyval(coeffs, xs)
+
+        self.reg.trait_set(xs=xs, ys=ys, fit='parabolic')
+
+        sol = {'coefficients':coeffs, 'n':n}
+        self.solution = sol
+        self.reg.calculate()
+
+    def testcoefficients(self):
+        self.assertListEqual(list(map(lambda x: round(x, 6),
+                                      self.reg.coefficients[::-1])),
+                             self.solution['coefficients'])
+
 class FilterOLSRegressionTest(RegressionTestCase, TestCase):
-    @staticmethod
-    def regressor_factory():
-        return OLSRegressor()
+    reg_klass = OLSRegressor
 
     def setUp(self):
         xs, ys, sol = filter_data()
@@ -117,8 +126,42 @@ class FilterOLSRegressionTest(RegressionTestCase, TestCase):
         # e=self.reg.coefficient_errors[0]
         self.assertAlmostEqual(e, self.solution['pred_error'], 3)
 
-#
-#
+
+class PearsonRegressionTest(RegressionTestCase):
+    kind = ''
+    def setUp(self):
+        xs, ys, wxs, wys = pearson()
+
+        exs = wxs ** -0.5
+        eys = wys ** -0.5
+
+        self.reg.trait_set(xs=xs, ys=ys,
+                                     xserr=exs,
+                                     yserr=eys)
+        self.reg.calculate()
+        self.solution={'n':len(xs)}
+
+    def test_slope(self):
+        exp = pearson(self.kind)
+        self.assertAlmostEqual(self.reg.slope, exp['slope'], 4)
+
+    def test_y_intercept(self):
+        expected = pearson(self.kind)
+        self.assertAlmostEqual(self.reg.intercept, expected['intercept'], 4)
+
+    def test_mswd(self):
+        expected = pearson(self.kind)
+        self.assertAlmostEqual(self.reg.mswd, expected['mswd'], 3)
+
+
+class ReedRegressionTest(PearsonRegressionTest, TestCase):
+    reg_klass = ReedYorkRegressor
+    kind = 'reed'
+
+
+class NewYorkRegressionTest(PearsonRegressionTest, TestCase):
+    reg_klass = NewYorkRegressor
+    kind = 'reed'
 # class WeightedMeanRegressionTest(RegressionTestCase, TestCase):
 #     @staticmethod
 #     def regressor_factory():
@@ -145,7 +188,7 @@ class FilterOLSRegressionTest(RegressionTestCase, TestCase):
 #         es = np.ones(n)
 #         ys = np.hstack((ys, [5.1]))
 #         es = np.hstack((es, [1000]))
-#         #        print es
+# #        print 'exception', es
 #         self.reg = WeightedMeanRegressor(ys=ys, errors=es)
 
 #    def testMean(self):
@@ -321,4 +364,4 @@ class FilterOLSRegressionTest(RegressionTestCase, TestCase):
 #        self.assertEqual(y, self.Yprederr_5_parabolic)
 # #        self.assertEqual(yal, self.Yprederr_5_parabolic)
 
-#============= EOF =============================================
+# ============= EOF =============================================

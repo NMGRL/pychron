@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +12,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import os
 from threading import Thread
 import time
 import uuid
+
 from traits.api import HasTraits, Instance, Str, Dict, Property, Bool, Float
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 import yaml
 from pychron.core.helpers.filetools import add_extension
 from pychron.experiment.utilities.identifier import make_runid
@@ -219,8 +221,8 @@ class SynExtractionCollector(Loggable):
     def _load_config(self):
         p = self.path
         if os.path.isfile(p):
-            with open(p, 'r') as fp:
-                return yaml.load(fp)
+            with open(p, 'r') as rfile:
+                return yaml.load(rfile)
 
     def _static_spec_factory(self, config):
         config = config.get('static')
@@ -240,5 +242,5 @@ class SynExtractionCollector(Loggable):
         else:
             self.debug('no dynamic in configuration file')
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

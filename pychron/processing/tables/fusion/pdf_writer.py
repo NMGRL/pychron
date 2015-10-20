@@ -12,12 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Int
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.core.pdf.items import Row, FootNoteRow, FooterRow
 from reportlab.lib import colors
 from pychron.processing.tables.pdf_writer import IsotopePDFTableWriter
@@ -124,9 +124,9 @@ class FusionPDFTableWriter(IsotopePDFTableWriter):
             ('extract_value', '{}'),
             ('moles_Ar40', value(n=3, scale=1e-17)),
 
-            #==============================================================
+            # ==============================================================
             # signals
-            #==============================================================
+            # ==============================================================
             ('Ar40', value(scale=scales['Ar40'])),
             ('Ar40', error(scale=scales['Ar40err'])),
             ('Ar39', value(scale=scales['Ar39'])),
@@ -138,9 +138,9 @@ class FusionPDFTableWriter(IsotopePDFTableWriter):
             ('Ar36', value(scale=scales['Ar36'])),
             ('Ar36', error(scale=scales['Ar36err'])),
 
-            #==============================================================
+            # ==============================================================
             # computed
-            #==============================================================
+            # ==============================================================
 
             # ('F', value(n=5)),
             ('kca', value(n=2)),
@@ -154,9 +154,9 @@ class FusionPDFTableWriter(IsotopePDFTableWriter):
         row = self._new_row(analysis, attrs, default_fontsize)
 
         # battrs = (
-        #     #==============================================================
+        #     # ==============================================================
         #     # blanks
-        #     #==============================================================
+        #     # ==============================================================
         #     #                     ('', '{}'),
         #     #                     ('', '{}'),
         #     ('', '{}'),
@@ -215,9 +215,9 @@ class FusionPDFTableWriter(IsotopePDFTableWriter):
         #             table._argH[i] = v.height * inch
 
 
-        #===============================================================================
+        # ===============================================================================
         # summary
-        #===============================================================================
+        # ===============================================================================
 
     def _make_summary_rows(self, mean, idx, style):
         weighted_mean_row = Row(fontsize=6, height=0.15)
@@ -233,13 +233,13 @@ class FusionPDFTableWriter(IsotopePDFTableWriter):
         #         platrow.add_item(value='Weighted Mean Age')
         return [weighted_mean_row]
 
-    #===============================================================================
+    # ===============================================================================
     # blanks
-    #===============================================================================
+    # ===============================================================================
 
-    #===============================================================================
+    # ===============================================================================
     # footnotes
-    #===============================================================================
+    # ===============================================================================
     def _make_footnote_rows(self, data, style):
         data.append(Row(height=0.1))
         height = self.footnote_height
@@ -273,9 +273,9 @@ class FusionPDFTableWriter(IsotopePDFTableWriter):
             style.add('SPAN', (0, idx), (-1, idx))
 
 
-            #===============================================================================
+            # ===============================================================================
 
-            #============= EOF =============================================
+            # ============= EOF =============================================
             # class TableSpec(HasTraits):
             #     status_width = Int(5)
             #     id_width = Int(20)

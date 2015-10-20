@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,15 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pychron.core.ui import set_toolkit
 set_toolkit('qt4')
 import unittest
 from pychron.processing.isotope import Isotope
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class FitBlockTest(unittest.TestCase):
     @classmethod
@@ -140,7 +140,7 @@ class FitBlockTest(unittest.TestCase):
     #     start_count = 0
     #     frequency = 1
     #
-    #     conditions = [
+    #     conditionals = [
     #         TruncationCondition(attr, comp, value,
     #                             start_count,
     #                             frequency)
@@ -151,7 +151,7 @@ class FitBlockTest(unittest.TestCase):
     #     arun.analysis_type = 'unknown'
     #     arun.start()
     #
-    #     result = arun._check_conditions(conditions, cnt)
+    #     result = arun._check_conditions(conditionals, cnt)
     #     self.assertEqual(result, True)
 
 #     def testTermination(self):
@@ -168,4 +168,4 @@ class FitBlockTest(unittest.TestCase):
 #         self.arun._measure_iteration(grpname, data_write_hook, ncounts,
 #                                      starttime, starttime_offset, series,
 #                                      fits, check_conditions, refresh)
-#============= EOF =============================================
+# ============= EOF =============================================

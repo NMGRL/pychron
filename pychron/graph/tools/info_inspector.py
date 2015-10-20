@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,15 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-from traits.api import Event, Instance, on_trait_change
+# ============= enthought library imports =======================
+from traits.api import Event, Instance
 from chaco.abstract_overlay import AbstractOverlay
 from enable.base_tool import BaseTool
 from kiva.fonttools import Font
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 def intersperse(m, delim):
     """
@@ -101,11 +101,11 @@ class InfoOverlay(AbstractOverlay):
 
         lws, lhs = zip(*[gc.get_full_text_extent(mi)[:2] for mi in lines])
 
-        lw = max(lws) + 4
-        lh = max(lhs) * len(lhs) + 2
+        rect_width = max(lws) + 4
+        rect_height = (max(lhs)+2) * len(lhs)
 
-        xoffset = 12
-        yoffset = -10
+        xoffset = 5
+        yoffset = -5
         gc.translate_ctm(xoffset, yoffset)
 
         # if the box doesnt fit in window
@@ -113,25 +113,23 @@ class InfoOverlay(AbstractOverlay):
         x2 = self.component.x2
         y2 = self.component.y2
 
-        if x + xoffset + lw > x2:
-            x = x2 - lw - xoffset - 1
+        if x + xoffset + rect_width > x2:
+            x = x2 - rect_width - xoffset - 1
 
-        #move down if to tall
-        if y + yoffset + lh > y2:
-            y = y2 - lh - yoffset -1
+        # move down if to tall
+        # if y + yoffset + rect_height > y2:
+        #     y = y2 - rect_height - yoffset -1
 
         # if current point within bounds of box, move box to left
         if x < sx:
-            x = sx - lw - xoffset - 6
+            x = sx - rect_width - xoffset - 6
 
-        h = lhs[0]
-
-        gc.rect(x, y, lw, lh)
+        gc.translate_ctm(x, y-rect_height)
+        gc.rect(0, -2, rect_width, rect_height+4)
         gc.draw_path()
         gc.set_fill_color((0, 0, 0))
 
-        gc.translate_ctm(x + 2, y + 2)
-
+        h = max(lhs)+2
         for i, mi in enumerate(lines[::-1]):
             gc.set_text_position(0, h * i)
             gc.show_text(mi)
@@ -143,4 +141,4 @@ class InfoOverlay(AbstractOverlay):
         if new:
             new.on_trait_change(self._update_, 'metadata_changed')
 
-#============= EOF =============================================
+# ============= EOF =============================================

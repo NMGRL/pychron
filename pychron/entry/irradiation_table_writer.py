@@ -12,19 +12,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 from pychron.core.ui import set_qt
 
 set_qt()
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import os
 
 from reportlab.lib import colors
 from traits.api import HasTraits, Str, Float
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 import yaml
 from pychron.core.helpers.filetools import view_file
 from pychron.core.pdf.base_table_pdf_writer import BasePDFTableWriter
@@ -52,8 +52,8 @@ class IrradiationTableWriter(IsotopeDatabaseManager):
     def make(self):
         root = os.path.join(paths.dissertation, 'data', 'minnabluff', 'irradiations')
         p = os.path.join(root, 'irradiations.yaml')
-        with open(p, 'r') as fp:
-            yd = yaml.load(fp)
+        with open(p, 'r') as rfile:
+            yd = yaml.load(rfile)
 
         db = self.db
         irrads = []
@@ -127,4 +127,4 @@ if __name__ == '__main__':
     i.connect()
     i.make()
 
-    #============= EOF =============================================
+    # ============= EOF =============================================

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,24 +12,25 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from chaco.api import AbstractOverlay
 from traits.api import Bool
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import linspace, hstack, sqrt, corrcoef, column_stack, array, delete
 from numpy.linalg import eig
 import math
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 # http://www.earth-time.org/projects/upb/public_docs/ErrorEllipses.pdf
 # 5) To create a 95% confidence ellipse from the 1s error ellipse, we must enlarge it by a factor of 2.4477.
 
-SCALE_FACTOR = 2.4477
+# SCALE_FACTOR = 2.4477
+SCALE_FACTOR = 1
 
 
 def error_ellipse(sx, sy, pxy, aspectratio=1):
@@ -107,7 +108,7 @@ class ErrorEllipseOverlay(AbstractOverlay):
                     self._draw_ellipse(gc, component, cx, cy, a, b, rot)
                     #gc.restore_state()
         except Exception, e:
-            print e
+            print 'exception', e
 
     def _draw_ellipse(self, gc, component, cx, cy, a, b, rot):
         #a *= self.nsigma

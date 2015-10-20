@@ -1,24 +1,26 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-from traits.api import HasTraits, Str, Bool, Property, Int, Enum, List, String, Tuple, Float, Dict
+# ============= enthought library imports =======================
+from enable.markers import marker_names
+from traits.api import HasTraits, Str, Bool, Property, Int, Enum, List, String, Tuple, Float, Dict, on_trait_change
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
+from pychron.core.codetools.inspection import caller
 from pychron.pychron_constants import NULL_STR, FIT_TYPES
 
 
@@ -45,6 +47,9 @@ class AuxPlotOptions(HasTraits):
     use_time_axis = False
     initialized = False
 
+    ymin = Float
+    ymax = Float
+
     ylimits = Tuple(Float, Float, transient=True)
     xlimits = Tuple(Float, Float, transient=True)
 
@@ -53,6 +58,26 @@ class AuxPlotOptions(HasTraits):
     _has_xlimits = Bool(False)
 
     enabled = True
+
+    marker = Str('circle')
+    marker_size = Float(2)
+
+    _suppress = False
+
+    @on_trait_change('ylimits')
+    def _handle_ylimits(self, new):
+        self._suppress = True
+        self.ymin = new[0]
+        self.ymax = new[1]
+        self._suppress = False
+
+    @on_trait_change('ymin, ymax')
+    def _handle_ymin_max(self, name, new):
+        if self._suppress:
+            return
+
+        self._has_ylimits = True
+        self.ylimits = (self.ymin, self.ymax)
 
     def set_overlay_position(self, k, v):
         self.overlay_positions[k] = v
@@ -88,7 +113,6 @@ class AuxPlotOptions(HasTraits):
         if self.initialized:
             if self.name != NULL_STR:
                 self.use = True
-                print 'setting use true', self.name
 
     def _get_plot_name(self):
         if self.name in self.names:
@@ -112,9 +136,13 @@ class FitPlotterOptions(AuxPlotOptions):
 
 
 class SpectrumPlotOptions(AuxPlotOptions):
-    names = List([NULL_STR, '%40Ar*', 'K/Ca', 'K/Cl', 'Mol K39', 'Age'])
+    names = List([NULL_STR,
+                  '40/36', '(40/36)ic', '(40/36)if',
+                  '%40Ar*', 'K/Ca', 'K/Cl', 'Mol K39', 'Age'])
 
-    _plot_names = List(['', 'radiogenic_yield', 'kca', 'kcl', 'moles_k39', 'age_spectrum'])
+    _plot_names = List(['',
+                        'raw_40_36', 'ic_40_36', 'icf_40_36',
+                        'radiogenic_yield', 'kca', 'kcl', 'moles_k39', 'age_spectrum'])
     #def _get_plot_names(self):
     #    return {NULL_STR: NULL_STR,
     #            'radiogenic_yield': 'Radiogenic 40Ar',
@@ -145,4 +173,4 @@ class SystemMonitorPlotOptions(AuxPlotOptions):
     def _name_changed(self):
         pass
 
-#============= EOF =============================================
+# ============= EOF =============================================

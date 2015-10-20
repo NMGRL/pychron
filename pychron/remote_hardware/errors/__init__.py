@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 from extraction_line_errors import *
 from laser_errors import *
@@ -20,7 +20,7 @@ from laser_errors import *
 
 def _print_error_table(errors, loc):
 #    for e in errors:
-#        print e
+# print 'exception', e
     def get_code(x):
         try:
             v = loc[x]
@@ -35,7 +35,7 @@ def _print_error_table(errors, loc):
         v = loc[k]
         a = v(None, None, None, None)
         if a.code is not None:
-            print '{:<30s} {:03n}    {}'.format(k, int(a.code), a.msg)
+            print '{:<30s} {:03d}    {}'.format(k, int(a.code), a.msg)
 
 def print_error_table():
 

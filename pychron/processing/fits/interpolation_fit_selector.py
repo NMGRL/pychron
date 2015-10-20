@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,12 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.processing.fits.fit import Fit
 from pychron.processing.fits.fit_selector import FitSelector
 from pychron.pychron_constants import FIT_TYPES_INTERPOLATE
@@ -32,4 +32,4 @@ class InterpolationFitSelector(FitSelector):
     fit_klass = InterpolationFit
     fit_types = FIT_TYPES_INTERPOLATE
 
-#============= EOF =============================================
+# ============= EOF =============================================

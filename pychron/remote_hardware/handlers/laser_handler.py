@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,26 +12,30 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from base_remote_hardware_handler import BaseRemoteHardwareHandler
 from pychron.remote_hardware.errors import InvalidArgumentsErrorCode
 # from dummies import DummyLM
 from pychron.remote_hardware.errors.laser_errors import LogicBoardCommErrorCode, \
     EnableErrorCode, DisableErrorCode, InvalidSampleHolderErrorCode, \
     InvalidMotorErrorCode
-from pychron.core.helpers.filetools import to_bool
+from pychron.core.helpers.strtools import to_bool
 # from pychron.remote_hardware.errors.error import InvalidDirectoryErrorCode
 # from pychron.paths import paths
 # import os
 
 class LaserHandler(BaseRemoteHardwareHandler):
+    """
+    ``LaserHandler`` provides a protocol for interfacing with a pychron laser.
+    """
     _elm = None
     _mrm = None
     _lm = None
+
     def error_response(self, err):
         return 'OK' if (err is None or err is True) else err
 
@@ -63,9 +67,9 @@ class LaserHandler(BaseRemoteHardwareHandler):
         if mrm is None:
             self.info('multrun report manager unavailable')
         return mrm
-#===============================================================================
+# ===============================================================================
 # Commands
-#===============================================================================
+# ===============================================================================
     def MachineVisionDegas(self, manager, lumens, duration, *args):
         manager.do_machine_vision_degas(lumens, duration, new_thread=True)
 
@@ -95,8 +99,20 @@ class LaserHandler(BaseRemoteHardwareHandler):
 
         sm = manager.stage_manager
         if hasattr(sm, 'video'):
-            _p, upath = sm.snapshot(name=name)
-            return upath
+            pic_format = args[0]
+            if pic_format not in ('.jpg','.png'):
+                pic_format='.jpg'
+
+            lpath, upath, imageblob = sm.snapshot(name=name,
+                                                  return_blob=True,
+                                                  inform=False,
+                                                  pic_format=pic_format)
+
+            s = '{:02X}{}{:02x}{}{}'.format(len(lpath),
+                                             lpath, len(upath), upath, imageblob)
+
+            self.debug('snapshot response={}'.format(s[:40]))
+            return s
 
     def PrepareLaser(self, manager, *args):
         result = 'OK'
@@ -187,15 +203,6 @@ class LaserHandler(BaseRemoteHardwareHandler):
 
         return self.error_response(err)
 
-    def _set_axis(self, manager, axis, value):
-        try:
-            d = float(value)
-        except (ValueError, TypeError), err:
-            return InvalidArgumentsErrorCode('Set{}'.format(axis.upper()), err)
-
-        err = manager.stage_manager.single_axis_move(axis, d)
-        return self.error_response(err)
-
     def SetX(self, manager, data, *args):
         return self._set_axis(manager, 'x', data)
 
@@ -209,8 +216,8 @@ class LaserHandler(BaseRemoteHardwareHandler):
         """
             returns the cached value
 
-            mass spec excessively calls GetPosition which calling moving
-            it appears this was wacking out the newport stage controller.
+            mass spec excessively calls GetPosition.
+            When called during moving it appears to wack out the newport stage controller.
             moving will only do a hardware query if the stage is actually in motion or
             use keyword force_query=True
         """
@@ -256,13 +263,6 @@ class LaserHandler(BaseRemoteHardwareHandler):
 
     def SetHomeZ(self, manager, *args):
         return self._set_home_(manager, axis='z')
-
-    def _set_home_(self, manager, **kw):
-        """
-        """
-        err = manager.stage_manager.define_home(**kw)
-        return self.error_response(err)
-
 
     def GoToHole(self, manager, hole, autocenter, *args):
         try:
@@ -410,11 +410,11 @@ class LaserHandler(BaseRemoteHardwareHandler):
         result = manager.get_output_blob()
         return str(result)
 
-        #===============================================================================
+        # ===============================================================================
 
         # Positioning
 
-    #===============================================================================
+    # ===============================================================================
     def GoToNamedPosition(self, manager, pos, *args):
         result = manager.goto_named_position(pos)
         return result
@@ -442,9 +442,29 @@ class LaserHandler(BaseRemoteHardwareHandler):
     def IsReady(self, manager, *args):
         result = manager.is_ready()
         return result
-#===============================================================================
+
+    def SetLight(self,manager, value, *args):
+        manager.set_light(value)
+        return 'OK'
+
+    def _set_axis(self, manager, axis, value):
+        try:
+            d = float(value)
+        except (ValueError, TypeError), err:
+            return InvalidArgumentsErrorCode('Set{}'.format(axis.upper()), err)
+
+        err = manager.stage_manager.single_axis_move(axis, d)
+        return self.error_response(err)
+
+    def _set_home_(self, manager, **kw):
+        """
+        """
+        err = manager.stage_manager.define_home(**kw)
+        return self.error_response(err)
+
+# ===============================================================================
 #
-#===============================================================================
+# ===============================================================================
 #     def DoJog(self, manager, name, *args):
 #         if name is None:
 #             err = InvalidArgumentsErrorCode('DoJog', name)
@@ -491,4 +511,4 @@ class LaserHandler(BaseRemoteHardwareHandler):
 #
 #        return result
 
-#============= EOF ====================================
+# ============= EOF ====================================

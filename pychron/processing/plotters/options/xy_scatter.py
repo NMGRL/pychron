@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import os
 
 from enable.colors import ColorTrait
@@ -23,10 +23,10 @@ from traits.api import Str, Range, on_trait_change, Bool, Dict, Enum, Property, 
 from traitsui.api import View, Item, EnumEditor, HGroup, VGroup, UItem
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
-from pychron.core.csv.csv_parser import CSVParser
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
+from pychron.core.csv.csv_parser import CSVColumnParser
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.processing.plotters.options.base import BasePlotterOptions
 from pychron.pychron_constants import FIT_TYPES, NULL_STR
 
@@ -95,7 +95,7 @@ class XYScatterOptions(BasePlotterOptions):
     def get_parser(self):
         p = self._parser
         if p is None:
-            p = CSVParser()
+            p = CSVColumnParser()
             p.load(self.file_source_path)
             self._parser = p
         return p
@@ -107,7 +107,7 @@ class XYScatterOptions(BasePlotterOptions):
     def _load_file_source(self):
         p = self.get_parser()
         keys = p.list_attributes()
-        self.attrs = {ai: '{:02n}:{}'.format(i, ai) for i, ai in enumerate(keys)}
+        self.attrs = {ai: '{:02d}:{}'.format(i, ai) for i, ai in enumerate(keys)}
         self.index_attr = keys[0]
         self.value_attr = keys[1]
 
@@ -202,6 +202,6 @@ class XYScatterOptions(BasePlotterOptions):
             resizable=True)
         return v
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 

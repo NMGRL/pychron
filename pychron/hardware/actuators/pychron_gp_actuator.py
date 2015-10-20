@@ -1,164 +1,134 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#========== standard library imports ==========
+# ========== standard library imports ==========
 import time
 
-#========== local library imports =============
+# ========== local library imports =============
 from gp_actuator import GPActuator
-from pychron.core.helpers.filetools import to_bool
+from pychron.core.helpers.strtools import to_bool
 
+
+def get_valve_name(obj):
+    if isinstance(obj, (str, int)):
+        addr = obj
+    else:
+        addr = obj.name.split('-')[1]
+    return addr
+
+
+def trim(func):
+    def wrapper(*args, **kw):
+        r = func(*args, **kw)
+        if r:
+            r = r.strip()
+            # r = r[4:-4]
+        return r
+
+    return wrapper
+
+
+def trim_bool(func):
+    def wrapper(*args, **kw):
+        r = func(*args, **kw)
+        if r:
+            r = r.strip()
+            r = to_bool(r)
+            # r = to_bool(r[4:-4])
+        return r
+
+    return wrapper
 
 
 class PychronGPActuator(GPActuator):
-    '''
-        
-    '''
-#    id_query = '*TST?'
+    """
+        Used to communicate with PyValve valves
+    """
 
-#    def id_response(self, response):
-#        if response.strip() == '0':
-#            return True
+    @trim
+    def get_state_checksum(self, vkeys, verbose=False):
+        cmd = 'GetStateChecksum {}'.format(','.join(vkeys))
+        resp = self.ask(cmd, verbose=verbose)
+        return resp
 
-#    def initialize(self, *args, **kw):
-#        '''
-#        '''
-#        self._communicator._terminator = chr(10)
-#
-#        #clear and record any accumulated errors
-#        errs = self._get_errors()
-#        if errs:
-#            self.warning('\n'.join(errs))
-#        return True
+    @trim_bool
+    def get_lock_state(self, obj, verbose=False):
+        cmd = 'GetValveLockState {}'.format(get_valve_name(obj))
+        return self.ask(cmd, verbose=verbose)
 
-#    def _get_errors(self):
-#        #maximum of 10 errors so no reason to use a while loop
-#
-#        errors = []
-#        for _i in range(10):
-#            error = self._get_error()
-#            if error is None:
-#                break
-#            else:
-#                errors.append(error)
-#        return errors
-#
-#    def _get_error(self):
-#        error = None
-#        cmd = 'SYST:ERR?'
-#        if not self.simulation:
-#            s = self.ask(cmd)
-#            if s is not None:
-#                if s != '+0,"No error"':
-#                    error = s
-#
-#        return error
-
-    def _get_valve_name(self, obj):
-        if isinstance(obj, (str, int)):
-            addr = obj
-        else:
-            addr = obj.name.split('-')[1]
-        return addr
-
-    def get_lock_state(self, obj):
-        cmd = 'GetValveLockState {}'.format(self._get_valve_name(obj))
-        resp = self.ask(cmd)
-        if resp is not None:
-            resp = resp.strip()
-            boolfunc = lambda x:True if x in ['True', 'true', 'T', 't'] else False
-            return boolfunc(resp)
-#        return bool(random.randint(0, 1))
-
-#    def get_lock_state(self, obj):
-# #        boolfunc = lambda x:True if x in ['True', 'true', 'T', 't'] else False
-#        cmd = 'GetValveLockStates'
-#        resp = self.ask(cmd)
-#
-#        if resp is not None:
-#            d = dict()
-#            if ',' in resp:
-#                d = dict([(r[:-1], bool(r[-1:])) for r in resp.split(',')])
-#            else:
-#                d = dict([(resp[i:i + 2][0], bool(int(resp[i:i + 2][1]))) for i in xrange(0, len(resp), 2)])
-#            try:
-#                resp = d[self._get_valve_name(obj)]
-#            except KeyError, e:
-#                print e
-#                return False
-#
-#        return resp
+    @trim
     def get_owners_word(self, verbose=False):
         cmd = 'GetValveOwners'
-        resp = self.ask(cmd, verbose=verbose)
-        return resp
+        return self.ask(cmd, verbose=verbose)
 
+    @trim
     def get_state_word(self, verbose=False):
         cmd = 'GetValveStates'
-        resp = self.ask(cmd, verbose=verbose)
-        return resp
+        return self.ask(cmd, verbose=verbose)
 
+    @trim
     def get_lock_word(self, verbose=False):
         cmd = 'GetValveLockStates'
-        resp = self.ask(cmd, verbose=verbose)
-        return resp
+        return self.ask(cmd, verbose=verbose)
 
-
-    def get_channel_state(self, obj):
-        '''
-        Query the hardware for the channel state
-         
-        '''
-        # returns one if channel close  0 for open
-#        boolfunc = lambda x:True if x in ['True', 'true', 'T', 't'] else False
-        cmd = 'GetValveState {}'.format(self._get_valve_name(obj))
-        resp = self.ask(cmd)
-        if resp is not None:
-            resp = to_bool(resp.strip())
-
-        return resp
+    @trim_bool
+    def get_channel_state(self, obj, verbose=True):
+        """
+            Query the hardware for the channel state
+        """
+        cmd = 'GetValveState {}'.format(get_valve_name(obj))
+        return self.ask(cmd, verbose=verbose)
 
     def close_channel(self, obj, excl=False):
-        '''
-        Close the channel
-      
-        '''
-        cmd = 'Close {}'.format(self._get_valve_name(obj))
-        resp = self.ask(cmd)
-        if resp:
-            if resp.lower().strip() == 'ok':
-                time.sleep(0.05)
-                resp = self.get_channel_state(obj) == False
-        return resp
+        """
+            Close the channel
+            obj: valve object
+
+            return True if actuation completed successfully
+        """
+        return self.actuate(obj, 'Close')
 
     def open_channel(self, obj):
-        '''
-        Open the channel
-   
-        '''
-        cmd = 'Open {}'.format(self._get_valve_name(obj))
-        resp = self.ask(cmd)
-        if resp:
-            if resp.lower().strip() == 'ok':
-                time.sleep(0.05)
-                resp = self.get_channel_state(obj) == True
-#        cmd = 'ROUT:OPEN (@{})'.format(self._get_valve_name(obj))
-#        self.tell(cmd)
-#        if self.simulation:
-#            return True
-        return resp
+        """
+            Open the channel
+            obj: valve object
 
-#============= EOF =====================================
+            return True if actuation completed successfully
+        """
+        return self.actuate(obj, 'Open')
+
+    def actuate(self, obj, action):
+        if self._actuate(obj, action):
+            time.sleep(0.05)
+            return self._check_actuate(obj, action)
+
+    @trim_bool
+    def _actuate(self, obj, action):
+        """
+            obj: valve object
+            action: str,  "Open" or "Close"
+        """
+        if self.simulation:
+            return True
+
+        cmd = '{} {}'.format(action, get_valve_name(obj))
+        return self.ask(cmd)
+
+    def _check_actuate(self, obj, action):
+        state = action == 'Open'
+        return self.get_channel_state(obj) == state
+
+# ============= EOF =====================================

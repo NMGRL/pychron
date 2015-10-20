@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Enum, Any
-#=============standard library imports ========================
+# =============standard library imports ========================
 from numpy import abs
 import collections
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 from pychron.canvas.canvas2D.base_data_canvas import BaseDataCanvas
 from pychron.canvas.canvas2D.scene.primitives.primitives import PointIndicator
 # from pychron.canvas.canvas2D.markup.markup_items import PointIndicator
@@ -27,23 +27,24 @@ from pychron.canvas.canvas2D.scene.primitives.primitives import PointIndicator
 
 class MarkupContainer(collections.MutableMapping):
     layers = None
+
     def clear(self):
         self.layers = [dict(), dict()]
 
     def __init__(self, *args, **kw):
-        '''
-            default layer is 1 
+        """
+            default layer is 1
             to draw under layer 1 use layer 0
-                
-        '''
+
+        """
         self.layers = [dict(), dict()]
 
-#    def add_layer(self):
-#        self.layers.append(dict())
-#
-#    def add_item(self, item, key, layer=0):
-#        l = self.layers[layer]
-#        l.update(key, item)
+    #    def add_layer(self):
+    #        self.layers.append(dict())
+    #
+    #    def add_item(self, item, key, layer=0):
+    #        l = self.layers[layer]
+    #        l.update(key, item)
 
     def __iter__(self):
         return (k for l in self.layers for k in l)
@@ -70,10 +71,10 @@ class MarkupContainer(collections.MutableMapping):
             self.layers.append(dict())
             l = self.layers[-1]
 
-#        if len(l) > 100:
-#            k = l.keys()
-#            k.sort()
-#            l.pop(k[0])
+        # if len(l) > 100:
+        #            k = l.keys()
+        #            k.sort()
+        #            l.pop(k[0])
 
         l[key] = v
 
@@ -95,8 +96,8 @@ class MarkupContainer(collections.MutableMapping):
 
 
 class MarkupCanvas(BaseDataCanvas):
-    '''
-    '''
+    """
+    """
     markupcontainer = None
     temp_start_pos = None
     temp_end_pos = None
@@ -109,6 +110,7 @@ class MarkupCanvas(BaseDataCanvas):
 
     selected = Any
     invalid_layers = None
+
     def __init__(self, *args, **kw):
         super(MarkupCanvas, self).__init__(*args, **kw)
         self.clear()
@@ -118,9 +120,8 @@ class MarkupCanvas(BaseDataCanvas):
         return next((v for k, v in self.markupcontainer.iteritems() if k == key), None)
 
     def _draw_hook(self, gc, *args, **kw):
-        '''
-
-        '''
+        """
+        """
 
         # draw the lines currently held in the markupcontainer
         self._draw_current_markup(gc)
@@ -130,11 +131,9 @@ class MarkupCanvas(BaseDataCanvas):
     def _draw_current_markup(self, *args, **kw):
         pass
 
-
     def _draw_markup_dict(self, gc):
-        '''
-    
-        '''
+        """
+        """
         gc.save_state()
         test = lambda x: self.invalid_layers and x in self.invalid_layers
         try:
@@ -144,7 +143,7 @@ class MarkupCanvas(BaseDataCanvas):
                     continue
 
                 for obj in l.itervalues():
-#                    print obj
+                    #                    print obj
                     try:
                         obj.render(gc)
                     except AttributeError:
@@ -159,20 +158,20 @@ class MarkupCanvas(BaseDataCanvas):
         self.invalid_layers = []
 
     def _over_item(self, event, items=None):
-        '''
-        '''
+        """
+        """
         if items is None:
-
             items = self.markupcontainer.itervalues()
 
         return next((item for item in items if hasattr(item, 'is_in') and item.is_in(event)), None)
-#        for item in items:
-#            try:
-#                if item.is_in(event):
-#                    return item
-#            except AttributeError:
-#                continue
-#            if hasattr(item, 'is_in'):
+
+    #        for item in items:
+    #            try:
+    #                if item.is_in(event):
+    #                    return item
+    #            except AttributeError:
+    #                continue
+    #            if hasattr(item, 'is_in'):
 
     def select_right_down(self, event):
         obj = self._over_item(event)
@@ -206,12 +205,13 @@ class MarkupCanvas(BaseDataCanvas):
             event.window.set_pointer(self.normal_pointer)
             self.event_state = 'normal'
 
+
 class InteractionMarkupCanvas(MarkupCanvas):
     tool_state = Enum('select', 'line', 'mline', 'rect', 'point', 'noteditable')
-    def get_path_points(self, k):
-        '''
 
-        '''
+    def get_path_points(self, k):
+        """
+        """
         self.m
         element = self.markupcontainer[k]
         if isinstance(element[0], list):
@@ -231,8 +231,8 @@ class InteractionMarkupCanvas(MarkupCanvas):
         return pa
 
     def normal_mouse_move(self, event):
-        '''
-        '''
+        """
+        """
         if self.tool_state == 'noteditable':
             return
 
@@ -252,13 +252,12 @@ class InteractionMarkupCanvas(MarkupCanvas):
                 event.window.set_pointer(self.cross_pointer)
             elif self.tool_state not in ['line', 'mline', 'rect']:
                 event.window.set_pointer(self.normal_pointer)
-#        self.invalidate_and_redraw()
+                #        self.invalidate_and_redraw()
         self.request_redraw()
 
     def normal_left_down(self, event):
-        '''
-
-        '''
+        """
+        """
         if self.tool_state == 'noteditable':
             return
 
@@ -267,10 +266,6 @@ class InteractionMarkupCanvas(MarkupCanvas):
         except AttributeError:
             pass
 
-
-#        self.selected_point = None
-#        self.selected_element = None
-#
         self.temp_start_pos = (event.x, event.y)
 
         if self.tool_state in ['line', 'mline']:
@@ -339,10 +334,9 @@ class InteractionMarkupCanvas(MarkupCanvas):
                         event.handled = True
         self.request_redraw()
 
-
     def normal_key_pressed(self, event):
-        '''
-        '''
+        """
+        """
         try:
             if event.character == 'Backspace' and self.selected_element is not None:
                 self.markupcontainer.pop(self.selected_element.identifier)
@@ -352,24 +346,21 @@ class InteractionMarkupCanvas(MarkupCanvas):
 
         self.key_set_tool_state(event)
 
-
     def omove_mouse_move(self, event):
 
         xadj, yadj = self._calc_adjustment(event)
         self.temp_start_pos = (event.x, event.y)
         self.selected_element.adjust(xadj, yadj)
 
-#        self.invalidate_and_redraw()
+        #        self.invalidate_and_redraw()
         self.request_redraw()
 
     def omove_left_up(self, event):
         self.event_state = 'normal'
 
-
     def pmove_mouse_move(self, event):
-        '''
-
-        '''
+        """
+        """
         xadj, yadj = self._calc_adjustment(event)
         self.temp_start_pos = (event.x, event.y)
 
@@ -378,8 +369,6 @@ class InteractionMarkupCanvas(MarkupCanvas):
             if abs(point[0] - container[0][0]) <= 1 and abs(point[1] - container[0][1]) <= 1:
                 ep = container[0]
                 re = [(ep[0] + xadj, ep[1] + yadj), container[1]] + elem[2:]
-
-
 
             elif abs(point[0] - container[1][0]) <= 1 and abs(point[1] - container[1][1]) <= 1:
                 ep = container[1]
@@ -406,20 +395,21 @@ class InteractionMarkupCanvas(MarkupCanvas):
             self.selected_point = ep
             self.markupcontainer[self.selected_element] = re
 
-#        self.invalidate_and_redraw()
+        # self.invalidate_and_redraw()
         self.request_redraw()
 
     def pmove_left_up(self, event):
-        '''
-        '''
+        """
+        """
         self.end_move()
 
     def lmove_mouse_move(self, event):
-        '''
+        """
 
-        '''
+        """
         se = self.selected_element
         element = self.markupcontainer[se]
+
         def _adjust(container):
             xe = container[0][0]
             ye = container[0][1]
@@ -442,20 +432,21 @@ class InteractionMarkupCanvas(MarkupCanvas):
         self.temp_start_pos = (event.x, event.y)
         # self.invalidate_and_redraw()
         self.request_redraw()
+
     def lmove_left_up(self, event):
         self.end_move()
 
     def ldraw_mouse_move(self, event):
-        '''
-        '''
+        """
+        """
         self.temp_end_pos = (event.x, event.y)
-#        self.invalidate_and_redraw()
+        #        self.invalidate_and_redraw()
         self.request_redraw()
 
     def ldraw_left_down(self, event):
-        '''
+        """
 
-        '''
+        """
         b = self.bounds
         ob = self.outer_bounds
         # assumes uniform padding
@@ -488,8 +479,8 @@ class InteractionMarkupCanvas(MarkupCanvas):
         self.request_redraw()
 
     def ldraw_key_pressed(self, event):
-        '''
-        '''
+        """
+        """
 
         if event.character == 's':
             event.window.set_pointer(self.normal_pointer)
@@ -506,7 +497,7 @@ class InteractionMarkupCanvas(MarkupCanvas):
         xa, ya = self._calc_adjustment(event)
         elem[0] = [(pt[0] + xa, pt[1] + ya) for pt in elem[0]]
         self.temp_start_pos = (event.x, event.y)
-#        self.invalidate_and_redraw()
+        #        self.invalidate_and_redraw()
         self.request_redraw()
 
     def rmove_left_up(self, event):
@@ -520,13 +511,6 @@ class InteractionMarkupCanvas(MarkupCanvas):
     def rpmove_mouse_move(self, event):
         elem = self.markupcontainer[self.selected_element]
         xa, ya = self._calc_adjustment(event)
-
-
-#        p1 = elem[0][self.selected_point - 1]
-#
-#        p2 = elem[0][self.selected_point]
-#
-#        p3 = elem[0][self.selected_point + 1]
 
         if self.selected_point == 0 or self.selected_point == 4:
             p1 = elem[0][1]
@@ -550,11 +534,11 @@ class InteractionMarkupCanvas(MarkupCanvas):
             elem[0][0] = (p3[0], p3[1] + ya)
 
         elem[0][self.selected_point] = (elem[0][self.selected_point][0] + xa,
-                                         elem[0][self.selected_point][1] + ya)
+                                        elem[0][self.selected_point][1] + ya)
         elem[0][-1] = elem[0][0]
 
         self.temp_start_pos = (event.x, event.y)
-#        self.invalidate_and_redraw()
+        #        self.invalidate_and_redraw()
         self.request_redraw()
 
     def rpmove_left_up(self, event):
@@ -562,26 +546,24 @@ class InteractionMarkupCanvas(MarkupCanvas):
 
     def rdraw_mouse_move(self, event):
         self.temp_end_pos = (event.x, event.y)
-#        self.invalidate_and_redraw()
+        #        self.invalidate_and_redraw()
         self.request_redraw()
 
     def rdraw_left_down(self, event):
         self.markupcontainer['rect'] = [
-                                   [self.temp_start_pos,
-                                    (self.temp_start_pos[0], self.temp_end_pos[1]),
-                                    self.temp_end_pos,
-                                    (self.temp_end_pos[0], self.temp_start_pos[1]),
-                                    self.temp_start_pos], None, False
-
-                        ]
+            [self.temp_start_pos,
+             (self.temp_start_pos[0], self.temp_end_pos[1]),
+             self.temp_end_pos,
+             (self.temp_end_pos[0], self.temp_start_pos[1]),
+             self.temp_start_pos], None, False]
         self.event_state = 'normal'
         self.tool_state = 'select'
-#        self.invalidate_and_redraw()
+        #        self.invalidate_and_redraw()
         self.request_redraw()
 
     def key_set_tool_state(self, event):
-        '''
-        '''
+        """
+        """
         try:
             c = event.character
             window = event.window
@@ -600,47 +582,32 @@ class InteractionMarkupCanvas(MarkupCanvas):
         except:
             pass
 
-
-
-#        self.invalidate_and_redraw()
         self.request_redraw()
 
-
     def _draw_current_markup(self, gc):
-        '''
+        """
+        """
+        with gc:
+            if self.event_state == 'ldraw':
+                gc.set_line_width(4)
+                gc.set_stroke_color((1, 0, 1, 1))
+                points = [self.temp_start_pos, self.temp_end_pos]
+                gc.begin_path()
+                gc.lines(points)
+                gc.stroke_path()
+            elif self.event_state == 'rdraw':
+                gc.begin_path()
 
-        '''
-        gc.save_state()
+                if self.temp_end_pos:
+                    gc.lines([self.temp_start_pos,
+                              (self.temp_start_pos[0], self.temp_end_pos[1]),
+                              self.temp_end_pos,
+                              (self.temp_end_pos[0], self.temp_start_pos[1]),
+                              self.temp_start_pos])
 
-        if self.event_state == 'ldraw':
-            gc.set_line_width(4)
-            gc.set_stroke_color((1, 0, 1, 1))
-            points = [self.temp_start_pos, self.temp_end_pos]
-            gc.begin_path()
-            gc.lines(points)
-            gc.stroke_path()
-        elif self.event_state == 'rdraw':
-            gc.begin_path()
-
-            if self.temp_end_pos:
-                gc.lines([self.temp_start_pos,
-                          (self.temp_start_pos[0], self.temp_end_pos[1]),
-                           self.temp_end_pos,
-                          (self.temp_end_pos[0], self.temp_start_pos[1]),
-                          self.temp_start_pos
-                          ]
-                          )
-
-            gc.stroke_path()
-
-        gc.restore_state()
-
+                gc.stroke_path()
 
     def _over_mark_up_line(self, event, tolerance=7):
-        '''
-
-        '''
-
         def _get_key(cont, tolerance):
 
             x = cont[0][0]
@@ -655,9 +622,9 @@ class InteractionMarkupCanvas(MarkupCanvas):
             yb = max(y, y2)
 
             if m == 'undefined' or abs(m) > 1000000:
-                    # the line is vertical
-                    if abs(event.x - x) <= tolerance and ya <= event.y <= yb:
-                        return k
+                # the line is vertical
+                if abs(event.x - x) <= tolerance and ya <= event.y <= yb:
+                    return k
 
             # do a first pass by making a box
             elif xa <= event.x <= xb and ya - 5 <= event.y <= yb + 5:
@@ -693,38 +660,36 @@ class InteractionMarkupCanvas(MarkupCanvas):
                 pts = v[0]
 
                 y1 = min(
-                       pts[0][1],
-                       pts[1][1],
-                       )
+                    pts[0][1],
+                    pts[1][1],
+                )
                 y2 = max(
-                       pts[0][1],
-                       pts[1][1],
-                       )
+                    pts[0][1],
+                    pts[1][1],
+                )
 
                 y = y1 <= event.y <= y2
 
                 x1 = min(
-                       pts[0][0],
-                       pts[2][0],
-                       )
+                    pts[0][0],
+                    pts[2][0],
+                )
                 x2 = max(
-                       pts[0][0],
-                       pts[2][0],
-                       )
+                    pts[0][0],
+                    pts[2][0],
+                )
 
                 x = x1 <= event.x <= x2
                 if x and y:
                     key = k
-
 
             if key is not None:
                 break
         return key
 
     def _over_mark_up_point(self, event, line, tolerance=4):
-        '''
-
-        '''
+        """
+        """
         x = line[0][0]
         y = line[0][1]
         x2 = line[1][0]
@@ -736,9 +701,8 @@ class InteractionMarkupCanvas(MarkupCanvas):
             return (x2, y2)
 
     def _get_line_parameters(self, x, y, x2, y2):
-        '''
-
-        '''
+        """
+        """
         try:
             m = float((y2 - y)) / (float(x2) - float(x))
             b = float(y) - m * float(x)
@@ -749,8 +713,8 @@ class InteractionMarkupCanvas(MarkupCanvas):
         return m, b
 
     def _calc_adjustment(self, event):
-        '''
-        '''
+        """
+        """
         xs = self.temp_start_pos[0]
         ys = self.temp_start_pos[1]
 
@@ -758,7 +722,7 @@ class InteractionMarkupCanvas(MarkupCanvas):
         yadj = -ys + event.y
         return xadj, yadj
 
-#============= EOF ====================================
+# ============= EOF ====================================
 #    def mldraw_mouse_move(self,event):
 #        self.ldraw_mouse_move(event)
 #

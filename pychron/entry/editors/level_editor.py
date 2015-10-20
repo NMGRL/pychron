@@ -1,22 +1,22 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
+from datetime import datetime
 import os
-import struct
 
 from enable.component_editor import ComponentEditor
 from pyface.constant import OK, YES, NO
@@ -24,32 +24,18 @@ from pyface.file_dialog import FileDialog
 from traits.api import List, Instance, Str, Float, Any, Button, Property, HasTraits
 from traitsui.api import View, Item, TabularEditor, HGroup, UItem, VSplit, Group, VGroup, \
     HSplit
-
-
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.canvas.canvas2D.irradiation_canvas import IrradiationCanvas
+from pychron.canvas.utils import load_holder_canvas, iter_geom
 from pychron.database.defaults import load_irradiation_map, parse_irradiation_tray_map
 from pychron.entry.editors.base_editor import ModelView
 from pychron.entry.editors.production import IrradiationProduction
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.pychron_constants import ALPHAS
-
-
-def load_holder_canvas(canvas, geom):
-    if geom:
-        canvas = canvas
-        holes = [(x, y, r, str(c + 1))
-                 for c, (x, y, r) in iter_geom(geom)]
-        canvas.load_scene(holes)
-
-
-def iter_geom(geom):
-    f = lambda x: struct.unpack('>fff', geom[x:x + 12])
-    return ((i, f(gi)) for i, gi in enumerate(xrange(0, len(geom), 12)))
 
 
 class NewProduction(HasTraits):
@@ -60,14 +46,13 @@ class NewProduction(HasTraits):
         v = View(HGroup('name', 'reactor'),
                  buttons=['OK', 'Cancel', 'Revert'],
                  title='New Production Ratio',
-                 kind='livemodal'
-        )
+                 kind='livemodal')
         return v
 
 
 class ProductionAdapter(TabularAdapter):
-    columns = [('Name', 'name'), ('Reactor', 'reactor')]
-    font = 'arial 10'
+    columns = [('Name', 'name'), ('Reactor', 'reactor'), ('Last Modified', 'last_modified')]
+    font = '10'
 
 
 class TrayAdapter(TabularAdapter):
@@ -103,6 +88,7 @@ class EditView(ModelView):
                           label='Tray')
 
         v = View(Item('name'),
+                 VGroup(UItem('level_note', style='custom'), label='Level Note', show_border=True),
                  Group(
                      pr_group,
                      tray_grp,
@@ -123,6 +109,7 @@ class AddView(EditView):
 class LevelEditor(Loggable):
     db = Any
 
+    level_note = Str
     name = Str
     selected_tray = Str
     z = Float
@@ -152,13 +139,18 @@ class LevelEditor(Loggable):
             level = db.get_irradiation_level(self.irradiation, self.name)
 
             self.z = level.z or 0
-            if level.production:
-                self.selected_production = next((p for p in self.productions
-                                                 if p.name == level.production.name), None)
+            # if level.production:
+            # self.selected_production = next((p for p in self.productions
+            # if p.name == level.production.name), None)
             original_tray = None
             if level.holder:
-                self.selected_tray = next((t for t in self.trays if t == level.holder.name), None)
-                original_tray=self.selected_tray
+                self.selected_tray = next((t for t in self.trays if t == level.holder), None)
+                original_tray = self.selected_tray
+
+            if level.note:
+                self.level_note = level.note
+            else:
+                self.level_note = ''
 
             ev = EditView(model=self)
             info = ev.edit_traits()
@@ -178,12 +170,13 @@ class LevelEditor(Loggable):
                         else:
                             return
 
-                    self._save_production()
+                    # self._save_production()
 
-                    pr = db.get_irradiation_production(self.selected_production.name)
-                    level.production = pr
+                    level.note = self.level_note
+                    # pr = db.get_irradiation_production(self.selected_production.name)
+                    # level.production = pr
 
-                    if original_tray!=self.selected_tray:
+                    if original_tray != self.selected_tray:
                         self._save_tray(level, original_tray)
 
                     break
@@ -193,27 +186,27 @@ class LevelEditor(Loggable):
         return self.name
 
     def _save_tray(self, level, original_tray):
-        db=self.db
+        db = self.db
         tr = db.get_irradiation_holder(self.selected_tray)
-        n=len(tuple(iter_geom(tr.geometry)))
-        on=len(level.positions)
-        if n<on:
+        n = len(tuple(iter_geom(tr.geometry)))
+        on = len(level.positions)
+        if n < on:
             if any([p.labnumber.analyses for p in level.positions[n:]]):
                 self.warning_dialog('Cannot change tray from "{}" to "{}" '
                                     'This change would orphan irradiation identifiers '
                                     'that have associated analyses'.format(original_tray, self.selected_tray))
             elif self.confirmation_dialog('You are about to orphan {} irradiation identifiers. '
-                                     'Are you sure you want to continue?'.format(on-n)):
+                                          'Are you sure you want to continue?'.format(on - n)):
 
-                level.holder=tr
+                level.holder = tr
                 for p in level.positions[n:]:
                     self.debug('deleting {} {} {} {}'.format(level.irradiation.name,
                                                              level.name,
-                                                          p.position,
-                                                          p.labnumber.identifier))
+                                                             p.position,
+                                                             p.labnumber.identifier))
                     db.delete_irradiation_position(p)
         else:
-            level.holder=tr
+            level.holder = tr
 
     def _add_level(self):
         irrad = self.irradiation
@@ -225,11 +218,11 @@ class LevelEditor(Loggable):
                 level = irrad.levels[-1]
 
                 self.z = level.z
-                if level.production:
-                    self.selected_production = next((p for p in self.productions
-                                                     if p.name == level.production.name), None)
+                # if level.production:
+                # self.selected_production = next((p for p in self.productions
+                # if p.name == level.production.name), None)
                 if level.holder:
-                    self.selected_tray = next((t for t in self.trays if t == level.holder.name), None)
+                    self.selected_tray = next((t for t in self.trays if t == level.holder), None)
 
                 if level.name in ALPHAS:
                     nind = ALPHAS.index(level.name) + 1
@@ -257,10 +250,11 @@ class LevelEditor(Loggable):
                     if not next((li for li in irrad.levels if li.name == self.name), None):
                         db.add_irradiation_level(self.name, irrad,
                                                  self.selected_tray,
-                                                 self.selected_production.name,
-                                                 self.z)
+                                                 # self.selected_production.name,
+                                                 self.z,
+                                                 self.level_note)
 
-                        self._save_production()
+                        # self._save_production()
 
                         return self.name
 
@@ -282,26 +276,34 @@ class LevelEditor(Loggable):
         db = self.db
         with db.session_ctx():
             ps = []
-            for pr in db.get_irradiation_productions():
+            # for pr in db.get_irradiation_productions():
+            for pr in self.repo.get_irradiation_productions():
                 p = IrradiationProduction(name=pr.name)
                 p.create(pr)
                 ps.append(p)
 
             self.productions = ps
 
-    def _save_production(self):
-        prod = self.selected_production
-        db = self.db
-        if prod.dirty:
-            with db.session_ctx():
-                ip = db.get_irradiation_production(prod.name)
-                if ip:
-                    self.debug('saving production {}'.format(prod.name))
+            # def _save_production(self):
+            # prod = self.selected_production
+            #     if prod.dirty:
+            #         self.repo.update_production(prod, irradiation=self.irradiation)
 
-                    params = prod.get_params()
-                    for k, v in params.iteritems():
-                        self.debug('setting {}={}'.format(k, v))
-                        setattr(ip, k, v)
+            # prod = self.selected_production
+            # db = self.db
+            # if prod.dirty:
+            # with db.session_ctx():
+            #         ip = db.get_irradiation_production(prod.name)
+            #         if ip:
+            #             self.debug('saving production {}'.format(prod.name))
+            #
+            #             params = prod.get_params()
+            #             for k, v in params.iteritems():
+            #                 self.debug('setting {}={}'.format(k, v))
+            #                 setattr(ip, k, v)
+            #
+            #             ip.note = prod.note
+            #             # ip.last_modified = datetime.now()
 
     def _add_production(self):
         pr = NewProduction()
@@ -317,16 +319,16 @@ class LevelEditor(Loggable):
                             continue
                     else:
                         if self.selected_production:
-                            pp=self.selected_production.clone_traits()
+                            pp = self.selected_production.clone_traits()
                         else:
-                            pp=IrradiationProduction()
+                            pp = IrradiationProduction()
 
-                        db.add_irradiation_production(name=pr.name)
-                        pp.name=pr.name
+                        db.add_irradiation_production(name=pr.name, last_modified=datetime.now())
+                        pp.name = pr.name
                         self.productions.append(pp)
 
-                        self.selected_production=next((pp for pp in self.productions if pp.name==pr.name), None)
-                        self.selected_production.editable=True
+                        self.selected_production = next((pp for pp in self.productions if pp.name == pr.name), None)
+                        self.selected_production.editable = True
 
                 break
 
@@ -338,15 +340,14 @@ class LevelEditor(Loggable):
 
     def _selected_tray_changed(self):
         with self.db.session_ctx():
-            holder = self.db.get_irradiation_holder(self.selected_tray)
-            if holder:
-                load_holder_canvas(self.canvas, holder.geometry)
+            holes = self.repo.get_irradiation_holder_holes(self.selected_tray)
+            load_holder_canvas(self.canvas, holes)
 
     def _add_tray_button_fired(self):
         dlg = FileDialog(action='open', default_directory=paths.irradiation_tray_maps_dir)
         if dlg.open() == OK:
             if dlg.path:
-                #verify this is a valid irradiation map file
+                # verify this is a valid irradiation map file
                 if parse_irradiation_tray_map(dlg.path) is not None:
                     db = self.db
                     with db.session_ctx():
@@ -354,5 +355,5 @@ class LevelEditor(Loggable):
                                              os.path.basename(dlg.path), overwrite_geometry=True)
 
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

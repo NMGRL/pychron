@@ -1,44 +1,44 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-from traits.api import Color, Instance, DelegatesTo
+# ============= enthought library imports =======================
+from traits.api import Color, Instance, DelegatesTo, List, Any, Property
 from traitsui.api import View, Item, UItem, VGroup, HGroup, spring, \
     EnumEditor, Group, Spring, VFold, Label, InstanceEditor, \
-    CheckListEditor, VSplit, TabularEditor, UReadonly
+    VSplit, TabularEditor, UReadonly, ListEditor, RangeEditor, Readonly
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traitsui.editors import TableEditor
-from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
 from traitsui.tabular_adapter import TabularAdapter
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
+from pychron.core.ui.combobox_editor import ComboboxEditor
+from pychron.core.ui.led_editor import LEDEditor
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.experiment.utilities.identifier import SPECIAL_NAMES
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.pychron_constants import MEASUREMENT_COLOR, EXTRACTION_COLOR, \
     NOT_EXECUTABLE_COLOR, SKIP_COLOR, SUCCESS_COLOR, CANCELED_COLOR, \
     TRUNCATED_COLOR, FAILED_COLOR, END_AFTER_COLOR
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.experiment.plot_panel import PlotPanel
 
-#===============================================================================
+
+# ===============================================================================
 # editing
-#===============================================================================
-
-
+# ===============================================================================
 def spacer(w):
     return Spring(width=w, springy=False)
 
@@ -59,19 +59,38 @@ def run_factory_item(name, **kw):
     return Item(run_factory_name(name), **kw)
 
 
-# def runs_table_name(name):
-#     return 'object.experiment_queue.runs_table.{}'.format(name)
-# def run_table_item(name, **kw):
-#     return Item(make_rt_name(name), **kw)
-
-
 class ExperimentFactoryPane(TraitsDockPane):
     id = 'pychron.experiment.factory'
     name = 'Experiment Editor'
+    info_label = Property(depends_on='model.run_factory.info_label')
+
+    def _get_info_label(self):
+        return '<font size="12" color="green"><b>{}</b></font>'.format(self.model.run_factory.info_label)
 
     def traits_view(self):
+        # QLabel {font-size: 10px}
+
+        ss = '''
+QLineEdit {font-size: 10px}
+QGroupBox {
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                      stop: 0 #E0E0E0, stop: 1 #FFFFFF);
+    border: 2px solid gray;
+    border-radius: 5px;
+    margin-top: 1ex; /* leave space at the top for the title */
+}
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left; /* position at the top center */
+    padding: 0 3px;
+    color: blue;
+}
+QComboBox {font-size: 10px}
+
+'''
+
         add_button = icon_button_editor('add_button', 'add',
-                                        enabled_when='ok_add',
+                                        # enabled_when='ok_add',
                                         tooltip='Add run')
 
         save_button = icon_button_editor('save_button', 'disk',
@@ -86,26 +105,43 @@ class ExperimentFactoryPane(TraitsDockPane):
                                           tooltip='Clear all runs added using "frequency"')
 
         queue_grp = VGroup(
-            HGroup(queue_factory_item('username'),
-                   queue_factory_item('username',
-                                      editor=EnumEditor(name=queue_factory_name('usernames')),
-                                      width=-25, show_label=False),
+            HGroup(UItem(queue_factory_name('username'),
+                         show_label=False,
+                         editor=ComboboxEditor(name=queue_factory_name('usernames'))),
                    icon_button_editor(queue_factory_name('edit_user'), 'database_edit'),
-                   Spring(width=-5, springy=False),
-                   queue_factory_item('use_email_notifier', show_label=False),
-                   Item(queue_factory_name('email'), enabled_when=queue_factory_name('use_email_notifier'))),
+                   # Spring(width=-5, springy=False),
+                   queue_factory_item('use_email',
+                                      tooltip='Send email notifications',
+                                      show_label=False),
+                   Item(queue_factory_name('email')),
+                   queue_factory_item('use_group_email',
+                                      tooltip='Email a group of users',
+                                      label='Group'),
+                   icon_button_editor(queue_factory_name('edit_emails'), 'cog',
+                                      tooltip='Edit user group')),
             HGroup(
                 queue_factory_item('mass_spectrometer',
                                    show_label=False,
                                    editor=EnumEditor(name=queue_factory_name('mass_spectrometers'))),
                 queue_factory_item('extract_device',
                                    show_label=False,
-                                   editor=EnumEditor(name=queue_factory_name('extract_devices')))),
-            queue_factory_item('load_name',
-                               show_label=False,
-                               editor=EnumEditor(name=queue_factory_name('load_names'))),
+                                   editor=EnumEditor(name=queue_factory_name('extract_devices'))),
+                queue_factory_item('load_name',
+                                   width=150,
+                                   label='Load',
+                                   editor=ComboboxEditor(name=queue_factory_name('load_names'))),
+                icon_button_editor('generate_queue_button', 'brick-go',
+                                   tooltip='Generate a experiment queue from the selected load',
+                                   enabled_when='load_name'),
+                icon_button_editor('edit_queue_config_button', 'cog',
+                                   tooltip='Configure experiment queue generation')),
+            HGroup(queue_factory_item('queue_conditionals_name',
+                                      label='Queue Conditionals',
+                                      editor=EnumEditor(name=queue_factory_name('available_conditionals')))),
             queue_factory_item('delay_before_analyses'),
-            queue_factory_item('delay_between_analyses'))
+            queue_factory_item('delay_between_analyses'),
+            show_border=True,
+            label='Queue')
 
         button_bar = HGroup(
             save_button,
@@ -115,31 +151,29 @@ class ExperimentFactoryPane(TraitsDockPane):
             CustomLabel(run_factory_name('edit_mode_label'),
                         color='red',
                         width=40),
-            spring,
-            run_factory_item('end_after', width=30),
-            run_factory_item('skip'))
+            spring)
+        button_bar2 = HGroup(Item('auto_increment_id', label='Auto Increment L#'),
+                             Item('auto_increment_position', label='Position'), )
         edit_grp = VFold(
+            queue_grp,
             VGroup(
                 self._get_info_group(),
                 self._get_extract_group(),
+                enabled_when=queue_factory_name('ok_make'),
                 label='General'),
             self._get_script_group(),
-            self._get_truncate_group(),
-            enabled_when=queue_factory_name('ok_make'))
+            self._get_truncate_group())
 
-        lower_button_bar = HGroup(
-            add_button,
-            clear_button,
-            Label('Auto Increment'),
-            Item('auto_increment_id', label='L#'),
-            Item('auto_increment_position', label='Position'))
         v = View(
             VGroup(
-                queue_grp,
                 button_bar,
-                CustomLabel(run_factory_name('info_label'), size=14, color='green'),
+                button_bar2,
+                UItem('pane.info_label', style='readonly'),
                 edit_grp,
-                lower_button_bar),
+
+                # lower_button_bar,
+                style_sheet=ss),
+            kind='live',
             width=225)
         return v
 
@@ -156,37 +190,38 @@ class ExperimentFactoryPane(TraitsDockPane):
             HGroup(run_factory_item('special_labnumber',
                                     show_label=False,
                                     editor=EnumEditor(values=SPECIAL_NAMES)),
-                   run_factory_item('frequency', width=50),
-                   run_factory_item('freq_before', label='Before'),
-                   run_factory_item('freq_after', label='After'),
+                   run_factory_item('run_block', show_label=False,
+                                    editor=EnumEditor(name=run_factory_name('run_blocks'))),
+                   icon_button_editor(run_factory_name('edit_run_blocks'), 'cog'),
+                   run_factory_item('frequency_model.frequency_int', width=50),
+                   icon_button_editor(run_factory_name('edit_frequency_button'), 'cog'),
+                   # run_factory_item('freq_before', label='Before'),
+                   # run_factory_item('freq_after', label='After'),
                    spring),
+
+            # HGroup(run_factory_item('labnumber',
+            # tooltip='Enter a Labnumber',
+            # width=100, ),
+            # run_factory_item('_labnumber', show_label=False,
+            # editor=CheckListEditor(name=run_factory_name('labnumbers')),
+            # width=-20),
+            # run_factory_item('aliquot',
+            #                         width=50),
+            #        spring),
+
             HGroup(run_factory_item('labnumber',
                                     tooltip='Enter a Labnumber',
-                                    width=100, ),
-                   run_factory_item('_labnumber', show_label=False,
-                                    editor=CheckListEditor(name=run_factory_name('labnumbers')),
-                                    width=-20),
+                                    width=100,
+                                    editor=ComboboxEditor(name=run_factory_name('labnumbers'))),
                    run_factory_item('aliquot',
                                     width=50),
                    spring),
-            # HGroup(
-            # run_factory_item('irradiation',
-            #                      tooltip='Irradiation info retreived from Database',
-            #                      style='readonly',
-            #                      width=90),
-            #     run_factory_item('sample',
-            #                      tooltip='Sample info retreived from Database',
-            #                      style='readonly',
-            #                      width=100,
-            #                      show_label=False),
-            #     spring),
-            HGroup(run_factory_item('flux'),
-                   Label(u'\u00b1'),
-                   run_factory_item('flux_error', show_label=False),
-                   icon_button_editor(run_factory_name('save_flux_button'),
-                                      'database_save',
-                                      tooltip='Save flux to database'),
-                   enabled_when=run_factory_name('labnumber')),
+            HGroup(run_factory_item('experiment_identifier',
+                                    label='Experiment ID',
+
+                                    editor=ComboboxEditor(name=run_factory_name('experiment_identifiers'))),
+                   icon_button_editor(run_factory_name('add_experiment_identifier'), 'add'),
+                   enabled_when='0'),
             HGroup(
                 run_factory_item('weight',
                                  label='Weight (mg)',
@@ -197,13 +232,32 @@ class ExperimentFactoryPane(TraitsDockPane):
                                          'Will be saved in Database with analysis'),
                 run_factory_item('auto_fill_comment',
                                  show_label=False,
-                                 tooltip='Auto fill "Comment" with IrradiationLevel:Hole, e.g A:9')),
+                                 tooltip='Auto fill "Comment" with IrradiationLevel:Hole, e.g A:9'),
+                # run_factory_item('comment_template',
+                # editor=EnumEditor(name=run_factory_name('comment_templates')),
+                # show_label=False),
+                icon_button_editor(run_factory_name('edit_comment_template'), 'cog',
+                                   tooltip='Edit comment template')),
+            HGroup(run_factory_item('flux'),
+                   Label(u'\u00b1'),
+                   run_factory_item('flux_error', show_label=False),
+                   icon_button_editor(run_factory_name('save_flux_button'),
+                                      'database_save',
+                                      tooltip='Save flux to database'),
+                   enabled_when=run_factory_name('labnumber')),
+
             show_border=True,
             label='Sample Info')
         return grp
 
     def _get_truncate_group(self):
         grp = VGroup(
+            HGroup(run_factory_item('use_simple_truncation', label='Use Simple'),
+                   icon_button_editor(run_factory_name('clear_conditionals'),
+                                      'delete',
+                                      tooltip='Clear Conditionals from selected runs'
+                                      # enabled_when=run_factory_name('edit_mode')
+                                      )),
             HGroup(
                 run_factory_item('trunc_attr',
                                  editor=EnumEditor(name=run_factory_name('trunc_attrs')),
@@ -212,24 +266,24 @@ class ExperimentFactoryPane(TraitsDockPane):
                 run_factory_item('trunc_crit', show_label=False),
                 spacer(-10),
                 run_factory_item('trunc_start', label='Start Count'),
-                icon_button_editor(run_factory_name('clear_truncation'),
-                                   'delete',
-                                   enabled_when=run_factory_name('edit_mode')),
                 show_border=True,
+                # enabled_when = run_factory_name('use_simple_truncation'),
                 label='Simple'),
             HGroup(
-                run_factory_item('truncation_path',
-                                 editor=EnumEditor(name=run_factory_name('truncations')),
+                run_factory_item('conditionals_path',
+                                 editor=EnumEditor(name=run_factory_name('conditionals')),
                                  label='Path'),
 
-                icon_button_editor(run_factory_name('edit_truncation_button'), 'table_edit',
-                                   enabled_when=run_factory_name('truncation_path'),
-                                   tooltip='Edit the selected action file'),
-                icon_button_editor(run_factory_name('new_truncation_button'), 'table_add',
-                                   tooltip='Add a new action file. Duplicated currently selected file if applicable'),
+                icon_button_editor(run_factory_name('edit_conditionals_button'), 'table_edit',
+                                   enabled_when=run_factory_name('conditionals_path'),
+                                   tooltip='Edit the selected conditionals file'),
+                icon_button_editor(run_factory_name('new_conditionals_button'), 'table_add',
+                                   tooltip='Add a new conditionals file. Duplicated currently '
+                                           'selected file if applicable'),
                 show_border=True,
                 label='File'),
-            label='Actions')
+            enabled_when=queue_factory_name('ok_make'),
+            label='Run Conditionals')
         return grp
 
     def _get_script_group(self):
@@ -248,6 +302,7 @@ class ExperimentFactoryPane(TraitsDockPane):
                                     tooltip='load the default scripts for this analysis type',
                                     show_label=False,
                                     enabled_when=run_factory_name('labnumber'))),
+            enabled_when=queue_factory_name('ok_make'),
             show_border=True,
             label='Scripts')
         return script_grp
@@ -256,27 +311,16 @@ class ExperimentFactoryPane(TraitsDockPane):
         return run_factory_item('factory_view', style='custom', show_label=False)
 
 
-#===============================================================================
+# ===============================================================================
 # execution
-#===============================================================================
-class WaitPane(TraitsDockPane):
-    id = 'pychron.experiment.wait'
-    name = 'Wait'
-
-    def traits_view(self):
-        v = View(
-            UItem('wait_group',
-                  style='custom'))
-        return v
-
-
+# ===============================================================================
 class ConnectionStatusPane(TraitsDockPane):
     id = 'pychron.experiment.connection_status'
     name = 'Connection Status'
 
     def traits_view(self):
-        cols = [ObjectColumn(name='name'),
-                CheckboxColumn(name='connected')]
+        cols = [ObjectColumn(name='name', editable=False),
+                ObjectColumn(name='connected', editable=False)]
         v = View(UItem('connectables',
                        editor=TableEditor(editable=False,
                                           sortable=False,
@@ -289,13 +333,31 @@ class StatsPane(TraitsDockPane):
     name = 'Stats'
 
     def traits_view(self):
-        v = View(
-            UItem('stats', style='custom'))
+        gen_grp = VGroup(Readonly('nruns', width=350, label='Total Runs'),
+                         Readonly('nruns_finished', label='Completed'),
+                         Readonly('total_time'),
+                         Readonly('elapsed'),
+                         Readonly('etf', label='Est. finish'),
+                         show_border=True, label='General')
+        cur_grp = VGroup(Readonly('current_run_duration', ),
+                         Readonly('run_elapsed'),
+                         show_border=True,
+                         label='Current')
+        sel_grp = VGroup(Readonly('start_at'),
+                         Readonly('end_at'),
+                         Readonly('run_duration'),
+
+                         label='Selection', show_border=True)
+        v = View(VGroup(gen_grp, cur_grp, sel_grp))
         return v
+
+        # def traits_view(self):
+        # v = View(UItem('stats', style='custom'))
+        # return v
 
 
 class ControlsPane(TraitsDockPane):
-    #     name = 'Controls'
+    # name = 'Controls'
     id = 'pychron.experiment.controls'
 
     movable = False
@@ -317,6 +379,7 @@ Quick=   measure_iteration stopped at current step
 
         v = View(
             HGroup(
+                UItem('executing_led', editor=LEDEditor(radius=30)),
                 spacer(-20),
                 icon_button_editor('start_button',
                                    'start',
@@ -342,11 +405,12 @@ Quick=   measure_iteration stopped at current step
                 UItem('truncate_style',
                       enabled_when='measuring',
                       tooltip=truncate_style_tt),
+                UItem('show_conditionals_button'),
                 spacer(-75),
                 CustomLabel('extraction_state_label',
                             color_name='extraction_state_color',
                             size=24,
-                            weight='bold')))
+                            weight='bold'), spring))
         return v
 
 
@@ -414,6 +478,11 @@ class IsotopeEvolutionPane(TraitsDockPane):
                            Spring(springy=False, width=-10),
                            Item('object.plot_panel.ncounts', label='Counts',
                                 tooltip='Set the number of measurement points'),
+                           Spring(springy=False, width=-10),
+                           CustomLabel('object.plot_panel.display_counts',
+                                       color='red',
+                                       size=14,
+                                       width=100),
                            Spring(springy=False, width=-5)),
                     UItem('object.plot_panel.analysis_view',
                           style='custom',
@@ -450,4 +519,25 @@ class AnalysisHealthPane(TraitsDockPane):
         return v
 
 
-#============= EOF =============================================
+class LoggerPane(TraitsDockPane):
+    loggers = List
+    selected = Any
+    name = 'Logger'
+    id = 'pychron.experiment.logger'
+
+    def __init__(self, *args, **kw):
+        super(LoggerPane, self).__init__(*args, **kw)
+        from pychron.displays.gdisplays import gWarningDisplay, gLoggerDisplay
+
+        self.loggers = [gLoggerDisplay, gWarningDisplay]
+
+    def traits_view(self):
+        v = View(UItem('loggers',
+                       editor=ListEditor(use_notebook=True,
+                                         page_name='.title',
+                                         selected='selected'),
+                       style='custom'))
+
+        return v
+
+# ============= EOF =============================================

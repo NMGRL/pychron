@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,15 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 
-#=============standard library imports ========================
+# =============standard library imports ========================
 
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 from fusions_logic_board import FusionsLogicBoard
 
 class FusionsDiodeLogicBoard(FusionsLogicBoard):
@@ -29,7 +29,7 @@ class FusionsDiodeLogicBoard(FusionsLogicBoard):
     def _set_laser_power(self, p, m):
         '''
         '''
-        self.parent._set_laser_power_(p, m)
+        self.parent.set_laser_power(p, m)
 
     def set_enable_onoff(self, onoff):
         '''
@@ -56,4 +56,4 @@ class FusionsDiodeLogicBoard(FusionsLogicBoard):
 #        '''
 #        '''
 #        return KerrThorMotor(name='beam', parent=self)
-#====================== EOF ===========================================
+# ====================== EOF ===========================================

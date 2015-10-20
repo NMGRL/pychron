@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,18 +12,25 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-import time
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.experiment.automated_run.data_collector import DataCollector
 
 
 class MultiCollector(DataCollector):
-    def _iter_hook(self, con, i):
+    """
+    Collector class for doing multi-collection, i.e. measuring multiple intensities simultaneously.
+
+    ``MulticCollector`` and ``PeakHopCollector`` conceptually very similar and potentially could be merged and simplified.
+    MultiCollection is a simple case of PeakHopCollection in which only one peak hop is made at the beginning.
+
+    """
+
+    def _iter_hook(self, i):
         if i % 50 == 0:
             self.info('collecting point {}'.format(i))
             #                mem_log('point {}'.format(i), verbose=True)
@@ -35,16 +42,15 @@ class MultiCollector(DataCollector):
             self.debug('failed getting data {}'.format(e))
             return
 
-        con.add_consumable((time.time() - self.starttime, data, i))
-        return True
+        if not data:
+            return
 
-    def _iter_step(self, data):
-        x, data, i = data
-        #print 'iterstep', x,data, i
-
+        x = self._get_time()
         # save the data
         self._save_data(x, *data)
         # plot the data
         self.plot_data(i, x, *data)
 
-        #============= EOF =============================================
+        return True
+
+        # ============= EOF =============================================

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,18 +12,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Instance, DelegatesTo, Button, List, Any, \
     Float
 from traitsui.api import View, Item, VGroup, HGroup, Group, spring, \
     TabularEditor
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import pickle
 import os
 from numpy import polyval
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.managers.manager import Manager
 from pychron.database.selectors.power_calibration_selector import PowerCalibrationSelector
 from pychron.database.adapters.power_calibration_adapter import PowerCalibrationAdapter
@@ -230,4 +230,4 @@ class CompositeCalibrationManager(Manager):
 if __name__ == '__main__':
     ccm = CompositeCalibrationManager()
     ccm.configure_traits()
-#============= EOF =============================================
+# ============= EOF =============================================

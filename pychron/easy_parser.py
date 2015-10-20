@@ -12,16 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import os
 
 from traits.api import List, Int
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 import yaml
 from pychron.paths import paths
 from pychron.loggable import Loggable
@@ -72,8 +72,8 @@ class EasyParser(Loggable):
             # path = os.path.join(paths.dissertation, 'data', 'minnabluff', 'spectra_unknowns.yaml')
 
         if os.path.isfile(path):
-            with open(path, 'r') as fp:
-                md = yaml.load_all(fp)
+            with open(path, 'r') as rfile:
+                md = yaml.load_all(rfile)
                 self._docs = list(md)
                 self._ndocs = len(self._docs)
         else:
@@ -93,5 +93,5 @@ class EasyParser(Loggable):
         except IndexError:
             self.warning_dialog('Invalid Document index {}. ndocs={}'.format(idx, self._ndocs))
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

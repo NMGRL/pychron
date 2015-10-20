@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,23 +12,24 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.canvas.canvas2D.video_canvas import VideoCanvas
 # from pychron.canvas.canvas2D.markup.markup_items import Rectangle
 from laser_tray_canvas import LaserTrayCanvas
 
+
 class VideoLaserTrayCanvas(LaserTrayCanvas, VideoCanvas):
-    '''
-    '''
+    """
+    """
     bgcolor = 'lightgray'
 
     def set_stage_position(self, x, y):
-        '''
-        '''
+        """
+        """
 
         super(VideoLaserTrayCanvas, self).set_stage_position(x, y)
         self.adjust_limits('x', x)
@@ -85,13 +86,13 @@ class VideoLaserTrayCanvas(LaserTrayCanvas, VideoCanvas):
 #                                                     )
 
     def _calc_relative_move_direction(self, char, direction):
-        '''
+        """
             correct for sense of camera
-        '''
+        """
         if char in ('Left', 'Right'):
             di = -1 if self.camera.hflip else 1
         else:
-            di = 1 if self.camera.vflip else -1
+            di = -1 if self.camera.vflip else 1
         return direction * di
 
 
@@ -112,4 +113,4 @@ class VideoLaserTrayCanvas(LaserTrayCanvas, VideoCanvas):
 # #            self.parent.canvas.set_stage_position(x, y)
 #
 # #        super(LaserTrayCanvas, self).normal_key_pressed(event)
-#============= EOF ====================================
+# ============= EOF ====================================

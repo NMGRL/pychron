@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,15 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Any, Int, Str, Event
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from PySide.QtCore import QTimer
 from stage_component_editor import _LaserComponentEditor, LaserComponentEditor
-#============= local library imports  ==========================
-
+# ============= local library imports  ==========================
 
 
 class _VideoComponentEditor(_LaserComponentEditor):
@@ -40,6 +39,8 @@ class _VideoComponentEditor(_LaserComponentEditor):
 
         self.playTimer = QTimer(self.control)
         self.playTimer.timeout.connect(self.update)
+
+        print 'asdfasfd', self.value.fps
         if self.value.fps:
             self.playTimer.setInterval(1000 / self.value.fps)
         self.playTimer.start()
@@ -60,8 +61,9 @@ class _VideoComponentEditor(_LaserComponentEditor):
 
     def update(self):
         if self.control:
-            self.value.draw_valid = False
-            self.control.repaint()
+            self.value.request_redraw()
+            # self.value.draw_valid = False
+            # self.control.repaint()
 
     def _stop_timer_fired(self):
         print 'VideoComponentEditor stopping playTimer'
@@ -82,4 +84,4 @@ class VideoComponentEditor(LaserComponentEditor):
     klass = _VideoComponentEditor
     stop_timer = Str
 
-#============= EOF ====================================
+# ============= EOF ====================================

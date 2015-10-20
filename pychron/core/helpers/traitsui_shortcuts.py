@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,12 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traitsui.api import  Item, ListEditor, InstanceEditor
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 def instance_item(name, **kw):
     return Item(name, style='custom', show_label=False, **kw)
 
@@ -26,4 +26,4 @@ def listeditor(name, **kw):
                 show_label=False,
                 editor=ListEditor(mutable=False, style='custom', editor=InstanceEditor()),
                     **kw)
-#============= EOF =============================================
+# ============= EOF =============================================

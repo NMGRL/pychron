@@ -1,31 +1,31 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-from traits.api import Any, Float, DelegatesTo, List, Bool
+# ============= enthought library imports =======================
+from traits.api import Any, Float, DelegatesTo, List, Bool, Property
 from traitsui.api import View, Item, EnumEditor, Group, HGroup, spring, ButtonEditor
 from pyface.timer.do_later import do_after
-#============= standard library imports ========================
-from numpy import linspace, exp, hstack, array, Inf
+# ============= standard library imports ========================
+from numpy import linspace, hstack, array, Inf
+from numpy.core.umath import exp
 import random
 import time
 from threading import Event
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from spectrometer_task import SpectrometerTask
-from pychron.globals import globalv
 from pychron.core.ui.gui import invoke_in_main_thread
 
 
@@ -48,53 +48,59 @@ def psuedo_peak(center, start, stop, step, magnitude=500, peak_width=0.008):
 
     for i, d in enumerate(gaussian(x)):
         if abs(center - x[i]) < peak_width:
-        #            d = magnitude
+            #            d = magnitude
             d = magnitude + magnitude / 50.0 * random.random()
         yield d
 
 
 class MagnetScan(SpectrometerTask):
-#    graph = Any
+    #    graph = Any
     detectors = DelegatesTo('spectrometer')
-    integration_time=DelegatesTo('spectrometer')
+    integration_time = DelegatesTo('spectrometer')
 
     reference_detector = Any
     additional_detectors = List
+    active_detectors = Property
 
     start_mass = Float(36)
     stop_mass = Float(40)
     step_mass = Float(1)
     normalize = Bool(True)
-
+    _peak_generator = None
     verbose = False
 
     def _scan_dac(self, values):
 
+        self.graph.set_x_limits(values[0], values[-1])
         if self.spectrometer.simulation:
             self._peak_generator = psuedo_peak(values[len(values) / 2] + 0.001, values[0], values[-1], len(values))
-            #self._peak_generator= multi_peak_generator(values)
+            # self._peak_generator = multi_peak_generator(values)
+            self.integration_time = 0.065536
 
         gen = (vi for vi in values)
         evt = Event()
         intensities = []
-        mag = self.spectrometer.magnet
 
-        invoke_in_main_thread(self._iter_dac, mag, gen.next(),
+        invoke_in_main_thread(self._iter_dac, gen.next(),
                               gen, evt, intensities)
 
         while not evt.isSet():
             time.sleep(0.01)
 
+        # self.integration_time = QTEGRA_INTEGRATION_TIMES[4]
         return True
 
-    def _iter_dac(self, mag, di, gen, evt, intensities):
+    def _get_active_detectors(self):
+        return [self.reference_detector] + self.additional_detectors
 
-        mag.set_dac(di, verbose=self.verbose)
+    def _iter_dac(self, di, gen, evt, intensities):
+        # self.debug('iter dac {}'.format(di))
+        mag = self.spectrometer.magnet
+        mag.set_dac(di, verbose=self.verbose, settling_time=self.integration_time*2)
 
         d = self._magnet_step_hook()
 
         self._graph_hook(di, d)
-
         intensities.append(d)
 
         try:
@@ -103,8 +109,8 @@ class MagnetScan(SpectrometerTask):
             di = None
 
         if di is not None and self.isAlive():
-            p=int(self.integration_time*1000*0.9)
-            do_after(p, self._iter_dac, mag, di, gen, evt, intensities)
+            p = int(self.integration_time * 1000 * 0.9)
+            do_after(p, self._iter_dac, di, gen, evt, intensities)
         else:
             evt.set()
 
@@ -131,18 +137,19 @@ class MagnetScan(SpectrometerTask):
             oys = array([v]) if oys is None else hstack((oys, v))
             setattr(plot, k, oys)
 
-            if i == 0:
-                # calculate ref range
-                miR = min(oys)
-                maR = max(oys)
-                R = maR - miR
-            else:
-                mir = min(oys)
-                mar = max(oys)
-                r = mar - mir
+            if self.normalize:
+                if i == 0:
+                    # calculate ref range
+                    miR = min(oys)
+                    maR = max(oys)
+                    R = maR - miR
+                else:
+                    mir = min(oys)
+                    mar = max(oys)
+                    r = mar - mir
 
-            if r and R and self.normalize:
-                oys = (oys - mir) * R / r + miR
+                if r and R:
+                    oys = (oys - mir) * R / r + miR
 
             xs = get_data('x{}'.format(i))
             xs = hstack((xs, di))
@@ -163,23 +170,30 @@ class MagnetScan(SpectrometerTask):
         spec = self.spectrometer
         ds = [str(self.reference_detector)] + self.additional_detectors
         intensity = spec.get_intensity(ds)
+        # print ds,intensity
+        # intensity = intensity[1]
+        # print self._peak_generator
+        # if self._peak_generator:
+        #     # print 'asdfas', intensity
+        #     v = self._peak_generator.next()
+        #     intensity = [v+random.random() for i in range(len(ds))]
 
         # debug
-        if globalv.experiment_debug:
-            from numpy import array, random, ones
-
-            v = self._peak_generator.next()
-            v = array([v])
-
-            r = ones(len(ds))
-            r = r * v
-            if len(r) > 1:
-                r[1] *= 0.5
-                if len(r) > 2:
-                    r[2] *= 0.1
-
-            intensity = r
-
+        # if globalv.experiment_debug:
+        # from numpy import array, ones
+        #
+        # v = self._peak_generator.next()
+        # v = array([v])
+        #
+        # r = ones(len(ds))
+        # r = r * v
+        # if len(r) > 1:
+        #     r[1] *= 0.5
+        #     if len(r) > 2:
+        #         r[2] *= 0.1
+        #
+        # intensity = r
+        # intensity=[random.random()]
         return intensity
 
     def _execute(self):
@@ -220,7 +234,7 @@ class MagnetScan(SpectrometerTask):
         spec = self.spectrometer
         mag = spec.magnet
         if map_mass:
-            detname=self.reference_detector.name
+            detname = self.reference_detector.name
             ds = spec.correct_dac(self.reference_detector,
                                   mag.map_mass_to_dac(sm, detname))
             de = spec.correct_dac(self.reference_detector,
@@ -239,7 +253,6 @@ class MagnetScan(SpectrometerTask):
             if di == -1:
                 sm, em = em, sm
             values = self._calc_step_values(sm, em, stm)
-
             if not self._scan_dac(values):
                 return
 
@@ -252,7 +265,14 @@ class MagnetScan(SpectrometerTask):
         return self.detectors[0]
 
     def edit_view(self):
-        v = self.traits_view()
+        # v = self.traits_view()
+        v = View(
+            Group(
+                Item('reference_detector', editor=EnumEditor(name='detectors')),
+                Item('integration_time', label='Integration (s)'),
+                label='Magnet Scan',
+                show_border=True))
+
         v.title = self.title
         v.buttons = ['OK', 'Cancel']
         return v
@@ -271,4 +291,4 @@ class MagnetScan(SpectrometerTask):
                 show_border=True))
 
         return v
-#============= EOF =============================================
+        # ============= EOF =============================================

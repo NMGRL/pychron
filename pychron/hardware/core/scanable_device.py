@@ -1,25 +1,28 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
-#============= enthought library imports =======================
-from traits.api import Event, Property, Any, Bool, Float, Str, Instance
+# ===============================================================================
+# ============= enthought library imports =======================
+import time
+
+from traits.api import Event, Property, Any, Bool, Float, Str, Instance, List
 from traitsui.api import HGroup, VGroup, Item, spring, ButtonEditor
-#============= standard library imports ========================
+
+# ============= standard library imports ========================
 from threading import Lock
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.hardware.core.viewable_device import ViewableDevice
 from pychron.graph.plot_record import PlotRecord
 from pychron.paths import paths
@@ -34,11 +37,14 @@ class ScanableDevice(ViewableDevice):
     scan_label = Property(depends_on='_scanning')
     _scanning = Bool(False)
 
+    alarms = List(Alarm)
+
     is_scanable = Bool(False)
     scan_func = Any
     scan_lock = None
     timer = None
     scan_period = Float(1000, enter_set=True, auto_set=False)
+    scan_width = Float(5, enter_set=True, auto_set=False)
     scan_units = 'ms'
     record_scan_data = Bool(False)
     graph_scan_data = Bool(False)
@@ -53,13 +59,20 @@ class ScanableDevice(ViewableDevice):
     data_manager = None
     time_dict = dict(ms=1, s=1000, m=60.0 * 1000, h=60.0 * 60.0 * 1000)
 
+    dm_kind = 'csv'
+    use_db = False
+    _auto_started = False
+
+    def is_scanning(self):
+        return self._scanning
+
     def _scan_path_changed(self):
         self.scan_root = os.path.split(self.scan_path)[0]
         self.scan_name = os.path.basename(self.scan_path)
 
-    #===============================================================================
+    # ===============================================================================
     # streamin interface
-    #===============================================================================
+    # ===============================================================================
     def setup_scan(self):
         # should get scan settings from the config file not the initialization.xml
         config = self.get_configuration()
@@ -69,11 +82,12 @@ class ScanableDevice(ViewableDevice):
             if enabled:
                 self.set_attribute(config, 'auto_start', 'Scan', 'auto_start', cast='boolean', default=False)
                 self.set_attribute(config, 'scan_period', 'Scan', 'period', cast='float')
+                self.set_attribute(config, 'scan_width', 'Scan', 'width', cast='float')
                 self.set_attribute(config, 'scan_units', 'Scan', 'units')
                 self.set_attribute(config, 'record_scan_data', 'Scan', 'record', cast='boolean')
                 self.set_attribute(config, 'graph_scan_data', 'Scan', 'graph', cast='boolean')
-                self.set_attribute(config, 'use_db', 'DataManager', 'use_db', cast='boolean', default=False)
-                self.set_attribute(config, 'dm_kind', 'DataManager', 'kind', default='csv')
+                # self.set_attribute(config, 'use_db', 'DataManager', 'use_db', cast='boolean', default=False)
+                # self.set_attribute(config, 'dm_kind', 'DataManager', 'kind', default='csv')
 
     def setup_alarms(self):
         config = self.get_configuration()
@@ -81,8 +95,7 @@ class ScanableDevice(ViewableDevice):
             for opt in config.options('Alarms'):
                 self.alarms.append(Alarm(
                     name=opt,
-                    alarm_str=config.get('Alarms', opt)
-                ))
+                    alarm_str=config.get('Alarms', opt)))
 
     def _scan_hook(self, *args, **kw):
         pass
@@ -92,12 +105,15 @@ class ScanableDevice(ViewableDevice):
             try:
                 v = getattr(self, self.scan_func)(verbose=False)
             except AttributeError, e:
-                print e
+                print 'exception', e
                 return
 
             if v is not None:
                 self.current_scan_value = str(v)
 
+                # self.debug('current scan func={}, value ={}'.format(self.scan_func, v))
+
+                x = None
                 if self.graph_scan_data:
                     if isinstance(v, tuple):
                         x = self.graph.record_multiple(v)
@@ -113,11 +129,14 @@ class ScanableDevice(ViewableDevice):
                     else:
                         x = self.graph.record(v)
                         v = (v,)
-
                 if self.record_scan_data:
+                    if x is None:
+                        x = time.time()
+
                     if self.dm_kind == 'csv':
                         ts = generate_datetimestamp()
-                        self.data_manager.write_to_frame((ts, x) + v)
+
+                        self.data_manager.write_to_frame((ts, '{:<8s}'.format('{:0.2f}'.format(x))) + v)
                     else:
                         tab = self.data_manager.get_table('scan1', '/scans')
                         if tab is not None:
@@ -137,7 +156,7 @@ class ScanableDevice(ViewableDevice):
                 '''
                 if self._no_response_counter > 3:
                     self.timer.Stop()
-                    self.info('no response. stopping scan')
+                    self.info('no response. stopping scan func={}'.format(self.scan_func))
                     self._scanning = False
                     self._no_response_counter = 0
 
@@ -151,11 +170,19 @@ class ScanableDevice(ViewableDevice):
         with self.scan_lock:
             self._scan_(*args, **kw)
 
-    def start_scan(self):
+    def start_scan(self, period=None):
+        """
+
+        :param period: delapy between triggers in milliseconds
+        :return:
+        """
         if self.timer is not None:
             self.timer.Stop()
             self.timer.wait_for_completion()
 
+        d = self.scan_width * 60 #* 1000/self.scan_period
+        # print self.scan_width, self.scan_period
+        self.graph.set_scan_width(d)
         self._scanning = True
         self.info('Starting scan')
         if self.record_scan_data:
@@ -170,11 +197,12 @@ class ScanableDevice(ViewableDevice):
             if dm is None:
                 self.data_manager = dm = klass()
 
-            dw = DataWarehouse(root=paths.device_scan_root)
+            dm.delimiter = '\t'
+
+            dw = DataWarehouse(root=paths.device_scan_dir)
             dw.build_warehouse()
 
-            self.frame_name = dm.new_frame(base_frame_name=self.name,
-                                           directory=dw.get_current_dir())
+            dm.new_frame(base_frame_name=self.name, directory=dw.get_current_dir())
             self.scan_path = dm.get_current_path()
 
             if self.dm_kind == 'h5':
@@ -184,11 +212,12 @@ class ScanableDevice(ViewableDevice):
             if self.auto_start:
                 self.save_scan_to_db()
 
-        sp = self.scan_period * self.time_dict[self.scan_units]
+        if period is None:
+            period = self.scan_period * self.time_dict[self.scan_units]
 
         from pychron.core.helpers.timer import Timer
 
-        self.timer = Timer(sp, self.scan)
+        self.timer = Timer(period, self.scan)
         self.info('Scan started')
 
     def save_scan_to_db(self):
@@ -215,7 +244,7 @@ class ScanableDevice(ViewableDevice):
 
         if self.record_scan_data and not self._auto_started:
             if self.use_db:
-                if self.db_save_dialog():
+                if self.confirmation_dialog('Save to Database'):
                     self.save_scan_to_db()
                 else:
                     if self.data_manager:
@@ -250,10 +279,10 @@ class ScanableDevice(ViewableDevice):
         return g
 
     def graph_builder(self, g, **kw):
-        p = g.new_plot(padding=[50, 5, 5, 35],
-                       zoom=True,
-                       pan=True,
-                       **kw)
+        g.new_plot(padding=[50, 5, 5, 35],
+                   zoom=True,
+                   pan=True,
+                   **kw)
 
         g.set_y_title(self.graph_ytitle)
         g.set_x_title('Time')
@@ -263,17 +292,12 @@ class ScanableDevice(ViewableDevice):
         g = VGroup(Item('graph', show_label=False, style='custom'),
                    VGroup(Item('scan_func', label='Function', style='readonly'),
 
-                          HGroup(Item('scan_period', label='Period ({})'.format(self.scan_units),
-                                      # style='readonly'
-                          ), spring),
-                          Item('current_scan_value', style='readonly'),
-                   ),
-
+                          HGroup(Item('scan_period', label='Period ({})'.format(self.scan_units)), spring),
+                          Item('current_scan_value', style='readonly')),
                    VGroup(
                        HGroup(Item('scan_button', editor=ButtonEditor(label_value='scan_label'),
                                    show_label=False),
-                              spring
-                       ),
+                              spring),
                        Item('scan_root',
                             style='readonly',
                             label='Scan directory',
@@ -283,10 +307,9 @@ class ScanableDevice(ViewableDevice):
                             visible_when='object.record_scan_data'),
                        visible_when='object.is_scanable'),
 
-                   label='Scan'
-        )
+                   label='Scan')
         v = super(ScanableDevice, self).current_state_view()
         v.content.content.append(g)
         return v
 
-        #============= EOF =============================================
+        # ============= EOF =============================================

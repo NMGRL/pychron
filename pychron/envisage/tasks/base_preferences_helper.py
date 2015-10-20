@@ -1,31 +1,32 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traits.api import List, Button, Any, Int, Str, Enum, Color
-from traitsui.api import View, VGroup, UItem, HGroup
+from traits.api import List, Button, Any, Int, Str, Enum, Color, String, Property
+from traitsui.api import View, VGroup, UItem, HGroup, Item
 from apptools.preferences.api import PreferencesHelper
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+import re
+# ============= local library imports  ==========================
 from traitsui.list_str_adapter import ListStrAdapter
 
 
-#def button_editor(trait, name, editor_kw=None, **kw):
-#    if editor_kw is None:
+# def button_editor(trait, name, editor_kw=None, **kw):
+# if editor_kw is None:
 #        editor_kw = {}
 #
 #    image = ImageResource(name=name,
@@ -35,6 +36,7 @@ from traitsui.list_str_adapter import ListStrAdapter
 #                 editor=ButtonEditor(image=image, **editor_kw),
 #                 **kw)
 from pychron.core.ui.custom_label_editor import CustomLabel
+from pychron.envisage.icon_button_editor import icon_button_editor
 
 
 class FavoritesAdapter(ListStrAdapter):
@@ -49,13 +51,79 @@ class FavoritesAdapter(ListStrAdapter):
 class BasePreferencesHelper(PreferencesHelper):
     def _get_value(self, name, value):
         if 'color' in name:
-            value = value.split('(')[1]
-            value = value[:-1]
-            value = map(float, value.split(','))
-            value = ','.join(map(lambda x: str(int(x * 255)), value))
+            try:
+                value = value.split('(')[1]
+                value = value[:-1]
+                value = map(float, value.split(','))
+                value = ','.join(map(lambda x: str(int(x * 255)), value))
+            except IndexError:
+                value = super(BasePreferencesHelper, self)._get_value(name, value)
         else:
             value = super(BasePreferencesHelper, self)._get_value(name, value)
         return value
+
+
+REPO_REGEX = re.compile(r'^[^\\]\w+/\w+')
+
+
+def test_connection_item():
+    return icon_button_editor('test_connection', 'server-connect',
+                              tooltip='Test connection to Github Repo')
+
+
+def remote_status_item(label=None):
+    grp = HGroup(Item('remote',
+                      label='Name'),
+                 test_connection_item(),
+                 CustomLabel('_remote_status',
+                             width=50,
+                             color_name='_remote_status_color'))
+    if label:
+        grp.label = label
+        grp.show_border = True
+    return grp
+
+
+class GitRepoPreferencesHelper(BasePreferencesHelper):
+    remote = Property(String, depends_on='_remote')
+    _remote = String
+    test_connection = Button
+    _remote_status = Str
+    _remote_status_color = Color
+
+    def _test_connection_fired(self):
+        import urllib2
+
+        if self.remote.strip():
+            try:
+                cmd = 'https://github.com/{}'.format(self.remote)
+                urllib2.urlopen(cmd)
+                self._remote_status = 'Valid'
+                self._remote_status_color = 'green'
+                self._connection_hook()
+                return
+            except BaseException, e:
+                print 'exception', e, cmd
+
+        self._remote_status_color = 'red'
+        self._remote_status = 'Invalid'
+
+    def _connection_hook(self):
+        pass
+
+    def _set_remote(self, v):
+        if v is not None:
+            self._remote = v
+
+    def _get_remote(self):
+        return self._remote
+
+    def _validate_remote(self, v):
+        if not v.strip():
+            return ''
+
+        if REPO_REGEX.match(v):
+            return v
 
 
 class FavoritesPreferencesHelper(BasePreferencesHelper):
@@ -79,6 +147,10 @@ class FavoritesPreferencesHelper(BasePreferencesHelper):
             vs = sel.split(',')
             for v, attr in zip(vs, self._get_attrs()):
                 setattr(self, attr, str(v))
+        self._selected_change_hook()
+
+    def _selected_change_hook(self):
+        pass
 
     def _delete_favorite_fired(self):
         if self.selected:
@@ -95,7 +167,7 @@ class FavoritesPreferencesHelper(BasePreferencesHelper):
 
     def _add_favorite_fired(self):
         if self.fav_name:
-            fv = ','.join(self._get_values())
+            fv = ','.join(map(str, self._get_values()))
             pf = next((f for f in self.favorites
                        if f.split(',')[0] == self.fav_name), None)
             if pf:
@@ -132,7 +204,8 @@ class BaseConsolePreferencesPane(PreferencesPane):
                                UItem('textcolor'),
                                UItem('bgcolor')),
                         preview,
+                        show_border=True,
                         label=self.label))
         return v
 
-    #============= EOF =============================================
+        # ============= EOF =============================================

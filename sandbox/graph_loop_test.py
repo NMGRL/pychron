@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,32 +12,28 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.etsconfig.etsconfig import ETSConfig
+
 ETSConfig.toolkit = 'qt4'
 
 from pychron.graph.graph import Graph
-from chaco.plot import Plot
 
-from chaco.lineplot import LinePlot
-from chaco.scatterplot import ScatterPlot
-from pychron.graph.regression_graph import StackedRegressionGraph
 from pychron.core.ui.gui import invoke_in_main_thread
 # from pychron.core.ui.thread import Thread
 from threading import Event, Timer, Thread
 # from pychron.graph.stacked_graph import StackedGraph
 from traits.api import HasTraits, Instance, Button
-from traitsui.api import View, Item, UItem
+from traitsui.api import View, UItem
 # from pychron.consumer_mixin import consumable
 # from pychron.graph.graph import Graph
 # from pychron.graph.regression_graph import RegressionGraph, StackedRegressionGraph
 import time
-from pyface.timer.do_later import do_later, do_after
-from pychron.core.codetools.memory_usage import mem_log, get_current_mem, count_instances
-#============= standard library imports ========================
-#============= local library imports  ==========================
+from pychron.core.codetools.memory_usage import mem_log, get_current_mem
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class PlotPanel(HasTraits):
     graph = Instance(Graph, ())
@@ -137,7 +133,7 @@ class Looper(HasTraits):
 
     def _iter_step(self, n, i, d):
         if i % 10 == 0:
-            print '{:03n} {}'.format(i, get_current_mem())
+            print '{:03d} {}'.format(i, get_current_mem())
 #         invoke_in_main_thread(self._graph, d, i)
         if i < n:
             t = Timer(.1, self._iter_step, args=(n, i + 1, d))
@@ -150,7 +146,7 @@ class Looper(HasTraits):
 #         g = self.graph
 
         if i % 10 == 0:
-            print '{:03n} {}'.format(i, get_current_mem())
+            print '{:03d} {}'.format(i, get_current_mem())
 #         for j in range(d):
 #             g.add_datum((i, j + i * 0.1),
 # #                         update_y_limits=True,
@@ -186,4 +182,4 @@ if __name__ == '__main__':
 
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,12 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 from traits.etsconfig.etsconfig import ETSConfig
 
 ETSConfig.toolkit = 'qt4'
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import csv
 from pylab import show, meshgrid, zeros, \
     contourf, array, linspace, scatter, cm, xlabel, ylabel, \
@@ -28,12 +28,12 @@ import matplotlib.pyplot as plt
 from pychron.core.regression.ols_regressor import MultipleLinearRegressor
 from pychron.core.regression.flux_regressor import PlaneFluxRegressor
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 def load_holder(holder):
     holes = []
-    with open(holder, 'r') as fp:
-        reader = csv.reader(fp, delimiter=',')
+    with open(holder, 'r') as rfile:
+        reader = csv.reader(rfile, delimiter=',')
         reader.next()  # pop header
 
         for i, line in enumerate(reader):
@@ -59,7 +59,7 @@ def pt_factory(line, holes):
 #        print hole, theta
         return x, y, theta, float(j)
     except Exception, e:
-        print e
+        print 'exception', e
 
 def get_column_idx(names, header):
     if not isinstance(names, (list, tuple)):
@@ -301,7 +301,7 @@ if __name__ == '__main__':
     #    visualize_flux_contour(p, holder, delim='\t')
     holes = [45, 47, 49, 51, 53]
     interpolate_flux(holes, p, holder, delim='\t')
-#============= EOF =============================================
+# ============= EOF =============================================
 # def load_flux_csv(p, holes, delim):
 #     with open(p, 'U') as fp:
 #         reader = csv.reader(fp, delimiter=delim)

@@ -1,31 +1,50 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
+from datetime import datetime
+
 import xlrd
 from xlrd.biffh import XLRDError
 
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.managers.data_managers.data_manager import DataManager
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
 
 class XLSDataManager(DataManager):
+    wb = None
+
     def open(self, p):
         self.wb = xlrd.open_workbook(p)
+
+    def strftime(self, d, f):
+        d = datetime(*xlrd.xldate_as_tuple(d, self.wb.datemode))
+        return d.strftime(f)
+
+    def iterrows(self, sheet, start=None, end=None):
+        if start is None:
+            start = 0
+        if end is None:
+            end = sheet.nrows
+
+        # print start, end
+        return (sheet.row(i) for i in xrange(start, end, 1))
+
     def get_sheet(self, names):
         if self.wb:
             if not isinstance(names, (list, tuple)):
@@ -61,4 +80,4 @@ class XLSDataManager(DataManager):
                 cols = ','.join(names)
                 self.warning_dialog('Invalid sheet. No column named "{}"'.format(cols))
 
-#============= EOF =============================================
+# ============= EOF =============================================

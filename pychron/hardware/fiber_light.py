@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Range, Event, Bool, on_trait_change, Property, Float
 from traitsui.api import View, Item, ButtonEditor, HGroup, Group
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.hardware.core.abstract_device import AbstractDevice
 
 
@@ -127,4 +127,4 @@ class FiberLight(AbstractDevice):
     def traits_view(self):
         return View(self.get_control_group())
 
-#============= EOF ====================================
+# ============= EOF ====================================

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Int, Str, Bool, List, Event, Property, Enum, Float
 from traitsui.api import Item, CheckListEditor, VGroup, HGroup, ButtonEditor, EnumEditor
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.pyscripts.commands.core import Command
 
 from pychron.paths import paths
@@ -28,9 +28,9 @@ from pychron.pychron_constants import NULL_STR
 
 DETS = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
 
-#===============================================================================
+# ===============================================================================
 # super commands
-#===============================================================================
+# ===============================================================================
 class ValueCommand(Command):
     value = Float
 
@@ -42,7 +42,7 @@ class ValueCommand(Command):
         return self.value
 
 
-class ConditionCommand(Command):
+class ConditionalCommand(Command):
     attribute = Str
     comparison = Enum('<', '>', '=', '<=', '>=')
     value = Float
@@ -52,8 +52,7 @@ class ConditionCommand(Command):
     def _get_condition_group(self):
         g = HGroup('attribute',
                    'comparison',
-                   'value'
-        )
+                   'value')
         o = HGroup('start_count', 'frequency')
         return VGroup(g, o)
 
@@ -64,22 +63,21 @@ class ConditionCommand(Command):
                                                                      self.start_count,
                                                                      self.frequency)
 
-        #===============================================================================
-
+# ===============================================================================
 # condition commands
-#===============================================================================
-class AddTermination(ConditionCommand):
-    description = 'Add termination condition'
+# ===============================================================================
+class AddTermination(ConditionalCommand):
+    description = 'Add termination conditional'
     example = ''' '''
 
     def _get_view(self):
         return self._get_condition_group()
 
 
-class AddAction(ConditionCommand):
+class AddAction(ConditionalCommand):
     action = Str
     resume = Bool(False)
-    description = 'Add action condition'
+    description = 'Add action conditional'
     example = ''' '''
 
     def _get_view(self):
@@ -91,13 +89,13 @@ class AddAction(ConditionCommand):
         return '{}, action="{}", resume={}'.format(s, self.action, self.resume)
 
 
-class AddTruncation(ConditionCommand):
-    description = 'Add truncation condition'
+class AddTruncation(ConditionalCommand):
+    description = 'Add truncation conditional'
     example = ''' '''
 
 
-class ClearConditions(Command):
-    description = 'Clear all conditions'
+class ClearConditionals(Command):
+    description = 'Clear all conditionals'
     example = ''' '''
 
 
@@ -115,9 +113,9 @@ class ClearTerminations(Command):
     description = 'Clear terminations'
     example = ''' '''
 
-#===============================================================================
+# ===============================================================================
 #
-#===============================================================================
+# ===============================================================================
 
 class Equilibrate(ValveCommand):
     description = 'Equilibrate'
@@ -402,9 +400,9 @@ however all peak centers for all activated detectors are determined'''
         pass
 
 
-#===============================================================================
+# ===============================================================================
 # set commands
-#===============================================================================
+# ===============================================================================
 class SetDeflection(ValueCommand):
     description = 'Set deflection of a detector'
     example = 'set_deflection("AX", 100)'
@@ -508,4 +506,4 @@ class SetAcceleratingVoltage(Command):
     description = 'Set the source accelerating voltage in volts'
     example = 'set_accelerating_voltage(4500)'
 
-#============= EOF =============================================
+# ============= EOF =============================================

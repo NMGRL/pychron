@@ -18,12 +18,12 @@
 from envisage.ui.tasks.task_factory import TaskFactory
 from traits.api import Any
 # ============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.spectrometer.base_spectrometer_manager import BaseSpectrometerManager
-from pychron.spectrometer.ion_optics_manager import IonOpticsManager
+from pychron.spectrometer.ion_optics.ion_optics_manager import IonOpticsManager
+from pychron.spectrometer.readout_view import ReadoutView
 from pychron.spectrometer.scan_manager import ScanManager
-from pychron.spectrometer.tasks.mass_cal.mass_calibration_task import MassCalibrationTask
 from pychron.spectrometer.tasks.spectrometer_task import SpectrometerTask
 
 
@@ -34,7 +34,20 @@ class BaseSpectrometerPlugin(BaseTaskPlugin):
     scan_manager = Any
     ion_optics_manager = Any
 
+    def start(self):
+        super(BaseSpectrometerPlugin, self).start()
+        if self.spectrometer_manager:
+            self.spectrometer_manager.spectrometer.start()
+
+    def _inspector_task_factory(self):
+        from pychron.spectrometer.tasks.inspector.scan_inspector_task import ScanInspectorTask
+
+        t = ScanInspectorTask()
+        return t
+
     def _mass_cal_task_factory(self):
+        from pychron.spectrometer.tasks.mass_cal.mass_calibration_task import MassCalibrationTask
+
         t = MassCalibrationTask(spectrometer_manager=self.spectrometer_manager)
         return t
 
@@ -49,35 +62,53 @@ class BaseSpectrometerPlugin(BaseTaskPlugin):
     def _factory_ion_optics(self):
         return self.ion_optics_manager
 
+    def _factory_scan_manager(self):
+        return self.scan_manager
+
     def _tasks_default(self):
         ts = [TaskFactory(id='pychron.spectrometer',
                           task_group='hardware',
                           factory=self._task_factory,
+                          accelerator="Ctrl+'",
                           name='Spectrometer',
-                          image='prism'),
+                          image='spectrum_emission'),
               TaskFactory(id='pychron.mass_calibration',
                           factory=self._mass_cal_task_factory,
                           name='Mass Calibration',
-                          accelerator='Ctrl+Shift+M')]
+                          accelerator='Ctrl+Shift+M'),
+              TaskFactory(id='pychron.spectrometer.scan_inspector',
+                          factory=self._inspector_task_factory,
+                          name='Scan Inspector')]
         return ts
 
     def _service_offers_default(self):
         """
         """
         so = self.service_offer_factory(
-            protocol = BaseSpectrometerManager,
+            protocol=BaseSpectrometerManager,
             # protocol=self.spectrometer_manager_klass,
             factory=self._factory_spectrometer)
         so1 = self.service_offer_factory(
             protocol=IonOpticsManager,
             factory=self._factory_ion_optics)
 
-        return [so, so1]
+        so2 = self.service_offer_factory(
+            protocol=ScanManager,
+            factory=self._factory_scan_manager)
+
+        so3 = self.service_offer_factory(protocol=ReadoutView,
+                                         factory=self._readout_view_factory)
+        return [so, so1, so2, so3]
+
+    def _readout_view_factory(self):
+        v = ReadoutView(spectrometer=self.spectrometer_manager.spectrometer)
+        return v
 
     def _managers_default(self):
         """
         """
         return [dict(name=self.manager_name,
+                     plugin_name=self.name,
                      manager=self.spectrometer_manager)]
 
     def _spectrometer_manager_default(self):
@@ -95,7 +126,7 @@ class BaseSpectrometerPlugin(BaseTaskPlugin):
                          ion_optics_manager=self.ion_optics_manager)
         return sm
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Any, Str, Float, Bool, Instance
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.graph.tools.info_inspector import InfoOverlay, InfoInspector
 
 
@@ -38,7 +38,7 @@ class ExtractionLineInfoTool(InfoInspector):
         return [self.name, 'volume= {}'.format(self.volume)]
 
     def normal_mouse_move(self, event):
-        if self.active and self.display_volume:
+        if self.active:
             x, y = event.x, event.y
             item = self.scene.get_is_in(x, y)
             if not item:
@@ -47,11 +47,7 @@ class ExtractionLineInfoTool(InfoInspector):
                 self.metadata_changed = True
 
     def normal_key_pressed(self, event):
-        if not self.display_volume:
-            return
-
         ok = event.character == self.volume_key and not self.active
-        #self.active = False
 
         if self.manager.use_network and ok:
             x, y = event.x, event.y
@@ -70,5 +66,5 @@ class ExtractionLineInfoTool(InfoInspector):
 class ExtractionLineInfoOverlay(InfoOverlay):
     tool = Instance(ExtractionLineInfoTool)
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

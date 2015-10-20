@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +12,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-from traits.api import HasTraits, List
-from traitsui.api import View, Item
-from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
+# ============= enthought library imports =======================
+from traits.api import List
 from envisage.ui.tasks.task_factory import TaskFactory
-from pychron.image.tasks.video_task import VideoTask
 from envisage.extension_point import ExtensionPoint
-#============= standard library imports ========================
-#============= local library imports  ==========================
+
+from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
+from pychron.image.tasks.video_task import VideoTask
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class VideoPlugin(BaseTaskPlugin):
 
@@ -54,4 +55,4 @@ class VideoPlugin(BaseTaskPlugin):
 #         elm = self.application.get_service(ExtractionLineManager)
 #         t = ExtractionLineTask(manager=elm)
 #         return t
-#============= EOF =============================================
+# ============= EOF =============================================

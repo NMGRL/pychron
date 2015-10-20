@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Bool, Instance, Enum
 from uncertainties import nominal_value, std_dev
 
@@ -24,8 +24,9 @@ from pychron.loggable import Loggable
 
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 def iso_value(attr, ve='value'):
     def f(x, k):
@@ -346,4 +347,4 @@ class LaserTableTextWriter(Loggable):
     def _get_header_styles(self):
         return None, None
 
-#============= EOF =============================================
+# ============= EOF =============================================

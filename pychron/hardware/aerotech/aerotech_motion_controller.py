@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 # from traits.api import HasTraits, on_trait_change, Str, Int, Float, Button
 # from traitsui.api import View, Item, Group, HGroup, VGroup
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 import time
 
 from aerotech_axis import AerotechAxis
@@ -39,10 +39,10 @@ class AerotechMotionController(MotionController):
     def initialize(self, *args, **kw):
         '''
         '''
-        self._communicator.write_terminator = None
+        self.communicator.write_terminator = None
         self.tell('##')
-        self._communicator.write_terminator = chr(13)
-        self._communicator.read_delay = 25
+        self.communicator.write_terminator = chr(13)
+        self.communicator.read_delay = 25
         self.enable()
 #        self.home()
 #        for a in self.axes.itervalues():
@@ -224,7 +224,7 @@ class AerotechMotionController(MotionController):
 #        resp = self.ask(cmd)
 #        return self._parse_response(resp)
 
-    def _moving_(self, *args, **kw):
+    def _moving(self, *args, **kw):
         '''
             unidex 511 6-12 Serial Pol
         '''
@@ -340,5 +340,5 @@ class AerotechMotionController(MotionController):
 #    amc = Aero
 
 
-#============= EOF ====================================
+# ============= EOF ====================================
 

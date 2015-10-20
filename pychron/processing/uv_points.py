@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Button, String
 from traitsui.api import View, Item, ButtonEditor
 from enable.component_editor import ComponentEditor
@@ -22,13 +22,14 @@ from chaco.abstract_overlay import AbstractOverlay
 
 from pychron.media_server.image_viewer import ImageViewer
 
-#============= standard library imports ========================
+
+# ============= standard library imports ========================
 from numpy import loadtxt
 import os
 from pychron.core.geometry.reference_point import ReferencePoint
 from pychron.media_server.browser import ReferencePointsTool, ReferencePointsOverlay
 from pychron.core.geometry.affine import calculate_rigid_transform, AffineTransform
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 '''
     open a bse image
     
@@ -63,9 +64,9 @@ class UVAnalysisImage(ImageViewer):
     define_points = Button
     define_points_label = String
     _defining_points = False
-#===============================================================================
+# ===============================================================================
 # handlers
-#===============================================================================
+# ===============================================================================
 
     def _set_reference_point(self, pt):
         '''
@@ -190,4 +191,4 @@ if __name__ == '__main__':
     uv.load_points(p)
     uv.configure_traits()
 
-#============= EOF =============================================
+# ============= EOF =============================================

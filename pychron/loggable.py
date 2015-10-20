@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,13 +13,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Any, String
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.globals import globalv
 from pychron.core.helpers.color_generators import colorname_generator
 from pychron.core.helpers.logger_setup import new_logger
@@ -30,6 +30,28 @@ from threading import current_thread
 
 color_name_gen = colorname_generator()
 NAME_WIDTH = 40
+__gloggers__ = dict()
+
+
+class unique(object):
+    def __init__(self):
+        self._registry = {}
+
+    def __call__(self, f):
+        def wrapped_f(*args, **kw):
+            obj = args[0]
+            msg = args[1]
+            hmsg = hash(msg)
+            ido = id(obj)
+            if not ido in self._registry:
+                self._registry[ido] = []
+
+            msgs = self._registry[ido]
+            if not hmsg in msgs:
+                msgs.append(hmsg)
+                f(*args)
+
+        return wrapped_f
 
 
 def confirmation_dialog(msg, return_retval=False,
@@ -51,15 +73,13 @@ def confirmation_dialog(msg, return_retval=False,
         dlg.timeout_return_code = timeout_ret
 
     retval = dlg.open(timeout)
+    from pyface.api import YES, OK
+
     if return_retval:
         return retval
     else:
-        from pyface.api import YES
 
-        return retval == YES
-
-
-__gloggers__ = dict()
+        return retval in (YES, OK)
 
 
 class Loggable(HasTraits):
@@ -84,49 +104,59 @@ class Loggable(HasTraits):
         else:
             self._add_logger()
 
-    def _name_changed(self):
-        self._add_logger()
+    def report_logger_stats(self):
+        self.debug('&&&& len __gloggers__ = {}'.format(len(__gloggers__)))
 
-    def _logger_name_changed(self):
-        self._add_logger()
+    @unique()
+    def unique_warning(self, *args, **kw):
+        self.warning(*args, **kw)
 
-    def _add_logger(self):
+    @unique()
+    def unique_info(self, *args, **kw):
+        self.info(*args, **kw)
+
+    @unique()
+    def unique_debug(self, *args, **kw):
+        self.debug(*args, **kw)
+
+    def warning(self, msg):
+        """
+        """
+
+        if self.logger is not None:
+            if globalv.use_warning_display:
+                from pychron.displays.gdisplays import gWarningDisplay
+
+                if globalv.show_warnings:
+                    gWarningDisplay.add_text(
+                        '{{:<{}s}} -- {{}}'.format(NAME_WIDTH).format(self.logger.name.strip(), msg))
+
+            self._log_('warning', msg)
+
+    def info(self, msg, dolater=False, color=None):
         """
 
         """
+        if self.logger is not None:
+            if globalv.use_logger_display:
+                from pychron.displays.gdisplays import gLoggerDisplay
 
-        if self.logger_name:
-            name = self.logger_name
-        elif self.name:
-            name = self.name
-        else:
-            name = self.__class__.__name__
+                if globalv.show_infos:
+                    args = ('{{:<{}s}} -- {{}}'.format(NAME_WIDTH).format(self.logger.name.strip(),
+                                                                          msg))
+                    gLoggerDisplay.add_text(args, color=color)
 
-        if self.logger is None:
-            self.logger = new_logger(name)
+            self._log_('info', msg)
 
-        c = color_name_gen.next()
-        if c in ['gray', 'silver', 'greenyellow']:
-            c = color_name_gen.next()
-        self.logcolor = c
+    def debug_exception(self):
+        import traceback
 
-    def add_window(self, ui):
+        self.debug(traceback.format_exc())
 
-        try:
-            if self.application is not None:
-                self.application.uis.append(ui)
-        except AttributeError:
-            pass
+    def debug(self, msg):
+        self._log_('debug', msg)
 
-    def open_view(self, obj, **kw):
-        def _open_():
-            ui = obj.edit_traits(**kw)
-            self.add_window(ui)
-
-        from pychron.core.ui.gui import invoke_in_main_thread
-
-        invoke_in_main_thread(_open_)
-
+    #dialogs
     def warning_dialog(self, msg, sound=None, title='Warning'):
         from pychron.core.ui.dialogs import myMessageDialog
 
@@ -154,9 +184,6 @@ class Loggable(HasTraits):
                               severity='information')
         dlg.open()
 
-    def db_save_dialog(self):
-        return self.confirmation_dialog('Save to Database')
-
     def message(self, msg):
         from pychron.displays.gdisplays import gMessageDisplay
 
@@ -170,63 +197,27 @@ class Loggable(HasTraits):
 
         self.info(msg)
 
-    def warning(self, msg, decorate=True):
-        """
-        """
-
-        if self.logger is not None:
-            if globalv.use_warning_display:
-                from pychron.displays.gdisplays import gWarningDisplay
-
-                if globalv.show_warnings:
-                    #if not gWarningDisplay.opened and not gWarningDisplay.was_closed:
-                    #invoke_in_main_thread(gWarningDisplay.edit_traits)
-                    #gWarningDisplay.opened = True
-                    gWarningDisplay.add_text(
-                        '{{:<{}s}} -- {{}}'.format(NAME_WIDTH).format(self.logger.name.strip(), msg))
-
-            # if decorate:
-            #     msg = '****** {}'.format(msg)
-            self._log_('warning', msg)
-
-    def info(self, msg, decorate=True, dolater=False, color=None):
+    #private
+    def _add_logger(self):
         """
 
         """
-        if self.logger is not None:
-            if globalv.use_logger_display:
-                from pychron.displays.gdisplays import gLoggerDisplay
 
-                if globalv.show_infos:
-                    #                     if not gLoggerDisplay.opened and not gLoggerDisplay.was_closed:
-                    #                         invoke_in_main_thread(gLoggerDisplay.edit_traits)
+        if self.logger_name:
+            name = self.logger_name
+        elif self.name:
+            name = self.name
+        else:
+            name = self.__class__.__name__
 
+        if self.logger is None:
+            __gloggers__[name] = self.logger
+            self.logger = new_logger(name)
 
-                    args = ('{{:<{}s}} -- {{}}'.format(NAME_WIDTH).format(self.logger.name.strip(),
-                                                                          msg))
-                    gLoggerDisplay.add_text(args, color=color)
-
-            # if decorate:
-            #     msg = '====== {}'.format(msg)
-
-            self._log_('info', msg)
-
-    def close_displays(self):
-        from pychron.displays.gdisplays import gLoggerDisplay, gWarningDisplay, gMessageDisplay
-
-        gLoggerDisplay.close_ui()
-        gWarningDisplay.close_ui()
-        gMessageDisplay.close_ui()
-
-    def debug(self, msg, decorate=True):
-        # '''
-        # '''
-        #
-        # if decorate:
-        #     msg = '++++++ {}'.format(msg)
-
-        self._log_('debug', msg)
-
+        c = color_name_gen.next()
+        if c in ['gray', 'silver', 'greenyellow']:
+            c = color_name_gen.next()
+        self.logcolor = c
 
     def _log_(self, func, msg):
 
@@ -253,6 +244,12 @@ class Loggable(HasTraits):
 
     def _post_process_msg(self, msg):
         return msg
-        #        func(msg)
 
-#============= EOF =============================================
+    #handlers
+    def _name_changed(self):
+        self._add_logger()
+
+    def _logger_name_changed(self):
+        self._add_logger()
+
+# ============= EOF =============================================

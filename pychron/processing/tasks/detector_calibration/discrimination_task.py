@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import csv
 from datetime import datetime
 
 from pychron.processing.tasks.analysis_edit.adapters import ReferencesAdapter
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.processing.tasks.analysis_edit.interpolation_task import InterpolationTask
 
 
@@ -40,8 +41,8 @@ class DiscrimintationTask(InterpolationTask):
                 prev = v, e
 
     def _load_discrimination_from_file(self, p):
-        with open(p, 'r') as fp:
-            reader = csv.reader(fp)
+        with open(p, 'r') as rfile:
+            reader = csv.reader(rfile)
             discs = []
             header = reader.next()
             detidx = header.index('DetectorTypeID')
@@ -107,7 +108,7 @@ class DiscrimintationTask(InterpolationTask):
             if disc_from_file:
                 disc, disc_err = self._get_discrimination_from_file(ai)
 
-            rid = '{}-{:02n}{}'.format(ai.labnumber.identifier, ai.aliquot, ai.step)
+            rid = '{}-{:02d}{}'.format(ai.labnumber.identifier, ai.aliquot, ai.step)
             msg = 'Setting discrimination={} +/-{} detector={} analysis={}'.format(disc, disc_err,
                                                                                    det, rid)
             self.debug(msg)
@@ -154,4 +155,4 @@ class DiscrimintationTask(InterpolationTask):
         #    self.unknowns_pane.items = selector.records[156:159]
         #    self.references_pane.items = selector.records[150:155]
 
-#============= EOF =============================================
+# ============= EOF =============================================

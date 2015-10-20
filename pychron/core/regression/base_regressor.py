@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
 from traits.api import Array, List, Event, Property, Any, \
     Dict, Str, Bool, cached_property, HasTraits
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import re
 import math
 from numpy import where, delete
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from tinv import tinv
 from pychron.core.stats.core import calculate_mswd, validate_mswd
 from pychron.pychron_constants import ALPHAS
@@ -76,7 +76,7 @@ class BaseRegressor(HasTraits):
     clean_yserr = Property(depends_on='dirty, xs, ys')
 
     degrees_of_freedom = Property
-
+    integrity_warning=False
 
     def calculate_filtered_data(self):
         fod = self.filter_outliers_dict
@@ -182,17 +182,14 @@ class BaseRegressor(HasTraits):
         return rmodel - es, rmodel + es
 
     def calculate_ci(self, rx, rmodel):
-        cors = self.calculate_ci_error(rx, rmodel)
+        cors = self.calculate_ci_error(rx)
         if rmodel is not None and cors is not None:
             if rmodel.shape[0] and cors.shape[0]:
                 return rmodel - cors, rmodel + cors
 
-    def calculate_ci_error(self, rx, rmodel=None):
-        if rmodel is None:
-            rmodel = self.predict(rx)
-
-        cors = self._calculate_ci(rx, rmodel)
-        return cors
+    def calculate_ci_error(self, rx):
+        cors = self._calculate_ci(rx)
+        return 2*cors
 
     def get_syx(self):
         n = self.clean_xs.shape[0]
@@ -254,20 +251,19 @@ class BaseRegressor(HasTraits):
         s = '{}    y={}+{}'.format(fit, eq, constant)
         return s
 
-    def _calculate_ci(self, rx, rmodel):
+    def _calculate_ci(self, rx):
         if isinstance(rx, (float, int)):
             rx = [rx]
 
         X = self.clean_xs
         Y = self.clean_ys
-        cors = self._calculate_confidence_interval(X, Y, rx, rmodel)
+        cors = self._calculate_confidence_interval(X, Y, rx)
         return cors
 
     def _calculate_confidence_interval(self,
                                        x,
                                        observations,
                                        rx,
-                                       model,
                                        confidence=95):
 
         alpha = 1.0 - confidence / 100.0
@@ -321,17 +317,20 @@ class BaseRegressor(HasTraits):
         exc = set(self.user_excluded) ^ set(self.truncate_excluded) ^ set(self.outlier_excluded)
         return delete(v, list(exc), 0)
 
-    def _check_integrity(self, x, y):
+    def _check_integrity(self, x, y, verbose=False):
         nx, ny = len(x), len(y)
         if not nx or not ny:
-            logger.warning('not x={} y={}'.format(nx, ny))
+            if self.integrity_warning or verbose:
+                logger.warning('not x={} y={}'.format(nx, ny))
             return
         if nx != ny:
-            logger.warning('x!=y x={} y={}'.format(nx, ny))
+            if self.integrity_warning or verbose:
+                logger.warning('x!=y x={} y={}'.format(nx, ny))
             return
 
         if nx == 1 or ny == 1:
-            logger.warning('==1 x={} y={}'.format(nx, ny))
+            if self.integrity_warning or verbose:
+                logger.warning('==1 x={} y={}'.format(nx, ny))
             return
 
         return True
@@ -374,4 +373,4 @@ class BaseRegressor(HasTraits):
         self._fit = v
         self.dirty = True
 
-#============= EOF =============================================
+# ============= EOF =============================================

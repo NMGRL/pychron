@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,21 +12,24 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
+# =============enthought library imports=======================
 
-#=============enthought library imports=======================
-
-#=============standard library imports ========================
+# =============standard library imports ========================
 from sqlalchemy import Column, Integer, Float, String, \
     ForeignKey, DateTime, Date, BLOB
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relation, relationship
 from sqlalchemy.sql.expression import func
+import os
+# =============local library imports  ==========================
+from pychron.database.orms.isotope.util import doublecolumn
 
-#=============local library imports  ==========================
 Base = declarative_base()
+
+DBVERSION = float(os.environ.get('MassSpecDBVersion', 16.3))
 
 
 class AnalysesChangeableItemsTable(Base):
@@ -34,8 +37,6 @@ class AnalysesChangeableItemsTable(Base):
     ChangeableItemsID = Column(Integer, primary_key=True)
     AnalysisID = Column(Integer, ForeignKey('AnalysesTable.AnalysisID'))
     DataReductionSessionID = Column(Integer, ForeignKey('datareductionsessiontable.DataReductionSessionID'))
-    Disc = Column(Float, default=1)
-    DiscEr = Column(Float, default=0)
     History = Column(String, default='')
     StatusReason = Column(Integer, default=0)
     StatusLevel = Column(Integer, default=0)
@@ -86,6 +87,8 @@ class AnalysesTable(Base):
     ManifoldOpt = Column(Integer, default=0)
     OriginalImportID = Column(String(1), default=0)
     RedundantSampleID = Column(Integer, ForeignKey('SampleTable.SampleID'))
+    if DBVERSION >= 16.3:
+        RedundantUserID = Column(Integer, ForeignKey('UserTable.UserID'))
 
     SampleLoadingID = Column(Integer, ForeignKey('sampleloadingtable.SampleLoadingID'))
     ChangeableItemsID = Column(Integer, default=0)
@@ -95,8 +98,12 @@ class AnalysesTable(Base):
     LoginSessionID = Column(Integer, ForeignKey('LoginSessionTable.LoginSessionID'))
     SpecRunType = Column(Integer)
 
-    ReferenceDetectorLabel = Column(String(40))
-    RefDetID = Column(Integer)
+    if DBVERSION >= 16.3:
+        SignalRefIsot = Column(String(length=30))
+    else:
+        ReferenceDetectorLabel = Column(String(40))
+
+    RefDetID = Column(Integer, ForeignKey('DetectorTable.DetectorID'))
 
     PipettedIsotopes = Column(BLOB)
 
@@ -105,37 +112,39 @@ class AnalysesTable(Base):
     #    araranalyses = relation('ArArAnalysisTable', backref='AnalysesTable')
     changeable = relationship('AnalysesChangeableItemsTable',
                               backref='AnalysesTable',
-                              uselist=False,
-    )
+                              uselist=False)
     positions = relationship('AnalysisPositionTable')
     runscript = relationship('RunScriptTable', uselist=False)
 
 
 class ArArAnalysisTable(Base):
-    '''
+    """
     WARNING
     the totals are not raw values and have been blank, discrimination and decay corrected already
-    '''
+    """
     __tablename__ = 'ArArAnalysisTable'
     #    AnalysisID = Column(Integer, primary_key=True)
     AnalysisID = Column(Integer, ForeignKey('AnalysesTable.AnalysisID'))
     DataReductionSessionID = Column(Integer)
-    JVal = Column(Float, default=0)
-    JEr = Column(Float, default=0)
-    Tot40 = Column(Float, default=0)
-    Tot39 = Column(Float, default=0)
-    Tot38 = Column(Float, default=0)
-    Tot37 = Column(Float, default=0)
-    Tot36 = Column(Float, default=0)
+    JVal = doublecolumn()  # Column(Float, default=0)
+    JEr = doublecolumn()  # Column(Float, default=0)
+    Tot40 = doublecolumn()
+    Tot39 = doublecolumn()
+    Tot38 = doublecolumn()
+    Tot37 = doublecolumn()
+    Tot36 = doublecolumn()
 
-    Tot40Er = Column(Float, default=0)
-    Tot39Er = Column(Float, default=0)
-    Tot38Er = Column(Float, default=0)
-    Tot37Er = Column(Float, default=0)
-    Tot36Er = Column(Float, default=0)
+    Tot40Er = doublecolumn()
+    Tot39Er = doublecolumn()
+    Tot38Er = doublecolumn()
+    Tot37Er = doublecolumn()
+    Tot36Er = doublecolumn()
 
-    Age = Column(Float, default=0, primary_key=True)
-    ErrAge = Column(Float, default=0)
+    Age = doublecolumn(primary_key=True)
+    ErrAge = doublecolumn()
+    ErrAgeWOErInJ = doublecolumn()
+    PctRad = doublecolumn()
+    PctRadEr = doublecolumn()
 
 
 class BaselinesChangeableItemsTable(Base):
@@ -150,8 +159,8 @@ class BaselinesChangeableItemsTable(Base):
 
 
 class BaselinesTable(Base):
-    '''
-    '''
+    """
+    """
     __tablename__ = 'baselinestable'
     BslnID = Column(Integer, primary_key=True)
     Label = Column(String(40))
@@ -160,7 +169,7 @@ class BaselinesTable(Base):
     isotope = relationship('IsotopeTable', backref='baseline', uselist=False)
 
 
-#    changeable_item = relationship('baselineschangeableitemstable', uselist=False)
+# changeable_item = relationship('baselineschangeableitemstable', uselist=False)
 
 class DatabaseVersionTable(Base):
     __tablename__ = 'databaseversiontable'
@@ -168,8 +177,8 @@ class DatabaseVersionTable(Base):
 
 
 class DataReductionSessionTable(Base):
-    '''
-    '''
+    """
+    """
     __tablename__ = 'datareductionsessiontable'
     DataReductionSessionID = Column(Integer, primary_key=True)
     SessionDate = Column(DateTime)
@@ -190,9 +199,12 @@ class DetectorTable(Base):
     ICFactorEr = Column(Float, default=0)
     ICFactorSource = Column(Integer, default=1)
     IonCounterDeadtimeSec = Column(Float, default=0)
-    Label = Column(String(40))
 
     isotopes = relationship('IsotopeTable', backref='detector')
+    if DBVERSION >= 16.3:
+        analyses = relationship('AnalysesTable', backref='reference_detector')
+    else:
+        Label = Column(String(40))
 
 
 class DetectorTypeTable(Base):
@@ -219,8 +231,8 @@ class IrradiationPositionTable(Base):
     StandardID = Column(Integer, default=0)
     Size = Column(String(40), default='NULL')
     Weight = Column(Float, default=0)
-    Note = Column(String(40), nullable=True)
-    LabActivation = Column(Date, default='NULL')
+    Note = Column(String(255), nullable=True)
+    LabActivation = Column(Date, default=func.now())
     J = Column(Float, nullable=True)
     JEr = Column(Float, nullable=True)
 
@@ -229,10 +241,12 @@ class IrradiationPositionTable(Base):
 
 class IrradiationLevelTable(Base):
     __tablename__ = 'IrradiationLevelTable'
-    IrradBaseID = Column(String(80))
-    Level = Column(String(80), primary_key=True)
+    IrradBaseID = Column(String(80), index=True, unique=False, primary_key=True)
+    Level = Column(String(80), index=True, unique=False, primary_key=True)
+
     SampleHolder = Column(String(40))
     ProductionRatiosID = Column(Integer, ForeignKey('IrradiationProductionTable.ProductionRatiosID'))
+    ExperimentType = Column(Integer, default=1)
 
 
 class IrradiationProductionTable(Base):
@@ -262,6 +276,10 @@ class IrradiationProductionTable(Base):
     Label = Column(String(80))
     levels = relationship('IrradiationLevelTable', backref='production')
 
+    @property
+    def Cl3638(self):
+        return self.P36Cl38Cl
+
 
 class IrradiationChronologyTable(Base):
     __tablename__ = 'irradiationchronologytable'
@@ -271,9 +289,9 @@ class IrradiationChronologyTable(Base):
 
 
 class IsotopeResultsTable(Base):
-    '''
+    """
     iso = intercept - bkgrd
-    '''
+    """
     __tablename__ = 'IsotopeResultsTable'
     Counter = Column(Integer, primary_key=True)
     LastSaved = Column(DateTime)
@@ -299,15 +317,17 @@ class IsotopeResultsTable(Base):
     Fit = Column(Integer, ForeignKey('fittypetable.Fit'))
 
     GOF = Column(Float)
-    PeakScaleFactor = Column(Float)
+    # PeakScaleFactor = Column(Float)
 
 
 class IsotopeTable(Base):
-    '''
-    '''
+    """
+    """
 
     __tablename__ = 'IsotopeTable'
     IsotopeID = Column(Integer, primary_key=True)
+    if DBVERSION >= 16.3:
+        TypeID = Column(Integer, default=1)
     AnalysisID = Column(Integer, ForeignKey('AnalysesTable.AnalysisID'))
     DetectorID = Column(Integer, ForeignKey('DetectorTable.DetectorID'))
     BkgdDetectorID = Column(Integer, nullable=True)
@@ -325,23 +345,14 @@ class IsotopeTable(Base):
     #    peak_time_series = relation('PeakTimeTable', uselist=False)
     peak_time_series = relation('PeakTimeTable')
 
-    results = relationship('IsotopeResultsTable', backref='isotope',
-                           #                          uselist=False
-    )
+    results = relationship('IsotopeResultsTable', backref='isotope')
 
 
 class FittypeTable(Base):
     __tablename__ = 'fittypetable'
     Fit = Column(Integer, primary_key=True)
     Label = Column(String(40))
-    results = relationship('IsotopeResultsTable', backref='fit',
-                           #                          uselist=False
-    )
-
-
-#    baseline_results = relationship('baselineschangeableitemstable', backref='fit',
-# #                          uselist=False
-#                          )
+    results = relationship('IsotopeResultsTable', backref='fit')
 
 
 class LoginSessionTable(Base):
@@ -349,6 +360,8 @@ class LoginSessionTable(Base):
     LoginSessionID = Column(Integer, primary_key=True)
     SpecSysN = Column(Integer, ForeignKey('machinetable.SpecSysN'))
     analyses = relationship('AnalysesTable', backref='login_session')
+    UserID = Column(Integer, default=1)
+    SessionStart = Column(DateTime, default=func.now())
 
 
 class MachineTable(Base):
@@ -360,8 +373,9 @@ class MachineTable(Base):
 
 
 class MaterialTable(Base):
-    '''
-    '''
+    """
+    """
+
     __tablename__ = 'MaterialTable'
     ID = Column(Integer, primary_key=True)
     Material = Column(String(40))
@@ -377,8 +391,8 @@ class MolecularWeightTable(Base):
 
 
 class PeakTimeTable(Base):
-    '''
-    '''
+    """
+    """
     __tablename__ = 'PeakTimeTable'
     Counter = Column(Integer, primary_key=True)
     PeakTimeBlob = Column(BLOB)
@@ -393,8 +407,8 @@ class PreferencesTable(Base):
 
 
 class ProjectTable(Base):
-    '''
-    '''
+    """
+    """
     __tablename__ = 'projecttable'
     ProjectID = Column(Integer, primary_key=True)
     Project = Column(String(40))
@@ -410,19 +424,19 @@ class RunScriptTable(Base):
 
 
 class SampleTable(Base):
-    '''
-    '''
+    """
+    """
     __tablename__ = 'SampleTable'
     SampleID = Column(Integer, primary_key=True)
     Sample = Column(String(40))
 
-    Project = Column(String(40))  # , ForeignKey('projecttable.Project'))
+    # Project = Column(String(40))  # , ForeignKey('projecttable.Project'))
     #    Project = relation('ProjectTable', backref = 'SampleTable')
     ProjectID = Column(Integer, ForeignKey('projecttable.ProjectID'))
     Note = Column(String(40), default='NULL')
     AlternateUserID = Column(String(40), default='NULL')
-    CollectionDateTime = Column(DateTime, default='')
-    Coordinates = Column(BLOB, default='NULL')
+    CollectionDateTime = Column(DateTime, default=func.now())
+    # Coordinates = Column(BLOB, default='NULL')
     Latitude = Column(String(40), default='NULL')
     Longitude = Column(String(40), default='NULL')
     Salinity = Column(Float, default=0)
@@ -440,3 +454,9 @@ class SampleLoadingTable(Base):
     LoadingDate = Column(DateTime, default=func.now())
 
     analyses = relationship('AnalysesTable', backref='sample_loading')
+
+
+class UserTable(Base):
+    __tablename__ = 'UserTable'
+    UserID = Column(Integer, primary_key=True)
+    UserName = Column(String(length=60))

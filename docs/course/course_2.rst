@@ -1,3 +1,6 @@
+Course 2.
+====================
+
 Topics
 --------
     1. Plotting continued

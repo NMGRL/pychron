@@ -12,25 +12,28 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
+
 
 class no_update(object):
-    model = None
+    _model = None
 
-    def __init__(self, model):
-        self.model = model
+    def __init__(self, model, fire_update_needed=True):
+        self._model = model
+        self._fire_update_needed = fire_update_needed
 
     def __enter__(self):
-        if self.model:
-            self.model._no_update = True
+        if self._model:
+            self._model._no_update = True
 
     def __exit__(self, _type, value, _traceback):
-        if self.model:
-            self.model._no_update = False
-            self.model.update_needed = True
+        if self._model:
+            self._model._no_update = False
+            if self._fire_update_needed:
+                self._model.update_needed = True
 
-#============= EOF =============================================
+# ============= EOF =============================================

@@ -5,30 +5,34 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
+from math import isnan
+
 from chaco.base_plot_container import BasePlotContainer
 from chaco.plot_label import PlotLabel
-from numpy import isnan
 from traits.api import Any, on_trait_change, \
     List, Event, Int
 from traitsui.api import View, UItem
 from enable.component_editor import ComponentEditor as EnableComponentEditor
-#============= standard library imports ========================
+
+# ============= standard library imports ========================
 from itertools import groupby
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from uncertainties import nominal_value, std_dev
-from pychron.core.csv.csv_parser import CSVParser
+from pychron.core.codetools.inspection import caller
+from pychron.core.csv.csv_parser import CSVColumnParser
 from pychron.processing.analyses.analysis_group import InterpretedAge
+from pychron.processing.plotters.figure_container import FigureContainer
 from pychron.processing.plotters.options.isochron import InverseIsochronOptions
 from pychron.processing.plotters.options.spectrum import SpectrumOptions
 from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
@@ -72,13 +76,17 @@ class FigureEditor(GraphEditor):
             ap.clear_ylimits()
             ap.clear_xlimits()
 
+    def set_items(self, *args, **kw):
+        self.clear_aux_plot_limits()
+        super(FigureEditor, self).set_items(*args, **kw)
+
     def set_items_from_file(self, p):
         if os.path.isfile(p):
             # def construct(d):
             if p.endswith('.xls'):
                 self.information_dialog('Plotting Spectra from Excel file not yet implemented')
             else:
-                par = CSVParser()
+                par = CSVColumnParser(delimiter='\t')
                 par.load(p)
                 self.analyses = self._get_items_from_file(par)
                 self._update_analyses()
@@ -230,12 +238,13 @@ class FigureEditor(GraphEditor):
 
         self._set_group(idxs, gid, 'graph_id', **kw)
 
+    @caller
     def rebuild(self):
         # ans = self._gather_unknowns(refresh_data, compress_groups=compress_groups)
         ans = self.analyses
         if ans:
             po = self.plotter_options_manager.plotter_options
-            #model, comp = timethis(self.get_component, args=(ans, po),
+            # model, comp = timethis(self.get_component, args=(ans, po),
             #                       msg='get_component {}'.format(self.__class__.__name__))
             model, comp = self.get_component(ans, po)
             if comp:
@@ -246,6 +255,24 @@ class FigureEditor(GraphEditor):
 
     def get_component(self, ans, po):
         pass
+
+    def _make_component(self, klass, ans, plot_options):
+        model = self.figure_model
+        if model is None:
+            model = klass()
+            self.figure_model = model
+
+        model.trait_set(plot_options=plot_options,
+                        titles=self.titles,
+                        analyses=ans)
+
+        container = self.figure_container
+        if not container:
+            container = FigureContainer(model=model)
+            self.figure_container = container
+
+        container.refresh()
+        return model, container.component
 
     def _set_group(self, idxs, gid, attr, refresh=True):
         ans = self.analyses
@@ -272,8 +299,8 @@ class FigureEditor(GraphEditor):
             captext = ''
             if self.caption_path:
                 if os.path.isfile(self.caption_path):
-                    with open(self.caption_path, 'r') as fp:
-                        captext = fp.read()
+                    with open(self.caption_path, 'r') as rfile:
+                        captext = rfile.read()
 
             elif self.caption_text:
                 captext = self.caption_text
@@ -294,7 +321,7 @@ class FigureEditor(GraphEditor):
 
     @on_trait_change('figure_model:panels:graph:[tag, save_db_figure, invalid]')
     def _handle_graph_event(self, name, new):
-        #propograte event to task
+        # propograte event to task
         setattr(self, name, new)
 
     # @on_trait_change('figure_model:panels:graph:save_db')
@@ -305,11 +332,11 @@ class FigureEditor(GraphEditor):
     @on_trait_change('figure_model:panels:figures:refresh_unknowns_table')
     def _handle_refresh(self, obj, name, old, new):
         self.refresh_unknowns_table = True
-        #if not obj.suppress_associated:
-        #print 'figure editor refresh', id(self)
+        # if not obj.suppress_associated:
+        # print 'figure editor refresh', id(self)
         for e in self.associated_editors:
             if isinstance(e, FigureEditor):
-                #e.rebuild_graph()
+                # e.rebuild_graph()
                 if e.model:
                     for p in e.model.panels:
                         for f in p.figures:
@@ -357,7 +384,7 @@ class FigureEditor(GraphEditor):
                                            graph=ai.graph_id,
                                            group=ai.group_id)
 
-#============= EOF =============================================
+# ============= EOF =============================================
 # dbans = fig.analyses
 # uuids = [ai.uuid for ai in self.analyses]
 

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,40 +12,32 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-import inspect
-import re
+# ============= enthought library imports =======================
 
 from traits.api import List
-
-
-
-
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import time
-#============= local library imports  ==========================
-from pychron.external_pipette.apis_manager import InvalidPipetteError
+import inspect
+import re
+# ============= local library imports  ==========================
+from pychron.core.ramper import Ramper
 from pychron.external_pipette.protocol import IPipetteManager
 from pychron.hardware.core.exceptions import TimeoutError
 from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.pyscripts.pyscript import verbose_skip, makeRegistry
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
-# from pychron.lasers.laser_managers.extraction_device import ILaserManager
 from pychron.pyscripts.valve_pyscript import ValvePyScript
-from pychron.pychron_constants import EXTRACTION_COLOR
+from pychron.pychron_constants import EXTRACTION_COLOR, LINE_STR
 
-ELPROTOCOL = 'pychron.extraction_line.extraction_line_manager.ExtractionLineManager'
+# ELPROTOCOL = 'pychron.extraction_line.extraction_line_manager.ExtractionLineManager'
 
 COMPRE = re.compile(r'[A-Za-z]*')
 
-'''
-    make a registry to hold all the commands exposed by ExtractionPyScript
-    used when building the context
-    see PyScript.get_context and get_command_register
-    
-'''
+# make a registry to hold all the commands exposed by ExtractionPyScript
+# used when building the context
+# see PyScript.get_context and get_command_register
 command_register = makeRegistry()
 
 
@@ -61,53 +53,30 @@ class RecordingCTX(object):
         self._script.stop_video_recording()
 
 
-class Ramper(object):
-    def ramp(self, func, start, end, duration, rate=0, period=1):
-        """
-            rate = units/s
-            duration= s
-
-            use rate if specified
-        """
-        st = time.time()
-        if end is not None:
-            if rate:
-                duration = abs(start - end) / float(rate)
-
-            if duration:
-                self._ramp(func, start, end, duration, period)
-
-        return time.time() - st
-
-    def _ramp(self, func, start, end, duration, period):
-        st = time.time()
-        i = 1
-
-        step = period * (end - start) / float(duration)
-
-        while (time.time() - st) < duration:
-            ct = time.time()
-            v = start + i * step
-            if func(i, v):
-                time.sleep(max(0, period - (time.time() - ct)))
-                i += 1
-            else:
-                break
-
-
 class ExtractionPyScript(ValvePyScript):
+    """
+    The ExtractionPyScript is used to program the extraction and gettering of
+    sample gas.
+    """
     _resource_flag = None
     info_color = EXTRACTION_COLOR
-    snapshot_paths = List
+    snapshots = List
 
     _extraction_positions = List
 
+    def set_run_identifier(self, v):
+        self.setup_context(run_identifier=v)
+
     def get_extraction_positions(self, clear=True):
         """
-            return a list of x,y,z tuples
-            each tuple represents where the extraction occurred
-            if clear is True (default)
-            _extraction_positions set to empty list
+        Returns a list of x,y,z tuples
+        each tuple represents where the extraction occurred
+
+        if clear is True (default) ``self._extraction_positions`` set to an empty list
+
+        :return: list of x,y,z tuples
+        :rtype: list of tuples
+
         """
         ret = self._extraction_positions
         if clear:
@@ -116,12 +85,33 @@ class ExtractionPyScript(ValvePyScript):
         return ret
 
     def get_response_blob(self):
+        """
+        Get the extraction device's response blob
+
+        :return: response blob. binary string representing time v measured output
+        :rtype: str
+        """
         return self._extraction_action([('get_response_blob', (), {})])
 
     def get_output_blob(self):
+        """
+        Get the extraction device's output blob
+
+        :return: output blob: binary string representing time v requested output
+        :rtype: str
+        """
         return self._extraction_action([('get_output_blob', (), {})])
 
     def output_achieved(self):
+        """
+        Return a formated string with the extraction "heating" results::
+
+            Requested Output= 100.000
+            Achieved Output= 99.012
+
+        :return: Formatted string with results
+        :rtype: str
+        """
         request = self.extract
         ach = self._extraction_action([('get_achieved_output', (), {})])
         try:
@@ -143,8 +133,9 @@ class ExtractionPyScript(ValvePyScript):
 
     def set_default_context(self):
         """
-            provide default values for all the properties exposed in the script
+        provide default values for all the properties exposed in the script
         """
+
         self.setup_context(analysis_type='',
                            position='',
                            pattern='',
@@ -153,27 +144,46 @@ class ExtractionPyScript(ValvePyScript):
                            extract_units='',
                            tray='',
                            ramp_rate='',
+                           ramp_duration=0,
                            duration=0,
                            cleanup=0,
                            beam_diameter=None,
                            run_identifier='default_runid')
 
-    #===============================================================================
+    # ===============================================================================
     # commands
-    #===============================================================================
+    # ===============================================================================
+    @verbose_skip
+    @command_register
+    def wake(self):
+        self._extraction_action('wake')
+        self._manager_action('wake')
+
     @verbose_skip
     @command_register
     def waitfor(self, func_or_tuple, start_message='', end_message='',
                 check_period=1, timeout=0):
         """
-            func_or_tuple: callable or a tuple
 
-            tuple format: (device_name, get_..., comparison)
-                comparison: x<10
-                          : 10<x<20
+        tuple format: (device_name, function_name, comparison)
+        comparison ::
 
-            callable can of form func() or func(ti) or func(ti, i)
-            where ti is the current relative time (relative to start of waitfor) and i is a counter
+          x<10
+          10<x<20
+
+        callable can of form ``func() or func(ti) or func(ti, i)``
+        where ``ti`` is the current relative time (relative to start of waitfor) and ``i`` is a counter
+
+        :param func_or_tuple: wait for function to return True
+        :type func_or_tuple: callable, tuple
+        :param start_message: Message to display at start
+        :type start_message: str
+        :param end_message: Message to display at end
+        :type end_message: str
+        :param check_period: Delay between checks in seconds
+        :type check_period: int, float
+        :param timeout: Cancel waiting after ``timeout`` seconds
+        :type timeout: int, float
         """
         include_time = False
         include_time_and_count = False
@@ -195,7 +205,7 @@ class ExtractionPyScript(ValvePyScript):
         st = time.time()
         i = 0
         while 1:
-            if self.canceled():
+            if self.is_canceled():
                 self.console_info('waitfor canceled')
                 return
 
@@ -236,11 +246,24 @@ class ExtractionPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def snapshot(self, name=''):
-        ps = self._extraction_action([('take_snapshot', (), {'name': name})])
+    def set_light(self, value=''):
+        self._extraction_action([('set_light', (value,), {})])
+
+    @verbose_skip
+    @command_register
+    def snapshot(self, name='', prefix='', view_snapshot=False, pic_format='.jpg'):
+        """
+            if name not specified use RID_Position e.g 12345-01A_3
+        """
+        if not name:
+            pos = '_'.join(self.position)
+            name = '{}_{}'.format(self.run_identifier, pos)
+
+        name = '{}{}'.format(prefix, name)
+        ps = self._extraction_action([('take_snapshot', (name, pic_format),
+                                       {'view_snapshot':view_snapshot})])
         if ps:
-            ps = ps[0]
-            self.snapshot_paths.append(ps[1])
+            self.snapshots.append(ps)
 
     @command_register
     def video_recording(self, name='video'):
@@ -281,13 +304,13 @@ class ExtractionPyScript(ValvePyScript):
     def set_motor_lock(self, name='', value=''):
         if name and value is not '':
             l = 'YES' if value else 'NO'
-            self.info('set motor lock to {}'.format(name, l))
+            self.console_info('set motor lock to {}'.format(name, l))
             self._extraction_action([('set_motor_lock', (name, value), {})])
 
     @verbose_skip
     @command_register
     def set_motor(self, name='', value=''):
-        self.info('setting motor "{}" to {}'.format(name, value))
+        self.console_info('setting motor "{}" to {}'.format(name, value))
         if name is not '' and value is not '':
             if value is not None:
                 self._extraction_action([('set_motor', (name, value), {})])
@@ -316,17 +339,19 @@ class ExtractionPyScript(ValvePyScript):
             position_ok = False
 
         if position_ok:
-            self.info('{} move to position {}'.format(self.extract_device,
+            self.console_info('{} move to position {}'.format(self.extract_device,
                                                       position))
             success = self._extraction_action([('move_to_position',
                                                 (position, autocenter), {})])
+
             if not success:
                 self.info('{} move to position failed'.format(self.extract_device))
+                self.cancel()
             else:
-                self.info('move to position suceeded')
+                self.console_info('move to position suceeded')
                 return True
         else:
-            self.info('move not required. position is None')
+            self.console_info('move not required. position is None')
             return True
 
     @verbose_skip
@@ -347,7 +372,7 @@ class ExtractionPyScript(ValvePyScript):
         if tray == '':
             tray = self.tray
 
-        self.info('set tray to {}'.format(tray))
+        self.console_info('set tray to {}'.format(tray))
         result = self._extraction_action([('set_stage_map', (tray,), {})])
         return result
 
@@ -361,6 +386,7 @@ class ExtractionPyScript(ValvePyScript):
             it is the ExtractionPyScripts responsiblity to handle the waiting.
             use the waitfor command to wait for signals from apis.
         """
+        from pychron.external_pipette.apis_manager import InvalidPipetteError
         cmd = 'load_blank_non_blocking' if self.analysis_type == 'blank' else 'load_pipette_non_blocking'
         try:
             #bug _manager_action only with except tuple of len 1 for args
@@ -384,6 +410,7 @@ class ExtractionPyScript(ValvePyScript):
             this is an atomic command. use the apis_controller config file to define
             the isolation procedures.
         """
+        from pychron.external_pipette.apis_manager import InvalidPipetteError
         if identifier == '':
             identifier = self.extract_value
 
@@ -413,14 +440,15 @@ class ExtractionPyScript(ValvePyScript):
         ed = self.extract_device
         ed = ed.replace('_', ' ')
 
-        #get current position and add as an extraction position
+        # get current position and add as an extraction position
         pos = self._extraction_action([('get_position', (), {})])
         self._extraction_positions.append(pos)
 
-        #set an experiment message
-        self.manager.set_extract_state('{} ON! {}({})'.format(ed, power, units), color='red')
+        # set an experiment message
+        if self.manager:
+            self.manager.set_extract_state('{} ON! {}({})'.format(ed, power, units), color='red')
 
-        self.info('extract sample to {} ({})'.format(power, units))
+        self.console_info('extract sample to {} ({})'.format(power, units))
         self._extraction_action([('extract', (power,), {'units': units})])
 
     @verbose_skip
@@ -430,12 +458,20 @@ class ExtractionPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def ramp(self, start=0, end=0, duration=0, rate=0, period=1):
+    def fire_laser(self):
+        self._extraction_action([('fire_laser', (), {})])
+
+    @verbose_skip
+    @command_register
+    def ramp(self, start=0, setpoint=0, duration=0, rate=0, period=1):
+        self.debug('ramp parameters start={}, '
+                   'setpoint={}, duration={}, rate={}, period={}'.format(start, setpoint, duration, rate, period))
+
         def func(i, ramp_step):
             if self._cancel:
                 return
 
-            self.info('ramp step {}. setpoint={}'.format(i, ramp_step))
+            self.console_info('ramp step {}. setpoint={}'.format(i, ramp_step))
             if not self._extraction_action([('set_laser_power', (ramp_step,), {})]):
                 return
 
@@ -446,7 +482,7 @@ class ExtractionPyScript(ValvePyScript):
 
         st = time.time()
         rmp = Ramper()
-        rmp.ramp(func, start, end, duration, rate, period)
+        rmp.ramp(func, start, setpoint, duration, rate, period)
         return time.time() - st
 
     @verbose_skip
@@ -456,25 +492,34 @@ class ExtractionPyScript(ValvePyScript):
             self.debug('+++++++++++++++++++++++ Runner is None')
             return
 
-        self.info('acquire {}'.format(name))
+        self.console_info('acquire {}'.format(name))
+        self.runner.connect()
+
         r = self.runner.get_resource(name)
 
-        s = False
         if not clear:
-            s = r.isSet()
-            if s:
-                self.info('waiting for access')
+            if r.isSet():
+                self.console_info('waiting for access')
 
-        while s:
-            if self._cancel:
-                break
-            self._sleep(1)
-            s = r.isSet()
+                if self.manager:
+                    self.manager.set_extract_state('Waiting for Resource Access. "{}"'.format(name), color='red')
+
+                while r.isSet():
+                    if self._cancel:
+                        break
+                    self._sleep(1)
+
+                    if not self.runner.reset_connection():
+                        self.cancel()
+                        break
 
         if not self._cancel:
             self._resource_flag = r
             r.set()
-            self.info('{} acquired'.format(name))
+            self.console_info('{} acquired'.format(name))
+
+        if self.manager:
+            self.manager.set_extract_state(False)
 
     @verbose_skip
     @command_register
@@ -483,7 +528,7 @@ class ExtractionPyScript(ValvePyScript):
             self.debug('+++++++++++++++++++++++ Runner is None')
             return
 
-        self.info('waiting for {} = {}'.format(name, criterion))
+        self.console_info('waiting for {} = {}'.format(name, criterion))
         r = self.runner.get_resource(name)
 
         cnt = 0
@@ -501,12 +546,12 @@ class ExtractionPyScript(ValvePyScript):
                 if cnt > 100:
                     cnt = 0
 
-        self.info('finished waiting')
+        self.console_info('finished waiting')
 
     @verbose_skip
     @command_register
     def release(self, name=None):
-        self.info('release {}'.format(name))
+        self.console_info('release {}'.format(name))
         if self.runner is None:
             self.debug('+++++++++++++++++++++++ Runner is None')
             return
@@ -515,7 +560,7 @@ class ExtractionPyScript(ValvePyScript):
         if r is not None:
             r.clear()
         else:
-            self.info('Could not release {}'.format(name))
+            self.console_info('Could not release {}'.format(name))
 
     @verbose_skip
     @command_register
@@ -528,7 +573,7 @@ class ExtractionPyScript(ValvePyScript):
         if r is not None:
             r.set(value)
         else:
-            self.info('Could not set {}'.format(name))
+            self.console_info('Could not set {}'.format(name))
 
     @verbose_skip
     @command_register
@@ -545,7 +590,7 @@ class ExtractionPyScript(ValvePyScript):
             else:
                 resp = r.isSet()
         else:
-            self.info('Could not get {}'.format(name))
+            self.console_info('Could not get {}'.format(name))
 
         self.debug('Get Resource Value {}={}'.format(name, resp))
         return resp
@@ -570,10 +615,9 @@ class ExtractionPyScript(ValvePyScript):
     @command_register
     def prepare(self):
         return self._extraction_action([('prepare', (), {})])
-
-    #===============================================================================
+    # ===============================================================================
     # properties
-    #===============================================================================
+    # ===============================================================================
     def _get_property(self, key, default=None):
         ctx = self.get_context()
         return ctx.get(key, default)
@@ -595,7 +639,10 @@ class ExtractionPyScript(ValvePyScript):
 
     @property
     def analysis_type(self):
-        return self._get_property('analysis_type')
+        at = self._get_property('analysis_type')
+        self.debug('getting analysis type for {}. '
+                   'analysis_type={}'.format(self.run_identifier, at))
+        return at
         # return self.get_context()['analysis_type']
 
     @property
@@ -632,10 +679,15 @@ class ExtractionPyScript(ValvePyScript):
     def beam_diameter(self):
         return self._get_property('beam_diameter')
         # return self.get_context()['beam_diameter']
-
-    #===============================================================================
+    @property
+    def run_identifier(self):
+        return self._get_property('run_identifier')
+    # ===============================================================================
     # private
-    #===============================================================================
+    # ===============================================================================
+    def _cancel_hook(self):
+        self.disable()
+
     def _get_device(self, name):
         app = self._get_application()
         if app is not None:
@@ -664,8 +716,13 @@ class ExtractionPyScript(ValvePyScript):
         if not 'name' in kw:
             kw['name'] = self.extract_device
 
-        if not 'protocol' in kw:
-            kw['protocol'] = ILaserManager
+        kw['name'] = kw.get('name', self.extract_device) or self.extract_device
+        if kw['name'] in ('Extract Device', LINE_STR):
+            return
+
+        # if not 'protocol' in kw:
+        #     kw['protocol'] = ILaserManager
+        kw['protocol']=kw.get('protocol', ILaserManager) or ILaserManager
 
         return self._manager_action(*args, **kw)
 
@@ -683,9 +740,9 @@ class ExtractionPyScript(ValvePyScript):
 
         success = self._extraction_action([('set_{}'.format(name), (value,), kw)])
         if not success:
-            self.info('{} move to position failed'.format(self.extract_device))
+            self.console_info('{} move to position failed'.format(self.extract_device))
         else:
-            self.info('move to position suceeded')
+            self.console_info('move to position suceeded')
         return True
 
     def _cancel_hook(self, **kw):
@@ -701,67 +758,4 @@ class ExtractionPyScript(ValvePyScript):
     def _stop_pattern(self, protocol=None):
         self._extraction_action([('stop_pattern', (), {})], protocol=protocol)
 
-#============= EOF ====================================
-
-#    @verbose_skip
-#    def _m_open(self, name=None, description=''):
-#
-#        if description is None:
-#            description = '---'
-#
-#        self.info('opening {} ({})'.format(name, description))
-#
-#        self._manager_action([('open_valve', (name,), dict(
-#                                                      mode='script',
-#                                                      description=description
-#                                                      ))], protocol=ELPROTOCOL)
-#
-#    @verbose_skip
-#    def close(self, name=None, description=''):
-#
-#        if description is None:
-#            description = '---'
-#
-#        self.info('closing {} ({})'.format(name, description))
-#        self._manager_action([('close_valve', (name,), dict(
-#                                                      mode='script',
-#                                                      description=description
-#                                                      ))], protocol=ELPROTOCOL)
-#    def get_context(self):
-#        d = super(ExtractionPyScript, self).get_context()
-
-#        #=======================================================================
-#        #Parameters
-#        # this are directly referencable in the script
-#        # e.g if OverlapRuns:
-#        #    or
-#        #    move_to_hole(holeid)
-#        #=======================================================================
-#
-#        d.update(self._context)
-#        return d
-
-#    def gosub(self, *args, **kw):
-#        kw['analysis_type'] = self.analysis_type
-#        kw['_context'] = self._context
-#        super(ExtractionPyScript, self).gosub(*args, **kw)
-
-#    @verbose_skip
-#    def is_open(self, name=None, description=''):
-#        self.info('is {} ({}) open?'.format(name, description))
-#        result = self._get_valve_state(name, description)
-#        if result:
-#            return result[0] == True
-#
-#    @verbose_skip
-#    def is_closed(self, name=None, description=''):
-#        self.info('is {} ({}) closed?'.format(name, description))
-#        result = self._get_valve_state(name, description)
-#        if result:
-#            return result[0] == False
-#
-#    def _get_valve_state(self, name, description):
-#        return self._manager_action([('open_valve', (name,), dict(
-#                                                      mode='script',
-#                                                      description=description
-#                                                      ))], protocol=ELPROTOCOL)
+# ============= EOF ====================================

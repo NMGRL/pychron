@@ -12,15 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import math
 from functools import partial
 from decimal import Decimal
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 def format_percent_error(v, e, n=2, include_percent_sign=False):
     p = calc_percent_error(v, e)
@@ -61,17 +61,19 @@ def floatfmt(f, n=4, s=4, max_width=None, default='NaN', use_scientific=False):
     if f is None:
         return default
 
-    if abs(f) < 1e-20:
+    absf = abs(f)
+    if absf < 1e-20:
         v = '0.0'
     else:
-
-        if abs(f) < math.pow(10, -n) or abs(f) > math.pow(10, s + 1):
+        if absf < math.pow(10, -n) or absf > math.pow(10, s + 1):
             if use_scientific:
                 fmt = '{{:0.{}E}}'.format(s)
             else:
-                if abs(f) < math.pow(10, s + 1):
-                    f = Decimal(f)
-                    n = int(math.ceil(abs(math.log10(abs(f)))))
+                if absf < math.pow(10, s + 1):
+                    # f = Decimal(f)
+                    # n = int(math.ceil(abs(math.log10(absf))))
+                    n = int(round(abs(math.log10(absf))))
+
                 fmt = '{{:0.{}f}}'.format(n)
 
         else:
@@ -88,4 +90,4 @@ def floatfmt(f, n=4, s=4, max_width=None, default='NaN', use_scientific=False):
 def pfloatfmt(**kw):
     return partial(floatfmt, **kw)
 
-#============= EOF =============================================
+# ============= EOF =============================================

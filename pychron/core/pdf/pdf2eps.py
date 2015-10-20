@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 import subprocess
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 def convert_pdf_eps(p):
     h, _ = os.path.splitext(p)
@@ -29,4 +29,4 @@ if __name__ == '__main__':
     p = '/Users/Ross/Sandbox/aaatable.pdf'
     convert_pdf_eps(p)
 
-#============= EOF =============================================
+# ============= EOF =============================================

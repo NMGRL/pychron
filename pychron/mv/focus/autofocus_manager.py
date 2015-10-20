@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,19 +12,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
+import cPickle as pickle
+
 from traits.api import Bool, Any, Instance, Button, Property, Event, on_trait_change
 from traitsui.api import View, Item, Handler, HGroup
-import apptools.sweet_pickle as pickle
-#============= standard library imports ========================
+
+# ============= standard library imports ========================
 # from threading import Thread
 from threading import Event as TEvent
 from numpy import linspace, argmin, argmax, random, asarray
 import time
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.time_series.time_series import smooth
 from pychron.image.cv_wrapper import grayspace, crop, get_focus_measure
 # from pychron.image.cvwrapper import grayspace, get_focus_measure, crop, resize
@@ -482,8 +484,8 @@ ImageGradmax={}, (z={})'''.format(operator, mi, fmi, ma, fma))
     def _autofocusing_changed(self, new):
         if not new:
             self.canvas.remove_item('croprect')
-#===============================================================================
+# ===============================================================================
 # Deprecated
-#===============================================================================
-#============= EOF =====================================
+# ===============================================================================
+# ============= EOF =====================================
 

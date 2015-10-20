@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import Instance, Float, Button, Int, Property, Event, Bool
 from traitsui.api import View, Item, HGroup
 
-#=============standard library imports ========================
+# =============standard library imports ========================
 from threading import Thread
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 from pychron.core.ui.stage_component_editor import VideoComponentEditor
 from pychron.image.video import Video
 from pychron.image.image import Image
@@ -290,7 +290,7 @@ if __name__ == '__main__':
 
 
 
-#================== EOF ========================
+# ================== EOF ========================
 # def process_image_dir(self, root):
 #        '''
 #            @type root: C{str}

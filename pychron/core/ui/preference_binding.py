@@ -1,32 +1,44 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from apptools.preferences.preference_binding import PreferenceBinding
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 # from apptools.preferences.api import PreferenceBinding as TPreferenceBinding
-#
+
+
+def extract_color(value):
+    value = ','.join(map(str, toTuple(value)))
+    return value
+
+
+def toTuple(value, scalar=255):
+    value = value.split('(')[1][:-1]
+    return map(lambda x: int(float(x) * scalar), value.split(','))
+
+
 class ColorPreferenceBinding(PreferenceBinding):
     def _get_value(self, name, value):
         if 'color' in name:
-            value = value.split('(')[1]
-            value = value[:-1]
-            value = map(float, value.split(','))
-            value = ','.join(map(lambda x: str(int(x * 255)), value))
+            value = extract_color(value)
+            # value = value.split('(')[1]
+            # value = value[:-1]
+            # value = map(float, value.split(','))
+            # value = ','.join(map(lambda x: str(int(x * 255)), value))
         else:
             value = super(ColorPreferenceBinding, self)._get_value(name, value)
         return value
@@ -71,4 +83,4 @@ def bind_preference(obj, trait_name, preference_path,
     else:
         return PreferenceBinding(**traits)
 
-#============= EOF =============================================
+# ============= EOF =============================================

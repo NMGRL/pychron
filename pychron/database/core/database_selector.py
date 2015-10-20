@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +12,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
+from datetime import datetime, timedelta
+
+from sqlalchemy import and_, or_
 from traits.api import Button, List, Any, Dict, Bool, Int, Enum, Event, \
     on_trait_change, Str, Instance, Property
 from traitsui.api import View, Item, \
     HGroup, spring, ListEditor, InstanceEditor, Handler, VGroup, VSplit
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
+from pychron.core.progress import progress_loader
 from pychron.database.core.database_adapter import DatabaseAdapter
 
 from pychron.database.core.query import Query, compile_query
@@ -37,8 +43,7 @@ from pychron.column_sorter_mixin import ColumnSorterMixin
 
 class BaseTabularAdapter(TabularAdapter):
     columns = [('ID', 'record_id'),
-               ('Timestamp', 'timestamp')
-    ]
+               ('Timestamp', 'timestamp')]
 
 # class ColumnSorterMixin(HasTraits):
 #     _sort_field = None
@@ -87,7 +92,7 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
     title = ''
 
     dclicked = Any
-    selected = Any
+    selected = List
     scroll_to_row = Int
     scroll_to_bottom = True
     key_pressed = Event
@@ -110,6 +115,8 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
 
     add_query_button = Button('+')
     delete_query_button = Button('-')
+    load_recent_button = Button('Load Recent')
+    recent_days = Int(1)
 
     queries = List(Query)
     lookup = Dict
@@ -123,7 +130,7 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
         super(DatabaseSelector, self).__init__(*args, **kw)
         self._load_hook()
 
-    def load_records(self, dbs, load=True, append=False):
+    def load_records(self, dbs, append=False):
         if not append:
             self.records = []
 
@@ -139,14 +146,43 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
     def query_factory(self, *args, **kw):
         return self._query_factory(**kw)
 
-    def add_query(self, parent_query, parameter, criterion, add=True):
+    def add_query(self, parameter, comparator, criterion,
+                  add=True, chain_rule='And', parent=None):
+        pp,pc,pco=None, None, None
+
+        if not parent and self.queries:
+            parent=self.queries[-1]
+
+        if parent:
+            pp = parent.parent_parameters
+            pc = parent.parent_criterions
+            pco = parent.parent_comparators
+            parent.chain_rule='And'
+
+        # pp = pp + [parameter] if pp else [parameter]
+        # pc = pc + [criterion] if pc else [criterion]
+        # pco = pco + [comparator] if pc else [comparator]
+        pp = pp or [parameter]
+        pc = pc or [criterion]
+        pco = pco or [comparator]
+
         q = self._query_factory(
-            parent_parameters=parent_query.parent_parameters + [parameter],
-            parent_criterions=parent_query.parent_criterions + [criterion])
+            parameter=parameter,
+            criterion=criterion,
+            comparator=comparator,
+            parent_parameters= pp,
+            parent_criterions= pc,
+            parent_comparators= pco,
+            chain_rule=chain_rule)
+
         if add:
             self.queries.append(q)
-        parent_query.on_trait_change(q._update_parent_parameter, 'parameter')
-        parent_query.on_trait_change(q._update_parent_criterion, 'criterion')
+
+        if parent:
+            parent.on_trait_change(q.update_parent_parameter, 'parameter')
+            parent.on_trait_change(q.update_parent_criterion, 'criterion')
+            parent.on_trait_change(q.update_parent_comparator, 'comparator')
+        return q
 
     def remove_query(self, q):
         if q in self.queries:
@@ -154,20 +190,23 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
 
     def load_recent(self, criterion='this month'):
         with self.db.session_ctx():
+            # dbs = timethis(self._get_recent, args=(criterion, ))
+            # timethis(self.load_records, args=(dbs, ), kwargs={'load':False})
+
             dbs = self._get_recent(criterion)
-            self.load_records(dbs, load=False)
+            self.load_records(dbs)
 
     def load_last(self, n=200):
         with self.db.session_ctx():
             dbs, _stmt = self._get_selector_records(limit=n)
-            self.load_records(dbs, load=False)
+            self.load_records(dbs)
 
             #    def execute_query(self, filter_str=None):
 
-    def execute_query(self, queries=None, load=True, use_filters=True):
+    def execute_query(self, queries=None, use_filters=True):
         with self.db.session_ctx():
             dbs = self._execute_query(queries, use_filters=use_filters)
-            self.load_records(dbs, load=load)
+            self.load_records(dbs)
 
     def get_last(self, n):
         dbs, _stmt = self._get_selector_records(limit=n)
@@ -181,9 +220,9 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
         qe = self.query_factory(criterion=end, parameter=self.date_str, comparator='<=')
         return self._execute_query([qs, qe], **kw)
 
-    #===============================================================================
+    # ===============================================================================
     # private
-    #===============================================================================
+    # ===============================================================================
     def _add_query(self, add=True):
         pq = None
         if self.queries:
@@ -194,18 +233,27 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
             if add:
                 self.queries.append(q)
         else:
-            self.add_query(pq, pq.parameter, pq.criterion, add=add)
+            self.add_query(pq.parameter, pq.comparator, pq.criterion,
+                           parent=pq, add=add)
 
     def _get_recent(self, criterion):
-        q = self.queries[0]
-        q.parameter = self.date_str
-        q.comparator = '>'
-        q.trait_set(criterion=criterion, trait_change_notify=False)
+        parameter=self.date_str
+        comparator='>'
+        if self.queries:
+            q = self.queries[0]
+            q.parameter = self.date_str
+            q.comparator = '>'
+            q.trait_set(criterion=criterion)
+        else:
+            q = self.add_query(parameter, comparator, criterion)
 
         return self._execute_query(queries=[q])
 
     def _assemble_query(self, q, queries, lookup):
         joined = []
+
+        ands = []
+        ors = []
         for qi in queries:
             if not qi.use:
                 continue
@@ -220,11 +268,25 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
                         joined.append(tab)
                         q = q.join(tab)
                 try:
-                    q = qi.assemble_filter(q, attr)
+                    f, is_or = qi.assemble_filter(q, attr)
                 except ValueError:
                     self.warning_dialog('Invalid query "{}", "{}"'.format(qi.parameter, attr))
                     return
 
+                if is_or:
+                    ors.append(f)
+                else:
+                    ands.append(f)
+
+        if ands:
+            fs = and_(*ands)
+            if ors:
+                fs=or_(fs, *ors)
+        elif ors:
+            fs=or_(*ors)
+
+        q = q.filter(fs)
+        self.debug('Query={}'.format(compile_query(q)))
         return q
 
     def _execute_query(self, queries=None, limit=None, use_filters=True):
@@ -237,8 +299,7 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
 
         dbs, query_str = self._get_selector_records(limit=limit,
                                                     queries=queries,
-                                                    use_filters=use_filters,
-        )
+                                                    use_filters=use_filters)
 
         if not self.verbose:
             query_str = str(query_str)
@@ -254,8 +315,12 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
             '''
                 using a IsotopeRecordView is significantly faster than loading a IsotopeRecord directly
             '''
-            rs = [self._record_view_factory(di) for di in records]
-            rs = [ri for ri in rs if ri]
+            def func(x, prog, i, n):
+                if prog:
+                    prog.change_message('Loading {}/{} {}'.format(i+1, n, x.record_id))
+                return self._record_view_factory(x)
+
+            rs = progress_loader(records, func)
             self.records.extend(rs)
 
     def _record_closed(self, obj, name, old, new):
@@ -270,14 +335,14 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
     def _record_view_factory(self, dbrecord):
         if hasattr(self, 'record_view_klass'):
             d = self.record_view_klass()
-            if d.create(dbrecord):
+            if d.create(dbrecord, fast_load=True):
                 return d
         else:
             return self.record_klass(_dbrecord=dbrecord)
 
-            #===============================================================================
+            # ===============================================================================
             # open window
-            #===============================================================================
+            # ===============================================================================
 
     def _open_selected(self, records=None):
         self.debug('open selected')
@@ -370,9 +435,16 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
     def _get_num_records(self):
         return 'Number Results: {}'.format(len(self.records))
 
-    #===============================================================================
+    # ===============================================================================
     # handlers
-    #===============================================================================
+    # ===============================================================================
+    def _load_recent_button_fired(self):
+        criterion = 'this month'
+        if self.recent_days:
+            t = datetime.now()- timedelta(days=self.recent_days)
+            criterion = t.strftime('%m/%d/%Y')
+        self.load_recent(criterion=criterion)
+
     def _delete_query_button_fired(self):
         self.remove_query(self.selected_query)
 
@@ -384,12 +456,21 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
         if self.dclicked and self.dclick_recall_enabled:
             self._open_selected()
 
-    def _open_button_fired(self):
-        self.debug('open button fired')
-        self._open_selected()
+    @on_trait_change('queries[]')
+    def _handle_queries_change(self):
+        if self.queries:
+            n=len(self.queries)-1
+            for i, q in enumerate(self.queries):
+                ar = q.chain_rule
+                if not ar:
+                    q.chain_rule = '' if i==n else 'And'
+
+    # def _open_button_fired(self):
+    #     self.debug('open button fired')
+    #     self._open_selected()
 
     def _search_fired(self):
-        self.execute_query(load=False)
+        self.execute_query()
 
     #        if self.records:
     #            self.selected = self.records[-1:]
@@ -397,12 +478,12 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
     #            print self.records.index(self.selected[0])
 
     def _limit_changed(self):
-        self.execute_query(load=False)
+        self.execute_query()
 
     @on_trait_change('db.[name,host]')
     def _id_string_change(self):
         if self.db.kind == 'mysql':
-            self.id_string = 'Database: {} at {}'.format(self.db.name, self.db.host)
+            self.id_string = 'Database: {}:{}'.format(self.db.host,self.db.name)
         else:
             self.id_string = 'Database: {}'.format(self.db.name)
 
@@ -413,9 +494,9 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
             #                sel = sel[0]
             #            self.selected_row = self.records.index(sel)
             #            self.update = True
-            #===============================================================================
+            # ===============================================================================
             # factories
-            #===============================================================================
+            # ===============================================================================
 
     def _query_factory(self, removable=True, **kw):
         q = self.query_klass(selector=self,
@@ -429,9 +510,9 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
         di.on_trait_change(self._record_closed, 'close_event')
         return di
 
-    #===============================================================================
+    # ===============================================================================
     # views
-    #===============================================================================
+    # ===============================================================================
     def _get_button_grp(self):
         return HGroup(spring, Item('search', show_label=False), defined_when='style=="normal"')
 
@@ -488,16 +569,16 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
             v.buttons = ['OK', 'Cancel']
         return v
 
-    #===============================================================================
+    # ===============================================================================
     # defaults
-    #===============================================================================
+    # ===============================================================================
     def _queries_default(self):
         return [self._query_factory(removable=False)]
 
     def _tabular_adapter_default(self):
         return self.tabular_adapter_klass()
 
-#============= EOF =============================================
+# ============= EOF =============================================
 #        if criteria is None:
 #            criteria = self.criteria
 #        self.criteria = criteria

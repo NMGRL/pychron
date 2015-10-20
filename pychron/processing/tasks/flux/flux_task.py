@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,36 +12,29 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-from collections import namedtuple
-import os
-import struct
-
-from pyface.tasks.action.schema import SToolBar
+# ============= enthought library imports =======================
 from traits.api import on_trait_change, List, HasTraits
 from traitsui.tabular_adapter import TabularAdapter
 from pyface.tasks.task_layout import TaskLayout, HSplitter, VSplitter, PaneItem, Tabbed
-
-
-
-
-#============= standard library imports ========================
-#============= local library imports  ==========================
+from pyface.tasks.action.schema import SToolBar
+# ============= standard library imports ========================
+from collections import namedtuple
+import os
+import struct
 from uncertainties import ufloat, nominal_value, std_dev
-from pychron.core.stats import calculate_weighted_mean, calculate_mswd
-from pychron.database.records.isotope_record import IsotopeRecordView
-from pychron.easy_parser import EasyParser
+# ============= local library imports  ==========================
 from pychron.paths import paths
+from pychron.core.stats import calculate_weighted_mean, calculate_mswd
+from pychron.processing.argon_calculations import calculate_flux
+from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.processing.analyses.analysis import Analysis
 from pychron.processing.tasks.actions.edit_actions import DatabaseSaveAction
-from pychron.processing.tasks.flux.flux_editor import FluxEditor
 from pychron.processing.tasks.flux.flux_parser import XLSFluxParser, CSVFluxParser
 from pychron.processing.tasks.flux.panes import IrradiationPane, AnalysesPane
 from pychron.processing.tasks.analysis_edit.interpolation_task import InterpolationTask
 from pychron.processing.tasks.analysis_edit.panes import TablePane
-from pychron.processing.argon_calculations import calculate_flux
 
 Position = namedtuple('Positon', 'position x y')
 
@@ -91,21 +84,15 @@ class FluxTask(InterpolationTask):
 
     analyses = List
     tool_bars = [SToolBar(DatabaseSaveAction())]
+    update_on_level_change = False
 
     def find_associated_analyses(self):
         pass
 
-    def _default_layout_default(self):
-        return TaskLayout(
-            id='pychron.processing',
-            left=HSplitter(
-                VSplitter(
-                    PaneItem('pychron.processing.irradiation'),
-                    Tabbed(
-                        PaneItem('pychron.processing.unknowns'),
-                        PaneItem('pychron.processing.references'),
-                        PaneItem('pychron.processing.analyses')),
-                    PaneItem('pychron.processing.controls'))))
+    def activated(self):
+        """
+            no need to do BaseBrowserTask.activated
+        """
 
     def create_dock_panes(self):
         panes = super(FluxTask, self).create_dock_panes()
@@ -114,7 +101,8 @@ class FluxTask(InterpolationTask):
             AnalysesPane(model=self)]
 
     def new_flux(self):
-        editor = FluxEditor(name='Flux {:03n}'.format(self.flux_editor_count),
+        from pychron.processing.tasks.flux.flux_editor import FluxEditor
+        editor = FluxEditor(name='Flux {:03d}'.format(self.flux_editor_count),
                             processor=self.manager)
 
         self._open_editor(editor)
@@ -221,7 +209,7 @@ class FluxTask(InterpolationTask):
         # reg.error_calc_type = editor.tool.mean_j_error_type
         error_kind = editor.tool.mean_j_error_type
         monitor_age = editor.tool.monitor_age
-        print error_kind
+        print 'exception', error_kind
         # helper funcs
         def mean_j(ans):
             ufs = (ai.uF for ai in ans)
@@ -256,32 +244,29 @@ class FluxTask(InterpolationTask):
             editor = self.active_editor
             editor.geometry = geom
             editor.suppress_update = True
-            i = 0
-            # for ais in ans:
-            for ri in refs:
-                ais, _ = db.get_labnumber_analyses(ri.identifier, omit_key='omit_ideo')
 
-                if ais:
+            for ri in refs:
+                ais, n = db.get_labnumber_analyses(ri.identifier, omit_key='omit_ideo')
+                if n:
                     ref = ais[0]
                     sj = ref.labnumber.selected_flux_history.flux.j
                     sjerr = ref.labnumber.selected_flux_history.flux.j_err
 
                     ident = ref.labnumber.identifier
 
-                    aa = proc.make_analyses(ais, progress=prog)
-                    n = len(aa)
-
+                    aa = proc.make_analyses(ais, progress=prog, calculate_age=True)
+                    # n = len(aa)
                     dev = 100
-                    j = 0
-                    if n:
-                        j = mean_j(aa)
+                    # j = 0
+                    # if n:
+                    j = mean_j(aa)
 
-                        if sj:
-                            dev = (j.nominal_value - sj) / sj * 100
+                    if sj:
+                        dev = (j.nominal_value - sj) / sj * 100
 
-                        if editor.tool.save_mean_j:
-                            db.save_flux(ident, j.nominal_value, j.std_dev, inform=False)
-                            sj, sjerr = j.nominal_value, j.std_dev
+                    if editor.tool.save_mean_j:
+                        db.save_flux(ident, j.nominal_value, j.std_dev, inform=False)
+                        sj, sjerr = j.nominal_value, j.std_dev
 
                     d = dict(saved_j=sj, saved_jerr=sjerr,
                              mean_j=nominal_value(j), mean_jerr=std_dev(j),
@@ -346,6 +331,7 @@ class FluxTask(InterpolationTask):
 
 
     def do_easy_flux(self):
+        from pychron.easy_parser import EasyParser
         path = os.path.join(paths.dissertation, 'data', 'minnabluff', 'flux.yaml')
         ep = EasyParser(path=path)
         # db = self.manager.db
@@ -381,4 +367,15 @@ class FluxTask(InterpolationTask):
         # prog.close()
         return True
 
-#============= EOF =============================================
+    def _default_layout_default(self):
+        return TaskLayout(
+            id='pychron.processing',
+            left=HSplitter(
+                VSplitter(
+                    PaneItem('pychron.processing.irradiation'),
+                    Tabbed(
+                        PaneItem('pychron.processing.unknowns'),
+                        PaneItem('pychron.processing.references'),
+                        PaneItem('pychron.processing.analyses')),
+                    PaneItem('pychron.processing.controls'))))
+# ============= EOF =============================================

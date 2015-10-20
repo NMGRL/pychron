@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Any, Property
 from traitsui.api import View, UItem, InstanceEditor, TabularEditor, VGroup, HGroup, spring, Spring
 from pyface.tasks.traits_dock_pane import TraitsDockPane
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.core.ui.custom_label_editor import CustomLabel
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
+from pychron.envisage.icon_button_editor import icon_button_editor
 
 
 class FigureAdapter(TabularAdapter):
@@ -62,7 +62,7 @@ class PlotterOptionsPane(TraitsDockPane):
     """
     id = 'pychron.processing.figures.plotter_options'
 
-    name = 'Plot Options'
+    name = 'Figure Options'
     pom = Any
 
     def traits_view(self):
@@ -71,4 +71,4 @@ class PlotterOptionsPane(TraitsDockPane):
                        style='custom'))
         return v
 
-#============= EOF =============================================
+# ============= EOF =============================================

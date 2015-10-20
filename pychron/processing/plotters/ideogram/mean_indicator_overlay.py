@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +12,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.plot_label import PlotLabel
 from chaco.scatterplot import render_markers
 from kiva.trait_defs.kiva_font_trait import KivaFont
 from traits.api import Color, Instance, Str, Float, Int, HasTraits, Any
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
+from traits.traits import Font
 from pychron.processing.plotters.point_move_tool import LabelMoveTool
 
 
@@ -149,8 +150,8 @@ class MeanIndicatorOverlay(AbstractOverlay, Movable):
             label = XYPlotLabel(component=self.component,
                                 font=self.font,
                                 text=self.text,
-                                id='{}_label'.format(self.id)
-            )
+                                color=self.color,
+                                id='{}_label'.format(self.id))
             self.label = label
             self.overlays.append(label)
             tool = LabelMoveTool(component=label)
@@ -191,7 +192,8 @@ class MeanIndicatorOverlay(AbstractOverlay, Movable):
 
             x, y = self.get_current_point()
 
-            e = self.error / 2.0 * max(1, self.nsigma)
+            # e = self.error / 2.0 * max(1, self.nsigma)
+            e = self.error * max(1, self.nsigma)
             p1, p2 = self.component.map_screen([(self.x - e, 0), (self.x + e, 0)])
 
             render_error_bar(gc, p1[0], p2[0], y,
@@ -239,4 +241,4 @@ class MeanIndicatorOverlay(AbstractOverlay, Movable):
         else:
             self.current_screen_point = (x, self.y)
 
-#============= EOF =============================================
+# ============= EOF =============================================

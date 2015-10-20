@@ -12,14 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Int, Float
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 # import time
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 # from monitor import Monitor
 from pychron.monitors.laser_monitor import LaserMonitor
 
@@ -28,8 +28,8 @@ NTRIES = 3
 
 
 class FusionsLaserMonitor(LaserMonitor):
-    '''
-    '''
+    """
+    """
 
     max_coolant_temp = Float(25)
     max_coolant_temp_tries = Int(3)
@@ -47,15 +47,15 @@ class FusionsLaserMonitor(LaserMonitor):
     max_unavailable = 3
 
     def load_additional_args(self, config):
-        '''
-        '''
+        """
+        """
         super(FusionsLaserMonitor, self).load_additional_args(self)
         self.set_attribute(config, 'max_coolant_temp',
                            'General', 'max_coolant_temp', cast='float', optional=True)
 
     def _fcheck_interlocks(self):
-        '''
-        '''
+        """
+        """
         # check laser interlocks
         manager = self.manager
         self.info('Check laser interlocks')
@@ -64,9 +64,7 @@ class FusionsLaserMonitor(LaserMonitor):
         if interlocks:
             inter = ' '.join(interlocks)
             manager.emergency_shutoff(inter)
-        #        elif interlocks is None:
-        #            manager.emergency_shutoff(reason='failed checking interlocks')
-
+            return True
 
     def _fcheck_coolant_temp(self):
         """
@@ -76,8 +74,6 @@ class FusionsLaserMonitor(LaserMonitor):
         self.info('Check laser coolant temperature')
         ct = manager.get_coolant_temperature(verbose=False)
         if ct is None:
-            #            self._invalid_checks.append('_FusionsLaserMonitor_check_coolant_temp')
-            #            pass
             self._chiller_unavailable()
         else:
             self._unavailable_cnt = 0
@@ -87,8 +83,14 @@ class FusionsLaserMonitor(LaserMonitor):
                     manager.emergency_shutoff('Coolant over temp {:0.2f}'.format(ct))
                 else:
                     self._coolant_check_cnt += 1
+                return True
+
             else:
                 self._coolant_check_cnt = 0
+
+    def reset(self):
+        self._coolant_check_status_cnt = 0
+        self._coolant_check_cnt = 0
 
     def _fcheck_coolant_status(self):
         manager = self.manager
@@ -99,14 +101,21 @@ class FusionsLaserMonitor(LaserMonitor):
         if status is None:
             self._chiller_unavailable()
         else:
+            # temporary disable pump fail check
+            if 'Pump Fail' in status:
+                self.debug('skip pump fail')
+                return
+
             self._unavailable_cnt = 0
-            if status:
+            if status and all(status):
                 if self._coolant_check_status_cnt > self.max_coolant_temp_tries:
                     status = ','.join(status) if isinstance(status, list) else status
                     reason = 'Laser coolant error {}'.format(status)
                     manager.emergency_shutoff(reason)
                 else:
                     self._coolant_check_status_cnt += 1
+                return True
+
             else:
                 self._coolant_check_status_cnt = 0
 
@@ -136,7 +145,7 @@ class FusionsLaserMonitor(LaserMonitor):
     setpoint = property(fget=_get_setpoint, fset=_set_setpoint)
 
 
-#============= EOF ====================================
+# ============= EOF ====================================
 #    def _doublecheck_setpoint(self):
 #        if self.setpoint:
 #            manager = self.manager

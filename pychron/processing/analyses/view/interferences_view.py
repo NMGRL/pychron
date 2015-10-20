@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Float, List, Property
 from traitsui.api import View, Item, UItem, TabularEditor, VGroup, HGroup
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
 from uncertainties import nominal_value, std_dev
 from pychron.core.helpers.formatting import floatfmt, format_percent_error
@@ -103,5 +103,5 @@ class InterferencesView(HasTraits):
                                                       editable=False))))
         return v
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

@@ -12,13 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traitsui.api import View, Controller, VGroup, UItem, HGroup, Heading
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class DateSelector(Controller):
     def traits_view(self):
@@ -34,5 +34,5 @@ class DateSelector(Controller):
         return v
 
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

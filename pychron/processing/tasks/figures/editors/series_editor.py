@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,12 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Instance
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.processing.plotters.series.series_model import SeriesModel
 from pychron.processing.tasks.figures.figure_editor import FigureEditor
 from pychron.processing.plotters.figure_container import FigureContainer
@@ -44,15 +44,9 @@ class SeriesEditor(FigureEditor):
         self._set_name()
 
     def get_component(self, ans, plotter_options):
-    #         print plotter_options
         if plotter_options is None:
             pom = self.plotter_options_manager_klass()
             plotter_options = pom.plotter_options
-
-        #         ref = ans[0]
-        #         plotter_options.load_aux_plots(ref)
-        #             plotter_options.load_fits(ref)
-
 
         model = self.model_klass(plot_options=plotter_options)
         model.analyses = ans
@@ -60,20 +54,4 @@ class SeriesEditor(FigureEditor):
 
         return model, iv.component
 
-#     def show_series(self, key, fit='Linear'):
-#         fi = next((ti for ti in self.tool.fits if ti.name == key), None)
-# #         self.tool.suppress_refresh_unknowns = True
-#         if fi:
-#             fi.trait_set(
-#                          fit=fit,
-#                          show=True,
-#                          trait_change_notify=False)
-#
-#         self.rebuild(refresh_data=False)
-
-
-#class AutoSeriesEditor(SeriesEditor):
-#    auto_figure_control = Instance(AutoSeriesControl, ())
-
-
-#============= EOF =============================================
+# ============= EOF =============================================

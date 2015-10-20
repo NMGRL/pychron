@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pychron.core.helpers.formatting import floatfmt, format_percent_error
 from pychron.graph.tools.info_inspector import InfoInspector, InfoOverlay
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 
 class RegressionInspectorTool(InfoInspector):
@@ -27,8 +27,8 @@ class RegressionInspectorTool(InfoInspector):
 
         v, e = reg.predict(0), reg.predict_error(0)
         lines = [reg.make_equation(),
-                 'x=0, y={} +/-{}({}%)'.format(floatfmt(v, n=5),
-                                               floatfmt(e, n=5),
+                 'x=0, y={} +/-{}({}%)'.format(floatfmt(v, n=9),
+                                               floatfmt(e, n=9),
                                                format_percent_error(v, e))]
 
         if not reg.mswd in ('NaN', None):
@@ -43,4 +43,4 @@ class RegressionInspectorTool(InfoInspector):
 class RegressionInspectorOverlay(InfoOverlay):
     pass
 
-#============= EOF =============================================
+# ============= EOF =============================================

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from PySide import QtGui, QtCore
 from PySide.QtCore import Qt
 from PySide.QtGui import QTextCursor, QTextEdit, QTextFormat, QCursor, QApplication, QTextCharFormat
@@ -22,16 +22,25 @@ from pyface.ui.qt4.code_editor.code_widget import AdvancedCodeWidget, CodeWidget
 from pyface.ui.qt4.code_editor.find_widget import FindWidget
 from pyface.ui.qt4.code_editor.replace_widget import ReplaceWidget
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.pyscripts.tasks.pyscript_lexer import PyScriptLexer
 
 
 class myCodeWidget(CodeWidget):
     dclicked = QtCore.Signal((str,))
     modified_select = QtCore.Signal((str,))
+    alt_select = QtCore.Signal((str,int, int))
+
     _current_pos = None
     gotos = ['gosub']
+
+    popup = None
+
+    def __init__(self, *args, **kw):
+        super(myCodeWidget, self).__init__(*args, **kw)
+
+        self.setMouseTracking(True)
 
     def keyPressEvent(self, event):
         super(myCodeWidget, self).keyPressEvent(event)
@@ -44,6 +53,9 @@ class myCodeWidget(CodeWidget):
         super(myCodeWidget, self).keyReleaseEvent(event)
         # self.setMouseTracking(False)
         QApplication.restoreOverrideCursor()
+        if self.popup:
+            self.popup.close()
+            self.popup = None
 
     def clear_selected(self):
         # self.setMouseTracking(False)
@@ -58,6 +70,20 @@ class myCodeWidget(CodeWidget):
         cursor.beginEditBlock()
         cursor.setCharFormat(fmt)
         cursor.endEditBlock()
+
+    def replace_selection(self, txt):
+
+        cursor = self.textCursor()
+        #  #     QtGui.QTextCursor.StartOfLine, QtGui.QTextCursor.KeepAnchor, txt.count('\n'))
+        cursor.beginEditBlock()
+        cursor.removeSelectedText()
+        cursor.insertText(txt)
+        cursor.endEditBlock()
+        # cursor.movePosition(
+        #     QtGui.QTextCursor.Left, QtGui.QTextCursor.MoveAnchor,len(txt))
+        # cursor.movePosition(
+        #     QtGui.QTextCursor.Right, QtGui.QTextCursor.KeepAnchor,len(txt))
+        self.setTextCursor(cursor)
 
     def mouseMoveEvent(self, event):
         if event.modifiers() & Qt.ControlModifier:
@@ -81,11 +107,22 @@ class myCodeWidget(CodeWidget):
 
         super(myCodeWidget, self).mouseMoveEvent(event)
 
+    # def mouseReleaseEvent(self, event):
+    #     if event.modifiers() & Qt.AltModifier:
+    #         print 'popup', self.popup
+    #         if self.popup:
+    #             self.popup.close()
+    #             self.popup = None
+
     def mousePressEvent(self, event):
-        if event.modifiers() & Qt.ControlModifier:
+        if event.modifiers() & Qt.ControlModifier: # on Mac OSX "command"
             cursor, line = self._get_line_cursor(event.pos())
             self.modified_select.emit(line.strip())
             self.clear_selected()
+        elif event.modifiers() & Qt.AltModifier: # On Mac OSX "option"
+            cursor, line = self._get_line_cursor(event.pos())
+            pt = self.mapToGlobal(event.pos())
+            self.alt_select.emit(line.strip(), pt.x(), pt.y())
 
         self._current_pos = None
         super(myCodeWidget, self).mousePressEvent(event)
@@ -102,14 +139,12 @@ class myCodeWidget(CodeWidget):
         line = cursor.selectedText()
         return cursor, line
 
-
     def mouseDoubleClickEvent(self, event):
         self.clear_selected()
 
         self._current_pos = event.pos()
         cursor, line = self._get_line_cursor(self._current_pos)
         self.dclicked.emit(line.strip())
-
 
     def replace_command(self, cmd):
         if self._current_pos:
@@ -137,7 +172,7 @@ class myAdvancedCodeWidget(AdvancedCodeWidget):
         self.code.setMouseTracking(True)
 
         #AdvanceCodeWidget
-        #=====================================
+        # =====================================
         self.find = FindWidget(self)
         self.find.hide()
         self.replace = ReplaceWidget(self)
@@ -172,7 +207,7 @@ class myAdvancedCodeWidget(AdvancedCodeWidget):
         self.setLayout(layout)
 
         self.edit_color = QtGui.QColor('blue').lighter(175)
-        #=====================================
+        # =====================================
 
     def insert_command(self, cmd):
         cur = self.code.textCursor()
@@ -234,5 +269,5 @@ class myAdvancedCodeWidget(AdvancedCodeWidget):
             selection.cursor.clearSelection()
         self.code.setExtraSelections([selection])
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

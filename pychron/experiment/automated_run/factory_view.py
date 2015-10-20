@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Instance
 from traitsui.api import View, Item, VGroup, Spring, HGroup, ButtonEditor, EnumEditor
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 POSITION_TOOLTIP = '''Set the position for this analysis or group of analyses.
 Examples:
@@ -61,9 +61,11 @@ class FactoryView(HasTraits):
                         editor=EnumEditor(name='extract_units_names')),
                    Item('ramp_duration', label='Ramp Dur. (s)'), ),
             HGroup(
-                Item('collection_time_zero_offset',
-                     label='T_o offset (s)',
-                     tooltip='# of seconds afer inlet opens to set time zero'),
+                Item('use_cdd_warming', label='CDD Warm',
+                     tooltip='Use the CDD warming routine at end of measurement'),
+                # Item('collection_time_zero_offset',
+                #      label='T_o offset (s)',
+                #      tooltip='# of seconds afer inlet opens to set time zero'),
                 Item('overlap', label='Overlap (s)', tooltip='Duration to wait before staring next run')),
             self._step_heat_group(),
             HGroup(
@@ -101,4 +103,4 @@ class FactoryView(HasTraits):
                  editor=ButtonEditor(label_value='edit_template_label')))
         return grp
 
-        #============= EOF =============================================
+        # ============= EOF =============================================

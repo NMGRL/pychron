@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import os
 import shelve
 
@@ -22,7 +22,7 @@ from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traits.api import Instance, on_trait_change
 from pyface.tasks.task_layout import TaskLayout, Splitter, PaneItem, Tabbed
 
-from pychron.entry.sensitivity_entry import SensitivityEntry
+from pychron.entry.entry_views.sensitivity_entry import SensitivityEntry
 from pychron.entry.tasks.sensitivity_entry_panes import SensitivityPane
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
 from pychron.processing.tasks.batch_edit.batch_editor import BatchEditor
@@ -33,13 +33,20 @@ from pychron.paths import paths
 
 
 
+
+
+
+
+
+
 #from pychron.processing.entry.sensitivity_entry import SensitivityEntry
 #from pychron.processing.tasks.entry.sensitivity_entry_panes import SensitivityPane
 from pychron.processing.tasks.browser.browser_task import BaseBrowserTask
 #from pychron.processing.tasks.figures.panes import MultiSelectAnalysisBrowser
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 # from pychron.processing.tasks.smart_selection.panes import SmartSelection
+from pychron.processing.tasks.browser.util import browser_pane_item
 
 
 class BatchEditTask(AnalysisEditTask):
@@ -196,7 +203,7 @@ class BatchEditTask(AnalysisEditTask):
     @on_trait_change('unknowns_pane:[append_button, replace_button]')
     def _append_unknowns(self, obj, name, old, new):
 
-        s = self._get_selected_analyses(self.unknowns_pane.items)
+        s = self._get_selected_analyses(unks=self.unknowns_pane.items)
         if s:
             if name == 'replace_button':
                 self.unknowns_pane.items = s
@@ -218,11 +225,11 @@ class BatchEditTask(AnalysisEditTask):
                 #
                 #self.unknowns_pane.items = self.unknowns
 
-                #===============================================================================
+                # ===============================================================================
 
                 # handlers
 
-    #===============================================================================
+    # ===============================================================================
     #     @on_trait_change('unknowns_pane:items')
     #     def _update_unknowns_runs(self, obj, name, old, new):
     #         if not obj._no_update:
@@ -235,7 +242,7 @@ class BatchEditTask(AnalysisEditTask):
         # app = self.window.application
         #entry = app.get_service('pychron.entry.modal_sensitivity')
         #if entry:
-        #    print entry
+        # print 'exception', entry
 
         se = SensitivityEntry()
         se.activate()
@@ -247,12 +254,12 @@ class BatchEditTask(AnalysisEditTask):
             if s is not None:
                 self.batch_editor.sens_value = s.sensitivity
 
-    #===============================================================================
+    # ===============================================================================
     # defaults
-    #===============================================================================
+    # ===============================================================================
     def _default_layout_default(self):
         #c=PaneItem('pychron.smart_selection.configure')
-        search = Tabbed(PaneItem('pychron.browser'))
+        search = Tabbed(browser_pane_item())
         #PaneItem('pychron.search.query'))
 
         #a=Splitter(d,orientation='vertical')
@@ -265,4 +272,4 @@ class BatchEditTask(AnalysisEditTask):
             id='pychron.processing.batch',
             left=left)
 
-#============= EOF =============================================
+# ============= EOF =============================================

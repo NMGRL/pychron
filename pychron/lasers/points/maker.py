@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import math
 
 from enable.abstract_overlay import AbstractOverlay
@@ -28,8 +28,8 @@ from pychron.loggable import Loggable
 
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class BaseMaker(Loggable):
     canvas = Any
@@ -91,10 +91,14 @@ class BaseMaker(Loggable):
     def _accept_point(self, ptargs):
         pass
 
+    def clear_all_hook(self):
+        pass
+
     def _clear_fired(self):
         cm = self.clear_mode
         if cm == 'all':
             self.canvas.clear_all()
+            self.clear_all_hook()
         elif cm == 'current point':
             self.canvas.pop_point(-1)
 
@@ -460,6 +464,9 @@ class GridMaker(BaseMaker):
         super(GridMaker, self).__init__(*args, **kw)
         self._add_grid_overlay()
 
+    def clear_all_hook(self):
+        self.grid_indices = []
+
     def initialize(self):
         self._add_grid_overlay()
 
@@ -519,6 +526,10 @@ class GridMaker(BaseMaker):
         xs = max(ncols, nrows)
         ys = min(ncols, nrows)
 
+        low_pc = self.canvas.point_count
+        high_pc = low_pc + (ncols * nrows) - 1
+        self.grid_indices.append((low_pc, low_pc + 1, high_pc - 1, high_pc))
+
         theta = math.radians(self.rotation)
 
         for ci in range(xs):
@@ -546,6 +557,9 @@ class GridMaker(BaseMaker):
                                             redraw=False, **ptargs)
 
                 self.info('added point {}:{:0.5f},{:0.5f} z={:0.5f}'.format(npt.identifier, npt.x, npt.y, npt.z))
+
+        if high_pc > 40:
+            self.canvas.downsample_point_labels(self.grid_indices)
 
         self.canvas.request_redraw()
 
@@ -602,4 +616,4 @@ class GridMaker(BaseMaker):
                       HGroup(UItem('toggle_grid_visible_button', label='Toggle Grid'),
                              Item('indicator_opacity', label='Opacity')))
 
-#============= EOF =============================================
+# ============= EOF =============================================

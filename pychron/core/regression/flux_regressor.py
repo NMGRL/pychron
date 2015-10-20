@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Bool
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import asarray, column_stack, ones_like
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from statsmodels.regression.linear_model import WLS, OLS
 from pychron.core.regression.ols_regressor import MultipleLinearRegressor
 
@@ -46,7 +46,7 @@ class PlaneFluxRegressor(MultipleLinearRegressor):
     # def predict_error(self, x, error_calc=None):
     #     x = asarray(x)
     #     exog=self._get_X(x)
-    #     # print exog
+    # # print 'exception', exog
     #     res=self._result
     #     covb = res.cov_params()
     #     # weights=self._get_weights()
@@ -81,4 +81,4 @@ class PlaneFluxRegressor(MultipleLinearRegressor):
         else:
             return OLS(fy, X)
 
-#============= EOF =============================================
+# ============= EOF =============================================

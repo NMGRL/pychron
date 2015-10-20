@@ -1,30 +1,29 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-from traits.api import Enum, Float, Bool, String, Button, Property, Int, on_trait_change, List
-from traitsui.api import Item, HGroup, Group, VGroup, UItem, EnumEditor, InstanceEditor, spring
+# ============= enthought library imports =======================
+from matplotlib.cm import cmap_d
+from traits.api import Enum, Float, Bool, Button, Property, Int, on_trait_change
+from traitsui.api import Item, HGroup, Group, VGroup, UItem, EnumEditor, InstanceEditor
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
-from pychron.core.helpers.color_generators import colornames
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
-from pychron.processing.label_maker import LabelMaker
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.processing.plotters.options.age import AgeOptions
-from pychron.processing.plotters.options.fill_group_editor import Fill, FillGroupEditor
+from pychron.processing.plotters.options.ideogram_group_options import IdeogramGroupEditor, IdeogramGroupOptions
 from pychron.processing.plotters.options.plotter import FONTS, SIZES
 
 
@@ -35,7 +34,7 @@ class IdeogramOptions(AgeOptions):
     use_static_limits = Bool
     xlow = Float
     xhigh = Float
-    use_centered_range = Bool
+
     _use_centered_range = Bool
     centered_range = Float(0.5)
 
@@ -44,7 +43,7 @@ class IdeogramOptions(AgeOptions):
     display_percent_error = Bool(True)
     plot_option_name = 'Ideogram'
     # index_attr = Enum('Age', 'Ar40*/Ar39k','Ar40/Ar36')
-    index_attr = String
+    # index_attr = String
 
     use_asymptotic_limits = Bool
     _use_asymptotic_limits = Bool
@@ -64,8 +63,6 @@ class IdeogramOptions(AgeOptions):
     mean_indicator_fontname = Enum(*FONTS)
     mean_indicator_fontsize = Enum(*SIZES)
 
-    label_fontsize = Enum(*SIZES)
-
     mean_sig_figs = Int
 
     refresh_asymptotic_button = Button
@@ -78,31 +75,52 @@ class IdeogramOptions(AgeOptions):
     # use_filled_line = Bool
     # fill_color = Color
     # fill_alpha = Range(0.0, 100.0)
-    edit_group_fill_color_button = Button
-    fill_groups = List
-    fill_group = Property  #(trait=Fill)
+    # edit_group_fill_color_button = Button
+    # fill_groups = List
+    # fill_group = Property  #(trait=Fill)
+    group_editor_klass = IdeogramGroupEditor
+    options_klass = IdeogramGroupOptions
 
-    def get_fill_dict(self, group_id):
-        n = len(self.fill_groups)
+    use_cmap_analysis_number = Bool(False)
+    cmap_analysis_number = Enum([m for m in cmap_d if not m.endswith("_r")])
+    use_latest_overlay = Bool(False)
+
+    def get_plot_dict(self, group_id):
+        # return {}
+
+        n = len(self.groups)
         gid = group_id % n
-        fg = self.fill_groups[gid]
-        if fg.use_filled_line:
+        fg = self.groups[gid]
+        d = {'color': fg.line_color,
+             'edge_color': fg.line_color,
+             'edge_width': fg.line_width,
+             'line_width': fg.line_width,
+             'line_color': fg.line_color}
+
+        if fg.use_fill:
             color = fg.color
             color.setAlphaF(fg.alpha * 0.01)
-            return dict(fill_color=fg.color,
-                        type='filled_line')
-        else:
-            return {}
+            d['fill_color'] = fg.color
+            d['type'] = 'filled_line'
+        return d
 
-    def _edit_group_fill_color_button_fired(self):
-        eg = FillGroupEditor(fill_groups=self.fill_groups)
-        info = eg.edit_traits()
-        if info.result:
-            self.refresh_plot_needed = True
+        # if fg.use_filled_line:
+        # color = fg.color
+        # color.setAlphaF(fg.alpha * 0.01)
+        # return dict(fill_color=fg.color,
+        #                 type='filled_line')
+        # else:
+        #     return {}
+
+    # def _edit_group_fill_color_button_fired(self):
+    # eg = FillGroupEditor(fill_groups=self.fill_groups)
+    # info = eg.edit_traits()
+    # if info.result:
+    #         self.refresh_plot_needed = True
 
     @on_trait_change('use_static_limits, use_centered_range')
     def _handle_use_limits(self, new):
-        #persist use asymptotic limits
+        # persist use asymptotic limits
         self._suppress_xlimits_clear = True
         if new:
             self._use_asymptotic_limits = self.use_asymptotic_limits
@@ -113,7 +131,7 @@ class IdeogramOptions(AgeOptions):
         self._suppress_xlimits_clear = False
 
     def _use_asymptotic_limits_changed(self, new):
-        #persist use_centered range
+        # persist use_centered range
         if not self._suppress_xlimits_clear:
             if new:
                 self._use_centered_range = self.use_centered_range
@@ -145,12 +163,15 @@ class IdeogramOptions(AgeOptions):
             ap.clear_ylimits()
 
     def _edit_label_format_fired(self):
-        lm = LabelMaker(label=self.analysis_label_display)
+        from pychron.processing.label_maker import LabelTemplater, LabelTemplateView
 
-        info = lm.edit_traits()
+        lm = LabelTemplater(label=self.analysis_label_display)
+        lv = LabelTemplateView(model=lm)
+        info = lv.edit_traits()
         if info.result:
             self.analysis_label_format = lm.formatter
             self.analysis_label_display = lm.label
+            self.refresh_plot_needed = True
 
     def _get_groups(self):
         xgrp = VGroup(Item('index_attr',
@@ -160,11 +181,12 @@ class IdeogramOptions(AgeOptions):
                                                      'Ar40/Ar39': '04:Ar40/Ar39',
                                                      'Ar40/Ar38': '05:Ar40/Ar38',
                                                      'Ar39/Ar37': '06:Ar39/Ar37',
-                                                     'Ar40': '07:Ar40',
-                                                     'Ar39': '08:Ar39',
-                                                     'Ar38': '09:Ar38',
-                                                     'Ar37': '10:Ar37',
-                                                     'Ar36': '11:Ar36', }),
+                                                     'uAr40/Ar36': '07:uncor. Ar40/Ar36',
+                                                     'Ar40': '08:Ar40',
+                                                     'Ar39': '09:Ar39',
+                                                     'Ar38': '10:Ar38',
+                                                     'Ar37': '11:Ar37',
+                                                     'Ar36': '12:Ar36', }),
                            label='X Value'),
                       HGroup(UItem('use_static_limits'),
                              Item('xlow', label='Min.',
@@ -191,6 +213,12 @@ class IdeogramOptions(AgeOptions):
                              label='Center on fixed range',
                              show_border=True,
                              enabled_when='not object.use_static_limits'))
+
+        grp_grp = VGroup(UItem('group',
+                               style='custom',
+                               editor=InstanceEditor(view='simple_view')),
+                         show_border=True,
+                         label='Group Attributes')
 
         g = Group(
             Item('probability_curve_kind',
@@ -234,6 +262,9 @@ class IdeogramOptions(AgeOptions):
                           label='Inset'),
                    Item('label_box'),
                    Item('analysis_number_sorting', label='Analysis# Sort'),
+                   Item('use_cmap_analysis_number'),
+                   Item('cmap_analysis_number'),
+                   Item('use_latest_overlay'),
                    HGroup(Item('analysis_label_display',
                                width=100,
                                style='readonly'),
@@ -244,10 +275,10 @@ class IdeogramOptions(AgeOptions):
                           Item('show_error_type_info', label='Error Type', enabled_when='show_info'),
                           show_border=True,
                           label='Info'),
-                   VGroup(UItem('fill_group', style='custom',
-                                editor=InstanceEditor(view='simple_view')),
-                          HGroup(icon_button_editor('edit_group_fill_color_button', 'cog'), spring),
-                          show_border=True, label='Fill'),
+                   # VGroup(UItem('fill_group', style='custom',
+                   #              editor=InstanceEditor(view='simple_view')),
+                   #        HGroup(icon_button_editor('edit_group_fill_color_button', 'cog'), spring),
+                   #        show_border=True, label='Fill'),
                    # VGroup(HGroup(UItem('use_filled_line'),
                    #               Item('fill_color', enabled_when='use_filled_line')),
                    #        Item('fill_alpha'),
@@ -264,31 +295,30 @@ class IdeogramOptions(AgeOptions):
                       show_border=True,
                       label='Error Bars')
         main_grp = VGroup(self._get_title_group(),
-                          xgrp,
-                          g, g2, egrp, label='Main')
+            xgrp,
+            grp_grp,
+            g, g2, egrp)
 
         orgp = Group(main_grp,
                      # label_grp,
                      # layout='tabbed',
                      label='Options')
 
-        label_grp = VGroup(self._get_x_axis_group(),
-                           self._get_y_axis_group(),
-                           self._get_indicator_font_group(),
-                           self._get_label_font_group(),
-                           label='Fonts')
-        return orgp, label_grp
-
-    def _get_label_font_group(self):
-        g = VGroup(UItem('label_fontsize'),
-                   label='Labels')
-        return g
+        # axis_grp = VGroup(self._get_x_axis_group(),
+        #                   self._get_y_axis_group(),
+        #                   label='Axes')
+        #
+        # label_grp = VGroup(self._get_indicator_font_group(),
+        #                    self._get_label_font_group(),
+        #                    label='Fonts')
+        return orgp,  # axis_grp, label_grp
 
     def _get_indicator_font_group(self):
         g = VGroup(HGroup(Item('mean_indicator_fontname', label='Mean Indicator'),
                           Item('mean_indicator_fontsize', show_label=False)),
                    HGroup(Item('error_info_fontname', label='Error Info'),
                           Item('error_info_fontsize', show_label=False)),
+                   show_border=True,
                    label='Info')
         return g
 
@@ -296,13 +326,25 @@ class IdeogramOptions(AgeOptions):
         return '{} {}'.format(self.mean_indicator_fontname,
                               self.mean_indicator_fontsize)
 
-    def _get_fill_group(self):
-        return self.fill_groups[0]
+    # def _get_fill_group(self):
+    #     return self.fill_groups[0]
+    #
+    # def _fill_groups_default(self):
+    #     return [Fill(group_id=i,
+    #                  color=colornames[i + 1],
+    #                  alpha=100) for i in range(10)]
 
-    def _fill_groups_default(self):
-        return [Fill(group_id=i,
-                     color=colornames[i + 1],
-                     alpha=100) for i in range(10)]
+    def _process_trait_change(self, name, new):
+        if name in ('asymptotic_width', 'asymptotic_percent', 'use_asymptotic_limits'):
+            for ap in self.aux_plots:
+                ap.clear_xlimits()
+
+        return True
+
+    def _get_refreshable_attrs(self):
+        attrs = super(IdeogramOptions, self)._get_refreshable_attrs()
+        attrs.extend(['asymptotic_width', 'asymptotic_percent', 'use_asymptotic_limits'])
+        return attrs
 
     def _get_dump_attrs(self):
         attrs = super(IdeogramOptions, self)._get_dump_attrs()
@@ -322,9 +364,18 @@ class IdeogramOptions(AgeOptions):
             'mean_indicator_fontsize',
             'mean_sig_figs',
             'display_inset', 'inset_location', 'inset_width', 'inset_height',
-            'fill_groups',
-            'label_fontsize'
-            # 'use_filled_line', 'fill_color', 'fill_alpha'
-        ]
+            # 'fill_groups',
+            'label_fontsize',
+            'use_cmap_analysis_number',
+            'cmap_analysis_number',
+            'use_latest_overlay']
 
-#============= EOF =============================================
+    def _load_factory_defaults(self, yd):
+        super(IdeogramOptions, self)._load_factory_defaults(yd)
+
+        self._set_defaults(yd, 'calculations', ('probability_curve_kind', 'mean_calculation_kind'))
+        self._set_defaults(yd, 'display', ('mean_indicator_fontsize', 'mean_sig_figs',))
+        self._set_defaults(yd, 'general', ('index_attr',))
+
+
+# ============= EOF =============================================

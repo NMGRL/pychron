@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Any, Event, Property, Bool
 # from traitsui.api import View, Item, spring, ButtonEditor, HGroup
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import linspace
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.loggable import Loggable
 from threading import Thread
 # from pychron.spectrometer.spectrometer import Spectrometer
@@ -69,6 +69,6 @@ class SpectrometerTask(Loggable):
     def _calc_step_values(self, start, end, width):
         sign = 1 if start < end else -1
         nsteps = abs(end - start + width * sign) / width
-
+        self.debug('calculated step values: start={}, end={}, width={}, nsteps={}'.format(start, end, width, nsteps))
         return linspace(start, end, nsteps)
-#============= EOF =============================================
+# ============= EOF =============================================

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from datetime import timedelta
 
 from pyface.tasks.action.schema import SToolBar
-from traits.api import on_trait_change, Any, HasTraits, Str, List, Property
+from traits.api import on_trait_change, Any, HasTraits, Str, List, Property, Int
 from traitsui.api import View, VGroup, HGroup, Item, UItem, TabularEditor
 
 from pychron.database.records.isotope_record import IsotopeRecordView
+from pychron.envisage.browser.adapters import AnalysisAdapter
 from pychron.processing.analyses.analysis import Analysis
 from pychron.processing.easy.easy_manager import EasyManager
 from pychron.processing.tasks.actions.edit_actions import DatabaseSaveAction, BinAnalysesAction, FindAssociatedAction
@@ -29,10 +30,10 @@ from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEd
 from pychron.processing.tasks.analysis_edit.panes import ReferencesPane
 from pychron.processing.tasks.analysis_edit.adapters import ReferencesAdapter
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.processing.tasks.browser.browser_task import DEFAULT_AT
-from pychron.processing.tasks.browser.panes import AnalysisAdapter
+# from pychron.processing.tasks.browser.panes import AnalysisAdapter
 from pychron.processing.tasks.recall.recall_editor import RecallEditor
 
 
@@ -96,9 +97,18 @@ class InterpolationTask(AnalysisEditTask):
                           BinAnalysesAction())]
     analysis_group_edit_klass = InterpolationAnalysisGroupEntry
 
+    days_pad = Int(0)
+    hours_pad = Int(18)
+
+    # def _dclicked_analysis_group_hook(self, unks, b):
+    #     self.active_editor.set_references([bi.analysis for bi in b
+    #                                        if bi.analysis_type.name == self.default_reference_analysis_type])
+
     def _dclicked_analysis_group_hook(self, unks, b):
-        self.active_editor.set_references([bi.analysis for bi in b
-                                           if bi.analysis_type.name == self.default_reference_analysis_type])
+        refs = [bi.analysis for bi in b
+                if bi.analysis_type.name == self.active_editor.default_reference_analysis_type]
+
+        self.active_editor.set_references(refs)
 
     def _get_analyses_to_group(self):
         sitems = super(InterpolationTask, self)._get_analyses_to_group()
@@ -187,7 +197,7 @@ class InterpolationTask(AnalysisEditTask):
                 if is_append:
                     refs = self.active_editor.references
 
-                s = self._get_selected_analyses(refs)
+                s = self._get_selected_analyses(unks=refs)
                 if s:
                     if is_append:
                         refs = self.active_editor.references
@@ -242,7 +252,7 @@ class InterpolationTask(AnalysisEditTask):
         with db.session_ctx():
             ans = db.get_analyses_date_range(sd, ed,
                                              analysis_type=at,
-                                             mass_spectrometer=ms,
+                                             mass_spectrometers=ms,
                                              extract_device=exd)
             ans = [self._record_view_factory(ai) for ai in ans]
             # self.danalysis_table.set_analyses(ans)
@@ -261,4 +271,4 @@ class InterpolationTask(AnalysisEditTask):
     def _easy_func(self):
         raise NotImplementedError
 
-#============= EOF =============================================
+# ============= EOF =============================================

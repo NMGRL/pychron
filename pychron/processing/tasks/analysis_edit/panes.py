@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Button, List, Instance, Property, Any, Event, Int, \
     Str, on_trait_change, Bool
 from traitsui.api import View, Item, UItem, HGroup, VGroup, spring, EnumEditor
@@ -23,10 +23,11 @@ from pyface.tasks.traits_dock_pane import TraitsDockPane
 import os
 import shelve
 import hashlib
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
+from traitsui.tabular_adapter import TabularAdapter
 from pychron.core.ui.qt.tabular_editor import UnselectTabularEditorHandler
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.processing.tasks.analysis_edit.table_filter import TableFilter
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.core.ui.tabular_editor import myTabularEditor
@@ -54,6 +55,9 @@ class TablePane(TraitsDockPane):
     selected = Any
     dclicked = Any
 
+    adapter = Instance(TabularAdapter)
+    adapter_klass = Any
+
     def load(self):
         pass
 
@@ -61,8 +65,9 @@ class TablePane(TraitsDockPane):
         pass
 
     def traits_view(self):
+
         v = View(VGroup(
-            UItem('items', editor=myTabularEditor(adapter=self.adapter_klass(),
+            UItem('items', editor=myTabularEditor(adapter=self.adapter,
                                                   operations=['move', 'delete'],
                                                   editable=True,
                                                   drag_external=True,
@@ -77,6 +82,8 @@ class TablePane(TraitsDockPane):
     def no_update(self):
         return self._no_update
 
+    def _adapter_default(self):
+        return self.adapter_klass()
 
 class HistoryTablePane(TablePane, ColumnSorterMixin):
     previous_selection = Any
@@ -109,9 +116,9 @@ class HistoryTablePane(TablePane, ColumnSorterMixin):
     def dump(self):
         self.dump_selection()
 
-    #===============================================================================
+    # ===============================================================================
     # previous selections
-    #===============================================================================
+    # ===============================================================================
     def load_previous_selections(self):
         try:
             self._load()
@@ -191,7 +198,7 @@ class HistoryTablePane(TablePane, ColumnSorterMixin):
             keys = sorted(d.keys())
             next_key = '001'
             if keys:
-                next_key = '{:03n}'.format(int(keys[-1]) + 1)
+                next_key = '{:03d}'.format(int(keys[-1]) + 1)
 
             # records = filter(lambda ri: not isinstance(ri, Marker), records)
 
@@ -237,8 +244,9 @@ class HistoryTablePane(TablePane, ColumnSorterMixin):
                    icon_button_editor('replace_button', 'arrow_refresh',
                                       tooltip=self._replace_tooltip),
                    icon_button_editor('clear_button', 'delete',
-                                      tooltip=self._clear_tooltip),
-                   Item('auto_group'),
+                                      tooltip=self._clear_tooltip)),
+            HGroup(Item('auto_group', tooltip='Automatically group by labnumber when'
+                                              '"appending" analyses. Note: Does not apply when drag-n-dropping analyses'),
                    icon_button_editor('configure_filter_button', 'filter',
                                       tooltip='Configure/Apply a filter',
                                       enabled_when='items')),
@@ -247,7 +255,7 @@ class HistoryTablePane(TablePane, ColumnSorterMixin):
                    icon_button_editor('configure_button', 'cog',
                                       tooltip=self.configure_history_tooltip)),
             HGroup(spring, CustomLabel('cs_label'), spring),
-            UItem('items', editor=myTabularEditor(adapter=self.adapter_klass(),
+            UItem('items', editor=myTabularEditor(adapter=self.adapter,
                                                   operations=['move', 'delete'],
                                                   editable=True,
                                                   drag_external=True,
@@ -304,6 +312,7 @@ class UnknownsHandler(UnselectTabularEditorHandler):
     def group_by_labnumber(self, info, obj):
         obj.group_by_labnumber()
 
+
 class UnknownsPane(HistoryTablePane):
     id = 'pychron.processing.unknowns'
     name = 'Unknowns'
@@ -327,8 +336,7 @@ class UnknownsPane(HistoryTablePane):
         self.refresh()
 
     def group_by_selected(self):
-        max_gid = max([si.group_id for si in self.selected]) + 1
-
+        max_gid = max([si.group_id for si in self.items]) + 1
         for si in self.selected:
             si.group_id = max_gid
 
@@ -336,7 +344,6 @@ class UnknownsPane(HistoryTablePane):
 
     def group_appended(self):
         print len(self.items)
-
 
     def clear_grouping(self, refresh_plot=True, idxs=None):
         if idxs is None:
@@ -391,7 +398,7 @@ class ReferencesPane(HistoryTablePane):
                    icon_button_editor('configure_button', 'cog',
                                       tooltip=self.configure_history_tooltip)),
             HGroup(spring, CustomLabel('cs_label'), spring, Item('auto_sort')),
-            UItem('items', editor=myTabularEditor(adapter=self.adapter_klass(),
+            UItem('items', editor=myTabularEditor(adapter=self.adapter,
                                                   operations=['move', 'delete'],
                                                   editable=True,
                                                   drag_external=True,
@@ -420,4 +427,4 @@ class ControlsPane(TraitsDockPane):
         return v
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

@@ -1,34 +1,36 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-from traits.api import Instance, Int, Str, Bool, Event, Property
+from traits.api import Instance, Int, Str, Bool, \
+    Event, Property, Float, Date, List, Tuple, CStr
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from collections import namedtuple
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.formatting import format_percent_error, floatfmt
 from pychron.core.helpers.logger_setup import new_logger
-from pychron.processing.analyses.analysis_view import AnalysisView
 from pychron.processing.arar_age import ArArAge
-#from pychron.processing.analyses.summary import AnalysisSummary
-#from pychron.processing.analyses.db_summary import DBAnalysisSummary
+# from pychron.processing.analyses.analysis_view import AnalysisView
+# from pychron.processing.analyses.summary import AnalysisSummary
+# from pychron.processing.analyses.db_summary import DBAnalysisSummary
 from pychron.experiment.utilities.identifier import make_aliquot_step, make_runid
 from pychron.processing.isotope import Isotope
+from pychron.pychron_constants import PLUSMINUS
 
 Fit = namedtuple('Fit', 'fit '
                         'filter_outliers filter_outlier_iterations filter_outlier_std_devs '
@@ -38,13 +40,18 @@ logger = new_logger('Analysis')
 
 
 class Analysis(ArArAge):
+    analysis_view_klass = ('pychron.processing.analyses.analysis_view', 'AnalysisView')
+    analysis_view = Instance('pychron.processing.analyses.analysis_view.AnalysisView')
+
+    # ids
+    record_id = Property(depends_on='labnumber,aliquot, step')
+    _record_id = Str
     group_id = Int
     graph_id = Int
 
-    analysis_view_klass = AnalysisView
-    analysis_view = Instance(AnalysisView)
-
-    labnumber = Str
+    # collection
+    uuid = Str
+    labnumber = CStr
     aliquot = Int
     step = Str
     aliquot_step_str = Str
@@ -53,7 +60,30 @@ class Analysis(ArArAge):
     project = Str
     comment = Str
     mass_spectrometer = Str
+    analysis_type = Str
+    extract_value = Float
+    extract_units = Str
+    cleanup_duration = Float
+    extract_duration = Float
+    extract_device = Str
+    position = CStr
+    rundate = Date
+    experiment_txt = Str
+    extraction_script_blob = Str
+    measurement_script_blob = Str
+    snapshots = List
+    extraction_script_name = Str
+    measurement_script_name = Str
+    xyz_position = Str
+    collection_time_zero_offset = Float
+    beam_diameter = Float
+    pattern = Str
+    ramp_duration = Float
+    ramp_rate = Float
+    peak_center_data = Tuple
+    collection_version = Str
 
+    # processing
     is_plateau_step = False
     temp_status = Int
     value_filter_omit = Bool
@@ -61,7 +91,6 @@ class Analysis(ArArAge):
     tag = Str
     data_reduction_tag = Str
 
-    record_id = Property(depends_on='labnumber,aliquot, step')
     status_text = Property
     age_string = Property
 
@@ -69,7 +98,13 @@ class Analysis(ArArAge):
     omit_spec = False
     omit_iso = False
     omit_series = False
+
+    blank_changes = List
+    fit_changes = List
+
+    # meta
     has_raw_data = False
+    has_changes = False
 
     recall_event = Event
     tag_event = Event
@@ -100,8 +135,8 @@ class Analysis(ArArAge):
         omit = False
         if omit_key:
             omit = getattr(self, omit_key)
-            #print ai.aliquot, r, omit, ai.filter_omit
-        #return r or ai.filter_omit #or ai.tag == 'omit'
+            # print ai.aliquot, r, omit, ai.filter_omit
+        # return r or ai.filter_omit #or ai.tag == 'omit'
         #omit=False
         return self.is_temp_omitted(include_value_filtered) or omit
 
@@ -124,22 +159,41 @@ class Analysis(ArArAge):
         """
         return
 
-    def _analysis_summary_default(self):
-        return self.analysis_summary_klass(model=self)
+    # def _analysis_summary_default(self):
+    # return self.analysis_summary_klass(model=self)
 
     def _analysis_view_default(self):
-        v = self.analysis_view_klass()
+
+        mod, klass = self.analysis_view_klass
+        mod = __import__(mod, fromlist=[klass, ])
+        klass = getattr(mod, klass)
+        # v = self.analysis_view_klass()
+        v = klass()
         self._sync_view(v)
         return v
 
     def sync_view(self, **kw):
         self._sync_view(**kw)
 
-    def _sync_view(self, v=None, **kw):
-        pass
+    def _sync_view(self, av=None, **kw):
+        if av is None:
+            av = self.analysis_view
+        try:
+            av.load(self)
+        except BaseException, e:
+            import traceback
+
+            traceback.print_exc()
+            print 'sync view {}'.format(e)
+
+    def _set_record_id(self, v):
+        self._record_id = v
 
     def _get_record_id(self):
-        return make_runid(self.labnumber, self.aliquot, self.step)
+        record_id = self._record_id
+        if not record_id:
+            record_id = make_runid(self.labnumber, self.aliquot, self.step)
+        return record_id
 
     def _get_age_string(self):
         a = self.age
@@ -159,7 +213,7 @@ class Analysis(ArArAge):
                 v = v.get_intensity()
             a, e = v.nominal_value, v.std_dev
         pe = format_percent_error(a, e)
-        return u'{} +/-{} ({}%)'.format(floatfmt(a), floatfmt(e), pe)
+        return u'{} {}{} ({}%)'.format(floatfmt(a), PLUSMINUS, floatfmt(e), pe)
 
     def _get_status_text(self):
         r = 'OK'
@@ -178,8 +232,8 @@ class Analysis(ArArAge):
 
 if __name__ == '__main__':
     pass
-    #============= EOF =============================================
-    #def _sync_irradiation(self, meas_analysis):
+    # ============= EOF =============================================
+    # def _sync_irradiation(self, meas_analysis):
     #    ln = meas_analysis.labnumber
     #    self.irradiation_info = self._get_irradiation_info(ln)
     #

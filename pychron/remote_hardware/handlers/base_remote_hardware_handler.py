@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,45 +12,27 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Any, Instance
+# ============= standard library imports ========================
 import shlex
-
-#============= standard library imports ========================
-#============= local library imports  ==========================
-from pychron.loggable import Loggable
+# ============= local library imports  ==========================
+# from dummies import DummyDevice, DummyLM
 from error_handler import ErrorHandler
-
-
-from dummies import DummyDevice, DummyLM
+from pychron.loggable import Loggable
 from pychron.remote_hardware.errors import DeviceConnectionErrorCode
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 
-# DIODE_PROTOCOL = 'pychron.lasers.laser_managers.fusions_diode_manager.FusionsDiodeManager'
-# CO2_PROTOCOL = 'pychron.lasers.laser_managers.fusions_co2_manager.FusionsCO2Manager'
-# SYNRAD_PROTOCOL = 'pychron.lasers.laser_managers.synrad_co2_manager.SynradCO2Manager'
-
 cnt = 0
 gErrorSet = False
+
 
 class BaseRemoteHardwareHandler(Loggable):
     application = Any
     error_handler = Instance(ErrorHandler, ())
     manager_name = 'Manager'
-#    def __init__(self, *args, **kw):
-#        super(BaseRemoteHardwareHandler, self).__init__(*args, **kw)
-#        self._manager_lock = Lock()
-
-    def _error_handler_default(self):
-        eh = ErrorHandler()
-        eh.logger = self
-        return eh
-
-    # @staticmethod
-    def _make_keys(self, name):
-        return [name, name.upper(), name.capitalize(), name.lower()]
 
     def parse(self, data):
         args = data.split(' ')
@@ -73,7 +55,7 @@ class BaseRemoteHardwareHandler(Loggable):
                 if err is None:
                     err, response = eh.check_response(func, manager, args[1:] +
                                                       [sender_addr])
-
+                    # print 'err: {} response: {}'.format(err, response)
                     if err is None:
                         return response
 
@@ -82,7 +64,6 @@ class BaseRemoteHardwareHandler(Loggable):
     def get_manager(self):
         return
 
-    # @staticmethod
     def split_data(self, data):
         return [a.strip() for a in shlex.split(data)]
 
@@ -94,7 +75,7 @@ class BaseRemoteHardwareHandler(Loggable):
             pass
 
     def get_device(self, name, protocol=None, owner=None):
-
+        dev = None
         if self.application is not None:
             if protocol is None:
                 protocol = 'pychron.hardware.core.i_core_device.ICoreDevice'
@@ -107,28 +88,24 @@ class BaseRemoteHardwareHandler(Loggable):
                     if dev is None:
                         dev = m.get_mass_spec_param(name)
                     else:
-                        dev.set_owner(owner)
+                        if owner:
+                            dev.set_owner(owner)
 
-                else:
-                    dev = DummyDevice()
-        else:
-            dev = DummyDevice()
+        #         else:
+        #             dev = DummyDevice()
+        # else:
+        #     dev = DummyDevice()
         return dev
 
     def get_laser_manager(self, name=None):
+        lm = None
         if name is None:
             name = self.manager_name
 
         if self.application is not None:
-#            protocol = CO2_PROTOCOL
-#            if name == 'Diode':
-#                protocol = DIODE_PROTOCOL
-#            elif name == 'Synrad':
-#                protocol = SYNRAD_PROTOCOL
-
             lm = self.application.get_service(ILaserManager, 'name=="{}"'.format(name))
-        else:
-            lm = DummyLM()
+        # else:
+        #     lm = DummyLM()
 
         return lm
 
@@ -149,7 +126,7 @@ class BaseRemoteHardwareHandler(Loggable):
     def Read(self, manager, dname, sender, *args):
         d = self.get_device(dname, owner=sender)
         if d is not None:
-            result = d.get()
+            result = d.get(current=True)
             self.debug('Read owner={}'.format(sender))
             self.info('Get {} = {}'.format(d.name, result))
         else:
@@ -159,12 +136,16 @@ class BaseRemoteHardwareHandler(Loggable):
     def PychronReady(self, *args, **kw):
         return 'OK'
 
+    def WakeScreen(self):
+        from pychron.core.ui.gui import wake_screen
+        wake_screen()
+
 #    def RemoteLaunch(self, *args, **kw):
 #        return False
 
-#===============================================================================
+# ===============================================================================
 # ##testing interface
-#===============================================================================
+# ===============================================================================
 
     def ReadTest(self, *args, **kw):
         global cnt
@@ -187,4 +168,11 @@ class BaseRemoteHardwareHandler(Loggable):
         global gErrorSet
         gErrorSet = True
         return 'OK'
-#============= EOF ====================================
+
+    #private
+    def _error_handler_default(self):
+        eh = ErrorHandler()
+        eh.logger = self
+        return eh
+
+# ============= EOF ====================================

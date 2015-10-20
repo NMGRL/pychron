@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from datetime import datetime
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.experiment.utilities.identifier import make_runid
 from pychron.processing.easy.base_easy import BaseEasy
 
@@ -54,7 +54,7 @@ class EasySensitivity(BaseEasy):
         db=self.db
         with db.session_ctx():
             ans = db.get_analyses_date_range(s, e,
-                                             mass_spectrometer=mi,
+                                             mass_spectrometers=mi,
                                              extract_device=ed,
                                              project=pr)
             ans=filter(lambda x: not x.uuid in self._uuids, ans)
@@ -70,5 +70,5 @@ class EasySensitivity(BaseEasy):
 
 
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

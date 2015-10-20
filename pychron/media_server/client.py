@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,15 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Str, Int, Bool
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import httplib
 import os
 from cStringIO import StringIO
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.loggable import Loggable
 from apptools.preferences.preference_binding import bind_preference
 from pychron.paths import paths
@@ -39,9 +39,9 @@ class MediaClient(Loggable):
         super(MediaClient, self).__init__(*args, **kw)
         self.bind_preferences()
 
-#===============================================================================
+# ===============================================================================
 # filesystem
-#===============================================================================
+# ===============================================================================
     def _parse_propfind(self, resp):
         parser = XMLParser()
 
@@ -75,12 +75,12 @@ class MediaClient(Loggable):
         if dest is not None:
             name = os.path.join(dest, name)
 
-        with open(path, 'rb') as fp:
+        with open(path, 'rb') as rfile:
             try:
-                self._post(name, fp.read())
+                self._post(name, rfile.read())
                 return True
             except Exception, e:
-                print e
+                print 'exception', e
 
     def _new_connection(self):
         url = '{}:{}'.format(self.host, self.port)
@@ -127,8 +127,8 @@ class MediaClient(Loggable):
             self.info('No file named {}'.format(name))
         else:
             if output is not None:
-                with open(output, 'wb') as fp:
-                    fp.write(buf.read())
+                with open(output, 'wb') as wfile:
+                    wfile.write(buf.read())
 
             if self.use_cache and not is_local:
                 if not os.path.isdir(self.cache_dir):
@@ -145,8 +145,8 @@ class MediaClient(Loggable):
             buf = open(path, 'r')
 
         if os.path.isdir(self.cache_dir):
-            with open(os.path.join(self.cache_dir, os.path.basename(path)), 'w') as fp:
-                fp.write(buf.read())
+            with open(os.path.join(self.cache_dir, os.path.basename(path)), 'w') as wfile:
+                wfile.write(buf.read())
         else:
             self.warning('No cache directory available. {}'.format(self.cache_dir))
 
@@ -192,4 +192,4 @@ if __name__ == '__main__':
 #    print c.get_media('foo.txt', kind='txt')
 #    print c.upload(p)
     c.retrieve('figure_export.pdf', 'mo3o.pdf')
-#============= EOF =============================================
+# ============= EOF =============================================

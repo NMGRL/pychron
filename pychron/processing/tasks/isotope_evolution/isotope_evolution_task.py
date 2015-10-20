@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from itertools import groupby
 import traceback
 from datetime import timedelta
@@ -26,15 +26,18 @@ from pyface.tasks.task_layout import PaneItem, TaskLayout, Tabbed, HSplitter, \
 
 
 
+
+
 #from pychron.pychron_constants import MINNA_BLUFF_IRRADIATIONS
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.datetime_tools import get_datetime
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.processing.tasks.analysis_edit.plot_editor_pane import PlotEditorPane
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
 from pychron.processing.tasks.analysis_edit.panes import ControlsPane
 from pychron.processing.tasks.actions.edit_actions import DatabaseSaveAction, FindAssociatedAction
+from pychron.processing.tasks.browser.util import browser_pane_item
 from pychron.processing.tasks.figures.actions import SavePDFFigureAction
 from pychron.processing.tasks.isotope_evolution.find_associated_parameters import FindAssociatedParametersDialog
 from pychron.processing.tasks.isotope_evolution.isotope_evolution_editor import IsotopeEvolutionEditor
@@ -42,9 +45,11 @@ from pychron.processing.tasks.isotope_evolution.isotope_evolution_editor import 
 
 class IsotopeEvolutionTask(AnalysisEditTask):
     name = 'Isotope Evolutions'
+    default_task_name = 'IsoEvo'
+
     iso_evo_editor_count = 1
     id = 'pychron.processing.isotope_evolution',
-    auto_select_analysis = False
+    # auto_select_analysis = False
     tool_bars = [SToolBar(DatabaseSaveAction(),
                           FindAssociatedAction(),
                           image_size=(16, 16)),
@@ -56,9 +61,10 @@ class IsotopeEvolutionTask(AnalysisEditTask):
         return TaskLayout(
             id='pychron.processing.isotope_evolution',
             left=HSplitter(
-                Tabbed(PaneItem('pychron.browser'),
-                       PaneItem('pychron.search.query')
-                ),
+                browser_pane_item(),
+                # Tabbed(PaneItem('pychron.browser'),
+                #        PaneItem('pychron.search.query')
+                # ),
                 VSplitter(
                     Tabbed(
                         PaneItem('pychron.plot_editor'),
@@ -80,7 +86,7 @@ class IsotopeEvolutionTask(AnalysisEditTask):
     def new_isotope_evolution(self):
 
 
-        editor = IsotopeEvolutionEditor(name='Iso Evo {:03n}'.format(self.iso_evo_editor_count),
+        editor = IsotopeEvolutionEditor(name='Iso Evo {:03d}'.format(self.iso_evo_editor_count),
                                         processor=self.manager)
         #selector = self.manager.db.selector
 
@@ -176,9 +182,9 @@ class IsotopeEvolutionTask(AnalysisEditTask):
             return f.model
 
     def _find_associated_analyses(self, db, lpost, hpost, atype, ms):
-        ans = db.get_date_range_analyses(lpost, hpost,
-                                         atype=atype,
-                                         spectrometer=ms)
+        ans = db.get_analyses_date_range(lpost, hpost,
+                                         analysis_type=atype,
+                                         mass_spectrometers=ms)
         if ans:
             self.debug('{} {} to {}. nanalyses={}'.format(atype, lpost, hpost, len(ans)))
             # ans = [ai for ai in ans if ai.uuid not in uuids]
@@ -200,19 +206,19 @@ class IsotopeEvolutionTask(AnalysisEditTask):
                             for ai in li.analyses])
         return ans
 
-    #===============================================================================
+    # ===============================================================================
     # equilibration tools
-    #===============================================================================
+    # ===============================================================================
     def calculate_optimal_eqtime(self):
         if self.active_editor:
             self.active_editor.calculate_optimal_eqtime()
 
-    #===============================================================================
+    # ===============================================================================
     # handlers
-    #===============================================================================
-    #===============================================================================
+    # ===============================================================================
+    # ===============================================================================
     # easy
-    #===============================================================================
+    # ===============================================================================
     def do_easy_fit(self):
         self._do_easy(self._do_easy_fit)
 
@@ -287,9 +293,9 @@ class IsotopeEvolutionTask(AnalysisEditTask):
                             td = timedelta(hours=6 * (i + 1))
                             lpost, hpost = min(ts) - td, max(ts) + td
 
-                            ans = db.get_date_range_analyses(lpost, hpost,
-                                                             atype=atype,
-                                                             spectrometer=ms)
+                            ans = db.get_analyses_date_range(lpost, hpost,
+                                                             analysis_type=atype,
+                                                             mass_spectrometers=ms)
 
                             if ans:
                                 self.debug('{} {} to {}. nanalyses={}'.format(atype, lpost, hpost, len(ans)))
@@ -317,7 +323,7 @@ class IsotopeEvolutionTask(AnalysisEditTask):
                 #                 ans = man.make_analyses(ans)
                 #self.unknowns_pane.items = ans
 
-#============= EOF =============================================
+# ============= EOF =============================================
 #_refit_thread = None
 
 #def refit_isotopes(self, dry_run=False):

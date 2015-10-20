@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Array, Any, Instance
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import struct
 import time
 from threading import Thread
 from numpy import array, vstack
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
 from pychron.managers.data_managers.csv_data_manager import CSVDataManager
 
@@ -101,4 +101,4 @@ class ResponseRecorder(HasTraits):
         if len(self.output_data):
             return ''.join([struct.pack('<ff', x, y) for x, y in self.output_data])
 
-#============= EOF =============================================
+# ============= EOF =============================================

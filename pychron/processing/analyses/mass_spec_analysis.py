@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,18 +12,30 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
+from uncertainties import ufloat
+
 from pychron.processing.analyses.analysis import Analysis
 from pychron.processing.isotope import Isotope, Blank, Baseline
+from pychron.pychron_constants import IRRADIATION_KEYS
 
 
 class MassSpecAnalysis(Analysis):
     def _sync(self, obj):
+
+        arar = obj.araranalyses[-1]
+        if arar:
+            self.j = ufloat(arar.JVal, arar.JEr)
+            self.age = arar.Age
+            self.age_err = arar.ErrAge
+            self.age_err_wo_j = arar.ErrAgeWOErInJ
+            self.rad40_percent = ufloat(arar.PctRad, arar.PctRadEr)
+
         for dbiso in obj.isotopes:
             r = dbiso.results[-1]
             uv = r.Iso
@@ -33,16 +45,32 @@ class MassSpecAnalysis(Analysis):
             be = r.BkgdEr
 
             key = dbiso.Label
-            iso = Isotope(name=key, value=uv, error=ee)
+            n = dbiso.NumCnts
+            iso = Isotope(name=key, value=uv, error=ee, n=n)
+            det =dbiso.detector
+            iso.ic_factor=ufloat(det.ICFactor, det.ICFactorEr)
+            iso.fit = r.fit.Label.lower()
 
             iso.baseline = Baseline(name=key,
                                     reverse_unpack=True,
                                     dbrecord=dbiso.baseline,
+                                    unpack=True,
                                     unpacker=lambda x: x.PeakTimeBlob,
-                                    fit='average_SEM')
+                                    error_type='SEM',
+                                    fit='average')
+            iso.baseline.set_filter_outliers_dict()
 
             iso.blank = Blank(name=key, value=bv, error=be)
             self.isotopes[key] = iso
 
+    def sync_irradiation(self, irrad):
+        production = irrad.production
+        self.production_ratios['Ca_K']=ufloat(production.CaOverKMultiplier,
+                                              production.CaOverKMultiplierEr)
+        self.production_ratios['Cl_K']=ufloat(production.ClOverKMultiplier,
+                                              production.ClOverKMultiplierEr)
 
-#============= EOF =============================================
+        for k,_ in IRRADIATION_KEYS:
+            self.interference_corrections[k]=getattr(production,k.capitalize())
+
+# ============= EOF =============================================

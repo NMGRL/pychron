@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +12,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from datetime import date, time
+
 from traits.api import HasTraits, List, Date, Time, Float, Button
 from traitsui.api import View, UItem, HGroup, VGroup, TableEditor
-#============= standard library imports ========================
-#============= local library imports  ==========================
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from traitsui.table_column import ObjectColumn
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
+from pychron.envisage.icon_button_editor import icon_button_editor
 
 
 class IrradiationDosage(HasTraits):
@@ -45,9 +47,20 @@ class IrradiationDosage(HasTraits):
     def _end_date_default(self):
         return date.today()
 
+    def start(self):
+        return '{} {}'.format(self.start_date, self.start_time)
+
+    def end(self):
+        return '{} {}'.format(self.start_date, self.start_time)
+
     def make_blob(self):
         return '{}|{} {}%{} {}'.format(self.power, self.start_date, self.start_time,
                                        self.end_date, self.end_time)
+
+    def to_tuple(self):
+        print 'tooo'
+        return str(self.power), self.start(), self.end()
+
         # def validate_dosage(self, prev_dose):
         #     if self.start_date is None:
         #         return 'Start date not set'
@@ -87,6 +100,9 @@ class IrradiationChronology(HasTraits):
 
         self.dosages = map(dose_factory, ds)
 
+    def get_doses(self):
+        return [ci.to_tuple() for ci in self.dosages]
+
     def make_blob(self):
         chronblob = '$\n'.join([ci.make_blob() for ci in self.dosages])
         return chronblob
@@ -121,10 +137,11 @@ class IrradiationChronology(HasTraits):
                 ObjectColumn(name='end_time'),
                 ObjectColumn(name='power')]
         table = UItem('dosages', editor=TableEditor(columns=cols,
+                                                    edit_on_first_click=False,
                                                     selected='selected_dosage',
                                                     sortable=False))
         v = View(VGroup(tb, table))
         return v
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

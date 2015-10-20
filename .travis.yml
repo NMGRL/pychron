@@ -1,3 +1,4 @@
+sudo: false
 language: python
 notifications:
   email:
@@ -39,6 +40,6 @@ install:
   - conda create --yes --quiet -n pychron-test ${PKGS} ${OPTIONAL}
   - source activate pychron-test
   - conda install --yes --file requirements_tests.txt
-  - pip install uncertainties
+  - pip install -r pip_requirements.txt
 
 script: python setup.py test

@@ -5,46 +5,44 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
+from itertools import groupby
 
-from pyface.tasks.action.dock_pane_toggle_group import DockPaneToggleGroup
-from pyface.timer.do_later import do_later
-from traits.api import Any, on_trait_change, List, Unicode, DelegatesTo
-
-
-
-# from traitsui.api import View, Item
+from pyface.tasks.task_layout import TaskLayout
+from traits.api import Any, on_trait_change, List, Unicode, DelegatesTo, Instance
+from pyface.directory_dialog import DirectoryDialog
+from pyface.timer.do_later import do_later, do_after
 from pyface.tasks.task import Task
 from pyface.tasks.action.schema import SMenu, SMenuBar, SGroup
-# from pyface.tasks.action.task_toggle_group import TaskToggleGroup
-# from envisage.ui.tasks.action.task_window_toggle_group import TaskWindowToggleGroup
 from pyface.action.api import ActionItem, Group
-# from pyface.tasks.action.task_action import TaskAction
 from envisage.ui.tasks.action.task_window_launch_group import TaskWindowLaunchAction
+from pyface.file_dialog import FileDialog
+from pyface.constant import OK, CANCEL, YES
+from pyface.confirmation_dialog import ConfirmationDialog
+
+
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
+from pychron.core.helpers.filetools import add_extension, view_file
+from pychron.core.ui.gui import invoke_in_main_thread
+from pychron.envisage.preference_mixin import PreferenceMixin
 from pychron.envisage.resources import icon
 from pychron.envisage.tasks.actions import GenericSaveAction, GenericSaveAsAction, \
     GenericFindAction, RaiseAction, RaiseUIAction, ResetLayoutAction, \
     MinimizeAction, PositionAction, IssueAction, CloseAction, CloseOthersAction, AboutAction, OpenAdditionalWindow, \
-    NoteAction
-from pyface.file_dialog import FileDialog
-from pyface.constant import OK, CANCEL, YES
-from itertools import groupby
-from pyface.confirmation_dialog import ConfirmationDialog
-from pychron.core.helpers.filetools import add_extension, view_file
+    NoteAction, RestartAction, DocumentationAction, CopyPreferencesAction, SwitchUserAction, KeyBindingsAction, \
+    ChangeLogAction, StartupTestsAction
 from pychron.loggable import Loggable
-
-#============= standard library imports ========================
-#============= local library imports  ==========================
-from pychron.core.ui.gui import invoke_in_main_thread
 
 
 class WindowGroup(Group):
@@ -56,21 +54,11 @@ class WindowGroup(Group):
         while isinstance(manager, Group):
             manager = manager.parent
 
-
-
-        #         application = self.manager.controller.task.window.application
-
-        #         t = 'active_window, window_opened, window_closed, windows, uis[]'
-        #         application.on_trait_change(self._rebuild, t)
         return manager
 
     def _items_default(self):
         application = self.manager.controller.task.window.application
-
-        t = 'active_window, window_opened, window_closed, windows, uis[]'
-        application.on_trait_change(self._rebuild, t)
-        #         application = self.manager.controller.task.window.application
-        #         application.on_trait_change(self._rebuild, 'window_opened, window_closed, uis[]')
+        application.on_trait_change(self._rebuild, 'active_window, window_opened, window_closed, windows, uis[]')
         return []
 
     def _make_actions(self, vs):
@@ -85,15 +73,13 @@ class WindowGroup(Group):
                             checked = vi == application.active_window
                             items.append(ActionItem(action=RaiseAction(window=vi,
                                                                        checked=checked,
-                                                                       name=vi.active_task.name
-                            )))
+                                                                       name=vi.active_task.name)))
                             added.append(vi.active_task.id)
                 else:
                     items.append(ActionItem(action=RaiseUIAction(
                         name=vi.title or vi.id,
                         ui=vi,
-                        checked=checked,
-                    )))
+                        checked=checked)))
 
         return items
 
@@ -121,12 +107,11 @@ class myTaskWindowLaunchAction(TaskWindowLaunchAction):
         now raise the window if its available else create it
     """
 
-    #style = 'toggle'
+    # style = 'toggle'
 
     def perform(self, event):
         application = event.task.window.application
         application.open_task(self.task_id)
-
         self.checked = True
 
     @on_trait_change('task:window:opened')
@@ -139,115 +124,121 @@ class myTaskWindowLaunchAction(TaskWindowLaunchAction):
     def _window_closed(self):
         if self.task:
             if self.task_id == self.task.id:
-                #not having the desired effect. check on action remaims
+                # not having the desired effect. check on action remaims
                 self.checked = False
 
 
-                #def _checked_changed(self):
-                #    print self.checked, self.task_id
-
-
-#             window = self.task.window
-#             print win, window
-#             print self.task_id, self.task.id
-#             self.checked=self.task.window==win
-#             print window.active_task, self.task
-#
-#             self.checked = (window is not None
-#                             and window.active_task == self.task)
-
-#     @on_trait_change('task:window:opened')
-#     def _window_o(self):
-#         self.checked=True
-
-#     @on_trait_change('task:window:closed')
-#     def _window_c(self):
-#         self.checked=False
-#         print 'asdfsafdasdf'
-
-#     @on_trait_change('foo')
-#     def _update_checked(self):
-#         print 'fffff'
-#         self.checked=True
-# #         if self.task:
-#             window = self.task.window
-#             self.checked = (window is not None
-#                             and window.active_task == self.task)
-#         print self.checked
-# class myTaskWindowLaunchGroup(TaskWindowLaunchGroup):
-#     '''
-#         uses myTaskWindowLaunchAction instead of enthoughts TaskWindowLaunchLaunchGroup
-#     '''
-#     def _items_default(self):
-#         manager = self
-#         while isinstance(manager, Group):
-#             manager = manager.parent
-#
-#         task = manager.controller.task
-#         application = task.window.application
-#
-#         groups = []
-#         def groupfunc(task_factory):
-#             gid = 0
-#             if hasattr(task_factory, 'task_group'):
-#                 gid = task_factory.task_group
-#
-#             return gid
-#
-#         for gi, factories in groupby(application.task_factories, groupfunc):
-#             items = []
-#             for factory in factories:
-# #         for factory in application.task_factories:
-#                 for win in application.windows:
-#                     if win.active_task:
-#                         if win.active_task.id == factory.id:
-#                             checked = True
-#                             break
-#                 else:
-#                     checked = False
-#
-#                 action = myTaskWindowLaunchAction(task_id=factory.id,
-#                                                   checked=checked)
-#
-#                 if hasattr(factory, 'accelerator'):
-#                     action.accelerator = factory.accelerator
-#                     print action.accelerator
-#                     items.append(ActionItem(action=action))
-#                 print items
-#             groups.append(Group(*items))
-#
-#         return groups
-#
 class TaskGroup(Group):
     items = List
 
 
-class BaseTask(Task, Loggable):
+class BaseTask(Task, Loggable, PreferenceMixin):
     application = DelegatesTo('window')
+
+    _full_window = False
+
+    def toggle_full_window(self):
+        if self._full_window:
+            self.window.set_layout(self.default_layout)
+            self.debug('set to normal view')
+        else:
+            self.window.set_layout(TaskLayout())
+            self.debug('set full window view')
+
+        self._full_window = not self._full_window
+
+    def show_pane(self, p):
+        op = p
+        if isinstance(p, str):
+            if '.' in p:
+                for k in self.trait_names():
+                    v = getattr(self, k)
+                    try:
+                        if v.id == p:
+                            p = v
+                            break
+                    except AttributeError:
+                        continue
+
+            else:
+                p = getattr(self, p)
+
+        self.debug('showing pane {} ==> {}'.format(op, p))
+        self._show_pane(p)
 
     def _show_pane(self, p):
         def _show():
             ctrl = p.control
-            if not p.visible:
-                ctrl.show()
-            ctrl.raise_()
+            if ctrl:
+                if not p.visible:
+                    ctrl.show()
+                ctrl.raise_()
+            else:
+                self.debug('No control for pane={}'.format(p.id))
 
         if p:
-            self.debug('$$$$$$$$$$$$$ show pane {}'.format(p.id))
+            # self.debug('$$$$$$$$$$$$$ show pane {}'.format(p.id))
             invoke_in_main_thread(do_later, _show)
 
     def _menu_bar_factory(self, menus=None):
         if not menus:
             menus = []
 
+        edit_menu = SMenu(GenericFindAction(),
+                          id='Edit', name='&Edit')
+
+        # entry_menu = SMenu(
+        #     id='entry.menu',
+        #     name='&Entry')
+
+        file_menu = SMenu(
+            SGroup(id='Open'),
+            SGroup(id='New'),
+            SGroup(
+                GenericSaveAsAction(),
+                GenericSaveAction(),
+                id='Save'),
+            SGroup(),
+            id='file.menu', name='File')
+
+        tools_menu = SMenu(
+            CopyPreferencesAction(),
+            id='tools.menu', name='Tools')
+
+        window_menu = SMenu(
+            WindowGroup(),
+            Group(
+                CloseAction(),
+                CloseOthersAction(),
+                id='Close'),
+            OpenAdditionalWindow(),
+            Group(MinimizeAction(),
+                  ResetLayoutAction(),
+                  PositionAction()),
+
+            # SplitEditorAction(),
+            id='window.menu',
+            name='Window')
+        help_menu = SMenu(
+            IssueAction(),
+            NoteAction(),
+            AboutAction(),
+            DocumentationAction(),
+            ChangeLogAction(),
+            RestartAction(),
+            KeyBindingsAction(),
+            SwitchUserAction(),
+            StartupTestsAction(),
+            # DemoAction(),
+            id='help.menu',
+            name='Help')
         mb = SMenuBar(
-            self._file_menu(),
-            self._edit_menu(),
+            file_menu,
+            edit_menu,
             self._view_menu(),
-            self._tools_menu(),
-            self._window_menu(),
-            self._help_menu(),
-        )
+            tools_menu,
+            window_menu,
+            help_menu)
         if menus:
             for mi in reversed(menus):
                 mb.items.insert(4, mi)
@@ -302,7 +293,7 @@ class BaseTask(Task, Loggable):
 
             groups.append(TaskGroup(items=items))
 
-        groups.append(DockPaneToggleGroup())
+        # groups.append(DockPaneToggleGroup())
         return groups
 
     def _view_menu(self):
@@ -312,87 +303,17 @@ class BaseTask(Task, Loggable):
             id='view.menu', name='&View')
         return view_menu
 
-    def _edit_menu(self):
-        edit_menu = SMenu(
-            GenericFindAction(),
-            id='Edit',
-            name='&Edit')
-        return edit_menu
-
-    def _file_menu(self):
-        file_menu = SMenu(
-            SGroup(id='Open'),
-            SGroup(id='New'),
-            SGroup(
-                GenericSaveAsAction(),
-                GenericSaveAction(),
-                id='Save'
-            ),
-            SGroup(),
-            #                         SMenu(id='Open', name='Open',),
-            #                         SMenu(id='New', name='New'),
-
-            #                         Group(
-            #                                GenericSaveAsAction(),
-            #                                GenericSaveAction(),
-            #                                id='Save'
-            #                                ),
-            #
-            #                           SGroup(),
-            #
-            #                                 ),
-
-            id='File', name='File')
-        return file_menu
-
-    def _tools_menu(self):
-        tools_menu = SMenu(id='tools.menu', name='Tools')
-        return tools_menu
-
-    def _window_menu(self):
-        window_menu = SMenu(
-            WindowGroup(),
-            Group(
-                CloseAction(),
-                CloseOthersAction(),
-                id='Close'),
-            OpenAdditionalWindow(),
-            Group(MinimizeAction(),
-                  ResetLayoutAction(),
-                  PositionAction()),
-
-            # SplitEditorAction(),
-            id='window.menu',
-            name='Window')
-
-        return window_menu
-
-    def _help_menu(self):
-        menu = SMenu(
-            IssueAction(),
-            NoteAction(),
-            AboutAction(),
-            id='help.menu',
-            name='Help')
-        return menu
-
     def _confirmation(self, message=''):
         dialog = ConfirmationDialog(parent=self.window.control,
                                     message=message, cancel=True,
                                     default=CANCEL, title='Save Changes?')
         return dialog.open()
 
-
-class BaseManagerTask(BaseTask):
-    default_directory = Unicode
-    _default_extension = ''
-    wildcard = None
-    manager = Any
-
     @on_trait_change('window:closing')
     def _on_close(self, event):
         """ Prompt the user to save when exiting.
         """
+
         close = self._prompt_for_save()
         event.veto = not close
 
@@ -407,6 +328,15 @@ class BaseManagerTask(BaseTask):
 
     def _prompt_for_save(self):
         return True
+
+
+class BaseManagerTask(BaseTask):
+    default_directory = Unicode
+    default_open_action = 'open'
+
+    _default_extension = ''
+    wildcard = None
+    manager = Any
 
     def view_pdf(self, p):
         # self.view_file(p, application='Adobe Reader')
@@ -434,7 +364,7 @@ class BaseManagerTask(BaseTask):
         #     self.debug('failed opening {} using {}'.format(p, app_path))
         #     subprocess.call(['open', p])
 
-    def open_file_dialog(self, action='open', **kw):
+    def open_directory_dialog(self, **kw):
         if 'default_directory' not in kw:
             kw['default_directory'] = self.default_directory
 
@@ -442,10 +372,28 @@ class BaseManagerTask(BaseTask):
             if self.wildcard:
                 kw['wildcard'] = self.wildcard
 
-        dialog = FileDialog(
-            #parent=self.window.control,
-            action=action,
+        dialog = DirectoryDialog(
+            # parent=self.window.control,
+            action='open',
             **kw)
+        if dialog.open() == OK:
+            r = dialog.path
+            # if action == 'open files':
+            #     r = dialog.paths
+            return r
+
+    def open_file_dialog(self, action=None, **kw):
+        if 'default_directory' not in kw:
+            kw['default_directory'] = self.default_directory
+
+        if 'wildcard' not in kw:
+            if self.wildcard:
+                kw['wildcard'] = self.wildcard
+
+        if action is None:
+            action = self.default_open_action
+
+        dialog = FileDialog(action=action, **kw)
         if dialog.open() == OK:
             r = dialog.path
             if action == 'open files':
@@ -466,8 +414,10 @@ class BaseManagerTask(BaseTask):
 
 
 class BaseExtractionLineTask(BaseManagerTask):
+    canvas_pane = Instance('pychron.extraction_line.tasks.extraction_line_pane.CanvasDockPane')
+
     def _get_el_manager(self):
-        app = self.window.application
+        app = self.application
         man = app.get_service('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
         return man
 
@@ -476,18 +426,14 @@ class BaseExtractionLineTask(BaseManagerTask):
         if man:
             man.deactivate()
 
-            #     def activated(self):
-            #         man = self._get_el_manager()
-            #         if man:
-            #             man.activate()
-
     def _add_canvas_pane(self, panes):
         app = self.window.application
         man = app.get_service('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
         if man:
             from pychron.extraction_line.tasks.extraction_line_pane import CanvasDockPane
 
-            panes.append(CanvasDockPane(canvas=man.new_canvas(name='alt_config')))
+            self.canvas_pane = CanvasDockPane(canvas=man.new_canvas())
+            panes.append(self.canvas_pane)
 
         return panes
 
@@ -495,30 +441,11 @@ class BaseExtractionLineTask(BaseManagerTask):
     def _window_opened(self):
         man = self._get_el_manager()
         if man:
-            #            do_later(man.activate)
-            man.activate()
-
-
-#            man.canvas.refresh()
+            do_after(1000, man.activate)
+            # man.activate()
 
 
 class BaseHardwareTask(BaseManagerTask):
     pass
 
-#     def _menu_bar_factory(self, menus=None):
-#         extraction_menu = SMenu(id='Extraction', name='&Extraction')
-#         measure_menu = SMenu(
-# # #                              PeakCenterAction(),
-#                             id='Measure', name='Measure',
-#                             before='help.menu'
-#                             )
-#         ms = [extraction_menu, measure_menu]
-#         if not menus:
-#             menus = ms
-#         else:
-#             menus.extend(ms)
-#         return super(BaseHardwareTask, self)._menu_bar_factory(menus=menus)
-# class BaseManagerTask(BaseTask):
-#    manager = Any
-
-#============= EOF =============================================
+# ============= EOF =============================================

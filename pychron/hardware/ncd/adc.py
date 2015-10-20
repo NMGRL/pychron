@@ -7,7 +7,7 @@
    http://www.controlanything.com/Relay/Device/A0010
    http://assets.controlanything.com/manuals/ProXR.pdf
 '''
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +21,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 import math
 import struct
 
@@ -31,10 +31,11 @@ import struct
 #logging_setup('prox')
 
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.hardware.ncd.ncd_device import NCDDevice
+from pychron.hardware.polyinomial_mapper import PolynomialMapper
 
 
 class ProXRADCExpansion(NCDDevice):
@@ -61,12 +62,13 @@ TWELVE_BIT_BANKS = [196, 197, 198]
 class ProXRADC(NCDDevice):
     max_voltage = 5
 
+
     def read_device_info(self):
         cmdstr = self._make_cmdstr(254, 246)
         resp = self.ask(cmdstr, nchars=5)
         return resp
 
-    def read_bank(self, bank=0, nbits=8):
+    def read_bank(self, bank=0, nbits=8, verbose=True):
         """
             return voltages (V) measured on channels in "bank"
             nbits= 8 or 12 resolution of measurement
@@ -82,10 +84,13 @@ class ProXRADC(NCDDevice):
 
         idx = bank_idxs[bank]
         cmdstr = self._make_cmdstr(254, idx)
-        resp = self.ask(cmdstr, nchars=nbytes)
-        return self._map_to_voltage(resp, nbits, nbytes)
+        resp = self.ask(cmdstr, nchars=nbytes, verbose=False)
+        vs = self._map_to_voltage(resp, nbits, nbytes)
+        if verbose:
+            self.debug('bank={} nbits={} values={}'.format(bank, nbits, ','.join(map(str, vs))))
+        return vs
 
-    def read_channel(self, channel, nbits=8, verbose=False):
+    def read_channel(self, channel, nbits=8, verbose=True):
         """
             return voltage (V) measured on "channel"
             nbits= 8 or 12. resolution of measurement
@@ -105,7 +110,17 @@ class ProXRADC(NCDDevice):
 
         cmdstr = self._make_cmdstr(254, bank_idx, channel_idx)
         resp = self.ask(cmdstr, nchars=nbytes, remove_eol=False, verbose=verbose)
-        return self._map_to_voltage(resp, nbits, nbytes)[0]
+        if resp:
+            volts = self._map_to_voltage(resp, nbits, nbytes)[0]
+        else:
+            volts = self.get_random_value()
+        return volts
+
+
+    def _parse_response(self, v):
+        if not v:
+            v = self.get_random_value()
+        return v
 
     def _check_nbits(self, nbits):
         if not nbits in (8, 12):
@@ -130,13 +145,24 @@ class ProXRADC(NCDDevice):
 
 
 if __name__ == '__main__':
+    from pychron.core.helpers.logger_setup import logging_setup
+
+    logging_setup('adc')
+
+    # paths.build('_dev')
+
     a = ProXRADC(name='ProXRADC')
     #a = MultiBankADCExpansion(name='proxr_adc')
-    a.bootstrap()
-    print a.read_bank()
-    print a.read_bank(nbits=12)
+    # a.bootstrap()
+    a.load_communicator('serial', port='usbserial-A5018URQ', baudrate=115200)
+    a.open()
+    #print 'read bank', a.read_bank()
+    a.read_bank(nbits=12)
+    a.read_bank(1, nbits=12)
+    a.read_bank(2, nbits=12)
+
     #print a._communicator.handle
     #a.read_device_info()
-    print a.read_channel(0, nbits=8)
-    print a.read_channel(0, nbits=12)
-#============= EOF =============================================
+    #print 'read channel 0',a.read_channel(0, nbits=8)
+    #print 'read channel 0 12bit',a.read_channel(0, nbits=12)
+# ============= EOF =============================================

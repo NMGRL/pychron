@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,31 +13,41 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
+from traits.etsconfig.etsconfig import ETSConfig
+
+ETSConfig.toolkit = 'qt4'
+import os
+
+
+def build_directories():
+    from pychron.paths import r_mkdir, paths
+    root=os.path.join(os.path.expanduser('~'), 'RHM')
+
+    if not os.path.isdir(root):
+        os.mkdir(root)
+
+    # servers = os.path.join(root, 'servers')
+    ldir = os.path.join(root, 'log')
+    r_mkdir(ldir)
+    paths.log_dir = ldir
+    paths.root = root
+
 
 if __name__ == '__main__':
 
-    import os
+    root = os.path.dirname(__file__)
+    from helpers import add_eggs
+    add_eggs(root)
 
-    from helpers import build_version
-    build_version('_experiment')
-
+    build_directories()
     from pychron.core.helpers.logger_setup import logging_setup
     from pychron.managers.remote_hardware_server_manager import RemoteHardwareServerManager
-
-#    from pychron.managers.manager import ManagerHandler
-#    class AppHandler(ManagerHandler):
-#        def closed(self, info, isok):
-#            info.object.kill()
-#            info.object.close_displays()
-#            return True
 
     logging_setup('server')
     s = RemoteHardwareServerManager()  # handler_klass=AppHandler)
     s.load()
     s.configure_traits()
-
-
     os._exit(0)
 
 #    launch()

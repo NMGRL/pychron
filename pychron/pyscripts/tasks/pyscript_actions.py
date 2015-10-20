@@ -12,13 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pyface.action.action import Action
 from pyface.tasks.action.task_action import TaskAction
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.envisage.resources import icon
 from pychron.envisage.tasks.actions import FileOpenAction, NewAction
 
@@ -63,13 +63,16 @@ class NewHopsEditorAction(HopsEditorAction):
 class OpenPyScriptAction(FileOpenAction):
     """
     """
+    id = 'pychron.open_pyscript'
     description = 'Open pyscript'
     name = 'Open Script...'
-    accelerator = 'Ctrl+Shift+O'
+    # accelerator = 'Ctrl+Shift+O'
     image = icon('document-open')
-    task_id = 'pychron.pyscript'
+    task_id = 'pychron.pyscript.task'
     # test_path = '/Users/ross/Pychrondata_dev/scripts/extraction/jan_pause.py'
-    test_path = '/Users/ross/Pychrondata_dev/scripts/measurement/jan_unknown.py'
+    test_path = '/Users/ross/Pychron_dev/scripts/measurement/jan_unknown.py'
+    # test_path = '/Users/ross/Pychron_dev/scripts/extraction/jan_air_x1.py'
+    # test_path = '/Users/argonlab2/Pychrondata_view/scripts/measurement/obama_analysis400_120.py'
 
 
 class NewPyScriptAction(NewAction):
@@ -77,7 +80,8 @@ class NewPyScriptAction(NewAction):
     """
     description = 'New pyscript'
     name = 'New Script'
-    task_id = 'pychron.pyscript'
+    task_id = 'pychron.pyscript.task'
+    id = 'pychron.new_pyscript'
     #    accelerator = 'Shift+Ctrl+O'
     #     image = icon('script-new')
     # def perform(self, event):
@@ -94,8 +98,17 @@ class NewPyScriptAction(NewAction):
 
 class JumpToGosubAction(TaskAction):
     name = 'Jump to Gosub'
-    image = icon('script_go.png')
+    image = icon('script_go')
     method = 'jump_to_gosub'
     tooltip = 'Jump to gosub defined at the current line. CMD+click on a gosub will also work.'
 
-#============= EOF =============================================
+
+class ExpandGosubsAction(TaskAction):
+    name = 'Expand Gosubs'
+    method = 'expand_gosubs'
+
+
+class MakeGosubAction(TaskAction):
+    name = 'Make Gosub'
+    method = 'make_gosub'
+# ============= EOF =============================================

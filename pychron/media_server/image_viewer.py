@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,15 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Instance, Any
-from traitsui.api import View, Item, TableEditor
 from chaco.api import HPlotContainer, ArrayPlotData, Plot
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.graph.image_underlay import ImageUnderlay
 from pychron.graph.tools.xy_inspector import XYInspector, XYInspectorOverlay
 
@@ -30,8 +29,8 @@ class ImageViewer(HasTraits):
 
     def load_image(self, path):
         if os.path.isfile(path):
-            with open(path, 'r') as fp:
-                self.set_image(fp)
+            with open(path, 'r') as rfile:
+                self.set_image(rfile)
 
     def set_image(self, buf):
         '''
@@ -73,4 +72,4 @@ class ImageViewer(HasTraits):
 #
 #        plot.overlays.append(zoom)
 
-#============= EOF =============================================
+# ============= EOF =============================================

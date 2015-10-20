@@ -1,38 +1,38 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from chaco.label import Label
 from chaco.plot_label import PlotLabel
 from enable.colors import color_table, convert_from_pyqt_color
 from enable.font_metrics_provider import font_metrics_provider
-from traits.api import Array, Int, Float, Str, Color, Event
+from traits.api import Array, Int, Float, Str, Color, Bool, List
 from chaco.abstract_overlay import AbstractOverlay
-#============= standard library imports ========================
-from numpy import where, array
-from enable.base_tool import BaseTool
 from enable.tools.drag_tool import DragTool
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+from numpy import where, array
+# ============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
-from pychron.graph.tools.info_inspector import InfoOverlay
-from pychron.pychron_constants import ALPHAS
+from pychron.graph.tools.info_inspector import InfoOverlay, InfoInspector
+from pychron.pychron_constants import PLUSMINUS
 
 
 class BasePlateauOverlay(AbstractOverlay):
     cumulative39s = Array
+
     def _get_section(self, pt):
         d = self.component.map_data(pt)
         cs = self.cumulative39s
@@ -44,11 +44,12 @@ class BasePlateauOverlay(AbstractOverlay):
         return tt
 
 
-class SpectrumTool(BaseTool, BasePlateauOverlay):
+class SpectrumTool(InfoInspector, BasePlateauOverlay):
     nsigma = Int(2)
-    metadata_changed =Event
-    current_position = None
-    current_screen = None
+    # metadata_changed = Event
+    # current_position = None
+    # current_screen = None
+    analyses = List
 
     def hittest(self, screen_pt, threshold=20):
         comp = self.component
@@ -57,23 +58,29 @@ class SpectrumTool(BaseTool, BasePlateauOverlay):
         ys = comp.value.get_data()[::2]
         if ndx < len(ys):
             yd = ys[ndx]
-            e = comp.errors[ndx] * self.nsigma
+
+            e = comp.errors[ndx * 2] * self.nsigma
             yl, yu = comp.y_mapper.map_screen(array([yd - e, yd + e]))
+            # print ys
+            # print ndx, yd, yd+e, yd-e, yu, yl, screen_pt[1], self.nsigma
+            if yu - yl < 1:
+                yu += 1
+                yl -= 1
 
             if yl < screen_pt[1] < yu:
                 return ndx
 
     # def normal_mouse_move(self, event):
-    #     xy=event.x, event.y
-    #     pos=self.hittest(xy)
-    #     if pos is not None:
-    #     # if isinstance(pos, tuple):
-    #         self.current_position = pos
-    #         self.current_screen = xy
-    #         # event.handled = True
-    #     else:
-    #         self.current_position = None
-    #         self.current_screen = None
+    # xy=event.x, event.y
+    # pos=self.hittest(xy)
+    # if pos is not None:
+    # # if isinstance(pos, tuple):
+    # self.current_position = pos
+    # self.current_screen = xy
+    # # event.handled = True
+    # else:
+    # self.current_position = None
+    # self.current_screen = None
     #     self.metadata_changed = True
 
     def normal_left_down(self, event):
@@ -84,25 +91,26 @@ class SpectrumTool(BaseTool, BasePlateauOverlay):
         ndx = self.hittest(pt)
         if ndx is not None:
             sels = self.component.index.metadata['selections']
-            self.component.index.metadata['selections'] = list(set(sels) ^ set([ndx]))
+            self.component.index.metadata['selections'] = mm = list(set(sels) ^ set([ndx]))
             self.component.request_redraw()
-
-        event.handled = True
+            event.handled = True
 
     def assemble_lines(self):
-        idx=self.current_position
-        comp=self.component
+        idx = self.current_position
+        comp = self.component
 
-        e=comp.errors[idx]
+        e = comp.errors[idx * 2]
         ys = comp.value.get_data()[::2]
-        v=ys[idx]
+        v = ys[idx]
 
-        low_c=0 if idx==0 else self.cumulative39s[idx-1]
+        low_c = 0 if idx == 0 else self.cumulative39s[idx - 1]
 
-        return ['Step={}'.format(ALPHAS[idx]),
-                '{}={} +/- {} (1s)'.format(comp.container.y_axis.title, floatfmt(v),
-                                      floatfmt(e)
-                                      ),
+        an = self.analyses[idx]
+        return ['RunID={}'.format(an.record_id),
+                'Tag={}'.format(an.tag),
+                'Status={}'.format(an.status_text),
+                u'{}={} {}{} (1\u03c3)'.format(comp.container.y_axis.title, floatfmt(v), PLUSMINUS,
+                                               floatfmt(e)),
                 'Cumulative. Ar39={}-{}'.format(floatfmt(low_c),
                                                 floatfmt(self.cumulative39s[idx]))]
 
@@ -113,12 +121,12 @@ class SpectrumTool(BaseTool, BasePlateauOverlay):
             hover = self._get_section(pt)
             self.component.index.metadata['hover'] = [hover]
             self.current_position = hover
-            self.current_screen=pt
+            self.current_screen = pt
         else:
             event.window.set_pointer('arrow')
             self.component.index.metadata['hover'] = None
 
-            self.current_position =None
+            self.current_position = None
             self.current_screen = None
 
         self.metadata_changed = True
@@ -128,24 +136,27 @@ class SpectrumInspectorOverlay(InfoOverlay):
     pass
     # @on_trait_change('tool:metadata_changed')
     # def _update_(self, new):
-    #     print 'asdf', new
+    # print 'asdf', new
     # tool =Any
     # @on_trait_change('tool:current_section')
     # def handle(self, new):
-    #     if new>=0:
-    #         self.visible=True
-    #     else:
-    #         self.visible=False
+    # if new>=0:
+    # self.visible=True
+    # else:
+    # self.visible=False
     #
     # def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
-    #     print 'pasdasfd'
-        # with gc:
-
+    # print 'pasdasfd'
+    # with gc:
 
 
 class SpectrumErrorOverlay(AbstractOverlay):
     nsigma = Int(1)
-    alpha=Float
+    alpha = Float
+    use_fill = Bool(False)
+    selections = List
+    use_user_color = Bool(False)
+    user_color = Color
 
     def overlay(self, component, gc, *args, **kw):
         comp = self.component
@@ -155,15 +166,31 @@ class SpectrumErrorOverlay(AbstractOverlay):
             xs = comp.index.get_data()
             ys = comp.value.get_data()
             es = comp.errors
-            sels = comp.index.metadata['selections']
-
+            # sels = comp.index.metadata['selections']
+            sels = self.selections
             n = len(xs)
             xs = xs.reshape(n / 2, 2)
             ys = ys.reshape(n / 2, 2)
             es = es.reshape(n / 2, 2)
+
+            if self.use_fill:
+                alpha = self.alpha * 0.01
+                func = gc.fill_path
+            else:
+                alpha = 1.0
+                func = gc.stroke_path
+
+            color = map(lambda x: x / 255., self.user_color.toTuple())
+
+            color = color[0], color[1], color[2], alpha
+            if abs(alpha - 0.3) < 0.1:
+                selection_color = (0.75, 0, 0)
+            else:
+                selection_color = color[0], color[1], color[2], 0.3
+
+            prev = None
             for i, ((xa, xb), (ya, yb), (ea, eb)) in enumerate(zip(xs, ys, es)):
                 ea *= self.nsigma
-                eb *= self.nsigma
                 p1 = xa, ya - ea
                 p2 = xa, ya + ea
                 p3 = xb, ya - ea
@@ -173,28 +200,46 @@ class SpectrumErrorOverlay(AbstractOverlay):
                 y = p1[1]
                 w = p3[0] - p1[0]
                 h = p2[1] - p1[1]
-                if i in sels:
-                    gc.set_fill_color((0.75, 0, 0))
-                else:
-                    c = comp.color
-                    if isinstance(c, str):
-                        c = color_table[c]
 
-                    c=c[0],c[1],c[2],self.alpha
-                    gc.set_fill_color(c)
+                c = selection_color if i in sels else color
 
-                gc.rect(x, y, w + 1, h)
-                gc.fill_path()
+                gc.set_fill_color(c)
+                gc.set_stroke_color(c)
+
+                with gc:
+                    if prev and not self._check_overlap(prev, (x, y, h)):
+                        y1 = prev[1]
+
+                        gc.move_to(x, y1)
+                        gc.line_to(x, y)
+                        gc.stroke_path()
+
+                prev = x, y, h
+
+                gc.rect(x, y, w, h)
+                func()
+
+    def _check_overlap(self, prev, cur):
+        _, start1, end1 = prev
+        _, start2, end2 = cur
+
+        return start1 + end1 > start2 and start2 + end2 >= start1
 
 
 class PlateauTool(DragTool):
+    def normal_mouse_move(self, event):
+        if self.is_draggable(event.x, event.y):
+            event.window.set_pointer('hand')
+        else:
+            event.window.set_pointer('arrow')
+
     # def normal_mouse_move(self, event):
-    #     if self.is_draggable(event.x, event.y):
-    #         event.handled = True
+    # if self.is_draggable(event.x, event.y):
+    # event.handled = True
     #
     # def normal_left_down(self, event):
-    #     if self.is_draggable(event.x, event.y):
-    #         event.handled = True
+    # if self.is_draggable(event.x, event.y):
+    # event.handled = True
 
     def is_draggable(self, x, y):
         return self.component.hittest((x, y))
@@ -221,25 +266,26 @@ class PlateauOverlay(BasePlateauOverlay):
     plateau_bounds = Array
     # y = Float
     dragged = False
-    id=Str
+    id = Str
 
-    plateau_label=PlotLabel
-    info_txt=Str
-    label_visible=True
-    label_offset=0
-    label_font_size=10
+    plateau_label = PlotLabel
+    info_txt = Str
+    label_visible = True
+    label_offset = 0
+    label_font_size = 10
     extend_end_caps = True
-    ages_errors=Array
-    ages=Array
-    nsigma=Int(2)
-    line_color=Color('red')
-    line_width=Float(1.0)
+    ages_errors = Array
+    ages = Array
+    nsigma = Int(2)
+    line_color = Color('red')
+    line_width = Float(1.0)
+    selections = List
 
     def hittest(self, pt, threshold=7):
         x, y = pt
         pts = self._get_line()
         if pts is not None:
-            pt1, pt2,y1,y2 = pts
+            pt1, pt2, y1, y2 = pts
             if pt1[0] <= x <= pt2[0]:
                 if abs(y - pt1[1]) <= threshold:
                     return True
@@ -253,57 +299,88 @@ class PlateauOverlay(BasePlateauOverlay):
         if ps[0] == ps[1]:
             return
 
-        sidx=ps[0]
-        eidx=ps[1]+1
+        sidx = ps[0]
+        eidx = ps[1]
+        sels = self.selections
+        # sels = self.component.index.metadata['selections']
+        while sidx in sels:
+            sidx += 1
+
+        while eidx in sels:
+            eidx -= 1
+
+        eidx += 1
+
         cstart = cs[sidx]
         cend = cs[eidx]
 
-        aes=self.ages
-        es=self.age_errors
-        eidx-=1
-        estart=es[sidx]*self.nsigma
-        eend=es[eidx]*self.nsigma
+        aes = self.ages
+        es = self.age_errors
+        eidx -= 1
+        estart = es[sidx] * self.nsigma
+        eend = es[eidx] * self.nsigma
 
-        ystart=aes[sidx]
-        yend=aes[eidx]
+        ystart = aes[sidx]
+        yend = aes[eidx]
+
+        y = self._get_plateau_y()
+
+        a = ystart - estart if y < ystart else ystart + estart
+        b = yend - eend if y < yend else yend + eend
+
+        pt1, pt2, up1, up2 = self.component.map_screen([(cstart, y), (cend, y), (cstart, a), (cend, b)])
+        # up1, up2 = self.component.map_screen([(cstart, a), (cend, b)])
+        y1, y2 = up1[1], up2[1]
+
+        return pt1, pt2, y1, y2
+
+    def _get_plateau_y(self, screen_offset=100):
+        """
+            return y for plateau in data space
+
+            if y value greater than bounds set y to ybounds - 50px
+        :param screen_offset:
+        :return:
+        """
+        comp = self.component
 
         y = self.y
+        oy = comp.value_mapper.map_data(0)
+        delta = comp.value_mapper.map_data(screen_offset) - oy
+        y += delta
 
-        a=ystart-estart if y<ystart else ystart+estart
-        b=yend-eend if y<yend else yend+eend
-
-        pt1, pt2 = self.component.map_screen([(cstart, y), (cend, y)])
-        up1, up2 = self.component.map_screen([(cstart,a),(cend, b)])
-        y1,y2=up1[1], up2[1]
-
-        return pt1, pt2, y1,y2
+        by = comp.value_range.high
+        if y > by:
+            delta = comp.value_mapper.map_data(50) - oy
+            y = by - delta
+        return y
 
     def _draw_end_caps(self, gc, x1, x2, y):
         gc.lines([(x1, y - 10), (x1, y + 10)])
         gc.lines([(x2, y - 10), (x2, y + 10)])
 
-    def _draw_extended_end_caps(self, gc,x1,x2,y,y1,y2):
-        if y1>y:
+    def _draw_extended_end_caps(self, gc, x1, x2, y, y1, y2):
+        if y1 > y:
             gc.lines([(x1, y - 10), (x1, y1 - 5)])
         else:
-            gc.lines([(x1, y+10), (x1, y1+5)])
+            gc.lines([(x1, y + 10), (x1, y1 + 5)])
 
-        if y2>y:
-            gc.lines([(x2, y-10), (x2, y2-5)])
+        if y2 > y:
+            gc.lines([(x2, y - 10), (x2, y2 - 5)])
         else:
-            gc.lines([(x2, y+10), (x2, y2+5)])
+            gc.lines([(x2, y + 10), (x2, y2 + 5)])
 
-        # if y1 < y and y2<y:
-        #     gc.lines([(x1, y1+5), (x1, y + 10)])
-        #     gc.lines([(x2, y2+5), (x2, y + 10)])
-        # elif y1> y and y2>y:
-        #     gc.lines([(x1, y - 10),(x1, y1 + 5)])
-        #     gc.lines([(x2, y - 10),(x2, y2 + 5)])
+            # if y1 < y and y2<y:
+            # gc.lines([(x1, y1+5), (x1, y + 10)])
+            # gc.lines([(x2, y2+5), (x2, y + 10)])
+            # elif y1> y and y2>y:
+            # gc.lines([(x1, y - 10),(x1, y1 + 5)])
+            # gc.lines([(x2, y - 10),(x2, y2 + 5)])
 
     def overlay(self, component, gc, *args, **kw):
         points = self._get_line()
         if points:
-            pt1, pt2, y1,y2 = points
+            pt1, pt2, y1, y2 = points
             with gc:
                 comp = self.component
                 gc.clip_to_rect(comp.x, comp.y, comp.width, comp.height)
@@ -322,7 +399,7 @@ class PlateauOverlay(BasePlateauOverlay):
                 # add end caps
                 if self.extend_end_caps:
                     gc.set_line_width(1)
-                    self._draw_extended_end_caps(gc, x1,x2,y,y1,y2)
+                    self._draw_extended_end_caps(gc, x1, x2, y, y1, y2)
 
                 gc.draw_path()
 
@@ -333,15 +410,9 @@ class PlateauOverlay(BasePlateauOverlay):
     def _get_plateau_label(self, x1, x2, y):
 
         if self.layout_needed or not self.plateau_label:
-            p=self.plateau_label
+            p = self.plateau_label
         else:
             comp = self.component
-            ox, oy = comp.map_screen([(0, self.y + self.label_offset)])[0]
-            # print self.label_offset, self.y, oy, y
-            # ox,oy=self.component.map_screen([self.y+self.label_offset])[0]
-            # print oy, self.label_offset, y,self.y
-            # oy=10
-
             x = x1 + (x2 - x1) * 0.5
 
             dummy_gc = font_metrics_provider()
@@ -357,12 +428,17 @@ class PlateauOverlay(BasePlateauOverlay):
                 x = comp.x + 5
                 hjustify = 'left'
 
-            p=PlotLabel(text=self.info_txt,
-                        font='modern {}'.format(self.label_font_size),
-                        hjustify=hjustify,
-                        x=x,
-                        y=oy+15)
-            self.plateau_label=p
+            x = max(comp.x, x)
+            p = PlotLabel(text=self.info_txt,
+                          font='modern {}'.format(self.label_font_size),
+                          color=self.line_color,
+                          hjustify=hjustify,
+                          border_visible=True,
+                          bgcolor='white',
+                          x=x,
+                          y=y + 10)
+            self.plateau_label = p
 
         return p
-#============= EOF =============================================
+
+# ============= EOF =============================================

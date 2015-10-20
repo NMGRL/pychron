@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 """
     the GeoEditor will not work in current setup
 
@@ -28,9 +28,9 @@ set_toolkit('qt4')
 from traits.api import HasTraits, Int
 from traitsui.api import View, Item
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
-from traitsui.qt4.basic_editor_factory import BasicEditorFactory
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
+from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.editor import Editor
 from qgis.gui import QgsMapCanvas
 
@@ -60,5 +60,5 @@ class A(HasTraits):
 if __name__=='__main__':
     a=A()
     a.configure_traits()
-#============= EOF =============================================
+# ============= EOF =============================================
 

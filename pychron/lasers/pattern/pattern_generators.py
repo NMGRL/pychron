@@ -22,7 +22,7 @@ import random
 
 from numpy import linspace, cos, sin, hstack
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.geometry.affine import AffineTransform
 
 
@@ -267,6 +267,6 @@ def line_spiral_pattern(cx, cy, R, ns, p, ss, direction='out', **kw):
 
             yield x, y
 
-#============= EOF ====================================
+# ============= EOF ====================================
 
 

@@ -1,27 +1,27 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Float, Instance, Str, Tuple
 from chaco.abstract_overlay import AbstractOverlay
 from enable.base_tool import BaseTool
 from enable.colors import ColorTrait
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import string
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
 from pychron.processing.plotters.ideogram.mean_indicator_overlay import XYPlotLabel
 
@@ -42,9 +42,11 @@ class LimitsTool(BaseTool):
 
     def drag_key_pressed(self, event):
         c = event.character
-        self._set_entered_value(c)
-
-        self.event_state = 'manual_set' if self.entered_value else 'drag'
+        if c == 'Esc':
+            self._finish(event)
+        else:
+            self._set_entered_value(c)
+            self.event_state = 'manual_set' if self.entered_value else 'drag'
         self.component.request_redraw()
 
     def manual_set_key_pressed(self, event):
@@ -92,6 +94,7 @@ class LimitsTool(BaseTool):
 
             self._set_ruler_pos(event)
             self.component.request_redraw()
+            event.handled = True
 
     def _set_ruler_pos(self, v):
         self.ruler_pos = (v.x, v.y)
@@ -102,6 +105,7 @@ class LimitsTool(BaseTool):
         self._finish(event)
         v = event.x if self.orientation == 'x' else event.y
         self._set_value(v)
+        event.handled = True
 
     def _finish(self, event):
         self.event_state = 'normal'
@@ -124,6 +128,7 @@ class LimitsTool(BaseTool):
         if a < b or a > b2:
             self._set_value(a)
         self.component.request_redraw()
+        event.handled = True
 
     def _set_value(self, screen_val):
         v = self._map_value(screen_val)
@@ -201,4 +206,4 @@ class LimitOverlay(AbstractOverlay):
             self.label.text = '{}: {}'.format(tool.orientation.upper(), v)
             self.label.overlay(other_component, gc, view_bounds=None, mode="normal")
 
-#============= EOF =============================================
+# ============= EOF =============================================

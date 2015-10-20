@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +12,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from difflib import ndiff
+
 from PySide import QtGui, QtCore
 from PySide.QtGui import QPlainTextEdit, QColor, QTextCursor, QFont, QTextEdit, QTextFormat, QPen
 from pyface.ui.qt4.code_editor.gutters import LineNumberWidget
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
-from traitsui.qt4.basic_editor_factory import BasicEditorFactory
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
+from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.editor import Editor
 
 class DiffGutter(LineNumberWidget):
@@ -277,4 +279,4 @@ class _PatchEditor(Editor):
 
 class PatchEditor(BasicEditorFactory):
     klass=_PatchEditor
-#============= EOF =============================================
+# ============= EOF =============================================

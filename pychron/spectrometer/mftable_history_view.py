@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,18 +12,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 from pychron.core.ui import set_qt
 
 set_qt()
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Int, Date, List, Str, Instance, Button
 from traitsui.api import View, Item, TabularEditor, Controller, UItem, \
     VSplit, VGroup, spring, EnumEditor, HGroup
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 
@@ -112,12 +112,12 @@ class MFTableHistory(HasTraits):
             self._load_items()
 
     def _checkout_button_fired(self):
-        with open(self.checkout_path, 'w') as fp:
+        with open(self.checkout_path, 'w') as wfile:
             hs = [hi[1] for hi in self.selected_adapter.columns]
             h = ','.join(hs)
-            fp.write('{}\n'.format(h))
+            wfile.write('{}\n'.format(h))
             for r in self.selected_table:
-                fp.write('{}\n'.format(','.join([getattr(r, hi) for hi in hs])))
+                wfile.write('{}\n'.format(','.join([getattr(r, hi) for hi in hs])))
 
 
 class MFTableHistoryView(Controller):
@@ -157,5 +157,5 @@ if __name__ == '__main__':
     #
     mv = MFTableHistoryView(model=mfh)
     mv.configure_traits()
-#============= EOF =============================================
+# ============= EOF =============================================
 

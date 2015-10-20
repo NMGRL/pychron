@@ -12,11 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
+SPECTROMETER_PROTOCOL = 'pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager'
+ION_OPTICS_PROTOCOL = 'pychron.spectrometer.ion_optics_manager.IonOpticsManager'
+SCAN_PROTOCOL = 'pychron.spectrometer.scan_manager.ScanManager'
+EL_PROTOCOL = 'pychron.extraction_line.extraction_line_manager.ExtractionLineManager'
+DVC_PROTOCOL = 'pychron.dvc.dvc.DVC'
 
 PLUSMINUS = u'\u00b1'
 try:
@@ -42,17 +47,19 @@ LINE_STR = '---------'
 SCRIPT_KEYS = ['measurement', 'post_measurement', 'extraction', 'post_equilibration']
 SCRIPT_NAMES = ['{}_script'.format(si) for si in SCRIPT_KEYS]
 
-FIT_TYPES = ['linear', 'parabolic', 'cubic',
-             'average', 'weighted_mean']
+FIT_TYPES = ['Linear', 'Parabolic', 'Cubic',
+             'Average', 'Weighted Mean']
 FIT_ERROR_TYPES = ['SD', 'SEM', 'CI']
 
 ERROR_TYPES = ['SD', 'SEM', 'SEM, but if MSWD>1 use SEM * sqrt(MSWD)']
 
-INTERPOLATE_TYPES = ['preceding', 'Bracketing Interpolate', 'Bracketing Average']
-FIT_TYPES_INTERPOLATE = FIT_TYPES + ['preceding', 'Bracketing Interpolate', 'Bracketing Average']
+INTERPOLATE_TYPES = ['Preceding', 'Bracketing Interpolate', 'Bracketing Average']
+FIT_TYPES_INTERPOLATE = FIT_TYPES + ['Preceding', 'Bracketing Interpolate', 'Bracketing Average']
 DELIMITERS = {',': 'comma', '\t': 'tab', ' ': 'space'}
 AGE_SCALARS = {'Ga': 1e9, 'Ma': 1e6, 'ka': 1e3, 'a': 1}
 AGE_MA_SCALARS = {'Ma': 1, 'ka': 1e-3, 'a': 1e-6, 'Ga': 1e3}
+
+OMIT_KEYS = ('omit_ideo', 'omit_spec', 'omit_iso', 'omit_series')
 
 import string
 
@@ -78,7 +85,9 @@ def alphas(idx):
         return '{}{}'.format(seeds[a], seeds[b])
 
 
-INTERFERENCE_KEYS = ['K4039', 'K3839', 'K3739', 'Ca3937', 'Ca3837', 'Ca3637', 'Cl3638']
+INTERFERENCE_KEYS = ('K4039', 'K3839', 'K3739', 'Ca3937', 'Ca3837', 'Ca3637', 'Cl3638')
+RATIO_KEYS = ('Ca_K', 'Cl_K')
+
 ARGON_KEYS = ('Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36')
 
 ISOTOPES = ARGON_KEYS
@@ -110,7 +119,9 @@ FAILED_COLOR = 'red'
 END_AFTER_COLOR = 'gray'
 NOT_EXECUTABLE_COLOR = 'red'
 
-LIGHT_RED_COLOR = '#FF7373'
+LIGHT_RED = '#FF7373'
+LIGHT_YELLOW = '#F7F6D0'
+LIGHT_GREEN = '#99FF99'
 
 DETECTOR_ORDER = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
 DETECTOR_MAP = {o: i for i, o in enumerate(DETECTOR_ORDER)}
@@ -122,10 +133,12 @@ QTEGRA_INTEGRATION_TIMES = [0.065536, 0.131072, 0.262144, 0.524288,
                             16.777216, 33.554432, 67.108864]
 DEFAULT_INTEGRATION_TIME = 1.048576
 
+K_DECAY_CONSTANTS = {'Min et al., 2000': (5.80e-11, 0, 4.884e-10, 0),
+                     'Steiger & Jager 1977': (5.81e-11, 0, 4.962e-10, 0)}
 # MINNA_BLUFF_IRRADIATIONS = [('NM-205', ['E', 'F' , 'G', 'H', 'O']),
 # ('NM-213', ['A', 'C', 'I', 'J', 'K', 'L']),
 # ('NM-216', ['C', 'D', 'E', 'F']),
 # ('NM-220', ['L', 'M', 'N', 'O']),
 # ('NM-222', ['A', 'B', 'C', 'D']),
 # ('NM-256', ['E', 'F'])]
-#============= EOF =============================================
+# ============= EOF =============================================

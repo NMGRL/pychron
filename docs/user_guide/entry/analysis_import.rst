@@ -7,8 +7,8 @@ Excel
 ~~~~~~~
 To import analyses from an Excel file follow the following file format.
 
-.. note:: Column order is not important, however, column names must match the following table. In addition the column names
-should be on the second row.
+.. note:: Column order is not important, however, column names must match the following table.
+          In addition the column names should be on the second row.
 
 Example Excel template
 

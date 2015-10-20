@@ -12,15 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import HasTraits, Str, List, Float, Property, Tuple, Bool, Instance
 from traitsui.api import View, Item, HGroup, ListEditor, InstanceEditor
-#=============standard library imports ========================
+# =============standard library imports ========================
 from numpy import polyval
 from pychron.hardware.agilent.agilent_unit import AgilentUnit
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 # from pychron.hardware.adc.analog_digital_converter import AnalogDigitalConverter
 
 
@@ -105,7 +105,7 @@ class AgilentMultiplexer(AgilentUnit):
                         cs = 1, 0
                     eq = Polynomial(coefficients=cs)
 
-                ch = Channel(address='{}{:02n}'.format(self.slot, int(section[7:])),
+                ch = Channel(address='{}{:02d}'.format(self.slot, int(section[7:])),
                              kind=kind,
                              name=name,
                              equation=eq)
@@ -188,7 +188,7 @@ class AgilentMultiplexer(AgilentUnit):
 
         return '(@{})'.format(','.join([ci.address for ci in channels]))
 
-    #===============================================================================
+    # ===============================================================================
     # view
     # ===============================================================================
     def traits_view(self):
@@ -198,7 +198,7 @@ class AgilentMultiplexer(AgilentUnit):
                                         editor=InstanceEditor(), style='custom')))
         return v
 
-    #===============================================================================
+    # ===============================================================================
     # private
     # ===============================================================================
     def _get_dc_channels(self):
@@ -233,7 +233,7 @@ class AgilentSingleADC(AgilentUnit):
         channel = self.config_get(config, 'General', 'channel', cast='int')
 
         if self.slot is not None and channel is not None:
-            self.address = '{}{:02n}'.format(self.slot, channel)
+            self.address = '{}{:02d}'.format(self.slot, channel)
             return True
 
     def initialize(self, *args, **kw):
@@ -299,4 +299,4 @@ class AgilentSingleADC(AgilentUnit):
 
 
 
-#============= EOF =====================================
+# ============= EOF =====================================

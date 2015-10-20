@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,23 +12,25 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-from traits.api import HasTraits, Instance, Any, Button, DelegatesTo, Float
-from traitsui.api import View, Item, TableEditor, HGroup
-from pychron.viewable import Viewable
-from enable.component_editor import ComponentEditor
-from pychron.canvas.canvas2D.extraction_line_canvas2D import ExtractionLineCanvas2D
+# ============= enthought library imports =======================
 import os
-from pychron.paths import paths
-# from pychron.managers.manager import Manager
-from pychron.extraction_line.valve_manager import ValveManager
-from pyface.timer.timer import Timer
-#============= standard library imports ========================
-#============= local library imports  ==========================
 
-class UVGasHandlerManager(ValveManager):
+from traits.api import Instance, Any, Button, DelegatesTo
+from traitsui.api import View, Item, HGroup
+from enable.component_editor import ComponentEditor
+
+from pychron.canvas.canvas2D.extraction_line_canvas2D import ExtractionLineCanvas2D
+from pychron.paths import paths
+
+# from pychron.managers.manager import Manager
+from pychron.extraction_line.switch_manager import SwitchManager
+from pyface.timer.timer import Timer
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
+
+class UVGasHandlerManager(SwitchManager):
     canvas = Instance(ExtractionLineCanvas2D)
     controller = Any
     use_explanation = False
@@ -86,9 +88,9 @@ class UVGasHandlerManager(ValveManager):
     def _update_pressure(self):
         self.controller.get_pressure()
 
-#===============================================================================
+# ===============================================================================
 # handlers
-#===============================================================================
+# ===============================================================================
     def _auto_gas_exchange_fired(self):
         self._auto_gas_exchange()
 
@@ -115,4 +117,4 @@ class UVGasHandlerManager(ValveManager):
                  height=500
                  )
         return v
-#============= EOF =============================================
+# ============= EOF =============================================

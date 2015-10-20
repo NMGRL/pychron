@@ -13,41 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from numpy.random.mtrand import normal
-from uncertainties import nominal_value
 
-from pychron.core.ui import set_qt
-
-
-set_qt()
 # ============= enthought library imports =======================
-from numpy import linspace
-from traits.api import HasTraits, Instance, Float
+from traits.api import Instance, Float
 from traitsui.api import View, Item, UItem, VGroup
 # ============= standard library imports ========================
+from uncertainties import nominal_value
 # ============= local library imports  ==========================
-from pychron.graph.regression_graph import StackedRegressionGraph
-from pychron.processing.isotope import Isotope
+from pychron.envisage.tasks.base_editor import BaseTraitsEditor
+from pychron.graph.stacked_regression_graph import StackedRegressionGraph
 
 
-def gen_data(b, m):
-    xs = linspace(15, 100)
-    ys = m * xs + b + normal(size=50)
-    # ys[6] = ys[6] + 10
-    return xs, ys
-
-
-def generate_test_data():
-    xs, ys = gen_data(500, -2)
-    a40 = Isotope(name='Ar40', xs=xs, ys=ys)
-
-    xs, ys = gen_data(10, 0.025)
-    a39 = Isotope(name='Ar39', xs=xs, ys=ys)
-
-    return dict(Ar40=a40, Ar39=a39)
-
-
-class RatioEditor(HasTraits):
+class RatioEditor(BaseTraitsEditor):
     """
     """
     graph = Instance(StackedRegressionGraph)
@@ -56,11 +33,15 @@ class RatioEditor(HasTraits):
     time_zero_offset = Float(0, auto_set=False, enter_set=True)
     ratio_intercept = Float
 
+    basename = ''
     def _time_zero_offset_changed(self):
         self.refresh_plot()
 
+    def setup(self):
+        self.data = self.analysis.isotopes
+        self.setup_graph()
+
     def setup_graph(self):
-        self.d = generate_test_data()
         cd = dict(padding=20,
                   spacing=5,
                   stack_order='top_to_bottom')
@@ -70,7 +51,7 @@ class RatioEditor(HasTraits):
 
     def refresh_plot(self):
         g = self.graph
-        d = self.d
+        d = self.data
 
         g.clear()
 
@@ -94,11 +75,11 @@ class RatioEditor(HasTraits):
         g.new_plot()
         g.set_x_limits(min_=0, max_=100)
         g.set_y_title(niso.name)
-        _,_,nl = g.new_series(niso.offset_xs, niso.ys, filter_outliers_dict=None)
+        _,_,nl = g.new_series(niso.offset_xs, niso.ys, filter_outliers_dict=fd)
 
         g.new_plot()
         g.set_y_title(diso.name)
-        _,_,dl = g.new_series(diso.offset_xs, diso.ys, filter_outliers_dict=None)
+        _,_,dl = g.new_series(diso.offset_xs, diso.ys, filter_outliers_dict=fd)
 
         # g.new_plot()
         # nreg = nl.regressor
@@ -118,7 +99,16 @@ class RatioEditor(HasTraits):
         g.new_plot()
         g.set_y_title('{}/{}'.format(niso.name, diso.name))
         g.set_x_title('Time (s)')
-        p,s,l = g.new_series(xs, rys, fit='linear', filter_outliers_dict=fd)
+        # p,s,l = g.new_series(xs, rys, fit='parabolic', filter_outliers_dict=fd)
+
+        fd = {'filter_outliers': True, 'std_devs': 2, 'iterations': 1}
+
+        fitfunc = lambda p, x: (p[0]*x+p[1])/(p[2]*x+p[3])
+
+        fit = ((fitfunc, [1,1,1,1]), None)
+        p,s,l = g.new_series(xs, rys, fit=fit,
+                             use_error_envelope=False,
+                             filter_outliers_dict=fd)
         reg = l.regressor
         self.ratio_intercept = reg.predict(0)
 
@@ -133,7 +123,7 @@ class RatioEditor(HasTraits):
 
 if __name__ == '__main__':
     re = RatioEditor()
-    re.setup_graph()
+    re.setup()
     re.configure_traits()
 # ============= EOF =============================================
 

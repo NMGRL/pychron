@@ -1,25 +1,25 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import asarray, average, vectorize
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 def _kronecker(ii, jj):
     return int(ii == jj)
 
@@ -27,15 +27,16 @@ def _kronecker(ii, jj):
 kronecker = vectorize(_kronecker)
 
 
-def calculate_mswd(x, errs, k=1):
+def calculate_mswd(x, errs, k=1, wm=None):
     mswd_w = 0
     n = len(x)
     if n >= 2:
         x = asarray(x)
         errs = asarray(errs)
-        xmean_w, _err = calculate_weighted_mean(x, errs)
+        if wm is None:
+            wm, _err = calculate_weighted_mean(x, errs)
 
-        ssw = (x - xmean_w) ** 2 / errs ** 2
+        ssw = (x - wm) ** 2 / errs ** 2
         mswd_w = ssw.sum() / float(n - k)
 
     #         xmean_u = x.mean()
@@ -73,17 +74,21 @@ def validate_mswd(mswd, n, k=1):
          http://en.wikipedia.org/wiki/Goodness_of_fit
          http://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.chi2.html#scipy.stats.chi2
     """
-    if n < 2:
-        return
+    if n - k + 1 < 2:
+        return False
 
+    low, high = get_mswd_limits(n, k)
+    return bool(low <= mswd <= high)
+
+
+def get_mswd_limits(n, k=1):
     dof = n - k
     # calculate the reduced chi2 95% interval for given dof
     # use scale parameter to calculate the chi2_reduced from chi2
     from scipy.stats import chi2
 
     rv = chi2(dof, scale=1 / float(dof))
-    low, high = rv.interval(0.95)
-    return bool(low <= mswd <= high)
+    return rv.interval(0.95)
 
 
 def chi_squared(x, y, sx, sy, a, b, corrcoeffs=None):
@@ -110,7 +115,7 @@ def chi_squared(x, y, sx, sy, a, b, corrcoeffs=None):
     sx = asarray(sx)
     sy = asarray(sy)
 
-    k=0
+    k = 0
     if corrcoeffs is not None:
         # p=((1+(sy/y)**2)*(1+(sx/x)**2))**-2
         k = 2 * b * corrcoeffs * sx * sy
@@ -133,5 +138,5 @@ def calculate_mswd2(x, y, ex, ey, a, b, corrcoeffs=None):
 
     return chi_squared(x, y, ex, ey, a, b, corrcoeffs) / (n - 2)
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from chaco.ticks import AbstractTickGenerator
 from numpy import array
-#============= standard library imports ========================
-#============= local library imports  ==========================
-from pychron.experiment.utilities.identifier import ANALYSIS_MAPPING_INTS, SPECIAL_MAPPING
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
+from pychron.experiment.utilities.identifier import ANALYSIS_MAPPING_INTS, SPECIAL_MAPPING, ANALYSIS_MAPPING
 
 TICKS = array(sorted(ANALYSIS_MAPPING_INTS.values()))
 
@@ -30,7 +30,16 @@ class StaticTickGenerator(AbstractTickGenerator):
 
 
 KEYS = [v[0] for v in sorted(ANALYSIS_MAPPING_INTS.items(), key=lambda x: x[1])]
-TICK_KEYS = [SPECIAL_MAPPING[v] for v in KEYS]
+print ANALYSIS_MAPPING
+print SPECIAL_MAPPING
+TICK_KEYS = KEYS
+# for v in KEYS:
+#     if v in ANALYSIS_MAPPING:
+#         TICK_KEYS.append(ANALYSIS_MAPPING[v])
+#     else:
+#         TICK_KEYS.append(SPECIAL_MAPPING[v])
+
+# TICK_KEYS = [ANALYSIS_MAPPING[v] for v in KEYS]
 
 
 def tick_formatter(x):
@@ -48,5 +57,5 @@ def analysis_type_formatter(x):
         v = ''
     return v
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

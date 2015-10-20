@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,18 +12,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Any
 from enable.api import Interactor
 # from chaco.base_plot_container import BasePlotContainer
 from chaco.plot import Plot
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 
 class ContextualMenuTool(Interactor):
@@ -56,6 +56,8 @@ class ContextualMenuTool(Interactor):
     #    self.parent.status_text = ''
 
     def normal_right_down(self, event):
+        if event.handled:
+            return
 
         comps = self.component.components_at(event.x, event.y)
         if comps:
@@ -97,4 +99,4 @@ class ContextualMenuTool(Interactor):
         menu_manager.destroy()
         event.handled = True
 
-#============= EOF ====================================
+# ============= EOF ====================================

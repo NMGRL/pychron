@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from chaco.tools.broadcaster import BroadcasterTool
 from traits.api import List, on_trait_change, Bool, \
     Property, cached_property, HasTraits, Tuple
@@ -27,13 +27,16 @@ from pychron.graph.tools.rect_selection_tool import RectSelectionTool, RectSelec
 from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
 
 
-#============= standard library imports ========================
+
+
+
+# ============= standard library imports ========================
 from numpy import Inf, asarray, array
 from pychron.processing.fits.interpolation_fit_selector import InterpolationFitSelector
 from pychron.core.regression.interpolation_regressor import InterpolationRegressor
 from chaco.array_data_source import ArrayDataSource
 from pychron.core.helpers.datetime_tools import convert_timestamp
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 
 def bin_analyses(ans):
@@ -152,8 +155,8 @@ class InterpolationEditor(GraphEditor):
                                      color='lightblue', line_style='solid')
         self.graph.redraw()
 
-    def find_references(self, **kw):
-        self._find_references(**kw)
+    def find_references(self):
+        self._find_references()
 
     @on_trait_change('references[]')
     def _update_references(self):
@@ -178,14 +181,14 @@ class InterpolationEditor(GraphEditor):
         self.auto_find = f
 
     def _update_analyses_hook(self):
-        print 'update_analyses_hook', self.auto_find
+        self.debug('update analyses hook auto_find={}'.format(self.auto_find))
         if self.auto_find:
             self._find_references()
 
     def set_references(self, refs, is_append=False, **kw):
         ans = self.processor.make_analyses(refs,
-                                           calculate_age=self.calculate_reference_age,
-                                           unpack=self.unpack_peaktime,
+                                           # calculate_age=self.calculate_reference_age,
+                                           # unpack=self.unpack_peaktime,
                                            **kw)
 
         if is_append:
@@ -195,43 +198,9 @@ class InterpolationEditor(GraphEditor):
 
         self.references = ans
 
-    def _find_references(self, progress=None):
-
-        self.debug('find references {}'.format(progress))
-        ans = []
-        proc = self.processor
-        uuids = []
-        with proc.db.session_ctx():
-            n = len(self.analyses)
-
-            if n > 1:
-                if progress is None:
-                    progress = proc.open_progress(n + 1)
-                else:
-                    progress.increase_max(n)
-
-            for ui in self.analyses:
-                if progress:
-                    progress.change_message('Finding associated analyses for {}'.format(ui.record_id))
-
-                for ai in proc.find_associated_analyses(ui,
-                                                        atype=self.default_reference_analysis_type,
-                                                        exclude_uuids=uuids):
-                    if not ai.uuid in uuids:
-                        uuids.append(ai.uuid)
-                        ans.append(ai)
-
-            self.debug('find references pre make')
-
-            ans = self.processor.make_analyses(ans, progress=progress)
-            ans = sorted(list(ans), key=lambda x: x.analysis_timestamp)
-            self.references = ans
-
-            if progress:
-                progress.soft_close()
-
-            self.debug('find references finished')
-            #self.task.references_pane.items = ans
+    def _find_references(self):
+        refs = self.processor.find_references()
+        self.references = refs
 
     def set_interpolated_values(self, iso, reg, ans):
         mi, ma = self._get_min_max()
@@ -352,7 +321,8 @@ class InterpolationEditor(GraphEditor):
         p = graph.new_plot(
             ytitle=iso,
             xtitle='Time (hrs)',
-            padding=[80, 10, 5, 30])
+            # padding=[80, 10, 5, 30]
+            padding=[80, 80, 80, 80])
         p.y_axis.title_spacing = 60
         p.value_range.tight_bounds = False
 
@@ -566,6 +536,6 @@ class InterpolationEditor(GraphEditor):
     def _clean_references(self):
         return [ri for ri in self.references if ri.temp_status == 0]
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 

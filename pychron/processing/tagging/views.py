@@ -14,8 +14,8 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
-from traits.api import HasTraits, Instance, List, Any
+# ============= enthought library imports =======================
+from traits.api import Instance
 from traitsui.api import View, Item, UItem, VGroup, HGroup
 from traitsui.editors import TableEditor, TabularEditor
 from traitsui.extras.checkbox_column import CheckboxColumn
@@ -24,12 +24,12 @@ from traitsui.handler import Controller
 from traitsui.table_column import ObjectColumn
 from traitsui.tabular_adapter import TabularAdapter
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
-#============= EOF =============================================
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
+# ============= EOF =============================================
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.processing.tagging.analysis_tags import AnalysisTagModel
 from pychron.processing.tagging.data_reduction_tags import DataReductionTagModel, SelectDataReductionTagModel
 

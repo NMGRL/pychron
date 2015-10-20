@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,20 +12,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Property, Int, Callable, Any
 from traitsui.qt4.editor import Editor
 from traitsui.basic_editor_factory import BasicEditorFactory
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from PySide.QtGui import QColor
-#============= local library imports  ==========================
-#============= views ===================================
+# ============= local library imports  ==========================
+# ============= views ===================================
 COLORS = ['red', 'yellow', 'green', 'black']
 QT_COLORS = [QColor(ci) for ci in COLORS]
+
+
 # QT_COLORS = [
 #             QColor(220, 10, 10),
 #             QColor(250, 200, 0),
@@ -63,6 +65,7 @@ def change_intensity(color, fac):
         rgb[i] = min(int(round(intensity * fac, 0)), 255)
 
     return QColor(*rgb)
+
 
 # class qtLED(QLabel):
 #     _state = False
@@ -126,7 +129,7 @@ def change_intensity(color, fac):
 #
 #
 # #    def OnMotion(self, event):
-# #        print event
+# #        print 'exception', event
 # #
 # #    def OnLeft(self, event):
 # #        if self._state:
@@ -239,9 +242,12 @@ class _LEDEditor(Editor):
         return brush
 
     def init(self, parent):
-        '''
+        """
+        """
+        rad = self.factory.radius
+        if not rad:
+            rad = 20
 
-        '''
         if self.control is None:
             self.control = qtLED()
             scene = QGraphicsScene()
@@ -251,11 +257,10 @@ class _LEDEditor(Editor):
             # system background color
             scene.setBackgroundBrush(QBrush(QColor(237, 237, 237)))
             self.control.setStyleSheet("border: 0px")
-            self.control.setMaximumWidth(35)
-            self.control.setMaximumHeight(35)
+            self.control.setMaximumWidth(rad+15)
+            self.control.setMaximumHeight(rad+15)
 
             x, y = 10, 10
-            rad = 20
             cx = x + rad / 1.75
             cy = y + rad / 1.75
 
@@ -265,16 +270,15 @@ class _LEDEditor(Editor):
             self.led = scene.addEllipse(x, y, rad, rad,
                                         pen=pen,
                                         brush=brush
-            )
+                                        )
 
             self.control.setScene(scene)
 
             self.value.on_trait_change(self.update_object, 'state')
 
     def update_object(self, obj, name, new):
-        '''
-
-        '''
+        """
+        """
         if name == 'state':
             if self.control is not None:
                 rect = self.led.rect()
@@ -291,12 +295,13 @@ class _LEDEditor(Editor):
                 #                 self.control.set_state(new)
 
     def update_editor(self, *args, **kw):
-        '''
-        '''
+        """
+        """
         if self.control:
             pass
 
-#        self.control = self._create_control(None)
+
+# self.control = self._create_control(None)
 #        self.value.on_trait_change(self.update_object, 'state')
 
 #    def _create_control(self, parent):
@@ -307,8 +312,9 @@ class _LEDEditor(Editor):
 #        return panel
 
 class LEDEditor(BasicEditorFactory):
-    '''
-    '''
+    """
+    """
     klass = _LEDEditor
+    radius = Int(20)
 
-#============= EOF ====================================
+# ============= EOF ====================================

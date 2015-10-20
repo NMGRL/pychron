@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traitsui.api import View, VGroup, UItem, \
     HGroup, TableEditor, ButtonEditor, Item
@@ -25,8 +25,9 @@ from pyface.image_resource import ImageResource
 from pychron.paths import paths
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 
 class BatchEditPane(TraitsTaskPane):
@@ -63,7 +64,7 @@ class BatchEditPane(TraitsTaskPane):
 
     def _sensitivity_group(self):
         im = ImageResource(
-            name='database_go.png',
+            name='database_go',
             search_path=paths.icon_search_path)
         beditor = ButtonEditor(image=im)
 
@@ -88,4 +89,4 @@ class BatchEditPane(TraitsTaskPane):
                 self._sensitivity_group()))
         return v
 
-        #============= EOF =============================================
+        # ============= EOF =============================================

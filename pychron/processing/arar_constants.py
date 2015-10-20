@@ -12,21 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import HasTraits, Property, Float, Enum, Str, Bool
 from uncertainties import ufloat, nominal_value, std_dev
 
-from pychron.core.ui.preference_binding import bind_preference
 from pychron.pychron_constants import AGE_SCALARS
 
 
-
-
-
-
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 
 # class ICFactor(HasTraits):
 #     detector = Str
@@ -106,6 +101,7 @@ class ArArConstants(HasTraits):
     def __init__(self, *args, **kw):
         #print 'init arar constants'
         try:
+            from pychron.core.ui.preference_binding import bind_preference
             bind_preference(self, 'lambda_b_v', 'pychron.arar.constants.lambda_b')
             bind_preference(self, 'lambda_b_e', 'pychron.arar.constants.lambda_b_error')
             bind_preference(self, 'lambda_e_v', 'pychron.arar.constants.lambda_e')
@@ -143,7 +139,7 @@ class ArArConstants(HasTraits):
 
             bind_preference(self, 'allow_negative_ca_correction', '{}.allow_negative_ca_correction'.format(prefid))
 
-        except AttributeError:
+        except (AttributeError, ImportError):
             pass
 
         super(ArArConstants, self).__init__(*args, **kw)

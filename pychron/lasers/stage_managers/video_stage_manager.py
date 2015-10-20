@@ -12,24 +12,26 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Instance, String, Property, Button, \
     Bool, Event, on_trait_change, Str, Int
 from apptools.preferences.preference_binding import bind_preference
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import time
+import os
+from numpy import asarray, copy
 from threading import Thread, Timer
 
-import os
-#============= local library imports  ==========================
-from pychron.core.helpers.filetools import unique_path
+# ============= local library imports  ==========================
+from pychron.core.helpers.filetools import unique_path, unique_path2
+from pychron.image.cv_wrapper import get_size, crop
+from pychron.mv.lumen_detector import LumenDetector
 from pychron.paths import paths
 from pychron.image.video import Video
 from pychron.canvas.canvas2D.camera import Camera
-from pychron.core.ui.media.sounds import play_sound
 from stage_manager import StageManager
 from pychron.core.ui.stage_component_editor import VideoComponentEditor
 
@@ -84,10 +86,13 @@ class VideoStageManager(StageManager):
     _auto_correcting = False
     stop_timer = Event
 
+    _lumen_detector = Instance(LumenDetector, ())
+
     def bind_preferences(self, pref_id):
         self.debug('binding preferences')
         super(VideoStageManager, self).bind_preferences(pref_id)
-        bind_preference(self.autocenter_manager, 'use_autocenter', '{}.use_autocenter'.format(pref_id))
+        if self.autocenter_manager:
+            bind_preference(self.autocenter_manager, 'use_autocenter', '{}.use_autocenter'.format(pref_id))
 
         bind_preference(self, 'render_with_markup', '{}.render_with_markup'.format(pref_id))
         bind_preference(self, 'auto_upload', 'pychron.media_server.auto_upload')
@@ -176,7 +181,8 @@ class VideoStageManager(StageManager):
     def autocenter(self, *args, **kw):
         return self._autocenter(*args, **kw)
 
-    def snapshot(self, path=None, name=None, auto=False, inform=True):
+    def snapshot(self, path=None, name=None, auto=False,
+                 inform=True, return_blob=False, pic_format='.jpg'):
         """
             path: abs path to use
             name: base name to use if auto saving in default dir
@@ -192,22 +198,38 @@ class VideoStageManager(StageManager):
 
                 if name is None:
                     name = 'snapshot'
-                path, _cnt = unique_path(root=paths.snapshot_dir, base=name,
-                                         extension='jpg')
+                path, _cnt = unique_path2(root=paths.snapshot_dir, base=name,
+                                          extension=pic_format)
+            elif name is not None:
+                if not os.path.isdir(os.path.dirname(name)):
+                    path, _ = unique_path2(root=paths.snapshot_dir, base=name,
+                                           extension=pic_format)
+                else:
+                    path = name
+
             else:
                 path = self.save_file_dialog()
 
         if path:
             self.info('saving snapshot {}'.format(path))
             # play camera shutter sound
-            play_sound('shutter')
+            # play_sound('shutter')
 
             self._render_snapshot(path)
             upath = self._upload(path)
+            if upath is None:
+                upath = ''
+
             if inform:
                 self.information_dialog('Snapshot save to {}. Uploaded to'.format(path, upath))
 
-            return path, upath
+            # return path, upath
+            if return_blob:
+                with open(path, 'rb') as rfile:
+                    im = rfile.read()
+                    return path, upath, im
+            else:
+                return path, upath
 
     def kill(self):
         """
@@ -223,11 +245,11 @@ class VideoStageManager(StageManager):
         if self.video:
             self.video.close(force=True)
 
-        #        if self.use_video_server:
+        # if self.use_video_server:
         #            self.video_server.stop()
-        if self._stage_maps:
-            for s in self._stage_maps:
-                s.dump_correction_file()
+        # if self._stage_maps:
+        #     for s in self._stage_maps:
+        #         s.dump_correction_file()
 
         self.clean_video_archive()
 
@@ -235,6 +257,52 @@ class VideoStageManager(StageManager):
         if self.use_video_archiver:
             self.info('Cleaning video directory')
             self.video_archiver.clean()
+
+    def is_auto_correcting(self):
+        return self._auto_correcting
+
+    crop_width = 2
+    crop_height = 2
+
+    def get_brightness(self):
+        ld = self._lumen_detector
+        # cw, ch = 2 * self.crop_width * self.pxpermm, 2 * self.crop_height * self.pxpermm
+        src = self.video.get_frame()
+        src = self._crop_image(src)
+        # if src:
+        # else:
+        #     src = random.random((ch, cw)) * 255
+        #     src = src.astype('uint8')
+        #         return random.random()
+        csrc = copy(src)
+        src, v = ld.get_value(csrc)
+        return csrc, src, v
+
+    def get_frame_size(self):
+        cw, ch = 2 * self.crop_width * self.pxpermm, 2 * self.crop_height * self.pxpermm
+        return cw, ch
+
+    def _crop_image(self, src):
+        ccx, ccy = 0, 0
+        cw_px, ch_px = self.get_frame_size()
+        # cw_px = int(cw)# * self.pxpermm)
+        # ch_px = int(ch)# * self.pxpermm)
+        w, h = get_size(src)
+
+        x = int((w - cw_px) / 2 + ccx)
+        y = int((h - ch_px) / 2 + ccy)
+
+        r = 4 - cw_px % 4
+        cw_px += r
+
+        return asarray(crop(src, x, y, cw_px, cw_px))
+
+    # def get_video_database(self):
+    # from pychron.database.adapters.video_adapter import VideoAdapter
+    #
+    #     db = VideoAdapter(name=self.parent.dbname,
+    #                       kind='sqlite')
+    #     return db
 
     def _upload(self, path):
         if self.use_media_server and self.auto_upload:
@@ -298,23 +366,20 @@ class VideoStageManager(StageManager):
 
         self.info('saving recording to path {}'.format(path))
 
-        if self.use_db:
-            db = self.get_video_database()
-            db.connect()
-
-            v = db.add_video_record(rid=basename)
-            db.add_path(v, path)
-            self.info('saving {} to database'.format(basename))
-            db.commit()
+        # if self.use_db:
+        # db = self.get_video_database()
+        #     db.connect()
+        #
+        #     v = db.add_video_record(rid=basename)
+        #     db.add_path(v, path)
+        #     self.info('saving {} to database'.format(basename))
+        #     db.commit()
 
         renderer = None
         if self.render_with_markup:
             renderer = self._render_snapshot
 
         self.video.start_recording(path, renderer)
-
-    def is_auto_correcting(self):
-        return self._auto_correcting
 
     def _move_to_hole_hook(self, holenum, correct):
         if correct and self.use_autocenter:
@@ -337,7 +402,7 @@ class VideoStageManager(StageManager):
     def _autocenter(self, holenum=None, ntries=1, save=False, use_interpolation=False):
         rpos = None
         interp = False
-        sm = self._stage_map
+        sm = self.stage_map
 
         if self.autocenter_manager.use_autocenter:
             time.sleep(0.75)
@@ -348,7 +413,7 @@ class VideoStageManager(StageManager):
                     self.stage_controller.x,
                     self.stage_controller.y,
                     holenum,
-                    dim=self._stage_map.g_dimension)
+                    dim=self.stage_map.g_dimension)
 
                 if rpos:
                     self.linear_move(*rpos, block=True,
@@ -386,16 +451,16 @@ class VideoStageManager(StageManager):
 
         return rpos, corrected, interp
 
-    #===============================================================================
+    # ===============================================================================
     # views
-    #===============================================================================
-    #===============================================================================
+    # ===============================================================================
+    # ===============================================================================
     # view groups
-    #===============================================================================
+    # ===============================================================================
 
-    #===============================================================================
+    # ===============================================================================
     # handlers
-    #===============================================================================
+    # ===============================================================================
     @on_trait_change('parent:motor_event')
     def _update_zoom(self, new):
         s = self.stage_controller
@@ -472,9 +537,9 @@ class VideoStageManager(StageManager):
     def _get_record_label(self):
         return 'Start Recording' if not self.is_recording else 'Stop'
 
-    #===============================================================================
+    # ===============================================================================
     # factories
-    #===============================================================================
+    # ===============================================================================
     def _canvas_factory(self):
         """
         """
@@ -484,7 +549,7 @@ class VideoStageManager(StageManager):
             self.warning('Video not Available')
             video = None
 
-        v = VideoLaserTrayCanvas(parent=self,
+        v = VideoLaserTrayCanvas(stage_manager=self,
                                  padding=30,
                                  video=video,
                                  camera=self.camera)
@@ -496,9 +561,9 @@ class VideoStageManager(StageManager):
         e.stop_timer = 'stop_timer'
         return e
 
-    #===============================================================================
+    # ===============================================================================
     # defaults
-    #===============================================================================
+    # ===============================================================================
     def _camera_default(self):
         camera = Camera()
 
@@ -552,10 +617,9 @@ class VideoStageManager(StageManager):
                                     canvas=self.canvas,
                                     application=self.application)
 
-
-#===============================================================================
+# ===============================================================================
 # calcualte camera params
-#===============================================================================
+# ===============================================================================
 # def _calculate_indicator_positions(self, shift=None):
 #        ccm = self.camera_calibration_manager
 #
@@ -636,7 +700,7 @@ class VideoStageManager(StageManager):
 #     # s.update_axes()
 #
 #     s.configure_traits()
-#============= EOF ====================================
+# ============= EOF ====================================
 #    def _mapcenters_button_fired(self):
 #        self.info('Mapping all holes for {}'.format(self.stage_map))
 #        mv = self.machine_vision_manager
@@ -709,4 +773,3 @@ class VideoStageManager(StageManager):
 #        ax = self.stage_controller.axes['y']
 #        ax.drive_ratio = v
 #        ax.save()
-

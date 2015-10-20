@@ -12,20 +12,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 from pychron.core.ui import set_qt
 
 set_qt()
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from chaco.abstract_overlay import AbstractOverlay
 from enable.base import str_to_font
-from traits.api import HasTraits, Instance, Any, Float, File, Property, Str
+from traits.api import HasTraits, Instance, Float, File, Property, Str, List
 from traitsui.api import View, Controller, UItem, Item
 from chaco.api import OverlayPlotContainer
 from enable.component_editor import ComponentEditor
 from pyface.api import FileDialog, OK
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from lxml.etree import ElementTree, Element
 from chaco.plot import Plot
 from chaco.array_plot_data import ArrayPlotData
@@ -37,10 +37,9 @@ from pychron.paths import paths
 from chaco.plot_graphics_context import PlotGraphicsContext
 from traitsui.menu import Action
 import math
-from pychron.core.helpers.filetools import to_bool
-#============= local library imports  ==========================
+from pychron.core.helpers.strtools import to_bool
+# ============= local library imports  ==========================
 class myDataLabel(DataLabel):
-    label_position = Any
     show_label_coords = False
     marker_visible = False
     label_position = 'center'
@@ -48,6 +47,7 @@ class myDataLabel(DataLabel):
 
 
 class LabelsOverlay(AbstractOverlay):
+    labels = List
     def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
         with gc:
             gc.set_font(str_to_font(None, None, '8'))
@@ -156,8 +156,13 @@ class GraphicModel(HasTraits):
         p = Plot(data=data, padding=100)
         p.x_grid.visible = False
         p.y_grid.visible = False
+
+        p.x_axis.visible = False
+        p.y_axis.visible = False
+
         p.x_axis.title = 'X cm'
         p.y_axis.title = 'Y cm'
+
         # font = 'modern 22'
         # p.x_axis.title_font = font
         # p.x_axis.tick_label_font = font
@@ -203,7 +208,7 @@ class GraphicModel(HasTraits):
             xs = x + r * sin(thetas)
             ys = y + r * cos(thetas)
 
-            xn, yn = 'px{:03n}'.format(i), 'py{:03n}'.format(i)
+            xn, yn = 'px{:03d}'.format(i), 'py{:03d}'.format(i)
             data.set_data(xn, xs)
             data.set_data(yn, ys)
 
@@ -257,7 +262,7 @@ class GraphicModel(HasTraits):
 
 
 def make_xml(path, offset=100, default_bounds=(50, 50),
-             default_radius=3, convert_mm=False,
+             default_radius=3.0, convert_mm=False,
              make=True,
              use_label=True,
              rotate=0):
@@ -413,6 +418,7 @@ if __name__ == '__main__':
     # p = '/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/construction/newtrays/16_40_ms.txt'
     # p = '/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/construction/newtrays/40_spokes_rev2.txt'
     # p = '/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/construction/newtrays/40_spokes-5.txt'
+    p = '/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/construction/newtrays/24_spokes.txt'
     gcc, gm = open_txt(p, (2.54, 2.54), 0.03 * 2.54,
                        convert_mm=True, make=True,
                        rotate=0)
@@ -429,4 +435,4 @@ if __name__ == '__main__':
 
     gcc.configure_traits()
 
-#============= EOF =============================================
+# ============= EOF =============================================

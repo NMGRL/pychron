@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,31 +12,31 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 import yaml
 
 from pychron.core.helpers.filetools import add_extension
 from pychron.core.ui import set_qt
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.paths import paths
 
 
 set_qt()
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import os
 from pyface.file_dialog import FileDialog
 from traits.api import HasTraits, List, Enum, Float, Int, Button, Any, Property, Str
 from traitsui.api import View, Item, Controller, UItem, HGroup, VGroup
 from traitsui.editors import ListEditor
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 
 class ActionItem(HasTraits):
-    attr = Enum('age', 'kca', 'rad40_percent', 'Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36', 'Ar41')
+    attr = Enum('age', 'kca', 'rad40_percent', 'Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36', 'Ar41', '37/39')
     comp = Enum('less than', 'greater than', 'between')
     value = Float
     value1 = Float
@@ -49,12 +49,12 @@ class ActionItem(HasTraits):
         super(ActionItem, self).__init__(*args, **kw)
 
         if saved_state:
-            saved_state.pop('comp')
+            # saved_state.pop('comp')
             self.trait_set(**saved_state)
 
     def assemble(self):
         return dict(attr=self.attr,
-                    comp=self.label,
+                    check=self.label,
                     value=self.value,
                     value1=self.value,
                     abbreviated_count_ratio=1.0,
@@ -150,14 +150,14 @@ class ActionEditor(Controller):
             self.model = ActionModel()
 
         self.model.path = p
-        with open(p, 'r') as fp:
-            yd = yaml.load(fp)
+        with open(p, 'r') as rfile:
+            yd = yaml.load(rfile)
             self.model.load_yaml(yd)
 
     def _dump(self, p):
         d = self.model.dump_yaml()
-        with open(p, 'w') as fp:
-            yaml.dump(d, fp, default_flow_style=False)
+        with open(p, 'w') as wfile:
+            yaml.dump(d, wfile, default_flow_style=False)
             self.model.path = p
 
     def _get_path(self):
@@ -167,7 +167,7 @@ class ActionEditor(Controller):
 
         if not os.path.isfile(p):
             p = None
-            dlg = FileDialog(action='save as', default_directory=paths.truncation_dir)
+            dlg = FileDialog(action='save as', default_directory=paths.conditionals_dir)
             if dlg.open():
                 p = dlg.path.strip()
                 if p:
@@ -209,5 +209,5 @@ if __name__ == '__main__':
     a = ActionEditor(model=ActionModel())
     a.configure_traits()
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

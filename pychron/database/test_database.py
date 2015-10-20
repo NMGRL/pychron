@@ -15,8 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 
 class Record(object):
@@ -47,7 +47,7 @@ def get_test_analysis(uuid=None, man=None, calculate_age=True, **kw):
     rec=Record(uuid)
     a = man.make_analysis(rec, calculate_age=calculate_age, **kw)
     return a, man
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

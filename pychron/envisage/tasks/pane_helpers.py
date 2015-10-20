@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,37 +12,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traits.api import Instance
-from traitsui.api import Item, ButtonEditor, Spring, View, UItem
+from traitsui.api import Spring, View, UItem
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
-from pychron.core.helpers.filetools import add_extension
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.displays.display import DisplayController
-from pychron.envisage.resources import icon
 
 
 def spacer(width=-1, **kw):
     return Spring(springy=False, width=width, **kw)
-
-
-def icon_button_editor(trait, name, label=None, editor_kw=None, **kw):
-    if editor_kw is None:
-        editor_kw = {}
-
-    name = add_extension(name, '.png')
-    # name = '{}.png'.format(name)
-    kw['show_label'] = label is not None
-    kw['label'] = label or ''
-    image = icon(name)
-
-    return Item(trait, style='custom',
-                editor=ButtonEditor(image=image, **editor_kw),
-                **kw)
 
 
 class ConsolePane(TraitsDockPane):
@@ -55,5 +38,5 @@ class ConsolePane(TraitsDockPane):
                        style='custom'))
         return v
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
