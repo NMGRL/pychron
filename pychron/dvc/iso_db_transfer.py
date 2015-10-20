@@ -23,15 +23,13 @@ import json
 
 from datetime import timedelta
 
-
-
 # ============= local library imports  ==========================
 from numpy import array, array_split
 from pychron.canvas.utils import make_geom
 from pychron.core.helpers.datetime_tools import make_timef, bin_timestamps, get_datetime
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.database.records.isotope_record import IsotopeRecordView
-from pychron.dvc import jdump
+from pychron.dvc import dvc_dump
 from pychron.dvc.dvc import DVC
 from pychron.dvc.dvc_persister import DVCPersister, format_experiment_identifier
 from pychron.experiment.automated_run.persistence_spec import PersistenceSpec
@@ -399,7 +397,7 @@ order by ant.analysis_timestamp ASC
                 j, e = 0, 0
 
             yd.append({'j': j, 'j_err': e, 'position': pos, 'decay_constants': {}})
-            jdump(yd, p)
+            dvc_dump(yd, p)
 
     def _transfer_analysis(self, rec, exp, overwrite=True):
         dest = self.dvc.db
@@ -568,13 +566,17 @@ def experiment_id_modifier(root, expid):
                     write = True
 
             if write:
-                jdump(jd, p)
+                dvc_dump(jd, p)
 
 
 def load_path():
-    path = '/Users/ross/Sandbox/dvc_imports/NM-276.txt'
-    expid = 'Irradiation-NM-276'
-    creator = 'mcintosh'
+    # path = '/Users/ross/Sandbox/dvc_imports/NM-276.txt'
+    # expid = 'Irradiation-NM-276'
+    # creator = 'mcintosh'
+
+    path = '/Users/ross/Sandbox/dvc_imports/chesner_unknowns.txt'
+    expid = 'toba'
+    creator = 'root'
 
     runs = e.runlist_load(path)
     return runs, expid, creator
@@ -621,10 +623,10 @@ if __name__ == '__main__':
     e.quiet = True
     e.init()
 
-    runs, expid, creator = load_path()
-    runs, expid, creator = load_import_request()
-    e.bulk_import_irradiations('root', dry=False)
-    # e.bulk_import_irradiation('NM-261')
+    # runs, expid, creator = load_path()
+    # runs, expid, creator = load_import_request()
+    # e.bulk_import_irradiations('root', dry=False)
+    e.bulk_import_irradiation('NM-274', 'root', dry=False)
 
     # e.do_export(runs, expid, creator, create_repo=False)
 
