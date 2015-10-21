@@ -13,20 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-import time
-
-from pychron.core.ui import set_qt
-
-set_qt()
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.core.helpers.logger_setup import logging_setup
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.core.scpi_device import SCPIDevice
-
-
-logging_setup('keithley')
 
 
 class KeithleyMeter(CoreDevice):
@@ -34,18 +25,34 @@ class KeithleyMeter(CoreDevice):
 
 
 class SCPIKeithley(SCPIDevice):
+    def zero(self):
+        self.debug('Turn zero-check on')
+        self.tell('SYST:ZCH ON')
+
+        self.debug('Turn zero-correct on')
+        self.tell('SYST:ZCOR ON')
+
+        self.debug('Turn zero-check off')
+        self.tell('SYST:ZCH OFF')
+
     def configure_instrument(self):
 
         # self.tell('SYST:ZCH ON')
         # self.tell('TRIG:COUNT INF;SOUR TIM;TIM 0.1')
-        self.tell('TRIG:COUNT INF')
         # self.tell('TRIG:SOUR TIM')
         # self.tell('TRIG:TIM 0.1')
 
-        self.tell('SYST:ZCH OFF')
+        # self.tell('SYST:ZCH OFF')
         # self.tell('SYST:ZCOR ON')
         self.tell('VOLT:RANG:AUTO ON')
-        self.trigger()
+
+        self.zero()
+
+        # setup counting
+        self.tell('ARM:LAY2:SOUR IMM')
+        self.tell('TRIG:COUNT INF')
+        self.tell('INIT')
+
         # self.tell('VOLT:RANG:AUTO OFF')
         # self.tell('SENS:VOLT:RANG 20')
         # self.tell('STAT:PRES')
@@ -53,6 +60,12 @@ class SCPIKeithley(SCPIDevice):
     #     print self.ask('read?')
 
 if __name__ == '__main__':
+    import time
+    from pychron.paths import paths
+    from pychron.core.helpers.logger_setup import logging_setup
+    paths.build('_dev')
+    logging_setup('keithley')
+
     d = SCPIKeithley(name='keithley617b')
     d.bootstrap()
 

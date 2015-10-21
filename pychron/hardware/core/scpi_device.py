@@ -30,7 +30,7 @@ class SCPIDevice(CoreDevice):
         self.tell('*CLS')
 
     def identify_instrument(self):
-        v =self.ask('*IDN?')
+        v = self.ask('*IDN?')
         self.info('Instrument ID {}'.format(v))
 
     def configure_instrument(self):
