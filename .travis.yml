@@ -39,7 +39,7 @@ before_install:
 install:
   - conda create --yes --quiet -n pychron-test ${PKGS} ${OPTIONAL}
   - source activate pychron-test
-  - conda install --yes --file requirements_tests.txt
-  - pip install -r pip_requirements.txt
+  - conda install --yes --file travis_conda_requirements.txt
+  - pip install -r travis_pip_requirements.txt
 
 script: python setup.py test

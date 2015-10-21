@@ -1,5 +1,4 @@
 statsmodels==0.5.0
-peakutils
 #PyYAML==3.11
 #traits>=4.4.0
 #pyface>=4.4.0
