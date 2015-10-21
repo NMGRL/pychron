@@ -393,7 +393,7 @@ class Ideogram(BaseArArFigure):
             if self.group_id > 0:
                 for ov in plot.overlays:
                     if isinstance(ov, IdeogramPointsInset):
-                        print self.group_id, startidx, ov.value.get_bounds()[1] + 1
+                        print 'ideogram point inset', self.group_id, startidx, ov.value.get_bounds()[1] + 1
                         startidx = max(startidx, ov.value.get_bounds()[1] + 1)
             else:
                 startidx = 1

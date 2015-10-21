@@ -23,7 +23,6 @@
     https://gist.github.com/sixtenbe/1178136
 """
 from numpy import Inf, isscalar, array, argmax, polyfit, asarray
-import peakutils
 
 
 def _datacheck_peakdetect(x_axis, y_axis):
@@ -151,42 +150,6 @@ def find_peaks(y_axis, x_axis=None, lookahead=300, delta=0):
     return [max_peaks, min_peaks]
 
 
-def find_fine_peak(func, initial_limits=(0, 1), tol=1, **find_peak_kw):
-    """
-
-    :param func:
-    :param initial_limits:
-    :param tol: break loop if fine peak position is within tol% of the coarse peak position
-    :param find_peak_kw: keywords to pass to find_peaks
-    :return:
-    """
-    xs, ys = func(*initial_limits)
-    maxp, minp = find_peaks(ys, xs, **find_peak_kw)
-    p = maxp[0][0]
-
-    alpha = 0.1
-
-    # convert tol from percent to decimal e.g 1% = 0.01
-    tol = tol * 0.01
-    for i in range(50):
-        alpha = alpha / 2.
-        ll, ul = p * (1 - alpha), p * (1 + alpha)
-        # print 'new limits {} {}'.format(ll, ul)
-        # rxs, rys = cumulative_probability(oxs, oes, ll, ul, n=500)
-        rxs, rys = func(ll, ul)
-        maxp, minp = find_peaks(rys, rxs, lookahead=1)
-
-        rp = maxp[0][0]
-        dev = abs(p - rp) / p
-        # print 'coarse peak: {}, fine peak: {}, dev={}%'.format(p, rp, dev*100)
-        if dev < tol:
-            break
-
-        p = rp
-
-    return rp
-
-
 class PeakCenterError(BaseException):
     def __init__(self, *args, **kw):
         super(PeakCenterError, self).__init__(*args)
@@ -262,93 +225,70 @@ def calculate_peak_center(x, y, test_peak_flat=True, min_peak_height=1.0, percen
 
 
 def fast_find_peaks(ys, xs, **kw):
+    try:
+        from peakutils import indexes
+    except ImportError:
+        from pyface.message_dialog import warning
+        warning(None, 'PeakUtils required to identify and label peaks.\n\n'
+                      'Please install PeakUtils. From commandline use "pip install peakutils"')
+        return [], []
+
     ys, xs = asarray(ys), asarray(xs)
-    indexes = peakutils.indexes(ys, **kw)
-    peaks_x = peakutils.interpolate(xs, ys, ind=indexes)
+    indexes = indexes(ys, **kw)
+    peaks_x = interpolate(xs, ys, ind=indexes)
     return peaks_x, ys[indexes]
 
-# if __name__ == '__main__':
-#     from pychron.core.stats.probability_curves import cumulative_probability
-#
-#     # oxs = [10, 10, 10, 20, 20, 20]
-#     # oes = [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
-#     oxs = [10, 10, 10]
-#     oes = [0.1, 0.1, 0.1]
-#
-#     # p = find_fine_peak(lambda mi, ma: cumulative_probability(oxs, oes, mi, ma, n=500),
-#     #                    tol=0.001, initial_limits=(5, 15), lookahead=1)
-#     p = timethis(find_fine_peak, args=(lambda mi, ma: cumulative_probability(oxs, oes, mi, ma, n=500),),
-#                  kwargs=dict(tol=0.001, initial_limits=(5, 15), lookahead=1))
-#     print p
-#
-#     ll = 5
-#     ul = 15
-#
-#     cp = None
-#     for i in range(10):
-#         print ll, ul
-#         xs, ys = cumulative_probability(oxs, oes, ll, ul, n=500)
-#         try:
-#             cp = calculate_peak_center(xs, ys, test_peak_flat=False)
-#             break
-#         except PeakCenterError, e:
-#             print e
-#             if e.low_pos_error:
-#                 ll *= 0.5
-#             elif e.high_pos_error:
-#                 ul *= 1.5
-#             else:
-#                 break
-#
-#     print cp
 
+def interpolate(x, y, ind=None, width=10, func=None):
+    """
+    modified from peakutils to handle edge peaks
 
-    # xs, ys = cumulative_probability(oxs, oes, 5, 15, n=500)
-    # maxp, minp = find_peaks(ys, xs, lookahead=1)
-    # plt.subplot(211)
-    # plt.plot(xs, ys)
-    #
-    # p = maxp[0][0]
-    # alpha = 0.1
-    # for i in range(5):
-    #     alpha = alpha/2.
-    #     ll, ul = p * (1 - alpha), p * (1 + alpha)
-    #     print 'new limits {} {}'.format(ll, ul)
-    #     rxs, rys = cumulative_probability(oxs, oes, ll, ul, n=500)
-    #     maxp, minp = find_peaks(rys, rxs, lookahead=1)
-    #
-    #     # plt.subplot(212)
-    #     # plt.plot(rxs, rys)
-    #     # plt.ylim(-1, max(rys))
-    #     rp = maxp[0][0]
-    #     print 'coarse peak: {}, fine peak: {}'.format(p, rp)
-    #     p = rp
-    # #     print maxp
-    # #     rp=0
-    # #
-    # #     # plt.axvline(xs[i])
-    # plt.show()
-    # from pylab import *
-    #
-    # def multi_peak_generator(values):
-    #     for v in values:
-    #         m = 0.5
-    #         if 5.5 <= v <= 6:
-    #             m = 3
-    #         elif 7 <= v <= 8:
-    #             m = 6
-    #
-    #         yield m  # + random() / 10.
-    #
-    #
-    # xs = linspace(3, 10, 101)
-    # ys = list(multi_peak_generator(xs))
-    # print ys
-    # mxp, mip = find_peaks(ys, lookahead=2, delta=1.5)
-    #
-    # plot(xs, ys, 'o')
-    # for i, v in mxp:
-    #     print i, v, xs[i]
-    #     axvline(xs[i])
-    # show()
+    Tries to enhance the resolution of the peak detection by using
+    Gaussian fitting, centroid computation or an arbitrary function on the
+    neighborhood of each previously detected peak index.
+
+    Parameters
+    ----------
+    x : ndarray
+        Data on the x dimension.
+    y : ndarray
+        Data on the y dimension.
+    ind : ndarray
+        Indexes of the previously detected peaks. If None, indexes() will be
+        called with the default parameters.
+    width : int
+        Number of points (before and after) each peak index to pass to *func*
+        in order to encrease the resolution in *x*.
+    func : function(x,y)
+        Function that will be called to detect an unique peak in the x,y data.
+
+    Returns
+    -------
+    ndarray :
+        Array with the adjusted peak positions (in *x*)
+    """
+
+    out = []
+    try:
+        if func is None:
+            from peakutils import gaussian_fit
+            func = gaussian_fit
+
+        if ind is None:
+            from peakutils import indexes
+            ind = indexes(y)
+
+        for slice_ in (slice(max(0, i - width), min(i + width, y.shape[0])) for i in ind):
+            try:
+                fit = func(x[slice_], y[slice_])
+                out.append(fit)
+            except Exception:
+                pass
+    except ImportError:
+        from pyface.message_dialog import warning
+        warning(None, 'PeakUtils required to identify and label peaks.\n\n'
+                      'Please install PeakUtils. From commandline use "pip install peakutils"')
+
+    return array(out)
+
 # ============= EOF =============================================
