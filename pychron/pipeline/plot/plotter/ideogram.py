@@ -25,20 +25,16 @@ from traits.api import Array
 # ============= standard library imports ========================
 from numpy import array, arange, \
     Inf, argmax
-from numpy import max as np_max
 # ============= local library imports  ==========================
 from uncertainties import nominal_value
 from pychron.core.helpers.formatting import floatfmt
+from pychron.core.stats.peak_detection import fast_find_peaks
 from pychron.core.stats.probability_curves import cumulative_probability, kernel_density
 from pychron.pipeline.plot.flow_label import FlowPlotLabel
-
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
-# from pychron.pipeline.plot.overlays. import FlowPlotLabel
 from pychron.pipeline.plot.overlays.ideogram_inset_overlay import IdeogramInset, IdeogramPointsInset
 
 from pychron.pipeline.plot.overlays.mean_indicator_overlay import MeanIndicatorOverlay
-from pychron.core.stats.peak_detection import find_peaks, find_fine_peak
-# from pychron.pipeline.plot import OverlayMoveTool
 from pychron.pipeline.plot.point_move_tool import OverlayMoveTool
 from pychron.graph.ticks import IntTickGenerator
 from pychron.pychron_constants import PLUSMINUS, SIGMA
@@ -465,26 +461,35 @@ class Ideogram(BaseArArFigure):
         xs = line.index.get_data()
         ys = line.value.get_data()
 
-        try:
-            maxp, minp = find_peaks(ys, xs, lookahead=1)
-        except IndexError:
-            return
-
-        for age, relative_prob in maxp:
-            func = lambda mi, ma: cumulative_probability(ages, errors, mi, ma, n=N)
-            limits = (age * 0.99, age * 1.01)
-            try:
-                p = find_fine_peak(func=func, initial_limits=limits, tol=0.001, lookahead=1)
-            except IndexError:
-                continue
-
+        xp, yp = fast_find_peaks(ys, xs)
+        for xi, yi in zip(xp, yp):
             label = PeakLabel(line,
-                              data_point=(p, relative_prob),
-                              label_text=floatfmt(p, n=3),
+                              data_point=(xi, yi),
+                              label_text=floatfmt(xi, n=3),
                               border_visible=False,
                               marker_visible=False,
                               show_label_coords=False)
             line.overlays.append(label)
+            # try:
+            #     maxp, minp = find_peaks(ys, xs, lookahead=1)
+            # except IndexError:
+            #     return
+            #
+            # for age, relative_prob in maxp:
+            #     func = lambda mi, ma: cumulative_probability(ages, errors, mi, ma, n=N)
+            #     limits = (age * 0.99, age * 1.01)
+            #     try:
+            #         p = find_fine_peak(func=func, initial_limits=limits, tol=0.001, lookahead=1)
+            #     except IndexError:
+            #         continue
+            #
+            #     label = PeakLabel(line,
+            #                       data_point=(p, relative_prob),
+            #                       label_text=floatfmt(p, n=3),
+            #                       border_visible=False,
+            #                       marker_visible=False,
+            #                       show_label_coords=False)
+            #     line.overlays.append(label)
 
     def _add_info(self, g, plot):
         if self.group_id == 0:
@@ -852,9 +857,9 @@ class Ideogram(BaseArArFigure):
 
         if self.options.mean_calculation_kind == 'kernel':
             wm, we = 0, 0
-            delta = 1
-            maxs, _mins = find_peaks(ys, xs, delta=delta, lookahead=1)
-            wm = np_max(maxs, axis=1)[0]
+            peak_xs, peak_ys = fast_find_peaks(ys, xs)
+            wm = peak_xs[0]
+            # wm = np_max(maxs, axis=1)[0]
         else:
             wage = self.analysis_group.weighted_age
             wm, we = wage.nominal_value, wage.std_dev

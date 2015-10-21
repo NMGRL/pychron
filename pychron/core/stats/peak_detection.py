@@ -22,9 +22,8 @@
 """
     https://gist.github.com/sixtenbe/1178136
 """
-from numpy import Inf, isscalar, array, argmax, polyfit
-
-from pychron.core.codetools.simple_timeit import timethis
+from numpy import Inf, isscalar, array, argmax, polyfit, asarray
+import peakutils
 
 
 def _datacheck_peakdetect(x_axis, y_axis):
@@ -262,40 +261,46 @@ def calculate_peak_center(x, y, test_peak_flat=True, min_peak_height=1.0, percen
     return [lx, cx, hx], [ly, cy, hy], mx, my
 
 
-if __name__ == '__main__':
-    from pychron.core.stats.probability_curves import cumulative_probability
+def fast_find_peaks(ys, xs, **kw):
+    ys, xs = asarray(ys), asarray(xs)
+    indexes = peakutils.indexes(ys, **kw)
+    peaks_x = peakutils.interpolate(xs, ys, ind=indexes)
+    return peaks_x, ys[indexes]
 
-    # oxs = [10, 10, 10, 20, 20, 20]
-    # oes = [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
-    oxs = [10, 10, 10]
-    oes = [0.1, 0.1, 0.1]
-
-    # p = find_fine_peak(lambda mi, ma: cumulative_probability(oxs, oes, mi, ma, n=500),
-    #                    tol=0.001, initial_limits=(5, 15), lookahead=1)
-    p = timethis(find_fine_peak, args=(lambda mi, ma: cumulative_probability(oxs, oes, mi, ma, n=500),),
-                 kwargs=dict(tol=0.001, initial_limits=(5, 15), lookahead=1))
-    print p
-
-    ll = 5
-    ul = 15
-
-    cp = None
-    for i in range(10):
-        print ll, ul
-        xs, ys = cumulative_probability(oxs, oes, ll, ul, n=500)
-        try:
-            cp = calculate_peak_center(xs, ys, test_peak_flat=False)
-            break
-        except PeakCenterError, e:
-            print e
-            if e.low_pos_error:
-                ll *= 0.5
-            elif e.high_pos_error:
-                ul *= 1.5
-            else:
-                break
-
-    print cp
+# if __name__ == '__main__':
+#     from pychron.core.stats.probability_curves import cumulative_probability
+#
+#     # oxs = [10, 10, 10, 20, 20, 20]
+#     # oes = [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
+#     oxs = [10, 10, 10]
+#     oes = [0.1, 0.1, 0.1]
+#
+#     # p = find_fine_peak(lambda mi, ma: cumulative_probability(oxs, oes, mi, ma, n=500),
+#     #                    tol=0.001, initial_limits=(5, 15), lookahead=1)
+#     p = timethis(find_fine_peak, args=(lambda mi, ma: cumulative_probability(oxs, oes, mi, ma, n=500),),
+#                  kwargs=dict(tol=0.001, initial_limits=(5, 15), lookahead=1))
+#     print p
+#
+#     ll = 5
+#     ul = 15
+#
+#     cp = None
+#     for i in range(10):
+#         print ll, ul
+#         xs, ys = cumulative_probability(oxs, oes, ll, ul, n=500)
+#         try:
+#             cp = calculate_peak_center(xs, ys, test_peak_flat=False)
+#             break
+#         except PeakCenterError, e:
+#             print e
+#             if e.low_pos_error:
+#                 ll *= 0.5
+#             elif e.high_pos_error:
+#                 ul *= 1.5
+#             else:
+#                 break
+#
+#     print cp
 
 
     # xs, ys = cumulative_probability(oxs, oes, 5, 15, n=500)

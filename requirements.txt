@@ -15,6 +15,7 @@ lxml
 xlrd
 xlwt
 jinja2
+peakutils
 
 #uncertainties
 #xlrd==0.7.1
