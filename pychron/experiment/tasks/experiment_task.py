@@ -69,7 +69,7 @@ class ExperimentEditorTask(EditorTask):
 
     isotope_evolution_pane = Instance(IsotopeEvolutionPane)
     experiment_factory_pane = Instance(ExperimentFactoryPane)
-    wait_pane = Instance(WaitPane)
+    # wait_pane = Instance(WaitPane)
     load_pane = Instance('pychron.loading.panes.LoadDockPane')
     load_table_pane = Instance('pychron.loading.panes.LoadTablePane')
     laser_control_client_pane = None
@@ -218,7 +218,8 @@ class ExperimentEditorTask(EditorTask):
         self.isotope_evolution_pane = IsotopeEvolutionPane(name=name)
 
         self.experiment_factory_pane = ExperimentFactoryPane(model=self.manager.experiment_factory)
-        self.wait_pane = WaitPane(model=self.manager.executor.wait_group)
+        # self.wait_pane = WaitPane(model=self.manager.executor.wait_group)
+        wait_pane = WaitPane(model=self.manager.executor.wait_group)
 
         ex = self.manager.executor
         panes = [StatsPane(model=self.manager.stats),
@@ -229,7 +230,7 @@ class ExperimentEditorTask(EditorTask):
                  ConnectionStatusPane(model=ex),
                  self.experiment_factory_pane,
                  self.isotope_evolution_pane,
-                 self.wait_pane]
+                 wait_pane]
 
         if self.loading_manager:
             self.load_pane = self.window.application.get_service('pychron.loading.panes.LoadDockPane')
@@ -591,8 +592,8 @@ class ExperimentEditorTask(EditorTask):
                 pass
 
             # bind the window control to the notification manager
-            if self.window:
-                self.manager.executor.notification_manager.parent = self.window.control
+            # if self.window:
+            #     self.manager.executor.notification_manager.parent = self.window.control
 
             for ei in self.editor_area.editors:
                 self._backup_editor(ei)
@@ -606,7 +607,7 @@ class ExperimentEditorTask(EditorTask):
             # launch execution thread
             # if successful open an auto figure task
             if self.manager.execute_queues(qs):
-                self._show_pane(self.wait_pane)
+                # self._show_pane(self.wait_pane)
                 self._set_last_experiment(self.active_editor.path)
             else:
                 self.warning('experiment queue did not start properly')
@@ -616,8 +617,8 @@ class ExperimentEditorTask(EditorTask):
         if new:
             if name == 'measuring':
                 self._show_pane(self.isotope_evolution_pane)
-            elif name == 'extracting':
-                self._show_pane(self.wait_pane)
+            # elif name == 'extracting':
+            #     self._show_pane(self.wait_pane)
 
     @on_trait_change('active_editor:queue:dclicked')
     def _edit_event(self):
