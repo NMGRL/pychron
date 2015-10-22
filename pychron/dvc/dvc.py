@@ -183,7 +183,9 @@ class DVC(Loggable):
             path = os.path.join(paths.dvc_dir, self.meta_repo_name)
             self.meta_repo.clone(url, path)
 
-        # self.synchronize()
+        # update meta repo.
+        self.meta_pull()
+
         if self.db.connect():
             # self._defaults()
             return True

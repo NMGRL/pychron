@@ -390,17 +390,18 @@ class PipelineEngine(Loggable):
 
     def run_from_pipeline(self):
         if not self.state:
-            self.run_pipeline()
+            ret = self.run_pipeline()
         else:
             node = self.selected
             idx = self.pipeline.nodes.index(node)
             idx = max(0, idx - 1)
             node = self.pipeline.nodes[idx]
 
-            self.run_pipeline(run_from=node)
+            ret = self.run_pipeline(run_from=node)
+        return ret
 
     def resume_pipeline(self):
-        self.run_pipeline(state=self.state)
+        return self.run_pipeline(state=self.state)
 
     def run_pipeline(self, run_from=None, state=None):
         if state is None:
