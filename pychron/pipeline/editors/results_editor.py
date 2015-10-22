@@ -22,13 +22,14 @@ from traitsui.api import View, UItem, TabularEditor
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.core.helpers.formatting import floatfmt
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor, grouped_name
-from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
+from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA, LIGHT_RED
 
 
 class IsoEvolutionResultsAdapter(TabularAdapter):
     columns = [('RunID', 'record_id'), ('Isotope', 'isotope'), ('Fit', 'fit'),
                ('Intercept', 'intercept_value'),
                (PLUSMINUS_ONE_SIGMA, 'intercept_error'),
+               ('%', 'percent_error'),
                ('Regression', 'regression_str')]
     font = '10'
     record_id_width = Int(80)
@@ -36,23 +37,33 @@ class IsoEvolutionResultsAdapter(TabularAdapter):
     fit_width = Int(80)
     intercept_value_width = Int(120)
     intercept_error_width = Int(80)
+    percent_error_width = Int(60)
 
     intercept_value_text = Property
     intercept_error_text = Property
+    percent_error_text = Property
+
+    def get_bg_color(self, obj, trait, row, column=0):
+        item = getattr(obj, trait)[row]
+        if not item.goodness:
+            return LIGHT_RED
 
     def _get_intercept_value_text(self):
         return self._format_number('intercept_value')
 
-    def _format_number(self, attr):
+    def _get_intercept_error_text(self):
+        return self._format_number('intercept_error')
+
+    def _get_percent_error_text(self):
+        return self._format_number('percent_error', n=3)
+
+    def _format_number(self, attr, **kw):
         if self.item.record_id:
             v = getattr(self.item, attr)
-            r = floatfmt(v)
+            r = floatfmt(v, **kw)
         else:
             r = ''
         return r
-
-    def _get_intercept_error_text(self):
-        return self._format_number('intercept_error')
 
 
 class IsoEvolutionResultsEditor(BaseTraitsEditor):

@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traitsui.api import View, EnumEditor
+from traitsui.api import EnumEditor, Item
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.options.options import AppearanceSubOptions, SubOptions, MainOptions, object_column, checkbox_column
@@ -23,7 +23,7 @@ from pychron.options.options import AppearanceSubOptions, SubOptions, MainOption
 
 class IsoEvoSubOptions(SubOptions):
     def traits_view(self):
-        return View()
+        return self._make_view(Item('goodness_threshold'))
 
 
 class IsoEvoAppearanceOptions(AppearanceSubOptions):

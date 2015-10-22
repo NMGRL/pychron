@@ -135,7 +135,9 @@ class IsoEvoResult(HasTraits):
     fit = Str
     intercept_value = Float
     intercept_error = Float
+    percent_error = Float
     regression_str = Str
+    goodness = Bool(True)
 
     analysis = Instance('pychron.processing.analyses.analysis.Analysis')
 
@@ -205,6 +207,7 @@ class FitIsotopeEvolutionNode(FitNode):
             state.editors.append(e)
 
     def _assemble_result(self, xi, prog, i, n):
+        po = self.plotter_options
 
         if prog:
             prog.change_message('Load raw data {}'.format(xi.record_id))
@@ -222,9 +225,18 @@ class FitIsotopeEvolutionNode(FitNode):
             else:
                 iso = next((i.baseline for i in isotopes.values() if i.detector == k), None)
 
+            i, e = nominal_value(iso.uvalue), std_dev(iso.uvalue)
+            pe = e / i * 100
+            goodness_threshold = po.goodness_threshold
+            goodness = True
+            if goodness_threshold:
+                goodness = pe < goodness_threshold
+
             yield IsoEvoResult(analysis=xi,
-                               intercept_value=nominal_value(iso.uvalue),
-                               intercept_error=std_dev(iso.uvalue),
+                               intercept_value=i,
+                               intercept_error=e,
+                               percent_error=pe,
+                               goodness=goodness,
                                regression_str=iso.regressor.tostring(),
                                fit=f.fit,
                                isotope=k)

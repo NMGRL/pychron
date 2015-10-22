@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import List
+from traits.api import List, Float
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.options.aux_plot import AuxPlot
@@ -33,6 +33,7 @@ class IsoFilterFitAuxPlot(AuxPlot, IsoFilterFit):
 class IsotopeEvolutionOptions(FitOptions):
     aux_plot_klass = IsoFilterFitAuxPlot
     subview_names = List(['Main', 'IsoEvo', 'Appearance'])
+    goodness_threshold = Float  # in percent
     # _main_options_klass = IsoEvoMainOptions
 
     def _get_subview(self, name):
