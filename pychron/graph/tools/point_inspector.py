@@ -63,7 +63,7 @@ class PointInspector(InfoInspector):
             inds = self.get_selected_index()
             lines = []
             convert_index = self.convert_index
-            if inds is not None:
+            if inds is not None and len(inds):
                 he = hasattr(self.component, 'yerror')
 
                 ys = comp.value.get_data()[inds]
