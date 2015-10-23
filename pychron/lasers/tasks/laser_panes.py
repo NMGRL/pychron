@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from traits.api import Property
 from traitsui.api import View, UItem, Group, InstanceEditor, HGroup, \
-    EnumEditor, Item, spring, Spring, ButtonEditor, VGroup, RangeEditor
+    EnumEditor, Item, spring, Spring, ButtonEditor, VGroup, RangeEditor, ListStrEditor
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 # ============= standard library imports ========================
@@ -129,8 +129,12 @@ class StageControlPane(TraitsDockPane):
 
             tc_grp = VGroup(UItem('tray_calibration.style',
                                   enabled_when='not tray_calibration.isCalibrating()'),
-                            UItem('tray_calibration.calibrate',
-                                  editor=ButtonEditor(label_value='tray_calibration.calibration_step')),
+                            HGroup(UItem('tray_calibration.calibrate',
+                                         editor=ButtonEditor(label_value='tray_calibration.calibration_step')),
+                                   UItem('tray_calibration.add_holes_button'),
+                                   UItem('tray_calibration.reset_holes_button')),
+                            UItem('tray_calibration.holes_list',
+                                  editor=ListStrEditor()),
                             HGroup(Item('tray_calibration.x', format_str='%0.3f', style='readonly'),
                                    Item('tray_calibration.y', format_str='%0.3f', style='readonly')),
                             Item('tray_calibration.rotation', format_str='%0.3f', style='readonly'),

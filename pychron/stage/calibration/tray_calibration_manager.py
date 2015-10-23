@@ -15,10 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import cPickle as pickle
-
-from traits.api import Float, Event, String, Any, Enum, Property, cached_property
+from traits.api import Float, Event, String, Any, Enum, Property, cached_property, Button, List
 # ============= standard library imports ========================
+import shutil
 import cPickle as pickle
 import os
 # ============= local library imports  ==========================
@@ -47,6 +46,17 @@ STYLE_DICT = {'Free': FreeCalibrator,
               'Linear': LinearCalibrator}
 
 
+def get_hole_calibration(name, hole):
+    p = os.path.join(paths.hidden_dir, '{}_calibrations'.format(name))
+    if os.path.isdir(p):
+        hole = int(hole)
+        for pp in os.listdir(p):
+            with open(pp, 'rb') as rfile:
+                holes, ca = pickle.load(rfile)
+                if hole in holes:
+                    return ca
+
+
 class TrayCalibrationManager(Loggable):
     x = Float
     y = Float
@@ -60,6 +70,10 @@ class TrayCalibrationManager(Loggable):
     style = Enum('Tray', 'Free', 'Hole', 'Linear')
     canvas = Any
     calibrator = Property(depends_on='style')
+
+    add_holes_button = Button
+    reset_holes_button = Button
+    holes_list = List
 
     def isCalibrating(self):
         return self.calibration_step != 'Calibrate'
@@ -104,6 +118,32 @@ class TrayCalibrationManager(Loggable):
     # ===============================================================================
     # handlers
     # ===============================================================================
+    def _reset_holes_button_fired(self):
+        name = self.parent.stage_map_name
+        root = os.path.join(paths.hidden_dir, '{}_calibrations'.format(name))
+        if os.path.isdir(root):
+            shutil.rmtree(root)
+
+        self.holes_list = []
+
+    def _add_holes_button_fired(self):
+        from pychron.stage.calibration.add_holes_view import AddHolesView
+        ahv = AddHolesView()
+        info = ahv.edit_traits(kind='live_modal')
+        if info.result:
+            name = self.parent.stage_map_name
+            root = os.path.join(paths.hidden_dir, '{}_calibrations'.format(name))
+            if not os.path.isdir(root):
+                os.mkdir(root)
+
+            self.holes_list.append(ahv.hole_str)
+
+            holes = ahv.holes
+            p = os.path.join(root, ahv.holes_id)
+            with open(p, 'wb') as wfile:
+                ca = self.canvas.calibration_item
+                pickle.dump((holes, ca), wfile)
+
     def _style_changed(self):
         if self.style in HELP_DICT:
             self.calibration_help = HELP_DICT[self.style]

@@ -28,7 +28,7 @@ from pychron.managers.manager import Manager
 from pychron.paths import paths
 from pychron.stage.maps.base_stage_map import BaseStageMap
 from pychron.stage.maps.laser_stage_map import LaserStageMap
-from pychron.stage.calibration.tray_calibration_manager import TrayCalibrationManager
+from pychron.stage.calibration.tray_calibration_manager import TrayCalibrationManager, get_hole_calibration
 
 
 class BaseStageManager(Manager):
@@ -136,6 +136,13 @@ class BaseStageManager(Manager):
         # use a affine transform object to map
         canvas = self.canvas
         ca = canvas.calibration_item
+
+        # check if a calibration applies to this hole
+        hole_calibration = get_hole_calibration(smap.name, pos)
+        if hole_calibration:
+            self.debug('Using hole calibration')
+            ca = hole_calibration
+
         if ca:
             rot = ca.rotation
             cpos = ca.center
