@@ -47,12 +47,12 @@ STYLE_DICT = {'Free': FreeCalibrator,
 
 
 def get_hole_calibration(name, hole):
-    p = os.path.join(paths.hidden_dir, '{}_calibrations'.format(name))
-    if os.path.isdir(p):
+    root = os.path.join(paths.hidden_dir, '{}_calibrations'.format(name))
+    if os.path.isdir(root):
         hole = int(hole)
-        for pp in os.listdir(p):
-            with open(pp, 'rb') as rfile:
-                holes, ca = pickle.load(rfile)
+        for pp in os.listdir(root):
+            with open(os.path.join(root, pp), 'rb') as rfile:
+                _, holes, ca = pickle.load(rfile)
                 if hole in holes:
                     return ca
 
@@ -83,6 +83,9 @@ class TrayCalibrationManager(Loggable):
             stage_map = self.parent.stage_map_name
 
         self.debug('loading calibration for {}'.format(stage_map))
+
+        self._load_holes_calibrations(stage_map)
+
         calobj = TrayCalibrator.load(stage_map)
         if calobj is not None:
             try:
@@ -115,6 +118,15 @@ class TrayCalibrationManager(Loggable):
 
             self.load_calibration(name)
 
+    def _load_holes_calibrations(self, sm):
+        self.holes_list = []
+        root = os.path.join(paths.hidden_dir, '{}_calibrations'.format(sm))
+        if os.path.isdir(root):
+            for pp in os.listdir(root):
+                with open(os.path.join(root, pp), 'rb') as rfile:
+                    hs, _, _ = pickle.load(rfile)
+                    self.holes_list.append(hs)
+
     # ===============================================================================
     # handlers
     # ===============================================================================
@@ -129,7 +141,7 @@ class TrayCalibrationManager(Loggable):
     def _add_holes_button_fired(self):
         from pychron.stage.calibration.add_holes_view import AddHolesView
         ahv = AddHolesView()
-        info = ahv.edit_traits(kind='live_modal')
+        info = ahv.edit_traits(kind='livemodal')
         if info.result:
             name = self.parent.stage_map_name
             root = os.path.join(paths.hidden_dir, '{}_calibrations'.format(name))
@@ -142,7 +154,7 @@ class TrayCalibrationManager(Loggable):
             p = os.path.join(root, ahv.holes_id)
             with open(p, 'wb') as wfile:
                 ca = self.canvas.calibration_item
-                pickle.dump((holes, ca), wfile)
+                pickle.dump((ahv.hole_str, holes, ca), wfile)
 
     def _style_changed(self):
         if self.style in HELP_DICT:

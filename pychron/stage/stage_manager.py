@@ -138,7 +138,7 @@ class BaseStageManager(Manager):
         ca = canvas.calibration_item
 
         # check if a calibration applies to this hole
-        hole_calibration = get_hole_calibration(smap.name, pos)
+        hole_calibration = get_hole_calibration(smap.name, key)
         if hole_calibration:
             self.debug('Using hole calibration')
             ca = hole_calibration

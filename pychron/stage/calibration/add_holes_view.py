@@ -25,19 +25,16 @@ from hashlib import md5
 # ============= local library imports  ==========================
 
 def parse_holestr(hstr):
-    try:
-        hs = []
-        for sublist in hstr.split(','):
-            if '-' in sublist:
-                s, e = sublist.split('-')
-                s, e = int(s.strip()), int(e.strip())
-                for i in xrange(s, e + 1):
-                    hs.append(i)
-            else:
-                hs.append(int(sublist))
-        return hs
-    except BaseException:
-        pass
+    hs = []
+    for sublist in hstr.split(','):
+        if '-' in sublist:
+            s, e = sublist.split('-')
+            s, e = int(s.strip()), int(e.strip())
+            for i in xrange(s, e + 1):
+                hs.append(i)
+        else:
+            hs.append(int(sublist))
+    return hs
 
 
 class HolesTrait(BaseStr):
@@ -60,8 +57,7 @@ class AddHolesView(HasTraits):
 
     @property
     def holes_id(self):
-        holes = parse_holestr(self.holes)
-        return md5(str(holes)).hexdigest()
+        return md5(str(self.holes)).hexdigest()
 
     def traits_view(self):
         v = View(UItem('hole_str'),
