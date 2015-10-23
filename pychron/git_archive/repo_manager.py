@@ -482,6 +482,8 @@ class GitRepoManager(Loggable):
         """
             fetch and merge
         """
+        self.debug('pulling {} from {}'.format(branch, remote))
+
         repo = self._repo
         try:
             remote = self._get_remote(remote)
@@ -490,6 +492,7 @@ class GitRepoManager(Loggable):
             return
 
         if remote:
+            self.debug('pulling from url: {}'.format(remote.url))
             if use_progress:
                 prog = open_progress(3,
                                      show_percent=False,

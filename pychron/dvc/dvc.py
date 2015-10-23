@@ -539,7 +539,6 @@ class DVC(Loggable):
         pull or clone an experiment repo
 
         """
-        url = self.make_url(name)
         root = os.path.join(paths.experiment_dataset_dir, name)
         exists = os.path.isdir(os.path.join(root, '.git'))
 
@@ -547,6 +546,7 @@ class DVC(Loggable):
             repo = self._get_experiment_repo(name)
             repo.pull()
         else:
+            url = self.make_url(name)
             GitRepoManager.clone_from(url, root)
 
         return True
