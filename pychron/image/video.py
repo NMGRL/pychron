@@ -21,6 +21,7 @@ from threading import Thread, Lock, Event
 import time
 import os
 import shutil
+from numpy import asarray
 # =============local library imports ===========================
 from pychron.image.image import Image
 from pychron.globals import globalv
@@ -134,8 +135,7 @@ class Video(Image):
 
     def get_image_data(self, cmap=None, **kw):
         frame = self.get_frame(**kw)
-        if frame:
-            return frame.as_numpy_array()
+        return asarray(frame)
 
     def start_recording(self, path, renderer=None):
         self._stop_recording_event = Event()
