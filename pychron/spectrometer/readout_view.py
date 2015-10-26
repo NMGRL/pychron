@@ -126,6 +126,7 @@ class ReadoutView(Loggable):
     refresh_needed = Event
     refresh_period = Int(10, enter_set=True, auto_set=False)  # seconds
     use_word_query = Bool(True)
+    compare_to_config_enabled = Bool(True)
 
     _alive = False
 
@@ -228,7 +229,8 @@ class ReadoutView(Loggable):
         tol = 0.001
 
         spec = self.spectrometer
-        if not spec.simulation:
+
+        if not spec.simulation and self.compare_to_config_enabled:
             for nn, rs in ((ne, self.readouts), (nd, self.deflections)):
                 for r in rs:
                     if not r.compare:
@@ -259,7 +261,10 @@ class ReadoutView(Loggable):
 
     def traits_view(self):
         v = View(listeditor('readouts'),
-                 HGroup(spring, Item('refresh', show_label=False)))
+                 HGroup(Item('Comp. Config',
+                             tooltip='If checked, compare the current values to the values in the configuration file.'
+                                     'Warn user if there is a mismatch'),
+                        spring, Item('refresh', show_label=False)))
         return v
 
 
