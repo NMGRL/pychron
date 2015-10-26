@@ -195,8 +195,13 @@ class BaseStageMap(Loggable):
                      for h in self.sample_holes if h.id == str(key)), None)
 
     def get_corrected_hole_pos(self, key):
-        return next(((h.x_cor, h.y_cor)
-                     for h in self.sample_holes if h.id == key), None)
+        if self.samples_holes:
+            return next(((h.x_cor, h.y_cor)
+                         for h in self.sample_holes if h.id == key), None)
+        else:
+            self.warning_dialog('There a no holes in tray map "{}". This is most likely because the file "{}" was not '
+                                'properly parsed. \n\n'
+                                'Check that the file is UTF-8 and Unix (LF) linefeed'.format(self.name, self.file_path))
 
     def clear_correction_file(self):
         pass
