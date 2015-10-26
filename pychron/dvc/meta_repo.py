@@ -336,14 +336,6 @@ class MetaRepo(GitRepoManager):
             self.add(p.path, commit=commit)
 
     def update_production(self, prod, irradiation=None):
-        # ip = db.get_irradiation_production(prod.name)
-        # if ip:
-        # if irradiation is None:
-        #     p = os.path.join(paths.meta_dir, 'productions', '{}.txt'.format(prod.name))
-        # else:
-        #     p = os.path.join(paths.meta_dir, irradiation, '{}.production.txt'.format(prod.name))
-        #
-        # ip = Production(p)
         ip = self.get_production(prod.name)
         self.debug('saving production {}'.format(prod.name))
 
@@ -415,10 +407,15 @@ class MetaRepo(GitRepoManager):
         if add:
             self.add(p, commit=commit)
 
+    def update_level_z(self, irradiation, level, z):
+        p = self.get_level_path(irradiation, level)
+        obj = dvc_load(p)
+        obj['z'] = z
+        dvc_dump(obj, p)
+
     def update_flux(self, irradiation, level, pos, identifier, j, e, decay, analyses, add=True):
         p = self.get_level_path(irradiation, level)
-        with open(p, 'r') as rfile:
-            jd = json.load(rfile)
+        jd = dvc_load(p)
 
         njd = [ji if ji['position'] != pos else {'position': pos, 'j': j, 'j_err': e,
                                                  'decay_constants': decay,
@@ -428,9 +425,6 @@ class MetaRepo(GitRepoManager):
                                                                'status': ai.is_omitted()}
                                                               for ai in analyses]} for ji in jd]
 
-        # n = {'decay_constants': decay, 'positions': njd}
-        # with open(p, 'w') as wfile:
-        #     json.dump(njd, wfile, indent=4)
         dvc_dump(njd, p)
         if add:
             self.add(p, commit=False)

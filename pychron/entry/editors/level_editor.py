@@ -27,6 +27,7 @@ from traitsui.api import View, Item, TabularEditor, HGroup, UItem, Group, VGroup
 
 
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
@@ -152,12 +153,6 @@ class LevelEditor(Loggable):
             self.z = level.z or 0
             pname, prod = self.meta_repo.get_production(self.irradiation, self.name)
             self.selected_production_name = pname
-            # self.selected_production = self.productions[pname]
-
-            # if level.production:
-            #     name = level.production.name.replace(' ', '_')
-            #     self.selected_production = next((v for k, v in self.productions.iteritems()
-            #                                      if k == name), None)
 
             original_tray = None
             if level.holder:
@@ -190,6 +185,11 @@ class LevelEditor(Loggable):
                     self._save_production()
 
                     level.note = self.level_note
+                    level.z = self.z
+
+                    # save z to meta repo
+                    self.meta_repo.update_level_z(self.irradiation, self.name, self.z)
+
                     if self.selected_production:
                         pr = db.get_production(self.selected_production.name)
                         if not pr:
@@ -268,7 +268,6 @@ class LevelEditor(Loggable):
                     if not next((li for li in irrad.levels if li.name == self.name), None):
 
                         self._save_level()
-                        # self._save_production()
 
                         return self.name
 
