@@ -18,7 +18,6 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.video_canvas import VideoCanvas
-# from pychron.canvas.canvas2D.markup.markup_items import Rectangle
 from laser_tray_canvas import LaserTrayCanvas
 
 
@@ -65,10 +64,10 @@ class VideoLaserTrayCanvas(LaserTrayCanvas, VideoCanvas):
     def add_markup_circle(self, x, y, r, **kw):
         from pychron.canvas.canvas2D.scene.primitives.primitives import Circle
         r = Circle(x=x, y=y,
-                  radius=r,
-                  space='screen',
-                  fill=False,
-                  **kw)
+                   radius=r,
+                   space='screen',
+                   fill=False,
+                   **kw)
         self.scene.add_item(r)
 
     def add_markup_rect(self, x, y, w, h, **kw):
@@ -77,13 +76,8 @@ class VideoLaserTrayCanvas(LaserTrayCanvas, VideoCanvas):
                       width=w, height=h,
                       space='screen',
                       fill=False,
-                      **kw
-                      )
+                      **kw)
         self.scene.add_item(r)
-#        self.markupcontainer['croprect'] = Rectangle(x=x, y=y, width=w, height=h,
-#                                                     canvas=self, space='screen',
-#                                                     fill=False
-#                                                     )
 
     def _calc_relative_move_direction(self, char, direction):
         """
@@ -95,22 +89,4 @@ class VideoLaserTrayCanvas(LaserTrayCanvas, VideoCanvas):
             di = -1 if self.camera.vflip else 1
         return direction * di
 
-
-#    def normal_key_pressed(self, event):
-# #        if not self._jog_moving:
-# #            c = event.character
-# #            if c in ['Left', 'Right', 'Up', 'Down']:
-# #                    event.handled = True
-# #                    controller = self.parent.stage_controller
-# #                    controller.jog_move(c)
-# #                    self._jog_moving = True
-#
-#
-#        c = event.character
-#        if c in ['Left', 'Right', 'Up', 'Down']:
-#            event.handled = True
-#            self.parent.stage_controller.relative_move(c)
-# #            self.parent.canvas.set_stage_position(x, y)
-#
-# #        super(LaserTrayCanvas, self).normal_key_pressed(event)
 # ============= EOF ====================================
