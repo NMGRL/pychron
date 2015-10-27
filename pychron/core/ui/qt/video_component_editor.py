@@ -40,9 +40,8 @@ class _VideoComponentEditor(_LaserComponentEditor):
         self.playTimer = QTimer(self.control)
         self.playTimer.timeout.connect(self.update)
 
-        print 'asdfasfd', self.value.fps
         if self.value.fps:
-            self.playTimer.setInterval(1000 / self.value.fps)
+            self.playTimer.setInterval(1000 / float(self.value.fps))
         self.playTimer.start()
         self.value.on_trait_change(self.stop, 'closed_event')
 
@@ -51,7 +50,7 @@ class _VideoComponentEditor(_LaserComponentEditor):
 
     def _update_fps(self):
         if self.value.fps:
-            self.playTimer.setInterval(1000 / self.value.fps)
+            self.playTimer.setInterval(1000 / float(self.value.fps))
 
     def stop(self):
         try:
