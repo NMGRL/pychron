@@ -213,7 +213,8 @@ class StageManager(BaseStageManager):
         self.stage_controller.linear_move(*pos, **kw)
 
     def move_to_hole(self, hole, **kw):
-        self._move(self._move_to_hole, hole, name='move_to_hole', **kw)
+        if self.stage_map.check_valid_hole(hole):
+            self._move(self._move_to_hole, hole, name='move_to_hole', **kw)
 
     def move_to_point(self, pt):
         self._move(self._move_to_point, pt, name='move_to_point')
@@ -728,7 +729,6 @@ class StageManager(BaseStageManager):
         self.info('Move to hole {} type={}'.format(key, str(type(key))))
         self.temp_hole = key
         self.temp_position = self.stage_map.get_hole_pos(key)
-
         pos = self.stage_map.get_corrected_hole_pos(key)
         self.info('position {}'.format(pos))
         if pos is not None:

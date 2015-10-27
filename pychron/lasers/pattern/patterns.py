@@ -342,7 +342,6 @@ class Pattern(HasTraits):
             show_border=True,
             label='Pattern')
 
-    @property
     def maker_view(self):
         v = View(HGroup(self.maker_group(),
                         Item('graph', show_label=False, style='custom')),
@@ -351,9 +350,9 @@ class Pattern(HasTraits):
 
     def traits_view(self):
         v = View(self.maker_group(),
-            buttons=['OK', 'Cancel'],
-            title=self.name,
-            resizable=True)
+                 buttons=['OK', 'Cancel'],
+                 title=self.name,
+                 resizable=True)
         return v
 
     def get_parameter_group(self):

@@ -61,20 +61,10 @@ class _VideoComponentEditor(_LaserComponentEditor):
     def update(self):
         if self.control:
             self.value.request_redraw()
-            # self.value.draw_valid = False
-            # self.control.repaint()
 
     def _stop_timer_fired(self):
         print 'VideoComponentEditor stopping playTimer'
         self.playTimer.stop()
-
-#    def onClose(self):
-#        self.playTimer.Stop()
-#
-#    def onNextFrame(self, evt):
-#        if self.control:
-#            self.control.Refresh()
-#            evt.Skip()
 
 
 class VideoComponentEditor(LaserComponentEditor):

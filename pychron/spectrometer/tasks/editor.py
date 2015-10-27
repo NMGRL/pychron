@@ -51,9 +51,4 @@ class CoincidenceEditor(PeakCenterEditor):
         v = View(VGroup(tgrp, UItem('graph', style='custom', editor=InstanceEditor())))
         return v
 
-
-
 # ============= EOF =============================================
-
-
-
