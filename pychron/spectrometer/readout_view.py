@@ -261,7 +261,7 @@ class ReadoutView(Loggable):
 
     def traits_view(self):
         v = View(listeditor('readouts'),
-                 HGroup(Item('Comp. Config',
+                 HGroup(Item('compare_to_config_enabled',label='Comp. Config',
                              tooltip='If checked, compare the current values to the values in the configuration file.'
                                      'Warn user if there is a mismatch'),
                         spring, Item('refresh', show_label=False)))
