@@ -466,6 +466,12 @@ class DVCDatabase(DatabaseAdapter):
     def get_analysis_uuid(self, value):
         return self._retrieve_item(AnalysisTbl, value, key='uuid')
 
+    def get_analyses_uuid(self, uuids):
+        with self.session_ctx() as sess:
+            q = sess.query(AnalysisTbl)
+            q = q.filter(AnalysisTbl.uuid.in_(uuids))
+            return self._query_all(q, verbose_query=True)
+
     def get_analysis_runid(self, idn, aliquot, step=None):
         with self.session_ctx() as sess:
             q = sess.query(AnalysisTbl)

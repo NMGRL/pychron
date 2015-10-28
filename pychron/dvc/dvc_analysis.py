@@ -22,14 +22,12 @@ import time
 
 import datetime
 from uncertainties import ufloat, std_dev, nominal_value
-
-
 # ============= local library imports  ==========================
 from pychron.core.helpers.datetime_tools import make_timef
 from pychron.core.helpers.filetools import add_extension, subdirize
 from pychron.core.helpers.iterfuncs import partition
 from pychron.dvc import dvc_dump, dvc_load
-from pychron.experiment.utilities.identifier import make_aliquot_step
+from pychron.experiment.utilities.identifier import make_aliquot_step, make_step
 from pychron.paths import paths
 from pychron.processing.analyses.analysis import Analysis
 from pychron.processing.isotope import Isotope
@@ -167,6 +165,9 @@ class DVCAnalysis(Analysis):
             v = jd.get(attr)
             if v is not None:
                 setattr(self, attr, v)
+
+        if self.increment is not None:
+            self.step = make_step(self.increment)
 
         try:
             self.rundate = datetime.datetime.strptime(jd['timestamp'], '%Y-%m-%dT%H:%M:%S')

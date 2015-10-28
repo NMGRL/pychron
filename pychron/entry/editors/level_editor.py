@@ -15,22 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import json
-import os
-
 from enable.component_editor import ComponentEditor
 from pyface.constant import OK, YES, NO
 from pyface.file_dialog import FileDialog
 from traits.api import List, Instance, Str, Float, Any, Button, Property, HasTraits, Dict
 from traitsui.api import View, Item, TabularEditor, HGroup, UItem, Group, VGroup, \
     HSplit, EnumEditor
-
-
-
-
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
+# ============= standard library imports ========================
+import json
+import os
+# ============= local library imports  ==========================
 from pychron.canvas.canvas2D.irradiation_canvas import IrradiationCanvas
 from pychron.canvas.utils import load_holder_canvas, iter_geom
 from pychron.core.helpers.logger_setup import logging_setup

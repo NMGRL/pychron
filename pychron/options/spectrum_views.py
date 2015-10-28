@@ -102,9 +102,7 @@ class CalculationSubOptions(SubOptions):
                            width=-100,
                            label='Error Type'),
                       Item('include_j_error_in_plateau', label='Include J Error'))
-        rgrp = VGroup(Item('center_line_style',
-                           label='Line Stype'),
-                      Item('extend_plateau_end_caps',
+        rgrp = VGroup(Item('extend_plateau_end_caps',
                            label='Extend End Caps'),
                       icon_button_editor('edit_plateau_criteria', 'cog',
                                          tooltip='Edit Plateau Criteria'), )
@@ -159,7 +157,7 @@ VIEWS = {}
 VIEWS['main'] = SpectrumMainOptions
 VIEWS['spectrum'] = SpectrumSubOptions
 VIEWS['appearance'] = SpectrumAppearance
-VIEWS['calculations'] = CalculationSubOptions
+VIEWS['plateau'] = CalculationSubOptions
 VIEWS['display'] = DisplaySubOptions
 VIEWS['groups'] = GroupSubOptions
 # ============= EOF =============================================
