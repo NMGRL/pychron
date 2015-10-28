@@ -93,6 +93,7 @@ class ExperimentPreferences(BasePreferencesHelper):
     end_after_color = Color
     invalid_color = Color
 
+    use_peak_center_threshold = Bool
     peak_center_threshold1 = Int(10)
     peak_center_threshold2 = Int(3)
     peak_center_threshold_window = Int(10)
@@ -235,6 +236,7 @@ class ExperimentPreferencesPane(PreferencesPane):
             Item('peak_center_threshold1', label='Threshold 1', enabled_when='use_peak_center_threshold'),
             Item('peak_center_threshold2', label='Threshold 2', enabled_when='use_peak_center_threshold'),
             Item('peak_center_threshold_window', label='Window', enabled_when='use_peak_center_threshold'),
+            show_border=True,
             label='Peak Center')
 
         automated_grp = Group(VGroup(Item('send_config_before_run',
