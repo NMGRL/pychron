@@ -136,6 +136,8 @@ class Video(Image):
     def get_image_data(self, cmap=None, **kw):
         frame = self.get_frame(**kw)
         return asarray(frame)
+        # if frame is not None:
+        #     return asarray(frame[:, :])
 
     def start_recording(self, path, renderer=None):
         self._stop_recording_event = Event()

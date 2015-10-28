@@ -18,6 +18,7 @@
 from traits.api import Any, Int, Str, Event
 # ============= standard library imports ========================
 from PySide.QtCore import QTimer
+from pychron.core.ui.qt.gui import invoke_in_main_thread
 from stage_component_editor import _LaserComponentEditor, LaserComponentEditor
 # ============= local library imports  ==========================
 
@@ -60,7 +61,8 @@ class _VideoComponentEditor(_LaserComponentEditor):
 
     def update(self):
         if self.control:
-            self.value.request_redraw()
+            invoke_in_main_thread(self.value.request_redraw)
+            # self.value.request_redraw()
 
     def _stop_timer_fired(self):
         print 'VideoComponentEditor stopping playTimer'
