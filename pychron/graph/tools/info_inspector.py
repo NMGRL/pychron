@@ -15,10 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Event, Instance
 from chaco.abstract_overlay import AbstractOverlay
 from enable.base_tool import BaseTool
 from kiva.fonttools import Font
+from traits.api import Event, Instance
 
 
 # ============= standard library imports ========================
@@ -98,7 +98,7 @@ class InfoOverlay(AbstractOverlay):
                 lines = [li for li in lines if li and li.strip()]
                 self._draw_info(plot, gc, lines)
 
-        self.visible = False
+                # self.visible = False
 
     def _draw_info(self, plot, gc, lines):
         if not self.tool.current_screen:

@@ -434,11 +434,13 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             self.debug('_retrieve_labnumbers n={}'.format(len(ls)))
 
             def func(li, prog, i, n):
+                # if prog and i % 25 == 0:
                 if prog:
                     prog.change_message('Loading Labnumber {}'.format(li.identifier))
                 return LabnumberRecordView(li)
 
-            sams = progress_loader(ls, func)
+            # sams = progress_loader(ls, func, n=len(ls) / 25)
+            sams = progress_loader(ls, func, step=25)
         return sams
 
     def _retrieve_labnumbers(self):
@@ -525,10 +527,11 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     def _make_records(self, ans):
         def func(xi, prog, i, n):
             if prog:
+                # if prog and i % 25 == 0:
                 prog.change_message('Loading {}'.format(xi.record_id))
             return xi.record_view
 
-        return progress_loader(ans, func, threshold=25)
+        return progress_loader(ans, func, threshold=25, step=25)
 
     def _get_sample_filter_parameter(self):
         p = self.sample_filter_parameter

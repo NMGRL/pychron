@@ -14,8 +14,8 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
-from traits.api import Instance, Str, Set, List, provides
 from apptools.preferences.preference_binding import bind_preference
+from traits.api import Instance, Str, Set, List, provides
 # ============= standard library imports ========================
 from math import isnan
 from datetime import datetime
@@ -657,7 +657,7 @@ class DVC(Loggable):
             try:
                 a = DVCAnalysis(record.record_id, expid)
             except AnalysisNotAnvailableError:
-                self.info('Analysis not available. Trying to clone repository {}'.format(expid))
+                self.info('Analysis {} not available. Trying to clone repository {}'.format(record.record_id, expid))
                 self.sync_repo(expid)
                 try:
                     a = DVCAnalysis(record.record_id, expid)

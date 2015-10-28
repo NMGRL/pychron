@@ -15,13 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Date, Float, Property, Long
+from traits.api import HasTraits, Str, Date, Long
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.experiment.utilities.identifier import get_analysis_type
 
 
-class RecordView(HasTraits):
+class RecordView(object):
     def __init__(self, dbrecord, *args, **kw):
         self._create(dbrecord)
         super(RecordView, self).__init__(*args, **kw)
@@ -42,15 +42,15 @@ class SampleImageRecordView(RecordView):
 
 
 class SampleRecordView(RecordView):
-    name = Str
-    material = Str
-    project = Str
-    lat = Float
-    lon = Float
-    elevation = Float
-    lithology = Str
-    rock_type = Str
-    identifier = Str
+    name = ''
+    material = ''
+    project = ''
+    lat = 0
+    lon = 0
+    elevation = 0
+    lithology = ''
+    rock_type = ''
+    identifier = ''
 
     def _create(self, dbrecord):
         if dbrecord.material:
@@ -73,28 +73,27 @@ class SampleRecordView(RecordView):
 
 
 class LabnumberRecordView(RecordView):
-    name = Str
-    material = Str
-    project = Str
-    labnumber = Str
-    identifier = Property
-    sample = Str
+    name = ''
+    material = ''
+    project = ''
+    labnumber = ''
+    sample = ''
 
-    lat = Float
-    lon = Float
-    elevation = Float
-    lithology = Str
+    lat = 0
+    lon = 0
+    elevation = 0
+    lithology = ''
 
-    alt_name = Str
-    low_post = Date  #
+    alt_name = ''
+    low_post = None
 
-    irradiation = Str
-    irradiation_level = Str
-    irradiation_and_level = Property
-    irradiation_pos = Str
+    irradiation = ''
+    irradiation_level = ''
+    irradiation_pos = ''
 
     def _create(self, dbrecord):
         self.labnumber = dbrecord.identifier or ''
+
         pos = dbrecord
         # pos = dbrecord.irradiation_position
         if pos:
@@ -132,12 +131,23 @@ class LabnumberRecordView(RecordView):
             except AttributeError:
                 pass
 
-    # mirror labnumber as identifier
-    def _get_identifier(self):
-        return self.labnumber
+                # import time
+                # for i in range(100):
+                #     time.sleep(0.001)
 
-    def _get_irradiation_and_level(self):
+    # def _get_identifier(self):
+    #     return self.labnumber
+
+    # def _get_irradiation_and_level(self):
+    #     return '{}{}'.format(self.irradiation, self.irradiation_level)
+    @property
+    def irradiation_and_level(self):
         return '{}{}'.format(self.irradiation, self.irradiation_level)
+
+    # mirror labnumber as identifier
+    @property
+    def identifier(self):
+        return self.labnumber
 
     @property
     def analysis_type(self):

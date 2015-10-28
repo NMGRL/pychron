@@ -237,14 +237,14 @@ class Spectrum(BaseArArFigure):
 
         # provide 1s errors use nsigma to control display
         ds.errors = es
-
-        sp = SpectrumErrorOverlay(component=ds,
-                                  use_user_color=True,
-                                  user_color=group.color,
-                                  alpha=group.alpha,
-                                  use_fill=group.use_fill,
-                                  nsigma=ns)
-        ds.underlays.append(sp)
+        if po.y_error:
+            sp = SpectrumErrorOverlay(component=ds,
+                                      use_user_color=True,
+                                      user_color=group.color,
+                                      alpha=group.alpha,
+                                      use_fill=group.use_fill,
+                                      nsigma=ns)
+            ds.underlays.append(sp)
 
         omit = self._get_omitted_by_tag(self.sorted_analyses)
         sp.selections = omit
