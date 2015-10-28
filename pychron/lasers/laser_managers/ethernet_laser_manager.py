@@ -54,8 +54,9 @@ class EthernetLaserManager(BaseLaserManager, EthernetDeviceMixin):
         if self.simulation:
             return globalv.communication_simulation
         else:
-            if self.setup_communicator():
-                self.debug('test connection. connected= {}'.format(self.connected))
+            self.connected = False
+            self.setup_communicator()
+            self.debug('test connection. connected= {}'.format(self.connected))
             return self.connected
 
     def _position_changed(self):
