@@ -17,10 +17,10 @@
 # ============= enthought library imports =======================
 
 from chaco.array_data_source import ArrayDataSource
+from chaco.tools.broadcaster import BroadcasterTool
+from chaco.tools.data_label_tool import DataLabelTool
 from traits.api import HasTraits, Any, Int, Str, Property, \
     Event, Bool, cached_property, List, Float
-from chaco.tools.data_label_tool import DataLabelTool
-from chaco.tools.broadcaster import BroadcasterTool
 # ============= standard library imports ========================
 from numpy import Inf, vstack, zeros_like, ma
 from uncertainties import std_dev, nominal_value, ufloat
@@ -392,6 +392,8 @@ class BaseArArFigure(HasTraits, SelectionFigure):
         self.graph.set_y_limits(min_=mi, max_=ma, pad=pad, plotid=pid, pad_style='upper')
 
     def update_options_limits(self, pid):
+
+        # print 'upl', pid, self.suppress_ylimits_update
         if hasattr(self.options, 'aux_plots'):
             n = len(self.options.aux_plots)
             ap = self.options.aux_plots[n - pid - 1]

@@ -330,7 +330,6 @@ class StepHeatAnalysisGroup(AnalysisGroup):
         args = calculate_plateau_age(ages, errors, k39, options=options, excludes=excludes)
         if args:
             v, e, pidx = args
-            print 'dddd', pidx
             if pidx[0] == pidx[1]:
                 return
 

@@ -23,7 +23,6 @@ from itertools import groupby
 from numpy import inf
 from math import isinf
 import time
-
 # ============= local library imports  ==========================
 from pychron.processing.analysis_graph import AnalysisStackedGraph
 
@@ -39,7 +38,7 @@ class FigurePanel(HasTraits):
     _graph_klass = AnalysisStackedGraph
     _figure_klass = Any
 
-    plot_spacing = Int
+    plot_spacing = Int(5)
     meta = Any
     title = Str
     use_previous_limits = True
@@ -142,10 +141,17 @@ class FigurePanel(HasTraits):
                         mi, ma = tmi, tma
                         print 'using previous limits', mi, ma
 
-                for i, p in enumerate(plots):
-                    if p.has_ylimits():
-                        print 'setting ylimits', p.ylimits[0], p.ylimits[1]
-                        g.set_y_limits(p.ylimits[0], p.ylimits[1], plotid=i)
+            for i, p in enumerate(plots):
+                if p.has_ylimits():
+                    g.set_y_limits(p.ylimits[0], p.ylimits[1], plotid=i)
+                elif p.calculated_ymin or p.calculated_ymax:
+                    g.set_y_limits(p.calculated_ymin, p.calculated_ymax, plotid=i)
+                elif p.ymin or p.ymax:
+                    ymi, yma = p.ymin, p.ymax
+                    if p.ymin > p.ymax:
+                        yma = None
+
+                    g.set_y_limits(ymi, yma, plotid=i)
 
             if mi is None and ma is None:
                 mi, ma = 0, 100

@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Int, Bool, \
-    Float, Property, on_trait_change, Dict, Tuple, Enum, List
+    Float, Property, on_trait_change, Dict, Tuple, Enum, List, Any
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.pychron_traits import FilterPredicate
@@ -66,16 +66,20 @@ class AuxPlot(HasTraits):
 
     _suppress = False
 
+    calculated_ymax = Any(transient=True)
+    calculated_ymin = Any(transient=True)
+
     def to_dict(self):
         keys = [k for k in self.traits(transient=False)]
         return {key: getattr(self, key) for key in keys}
 
-    @on_trait_change('ylimits')
-    def _handle_ylimits(self, new):
-        self._suppress = True
-        self.ymin = new[0]
-        self.ymax = new[1]
-        self._suppress = False
+    # @on_trait_change('ylimits')
+    # def _handle_ylimits(self, new):
+    #     print 'fasdfsdf', new
+    #     self._suppress = True
+    #     self.ymin = new[0]
+    #     self.ymax = new[1]
+    #     self._suppress = False
 
     @on_trait_change('ymin, ymax')
     def _handle_ymin_max(self, name, new):

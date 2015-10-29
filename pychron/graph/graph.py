@@ -17,13 +17,13 @@
 # =============enthought library imports=======================
 # from chaco.scales.time_scale import CalendarScaleSystem
 # from chaco.scales_tick_generator import ScalesTickGenerator
-from traits.api import Instance, Bool, \
-    List, Str, Property, Dict, Event
-from traitsui.api import View, UItem
-from enable.component_editor import ComponentEditor
 from chaco.api import OverlayPlotContainer, \
     VPlotContainer, HPlotContainer, GridPlotContainer, \
     BasePlotContainer, Plot, ArrayPlotData, ArrayDataSource
+from enable.component_editor import ComponentEditor
+from traits.api import Instance, Bool, \
+    List, Str, Property, Dict, Event
+from traitsui.api import View, UItem
 # from chaco.tools.api import ZoomTool, LineInspector, RangeSelection, \
 #     RangeSelectionOverlay
 # from chaco.axis import PlotAxis
@@ -721,14 +721,9 @@ class Graph(ContextMenuMixin):
 
         self._set_limits(min_, max_, 'value', plotid, pad, **kw)
 
-    #         invoke_in_main_thread(self._set_limits,
-    #                               min_, max_, 'value', plotid, pad, **kw)
-
     def set_x_limits(self, min_=None, max_=None, pad=0, plotid=0, **kw):
         """
         """
-        #         invoke_in_main_thread(self._set_limits,
-        #                               min_, max_, 'index', plotid, pad, **kw)
         if self._set_limits(min_, max_, 'index', plotid, pad, **kw):
             self.x_limits_changed = True
 

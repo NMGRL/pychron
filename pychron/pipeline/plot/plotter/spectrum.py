@@ -85,7 +85,10 @@ class Spectrum(BaseArArFigure):
             self._set_ml_title(title, pid, 'y')
         else:
             graph.set_y_title(title, plotid=pid)
-        xs, ys, es, _, _, _ = self._calculate_spectrum(value_key=vk)
+
+        xs, ys, es, c39s, s39, vs = self._calculate_spectrum(value_key=vk)
+        self.calculate_ylimits(po, s39, vs)
+
         s = self._add_plot(xs, ys, es, pid, po)
         return s
 
@@ -140,24 +143,7 @@ class Spectrum(BaseArArFigure):
                 overlay.y = y
                 pma = y
 
-        # filter ys,es if 39Ar < 1% of total
-        ps = s39 / s39.sum()
-        ps = ps > 0.01
-        vs = vs[ps]
-        try:
-            vs, es = zip(*[(vi.nominal_value, vi.std_dev) for vi in vs])
-            vs, es = array(vs), array(es)
-            nes = es * op.step_nsigma
-            yl = vs - nes
-            yu = vs + nes
-
-            _mi = min(yl)
-            _ma = max(yu)
-            if pma:
-                _ma = max(pma, _ma)
-        except ValueError:
-            _mi = 0
-            _ma = 1
+        self.calculate_ylimits(po, s39, vs, pma)
 
         if op.display_integrated_info:
             text = self._make_integrated_text()
@@ -178,16 +164,39 @@ class Spectrum(BaseArArFigure):
 
         self._add_info(graph, plot)
 
-        # print po.has_ylimits(),po.ylimits
-        pad = '0.25'
-        if po.has_ylimits():
-            _mi, _ma = po.ylimits
-            # print 'using previous limits', _mi, _ma
-            pad = None
-
-        # print 'setting', _mi, _ma
-        self.graph.set_y_limits(min_=_mi, max_=_ma, pad=pad, plotid=pid)
         return spec
+
+    def calculate_ylimits(self, po, s39, vs, pma=None):
+        ps = s39 / s39.sum()
+        ps = ps > 0.01
+        vs = vs[ps]
+
+        # filter ys,es if 39Ar < 1% of total
+        try:
+            vs, es = zip(*[(vi.nominal_value, vi.std_dev) for vi in vs])
+            vs, es = array(vs), array(es)
+            nes = es * self.options.step_nsigma
+            yl = vs - nes
+            yu = vs + nes
+
+            _mi = min(yl)
+            _ma = max(yu)
+            if pma:
+                _ma = max(pma, _ma)
+        except ValueError:
+            _mi = 0
+            _ma = 1
+
+        if not po.has_ylimits():
+            if po.calculated_ymin is None:
+                po.calculated_ymin = _mi
+            else:
+                po.calculated_ymin = min(po.calculated_ymin, _mi)
+
+            if po.calculated_ymax is None:
+                po.calculated_ymax = _ma
+            else:
+                po.calculated_ymax = max(po.calculated_ymax, _ma)
 
     def _add_info(self, g, plot):
         if self.group_id == 0:
@@ -315,11 +324,11 @@ class Spectrum(BaseArArFigure):
     # self._update_graph_metadata(gid, None, name, old, new)
 
     def _update_graph_metadata(self, obj, name, old, new):
-        print 'update graph metadata, {} {} {} {}'.format(obj, name, old, new)
+        # print 'update graph metadata, {} {} {} {}'.format(obj, name, old, new)
         sel = obj.metadata['selections']
 
         sel1 = self._filter_metadata_changes(obj, self.sorted_analyses)
-        print sel, sel1
+        # print sel, sel1
 
         for sp in self.spectrum_overlays:
             sp.selections = sel
