@@ -133,6 +133,9 @@ class TIsotope:
 
 
 class DVCAnalysis(Analysis):
+    icfactor_reviewed = False
+    blank_reviewed = False
+
     def __init__(self, record_id, experiment_id, *args, **kw):
         super(DVCAnalysis, self).__init__(*args, **kw)
         self.record_id = record_id
@@ -197,13 +200,15 @@ class DVCAnalysis(Analysis):
         self.set_tag(jd)
 
     def _load_blanks(self, jd):
-        for iso, v in jd.iteritems():
-            if iso in self.isotopes:
-                i = self.isotopes[iso]
+        for key, v in jd.iteritems():
+            if key in self.isotopes:
+                i = self.isotopes[key]
                 self._load_value_error(i.blank, v)
                 # i.blank.value = v['value']
                 # i.blank.error = v['error']
                 i.blank.fit = v['fit']
+            elif key == 'reviewed':
+                self.blank_reviewed = v
 
     def _load_intercepts(self, jd):
         for iso, v in jd.iteritems():
@@ -241,8 +246,11 @@ class DVCAnalysis(Analysis):
                                                           std_devs=v.get('std_devs', 0))
 
     def _load_icfactors(self, jd):
-        for det, v in jd.iteritems():
-            self.set_ic_factor(det, v['value'], v['error'])
+        for key, v in jd.iteritems():
+            if isinstance(v, dict):
+                self.set_ic_factor(key, v['value'], v['error'])
+            elif key == 'reviewed':
+                self.icfactor_reviewed = v
 
     def load_raw_data(self, keys=None):
         def format_blob(blob):
