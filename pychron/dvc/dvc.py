@@ -657,11 +657,12 @@ class DVC(Loggable):
             try:
                 a = DVCAnalysis(record.record_id, expid)
             except AnalysisNotAnvailableError:
-                self.info('Analysis {} not available. Trying to clone repository {}'.format(record.record_id, expid))
+                self.info('Analysis {} not available. Trying to clone repository "{}'.format(record.record_id, expid))
                 self.sync_repo(expid)
                 try:
                     a = DVCAnalysis(record.record_id, expid)
                 except AnalysisNotAnvailableError:
+                    self.warning_dialog('Analysis {} not in repository {}'.format(record.record_id, expid))
                     return
 
             # get repository branch
@@ -670,7 +671,7 @@ class DVC(Loggable):
             a.set_tag(record.tag)
 
             # load irradiation
-            if a.irradiation:
+            if a.irradiation and a.irradiation not in ('NoIrradiation',):
                 chronology = meta_repo.get_chronology(a.irradiation)
                 a.set_chronology(chronology)
 

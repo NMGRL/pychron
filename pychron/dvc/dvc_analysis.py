@@ -166,7 +166,6 @@ class DVCAnalysis(Analysis):
             if v is not None:
                 setattr(self, attr, v)
 
-        print self.increment
         if self.increment is not None:
             self.step = make_step(self.increment)
 
