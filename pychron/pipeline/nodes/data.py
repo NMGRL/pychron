@@ -52,20 +52,23 @@ class InterpretedAgeNode(DVCNode):
         info = browser_view.edit_traits(kind='livemodal')
 
         if info.result:
-            self.browser_model.dump()
-            # records = self.browser_model.get_analysis_records()
-            # if records:
-            #     analyses = self.dvc.make_analyses(records)
-            #     if browser_view.is_append:
-            #         ans = getattr(self, self.analysis_kind)
-            #         ans.extend(analyses)
-            #     else:
-            #         self.trait_set(**{self.analysis_kind: analyses})
+            self.browser_model.dump_browser()
+
+            records = self.browser_model.get_interpreted_age_records()
+
+            if records:
+                interpreted_ages = self.dvc.make_interpreted_ages(records)
+
+                if browser_view.is_append:
+                    ias = getattr(self, self.interpreted_ages)
+                    ias.extend(interpreted_ages)
+                else:
+                    self.interpreted_ages = interpreted_ages
 
             return True
 
     def run(self, state):
-        pass
+        state.interpreted_ages = self.interpreted_ages
 
 
 class DataNode(DVCNode):
@@ -90,7 +93,7 @@ class DataNode(DVCNode):
         info = browser_view.edit_traits(kind='livemodal')
 
         if info.result:
-            self.browser_model.dump()
+            self.browser_model.dump_browser()
 
             records = self.browser_model.get_analysis_records()
             if records:

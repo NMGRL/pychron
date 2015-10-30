@@ -43,7 +43,7 @@ class PipelinePlugin(BaseTaskPlugin):
                 ('isochron_template', 'ISOCHRON', ov),
                 ('csv_ideogram_template', 'CSV_IDEO', ov),
                 ('vertical_flux_template', 'VERTICAL_FLUX', ov),
-                ('summary_table_template', 'SUMMARY_TABLE', ov)]
+                ('interpreted_age_table_template', 'INTERPRETED_AGE_TABLE', ov)]
 
     def _pipeline_factory(self):
         model = self.application.get_service(SampleBrowserModel)

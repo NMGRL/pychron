@@ -15,14 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import os
-
 from traits.api import HasTraits, Str, Bool, Enum, \
-    Button, Float, Int
+    Button, Float, Int, Color
 from traitsui.api import View, Item, UItem, HGroup, Group, VGroup
-
-
 # ============= standard library imports ========================
+import os
 # ============= local library imports  ==========================
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.paths import paths
@@ -115,6 +112,8 @@ class PDFTableOptions(BasePDFOptions):
     title = Str
     auto_title = Bool
 
+    use_alternating_background = Bool
+    alternating_background = Color
 
     # show_page_numbers = Bool
     default_row_height = Float(0.22)

@@ -33,7 +33,8 @@ import json
 from pychron.core.i_datastore import IDatastore
 from pychron.core.helpers.filetools import remove_extension, list_subdirectories
 from pychron.core.progress import progress_loader
-from pychron.dvc import dvc_dump
+from pychron.database.interpreted_age import InterpretedAge
+from pychron.dvc import dvc_dump, dvc_load
 from pychron.dvc.defaults import TRIGA, HOLDER_24_SPOKES, LASER221, LASER65
 from pychron.dvc.dvc_analysis import DVCAnalysis, experiment_path, analysis_path, PATH_MODIFIERS, \
     AnalysisNotAnvailableError
@@ -140,6 +141,12 @@ class Tag(object):
         # with open(self.path, 'w') as wfile:
         #     json.dump(obj, wfile, indent=4)
         dvc_dump(obj, self.path)
+
+
+class DVCInterpretedAge(InterpretedAge):
+    def from_json(self, obj):
+        for a in ('age', 'age_err', 'kca', 'kca_err', 'age_kind', 'kca_kind', 'mswd'):
+            setattr(self, a, obj[a])
 
 
 class GitSessionCTX(object):
@@ -417,6 +424,17 @@ class DVC(Loggable):
             if make_records:
                 records = self.make_analyses(records)
             return records
+
+    def make_interpreted_ages(self, ias):
+        def func(x, prog, i, n):
+            if prog:
+                prog.change_message('Making Interpreted age {}'.format(x.name))
+            obj = dvc_load(x.path)
+            ia = DVCInterpretedAge()
+            ia.from_json(obj)
+            return ia
+
+        return progress_loader(ias, func, step=25)
 
     def make_analyses(self, records, calculate_f_only=False):
         if not records:

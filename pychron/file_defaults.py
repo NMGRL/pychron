@@ -423,8 +423,8 @@ VERTICAL_FLUX = """- klass: FindVerticalFluxNode
 - klass: VerticalFluxNode
 """
 
-SUMMARY_TABLE = """- klass: InterpretedAgeNode
-- klass: SummaryTableNode
+INTERPRETED_AGE_TABLE = """- klass: InterpretedAgeNode
+- klass: InterpretedAgeTableNode
 """
 # SYSTEM_HEALTH = '''
 # values:

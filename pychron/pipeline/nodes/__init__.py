@@ -30,6 +30,6 @@ from pychron.pipeline.nodes.grouping import GroupingNode
 from pychron.pipeline.nodes.persist import DVCPersistNode, PDFFigureNode, \
     BlanksPersistNode, IsotopeEvolutionPersistNode, ICFactorPersistNode, FluxPersistNode, XLSTablePersistNode
 from pychron.pipeline.nodes.review import ReviewNode
-from pychron.pipeline.nodes.table import AnalysisTableNode, SummaryTableNode
+from pychron.pipeline.nodes.table import AnalysisTableNode, InterpretedAgeTableNode
 
 # ============= EOF =============================================

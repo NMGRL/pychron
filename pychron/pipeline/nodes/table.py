@@ -19,6 +19,7 @@ from traits.api import HasTraits, Instance, Bool
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.pipeline.editors.fusion.fusion_table_editor import FusionTableEditor
+from pychron.pipeline.editors.interpreted_age_table_editor import InterpretedAgeTableEditor
 from pychron.pipeline.nodes.base import BaseNode
 
 
@@ -30,7 +31,7 @@ class AnalysisTableOptions(TableOptions):
     references_enabled = Bool(False)
 
 
-class SummaryTableOptions(TableOptions):
+class InterpretedAgeTableOptions(TableOptions):
     pass
 
 
@@ -76,10 +77,12 @@ class AnalysisTableNode(TableNode):
         pass
 
 
-class SummaryTableNode(TableNode):
-    name = 'Summary Table'
-    options_klass = SummaryTableOptions
+class InterpretedAgeTableNode(TableNode):
+    name = 'Interpreted Age Table'
+    options_klass = InterpretedAgeTableOptions
 
     def run(self, state):
-        pass
+        editor = InterpretedAgeTableEditor()
+        editor.interpreted_ages = state.interpreted_ages
+        state.editors.append(editor)
 # ============= EOF =============================================

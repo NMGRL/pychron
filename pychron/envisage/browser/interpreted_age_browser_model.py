@@ -28,6 +28,12 @@ class InterpretedAgeBrowserModel(BrowserModel):
     persistence_name = 'ia_browser_options'
     selection_persistence_name = 'ia_browser_selection'
 
+    def get_interpreted_age_records(self):
+        records = self.interpreted_age_table.selected
+        if not records:
+            records = self.interpreted_age_table.interpreted_ages
+        return records
+
     def _selected_samples_changed_hook(self, new):
         self.interpreted_age_table.selected = []
 

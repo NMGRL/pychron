@@ -31,11 +31,13 @@ class RecordView(object):
 
 
 class InterpretedAgeRecordView(object):
+    name = ''
     identifier = ''
     path = ''
 
     def __init__(self, idn, path):
         self.identifier = idn
+        self.name = idn
         self.path = path
 
 

@@ -216,7 +216,7 @@ class Paths(object):
     spectrum_template = None
     isochron_template = None
     inverse_isochron_template = None
-    summary_table_template = None
+    interpreted_age_table_template = None
 
     def write_default_file(self, p, default, overwrite=False):
         return self._write_default_file(p, default, overwrite)
@@ -418,7 +418,7 @@ class Paths(object):
         self.isochron_template = join(self.pipeline_template_dir, 'isochron.yaml')
         self.inverse_isochron_template = join(self.pipeline_template_dir, 'inverse_isochron.yaml')
         self.vertical_flux_template = join(self.pipeline_template_dir, 'vertical_flux.yaml')
-        self.summary_table_template = join(self.pipeline_template_dir, 'summary_table.yaml')
+        self.interpreted_age_table_template = join(self.pipeline_template_dir, 'interpreted_age_table.yaml')
 
         build_directories()
 
