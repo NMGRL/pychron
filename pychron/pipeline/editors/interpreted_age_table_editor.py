@@ -31,16 +31,21 @@ from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 
 # from pychron.processing.tasks.browser.panes import AnalysisAdapter
 from pychron.processing.tables.interpreted_age.xls_writer import InterpretedAgeXLSTableWriter
+from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
 
 class InterpretedAgeAdapter(TabularAdapter):
     columns = [('Sample', 'sample'),
                ('Identifier', 'identifier'),
+               ('Material', 'material'),
+               ('Irradiation', 'irradiation'),
                ('Kind', 'age_kind'),
                ('Age', 'display_age'),
-               ('Error', 'display_age_err'),
+               (PLUSMINUS_ONE_SIGMA, 'display_age_err'),
                ('NAnalyses', 'nanalyses'),
-               ('MSWD', 'mswd')]
+               ('MSWD', 'mswd'),
+               ('K/Ca', 'kca'),
+               (PLUSMINUS_ONE_SIGMA, 'kca_err')]
 
     font = 'arial 10'
     sample_width = Int(100)
@@ -53,10 +58,14 @@ class InterpretedAgeAdapter(TabularAdapter):
     display_age_text = Property
     display_age_err_text = Property
     mswd_text = Property
+    kca_text = Property
+    kca_err_text = Property
 
     display_age_sigfigs = Int(3)
     display_age_err_sigfigs = Int(3)
     mswd_sigfigs = Int(3)
+    kca_sigfigs = Int(3)
+    kca_err_sigfigs = Int(3)
 
     def _get_display_age_text(self):
         return self._format_number('display_age')
@@ -66,6 +75,12 @@ class InterpretedAgeAdapter(TabularAdapter):
 
     def _get_mswd_text(self):
         return self._format_number('mswd')
+
+    def _get_kca_text(self):
+        return self._format_number('kca')
+
+    def _get_kca_err_text(self):
+        return self._format_number('kca_err')
 
     def _format_number(self, attr):
         v = getattr(self.item, attr)

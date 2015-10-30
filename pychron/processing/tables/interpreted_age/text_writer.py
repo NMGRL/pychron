@@ -16,15 +16,14 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-# ============= local library imports  ==========================
 from xlwt import XFStyle
 
-from pychron.loggable import Loggable
+
+# ============= local library imports  ==========================
 
 
-class InterpretedAgeTextWriter(Loggable):
+class InterpretedAgeTextWriter(object):
     def build(self, p, ias, title=None, adapter=None):
-        self.info('saving table to {}'.format(p))
         wb = self._new_workbook()
         self._write_summary_sheet(wb, ias, title, adapter)
         # options = self.options
@@ -61,22 +60,22 @@ class InterpretedAgeTextWriter(Loggable):
         #     return f
 
         sh = wb.add_sheet('Summary')
-        cols = [('Sample', 'sample'),
-                ('Identifier', 'identifier'),
-                ('Irradiation', 'irradiation'),
-                ('Material', 'material'),
-                ('Age Type', 'age_kind'),
-                ('MSWD', 'mswd'),
-                ('N', 'nanalyses'),
-                # ('K/Ca', 'kca'),
-                # (u'{}\u03c3'.format(self.options.kca_nsigma),
-                # 'kca_err', set_nsigma('kca')),
-
-                ('Age', 'display_age'),
-                # (u'{}\u03c3'.format(self.options.age_nsigma),
-                #  'age_err', set_nsigma('age')),
-                ]
-
+        # cols = [('Sample', 'sample'),
+        #         ('Identifier', 'identifier'),
+        #         ('Irradiation', 'irradiation'),
+        #         ('Material', 'material'),
+        #         ('Age Type', 'age_kind'),
+        #         ('MSWD', 'mswd'),
+        #         ('N', 'nanalyses'),
+        #         ('K/Ca', 'kca'),
+        #         # (u'{}\u03c3'.format(self.options.kca_nsigma),
+        #         # 'kca_err', set_nsigma('kca')),
+        #
+        #         ('Age', 'display_age'),
+        #         # (u'{}\u03c3'.format(self.options.age_nsigma),
+        #         #  'age_err', set_nsigma('age')),
+        #         ]
+        cols = adapter.columns
         start = 0
         if title:
             self._add_title_row(0, sh, title)

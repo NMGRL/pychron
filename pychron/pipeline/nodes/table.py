@@ -59,9 +59,14 @@ class InterpretedAgeTableOptions(TableOptions):
     def _columns_default(self):
         cs = (('Sample', 'sample', ''),
               ('Identifier', 'identifier', ''),
+              ('Material', 'material', ''),
+              ('Irradiation', 'irradiation', ''),
+              ('Age Kind', 'age_kind', ''),
               ('Age', 'display_age', 3),
-              ('AgeError', 'display_age_err', 3),
-              ('MSWD', 'mswd', 3))
+              ('Age Error', 'display_age_err', 3),
+              ('MSWD', 'mswd', 3),
+              ('K/Ca', 'kca', 3),
+              ('K/Ca Error', 'kca_err', 3))
 
         cols = [TableColumn(name=attr, key=key, sigfigs=str(sigfigs)) for attr, key, sigfigs in cs]
         return cols
