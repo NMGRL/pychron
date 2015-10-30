@@ -40,6 +40,10 @@ class InterpretedAgeRecordView(object):
         self.name = idn
         self.path = path
 
+    @property
+    def id(self):
+        return self.identifier
+
 
 class SampleImageRecordView(RecordView):
     name = Str

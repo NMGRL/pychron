@@ -15,24 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from pyface.constant import OK
-from pyface.file_dialog import FileDialog
-from traits.api import HasTraits, Str, Button, Instance, Bool
-from traitsui.api import View, Item, Controller, UItem, VGroup, HGroup, spring, InstanceEditor, Tabbed
+from traits.api import HasTraits, Button, Instance
+from traitsui.api import View, Item, UItem, VGroup, InstanceEditor, Tabbed
 # ============= standard library imports ========================
-import os
 # ============= local library imports  ==========================
-from pychron.core.helpers.filetools import unique_path2, add_extension
 from pychron.core.pdf.save_pdf_dialog import FigurePDFOptions, PDFLayoutView
+from pychron.core.save_model import SaveModel, SaveController
 from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.paths import paths
 
 
-class SaveFigureModel(HasTraits):
-    root_directory = Str
-    name = Str
-    path = Str
-    use_manual_path = Bool(False)
+class SaveFigureModel(SaveModel):
     pdf_options = Instance(FigurePDFOptions)
 
     def __init__(self, analyses, *args, **kw):
@@ -50,52 +43,15 @@ class SaveFigureModel(HasTraits):
     def dump(self):
         self.pdf_options.dump()
 
-    def prepare_path(self, make=False):
-        if self.use_manual_path:
-            return self.path
-        else:
-            return self._prepare_path(make=make)
 
-    def _prepare_path(self, make=False):
-        root = os.path.join(paths.figure_dir, self.root_directory)
-        if make and not os.path.isdir(root):
-            os.mkdir(root)
-
-        path, cnt = unique_path2(root, self.name, extension='.pdf')
-        return path
-
-
-class SaveFigureView(Controller):
-    use_finder_button = Button('Use Finder')
-
-    def closed(self, info, is_ok):
-        if is_ok:
-            self.model.dump()
-
-    def _use_finder_button_fired(self):
-        dlg = FileDialog(action='save as')
-        if dlg.open() == OK:
-            self.model.use_manual_path = True
-            self.model.path = add_extension(dlg.path, '.pdf')
-
-    def object_name_changed(self, info):
-        self._set_path()
-
-    def object_root_directory_changed(self, info):
-        self._set_path()
-
-    def _set_path(self):
-        self.model.use_manual_path = False
-        path = self.model.prepare_path()
-        self.model.path = path
+class SaveFigureView(SaveController):
+    def _get_root_item(self):
+        item = Item('root_directory', label='Directory',
+                    editor=ComboboxEditor(name='experiment_identifiers'))
+        return item
 
     def traits_view(self):
-        path_group = VGroup(Item('root_directory', label='Directory',
-                                 editor=ComboboxEditor(name='experiment_identifiers')),
-                            Item('name'),
-                            HGroup(UItem('controller.use_finder_button'), spring),
-                            Item('path', style='readonly'),
-                            label='File')
+        path_group = self._get_path_group()
 
         options_group = VGroup(UItem('pdf_options',
                                      style='custom',

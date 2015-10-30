@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Instance, Bool
+from traits.api import HasTraits, Bool
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.pipeline.editors.fusion.fusion_table_editor import FusionTableEditor
@@ -39,16 +39,17 @@ class InterpretedAgeTableOptions(TableOptions):
 
 
 class TableNode(BaseNode):
-    options = Instance(TableOptions)
+    pass
+    # options = Instance(TableOptions)
 
-    def configure(self, pre_run=False, **kw):
-        if not pre_run:
-            self._manual_configured = True
+    # def configure(self, pre_run=False, **kw):
+    #     if not pre_run:
+    #         self._manual_configured = True
+    #
+    #     return self._configure(self.options)
 
-        return self._configure(self.options)
-
-    def _options_default(self):
-        return self.options_klass()
+    # def _options_default(self):
+    #     return self.options_klass()
 
 
 class AnalysisTableNode(TableNode):

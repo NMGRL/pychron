@@ -102,7 +102,10 @@ class BaseNode(HasTraits):
 
     def _configure(self, obj=None, **kw):
         if obj is None:
-            obj = self
+            if self.options_klass:
+                obj = self.options
+            else:
+                obj = self
 
         info = obj.edit_traits(kind='livemodal')
         if info.result:
@@ -115,8 +118,11 @@ class BaseNode(HasTraits):
 
         return d
 
-    def _options_default(self):
+    def _options_factory(self):
         return self.options_klass()
+
+    def _options_default(self):
+        return self._options_factory()
 
     def _to_template(self, d):
         pass

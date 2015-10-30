@@ -183,9 +183,9 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         self.load()
 
     def load_browser_selection(self):
-        # self.debug('$$$$$$$$$$$$$$$$$$$$$ Loading browser selection')
         obj = self._get_browser_persistence()
         if obj:
+            # self.debug('$$$$$$$$$$$$$$$$$$$$$ Loading browser selection')
             self._load_browser_selection(obj)
 
     def dump_browser_selection(self):
@@ -558,8 +558,8 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             setattr(self, 'selected_{}'.format(attr), vs)
 
         load('projects', self.projects)
-        load('samples', self.samples)
         load('experiments', self.experiments)
+        load('samples', self.samples)
 
     # handlers
     def _identifier_changed(self, new):
@@ -755,8 +755,10 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
                 with open(p, 'rb') as rfile:
                     return pickle.load(rfile)
             except (pickle.PickleError, EOFError, OSError), e:
-                # self.debug('Failed loaded previous browser selection. {}'.format(e))
+                self.debug('Failed loaded previous browser selection. {}'.format(e))
                 pass
+        else:
+            self.debug('browser selection not a file {}'.format(p))
 
     # defaults
     def _table_configurer_default(self):

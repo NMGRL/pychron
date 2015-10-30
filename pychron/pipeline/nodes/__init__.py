@@ -28,7 +28,8 @@ from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode, F
 from pychron.pipeline.nodes.gain import GainCalibrationNode
 from pychron.pipeline.nodes.grouping import GroupingNode
 from pychron.pipeline.nodes.persist import DVCPersistNode, PDFFigureNode, \
-    BlanksPersistNode, IsotopeEvolutionPersistNode, ICFactorPersistNode, FluxPersistNode, XLSTablePersistNode
+    BlanksPersistNode, IsotopeEvolutionPersistNode, ICFactorPersistNode, FluxPersistNode, XLSTablePersistNode, \
+    InterpretedAgeTablePersistNode
 from pychron.pipeline.nodes.review import ReviewNode
 from pychron.pipeline.nodes.table import AnalysisTableNode, InterpretedAgeTableNode
 

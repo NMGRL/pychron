@@ -425,6 +425,8 @@ VERTICAL_FLUX = """- klass: FindVerticalFluxNode
 
 INTERPRETED_AGE_TABLE = """- klass: InterpretedAgeNode
 - klass: InterpretedAgeTableNode
+- klass: ReviewNode
+- klass: InterpretedAgeTablePersistNode
 """
 # SYSTEM_HEALTH = '''
 # values:
