@@ -15,32 +15,32 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Enum
-from traitsui.api import View, UItem, VGroup
-
-
 # ============= standard library imports ========================
+from xlwt.Workbook import Workbook
+from xlwt.Style import XFStyle, default_style
+from xlwt.Formatting import Borders
+from xlwt import Alignment
 # ============= local library imports  ==========================
-from pychron.core.save_model import SaveModel, SaveController
-from pychron.paths import paths
+from pychron.processing.tables.interpreted_age.text_writer import InterpretedAgeTextWriter
 
 
-class InterpretedAgePersistOptions(SaveModel):
-    extension = Enum('xls', 'pdf')
+class InterpretedAgeXLSTableWriter(InterpretedAgeTextWriter):
+    default_style = default_style
 
-    @property
-    def default_root(self):
-        return paths.table_dir
+    def _new_workbook(self):
+        return Workbook()
 
+    def _get_header_styles(self):
+        s1 = XFStyle()
+        al = Alignment()
+        al.horz = Alignment.HORZ_CENTER
+        s1.alignment = al
 
-class InterpretedAgePersistOptionsView(SaveController):
-    def traits_view(self):
-        path_grp = self._get_path_group(show_border=True)
-        v = View(VGroup(UItem('extension', label='Output Mode'),
-                        path_grp),
-                 title='Save Interpreted Age Table',
-                 buttons=['OK', 'Cancel'],
-                 resizable=True)
-        return v
+        s2 = XFStyle()
+        borders = Borders()
+        borders.bottom = 2
+        s2.borders = borders
+
+        return s1, s2
 
 # ============= EOF =============================================

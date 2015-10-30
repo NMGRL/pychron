@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 
-from traits.api import List, on_trait_change, Int, Event
+from traits.api import List, Int, Event, Instance, Property
 from traitsui.api import View, UItem, VGroup, TabularEditor
 from traitsui.tabular_adapter import TabularAdapter
 
@@ -25,10 +25,12 @@ from traitsui.tabular_adapter import TabularAdapter
 from pychron.column_sorter_mixin import ColumnSorterMixin
 # from pychron.database.interpreted_age import InterpretedAge
 # from pychron.database.records.isotope_record import IsotopeRecordView
+from pychron.core.helpers.formatting import floatfmt
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 
 
 # from pychron.processing.tasks.browser.panes import AnalysisAdapter
+from pychron.processing.tables.interpreted_age.xls_writer import InterpretedAgeXLSTableWriter
 
 
 class InterpretedAgeAdapter(TabularAdapter):
@@ -48,6 +50,32 @@ class InterpretedAgeAdapter(TabularAdapter):
     display_age_err_width = Int(75)
     nanalyses_width = Int(75)
 
+    display_age_text = Property
+    display_age_err_text = Property
+    mswd_text = Property
+
+    display_age_sigfigs = Int(3)
+    display_age_err_sigfigs = Int(3)
+    mswd_sigfigs = Int(3)
+
+    def _get_display_age_text(self):
+        return self._format_number('display_age')
+
+    def _get_display_age_err_text(self):
+        return self._format_number('display_age_err')
+
+    def _get_mswd_text(self):
+        return self._format_number('mswd')
+
+    def _format_number(self, attr):
+        v = getattr(self.item, attr)
+        n = getattr(self, '{}_sigfigs'.format(attr))
+        return floatfmt(v, n)
+
+        # @property
+        # def age_sigfigs(self):
+        #     return self.display_age_sigfigs
+
 
 class InterpretedAgeTableEditor(BaseTraitsEditor, ColumnSorterMixin):
     interpreted_ages = List
@@ -56,7 +84,7 @@ class InterpretedAgeTableEditor(BaseTraitsEditor, ColumnSorterMixin):
     # saved_group_id = Int
     name = 'Untitled'
     refresh = Event
-
+    tabular_adapter = Instance(InterpretedAgeAdapter, ())
     # def save_summary_table(self, root, auto_view=False):
     #     name = '{}_summary'.format(self.name)
     #     w = SummaryPDFTableWriter()
@@ -77,11 +105,18 @@ class InterpretedAgeTableEditor(BaseTraitsEditor, ColumnSorterMixin):
     #     else:
     #         title = opt.title
     #     return title
+    def make_xls_table(self, path):
+        # ans = self._clean_items()
+        # means = self.analysis_groups
+        t = InterpretedAgeXLSTableWriter()
+        if path:
+            t.build(path, self.interpreted_ages, self._generate_title(), self.tabular_adapter)
+            return path
 
     def _generate_title(self):
         return 'Table 1. Ar/Ar Summary Table'
 
-    @on_trait_change('interpreted_ages[]')
+    # @on_trait_change('interpreted_ages[]')
     # def _interpreted_ages_changed(self):
     #     if self.interpreted_ages:
     #         self.pdf_table_options.title = self._generate_title()
@@ -89,7 +124,7 @@ class InterpretedAgeTableEditor(BaseTraitsEditor, ColumnSorterMixin):
 
     def traits_view(self):
         interpreted_grp = UItem('interpreted_ages',
-                                editor=TabularEditor(adapter=InterpretedAgeAdapter(),
+                                editor=TabularEditor(adapter=self.tabular_adapter,
                                                      operations=['move', 'delete'],
                                                      column_clicked='column_clicked',
                                                      refresh='refresh'))

@@ -222,7 +222,7 @@ class InterpretedAgeTablePersistNode(BaseNode):
     options_klass = InterpretedAgePersistOptionsView
 
     def _options_factory(self):
-        opt = InterpretedAgePersistOptions()
+        opt = InterpretedAgePersistOptions(name='foo')
         return self.options_klass(model=opt)
 
     def run(self, state):
@@ -231,6 +231,6 @@ class InterpretedAgeTablePersistNode(BaseNode):
             if isinstance(editor, InterpretedAgeTableEditor):
                 opt = self.options.model
                 if opt.extension == 'xls':
-                    editor.make_xls_table(opt.output_path)
-
+                    editor.make_xls_table(opt.path)
+                    view_file(opt.path)
 # ============= EOF =============================================

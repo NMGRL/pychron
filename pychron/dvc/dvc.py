@@ -145,7 +145,8 @@ class Tag(object):
 
 class DVCInterpretedAge(InterpretedAge):
     def from_json(self, obj):
-        for a in ('age', 'age_err', 'kca', 'kca_err', 'age_kind', 'kca_kind', 'mswd'):
+        for a in ('age', 'age_err', 'kca', 'kca_err', 'age_kind', 'kca_kind', 'mswd',
+                  'sample', 'material', 'identifier', 'nanalyses', 'irradiation'):
             setattr(self, a, obj[a])
 
 
@@ -316,7 +317,12 @@ class DVC(Loggable):
                  mswd=float(mswd),
                  include_j_error_in_mean=ia.include_j_error_in_mean,
                  include_j_error_in_plateau=ia.include_j_error_in_plateau,
-                 include_j_error_in_individual_analyses=ia.include_j_error_in_individual_analyses)
+                 include_j_error_in_individual_analyses=ia.include_j_error_in_individual_analyses,
+                 sample=ia.sample,
+                 material=ia.material,
+                 identifier=ia.identifier,
+                 nanalyses=ia.nanalyses,
+                 irradiation=ia.irradiation)
 
         # db_ia = db.add_interpreted_age(**d)
 

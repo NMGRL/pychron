@@ -15,32 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Enum
-from traitsui.api import View, UItem, VGroup
-
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.core.save_model import SaveModel, SaveController
-from pychron.paths import paths
 
-
-class InterpretedAgePersistOptions(SaveModel):
-    extension = Enum('xls', 'pdf')
-
-    @property
-    def default_root(self):
-        return paths.table_dir
-
-
-class InterpretedAgePersistOptionsView(SaveController):
-    def traits_view(self):
-        path_grp = self._get_path_group(show_border=True)
-        v = View(VGroup(UItem('extension', label='Output Mode'),
-                        path_grp),
-                 title='Save Interpreted Age Table',
-                 buttons=['OK', 'Cancel'],
-                 resizable=True)
-        return v
 
 # ============= EOF =============================================

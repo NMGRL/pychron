@@ -33,6 +33,10 @@ class SaveModel(HasTraits):
     use_manual_path = Bool(False)
     extension = '.pdf'
 
+    @property
+    def default_root(self):
+        return paths.figure_dir
+
     def dump(self):
         pass
 
@@ -43,7 +47,7 @@ class SaveModel(HasTraits):
             return self._prepare_path(make=make)
 
     def _prepare_path(self, make=False):
-        root = os.path.join(paths.figure_dir, self.root_directory)
+        root = os.path.join(self.default_root, self.root_directory)
         if make and not os.path.isdir(root):
             os.mkdir(root)
 
