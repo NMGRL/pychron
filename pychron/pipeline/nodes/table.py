@@ -23,21 +23,38 @@ from pychron.pipeline.nodes.base import BaseNode
 
 
 class TableOptions(HasTraits):
+    pass
+
+
+class AnalysisTableOptions(TableOptions):
     references_enabled = Bool(False)
+
+
+class SummaryTableOptions(TableOptions):
+    pass
+
+
+# ==================================================
 
 
 class TableNode(BaseNode):
     options = Instance(TableOptions)
-    name = 'Analysis Table'
-    options_klass = TableOptions
-
-    auto_configure = False
 
     def configure(self, pre_run=False, **kw):
         if not pre_run:
             self._manual_configured = True
 
         return self._configure(self.options)
+
+    def _options_default(self):
+        return self.options_klass()
+
+
+class AnalysisTableNode(TableNode):
+    name = 'Analysis Table'
+    options_klass = AnalysisTableOptions
+
+    auto_configure = False
 
     def run(self, state):
         if state.unknowns:
@@ -58,7 +75,11 @@ class TableNode(BaseNode):
     def _make_references_table(self, items):
         pass
 
-    def _options_default(self):
-        return self.options_klass()
 
+class SummaryTableNode(TableNode):
+    name = 'Summary Table'
+    options_klass = SummaryTableOptions
+
+    def run(self, state):
+        pass
 # ============= EOF =============================================

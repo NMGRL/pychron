@@ -23,23 +23,55 @@ from pyface.message_dialog import information
 from pyface.timer.do_later import do_after
 from traits.api import Instance, Bool, Int, Str, List, Enum
 from traitsui.api import View, Item, EnumEditor
-
 # ============= standard library imports ========================
 import weakref
 from datetime import datetime
 # ============= local library imports  ==========================
-from pychron.core.csv.csv_parser import CSVColumnParser
-from pychron.envisage.browser.view import BrowserView
 from pychron.pipeline.nodes.base import BaseNode
-from pychron.processing.analyses.file_analysis import FileAnalysis
 
 
-class DataNode(BaseNode):
+class DVCNode(BaseNode):
+    dvc = Instance('pychron.dvc.dvc.DVC')
+    browser_model = Instance('pychron.envisage.browser.browser_model.BrowserModel')
+
+
+class InterpretedAgeNode(DVCNode):
+    name = 'Interpreted Age'
+
+    def configure(self, pre_run=False, **kw):
+        # if pre_run and getattr(self, self.analysis_kind):
+        #     return True
+        if not pre_run:
+            self._manual_configured = True
+
+        from pychron.envisage.browser.view import InterpretedAgeBrowserView
+
+        self.browser_model.activated()
+
+        browser_view = InterpretedAgeBrowserView(model=self.browser_model)
+        info = browser_view.edit_traits(kind='livemodal')
+
+        if info.result:
+            self.browser_model.dump()
+            # records = self.browser_model.get_analysis_records()
+            # if records:
+            #     analyses = self.dvc.make_analyses(records)
+            #     if browser_view.is_append:
+            #         ans = getattr(self, self.analysis_kind)
+            #         ans.extend(analyses)
+            #     else:
+            #         self.trait_set(**{self.analysis_kind: analyses})
+
+            return True
+
+    def run(self, state):
+        pass
+
+
+class DataNode(DVCNode):
     name = 'Data'
 
     analysis_kind = None
-    dvc = Instance('pychron.dvc.dvc.DVC')
-    browser_model = Instance('pychron.envisage.browser.browser_model.BrowserModel')
 
     check_reviewed = Bool(False)
 
@@ -50,10 +82,16 @@ class DataNode(BaseNode):
         if not pre_run:
             self._manual_configured = True
 
+        from pychron.envisage.browser.view import BrowserView
+
+        self.browser_model.activated()
+
         browser_view = BrowserView(model=self.browser_model)
         info = browser_view.edit_traits(kind='livemodal')
 
         if info.result:
+            self.browser_model.dump()
+
             records = self.browser_model.get_analysis_records()
             if records:
                 analyses = self.dvc.make_analyses(records)
@@ -96,11 +134,15 @@ class CSVNode(BaseNode):
         items.extend(self.unknowns)
 
     def _load_analyses(self):
+        from pychron.core.csv.csv_parser import CSVColumnParser
+
         par = CSVColumnParser(delimiter=',')
         par.load(self.path)
         return self._get_items_from_file(par)
 
     def _get_items_from_file(self, parser):
+        from pychron.processing.analyses.file_analysis import FileAnalysis
+
         def gen():
             for d in parser.itervalues():
                 if d['age'] is not None:

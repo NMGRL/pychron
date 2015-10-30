@@ -21,8 +21,8 @@ from traits.api import HasTraits
 # ============= standard library imports ========================
 import yaml
 # ============= local library imports  ==========================
-from pychron.pipeline.nodes import DiffNode
-from pychron.pipeline.nodes.data import DataNode, UnknownNode
+from pychron.pipeline.nodes.diff import DiffNode
+from pychron.pipeline.nodes.data import DataNode, UnknownNode, DVCNode, InterpretedAgeNode
 from pychron.pipeline.nodes.find import FindNode
 from pychron.pipeline.nodes.gain import GainCalibrationNode
 from pychron.pipeline.nodes.persist import PersistNode
@@ -35,7 +35,7 @@ class PipelineTemplate(HasTraits):
         self.name = name
         self.path = path
 
-    def render(self, application, pipeline, bmodel, dvc, clear=False):
+    def render(self, application, pipeline, bmodel, iabmodel, dvc, clear=False):
         # if first node is an unknowns node
         # render into template
 
@@ -63,7 +63,9 @@ class PipelineTemplate(HasTraits):
                 continue
 
             node = self._node_factory(klass, ni)
-            if isinstance(node, DataNode):
+            if isinstance(node, InterpretedAgeNode):
+                node.trait_set(browser_model=iabmodel, dvc=dvc)
+            elif isinstance(node, DVCNode):
                 node.trait_set(browser_model=bmodel, dvc=dvc)
             elif isinstance(node, (FindNode, PersistNode, GainCalibrationNode)):
                 node.trait_set(dvc=dvc)
@@ -82,7 +84,5 @@ class PipelineTemplate(HasTraits):
         node.pre_load(ni)
         node.load(ni)
         return node
-
-
 
 # ============= EOF =============================================

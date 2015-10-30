@@ -14,6 +14,8 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
+import glob
+
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import Instance, Str, Set, List, provides
 # ============= standard library imports ========================
@@ -37,6 +39,7 @@ from pychron.dvc.dvc_analysis import DVCAnalysis, experiment_path, analysis_path
     AnalysisNotAnvailableError
 from pychron.dvc.dvc_database import DVCDatabase
 from pychron.dvc.meta_repo import MetaRepo
+from pychron.envisage.browser.record_views import InterpretedAgeRecordView
 from pychron.git_archive.repo_manager import GitRepoManager, format_date, get_repository_branch
 from pychron.github import Organization
 from pychron.loggable import Loggable
@@ -102,6 +105,17 @@ def get_review_status(record):
         ret = 'All'  # all
 
     record.review_status = ret
+
+
+def find_interpreted_age_path(idn, experiments, prefixlen=3):
+    prefix = idn[:prefixlen]
+    suffix = '{}.ia.json'.format(idn[prefixlen:])
+
+    for e in experiments:
+        pathname = '{}/{}/{}/ia/{}'.format(paths.experiment_dataset_dir, e, prefix, suffix)
+        ps = glob.glob(pathname)
+        if ps:
+            return ps[0]
 
 
 class Tag(object):
@@ -386,6 +400,15 @@ class DVC(Loggable):
             ip = db.get_identifier(identifier)
             ip.j = j
             ip.j_err = e
+
+    def find_interpreted_ages(self, identifiers, experiments):
+        ias = []
+        for idn in identifiers:
+            path = find_interpreted_age_path(idn, experiments)
+            if path:
+                ias.append(InterpretedAgeRecordView(idn, path))
+
+        return ias
 
     def find_references(self, times, atypes, hours, exclude=None, make_records=True, **kw):
         records = self.db.find_references(times, atypes, hours, exclude=exclude, **kw)
@@ -774,12 +797,15 @@ class DVC(Loggable):
 
 if __name__ == '__main__':
     paths.build('_dev')
-    d = DVC(bind=False)
-    with open('/Users/ross/Programming/githubauth.txt') as rfile:
-        usr = rfile.readline().strip()
-        pwd = rfile.readline().strip()
-    d.github_user = usr
-    d.github_password = pwd
-    d.organization = 'NMGRLData'
-    d.add_experiment('Irradiation-NM-273')
+    idn = '24138'
+    exps = ['Irradiation-NM-272']
+    print find_interpreted_age_path(idn, exps)
+    # d = DVC(bind=False)
+    # with open('/Users/ross/Programming/githubauth.txt') as rfile:
+    #     usr = rfile.readline().strip()
+    #     pwd = rfile.readline().strip()
+    # d.github_user = usr
+    # d.github_password = pwd
+    # d.organization = 'NMGRLData'
+    # d.add_experiment('Irradiation-NM-273')
 # ============= EOF =============================================

@@ -30,6 +30,15 @@ class RecordView(object):
         pass
 
 
+class InterpretedAgeRecordView(object):
+    identifier = ''
+    path = ''
+
+    def __init__(self, idn, path):
+        self.identifier = idn
+        self.path = path
+
+
 class SampleImageRecordView(RecordView):
     name = Str
     record_id = Long

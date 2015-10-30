@@ -121,6 +121,7 @@ class Pipeline(HasTraits):
 class PipelineEngine(Loggable):
     dvc = Instance('pychron.dvc.dvc.DVC')
     browser_model = Instance('pychron.envisage.browser.base_browser_model.BaseBrowserModel')
+    interpreted_age_browser_model = Instance('pychron.envisage.browser.base_browser_model.BaseBrowserModel')
     pipeline = Instance(Pipeline, ())
     selected = Instance(BaseNode, ())
     dclicked = Event
@@ -494,7 +495,10 @@ class PipelineEngine(Loggable):
             return
 
         pt = PipelineTemplate(name, path)
-        pt.render(self.application, self.pipeline, self.browser_model, self.dvc)
+        pt.render(self.application, self.pipeline,
+                  self.browser_model,
+                  self.interpreted_age_browser_model,
+                  self.dvc)
         self.update_detectors()
         if self.pipeline.nodes:
             self.selected = self.pipeline.nodes[0]

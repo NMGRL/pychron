@@ -19,15 +19,17 @@ from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.task_factory import TaskFactory
 from pyface.tasks.action.schema import SMenu, SGroup
 from pyface.tasks.action.schema_addition import SchemaAddition
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.envisage.browser.interpreted_age_browser_model import InterpretedAgeBrowserModel
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.pipeline.tasks.actions import ConfigureRecallAction, IdeogramAction, IsochronAction, SpectrumAction, \
     SeriesAction, BlanksAction, ICFactorAction, ResetFactoryDefaultsAction, VerticalFluxAction
 from pychron.pipeline.tasks.browser_task import BrowserTask
 from pychron.pipeline.tasks.preferences import PipelinePreferencesPane
 from pychron.pipeline.tasks.task import PipelineTask
-from pychron.envisage.browser.browser_model import BrowserModel
+from pychron.envisage.browser.sample_browser_model import SampleBrowserModel
 
 
 class PipelinePlugin(BaseTaskPlugin):
@@ -40,26 +42,35 @@ class PipelinePlugin(BaseTaskPlugin):
                 ('spectrum_template', 'SPEC', ov),
                 ('isochron_template', 'ISOCHRON', ov),
                 ('csv_ideogram_template', 'CSV_IDEO', ov),
-                ('vertical_flux_template', 'VERTICAL_FLUX', ov)]
+                ('vertical_flux_template', 'VERTICAL_FLUX', ov),
+                ('summary_table_template', 'SUMMARY_TABLE', ov)]
 
     def _pipeline_factory(self):
-        model = self.application.get_service(BrowserModel)
-        t = PipelineTask(browser_model=model)
+        model = self.application.get_service(SampleBrowserModel)
+        iamodel = self.application.get_service(InterpretedAgeBrowserModel)
+        t = PipelineTask(browser_model=model,
+                         interpreted_age_browser_model=iamodel)
         return t
 
     def _browser_factory(self):
-        model = self.application.get_service(BrowserModel)
+        model = self.application.get_service(SampleBrowserModel)
         t = BrowserTask(browser_model=model)
         return t
 
     def _browser_model_factory(self):
-        return BrowserModel(application=self.application)
+        return SampleBrowserModel(application=self.application)
+
+    def _interpreted_age_browser_model_factory(self):
+        return InterpretedAgeBrowserModel(application=self.application)
 
     # defaults
     def _service_offers_default(self):
-        so = self.service_offer_factory(protocol=BrowserModel,
+        so = self.service_offer_factory(protocol=SampleBrowserModel,
                                         factory=self._browser_model_factory)
-        return [so]
+
+        so1 = self.service_offer_factory(protocol=InterpretedAgeBrowserModel,
+                                         factory=self._interpreted_age_browser_model_factory)
+        return [so, so1]
 
     def _preferences_panes_default(self):
         return [PipelinePreferencesPane]

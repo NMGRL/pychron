@@ -70,6 +70,10 @@ class BrowserTask(BaseBrowserTask):
 
     def _opened_hook(self):
         super(BrowserTask, self)._opened_hook()
+
+        self.browser_model.activated()
+        self._activate_sample_browser()
+
         if globalv.browser_debug:
             if self.browser_model.analysis_table.analyses:
                 r = self.browser_model.analysis_table.analyses[0]

@@ -20,8 +20,8 @@ Global path structure
 add a path verification function
 make sure directory exists and build if not
 """
-from os import path, mkdir
 import os
+from os import path, mkdir
 
 from pyface.message_dialog import warning
 
@@ -211,9 +211,12 @@ class Paths(object):
     blanks_template = None
     iso_evo_template = None
     ideogram_template = None
+    vertical_flux_template = None
+    csv_ideogram_template = None
     spectrum_template = None
     isochron_template = None
     inverse_isochron_template = None
+    summary_table_template = None
 
     def write_default_file(self, p, default, overwrite=False):
         return self._write_default_file(p, default, overwrite)
@@ -415,6 +418,7 @@ class Paths(object):
         self.isochron_template = join(self.pipeline_template_dir, 'isochron.yaml')
         self.inverse_isochron_template = join(self.pipeline_template_dir, 'inverse_isochron.yaml')
         self.vertical_flux_template = join(self.pipeline_template_dir, 'vertical_flux.yaml')
+        self.summary_table_template = join(self.pipeline_template_dir, 'summary_table.yaml')
 
         build_directories()
 

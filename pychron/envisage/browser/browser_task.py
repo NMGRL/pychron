@@ -19,7 +19,6 @@
 from traits.api import Any, on_trait_change, Date, Time, Instance
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.core.helpers.ctx_managers import no_update
 from pychron.core.ui.table_configurer import RecallTableConfigurer
 from pychron.envisage.tasks.editor_task import BaseEditorTask
 # from pychron.processing.selection.data_selector import DataSelector
@@ -67,7 +66,7 @@ class BaseBrowserTask(BaseEditorTask):
     # identifier_visible = Property(depends_on='filter_focus')
     # project_visible = Property(depends_on='filter_focus')
     default_task_name = 'Recall'
-    browser_model = Instance('pychron.envisage.browser.browser_model.BrowserModel')
+    browser_model = Instance('pychron.envisage.browser.sample_browser_model.SampleBrowserModel')
     dvc = Instance('pychron.dvc.dvc.DVC')
 
     isotope_adapter = Instance(IsotopeTabularAdapter, ())
@@ -221,12 +220,12 @@ class BaseBrowserTask(BaseEditorTask):
         if not self.browser_model.is_activated:
             self._setup_browser_model()
 
-        with no_update(self):
-            self.browser_model.current_task_name = self.default_task_name
-
-        self.browser_model.activated()
-        self._activate_sample_browser()
-        self.activate_workspace()
+            # with no_update(self):
+            #     self.browser_model.current_task_name = self.default_task_name
+            #
+            # self.browser_model.activated()
+            # self._activate_sample_browser()
+            # self.activate_workspace()
 
     def _find_refs(self, an):
         self.information_dialog('Finding references not currently implemented')
@@ -274,7 +273,7 @@ class BaseBrowserTask(BaseEditorTask):
         #                         obj=self.search_criteria)
         #
         # self.load_browser_selection()
-        self.browser_model.activate_sample_browser()
+        self.browser_model.activate_browser()
         # self.browser_pane.name = 'Browser/Sample'
         self._activated = True
 

@@ -177,4 +177,7 @@ class AnalysisAdapter(BrowserAdapter):
 
         return color
 
+
+class InterpretedAgeAdapter(TabularAdapter):
+    columns = [('Identifier', 'identifier')]
 # ============= EOF =============================================

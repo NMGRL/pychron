@@ -422,6 +422,10 @@ SPEC = """- klass: UnknownNode
 VERTICAL_FLUX = """- klass: FindVerticalFluxNode
 - klass: VerticalFluxNode
 """
+
+SUMMARY_TABLE = """- klass: InterpretedAgeNode
+- klass: SummaryTableNode
+"""
 # SYSTEM_HEALTH = '''
 # values:
 #  - Ar40/Ar36

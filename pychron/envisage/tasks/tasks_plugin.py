@@ -17,8 +17,6 @@
 # ============= enthought library imports =======================
 import random
 
-from traits.api import List, Tuple, HasTraits, Password
-from traitsui.api import View, Item
 from envisage.extension_point import ExtensionPoint
 from envisage.ui.tasks.action.exit_action import ExitAction
 from envisage.ui.tasks.action.preferences_action import PreferencesAction
@@ -28,10 +26,13 @@ from pyface.confirmation_dialog import confirm
 from pyface.constant import NO
 from pyface.tasks.action.dock_pane_toggle_group import DockPaneToggleGroup
 from pyface.tasks.action.schema_addition import SchemaAddition
+from traits.api import List, Tuple, HasTraits, Password
+from traitsui.api import View, Item
 
 # ============= standard library imports ========================
 import hashlib
 # ============= local library imports  ==========================
+from pychron.core.helpers.strtools import to_bool
 from pychron.envisage.tasks.base_plugin import BasePlugin
 from pychron.paths import paths
 from pychron.envisage.resources import icon
@@ -71,7 +72,7 @@ class PychronTasksPlugin(BasePlugin):
         self._random_tip()
 
     def _random_tip(self):
-        if globalv.random_tip_enabled and self.application.preferences.get('pychron.general.show_random_tip'):
+        if globalv.random_tip_enabled and to_bool(self.application.preferences.get('pychron.general.show_random_tip')):
             from pychron.envisage.tasks.tip_view import TipView
 
             t = random.choice(self.help_tips)

@@ -18,7 +18,9 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
-from pychron.pipeline.nodes.data import UnknownNode, ReferenceNode, FluxMonitorsNode, ListenUnknownNode, CSVNode
+from pychron.pipeline.nodes.data import UnknownNode, ReferenceNode, FluxMonitorsNode, ListenUnknownNode, CSVNode, \
+    InterpretedAgeNode
+from pychron.pipeline.nodes.diff import DiffNode
 from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, SeriesNode, InverseIsochronNode, VerticalFluxNode
 from pychron.pipeline.nodes.filter import FilterNode
 from pychron.pipeline.nodes.find import FindReferencesNode, FindFluxMonitorsNode, FindVerticalFluxNode
@@ -28,6 +30,6 @@ from pychron.pipeline.nodes.grouping import GroupingNode
 from pychron.pipeline.nodes.persist import DVCPersistNode, PDFFigureNode, \
     BlanksPersistNode, IsotopeEvolutionPersistNode, ICFactorPersistNode, FluxPersistNode, XLSTablePersistNode
 from pychron.pipeline.nodes.review import ReviewNode
-from pychron.pipeline.nodes.table import TableNode
-from pychron.pipeline.nodes.diff import DiffNode
+from pychron.pipeline.nodes.table import AnalysisTableNode, SummaryTableNode
+
 # ============= EOF =============================================

@@ -22,7 +22,7 @@ from traitsui.handler import Handler
 # ============= local library imports  ==========================
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.browser.adapters import BrowserAdapter
-from pychron.envisage.browser.sample_view import BrowserSampleView
+from pychron.envisage.browser.sample_view import BrowserSampleView, BrowserInterpretedAgeView
 from pychron.envisage.browser.time_view import TimeViewModel
 from pychron.envisage.icon_button_editor import icon_button_editor
 
@@ -68,7 +68,7 @@ class BaseBrowserView(HasTraits):
         """
         if self.model:
             return {'object': self.model, 'pane': self}
-        return super(BrowserView, self).trait_context()
+        return super(BaseBrowserView, self).trait_context()
 
     def _get_browser_group(self):
         grp = Group(UItem('pane.sample_view',
@@ -174,4 +174,31 @@ class BrowserView(BaseBrowserView):
                  resizable=True)
 
         return v
+
+
+class InterpretedAgeBrowserView(HasTraits):
+    append_button = Button('Append')
+    replace_button = Button('Replace')
+    sample_view = Instance(BrowserInterpretedAgeView)
+
+    def _sample_view_default(self):
+        return BrowserInterpretedAgeView(model=self.model, pane=self)
+
+    def trait_context(self):
+        """ Use the model object for the Traits UI context, if appropriate.
+        """
+        if self.model:
+            return {'object': self.model, 'pane': self}
+        return super(InterpretedAgeBrowserView, self).trait_context()
+
+    def traits_view(self):
+        bgrp = HGroup(spring, UItem('pane.append_button'), UItem('pane.replace_button'))
+        v = View(VGroup(UItem('pane.sample_view', style='custom'),
+                        bgrp),
+                 handler=BrowserViewHandler(),
+                 title='Browser',
+                 resizable=True)
+
+        return v
+
 # ============= EOF =============================================

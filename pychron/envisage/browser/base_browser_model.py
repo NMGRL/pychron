@@ -160,9 +160,14 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
     db = Property
     use_fuzzy = True
-    pattributes = ('project_enabled', 'sample_view_active', 'use_low_post', 'use_high_post',
+    pattributes = ('project_enabled',
+                   'experiment_enabled',
+                   'sample_view_active', 'use_low_post', 'use_high_post',
                    'use_named_date_range', 'named_date_range',
                    'low_post', 'high_post')
+
+    persistence_name = 'browser_options'
+    selection_persistence_name = 'browser_selection'
 
     _suppress_post_update = False
 
@@ -170,6 +175,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         return self._make_records(ans)
 
     def dump_browser(self):
+        self.debug('dump browser')
         self.dump()
         self.dump_browser_selection()
 
@@ -310,9 +316,13 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         grps = self.get_analysis_groups(names)
         self.analysis_groups = grps
 
+    @caller
     def _load_associated_labnumbers(self):
         """
         """
+        if self._suppress_load_labnumbers:
+            return
+
         db = self.db
         sams = []
         with db.session_ctx():
@@ -362,12 +372,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             es = [e.name for e in self.selected_experiments] if self.selected_experiments else []
             ls = db.get_labnumbers(experiments=es, mass_spectrometers=(ms,), low_post=lpost)
 
-            def func(li, prog, i, n):
-                if prog:
-                    prog.change_message('Loading Labnumber {}'.format(li.identifier))
-                return LabnumberRecordView(li)
-
-            sams = progress_loader(ls, func)
+            sams = self._load_sample_record_views(ls)
 
         return sams
 
@@ -381,15 +386,19 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             n = len(lns)
             self.debug('_populate_samples n={}'.format(n))
 
-            def func(li, prog, i, n):
-                if prog:
-                    prog.change_message('Loading Labnumber {}'.format(li.identifier))
-                return LabnumberRecordView(li)
-
-            sams = progress_loader(lns, func)
+            sams = self._load_sample_record_views(lns)
 
         sel = sams[:1] if n == 1 and sams else []
         self.set_samples(sams, sel)
+
+    def _load_sample_record_views(self, lns):
+        def func(li, prog, i, n):
+            if prog:
+                prog.change_message('Loading Labnumber {}'.format(li.identifier))
+            return LabnumberRecordView(li)
+
+        sams = progress_loader(lns, func, step=25)
+        return sams
 
     # def _retrieve_labnumbers_hook(self, db):
     #     projects = self.selected_projects
@@ -433,14 +442,8 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             ls = self._retrieve_labnumbers()
             self.debug('_retrieve_labnumbers n={}'.format(len(ls)))
 
-            def func(li, prog, i, n):
-                # if prog and i % 25 == 0:
-                if prog:
-                    prog.change_message('Loading Labnumber {}'.format(li.identifier))
-                return LabnumberRecordView(li)
+            sams = self._load_sample_record_views(ls)
 
-            # sams = progress_loader(ls, func, n=len(ls) / 25)
-            sams = progress_loader(ls, func, step=25)
         return sams
 
     def _retrieve_labnumbers(self):
@@ -736,11 +739,11 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     # persistence
     @property
     def persistence_path(self):
-        return os.path.join(paths.hidden_dir, 'browser_options')
+        return os.path.join(paths.hidden_dir, self.persistence_name)
 
     @property
     def selection_persistence_path(self):
-        p = os.path.join(paths.hidden_dir, 'browser_selection')
+        p = os.path.join(paths.hidden_dir, self.selection_persistence_name)
         return self._make_persistence_path(p)
 
     # persistence private

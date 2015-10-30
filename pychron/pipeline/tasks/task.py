@@ -97,6 +97,7 @@ class PipelineTask(BaseBrowserTask):
 
         self.engine.dvc = self.dvc
         self.engine.browser_model = self.browser_model
+        self.engine.interpreted_age_browser_model = self.interpreted_age_browser_model
 
         # self.engine.add_data()
 
@@ -111,7 +112,8 @@ class PipelineTask(BaseBrowserTask):
                 self.run()
 
     def prepare_destroy(self):
-        pass
+        super(PipelineTask, self).prepare_destroy()
+        self.interpreted_age_browser_model.dump_browser()
 
     def create_dock_panes(self):
         panes = [PipelinePane(model=self.engine),
