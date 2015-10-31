@@ -398,7 +398,7 @@ class PipelineEngine(Loggable):
             idx = max(0, idx - 1)
             node = self.pipeline.nodes[idx]
 
-            ret = self.run_pipeline(run_from=node)
+            ret = self.run_pipeline(run_from=node, state=self.state)
         return ret
 
     def resume_pipeline(self):

@@ -16,10 +16,9 @@
 
 # ============= enthought library imports =======================
 
-from traits.api import List, Int, Event, Instance, Property
-from traitsui.api import View, UItem, VGroup, TabularEditor
+from traits.api import List, Int, Event, Instance, Property, Str
+from traitsui.api import View, UItem, VGroup, TabularEditor, Item
 from traitsui.tabular_adapter import TabularAdapter
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.column_sorter_mixin import ColumnSorterMixin
@@ -100,6 +99,7 @@ class InterpretedAgeTableEditor(BaseTraitsEditor, ColumnSorterMixin):
     name = 'Untitled'
     refresh = Event
     tabular_adapter = Instance(InterpretedAgeAdapter, ())
+    title = Str('Table 1. Ar/Ar Summary Table')
     # def save_summary_table(self, root, auto_view=False):
     #     name = '{}_summary'.format(self.name)
     #     w = SummaryPDFTableWriter()
@@ -120,6 +120,7 @@ class InterpretedAgeTableEditor(BaseTraitsEditor, ColumnSorterMixin):
     #     else:
     #         title = opt.title
     #     return title
+
     def make_xls_table(self, path):
         # ans = self._clean_items()
         # means = self.analysis_groups
@@ -129,7 +130,9 @@ class InterpretedAgeTableEditor(BaseTraitsEditor, ColumnSorterMixin):
             return path
 
     def _generate_title(self):
-        return 'Table 1. Ar/Ar Summary Table'
+        return self.title
+
+    #     return 'Table 1. Ar/Ar Summary Table'
 
     # @on_trait_change('interpreted_ages[]')
     # def _interpreted_ages_changed(self):
@@ -143,7 +146,8 @@ class InterpretedAgeTableEditor(BaseTraitsEditor, ColumnSorterMixin):
                                                      operations=['move', 'delete'],
                                                      column_clicked='column_clicked',
                                                      refresh='refresh'))
-        v = View(VGroup(interpreted_grp))
+        title_grp = Item('title')
+        v = View(VGroup(title_grp, interpreted_grp))
         return v
 
 # ============= EOF =============================================
