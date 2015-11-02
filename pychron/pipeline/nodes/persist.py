@@ -231,6 +231,6 @@ class InterpretedAgeTablePersistNode(BaseNode):
             if isinstance(editor, InterpretedAgeTableEditor):
                 opt = self.options.model
                 if opt.extension == 'xls':
-                    editor.make_xls_table(opt.path)
+                    editor.make_xls_table(opt)
                     view_file(opt.path)
 # ============= EOF =============================================

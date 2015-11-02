@@ -36,7 +36,9 @@ except UnicodeEncodeError:
 
 SIGMA = u'\u03c3'
 
-PLUSMINUS_ONE_SIGMA = u'{}1{}'.format(PLUSMINUS, SIGMA)
+PLUSMINUS_NSIGMA = u'{}{{}}{}'.format(PLUSMINUS, SIGMA)
+PLUSMINUS_ONE_SIGMA = PLUSMINUS_NSIGMA.format(1)
+# PLUSMINUS_ONE_SIGMA = u'{}1{}'.format(PLUSMINUS, SIGMA)
 PLUSMINUS_PERCENT = u'{}%  '.format(PLUSMINUS)
 
 NULL_STR = '---'

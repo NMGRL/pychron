@@ -23,9 +23,9 @@ from xlwt import XFStyle
 
 
 class InterpretedAgeTextWriter(object):
-    def build(self, p, ias, title=None, adapter=None):
+    def build(self, p, ias, title=None, adapter=None, options=None):
         wb = self._new_workbook()
-        self._write_summary_sheet(wb, ias, title, adapter)
+        self._write_summary_sheet(wb, ias, title, adapter, options)
         # options = self.options
         # if options.use_sample_sheets:
         #     for gi in groups:
@@ -51,7 +51,7 @@ class InterpretedAgeTextWriter(object):
 
         wb.save(p)
 
-    def _write_summary_sheet(self, wb, ias, title, adapter):
+    def _write_summary_sheet(self, wb, ias, title, adapter, options):
         # def set_nsigma(nattr):
         #     def f(item, attr):
         #         return getattr(item, attr) * getattr(self.options,
@@ -60,6 +60,8 @@ class InterpretedAgeTextWriter(object):
         #     return f
 
         sh = wb.add_sheet('Summary')
+        if options:
+            sh.show_grid = options.show_grid
         # cols = [('Sample', 'sample'),
         #         ('Identifier', 'identifier'),
         #         ('Irradiation', 'irradiation'),
@@ -105,6 +107,11 @@ class InterpretedAgeTextWriter(object):
 
             txt = getter(ia, attr)
             if isinstance(txt, float):
+                if attr == 'kca_err':
+                    txt *= adapter.kca_nsigma
+                elif attr == 'display_age_err':
+                    txt *= adapter.display_age_nsigma
+
                 style = XFStyle()
                 fmt = '0' * getattr(adapter, '{}_sigfigs'.format(attr))
                 style.num_format_str = '0.{}'.format(fmt)

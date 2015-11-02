@@ -41,7 +41,7 @@ class InterpretedAgeAdapter(TabularAdapter):
                ('Kind', 'age_kind'),
                ('Age', 'display_age'),
                (PLUSMINUS_ONE_SIGMA, 'display_age_err'),
-               ('NAnalyses', 'nanalyses'),
+               ('N', 'nanalyses'),
                ('MSWD', 'mswd'),
                ('K/Ca', 'kca'),
                (PLUSMINUS_ONE_SIGMA, 'kca_err')]
@@ -66,11 +66,14 @@ class InterpretedAgeAdapter(TabularAdapter):
     kca_sigfigs = Int(3)
     kca_err_sigfigs = Int(3)
 
+    kca_nsigma = Int(2)
+    display_age_nsigma = Int(2)
+
     def _get_display_age_text(self):
         return self._format_number('display_age')
 
     def _get_display_age_err_text(self):
-        return self._format_number('display_age_err')
+        return self._format_err('display_age')
 
     def _get_mswd_text(self):
         return self._format_number('mswd')
@@ -79,16 +82,19 @@ class InterpretedAgeAdapter(TabularAdapter):
         return self._format_number('kca')
 
     def _get_kca_err_text(self):
-        return self._format_number('kca_err')
+        return self._format_err('kca')
 
     def _format_number(self, attr):
         v = getattr(self.item, attr)
         n = getattr(self, '{}_sigfigs'.format(attr))
         return floatfmt(v, n)
 
-        # @property
-        # def age_sigfigs(self):
-        #     return self.display_age_sigfigs
+    def _format_err(self, attr):
+        nsigma = getattr(self, '{}_nsigma'.format(attr))
+        v = getattr(self.item, '{}_err'.format(attr))
+        v *= nsigma
+        n = getattr(self, '{}_err_sigfigs'.format(attr))
+        return floatfmt(v, n)
 
 
 class InterpretedAgeTableEditor(BaseTraitsEditor, ColumnSorterMixin):
@@ -121,12 +127,13 @@ class InterpretedAgeTableEditor(BaseTraitsEditor, ColumnSorterMixin):
     #         title = opt.title
     #     return title
 
-    def make_xls_table(self, path):
+    def make_xls_table(self, output_options):
         # ans = self._clean_items()
         # means = self.analysis_groups
         t = InterpretedAgeXLSTableWriter()
+        path = output_options.path
         if path:
-            t.build(path, self.interpreted_ages, self._generate_title(), self.tabular_adapter)
+            t.build(path, self.interpreted_ages, self._generate_title(), self.tabular_adapter, output_options)
             return path
 
     def _generate_title(self):

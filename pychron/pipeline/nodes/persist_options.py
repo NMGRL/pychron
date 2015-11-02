@@ -15,8 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Enum
-from traitsui.api import View, UItem, VGroup
+from traits.api import Enum, Bool
+from traitsui.api import View, UItem, VGroup, Tabbed, Item
 
 
 # ============= standard library imports ========================
@@ -27,6 +27,7 @@ from pychron.paths import paths
 
 class InterpretedAgePersistOptions(SaveModel):
     extension = Enum('xls', 'pdf')
+    show_grid = Bool
 
     @property
     def default_root(self):
@@ -36,8 +37,11 @@ class InterpretedAgePersistOptions(SaveModel):
 class InterpretedAgePersistOptionsView(SaveController):
     def traits_view(self):
         path_grp = self._get_path_group(show_border=True)
-        v = View(VGroup(UItem('extension', label='Output Mode'),
-                        path_grp),
+        view_grp = VGroup(Item('show_grid'), label='Appearance')
+
+        v = View(Tabbed(VGroup(UItem('extension', label='Output Mode'),
+                               path_grp),
+                        view_grp),
                  title='Save Interpreted Age Table',
                  buttons=['OK', 'Cancel'],
                  resizable=True)

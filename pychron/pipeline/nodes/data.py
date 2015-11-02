@@ -36,7 +36,8 @@ class DVCNode(BaseNode):
 
 
 class InterpretedAgeNode(DVCNode):
-    name = 'Interpreted Age'
+    name = 'Interpreted Ages'
+    interpreted_ages = List
 
     def configure(self, pre_run=False, **kw):
         # if pre_run and getattr(self, self.analysis_kind):
@@ -60,7 +61,7 @@ class InterpretedAgeNode(DVCNode):
                 interpreted_ages = self.dvc.make_interpreted_ages(records)
 
                 if browser_view.is_append:
-                    ias = getattr(self, self.interpreted_ages)
+                    ias = self.interpreted_ages
                     ias.extend(interpreted_ages)
                 else:
                     self.interpreted_ages = interpreted_ages

@@ -15,8 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Bool, List, Str
-from traitsui.api import View, UItem, TableEditor
+from traits.api import HasTraits, Bool, List, Str, Enum
+from traitsui.api import View, UItem, TableEditor, VGroup, Item
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.extras.checkbox_column import CheckboxColumn
@@ -24,6 +24,7 @@ from traitsui.table_column import ObjectColumn
 from pychron.pipeline.editors.fusion.fusion_table_editor import FusionTableEditor
 from pychron.pipeline.editors.interpreted_age_table_editor import InterpretedAgeTableEditor
 from pychron.pipeline.nodes.base import BaseNode
+from pychron.pychron_constants import PLUSMINUS_NSIGMA
 
 
 class TableOptions(HasTraits):
@@ -43,6 +44,14 @@ class TableColumn(HasTraits):
 
 class InterpretedAgeTableOptions(TableOptions):
     columns = List
+    kca_nsigma = Enum(1, 2, 3)
+    age_nsigma = Enum(1, 2, 3)
+
+    def _kca_nsigma_default(self):
+        return 2
+
+    def _age_nsigma_default(self):
+        return 2
 
     @property
     def column_labels(self):
@@ -62,11 +71,13 @@ class InterpretedAgeTableOptions(TableOptions):
               ('Material', 'material', ''),
               ('Irradiation', 'irradiation', ''),
               ('Age Kind', 'age_kind', ''),
-              ('Age', 'display_age', 3),
-              ('Age Error', 'display_age_err', 3),
               ('MSWD', 'mswd', 3),
               ('K/Ca', 'kca', 3),
-              ('K/Ca Error', 'kca_err', 3))
+              ('K/Ca Error', 'kca_err', 3),
+              ('N', 'nanalyses', ''),
+              ('Age', 'display_age', 3),
+              ('Age Error', 'display_age_err', 3),
+              )
 
         cols = [TableColumn(name=attr, key=key, sigfigs=str(sigfigs)) for attr, key, sigfigs in cs]
         return cols
@@ -76,9 +87,15 @@ class InterpretedAgeTableOptions(TableOptions):
                 CheckboxColumn(name='display'),
                 ObjectColumn(name='sigfigs')]
 
-        v = View(UItem('columns', editor=TableEditor(columns=cols, sortable=False)),
+        sigma = VGroup(Item('age_nsigma'), Item('kca_nsigma'))
+
+        v = View(VGroup(UItem('columns', editor=TableEditor(columns=cols, sortable=False)),
+                        sigma,
+                        ),
                  title='Interpreted Age Table Options',
                  resizable=True,
+                 height=500,
+                 width=300,
                  buttons=['OK', 'Cancel'])
         return v
 
@@ -136,6 +153,16 @@ class InterpretedAgeTableNode(TableNode):
         ta = editor.tabular_adapter
         cols = [c for c in ta.columns if c[1] in self.options.column_keys]
         if cols:
+
+            ta.kca_nsigma = self.options.kca_nsigma
+            ta.display_age_nsigma = self.options.age_nsigma
+
+            for i, c in enumerate(cols):
+                if c[1] == 'kca_err':
+                    cols[i] = (PLUSMINUS_NSIGMA.format(self.options.kca_nsigma), 'kca_err')
+                elif c[1] == 'display_age_err':
+                    cols[i] = (PLUSMINUS_NSIGMA.format(self.options.age_nsigma), 'display_age_err')
+
             for c, si in zip(cols, self.options.column_sigfigs):
                 attr = '{}_sigfigs'.format(c[1])
                 if hasattr(ta, attr):
