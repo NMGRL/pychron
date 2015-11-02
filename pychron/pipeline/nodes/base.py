@@ -109,8 +109,12 @@ class BaseNode(HasTraits):
 
         info = obj.edit_traits(kind='livemodal')
         if info.result:
+            self.finish_configure()
             self.refresh()
             return True
+
+    def finish_configure(self):
+        pass
 
     def to_template(self):
         d = {'klass': self.__class__.__name__}

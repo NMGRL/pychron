@@ -15,19 +15,24 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+
 from traits.api import HasTraits, Bool, List, Str, Enum
 from traitsui.api import View, UItem, TableEditor, VGroup, Item
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
+# ============= standard library imports ========================
+import os
+# ============= local library imports  ==========================
+
+from pychron.paths import paths
+from pychron.persistence_loggable import PersistenceMixin
 from pychron.pipeline.editors.fusion.fusion_table_editor import FusionTableEditor
 from pychron.pipeline.editors.interpreted_age_table_editor import InterpretedAgeTableEditor
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.pychron_constants import PLUSMINUS_NSIGMA
 
 
-class TableOptions(HasTraits):
+class TableOptions(HasTraits, PersistenceMixin):
     pass
 
 
@@ -43,9 +48,13 @@ class TableColumn(HasTraits):
 
 
 class InterpretedAgeTableOptions(TableOptions):
-    columns = List
-    kca_nsigma = Enum(1, 2, 3)
-    age_nsigma = Enum(1, 2, 3)
+    columns = List(dump=True)
+    kca_nsigma = Enum(1, 2, 3, dump=True)
+    age_nsigma = Enum(1, 2, 3, dump=True)
+
+    def __init__(self, *args, **kw):
+        super(InterpretedAgeTableOptions, self).__init__(*args, **kw)
+        self.persistence_path = os.path.join(paths.hidden_dir, 'interpreted_age_table_options.p')
 
     def _kca_nsigma_default(self):
         return 2
@@ -146,6 +155,15 @@ class AnalysisTableNode(TableNode):
 class InterpretedAgeTableNode(TableNode):
     name = 'Interpreted Age Table'
     options_klass = InterpretedAgeTableOptions
+
+    def finish_configure(self):
+        if self.options:
+            self.options.dump()
+
+    def _options_factory(self):
+        op = super(InterpretedAgeTableNode, self)._options_factory()
+        op.load()
+        return op
 
     def run(self, state):
         editor = InterpretedAgeTableEditor()
