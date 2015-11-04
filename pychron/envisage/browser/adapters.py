@@ -179,5 +179,10 @@ class AnalysisAdapter(BrowserAdapter):
 
 
 class InterpretedAgeAdapter(TabularAdapter):
-    columns = [('Identifier', 'identifier')]
+    columns = [('Identifier', 'identifier'),
+               ('Name', 'name')]
+
+    font = 'arial 10'
+    name_width = 100
+    identifier_width = 100
 # ============= EOF =============================================

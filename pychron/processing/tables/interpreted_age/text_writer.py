@@ -16,9 +16,6 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-from xlwt import XFStyle
-
-
 # ============= local library imports  ==========================
 
 
@@ -62,6 +59,7 @@ class InterpretedAgeTextWriter(object):
         sh = wb.add_sheet('Summary')
         if options:
             sh.show_grid = options.show_grid
+            sh.show_outline = options.show_outline
         # cols = [('Sample', 'sample'),
         #         ('Identifier', 'identifier'),
         #         ('Irradiation', 'irradiation'),
@@ -84,7 +82,7 @@ class InterpretedAgeTextWriter(object):
             start = 1
 
         self._add_summary_header_row(start, sh, cols)
-        start += 1
+        start += 2
         for i, ia in enumerate(ias):
             self._add_summary_row(sh, ia, i + start, cols, adapter)
 
@@ -93,9 +91,10 @@ class InterpretedAgeTextWriter(object):
         sh.merge(row, row, 0, 9)
 
     def _add_summary_header_row(self, start, sh, cols):
-        s1, s2 = self._get_header_styles()
+        # s1, s2 = self._get_header_styles()
+        header_style = self._get_header_style()
         for i, ci in enumerate(cols):
-            sh.write(start, i, ci[0], style=s2)
+            sh.write(start, i, ci[0], style=header_style)
 
     def _add_summary_row(self, sh, ia, row, cols, adapter):
         for j, c in enumerate(cols):
@@ -112,7 +111,8 @@ class InterpretedAgeTextWriter(object):
                 elif attr == 'display_age_err':
                     txt *= adapter.display_age_nsigma
 
-                style = XFStyle()
+                style = self._style_factory()
+
                 fmt = '0' * getattr(adapter, '{}_sigfigs'.format(attr))
                 style.num_format_str = '0.{}'.format(fmt)
             else:

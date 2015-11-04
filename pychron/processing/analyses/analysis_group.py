@@ -374,6 +374,7 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
     preferred_age_error_kind = Str  # ('SD')
     preferred_ages = Property(depends_on='analyses')
 
+    name = Str
     use = Bool
 
     def _preferred_age_error_kind_changed(self, new):

@@ -197,6 +197,7 @@ class InterpretedAgeBrowserView(HasTraits):
                         bgrp),
                  handler=BrowserViewHandler(),
                  title='Browser',
+                 width=900,
                  resizable=True)
 
         return v

@@ -515,6 +515,7 @@ class PipelineEngine(Loggable):
         templates = map(formatter, templates)
         with open(paths.pipeline_template_file, 'r') as rfile:
             tnames = yaml.load(rfile)
+
         ns = [pt for pt in tnames if pt in templates]
         self.available_pipeline_templates = ns
 

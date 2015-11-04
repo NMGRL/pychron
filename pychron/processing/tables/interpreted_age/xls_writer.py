@@ -16,10 +16,10 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-from xlwt.Workbook import Workbook
-from xlwt.Style import XFStyle, default_style
-from xlwt.Formatting import Borders
 from xlwt import Alignment
+from xlwt.Formatting import Borders
+from xlwt.Style import XFStyle, default_style
+from xlwt.Workbook import Workbook
 # ============= local library imports  ==========================
 from pychron.processing.tables.interpreted_age.text_writer import InterpretedAgeTextWriter
 
@@ -30,17 +30,21 @@ class InterpretedAgeXLSTableWriter(InterpretedAgeTextWriter):
     def _new_workbook(self):
         return Workbook()
 
-    def _get_header_styles(self):
-        s1 = XFStyle()
+    def _style_factory(self):
+        return XFStyle()
+
+    def _get_header_style(self):
+        # s1 = self._style_factory()
         al = Alignment()
         al.horz = Alignment.HORZ_CENTER
-        s1.alignment = al
+        # s1.alignment = al
 
-        s2 = XFStyle()
+        s2 = self._style_factory()
         borders = Borders()
         borders.bottom = 2
         s2.borders = borders
+        s2.alignment = al
 
-        return s1, s2
+        return s2
 
 # ============= EOF =============================================

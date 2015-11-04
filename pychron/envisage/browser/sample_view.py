@@ -241,7 +241,7 @@ class BrowserInterpretedAgeView(BaseBrowserSampleView):
     def _get_interpreted_age_group(self):
         grp = VGroup(
             UItem('interpreted_table.interpreted_ages',
-                  width=0.4,
+                  # width=0.4,
                   editor=myTabularEditor(
                       adapter=self.model.interpreted_age_table.tabular_adapter,
                       operations=['move', 'delete'],

@@ -35,9 +35,9 @@ class InterpretedAgeRecordView(object):
     identifier = ''
     path = ''
 
-    def __init__(self, idn, path):
+    def __init__(self, idn, path, name):
         self.identifier = idn
-        self.name = idn
+        self.name = name
         self.path = path
 
     @property

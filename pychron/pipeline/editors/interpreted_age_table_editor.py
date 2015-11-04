@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 
 from traits.api import List, Int, Event, Instance, Property, Str
-from traitsui.api import View, UItem, VGroup, TabularEditor, Item
+from traitsui.api import View, UItem, VGroup, TabularEditor, Item, HGroup
 from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -39,12 +39,12 @@ class InterpretedAgeAdapter(TabularAdapter):
                ('Material', 'material'),
                ('Irradiation', 'irradiation'),
                ('Kind', 'age_kind'),
-               ('Age', 'display_age'),
-               (PLUSMINUS_ONE_SIGMA, 'display_age_err'),
                ('N', 'nanalyses'),
                ('MSWD', 'mswd'),
                ('K/Ca', 'kca'),
-               (PLUSMINUS_ONE_SIGMA, 'kca_err')]
+               (PLUSMINUS_ONE_SIGMA, 'kca_err'),
+               ('Age', 'display_age'),
+               (PLUSMINUS_ONE_SIGMA, 'display_age_err')]
 
     font = 'arial 10'
     sample_width = Int(100)
@@ -153,7 +153,7 @@ class InterpretedAgeTableEditor(BaseTraitsEditor, ColumnSorterMixin):
                                                      operations=['move', 'delete'],
                                                      column_clicked='column_clicked',
                                                      refresh='refresh'))
-        title_grp = Item('title')
+        title_grp = HGroup(Item('title'))
         v = View(VGroup(title_grp, interpreted_grp))
         return v
 

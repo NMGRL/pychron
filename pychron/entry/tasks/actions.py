@@ -176,18 +176,29 @@ class ExportIrradiationAction(TaskAction):
     method = 'export_irradiation'
 
 
-class GenerateIrradiationTableAction(Action):
+class GenerateIrradiationTableAction(TaskAction):
     name = 'Generate Irradiation Table'
     dname = 'Generate Irradiation Table'
     accelerator = 'Ctrl+0'
 
-    ddescription = 'Do not use!'
+    # ddescription = 'Do not use!'
 
     def perform(self, event):
-        from pychron.entry.irradiation_table_writer import IrradiationTableWriter
+        # from pychron.entry.irradiation_table_writer import IrradiationTableWriter
+        # a = IrradiationTableWriter()
+        # a.make()
 
-        a = IrradiationTableWriter()
-        a.make()
+        from pychron.entry.irradiation_xls_writer import IrradiationXLSTableWriter
+        dvc = self.task.window.application.get_service('pychron.dvc.dvc.DVC')
+        if dvc is not None:
+            if dvc.db.connect():
+                names = dvc.get_irradiation_names()
+
+                a = IrradiationXLSTableWriter(dvc=dvc)
+                a.make(names)
+        else:
+            from pyface.message_dialog import warning
+            warning(None, 'DVC Plugin is required. Please enable')
 
 
 class ImportIrradiationHolderAction(Action):

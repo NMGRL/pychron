@@ -341,7 +341,6 @@ class DVC(Loggable):
 
     def _add_interpreted_age(self, ia, d):
         p = analysis_path(ia.identifier, ia.experiment_identifier, modifier='ia', mode='w')
-        print p
         dvc_dump(d, p)
 
     def analysis_has_review(self, ai, attr):
@@ -419,7 +418,9 @@ class DVC(Loggable):
         for idn in identifiers:
             path = find_interpreted_age_path(idn, experiments)
             if path:
-                ias.append(InterpretedAgeRecordView(idn, path))
+                obj = dvc_load(path)
+                name = obj.get('name')
+                ias.append(InterpretedAgeRecordView(idn, path, name))
 
         return ias
 
@@ -645,6 +646,13 @@ class DVC(Loggable):
             dblevel = self.db.get_irradiation_level(irrad, level)
             return self.meta_repo.get_irradiation_holder_holes(dblevel.holder)
 
+    def get_irradiation_names(self):
+        names = []
+        with self.db.session_ctx():
+            irrads = self.db.get_irradiations()
+            names = [i.name for i in irrads]
+
+        return names
     # IDatastore
     def get_greatest_aliquot(self, identifier):
         return self.db.get_greatest_aliquot(identifier)
