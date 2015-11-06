@@ -21,7 +21,8 @@ from traitsui.api import View, UItem, ListStrEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from xlwt import Workbook, XFStyle
-from xlwt.Style import default_style
+
+from pychron.pychron_constants import INTERFERENCE_KEYS
 
 
 class IrradiationSelector(HasTraits):
@@ -46,7 +47,8 @@ class IrradiationXLSTableWriter(HasTraits):
         while 1:
             info = irrad_selector.edit_traits()
             if info.result:
-                irradiations = irrad_selector.selected
+                irradiations = irrad_selector.irradiations[1:4]
+                # irradiations = irrad_selector.selected
                 if not irradiations:
                     warning('You must select one or more irradiations')
                 else:
@@ -59,9 +61,19 @@ class IrradiationXLSTableWriter(HasTraits):
         wb = Workbook()
         sh = wb.add_sheet('Irradiations')
 
-        cols = [('Irradiation', ''), ('Duration (hrs)', 'duration')]
+        gen_cols = [('Irradiation', '', ''),
+                    ('Duration (hrs)', 'duration', '0.#'), ]
+
+        pr_cols = [('(40/39)K', 'K4039', '0.###'),
+                   ('(38/39)K', 'K3839', '0.###'),
+                   ('(37/39)K', 'K3739', '0.###'),
+                   ('(39/37)Ca', 'Ca3937', '0.###'),
+                   ('(38/37)Ca', 'Ca3837', '0.###'),
+                   ('(36/37)Ca', 'Ca3637', '0.###'),
+                   ('(36/38)Cl', 'Cl3638', '0.###')]
+        cols = gen_cols + pr_cols
         row = 0
-        for i, (label, key) in enumerate(cols):
+        for i, (label, key, fmt) in enumerate(cols):
             sh.write(row, i, label)
 
         for j, irrad in enumerate(irrads):
@@ -70,17 +82,18 @@ class IrradiationXLSTableWriter(HasTraits):
 
     def _make_irradiation_line(self, sheet, row, irradname, cols):
         dvc = self.dvc
-        for i, (label, key) in enumerate(cols[1:]):
-            sheet.write(row, 0, irradname)
+        chron = dvc.get_chronology(irradname)
+        _, prod = dvc.meta_repo.get_production(irradname, 'A')
 
-            chron = dvc.get_chronology(irradname)
+        sheet.write(row, 0, irradname)
+        for i, (label, key, fmt) in enumerate(cols[1:]):
+            style = XFStyle()
             if key == 'duration':
                 v = chron.duration
-                style = XFStyle()
-                style.num_format_str = '0.#'
-            else:
-                style = default_style
+            elif key in INTERFERENCE_KEYS:
+                v = getattr(prod, key)
 
+            style.num_format_str = fmt
             sheet.write(row, i + 1, v, style)
 
 # ============= EOF =============================================

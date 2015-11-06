@@ -43,6 +43,7 @@ class PipelinePlugin(BaseTaskPlugin):
                 ('isochron_template', 'ISOCHRON', ov),
                 ('csv_ideogram_template', 'CSV_IDEO', ov),
                 ('vertical_flux_template', 'VERTICAL_FLUX', ov),
+                ('analysis_table_template', 'ANALYSIS_TABLE', ov),
                 ('interpreted_age_table_template', 'INTERPRETED_AGE_TABLE', ov)]
 
     def _pipeline_factory(self):

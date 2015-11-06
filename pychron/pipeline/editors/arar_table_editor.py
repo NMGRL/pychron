@@ -18,9 +18,7 @@
 from itertools import groupby
 
 from traits.api import Property, List, cached_property, Str
-from traitsui.api import View, UItem
-
-
+from traitsui.api import View, UItem, Item, VGroup, HGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.column_sorter_mixin import ColumnSorterMixin
@@ -40,6 +38,8 @@ class ArArTableEditor(BaseTableEditor, ColumnSorterMixin):
     analysis_groups_adapter_klass = None
     extract_label = Str
     extract_units = Str
+
+    title = Str('Table X. Ar/Ar Analyses')
 
     def _items_items_changed(self):
         self.refresh_needed = True
@@ -69,16 +69,16 @@ class ArArTableEditor(BaseTableEditor, ColumnSorterMixin):
             t.build(path, ans, groups, title=title)
             return path
 
-    def make_xls_table(self, title, path):
+    def make_xls_table(self, option):
         # ans = self._clean_items()
         means = self.analysis_groups
 
         t = self._writer_factory(self.xls_writer_klass)
         # path = self._get_save_path(path, ext='.xls')
         #         p = '/Users/ross/Sandbox/aaaatable.xls'
-        if path:
-            t.build(path, means, title)
-            return path
+        if option.path:
+            t.build(option.path, means, title=self._generate_title())
+            return option.path
 
     def make_csv_table(self, title, path):
         ans = self._clean_items()
@@ -91,6 +91,9 @@ class ArArTableEditor(BaseTableEditor, ColumnSorterMixin):
         if path:
             t.build(path, ans, means, title)
             return path
+
+    def _generate_title(self):
+        return self.title
 
     def _get_column_widths(self):
         """
@@ -115,7 +118,8 @@ class ArArTableEditor(BaseTableEditor, ColumnSorterMixin):
         return ms
 
     def traits_view(self):
-        v = View(
+        v = View(VGroup(
+            HGroup(Item('title')),
             UItem('items',
                   editor=myTabularEditor(adapter=self.adapter_klass(),
                                          #                                               editable=False,
@@ -130,7 +134,7 @@ class ArArTableEditor(BaseTableEditor, ColumnSorterMixin):
                                          #                                              auto_resize=True,
                                          editable=False,
                                          auto_update=False,
-                                         refresh='refresh_needed')))
+                                         refresh='refresh_needed'))))
         return v
 
         # ============= EOF =============================================

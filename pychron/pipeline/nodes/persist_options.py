@@ -25,6 +25,32 @@ from pychron.core.save_model import SaveModel, SaveController
 from pychron.paths import paths
 
 
+class AnalysisTablePersistOptions(SaveModel):
+    extension = Enum('xls', 'pdf')
+    show_grid = Bool
+    show_outline = Bool
+
+    @property
+    def default_root(self):
+        return paths.table_dir
+
+
+class AnalysisTablePersistOptionsView(SaveController):
+    def traits_view(self):
+        path_grp = self._get_path_group(show_border=True)
+        view_grp = VGroup(Item('show_grid'),
+                          Item('show_outline'),
+                          label='Appearance')
+
+        v = View(Tabbed(VGroup(UItem('extension', label='Output Mode'),
+                               path_grp),
+                        view_grp),
+                 title='Save Analysis Table',
+                 buttons=['OK', 'Cancel'],
+                 resizable=True)
+        return v
+
+
 class InterpretedAgePersistOptions(SaveModel):
     extension = Enum('xls', 'pdf')
     show_grid = Bool

@@ -22,11 +22,12 @@ import os
 # ============= local library imports  ==========================
 from traitsui.editors import DirectoryEditor
 from uncertainties import ufloat
-from pychron.core.helpers.filetools import add_extension, unique_path2, view_file
+from pychron.core.helpers.filetools import add_extension, view_file
 from pychron.core.progress import progress_iterator
 from pychron.paths import paths
 from pychron.pipeline.nodes.base import BaseNode
-from pychron.pipeline.nodes.persist_options import InterpretedAgePersistOptions, InterpretedAgePersistOptionsView
+from pychron.pipeline.nodes.persist_options import InterpretedAgePersistOptions, InterpretedAgePersistOptionsView, \
+    AnalysisTablePersistOptions, AnalysisTablePersistOptionsView
 
 
 class PersistNode(BaseNode):
@@ -203,18 +204,27 @@ class TablePersistNode(FileNode):
     pass
 
 
-class XLSTablePersistNode(TablePersistNode):
-    name = 'Save Excel Table'
+class XLSTablePersistNode(BaseNode):
+    name = 'Save Analysis Table'
+    options_klass = AnalysisTablePersistOptionsView
+
+    def _options_factory(self):
+        opt = AnalysisTablePersistOptions(name='foo')
+        return self.options_klass(model=opt)
 
     def run(self, state):
         from pychron.pipeline.editors.arar_table_editor import ArArTableEditor
 
         for editor in state.editors:
             if isinstance(editor, ArArTableEditor):
-                basename = 'test_xls_table'
-                path, _ = unique_path2(paths.data_dir, basename, extension='.xls')
-                editor.make_xls_table('FooBar', path)
-                view_file(path)
+                opt = self.options.model
+                if opt.extension == 'xls':
+                    editor.make_xls_table(opt)
+                    view_file(opt.path)
+
+                    # basename = 'test_xls_table'
+                    # path, _ = unique_path2(paths.data_dir, basename, extension='.xls')
+                    # editor.make_xls_table('FooBar', path)
 
 
 class InterpretedAgeTablePersistNode(BaseNode):
@@ -233,4 +243,5 @@ class InterpretedAgeTablePersistNode(BaseNode):
                 if opt.extension == 'xls':
                     editor.make_xls_table(opt)
                     view_file(opt.path)
+
 # ============= EOF =============================================

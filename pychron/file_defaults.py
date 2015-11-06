@@ -423,6 +423,12 @@ VERTICAL_FLUX = """- klass: FindVerticalFluxNode
 - klass: VerticalFluxNode
 """
 
+ANALYSIS_TABLE = """- klass: UnknownNode
+- klass: AnalysisTableNode
+- klass: ReviewNode
+- klass: XLSTablePersistNode
+"""
+
 INTERPRETED_AGE_TABLE = """- klass: InterpretedAgeNode
 - klass: InterpretedAgeTableNode
 - klass: ReviewNode
