@@ -43,9 +43,10 @@ class MDriveMotor(CoreDevice, BaseLinearDrive):
             ('General', 'max'),
             ('General', 'nominal_position'),
             ('General', 'units')]
-        self._load_config_attributes(args)
+        self._load_config_attributes(config, args)
 
         self.linear_mapper_factory()
+        return True
 
     def is_simulation(self):
         return self.simulation
@@ -53,6 +54,19 @@ class MDriveMotor(CoreDevice, BaseLinearDrive):
     # private
     def _read_motor_position(self, *args, **kw):
         pass
+
+    def test(self):
+        print self.communicator
+        print self.communicator.handle
+        print 'asd {}'.format(self.ask('PR AL\n'))
+
+if __name__ == '__main__':
+    from pychron.paths import paths
+
+    paths.build('_dev')
+    m = MDriveMotor(name='mdrive')
+    m.bootstrap()
+    m.test()
 # ============= EOF =============================================
 
 
