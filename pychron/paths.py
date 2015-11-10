@@ -26,7 +26,7 @@ from os import path, mkdir
 from pyface.message_dialog import warning
 
 from pychron.file_defaults import TASK_EXTENSION_DEFAULT, SIMPLE_UI_DEFAULT, \
-    EDIT_UI_DEFAULT, IDENTIFIERS_DEFAULT, PIPELINE_TEMPLATES
+    EDIT_UI_DEFAULT, IDENTIFIERS_DEFAULT
 
 
 class Paths(object):
@@ -160,9 +160,12 @@ class Paths(object):
     # processing
     # ==============================================================================
     formatting_dir = None
+
     pipeline_dir = None
     pipeline_template_dir = None
 
+    user_pipeline_dir = None
+    user_pipeline_template_dir = None
     # ==============================================================================
     # lovera exectuables
     # ==============================================================================
@@ -371,7 +374,10 @@ class Paths(object):
         # processing
         # ==============================================================================
         # self.formatting_dir = join(self.setup_dir, 'formatting')
-        self.pipeline_dir = join(self.setup_dir, 'pipeline')
+        self.user_pipeline_dir = join(self.setup_dir, 'pipeline')
+        self.user_pipeline_template_dir = join(self.user_pipeline_dir, 'templates')
+
+        self.pipeline_dir = join(self.hidden_dir, 'pipeline')
         self.pipeline_template_dir = join(self.pipeline_dir, 'templates')
         # ==============================================================================
         # lovera exectuables
@@ -459,7 +465,8 @@ class Paths(object):
                      (self.edit_ui_defaults, EDIT_UI_DEFAULT),
                      (self.task_extensions_file, TASK_EXTENSION_DEFAULT),
                      (self.identifiers_file, IDENTIFIERS_DEFAULT),
-                     (self.pipeline_template_file, PIPELINE_TEMPLATES)):
+                     # (self.pipeline_template_file, PIPELINE_TEMPLATES)
+                     ):
             overwrite = d in (SYSTEM_HEALTH, SIMPLE_UI_DEFAULT,)
             # overwrite = d in (SYSTEM_HEALTH, SIMPLE_UI_DEFAULT,)
             # print p

@@ -34,8 +34,10 @@ from pychron.envisage.browser.sample_browser_model import SampleBrowserModel
 
 class PipelinePlugin(BaseTaskPlugin):
     def _file_defaults_default(self):
-        ov = False
-        return [('icfactor_template', 'ICFACTOR', ov),
+        ov = True
+        return [
+            ('pipeline_template_file', 'PIPELINE_TEMPLATES', ov),
+            ('icfactor_template', 'ICFACTOR', ov),
                 ('blanks_template', 'BLANKS', ov),
                 ('iso_evo_template', 'ISOEVO', ov),
                 ('ideogram_template', 'IDEO', ov),

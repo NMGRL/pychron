@@ -286,7 +286,7 @@ class PipelineTask(BaseBrowserTask):
         self.engine.reset()
 
     def save_pipeline_template(self):
-        path = self.save_file_dialog(default_directory=paths.pipeline_template_dir)
+        path = self.save_file_dialog(default_directory=paths.user_pipeline_template_dir)
         # path = '/Users/ross/Sandbox/template.yaml'
         # path = os.path.join(paths.pipeline_template_dir, 'test.yaml')
         if path:

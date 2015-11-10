@@ -32,11 +32,13 @@ PIPELINE_TEMPLATES = '''- Iso Evo
 - Flux
 - Ideogram
 - Spectrum
-- Isochron
+- InverseIsochron
 - Series
-- Table
+- Analysis Table
+- Interpreted Age Table
 - Auto Ideogram
 - Diff
+- Vertical Flux
 '''
 
 IDENTIFIERS_DEFAULT = """
