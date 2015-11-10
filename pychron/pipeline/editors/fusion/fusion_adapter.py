@@ -28,29 +28,30 @@ class FusionTableAdapter(BaseAdapter):
         # ('N', 'aliquot_step_str'),
         ('RunID', 'record_id'),
         ('Power', 'extract_value'),
-        ('Mol. Ar40', 'moles_Ar40'),
-        ('Ar40', 'ar40'),
-        (PLUSMINUS_ONE_SIGMA, 'ar40_err'),
+        # ('Mol. Ar40', 'moles_Ar40'),
+        ('Ar40', 'Ar40'),
+        (PLUSMINUS_ONE_SIGMA, 'Ar40_err'),
 
-        ('Ar39', 'ar39'),
-        (PLUSMINUS_ONE_SIGMA, 'ar39_err'),
+        ('Ar39', 'Ar39'),
+        (PLUSMINUS_ONE_SIGMA, 'Ar39_err'),
 
-        ('Ar38', 'ar38'),
-        (PLUSMINUS_ONE_SIGMA, 'ar38_err'),
+        ('Ar38', 'Ar38'),
+        (PLUSMINUS_ONE_SIGMA, 'Ar38_err'),
 
-        ('Ar37', 'ar37'),
-        (PLUSMINUS_ONE_SIGMA, 'ar37_err'),
+        ('Ar37', 'Ar37'),
+        (PLUSMINUS_ONE_SIGMA, 'Ar37_err'),
 
-        ('Ar36', 'ar36'),
-        (PLUSMINUS_ONE_SIGMA, 'ar36_err'),
+        ('Ar36', 'Ar36'),
+        (PLUSMINUS_ONE_SIGMA, 'Ar36_err'),
         ('%40Ar*', 'rad40_percent'),
 
-        ('40Ar*/39ArK', 'F'),
+        #     ('40Ar*/39ArK', 'F'),
         ('Age', 'age'),
-        (PLUSMINUS_ONE_SIGMA, 'age_error'),
+        (PLUSMINUS_ONE_SIGMA, 'age_err'),
         ('K/Ca', 'kca'),
-        (PLUSMINUS_ONE_SIGMA, 'kca_error'),
-        ('', 'blank_column')]
+        (PLUSMINUS_ONE_SIGMA, 'kca_err'),
+        #     ('', 'blank_column')
+    ]
 
     record_id_width = Int(60)
 

@@ -21,10 +21,17 @@ from traits.api import Property, List, cached_property, Str
 from traitsui.api import View, UItem, Item, VGroup, HGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from uncertainties import nominal_value, std_dev
 from pychron.column_sorter_mixin import ColumnSorterMixin
+from pychron.core.helpers.formatting import floatfmt
 from pychron.processing.analyses.analysis_group import AnalysisGroup
 from pychron.pipeline.editors.base_table_editor import BaseTableEditor
 from pychron.core.ui.tabular_editor import myTabularEditor
+from pychron.pychron_constants import ARGON_KEYS
+
+
+class ArArRecordView:
+    pass
 
 
 class ArArTableEditor(BaseTableEditor, ColumnSorterMixin):
@@ -41,8 +48,34 @@ class ArArTableEditor(BaseTableEditor, ColumnSorterMixin):
 
     title = Str('Table X. Ar/Ar Analyses')
 
-    def _items_items_changed(self):
-        self.refresh_needed = True
+    def make_records(self, items):
+        record_factory = self._record_factory
+        records = [record_factory(i) for i in items]
+
+        self.records = records
+
+    def _record_factory(self, item):
+        record = ArArRecordView()
+        record.record_id = item.record_id
+        record.extract_value = item.extract_value
+        record.age = floatfmt(nominal_value(item.age), n=4)
+        record.age_err = floatfmt(item.age_err_wo_j, n=4)
+
+        record.kca = floatfmt(nominal_value(item.kca), n=2)
+        record.kca_err = floatfmt(std_dev(item.kca), n=3)
+        record.rad40_percent = floatfmt(nominal_value(item.rad40_percent))
+
+        for attr in ARGON_KEYS:
+            v = item.isotopes[attr].get_intensity()
+            vv = floatfmt(nominal_value(v), n=3)
+            setattr(record, attr, vv)
+            ve = floatfmt(std_dev(v), n=3)
+            setattr(record, '{}_err'.format(attr), ve)
+
+        return record
+
+    # def _items_items_changed(self):
+    #     self.refresh_needed = True
 
     def _writer_factory(self, klass, **kw):
         kw['extract_label'] = self.extract_label
@@ -120,15 +153,15 @@ class ArArTableEditor(BaseTableEditor, ColumnSorterMixin):
     def traits_view(self):
         v = View(VGroup(
             HGroup(Item('title')),
-            # UItem('items',
-            #       editor=myTabularEditor(adapter=self.adapter_klass(),
-            #                              #                                               editable=False,
-            #                              col_widths='col_widths',
-            #                              selected='selected',
-            #                              multi_select=True,
-            #                              auto_update=False,
-            #                              operations=['delete', 'move'],
-            #                              column_clicked='column_clicked')),
+            UItem('records',
+                  editor=myTabularEditor(adapter=self.adapter_klass(),
+                                         #                                               editable=False,
+                                         col_widths='col_widths',
+                                         selected='selected',
+                                         multi_select=True,
+                                         auto_update=False,
+                                         operations=['delete', 'move'],
+                                         column_clicked='column_clicked')),
             UItem('analysis_groups',
                   editor=myTabularEditor(adapter=self.analysis_groups_adapter_klass(),
                                          #                                              auto_resize=True,

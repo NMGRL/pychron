@@ -27,6 +27,7 @@ from pychron.paths import paths
 
 class BaseTableEditor(BaseTraitsEditor):
     items = List
+    records = List
     # oitems = List
     col_widths = List
     selected = Any
