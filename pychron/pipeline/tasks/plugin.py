@@ -15,15 +15,21 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import md5
+import os
+import pickle
+
 from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.task_factory import TaskFactory
 from pyface.tasks.action.schema import SMenu, SGroup
 from pyface.tasks.action.schema_addition import SchemaAddition
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.browser.interpreted_age_browser_model import InterpretedAgeBrowserModel
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
+from pychron.paths import paths, get_file_text
 from pychron.pipeline.tasks.actions import ConfigureRecallAction, IdeogramAction, IsochronAction, SpectrumAction, \
     SeriesAction, BlanksAction, ICFactorAction, ResetFactoryDefaultsAction, VerticalFluxAction
 from pychron.pipeline.tasks.browser_task import BrowserTask
@@ -35,18 +41,36 @@ from pychron.envisage.browser.sample_browser_model import SampleBrowserModel
 class PipelinePlugin(BaseTaskPlugin):
     def _file_defaults_default(self):
         ov = True
-        return [
-            ('pipeline_template_file', 'PIPELINE_TEMPLATES', ov),
-            ('icfactor_template', 'ICFACTOR', ov),
-                ('blanks_template', 'BLANKS', ov),
-                ('iso_evo_template', 'ISOEVO', ov),
-                ('ideogram_template', 'IDEO', ov),
-                ('spectrum_template', 'SPEC', ov),
-                ('isochron_template', 'ISOCHRON', ov),
-                ('csv_ideogram_template', 'CSV_IDEO', ov),
-                ('vertical_flux_template', 'VERTICAL_FLUX', ov),
-                ('analysis_table_template', 'ANALYSIS_TABLE', ov),
-                ('interpreted_age_table_template', 'INTERPRETED_AGE_TABLE', ov)]
+        files = [['pipeline_template_file', 'PIPELINE_TEMPLATES', ov],
+                 ['icfactor_template', 'ICFACTOR', ov],
+                 ['blanks_template', 'BLANKS', ov],
+                 ['iso_evo_template', 'ISOEVO', ov],
+                 ['ideogram_template', 'IDEO', ov],
+                 ['spectrum_template', 'SPEC', ov],
+                 ['isochron_template', 'ISOCHRON', ov],
+                 ['csv_ideogram_template', 'CSV_IDEO', ov],
+                 ['vertical_flux_template', 'VERTICAL_FLUX', ov],
+                 ['analysis_table_template', 'ANALYSIS_TABLE', ov],
+                 ['interpreted_age_table_template', 'INTERPRETED_AGE_TABLE', ov]]
+
+        # open the manifest file to set the overwrite flag
+        if os.path.isfile(paths.template_manifest_file):
+            with open(paths.template_manifest) as rfile:
+                manifest = pickle.load(rfile)
+        else:
+            manifest = {}
+
+        for item in files:
+            fn, t, o = item
+            txt = get_file_text(t)
+            h = md5.hash(txt)
+            if fn in manifest and h == manifest[fn]:
+                item[2] = False
+
+            manifest[fn] = h
+
+        with open(paths.template_manifest_file) as wfile:
+            pickle.dump(manifest, wfile)
 
     def _pipeline_factory(self):
         model = self.application.get_service(SampleBrowserModel)

@@ -29,6 +29,16 @@ from pychron.file_defaults import TASK_EXTENSION_DEFAULT, SIMPLE_UI_DEFAULT, \
     EDIT_UI_DEFAULT, IDENTIFIERS_DEFAULT
 
 
+def get_file_text(d):
+    txt = ''
+    try:
+        mod = __import__('pychron.file_defaults', fromlist=[d])
+        txt = getattr(mod, d)
+    except BaseException, e:
+        pass
+    return txt
+
+
 class Paths(object):
     git_base_origin = 'https://github.com'
 
@@ -174,6 +184,7 @@ class Paths(object):
     # ===========================================================================
     # files
     # ===========================================================================
+    template_manifest_file = None
     pipeline_template_file = None
     identifiers_file = None
     backup_recovery_file = None
@@ -386,6 +397,7 @@ class Paths(object):
         # =======================================================================
         # files
         # =======================================================================
+        self.template_manifest_file = join(self.pipeline_dir, 'pipeline_manifest.p')
         self.pipeline_template_file = join(self.pipeline_dir, 'template_order.yaml')
         self.identifiers_file = join(self.hidden_dir, 'identifiers.yaml')
         self.backup_recovery_file = join(self.hidden_dir, 'backup_recovery')
@@ -443,17 +455,12 @@ class Paths(object):
     def write_file_defaults(self, fs, force=False):
         # print fs
         for p, d, o in fs:
-            try:
-                mod = __import__('pychron.file_defaults', fromlist=[d])
-                d = getattr(mod, d)
-            except BaseException, e:
-                print 'dddddd', p, e
-                pass
+            txt = get_file_text(d)
             try:
                 p = getattr(paths, p)
             except AttributeError:
                 pass
-            self.write_default_file(p, d, o or force)
+            self.write_default_file(p, txt, o or force)
 
     def _write_default_files(self):
         from pychron.file_defaults import DEFAULT_INITIALIZATION, DEFAULT_STARTUP_TESTS, SYSTEM_HEALTH
