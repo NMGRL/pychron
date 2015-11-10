@@ -145,7 +145,7 @@ class AnalysisTableNode(TableNode):
         editor_klass = FusionTableEditor
         editor = editor_klass()
 
-        editor.make_records(items)
+        # editor.make_records(items)
         editor.items = items
 
         state.editors.append(editor)

@@ -426,6 +426,7 @@ VERTICAL_FLUX = """- klass: FindVerticalFluxNode
 """
 
 ANALYSIS_TABLE = """- klass: UnknownNode
+- klass: GroupingNode
 - klass: AnalysisTableNode
 - klass: ReviewNode
 - klass: XLSTablePersistNode
