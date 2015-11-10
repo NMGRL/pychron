@@ -231,6 +231,7 @@ class PipelineEngine(Loggable):
         # self.run_needed = True
 
     def set_template(self, name):
+        self.debug('Set template "{}"'.format(name))
         self._set_template(name)
 
     def get_experiment_ids(self):
@@ -485,7 +486,6 @@ class PipelineEngine(Loggable):
 
     # private
     def _set_template(self, name):
-        print 'set template', name
         self.reset_event = True
         name = name.replace(' ', '_').lower()
 
@@ -504,19 +504,32 @@ class PipelineEngine(Loggable):
             self.selected = self.pipeline.nodes[0]
 
     def _load_predefined_templates(self):
+        self.debug('load predefined templates')
         templates = []
+        user_templates = []
+
         for temp in list_directory2(paths.pipeline_template_dir, extension='.yaml',
                                     remove_extension=True):
             templates.append(temp)
+        self.debug('loaded {} pychron templates'.format(len(templates)))
+
+        for temp in list_directory2(paths.user_pipeline_template_dir, extension='.yaml',
+                                    remove_extension=True):
+            user_templates.append(temp)
+        self.debug('loaded {} user templates'.format(len(user_templates)))
 
         def formatter(t):
             return ' '.join(map(str.capitalize, t.split('_')))
 
         templates = map(formatter, templates)
+        user_templates = map(formatter, user_templates)
+
         with open(paths.pipeline_template_file, 'r') as rfile:
             tnames = yaml.load(rfile)
 
         ns = [pt for pt in tnames if pt in templates]
+        ns.extend(user_templates)
+
         self.available_pipeline_templates = ns
 
     def _add_find_node(self, node, run, analysis_type):
