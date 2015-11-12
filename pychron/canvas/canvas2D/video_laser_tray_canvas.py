@@ -21,14 +21,15 @@ from pychron.canvas.canvas2D.video_canvas import VideoCanvas
 # from pychron.canvas.canvas2D.markup.markup_items import Rectangle
 from laser_tray_canvas import LaserTrayCanvas
 
+
 class VideoLaserTrayCanvas(LaserTrayCanvas, VideoCanvas):
-    '''
-    '''
+    """
+    """
     bgcolor = 'lightgray'
 
     def set_stage_position(self, x, y):
-        '''
-        '''
+        """
+        """
 
         super(VideoLaserTrayCanvas, self).set_stage_position(x, y)
         self.adjust_limits('x', x)
@@ -85,13 +86,13 @@ class VideoLaserTrayCanvas(LaserTrayCanvas, VideoCanvas):
 #                                                     )
 
     def _calc_relative_move_direction(self, char, direction):
-        '''
+        """
             correct for sense of camera
-        '''
+        """
         if char in ('Left', 'Right'):
             di = -1 if self.camera.hflip else 1
         else:
-            di = 1 if self.camera.vflip else -1
+            di = -1 if self.camera.vflip else 1
         return direction * di
 
 

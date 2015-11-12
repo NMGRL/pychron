@@ -18,8 +18,11 @@
 from apptools.preferences.preference_binding import bind_preference
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from sqlalchemy import and_
+from sqlalchemy.exc import SQLAlchemyError
 from pychron.database.core.database_adapter import DatabaseAdapter
-from pychron.labspy.orm import Measurement, ProcessInfo, Device, Version, Status, Experiment, Analysis, AnalysisType
+from pychron.labspy.orm import Measurement, ProcessInfo, Version, \
+    Device, Experiment, Analysis, Connections  # , Version, Status, Experiment, Analysis, AnalysisType
 
 
 class LabspyDatabaseAdapter(DatabaseAdapter):
@@ -38,11 +41,12 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
 
     def add_analysis(self, dbexp, rd):
         at = None
-        if 'analysis_type' in rd:
-            analysis_type = rd.pop('analysis_type')
-            at = self.get_analysis_type(analysis_type)
-            if not at:
-                at = self.add_analysis_type(analysis_type)
+        # if 'analysis_type' in rd:
+        #     analysis_type = rd.pop('analysis_type')
+        #     at = self.get_analysis_type(analysis_type)
+        #     if not at:
+        #         at = self.add_analysis_type(analysis_type)
+
         an = Analysis(**rd)
         if at:
             an.analysis_type = at
@@ -50,13 +54,38 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
         an.experiment = dbexp
         return self._add_item(an)
 
+    def set_connection(self, ts, appname, username, devname, com, addr, status):
+        try:
+            conn = self.get_connection(appname, devname)
+        except SQLAlchemyError, e:
+            self.warning('Error getting connection {}.{} exception: {}'.format(appname, devname, e))
+            return
+
+        if conn is None:
+            conn = Connections()
+            self._add_item(conn)
+
+        conn.appname = appname
+        conn.username = username
+        conn.devname = devname
+        conn.com = com
+        conn.address = addr
+        conn.status = bool(status)
+        conn.timestamp = ts
+
+    def get_connection(self, appname, devname):
+        with self.session_ctx() as sess:
+            q = sess.query(Connections)
+            q = q.filter(and_(Connections.appname == appname, Connections.devname == devname))
+            return self._query_first(q, reraise=True)
+
     def update_experiment(self, hashid, **kw):
         exp = self.get_experiment(hashid)
         for k, v in kw.items():
             setattr(exp, k, v)
 
     def add_device(self, dev):
-        dev = Device(Name=dev)
+        dev = Device(name=dev)
         return self._add_item(dev)
 
     def add_measurement(self, dev, name, value, unit):
@@ -64,7 +93,7 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
         if not pinfo:
             pinfo = self.add_process_info(dev, name, unit)
 
-        measurement = Measurement(Value=value)
+        measurement = Measurement(value=value)
         measurement.process = pinfo
         return self._add_item(measurement)
 
@@ -75,45 +104,43 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
             self.debug('add device {}'.format(dev))
             dbdev = self.add_device(dev)
 
-        p = ProcessInfo(Name=name, Units=unit)
+        p = ProcessInfo(name=name, units=unit)
         p.device = dbdev
         return self._add_item(p)
 
-    def add_status(self):
-        p = Status()
-        return self._add_item(p)
-
-    def add_analysis_type(self, name):
-        obj = AnalysisType(Name=name)
-        return self._add_item(obj)
+    # def add_status(self):
+    #     p = Status()
+    #     return self._add_item(p)
+    #
+    # def add_analysis_type(self, name):
+    #     obj = AnalysisType(Name=name)
+    #     return self._add_item(obj)
 
     # getters
-    def get_analysis_type(self, name):
-        return self._retrieve_item(AnalysisType, name, key='Name')
-
-    def get_experiment(self, hid):
-        return self._retrieve_item(Experiment, hid, key='HashID')
-
-    def get_status(self):
-        with self.session_ctx() as sess:
-            q = sess.query(Status)
-            return self._query_one(q)
+    # def get_analysis_type(self, name):
+    #     return self._retrieve_item(AnalysisType, name, key='Name')
+    #
+    # def get_experiment(self, hid):
+    #     return self._retrieve_item(Experiment, hid, key='HashID')
+    #
+    # def get_status(self):
+    #     with self.session_ctx() as sess:
+    #         q = sess.query(Status)
+    #         return self._query_one(q)
 
     def get_migrate_version(self, **kw):
         with self.session_ctx() as sess:
             q = sess.query(Version)
+            q = q.limit(1)
             mv = q.one()
             return mv
 
     def get_device(self, name):
-        return self._retrieve_item(Device, name, key='Name')
+        return self._retrieve_item(Device, name, key='name')
 
     def get_process_info(self, dev, name):
         dev = self.get_device(dev)
         if dev:
-            return next((p for p in dev.processes if p.Name == name), None)
+            return next((p for p in dev.processes if p.name == name), None)
 
 # ============= EOF =============================================
-
-
-

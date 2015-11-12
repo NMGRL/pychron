@@ -32,8 +32,8 @@ from pychron.hardware.core.core_device import CoreDevice
 class NCDDevice(CoreDevice):
     def initialize(self, *args, **kw):
         super(NCDDevice, self).initialize(*args, **kw)
-        if self._communicator:
-            self._communicator.write_terminator = None
+        if self.communicator:
+            self.communicator.write_terminator = None
         return True
 
     def _make_cmdstr(self, *args):

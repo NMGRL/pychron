@@ -351,9 +351,9 @@ class Pattern(HasTraits):
 
     def traits_view(self):
         v = View(self.maker_group(),
-                 buttons=['OK', 'Cancel'],
-                 title=self.name,
-                 resizable=True)
+            buttons=['OK', 'Cancel'],
+            title=self.name,
+            resizable=True)
         return v
 
     def get_parameter_group(self):

@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -64,8 +64,8 @@ def load_isotopedb_defaults(db):
             #                           blank', 'air', 'cocktail', 'background', 'unknown']:
             db.add_analysis_type(at)
 
-        for mi in ['obama', 'jan', 'nmgrl map']:
-            db.add_mass_spectrometer(mi)
+        # for mi in ['obama', 'jan', 'nmgrl map']:
+        #     db.add_mass_spectrometer(mi)
 
         project = db.add_project('REFERENCES')
         # print project
@@ -78,15 +78,15 @@ def load_isotopedb_defaults(db):
             #            samp.project = project
             # samp.project_id=project.id
             # print samp.project_id
-            db.add_labnumber(i + 1, sample=samp)
+            # db.add_labnumber(i + 1, sample=samp)
         sess.commit()
 
-        for hi, kind, make in [('Fusions CO2', '10.6um co2', 'photon machines'),
-                               ('Fusions Diode', '810nm diode', 'photon machines'),
-                               ('Fusions UV', '193nm eximer', 'photon machines')]:
-            db.add_extraction_device(name=hi,
-                                     kind=kind,
-                                     make=make)
+        # for hi, kind, make in [('Fusions CO2', '10.6um co2', 'photon machines'),
+        #                        ('Fusions Diode', '810nm diode', 'photon machines'),
+        #                        ('Fusions UV', '193nm eximer', 'photon machines')]:
+        #     db.add_extraction_device(name=hi,
+        #                              kind=kind,
+        #                              make=make)
 
         mdir = paths.irradiation_tray_maps_dir
         for p, name in iterdir(mdir, exclude=('.zip',)):
@@ -95,7 +95,10 @@ def load_isotopedb_defaults(db):
 
         mdir = paths.map_dir
         for p, name in iterdir(mdir):
-            _load_tray_map(db, p, name)
+            try:
+                _load_tray_map(db, p, name)
+            except BaseException:
+                print 'failed loading tray map "{}", "{}"'.format(p, name)
 
         for t in ('ok', 'invalid'):
             db.add_tag(t, user='default')

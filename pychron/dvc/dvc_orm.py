@@ -15,13 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from sqlalchemy.orm import relationship
-from sqlalchemy.sql.schema import ForeignKey
 # ============= standard library imports ========================
-# ============= local library imports  ==========================
+from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
-from sqlalchemy import Column, Integer, String, TIMESTAMP, Float, BLOB, func, Boolean
+from sqlalchemy import Column, Integer, String, TIMESTAMP, Float, BLOB, func, Boolean, ForeignKey
+# ============= local library imports  ==========================
+from pychron.core.helpers.datetime_tools import make_timef
 from pychron.database.records.isotope_record import IsotopeRecordView
+from pychron.experiment.utilities.identifier import make_runid
+from pychron.pychron_constants import OMIT_KEYS
 
 Base = declarative_base()
 
@@ -39,10 +41,72 @@ class NameMixin(BaseMixin):
         return '{}<{}>'.format(self.__class__.__name__, self.name)
 
 
+class InterpretedAgeTbl(Base, BaseMixin):
+    idinterpretedagetbl = Column(Integer, primary_key=True)
+    age_kind = Column(String(32))
+    kca_kind = Column(String(32))
+
+    age = Column(Float)
+    age_err = Column(Float)
+    display_age_units = Column(String(2))
+
+    kca = Column(Float)
+    kca_err = Column(Float)
+    mswd = Column(Float)
+
+    age_error_kind = Column(String(80))
+    include_j_error_in_mean = Column(Boolean)
+    include_j_error_in_plateau = Column(Boolean)
+    include_j_error_in_individual_analyses = Column(Boolean)
+
+    analyses = relationship('InterpretedAgeSetTbl', backref='interpreted_age')
+
+
+class InterpretedAgeSetTbl(Base, BaseMixin):
+    idinterpretedagesettbl = Column(Integer, primary_key=True)
+    interpreted_ageID = Column(Integer, ForeignKey('InterpretedAgeTbl.idinterpretedagetbl'))
+    analysisID = Column(Integer, ForeignKey('AnalysisTbl.idanalysisTbl'))
+    forced_plateau_step = Column(Boolean)
+    plateau_step = Column(Boolean)
+    tag = Column(String(80))
+
+    analysis = relationship('AnalysisTbl', uselist=False)
+
+
+class ExperimentTbl(Base, BaseMixin):
+    name = Column(String(80), primary_key=True)
+    timestamp = Column(TIMESTAMP, default=func.now())
+    creator = Column(String(80))
+
+    experiment_associations = relationship('ExperimentAssociationTbl', backref='experiment')
+
+    def record_view(self):
+        from pychron.envisage.browser.record_views import ExperimentRecordView
+
+        v = ExperimentRecordView()
+        v.name = self.name
+        return v
+
+class ExperimentAssociationTbl(Base, BaseMixin):
+    idexperimentassociationTbl = Column(Integer, primary_key=True)
+    experimentName = Column(String(80), ForeignKey('ExperimentTbl.name'))
+    analysisID = Column(Integer, ForeignKey('AnalysisTbl.idanalysisTbl'))
+    # experiments = relationship('ExperimentTbl')
+    # analyses = relationship('AnalysisTbl', backref='experiment_associations')
+
+
+class AnalysisChangeTbl(Base, BaseMixin):
+    idanalysischangeTbl = Column(Integer, primary_key=True)
+    tag = Column(String(40), ForeignKey('TagTbl.name'))
+    timestamp = Column(TIMESTAMP)
+    user = Column(String(40))
+    analysisID = Column(Integer, ForeignKey('AnalysisTbl.idanalysisTbl'))
+
+
 class AnalysisTbl(Base, BaseMixin):
     idanalysisTbl = Column(Integer, primary_key=True)
     timestamp = Column(TIMESTAMP)
-    tag = Column(String(45))
+    # tag = Column(String(45))
     uuid = Column(String(32))
     analysis_type = Column(String(45))
     aliquot = Column(Integer)
@@ -64,33 +128,92 @@ class AnalysisTbl(Base, BaseMixin):
 
     weight = Column(Float)
     comment = Column(String(80))
+    experiment_associations = relationship('ExperimentAssociationTbl', backref='analysis')
+    change = relationship('AnalysisChangeTbl', uselist=False, backref='analysis')
+
+    _record_view = None
 
     @property
-    def labnumber(self):
-        return self.irradiation_position
+    def irradiation(self):
+        return self.irradiation_position.level.irradiation.name
+
+    @property
+    def irradiation_level(self):
+        return self.irradiation_position.level.name
+
+    #
+    @property
+    def irradiation_position_position(self):
+        return self.irradiation_position.position
+
+    @property
+    def tag_dict(self):
+        return {k: getattr(self.change.tag_item, k) for k in ('name',) + OMIT_KEYS}
+    # @property
+    # def labnumber(self):
+    #     return self.irradiation_position
 
     @property
     def analysis_timestamp(self):
         return self.timestamp
 
+    @property
+    def rundate(self):
+        return self.timestamp
+
+    @property
+    def experiment_id(self):
+        if self.experiment_associations and len(self.experiment_associations) == 1:
+            return self.experiment_associations[0].experimentName
+
+    @property
+    def record_id(self):
+        return make_runid(self.irradiation_position.identifier, self.aliquot, self.increment)
+
+    @property
+    def experiment_identifier(self):
+        es = [e.experimentName for e in self.experiment_associations]
+        if len(es) == 1:
+            return es[0]
+
+    @property
     def record_view(self):
-        iv = IsotopeRecordView()
-        iv.extract_script_name = self.extractionName
-        iv.meas_script_name = self.measurementName
+        iv = self._record_view
+        if not iv:
 
-        iv.identifier = self.irradiation_position.identifier
-        iv.labnumber = iv.identifier
+            iv = IsotopeRecordView()
+            iv.extract_script_name = self.extractionName
+            iv.meas_script_name = self.measurementName
 
-        for tag in ('aliquot', 'increment', 'tag', 'uuid',
-                    'extract_value', 'cleanup', 'duration',
-                    'mass_spectrometer',
-                    'extract_device', 'analysis_type'):
-            setattr(iv, tag, getattr(self, tag))
+            irradpos = self.irradiation_position
+            iv.identifier = irradpos.identifier
+            iv.irradiation = irradpos.level.irradiation.name
+            iv.irradiation_level = irradpos.level.name
+            iv.irradiation_position_position = irradpos.position
 
-        if self.irradiation_position.sample:
-            iv.sample = self.irradiation_position.sample.name
-            if self.irradiation_position.sample.project:
-                iv.project = self.irradiation_position.sample.project.name
+            iv.labnumber = iv.identifier
+            iv.experiment_ids = es = [e.experimentName for e in self.experiment_associations]
+            if len(es) == 1:
+                iv.experiment_identifier = es[0]
+
+            for tag in ('aliquot', 'increment', 'uuid',
+                        'extract_value', 'cleanup', 'duration',
+                        'mass_spectrometer',
+                        'extract_device',
+                        'rundate',
+                        'analysis_type'):
+                setattr(iv, tag, getattr(self, tag))
+
+            if irradpos.sample:
+                iv.sample = irradpos.sample.name
+                if irradpos.sample.project:
+                    iv.project = irradpos.sample.project.name
+
+            iv.timestampf = make_timef(self.timestamp)
+            tag = self.change.tag_item
+            iv.tag = tag.name
+            iv.tag_dict = {k: getattr(tag, k) for k in ('name',) + OMIT_KEYS}
+            self._record_view = iv
 
         return iv
 
@@ -112,9 +235,15 @@ class SampleTbl(Base, NameMixin):
     positions = relationship('IrradiationPositionTbl', backref='sample')
 
 
+class ProductionTbl(Base, NameMixin):
+    idproductionTbl = Column(Integer, primary_key=True)
+    levels = relationship('LevelTbl', backref='production')
+
+
 class LevelTbl(Base, NameMixin):
     idlevelTbl = Column(Integer, primary_key=True)
     irradiationID = Column(Integer, ForeignKey('IrradiationTbl.idirradiationTbl'))
+    productionID = Column(Integer, ForeignKey('ProductionTbl.idproductionTbl'))
     holder = Column(String(45))
     z = Column(Float)
 
@@ -141,10 +270,19 @@ class IrradiationPositionTbl(Base, BaseMixin):
     j = Column(Float)
     j_err = Column(Float)
 
+    # @property
+    # def irradiation_position(self):
+    #     return self
 
-    @property
-    def irradiation_position(self):
-        return self
+
+class TagTbl(Base, BaseMixin):
+    name = Column(String(40), primary_key=True)
+    omit_ideo = Column(Boolean)
+    omit_spec = Column(Boolean)
+    omit_iso = Column(Boolean)
+    omit_series = Column(Boolean)
+
+    analyses = relationship('AnalysisChangeTbl', backref='tag_item')
 
 
 class MassSpectrometerTbl(Base, BaseMixin):
@@ -158,6 +296,9 @@ class ExtractDeviceTbl(Base, BaseMixin):
 
 class UserTbl(Base, BaseMixin):
     name = Column(String(45), primary_key=True)
+    affiliation = Column(String(80))
+    category = Column(String(80))
+    email = Column(String(80))
 
 
 class LoadTbl(Base, BaseMixin):
@@ -193,7 +334,8 @@ class MeasuredPositionTbl(Base, BaseMixin):
     analysisID = Column(Integer, ForeignKey('AnalysisTbl.idanalysisTbl'))
     loadName = Column(String(45), ForeignKey('LoadTbl.name'))
 
+
+class VersionTbl(Base, BaseMixin):
+    version = Column(String(40), primary_key=True)
+
 # ============= EOF =============================================
-
-
-

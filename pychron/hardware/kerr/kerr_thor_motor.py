@@ -14,27 +14,29 @@
 # limitations under the License.
 # ===============================================================================
 
-
-
 # =============enthought library imports=======================
 # =============standard library imports ========================
 # =============local library imports  ==========================
 from kerr_motor import KerrMotor
+
+
 class KerrThorMotor(KerrMotor):
-    '''
-    '''
+    """
+    """
 
-    def _initialize_(self, *args, **kw):
-        '''
-        '''
+    def _build_io(self):
+        return '1800'
+
+    def _build_gains(self):
+        return 'F6B0042003F401B004FF006400010101'
+
+    def _wait_for_home(self, progress=None):
+        """
+        thor motor does not have limit switches so cannot use HOME_IN_PROG bit of the Status Byte
+
+        Instead wait untill 4 successive read positions return the same value
+        """
+        self.block(4, progress=progress, homing=True)
 
 
-        addr = self.address
-        commands = [(addr, '1706', 100, 'stop motor, turn off amp'),
-                   (addr, '1800', 100, 'configure io pins'),
-                   (addr, 'F6B0042003F401B004FF006400010101', 100, 'set gains'),
-                   (addr, '1701', 100, 'turn on amp'),
-#                   (addr, '00', 100, 'reset position'),
-                  ]
-        self._initialize_motor(commands, *args, **kw)
 # =============EOF-==============================================

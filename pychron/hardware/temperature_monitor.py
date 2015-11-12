@@ -243,7 +243,7 @@ if __name__ == '__main__':
     a.address = '01'
     a.load_communicator('serial', port='usbserial-FTT3I39P', baudrate=9600)
     a.open()
-    print a._communicator.handle
+    print a.communicator.handle
     print a.read_input_type()
     print a.read_temperature()
 

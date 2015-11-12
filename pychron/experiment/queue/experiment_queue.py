@@ -98,19 +98,27 @@ class ExperimentQueue(BaseExperimentQueue):
             self.dump(wfile)
 
     def toggle_skip(self):
+        self.debug('Toggle skip')
         for si in self.selected:
             si.skip = not si.skip
         self.selected = []
         self.refresh_table_needed = True
 
-    def end_after(self):
+    def toggle_end_after(self):
+        self.debug('Toggle end after')
         sel = self.selected
         for ai in self.automated_runs:
             if ai not in sel:
                 ai.end_after = False
 
         si = sel[-1]
+
+        idx = self.automated_runs.index(si)
+
         si.end_after = not si.end_after
+
+        self.debug('setting {} end_after to {}'.format(idx, si.end_after))
+
         self.selected = []
         self.refresh_table_needed = True
 

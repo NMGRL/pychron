@@ -166,9 +166,6 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
     def get_samples(self, **kw):
         return self._get_items(SampleTable, globals(), **kw)
 
-    def get_database_version(self, **kw):
-        return self._retrieve_items(DatabaseVersionTable, **kw)
-
     def get_sample_loading(self, value):
         return self._retrieve_item(SampleLoadingTable, value,
                                    key='SampleLoadingID')
@@ -301,6 +298,17 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
             q = q.filter(IrradiationLevelTable.Level == name)
             q = q.filter(IrradiationLevelTable.IrradBaseID == irrad)
             return self._query_one(q)
+
+    def get_database_version(self, **kw):
+        ver = 0
+        with self.session_ctx() as sess:
+            q = sess.query(DatabaseVersionTable)
+            item = self._query_one(q, **kw)
+            if item:
+                ver = item.Version
+
+        self.debug('MassSpec Database Version: {}'.format(ver))
+        return ver
 
     # ===============================================================================
     # adders

@@ -36,10 +36,12 @@ from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.paths import paths
 from pychron.pychron_constants import SPECTROMETER_PROTOCOL
 from pychron.experiment.tasks.experiment_panes import ExperimentFactoryPane, StatsPane, \
-    ControlsPane, WaitPane, IsotopeEvolutionPane, ConnectionStatusPane
+    ControlsPane, IsotopeEvolutionPane, ConnectionStatusPane
+from pychron.envisage.tasks.wait_pane import WaitPane
 
 
 class ExperimentEditorTask(EditorTask):
+    id = 'pychron.experiment.task'
     name = 'Experiment'
 
     default_filename = 'Experiment Current.txt'
@@ -219,7 +221,7 @@ class ExperimentEditorTask(EditorTask):
         self.wait_pane = WaitPane(model=self.manager.executor.wait_group)
 
         ex = self.manager.executor
-        panes = [StatsPane(model=self.manager),
+        panes = [StatsPane(model=self.manager.stats),
                  ControlsPane(model=ex),
                  ConsolePane(model=ex),
                  LoggerPane(),
@@ -241,22 +243,21 @@ class ExperimentEditorTask(EditorTask):
 
         panes = self._add_canvas_pane(panes)
 
-        app = self.window.application
-        man = app.get_service('pychron.lasers.laser_managers.ilaser_manager.ILaserManager')
-        if man:
-            if hasattr(man.stage_manager, 'video'):
-                from pychron.image.tasks.video_pane import VideoDockPane
-
-                video = man.stage_manager.video
-                man.initialize_video()
-                pane = VideoDockPane(video=video)
-                panes.append(pane)
-
-            from pychron.lasers.tasks.laser_panes import ClientDockPane
-
-            lc = ClientDockPane(model=man)
-            self.laser_control_client_pane = lc
-            panes.append(lc)
+        # app = self.window.application
+        # man = app.get_service('pychron.lasers.laser_managers.ilaser_manager.ILaserManager')
+        # if man:
+        #     if hasattr(man.stage_manager, 'video'):
+        #         from pychron.image.tasks.video_pane import VideoDockPane
+        #
+        #         video = man.stage_manager.video
+        #         man.initialize_video()
+        #         pane = VideoDockPane(video=video)
+        #         panes.append(pane)
+        #
+        #     from pychron.lasers.tasks.laser_panes import ClientDockPane
+        #     lc = ClientDockPane(model=man)
+        #     self.laser_control_client_pane = lc
+        #     panes.append(lc)
 
         return panes
 
@@ -493,7 +494,8 @@ class ExperimentEditorTask(EditorTask):
                 ed = convert_extract_device(new)
                 man = app.get_service(ILaserManager, 'name=="{}"'.format(ed))
                 if man:
-                    self.laser_control_client_pane.model = man
+                    if self.laser_control_client_pane:
+                        self.laser_control_client_pane.model = man
 
         if new == 'Fusions UV':
             if self.active_editor and not isinstance(self.active_editor, UVExperimentEditor):
@@ -657,7 +659,7 @@ class ExperimentEditorTask(EditorTask):
     def _default_layout_default(self):
         return TaskLayout(
             left=Splitter(
-                PaneItem('pychron.experiment.wait', height=100),
+                PaneItem('pychron.wait', height=100),
                 Tabbed(
                     PaneItem('pychron.experiment.factory'),
                     PaneItem('pychron.experiment.isotope_evolution')),

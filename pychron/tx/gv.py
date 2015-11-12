@@ -14,26 +14,37 @@
 # limitations under the License.
 # ===============================================================================
 
-"""
-This is the docstring for module.py
-"""
-
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change
-from traitsui.api import View, UItem, Item, HGroup, VGroup
+import random
+
+import gevent
+from gevent.server import StreamServer
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
+def handle(socket, address):
+    data = socket.recv(4096)
+    cmd = data.split(' ')[0]
+    print socket
+    if cmd == 'GetData':
+        gevent.sleep(1)
+        socket.sendall('Foo')
+        # gevent.spawn(getdata, socket, data)
+    else:
+        msg = 'Random {}'.format(random.random())
+        socket.sendall(msg)
 
-class Class(object):
 
-    def function(self, a):
-        """
+def getdata(socket, data):
+    s = 0
+    # for i in range(int(1e7)):
+    # s += 1
+    gevent.sleep(1)
+    socket.sendall('Foo')
 
-        :param a: str
-        :return: True
-        """
+
+server = StreamServer(('127.0.0.1', 8007), handle)  # creates a new server
+server.serve_forever()  # start accepting new connections
 # ============= EOF =============================================
-
-
-

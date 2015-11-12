@@ -75,10 +75,22 @@ class SystemHealthSeries(Loggable):
         :return: 'cancel' or 'terminate'
         """
         try:
+            for iso in an.isotopes.values():
+                if self.isotope_health.check(iso):
+                    self._flag_analysis(an, iso.name)
+
+        except BaseException, e:
+            self.warning('isotope health add_analysis failed. error="{}"'.format(e))
+
+        try:
             nseries = self._add_yaml(an)
             return self._analyze_series(nseries)
         except BaseException, e:
             self.warning('system health add_analysis failed. error="{}"'.format(e))
+
+    # private
+    def _flag_analysis(self, an, name):
+        self.info('FLAG ---- Analysis: {}, isotope: {}'.format(an.record_id, name))
 
     def _add_yaml(self, an):
         p = os.path.join(paths.hidden_dir, 'health_series.yaml')
@@ -215,8 +227,8 @@ class SystemHealthSeries(Loggable):
                  'uuid': spec.uuid,
                  'timestamp': time.mktime(spec.analysis_timestamp.timetuple())}
 
-            spec_dict = an.persister.spec_dict
-            defl_dict = an.persister.defl_dict
+            spec_dict = an.persister.per_spec.spec_dict
+            defl_dict = an.persister.per_spec.defl_dict
 
             for v in self._values:
                 if v.endswith('_deflection'):

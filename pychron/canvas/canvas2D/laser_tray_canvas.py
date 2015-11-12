@@ -185,7 +185,8 @@ class LaserTrayCanvas(StageCanvas):
         self.transects = []
         self.polygons = []
         self.reset_markup()
-        self.scene.reset_layers()
+        if self.scene:
+            self.scene.reset_layers()
 
     def reset_markup(self):
         self._new_line = True
@@ -352,7 +353,6 @@ class LaserTrayCanvas(StageCanvas):
         if between(self.x, x, self.x2) and between(self.y, y, self.y2):
             if self.stage_manager is not None:
                 p = self.stage_manager.stage_controller
-
                 x, y = self.map_data((x, y))
                 try:
                     if between(p.xaxes_min, x, p.xaxes_max) and \
@@ -378,7 +378,8 @@ class LaserTrayCanvas(StageCanvas):
 
     def get_offset_stage_screen_position(self):
         sx, sy = self.get_stage_screen_position()
-        return sx + self.crosshairs_offsetx, sy + self.crosshairs_offsety
+        return sx, sy
+        # return sx + self.crosshairs_offsetx, sy + self.crosshairs_offsety
 
     def adjust_limits(self, mapper, val, delta=None):
         """
@@ -394,7 +395,12 @@ class LaserTrayCanvas(StageCanvas):
             vma = vrange.high
             pname = 'prev_{}_val'.format(mapper)
 
-            d = val - getattr(self, pname)
+            try:
+                pv = getattr(self, pname)
+            except AttributeError:
+                pv = 0
+
+            d = val - pv
             setattr(self, pname, val)
 
             nmi = vmi + d
@@ -413,10 +419,12 @@ class LaserTrayCanvas(StageCanvas):
         """
         """
 
+        # print 'ff', self.crosshairs_offsetx, self.crosshairs_offsety
         x = event.x - self.crosshairs_offsetx
         y = event.y - self.crosshairs_offsety
 
         pos = self.valid_position(x, y)
+        print 'fffff', x,y, pos
 
         if pos:
             self.stage_manager.linear_move(*pos,
@@ -470,7 +478,8 @@ class LaserTrayCanvas(StageCanvas):
             self.overlays.append(BoundsOverlay(component=self))
 
     def _add_crosshairs(self):
-        ch = CrosshairsOverlay(component=self)
+        ch = CrosshairsOverlay(component=self,
+                               constrain='')
         self.crosshairs_overlay = ch
         self.overlays.append(ch)
 

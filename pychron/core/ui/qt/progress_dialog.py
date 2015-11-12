@@ -16,14 +16,18 @@
 
 # ============= enthought library imports =======================
 # from pyface.api import ProgressDialog
-import sys
 
 from traits.api import Property, Bool, Int
 
 # ============= standard library imports ========================
+import sys
+import time
+from PySide import QtGui
 from PySide.QtCore import Qt
 from PySide.QtGui import QLabel, QDialogButtonBox
 from pyface.ui.qt4.progress_dialog import ProgressDialog
+
+
 # ============= local library imports  ==========================
 
 
@@ -36,7 +40,7 @@ class Stream(object):
 
     def write(self, msg):
         n = self.message_length
-        if len(msg)>n:
+        if len(msg) > n:
             msg = '...{}'.format(msg[-n:])
         self.parent.change_message(msg)
 
@@ -86,7 +90,7 @@ class myProgressDialog(ProgressDialog):
         try:
             super(myProgressDialog, self).close()
         except AttributeError:
-            #window already closed
+            # window already closed
             pass
 
     def cancel(self):
@@ -128,7 +132,6 @@ class myProgressDialog(ProgressDialog):
         return self._user_accepted
 
     def change_message(self, message, auto_increment=True):
-        #self.message = message
         try:
             self.message_control.setText(message)
             if auto_increment:
@@ -154,6 +157,52 @@ class myProgressDialog(ProgressDialog):
 
     def increase_max(self, step=1):
         self.max += step
+
+    def update(self, value):
+        """
+        updates the progress bar to the desired value. If the value is >=
+        the maximum and the progress bar is not contained in another panel
+        the parent window will be closed
+
+        """
+        if self.progress_bar is None:
+            return None, None
+
+        percent = 1.0
+        if self.max > 0:
+            self.progress_bar.setValue(value)
+
+            if (self.max != self.min):
+                percent = (float(value) - self.min) / (self.max - self.min)
+            else:
+                percent = 1.0
+
+            if value >= self.max or self._user_cancelled:
+                self.close()
+        else:
+            self.progress_bar.setValue(self.progress_bar.value() + value)
+
+            if self._user_cancelled:
+                self.close()
+
+        if self.show_time and (percent != 0):
+            current_time = time.time()
+            elapsed = current_time - self._start_time
+            estimated = elapsed / percent
+            remaining = estimated - elapsed
+            self._set_time_label(elapsed,
+                                 self._elapsed_control)
+            self._set_time_label(estimated,
+                                 self._estimated_control)
+            self._set_time_label(remaining,
+                                 self._remaining_control)
+
+        if self.show_percent:
+            self._percent_control = "%3f" % ((percent * 100) % 1)
+
+        QtGui.QApplication.processEvents()
+
+        return (not self._user_cancelled, False)
 
 # def set_size(self, w, h):
 # #        self.dialog_size = QRect(QPoint(0, 0), QSize(w, h))

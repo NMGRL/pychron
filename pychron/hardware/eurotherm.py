@@ -74,7 +74,7 @@ class Eurotherm(CoreDevice):
         self.set_attribute(config, 'protocol', 'Communications', 'protocol', optional=True)
 
         if self.protocol == 'ei_bisynch':
-            self._communicator.write_terminator = None
+            self.communicator.write_terminator = None
 
             self.set_attribute(config, 'GID', 'Communications', 'GID', cast='int', optional=True)
 

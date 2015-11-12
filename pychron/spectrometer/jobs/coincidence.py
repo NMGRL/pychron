@@ -15,12 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import time
 from traits.api import List, HasTraits, Str, Bool, Float, Property
 from traitsui.api import View, UItem, TableEditor
 # ============= standard library imports ========================
-import os
-from ConfigParser import ConfigParser
 from random import random
+from ConfigParser import ConfigParser
+import os
+import time
 # ============= local library imports  ==========================
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
@@ -63,9 +65,15 @@ class DeflectionResult(HasTraits):
         self.new_deflection = n
 
 
-class CoincidenceScan(BasePeakCenter):
+class Coincidence(BasePeakCenter):
     title = 'Coincidence'
     inform = False
+
+    def __init__(self, *args, **kw):
+        super(Coincidence, self).__init__(*args, **kw)
+        self.window = 0.015
+        self.step_width = 0.0005
+        self.percent = 80
 
     def _reference_detector_default(self):
         self.additional_detectors = [di.name for di in self.detectors[1:]]
@@ -80,6 +88,10 @@ class CoincidenceScan(BasePeakCenter):
         """
         graph = self.graph
         plot = graph.plots[0]
+        time.sleep(0.05)
+
+        # wait for graph to fully update
+        time.sleep(0.1)
 
         # def get_peak_center(i, di):
         def get_peak_center(di):
@@ -102,15 +114,14 @@ class CoincidenceScan(BasePeakCenter):
             return cx
 
         spec = self.spectrometer
-        # centers = dict([(di.name, get_peak_center(i, di))
-        # for i, di in enumerate(spec.detectors)])
+
         centers = {d: get_peak_center(d) for d in self.active_detectors}
+        print centers
         ref = self.reference_detector
         post = centers[ref]
         if post is None:
             return
 
-        # no_change = True
         results = []
         for di in self.active_detectors:
             di = spec.get_detector(di)
@@ -124,10 +135,7 @@ class CoincidenceScan(BasePeakCenter):
 
             if abs(dac_dev) < 0.001:
                 self.info('no offset detected between {} and {}'.format(ref, di.name))
-                no_change = True
                 continue
-
-            # no_change = False
 
             defl = di.map_dac_to_deflection(dac_dev)
             self.info('{} dac dev. {:0.5f}. converted to deflection voltage {:0.1f}.'.format(di.name, dac_dev, defl))
@@ -139,8 +147,6 @@ class CoincidenceScan(BasePeakCenter):
             if newdefl >= 0:
                 results.append(DeflectionResult(di.name, curdefl, newdefl))
 
-        # if no_change and self.inform:
-        # else:
         if not results:
             self.information_dialog('no deflection changes needed')
         else:

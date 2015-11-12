@@ -23,10 +23,13 @@ make sure directory exists and build if not
 from os import path, mkdir
 import os
 
-from pychron.file_defaults import TASK_EXTENSION_DEFAULT, SIMPLE_UI_DEFAULT, EDIT_UI_DEFAULT, IDENTIFIERS_DEFAULT
+from pychron.file_defaults import TASK_EXTENSION_DEFAULT, SIMPLE_UI_DEFAULT, \
+    EDIT_UI_DEFAULT, IDENTIFIERS_DEFAULT
 
 
 class Paths(object):
+    git_base_origin = 'https://github.com'
+
     dissertation = '/Users/ross/Programming/git/dissertation'
     # enthought = path.join(path.expanduser('~'), '.enthought')
     # users_file = path.join(enthought, 'users')
@@ -58,7 +61,7 @@ class Paths(object):
     # ==============================================================================
     # root
     # ==============================================================================
-    scripts_dir = scripts_dir = None
+    scripts_dir = None
     experiment_dir = None
     auto_save_experiment_dir = None
 
@@ -94,7 +97,7 @@ class Paths(object):
     # ==============================================================================
     # setup
     # ==============================================================================
-    setup_dir = setup_dir = None
+    setup_dir = None
     device_dir = None
     spectrometer_dir = None
     backup_deflection_dir = None
@@ -137,12 +140,15 @@ class Paths(object):
     sample_image_dir = None
     sample_image_backup_dir = None
 
+    experiment_dataset_dir = None
     project_dir = None
     meta_dir = None
     meta_db = None
     dvc_dir = None
     device_scan_dir = None
     isotope_dir = None
+
+    index_db = None
     # vcs_dir = None
     # initialization_dir = None
     # device_creator_dir = None
@@ -186,6 +192,7 @@ class Paths(object):
 
     duration_tracker = None
     experiment_launch_history = None
+    notification_triggers = None
 
     def write_default_file(self, p, default, overwrite=False):
         return self._write_default_file(p, default, overwrite)
@@ -330,9 +337,13 @@ class Paths(object):
         self.sample_image_backup_dir = join(self.sample_image_dir, 'backup')
 
         self.dvc_dir = join(self.data_dir, '.dvc')
-        self.project_dir = join(self.dvc_dir, 'projects')
+        # self.project_dir = join(self.dvc_dir, 'projects')
+        self.experiment_dataset_dir = join(self.dvc_dir, 'experiments')
         self.meta_dir = join(self.dvc_dir, 'meta')
-        self.meta_db = join(self.dvc_dir, 'pychronmeta.sqlite')
+        self.index_db = join(self.dvc_dir, 'index.db')
+
+        # self.meta_db = join(self.meta_dir, 'pychronmeta.sqlite')
+        # self.meta_txtdb = join(self.meta_dir, 'pychronmeta.txtdb')
         # self.vcs_dir = join(self.data_dir, 'vcs')
 
         # ==============================================================================
@@ -372,6 +383,7 @@ class Paths(object):
 
         self.duration_tracker = join(self.hidden_dir, 'duration_tracker.txt')
         self.experiment_launch_history = join(self.hidden_dir, 'experiment_launch_history.txt')
+        self.notification_triggers = join(self.setup_dir, 'notification_triggers.yaml')
         build_directories()
 
     def write_defaults(self):

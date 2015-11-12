@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.tasks.action.task_action import TaskAction
+from pyface.tasks.task_layout import TaskLayout, PaneItem
 from traits.api import Str
 # ============= standard library imports ========================
 import os
@@ -22,6 +24,11 @@ import os
 # ============= local library imports  ==========================
 from traitsui.menu import Action
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
+
+
+class ShowMotionConfigureAction(TaskAction):
+    method = 'show_motion_configure'
+    name = 'Motion Configure...'
 
 
 class ListAction(Action):
@@ -63,7 +70,8 @@ class ProcedureAction(ListAction):
                 break
         else:
             # open extraction line task
-            app.open_task('pychron.extraction_line')
+            task = app.open_task('pychron.extraction_line')
+            task.show_pane(task.wait_pane)
 
         manager = app.get_service('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
 
@@ -78,6 +86,7 @@ class ProcedureAction(ListAction):
         context = {'analysis_type': 'blank' if 'blank' in name else 'unknown'}
         task.execute_script(name, root,
                             delay_start=1,
+                            manager=manager,
                             on_completion=lambda: manager.info(info('Finished Procedure "{}"'.format(name))),
                             context=context)
 

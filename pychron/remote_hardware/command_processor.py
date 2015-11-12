@@ -24,11 +24,12 @@ import select
 # ============= local library imports  ==========================
 from pychron.config_loadable import ConfigLoadable
 from pychron.hardware.core.checksum_helper import computeCRC
-from pychron.remote_hardware.errors.error import ErrorCode
+# from pychron.remote_hardware.errors.error import ErrorCode
 from pychron.remote_hardware.context import ContextFilter
-from pychron.remote_hardware.errors import SystemLockErrorCode, \
-    SecurityErrorCode
+# from pychron.remote_hardware.errors import SystemLockErrorCode, \
+#     SecurityErrorCode
 from pychron.globals import globalv
+from pychron.tx.errors import SystemLockErrorCode, SecurityErrorCode, ErrorCode
 
 BUFSIZE = 2048
 

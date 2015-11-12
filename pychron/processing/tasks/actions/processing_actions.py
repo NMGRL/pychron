@@ -374,6 +374,7 @@ class ExportAnalysesAction(Action):
 
 class SetSQLiteAction(Action):
     name = 'Set SQLite Dataset...'
+    dname = 'Set SQLite Dataset'
 
     def perform(self, event):
         app = event.task.window.application
@@ -383,6 +384,7 @@ class SetSQLiteAction(Action):
 
 class SetXMLAction(Action):
     name = 'Set XML Dataset...'
+    dname = 'Set XML Dataset'
     accelerator = 'Ctrl+3'
     def perform(self, event):
         app = event.task.window.application

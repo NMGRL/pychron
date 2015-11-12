@@ -20,17 +20,20 @@ from pyface.tasks.traits_editor import TraitsEditor
 
 from pychron.loggable import Loggable
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
 
 class BaseTraitsEditor(TraitsEditor, Loggable):
     dirty = Bool(False)
+    _destroyed = False
 
     def prepare_destroy(self):
         pass
 
     def destroy(self):
+        self._destroyed = True
         self.prepare_destroy()
         super(BaseTraitsEditor, self).destroy()
 

@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import cPickle as pickle
+
 from traits.api import Float, Event, String, Any, Enum, Property, cached_property
 # ============= standard library imports ========================
 import cPickle as pickle
@@ -42,8 +44,7 @@ HELP_DICT = {
 
 STYLE_DICT = {'Free': FreeCalibrator,
               'Hole': HoleCalibrator,
-              'Linear': LinearCalibrator
-              }
+              'Linear': LinearCalibrator}
 
 
 class TrayCalibrationManager(Loggable):
@@ -62,11 +63,6 @@ class TrayCalibrationManager(Loggable):
 
     def isCalibrating(self):
         return self.calibration_step != 'Calibrate'
-
-        # def get_current_position(self):
-        # x = self.parent.stage_controller.x
-        # y = self.parent.stage_controller.y
-        # return x, y
 
     def load_calibration(self, stage_map=None):
         if stage_map is None:
@@ -89,7 +85,7 @@ class TrayCalibrationManager(Loggable):
             self._style_changed()
 
     def save_calibration(self, name=None):
-        PICKLE_PATH = p = os.path.join(paths.hidden_dir, '{}_stage_calibration')
+        pickle_path = os.path.join(paths.hidden_dir, '{}_stage_calibration')
         if name is None:
             # delete the corrections file
             name = self.parent.stage_map_name
@@ -98,37 +94,12 @@ class TrayCalibrationManager(Loggable):
         if ca is not None:
             self.parent.stage_map.clear_correction_file()
             ca.style = self.style
-            p = PICKLE_PATH.format(name)
+            p = pickle_path.format(name)
             self.info('saving calibration {}'.format(p))
             with open(p, 'wb') as f:
                 pickle.dump(ca, f)
 
             self.load_calibration(name)
-
-    # def get_additional_controls(self):
-    # return self.calibrator.get_controls()
-
-    # def traits_view(self):
-    #     cg = VGroup(
-    #         Item('style', show_label=False, enabled_when='not object.isCalibrating()'),
-    #         self._button_factory('calibrate', 'calibration_step'),
-    #         HGroup(Item('x', format_str='%0.3f', style='readonly'),
-    #                Item('y', format_str='%0.3f', style='readonly')),
-    #         Item('rotation', format_str='%0.3f', style='readonly'),
-    #         Item('scale', format_str='%0.4f', style='readonly'),
-    #         Item('error', format_str='%0.2f', style='readonly'),
-    #         Item('object.calibrator', style='custom', editor=InstanceEditor())
-    #     )
-    #     # ad = self.get_additional_controls()
-    #     # if ad is not None:
-    #     # cg.content.append(ad)
-    #
-    #     v = View(cg,
-    #              CustomLabel('calibration_help',
-    #                          color='green',
-    #                          height=75, width=300),
-    #              )
-    #     return v
 
     # ===============================================================================
     # handlers

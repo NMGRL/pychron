@@ -101,10 +101,6 @@ class SwitchManager(Manager):
         super(SwitchManager, self).kill()
         self._save_states()
 
-    def _save_states(self):
-        self._save_soft_lock_states()
-        self._save_manual_states()
-
     def create_device(self, name, *args, **kw):
         """
         """
@@ -314,23 +310,6 @@ class SwitchManager(Manager):
         if v is not None:
             return v.software_lock
 
-    def _check_soft_interlocks(self, name):
-        """
-        """
-        cv = self.get_switch_by_name(name)
-        self.debug('check software interlocks {}'.format(name))
-        if cv is not None:
-            interlocks = cv.interlocks
-            self.debug('interlocks {}'.format(interlocks))
-            switches = self.switches
-            for interlock in interlocks:
-
-                if interlock in switches:
-                    v = switches[interlock]
-                    if v.state:
-                        self.debug('interlocked {}'.format(interlock))
-                        return v
-
     def open_by_name(self, name, mode='normal'):
         """
         """
@@ -384,12 +363,33 @@ class SwitchManager(Manager):
         return next((False for vi in v.interlocks if self.get_switch_by_name(vi).state), True)
 
     # private
+    def _save_states(self):
+        self._save_soft_lock_states()
+        self._save_manual_states()
+
+    def _check_soft_interlocks(self, name):
+        """
+        """
+        cv = self.get_switch_by_name(name)
+        self.debug('check software interlocks {}'.format(name))
+        if cv is not None:
+            interlocks = cv.interlocks
+            self.debug('interlocks {}'.format(interlocks))
+            switches = self.switches
+            for interlock in interlocks:
+
+                if interlock in switches:
+                    v = switches[interlock]
+                    if v.state:
+                        self.debug('interlocked {}'.format(interlock))
+                        return v
+
     def _get_state_by(self, v):
         """
         """
         state = None
         if self.query_valve_state and v.query_state:
-            state = v.get_hardware_state()
+            state = v.get_hardware_state(verbose=False)
 
         if state is None:
             state = v.state
@@ -403,7 +403,6 @@ class SwitchManager(Manager):
                      if getattr(valve, attr) == a), None)
 
     def _validate_checksum(self, word):
-        # return True
         if word is not None:
             checksum = word[-4:]
             data = word[:-4]
@@ -449,13 +448,19 @@ class SwitchManager(Manager):
     def load_hardware_states(self):
         for k, v in self.switches.iteritems():
             if v.query_state:
-                s = v.get_hardware_state(verbose=True)
-                self.refresh_state = (k, s, False)
+                s = v.get_hardware_state(verbose=False)
+                if v.state != s:
+                    self.refresh_state = (k, s, False)
+
+        self.refresh_canvas_needed = True
 
     def _load_states(self):
         for k, v in self.switches.iteritems():
             s = v.get_hardware_state()
-            self.refresh_state = (k, s, False)
+            if v.state != s:
+                self.refresh_state = (k, s, False)
+
+        self.refresh_canvas_needed = True
 
     def _load_manual_states(self):
         p = os.path.join(paths.hidden_dir, '{}_manual_states'.format(self.name))
@@ -530,17 +535,10 @@ class SwitchManager(Manager):
         return r, c
 
     def _close_(self, name, mode):
-        """
-        """
         action = 'set_closed'
-        # if self._check_soft_interlocks(name):
-        # self.warning('Software Interlock')
-        # return
         return self._actuate_(name, action, mode)
 
     def _actuate_(self, name, action, mode, address=None):
-        """
-        """
         changed = False
         if address is None:
             v = self.get_switch_by_name(name)
@@ -564,13 +562,10 @@ class SwitchManager(Manager):
             msg = 'Valve {} not available'.format(vid)
             self.console_message = msg, 'red'
             self.warning(msg)
-            # result = 'Valve %s not available' % id
 
         return result, changed
 
     def _load_valves_from_file(self, path):
-        """
-        """
         self.info('loading valve definitions file  {}'.format(path))
 
         def factory(v):
@@ -646,7 +641,6 @@ class SwitchManager(Manager):
         if vqs:
             qs = vqs == 'true'
 
-        # print name, description, qs, vqs
         parent = v_elem.find('parent')
 
         parent_name = ''
@@ -696,336 +690,4 @@ class SwitchManager(Manager):
     def _get_simulation(self):
         return any([act.simulation for act in self.actuators])
 
-        #
-        # if __name__ == '__main__':
-        # from pychron.loggable import Loggable
-        # from threading import Timer, Thread, Event
-        # from Queue import Queue
-        # import random
-        # class Foo(Loggable):
-        # def get_state_by_name(self, m):
-        # b = random.randint(1, 5) / 50.0
-        # r = 0.1 + b
-        # #        r = 3
-        # self.info('sleep {}'.format(r))
-        #             time.sleep(r)
-        #             return True
-        #
-        #         def _get_states(self, times_up_event, sq):
-        #             #        self.states = []
-        #             for k in ['A', 'B', 'Ca', 'Dn', 'Es', 'F', 'G', 'H', 'I']:
-        #                 if times_up_event.isSet():
-        #                     break
-        #
-        #                 sq.put(k)
-        #                 #            self.info('geting state for {}'.format(k))
-        #                 s = self.get_state_by_name(k)
-        #                 #            self.info('got {} for {}'.format(s, k))
-        #                 if times_up_event.isSet():
-        #                     break
-        #                 sq.put('1' if s else '0')
-        #
-        #                 # return ''.join(states)
-        #
-        #         def get_states(self):
-        #             """
-        #                 with this method you need to ensure the communicators timeout
-        #                 is sufficiently low. the communicator will block until a response
-        #                 or a timeout. the times up event only breaks between state queries.
-        #
-        #             """
-        #             states_queue = Queue()
-        #             times_up_event = Event()
-        #             t = Timer(1, lambda: times_up_event.set())
-        #             t.start()
-        #             #        states = self._get_states(times_up_event)
-        #             #        return states
-        #             t = Thread(target=self._get_states, args=(times_up_event, states_queue))
-        #             t.start()
-        #             t.join(timeout=1.1)
-        #             s = ''
-        #
-        #             n = states_queue.qsize()
-        #             if n % 2 != 0:
-        #                 c = n / 2 * 2
-        #             else:
-        #                 c = n
-        #
-        #             i = 0
-        #             while not states_queue.empty() and i < c:
-        #                 s += states_queue.get_nowait()
-        #                 i += 1
-        #
-        #                 #        n = len(s)
-        #                 #        if n % 2 != 0:
-        #                 #            sn = s[:n / 2 * 2]
-        #                 #        else:
-        #                 #            sn = s
-        #                 #        s = ''.join(self.states)
-        #             self.info('states = {}'.format(s))
-        #             return s
-        #
-        #             #    v = ValveManager()
-        #             #    p = os.path.join(paths.extraction_line_dir, 'valves.xml')
-        #             #    v._load_valves_from_file(p)
-        #
-        #     from pychron.core.helpers.logger_setup import logging_setup
-        #
-        #     logging_setup('foo')
-        #     f = Foo()
-        #     for i in range(10):
-        #         r = f.get_states()
-        #         time.sleep(2)
-        #         # print r, len(r)
-
-        # ==================== EOF ==================================
-
-        # ===============================================================================
-        # deprecated
-        # ===============================================================================
-        # def claim_section(self, section, addr=None, name=None):
-
-# try:
-# vg = self.valve_groups[section]
-# except KeyError:
-# return True
-#
-# if addr is None:
-# addr = self._get_system_address(name)
-#
-# vg.owner = addr
-#
-# def release_section(self, section):
-#         try:
-#             vg = self.valve_groups[section]
-#         except KeyError:
-#             return True
-#
-#         vg.owner = None
-#     def get_system(self, addr):
-#         return next((k for k, v in self.systems.iteritems() if v == addr), None)
-#     def check_group_ownership(self, name, claimer):
-#         grp = None
-#         for g in self.valve_groups.itervalues():
-#             for vi in g.valves:
-#                 if vi.is_name(name):
-#                     grp = g
-#                     break
-#         r = False
-#         if grp is not None:
-#             r = grp.owner == claimer
-#
-# #        print name, claimer,grp, r
-#         return r
-
-# def get_owners_word(self):
-#         """
-#          eg.
-#                 1. 129.128.12.141-A,B,C:D,E,F
-#                 2. A,B,C,D,E,F
-#                 3. 129.128.12.141-A,B,C:129.138.12.150-D,E:F
-#                     A,B,C owned by 141,
-#                     D,E owned by 150
-#                     F free
-#         """
-#         if self.actuators:
-#             rs = []
-#             actuator = self.actuators[0]
-#             word = actuator.get_owners_word()
-#             if word:
-#                 groups = word.split(':')
-#                 if len(groups) > 1:
-#                     for gi in groups:
-#                         if '-' in gi:
-#                             owner, vs = gi.split('-')
-#                         else:
-#                             owner, vs = '', gi
-#
-#                         rs.append((owner, vs.split(',')))
-#
-#                 else:
-#                     rs = [('', groups[0].split(',')), ]
-#             return rs
-
-#     def _get_system_address(self, name):
-#         return next((h for k, h in self.systems.iteritems() if k == name), None)
-#
-#     def _load_system_dict(self):
-# #        config = self.configparser_factory()
-#
-#         from pychron.core.helpers.parsers.initialization_parser import InitializationParser
-# #        ip = InitializationParser(os.path.join(setup_dir, 'initialization.xml'))
-#         ip = InitializationParser()
-#
-#         self.systems = dict()
-#         for name, host in ip.get_systems():
-#             self.systems[name] = host
-
-#        config.read(os.path.join(setup_dir, 'system_locks.cfg'))
-#
-#        for sect in config.sections():
-#            name = config.get(sect, 'name')
-#            host = config.get(sect, 'host')
-# #            names.append(name)
-#            self.systems[name] = host
-#
-#     def _load_sections_from_file(self, path):
-#         '''
-#         '''
-#         self.sections = []
-#         config = self.get_configuration(path=path)
-#         if config is not None:
-#             for s in config.sections():
-#                 section = Section()
-#                 comps = config.get(s, 'components')
-#                 for c in comps.split(','):
-#                     section.add_component(c)
-#
-#                 for option in config.options(s):
-#                     if 'test' in option:
-#                         test = config.get(s, option)
-#                         tkey, prec, teststr = test.split(',')
-#                         t = (int(prec), teststr)
-#                         section.add_test(tkey, t)
-#
-#                 self.sections.append(section)
-
-#    def _get_states(self, times_up_event, sq):
-#
-#        def _gstate(ki):
-#            sq.put(ki)
-#            s = self.get_state_by_name(ki)
-#            sq.put('1' if s else '0')
-#
-#        dv = []
-#        for k, v in self.valves.iteritems():
-# #        for k, _ in self.valves.items():
-#            if v.query_state:
-#                dv.append(k)
-#                continue
-#
-#            if times_up_event.isSet():
-#                break
-#
-#            _gstate(k)
-#
-#        if times_up_event.isSet():
-#            return
-#
-#        for k in dv:
-#            if times_up_event.isSet():
-#                break
-#            _gstate(k)
-#    def get_states2(self, timeout=1):
-#        '''
-#            use event and timer to allow for partial responses
-#            the timer t will set the event in timeout seconds
-#
-#            after the timer is started _get_states is called
-#            _get_states loops thru the valves querying their state
-#
-#            each iteration the times_up_event is checked to see it
-#            has fired if it has the the loop breaks and returns the
-#            states word
-#
-#            to prevent the communicator from blocking longer then the times up event
-#            the _gs_thread is joined and timeouts out after 1.01s
-#        '''
-#
-#        states_queue = Queue()
-#        times_up_event = Event()
-#        t = Timer(1, lambda: times_up_event.set())
-#        t.start()
-#        try:
-#
-#            _gs_thread = Thread(name='valves.get_states',
-#                                target=self._get_states, args=(times_up_event, states_queue))
-#            _gs_thread.start()
-#            _gs_thread.join(timeout=1.01)
-#        except (Exception,), e:
-#            pass
-#
-#        # ensure word has even number of elements
-#        s = ''
-#        i = 0
-#        n = states_queue.qsize()
-#        if n % 2 != 0:
-#            c = n / 2 * 2
-#        else:
-#            c = n
-#
-#        while not states_queue.empty() and i < c:
-#            s += states_queue.get_nowait()
-#            i += 1
-#
-#        return s
-# def _load_valves_from_filetxt(self, path):
-#        '''
-#
-#        '''
-#        c = parse_setupfile(path)
-#
-#        self.sector_inlet_valve = c[0][0]
-#        self.quad_inlet_valve = c[0][1]
-#
-#        actid = 6
-#        curgrp = None
-#        self.valve_groups = dict()
-#
-#        for a in c[1:]:
-#            act = 'valve_controller'
-#            if len(a) == actid + 1:
-#                act = a[actid]
-#
-#            name = a[0]
-#            actuator = self.get_actuator_by_name(act)
-#            warn_no_act = True
-#            if warn_no_act:
-#                if actuator is None:
-#                    self.warning_dialog('No actuator for {}. Valve will not operate. Check setupfiles/extractionline/valves.txt'.format(name))
-#            print a
-#            v = HardwareValve(name,
-#                     address=a[1],
-#                     actuator=self.get_actuator_by_name(act),
-#                     interlocks=a[2].split(','),
-#                     query_valve_state=a[4] in ['True', 'true']
-# #                     group=a[4]
-#                     )
-#            try:
-#                if a[5] and a[5] != curgrp:
-#                    curgrp = a[5]
-#                    if curgrp in self.valve_groups:
-#                        self.valve_groups[curgrp].valves.append(v)
-#                    else:
-#                        vg = ValveGroup()
-#                        vg.valves = [v]
-#                        self.valve_groups[curgrp] = vg
-#                else:
-#                    self.valve_groups[curgrp].valves.append(v)
-#
-#            except IndexError:
-#
-#                #there is no group specified
-#                pass
-#
-#            s = v.get_hardware_state()
-#
-#            #update the extraction line managers canvas
-# #            self.extraction_line_manager.canvas.update_valve_state(v.name[-1], s)
-#            self.extraction_line_manager.update_valve_state(v.name[-1], s)
-#            args = dict(name=a[0],
-#                        address=a[1],
-#                        description=a[3],
-#                        canvas=self.extraction_line_manager.canvas,
-#
-#                        )
-#            ev = ExplanableValve(**args)
-#            ev.state = s if s is not None else False
-#
-#            self.valves[name] = v
-#            self.explanable_items.append(ev)
-
-#        for k,g in self.valve_groups.iteritems():
-#
-#            for v in g.valves:
-#                print k,v.name
+# ==================== EOF ==================================

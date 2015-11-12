@@ -31,7 +31,7 @@ PACKAGES = dict(ProXRADC='pychron.hardware.ncd.adc',
 @provides(ICoreDevice)
 class AbstractDevice(ScanableDevice, HasCommunicator):
     _cdevice = Instance(CoreDevice)
-    _communicator = DelegatesTo('_cdevice')
+    communicator = DelegatesTo('_cdevice')
 
     dev_klass = Property(depends_on='_cdevice')
     graph = DelegatesTo('_cdevice')

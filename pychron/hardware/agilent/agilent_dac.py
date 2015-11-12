@@ -36,7 +36,7 @@ class AgilentDAC(CoreDevice):
     max_value = Float(100)
 
     def initialize(self):
-        self._communicator.terminator = chr(10)
+        self.communicator.terminator = chr(10)
         return True
 
     # ===========================================================================

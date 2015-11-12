@@ -34,6 +34,7 @@ class SampleImageRecordView(RecordView):
     name = Str
     record_id = Long
     crete_date = Date
+
     def _create(self, dbrecord):
         self.name = dbrecord.name
         self.record_id = dbrecord.id
@@ -131,7 +132,7 @@ class LabnumberRecordView(RecordView):
             except AttributeError:
                 pass
 
-    #mirror labnumber as identifier
+    # mirror labnumber as identifier
     def _get_identifier(self):
         return self.labnumber
 
@@ -147,7 +148,19 @@ class LabnumberRecordView(RecordView):
         return self.identifier
 
 
-class ProjectRecordView(RecordView):
+class NameView(HasTraits):
+    name = Str
+
+    @property
+    def id(self):
+        return self.name
+
+
+class ExperimentRecordView(NameView):
+    pass
+
+
+class ProjectRecordView(RecordView, NameView):
     name = Str
 
     def _create(self, dbrecord):
@@ -155,10 +168,6 @@ class ProjectRecordView(RecordView):
             self.name = dbrecord.name
         else:
             self.name = dbrecord
-
-    @property
-    def id(self):
-        return self.name
 
 
 class AnalysisGroupRecordView(RecordView):

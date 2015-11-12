@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2014 Jake Ross
+# Copyright 2015 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,22 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Button
-from traitsui.api import View, Item
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.loggable import Loggable
-
-
-class TestBot(Loggable):
-    def run(self):
-        app = self.application
-        for p in app.plugin_manager:
-            if hasattr(p, 'testbot_run'):
-                p.testbot_run()
 
 
 # ============= EOF =============================================
-
-
-

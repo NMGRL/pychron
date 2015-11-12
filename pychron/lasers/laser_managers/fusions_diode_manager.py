@@ -40,7 +40,7 @@ from fusions_laser_manager import FusionsLaserManager
 class FusionsDiodeManager(FusionsLaserManager):
     """
     """
-    stage_manager_id = 'fusions.diode.stage_map'
+    stage_manager_id = 'fusions.diode'
     id = 'pychron.fusions.diode'
     # name = 'fusions_diode'
     name = 'FusionsDiode'

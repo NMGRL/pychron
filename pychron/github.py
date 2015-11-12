@@ -29,11 +29,11 @@ def get_branches(new):
     return [branch['name'] for branch in json.load(doc)]
 
 
-BASE_URL = 'https://api.github.com'
+GITHUB_API_URL = 'https://api.github.com'
 
 
 def make_request(r):
-    return '{}{}'.format(BASE_URL, r)
+    return '{}{}'.format(GITHUB_API_URL, r)
 
 
 def get_organization_repositiories(name):
@@ -43,14 +43,15 @@ def get_organization_repositiories(name):
     return [repo['name'] for repo in json.loads(doc.text)]
 
 
-def create_organization_repository(org, name, usr, pwd):
+def create_organization_repository(org, name, usr, pwd, **kw):
     cmd = '/orgs/{}/repos'.format(org)
     cmd = make_request(cmd)
     payload = {'name': name}
+    payload.update(**kw)
     auth = base64.encodestring('{}:{}'.format(usr, pwd)).replace('\n', '')
     headers = {"Authorization": "Basic {}".format(auth)}
     r = requests.post(cmd, data=json.dumps(payload), headers=headers)
-    print r.text
+    return r
 
 
 class GithubObject(object):
@@ -71,8 +72,8 @@ class GithubObject(object):
 
 class Organization(GithubObject):
     def __init__(self, name, *args, **kw):
-        super(Organization, self).__init__(*args, **kw)
         self._name = name
+        super(Organization, self).__init__(*args, **kw)
 
     @property
     def base_cmd(self):
@@ -80,27 +81,31 @@ class Organization(GithubObject):
 
     @property
     def repos(self):
+
         cmd = make_request(self.base_cmd)
         doc = requests.get(cmd)
         return [repo['name'] for repo in json.loads(doc.text)]
 
-    def create_repo(self, name, **payload):
-        cmd = make_request(self.base_cmd)
-        payload['name'] = name
+    def has_repo(self, name):
+        return name in self.repos
 
-        headers = self._make_headers(auth=True)
-        r = requests.post(cmd, data=json.dumps(payload), headers=headers)
-        self._process_post(r)
+    def create_repo(self, name, usr, pwd, **payload):
+        create_organization_repository(self._name, name, usr, pwd)
+        # cmd = make_request(self.base_cmd)
+        # payload['name'] = name
+        #
+        # headers = self._make_headers(auth=True)
+        # r = requests.post(cmd, data=json.dumps(payload), headers=headers)
+        # self._process_post(r)
 
 
 if __name__ == '__main__':
+    with open('/Users/ross/Programming/githubauth.txt') as rfile:
+        usr = rfile.readline().strip()
+        pwd = rfile.readline().strip()
     # print get_organization_repositiories('NMGRL')
-    # create_organization_repository('NMGRL', 'test', 'jirhiker', 'jross4039')
-    org = Organization('NMGRL', 'jirhiker', 'jross4039')
+    org = Organization('NMGRLData', usr, pwd)
     print org.repos, len(org.repos)
     # print org.create_repo('test2', auto_init=True)
     # print org.repos, len(org.repos)
 # ============= EOF =============================================
-
-
-

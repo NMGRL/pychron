@@ -81,7 +81,6 @@ class LaserManager(BaseLaserManager):
 
         if self.simulation:
             self.enabled = True
-            #            self.enabled_led.state = 'green'
             return True
 
         if isinstance(enabled, bool) and enabled:
@@ -92,11 +91,11 @@ class LaserManager(BaseLaserManager):
             self.monitor = self.monitor_factory()
             self.monitor.reset()
             if not self.monitor.monitor():
-                #                self.enabled_led.state = 'green'
-                #                self.enabled_led.state = 'green'
-                #            else:
                 self.disable_laser()
                 self.warning_dialog('Monitor could not be started. Laser disabled', sound='alarm1')
+            else:
+                if self.monitor.check():
+                    self.emergency_shutoff('Laser Monitor detected an error')
         else:
             self.warning_dialog('Could not enable laser. Check coolant and manual interlocks')
 
@@ -215,7 +214,8 @@ class LaserManager(BaseLaserManager):
     def shutdown(self):
         self.debug('shutdown')
         self._dump_pulse()
-
+        if self.stage_manager:
+            self.stage_manager.shutdown()
 
     # ===============================================================================
     # handlers

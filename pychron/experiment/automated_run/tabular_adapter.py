@@ -42,6 +42,7 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
         ('Labnumber', 'labnumber'),
         ('Aliquot', 'aliquot'),
         ('Sample', 'sample'),
+        ('ExperimentID', 'experiment_identifier'),
         ('Position', 'position'),
         ('Extract', 'extract_value'),
         ('Units', 'extract_units'),
@@ -120,11 +121,10 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
     use_cdd_warming_text = Property
     colors = Dict(COLORS)
 
-    # def get_tooltip(self, obj, trait, row, column):
-    #     name = self.column_map[column]
-    #     item = getattr(obj, trait)[row]
-    #     # name='_'.join(name.split('_')[:-1])
-    #     return '{}= {}'.format(name, getattr(item, name))
+    def get_tooltip(self, obj, trait, row, column):
+        name = self.column_map[column]
+        item = getattr(obj, trait)[row]
+        return '{}= {}'.format(name, getattr(item, name))
 
     def get_row_label(self, section, obj=None):
         return section + 1
@@ -138,10 +138,9 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
                 color = SKIP_COLOR  # '#33CCFF'  # light blue
             elif item.state in self.colors:
                 color = self.colors[item.state]
-            # elif item.end_after:
-            #     color = COLORS['end_after']
+            elif item.end_after:
+                color = END_AFTER_COLOR
             else:
-
                 if row % 2 == 0:
                     # color = 'white'
                     # color = self.even_bg_color

@@ -207,7 +207,8 @@ class PyScriptTask(EditorTask, ExecuteMixin):
     def _execute_extraction(self, name, root, kind, new_thread=True,
                             delay_start=0,
                             on_completion=None,
-                            context=None):
+                            context=None,
+                            manager=None):
         from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
 
         klass = ExtractionPyScript
@@ -217,6 +218,7 @@ class PyScriptTask(EditorTask, ExecuteMixin):
             klass = LaserPyScript
 
         script = klass(application=self.application,
+                       manager=manager,
                        root=root,
                        name=add_extension(name, '.py'),
                        runner=self._runner)

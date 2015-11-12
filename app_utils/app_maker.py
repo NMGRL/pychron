@@ -226,7 +226,12 @@ class Template(object):
         # =======================================================================
         # rename
         # =======================================================================
-        ins.rename_app()
+        appname = ins.rename_app()
+
+        # =======================================================================
+        # intsall
+        # =======================================================================
+        ins.install_app(appname)
 
 
 class PychronTemplate(Template):
@@ -347,6 +352,10 @@ execfile(os.path.join(os.path.split(__file__)[0], "{}.py"))
                                rsrcname=rsrcfilename, others=extras, raw=raw,
                                progress=verbose, destroot=destroot)
 
+    def install_app(self, appname):
+        print 'copy to applications {}'.format(appname)
+        shutil.move(appname, '/Applications/{}'.format(os.path.basename(appname)))
+
     def rename_app(self):
         old = self.apppath
         new = os.path.join(os.path.dirname(old),
@@ -357,7 +366,7 @@ execfile(os.path.join(os.path.split(__file__)[0], "{}.py"))
             #        for i in range(3):
             try:
                 os.rename(old, new)
-                break
+                return new
             except OSError, e:
                 # print 'exception', e
                 name = new[:-4]

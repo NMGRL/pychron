@@ -104,6 +104,8 @@ class ConsumerMixin(object):
         else:
             def get_func():
                 try:
+                    if self._consumer_queue is None:
+                        print self
                     return self._consumer_queue.get(timeout=1)
                 except Empty:
                     return

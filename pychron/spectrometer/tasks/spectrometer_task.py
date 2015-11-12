@@ -33,13 +33,15 @@ class SpectrometerTask(EditorTask):
     name = 'Scan'
     id = 'pychron.spectrometer'
     _scan_editor = Instance(ScanEditor)
-    tool_bars = [SToolBar(StopScanAction(),)]
+    tool_bars = [SToolBar(StopScanAction(), )]
 
     def stop_scan(self):
         self.debug('stop scan fired')
         editor = self.active_editor
+        self.debug('active editor {}'.format(editor))
         if editor:
-            if isinstance(editor, ScanEditor):
+            if isinstance(editor, (ScanEditor, PeakCenterEditor, CoincidenceEditor)):
+                self.debug('editor stop')
                 editor.stop()
 
     def do_coincidence(self):
@@ -56,14 +58,6 @@ class SpectrometerTask(EditorTask):
             man.do_coincidence_scan()
 
     def do_peak_center(self):
-        # man = self.ion_optics_manager
-        # if len(self.graphs) > 1:
-        # i = int(self.graphs[-1].split(' ')[2]) + 1
-        # else:
-        # i = 1
-
-        # i = 1
-        self.scan_manager.log_events_enabled = False
         es = [int(e.name.split(' ')[-1])
               for e in self.editor_area.editors
               if isinstance(e, PeakCenterEditor)]
@@ -73,15 +67,43 @@ class SpectrometerTask(EditorTask):
         man = self.scan_manager.ion_optics_manager
         name = 'Peak Center {:02d}'.format(i)
         if man.setup_peak_center(new=True, standalone_graph=False):
-            def func():
-                setattr(self.scan_manager, 'log_events_enabled', True)
+            self._on_peak_center_start()
 
             self._open_editor(PeakCenterEditor(model=man.peak_center,
                                                name=name))
 
             man.do_peak_center(confirm_save=True, warn=True,
                                message='manual peakcenter',
-                               on_end=func)
+                               on_end=self._on_peak_center_end)
+
+    def define_peak_center(self):
+        from pychron.spectrometer.ion_optics.define_peak_center_view import DefinePeakCenterView
+
+        man = self.scan_manager.ion_optics_manager
+        spec = man.spectrometer
+        dets = spec.detector_names
+        isos = spec.isotopes
+
+        dpc = DefinePeakCenterView(detectors=dets,
+                                   isotopes=isos,
+                                   detector=dets[0],
+                                   isotope=isos[0])
+        info = dpc.edit_traits()
+        if info.result:
+            det = dpc.detector
+            isotope = dpc.isotope
+            dac = dpc.dac
+            self.debug('manually setting mftable to {}:{}:{}'.format(det, isotope, dac))
+            message = 'manually define peak center {}:{}:{}'.format(det, isotope, dac)
+            man.spectrometer.magnet.update_field_table(det, isotope, dac, message)
+
+    def _on_peak_center_start(self):
+        self.scan_manager.log_events_enabled = False
+        self.scan_manager.scan_enabled = False
+
+    def _on_peak_center_end(self):
+        self.scan_manager.log_events_enabled = True
+        self.scan_manager.scan_enabled = True
 
     def send_configuration(self):
         self.scan_manager.spectrometer.send_configuration()

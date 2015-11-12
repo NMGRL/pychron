@@ -15,10 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.task_factory import TaskFactory
+from pyface.tasks.action.schema_addition import SchemaAddition
 
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
+from pychron.logger.tasks.actions import LogViewerAction, CurrentLogViewerAction
 from pychron.logger.tasks.logger_task import LoggerTask
+
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -28,13 +32,17 @@ class LoggerPlugin(BaseTaskPlugin):
     name = 'Logger'
 
     def _tasks_default(self):
-        return [
-                TaskFactory(id=self.id,
+        return [TaskFactory(id=self.id,
                             factory=self._task_factory,
-                            name='Logger',
-                            ),
-                ]
+                            name='Logger')]
 
     def _task_factory(self):
         return LoggerTask()
+
+    def _task_extensions_default(self):
+        return [TaskExtension(actions=[SchemaAddition(factory=LogViewerAction,
+                                                      path='MenuBar/help.menu'),
+                                       SchemaAddition(factory=CurrentLogViewerAction,
+                                                      path='MenuBar/help.menu')])]
+
 # ============= EOF =============================================

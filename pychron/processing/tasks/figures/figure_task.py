@@ -26,8 +26,6 @@ import os
 # ============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.envisage.tasks.actions import ToggleFullWindowAction
-from pychron.file_defaults import IDEOGRAM_DEFAULTS, SPECTRUM_DEFAULTS, INVERSE_ISOCHRON_DEFAULTS, COMPOSITE_DEFAULTS, \
-    SCREEN_FORMATTING_DEFAULTS, PRESENTATION_FORMATTING_DEFAULTS
 from pychron.paths import paths
 from pychron.processing.plotters.xy.xy_scatter import XYScatterEditor
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
@@ -103,10 +101,9 @@ class FigureTask(AnalysisEditTask):
     # task protocol
     # ===============================================================================
     def activated(self):
-        from pychron.globals import globalv
 
-        if globalv.recall_debug:
-            self.manager.set_xml_dataset()
+        # if globalv.recall_debug:
+        #     self.manager.set_xml_dataset()
 
         super(FigureTask, self).activated()
 

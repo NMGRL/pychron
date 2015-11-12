@@ -14,10 +14,9 @@
 # limitations under the License.
 # ===============================================================================
 
-
-
 import time
 import math
+
 from datetime import datetime
 
 ISO_FORMAT_STR = "%Y-%m-%d %H:%M:%S"
@@ -61,14 +60,15 @@ def get_date():
     return time.strftime('%Y-%m-%d')
 
 
-def get_time(timestamp=None):
+def make_timef(timestamp=None):
     if timestamp is None:
-        timestamp = time.time()
+        t = time.time()
+    elif isinstance(timestamp, float):
+        t = timestamp
+        # timestamp = datetime.fromtimestamp(timestamp)
+    else:
+        t = time.mktime(timestamp.timetuple())
 
-    if isinstance(timestamp, float):
-        timestamp = datetime.fromtimestamp(timestamp)
-
-    t = time.mktime(timestamp.timetuple())
     return t
 
 

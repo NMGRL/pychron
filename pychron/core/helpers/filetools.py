@@ -18,9 +18,26 @@
 import glob
 import os
 import subprocess
-from datetime import datetime
 import shutil
 import re
+
+from datetime import datetime
+
+
+def subdirize(root, name, n=1, l=2, mode='r'):
+    for i in xrange(n):
+
+        n, name = name[:l], name[l:]
+        path = os.path.join(root, n)
+        if not os.path.isdir(path):
+            if mode == 'r':
+                return
+
+            os.mkdir(path)
+
+        root = path
+
+    return root, name
 
 
 def backup(p, backupdir, **kw):
@@ -86,7 +103,7 @@ def ilist_directory2(root, extension=None, filtername=None, remove_extension=Fal
     gfilter = root
     if extension:
         if not isinstance(extension, (list, tuple)):
-            extension = (extension, )
+            extension = (extension,)
 
         for ext in extension:
             if not ext.startswith('.'):
@@ -104,12 +121,23 @@ def list_directory2(root, extension=None, filtername=None, remove_extension=Fals
     return list(ilist_directory2(root, extension, filtername, remove_extension))
 
 
+def ilist_gits(root):
+    for p in os.listdir(root):
+        pp = os.path.join(root, p, '.git')
+        if os.path.isdir(pp):
+            yield p
+
+
+def list_gits(root):
+    return list(ilist_gits(root))
+
+
 def list_directory(p, extension=None, filtername=None, remove_extension=False):
     ds = []
-    #if extension:
+    # if extension:
 
-    #return any([path.endswith(ext) for ext in extension.split(',')])
-    #else:
+    # return any([path.endswith(ext) for ext in extension.split(',')])
+    # else:
     #    def test(path):
     #        return True
 
@@ -391,7 +419,11 @@ def get_path(root, name, extensions):
             if re.match(name, f):
                 return os.path.join(root, f)
 
-        # p = os.path.join(root, add_extension(name, ext))
-        # if os.path.isfile(p):
-        #     return p
+                # p = os.path.join(root, add_extension(name, ext))
+                # if os.path.isfile(p):
+                #     return p
 
+# if __name__ == '__main__':
+#     name = 'b60a449a-0f15-4554-a517-e0b421aaca97.h5'
+#     print name
+#     print subdirize('/Users/ross/.dvc/experiments', name)

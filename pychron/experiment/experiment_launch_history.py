@@ -13,17 +13,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-
+from pychron.core.ui import set_qt
+set_qt()
 # ============= enthought library imports =======================
-
+from pyface.timer.do_later import do_later
 from traits.api import HasTraits, Str, Int, List, Event, Instance
-from traitsui.api import View, UItem
+from traitsui.api import View, UItem, Handler
 from traitsui.tabular_adapter import TabularAdapter
 
 # ============= standard library imports ========================
 import os
 import time
 # ============= local library imports  ==========================
+from pychron.core.helpers.datetime_tools import get_datetime
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.paths import paths
 
@@ -66,6 +68,12 @@ class LaunchItem(HasTraits):
     total_launches = Int
 
 
+class ELHHandler(Handler):
+    def object_dclicked_changed(self, info):
+        if info.initialized:
+           do_later(info.ui.dispose,True)
+
+
 class ExperimentLaunchHistory(HasTraits):
     items = List
     selected = Instance(LaunchItem)
@@ -78,6 +86,9 @@ class ExperimentLaunchHistory(HasTraits):
                 l, t, p = l.split(',')
                 n = os.path.basename(p)
                 n, _ = os.path.splitext(n)
+
+                l = get_datetime(float(l)).strftime('%a %H:%M %m-%d-%Y')
+
                 return LaunchItem(name=n, path=p, last_run_time=l, total_launches=int(t))
 
         with open(paths.experiment_launch_history, 'r') as rfile:
@@ -89,6 +100,7 @@ class ExperimentLaunchHistory(HasTraits):
                                                        selected='selected',
                                                        dclicked='dclicked',
                                                        editable=False)),
+                 handler=ELHHandler(),
                  width=700,
                  title='Experiment Launch History',
                  buttons=['OK', 'Cancel'],
@@ -97,6 +109,8 @@ class ExperimentLaunchHistory(HasTraits):
 
 
 if __name__ == '__main__':
+    paths.build('_dev')
     elh = ExperimentLaunchHistory()
+    elh.load()
     elh.configure_traits()
 # ============= EOF =============================================

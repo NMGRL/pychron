@@ -26,7 +26,6 @@ class CancelLoadingError(BaseException):
 
 def open_progress(n, close_at_end=True, **kw):
     pd = myProgressDialog(max=n - 1,
-                          #dialog_size=(0,0, 550, 15),
                           close_at_end=close_at_end,
                           can_cancel=True,
                           can_ok=True, **kw)

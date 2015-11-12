@@ -27,6 +27,9 @@ class ScanEditor(TraitsEditor):
     id = 'pychron.scan'
     model = Instance('pychron.spectrometer.scan_manager.ScanManager')
 
+    def stop(self):
+        self.model.stop()
+
     def traits_view(self):
         v = View(UItem('graph', style='custom', editor=InstanceEditor()))
         return v
@@ -37,15 +40,11 @@ class PeakCenterEditor(ScanEditor):
 
 
 class CoincidenceEditor(PeakCenterEditor):
-    model = Instance('pychron.spectrometer.jobs.coincidence_scan.CoincidenceScan')
+    model = Instance('pychron.spectrometer.jobs.coincidence.Coincidence')
     stop_button = Button
 
-    def stop_scan(self):
-        self.model.stop()
-    stop = stop_scan
-
     def _stop_button_fired(self):
-        self.stop_scan()
+        self.stop()
 
     def traits_view(self):
         tgrp = HGroup(icon_button_editor('editor.stop_button', 'stop', tooltip='Stop the current scan'))

@@ -18,21 +18,20 @@
 from chaco.abstract_overlay import AbstractOverlay
 from kiva.fonttools import str_to_font
 from traits.api import cached_property, Property, Str, Bool
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+
+
 class PointsLabelOverlay(AbstractOverlay):
     font = Str('modern 10')
-    gfont = Property(depends_on='font')
-    #     font = str_to_font('modern 14')
 
     width = 0
     height = 0
 
     label_box = Bool(False)
 
-    @cached_property
-    def _get_gfont(self):
+    @property
+    def gfont(self):
         return str_to_font(self.font)
 
     def overlay(self, oc, gc, view_bounds=None, mode="normal"):
@@ -61,15 +60,11 @@ class PointsLabelOverlay(AbstractOverlay):
                     gc.translate_ctm(xi, yi + 8)
                     if show_bound_box:
                         gc.set_fill_color((1, 1, 1))
-                        # gc.set_fill_color((1,))
                         gc.rect(-2, -2, w + 4, h + 4)
                         gc.draw_path()
 
-                    # gc.set_text_position(xi, yi)
                     gc.set_fill_color((0, 0, 0))
                     gc.set_text_position(0, 0)
                     gc.show_text(li)
 
-
 # ============= EOF =============================================
-

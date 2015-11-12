@@ -20,21 +20,24 @@
 from pychron.hardware.adc.adc_device import PolynomialMapperMixin
 from pychron.hardware.core.abstract_device import AddressableAbstractDevice
 from pychron.hardware.core.core_device import CoreDevice
-from pychron.remote_hardware.registry import register, RHMixin, registered_function
+# from pychron.remote_hardware.registry import register, registered_function
+from pychron.tx.registry import tx_register_functions, register, registered_function
 
 
-class Pneumatics(AddressableAbstractDevice, RHMixin, PolynomialMapperMixin):
+class Pneumatics(AddressableAbstractDevice, PolynomialMapperMixin):
     scan_func = 'get_pressure'
 
     def __init__(self, *args, **kw):
         super(Pneumatics, self).__init__(*args, **kw)
-        self.register_functions()
+        tx_register_functions(self)
+
+        # self.register_functions()
 
     def load_additional_args(self, config):
         self.load_mapping(config)
         return super(Pneumatics, self).load_additional_args(config)
 
-    @register('GetPneumatics')
+    @register('GetPneumaticsPressure')
     def get_pressure(self, **kw):
         v = self.get(**kw)
         if v is not None:
@@ -44,7 +47,7 @@ class Pneumatics(AddressableAbstractDevice, RHMixin, PolynomialMapperMixin):
 
 
 class PychronPneumatics(CoreDevice):
-    @registered_function('GetPneumatics', camel_case=True, returntype=float)
+    @registered_function('GetPneumaticsPressure', camel_case=True, returntype=float)
     def get_pressure(self):
         pass
 

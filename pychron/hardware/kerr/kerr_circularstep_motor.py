@@ -69,7 +69,7 @@ class KerrCircularStepMotor(KerrStepMotor):
         # step 1. move positive until prox switch is on
         # ======================================================================
         # set to max pos
-        self._set_motor_position_(self.max, velocity=self.home_velocity)
+        self._set_motor_position(self.max, velocity=self.home_velocity)
         # wait until prox switch is on
         self._proximity_move(True, n=1, progress=progress)
         # ======================================================================
@@ -77,13 +77,13 @@ class KerrCircularStepMotor(KerrStepMotor):
         # ======================================================================
         self.reset_position(motor_off=False)
         moffset = 55
-        self._set_motor_position_(moffset, velocity=self.home_velocity)
+        self._set_motor_position(moffset, velocity=self.home_velocity)
 
         # =====================================================================
         # step 3. move 1 step incrementally until home switch set (and proximity not set)
         # =====================================================================
         for i in range(10):
-            self._set_motor_position_(i + 1 + moffset, velocity=1)
+            self._set_motor_position(i + 1 + moffset, velocity=1)
             time.sleep(0.1)
             lim = self._read_limits()
             if not int(lim[4]) and int(lim[2]):

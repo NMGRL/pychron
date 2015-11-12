@@ -16,15 +16,11 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from ConfigParser import ConfigParser
 import ast
 import time
 import os
-from ConfigParser import ConfigParser
-
 import yaml
-
-
-
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import fileiter
 from pychron.paths import paths
@@ -69,7 +65,10 @@ class MeasurementPyScript(ValvePyScript):
 
     def gosub(self, *args, **kw):
         kw['automated_run'] = self.automated_run
-        super(MeasurementPyScript, self).gosub(*args, **kw)
+        s = super(MeasurementPyScript, self).gosub(*args, **kw)
+        if s:
+            s.automated_run = None
+        return s
 
     def reset(self, arun):
         """
@@ -314,7 +313,9 @@ class MeasurementPyScript(ValvePyScript):
 
     @count_verbose_skip
     @command_register
-    def peak_center(self, detector='AX', isotope='Ar40', integration_time=1.04, save=True, calc_time=False):
+    def peak_center(self, detector='AX', isotope='Ar40',
+                    integration_time=1.04, save=True, calc_time=False,
+                    directions='Increase'):
         """
         Calculate the peak center for ``isotope`` on ``detector``.
 
@@ -325,12 +326,13 @@ class MeasurementPyScript(ValvePyScript):
         """
 
         if calc_time:
-            n = 40
-            self._estimated_duration += n * integration_time
+            n = 31
+            self._estimated_duration += n * integration_time * 2
             return
 
         self._automated_run_call('py_peak_center', detector=detector,
                                  isotope=isotope, integration_time=integration_time,
+                                 directions=directions,
                                  save=save)
 
     @verbose_skip
@@ -764,7 +766,8 @@ class MeasurementPyScript(ValvePyScript):
         :return: float, int
         """
         if self.automated_run:
-            return self._automated_run_call(lambda: self.automated_run.eqtime)
+            return self.automated_run.eqtime
+            # return self._automated_run_call(lambda: self.automated_run.eqtime)
         else:
             r = 15
             cg = self._get_config()
@@ -780,7 +783,8 @@ class MeasurementPyScript(ValvePyScript):
         :return: float, int
         """
         if self.automated_run:
-            return self._automated_run_call(lambda: self.automated_run.time_zero_offset)
+            return self.automated_run.time_zero_offset
+            # return self._automated_run_call(lambda: self.automated_run.time_zero_offset)
         else:
             return 0
 
@@ -791,7 +795,9 @@ class MeasurementPyScript(ValvePyScript):
 
         :return: bool
         """
-        return self._automated_run_call(lambda: self.automated_run.spec.use_cdd_warming)
+        if self.automated_run:
+            return self.automated_run.spec.use_cdd_warming
+        # return self._automated_run_call(lambda: self.automated_run.spec.use_cdd_warming)
 
     # private
     def _get_deflection_from_file(self, name):

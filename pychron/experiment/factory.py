@@ -36,6 +36,7 @@ from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 
 class ExperimentFactory(Loggable, ConsumerMixin):
     db = Any
+    dvc = Instance('pychron.dvc.dvc.DVC')
     run_factory = Instance(AutomatedRunFactory)
     queue_factory = Instance(ExperimentQueueFactory)
 
@@ -234,6 +235,10 @@ email, use_email, use_group_email,
 queue_conditionals_name]''')
     def _update_queue(self, name, new):
         self.debug('update queue {}={}'.format(name, new))
+        if self.queue:
+            self.queue.trait_set(**{name: new})
+            self.queue.changed = True
+
         if name == 'mass_spectrometer':
             self.debug('_update_queue "{}"'.format(new))
             self.mass_spectrometer = new
@@ -249,10 +254,6 @@ queue_conditionals_name]''')
             # self.email=new
             # self.queue.username = new
 
-        if self.queue:
-            self.queue.trait_set(**{name: new})
-
-        self.queue.changed = True
         self._auto_save()
 
     def _auto_save(self):
@@ -268,7 +269,7 @@ queue_conditionals_name]''')
 
         self.run_factory.remote_patterns = self._get_patterns(ed)
         self.run_factory.setup_files()
-        self.run_factory.set_mass_spectrometer(self.mass_spectrometer)
+        # self.run_factory.set_mass_spectrometer(self.mass_spectrometer)
 
         if self._load_persistence_flag:
             self.run_factory.load()
@@ -317,6 +318,7 @@ queue_conditionals_name]''')
             klass = AutomatedRunFactory
 
         rf = klass(db=self.db,
+                   dvc=self.dvc,
                    application=self.application,
                    extract_device=self.extract_device,
                    mass_spectrometer=self.default_mass_spectrometer)
@@ -439,6 +441,10 @@ queue_conditionals_name]''')
         rf.labnumber = ''
         rf.sample = ''
 
+    def _dvc_changed(self):
+        self.queue_factory.dvc = self.dvc
+        self.run_factory.dvc = self.dvc
+
     def _db_changed(self):
         self.queue_factory.db = self.db
         self.run_factory.db = self.db
@@ -470,6 +476,7 @@ queue_conditionals_name]''')
 
     def _queue_factory_default(self):
         eq = ExperimentQueueFactory(db=self.db,
+                                    dvc=self.dvc,
                                     application=self.application)
         # eq.activate()
         return eq

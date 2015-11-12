@@ -284,7 +284,8 @@ class InitializationParser(XMLParser):
         return servers
 
     def _get_parameters(self, subtree, tag, all_=False, element=False):
-
+        if subtree is None:
+            print subtree
         return [d if element else d.text.strip()
                 for d in subtree.findall(tag)
                 if all_ or to_bool(d.get('enabled'))]

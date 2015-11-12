@@ -618,7 +618,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
             return f()
         except SQLAlchemyError, e:
             if reraise:
-                raise
+                raise e
                 # if self.verbose:
                 #     self.debug('_query exception {}'.format(e))
                 # import traceback
