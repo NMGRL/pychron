@@ -23,7 +23,7 @@ from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
 
 class NMGRLFurnacePreferences(BasePreferencesHelper):
-    pass
+    preferences_path = 'pychron.nmgrlfurnace'
 
 
 class NMGRLFurnacePreferencesPane(PreferencesPane):
