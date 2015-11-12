@@ -188,7 +188,7 @@ class PatternExecutor(Patternable):
                     self.info('doing pattern iteration {}'.format(ni))
                     self._execute_iteration()
 
-                self.controller.linear_move(pat.cx, pat.cy)
+                self.controller.linear_move(pat.cx, pat.cy, block=True)
                 if pat.disable_at_end:
                     self.laser_manager.disable_device()
                 self.finish()

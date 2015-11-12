@@ -300,7 +300,7 @@ ABLE TO USE THE HARDWARE JOYSTICK
             self._y_position = y
 
             self.debug('doing linear move')
-            self.timer = self.timer_factory()
+            # self.timer = self.timer_factory()
             self._linear_move_(dict(x=x, y=y), **kw)
         else:
             self.info('displacement of move too small {} < {}'.format(d, tol))

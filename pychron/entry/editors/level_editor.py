@@ -170,11 +170,8 @@ class LevelEditor(Loggable):
                         else:
                             return
 
-                    # self._save_production()
-
                     level.note = self.level_note
-                    # pr = db.get_irradiation_production(self.selected_production.name)
-                    # level.production = pr
+                    level.z = self.z
 
                     if original_tray != self.selected_tray:
                         self._save_tray(level, original_tray)
@@ -218,9 +215,7 @@ class LevelEditor(Loggable):
                 level = irrad.levels[-1]
 
                 self.z = level.z
-                # if level.production:
-                # self.selected_production = next((p for p in self.productions
-                # if p.name == level.production.name), None)
+
                 if level.holder:
                     self.selected_tray = next((t for t in self.trays if t == level.holder), None)
 
@@ -250,11 +245,8 @@ class LevelEditor(Loggable):
                     if not next((li for li in irrad.levels if li.name == self.name), None):
                         db.add_irradiation_level(self.name, irrad,
                                                  self.selected_tray,
-                                                 # self.selected_production.name,
                                                  self.z,
                                                  self.level_note)
-
-                        # self._save_production()
 
                         return self.name
 
@@ -276,34 +268,12 @@ class LevelEditor(Loggable):
         db = self.db
         with db.session_ctx():
             ps = []
-            # for pr in db.get_irradiation_productions():
             for pr in self.repo.get_irradiation_productions():
                 p = IrradiationProduction(name=pr.name)
                 p.create(pr)
                 ps.append(p)
 
             self.productions = ps
-
-            # def _save_production(self):
-            # prod = self.selected_production
-            #     if prod.dirty:
-            #         self.repo.update_production(prod, irradiation=self.irradiation)
-
-            # prod = self.selected_production
-            # db = self.db
-            # if prod.dirty:
-            # with db.session_ctx():
-            #         ip = db.get_irradiation_production(prod.name)
-            #         if ip:
-            #             self.debug('saving production {}'.format(prod.name))
-            #
-            #             params = prod.get_params()
-            #             for k, v in params.iteritems():
-            #                 self.debug('setting {}={}'.format(k, v))
-            #                 setattr(ip, k, v)
-            #
-            #             ip.note = prod.note
-            #             # ip.last_modified = datetime.now()
 
     def _add_production(self):
         pr = NewProduction()

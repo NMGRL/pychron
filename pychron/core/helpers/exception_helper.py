@@ -21,7 +21,7 @@ from traitsui.menu import Action
 import traits.trait_notifiers
 from pyface.message_dialog import warning
 # ============= standard library imports ========================
-import keyring as keyring
+import keyring
 import base64
 import json
 import requests

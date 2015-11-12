@@ -915,6 +915,8 @@ class AutomatedRun(Loggable):
                                                 msg=self.persister.secondary_database_fail)
             else:
                 return True
+        else:
+            return True
 
     def get_previous_blanks(self):
         blanks = None
