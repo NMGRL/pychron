@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from enable.component_editor import ComponentEditor
+from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traits.api import Button
 from traitsui.api import View, Item, Readonly, UItem, UReadonly, VGroup, HGroup, EnumEditor, spring, \
     InstanceEditor, ButtonEditor, RangeEditor, Tabbed
@@ -25,16 +26,13 @@ from pyface.tasks.traits_task_pane import TraitsTaskPane
 from pychron.core.ui.custom_label_editor import CustomLabel
 
 
-class FurnacePane(TraitsTaskPane):
+class ControlPane(TraitsDockPane):
+    name = 'Controls'
+    id = 'pychron.nmgrlfurnace.controls'
+
     dump_sample_button = Button('Dump')
     lower_funnel_button = Button('Lower Funnel')
     raise_funnel_button = Button('Raise Funnel')
-
-    def trait_context(self):
-        return {'object': self.model,
-                'pane': self,
-                'tray_manager': self.model.stage_manager.tray_calibration_manager,
-                'stage_manager': self.model.stage_manager}
 
     def _dump_sample_button_fired(self):
         self.model.stage_manager.dump_sample()
@@ -45,12 +43,13 @@ class FurnacePane(TraitsTaskPane):
     def _lower_funnel_button_fired(self):
         self.model.stage_manager.lower_funnel()
 
-    def traits_view(self):
-        canvas_grp = VGroup(
-            HGroup(UItem('stage_manager.stage_map_name', editor=EnumEditor(name='stage_manager.stage_map_names')),
-                   spring),
-            UItem('stage_manager.canvas', style='custom', editor=ComponentEditor()))
+    def trait_context(self):
+        return {'object': self.model,
+                'pane': self,
+                'tray_manager': self.model.stage_manager.tray_calibration_manager,
+                'stage_manager': self.model.stage_manager}
 
+    def traits_view(self):
         cali_grp = VGroup(UItem('tray_manager.calibrate',
                                 enabled_when='stage_manager.stage_map_name',
                                 editor=ButtonEditor(label_value='tray_manager.calibration_step')),
@@ -88,8 +87,24 @@ class FurnacePane(TraitsTaskPane):
                        label='Dumper', show_border=True)
 
         v = View(VGroup(c_grp,
-                        UItem('graph', style='custom'),
-                        HGroup(Tabbed(d_grp, cali_grp), canvas_grp)))
+                        HGroup(Tabbed(d_grp, cali_grp))))
+        return v
+
+
+class FurnacePane(TraitsTaskPane):
+    def trait_context(self):
+        return {'object': self.model,
+                'pane': self,
+                'tray_manager': self.model.stage_manager.tray_calibration_manager,
+                'stage_manager': self.model.stage_manager}
+
+    def traits_view(self):
+        canvas_grp = VGroup(
+            HGroup(UItem('stage_manager.stage_map_name', editor=EnumEditor(name='stage_manager.stage_map_names')),
+                   spring),
+            UItem('stage_manager.canvas', style='custom', editor=ComponentEditor()))
+
+        v = View(VGroup(UItem('graph', style='custom'), canvas_grp))
         return v
 
 # ============= EOF =============================================
