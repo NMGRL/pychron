@@ -1719,14 +1719,15 @@ anaylsis_type={}
 
     def _update_labels(self):
         if self.plot_panel:
-            if self.plot_panel.isotope_graph:
-                # update the plot_panel labels
-                plots = self.plot_panel.isotope_graph.plots
-                n = len(plots)
+            for g in (self.plot_panel.isotope_graph, self.plot_panel.sniff_graph):
+                if g:
+                    # update the plot_panel labels
+                    plots = g.plots
+                    n = len(plots)
 
-                for i, det in enumerate(self._active_detectors):
-                    if i < n:
-                        plots[i].y_axis.title = det.isotope
+                    for i, det in enumerate(self._active_detectors):
+                        if i < n:
+                            plots[i].y_axis.title = det.isotope
 
     def _update_detectors(self):
         for det in self._active_detectors:

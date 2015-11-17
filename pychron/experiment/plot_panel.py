@@ -153,6 +153,7 @@ class PlotPanel(Loggable):
         self.debug('clearing graphs')
         self.isotope_graph.clear()
         self.peak_center_graph.clear()
+        self.sniff_graph.clear()
 
     def create(self, dets):
         """
@@ -172,12 +173,13 @@ class PlotPanel(Loggable):
         return self._new_plot(**kw)
 
     def _new_plot(self, **kw):
-        g = self.isotope_graph
-        plot = g.new_plot(xtitle='time (s)', padding_left=70,
-                          padding_right=10,
-                          **kw)
+        for g in (self.sniff_graph, self.isotope_graph):
+            plot = g.new_plot(xtitle='time (s)', padding_left=70,
+                              padding_right=10,
+                              **kw)
 
-        plot.y_axis.title_spacing = 50
+            plot.y_axis.title_spacing = 50
+
         return plot
 
     # private
