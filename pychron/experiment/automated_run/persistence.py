@@ -427,7 +427,7 @@ class AutomatedRunPersister(BasePersister):
 
         dm.close_file()
 
-    def post_measurement_save(self):
+    def post_measurement_save(self, save_local=True):
         """
         check for runid conflicts. automatically update runid if conflict
 
@@ -457,8 +457,9 @@ class AutomatedRunPersister(BasePersister):
         ln = run_spec.labnumber
         aliquot = run_spec.aliquot
 
-        # save to local sqlite database for backup and reference
-        # self._local_db_save()
+        if save_local:
+            # save to local sqlite database for backup and reference
+            self._local_db_save()
 
         # save to a database
         db = self.datahub.mainstore.db
@@ -990,6 +991,16 @@ class AutomatedRunPersister(BasePersister):
                              aliquot=aliquot,
                              uuid=uuid,
                              step=step,
+
+                             mass_spectrometer=spec.mass_spectrometer,
+                             extract_device=spec.extract_device,
+                             extract_value=spec.extract_value,
+                             extract_units=spec.extract_units,
+                             duration=spec.duration,
+                             cleanup=spec.cleanup,
+
+                             comment=spec.comment,
+                             weight=spec.weight,
                              collection_path=cp)
 
     def _local_lab_db_factory(self):

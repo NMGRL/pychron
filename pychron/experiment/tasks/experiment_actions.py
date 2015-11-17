@@ -288,4 +288,10 @@ class ResetQueuesAction(TaskAction):
     dname = 'Reset Queues'
 
 
+class LastAnalysisRecoveryAction(TaskAction):
+    def perform(self, event):
+        from pychron.experiment.analysis_recovery import AnalysisRecoverer
+        a = AnalysisRecoverer()
+        a.recover_last_analysis()
+
 # ============= EOF ====================================
