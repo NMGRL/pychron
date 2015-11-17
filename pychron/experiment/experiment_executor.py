@@ -23,7 +23,7 @@ from pyface.timer.do_later import do_after
 from traits.trait_errors import TraitError
 # ============= standard library imports ========================
 from datetime import datetime
-from threading import Thread, Event as Flag, Lock, currentThread
+from threading import Thread, Event as Flag, Lock, currentThread, Timer
 import time
 import os
 import yaml
@@ -443,6 +443,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         with consumable(func=self._overlapped_run) as con:
             while 1:
                 if not self.is_alive():
+                    self.debug('executor not alive')
                     break
 
                 if self.queue_modified:
@@ -479,6 +480,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
                 run = self._make_run(spec)
                 if run is None:
+                    self.debug('failed to make run')
                     break
 
                 self.wait_group.active_control.page_name = run.runid
@@ -509,6 +511,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 total_cnt += 1
                 is_first_analysis = False
                 if self.end_at_run_completion:
+                    self.debug('end at run completion')
                     break
 
             self.debug('run loop exited. end at completion:{}'.format(self.end_at_run_completion))
@@ -611,11 +614,13 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         self._report_execution_state(run)
 
-        do_after(1000, run.teardown)
+        # do_after(1000, run.teardown)
         # run.teardown()
+        t = Timer(1, run.teardown)
+        t.start()
 
         self.measuring_run = None
-        mem_log('> end join')
+        self.debug('join run finished')
 
     def _do_run(self, run):
         st = time.time()

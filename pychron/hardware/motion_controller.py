@@ -316,21 +316,23 @@ class MotionController(CoreDevice):
                 return self.timer.isActive()
 
             func = timerActive
+            period = 0.05
         else:
             def moving():
                 return self._moving(axis=axis)
 
             func = moving
+            period = 0.1
 
         i = 0
-        #         fn = func.func_name
-        #         n = 10
+        # fn = func.func_name
+        # n = 10
         while 1:
             a = func()
-            #             if i % n == 0:
-            #                 self.debug('blocking {} {}'.format(fn, a))
+            # if i % n == 0:
+            #     self.debug('blocking {} {}'.format(fn, a))
 
-            time.sleep(0.1)
+            time.sleep(period)
             if i > 100:
                 i = 0
             if not a:
