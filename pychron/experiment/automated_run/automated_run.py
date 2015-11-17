@@ -41,7 +41,6 @@ from pychron.experiment.conditional.conditional import TruncationConditional, \
 from pychron.experiment.utilities.conditionals import test_queue_conditionals_name
 from pychron.experiment.utilities.identifier import convert_identifier
 from pychron.experiment.utilities.script import assemble_script_blob
-
 from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.paths import paths
@@ -1913,6 +1912,8 @@ anaylsis_type={}
             from pychron.core.ui.gui import invoke_in_main_thread
 
             invoke_in_main_thread(self._setup_isotope_graph, starttime_offset, color, grpname)
+            if grpname == 'sniff':
+                invoke_in_main_thread(self._setup_sniff_graph, starttime_offset, color)
 
         with self.persister.writer_ctx():
             m.measure()
@@ -1927,6 +1928,37 @@ anaylsis_type={}
             self.experiment_executor.cancel(confirm=False, err=m.err_message)
 
         return not m.canceled
+
+    def _setup_sniff_graph(self, starttime_offset, color):
+        graph = self.plot_panel.sniff_graph
+        mi, ma = graph.get_x_limits()
+
+        max_ = ma
+        min_ = mi
+        tc = self.plot_panel.total_counts
+        if tc > ma or ma == Inf:
+            max_ = tc * 1.1
+
+        if starttime_offset > mi:
+            min_ = -starttime_offset
+
+        graph.set_x_limits(min_=min_, max_=max_)
+
+        series = self.collector.series_idx
+        for k, iso in self.arar_age.isotopes.iteritems():
+            idx = graph.get_plotid_by_ytitle(k)
+            if idx is not None:
+                try:
+                    graph.series[idx][series]
+                except IndexError, e:
+                    graph.new_series(marker='circle',
+                                     color=color,
+                                     type='scatter',
+                                     marker_size=1.25,
+                                     fit=None,
+                                     plotid=idx,
+                                     add_inspector=False,
+                                     add_tools=False)
 
     def _setup_isotope_graph(self, starttime_offset, color, grpname):
         """
@@ -1974,8 +2006,6 @@ anaylsis_type={}
 
         scnt, fcnt = (2, 1) if regressing else (1, 0)
         self.measurement_script.increment_series_counts(scnt, fcnt)
-
-        return graph
 
     def _wait_for(self, predicate, msg):
         st = time.time()
@@ -2140,8 +2170,8 @@ anaylsis_type={}
 
         return default
 
-    # def _get_runid(self):
-    #     return self.spec.runid
+        # def _get_runid(self):
+        #     return self.spec.runid
         # return make_runid(self.spec.labnumber,
         # self.spec.aliquot,
         # self.spec.step)

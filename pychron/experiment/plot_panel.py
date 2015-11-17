@@ -26,6 +26,7 @@ from pychron.graph.graph import Graph
 from pychron.core.ui.text_table import MultiTextTableAdapter
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.core.ui.gui import invoke_in_main_thread
+from pychron.graph.stacked_graph import StackedGraph
 from pychron.graph.stacked_regression_graph import StackedRegressionGraph
 from pychron.processing.analyses.view.automated_run_view import AutomatedRunAnalysisView
 from pychron.processing.arar_age import ArArAge
@@ -92,6 +93,7 @@ class PlotPanel(Loggable):
 
     arar_age = Instance(ArArAge)
 
+    sniff_graph = Instance(Graph)
     isotope_graph = Instance(Graph)
     peak_center_graph = Instance(Graph)
     selected_graph = Any
@@ -261,10 +263,20 @@ class PlotPanel(Loggable):
         g.page_name = 'Isotopes'
         return g
 
+    def _sniff_graph_default(self):
+        g = StackedGraph(container_dict=dict(padding=5, bgcolor='gray',
+                                             stack_order=self.stack_order,
+                                             spacing=5),
+                         bind_index=False,
+                         use_data_tool=False,
+                         padding_bottom=35)
+        g.page_name = 'Equil.'
+        return g
+
     def _graph_container_default(self):
         return GraphContainer(model=self)
 
     def _graphs_default(self):
-        return [self.isotope_graph, self.peak_center_graph]
+        return [self.isotope_graph, self.peak_center_graph, self.sniff_graph]
 
 # ============= EOF =============================================

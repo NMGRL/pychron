@@ -284,6 +284,14 @@ class DataCollector(Consoleable):
                             update_y_limits=True,
                             ypadding='0.1')
 
+            if self.collection_kind == 'sniff':
+                sgraph = self.plot_panel.sniff_graph
+                sgraph.add_datum((x, signal),
+                                 series=self.series_idx,
+                                 plotid=pid,
+                                 update_y_limits=True,
+                                 ypadding='0.1')
+
             if fit:
                 graph.set_fit(fit, plotid=pid, series=self.fit_series_idx)
 
@@ -397,6 +405,7 @@ class DataCollector(Consoleable):
                 self.automated_run.show_conditionals(tripped=cancelation_conditional)
 
                 return 'cancel'
+
     @property
     def arar_age(self):
         if self.automated_run:
@@ -427,7 +436,7 @@ class DataCollector(Consoleable):
         if self.automated_run:
             return self.automated_run.cancelation_conditionals
 
-# ============= EOF =============================================
+        # ============= EOF =============================================
         # def _iter(self, con, evt, i, prev=0):
         #
         #     result = self._check_iteration(evt, i)
