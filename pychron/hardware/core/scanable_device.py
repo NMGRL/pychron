@@ -63,6 +63,9 @@ class ScanableDevice(ViewableDevice):
     use_db = False
     _auto_started = False
 
+    def is_scanning(self):
+        return self._scanning
+
     def _scan_path_changed(self):
         self.scan_root = os.path.split(self.scan_path)[0]
         self.scan_name = os.path.basename(self.scan_path)
@@ -108,7 +111,7 @@ class ScanableDevice(ViewableDevice):
             if v is not None:
                 self.current_scan_value = str(v)
 
-                self.debug('current scan func={}, value ={}'.format(self.scan_func, v))
+                # self.debug('current scan func={}, value ={}'.format(self.scan_func, v))
 
                 x = None
                 if self.graph_scan_data:

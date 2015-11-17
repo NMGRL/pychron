@@ -24,7 +24,7 @@ import math
 import cPickle as pickle
 # =============local library imports  ==========================
 from pychron.hardware.core.data_helper import make_bitarray
-from pychron.hardware.motion_controller import MotionController
+from pychron.hardware.motion_controller import MotionController, PositionError, TargetPositionError
 from newport_axis import NewportAxis
 from newport_joystick import Joystick
 from newport_group import NewportGroup
@@ -138,32 +138,32 @@ ABLE TO USE THE HARDWARE JOYSTICK
             return self.axes['x'].id == 2
 
     def get_current_xy(self):
-        x, y = None, None
-        if self.mode == 'grouped':
-            f = self.ask('{}HP'.format(self.groupobj.id), verbose=True)
-            # cmd = '{}TP?;{}TP?'.format(self.axes['x'].id, self.axes['y'].id)
-            # f = self.ask(cmd, verbose=True)
-            # args = f.split(',')[:2]
-            try:
-                f = f.strip()
-                args = f.split('\n')
-                x, y = map(float, map(str.strip, args))
-
-                ax = self.axes['x']
-                x = self._sign_correct(x, 'x', ratio=False) / ax.drive_ratio
-
-                ax = self.axes['y']
-                y = self._sign_correct(y, 'y', ratio=False) / ax.drive_ratio
-            except BaseException, e:
-                # import traceback
-                # traceback.print_exc()
-                self.warning('get_current_xy failed. {}'.format(e))
-                x = self.get_current_position('x')
-                y = self.get_current_position('y')
-
-        else:
-            x = self.get_current_position('x')
-            y = self.get_current_position('y')
+        # x, y = None, None
+        # if self.mode == 'grouped':
+        #     f = self.ask('{}HP'.format(self.groupobj.id), verbose=True)
+        #     # cmd = '{}TP?;{}TP?'.format(self.axes['x'].id, self.axes['y'].id)
+        #     # f = self.ask(cmd, verbose=True)
+        #     # args = f.split(',')[:2]
+        #     try:
+        #         f = f.strip()
+        #         args = f.split('\n')
+        #         x, y = map(float, map(str.strip, args))
+        #
+        #         ax = self.axes['x']
+        #         x = self._sign_correct(x, 'x', ratio=False) / ax.drive_ratio
+        #
+        #         ax = self.axes['y']
+        #         y = self._sign_correct(y, 'y', ratio=False) / ax.drive_ratio
+        #     except BaseException, e:
+        #         # import traceback
+        #         # traceback.print_exc()
+        #         self.warning('get_current_xy failed. {}'.format(e))
+        #         x = self.get_current_position('x')
+        #         y = self.get_current_position('y')
+        #
+        # else:
+        x = self.get_current_position('x')
+        y = self.get_current_position('y')
 
         return x, y
 
@@ -300,7 +300,7 @@ ABLE TO USE THE HARDWARE JOYSTICK
             self._y_position = y
 
             self.debug('doing linear move')
-            self.timer = self.timer_factory()
+            # self.timer = self.timer_factory()
             self._linear_move_(dict(x=x, y=y), **kw)
         else:
             self.info('displacement of move too small {} < {}'.format(d, tol))
@@ -752,6 +752,7 @@ ABLE TO USE THE HARDWARE JOYSTICK
 
         self.configure_group(grouped_move, **kw)
         self.debug('group configured')
+        target_x, target_y = kwargs['x'], kwargs['y']
         for k in kwargs:
             key = k[0]
             if sign_correct:
@@ -781,6 +782,12 @@ ABLE TO USE THE HARDWARE JOYSTICK
             self.info('move to {x:0.5f},{y:0.5f} complete'.format(**kwargs))
             self.update_axes()
 
+            tol = 0.1
+            x, y = self._x_position, self._y_position
+
+            if abs(x - target_x) > tol or abs(y - target_y) > tol:
+                raise TargetPositionError(x, y, target_x, target_y)
+
     def start_timer(self):
         self.timer = self.timer_factory()
 
@@ -804,23 +811,23 @@ ABLE TO USE THE HARDWARE JOYSTICK
             self._block(axis=block)
         self.parent.canvas.clear_desired_position()
 
-            #    def _block_(self, axis=None, event=None):
-            #        '''
-            #        '''
-            #        if event is not None:
-            #            event.clear()
-            #
-            #        if self.timer:
-            #            #timer is calling self._moving_
-            #            func = lambda: self.timer.isRunning()
-            #        else:
-            #            func = lambda: self._moving_(axis=axis)
-            #
-            #        while func():
-            #            time.sleep(0.25)
-            #
-            #        if event is not None:
-            #            event.set()
+        #    def _block_(self, axis=None, event=None):
+        #        '''
+        #        '''
+        #        if event is not None:
+        #            event.clear()
+        #
+        #        if self.timer:
+        #            #timer is calling self._moving_
+        #            func = lambda: self.timer.isRunning()
+        #        else:
+        #            func = lambda: self._moving_(axis=axis)
+        #
+        #        while func():
+        #            time.sleep(0.25)
+        #
+        #        if event is not None:
+        #            event.set()
 
     def _moving(self, axis=None, verbose=False):
         """

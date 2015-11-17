@@ -18,9 +18,8 @@
 from traits.api import Interface
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-import traits.has_traits
 
-traits.has_traits.CHECK_INTERFACES = 1
+# traits.has_traits.CHECK_INTERFACES = 1
 
 
 class IDatastore(Interface):

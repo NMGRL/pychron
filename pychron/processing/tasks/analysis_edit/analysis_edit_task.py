@@ -228,8 +228,8 @@ class AnalysisEditTask(BaseBrowserTask):
                 ans = None
                 if self.browser_model.use_workspace:
                     ans = self.workspace.make_analyses(records)
-                # elif self.dvc:
-                #     ans = self.dvc.make_analyses(records)
+                elif self.dvc:
+                    ans = self.dvc.make_analyses(records)
                 # else:
                 # ans = self.manager.make_analyses(records, calculate_age=True, load_aux=True)
                 if ans:

@@ -47,7 +47,6 @@ def check_secondary_database_save(identifier):
         ret = False
     elif get_analysis_type(identifier) == 'detector_ic':
         ret = False
-    print identifier, ret
     return ret
 
 
@@ -101,11 +100,10 @@ class Datahub(Loggable):
             self._new_aliquot = spec.aliquot
         else:
             k = 'Fusion'
-            self.debug('get greatest aliquots')
+            self.debug('get greatest aliquots for {}'.format(spec.identifier))
             try:
                 ps, ns, vs = self._get_greatest_aliquots(spec.identifier)
-
-                print 'b', ps, ns, vs, spec.identifier
+                self.debug('greatest aliquots. Sources: {}, Precedences: {}, Aliquots: {}'.format(ns, ps, vs))
                 mv = max(vs)
                 self._new_runid = make_aliquot_step(mv + 1, '')
                 self._new_aliquot = mv + 1

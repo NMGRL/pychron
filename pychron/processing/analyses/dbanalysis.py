@@ -480,9 +480,12 @@ class DBAnalysis(Analysis):
             segments = [(pwr, convert_days(en - st), convert_days(analts - st))
                         for pwr, st, en in doses
                         if st is not None and en is not None]
+            try:
+                d_o = doses[0][1]
+                self.irradiation_time = time.mktime(d_o.timetuple()) if d_o else 0
+            except IndexError:
+                pass
 
-            d_o = doses[0][1]
-            self.irradiation_time = time.mktime(d_o.timetuple()) if d_o else 0
             self.chron_segments = segments
             self.chron_dosages = doses
 

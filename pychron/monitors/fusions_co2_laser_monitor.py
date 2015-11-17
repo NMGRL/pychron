@@ -21,13 +21,14 @@ from traits.api import  List
 from pychron.monitors.co2_laser_monitor import CO2LaserMonitor
 from pychron.monitors.fusions_laser_monitor import FusionsLaserMonitor
 from pychron.remote_hardware.errors.laser_errors import SetpointErrorCode
+
+
 class FusionsCO2LaserMonitor(FusionsLaserMonitor, CO2LaserMonitor):
 
     internal_meter_buffer = List
 
     def update_imb(self, obj, name, old, new):
         if new is not None:
-#            self.internal_meter_buffer.append(new)
             self._add_to_buffer(new)
 
     def stop(self):

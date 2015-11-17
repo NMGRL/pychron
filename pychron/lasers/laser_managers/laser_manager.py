@@ -21,6 +21,7 @@ import cPickle as pickle
 # ============= standard library imports ========================
 import os
 # ============= local library imports  ==========================
+from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.monitors.laser_monitor import LaserMonitor
 from pychron.lasers.laser_managers.pulse import Pulse
 from pychron.paths import paths
@@ -81,7 +82,6 @@ class LaserManager(BaseLaserManager):
 
         if self.simulation:
             self.enabled = True
-            #            self.enabled_led.state = 'green'
             return True
 
         if isinstance(enabled, bool) and enabled:
@@ -92,11 +92,11 @@ class LaserManager(BaseLaserManager):
             self.monitor = self.monitor_factory()
             self.monitor.reset()
             if not self.monitor.monitor():
-                #                self.enabled_led.state = 'green'
-                #                self.enabled_led.state = 'green'
-                #            else:
                 self.disable_laser()
                 self.warning_dialog('Monitor could not be started. Laser disabled', sound='alarm1')
+            else:
+                if self.monitor.check():
+                    self.emergency_shutoff('Laser Monitor detected an error')
         else:
             self.warning_dialog('Could not enable laser. Check coolant and manual interlocks')
 
@@ -177,6 +177,7 @@ class LaserManager(BaseLaserManager):
     def emergency_shutoff(self, reason):
         """
         """
+        self.warning('Emergency shutoff')
         self.disable_laser()
 
         if reason is not None:
@@ -186,7 +187,7 @@ class LaserManager(BaseLaserManager):
 
             self.error_code = LaserMonitorErrorCode(reason)
 
-            self.warning_dialog(reason, sound='alarm1', title='AUTOMATIC LASER SHUTOFF')
+            invoke_in_main_thread(self.warning_dialog, reason, title='AUTOMATIC LASER SHUTOFF')
 
     def start_video_recording(self, *args, **kw):
         pass
@@ -215,7 +216,8 @@ class LaserManager(BaseLaserManager):
     def shutdown(self):
         self.debug('shutdown')
         self._dump_pulse()
-
+        if self.stage_manager:
+            self.stage_manager.shutdown()
 
     # ===============================================================================
     # handlers

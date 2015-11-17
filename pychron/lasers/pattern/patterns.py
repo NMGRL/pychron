@@ -14,8 +14,6 @@
 # limitations under the License.
 # ===============================================================================
 
-
-
 # ============= enthought library imports =======================
 from traits.api import Bool, Float, Button, Instance, Range, Str, Property
 from traits.has_traits import HasTraits
@@ -64,7 +62,7 @@ class DirectionOverlay(AbstractOverlay):
                     gc.translate_ctm(-l + o, 0)
                     self._draw_indicator(gc, True)
 
-                #draw 4-1
+                # draw 4-1
                 with gc:
                     gc.translate_ctm(o, -w)
 
@@ -73,18 +71,18 @@ class DirectionOverlay(AbstractOverlay):
                     gc.translate_ctm(-l + o, 0)
                     self._draw_indicator(gc, True)
 
-                #draw 3-4
+                # draw 3-4
                 gc.translate_ctm(0, -w)
                 self._draw_indicator(gc, False)
 
             else:
                 if w > 8:
                     # draw verticals
-                    #draw 2-3
+                    # draw 2-3
                     with gc:
                         gc.translate_ctm(l, -w / 2.)
                         self._draw_indicator(gc, True, False)
-                        #draw 4-1
+                        # draw 4-1
                     with gc:
                         gc.translate_ctm(-l, -w / 2.)
                         self._draw_indicator(gc, False, False)
@@ -160,7 +158,7 @@ class OverlapOverlay(AbstractOverlay):
 
             with gc:
                 gc.set_line_join(0)
-                gc.set_line_width(rad*2)
+                gc.set_line_width(rad * 2)
 
                 gc.move_to(*pts[0])
 
@@ -345,18 +343,16 @@ class Pattern(HasTraits):
             label='Pattern')
 
     def maker_view(self):
-        v = View(HGroup(
-            self.maker_group(),
-            Item('graph',
-                 show_label=False, style='custom')),
-            resizable=True)
+        v = View(HGroup(self.maker_group(),
+                        Item('graph', show_label=False, style='custom')),
+                 resizable=True)
         return v
 
     def traits_view(self):
         v = View(self.maker_group(),
-            buttons=['OK', 'Cancel'],
-            title=self.name,
-            resizable=True)
+                 buttons=['OK', 'Cancel'],
+                 title=self.name,
+                 resizable=True)
         return v
 
     def get_parameter_group(self):
@@ -376,7 +372,8 @@ class RubberbandPattern(Pattern):
         self.rotation = sm.canvas.calibration_item.rotation
 
         ck = sm.temp_hole
-        smap = sm.get_stage_map()
+        # smap = sm.get_stage_map()
+        smap = sm.stage_map
         obj = smap.get_hole(ck)
 
         self.endpoint1 = smap.get_hole_pos(ck)

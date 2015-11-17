@@ -57,6 +57,7 @@ class ToupCamCamera(object):
     _frame_fn = None
     _temptint_cb = None
     _save_path = None
+
     def __init__(self, resolution=2, bits=32):
         if bits not in (32,):
             raise ValueError('Bits needs to by 8 or 32')
@@ -65,8 +66,7 @@ class ToupCamCamera(object):
         self.cam = self.get_camera()
         self.bits = bits
 
-        # icamera interface
-
+    # icamera interface
     def save(self, p):
         self._save_path = p
         lib.Toupcam_Snap(self.cam, self.resolution)

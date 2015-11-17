@@ -40,6 +40,11 @@ class LabspyPreferences(BasePreferencesHelper):
     use_labspy = Bool
 
 
+class DVCPreferences(BasePreferencesHelper):
+    preferences_path = 'pychron.experiment'
+    use_dvc_persistence = Bool
+
+
 class ExperimentPreferences(BasePreferencesHelper):
     preferences_path = 'pychron.experiment'
     id = 'pychron.experiment.preferences_page'
@@ -88,6 +93,11 @@ class ExperimentPreferences(BasePreferencesHelper):
     end_after_color = Color
     invalid_color = Color
 
+    use_peak_center_threshold = Bool
+    peak_center_threshold1 = Int(10)
+    peak_center_threshold2 = Int(3)
+    peak_center_threshold_window = Int(10)
+
     def _get_memory_threshold(self):
         return self._memory_threshold
 
@@ -125,10 +135,20 @@ class ConsolePreferences(BaseConsolePreferences):
 class LabspyPreferencesPane(PreferencesPane):
     model_factory = LabspyPreferences
     category = 'Experiment'
-    #
+
     def traits_view(self):
         v = View(VGroup(Item('use_labspy', label='Use Labspy'),
                         label='Labspy', show_border=True))
+        return v
+
+
+class DVCPreferencesPane(PreferencesPane):
+    model_factory = DVCPreferences
+    category = 'Experiment'
+
+    def traits_view(self):
+        v = View(VGroup(Item('use_dvc_persistence', label='Use DVC Persistence'),
+                        label='DVC', show_border=True))
         return v
 
 
@@ -209,6 +229,16 @@ class ExperimentPreferencesPane(PreferencesPane):
                             label='Overlap')
         persist_grp = Group(Item('use_xls_persister', label='Save analyses to Excel workbook'),
                             label='Persist', show_border=True)
+
+        pc_grp = Group(
+            Item('use_peak_center_threshold', label='Use Peak Center Threshold',
+                 tooltip='Only peak center if intensity is greater than the peak center threshold'),
+            Item('peak_center_threshold1', label='Threshold 1', enabled_when='use_peak_center_threshold'),
+            Item('peak_center_threshold2', label='Threshold 2', enabled_when='use_peak_center_threshold'),
+            Item('peak_center_threshold_window', label='Window', enabled_when='use_peak_center_threshold'),
+            show_border=True,
+            label='Peak Center')
+
         automated_grp = Group(VGroup(Item('send_config_before_run',
                                           tooltip='Set the spectrometer configuration before each analysis',
                                           label='Set Spectrometer Configuration on Start'),
@@ -217,6 +247,7 @@ class ExperimentPreferencesPane(PreferencesPane):
                                           label='Set Integration Time on Start'),
                                      Item('default_integration_time',
                                           enabled_when='set_integration_time_on_start'),
+                                     pc_grp,
                                      persist_grp,
                                      monitor_grp, overlap_grp),
                               label='Automated Run')

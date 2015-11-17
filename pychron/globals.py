@@ -86,6 +86,7 @@ class Globals(object):
     dashboard_simulation = False
     use_testbot = False
     random_tip_enabled = True
+    client_only_locking = True
 
     def build(self, ip):
 
@@ -112,7 +113,8 @@ class Globals(object):
                            ('dev_confirm_exit', to_bool),
                            ('random_tip_enabled', to_bool),
                            ('test_experiment_set', str),
-                           ('system_monitor_debug', to_bool)]:
+                           ('system_monitor_debug', to_bool),
+                           ('client_only_locking', to_bool)]:
             a = ip.get_global(attr)
             if a:
                 setattr(globalv, attr, func(a))

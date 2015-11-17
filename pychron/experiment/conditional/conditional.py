@@ -16,7 +16,9 @@
 
 # ============= enthought library imports =======================
 import os
+
 from traits.api import Str, Either, Int, Callable, Bool, Float, Enum
+
 # ============= standard library imports ========================
 from uncertainties import nominal_value, std_dev
 import pprint
@@ -24,7 +26,7 @@ import pprint
 import yaml
 from pychron.experiment.conditional.regexes import MAPPER_KEY_REGEX, \
     STD_REGEX, INTERPOLATE_REGEX
-from pychron.experiment.conditional.utilities import tokenize, get_teststr_attr_func, extract_attr, interpolate_teststr
+from pychron.experiment.conditional.utilities import tokenize, get_teststr_attr_func, extract_attr
 from pychron.experiment.utilities.conditionals import RUN, QUEUE, SYSTEM
 from pychron.loggable import Loggable
 from pychron.paths import paths
@@ -181,6 +183,7 @@ class AutomatedRunConditional(BaseConditional):
     # start_count=0,
     # frequency=1,
     # *args, **kw):
+
     def __init__(self, teststr,
                  start_count=0,
                  frequency=1,
@@ -224,9 +227,11 @@ class AutomatedRunConditional(BaseConditional):
 
         """
         teststr, ctx = self._make_context(run, data)
+
+        self.value_context = vc = pprint.pformat(ctx, width=1)
+
         self.debug('testing {}'.format(teststr))
-        msg = 'evaluate ot="{}" t="{}", ctx="{}"'.format(self.teststr, teststr,
-                                                         pprint.pformat(ctx, width=1))
+        msg = 'evaluate ot="{}" t="{}", ctx="{}"'.format(self.teststr, teststr, vc)
         self.debug(msg)
         if eval(teststr, ctx):
             self.trips += 1

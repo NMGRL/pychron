@@ -38,7 +38,7 @@ def get_detector_name(det):
 
 
 def mass_cal_func(p, x):
-    return p[2] + (p[0] ** 2 * x / p[1]) ** 0.5
+    return p[0]*x**2+p[1]*x+p[2]
 
 
 def least_squares(func, xs, ys, initial_guess):

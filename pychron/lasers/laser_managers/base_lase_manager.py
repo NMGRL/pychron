@@ -15,17 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
 import time
 from traits.api import Instance, Event, Bool, Any, Property, Str, Float, provides
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.strtools import to_bool
-from pychron.core.ui.gui import wake_screen
-from pychron.lasers.stage_managers.stage_manager import StageManager
-from pychron.lasers.pattern.pattern_executor import PatternExecutor
+from pychron.hardware.meter_calibration import MeterCalibration
 from pychron.managers.manager import Manager
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
-from pychron.core.ui.led_editor import LED
 from pychron.core.helpers.filetools import list_directory
 from pychron.paths import paths
 
@@ -34,15 +32,15 @@ from pychron.paths import paths
 class BaseLaserManager(Manager):
     # implements(ILaserManager)
     # provides(ILaserManager)
-    pattern_executor = Instance(PatternExecutor)
+    pattern_executor = Instance('pychron.lasers.pattern.pattern_executor.PatternExecutor')
     use_video = Bool(False)
 
     enable = Event
     enable_label = Property(depends_on='enabled')
-    enabled_led = Instance(LED, ())
+    enabled_led = Instance('pychron.core.ui.led_editor.LED')
     enabled = Bool(False)
 
-    stage_manager = Instance(StageManager)
+    stage_manager = Instance('pychron.lasers.stage_managers.stage_manager.StageManager')
 
     requested_power = Any
     status_text = Str
@@ -56,6 +54,9 @@ class BaseLaserManager(Manager):
     _requested_power = Float
     _calibrated_power = None
     _cancel_blocking = False
+
+    def bind_preferences(self, prefid):
+        pass
 
     def test_connection(self):
         if self.mode == 'client':
@@ -72,10 +73,12 @@ class BaseLaserManager(Manager):
         pos = self.get_position()
         self.debug('got position {}'.format(pos))
         if pos:
-            self.stage_manager.trait_set(**dict(zip(('_x_position', '_y_position', '_z_position'), pos)))
-            return True
+            if self.stage_manager:
+                self.stage_manager.trait_set(**dict(zip(('_x_position', '_y_position', '_z_position'), pos)))
+            return pos
 
     def wake(self):
+        from pychron.core.ui.gui import wake_screen
         wake_screen()
 
     def is_ready(self):
@@ -158,16 +161,6 @@ class BaseLaserManager(Manager):
         if self.pattern_executor:
             return self.pattern_executor.isPatterning()
 
-    def _pattern_executor_default(self):
-        controller = None
-        if hasattr(self, 'stage_manager'):
-            controller = self.stage_manager.stage_controller
-
-        pm = PatternExecutor(application=self.application,
-                             controller=controller,
-                             laser_manager=self)
-        return pm
-
     def move_to_position(self, pos, *args, **kw):
         if not isinstance(pos, list):
             pos = [pos]
@@ -188,6 +181,12 @@ class BaseLaserManager(Manager):
 
     def get_achieved_output(self):
         pass
+
+    def calculate_calibrated_power(self, request, calibration='watts', verbose=True):
+        mc = self._calibration_factory(calibration)
+        if verbose:
+            self.info('using power coefficients  (e.g. ax2+bx+c) {}'.format(mc.print_string()))
+        return mc.get_input(request)
 
     # private
     def _move_to_position(self, *args, **kw):
@@ -218,9 +217,9 @@ class BaseLaserManager(Manager):
             if resp is not None:
                 try:
                     if not cmpfunc(resp):
-                    # if not to_bool(resp):
                         cnt += 1
-                except (ValueError, TypeError):
+                except (ValueError, TypeError), e:
+                    print '_blocking exception {}'.format(e)
                     cnt = 0
 
                 if position_callback:
@@ -246,6 +245,37 @@ class BaseLaserManager(Manager):
 
         return state
 
+    def _calibration_factory(self, calibration):
+        coeffs = None
+        nmapping = False
+        if calibration == 'watts':
+            path = os.path.join(paths.device_dir, self.configuration_dir_name, 'calibrated_power.cfg')
+            if os.path.isfile(path):
+                config = self.get_configuration(path=path)
+                coeffs, nmapping = self._get_watt_calibration(config)
+
+        if coeffs is None:
+            coeffs = [1, 0]
+
+        return MeterCalibration(coeffs, normal_mapping=bool(nmapping))
+
+    def _get_watt_calibration(self, config):
+        coeffs = [1, 0]
+        nmapping = False
+        section = 'PowerOutput'
+        if config.has_section(section):
+            cs = config.get(section, 'coefficients')
+            try:
+                coeffs = map(float, cs.split(','))
+            except ValueError:
+                self.warning_dialog('Invalid power calibration {}'.format(cs))
+                return
+
+            if config.has_option(section, 'normal_mapping'):
+                nmapping = config.getboolean(section, 'normal_mapping')
+
+        return coeffs, nmapping
+
     # ===============================================================================
     # getter/setters
     # ===============================================================================
@@ -257,7 +287,7 @@ class BaseLaserManager(Manager):
     def _get_calibrated_power(self, power, use_calibration=True, verbose=True):
         if power:
             if self.use_calibrated_power and use_calibration:
-                power = max(0, self.laser_controller.get_calibrated_power(power, verbose=verbose))
+                power = max(0, self.calculate_calibrated_power(power, verbose=verbose))
         return power
 
     def _get_requested_power(self):
@@ -303,9 +333,27 @@ class BaseLaserManager(Manager):
             from pychron.lasers.stage_managers.video_stage_manager import VideoStageManager
             klass = VideoStageManager
         else:
+            from pychron.lasers.stage_managers.stage_manager import StageManager
             klass = StageManager
 
         args['parent'] = self
         sm = klass(**args)
+        sm.id = self.stage_manager_id
         return sm
+
+    # defaults
+    def _enabled_led_default(self):
+        from pychron.core.ui.led_editor import LED
+        return LED()
+
+    def _pattern_executor_default(self):
+        from pychron.lasers.pattern.pattern_executor import PatternExecutor
+        controller = None
+        if hasattr(self, 'stage_manager'):
+            controller = self.stage_manager.stage_controller
+
+        pm = PatternExecutor(application=self.application,
+                             controller=controller,
+                             laser_manager=self)
+        return pm
 # ============= EOF =============================================

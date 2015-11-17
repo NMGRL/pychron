@@ -151,9 +151,7 @@ QComboBox {font-size: 10px}
             CustomLabel(run_factory_name('edit_mode_label'),
                         color='red',
                         width=40),
-            spring,
-            run_factory_item('end_after', width=30),
-            run_factory_item('skip'))
+            spring)
         button_bar2 = HGroup(Item('auto_increment_id', label='Auto Increment L#'),
                              Item('auto_increment_position', label='Position'), )
         edit_grp = VFold(
@@ -161,24 +159,16 @@ QComboBox {font-size: 10px}
             VGroup(
                 self._get_info_group(),
                 self._get_extract_group(),
+                enabled_when=queue_factory_name('ok_make'),
                 label='General'),
             self._get_script_group(),
-            self._get_truncate_group(),
-            enabled_when=queue_factory_name('ok_make'))
+            self._get_truncate_group())
 
-        # lower_button_bar = HGroup(
-        # add_button,
-        # clear_button,
-        # Label('Auto Increment'),
-        # Item('auto_increment_id', label='L#'),
-        # Item('auto_increment_position', label='Position'))
         v = View(
             VGroup(
-                # queue_grp,
                 button_bar,
                 button_bar2,
                 UItem('pane.info_label', style='readonly'),
-                # CustomLabel(run_factory_name('info_label'), size=14, color='green'),
                 edit_grp,
 
                 # lower_button_bar,
@@ -226,7 +216,12 @@ QComboBox {font-size: 10px}
                    run_factory_item('aliquot',
                                     width=50),
                    spring),
+            HGroup(run_factory_item('experiment_identifier',
+                                    label='Experiment ID',
 
+                                    editor=ComboboxEditor(name=run_factory_name('experiment_identifiers'))),
+                   icon_button_editor(run_factory_name('add_experiment_identifier'), 'add'),
+                   enabled_when='0'),
             HGroup(
                 run_factory_item('weight',
                                  label='Weight (mg)',
@@ -262,7 +257,7 @@ QComboBox {font-size: 10px}
                                       'delete',
                                       tooltip='Clear Conditionals from selected runs'
                                       # enabled_when=run_factory_name('edit_mode')
-                   )),
+                                      )),
             HGroup(
                 run_factory_item('trunc_attr',
                                  editor=EnumEditor(name=run_factory_name('trunc_attrs')),
@@ -287,6 +282,7 @@ QComboBox {font-size: 10px}
                                            'selected file if applicable'),
                 show_border=True,
                 label='File'),
+            enabled_when=queue_factory_name('ok_make'),
             label='Run Conditionals')
         return grp
 
@@ -306,6 +302,7 @@ QComboBox {font-size: 10px}
                                     tooltip='load the default scripts for this analysis type',
                                     show_label=False,
                                     enabled_when=run_factory_name('labnumber'))),
+            enabled_when=queue_factory_name('ok_make'),
             show_border=True,
             label='Scripts')
         return script_grp
@@ -317,49 +314,6 @@ QComboBox {font-size: 10px}
 # ===============================================================================
 # execution
 # ===============================================================================
-class WaitPane(TraitsDockPane):
-    id = 'pychron.experiment.wait'
-    name = 'Wait'
-
-    def traits_view(self):
-        cview = View(VGroup(
-            CustomLabel('message',
-                        size=14,
-                        weight='bold',
-                        color_name='message_color'),
-
-            HGroup(Spring(width=-5, springy=False),
-                   Item('high', label='Set Max. Seconds'),
-                   spring,
-                   CustomLabel('current_time',
-                               size=14,
-                               weight='bold'),
-                   UItem('continue_button')),
-            HGroup(Spring(width=-5, springy=False),
-                   Item('current_time', show_label=False,
-                        editor=RangeEditor(mode='slider', low=1, high_name='duration')))))
-
-        v = View(UItem('active_control',
-                       style='custom',
-                       visible_when='single',
-                       editor=InstanceEditor(view=cview)),
-                 UItem('controls',
-                       editor=ListEditor(
-                           use_notebook=True,
-                           selected='active_control',
-                           page_name='.page_name',
-                           view=cview),
-                       style='custom',
-                       visible_when='not single'))
-        return v
-
-        # def traits_view(self):
-        # v = View(
-        # UItem('wait_group',
-        # style='custom'))
-        # return v
-
-
 class ConnectionStatusPane(TraitsDockPane):
     id = 'pychron.experiment.connection_status'
     name = 'Connection Status'
@@ -425,7 +379,7 @@ Quick=   measure_iteration stopped at current step
 
         v = View(
             HGroup(
-                UItem('executing_led', editor=LEDEditor()),
+                UItem('executing_led', editor=LEDEditor(radius=30)),
                 spacer(-20),
                 icon_button_editor('start_button',
                                    'start',

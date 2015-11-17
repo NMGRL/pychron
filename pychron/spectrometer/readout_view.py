@@ -15,26 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import ConfigParser
-import os
-
-from pyface.timer.do_later import do_after
 from traits.api import HasTraits, Str, List, Any, Event, Button, Int, Bool, Float
 from traitsui.api import View, Item, HGroup, spring
 from traitsui.handler import Handler
-import yaml
-
-from pychron.core.helpers.traitsui_shortcuts import listeditor
-
-
-
-
-
-
-
-
+from pyface.timer.do_later import do_after
 # ============= standard library imports ========================
+import ConfigParser
+import os
+import yaml
 # ============= local library imports  ==========================
+from pychron.core.helpers.traitsui_shortcuts import listeditor
 from pychron.loggable import Loggable
 from pychron.paths import paths
 
@@ -109,26 +99,10 @@ class Readout(BaseReadout):
         v = View(HGroup(Item('value', style='readonly', label=self.name)))
         return v
 
-
-        # self._set_value(v)
-
     def query_value(self):
         cmd = 'Get{}'.format(self.name)
         v = self.spectrometer.get_parameter(cmd)
         self.set_value(v)
-        # self._set_value(v)
-
-    # def _set_value(self, v):
-    # if v is not None:
-    # try:
-    #             self.fvalue = float(v)
-    #             v = self.format.format(self.fvalue)
-    #         except ValueError:
-    #             pass
-    #     else:
-    #         v = ''
-    #
-    #     self.value = v
 
     def get_percent_value(self):
         return (self.value - self.min_value) / (self.max_value - self.min_value)
@@ -152,6 +126,7 @@ class ReadoutView(Loggable):
     refresh_needed = Event
     refresh_period = Int(10, enter_set=True, auto_set=False)  # seconds
     use_word_query = Bool(True)
+    compare_to_config_enabled = Bool(True)
 
     _alive = False
 
@@ -174,8 +149,6 @@ class ReadoutView(Loggable):
 
         else:
             self._load_yaml(ypath)
-
-            # self._refresh()
 
     def _load_cfg(self, path):
         config = ConfigParser.ConfigParser()
@@ -256,36 +229,42 @@ class ReadoutView(Loggable):
         tol = 0.001
 
         spec = self.spectrometer
-        for nn, rs in ((ne, self.readouts), (nd, self.deflections)):
-            for r in rs:
-                if not r.compare:
-                    continue
 
-                name = r.name
-                rv = r.value
-                cv = spec.get_configuration_value(name)
-                if abs(rv - cv) > tol:
-                    nn.append((r.name, rv, cv))
-                    self.debug('{} does not match. Current:{:0.3f}, Config: {:0.3f}'.format(name, rv, cv))
-        ns = ''
-        if ne:
-            ns = '\n'.join(map(lambda n: '{:<16s}\t{:0.3f}\t{:0.3f}'.format(*n), ne))
+        if not spec.simulation and self.compare_to_config_enabled:
+            for nn, rs in ((ne, self.readouts), (nd, self.deflections)):
+                for r in rs:
+                    if not r.compare:
+                        continue
 
-        if nd:
-            nnn = '\n'.join(map(lambda n: '{:<16s}\t\t{:0.0f}\t{:0.0f}'.format(*n), nd))
-            ns = '{}\n{}'.format(ns, nnn)
+                    name = r.name
+                    rv = r.value
+                    cv = spec.get_configuration_value(name)
+                    if abs(rv - cv) > tol:
+                        nn.append((r.name, rv, cv))
+                        self.debug('{} does not match. Current:{:0.3f}, Config: {:0.3f}'.format(name, rv, cv))
 
-        if ns:
-            msg = 'There is a mismatch between the current spectrometer values and the configuration.\n' \
-                  'Would you like to set the spectrometer to the configuration values?\n\n' \
-                  'Name\t\tCurrent\tConfig\n{}'.format(ns)
-            if self.confirmation_dialog(msg, size=(725, 300)):
-                self.spectrometer.send_configuration()
-                self.spectrometer.set_debug_configuration_values()
+            ns = ''
+            if ne:
+                ns = '\n'.join(map(lambda n: '{:<16s}\t{:0.3f}\t{:0.3f}'.format(*n), ne))
+
+            if nd:
+                nnn = '\n'.join(map(lambda n: '{:<16s}\t\t{:0.0f}\t{:0.0f}'.format(*n), nd))
+                ns = '{}\n{}'.format(ns, nnn)
+
+            if ns:
+                msg = 'There is a mismatch between the current spectrometer values and the configuration.\n' \
+                      'Would you like to set the spectrometer to the configuration values?\n\n' \
+                      'Name\t\tCurrent\tConfig\n{}'.format(ns)
+                if self.confirmation_dialog(msg, size=(725, 300)):
+                    spec.send_configuration()
+                    spec.set_debug_configuration_values()
 
     def traits_view(self):
         v = View(listeditor('readouts'),
-                 HGroup(spring, Item('refresh', show_label=False)))
+                 HGroup(Item('compare_to_config_enabled',label='Comp. Config',
+                             tooltip='If checked, compare the current values to the values in the configuration file.'
+                                     'Warn user if there is a mismatch'),
+                        spring, Item('refresh', show_label=False)))
         return v
 
 

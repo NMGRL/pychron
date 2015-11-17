@@ -23,7 +23,7 @@ from fabric.api import lcd, local
 def deploy():
     ver = '2.1.1'
     with lcd('~/Programming/git/pychron_valve'):
-        local('git pull origin release/v2.1.0')
+        local('git pull origin release/v2.1.1')
         local('python app_utils/app_maker -Avalve -v{}'.format(ver))
         local('mv launchers/pyvalve_{}.app /Applications'.format(ver))
 

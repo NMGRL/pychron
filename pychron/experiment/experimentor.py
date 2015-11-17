@@ -19,23 +19,20 @@ from traits.api import Instance, List, on_trait_change, Bool, Event
 # ============= standard library imports ========================
 from itertools import groupby
 # ============= local library imports  ==========================
-from pychron.database.isotope_database_manager import IsotopeDatabaseManager
+from pychron.dvc.dvc_irradiationable import DVCIrradiationable
 from pychron.experiment.queue.experiment_queue import ExperimentQueue
 from pychron.experiment.factory import ExperimentFactory
-from pychron.experiment.utilities.aliquot_numbering import renumber_aliquots
 from pychron.experiment.stats import StatsGroup
 from pychron.experiment.experiment_executor import ExperimentExecutor
-from pychron.experiment.utilities.identifier import convert_identifier
-from pychron.loggable import Loggable
 
 
-class Experimentor(Loggable):
-    iso_db_manager = Instance(IsotopeDatabaseManager)
+class Experimentor(DVCIrradiationable):
     experiment_factory = Instance(ExperimentFactory)
     experiment_queue = Instance(ExperimentQueue)
     executor = Instance(ExperimentExecutor)
     experiment_queues = List
     stats = Instance(StatsGroup, ())
+    dvc = Instance('pychron.dvc.dvc.DVC')
 
     mode = None
     # unique_executor_db = False
@@ -59,7 +56,6 @@ class Experimentor(Loggable):
     save_event = Event
 
     def load(self):
-        self.iso_db_manager.load()
         self.experiment_factory.queue_factory.db_refresh_needed = True
         self.experiment_factory.run_factory.db_refresh_needed = True
 
@@ -138,16 +134,6 @@ class Experimentor(Loggable):
         for qi in queues:
             qi.refresh_table_needed = True
 
-    def _get_labnumber(self, ln):
-        """
-           return gen_labtable object
-        """
-        db = self.iso_db_manager.db
-        ln = convert_identifier(ln)
-        dbln = db.get_labnumber(ln)
-
-        return dbln
-
     def _group_analyses(self, ans, exclude=None):
         """
             sort, group and filter by labnumber
@@ -164,7 +150,7 @@ class Experimentor(Loggable):
         if not dbln:
             return None
         else:
-            project, sample, material, irradiation = '', '', '', ''
+            project, sample, material, irradiation, level, pos = '', '', '', '', '', 0
             sample = dbln.sample
             if sample:
                 if sample.project:
@@ -177,10 +163,12 @@ class Experimentor(Loggable):
             dbpos = dbln.irradiation_position
             if dbpos:
                 level = dbpos.level
-                irradiation = '{} {}:{}'.format(level.irradiation.name,
-                                                level.name, dbpos.position)
 
-        return project, sample, material, irradiation
+                irradiation = level.irradiation.name
+                level = level.name
+                pos = dbpos.position
+
+        return project, sample, material, irradiation, level, pos
 
     def _set_analysis_metadata(self):
         cache = dict()
@@ -202,11 +190,14 @@ class Experimentor(Loggable):
                     if not info:
                         cache[ln] = dict(identifier_error=True)
                     else:
-                        project, sample, material, irrad = info
+                        project, sample, material, irrad, level, pos = info
 
                         cache[ln] = dict(project=project or '', sample=sample or '',
                                          material=material or '',
-                                         irradiation=irrad or '', identifier_error=False)
+                                         irradiation=irrad or '',
+                                         irradiation_level=level or '',
+                                         irradiation_position=pos or 0,
+                                         identifier_error=False)
 
                 ai.trait_set(**cache[ln])
 
@@ -224,11 +215,13 @@ class Experimentor(Loggable):
         return self.executor.execute()
 
     def verify_database_connection(self, inform=True):
-        if self.iso_db_manager:
-            return self.iso_db_manager.verify_database_connection(inform)
-        else:
-            self.warning_dialog('Not connected to a database. Currently cannot use run experiments without a database.'
-                                'Make sure the Database plugin is enabled.')
+        db = self.iso_db_manager.db
+        if db is not None:
+            if db.connect(force=True):
+                return True
+        elif inform:
+            self.warning_dialog('Not Database available')
+
     # ===============================================================================
     # handlers
     # ===============================================================================
@@ -343,7 +336,9 @@ class Experimentor(Loggable):
                 dms = spec.name.capitalize()
 
         e = ExperimentFactory(application=self.application,
-                              # db=self.manager.db,
+                              dvc=self.dvc,
+                              # dvc=self.iso_db_manager,
+                              # db=self.iso_db_manager.db,
                               default_mass_spectrometer=dms)
         if self.iso_db_manager:
             e.db = self.iso_db_manager.db

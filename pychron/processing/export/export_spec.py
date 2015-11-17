@@ -157,8 +157,8 @@ class MassSpecExportSpec(Loggable):
         # hfile = dm._frame
         # root = dm._frame.root
         #     signal = root.signal
-        #     for isogroup in hfile.listNodes(signal):
-        #         for dettable in hfile.listNodes(isogroup):
+        #     for isogroup in hfile.list_nodes(signal):
+        #         for dettable in hfile.list_nodes(isogroup):
         #             iso = isogroup._v_name
         #             det = dettable.name
         #             self.debug('iter_isotopes yield: {} {}'.format(iso, det))
@@ -268,8 +268,8 @@ class MassSpecExportSpec(Loggable):
         # v, e = 0, 0
         # if hasattr(root, 'baseline'):
         # baseline = root.baseline
-        # for isogroup in hfile.listNodes(baseline):
-        # for dettable in hfile.listNodes(isogroup):
+        # for isogroup in hfile.list_nodes(baseline):
+        # for dettable in hfile.list_nodes(isogroup):
         #             if dettable.name == det:
         #                 vb = [r['value'] for r in dettable.iterrows()]
         #                 break
@@ -307,8 +307,8 @@ class MassSpecExportSpec(Loggable):
         # try:
         #     group = getattr(root, group)
         #     if iso is None:
-        #         tab = next((di for ii in hfile.listNodes(group)
-        #                     for di in hfile.listNodes(ii)
+        #         tab = next((di for ii in hfile.list_nodes(group)
+        #                     for di in hfile.list_nodes(ii)
         #                     if di.name == det))
         #     else:
         #         isog = getattr(group, iso)

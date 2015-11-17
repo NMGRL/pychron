@@ -18,6 +18,7 @@
 from traits.api import Any, Int, Str, Event
 # ============= standard library imports ========================
 from PySide.QtCore import QTimer
+from pychron.core.ui.qt.gui import invoke_in_main_thread
 from stage_component_editor import _LaserComponentEditor, LaserComponentEditor
 # ============= local library imports  ==========================
 
@@ -39,8 +40,9 @@ class _VideoComponentEditor(_LaserComponentEditor):
 
         self.playTimer = QTimer(self.control)
         self.playTimer.timeout.connect(self.update)
+
         if self.value.fps:
-            self.playTimer.setInterval(1000 / self.value.fps)
+            self.playTimer.setInterval(1000 / float(self.value.fps))
         self.playTimer.start()
         self.value.on_trait_change(self.stop, 'closed_event')
 
@@ -49,7 +51,7 @@ class _VideoComponentEditor(_LaserComponentEditor):
 
     def _update_fps(self):
         if self.value.fps:
-            self.playTimer.setInterval(1000 / self.value.fps)
+            self.playTimer.setInterval(1000 / float(self.value.fps))
 
     def stop(self):
         try:
@@ -59,21 +61,12 @@ class _VideoComponentEditor(_LaserComponentEditor):
 
     def update(self):
         if self.control:
-            self.value.request_redraw()
-            # self.value.draw_valid = False
-            # self.control.repaint()
+            invoke_in_main_thread(self.value.request_redraw)
+            # self.value.request_redraw()
 
     def _stop_timer_fired(self):
         print 'VideoComponentEditor stopping playTimer'
         self.playTimer.stop()
-
-#    def onClose(self):
-#        self.playTimer.Stop()
-#
-#    def onNextFrame(self, evt):
-#        if self.control:
-#            self.control.Refresh()
-#            evt.Skip()
 
 
 class VideoComponentEditor(LaserComponentEditor):

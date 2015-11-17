@@ -38,6 +38,7 @@ class EUCustom(UCustom):
 
 
 class IrradiationProduction(HasTraits):
+    name = Str
     reactor = Str
     note = Str
     last_modified = Str

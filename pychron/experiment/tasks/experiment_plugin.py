@@ -33,7 +33,7 @@ from pychron.experiment.signal_calculator import SignalCalculator
 from pychron.experiment.image_browser import ImageBrowser
 from pychron.experiment.tasks.experiment_task import ExperimentEditorTask
 from pychron.experiment.tasks.experiment_preferences import ExperimentPreferencesPane, ConsolePreferencesPane, \
-    UserNotifierPreferencesPane, LabspyPreferencesPane
+    UserNotifierPreferencesPane, LabspyPreferencesPane, DVCPreferencesPane
 from pychron.experiment.tasks.experiment_actions import NewExperimentQueueAction, \
     OpenExperimentQueueAction, SignalCalculatorAction, \
     DeselectAction, SendTestNotificationAction, \
@@ -50,8 +50,8 @@ class ExperimentPlugin(BaseTaskPlugin):
     def start(self):
         super(ExperimentPlugin, self).start()
         manager = self.application.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
-        # dvc = self.application.get_service('pychron.dvc.dvc.DVC')
-        # self.experimentor.dvc = dvc
+        dvc = self.application.get_service('pychron.dvc.dvc.DVC')
+        self.experimentor.dvc = dvc
         self.experimentor.iso_db_manager = manager
         self.experimentor.executor.set_managers()
         self.experimentor.executor.bind_preferences()
@@ -81,6 +81,7 @@ class ExperimentPlugin(BaseTaskPlugin):
     def _preferences_panes_default(self):
         return [ExperimentPreferencesPane,
                 LabspyPreferencesPane,
+                DVCPreferencesPane,
                 ConsolePreferencesPane,
                 UserNotifierPreferencesPane]
 

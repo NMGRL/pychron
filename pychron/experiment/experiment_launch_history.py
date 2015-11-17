@@ -25,7 +25,7 @@ from traitsui.tabular_adapter import TabularAdapter
 import os
 import time
 # ============= local library imports  ==========================
-from pychron.core.helpers.datetime_tools import get_time, get_datetime
+from pychron.core.helpers.datetime_tools import get_datetime
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.paths import paths
 

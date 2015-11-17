@@ -42,24 +42,26 @@ class DVCIrradiationable(Loggable):
 
     @cached_property
     def _get_irradiations(self):
-        with self.dvc.db.session_ctx():
-            irs = self.dvc.db.get_irradiations()
-            names = [i.name for i in irs]
-            if names:
-                self.irradiation = names[0]
-            return names
+        if self.dvc.connect():
+            with self.dvc.db.session_ctx():
+                irs = self.dvc.db.get_irradiations()
+                names = [i.name for i in irs]
+                if names:
+                    self.irradiation = names[0]
+                return names
 
     @cached_property
     def _get_levels(self):
-        with self.dvc.db.session_ctx():
-            irrad = self.dvc.db.get_irradiation(self.irradiation)
-            if irrad:
-                names = [li.name for li in irrad.levels]
-                if names:
-                    self.level = names[0]
-                return names
-            else:
-                return []
+        if self.dvc.connect():
+            with self.dvc.db.session_ctx():
+                irrad = self.dvc.db.get_irradiation(self.irradiation)
+                if irrad:
+                    names = [li.name for li in irrad.levels]
+                    if names:
+                        self.level = names[0]
+                    return names
+                else:
+                    return []
 
 # ============= EOF =============================================
 

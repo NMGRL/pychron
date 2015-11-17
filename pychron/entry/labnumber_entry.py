@@ -83,7 +83,7 @@ class LabnumberEntry(IsotopeDatabaseManager):
     edit_irradiation_enabled = Property(depends_on='irradiation')
 
     tray_name = Str
-    irradiation_tray_image = Property(Image, depends_on='level, irradiation, saved')
+    # irradiation_tray_image = Property(Image, depends_on='level, irradiation, saved')
     irradiated_positions = List(IrradiatedPosition)
 
     add_irradiation_button = Button('Add Irradiation')
@@ -159,7 +159,6 @@ class LabnumberEntry(IsotopeDatabaseManager):
             self.warning_dialog('Unable to Transfer Js. Mass Spec database not configured properly. '
                                 'Check Preferences>Database')
 
-
     def save_tray_to_db(self, p, name):
         with self.db.session_ctx():
             load_irradiation_map(self.db, p, name, overwrite_geometry=True)
@@ -194,6 +193,13 @@ class LabnumberEntry(IsotopeDatabaseManager):
         if self.selected:
             for si in self.selected:
                 setattr(si, attr, v)
+            self.refresh_table = True
+
+    def set_selected_attrs(self, vs, attrs):
+        if self.selected:
+            for si in self.selected:
+                for v, attr in zip(vs, attrs):
+                    setattr(si, attr, v)
             self.refresh_table = True
 
     def import_sample_metadata(self, p):
@@ -265,6 +271,7 @@ class LabnumberEntry(IsotopeDatabaseManager):
                 if lg.setup():
                     prog = open_progress()
                     lg.generate_identifiers(prog, overwrite)
+                    prog.close()
                     self._update_level()
 
     def preview_generate_identifiers(self):
@@ -277,6 +284,7 @@ class LabnumberEntry(IsotopeDatabaseManager):
         if lg.setup():
             prog = open_progress()
             lg.preview(prog, self.irradiated_positions, self.irradiation, self.level)
+            prog.close()
             self.refresh_table = True
 
     def check_monitor_name(self):
@@ -454,8 +462,6 @@ class LabnumberEntry(IsotopeDatabaseManager):
         self.dirty = False
         self._level_changed(self.level)
 
-        # self.info('Changes saved to database')
-
     def _increment(self, name):
         """
             convert name into an integer and add 1
@@ -494,24 +500,24 @@ class LabnumberEntry(IsotopeDatabaseManager):
     # ===============================================================================
     # handlers
     # ===============================================================================
-    @on_trait_change('irradiated_positions:sample')
-    def _handle_entry(self, obj, name, old, new):
-        if not self._no_update:
-            if not new:
-                obj.material = ''
-                obj.project = ''
-            else:
-                db = self.db
-                with db.session_ctx():
-                    dbsam = db.get_sample(new)
-                    if dbsam:
-                        if not obj.material:
-                            if dbsam.material:
-                                obj.material = dbsam.material.name
-
-                        if not obj.project:
-                            if dbsam.project:
-                                obj.project = dbsam.project.name
+    # @on_trait_change('irradiated_positions:sample')
+    # def _handle_entry(self, obj, name, old, new):
+    # if not self._no_update:
+    # if not new:
+    # obj.material = ''
+    #             obj.project = ''
+    #         else:
+    #             db = self.dvc.db
+    #             with db.session_ctx():
+    #                 dbsam = db.get_sample(new, new.project)
+    #                 if dbsam:
+    #                     if not obj.material:
+    #                         if dbsam.material:
+    #                             obj.material = dbsam.material.name
+    #
+    #                     if not obj.project:
+    #                         if dbsam.project:
+    #                             obj.project = dbsam.project.name
 
 
     @on_trait_change('canvas:selected')
@@ -611,7 +617,7 @@ THIS CHANGE CANNOT BE UNDONE')
 
     def _auto_increment_irradiation(self):
         lastname = self.irradiations[0]
-        #try to auto increment the irrad
+        # try to auto increment the irrad
         if self.irradiation_prefix:
             db = self.db
             with db.session_ctx():
@@ -623,7 +629,7 @@ THIS CHANGE CANNOT BE UNDONE')
                                               limit=1)
                 if dbirrad:
                     lastname = dbirrad[0].name
-                    #try to increment lastname
+                    # try to increment lastname
                     lastname = self._increment(lastname)
 
         return lastname
@@ -791,7 +797,7 @@ THIS CHANGE CANNOT BE UNDONE')
     def _get_edit_level_enabled(self):
         return self.level is not None
 
-
+    # handlers
     @on_trait_change('irradiated_positions:+')
     def _set_dirty(self, name, new):
         if not self.suppress_dirty:
@@ -807,208 +813,4 @@ if __name__ == '__main__':
     m = LabnumberEntry()
     m.configure_traits()
 # ============= EOF =============================================
-# _prev_tray = self.tray_name
-# irradiation = self.irradiation
-# level = Level(db=self.db,
-# name=self.level,
-# trays=self.trays)
-# level.load(irradiation)
-# info = level.edit_traits(kind='livemodal')
-# if info.result:
-#
-#     self.info('saving level. Irradiation={}, Name={}, Tray={}, Z={}'.format(irradiation,
-#                                                                             level.name,
-#                                                                             level.tray,
-#                                                                             level.z))
-#     level.edit_db()
-#
-#     self.saved = True
-#     self.irradiation = irradiation
-#     self.level = level.name
-#
-#     if _prev_tray != level.tray:
-#         if not self.confirmation_dialog('Irradiation Tray changed. Copy labnumbers to new tray'):
-#             self._load_holder_positions(level.tray)
 
-#@on_trait_change('project, sample')
-#def _edit_handler(self, name, new):
-#    if self.selected:
-#
-#        for si in self.selected:
-#            setattr(si, name, new)
-#
-#        if name == 'sample':
-#            sample = self.db.get_sample(new)
-#            material = sample.material
-#            material = material.name if material else ''
-#
-#            for si in self.selected:
-#                setattr(si, 'material', material)
-#
-#
-#    self.refresh_table = True
-
-#     def _set_auto_params(self, s, rid):
-#         s.labnumber = rid
-#         s.sample = self.auto_sample
-#         s.project = self.auto_project
-#         s.material = self.auto_material
-#         s.j = self.auto_j
-#         s.j_err = self.auto_j_err
-#    def _save_button_fired(self):
-#        self._save_to_db()
-
-#     def _freeze_button_fired(self):
-#         for si in self.selected:
-#             si.auto_assigned = False
-#
-#     def _thaw_button_fired(self):
-#         for si in self.selected:
-#             si.auto_assigned = True
-#
-#
-#     @on_trait_change('auto+')
-#     def _auto_update(self, obj, name, old, new):
-#         cnt = 0
-# #        print name, old, new
-#         if self.auto_assign:
-#             for s in self.irradiated_positions:
-#                 rid = str(self.auto_startrid + cnt)
-#                 if s.labnumber:
-#                     if self.auto_assign_overwrite or s.auto_assigned:
-#                         self._set_auto_params(s, rid)
-#                         s.auto_assigned = True
-#                         cnt += 1
-#                 else:
-#                     self._set_auto_params(s, rid)
-#                     s.auto_assigned = True
-#                     cnt += 1
-#
-#
-# #                if self.auto_assign:
-# #                if s.labnumber:
-# #                    if self.auto_assign_overwrite or name != 'auto_assign':
-# #                        self._set_auto_params(s, rid)
-# #                        cnt += 1
-# #                else:
-# #                    self._set_auto_params(s, rid)
-# #                    cnt += 1
-#
-#         self._update_sample_table = True
-#     auto_assign = Bool
-#     auto_startrid = Int(19999)
-#     auto_assign_overwrite = Bool(False)
-#     auto_project = Str('Foo')
-#     auto_sample = Str('FC-2')
-#     auto_material = Str('sanidine')
-#     auto_j = Float(1e-4)
-#     auto_j_err = Float(1e-7)
-#     freeze_button = Button('Freeze')
-#     thaw_button = Button('Thaw')
-
-#     _update_sample_table = Event
-
-#    save_button = Button('Save')
-
-#     def traits_view(self):
-#         irradiation = Group(
-#                             HGroup(
-#                                    VGroup(HGroup(Item('irradiation',
-#                                                       editor=EnumEditor(name='irradiations')
-#                                                       ),
-#                                                  Item('edit_irradiation_button',
-#                                                       enabled_when='edit_irradiation_enabled',
-#                                                       show_label=False)
-#                                                  ),
-#                                           HGroup(Item('level', editor=EnumEditor(name='levels')),
-#                                                  spring,
-#                                                  Item('edit_level_button',
-#                                                       enabled_when='edit_level_enabled',
-#                                                       show_label=False)
-#                                                  ),
-#                                           Item('add_irradiation_button', show_label=False),
-#                                           Item('add_level_button', show_label=False),
-# #                                        Item('irradiation_tray',
-# #                                             editor=EnumEditor(name='irradiation_trays')
-# #                                             )
-#                                           ),
-#                                    spring,
-#                                    VGroup(
-#                                           Item('tray_name', style='readonly', show_label=False),
-#                                           Item('irradiation_tray_image',
-#                                                editor=ImageEditor(),
-#                                                height=200,
-#                                                width=200,
-#                                                style='custom',
-#                                                show_label=False),
-#                                           ),
-#                                         ),
-#                             label='Irradiation',
-#                             show_border=True
-#                             )
-#
-#         auto = Group(
-#                     Item('auto_assign', label='Auto-assign Labnumbers'),
-#                     Item('auto_startrid', label='Start Labnumber',
-#                          enabled_when='auto_assign'
-#                          ),
-#                     Item('auto_project', label='Project',
-#                          enabled_when='auto_assign'
-#                          ),
-#                     Item('auto_sample', label='Sample',
-#                          enabled_when='auto_assign'
-#                          ),
-#                     Item('auto_material', label='Material',
-#                          enabled_when='auto_assign'
-#                          ),
-#                      Item('auto_j', format_str='%0.2e', label='Nominal J.'),
-#                      Item('auto_j_err', format_str='%0.2e', label='Nominal J Err.'),
-#                     Item('auto_assign_overwrite', label='Overwrite exisiting Labnumbers',
-#                          enabled_when='auto_assign'
-#                          ),
-#                       HGroup(Item('freeze_button', show_label=False), Item('thaw_button', show_label=False),
-#                               enabled_when='selected'),
-#                       show_border=True,
-#                       label='Auto-Assign'
-#
-#                       )
-#
-#         samples = Group(
-#
-#                         Item('irradiated_positions',
-#                              editor=TabularEditor(adapter=IrradiatedPositionAdapter(),
-#                                                   update='_update_sample_table',
-#                                                   multi_select=True,
-#                                                   selected='selected',
-#                                                   operations=['edit']
-#                                                   ),
-#                              show_label=False
-#                              ),
-#                         label='Lab Numbers',
-#                         show_border=True
-#                         )
-# #        flux = Group(
-# #                     HGroup(
-# #                            Item('flux_monitor', show_label=False, editor=EnumEditor(name='flux_monitors')),
-# #                            Item('edit_monitor_button', show_label=False)),
-# #                     Item('flux_monitor_age', format_str='%0.3f', style='readonly', label='Monitor Age (Ma)'),
-# #                     Spring(height=50, springy=False),
-# #                     Item('calculate_flux_button',
-# #                          enabled_when='calculate_flux_enabled',
-# #                          show_label=False),
-# #                     label='Flux',
-# #                     show_border=True
-# #                     )
-#         v = View(VGroup(
-#                         HGroup(auto, irradiation,
-# #                               flux
-#                                ),
-#                         samples,
-#                         HGroup(spring, Item('save_button', show_label=False))
-#                         ),
-#                  resizable=True,
-#                  width=0.75,
-#                  height=600,
-#                  title='Labnumber Entry'
-#                  )
-#         return v

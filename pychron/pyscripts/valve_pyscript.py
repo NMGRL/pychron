@@ -39,7 +39,10 @@ class ValvePyScript(PyScript):
 
     def gosub(self, *args, **kw):
         kw['runner'] = self.runner
-        super(ValvePyScript, self).gosub(*args, **kw)
+        s = super(ValvePyScript, self).gosub(*args, **kw)
+        if s:
+            s.runner = None
+        return s
 
     @verbose_skip
     @command_register

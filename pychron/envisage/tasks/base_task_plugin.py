@@ -15,13 +15,18 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
+
 from envisage.ui.tasks.task_extension import TaskExtension
 from traits.api import List
 from envisage.service_offer import ServiceOffer
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.helpers.filetools import add_extension
 from pychron.envisage.tasks.base_plugin import BasePlugin
 from pychron.globals import globalv
+from pychron.paths import paths
 
 
 class BaseTaskPlugin(BasePlugin):
@@ -42,6 +47,9 @@ class BaseTaskPlugin(BasePlugin):
     managers = List(contributes_to='pychron.hardware.managers')
 
     _tests = None
+
+    def _make_preferences_path(self, name):
+        return 'file://{}'.format(os.path.join(paths.preferences_dir, add_extension(name, '.ini')))
 
     def service_offer_factory(self, **kw):
         return ServiceOffer(**kw)

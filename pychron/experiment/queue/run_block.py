@@ -87,10 +87,8 @@ class RunBlock(Loggable):
 
                 arun = klass()
                 arun.load(script_info, params)
-                #arun = self._automated_run_factory(script_info, params, klass)
 
                 yield arun
-                # aruns.append(arun)
 
             except Exception, e:
                 import traceback

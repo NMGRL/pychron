@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+import os
+import pickle
 from traits.api import Float, Property, Bool, Int, CInt, Button
 from traitsui.api import View, Item, HGroup, VGroup, EnumEditor, RangeEditor, \
     spring
@@ -34,6 +36,7 @@ from pychron.core.helpers.timer import Timer
 from pychron.consumer_mixin import ConsumerMixin
 from pychron.core.ui.qt.progress_editor import ProgressEditor
 # from pyface.progress_dialog import ProgressDialog
+from pychron.paths import paths
 
 SIGN = ['negative', 'positive']
 
@@ -99,7 +102,7 @@ class KerrMotor(KerrDevice, ConsumerMixin):
                 self.info('waiting for move to complete')
                 self.block()
                 self.info('move complete')
-            self.enabled = True
+                self.enabled = True
         else:
             self.info('not changing pos {}=={}'.format(self.data_position, value))
 
@@ -225,7 +228,7 @@ class KerrMotor(KerrDevice, ConsumerMixin):
 
         cmds = []
         if motor_off:
-            cmd, msg = '1706'
+            # cmd, msg = '1706'
             cmds.append((addr, '1706', 100, 'Motor OFF'))
 
         if position is not None:
@@ -244,7 +247,7 @@ class KerrMotor(KerrDevice, ConsumerMixin):
         #         (addr, cmd, 100, msg),
         #         ()]
         self._execute_hex_commands(cmds)
-        self._motor_position = 0
+        # self._motor_position = 0
 
     # PIC Commands
     def read_status(self, cb, verbose=True):
@@ -367,6 +370,15 @@ class KerrMotor(KerrDevice, ConsumerMixin):
 
         return timer
 
+    def set_homing_required(self, value):
+        self.debug('Set homing required: {}'.format(value))
+        hd = self._get_homing_persistence()
+        if not hd:
+            hd = {}
+
+        hd['homing_required'] = value
+        self._dump_homing_persistence(hd)
+
     # private
     def _initialize(self, *args, **kw):
         addr = self.address
@@ -383,14 +395,62 @@ class KerrMotor(KerrDevice, ConsumerMixin):
         self.load_data_position()
 
         self._execute_hex_commands(commands)
+
+        homing_required = self._get_homing_required()
+        self.debug('Homing required: {}'.format(homing_required))
         if self.home_at_startup:
             self.info('============ HOME AT STARTUP =============')
             self._execute_hex_commands([(self.address, '00', 100, 'reset position')])
             self._home_motor(*args, **kw)
+        elif homing_required:
+            pos = self._get_last_known_position()
+            if pos is not None and self.confirmation_dialog('Last Known Position: {}. '
+                                                            'Use this value instead of homing?'.format(pos)):
+                self.reset_position(position=self.homing_position)
+
+            else:
+                self.info('============ HOME AT STARTUP (Required) =============')
+                self._execute_hex_commands([(self.address, '00', 100, 'reset position')])
+                self._home_motor(*args, **kw)
+
         elif self.homing_position:
             self.reset_position(position=self.homing_position)
 
         self.load_data_position()
+
+    def _set_last_known_position(self, pos):
+        self.debug('Set last known position: {}'.format(pos))
+        hd = self._get_homing_persistence()
+        if not hd:
+            hd = {}
+
+        hd['last_known_position'] = pos
+        self._dump_homing_persistence(hd)
+
+    def _get_last_known_position(self):
+        hd = self._get_homing_persistence()
+        if hd:
+            return hd.get('last_known_position')
+
+    @property
+    def homing_path(self):
+        return os.path.join(paths.hidden_dir, '{}-{}-homing.p'.format(self.name, self.address))
+
+    def _dump_homing_persistence(self, hd):
+        p = self.homing_path
+        with open(p, 'w') as wfile:
+            pickle.dump(hd, wfile)
+
+    def _get_homing_persistence(self):
+        p = self.homing_path
+        if os.path.isfile(p):
+            with open(p, 'r') as rfile:
+                return pickle.load(rfile)
+
+    def _get_homing_required(self):
+        hd = self._get_homing_persistence()
+        if hd:
+            return hd['homing_required']
 
     def _home_motor(self, progress=None, *args, **kw):
 
@@ -413,10 +473,21 @@ class KerrMotor(KerrDevice, ConsumerMixin):
         cmds = [(addr, home_cmd, 100, '=======Set Homing===='),
                 (addr, move_cmd, 100, 'Send to Home')]
         self._execute_hex_commands(cmds)
-        # self.block(4, progress=progress, homing=True)
+
+        self.debug('wait for home started')
+        self._wait_for_home(progress)
+        self.debug('wait for home complete')
+
+        pos = self.read_home_position()
+        self.debug('home position: {}'.format(pos))
+        cmds = [(addr, '00', 100, 'reset position')]
+        self._execute_hex_commands(cmds)
+
+    def _wait_for_home(self, progress=None):
         # wait until homing signal set
 
         hbit = 5 if self.home_limit == 1 else 6
+        psteps = None
         while 1:
             steps = self.load_data_position(set_pos=False)
             invoke_in_main_thread(self.trait_set, homing_position=steps)
@@ -424,15 +495,20 @@ class KerrMotor(KerrDevice, ConsumerMixin):
 
             if not self._test_status_byte(status, setbits=[7]):
                 break
-            if self._test_status_byte(status, setbits=[7,hbit]):
+            if self._test_status_byte(status, setbits=[7, hbit]):
                 break
-            time.sleep(0.25)
 
-        pos = self.read_home_position()
-        cmds = [(addr, '00', 100, 'reset position')]
-        self._execute_hex_commands(cmds)
-        print 'ppppp', pos
-        # self.update_configuration(homing={'home_position': pos})
+            if steps == psteps:
+                step_count += 1
+            else:
+                step_count = 0
+
+            if step_count > 10:
+                break
+            psteps = steps
+
+            time.sleep(0.25)
+        self.debug('wait for home complete')
 
     def _parse_position(self, pos):
         if pos is not None:
@@ -441,49 +517,9 @@ class KerrMotor(KerrDevice, ConsumerMixin):
 
     def _test_status_byte(self, status, setbits):
         b = '{:08b}'.format(int(status[:2], 16))
-        bb = [bool(int(b[7-si])) for si in setbits]
+        bb = [bool(int(b[7 - si])) for si in setbits]
 
         return all(bb)
-
-    def _home_motor2(self, progress=None, *args, **kw):
-        """
-        """
-        if progress is not None:
-            progress.increase_max()
-            progress.change_message('Homing {}'.format(self.name))
-
-        addr = self.address
-
-        cmd = '94'
-        # control = 'F6'
-        control = '8E'
-
-        v = self._float_to_hexstr(self.home_velocity)
-        a = self._float_to_hexstr(self.home_acceleration)
-        move_cmd = ''.join((cmd, control, v, a, '00'))
-
-        #         home_control_byte = self._load_home_control_byte()
-        #         home_cmd = '19{:02x}'.format(home_control_byte)
-
-        cmds = [
-            #                 (addr, home_cmd, 100, '=======Set Homing===='),
-            (addr, move_cmd, 100, 'Send to Home')]
-        self._execute_hex_commands(cmds)
-
-        '''
-            this is a hack. Because the home move is in velocity profile mode we cannot use the 0bit of the status byte to
-            determine when the move is complete (0bit indicates when motor has reached requested velocity).
-
-            instead we will poll the motor position until n successive positions are equal ie at a limt
-        '''
-
-        self.block(4, progress=progress, homing=True)
-
-        # we are homed and should reset position
-
-        cmds = [(addr, '00', 100, 'reset position')]
-
-        self._execute_hex_commands(cmds)
 
     def _moving(self, verbose=True):
         status_byte = self.read_defined_status(verbose=verbose)
@@ -511,7 +547,6 @@ class KerrMotor(KerrDevice, ConsumerMixin):
         if pos is not None:
             pos = pos[2:-2]
             pos = self._hexstr_to_float(pos)
-            #            self._motor_position = pos
             return pos
 
     def _load_home_control_byte(self):
@@ -533,7 +568,6 @@ class KerrMotor(KerrDevice, ConsumerMixin):
             bs = '00010010'
 
         return int(bs, 2)
-        # return int('00010011', 2)
 
     def _load_trajectory_controlbyte(self):
         """
@@ -556,40 +590,25 @@ class KerrMotor(KerrDevice, ConsumerMixin):
 
     def _calculate_hysteresis_position(self, pos, hysteresis):
         hpos = pos + hysteresis
-        #         self._hysteresis_correction = 0
-        #         if hysteresis:
+
         hpos = max(self.min_steps, min(self.steps, hpos))
-        #             if hpos > self.max:
-        #                 self._hysteresis_correction = hpos - self.max
-        #                 hpos = self.max
-        #             elif hpos < self.min:
-        #                 self._hysteresis_correction = hpos - self.min
-        #                 hpos = self.min
-        #             else:
-        #                 self._hysteresis_correction = hysteresis
-        return hpos
+
+        return int(hpos)
 
     def _update_position(self):
         """
         """
 
-        if self._moving(verbose=False):
+        if self._moving(verbose=True):
             self.enabled = False
-
-        # if not self._check_status_byte(0):
-        #            self.enabled = False
-
         else:
-            #             if self.use_hysteresis and \
             if self.hysteresis_value and \
                     not self.doing_hysteresis_correction and \
                     self.do_hysteresis:
                 # move to original desired position at half velocity
-                #                    print 'mp',self._motor_position, self.hysteresis_value
                 self._set_motor_position(
                     self._desired_position,
-                    velocity=self.velocity / 2
-                )
+                    velocity=self.velocity / 2)
                 self.doing_hysteresis_correction = True
             else:
                 self.enabled = True
@@ -597,7 +616,9 @@ class KerrMotor(KerrDevice, ConsumerMixin):
                     self.timer.Stop()
                     #                     self.update_position = self._data_position
                     time.sleep(0.25)
-                    self.load_data_position(set_pos=False)
+
+                steps = self.load_data_position(set_pos=False)
+                self._set_last_known_position(steps)
 
         if not self.enabled:
             self.load_data_position(set_pos=False)
@@ -633,9 +654,6 @@ class KerrMotor(KerrDevice, ConsumerMixin):
                 invoke_in_main_thread(launch)
             else:
                 launch()
-
-                #            if self.parent.simulation:
-                #                self.update_position = self._data_position
 
     def _set_motor_position(self, pos, hysteresis=0, velocity=None):
         """
@@ -795,8 +813,46 @@ class KerrMotor(KerrDevice, ConsumerMixin):
                    label='Move', show_border=True),
             VGroup('home_velocity', 'home_acceleration', 'homing_position', label='Home', show_border=True)))
 
-        # ============= EOF ====================================
-
+# ============= EOF ====================================
+# def _home_motor2(self, progress=None, *args, **kw):
+#         """
+#         """
+#         if progress is not None:
+#             progress.increase_max()
+#             progress.change_message('Homing {}'.format(self.name))
+#
+#         addr = self.address
+#
+#         cmd = '94'
+#         # control = 'F6'
+#         control = '8E'
+#
+#         v = self._float_to_hexstr(self.home_velocity)
+#         a = self._float_to_hexstr(self.home_acceleration)
+#         move_cmd = ''.join((cmd, control, v, a, '00'))
+#
+#         #         home_control_byte = self._load_home_control_byte()
+#         #         home_cmd = '19{:02x}'.format(home_control_byte)
+#
+#         cmds = [
+#             #                 (addr, home_cmd, 100, '=======Set Homing===='),
+#             (addr, move_cmd, 100, 'Send to Home')]
+#         self._execute_hex_commands(cmds)
+#
+#         '''
+#             this is a hack. Because the home move is in velocity profile mode we cannot use the 0bit of the status byte to
+#             determine when the move is complete (0bit indicates when motor has reached requested velocity).
+#
+#             instead we will poll the motor position until n successive positions are equal ie at a limt
+#         '''
+#
+#         self.block(4, progress=progress, homing=True)
+#
+#         # we are homed and should reset position
+#
+#         cmds = [(addr, '00', 100, 'reset position')]
+#
+#         self._execute_hex_commands(cmds)
 # def _check_status_byte(self, check_bit):
 #        '''
 #        return bool

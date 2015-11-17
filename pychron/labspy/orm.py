@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, func
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, func, Boolean
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.orm import relationship
 # ============= standard library imports ========================
@@ -27,6 +27,7 @@ stringcolumn = lambda w=80, **kw: Column(String(w), **kw)
 
 
 class BaseMixin(object):
+    id = Column(Integer, primary_key=True)
     @declared_attr
     def __tablename__(self):
         return self.__name__
@@ -58,6 +59,16 @@ class Measurement(Base, StatusMixin):
     pub_date = Column(DateTime, default=func.now())
 
 
+class Connections(Base, StatusMixin):
+    appname = stringcolumn()
+    username = stringcolumn()
+    devname = stringcolumn()
+    com = stringcolumn()
+    address = stringcolumn()
+    status = Column(Boolean)
+    timestamp = Column(DateTime)
+
+
 class Version(Base):
     __tablename__ = 'django_migrations'
 
@@ -65,23 +76,31 @@ class Version(Base):
     app = stringcolumn()
     name = stringcolumn()
 
-#
-#
-#
-# # Experiment klasses
-# class Experiment(Base, BaseMixin):
-#     ExpID = Column(Integer, primary_key=True)
-#     Name = stringcolumn()
-#     Spectrometer = stringcolumn()
-#     ExtractionDevice = stringcolumn()
-#     StartTime = Column(DateTime)
-#     EndTime = Column(DateTime)
-#     State = stringcolumn(default='Running')
-#     LastUpdate = Column(DateTime, default=func.now())
-#     User = stringcolumn()
-#
-#     HashID = stringcolumn()
-#     analyses = relationship('Analysis', backref='experiment')
+
+# Experiment klasses
+class Analysis(Base, BaseMixin):
+    experiment_id = Column(Integer, ForeignKey('Experiment.id'))
+    runid = stringcolumn()
+    start_time = Column(DateTime)
+    analysis_type = stringcolumn()
+
+
+class Experiment(Base, BaseMixin):
+    name = stringcolumn()
+    system = stringcolumn()
+    user = stringcolumn()
+    start_time = Column(DateTime)
+    state = stringcolumn()
+    # ExpID = Column(Integer, primary_key=True)
+    # ExtractionDevice = stringcolumn()
+    # StartTime = Column(DateTime)
+    # EndTime = Column(DateTime)
+    # State = stringcolumn(default='Running')
+    # LastUpdate = Column(DateTime, default=func.now())
+    # User = stringcolumn()
+
+    # HashID = stringcolumn()
+    analyses = relationship('Analysis', backref='experiment')
 #
 #
 # class AnalysisType(Base,BaseMixin):

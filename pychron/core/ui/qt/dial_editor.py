@@ -20,7 +20,7 @@ from traits.api import Any, Int, Float, Str, Bool, Either, Callable
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from traitsui.qt4.basic_editor_factory import BasicEditorFactory
+from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.editor import Editor
 
 

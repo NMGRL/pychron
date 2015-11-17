@@ -183,7 +183,7 @@ class ClientSwitchManager(SwitchManager):
         :return: True if local checksum matches remote checksum.
         """
         valves = self.switches
-        vkeys = valves.keys()
+        vkeys = sorted(valves.keys())
         local = self.calculate_checksum(vkeys)
 
         remote = self.get_state_checksum(vkeys)

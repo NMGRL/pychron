@@ -39,21 +39,25 @@ class ClientExtractionLinePlugin(ExtractionLinePlugin):
             self.warning_dialog('Script Runner is not configured in the Initialization file. See documentation')
             return
 
-        host, port, kind = None, None, None
+        host, port, kind, frame = None, None, None, None
 
         if runner is not None:
             comms = runner.find('communications')
             host = comms.find('host')
             port = comms.find('port')
             kind = comms.find('kind')
+            frame = comms.find('message_frame')
 
         if host is not None:
             host = host.text  # if host else 'localhost'
         if port is not None:
             port = int(port.text)  # if port else 1061
+        if kind is not None:
             kind = kind.text  # if kind else 'udp'
+        if frame is not None:
+            frame = frame.text
 
-        runner = RemotePyScriptRunner(host, port, kind)
+        runner = RemotePyScriptRunner(host, port, kind, frame)
         return runner
 
     def _preferences_panes_default(self):

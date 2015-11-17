@@ -19,7 +19,7 @@ from pyface.qt import QtGui
 from traits.has_traits import HasTraits
 from traits.trait_types import Str
 from traitsui.item import UItem
-from traitsui.qt4.basic_editor_factory import BasicEditorFactory
+from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.editor import Editor
 from traitsui.view import View
 from pychron.image.cv_wrapper import get_capture_device

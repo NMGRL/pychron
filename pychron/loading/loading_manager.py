@@ -15,31 +15,22 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import os
-from datetime import datetime
 
-from matplotlib.cm import get_cmap, cmap_d
 from traits.api import HasTraits, cached_property, List, Str, Instance, \
     Property, Int, Event, Any, Bool, Button, Float, on_trait_change, Enum, RGBColor
 from traitsui.api import View, Item, EnumEditor, UItem, ListStrEditor
-
-
-
-
-
-
-
-
 # ============= standard library imports ========================
-
+import os
+from datetime import datetime
+from matplotlib.cm import get_cmap, cmap_d
 from itertools import groupby
 # ============= local library imports  ==========================
 from pychron.canvas.utils import load_holder_canvas
 from pychron.core.helpers.filetools import view_file
-from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.canvas.canvas2D.loading_canvas import LoadingCanvas, group_position
 
 from pychron.canvas.canvas2D.scene.primitives.primitives import LoadIndicator
+from pychron.dvc.dvc_irradiationable import DVCIrradiationable
 from pychron.loading.loading_pdf_writer import LoadingPDFWriter
 from pychron.paths import paths
 
@@ -121,12 +112,14 @@ class LoadPosition(HasTraits):
 maps = [m for m in cmap_d if not m.endswith("_r")]
 
 
-class LoadingManager(IsotopeDatabaseManager):
+class LoadingManager(DVCIrradiationable):
+    # db = Instance('pychron.dvc.dvc_database.DVCDatabase')
     _pdf_writer = Instance(LoadingPDFWriter, ())
     dirty = Bool(False)
     username = Str
     refresh_level = Event
     refresh_irradiation = Event
+    refresh_labnumber = Event
 
     available_user_names = List
 
@@ -143,7 +136,7 @@ class LoadingManager(IsotopeDatabaseManager):
     npositions = Int(1)
     auto_increment = Bool(False)
     # irradiation_hole = Str
-    #     sample = Str
+    # sample = Str
 
     positions = List
 
@@ -184,11 +177,15 @@ class LoadingManager(IsotopeDatabaseManager):
     interaction_mode = Enum('Entry', 'Info', 'Edit')
     suppress_update = False
 
+    def __init__(self, *args, **kw):
+        super(LoadingManager, self).__init__(*args, **kw)
+        self.dvc = self.application.get_service('pychron.dvc.dvc.DVC')
+
     def load(self):
         if self.canvas:
             self.canvas.editable = True
             self.clear()
-        return super(LoadingManager, self).load()
+        return True
 
     def clear(self):
         self.load_name = ''
@@ -199,26 +196,27 @@ class LoadingManager(IsotopeDatabaseManager):
 
         self.canvas = self.make_canvas(loadtable)
 
-        with self.db.session_ctx():
+        with self.dvc.db.session_ctx():
             if isinstance(loadtable, (str, unicode)):
-                loadtable = self.db.get_loadtable(loadtable)
+                loadtable = self.dvc.db.get_loadtable(loadtable)
 
             self.positions = []
             if not loadtable:
                 return
 
             for ln, poss in groupby(loadtable.loaded_positions,
-                                    key=lambda x: x.lab_identifier):
-                dbln = self.db.get_labnumber(ln, key='id')
+                                    key=lambda x: x.identifier):
+                dbpos = self.dvc.db.get_identifier(ln)
                 sample = ''
-                if dbln and dbln.sample:
-                    sample = dbln.sample.name
-                dbirradpos = dbln.irradiation_position
-                dblevel = dbirradpos.level
+                project = ''
+                if dbpos.sample:
+                    sample = dbpos.sample.name
+                    project = dbpos.sample.project.name
 
+                dblevel = dbpos.level
                 irrad = dblevel.irradiation.name
                 level = dblevel.name
-                irradpos = dbirradpos.position
+                irradpos = dbpos.position
                 irradiation = '{} {}{}'.format(irrad, level, irradpos)
 
                 pos = []
@@ -228,7 +226,7 @@ class LoadingManager(IsotopeDatabaseManager):
                     if item:
                         item.fill = True
                         item.add_labnumber_label(
-                            dbln.identifier,
+                            dbpos.identifier,
                             # ox=-10, oy=-10,
                             visible=self.show_labnumbers)
 
@@ -243,17 +241,17 @@ class LoadingManager(IsotopeDatabaseManager):
                     pos.append(pid)
 
                 if group_labnumbers:
-                    self._add_position(ln, pos)
+                    self._add_position(pos, ln, sample, project, irrad, level, irradpos)
                 else:
                     for pi in pos:
-                        self._add_position(ln, [pi])
+                        self._add_position([pi], ln, sample, project, irrad, level, irradpos)
 
         self.positions = sorted(self.positions, key=lambda x: x.positions[0])
         self._set_group_colors()
         self.canvas.request_redraw()
 
     def make_canvas(self, new, editable=True):
-        db = self.db
+        db = self.dvc.db
         with db.session_ctx():
 
             #         with session(None) as s:
@@ -265,15 +263,16 @@ class LoadingManager(IsotopeDatabaseManager):
                     view_y_range=(-2, 2),
                     editable=editable)
 
-            if lt and lt.holder_:
-                load_holder_canvas(c, lt.holder_.geometry,
+            if lt and lt.holderName:
+                holes = self.dvc.get_load_holder_holes(lt.holderName)
+                load_holder_canvas(c, holes,
                                    show_hole_numbers=self.show_hole_numbers)
 
                 for pi in lt.loaded_positions:
                     item = c.scene.get_item(str(pi.position))
                     if item:
                         item.fill = True
-                        item.identifier = pi.labnumber.identifier
+                        item.identifier = pi.identifier
                         item.add_labnumber_label(item.identifier)
 
                 for pi in lt.measured_positions:
@@ -288,16 +287,17 @@ class LoadingManager(IsotopeDatabaseManager):
         return c
 
     def setup(self):
-        if self.db.connected:
-            ls = self._get_loads()
+        if self.dvc.db.connected:
+            ls = self._get_load_names()
             if ls:
                 self.loads = ls
 
-            ts = self._get_trays()
+            # ts = self._get_trays()
+            ts = self.dvc.db.get_load_holders()
             if ts:
                 self.trays = ts
 
-            us = self._get_users()
+            us = self.dvc.db.get_users()
             if us:
                 self.available_user_names = us
 
@@ -366,11 +366,12 @@ class LoadingManager(IsotopeDatabaseManager):
         else:
             self.information_dialog('Please select a load')
 
-    def save(self):
+    def save(self, save_positions=True):
         self.debug('saving load to database')
-        with self.db.session_ctx():
+        with self.dvc.db.session_ctx():
             self._save_load()
-            self._save_positions(self.load_name)
+            if save_positions:
+                self._save_positions(self.load_name)
             self.dirty = False
         return True
 
@@ -392,29 +393,26 @@ class LoadingManager(IsotopeDatabaseManager):
         self.interaction_mode = 'Info'
 
     # private
-    def _get_users(self):
-        with self.db.session_ctx():
-            users = self.db.get_users()
-            return [u.name for u in users]
 
-    def _get_loads(self):
-        with self.db.session_ctx():
-            loads = self.db.get_loads()
-            if loads:
-                return [li.name for li in loads]
+    def _get_load_names(self):
+        return self.dvc.db.get_loads()
+        # with self.dvc.db.session_ctx():
+        # if loads:
+        #         return [li.name for li in loads]
 
-    def _get_trays(self):
-        with self.db.session_ctx():
-            trays = self.db.get_load_holders()
-            if trays:
-                ts = [ti.name for ti in trays]
-                return ts
+    # def _get_trays(self):
+    # with self.dvc.db.session_ctx():
+    #         trays = self.dvc.db.get_load_holders()
+    #         print 'fge_', trays
+    #         if trays:
+    #             ts = [ti.name for ti in trays]
+    #             return ts
 
     def _get_last_load(self, set_tray=True):
 
-        #         with self.db.session_():
-        with self.db.session_ctx():
-            lt = self.db.get_loadtable()
+        # with self.dvc.db.session_():
+        with self.dvc.db.session_ctx():
+            lt = self.dvc.db.get_loadtable()
             if lt:
                 self.load_name = lt.name
                 #                 if set_tray and lt.holder_:
@@ -502,13 +500,15 @@ class LoadingManager(IsotopeDatabaseManager):
             idx = self.labnumbers.index(self.labnumber)
             try:
                 self.labnumber = self.labnumbers[idx + 1]
+                print self.labnumber, idx
+                self.refresh_labnumber = True
             except IndexError:
                 idx = self.levels.index(self.level)
                 try:
                     self.level = self.levels[idx + 1]
                     self.labnumber = self.labnumbers[0]
                     self.refresh_level = True
-                    # print 'increment level', self.level
+                    print 'increment level', self.level
                 except IndexError:
                     idx = self.irradiations.index(self.irradiation)
                     try:
@@ -529,31 +529,39 @@ class LoadingManager(IsotopeDatabaseManager):
         else:
             self._new_position_group(canvas_hole)
 
-    def _add_position(self, ln, pos):
+    def _add_position(self, pos, identifier, sample, project, irradiation, level, ipos):
         pos = map(int, pos)
-        ln = self.db.get_labnumber(ln, key='id')
-        ip = ln.irradiation_position
-        level = ip.level
-        irrad = level.irradiation
-        sample = ''
-        project = ''
-        if ln.sample:
-            sample = ln.sample.name
-            if ln.sample.project:
-                project = ln.sample.project.name
-
-        lp = LoadPosition(labnumber=ln.identifier,
+        lp = LoadPosition(labnumber=identifier,
                           sample=sample,
                           project=project,
-                          irradiation=irrad.name,
-                          level=level.name,
-                          irrad_position=int(ip.position),
+                          irradiation=irradiation,
+                          level=level,
+                          irrad_position=int(ipos),
                           positions=pos)
-
         self.positions.append(lp)
 
+        # ln = self.dvc.db.get_labnumber(ln)
+        # ip = ln.irradiation_position
+        # level = ip.level
+        # irrad = level.irradiation
+        # sample = ''
+        # project = ''
+        # if ln.sample:
+        # sample = ln.sample.name
+        #     if ln.sample.project:
+        #         project = ln.sample.project.name
+
+        # lp = LoadPosition(labnumber=ln.identifier,
+        #                   sample=sample,
+        #                   project=project,
+        #                   irradiation=irrad.name,
+        #                   level=level.name,
+        #                   irrad_position=int(ip.position),
+        #                   positions=pos)
+
+
     def _save_load(self):
-        db = self.db
+        db = self.dvc.db
         nln = self.new_load_name
         if nln:
             lln = self._get_last_load(set_tray=False)
@@ -562,14 +570,14 @@ class LoadingManager(IsotopeDatabaseManager):
             else:
                 self.info('adding load {} {} to database'.format(nln, self.tray))
                 db.add_load(nln, holder=self.tray)
-
-                ls = self._get_loads()
+                db.flush()
+                ls = self._get_load_names()
                 self.loads = ls
                 self._get_last_load()
                 self.new_load_name = 0
 
     def _save_positions(self, name):
-        db = self.db
+        db = self.dvc.db
         with db.session_ctx() as sess:
             lt = db.get_loadtable(name=name)
 
@@ -592,7 +600,7 @@ class LoadingManager(IsotopeDatabaseManager):
 
     @cached_property
     def _get_labnumbers(self):
-        db = self.db
+        db = self.dvc.db
         r = []
         if db.connected:
             with db.session_ctx():
@@ -600,28 +608,28 @@ class LoadingManager(IsotopeDatabaseManager):
                                                  self.level)
                 if level:
                     #             self._positions = [str(li.position) for li in level.positions]
-                    r = sorted([li.labnumber.identifier
-                                for li in level.positions if li.labnumber])
+                    r = sorted([li.identifier
+                                for li in level.positions if li.identifier])
                     if r:
                         self.labnumber = r[0]
         return r
 
     def _get_irradiation_position_record(self):
-        with self.db.session_ctx():
-            level = self.db.get_irradiation_level(self.irradiation,
-                                                  self.level)
+        with self.dvc.db.session_ctx():
+            level = self.dvc.db.get_irradiation_level(self.irradiation,
+                                                      self.level)
             if level:
                 return next((pi for pi in level.positions
-                             if pi.labnumber and pi.labnumber.identifier == self.labnumber), None)
+                             if pi.identifier == self.labnumber), None)
 
     @cached_property
     def _get_project(self):
         project = ''
-        if self.db.connected:
-            with self.db.session_ctx():
+        if self.dvc.db.connected:
+            with self.dvc.db.session_ctx():
                 pos = self._get_irradiation_position_record()
                 try:
-                    project = pos.labnumber.sample.project.name
+                    project = pos.sample.project.name
                 except AttributeError:
                     pass
         return project
@@ -629,11 +637,11 @@ class LoadingManager(IsotopeDatabaseManager):
     @cached_property
     def _get_sample(self):
         sample = ''
-        if self.db.connected:
-            with self.db.session_ctx():
+        if self.dvc.db.connected:
+            with self.dvc.db.session_ctx():
                 pos = self._get_irradiation_position_record()
                 try:
-                    sample = pos.labnumber.sample.name
+                    sample = pos.sample.name
                 except AttributeError:
                     pass
         return sample
@@ -645,8 +653,8 @@ class LoadingManager(IsotopeDatabaseManager):
     @cached_property
     def _get_irradiation_hole(self):
         ir = ''
-        if self.db.connected:
-            with self.db.session_ctx():
+        if self.dvc.db.connected:
+            with self.dvc.db.session_ctx():
                 pos = self._get_irradiation_position_record()
                 if pos is not None:
                     ir = pos.position
@@ -667,33 +675,32 @@ class LoadingManager(IsotopeDatabaseManager):
         ls = LoadSelection(loads=self.loads)
         info = ls.edit_traits()
         if info.result:
-            db = self.db
+            db = self.dvc.db
             with db.session_ctx():
                 loads = db.get_loads(names=ls.selected)
                 for li in loads:
                     li.archived = True
 
-            self.loads = self._get_loads()
+            self.loads = self._get_load_names()
 
     def _add_button_fired(self):
-        db = self.db
+        db = self.dvc.db
         with db.session_ctx():
             ln = db.get_latest_load()
-            ln = ln.name
 
-        try:
-
-            nv = int(ln) + 1
-        except (ValueError, IndexError), e:
-            print e
-            nv = 1
+            try:
+                ln = ln.name
+                nv = int(ln) + 1
+            except (ValueError, IndexError, AttributeError), e:
+                print 'lm add button exception', e
+                nv = 1
 
         self.new_load_name = nv
 
         info = self.edit_traits(view='_new_load_view')
 
         if info.result:
-            self.save()
+            self.save(save_positions=False)
             self._refresh_loads()
 
     def _delete_button_fired(self):
@@ -702,9 +709,9 @@ class LoadingManager(IsotopeDatabaseManager):
             if not self.confirmation_dialog('Are you sure you want to delete {}?'.format(ln)):
                 return
 
-            with self.db.session_ctx() as sess:
+            with self.dvc.db.session_ctx() as sess:
                 # delete the load and any associated records
-                dbload = self.db.get_loadtable(name=ln)
+                dbload = self.dvc.db.get_loadtable(name=ln)
                 if dbload:
                     for ps in (dbload.loaded_positions, dbload.measured_positions):
                         for pos in ps:
@@ -717,7 +724,7 @@ class LoadingManager(IsotopeDatabaseManager):
 
 
     def _refresh_loads(self):
-        self.loads = self._get_loads()
+        self.loads = self._get_load_names()
         self.load_name = self.loads[0]
 
     def _load_name_changed(self, new):
@@ -821,7 +828,8 @@ class LoadingManager(IsotopeDatabaseManager):
 
                         self._set_position(new)
                         new = self.canvas.scene.get_item(str(int(new.name) + 1))
-                        self.canvas.set_last_position(int(new.name))
+                        if new:
+                            self.canvas.set_last_position(int(new.name))
 
                     if not self.retain_weight:
                         self.weight = 0

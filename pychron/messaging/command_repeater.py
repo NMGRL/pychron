@@ -24,9 +24,10 @@ from random import random
 from threading import Lock
 # ============= local library imports  ==========================
 from pychron.config_loadable import ConfigLoadable
-from pychron.remote_hardware.errors import PychronCommErrorCode
+# from pychron.remote_hardware.errors import PychronCommErrorCode
 from pychron.globals import globalv
 from pychron.core.ui.led_editor import LED, LEDEditor
+from pychron.tx.errors import PychronCommErrorCode
 
 
 class CRHandler(Handler):
