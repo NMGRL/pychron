@@ -134,7 +134,7 @@ class PlotPanel(Loggable):
     def set_peak_center_graph(self, graph):
         graph.page_name = 'Peak Center'
         self.peak_center_graph = graph
-        self.graphs = [self.isotope_graph, self.peak_center_graph]
+        self.graphs = [self.isotope_graph, self.peak_center_graph, self.sniff_graph]
         self.show_graph(graph)
 
     def show_graph(self, g):

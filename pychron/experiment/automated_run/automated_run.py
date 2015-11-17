@@ -2002,6 +2002,7 @@ anaylsis_type={}
                                      marker_size=1.25,
                                      fit=fit,
                                      plotid=idx,
+                                     use_error_envelope=False,
                                      add_inspector=False,
                                      add_tools=False)
 
