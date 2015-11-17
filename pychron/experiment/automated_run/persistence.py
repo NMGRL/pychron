@@ -218,7 +218,7 @@ class AutomatedRunPersister(BasePersister):
 
     """
     dbexperiment_identifier = Long
-    local_lab_db = Instance(LocalLabAdapter)
+    # local_lab_db = Instance(LocalLabAdapter)
     datahub = Instance('pychron.experiment.datahub.Datahub')
 
     data_manager = Instance('pychron.managers.data_managers.h5_data_manager.H5DataManager', ())
@@ -1004,12 +1004,11 @@ class AutomatedRunPersister(BasePersister):
                              collection_path=cp)
 
     def _local_lab_db_factory(self):
-        if self.local_lab_db:
-            return self.local_lab_db
-        path = os.path.join(paths.hidden_dir, 'local_lab.db')
+        # if self.local_lab_db:
+        #     return self.local_lab_db
+        # path = os.path.join(paths.hidden_dir, 'local_lab.db')
         # name = '/Users/ross/Sandbox/local.db'
-        ldb = LocalLabAdapter(path=path)
-        ldb.connect()
+        ldb = LocalLabAdapter()
         ldb.build_database()
         return ldb
 

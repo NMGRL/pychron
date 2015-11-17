@@ -137,10 +137,9 @@ class ExperimentPlugin(BaseTaskPlugin):
                   SchemaAddition(id='pychron.experiment.new_experiment', factory=NewExperimentQueueAction,
                                  path='MenuBar/file.menu/New'),
                   SchemaAddition(id='pychron.experiment.signal_calculator', factory=SignalCalculatorAction,
-                                 path='MenuBar/Tools'),
+                                 path='MenuBar/tools.menu'),
                   SchemaAddition(id='pychron.experiment.last_analysis_recovery', factory=LastAnalysisRecoveryAction,
-                                 path='MenuBar/Tools'),
-
+                                 path='MenuBar/tools.menu'),
                   SchemaAddition(id='pychron.experiment.new_pattern', factory=NewPatternAction,
                                  path='MenuBar/file.menu/New'),
                   SchemaAddition(id='pychron.experiment.open_pattern', factory=OpenPatternAction,
