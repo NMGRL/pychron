@@ -41,20 +41,21 @@ class AnalysisRecoverer(Loggable):
             self.warning('No analyses to recover')
             return
 
-        lt = ldb.get_last_analysis()
-        if lt is None:
-            self.warning('No analyses to recover')
-            return
+        with ldb.session_ctx():
+            lt = ldb.get_last_analysis()
+            if lt is None:
+                self.warning('No analyses to recover')
+                return
 
-        self.debug('last analysis Time: {}, Identifier: {}, Aliquot: {}'.format(lt.create_date,
-                                                                                lt.labnumber,
-                                                                                lt.aliquot))
-        persister = AutomatedRunPersister()
-        datahub = Datahub()
-        persister.datahub = datahub
+            self.debug('last analysis Time: {}, Identifier: {}, Aliquot: {}'.format(lt.create_date,
+                                                                                    lt.labnumber,
+                                                                                    lt.aliquot))
+            persister = AutomatedRunPersister()
+            datahub = Datahub()
+            persister.datahub = datahub
 
-        per_spec = self._make_per_spec(lt)
-        persister.per_spec = per_spec
+            per_spec = self._make_per_spec(lt)
+            persister.per_spec = per_spec
 
         persister.post_extraction_save('','',[])
         persister.post_measurement_save(save_local=False)

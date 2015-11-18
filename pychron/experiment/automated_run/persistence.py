@@ -155,7 +155,7 @@ class ExcelPersister(BasePersister):
         wb.save(path)
 
     def _save_isotopes(self, sh):
-        for i, (k, iso) in enumerate(self.per_spec.arar_age.isotopes.items()):
+        for i, (k, iso) in enumerate(self.per_spec.isotope_group.isotopes.items()):
 
             sh.write(0, i, '{} time'.format(k))
             sh.write(0, i+1, '{} intensity'.format(k))
@@ -580,7 +580,7 @@ class AutomatedRunPersister(BasePersister):
         from pychron.experiment.utilities.identifier import get_analysis_type
 
         if get_analysis_type(self.per_spec.run_spec.identifier) == 'detector_ic':
-            items = make_items(self.per_spec.arar_age.isotopes)
+            items = make_items(self.per_spec.isotope_group.isotopes)
 
             save_csv(self.per_spec.run_spec.record_id, items)
 
@@ -662,7 +662,7 @@ class AutomatedRunPersister(BasePersister):
         dbhist = db.add_fit_history(analysis,
                                     user=self.per_spec.run_spec.username)
 
-        for iso in self.per_spec.arar_age.isotopes.itervalues():
+        for iso in self.per_spec.isotope_group.isotopes.itervalues():
             detname = iso.detector
             dbdet = db.get_detector(detname)
             if dbdet is None:
@@ -837,11 +837,11 @@ class AutomatedRunPersister(BasePersister):
 
     def _save_detector_intercalibration(self, db, analysis):
         self.info('saving detector intercalibration')
-        if self.per_spec.arar_age:
+        if self.per_spec.isotope_group:
             history = None
             for det in self.per_spec.active_detectors:
                 det = det.name
-                ic = self.per_spec.arar_age.get_ic_factor(det)
+                ic = self.per_spec.isotope_group.get_ic_factor(det)
                 self.info('default ic_factor {}= {}'.format(det, ic))
                 if det == 'CDD':
                     # save cdd_ic_factor so it can be exported to secondary db
@@ -944,7 +944,7 @@ class AutomatedRunPersister(BasePersister):
         # sf = dict(zip(dkeys, fb))
         # p = self._current_data_frame
 
-        ic = self.per_spec.arar_age.get_ic_factor('CDD')
+        ic = self.per_spec.isotope_group.get_ic_factor('CDD')
 
         exp = MassSpecExportSpec(runid=rid,
                                  runscript_name=self.per_spec.runscript_name,
@@ -953,7 +953,7 @@ class AutomatedRunPersister(BasePersister):
                                  mass_spectrometer=self.per_spec.run_spec.mass_spectrometer.capitalize(),
                                  # blanks=blanks,
                                  # data_path=p,
-                                 isotopes=self.per_spec.arar_age.isotopes,
+                                 isotopes=self.per_spec.isotope_group.isotopes,
                                  # signal_intercepts=si,
                                  # signal_intercepts=self._processed_signals_dict,
                                  is_peak_hop=self.per_spec.save_as_peak_hop,

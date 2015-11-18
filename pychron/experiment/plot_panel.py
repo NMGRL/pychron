@@ -28,9 +28,8 @@ from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.graph.stacked_graph import StackedGraph
 from pychron.graph.stacked_regression_graph import StackedRegressionGraph
-from pychron.processing.analyses.view.automated_run_view import AutomatedRunAnalysisView
-from pychron.processing.arar_age import ArArAge
-from pychron.pychron_constants import PLUSMINUS
+from pychron.processing.isotope_group import IsotopeGroup
+from pychron.pychron_constants import PLUSMINUS, AR_AR
 from pychron.loggable import Loggable
 
 HEIGHT = 250
@@ -89,9 +88,10 @@ class GraphContainer(TraitsContainer):
 
 class PlotPanel(Loggable):
     graph_container = Instance(GraphContainer)
-    analysis_view = Instance(AutomatedRunAnalysisView, ())
+    # analysis_view = Instance(ArArAutomatedRunAnalysisView, ())
+    analysis_view = Instance('pychron.processing.analyses.view.automated_run_view.AutomatedRunAnalysisView')
 
-    arar_age = Instance(ArArAge)
+    isotope_group = Instance(IsotopeGroup)
 
     sniff_graph = Instance(Graph)
     isotope_graph = Instance(Graph)
@@ -126,7 +126,7 @@ class PlotPanel(Loggable):
     is_peak_hop = Bool(False)
     hops = List
 
-    ratios = ['Ar40:Ar36', 'Ar40:Ar39', ]
+    # ratios = ['Ar40:Ar36', 'Ar40:Ar39', ]
     info_func = None
 
     # refresh_age = True
@@ -172,6 +172,16 @@ class PlotPanel(Loggable):
     def new_plot(self, **kw):
         return self._new_plot(**kw)
 
+    def set_analysis_view(self, experiment_type, **kw):
+        if experiment_type == AR_AR:
+            from pychron.processing.analyses.view.automated_run_view import ArArAutomatedRunAnalysisView
+            klass = ArArAutomatedRunAnalysisView
+        else:
+            from pychron.processing.analyses.view.automated_run_view import GenericAutomatedRunAnalysisView
+            klass = GenericAutomatedRunAnalysisView
+        self.analysis_view = klass(**kw)
+
+    # private
     def _new_plot(self, **kw):
         for g in (self.sniff_graph, self.isotope_graph):
             plot = g.new_plot(xtitle='time (s)', padding_left=70,
@@ -182,7 +192,6 @@ class PlotPanel(Loggable):
 
         return plot
 
-    # private
     def _create(self, evt):
         self.reset()
 
@@ -249,7 +258,7 @@ class PlotPanel(Loggable):
     @on_trait_change('isotope_graph:regression_results')
     def _update_display(self, obj, name, old, new):
         if new:
-            self.analysis_view.load_computed(self.arar_age, new_list=False)
+            self.analysis_view.load_computed(self.isotope_group, new_list=False)
             self.analysis_view.refresh_needed = True
 
     # ===============================================================================

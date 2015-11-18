@@ -44,8 +44,9 @@ from pychron.experiment.utilities.script import assemble_script_blob
 from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.paths import paths
+from pychron.processing.analyses.view.automated_run_view import GenericAutomatedRunAnalysisView
 from pychron.pychron_constants import NULL_STR, MEASUREMENT_COLOR, \
-    EXTRACTION_COLOR, SCRIPT_KEYS
+    EXTRACTION_COLOR, SCRIPT_KEYS, AR_AR
 
 DEBUG = False
 
@@ -125,7 +126,7 @@ class AutomatedRun(Loggable):
     runner = Any
     monitor = Any
     plot_panel = Any
-    arar_age = Instance('pychron.processing.arar_age.ArArAge')
+    isotope_group = Instance('pychron.processing.isotope_group.IsotopeGroup')
 
     spec = Any
     runid = Str
@@ -179,8 +180,11 @@ class AutomatedRun(Loggable):
 
     persistence_spec = Instance(PersistenceSpec)
 
+    experiment_type = Str
+
     def bind_preferences(self):
         prefid = 'pychron.experiment'
+        bind_preference(self, 'experiment_type', '{}.pychron.experiment'.format(prefid))
         bind_preference(self, 'use_peak_center_threshold', '{}.use_peak_center_threshold'.format(prefid))
         bind_preference(self, 'peak_center_threshold1', '{}.peak_center_threshold1'.format(prefid))
         bind_preference(self, 'peak_center_threshold2', '{}.peak_center_threshold2'.format(prefid))
@@ -246,7 +250,7 @@ class AutomatedRun(Loggable):
             self._activate_detectors(dets)
 
     def py_set_fits(self, fits):
-        isotopes = self.arar_age.isotopes
+        isotopes = self.isotope_group.isotopes
         if not fits:
             fits = self._get_default_fits()
         elif len(fits) == 1:
@@ -265,7 +269,7 @@ class AutomatedRun(Loggable):
             self.debug('set "{}" to "{}"'.format(k, fi))
 
     def py_set_baseline_fits(self, fits):
-        isotopes = self.arar_age.isotopes
+        isotopes = self.isotope_group.isotopes
 
         if not fits:
             fits = self._get_default_fits(is_baseline=True)
@@ -404,7 +408,7 @@ class AutomatedRun(Loggable):
 
         if self.plot_panel:
             bs = dict([(iso.name, iso.baseline.uvalue) for iso in
-                       self.arar_age.isotopes.values()])
+                       self.isotope_group.isotopes.values()])
             self.set_previous_baselines(bs)
             self.plot_panel.is_baseline = False
 
@@ -427,7 +431,7 @@ class AutomatedRun(Loggable):
         key = lambda x: x[0]
         hops = parse_hops(hopstr, ret='iso,det,is_baseline')
         hops = sorted(hops, key=key)
-        a = self.arar_age
+        a = self.isotope_group
         g = self.plot_panel.isotope_graph
 
         _, pb = self.get_previous_blanks()
@@ -519,8 +523,8 @@ class AutomatedRun(Loggable):
         ion = self.ion_optics_manager
 
         if ion is not None:
-            if self.arar_age and check_intensity and self.use_peak_center_threshold:
-                iso = self.arar_age.get_isotope(isotope)
+            if self.isotope_group and check_intensity and self.use_peak_center_threshold:
+                iso = self.isotope_group.get_isotope(isotope)
                 v = iso.get_intensity()
                 if v < self.peak_center_threshold1:
                     self.debug('peak center: {}={}<{}'.format(isotope, v, self.peak_center_threshold1))
@@ -710,17 +714,17 @@ class AutomatedRun(Loggable):
         if self.plot_panel:
             self.plot_panel.info_func = None
             self.plot_panel.automated_run = None
-            self.plot_panel.arar_age = None
+            self.plot_panel.isotope_group = None
 
         if self.monitor:
             self.monitor.automated_run = None
 
-        if self.arar_age:
-            self.arar_age = None
+        if self.isotope_group:
+            self.isotope_group = None
 
         if self.persistence_spec:
             self.persistence_spec.spec = None
-            self.persistence_spec.arar_age = None
+            self.persistence_spec.isotope_group = None
 
         self._persister_action('trait_set', persistence_spec=None)
         self.spec = None
@@ -993,7 +997,7 @@ class AutomatedRun(Loggable):
 
         self._update_persister_spec(save_as_peak_hop=False,
                                     run_spec=self.spec,
-                                    arar_age=self.arar_age,
+                                    isotope_group=self.isotope_group,
                                     positions=self.spec.get_position_list(),
                                     auto_save_detector_ic=auto_save_detector_ic,
                                     extraction_positions=ext_pos,
@@ -1222,8 +1226,8 @@ class AutomatedRun(Loggable):
                                        for ai in self._active_detectors])
 
         age = ''
-        if self.arar_age:
-            age = self.arar_age.age
+        if self.isotope_group:
+            age = self.isotope_group.age
         age_string = 'age={}'.format(age)
 
         return '''runid={} timestamp={} {}
@@ -1239,7 +1243,7 @@ anaylsis_type={}
 
     def get_baseline_corrected_signals(self):
         d = dict()
-        for k, iso in self.arar_age.isotopes.iteritems():
+        for k, iso in self.isotope_group.isotopes.iteritems():
             d[k] = iso.get_baseline_corrected_value()
         return d
 
@@ -1253,23 +1257,27 @@ anaylsis_type={}
     # private
     # ===============================================================================
     def _start(self):
-
-        if self._use_arar_age():
-            if self.arar_age is None:
-                # load arar_age object for age calculation
+        if self.isotope_group is None:
+            # load arar_age object for age calculation
+            if self.experiment_type == AR_AR:
                 from pychron.processing.arar_age import ArArAge
+                klass = ArArAge
+            else:
+                from pychron.processing.isotope_group import IsotopeGroup
+                klass = IsotopeGroup
 
-                self.arar_age = ArArAge()
+            self.isotope_group = klass()
 
-            es = self.extraction_script
-            if es is not None:
-                # get senstivity multiplier from extraction script
-                v = self._get_yaml_parameter(es, 'sensitivity_multiplier', default=1)
-                self.arar_age.sensitivity_multiplier = v
+        es = self.extraction_script
+        if es is not None:
+            # get sensitivity multiplier from extraction script
+            v = self._get_yaml_parameter(es, 'sensitivity_multiplier', default=1)
+            self.isotope_group.sensitivity_multiplier = v
 
-            ln = self.spec.labnumber
-            ln = convert_identifier(ln)
-            if not self.experiment_executor.datahub.load_analysis_backend(ln, self.arar_age):
+        ln = self.spec.labnumber
+        ln = convert_identifier(ln)
+        if self.experiment_type:
+            if not self.experiment_executor.datahub.load_arar_analysis_backend(ln, self.isotope_group):
                 self.debug('failed load analysis backend')
                 return
 
@@ -1300,6 +1308,9 @@ anaylsis_type={}
             self.plot_panel.total_counts = 0
             self.plot_panel.is_peak_hop = False
             self.plot_panel.is_baseline = False
+            self.plot_panel.set_analysis_view(self.experiment_type)
+
+            # self.plot_panel.experiment_type = self.experiment_type
 
         self.multi_collector.canceled = False
         self.multi_collector.is_baseline = False
@@ -1394,7 +1405,7 @@ anaylsis_type={}
                 #             # var.append(cx)
 
     def _conditional_appender(self, name, cd, klass):
-        if not self.arar_age:
+        if not self.isotope_group:
             self.warning('No ArArAge to use for conditional testing')
             return
 
@@ -1420,7 +1431,7 @@ anaylsis_type={}
         if attr == 'age' and self.spec.analysis_type not in ('unknown', 'cocktail'):
             self.debug('not adding because analysis_type not unknown or cocktail')
 
-        if not self.arar_age.has_attr(attr):
+        if not self.isotope_group.has_attr(attr):
             self.warning('invalid {} attribute "{}"'.format(name, attr))
         else:
             obj = getattr(self, '{}_conditionals'.format(name))
@@ -1548,9 +1559,9 @@ anaylsis_type={}
         p.show_isotope_graph()
 
         # for iso in self.arar_age.isotopes:
-        self.arar_age.clear_isotopes()
-        self.arar_age.clear_error_components()
-        self.arar_age.clear_blanks()
+        self.isotope_group.clear_isotopes()
+        self.isotope_group.clear_error_components()
+        self.isotope_group.clear_blanks()
 
         cb = False
         if (not self.spec.analysis_type.startswith('blank')
@@ -1560,18 +1571,18 @@ anaylsis_type={}
             pid, blanks = self.get_previous_blanks()
 
             for iso, v in blanks.iteritems():
-                self.arar_age.set_blank(iso, v)
+                self.isotope_group.set_blank(iso, v)
 
         for d in self._active_detectors:
-            self.arar_age.set_isotope(d.isotope, (0, 0),
-                                      detector=d.name,
-                                      correct_for_blank=cb)
+            self.isotope_group.set_isotope(d.isotope, (0, 0),
+                                           detector=d.name,
+                                           correct_for_blank=cb)
 
-        self.arar_age.clear_baselines()
+        self.isotope_group.clear_baselines()
 
         baselines = self.get_previous_baselines()
         for iso, v in baselines.iteritems():
-            self.arar_age.set_baseline(iso, v)
+            self.isotope_group.set_baseline(iso, v)
 
         p.analysis_view.load(self)
 
@@ -1637,12 +1648,12 @@ anaylsis_type={}
     def _get_extraction_parameter(self, key, default=None):
         return self._get_yaml_parameter(self.extraction_script, key, default)
 
-    def _use_arar_age(self):
-        ln = self.spec.labnumber
-        return ln not in ('dg', 'pa')
+    # def _use_arar_age(self):
+    #     ln = self.spec.labnumber
+    #     return ln not in ('dg', 'pa')
 
     def _new_plot_panel(self, plot_panel, stack_order='bottom_to_top'):
-        from pychron.processing.analyses.view.automated_run_view import AutomatedRunAnalysisView
+        from pychron.processing.analyses.view.automated_run_view import ArArAutomatedRunAnalysisView
 
         title = self.runid
         sample, irradiation = self.spec.sample, self.spec.display_irradiation
@@ -1657,10 +1668,12 @@ anaylsis_type={}
             plot_panel = PlotPanel(
                 stack_order=stack_order,
                 info_func=self.info,
-                arar_age=self.arar_age)
+                isotope_group=self.isotope_group)
 
-        an = AutomatedRunAnalysisView(analysis_type=self.spec.analysis_type,
-                                      analysis_id=self.runid)
+        plot_panel.set_analysis_view(self.experiment_type,
+                                     analysis_type=self.spec.analysis_type,
+                                     analysis_id=self.runid)
+        an = plot_panel.analysis_view
         an.load(self)
 
         plot_panel.trait_set(
@@ -1731,7 +1744,7 @@ anaylsis_type={}
 
     def _update_detectors(self):
         for det in self._active_detectors:
-            self.arar_age.set_isotope_detector(det)
+            self.isotope_group.set_isotope_detector(det)
 
     def _set_magnet_position(self, pos, detector,
                              dac=False, update_detectors=True,
@@ -1748,10 +1761,10 @@ anaylsis_type={}
             self._update_detectors()
         if remove_non_active:
             # remove non active isotopes
-            for iso in self.arar_age.isotopes.keys():
+            for iso in self.isotope_group.isotopes.keys():
                 det = next((di for di in self._active_detectors if di.isotope == iso), None)
                 if det is None:
-                    self.arar_age.isotopes.pop(iso)
+                    self.isotope_group.isotopes.pop(iso)
 
         if self.plot_panel:
             self.plot_panel.analysis_view.load(self)
@@ -1794,11 +1807,11 @@ anaylsis_type={}
                 ci['start'] = ncounts
 
         conds = [conditional_from_dict(ci, ActionConditional) for ci in conditionals]
-        self.arar_age.conditional_modifier = 'whiff'
+        self.isotope_group.conditional_modifier = 'whiff'
         self.collector.set_temporary_conditionals(conds)
         self.py_data_collection(None, ncounts, starttime, starttime_offset, series, fit_series, group='whiff')
         self.collector.clear_temporary_conditionals()
-        self.arar_age.conditional_modifier = None
+        self.isotope_group.conditional_modifier = None
 
         result = self.collector.measurement_result
         # self.persister.whiff_result = result
@@ -1905,6 +1918,7 @@ anaylsis_type={}
             data_generator=get_data,
             data_writer=data_writer,
             starttime=starttime,
+            experiment_type=self.experiment_type,
             refresh_age=self.spec.analysis_type in ('unknown', 'cocktail'))
 
         if self.plot_panel:
@@ -1946,7 +1960,7 @@ anaylsis_type={}
         graph.set_x_limits(min_=min_, max_=max_)
 
         series = self.collector.series_idx
-        for k, iso in self.arar_age.isotopes.iteritems():
+        for k, iso in self.isotope_group.isotopes.iteritems():
             idx = graph.get_plotid_by_ytitle(k)
             if idx is not None:
                 try:
@@ -1987,7 +2001,7 @@ anaylsis_type={}
         series = self.collector.series_idx
 
         regressing = False
-        for k, iso in self.arar_age.isotopes.iteritems():
+        for k, iso in self.isotope_group.isotopes.iteritems():
             idx = graph.get_plotid_by_ytitle(k)
             # print 'ff', k, iso.name, idx
             if idx is not None:

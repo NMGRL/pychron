@@ -131,7 +131,7 @@ class Datahub(Loggable):
                                                                                        spec.step,
                                                                                        spec.increment))
 
-    def load_analysis_backend(self, ln, arar_age):
+    def load_arar_analysis_backend(self, ln, arar_age):
         db = self.mainstore.db
         with db.session_ctx():
             ln = db.get_labnumber(ln)

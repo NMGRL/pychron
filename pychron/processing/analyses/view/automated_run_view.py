@@ -16,34 +16,31 @@
 
 # ============= enthought library imports =======================
 from traitsui.api import View, UItem, Group
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.processing.analyses.view.main_view import MainView
+from pychron.pychron_constants import AR_AR
 
 
 class AutomatedRunAnalysisView(MainView):
-    # def update_values(self, arar_age):
-    #     for ci in self.computed_values:
-    #         v = getattr(arar_age, ci)
-    _corrected_enabled = False
-
-    def load(self, ar):
-        an = ar.arar_age
-        self.isotopes = [an.isotopes[k] for k in an.isotope_keys]
-        self._irradiation_str = ar.spec.irradiation
-        self._j = an.j
-
-        self.load_computed(an)
-        self.load_extraction(ar.spec)
-
-        self.load_measurement(ar.spec, an)
-
     def _get_irradiation(self, an):
         return self._irradiation_str
 
     def _get_j(self, an):
         return self._j
+
+    def load(self, automated_run):
+        isotope_group = automated_run.isotope_group
+        self.isotopes = [isotope_group.isotopes[k] for k in isotope_group.isotope_keys]
+
+        self.load_computed(isotope_group)
+        self.load_extraction(automated_run.spec)
+        self.load_measurement(automated_run.spec, isotope_group)
+
+        self._load_hook(automated_run, isotope_group)
+
+    def _load_hook(self, automated_run, isotope_group):
+        pass
 
     def traits_view(self):
         teditor, ieditor, ceditor, eeditor, meditor = es = self._get_editors()
@@ -65,4 +62,17 @@ class AutomatedRunAnalysisView(MainView):
             Group(isotopes, ratios, extract, meas, layout='tabbed'))
         return v
 
+
+class ArArAutomatedRunAnalysisView(MainView):
+    _corrected_enabled = False
+
+    def _load_hook(self, automated_run, isotope_group):
+        if self.experiment_type == AR_AR:
+            self._irradiation_str = automated_run.spec.irradiation
+            self._j = isotope_group.j
+
+
+class GenericAutomatedRunAnalysisView(MainView):
+    def load_computed(self, an, new_list=True):
+        pass
 # ============= EOF =============================================

@@ -62,10 +62,10 @@ def get_teststr_attr_func(token):
 
         def func(obj, data, window):
             if window:
-                vs = obj.arar_age.get_values(attr, window)
+                vs = obj.isotope_group.get_values(attr, window)
                 v = ufloat(vs.mean(), vs.std())
             else:
-                v = obj.arar_age.get_value(attr)
+                v = obj.isotope_group.get_value(attr)
             return v
 
     if token.startswith('not'):
@@ -78,7 +78,7 @@ def get_teststr_attr_func(token):
 # wrappers
 def wrapper(fstr, token, ai):
     return lambda obj, data, window: eval(fstr, {'attr': ai,
-                                                 'aa': obj.arar_age,
+                                                 'aa': obj.isotope_group,
                                                  'obj': obj,
                                                  'data': data, 'window': window})
 

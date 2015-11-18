@@ -49,6 +49,8 @@ class ExperimentPreferences(BasePreferencesHelper):
     preferences_path = 'pychron.experiment'
     id = 'pychron.experiment.preferences_page'
 
+    experiment_type = Enum('Ar/Ar', 'Generic')
+
     use_notifications = Bool
     notifications_port = Int
 
@@ -239,7 +241,8 @@ class ExperimentPreferencesPane(PreferencesPane):
             show_border=True,
             label='Peak Center')
 
-        automated_grp = Group(VGroup(Item('send_config_before_run',
+        automated_grp = Group(VGroup(Item('experiment_type', label='Experiment Type'),
+                                     Item('send_config_before_run',
                                           tooltip='Set the spectrometer configuration before each analysis',
                                           label='Set Spectrometer Configuration on Start'),
                                      Item('set_integration_time_on_start',
