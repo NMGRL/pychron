@@ -19,7 +19,6 @@
 import argparse
 # ============= local library imports  ==========================
 import os
-
 import shutil
 
 VERSION = '1'
@@ -35,11 +34,24 @@ def migrate():
     version = get_version(root)
     if version == '0':
         migrate_spectrometer_config(root)
+        migrate_mftable(root)
 
     write_version(root)
 
 
 # migrations
+def migrate_mftable(root):
+    mfroot = os.path.join(root, 'setupfiles', 'spectrometer', 'mftables')
+    spec_root = os.path.join(root, 'setupfiles', 'spectrometer')
+    if not os.path.isdir(mfroot):
+        os.mkdir(mfroot)
+
+    # move mftable
+    mfpath = os.path.join(spec_root, 'mftable.csv')
+    if os.path.isfile(mfpath):
+        shutil.move(mfpath, os.path.join(mfroot, 'argon.csv'))
+
+
 def migrate_spectrometer_config(root):
     # make configuration dir
     spec_root = os.path.join(root, 'setupfiles', 'spectrometer')

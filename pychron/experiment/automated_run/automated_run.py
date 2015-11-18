@@ -726,8 +726,19 @@ class AutomatedRun(Loggable):
             self.persistence_spec.spec = None
             self.persistence_spec.isotope_group = None
 
-        self._persister_action('trait_set', persistence_spec=None)
+        self._persister_action('trait_set', persistence_spec=None, monitor=None)
+
+        self.monitor = None
         self.spec = None
+        self.experiment_executor = None
+        self.extraction_line_manager = None
+        self.spectrometer_manager = None
+        self.persister = None
+        self.dvc_persister = None
+        self.xls_persister = None
+        self.ion_optics_manager = None
+        self.runner = None
+        self.system_health = None
         # self.py_clear_conditionals()
 
     def finish(self):

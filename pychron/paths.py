@@ -101,6 +101,7 @@ class Paths(object):
     device_dir = None
     spectrometer_dir = None
     spectrometer_config_dir = None
+    mftable_dir = None
     backup_deflection_dir = None
 
     queue_conditionals_dir = None
@@ -296,6 +297,8 @@ class Paths(object):
         self.spectrometer_dir = join(setup_dir, 'spectrometer')
         self.backup_deflection_dir = join(self.spectrometer_dir, 'deflection_backup')
         self.spectrometer_config_dir = join(self.spectrometer_dir, 'configurations')
+        self.mftable_dir = join(self.spectrometer_dir, 'mftables')
+
         self.device_dir = join(setup_dir, 'devices')
         self.backup_device_dir = join(self.device_dir, 'backup')
         self.canvas2D_dir = join(setup_dir, 'canvas2D')

@@ -614,10 +614,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         self._report_execution_state(run)
 
-        # do_after(1000, run.teardown)
-        # run.teardown()
-        t = Timer(1, run.teardown)
-        t.start()
+        do_after(1000, run.teardown)
+        run.teardown()
+        # t = Timer(1, run.teardown)
+        # t.start()
 
         self.measuring_run = None
         self.debug('join run finished')

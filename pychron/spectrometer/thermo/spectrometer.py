@@ -23,7 +23,7 @@ import random
 import time
 import os
 # ============= local library imports  ==========================
-from pychron.core.helpers.filetools import list_directory2
+from pychron.core.helpers.filetools import list_directory2, add_extension
 from pychron.core.progress import open_progress
 from pychron.globals import globalv
 from pychron.spectrometer.thermo.source import ArgusSource
@@ -643,7 +643,7 @@ class Spectrometer(SpectrometerDevice):
             defl = {}
             trap = {}
             for section in config.sections():
-                if section in ['Default', 'Protection', 'General', 'Trap']:
+                if section in ['Default', 'Protection', 'General', 'Trap', 'Magnet']:
                     continue
 
                 for attr in config.options(section):
@@ -659,7 +659,15 @@ class Spectrometer(SpectrometerDevice):
                 for attr in ('current', 'ramp_step', 'ramp_period', 'ramp_tolerance'):
                     if config.has_option(section, attr):
                         trap[attr] = config.getfloat(section, attr)
-            self._config = (d, defl, trap)
+
+            section = 'Magnet'
+            magnet = {}
+            if config.has_section(section):
+                for attr in ('mftable',):
+                    if config.has_option(section, attr):
+                        magnet[attr] = config.get(section, attr)
+
+            self._config = (d, defl, trap, magnet)
 
         return self._config
 
@@ -685,7 +693,7 @@ class Spectrometer(SpectrometerDevice):
                            hv='HV')
 
         if self.microcontroller:
-            specparams, defl, trap = self._get_cached_config()
+            specparams, defl, trap, magnet = self._get_cached_config()
             for k, v in defl.items():
                 cmd = 'SetDeflection'
                 v = '{},{}'.format(k, v)
@@ -707,6 +715,11 @@ class Spectrometer(SpectrometerDevice):
                 tol = trap.get('ramp_tolerance', 10)
                 if not self._ramp_trap_current(v, step, period, use_ramp, tol):
                     self.set_parameter('SetParameter', 'Trap Current Set,{}'.format(v))
+
+            # set the mftable
+            mftable_name = magnet.get('mftable')
+            self.magnet.mftable.path = mftable_name
+            self.magnet.mftable.load_mftable()
 
             self.source.sync_parameters()
 

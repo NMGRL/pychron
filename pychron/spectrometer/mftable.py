@@ -318,7 +318,7 @@ class MagnetFieldTable(Loggable):
 
     def _name_to_path(self, name):
         if name:
-            name = os.path.join(paths.spectrometer_dir, add_extension(name, '.csv'))
+            name = os.path.join(paths.mftable_dir, add_extension(name, '.csv'))
         return name or ''
 
     def _set_path(self, v):
