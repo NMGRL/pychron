@@ -682,7 +682,7 @@ class Spectrometer(SpectrometerDevice):
         return keys, signals
 
     def _send_configuration(self, use_ramp=True):
-        self.debug('Sending configuration')
+        self.debug('======== Sending configuration ========')
         command_map = dict(ionrepeller='IonRepeller',
                            electronenergy='ElectronEnergy',
                            ysymmetry='YSymmetry',
@@ -718,9 +718,10 @@ class Spectrometer(SpectrometerDevice):
 
             # set the mftable
             mftable_name = magnet.get('mftable')
-            self.magnet.mftable.path = mftable_name
-            self.magnet.mftable.load_mftable()
-
+            if mftable_name:
+                self.magnet.mftable.path = mftable_name
+                self.magnet.mftable.load_mftable(load_items=True)
+            self.debug('======== Configuration Finished ========')
             self.source.sync_parameters()
 
     def _ramp_trap_current(self, v, step, period, use_ramp=False, tol=10):

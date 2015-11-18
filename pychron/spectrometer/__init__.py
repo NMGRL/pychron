@@ -19,6 +19,18 @@ from pychron.core.helpers.filetools import add_extension
 from pychron.paths import paths
 
 
+def set_mftable_name(name):
+    ppath = os.path.join(paths.hidden_dir, 'mftable_name')
+    name = add_extension(name, '.csv')
+    with open(ppath, 'w') as wfile:
+        wfile.write(name)
+
+
+def get_mftable_name():
+    with open(os.path.join(paths.hidden_dir, 'mftable_name')) as rfile:
+        return rfile.read().strip()
+
+
 def set_spectrometer_config_name(name):
     ppath = os.path.join(paths.hidden_dir, 'spectrometer_config_name')
     name = add_extension(name, '.cfg')
@@ -27,7 +39,7 @@ def set_spectrometer_config_name(name):
 
 def get_spectrometer_config_name():
     with open(os.path.join(paths.hidden_dir, 'spectrometer_config_name')) as rfile:
-        return rfile.readall().strip()
+        return rfile.read().strip()
 
 
 def get_spectrometer_config_path(name=None):

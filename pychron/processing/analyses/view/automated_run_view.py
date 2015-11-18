@@ -18,26 +18,23 @@
 from traitsui.api import View, UItem, Group
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.helpers.formatting import floatfmt
 from pychron.processing.analyses.view.main_view import MainView
+from pychron.processing.analyses.view.values import MeasurementValue
 from pychron.pychron_constants import AR_AR
 
 
 class AutomatedRunAnalysisView(MainView):
-    def _get_irradiation(self, an):
-        return self._irradiation_str
-
-    def _get_j(self, an):
-        return self._j
 
     def load(self, automated_run):
         isotope_group = automated_run.isotope_group
         self.isotopes = [isotope_group.isotopes[k] for k in isotope_group.isotope_keys]
 
+        self._load_hook(automated_run, isotope_group)
+
         self.load_computed(isotope_group)
         self.load_extraction(automated_run.spec)
         self.load_measurement(automated_run.spec, isotope_group)
-
-        self._load_hook(automated_run, isotope_group)
 
     def _load_hook(self, automated_run, isotope_group):
         pass
@@ -63,16 +60,46 @@ class AutomatedRunAnalysisView(MainView):
         return v
 
 
-class ArArAutomatedRunAnalysisView(MainView):
+class ArArAutomatedRunAnalysisView(AutomatedRunAnalysisView):
     _corrected_enabled = False
 
+    def _get_irradiation(self, an):
+        return self._irradiation_str
+
+    def _get_j(self, an):
+        return self._j
+
     def _load_hook(self, automated_run, isotope_group):
-        if self.experiment_type == AR_AR:
-            self._irradiation_str = automated_run.spec.irradiation
-            self._j = isotope_group.j
+        self._irradiation_str = automated_run.spec.irradiation
+        self._j = isotope_group.j
 
 
-class GenericAutomatedRunAnalysisView(MainView):
+class GenericAutomatedRunAnalysisView(AutomatedRunAnalysisView):
     def load_computed(self, an, new_list=True):
         pass
+
+    def load_measurement(self, an, ar):
+        ms = [
+            MeasurementValue(name='DR Version',
+                             value=an.data_reduction_tag),
+            MeasurementValue(name='DAQ Version',
+                             value=an.collection_version),
+            MeasurementValue(name='AnalysisID',
+                             value=self.analysis_id),
+            MeasurementValue(name='Spectrometer',
+                             value=an.mass_spectrometer),
+            MeasurementValue(name='Run Date',
+                             value=an.rundate.strftime('%Y-%m-%d %H:%M:%S')),
+            MeasurementValue(name='Project',
+                             value=an.project),
+            MeasurementValue(name='Sample',
+                             value=an.sample),
+            MeasurementValue(name='Material',
+                             value=an.material),
+            MeasurementValue(name='Comment',
+                             value=an.comment),
+            MeasurementValue(name='Sens.',
+                             value=floatfmt(an.sensitivity))]
+
+        self.measurement_values = ms
 # ============= EOF =============================================

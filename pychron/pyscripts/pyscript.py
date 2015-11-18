@@ -814,8 +814,6 @@ class PyScript(Loggable):
         else:
             wd = self._wait_control
 
-        print self.manager, wd
-
         if wd is None:
             wd = WaitControl()
 

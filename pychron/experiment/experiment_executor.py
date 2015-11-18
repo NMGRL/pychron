@@ -440,6 +440,13 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         is_first_flag = True
         is_first_analysis = True
 
+        # from pympler import classtracker
+        # tr = classtracker.ClassTracker()
+        # from pychron.experiment.automated_run.automated_run import AutomatedRun
+        # tr.track_class(AutomatedRun)
+        # tr.create_snapshot()
+        # self.tracker = tr
+
         with consumable(func=self._overlapped_run) as con:
             while 1:
                 if not self.is_alive():
@@ -614,8 +621,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         self._report_execution_state(run)
 
-        do_after(1000, run.teardown)
-        run.teardown()
+        invoke_in_main_thread(run.teardown)
+
+        # do_after(1000, run.teardown)
+        # run.teardown()
         # t = Timer(1, run.teardown)
         # t.start()
 
@@ -1020,7 +1029,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         '''
         self._add_backup(arun.uuid)
 
-        arun.bind_preferences()
+        arun.bind_preferences(self.application.preferences)
 
         arun.integration_time = 1.04
 

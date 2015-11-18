@@ -26,7 +26,7 @@ VERSION = '1'
 
 def migrate():
     args = get_args()
-    root = args.root
+    root = args.root[0]
     if root is None:
         root = os.path.join(os.path.expanduser('~'), 'Pychron')
 
@@ -50,6 +50,10 @@ def migrate_mftable(root):
     mfpath = os.path.join(spec_root, 'mftable.csv')
     if os.path.isfile(mfpath):
         shutil.move(mfpath, os.path.join(mfroot, 'argon.csv'))
+
+    ppath = os.path.join(root, '.hidden', 'mftable_name')
+    with open(ppath, 'w') as wfile:
+        wfile.write('argon.csv')
 
 
 def migrate_spectrometer_config(root):
@@ -81,7 +85,7 @@ def get_version(root):
     p = os.path.join(root, '.hidden', 'version')
     if os.path.isfile(p):
         with open(p, 'r') as rfile:
-            v = rfile.readall().strip()
+            v = rfile.read().strip()
     return v
 
 

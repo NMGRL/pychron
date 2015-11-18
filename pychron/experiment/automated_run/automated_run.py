@@ -32,6 +32,7 @@ from numpy import Inf
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import get_path
 from pychron.core.helpers.filetools import add_extension
+from pychron.core.helpers.strtools import to_bool
 from pychron.experiment.automated_run.hop_util import parse_hops
 from pychron.experiment.automated_run.persistence_spec import PersistenceSpec
 from pychron.experiment.conditional.conditional import TruncationConditional, \
@@ -177,15 +178,20 @@ class AutomatedRun(Loggable):
 
     persistence_spec = Instance(PersistenceSpec)
 
-    experiment_type = Str
+    experiment_type = Str(AR_AR)
 
-    def bind_preferences(self):
-        prefid = 'pychron.experiment'
-        bind_preference(self, 'experiment_type', '{}.pychron.experiment'.format(prefid))
-        bind_preference(self, 'use_peak_center_threshold', '{}.use_peak_center_threshold'.format(prefid))
-        bind_preference(self, 'peak_center_threshold1', '{}.peak_center_threshold1'.format(prefid))
-        bind_preference(self, 'peak_center_threshold2', '{}.peak_center_threshold2'.format(prefid))
-        bind_preference(self, 'peak_center_threshold_window', '{}.peak_center_threshold_window'.format(prefid))
+    def bind_preferences(self, preferences):
+        self.debug('bind preferences')
+
+        for attr, cast in (('experiment_type',str),
+                           ('use_peak_center_threshold', to_bool),
+                           ('peak_center_threshold1', int),
+                           ('peak_center_threshold2',int),
+                           ('peak_center_threshold_window',int)):
+            try:
+                setattr(self, attr, cast(preferences.get('pychron.experiment.{}'.format(attr))))
+            except TypeError:
+                pass
 
     # ===============================================================================
     # pyscript interface
@@ -730,7 +736,7 @@ class AutomatedRun(Loggable):
 
         self.monitor = None
         self.spec = None
-        self.experiment_executor = None
+
         self.extraction_line_manager = None
         self.spectrometer_manager = None
         self.persister = None
@@ -740,6 +746,18 @@ class AutomatedRun(Loggable):
         self.runner = None
         self.system_health = None
         # self.py_clear_conditionals()
+
+        # self.experiment_executor.tracker.create_snapshot()
+        # self.experiment_executor.tracker.stats.print_summary()
+        self.experiment_executor = None
+
+        # from pympler.refbrowser import ConsoleBrowser
+        #
+        # def output_function(o):
+        #     return str(type(o))
+        #
+        # cb = ConsoleBrowser(self, maxdepth=2, str_func=output_function)
+        # cb.print_tree()
 
     def finish(self):
         self.debug('----------------- finish -----------------')
@@ -1287,7 +1305,9 @@ anaylsis_type={}
 
         ln = self.spec.labnumber
         ln = convert_identifier(ln)
-        if self.experiment_type:
+
+        self.debug('**************** Experiment Type: {}, {}'.format(self.experiment_type, AR_AR))
+        if self.experiment_type == AR_AR:
             if not self.experiment_executor.datahub.load_arar_analysis_backend(ln, self.isotope_group):
                 self.debug('failed load analysis backend')
                 return
@@ -1681,6 +1701,7 @@ anaylsis_type={}
                 info_func=self.info,
                 isotope_group=self.isotope_group)
 
+        self.debug('*************** Set Analysis View {}'.format(self.experiment_type))
         plot_panel.set_analysis_view(self.experiment_type,
                                      analysis_type=self.spec.analysis_type,
                                      analysis_id=self.runid)
