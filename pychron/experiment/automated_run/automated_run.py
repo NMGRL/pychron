@@ -32,8 +32,6 @@ from numpy import Inf
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import get_path
 from pychron.core.helpers.filetools import add_extension
-# from pychron.core.codetools.memory_usage import mem_log
-
 from pychron.experiment.automated_run.hop_util import parse_hops
 from pychron.experiment.automated_run.persistence_spec import PersistenceSpec
 from pychron.experiment.conditional.conditional import TruncationConditional, \
@@ -44,7 +42,6 @@ from pychron.experiment.utilities.script import assemble_script_blob
 from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.paths import paths
-from pychron.processing.analyses.view.automated_run_view import GenericAutomatedRunAnalysisView
 from pychron.pychron_constants import NULL_STR, MEASUREMENT_COLOR, \
     EXTRACTION_COLOR, SCRIPT_KEYS, AR_AR
 
@@ -221,6 +218,9 @@ class AutomatedRun(Loggable):
                 import traceback
 
                 traceback.print_exc()
+
+    def py_send_spectrometer_configuration(self):
+        self.spectrometer_manager.spectrometer.send_configuration()
 
     def py_set_integration_time(self, v):
         self.set_integration_time(v)

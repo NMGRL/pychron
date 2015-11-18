@@ -24,6 +24,7 @@ import yaml
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import fileiter
 from pychron.paths import paths
+from pychron.spectrometer import get_spectrometer_config_path, set_spectrometer_config_name
 from pychron.pychron_constants import MEASUREMENT_COLOR
 from pychron.pyscripts.pyscript import verbose_skip, count_verbose_skip, \
     makeRegistry, CTXObject
@@ -749,6 +750,12 @@ class MeasurementPyScript(ValvePyScript):
             if v is not None:
                 func('SetDeflection', '{},{}'.format(dn, v))
 
+    @verbose_skip
+    @command_register
+    def set_spectrometer_configuration(self, name):
+        set_spectrometer_config_name(name)
+        self._automated_run_call('py_send_spectrometer_configuration')
+
     @property
     def truncated(self):
         """
@@ -822,7 +829,8 @@ class MeasurementPyScript(ValvePyScript):
 
     def _get_config(self):
         config = ConfigParser()
-        p = os.path.join(paths.spectrometer_dir, 'config.cfg')
+        # p = os.path.join(paths.spectrometer_dir, 'config.cfg')
+        p = get_spectrometer_config_path()
         config.read(p)
 
         return config

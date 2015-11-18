@@ -23,6 +23,7 @@ import random
 import time
 import os
 # ============= local library imports  ==========================
+from pychron.core.helpers.filetools import list_directory2
 from pychron.core.progress import open_progress
 from pychron.globals import globalv
 from pychron.spectrometer.thermo.source import ArgusSource
@@ -31,6 +32,8 @@ from pychron.spectrometer.thermo.detector import Detector
 from pychron.spectrometer.thermo.spectrometer_device import SpectrometerDevice
 from pychron.pychron_constants import NULL_STR, QTEGRA_INTEGRATION_TIMES, DEFAULT_INTEGRATION_TIME
 from pychron.paths import paths
+from pychron.spectrometer import get_spectrometer_config_path, get_spectrometer_config_name, \
+    set_spectrometer_config_name
 from pychron.core.ramper import Ramper, calculate_steps, StepRamper
 
 
@@ -83,8 +86,11 @@ class Spectrometer(SpectrometerDevice):
     molecular_weight = Str('Ar40')
     molecular_weights = None
     isotopes = Property
-    sub_cup_configurations = List
 
+    spectrometer_configuration = Str
+    spectrometer_configurations = List
+
+    sub_cup_configurations = List
     sub_cup_configuration = Property(depends_on='_sub_cup_configuration')
     _sub_cup_configuration = Str
 
@@ -368,7 +374,16 @@ class Spectrometer(SpectrometerDevice):
         """
         self.load_detectors()
 
-        p = os.path.join(paths.spectrometer_dir, 'config.cfg')
+        # load local configurations
+        self.spectrometer_configurations = list_directory2(paths.spectrometer_config_dir,
+                                                           remove_extension=True,
+                                                           extension='.cfg')
+
+        name = get_spectrometer_config_name()
+        sc, _ = os.path.splitext(name)
+        self.spectrometer_configuration = sc
+
+        p = get_spectrometer_config_path(name)
         config = self.get_configuration_writer(p)
         pd = 'Protection'
 
@@ -588,6 +603,10 @@ class Spectrometer(SpectrometerDevice):
     # ===============================================================================
     # private
     # ===============================================================================
+    def _spectrometer_configuration_changed(self, new):
+        if new:
+            set_spectrometer_config_name(new)
+
     def _parse_word(self, word):
         try:
             x = [float(v) for v in word.split(',')]
@@ -599,7 +618,8 @@ class Spectrometer(SpectrometerDevice):
         self._config = None
 
     def update_config(self, **kw):
-        p = os.path.join(paths.spectrometer_dir, 'config.cfg')
+        # p = os.path.join(paths.spectrometer_dir, 'config.cfg')
+        p = get_spectrometer_config_path()
         config = self.get_configuration_writer(p)
         for k, v in kw.items():
             for option, value in v:
@@ -612,7 +632,8 @@ class Spectrometer(SpectrometerDevice):
 
     def _get_cached_config(self):
         if self._config is None:
-            p = os.path.join(paths.spectrometer_dir, 'config.cfg')
+            p = get_spectrometer_config_path()
+            # p = os.path.join(paths.spectrometer_dir, 'config.cfg')
             if not os.path.isfile(p):
                 self.warning('Spectrometer configuration file {} not found'.format(p))
                 return
@@ -652,7 +673,7 @@ class Spectrometer(SpectrometerDevice):
         keys = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
         return keys, signals
 
-    def _send_configuration(self, use_ramp=False):
+    def _send_configuration(self, use_ramp=True):
         self.debug('Sending configuration')
         command_map = dict(ionrepeller='IonRepeller',
                            electronenergy='ElectronEnergy',
@@ -660,7 +681,8 @@ class Spectrometer(SpectrometerDevice):
                            zsymmetry='ZSymmetry',
                            zfocus='ZFocus',
                            extractionlens='ExtractionLens',
-                           ioncountervoltage='IonCounterVoltage', )
+                           ioncountervoltage='IonCounterVoltage',
+                           hv='HV')
 
         if self.microcontroller:
             specparams, defl, trap = self._get_cached_config()
