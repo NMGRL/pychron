@@ -31,7 +31,8 @@ from uncertainties import nominal_value, std_dev
 from xlwt import Workbook
 from pychron.core.helpers.datetime_tools import get_datetime
 from pychron.core.helpers.filetools import subdirize
-from pychron.core.ui.preference_binding import bind_preference
+from pychron.core.helpers.strtools import to_bool
+from pychron.core.ui.preference_binding import bind_preference, set_preference
 from pychron.database.adapters.local_lab_adapter import LocalLabAdapter
 from pychron.experiment.automated_run.hop_util import parse_hops
 
@@ -235,17 +236,23 @@ class AutomatedRunPersister(BasePersister):
 
     def __init__(self, *args, **kw):
         super(AutomatedRunPersister, self).__init__(*args, **kw)
-        self.bind_preferences()
+        # self.bind_preferences()
         self._temp_analysis_buffer = []
 
-    def bind_preferences(self):
+    def set_preferences(self, preferences):
         """
         bind to application preferences
         """
-        prefid = 'pychron.experiment'
-        bind_preference(self, 'use_analysis_grouping', '{}.use_analysis_grouping'.format(prefid))
-        bind_preference(self, 'grouping_threshold', '{}.grouping_threshold'.format(prefid))
-        bind_preference(self, 'grouping_suffix', '{}.grouping_suffix'.format(prefid))
+        # prefid = 'pychron.experiment'
+        # bind_preference(self, 'use_analysis_grouping', '{}.use_analysis_grouping'.format(prefid))
+        # bind_preference(self, 'grouping_threshold', '{}.grouping_threshold'.format(prefid))
+        # bind_preference(self, 'grouping_suffix', '{}.grouping_suffix'.format(prefid))
+        self.debug('set preferences')
+
+        for attr, cast in (('use_analysis_grouping', to_bool),
+                           ('grouping_threshold', float),
+                           ('grouping_suffix', str)):
+            set_preference(preferences, self, attr, 'pychron.experiment.{}'.format(attr), cast)
 
     # ===============================================================================
     # data writing

@@ -447,6 +447,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         # tr = classtracker.ClassTracker()
         # from pychron.experiment.automated_run.automated_run import AutomatedRun
         # tr.track_class(AutomatedRun)
+        # tr.track_class(AutomatedRunPersister)
         # tr.create_snapshot()
         # self.tracker = tr
 
@@ -516,6 +517,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     is_first_flag = True
                     last_runid = run.runid
                     self._join_run(spec, run)
+
+                # self.tracker.stats.print_summary()
 
                 cnt += 1
                 total_cnt += 1
@@ -1032,7 +1035,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         '''
         self._add_backup(arun.uuid)
 
-        arun.bind_preferences(self.application.preferences)
+        arun.set_preferences(self.application.preferences)
 
         arun.integration_time = 1.04
 

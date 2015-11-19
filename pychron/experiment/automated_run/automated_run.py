@@ -33,6 +33,7 @@ from numpy import Inf, polyfit, linspace, polyval
 from pychron.core.helpers.filetools import get_path
 from pychron.core.helpers.filetools import add_extension
 from pychron.core.helpers.strtools import to_bool
+from pychron.core.ui.preference_binding import set_preference
 from pychron.experiment.automated_run.hop_util import parse_hops
 from pychron.experiment.automated_run.persistence_spec import PersistenceSpec
 from pychron.experiment.conditional.conditional import TruncationConditional, \
@@ -183,18 +184,19 @@ class AutomatedRun(Loggable):
 
     experiment_type = Str(AR_AR)
 
-    def bind_preferences(self, preferences):
-        self.debug('bind preferences')
+    def set_preferences(self, preferences):
+        self.debug('set preferences')
 
         for attr, cast in (('experiment_type', str),
                            ('use_peak_center_threshold', to_bool),
                            ('peak_center_threshold1', int),
                            ('peak_center_threshold2', int),
                            ('peak_center_threshold_window', int)):
-            try:
-                setattr(self, attr, cast(preferences.get('pychron.experiment.{}'.format(attr))))
-            except TypeError:
-                pass
+            set_preference(preferences, self, attr, 'pychron.experiment.{}'.format(attr), cast)
+
+        self.persister.set_preferences(preferences)
+        self.multi_collector.console_set_preferences(preferences, 'pychron.experiment')
+        self.peak_hop_collector.console_set_preferences(preferences, 'pychron.experiment')
 
     # ===============================================================================
     # pyscript interface
@@ -2318,14 +2320,14 @@ anaylsis_type={}
         from pychron.experiment.automated_run.peak_hop_collector import PeakHopCollector
 
         c = PeakHopCollector()
-        c.console_bind_preferences('pychron.experiment')
+        # c.console_bind_preferences('pychron.experiment')
         return c
 
     def _multi_collector_default(self):
         from pychron.experiment.automated_run.multi_collector import MultiCollector
 
         c = MultiCollector()
-        c.console_bind_preferences('pychron.experiment')
+        # c.console_bind_preferences('pychron.experiment')
         return c
 
 # ============= EOF =============================================

@@ -296,6 +296,6 @@ class PlotPanel(Loggable):
         return GraphContainer(model=self)
 
     def _graphs_default(self):
-        return [self.isotope_graph, self.peak_center_graph, self.sniff_graph]
+        return [self.isotope_graph, self.sniff_graph, self.peak_center_graph]
 
 # ============= EOF =============================================

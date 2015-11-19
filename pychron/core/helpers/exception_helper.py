@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import threading
+
 from traits.api import HasTraits, Str, List
 from traitsui.api import View, UItem, Item, HGroup, VGroup, CheckListEditor, Controller, TextEditor
 from traitsui.menu import Action
@@ -176,15 +178,15 @@ class ExceptionHandler(Controller):
             UItem('helpstr',
                   style='readonly'),
             Item('title'),
-                        HGroup(
-                            VGroup(UItem('labels', style='custom', editor=CheckListEditor(values=LABELS)),
-                                   show_border=True, label='Labels (optional)'),
-                            VGroup(UItem('description', style='custom'), show_border=True, label='Description (optional)')),
-                        UItem('exctext',
-                              style='custom',
-                              editor=TextEditor(read_only=True))),
-                 title='Exception',
-                 buttons=[SubmitAction, 'Cancel'])
+            HGroup(
+                VGroup(UItem('labels', style='custom', editor=CheckListEditor(values=LABELS)),
+                       show_border=True, label='Labels (optional)'),
+                VGroup(UItem('description', style='custom'), show_border=True, label='Description (optional)')),
+            UItem('exctext',
+                  style='custom',
+                  editor=TextEditor(read_only=True))),
+            title='Exception',
+            buttons=[SubmitAction, 'Cancel'])
 
         return v
 
@@ -196,6 +198,7 @@ def ignored_exceptions(exctype, value, tb):
     # if exception was not generated from pychron. This should obviate the subsequent if statements
     tb = traceback.extract_tb(tb)
     if 'pychron' not in tb[0][0] and 'pychron' not in tb[-1][0]:
+        print 'ignore exception'
         return True
 
     if exctype in (RuntimeError, KeyboardInterrupt):
@@ -227,18 +230,50 @@ def traits_except_handler(obj, name, old, new):
     except_handler(*sys.exc_info())
 
 
-def set_exception_handler(func=None):
+def set_thread_exception_handler():
     """
-        set sys.excepthook to func.  if func is None use a default handler
+    taken from http://bugs.python.org/issue1230540
 
-        default handler formats and logs the traceback as critical and calls sys.__excepthook__
-        for normal exception handling
 
-    :return:
+    Workaround for sys.excepthook thread bug
+    From
+http://spyced.blogspot.com/2007/06/workaround-for-sysexcepthook-bug.html
+
+(https://sourceforge.net/tracker/?func=detail&atid=105470&aid=1230540&group_id=5470).
+    Call once from __main__ before creating any threads.
+    If using psyco, call psyco.cannotcompile(threading.Thread.run)
+    since this replaces a new-style class method.
+    """
+    init_old = threading.Thread.__init__
+
+    def init(self, *args, **kwargs):
+        init_old(self, *args, **kwargs)
+        run_old = self.run
+
+        def run_with_except_hook(*args, **kw):
+            try:
+                run_old(*args, **kw)
+            except (KeyboardInterrupt, SystemExit):
+                raise
+            except:
+                from pychron.core.ui.gui import invoke_in_main_thread
+                invoke_in_main_thread(sys.excepthook, *sys.exc_info())
+
+        self.run = run_with_except_hook
+
+    threading.Thread.__init__ = init
+
+def set_exception_handler():
+    """
+
     """
 
     sys.excepthook = except_handler
     traits.trait_notifiers.handle_exception = traits_except_handler
+    set_thread_exception_handler()
+
+
+
 
 
 if __name__ == '__main__':
