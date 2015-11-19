@@ -1789,11 +1789,16 @@ anaylsis_type={}
                 xs = g.get_data(i)
                 ys = g.get_data(i, axis=1)
                 xs, ys = xs[-n:], ys[-n:]
+
+                g.new_series(xs, ys, type='scatter', plotid=i, color='blue',
+                             marker_size=2.5)
+
                 coeffs = polyfit(xs, ys, 1)
                 fys = polyval(coeffs, fxs)
-                g.new_series(fxs, fys, type='line', plotid=i)
+                g.new_series(fxs, fys, type='line', plotid=i, color='blue')
                 txt = 'Slope={:0.3f}'.format(coeffs[0])
                 g.add_plot_label(txt, plotid=i, overlay_position='inside right')
+            g.redraw()
 
     def _update_labels(self):
         if self.plot_panel:
