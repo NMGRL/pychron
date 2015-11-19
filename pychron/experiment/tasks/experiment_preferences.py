@@ -84,7 +84,8 @@ class ExperimentPreferences(BasePreferencesHelper):
 
     automated_runs_editable = Bool
 
-    use_xls_persister = Bool
+    use_xls_persistence = Bool
+    use_db_persistence = Bool
 
     success_color = Color
     extraction_color = Color
@@ -229,7 +230,9 @@ class ExperimentPreferencesPane(PreferencesPane):
                                  label='Min. Mass Spectrometer Pumptime (s)'),
                             show_border=True,
                             label='Overlap')
-        persist_grp = Group(Item('use_xls_persister', label='Save analyses to Excel workbook'),
+
+        persist_grp = Group(Item('use_xls_persistence', label='Save analyses to Excel workbook'),
+                            Item('use_db_persistence', label='Save analyses to Database'),
                             label='Persist', show_border=True)
 
         pc_grp = Group(

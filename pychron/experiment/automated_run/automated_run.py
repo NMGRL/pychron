@@ -28,7 +28,7 @@ import weakref
 from itertools import groupby
 from threading import Thread, Event as TEvent
 from uncertainties import ufloat, nominal_value, std_dev
-from numpy import Inf
+from numpy import Inf, polyfit, linspace, polyval
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import get_path
 from pychron.core.helpers.filetools import add_extension
@@ -143,7 +143,10 @@ class AutomatedRun(Loggable):
     measuring = Bool(False)
     dirty = Bool(False)
     update = Event
+
+    use_db_persistence = Bool(True)
     use_dvc_persistence = Bool(False)
+    use_xls_persistence = Bool(False)
 
     measurement_script = Instance('pychron.pyscripts.measurement_pyscript.MeasurementPyScript')
     post_measurement_script = Instance('pychron.pyscripts.extraction_line_pyscript.ExtractionPyScript')
@@ -183,11 +186,11 @@ class AutomatedRun(Loggable):
     def bind_preferences(self, preferences):
         self.debug('bind preferences')
 
-        for attr, cast in (('experiment_type',str),
+        for attr, cast in (('experiment_type', str),
                            ('use_peak_center_threshold', to_bool),
                            ('peak_center_threshold1', int),
-                           ('peak_center_threshold2',int),
-                           ('peak_center_threshold_window',int)):
+                           ('peak_center_threshold2', int),
+                           ('peak_center_threshold_window', int)):
             try:
                 setattr(self, attr, cast(preferences.get('pychron.experiment.{}'.format(attr))))
             except TypeError:
@@ -204,14 +207,22 @@ class AutomatedRun(Loggable):
 
     def py_reset_data(self):
         self.debug('reset data')
-        self.persister.pre_measurement_save()
         self._persister_action('pre_measurement_save')
 
     def _update_persister_spec(self, **kw):
         self.persistence_spec.trait_set(**kw)
 
+    def _persister_save_action(self, func, *args, **kw):
+        if self.use_db_persistence:
+            getattr(self.persister, func)(*args, **kw)
+        if self.use_dvc_persistence:
+            getattr(self.dvc_persister, func)(*args, **kw)
+        if self.use_xls_persistence:
+            getattr(self.xls_persister, func)(*args, **kw)
+
     def _persister_action(self, func, *args, **kw):
         getattr(self.persister, func)(*args, **kw)
+
         for i, p in enumerate((self.xls_persister, self.dvc_persister)):
             if p is None:
                 continue
@@ -932,7 +943,7 @@ class AutomatedRun(Loggable):
                                             active_detectors=self._active_detectors)
 
             # save to database
-            self._persister_action('post_measurement_save')
+            self._persister_save_action('post_measurement_save')
 
             if self.plot_panel:
                 self.plot_panel.analysis_view.refresh_needed = True
@@ -1103,7 +1114,7 @@ class AutomatedRun(Loggable):
             oblob = self.extraction_script.get_output_blob()
             snapshots = self.extraction_script.snapshots
 
-            self._persister_action('post_extraction_save', rblob, oblob, snapshots)
+            self._persister_save_action('post_extraction_save', rblob, oblob, snapshots)
             # self.persister.post_extraction_save(rblob, oblob, snapshots)
             self.heading('Extraction Finished')
             self.info_color = None
@@ -1749,7 +1760,11 @@ anaylsis_type={}
         # delay for eq time
         self.info('equilibrating for {}sec'.format(eqtime))
         time.sleep(eqtime)
+
         if self._alive:
+            # analyze the equilibration
+            self._analyze_equilibration()
+
             self.heading('Equilibration Finished')
             if elm and inlet and close_inlet:
                 for i in inlet:
@@ -1761,6 +1776,22 @@ anaylsis_type={}
             if self.overlap_evt:
                 self.debug('setting overlap event. next run ok to start extraction')
                 self.overlap_evt.set()
+
+    def _analyze_equilibration(self):
+        if self.plot_panel:
+            g = self.plot_panel.sniff_graph
+            xmi, xma = g.get_x_limits()
+            fxs = linspace(xmi, xma)
+            n = 5
+            for i, p in enumerate(g.plots):
+                xs = g.get_data(i)
+                ys = g.get_data(i, axis=1)
+                xs, ys = xs[-n:], ys[-n:]
+                coeffs = polyfit(xs, ys, 1)
+                fys = polyval(coeffs, fxs)
+                g.new_series(fxs, fys, type='line', plotid=i)
+                txt = 'Slope={:0.3f}'.format(coeffs[0])
+                g.add_plot_label(txt, plotid=i, overlay_position='inside right')
 
     def _update_labels(self):
         if self.plot_panel:

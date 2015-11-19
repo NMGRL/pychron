@@ -126,15 +126,16 @@ class PlotPanel(Loggable):
     is_peak_hop = Bool(False)
     hops = List
 
-    # ratios = ['Ar40:Ar36', 'Ar40:Ar39', ]
     info_func = None
-
-    # refresh_age = True
 
     def set_peak_center_graph(self, graph):
         graph.page_name = 'Peak Center'
         self.peak_center_graph = graph
-        self.graphs = [self.isotope_graph, self.peak_center_graph, self.sniff_graph]
+
+        graphs = [g for g in self.graphs if g.page_name != 'Peak Center']
+        graphs.append(graph)
+
+        self.graphs = graphs
         self.show_graph(graph)
 
     def show_graph(self, g):
@@ -180,6 +181,13 @@ class PlotPanel(Loggable):
             from pychron.processing.analyses.view.automated_run_view import GenericAutomatedRunAnalysisView
             klass = GenericAutomatedRunAnalysisView
         self.analysis_view = klass(**kw)
+
+    def add_isotope_graph(self, name):
+        g = self._graph_factory()
+        g.page_name = name
+        self.graphs.append(g)
+        self.isotope_graph = g
+        self.selected_graph = g
 
     # private
     def _new_plot(self, **kw):
@@ -271,7 +279,7 @@ class PlotPanel(Loggable):
 
     def _isotope_graph_default(self):
         g = self._graph_factory()
-        g.page_name = 'Isotopes'
+        g.page_name = 'Ar'
         return g
 
     def _sniff_graph_default(self):

@@ -140,9 +140,11 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     set_integration_time_on_start = Bool(False)
     send_config_before_run = Bool(False)
     default_integration_time = Float(DEFAULT_INTEGRATION_TIME)
-    use_xls_persister = Bool(False)
     use_memory_check = Bool(True)
     memory_threshold = Int
+
+    use_xls_persistence = Bool(False)
+    use_db_persistence = Bool(True)
 
     # dvc
     use_dvc_persistence = Bool(False)
@@ -191,12 +193,13 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         attrs = ('use_auto_save',
                  'auto_save_delay',
                  'use_labspy',
-                 'use_dvc_persistence',
                  'min_ms_pumptime',
                  'set_integration_time_on_start',
                  'send_config_before_run',
                  'default_integration_time',
-                 'use_xls_persister')
+                 'use_dvc_persistence',
+                 'use_xls_persistence',
+                 'use_db_persistence')
         self._preference_binder(prefid, attrs)
 
         if self.use_dvc_persistence:
@@ -1046,7 +1049,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         arun.use_syn_extraction = False
 
+        arun.use_db_persistence = self.use_db_persistence
         arun.use_dvc_persistence = self.use_dvc_persistence
+        arun.use_xls_persistence = self.use_xls_persistence
+
         if self.use_dvc_persistence:
             dvcp = self.application.get_service('pychron.dvc.dvc_persister.DVCPersister')
             if dvcp:
@@ -1066,7 +1072,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if self.use_system_health:
             arun.system_health = self.system_health
 
-        if self.use_xls_persister:
+        if self.use_xls_persistence:
             xls_persister = ExcelPersister()
             xls_persister.load_name = exp.load_name
             if mon is not None:
