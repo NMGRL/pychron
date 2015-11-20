@@ -89,7 +89,7 @@ class LabspyClient(Loggable):
         super(LabspyClient, self).__init__(*args, **kw)
         if bind:
             self.bind_preferences()
-            self.start()
+            # self.start()
 
     def bind_preferences(self):
         self.db.bind_preferences()

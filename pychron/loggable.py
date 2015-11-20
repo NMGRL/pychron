@@ -158,6 +158,8 @@ class Loggable(HasTraits):
 
     #dialogs
     def warning_dialog(self, msg, sound=None, title='Warning'):
+        self.warning(msg)
+
         from pychron.core.ui.dialogs import myMessageDialog
 
         dialog = myMessageDialog(
