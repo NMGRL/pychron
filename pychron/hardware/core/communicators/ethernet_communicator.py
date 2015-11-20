@@ -316,12 +316,12 @@ class EthernetCommunicator(Communicator):
         self.error_mode = False
 
     def _ask(self, cmd, timeout=None):
-        if timeout is None:
-            timeout = 1
-
         if self.error_mode:
             self.handler = None
             timeout = 0.25
+
+        if timeout is None:
+            timeout = 1
 
         self.error_mode = False
         handler = self.get_handler(timeout)
