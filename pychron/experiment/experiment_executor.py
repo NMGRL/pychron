@@ -1505,10 +1505,17 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     break
 
     def _pre_execute_check(self, inform=True):
-        if not self.datahub.secondary_connect():
-            if not self.confirmation_dialog(
-                    'Not connected to a Mass Spec database. Do you want to continue with pychron only?'):
+        if not self.use_db_persistence and not self.use_xls_persistence and not self.use_dvc_persistence:
+            if not self.confirmation_dialog('You do not have any Database or XLS saving enabled. '
+                                     'Are you sure you want to continue?\n\n'
+                                     'Enable analysis saving in Preferences>>Experiment>>Automated Run'):
                 return
+
+        if self.use_db_persistence:
+            if not self.datahub.secondary_connect():
+                if not self.confirmation_dialog(
+                        'Not connected to a Mass Spec database. Do you want to continue with pychron only?'):
+                    return
 
         exp = self.experiment_queue
         runs = exp.cleaned_automated_runs

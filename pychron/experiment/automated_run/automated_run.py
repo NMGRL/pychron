@@ -752,9 +752,9 @@ class AutomatedRun(Loggable):
 
         self.extraction_line_manager = None
         self.spectrometer_manager = None
-        self.persister = None
-        self.dvc_persister = None
-        self.xls_persister = None
+        # self.persister = None
+        # self.dvc_persister = None
+        # self.xls_persister = None
         self.ion_optics_manager = None
         self.runner = None
         self.system_health = None
@@ -1783,21 +1783,30 @@ anaylsis_type={}
         if self.plot_panel:
             g = self.plot_panel.sniff_graph
             xmi, xma = g.get_x_limits()
+            xma *= 1.25
+            g.set_x_limits(xmi, xma)
+
             fxs = linspace(xmi, xma)
-            n = 5
             for i, p in enumerate(g.plots):
                 xs = g.get_data(i)
                 ys = g.get_data(i, axis=1)
-                xs, ys = xs[-n:], ys[-n:]
 
-                g.new_series(xs, ys, type='scatter', plotid=i, color='blue',
-                             marker_size=2.5)
+                for ni, color, yoff in ((5, 'red', 30), (4, 'green', 10), (3, 'blue', -10), (2, 'orange', -30)):
+                    xsi, ysi = xs[-ni:], ys[-ni:]
 
-                coeffs = polyfit(xs, ys, 1)
-                fys = polyval(coeffs, fxs)
-                g.new_series(fxs, fys, type='line', plotid=i, color='blue')
-                txt = 'Slope={:0.3f}'.format(coeffs[0])
-                g.add_plot_label(txt, plotid=i, overlay_position='inside right')
+                    g.new_series(xsi, ysi, type='scatter', plotid=i, color=color,
+                                 marker_size=2.5)
+
+                    coeffs = polyfit(xsi, ysi, 1)
+                    fys = polyval(coeffs, fxs)
+                    g.new_series(fxs, fys, type='line', plotid=i, color=color)
+                    txt = 'Slope ({})={:0.3f}'.format(ni, coeffs[0])
+                    g.add_plot_label(txt, plotid=i, overlay_position='inside right',
+                                     font='modern 14',
+                                     bgcolor='white',
+                                     color=color,
+                                     y_offset=yoff)
+
             g.redraw()
 
     def _update_labels(self):
