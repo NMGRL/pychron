@@ -201,6 +201,10 @@ class AutomatedRun(Loggable):
     # ===============================================================================
     # pyscript interface
     # ===============================================================================
+    def py_set_isotope_group(self, name):
+        if self.plot_panel:
+            self.plot_panel.add_isotope_graph(name)
+
     def py_generate_ic_mftable(self, detectors, refiso):
         return self._generate_ic_mftable(detectors, refiso)
 

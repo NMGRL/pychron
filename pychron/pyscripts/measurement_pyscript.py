@@ -756,6 +756,11 @@ class MeasurementPyScript(ValvePyScript):
         set_spectrometer_config_name(name)
         self._automated_run_call('py_send_spectrometer_configuration')
 
+    @verbose_skip
+    @command_register
+    def set_isotope_group(self, name):
+        self._automated_run_call('py_set_isotope_group', name)
+
     @property
     def truncated(self):
         """
