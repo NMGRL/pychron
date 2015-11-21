@@ -834,8 +834,11 @@ class MeasurementPyScript(ValvePyScript):
 
     def _get_config(self):
         config = ConfigParser()
-        # p = os.path.join(paths.spectrometer_dir, 'config.cfg')
-        p = get_spectrometer_config_path()
+        try:
+            p = get_spectrometer_config_path()
+        except IOError:
+            p = os.path.join(paths.spectrometer_dir, 'config.cfg')
+
         config.read(p)
 
         return config

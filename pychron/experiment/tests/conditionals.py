@@ -24,7 +24,7 @@ class MSpec(object):
 
 class Arun(object):
     def __init__(self):
-        self.arar_age = ArArAge()
+        self.isotope_group = ArArAge()
         self.spec = MSpec()
 
     def get_deflection(self, *args, **kw):
