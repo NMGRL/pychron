@@ -36,7 +36,6 @@ from sqlalchemy.exc import SQLAlchemyError, InvalidRequestError, StatementError,
 from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
 import os
 # =============local library imports  ==========================
-from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.database.core.query import compile_query
 from pychron.loggable import Loggable
 from pychron.database.core.base_orm import AlembicVersionTable
@@ -232,6 +231,7 @@ class DatabaseAdapter(Loggable):
                                     'Set in Preferences. current kind="{}"'.format(self.name, self.kind)
 
             if not self.enabled:
+                from pychron.core.ui.gui import invoke_in_main_thread
                 invoke_in_main_thread(self.warning_dialog, self.connection_error)
             else:
                 url = self.url
@@ -257,6 +257,7 @@ class DatabaseAdapter(Loggable):
                         self.connection_error = 'Not Connected to Database "{}".\nAccess Denied for user= {} \
 host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
                         if warn:
+                            from pychron.core.ui.gui import invoke_in_main_thread
                             invoke_in_main_thread(self.warning_dialog, self.connection_error)
 
         self.connection_parameters_changed = False
