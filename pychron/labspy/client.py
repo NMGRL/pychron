@@ -22,7 +22,7 @@ from apptools.preferences.preference_binding import bind_preference
 
 # ============= standard library imports ========================
 import os
-from threading import Timer, Thread
+from threading import Timer, Thread, Lock
 import hashlib
 import time
 import yaml
@@ -37,12 +37,13 @@ from pychron.paths import paths
 
 def auto_connect(func):
     def wrapper(obj, *args, **kw):
-        if not obj.db.connected:
-            obj.connect()
+        with obj.session_lock:
+            if not obj.db.connected:
+                obj.connect()
 
-        if obj.db.connected:
-            with obj.db.session_ctx():
-                return func(obj, *args, **kw)
+            if obj.db.connected:
+                with obj.db.session_ctx():
+                    return func(obj, *args, **kw)
 
     return wrapper
 
@@ -84,12 +85,14 @@ class LabspyClient(Loggable):
     connection_status_period = Int
 
     _timer = None
+    session_lock = None
 
     def __init__(self, bind=True, *args, **kw):
         super(LabspyClient, self).__init__(*args, **kw)
         if bind:
             self.bind_preferences()
             # self.start()
+        self.session_lock = Lock()
 
     def bind_preferences(self):
         self.db.bind_preferences()
