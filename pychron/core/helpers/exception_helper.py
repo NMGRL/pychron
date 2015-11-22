@@ -211,11 +211,6 @@ def ignored_exceptions(exctype, value, tb):
 
 def except_handler(exctype, value, tb):
     lines = traceback.format_exception(exctype, value, tb)
-    if not ignored_exceptions(exctype, value, tb):
-        em = ExceptionModel(exctext=''.join(lines),
-                            labels=['Bug'])
-        ed = ExceptionHandler(model=em)
-        ed.edit_traits()
 
     root = logging.getLogger()
     root.critical('============ Exception ==============')
@@ -224,6 +219,13 @@ def except_handler(exctype, value, tb):
         if ti:
             root.critical(ti)
     root.critical('============ End Exception ==========')
+
+    if not ignored_exceptions(exctype, value, tb):
+        em = ExceptionModel(exctext=''.join(lines),
+                            labels=['Bug'])
+        ed = ExceptionHandler(model=em)
+        from pychron.core.ui.gui import invoke_in_main_thread
+        invoke_in_main_thread(ed.edit_traits)
 
 
 def traits_except_handler(obj, name, old, new):
