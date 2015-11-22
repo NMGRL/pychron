@@ -82,7 +82,7 @@ def verbose_skip(func):
             if an < min_args:
                 raise PyscriptError(obj.name, 'invalid arguments count for {}, args={} kwargs={}'.format(fname,
                                                                                                          args, kw))
-            if obj.testing_syntax or obj.is_canceled() or obj.is_truncated():
+            if obj.testing_syntax or obj.is_canceled() or obj.is_truncated() or obj.is_aborted():
                 return 0
 
             obj.debug('{} {} {}'.format(fname, args, kw))
@@ -94,7 +94,7 @@ def verbose_skip(func):
 
 def skip(func):
     def decorator(obj, *args, **kw):
-        if obj.testing_syntax or obj.is_canceled() or obj.is_truncated():
+        if obj.testing_syntax or obj.is_canceled() or obj.is_truncated() or obj.is_aborted():
             return
         return func(obj, *args, **kw)
 
@@ -113,7 +113,7 @@ def calculate_duration(func):
 
 def count_verbose_skip(func):
     def decorator(obj, *args, **kw):
-        if obj.is_truncated() or obj.is_canceled():
+        if obj.is_truncated() or obj.is_canceled() or obj.is_aborted():
             return 0
 
         fname = func.__name__
@@ -195,7 +195,8 @@ class PyScript(Loggable):
 
     _interval_stack = None
 
-    _cancel = Bool(False)
+    _aborted = False
+    _cancel = False
     _completed = False
     _truncate = False
 
@@ -214,6 +215,9 @@ class PyScript(Loggable):
     # def __init__(self, *args, **kw):
     # super(PyScript, self).__init__(*args, **kw)
     # self._block_lock = Lock()
+
+    def is_aborted(self):
+        return self._aborted
 
     def is_canceled(self):
         return self._cancel
@@ -497,6 +501,20 @@ class PyScript(Loggable):
         if self._gosub_script is not None:
             self._gosub_script.truncate(style=style)
 
+    def abort(self):
+        self._aborted = True
+        if self._gosub_script is not None:
+            if not self._gosub_script.is_aborted():
+                self._gosub_script.abort()
+
+        if self.parent_script:
+            if not self.parent_script.is_aborted():
+                self.parent_script.abort()
+
+        if self._wait_control:
+            self._wait_control.stop()
+        self._abort_hook()
+
     def cancel(self, **kw):
         self._cancel = True
         if self._gosub_script is not None:
@@ -758,6 +776,9 @@ class PyScript(Loggable):
 
         if self._cancel:
             self.console_info('{} canceled'.format(self.name))
+        elif self._aborted:
+            self.console_info('{} aborted'.format(self.name))
+            self._completed = True
         else:
             self.console_info('{} completed successfully'.format(self.name))
             self._completed = True
@@ -930,6 +951,9 @@ class PyScript(Loggable):
     #     return __CACHED_DURATIONS__[h]
 
     def _cancel_hook(self, **kw):
+        pass
+
+    def _abort_hook(self):
         pass
 
     def _finish(self):

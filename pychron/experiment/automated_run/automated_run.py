@@ -647,6 +647,30 @@ class AutomatedRun(Loggable):
     # ===============================================================================
     # run termination
     # ===============================================================================
+    def abort_run(self, do_post_equilibration=True):
+        self.debug('Abort run do_post_equilibration={}'.format(do_post_equilibration))
+        # self.multi_collector.canceled = True
+        self.collector.canceled = True
+
+        # self.aliquot='##'
+        self._persister_action('trait_set', save_enabled=False)
+
+        for s in ('extraction', 'measurement'):
+            script = getattr(self, '{}_script'.format(s))
+            if script is not None:
+                script.abort()
+
+        if self.peak_center:
+            self.debug('cancel peak center')
+            self.peak_center.cancel()
+
+        self.do_post_termination(do_post_equilibration=do_post_equilibration)
+
+        self.finish()
+
+        if self.state != 'not run':
+            self.state = 'aborted'
+
     def cancel_run(self, state='canceled', do_post_equilibration=True):
         """
         terminate the measurement script immediately
@@ -656,6 +680,8 @@ class AutomatedRun(Loggable):
         don't save run
 
         """
+
+        self.debug('Cancel run state={} do_post_equilibration={}'.format(state, do_post_equilibration))
         # self.multi_collector.canceled = True
         self.collector.canceled = True
 
@@ -782,7 +808,7 @@ class AutomatedRun(Loggable):
         if self.monitor:
             self.monitor.stop()
 
-        if self.state not in ('not run', 'canceled', 'success', 'truncated'):
+        if self.state not in ('not run', 'canceled', 'success', 'truncated', 'aborted'):
             self.state = 'failed'
 
         self.stop()
@@ -1135,6 +1161,7 @@ class AutomatedRun(Loggable):
 
             self.do_post_equilibration()
             self.do_post_measurement()
+
             self.finish()
 
             self.heading('Extraction Finished unsuccessfully', color='red')

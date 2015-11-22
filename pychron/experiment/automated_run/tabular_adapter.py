@@ -34,7 +34,8 @@ COLORS = {'success': SUCCESS_COLOR,
           'truncated': TRUNCATED_COLOR,
           'failed': FAILED_COLOR,
           'end_after': END_AFTER_COLOR,
-          'invalid': 'red'}
+          'invalid': 'red',
+          'aborted': 'orange'}
 
 
 class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):

@@ -83,7 +83,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     extraction_state_color = Color
 
     end_at_run_completion = Bool(False)
-    cancel_run_button = Button('Cancel Run')
+    abort_run_button = Button('Abort Run')
 
     truncate_button = Button('Truncate Run')
     truncate_style = Enum('Normal', 'Quick')
@@ -159,6 +159,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     alive = Bool(False)
     _canceled = False
     _state_thread = None
+    _aborted = False
 
     _end_flag = None
     _complete_flag = None
@@ -261,6 +262,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             msg = 'Starting Execution "{}"'.format(name)
             self.heading(msg)
 
+            self._aborted = False
             self._canceled = False
             self.extraction_state_label = ''
 
@@ -338,6 +340,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     def _reset(self):
         self.alive = True
         self._canceled = False
+        self._aborted = False
 
         self._err_message = ''
         self.end_at_run_completion = False
@@ -661,6 +664,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if not self.is_alive():
                 break
 
+            if self._aborted:
+                break
+
             if self.monitor and self.monitor.has_fatal_error():
                 run.cancel_run()
                 run.state = 'failed'
@@ -722,20 +728,18 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         # run.teardown()
         do_after(1000, run.teardown)
 
-    def _cancel_run(self):
+    def _abort_run(self):
         self.set_extract_state(False)
         self.wait_group.stop()
-        self._canceled = True
+
+        self._aborted = True
         for arun in (self.measuring_run, self.extracting_run):
             if arun:
-                arun.cancel_run(state='canceled')
-        self._err_message = 'User Canceled'
+                arun.abort_run()
 
     def _cancel(self, style='queue', cancel_run=False, msg=None, confirm=True, err=None):
-        # arun = self.current_run
         aruns = (self.measuring_run, self.extracting_run)
 
-        # arun = self.experiment_queue.current_run
         if style == 'queue':
             name = os.path.basename(self.experiment_queue.path)
             name, _ = os.path.splitext(name)
@@ -1507,8 +1511,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     def _pre_execute_check(self, inform=True):
         if not self.use_db_persistence and not self.use_xls_persistence and not self.use_dvc_persistence:
             if not self.confirmation_dialog('You do not have any Database or XLS saving enabled. '
-                                     'Are you sure you want to continue?\n\n'
-                                     'Enable analysis saving in Preferences>>Experiment>>Automated Run'):
+                                            'Are you sure you want to continue?\n\n'
+                                            'Enable analysis saving in Preferences>>Experiment>>Automated Run'):
                 return
 
         if self.use_db_persistence:
@@ -1847,15 +1851,17 @@ Use Last "blank_{}"= {}
             self.info('stop execution')
             self.stop()
 
-    def _cancel_run_button_fired(self):
-        self.debug('cancel run. Executor.isAlive={}'.format(self.is_alive()))
+    def _abort_run_button_fired(self):
+        self.debug('abort run. Executor.isAlive={}'.format(self.is_alive()))
         if self.is_alive():
             for crun, kind in ((self.measuring_run, 'measuring'),
                                (self.extracting_run, 'extracting')):
                 if crun:
                     self.debug('cancel {} run {}'.format(kind, crun.runid))
-                    t = Thread(target=self._cancel_run)
-                    t.start()
+                    self._abort_run()
+                    # do_after(50, self._cancel_run)
+                    # t = Thread(target=self._cancel_run)
+                    # t.start()
                     break
 
     def _truncate_button_fired(self):
