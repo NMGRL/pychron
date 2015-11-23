@@ -156,9 +156,9 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
     def _get_position_text(self):
         at = self.item.analysis_type
         p = self.item.position
-        if at != 'unknown':
+        if at not in ('unknown', 'degas'):
             if at == 'blank_unknown':
-                if not ',' in p:
+                if ',' not in p:
                     p = ''
             else:
                 p = ''

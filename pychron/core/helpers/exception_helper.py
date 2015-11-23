@@ -175,18 +175,18 @@ class ExceptionHandler(Controller):
 
     def traits_view(self):
         v = View(VGroup(
-            UItem('helpstr',
-                  style='readonly'),
-            Item('title'),
-            HGroup(
-                VGroup(UItem('labels', style='custom', editor=CheckListEditor(values=LABELS)),
-                       show_border=True, label='Labels (optional)'),
-                VGroup(UItem('description', style='custom'), show_border=True, label='Description (optional)')),
-            UItem('exctext',
-                  style='custom',
-                  editor=TextEditor(read_only=True))),
-            title='Exception',
-            buttons=[SubmitAction, 'Cancel'])
+                UItem('helpstr',
+                      style='readonly'),
+                Item('title'),
+                HGroup(
+                        VGroup(UItem('labels', style='custom', editor=CheckListEditor(values=LABELS)),
+                               show_border=True, label='Labels (optional)'),
+                        VGroup(UItem('description', style='custom'), show_border=True, label='Description (optional)')),
+                UItem('exctext',
+                      style='custom',
+                      editor=TextEditor(read_only=True))),
+                title='Exception',
+                buttons=[SubmitAction, 'Cancel'])
 
         return v
 
@@ -265,6 +265,7 @@ http://spyced.blogspot.com/2007/06/workaround-for-sysexcepthook-bug.html
 
     threading.Thread.__init__ = init
 
+
 def set_exception_handler():
     """
 
@@ -273,9 +274,6 @@ def set_exception_handler():
     sys.excepthook = except_handler
     traits.trait_notifiers.handle_exception = traits_except_handler
     set_thread_exception_handler()
-
-
-
 
 
 if __name__ == '__main__':

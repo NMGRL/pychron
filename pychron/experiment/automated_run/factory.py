@@ -21,7 +21,6 @@ from apptools.preferences.preference_binding import bind_preference
 from traits.api import String, Str, Property, Any, Float, Instance, Int, List, \
     cached_property, on_trait_change, Bool, Button, Event, Enum, Dict
 
-
 # ============= standard library imports ========================
 from traits.trait_errors import TraitError
 import yaml
@@ -484,10 +483,10 @@ class AutomatedRunFactory(PersistenceLoggable):
         return block.make_runs(p), self.frequency_model.frequency
 
     def _new_runs(self, exp_queue, positions):
-        _ln, special = self._make_short_labnumber()
+        ln, special = self._make_short_labnumber()
         freq = self.frequency_model.frequency if special else None
         self.debug('Frequency={}'.format(freq))
-        if not special:
+        if not special or ln == 'dg':
             if not positions:
                 positions = self.position
 
@@ -953,7 +952,7 @@ class AutomatedRunFactory(PersistenceLoggable):
                     return True
                 else:
                     self.warning_dialog(
-                        '{} does not exist. Add using "Labnumber Entry" or "Utilities>>Import"'.format(labnumber))
+                            '{} does not exist. Add using "Labnumber Entry" or "Utilities>>Import"'.format(labnumber))
 
     def _load_labnumber_defaults(self, old, labnumber, special):
         self.debug('load labnumber defaults {} {}'.format(labnumber, special))
