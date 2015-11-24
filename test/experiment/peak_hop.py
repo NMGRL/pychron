@@ -62,8 +62,8 @@ class PeakHopTestCase(unittest.TestCase):
         s.load(db_mol_weights=False)
         a.spectrometer_manager = s
         a.ion_optics_manager = ion
-        a.arar_age = ArArAge()
-        a.arar_age.j=ufloat(0.001, 1e-6)
+        a.isotope_group = ArArAge()
+        a.isotope_group.j=ufloat(0.001, 1e-6)
 
         a._alive = True
         a.uuid = '12345-ABCDE'

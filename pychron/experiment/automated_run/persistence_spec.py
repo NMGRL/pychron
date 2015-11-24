@@ -26,7 +26,7 @@ from traits.api import HasTraits, Str, Int, Bool, Any, Float, \
 class PersistenceSpec(HasTraits):
     run_spec = Instance('pychron.experiment.automated_run.spec.AutomatedRunSpec')
     monitor = Instance('pychron.monitors.automated_run_monitor.AutomatedRunMonitor')
-    arar_age = Instance('pychron.processing.arar_age.ArArAge')
+    isotope_group = Instance('pychron.processing.isotope_group.IsotopeGroup')
 
     auto_save_detector_ic = Bool
     signal_fods = Dict

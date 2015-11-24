@@ -191,6 +191,10 @@ class ClientSwitchManager(SwitchManager):
             return True
         else:
             self.warning('State checksums do not match. Local:{} Remote:{}'.format(local, remote))
+
+            if remote is None:
+                return
+
             if self.actuators:
 
                 state_word = self.get_state_word()

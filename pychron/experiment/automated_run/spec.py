@@ -41,7 +41,7 @@ class AutomatedRunSpec(HasTraits):
     state = Enum('not run', 'extraction',
                  'measurement', 'success',
                  'failed', 'truncated', 'canceled',
-                 'invalid', 'test')
+                 'invalid', 'test', 'aborted')
 
     skip = Bool(False)
     end_after = Bool(False)

@@ -300,7 +300,7 @@ class DVCPersister(BasePersister):
             clf = self.isotope_classifier
 
         endianness = '>'
-        for iso in self.per_spec.arar_age.isotopes.values():
+        for iso in self.per_spec.isotope_group.isotopes.values():
 
             sblob = base64.b64encode(iso.pack(endianness, as_hex=False))
             snblob = base64.b64encode(iso.sniff.pack(endianness, as_hex=False))

@@ -256,7 +256,13 @@ class ControlsPane(TraitsDockPane):
 
         v = View(
             VGroup(
-                HGroup(spacer(10),
+                HGroup(Item('spectrometer_configuration',
+                            label='Configuration',
+                            editor=EnumEditor(name='spectrometer_configurations')),
+                       icon_button_editor('set_spectrometer_configuration',
+                                          'brick-go',
+                                          tooltip='set selected spectrometer configuration'),
+                       spacer(10),
                        Item('integration_time',
                             label='Integration Time(s)')),
                 control_grp))

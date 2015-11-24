@@ -25,6 +25,7 @@ from threading import Event
 from pychron.envisage.consoleable import Consoleable
 from pychron.experiment.utilities.conditionals_results import check_conditional_results
 from pychron.globals import globalv
+from pychron.pychron_constants import AR_AR
 
 
 class DataCollector(Consoleable):
@@ -181,26 +182,28 @@ class DataCollector(Consoleable):
 
     def _save_data(self, x, keys, signals):
         self.data_writer(self.detectors, x, keys, signals)
+
         # update arar_age
         if self.is_baseline and self.for_peak_hop:
             self._update_baseline_peak_hop(x, keys, signals)
         else:
             self._update_isotopes(x, keys, signals)
 
-        if self.refresh_age:
-            self.arar_age.calculate_age(force=True)
+        if self.experiment_type == AR_AR:
+            if self.refresh_age:
+                self.isotope_group.calculate_age(force=True)
 
     def _update_baseline_peak_hop(self, x, keys, signals):
-        a = self.arar_age
-        for iso in self.arar_age.isotopes.itervalues():
+        ig = self.isotope_group
+        for iso in ig.isotopes.itervalues():
             signal = self._get_signal(keys, signals, iso.detector)
             if signal is not None:
-                if not a.append_data(iso.name, iso.detector, x, signal, 'baseline'):
+                if not ig.append_data(iso.name, iso.detector, x, signal, 'baseline'):
                     self.debug('baselines - failed appending data for {}. not a current isotope {}'.format(iso,
-                                                                                                           a.isotope_keys))
+                                                                                                           ig.isotope_keys))
 
     def _update_isotopes(self, x, keys, signals):
-        a = self.arar_age
+        a = self.isotope_group
         kind = self.collection_kind
 
         for dn in keys:
@@ -230,7 +233,7 @@ class DataCollector(Consoleable):
         return d
 
     def _plot_baseline_for_peak_hop(self, i, x, keys, signals):
-        for k, v in self.arar_age.isotopes.iteritems():
+        for k, v in self.isotope_group.isotopes.iteritems():
             signal = signals[keys.index(v.detector)]
             self._set_plot_data(i, k, v.detector, x, signal)
 
@@ -244,7 +247,7 @@ class DataCollector(Consoleable):
 
     def _get_fit(self, cnt, det, iso):
 
-        isotopes = self.arar_age.isotopes
+        isotopes = self.isotope_group.isotopes
         if self.is_baseline:
             ix = isotopes[iso]
             fit = ix.baseline.get_fit(cnt)
@@ -283,6 +286,14 @@ class DataCollector(Consoleable):
                             plotid=pid,
                             update_y_limits=True,
                             ypadding='0.1')
+
+            if self.collection_kind == 'sniff':
+                sgraph = self.plot_panel.sniff_graph
+                sgraph.add_datum((x, signal),
+                                 series=self.series_idx,
+                                 plotid=pid,
+                                 update_y_limits=True,
+                                 ypadding='0.1')
 
             if fit:
                 graph.set_fit(fit, plotid=pid, series=self.fit_series_idx)
@@ -397,10 +408,11 @@ class DataCollector(Consoleable):
                 self.automated_run.show_conditionals(tripped=cancelation_conditional)
 
                 return 'cancel'
+
     @property
-    def arar_age(self):
+    def isotope_group(self):
         if self.automated_run:
-            return self.automated_run.arar_age
+            return self.automated_run.isotope_group
 
     @property
     def plot_panel(self):
@@ -427,7 +439,7 @@ class DataCollector(Consoleable):
         if self.automated_run:
             return self.automated_run.cancelation_conditionals
 
-# ============= EOF =============================================
+        # ============= EOF =============================================
         # def _iter(self, con, evt, i, prev=0):
         #
         #     result = self._check_iteration(evt, i)

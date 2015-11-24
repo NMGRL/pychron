@@ -63,7 +63,7 @@ class MulticollectTestCase(unittest.TestCase):
         s.load(db_mol_weights=False)
         a.spectrometer_manager = s
         a.ion_optics_manager = ion
-        a.arar_age = ArArAge()
+        a.isotope_group = ArArAge()
 
         a._alive = True
         a.uuid = '12345-ABCDE'

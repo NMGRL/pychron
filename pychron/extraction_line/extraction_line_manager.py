@@ -246,7 +246,10 @@ class ExtractionLineManager(Manager, Consoleable):
             if self.switch_manager.simulation:
                 return globalv.communication_simulation
             else:
-                return bool(self.get_valve_states())
+                valves = self.switch_manager.switches
+                vkeys = sorted(valves.keys())
+                state = self.switch_manager.get_state_checksum(vkeys)
+                return bool(state)
 
     def refresh_canvas(self):
         for ci in self._canvases:

@@ -20,8 +20,8 @@ Global path structure
 add a path verification function
 make sure directory exists and build if not
 """
-from os import path, mkdir
 import os
+from os import path, mkdir
 
 from pychron.file_defaults import TASK_EXTENSION_DEFAULT, SIMPLE_UI_DEFAULT, \
     EDIT_UI_DEFAULT, IDENTIFIERS_DEFAULT
@@ -100,6 +100,8 @@ class Paths(object):
     setup_dir = None
     device_dir = None
     spectrometer_dir = None
+    spectrometer_config_dir = None
+    mftable_dir = None
     backup_deflection_dir = None
 
     queue_conditionals_dir = None
@@ -294,6 +296,9 @@ class Paths(object):
         self.setup_dir = setup_dir = join(root, 'setupfiles')
         self.spectrometer_dir = join(setup_dir, 'spectrometer')
         self.backup_deflection_dir = join(self.spectrometer_dir, 'deflection_backup')
+        self.spectrometer_config_dir = join(self.spectrometer_dir, 'configurations')
+        self.mftable_dir = join(self.spectrometer_dir, 'mftables')
+
         self.device_dir = join(setup_dir, 'devices')
         self.backup_device_dir = join(self.device_dir, 'backup')
         self.canvas2D_dir = join(setup_dir, 'canvas2D')
@@ -432,42 +437,4 @@ def build_directories():
 
 
 paths = Paths()
-# paths.build('_dev')
-# build_directories()
 # ============= EOF ==============================================
-# ==============================================================================
-# # #database
-# # ==============================================================================
-# device_scan_root = device_scan_root = None
-# device_scan_db = None
-#
-# co2laser_db_root = None
-# co2laser_db = None
-#
-# diodelaser_db_root = None
-# diodelaser_db = None
-#
-# isotope_db_root = None
-# isotope_db = None
-# ==============================================================================
-# #database
-# ==============================================================================
-# db_path = '/usr/local/pychron
-# db_path = stable_root
-# self.device_scan_root = device_scan_root = join(db_path, 'device_scans')
-# self.device_scan_db = join(device_scan_root, 'device_scans.sqlite')
-
-# self.co2laser_db_root = join(db_path, 'co2laserdb')
-# self.co2laser_db = join(db_path, 'co2.sqlite')
-# self.uvlaser_db_root = join(db_path, 'uvlaserdb')
-# self.uvlaser_db = join(db_path, 'uv.sqlite')
-#
-# self.powermap_db_root = join(db_path, 'powermap')
-# self.powermap_db = join(db_path, 'powermap.sqlite')
-#
-# self.diodelaser_db_root = join(db_path, 'diodelaserdb')
-# self.diodelaser_db = join(db_path, 'diode.sqlite')
-# self.isotope_db_root = join(db_path, 'isotopedb')
-
-# ROOT = '/Users/ross/Sandbox/pychron_test_data/data'
-# self.isotope_db = join(ROOT, 'isotopedb.sqlite')

@@ -216,7 +216,7 @@ class SystemHealthSeries(Loggable):
         :return: dict
         """
 
-        arar = an.arar_age
+        ig = an.isotope_group
         try:
             spec = an.spec
             d = {'identifier': spec.identifier,
@@ -242,7 +242,7 @@ class SystemHealthSeries(Loggable):
                     try:
                         d[v] = spec_dict[v]
                     except KeyError:
-                        vv = arar.get_value(v)
+                        vv = ig.get_value(v)
                         d[v] = nominal_value(vv)
                         d['{}_err'.format(v)] = std_dev(vv)
 

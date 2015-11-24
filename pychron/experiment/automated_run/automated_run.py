@@ -28,12 +28,12 @@ import weakref
 from itertools import groupby
 from threading import Thread, Event as TEvent
 from uncertainties import ufloat, nominal_value, std_dev
-from numpy import Inf
+from numpy import Inf, polyfit, linspace, polyval
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import get_path
 from pychron.core.helpers.filetools import add_extension
-# from pychron.core.codetools.memory_usage import mem_log
-
+from pychron.core.helpers.strtools import to_bool
+from pychron.core.ui.preference_binding import set_preference
 from pychron.experiment.automated_run.hop_util import parse_hops
 from pychron.experiment.automated_run.persistence_spec import PersistenceSpec
 from pychron.experiment.conditional.conditional import TruncationConditional, \
@@ -41,12 +41,11 @@ from pychron.experiment.conditional.conditional import TruncationConditional, \
 from pychron.experiment.utilities.conditionals import test_queue_conditionals_name
 from pychron.experiment.utilities.identifier import convert_identifier
 from pychron.experiment.utilities.script import assemble_script_blob
-
 from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR, MEASUREMENT_COLOR, \
-    EXTRACTION_COLOR, SCRIPT_KEYS
+    EXTRACTION_COLOR, SCRIPT_KEYS, AR_AR
 
 DEBUG = False
 
@@ -126,7 +125,7 @@ class AutomatedRun(Loggable):
     runner = Any
     monitor = Any
     plot_panel = Any
-    arar_age = Instance('pychron.processing.arar_age.ArArAge')
+    isotope_group = Instance('pychron.processing.isotope_group.IsotopeGroup')
 
     spec = Any
     runid = Str
@@ -145,7 +144,10 @@ class AutomatedRun(Loggable):
     measuring = Bool(False)
     dirty = Bool(False)
     update = Event
+
+    use_db_persistence = Bool(True)
     use_dvc_persistence = Bool(False)
+    use_xls_persistence = Bool(False)
 
     measurement_script = Instance('pychron.pyscripts.measurement_pyscript.MeasurementPyScript')
     post_measurement_script = Instance('pychron.pyscripts.extraction_line_pyscript.ExtractionPyScript')
@@ -180,16 +182,29 @@ class AutomatedRun(Loggable):
 
     persistence_spec = Instance(PersistenceSpec)
 
-    def bind_preferences(self):
-        prefid = 'pychron.experiment'
-        bind_preference(self, 'use_peak_center_threshold', '{}.use_peak_center_threshold'.format(prefid))
-        bind_preference(self, 'peak_center_threshold1', '{}.peak_center_threshold1'.format(prefid))
-        bind_preference(self, 'peak_center_threshold2', '{}.peak_center_threshold2'.format(prefid))
-        bind_preference(self, 'peak_center_threshold_window', '{}.peak_center_threshold_window'.format(prefid))
+    experiment_type = Str(AR_AR)
+
+    def set_preferences(self, preferences):
+        self.debug('set preferences')
+
+        for attr, cast in (('experiment_type', str),
+                           ('use_peak_center_threshold', to_bool),
+                           ('peak_center_threshold1', int),
+                           ('peak_center_threshold2', int),
+                           ('peak_center_threshold_window', int)):
+            set_preference(preferences, self, attr, 'pychron.experiment.{}'.format(attr), cast)
+
+        self.persister.set_preferences(preferences)
+        self.multi_collector.console_set_preferences(preferences, 'pychron.experiment')
+        self.peak_hop_collector.console_set_preferences(preferences, 'pychron.experiment')
 
     # ===============================================================================
     # pyscript interface
     # ===============================================================================
+    def py_set_isotope_group(self, name):
+        if self.plot_panel:
+            self.plot_panel.add_isotope_graph(name)
+
     def py_generate_ic_mftable(self, detectors, refiso):
         return self._generate_ic_mftable(detectors, refiso)
 
@@ -198,14 +213,22 @@ class AutomatedRun(Loggable):
 
     def py_reset_data(self):
         self.debug('reset data')
-        self.persister.pre_measurement_save()
         self._persister_action('pre_measurement_save')
 
     def _update_persister_spec(self, **kw):
         self.persistence_spec.trait_set(**kw)
 
+    def _persister_save_action(self, func, *args, **kw):
+        if self.use_db_persistence:
+            getattr(self.persister, func)(*args, **kw)
+        if self.use_dvc_persistence:
+            getattr(self.dvc_persister, func)(*args, **kw)
+        if self.use_xls_persistence:
+            getattr(self.xls_persister, func)(*args, **kw)
+
     def _persister_action(self, func, *args, **kw):
         getattr(self.persister, func)(*args, **kw)
+
         for i, p in enumerate((self.xls_persister, self.dvc_persister)):
             if p is None:
                 continue
@@ -218,6 +241,9 @@ class AutomatedRun(Loggable):
                 import traceback
 
                 traceback.print_exc()
+
+    def py_send_spectrometer_configuration(self):
+        self.spectrometer_manager.spectrometer.send_configuration()
 
     def py_set_integration_time(self, v):
         self.set_integration_time(v)
@@ -247,7 +273,7 @@ class AutomatedRun(Loggable):
             self._activate_detectors(dets)
 
     def py_set_fits(self, fits):
-        isotopes = self.arar_age.isotopes
+        isotopes = self.isotope_group.isotopes
         if not fits:
             fits = self._get_default_fits()
         elif len(fits) == 1:
@@ -266,7 +292,7 @@ class AutomatedRun(Loggable):
             self.debug('set "{}" to "{}"'.format(k, fi))
 
     def py_set_baseline_fits(self, fits):
-        isotopes = self.arar_age.isotopes
+        isotopes = self.isotope_group.isotopes
 
         if not fits:
             fits = self._get_default_fits(is_baseline=True)
@@ -405,7 +431,7 @@ class AutomatedRun(Loggable):
 
         if self.plot_panel:
             bs = dict([(iso.name, iso.baseline.uvalue) for iso in
-                       self.arar_age.isotopes.values()])
+                       self.isotope_group.isotopes.values()])
             self.set_previous_baselines(bs)
             self.plot_panel.is_baseline = False
 
@@ -428,7 +454,7 @@ class AutomatedRun(Loggable):
         key = lambda x: x[0]
         hops = parse_hops(hopstr, ret='iso,det,is_baseline')
         hops = sorted(hops, key=key)
-        a = self.arar_age
+        a = self.isotope_group
         g = self.plot_panel.isotope_graph
 
         _, pb = self.get_previous_blanks()
@@ -520,8 +546,8 @@ class AutomatedRun(Loggable):
         ion = self.ion_optics_manager
 
         if ion is not None:
-            if self.arar_age and check_intensity and self.use_peak_center_threshold:
-                iso = self.arar_age.get_isotope(isotope)
+            if self.isotope_group and check_intensity and self.use_peak_center_threshold:
+                iso = self.isotope_group.get_isotope(isotope)
                 v = iso.get_intensity()
                 if v < self.peak_center_threshold1:
                     self.debug('peak center: {}={}<{}'.format(isotope, v, self.peak_center_threshold1))
@@ -621,6 +647,30 @@ class AutomatedRun(Loggable):
     # ===============================================================================
     # run termination
     # ===============================================================================
+    def abort_run(self, do_post_equilibration=True):
+        self.debug('Abort run do_post_equilibration={}'.format(do_post_equilibration))
+        # self.multi_collector.canceled = True
+        self.collector.canceled = True
+
+        # self.aliquot='##'
+        self._persister_action('trait_set', save_enabled=False)
+
+        for s in ('extraction', 'measurement'):
+            script = getattr(self, '{}_script'.format(s))
+            if script is not None:
+                script.abort()
+
+        if self.peak_center:
+            self.debug('cancel peak center')
+            self.peak_center.cancel()
+
+        self.do_post_termination(do_post_equilibration=do_post_equilibration)
+
+        self.finish()
+
+        if self.state != 'not run':
+            self.state = 'aborted'
+
     def cancel_run(self, state='canceled', do_post_equilibration=True):
         """
         terminate the measurement script immediately
@@ -630,6 +680,8 @@ class AutomatedRun(Loggable):
         don't save run
 
         """
+
+        self.debug('Cancel run state={} do_post_equilibration={}'.format(state, do_post_equilibration))
         # self.multi_collector.canceled = True
         self.collector.canceled = True
 
@@ -711,21 +763,44 @@ class AutomatedRun(Loggable):
         if self.plot_panel:
             self.plot_panel.info_func = None
             self.plot_panel.automated_run = None
-            self.plot_panel.arar_age = None
+            self.plot_panel.isotope_group = None
 
         if self.monitor:
             self.monitor.automated_run = None
 
-        if self.arar_age:
-            self.arar_age = None
+        if self.isotope_group:
+            self.isotope_group = None
 
         if self.persistence_spec:
             self.persistence_spec.spec = None
-            self.persistence_spec.arar_age = None
+            self.persistence_spec.isotope_group = None
 
-        self._persister_action('trait_set', persistence_spec=None)
+        self._persister_action('trait_set', persistence_spec=None, monitor=None)
+
+        self.monitor = None
         self.spec = None
+
+        self.extraction_line_manager = None
+        self.spectrometer_manager = None
+        # self.persister = None
+        # self.dvc_persister = None
+        # self.xls_persister = None
+        self.ion_optics_manager = None
+        self.runner = None
+        self.system_health = None
         # self.py_clear_conditionals()
+
+        # self.experiment_executor.tracker.create_snapshot()
+        # self.experiment_executor.tracker.stats.print_summary()
+        self.experiment_executor = None
+
+        # from pympler.refbrowser import ConsoleBrowser
+        #
+        # def output_function(o):
+        #     return str(type(o))
+        #
+        # cb = ConsoleBrowser(self, maxdepth=2, str_func=output_function)
+        # cb.print_tree()
 
     def finish(self):
         self.debug('----------------- finish -----------------')
@@ -733,7 +808,7 @@ class AutomatedRun(Loggable):
         if self.monitor:
             self.monitor.stop()
 
-        if self.state not in ('not run', 'canceled', 'success', 'truncated'):
+        if self.state not in ('not run', 'canceled', 'success', 'truncated', 'aborted'):
             self.state = 'failed'
 
         self.stop()
@@ -900,7 +975,7 @@ class AutomatedRun(Loggable):
                                             active_detectors=self._active_detectors)
 
             # save to database
-            self._persister_action('post_measurement_save')
+            self._persister_save_action('post_measurement_save')
 
             if self.plot_panel:
                 self.plot_panel.analysis_view.refresh_needed = True
@@ -994,7 +1069,7 @@ class AutomatedRun(Loggable):
 
         self._update_persister_spec(save_as_peak_hop=False,
                                     run_spec=self.spec,
-                                    arar_age=self.arar_age,
+                                    isotope_group=self.isotope_group,
                                     positions=self.spec.get_position_list(),
                                     auto_save_detector_ic=auto_save_detector_ic,
                                     extraction_positions=ext_pos,
@@ -1071,7 +1146,7 @@ class AutomatedRun(Loggable):
             oblob = self.extraction_script.get_output_blob()
             snapshots = self.extraction_script.snapshots
 
-            self._persister_action('post_extraction_save', rblob, oblob, snapshots)
+            self._persister_save_action('post_extraction_save', rblob, oblob, snapshots)
             # self.persister.post_extraction_save(rblob, oblob, snapshots)
             self.heading('Extraction Finished')
             self.info_color = None
@@ -1086,6 +1161,7 @@ class AutomatedRun(Loggable):
 
             self.do_post_equilibration()
             self.do_post_measurement()
+
             self.finish()
 
             self.heading('Extraction Finished unsuccessfully', color='red')
@@ -1223,8 +1299,8 @@ class AutomatedRun(Loggable):
                                        for ai in self._active_detectors])
 
         age = ''
-        if self.arar_age:
-            age = self.arar_age.age
+        if self.isotope_group:
+            age = self.isotope_group.age
         age_string = 'age={}'.format(age)
 
         return '''runid={} timestamp={} {}
@@ -1240,7 +1316,7 @@ anaylsis_type={}
 
     def get_baseline_corrected_signals(self):
         d = dict()
-        for k, iso in self.arar_age.isotopes.iteritems():
+        for k, iso in self.isotope_group.isotopes.iteritems():
             d[k] = iso.get_baseline_corrected_value()
         return d
 
@@ -1254,23 +1330,29 @@ anaylsis_type={}
     # private
     # ===============================================================================
     def _start(self):
-
-        if self._use_arar_age():
-            if self.arar_age is None:
-                # load arar_age object for age calculation
+        if self.isotope_group is None:
+            # load arar_age object for age calculation
+            if self.experiment_type == AR_AR:
                 from pychron.processing.arar_age import ArArAge
+                klass = ArArAge
+            else:
+                from pychron.processing.isotope_group import IsotopeGroup
+                klass = IsotopeGroup
 
-                self.arar_age = ArArAge()
+            self.isotope_group = klass()
 
-            es = self.extraction_script
-            if es is not None:
-                # get senstivity multiplier from extraction script
-                v = self._get_yaml_parameter(es, 'sensitivity_multiplier', default=1)
-                self.arar_age.sensitivity_multiplier = v
+        es = self.extraction_script
+        if es is not None:
+            # get sensitivity multiplier from extraction script
+            v = self._get_yaml_parameter(es, 'sensitivity_multiplier', default=1)
+            self.isotope_group.sensitivity_multiplier = v
 
-            ln = self.spec.labnumber
-            ln = convert_identifier(ln)
-            if not self.experiment_executor.datahub.load_analysis_backend(ln, self.arar_age):
+        ln = self.spec.labnumber
+        ln = convert_identifier(ln)
+
+        self.debug('**************** Experiment Type: {}, {}'.format(self.experiment_type, AR_AR))
+        if self.experiment_type == AR_AR:
+            if not self.experiment_executor.datahub.load_arar_analysis_backend(ln, self.isotope_group):
                 self.debug('failed load analysis backend')
                 return
 
@@ -1301,6 +1383,9 @@ anaylsis_type={}
             self.plot_panel.total_counts = 0
             self.plot_panel.is_peak_hop = False
             self.plot_panel.is_baseline = False
+            self.plot_panel.set_analysis_view(self.experiment_type)
+
+            # self.plot_panel.experiment_type = self.experiment_type
 
         self.multi_collector.canceled = False
         self.multi_collector.is_baseline = False
@@ -1395,7 +1480,7 @@ anaylsis_type={}
                 #             # var.append(cx)
 
     def _conditional_appender(self, name, cd, klass):
-        if not self.arar_age:
+        if not self.isotope_group:
             self.warning('No ArArAge to use for conditional testing')
             return
 
@@ -1421,7 +1506,7 @@ anaylsis_type={}
         if attr == 'age' and self.spec.analysis_type not in ('unknown', 'cocktail'):
             self.debug('not adding because analysis_type not unknown or cocktail')
 
-        if not self.arar_age.has_attr(attr):
+        if not self.isotope_group.has_attr(attr):
             self.warning('invalid {} attribute "{}"'.format(name, attr))
         else:
             obj = getattr(self, '{}_conditionals'.format(name))
@@ -1549,9 +1634,9 @@ anaylsis_type={}
         p.show_isotope_graph()
 
         # for iso in self.arar_age.isotopes:
-        self.arar_age.clear_isotopes()
-        self.arar_age.clear_error_components()
-        self.arar_age.clear_blanks()
+        self.isotope_group.clear_isotopes()
+        self.isotope_group.clear_error_components()
+        self.isotope_group.clear_blanks()
 
         cb = False
         if (not self.spec.analysis_type.startswith('blank')
@@ -1561,18 +1646,18 @@ anaylsis_type={}
             pid, blanks = self.get_previous_blanks()
 
             for iso, v in blanks.iteritems():
-                self.arar_age.set_blank(iso, v)
+                self.isotope_group.set_blank(iso, v)
 
         for d in self._active_detectors:
-            self.arar_age.set_isotope(d.isotope, (0, 0),
-                                      detector=d.name,
-                                      correct_for_blank=cb)
+            self.isotope_group.set_isotope(d.isotope, (0, 0),
+                                           detector=d.name,
+                                           correct_for_blank=cb)
 
-        self.arar_age.clear_baselines()
+        self.isotope_group.clear_baselines()
 
         baselines = self.get_previous_baselines()
         for iso, v in baselines.iteritems():
-            self.arar_age.set_baseline(iso, v)
+            self.isotope_group.set_baseline(iso, v)
 
         p.analysis_view.load(self)
 
@@ -1638,12 +1723,12 @@ anaylsis_type={}
     def _get_extraction_parameter(self, key, default=None):
         return self._get_yaml_parameter(self.extraction_script, key, default)
 
-    def _use_arar_age(self):
-        ln = self.spec.labnumber
-        return ln not in ('dg', 'pa')
+    # def _use_arar_age(self):
+    #     ln = self.spec.labnumber
+    #     return ln not in ('dg', 'pa')
 
     def _new_plot_panel(self, plot_panel, stack_order='bottom_to_top'):
-        from pychron.processing.analyses.view.automated_run_view import AutomatedRunAnalysisView
+        from pychron.processing.analyses.view.automated_run_view import ArArAutomatedRunAnalysisView
 
         title = self.runid
         sample, irradiation = self.spec.sample, self.spec.display_irradiation
@@ -1658,10 +1743,13 @@ anaylsis_type={}
             plot_panel = PlotPanel(
                 stack_order=stack_order,
                 info_func=self.info,
-                arar_age=self.arar_age)
+                isotope_group=self.isotope_group)
 
-        an = AutomatedRunAnalysisView(analysis_type=self.spec.analysis_type,
-                                      analysis_id=self.runid)
+        self.debug('*************** Set Analysis View {}'.format(self.experiment_type))
+        plot_panel.set_analysis_view(self.experiment_type,
+                                     analysis_type=self.spec.analysis_type,
+                                     analysis_id=self.runid)
+        an = plot_panel.analysis_view
         an.load(self)
 
         plot_panel.trait_set(
@@ -1705,7 +1793,11 @@ anaylsis_type={}
         # delay for eq time
         self.info('equilibrating for {}sec'.format(eqtime))
         time.sleep(eqtime)
+
         if self._alive:
+            # analyze the equilibration
+            self._analyze_equilibration()
+
             self.heading('Equilibration Finished')
             if elm and inlet and close_inlet:
                 for i in inlet:
@@ -1718,20 +1810,51 @@ anaylsis_type={}
                 self.debug('setting overlap event. next run ok to start extraction')
                 self.overlap_evt.set()
 
+    def _analyze_equilibration(self):
+        if self.plot_panel:
+            g = self.plot_panel.sniff_graph
+            xmi, xma = g.get_x_limits()
+            xma *= 1.25
+            g.set_x_limits(xmi, xma)
+
+            fxs = linspace(xmi, xma)
+            for i, p in enumerate(g.plots):
+                xs = g.get_data(i)
+                ys = g.get_data(i, axis=1)
+
+                for ni, color, yoff in ((5, 'red', 30), (4, 'green', 10), (3, 'blue', -10), (2, 'orange', -30)):
+                    xsi, ysi = xs[-ni:], ys[-ni:]
+
+                    g.new_series(xsi, ysi, type='scatter', plotid=i, color=color,
+                                 marker_size=2.5)
+
+                    coeffs = polyfit(xsi, ysi, 1)
+                    fys = polyval(coeffs, fxs)
+                    g.new_series(fxs, fys, type='line', plotid=i, color=color)
+                    txt = 'Slope ({})={:0.3f}'.format(ni, coeffs[0])
+                    g.add_plot_label(txt, plotid=i, overlay_position='inside right',
+                                     font='modern 14',
+                                     bgcolor='white',
+                                     color=color,
+                                     y_offset=yoff)
+
+            g.redraw()
+
     def _update_labels(self):
         if self.plot_panel:
-            if self.plot_panel.isotope_graph:
-                # update the plot_panel labels
-                plots = self.plot_panel.isotope_graph.plots
-                n = len(plots)
+            for g in (self.plot_panel.isotope_graph, self.plot_panel.sniff_graph):
+                if g:
+                    # update the plot_panel labels
+                    plots = g.plots
+                    n = len(plots)
 
-                for i, det in enumerate(self._active_detectors):
-                    if i < n:
-                        plots[i].y_axis.title = det.isotope
+                    for i, det in enumerate(self._active_detectors):
+                        if i < n:
+                            plots[i].y_axis.title = det.isotope
 
     def _update_detectors(self):
         for det in self._active_detectors:
-            self.arar_age.set_isotope_detector(det)
+            self.isotope_group.set_isotope_detector(det)
 
     def _set_magnet_position(self, pos, detector,
                              dac=False, update_detectors=True,
@@ -1748,10 +1871,10 @@ anaylsis_type={}
             self._update_detectors()
         if remove_non_active:
             # remove non active isotopes
-            for iso in self.arar_age.isotopes.keys():
+            for iso in self.isotope_group.isotopes.keys():
                 det = next((di for di in self._active_detectors if di.isotope == iso), None)
                 if det is None:
-                    self.arar_age.isotopes.pop(iso)
+                    self.isotope_group.isotopes.pop(iso)
 
         if self.plot_panel:
             self.plot_panel.analysis_view.load(self)
@@ -1794,11 +1917,11 @@ anaylsis_type={}
                 ci['start'] = ncounts
 
         conds = [conditional_from_dict(ci, ActionConditional) for ci in conditionals]
-        self.arar_age.conditional_modifier = 'whiff'
+        self.isotope_group.conditional_modifier = 'whiff'
         self.collector.set_temporary_conditionals(conds)
         self.py_data_collection(None, ncounts, starttime, starttime_offset, series, fit_series, group='whiff')
         self.collector.clear_temporary_conditionals()
-        self.arar_age.conditional_modifier = None
+        self.isotope_group.conditional_modifier = None
 
         result = self.collector.measurement_result
         # self.persister.whiff_result = result
@@ -1905,6 +2028,7 @@ anaylsis_type={}
             data_generator=get_data,
             data_writer=data_writer,
             starttime=starttime,
+            experiment_type=self.experiment_type,
             refresh_age=self.spec.analysis_type in ('unknown', 'cocktail'))
 
         if self.plot_panel:
@@ -1913,6 +2037,8 @@ anaylsis_type={}
             from pychron.core.ui.gui import invoke_in_main_thread
 
             invoke_in_main_thread(self._setup_isotope_graph, starttime_offset, color, grpname)
+            if grpname == 'sniff':
+                invoke_in_main_thread(self._setup_sniff_graph, starttime_offset, color)
 
         with self.persister.writer_ctx():
             m.measure()
@@ -1927,6 +2053,37 @@ anaylsis_type={}
             self.experiment_executor.cancel(confirm=False, err=m.err_message)
 
         return not m.canceled
+
+    def _setup_sniff_graph(self, starttime_offset, color):
+        graph = self.plot_panel.sniff_graph
+        mi, ma = graph.get_x_limits()
+
+        max_ = ma
+        min_ = mi
+        tc = self.plot_panel.total_counts
+        if tc > ma or ma == Inf:
+            max_ = tc * 1.1
+
+        if starttime_offset > mi:
+            min_ = -starttime_offset
+
+        graph.set_x_limits(min_=min_, max_=max_)
+
+        series = self.collector.series_idx
+        for k, iso in self.isotope_group.isotopes.iteritems():
+            idx = graph.get_plotid_by_ytitle(k)
+            if idx is not None:
+                try:
+                    graph.series[idx][series]
+                except IndexError, e:
+                    graph.new_series(marker='circle',
+                                     color=color,
+                                     type='scatter',
+                                     marker_size=1.25,
+                                     fit=None,
+                                     plotid=idx,
+                                     add_inspector=False,
+                                     add_tools=False)
 
     def _setup_isotope_graph(self, starttime_offset, color, grpname):
         """
@@ -1954,7 +2111,7 @@ anaylsis_type={}
         series = self.collector.series_idx
 
         regressing = False
-        for k, iso in self.arar_age.isotopes.iteritems():
+        for k, iso in self.isotope_group.isotopes.iteritems():
             idx = graph.get_plotid_by_ytitle(k)
             # print 'ff', k, iso.name, idx
             if idx is not None:
@@ -1969,13 +2126,12 @@ anaylsis_type={}
                                      marker_size=1.25,
                                      fit=fit,
                                      plotid=idx,
+                                     use_error_envelope=False,
                                      add_inspector=False,
                                      add_tools=False)
 
         scnt, fcnt = (2, 1) if regressing else (1, 0)
         self.measurement_script.increment_series_counts(scnt, fcnt)
-
-        return graph
 
     def _wait_for(self, predicate, msg):
         st = time.time()
@@ -2140,8 +2296,8 @@ anaylsis_type={}
 
         return default
 
-    # def _get_runid(self):
-    #     return self.spec.runid
+        # def _get_runid(self):
+        #     return self.spec.runid
         # return make_runid(self.spec.labnumber,
         # self.spec.aliquot,
         # self.spec.step)
@@ -2209,14 +2365,14 @@ anaylsis_type={}
         from pychron.experiment.automated_run.peak_hop_collector import PeakHopCollector
 
         c = PeakHopCollector()
-        c.console_bind_preferences('pychron.experiment')
+        # c.console_bind_preferences('pychron.experiment')
         return c
 
     def _multi_collector_default(self):
         from pychron.experiment.automated_run.multi_collector import MultiCollector
 
         c = MultiCollector()
-        c.console_bind_preferences('pychron.experiment')
+        # c.console_bind_preferences('pychron.experiment')
         return c
 
 # ============= EOF =============================================

@@ -26,10 +26,10 @@ from pychron.graph.graph import Graph
 from pychron.core.ui.text_table import MultiTextTableAdapter
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.core.ui.gui import invoke_in_main_thread
+from pychron.graph.stacked_graph import StackedGraph
 from pychron.graph.stacked_regression_graph import StackedRegressionGraph
-from pychron.processing.analyses.view.automated_run_view import AutomatedRunAnalysisView
-from pychron.processing.arar_age import ArArAge
-from pychron.pychron_constants import PLUSMINUS
+from pychron.processing.isotope_group import IsotopeGroup
+from pychron.pychron_constants import PLUSMINUS, AR_AR
 from pychron.loggable import Loggable
 
 HEIGHT = 250
@@ -88,10 +88,12 @@ class GraphContainer(TraitsContainer):
 
 class PlotPanel(Loggable):
     graph_container = Instance(GraphContainer)
-    analysis_view = Instance(AutomatedRunAnalysisView, ())
+    # analysis_view = Instance(ArArAutomatedRunAnalysisView, ())
+    analysis_view = Instance('pychron.processing.analyses.view.automated_run_view.AutomatedRunAnalysisView')
 
-    arar_age = Instance(ArArAge)
+    isotope_group = Instance(IsotopeGroup)
 
+    sniff_graph = Instance(Graph)
     isotope_graph = Instance(Graph)
     peak_center_graph = Instance(Graph)
     selected_graph = Any
@@ -124,15 +126,16 @@ class PlotPanel(Loggable):
     is_peak_hop = Bool(False)
     hops = List
 
-    ratios = ['Ar40:Ar36', 'Ar40:Ar39', ]
     info_func = None
-
-    # refresh_age = True
 
     def set_peak_center_graph(self, graph):
         graph.page_name = 'Peak Center'
         self.peak_center_graph = graph
-        self.graphs = [self.isotope_graph, self.peak_center_graph]
+
+        graphs = [g for g in self.graphs if g.page_name != 'Peak Center']
+        graphs.append(graph)
+
+        self.graphs = graphs
         self.show_graph(graph)
 
     def show_graph(self, g):
@@ -151,6 +154,7 @@ class PlotPanel(Loggable):
         self.debug('clearing graphs')
         self.isotope_graph.clear()
         self.peak_center_graph.clear()
+        self.sniff_graph.clear()
 
     def create(self, dets):
         """
@@ -169,16 +173,33 @@ class PlotPanel(Loggable):
     def new_plot(self, **kw):
         return self._new_plot(**kw)
 
-    def _new_plot(self, **kw):
-        g = self.isotope_graph
-        plot = g.new_plot(xtitle='time (s)', padding_left=70,
-                          padding_right=10,
-                          **kw)
+    def set_analysis_view(self, experiment_type, **kw):
+        if experiment_type == AR_AR:
+            from pychron.processing.analyses.view.automated_run_view import ArArAutomatedRunAnalysisView
+            klass = ArArAutomatedRunAnalysisView
+        else:
+            from pychron.processing.analyses.view.automated_run_view import GenericAutomatedRunAnalysisView
+            klass = GenericAutomatedRunAnalysisView
+        self.analysis_view = klass(**kw)
 
-        plot.y_axis.title_spacing = 50
-        return plot
+    def add_isotope_graph(self, name):
+        g = self._graph_factory()
+        g.page_name = name
+        self.graphs.append(g)
+        self.isotope_graph = g
+        self.selected_graph = g
 
     # private
+    def _new_plot(self, **kw):
+        for g in (self.sniff_graph, self.isotope_graph):
+            plot = g.new_plot(xtitle='time (s)', padding_left=70,
+                              padding_right=10,
+                              **kw)
+
+            plot.y_axis.title_spacing = 50
+
+        return plot
+
     def _create(self, evt):
         self.reset()
 
@@ -245,7 +266,7 @@ class PlotPanel(Loggable):
     @on_trait_change('isotope_graph:regression_results')
     def _update_display(self, obj, name, old, new):
         if new:
-            self.analysis_view.load_computed(self.arar_age, new_list=False)
+            self.analysis_view.load_computed(self.isotope_group, new_list=False)
             self.analysis_view.refresh_needed = True
 
     # ===============================================================================
@@ -258,13 +279,23 @@ class PlotPanel(Loggable):
 
     def _isotope_graph_default(self):
         g = self._graph_factory()
-        g.page_name = 'Isotopes'
+        g.page_name = 'Ar'
+        return g
+
+    def _sniff_graph_default(self):
+        g = StackedGraph(container_dict=dict(padding=5, bgcolor='gray',
+                                             stack_order=self.stack_order,
+                                             spacing=5),
+                         bind_index=False,
+                         use_data_tool=False,
+                         padding_bottom=35)
+        g.page_name = 'Equil.'
         return g
 
     def _graph_container_default(self):
         return GraphContainer(model=self)
 
     def _graphs_default(self):
-        return [self.isotope_graph, self.peak_center_graph]
+        return [self.isotope_graph, self.sniff_graph, self.peak_center_graph]
 
 # ============= EOF =============================================

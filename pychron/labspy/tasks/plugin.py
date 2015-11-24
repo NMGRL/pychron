@@ -39,9 +39,7 @@ class LabspyClientPlugin(BaseTaskPlugin):
         return [LabspyPreferencesPane]
 
     def test_communication(self):
-        lc=self.application.get_service(LabspyClient)
+        lc = self.application.get_service(LabspyClient)
         return lc.test_connection(warn=False)
+
 # ============= EOF =============================================
-
-
-

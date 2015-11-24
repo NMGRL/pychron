@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, List, Str, Dict, Float, Bool, Property
+from traits.api import HasTraits, List, Str, Dict, Float, Bool, Property, cached_property
 from traitsui.api import View, Controller, TableEditor, UItem
 # from traitsui.table_column import ObjectColumn
 # ============= standard library imports ========================
@@ -29,6 +29,7 @@ from scipy.optimize import leastsq
 from pychron.core.helpers.filetools import add_extension
 from pychron.loggable import Loggable
 from pychron.paths import paths
+from pychron.spectrometer import set_mftable_name, get_mftable_name
 
 
 def get_detector_name(det):
@@ -70,7 +71,6 @@ class MagnetFieldTable(Loggable):
     use_local_archive = Bool
     use_db_archive = Bool
     path = Property
-    _path = Str
 
     def __init__(self, *args, **kw):
         super(MagnetFieldTable, self).__init__(*args, **kw)
@@ -209,9 +209,8 @@ class MagnetFieldTable(Loggable):
                 Ar36,5.56072,5.456202,5.56072,5.56072,5.56072,5.56072
 
         """
-        # p = paths.mftable
-        p = self.path
 
+        p = self.path
         self.debug('Using mftable located at {}'.format(p))
 
         mws = self.molweights
@@ -316,20 +315,28 @@ class MagnetFieldTable(Loggable):
             archive.close()
             self.info('locally archiving mftable')
 
-    def _name_to_path(self, name):
-        if name:
-            name = os.path.join(paths.spectrometer_dir, add_extension(name, '.csv'))
-        return name or ''
+    def _set_path(self, name):
+        set_mftable_name(name)
 
-    def _set_path(self, v):
-        self._path = self._name_to_path(v)
-
+    @cached_property
     def _get_path(self):
-        if self._path:
-            p = self._path
-        else:
-            p = paths.mftable
-        return p
+        name = get_mftable_name()
+        return os.path.join(paths.mftable_dir, add_extension(name, '.csv'))
+
+    # def _name_to_path(self, name):
+    #     if name:
+    #         name = os.path.join(paths.mftable_dir, add_extension(name, '.csv'))
+    #     return name or ''
+    #
+    # def _set_path(self, v):
+    #     self._path = self._name_to_path(v)
+    #
+    # def _get_path(self):
+    #     if self._path:
+    #         p = self._path
+    #     else:
+    #         p = paths.mftable
+    #     return p
 
 
 # ============= EOF =============================================

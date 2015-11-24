@@ -31,7 +31,8 @@ from uncertainties import nominal_value, std_dev
 from xlwt import Workbook
 from pychron.core.helpers.datetime_tools import get_datetime
 from pychron.core.helpers.filetools import subdirize
-from pychron.core.ui.preference_binding import bind_preference
+from pychron.core.helpers.strtools import to_bool
+from pychron.core.ui.preference_binding import bind_preference, set_preference
 from pychron.database.adapters.local_lab_adapter import LocalLabAdapter
 from pychron.experiment.automated_run.hop_util import parse_hops
 
@@ -155,7 +156,7 @@ class ExcelPersister(BasePersister):
         wb.save(path)
 
     def _save_isotopes(self, sh):
-        for i, (k, iso) in enumerate(self.per_spec.arar_age.isotopes.items()):
+        for i, (k, iso) in enumerate(self.per_spec.isotope_group.isotopes.items()):
 
             sh.write(0, i, '{} time'.format(k))
             sh.write(0, i+1, '{} intensity'.format(k))
@@ -218,7 +219,7 @@ class AutomatedRunPersister(BasePersister):
 
     """
     dbexperiment_identifier = Long
-    local_lab_db = Instance(LocalLabAdapter)
+    # local_lab_db = Instance(LocalLabAdapter)
     datahub = Instance('pychron.experiment.datahub.Datahub')
 
     data_manager = Instance('pychron.managers.data_managers.h5_data_manager.H5DataManager', ())
@@ -235,17 +236,23 @@ class AutomatedRunPersister(BasePersister):
 
     def __init__(self, *args, **kw):
         super(AutomatedRunPersister, self).__init__(*args, **kw)
-        self.bind_preferences()
+        # self.bind_preferences()
         self._temp_analysis_buffer = []
 
-    def bind_preferences(self):
+    def set_preferences(self, preferences):
         """
         bind to application preferences
         """
-        prefid = 'pychron.experiment'
-        bind_preference(self, 'use_analysis_grouping', '{}.use_analysis_grouping'.format(prefid))
-        bind_preference(self, 'grouping_threshold', '{}.grouping_threshold'.format(prefid))
-        bind_preference(self, 'grouping_suffix', '{}.grouping_suffix'.format(prefid))
+        # prefid = 'pychron.experiment'
+        # bind_preference(self, 'use_analysis_grouping', '{}.use_analysis_grouping'.format(prefid))
+        # bind_preference(self, 'grouping_threshold', '{}.grouping_threshold'.format(prefid))
+        # bind_preference(self, 'grouping_suffix', '{}.grouping_suffix'.format(prefid))
+        self.debug('set preferences')
+
+        for attr, cast in (('use_analysis_grouping', to_bool),
+                           ('grouping_threshold', float),
+                           ('grouping_suffix', str)):
+            set_preference(preferences, self, attr, 'pychron.experiment.{}'.format(attr), cast)
 
     # ===============================================================================
     # data writing
@@ -427,7 +434,7 @@ class AutomatedRunPersister(BasePersister):
 
         dm.close_file()
 
-    def post_measurement_save(self):
+    def post_measurement_save(self, save_local=True):
         """
         check for runid conflicts. automatically update runid if conflict
 
@@ -457,8 +464,9 @@ class AutomatedRunPersister(BasePersister):
         ln = run_spec.labnumber
         aliquot = run_spec.aliquot
 
-        # save to local sqlite database for backup and reference
-        # self._local_db_save()
+        if save_local:
+            # save to local sqlite database for backup and reference
+            self._local_db_save()
 
         # save to a database
         db = self.datahub.mainstore.db
@@ -579,7 +587,7 @@ class AutomatedRunPersister(BasePersister):
         from pychron.experiment.utilities.identifier import get_analysis_type
 
         if get_analysis_type(self.per_spec.run_spec.identifier) == 'detector_ic':
-            items = make_items(self.per_spec.arar_age.isotopes)
+            items = make_items(self.per_spec.isotope_group.isotopes)
 
             save_csv(self.per_spec.run_spec.record_id, items)
 
@@ -661,7 +669,7 @@ class AutomatedRunPersister(BasePersister):
         dbhist = db.add_fit_history(analysis,
                                     user=self.per_spec.run_spec.username)
 
-        for iso in self.per_spec.arar_age.isotopes.itervalues():
+        for iso in self.per_spec.isotope_group.isotopes.itervalues():
             detname = iso.detector
             dbdet = db.get_detector(detname)
             if dbdet is None:
@@ -836,11 +844,11 @@ class AutomatedRunPersister(BasePersister):
 
     def _save_detector_intercalibration(self, db, analysis):
         self.info('saving detector intercalibration')
-        if self.per_spec.arar_age:
+        if self.per_spec.isotope_group:
             history = None
             for det in self.per_spec.active_detectors:
                 det = det.name
-                ic = self.per_spec.arar_age.get_ic_factor(det)
+                ic = self.per_spec.isotope_group.get_ic_factor(det)
                 self.info('default ic_factor {}= {}'.format(det, ic))
                 if det == 'CDD':
                     # save cdd_ic_factor so it can be exported to secondary db
@@ -943,7 +951,7 @@ class AutomatedRunPersister(BasePersister):
         # sf = dict(zip(dkeys, fb))
         # p = self._current_data_frame
 
-        ic = self.per_spec.arar_age.get_ic_factor('CDD')
+        ic = self.per_spec.isotope_group.get_ic_factor('CDD')
 
         exp = MassSpecExportSpec(runid=rid,
                                  runscript_name=self.per_spec.runscript_name,
@@ -952,7 +960,7 @@ class AutomatedRunPersister(BasePersister):
                                  mass_spectrometer=self.per_spec.run_spec.mass_spectrometer.capitalize(),
                                  # blanks=blanks,
                                  # data_path=p,
-                                 isotopes=self.per_spec.arar_age.isotopes,
+                                 isotopes=self.per_spec.isotope_group.isotopes,
                                  # signal_intercepts=si,
                                  # signal_intercepts=self._processed_signals_dict,
                                  is_peak_hop=self.per_spec.save_as_peak_hop,
@@ -990,15 +998,24 @@ class AutomatedRunPersister(BasePersister):
                              aliquot=aliquot,
                              uuid=uuid,
                              step=step,
+
+                             mass_spectrometer=spec.mass_spectrometer,
+                             extract_device=spec.extract_device,
+                             extract_value=spec.extract_value,
+                             extract_units=spec.extract_units,
+                             duration=spec.duration,
+                             cleanup=spec.cleanup,
+
+                             comment=spec.comment,
+                             weight=spec.weight,
                              collection_path=cp)
 
     def _local_lab_db_factory(self):
-        if self.local_lab_db:
-            return self.local_lab_db
-        path = os.path.join(paths.hidden_dir, 'local_lab.db')
+        # if self.local_lab_db:
+        #     return self.local_lab_db
+        # path = os.path.join(paths.hidden_dir, 'local_lab.db')
         # name = '/Users/ross/Sandbox/local.db'
-        ldb = LocalLabAdapter(path=path)
-        ldb.connect()
+        ldb = LocalLabAdapter()
         ldb.build_database()
         return ldb
 
