@@ -25,9 +25,8 @@ from pychron.stage.maps.furnace_map import FurnaceStageMap
 from pychron.stage.stage_manager import BaseStageManager
 
 
-class Dumper(LinearAxis):
-    def dump(self):
-        pass
+class SampleLinearHolder(LinearAxis):
+    pass
 
 
 class BaseFurnaceStageManager(BaseStageManager):
@@ -40,29 +39,17 @@ class BaseFurnaceStageManager(BaseStageManager):
 
 
 class NMGRLFurnaceStageManager(BaseFurnaceStageManager):
-    dumper = Instance(Dumper)
-    funnel = Instance(LinearAxis)
+    sample_linear_holder = Instance(SampleLinearHolder)
 
-    def dump_sample(self):
-        self.debug('dump sample')
-        # self.dumper
+    def set_sample_dumped(self):
         hole = self.stage_map.get_hole(self.calibrated_position_entry)
         if hole:
             hole.analyzed = True
             self.canvas.request_redraw()
 
-    def lower_funnel(self):
-        self.debug('lower funnel')
-        self.funnel.position = self.funnel.max_value
-
-    def raise_funnel(self):
-        self.debug('raise funnel')
-
-        self.funnel.position = self.funnel.min_value
-
     def get_current_position(self):
-        if self.dumper:
-            x = self.dumper.position
+        if self.sample_linear_holder:
+            x = self.sample_linear_holder.position
             return x, 0
 
     def goto_position(self, v):
@@ -79,7 +66,7 @@ class NMGRLFurnaceStageManager(BaseFurnaceStageManager):
             x, y = self.get_calibrated_position(pos, key=key)
             self.info('hole={}, position={}, calibrated_position={}'.format(key, pos, (x, y)))
 
-            self.dumper.position = x
+            self.sample_linear_holder.position = x
             self.info('Move complete')
             self.update_axes()  # update_hole=False)
         else:
@@ -88,18 +75,14 @@ class NMGRLFurnaceStageManager(BaseFurnaceStageManager):
     def _update_axes(self):
         pass
 
-        # v = self.dumper.update_current_position()
+        # v = self.sample_linear_holder.update_current_position()
 
     def _canvas_factory(self):
-        c = FurnaceCanvas(dumper=self.dumper)
+        c = FurnaceCanvas(sample_linear_holder=self.sample_linear_holder)
         return c
 
-    def _dumper_default(self):
-        d = Dumper(name='dumper', configuration_dir_name='furnace')
+    def _sample_linear_holder_default(self):
+        d = SampleLinearHolder(name='sample_linear_holder', configuration_dir_name='furnace')
         return d
-
-    def _funnel_default(self):
-        f = LinearAxis(name='funnel', configuration_dir_name='furnace')
-        return f
 
 # ============= EOF =============================================

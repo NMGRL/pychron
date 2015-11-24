@@ -19,13 +19,17 @@ from pyface.timer.do_later import do_after
 from traits.api import TraitError, Instance, Float, provides, Int
 # ============= standard library imports ========================
 import os
+import time
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.dumper_canvas import DumperCanvas
+from pychron.core.helpers.filetools import pathtolist
+from pychron.core.ui.thread import Thread
 from pychron.extraction_line.switch_manager import SwitchManager
 from pychron.furnace.furnace_controller import FurnaceController
 from pychron.furnace.ifurnace_manager import IFurnaceManager
 from pychron.furnace.stage_manager import NMGRLFurnaceStageManager, BaseFurnaceStageManager
 from pychron.graph.stream_graph import StreamGraph
+from pychron.hardware.linear_axis import LinearAxis
 from pychron.managers.manager import Manager
 from pychron.paths import paths
 
@@ -45,6 +49,8 @@ class BaseFurnaceManager(Manager):
 
 @provides(IFurnaceManager)
 class NMGRLFurnaceManager(BaseFurnaceManager):
+    funnel = Instance(LinearAxis)
+
     setpoint_readback_min = Float(0)
     setpoint_readback_max = Float(1600.0)
 
@@ -54,6 +60,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     dumper_canvas = Instance(DumperCanvas)
     _alive = False
     _guide_overlay = None
+    _dumper_thread = None
 
     def activate(self):
         # pref_id = 'pychron.furnace'
@@ -65,7 +72,20 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         self._stop_update()
 
     def dump_sample(self):
-        self.stage_manager.dump_sample()
+        self.debug('dump sample')
+
+        if self._dumper_thread is None:
+            self._dumper_thread = Thread(name='DumpSample', target=self._dump_sample)
+            self._dumper_thread.start()
+
+    def lower_funnel(self):
+        self.debug('lower funnel')
+        self.funnel.position = self.funnel.max_value
+
+    def raise_funnel(self):
+        self.debug('raise funnel')
+
+        self.funnel.position = self.funnel.min_value
 
     def set_setpoint(self, v):
         if self.controller:
@@ -117,6 +137,48 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         if self._alive:
             do_after(self.update_period * 1000, self._update_readback)
 
+    def _dump_sample(self):
+        """
+        1. open gate valve
+        2. open shutters
+        3. lower funnel
+        4. actuate magnets
+        5. raise funnel
+        6. close shutters
+        7. close gate valve
+        :return:
+        """
+        self.debug('dump sample started')
+        for line in self._load_dump_script():
+            self.debug(line)
+            self._execute_script_line(line)
+
+            # self.stage_manager.set_sample_dumped()
+            # self._dumper_thread = None
+
+    def _load_dump_script(self):
+        p = os.path.join(paths.device_dir, 'furnace', 'dump_sequence.txt')
+        return pathtolist(p)
+
+    def _execute_script_line(self, line):
+        cmd, args = line.split(' ')
+
+        if cmd == 'sleep':
+            time.sleep(float(args))
+        elif cmd == 'open':
+            self.switch_manager.open_switch(args)
+            self.dumper_canvas.set_item_state(args, True)
+        elif cmd == 'close':
+            self.switch_manager.close_switch(args)
+            self.dumper_canvas.set_item_state(args, False)
+        elif cmd == 'lower_funnel':
+            self.lower_funnel()
+            self.dumper_canvas.set_item_state(args, True)
+        elif cmd == 'raise_funnel':
+            self.raise_funnel()
+            self.dumper_canvas.set_item_state(args, False)
+        self.dumper_canvas.request_redraw()
+
     # handlers
     def _setpoint_changed(self, new):
         self.set_setpoint(new)
@@ -137,5 +199,9 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         valvepath = os.path.join(paths.extraction_line_dir, 'valves.xml')
         dc.load_canvas_file(pathname, configpath, valvepath, dc)
         return dc
+
+    def _funnel_default(self):
+        f = LinearAxis(name='funnel', configuration_dir_name='furnace')
+        return f
 
 # ============= EOF =============================================

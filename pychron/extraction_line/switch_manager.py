@@ -319,6 +319,12 @@ class SwitchManager(Manager):
     def close_valve(self, *args, **kw):
         return self.close_by_name(*args, **kw)
 
+    def open_switch(self, *args, **kw):
+        return self.open_by_name(*args, **kw)
+
+    def close_switch(self, *args, **kw):
+        return self.close_by_name(*args, **kw)
+
     def open_by_name(self, name, mode='normal'):
         """
         """

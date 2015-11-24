@@ -32,17 +32,20 @@ class ControlPane(TraitsDockPane):
     id = 'pychron.nmgrlfurnace.controls'
 
     dump_sample_button = Button('Dump')
-    lower_funnel_button = Button('Lower Funnel')
-    raise_funnel_button = Button('Raise Funnel')
 
+    # lower_funnel_button = Button('Lower Funnel')
+    # raise_funnel_button = Button('Raise Funnel')
+
+    # def _dump_sample_button_fired(self):
+    #     self.model.stage_manager.dump_sample()
+    #
+    # def _raise_funnel_button_fired(self):
+    #     self.model.stage_manager.raise_funnel()
+    #
+    # def _lower_funnel_button_fired(self):
+    #     self.model.stage_manager.lower_funnel()
     def _dump_sample_button_fired(self):
-        self.model.stage_manager.dump_sample()
-
-    def _raise_funnel_button_fired(self):
-        self.model.stage_manager.raise_funnel()
-
-    def _lower_funnel_button_fired(self):
-        self.model.stage_manager.lower_funnel()
+        self.model.dump_sample()
 
     def trait_context(self):
         return {'object': self.model,
@@ -79,13 +82,15 @@ class ControlPane(TraitsDockPane):
                        VGroup(UItem('setpoint_readback', editor=LCDEditor())),
                        label='Controller', show_border=True)
         d_grp = VGroup(Item('stage_manager.calibrated_position_entry', label='Hole'),
-                       Item('stage_manager.dumper.position',
+                       Item('stage_manager.sample_linear_holder.position',
                             editor=RangeEditor(mode='slider',
-                                               low_name='stage_manager.dumper.min_value',
-                                               high_name='stage_manager.dumper.max_value', )),
+                                               low_name='stage_manager.sample_linear_holder.min_value',
+                                               high_name='stage_manager.sample_linear_holder.max_value', )),
+
+                       HGroup(UItem('pane.dump_sample_button',
+                                    tooltip='Complete sample dumping procedure'), spring),
                        UItem('dumper_canvas', editor=ComponentEditor()),
                        # UItem('pane.lower_funnel_button', enabled_when='stage_manager.funnel.min_limit'),
-                       # UItem('pane.dump_sample_button', enabled_when='stage_manager.funnel.max_limit'),
                        # UItem('pane.raise_funnel_button', enabled_when='stage_manager.funnel.max_limit'),
                        label='Dumper', show_border=True)
 

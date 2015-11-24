@@ -25,6 +25,13 @@ class DumperCanvas(ExtractionLineCanvas2D):
     def load_canvas_file(self, pathname, configpath, valvepath, canvas):
         self.scene.load(pathname, configpath, valvepath, canvas)
 
+    def set_item_state(self, item_name, state):
+        item = self.scene.get_item(item_name)
+        if item:
+            item.state = state
+            self._select_hook(item)
+            self.invalidate_and_redraw()
+
     def _select_hook(self, item):
         if hasattr(item, 'associations'):
             if item.associations:
