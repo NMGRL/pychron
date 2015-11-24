@@ -78,6 +78,9 @@ class SwitchManager(Manager):
 
     _prev_keys = None
 
+    def set_selected_explanation_item(self, item):
+        pass
+
     def actuate_children(self, name, action, mode):
         """
             actuate all switches that have ``name`` defined as their parent
@@ -310,6 +313,12 @@ class SwitchManager(Manager):
         if v is not None:
             return v.software_lock
 
+    def open_valve(self, *args, **kw):
+        return self.open_by_name(*args, **kw)
+
+    def close_valve(self, *args, **kw):
+        return self.close_by_name(*args, **kw)
+
     def open_by_name(self, name, mode='normal'):
         """
         """
@@ -366,6 +375,19 @@ class SwitchManager(Manager):
     def _save_states(self):
         self._save_soft_lock_states()
         self._save_manual_states()
+
+    def _check_positive_interlocks(self, name):
+        interlocks = []
+        cv = self.get_switch_by_name(name)
+        if cv is not None:
+            switches = self.switches
+            pinterlocks = cv.positive_interlocks
+            for pp in pinterlocks:
+                if pp in switches:
+                    v = switches[pp]
+                    if not v.state:
+                        interlocks.append(pp)
+        return interlocks
 
     def _check_soft_interlocks(self, name):
         """
@@ -521,7 +543,14 @@ class SwitchManager(Manager):
             msg = 'Software Interlock. {} is OPEN!. Will not open {}'.format(interlocked_valve.name, name)
             self.console_message = (msg, 'red')
             self.warning(msg)
-            return
+            return False, False
+
+        positive_interlocks = self._check_positive_interlocks(name)
+        if positive_interlocks:
+            msg = 'Positive Interlocks not all enabled. {} not opened'.format(','.join(positive_interlocks))
+            self.console_message = (msg, 'red')
+            self.warning(msg)
+            return False, False
 
         r, c = self._actuate_(name, action, mode)
         if r and c:
@@ -536,6 +565,13 @@ class SwitchManager(Manager):
 
     def _close_(self, name, mode):
         action = 'set_closed'
+        interlocked_valve = self._check_soft_interlocks(name)
+        if interlocked_valve:
+            msg = 'Software Interlock. {} is OPEN!. Will not close {}'.format(interlocked_valve.name, name)
+            self.console_message = (msg, 'red')
+            self.warning(msg)
+            return False, False
+
         return self._actuate_(name, action, mode)
 
     def _actuate_(self, name, action, mode, address=None):
@@ -624,6 +660,7 @@ class SwitchManager(Manager):
         act_elem = v_elem.find('actuator')
         description = v_elem.find('description')
 
+        positive_interlocks = [i.text.strip() for i in v_elem.findall('positive_interlock')]
         interlocks = [i.text.strip() for i in v_elem.findall('interlock')]
         if description is not None:
             description = description.text.strip()
@@ -674,6 +711,7 @@ class SwitchManager(Manager):
                    actuator=actuator,
                    description=description,
                    query_state=qs,
+                   positive_interlocks=positive_interlocks,
                    interlocks=interlocks,
                    settling_time=st or 0)
         return name, hv

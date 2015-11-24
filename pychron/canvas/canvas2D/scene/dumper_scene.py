@@ -34,10 +34,9 @@ class DumperScene(ExtractionLineScene):
         origin, color_dict = self._load_config(configpath, canvas)
 
         self._load_switchables(cp, origin, valvepath)
-
         self._load_rects(cp, origin, color_dict)
-
         self._load_stateables(cp, origin, color_dict)
+        self._load_markup(cp, origin, color_dict)
 
     def _load_stateables(self, cp, origin, color_dict):
         for key in ('gate', 'funnel'):

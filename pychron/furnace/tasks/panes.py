@@ -83,9 +83,10 @@ class ControlPane(TraitsDockPane):
                             editor=RangeEditor(mode='slider',
                                                low_name='stage_manager.dumper.min_value',
                                                high_name='stage_manager.dumper.max_value', )),
-                       UItem('pane.lower_funnel_button', enabled_when='stage_manager.funnel.min_limit'),
-                       UItem('pane.dump_sample_button', enabled_when='stage_manager.funnel.max_limit'),
-                       UItem('pane.raise_funnel_button', enabled_when='stage_manager.funnel.max_limit'),
+                       UItem('dumper_canvas', editor=ComponentEditor()),
+                       # UItem('pane.lower_funnel_button', enabled_when='stage_manager.funnel.min_limit'),
+                       # UItem('pane.dump_sample_button', enabled_when='stage_manager.funnel.max_limit'),
+                       # UItem('pane.raise_funnel_button', enabled_when='stage_manager.funnel.max_limit'),
                        label='Dumper', show_border=True)
 
         v = View(VGroup(c_grp,

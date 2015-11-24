@@ -26,24 +26,16 @@ class DumperCanvas(ExtractionLineCanvas2D):
         self.scene.load(pathname, configpath, valvepath, canvas)
 
     def _select_hook(self, item):
-        print item, item.state
         if hasattr(item, 'associations'):
             if item.associations:
                 for i in item.associations:
                     self._set_associated(i, item.state)
-                    # if item.state:
-                    #     self._open_associated(i)
-                    # else:
-                    #     self._close_associated(i)
 
     def _set_associated(self, i, state):
         item = self.scene.get_item(i)
 
         item.set_state(state)
         item.request_layout()
-
-    def _close_associated(self, i):
-        pass
 
     def _scene_default(self):
         s = DumperScene()

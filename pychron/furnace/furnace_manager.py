@@ -18,12 +18,16 @@
 from pyface.timer.do_later import do_after
 from traits.api import TraitError, Instance, Float, provides, Int
 # ============= standard library imports ========================
+import os
 # ============= local library imports  ==========================
+from pychron.canvas.canvas2D.dumper_canvas import DumperCanvas
+from pychron.extraction_line.switch_manager import SwitchManager
 from pychron.furnace.furnace_controller import FurnaceController
 from pychron.furnace.ifurnace_manager import IFurnaceManager
 from pychron.furnace.stage_manager import NMGRLFurnaceStageManager, BaseFurnaceStageManager
 from pychron.graph.stream_graph import StreamGraph
 from pychron.managers.manager import Manager
+from pychron.paths import paths
 
 
 class BaseFurnaceManager(Manager):
@@ -31,6 +35,7 @@ class BaseFurnaceManager(Manager):
     setpoint = Float(auto_set=False, enter_set=True)
     setpoint_readback = Float
     stage_manager = Instance(BaseFurnaceStageManager)
+    switch_manager = Instance(SwitchManager)
 
     def _controller_default(self):
         c = FurnaceController(name='controller',
@@ -46,6 +51,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     graph = Instance(StreamGraph)
     update_period = Int(2)
 
+    dumper_canvas = Instance(DumperCanvas)
     _alive = False
     _guide_overlay = None
 
@@ -118,5 +124,18 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     def _stage_manager_default(self):
         sm = NMGRLFurnaceStageManager(stage_manager_id='nmgrl.furnace.stage_map')
         return sm
+
+    def _switch_manager_default(self):
+        sm = SwitchManager()
+        return sm
+
+    def _dumper_canvas_default(self):
+        dc = DumperCanvas(manager=self.switch_manager)
+
+        pathname = os.path.join(paths.canvas2D_dir, 'dumper.xml')
+        configpath = os.path.join(paths.canvas2D_dir, 'dumper_config.xml')
+        valvepath = os.path.join(paths.extraction_line_dir, 'valves.xml')
+        dc.load_canvas_file(pathname, configpath, valvepath, dc)
+        return dc
 
 # ============= EOF =============================================

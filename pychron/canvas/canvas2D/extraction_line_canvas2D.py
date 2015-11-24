@@ -192,7 +192,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
                     ok, change = self.manager.open_valve(item.name, mode=mode)
                 else:
                     ok, change = self.manager.close_valve(item.name, mode=mode)
-            except TypeError:
+            except TypeError, e:
                 ok, change = True, True
 
         else:

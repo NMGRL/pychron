@@ -131,8 +131,6 @@ class ExtractionLineScene(Scene):
         # else:
         # klass = RoundedRectangle
 
-
-
         rect = klass(x + ox, y + oy, width=w, height=h,
                      name=key,
                      border_width=bw,
