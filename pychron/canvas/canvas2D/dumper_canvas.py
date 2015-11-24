@@ -1,0 +1,52 @@
+# ===============================================================================
+# Copyright 2015 Jake Ross
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ===============================================================================
+
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
+from pychron.canvas.canvas2D.extraction_line_canvas2D import ExtractionLineCanvas2D
+from pychron.canvas.canvas2D.scene.dumper_scene import DumperScene
+
+
+class DumperCanvas(ExtractionLineCanvas2D):
+    def load_canvas_file(self, pathname, configpath, valvepath, canvas):
+        self.scene.load(pathname, configpath, valvepath, canvas)
+
+    def _select_hook(self, item):
+        print item, item.state
+        if hasattr(item, 'associations'):
+            if item.associations:
+                for i in item.associations:
+                    self._set_associated(i, item.state)
+                    # if item.state:
+                    #     self._open_associated(i)
+                    # else:
+                    #     self._close_associated(i)
+
+    def _set_associated(self, i, state):
+        item = self.scene.get_item(i)
+
+        item.set_state(state)
+        item.request_layout()
+
+    def _close_associated(self, i):
+        pass
+
+    def _scene_default(self):
+        s = DumperScene()
+        return s
+
+# ============= EOF =============================================

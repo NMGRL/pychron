@@ -18,12 +18,13 @@
 from enable.component_editor import ComponentEditor
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traits.api import Button
-from traitsui.api import View, Item, Readonly, UItem, UReadonly, VGroup, HGroup, EnumEditor, spring, \
+from traitsui.api import View, Item, Readonly, UItem, VGroup, HGroup, EnumEditor, spring, \
     InstanceEditor, ButtonEditor, RangeEditor, Tabbed
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from pychron.core.ui.custom_label_editor import CustomLabel
+from pychron.core.ui.lcd_editor import LCDEditor
 
 
 class ControlPane(TraitsDockPane):
@@ -65,17 +66,18 @@ class ControlPane(TraitsDockPane):
 
                           show_border=True, label='Calibration')
 
-        c_grp = VGroup(HGroup(Item('setpoint'),
-                              UReadonly('setpoint_readback',
-                                        width=100)),
-                       UItem('setpoint_readback',
-                             enabled_when='0',
-                             editor=RangeEditor(mode='slider',
-                                                low_name='setpoint_readback_min',
-                                                high_name='setpoint_readback_max')),
-
+        # c_grp = VGroup(HGroup(Item('setpoint'),
+        #                       UItem('setpoint_readback')),
+        #                UItem('setpoint_readback',
+        #                      enabled_when='0',
+        #                      editor=RangeEditor(mode='slider',
+        #                                         low_name='setpoint_readback_min',
+        #                                         high_name='setpoint_readback_max')),
+        #
+        #                label='Controller', show_border=True)
+        c_grp = VGroup(Item('setpoint'),
+                       VGroup(UItem('setpoint_readback', editor=LCDEditor())),
                        label='Controller', show_border=True)
-
         d_grp = VGroup(Item('stage_manager.calibrated_position_entry', label='Hole'),
                        Item('stage_manager.dumper.position',
                             editor=RangeEditor(mode='slider',

@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-
+from traits.api import List
 # ============= enthought library imports =======================
 import math
 
@@ -26,6 +26,7 @@ from pychron.canvas.canvas2D.scene.primitives.rounded import RoundedRectangle, r
 
 
 class Switch(Connectable, Circle):
+    associations = List
     def set_label(self, label, offset_x, offset_y, **kw):
         lb = Label(0, 0,
                    text=label,

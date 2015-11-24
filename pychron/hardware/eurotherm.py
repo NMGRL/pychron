@@ -142,9 +142,8 @@ class Eurotherm(CoreDevice):
         """
         """
         resp = self._query('PV', **kw)
-
         if resp is None or resp == 'simulation':
-            resp = self.get_random_value(0, 10)
+            resp = self.get_random_value(0, 10) + self.process_setpoint
 
         self.process_value = resp
 
@@ -226,6 +225,7 @@ class Eurotherm(CoreDevice):
         """
         """
         if v is not None:
+            self._setpoint = v
             self.set_process_setpoint(v)
 
     def _validate_process_setpoint(self, v):
