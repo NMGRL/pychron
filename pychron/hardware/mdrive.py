@@ -24,7 +24,7 @@ from pychron.hardware.core.core_device import CoreDevice
 
 
 class MDriveMotor(CoreDevice, BaseLinearDrive):
-    def load_additional_args(self, config):
+	def load_additional_args(self, config):
         args = [
             ('Motion', 'steps', 'int'),
             ('Motion', 'min_steps', 'int'),
@@ -49,16 +49,44 @@ class MDriveMotor(CoreDevice, BaseLinearDrive):
         return True
 
     def is_simulation(self):
-        return self.simulation
+		return self.simulation
 
-    # private
+    def move_absolute(self, pos, block=True):
+        self._move(pos, False, block)
+
+    def move_relative(self, pos, block=True):
+        self._move(pos, True, block)
+    
+    # private    
+    def _move(self, pos, relative, block):
+        cmd = 'MR' if relative else 'MA'
+        self.tell('{} {}'.format(cmd, pos))
+        if block:
+            self._block()
+            print 'move complete'
+            
+    def _moving(self):
+        """
+        0= Not Moving
+        1= Moviing
+        """
+        resp = self.ask('PR MV')
+        return resp=='1'
+    
+    def _block(self):
+        while 1:
+            if not self._moving():
+                break
+            
+            time.sleep(0.1)
+    
     def _read_motor_position(self, *args, **kw):
-        pass
+        return self.ask('PR P')
 
     def test(self):
         print self.communicator
         print self.communicator.handle
-        print 'asd {}'.format(self.ask('PR AL\n'))
+        print 'asd {}'.format(self.ask('PR P'))
 
 if __name__ == '__main__':
     from pychron.paths import paths
