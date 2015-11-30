@@ -78,9 +78,6 @@ class SwitchManager(Manager):
 
     _prev_keys = None
 
-    def set_selected_explanation_item(self, item):
-        pass
-
     def actuate_children(self, name, action, mode):
         """
             actuate all switches that have ``name`` defined as their parent
@@ -273,13 +270,13 @@ class SwitchManager(Manager):
         """
         return next((item for item in self.explanable_items if item.name == n), None)
 
-    def get_state_by_name(self, n):
+    def get_state_by_name(self, n, force=False):
         """
         """
         v = self.get_switch_by_name(n)
         state = None
         if v is not None:
-            state = self._get_state_by(v)
+            state = self._get_state_by(v, force=force)
 
         return state
 
@@ -312,12 +309,6 @@ class SwitchManager(Manager):
 
         if v is not None:
             return v.software_lock
-
-    def open_valve(self, *args, **kw):
-        return self.open_by_name(*args, **kw)
-
-    def close_valve(self, *args, **kw):
-        return self.close_by_name(*args, **kw)
 
     def open_switch(self, *args, **kw):
         return self.open_by_name(*args, **kw)
@@ -412,11 +403,11 @@ class SwitchManager(Manager):
                         self.debug('interlocked {}'.format(interlock))
                         return v
 
-    def _get_state_by(self, v):
+    def _get_state_by(self, v, force=False):
         """
         """
         state = None
-        if self.query_valve_state and v.query_state:
+        if (self.query_valve_state and v.query_state) or force:
             state = v.get_hardware_state(verbose=False)
 
         if state is None:

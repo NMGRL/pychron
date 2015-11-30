@@ -150,6 +150,9 @@ class MDriveMotor(CoreDevice, BaseLinearDrive):
     def set_encoder_position(self, v):
         self.tell('P {}'.format(v))
 
+    def moving(self):
+        return self._moving()
+
     # private
     def _set_var(self, var, val, check_error=True):
         ret = True

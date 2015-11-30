@@ -55,6 +55,9 @@ class NMGRLFurnaceStageManager(BaseFurnaceStageManager):
     def goto_position(self, v):
         self.move_to_hole(v)
 
+    def in_motion(self):
+        return self.sample_linear_holder.moving()
+
     # private
     def _move_to_hole(self, key, correct_position=True):
         self.info('Move to hole {} type={}'.format(key, str(type(key))))
@@ -67,6 +70,8 @@ class NMGRLFurnaceStageManager(BaseFurnaceStageManager):
             self.info('hole={}, position={}, calibrated_position={}'.format(key, pos, (x, y)))
 
             self.sample_linear_holder.position = x
+            self.sample_linear_holder.move_absolute(x)
+
             self.info('Move complete')
             self.update_axes()  # update_hole=False)
         else:

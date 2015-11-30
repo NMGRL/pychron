@@ -27,6 +27,7 @@ from pychron.core.ui.thread import Thread
 from pychron.extraction_line.switch_manager import SwitchManager
 from pychron.furnace.furnace_controller import FurnaceController
 from pychron.furnace.ifurnace_manager import IFurnaceManager
+from pychron.furnace.loader_logic import LoaderLogic
 from pychron.furnace.stage_manager import NMGRLFurnaceStageManager, BaseFurnaceStageManager
 from pychron.graph.stream_graph import StreamGraph
 from pychron.hardware.linear_axis import LinearAxis
@@ -50,6 +51,7 @@ class BaseFurnaceManager(Manager):
 @provides(IFurnaceManager)
 class NMGRLFurnaceManager(BaseFurnaceManager):
     funnel = Instance(LinearAxis)
+    loader_logic = Instance(LoaderLogic)
 
     setpoint_readback_min = Float(0)
     setpoint_readback_max = Float(1600.0)
@@ -70,6 +72,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
 
     def prepare_destroy(self):
         self._stop_update()
+        self.loader_logic.manager = None
 
     def dump_sample(self):
         self.debug('dump sample')
@@ -78,14 +81,26 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
             self._dumper_thread = Thread(name='DumpSample', target=self._dump_sample)
             self._dumper_thread.start()
 
+    def actuate_magnets(self):
+        self.debug('actuate magnets')
+        if self.loader_logic.check('AM'):
+            pass
+        else:
+            self.warning('actuate magnets not enabled')
+
     def lower_funnel(self):
         self.debug('lower funnel')
-        self.funnel.position = self.funnel.max_value
+        if self.loader_logic.check('FD'):
+            self.funnel.position = self.funnel.max_value
+        else:
+            self.warning('lowering funnel not enabled')
 
     def raise_funnel(self):
         self.debug('raise funnel')
-
-        self.funnel.position = self.funnel.min_value
+        if self.loader_logic.check('FU'):
+            self.funnel.position = self.funnel.min_value
+        else:
+            self.warning('raising funnel not enabled')
 
     def set_setpoint(self, v):
         if self.controller:
@@ -115,7 +130,71 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         except TraitError:
             pass
 
+    # canvas
+    def set_software_lock(self, name, lock):
+        if self.switch_manager is not None:
+            if lock:
+                self.switch_manager.lock(name)
+            else:
+                self.switch_manager.unlock(name)
+
+    def open_valve(self, name, **kw):
+        if not self._open_logic(name):
+            return
+
+        if self.switch_manager:
+            return self.switch_manager.open_switch(name, **kw)
+
+    def close_valve(self, name, **kw):
+        if not self._close_logic(name):
+            return
+
+        if self.switch_manager:
+            return self.switch_manager.close_switch(name, **kw)
+
+    def set_selected_explanation_item(self, item):
+        pass
+
+    # logic
+    def get_switch_state(self, name):
+        if self.switch_manager:
+            return self.switch_manager.get_state_by_name(name, force=True)
+
+    def get_flag_state(self, flag):
+        if flag in ('no_motion', 'no_dump', 'funnel_up', 'funnel_down'):
+            return getattr(self, flag)()
+        return False
+
+    def funnel_up(self):
+        return False
+
+    def funnel_down(self):
+        return False
+
+    def no_motion(self):
+        return not self.stage_manager.in_motion()
+
+    def no_dump(self):
+        return True
+
     # private
+    def _open_logic(self, name):
+        """
+        check the logic rules to see if its ok to open "name"
+
+        return True if ok
+        """
+        return self.loader_logic.close(name)
+
+    def _close_logic(self, name):
+        """
+        check the logic rules to see if its ok to close "name"
+
+        return True if ok
+
+        """
+        return self.loader_logic.open(name)
+
     def _stop_update(self):
         self._alive = False
 
@@ -177,6 +256,9 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         elif cmd == 'raise_funnel':
             self.raise_funnel()
             self.dumper_canvas.set_item_state(args, False)
+        elif cmd == 'actuate_magnets':
+            self.actuate_magnets()
+
         self.dumper_canvas.request_redraw()
 
     # handlers
@@ -192,7 +274,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         return sm
 
     def _dumper_canvas_default(self):
-        dc = DumperCanvas(manager=self.switch_manager)
+        dc = DumperCanvas(manager=self)
 
         pathname = os.path.join(paths.canvas2D_dir, 'dumper.xml')
         configpath = os.path.join(paths.canvas2D_dir, 'dumper_config.xml')
@@ -204,4 +286,9 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         f = LinearAxis(name='funnel', configuration_dir_name='furnace')
         return f
 
+    def _loader_logic_default(self):
+        l = LoaderLogic(manager=self)
+        l.load_config()
+
+        return l
 # ============= EOF =============================================
