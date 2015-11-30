@@ -57,7 +57,6 @@ class MDriveCommunicator(Communicator):
             return x.strip()
         
     def _format_command(self, cmd):
-
         return '{}{}'.format(cmd, self.terminator)
 
 # ============= EOF ====================================
