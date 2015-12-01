@@ -153,11 +153,21 @@ class MDriveMotor(CoreDevice, BaseLinearDrive):
     def moving(self):
         return self._moving()
 
+    def block(self, n=3, tolerance=1, progress=None, homing=False):
+        self._block()
+
     # private
+    def _set_motor(self, value):
+        self._data_position = value
+
+        relative = True
+        block = False
+        self._move(value, relative, block)
+
     def _set_var(self, var, val, check_error=True):
         ret = True
         self.tell('{} {}'.format(var, val))
-        if self.check_error:
+        if check_error:
             eflag = self._get_var('EF')
             if eflag == 1:
                 ecode = self._get_var('ER', as_int=False)

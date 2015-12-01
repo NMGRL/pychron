@@ -15,8 +15,6 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-import os
-import pickle
 from traits.api import Float, Property, Bool, Int, CInt, Button
 from traitsui.api import View, Item, HGroup, VGroup, EnumEditor, RangeEditor, \
     spring
@@ -32,15 +30,13 @@ from pychron.hardware.core.data_helper import make_bitarray
 import time
 from pychron.globals import globalv
 from pychron.core.ui.gui import invoke_in_main_thread
-from pychron.consumer_mixin import ConsumerMixin
 from pychron.core.ui.qt.progress_editor import ProgressEditor
 # from pyface.progress_dialog import ProgressDialog
-from pychron.paths import paths
 
 SIGN = ['negative', 'positive']
 
 
-class KerrMotor(KerrDevice, BaseLinearDrive, ConsumerMixin):
+class KerrMotor(KerrDevice, BaseLinearDrive):
     """
         Base class for motors controller by a kerr microcontroller board
 
@@ -48,8 +44,6 @@ class KerrMotor(KerrDevice, BaseLinearDrive, ConsumerMixin):
     use_initialize = Bool(True)
     use_hysteresis = Bool(False)
     hysteresis_value = Float(0)  # nominal value to for hysteresis
-
-    enabled = Bool(False)
 
     _motor_position = CInt
     doing_hysteresis_correction = False
@@ -62,23 +56,6 @@ class KerrMotor(KerrDevice, BaseLinearDrive, ConsumerMixin):
     home_button = Button('Home')
 
     home_status = Int
-
-    def set_value(self, value, block=False):
-        if self.data_position != value:
-            self.enabled = False
-            value = self._convert_value(value)
-            self.info('setting data position {}'.format(value))
-            self._set_motor(value)
-            #            self.data_position = value
-            if block:
-                self.info('waiting for move to complete')
-                self.block()
-                self.info('move complete')
-                self.enabled = True
-        else:
-            self.info('not changing pos {}=={}'.format(self.data_position, value))
-
-        return True
 
     def load_additional_args(self, config):
         """
@@ -529,9 +506,6 @@ class KerrMotor(KerrDevice, BaseLinearDrive, ConsumerMixin):
 
         self._execute_hex_command(cmd)
 
-    def _convert_value(self, value):
-        return value
-
     def _float_to_hexstr(self, f, endianness='little'):
         f = max(0, f)
         fmt = '%si' % ('<' if endianness == 'little' else '>')
@@ -628,11 +602,7 @@ class KerrMotor(KerrDevice, BaseLinearDrive, ConsumerMixin):
     def _get_display_name(self):
         return self.name.capitalize()
 
-    def _get_data_position(self):
-        return self._data_position
 
-    def _set_data_position(self, pos):
-        self.add_consumable((self._set_motor, pos))
 
     # view
     def control_view(self):

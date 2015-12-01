@@ -17,11 +17,12 @@
 # ============= enthought library imports =======================
 import os
 import pickle
-from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change, Instance, CInt
-from traitsui.api import View, UItem, Item, HGroup, VGroup
+
+from traits.api import Str, Int, Bool, Float, Property, Instance, CInt
 # ============= standard library imports ========================
 import time
 # ============= local library imports  ==========================
+from pychron.consumer_mixin import ConsumerMixin
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.hardware.linear_mapper import LinearMapper
 from pychron.core.helpers.timer import Timer
@@ -29,7 +30,7 @@ from pychron.loggable import Loggable
 from pychron.paths import paths
 
 
-class BaseLinearDrive(Loggable):
+class BaseLinearDrive(Loggable, ConsumerMixin):
     velocity = Property
     _velocity = Float
     acceleration = Float
@@ -63,6 +64,25 @@ class BaseLinearDrive(Loggable):
 
     _not_moving_count = 0
     unique_id = Str
+
+    enabled = Bool(False)
+
+    def set_value(self, value, block=False):
+        if self.data_position != value:
+            self.enabled = False
+            value = self._convert_value(value)
+            self.info('setting data position {}'.format(value))
+            self._set_motor(value)
+            #            self.data_position = value
+            if block:
+                self.info('waiting for move to complete')
+                self.block()
+                self.info('move complete')
+                self.enabled = True
+        else:
+            self.info('not changing pos {}=={}'.format(self.data_position, value))
+
+        return True
 
     def linear_mapper_factory(self):
         mi = self.min
@@ -150,6 +170,12 @@ class BaseLinearDrive(Loggable):
         return timer
 
     # private
+    def _set_motor(self, value):
+        pass
+
+    def _convert_value(self, value):
+        return value
+
     def _read_motor_position(self, *args, **kw):
         pass
 
@@ -197,4 +223,10 @@ class BaseLinearDrive(Loggable):
         hd = self._get_homing_persistence()
         if hd:
             return hd['homing_required']
+
+    def _get_data_position(self):
+        return self._data_position
+
+    def _set_data_position(self, pos):
+        self.add_consumable((self._set_motor, pos))
 # ============= EOF =============================================

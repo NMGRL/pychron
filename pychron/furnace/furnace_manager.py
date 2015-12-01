@@ -25,12 +25,12 @@ from pychron.canvas.canvas2D.dumper_canvas import DumperCanvas
 from pychron.core.helpers.filetools import pathtolist
 from pychron.core.ui.thread import Thread
 from pychron.extraction_line.switch_manager import SwitchManager
+from pychron.furnace.funnel import NMGRLFunnel
 from pychron.furnace.furnace_controller import FurnaceController
 from pychron.furnace.ifurnace_manager import IFurnaceManager
 from pychron.furnace.loader_logic import LoaderLogic
 from pychron.furnace.stage_manager import NMGRLFurnaceStageManager, BaseFurnaceStageManager
 from pychron.graph.stream_graph import StreamGraph
-from pychron.hardware.linear_axis import LinearAxis
 from pychron.managers.manager import Manager
 from pychron.paths import paths
 
@@ -50,7 +50,7 @@ class BaseFurnaceManager(Manager):
 
 @provides(IFurnaceManager)
 class NMGRLFurnaceManager(BaseFurnaceManager):
-    funnel = Instance(LinearAxis)
+    funnel = Instance(NMGRLFunnel)
     loader_logic = Instance(LoaderLogic)
 
     setpoint_readback_min = Float(0)
@@ -91,14 +91,14 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     def lower_funnel(self):
         self.debug('lower funnel')
         if self.loader_logic.check('FD'):
-            self.funnel.position = self.funnel.max_value
+            self.funnel.set_value(self.funnel.down_position)
         else:
             self.warning('lowering funnel not enabled')
 
     def raise_funnel(self):
         self.debug('raise funnel')
         if self.loader_logic.check('FU'):
-            self.funnel.position = self.funnel.min_value
+            self.funnel.set_value(self.funnel.up_position)
         else:
             self.warning('raising funnel not enabled')
 
@@ -283,7 +283,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         return dc
 
     def _funnel_default(self):
-        f = LinearAxis(name='funnel', configuration_dir_name='furnace')
+        f = NMGRLFunnel(name='funnel', configuration_dir_name='furnace')
         return f
 
     def _loader_logic_default(self):
