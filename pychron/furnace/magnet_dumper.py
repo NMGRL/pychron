@@ -15,31 +15,20 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Int
-
+from traits.api import Str
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.hardware.core.abstract_device import AbstractDevice
 
 
-class NMGRLFunnel(AbstractDevice):
-    down_position = Int
-    up_position = Int
-    tolerance = Int
+class NMGRLMagnetDumper(AbstractDevice):
+    channel_address = Str
 
     def load_additional_args(self, config):
-        self.set_attribute(config, 'down_position', 'Positioning', 'down_position', cast='int')
-        self.set_attribute(config, 'up_position', 'Positioning', 'up_position', cast='int')
-        self.set_attribute(config, 'tolerance', 'Positioning', 'tolerance', cast='int')
+        self.set_attribute(config, 'General', 'channel_address')
 
-    def in_up_position(self):
+    def actuate(self):
         if self._cdevice:
-            pos = self._cdevice.read_position()
-            return abs(pos - self.up_position) <= self.tolerance
-
-    def in_down_position(self):
-        if self._cdevice:
-            pos = self._cdevice.read_position()
-            return abs(pos - self.down_position) <= self.tolerance
+            self._cdevice.open_channel(self.channel_address)
 
 # ============= EOF =============================================

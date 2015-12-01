@@ -29,6 +29,7 @@ from pychron.furnace.funnel import NMGRLFunnel
 from pychron.furnace.furnace_controller import FurnaceController
 from pychron.furnace.ifurnace_manager import IFurnaceManager
 from pychron.furnace.loader_logic import LoaderLogic
+from pychron.furnace.magnet_dumper import NMGRLMagnetDumper
 from pychron.furnace.stage_manager import NMGRLFurnaceStageManager, BaseFurnaceStageManager
 from pychron.graph.stream_graph import StreamGraph
 from pychron.managers.manager import Manager
@@ -52,7 +53,7 @@ class BaseFurnaceManager(Manager):
 class NMGRLFurnaceManager(BaseFurnaceManager):
     funnel = Instance(NMGRLFunnel)
     loader_logic = Instance(LoaderLogic)
-
+    magnets = Instance(NMGRLMagnetDumper)
     setpoint_readback_min = Float(0)
     setpoint_readback_max = Float(1600.0)
 
@@ -84,6 +85,8 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     def actuate_magnets(self):
         self.debug('actuate magnets')
         if self.loader_logic.check('AM'):
+            self.magnet.open()
+            # wait for actuate magnets
             pass
         else:
             self.warning('actuate magnets not enabled')
@@ -166,10 +169,10 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         return False
 
     def funnel_up(self):
-        return False
+        return self.funnel.in_up_position()
 
     def funnel_down(self):
-        return False
+        return self.funnel.in_down_position()
 
     def no_motion(self):
         return not self.stage_manager.in_motion()
@@ -291,4 +294,8 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         l.load_config()
 
         return l
+
+    def _magnets_default(self):
+        m = NMGRLMagnetDumper()
+        return m
 # ============= EOF =============================================

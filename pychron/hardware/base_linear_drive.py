@@ -136,7 +136,8 @@ class BaseLinearDrive(Loggable, ConsumerMixin):
     def load_data_position(self, set_pos=True):
         """
         """
-        steps = self._read_motor_position(verbose=False)
+        steps = self.read_position()
+
         if steps is not None:
             pos = self.linear_mapper.map_data(steps)
             pos = max(self.min, min(self.max, pos))
@@ -148,6 +149,10 @@ class BaseLinearDrive(Loggable, ConsumerMixin):
                 pos, self.units,
                 steps))
 
+        return steps
+
+    def read_position(self, verbose=False):
+        steps = self._read_motor_position(verbose=verbose)
         return steps
 
     def timer_factory(self):
@@ -171,13 +176,13 @@ class BaseLinearDrive(Loggable, ConsumerMixin):
 
     # private
     def _set_motor(self, value):
-        pass
+        return
 
     def _convert_value(self, value):
         return value
 
     def _read_motor_position(self, *args, **kw):
-        pass
+        return None
 
     def _load_config_attributes(self, config, args):
         for args in args:

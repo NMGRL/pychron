@@ -15,31 +15,39 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Int
+try:
+    import RPi.GPIO as GPIO
+except ImportError:
+    pass
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.hardware.core.abstract_device import AbstractDevice
+from pychron.hardware.core.core_device import CoreDevice
 
 
-class NMGRLFunnel(AbstractDevice):
-    down_position = Int
-    up_position = Int
-    tolerance = Int
+class RPiGPIO(CoreDevice):
+    def close(self):
+        GPIO.close()
+        super(RPiGPIO, self).close()
 
     def load_additional_args(self, config):
-        self.set_attribute(config, 'down_position', 'Positioning', 'down_position', cast='int')
-        self.set_attribute(config, 'up_position', 'Positioning', 'up_position', cast='int')
-        self.set_attribute(config, 'tolerance', 'Positioning', 'tolerance', cast='int')
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setwarnings(False)
 
-    def in_up_position(self):
-        if self._cdevice:
-            pos = self._cdevice.read_position()
-            return abs(pos - self.up_position) <= self.tolerance
+        outpins = self.config_get('Pins', 'output')
+        inpins = self.config_get('Pins', 'input')
+        for mode, pins in ((outpins, GPIO.OUT),
+                           (inpins, GPIO.IN)):
+            for pin in pins:
+                GPIO.setup(pin, mode)
 
-    def in_down_position(self):
-        if self._cdevice:
-            pos = self._cdevice.read_position()
-            return abs(pos - self.down_position) <= self.tolerance
+    def open_channel(self, channel):
+        GPIO.output(channel, 0)
+
+    def close_channel(self, channel):
+        GPIO.output(channel, 1)
+
+    def get_channel_state(self, channel):
+        return GPIO.input(channel)
 
 # ============= EOF =============================================
