@@ -18,8 +18,7 @@
 import os
 
 import yaml
-from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change, Dict
-from traitsui.api import View, UItem, Item, HGroup, VGroup
+from traits.api import Any, Dict
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -33,16 +32,20 @@ class LoaderLogic(Loggable):
     manager = Any
 
     def check(self, name):
+        self.debug('check rule for {}'.format(name))
+        # return True
         rule = self.rules[name]
         return self._check_rule(rule)
 
     def open(self, name):
-        name = self.switch_map[name]
+        # return True
+        name = self.switches[name]
         key = '{}_O'.format(name)
         return self.check(key)
 
     def close(self, name):
-        name = self.switch_map[name]
+        # return True
+        name = self.switches[name]
         key = '{}_C'.format(name)
         return self.check(key)
 
@@ -53,21 +56,41 @@ class LoaderLogic(Loggable):
             self.rules = yd['rules']
             self.switches = yd['switches']
 
+    def _convert_switch_name(self, name):
+
+        return next((k for k, v in self.switches.iteritems() if v == name), None)
+
     def _check_rule(self, rule):
         bits = []
+        self.debug('------- check rule {}'.format(','.join(rule)))
         for flag in rule:
             if '_' in flag:
-                name, state = flag.split('_')
+                key, state = flag.split('_')
+                name = self._convert_switch_name(key)
                 if name in self.switches:
                     s = self.manager.get_switch_state(name)
                     b = False
-                    if (s and state == 'C') or (not s and state == 'O'):
+                    if (s and state == 'O') or (not s and state == 'C'):
                         b = True
+
+                    self.debug('switch state: name={}, state={}, s={}, b={}'.format(name, state, s, b))
                 else:
                     b = self.manager.get_flag_state(flag)
             else:
                 b = self.manager.get_flag_state(flag)
+
+            # self.debug('flag={} value={}'.format(flag, b))
             bits.append(b)
+
+        rs = ['{:>15}'.format(f) for f in rule]
+        rs = '|'.join(rs)
+
+        bs = ['{:>15}'.format(bi) for bi in bits]
+        bs = '|'.join(bs)
+        self.debug(rs)
+        self.debug(bs)
+
+        self.debug('------------------------')
 
         return all(bits)
 

@@ -42,6 +42,7 @@ class BaseFurnaceManager(Manager):
     setpoint_readback = Float
     stage_manager = Instance(BaseFurnaceStageManager)
     switch_manager = Instance(SwitchManager)
+    use_network = False
 
     def _controller_default(self):
         c = FurnaceController(name='controller',
@@ -64,6 +65,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     _alive = False
     _guide_overlay = None
     _dumper_thread = None
+    mode = 'normal'
 
     def activate(self):
         # pref_id = 'pychron.furnace'
@@ -81,6 +83,10 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         if self._dumper_thread is None:
             self._dumper_thread = Thread(name='DumpSample', target=self._dump_sample)
             self._dumper_thread.start()
+
+    def is_dump_complete(self):
+        ret = self._dumper_thread is None
+        return ret
 
     def actuate_magnets(self):
         self.debug('actuate magnets')
@@ -143,14 +149,16 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
 
     def open_valve(self, name, **kw):
         if not self._open_logic(name):
-            return
+            self.debug('logic failed')
+            return False, False
 
         if self.switch_manager:
             return self.switch_manager.open_switch(name, **kw)
 
     def close_valve(self, name, **kw):
         if not self._close_logic(name):
-            return
+            self.debug('logic failed')
+            return False, False
 
         if self.switch_manager:
             return self.switch_manager.close_switch(name, **kw)
@@ -164,6 +172,8 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
             return self.switch_manager.get_state_by_name(name, force=True)
 
     def get_flag_state(self, flag):
+        self.debug('get_flag_state {}'.format(flag))
+
         if flag in ('no_motion', 'no_dump', 'funnel_up', 'funnel_down'):
             return getattr(self, flag)()
         return False
@@ -175,10 +185,14 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         return self.funnel.in_down_position()
 
     def no_motion(self):
-        return not self.stage_manager.in_motion()
+        v = not self.stage_manager.in_motion()
+        self.debug('no motion {}'.format(v))
+        return v
 
     def no_dump(self):
-        return True
+        v = not self.magnets.dump_in_progress()
+        self.debug('no dump {}'.format(v))
+        return v
 
     # private
     def _open_logic(self, name):
@@ -187,7 +201,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
 
         return True if ok
         """
-        return self.loader_logic.close(name)
+        return self.loader_logic.open(name)
 
     def _close_logic(self, name):
         """
@@ -196,7 +210,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         return True if ok
 
         """
-        return self.loader_logic.open(name)
+        return self.loader_logic.close(name)
 
     def _stop_update(self):
         self._alive = False
@@ -235,15 +249,18 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
             self.debug(line)
             self._execute_script_line(line)
 
-            # self.stage_manager.set_sample_dumped()
-            # self._dumper_thread = None
+            self.stage_manager.set_sample_dumped()
+            self._dumper_thread = None
 
     def _load_dump_script(self):
         p = os.path.join(paths.device_dir, 'furnace', 'dump_sequence.txt')
         return pathtolist(p)
 
     def _execute_script_line(self, line):
-        cmd, args = line.split(' ')
+        if ' ' in line:
+            cmd, args = line.split(' ')
+        else:
+            cmd, args = line, None
 
         if cmd == 'sleep':
             time.sleep(float(args))
@@ -296,6 +313,6 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         return l
 
     def _magnets_default(self):
-        m = NMGRLMagnetDumper()
+        m = NMGRLMagnetDumper(name='magnets', configuration_dir_name='furnace')
         return m
 # ============= EOF =============================================

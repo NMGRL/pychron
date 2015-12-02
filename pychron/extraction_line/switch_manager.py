@@ -409,6 +409,8 @@ class SwitchManager(Manager):
         state = None
         if (self.query_valve_state and v.query_state) or force:
             state = v.get_hardware_state(verbose=False)
+            if v.actuator.simulation:
+                state = None
 
         if state is None:
             state = v.state

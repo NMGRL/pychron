@@ -27,19 +27,28 @@ class NMGRLFunnel(AbstractDevice):
     up_position = Int
     tolerance = Int
 
+    _simulation_funnel_up = True
+
     def load_additional_args(self, config):
         self.set_attribute(config, 'down_position', 'Positioning', 'down_position', cast='int')
         self.set_attribute(config, 'up_position', 'Positioning', 'up_position', cast='int')
         self.set_attribute(config, 'tolerance', 'Positioning', 'tolerance', cast='int')
+        super(NMGRLFunnel, self).load_additional_args(config)
 
     def in_up_position(self):
         if self._cdevice:
-            pos = self._cdevice.read_position()
-            return abs(pos - self.up_position) <= self.tolerance
+            if not self.simulation:
+                pos = self._cdevice.read_position()
+                return abs(pos - self.up_position) <= self.tolerance
+            else:
+                return self._simulation_funnel_up
 
     def in_down_position(self):
         if self._cdevice:
-            pos = self._cdevice.read_position()
-            return abs(pos - self.down_position) <= self.tolerance
+            if not self.simulation:
+                pos = self._cdevice.read_position()
+                return abs(pos - self.down_position) <= self.tolerance
+            else:
+                return not self._simulation_funnel_up
 
 # ============= EOF =============================================

@@ -67,6 +67,9 @@ class BaseLinearDrive(Loggable, ConsumerMixin):
 
     enabled = Bool(False)
 
+    def set_position(self, *args, **kw):
+        return self.set_value(*args, **kw)
+
     def set_value(self, value, block=False):
         if self.data_position != value:
             self.enabled = False

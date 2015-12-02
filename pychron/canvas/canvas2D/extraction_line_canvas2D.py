@@ -187,13 +187,13 @@ class ExtractionLineCanvas2D(SceneCanvas):
             state = item.state
             state = not state
             mode = 'normal'
-            try:
-                if state:
-                    ok, change = self.manager.open_valve(item.name, mode=mode)
-                else:
-                    ok, change = self.manager.close_valve(item.name, mode=mode)
-            except TypeError, e:
-                ok, change = True, True
+            # try:
+            if state:
+                ok, change = self.manager.open_valve(item.name, mode=mode)
+            else:
+                ok, change = self.manager.close_valve(item.name, mode=mode)
+                # except TypeError, e:
+                # ok, change = True, True
 
         else:
             if not isinstance(item, BaseValve):

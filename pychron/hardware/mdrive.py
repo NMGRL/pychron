@@ -23,7 +23,7 @@ from pychron.hardware.core.core_device import CoreDevice
 
 ERROR_MAP = {'6': 'An I/O is already set to this type. Applies to non-General Purpose I/O.',
              '8': 'Tried to set an I/O to an incorrect I/O type.',
-             '9': 'Tried to write to I/O set as Input or is “TYPED”.',
+             '9': 'Tried to write to I/O set as Input or is "TYPED".',
              '10': 'Illegal I/O number.',
              '11': 'Incorrect CLOCK type.',
              '12': 'Illegal Trip / Capture',
@@ -88,7 +88,7 @@ ERROR_MAP = {'6': 'An I/O is already set to this type. Applies to non-General Pu
                    'but did not trip the Home switch. Indicates a possible badswitch or a bad circuit.',
              '83': 'Reached plus LIMIT switch. The LIMIT switch in the plus directionwas tripped.',
              '84': 'Reached minus LIMIT switch. The LIMIT switch in the minus directionwas tripped.',
-             '85': 'MA or MR isn’t allowed during a HOME and a HOME isn’t allowed while the device is in motion.',
+             '85': 'MA or MR is not allowed during a HOME and a HOME is not allowed while the device is in motion.',
              '86': 'Stall detected. The Stall Flag (ST) has been set to 1.',
              '87': 'MDrive In Clock Mode, JOG not allowed',
              '88': 'MDrive Following error',
@@ -178,9 +178,11 @@ class MDriveMotor(CoreDevice, BaseLinearDrive):
 
     def _get_var(self, c, as_int=True):
         resp = self.ask('PR {}'.format(c))
-        self.info('Variable {}={}'.format(c, resp))
-        if as_int:
+
+        if as_int and resp is not None:
             resp = int(resp)
+
+        self.info('Variable {}={}'.format(c, resp))
         return resp
 
     def _move(self, pos, relative, block):

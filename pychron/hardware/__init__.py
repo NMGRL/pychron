@@ -49,6 +49,7 @@ HW_PACKAGE_MAP = {
     'RemoteNewportMotionController': 'pychron.hardware.remote.newport_motion_controller',
 
     'TempHumMicroServer': 'pychron.hardware.environmental_probe',
-    'AirTransducer': 'pychron.hardware.transducer'
+    'AirTransducer': 'pychron.hardware.transducer',
+    'NMGRLMagnetDumper': 'pychron.furnace.magnet_dumper'
     # 'ControlModule': 'pychron.hardware.fusions.vue_diode_control_module'
 }

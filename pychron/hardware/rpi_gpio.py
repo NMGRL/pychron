@@ -15,17 +15,47 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pychron.hardware.actuators.gp_actuator import GPActuator
+
 try:
     import RPi.GPIO as GPIO
 except ImportError:
-    pass
+    class DummyGPIO:
+        OUT = 0
+        IN = 0
+        BCM = 0
+
+        def setmode(self, *args):
+            pass
+
+        def setwarnings(self, *args):
+            pass
+
+        def setup(self, *args):
+            pass
+
+        def output(self, *args):
+            pass
+
+        def input(self, *args):
+            pass
+
+        def close(self):
+            pass
+
+
+    GPIO = DummyGPIO()
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.hardware.core.core_device import CoreDevice
 
 
-class RPiGPIO(CoreDevice):
+class RPiGPIO(GPActuator):
+    def open(self, *args, **kw):
+        if not isinstance(GPIO, DummyGPIO):
+            self.simulation = False
+        return True
+
     def close(self):
         GPIO.close()
         super(RPiGPIO, self).close()
@@ -34,20 +64,22 @@ class RPiGPIO(CoreDevice):
         GPIO.setmode(GPIO.BCM)
         GPIO.setwarnings(False)
 
-        outpins = self.config_get('Pins', 'output')
-        inpins = self.config_get('Pins', 'input')
-        for mode, pins in ((outpins, GPIO.OUT),
+        outpins = self.config_get(config, 'Pins', 'output')
+        inpins = self.config_get(config, 'Pins', 'input')
+        for pins, mode in ((outpins, GPIO.OUT),
                            (inpins, GPIO.IN)):
             for pin in pins:
                 GPIO.setup(pin, mode)
 
-    def open_channel(self, channel):
+    def open_channel(self, channel, **kw):
         GPIO.output(channel, 0)
+        return True
 
-    def close_channel(self, channel):
+    def close_channel(self, channel, **kw):
         GPIO.output(channel, 1)
+        return True
 
-    def get_channel_state(self, channel):
+    def get_channel_state(self, channel, **kw):
         return GPIO.input(channel)
 
 # ============= EOF =============================================

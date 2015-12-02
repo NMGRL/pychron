@@ -23,12 +23,25 @@ from pychron.hardware.core.abstract_device import AbstractDevice
 
 class NMGRLMagnetDumper(AbstractDevice):
     channel_address = Str
+    in_progress_address = Str
+    _dump_in_progress = False
 
     def load_additional_args(self, config):
-        self.set_attribute(config, 'General', 'channel_address')
+        self.set_attribute(config, 'channel_address', 'General', 'channel_address')
+        self.set_attribute(config, 'in_progress_address', 'General', 'in_progress_address')
+        super(NMGRLMagnetDumper, self).load_additional_args(config)
 
     def actuate(self):
         if self._cdevice:
+            self._dump_in_progress = True
             self._cdevice.open_channel(self.channel_address)
+
+    def dump_in_progress(self):
+        state = False
+        if self._dump_in_progress:
+            state = self._cdevice.get_channel_state(self.in_progress_address)
+            if not state:
+                self._dump_in_progress = False
+        return state
 
 # ============= EOF =============================================
