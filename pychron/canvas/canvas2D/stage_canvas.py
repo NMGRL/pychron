@@ -21,6 +21,9 @@ from traits.api import Instance, Tuple, Color, Bool, Any, Float, Property
 from pychron.canvas.canvas2D.crosshairs_overlay import CrosshairsOverlay, SimpleCrosshairsOverlay
 from pychron.canvas.canvas2D.map_canvas import MapCanvas
 
+DIRECTIONS = {'Left': ('x', -1), 'Right': ('x', 1),
+              'Down': ('y', -1), 'Up': ('y', 1)}
+
 
 class StageCanvas(MapCanvas):
     crosshairs_overlay = Instance(SimpleCrosshairsOverlay)
@@ -89,6 +92,29 @@ class StageCanvas(MapCanvas):
         event.window.set_pointer(self.normal_pointer)
         self.request_redraw()
         event.handled = True
+
+    def normal_key_pressed(self, event):
+        c = event.character
+        if c in ('Left', 'Right', 'Up', 'Down'):
+            ax_key, direction = DIRECTIONS[c]
+            direction = self._calc_relative_move_direction(c, direction)
+            distance = 5 if event.shift_down else 1
+            self.stage_manager.relative_move(ax_key, direction, distance)
+            event.handled = True
+        elif c in ('a', 'A'):
+            self.stage_manager.accept_point()
+
+    def key_released(self, char):
+        """
+            called from outside by StageCompnentEditor
+        """
+        self.stage_manager.key_released()
+
+    # ===============================================================================
+    # private
+    # ===============================================================================
+    def _calc_relative_move_direction(self, char, direction):
+        return direction
 
     def _add_crosshairs(self, klass=None):
         if klass is None:

@@ -58,6 +58,12 @@ class NMGRLFurnaceStageManager(BaseFurnaceStageManager):
     def in_motion(self):
         return self.sample_linear_holder.moving()
 
+    def relative_move(self, ax_key, direction, distance):
+        self.sample_linear_holder.slew(direction * distance)
+
+    def key_released(self):
+        self.sample_linear_holder.stop()
+
     # private
     def _move_to_hole(self, key, correct_position=True):
         self.info('Move to hole {} type={}'.format(key, str(type(key))))

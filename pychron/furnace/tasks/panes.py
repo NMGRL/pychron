@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from enable.component_editor import ComponentEditor
 from pyface.tasks.traits_dock_pane import TraitsDockPane
-from traits.api import Button
+from traits.api import Button, Bool
 from traitsui.api import View, Item, Readonly, UItem, VGroup, HGroup, EnumEditor, spring, \
     InstanceEditor, ButtonEditor, RangeEditor, Tabbed
 # ============= standard library imports ========================
@@ -25,6 +25,7 @@ from traitsui.api import View, Item, Readonly, UItem, VGroup, HGroup, EnumEditor
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.core.ui.lcd_editor import LCDEditor
+from pychron.envisage.icon_button_editor import icon_button_editor
 
 
 class ControlPane(TraitsDockPane):
@@ -32,6 +33,10 @@ class ControlPane(TraitsDockPane):
     id = 'pychron.nmgrlfurnace.controls'
 
     dump_sample_button = Button('Dump')
+    funnel_up_button = Button
+    funnel_down_button = Button
+    funnel_down_enabled = Bool(True)
+    funnel_up_enabled = Bool(False)
 
     # lower_funnel_button = Button('Lower Funnel')
     # raise_funnel_button = Button('Raise Funnel')
@@ -44,6 +49,17 @@ class ControlPane(TraitsDockPane):
     #
     # def _lower_funnel_button_fired(self):
     #     self.model.stage_manager.lower_funnel()
+
+    def _funnel_up_button_fired(self):
+        if self.model.raise_funnel():
+            self.funnel_up_enabled = False
+            self.funnel_down_enabled = True
+
+    def _funnel_down_button_fired(self):
+        if self.model.lower_funnel():
+            self.funnel_up_enabled = True
+            self.funnel_down_enabled = False
+
     def _dump_sample_button_fired(self):
         self.model.dump_sample()
 
@@ -88,7 +104,14 @@ class ControlPane(TraitsDockPane):
                                                high_name='stage_manager.sample_linear_holder.max_value', )),
 
                        HGroup(UItem('pane.dump_sample_button',
-                                    tooltip='Complete sample dumping procedure'), spring),
+                                    tooltip='Complete sample dumping procedure'),
+                              icon_button_editor('pane.funnel_up_button', 'arrow_up',
+                                                 enabled_when='pane.funnel_up_enabled',
+                                                 editor_kw={'label': 'Funnel Up'}),
+                              icon_button_editor('pane.funnel_down_button', 'arrow_down',
+                                                 enabled_when='pane.funnel_down_enabled',
+                                                 editor_kw={'label': 'Funnel Down'}),
+                              spring),
                        UItem('dumper_canvas', editor=ComponentEditor()),
                        # UItem('pane.lower_funnel_button', enabled_when='stage_manager.funnel.min_limit'),
                        # UItem('pane.raise_funnel_button', enabled_when='stage_manager.funnel.max_limit'),
@@ -108,9 +131,9 @@ class FurnacePane(TraitsTaskPane):
 
     def traits_view(self):
         canvas_grp = VGroup(
-            HGroup(UItem('stage_manager.stage_map_name', editor=EnumEditor(name='stage_manager.stage_map_names')),
-                   spring),
-            UItem('stage_manager.canvas', style='custom', editor=ComponentEditor()))
+                HGroup(UItem('stage_manager.stage_map_name', editor=EnumEditor(name='stage_manager.stage_map_names')),
+                       spring),
+                UItem('stage_manager.canvas', style='custom', editor=ComponentEditor()))
 
         v = View(VGroup(UItem('graph', style='custom'), canvas_grp))
         return v

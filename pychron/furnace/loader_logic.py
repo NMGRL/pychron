@@ -32,19 +32,15 @@ class LoaderLogic(Loggable):
     manager = Any
 
     def check(self, name):
-        self.debug('check rule for {}'.format(name))
-        # return True
         rule = self.rules[name]
-        return self._check_rule(rule)
+        return self._check_rule(name, rule)
 
     def open(self, name):
-        # return True
         name = self.switches[name]
         key = '{}_O'.format(name)
         return self.check(key)
 
     def close(self, name):
-        # return True
         name = self.switches[name]
         key = '{}_C'.format(name)
         return self.check(key)
@@ -60,9 +56,9 @@ class LoaderLogic(Loggable):
 
         return next((k for k, v in self.switches.iteritems() if v == name), None)
 
-    def _check_rule(self, rule):
+    def _check_rule(self, key, rule):
         bits = []
-        self.debug('------- check rule {}'.format(','.join(rule)))
+        self.debug('------- check rule {}: {}'.format(key, ','.join(rule)))
         for flag in rule:
             if '_' in flag:
                 key, state = flag.split('_')
@@ -78,19 +74,15 @@ class LoaderLogic(Loggable):
                     b = self.manager.get_flag_state(flag)
             else:
                 b = self.manager.get_flag_state(flag)
-
-            # self.debug('flag={} value={}'.format(flag, b))
             bits.append(b)
 
-        rs = ['{:>15}'.format(f) for f in rule]
+        rs = ['{:>10}'.format(f) for f in rule]
         rs = '|'.join(rs)
 
-        bs = ['{:>15}'.format(bi) for bi in bits]
+        bs = ['{:>10}'.format(bi) for bi in bits]
         bs = '|'.join(bs)
         self.debug(rs)
         self.debug(bs)
-
-        self.debug('------------------------')
 
         return all(bits)
 

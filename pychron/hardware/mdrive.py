@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from traits.api import Int, Bool
 # ============= standard library imports ========================
 import time
 # ============= local library imports  ==========================
@@ -81,8 +82,10 @@ ERROR_MAP = {'6': 'An I/O is already set to this type. Applies to non-General Pu
              '73': 'Tried to SAVE while moving',
              '74': 'Tried to Initialize Parameters (IP) or Clear Program (CP) while Moving',
              '75': 'Linear Overtemperature Error (For units without Internal Over Temp)',
-             '80': 'HOME switch not defined. Attempting to do a HOME (H) sequence but the Home Switch has not yet been defined.',
-             '81': 'HOME type not defined. The HOME (HM or HI) Command has been programmed but with no type or an illegal type. '
+             '80': 'HOME switch not defined. Attempting to do a HOME (H) sequence but '
+                   'the Home Switch has not yet been defined.',
+             '81': 'HOME type not defined. The HOME (HM or HI) Command has been programmed '
+                   'but with no type or an illegal type. '
                    '(Types = 1, 2, 3, or 4)',
              '82': 'Went to both LIMITS and did not find home. The motion encroached both limits '
                    'but did not trip the Home switch. Indicates a possible badswitch or a bad circuit.',
@@ -102,13 +105,28 @@ ERROR_MAP = {'6': 'An I/O is already set to this type. Applies to non-General Pu
 
 
 class MDriveMotor(CoreDevice, BaseLinearDrive):
+    initial_velocity = Int
+    deceleration = Int
+    run_current = Int
+    use_encoder = Bool
+    steps_per_turn = Int
+
+    slew_velocity = Int
+
+    _slewing = False
+
     def load_additional_args(self, config):
         args = [
             ('Motion', 'steps', 'int'),
             ('Motion', 'min_steps', 'int'),
             ('Motion', 'sign'),
             ('Motion', 'velocity'),
+            ('Motion', 'slew_velocity'),
+            ('Motion', 'initial_velocity'),
             ('Motion', 'acceleration'),
+            ('Motion', 'deceleration'),
+            ('Motion', 'run_current')
+            ('Motion', 'use_encoder')
 
             ('Homing', 'home_delay'),
             ('Homing', 'home_velocity'),
@@ -126,29 +144,66 @@ class MDriveMotor(CoreDevice, BaseLinearDrive):
         self.linear_mapper_factory()
         return True
 
+    def initialize(self, *args, **kw):
+        self.set_encoder_mode(self.use_encoder)
+        if self.use_encoder:
+            self.steps_per_turn = 2048
+        else:
+            self.steps_per_turn = 51200
+
+        for attr in ('initial_velocity', 'velocity', 'acceleration', 'deceleration', 'run_current'):
+            v = getattr(self, attr)
+            if v:
+                func = getattr(self, 'set_{}'.format(attr))
+                func(v)
+
     def is_simulation(self):
         return self.simulation
 
-    def move_absolute(self, pos, block=True):
+    def convert_to_steps(self, pos):
+        return int(pos * self.steps_per_turn)
+
+    def move_absolute(self, pos, block=True, convert_turns=False):
+        if convert_turns:
+            pos = int(pos * self.steps_per_turn)
         self._move(pos, False, block)
 
-    def move_relative(self, pos, block=True):
+    def move_relative(self, pos, block=True, convert_turns=False):
+        if convert_turns:
+            pos = int(pos * self.steps_per_turn)
+
         self._move(pos, True, block)
+
+    def slew(self, modifier):
+        if not self._slewing:
+            v = self.slew_velocity * modifier
+            self.set_slew(v)
+            self._slewing = True
+
+    def stop(self):
+        self._slewing = False
+        self.set_slew(0)
 
     def set_initial_velocity(self, v):
         self._set_var('VI', v)
 
     def set_velocity(self, v):
-        self.tell('VM {}'.format(v))
+        self._set_var('VM', v)
 
     def set_acceleration(self, a):
-        self.tell('A {}'.format(a))
+        self._set_var('A', a)
 
     def set_slew(self, v):
-        self.tell('SL {}'.format(v))
+        self._set_var('SL', v)
 
     def set_encoder_position(self, v):
-        self.tell('P {}'.format(v))
+        self._set_var('P', v)
+
+    def set_use_encoder(self, b):
+        self._set_var('EE', '{:b}'.format(b))
+
+    def set_run_current(self, rc):
+        self._set_var('RC', rc)
 
     def moving(self):
         return self._moving()
@@ -165,16 +220,28 @@ class MDriveMotor(CoreDevice, BaseLinearDrive):
         self._move(value, relative, block)
 
     def _set_var(self, var, val, check_error=True):
+        if check_error:
+            args = self._check_error()
+            if args:
+                ecode, estr = args
+                self.warning('Existing error ErrorCode={}, Error={}'.format(ecode, estr))
+
         ret = True
         self.tell('{} {}'.format(var, val))
         if check_error:
-            eflag = self._get_var('EF')
-            if eflag == 1:
-                ecode = self._get_var('ER', as_int=False)
-                estr = ERROR_MAP.get(ecode, 'See MCode Programming Manual')
+            args = self._check_error()
+            if args:
+                ecode, estr = args
                 self.warning('Error setting {}={} ErrorCode={}. Error={}'.format(var, val, ecode, estr))
                 ret = False
         return ret
+
+    def _check_error(self):
+        eflag = self._get_var('EF')
+        if eflag == 1:
+            ecode = self._get_var('ER', as_int=False)
+            estr = ERROR_MAP.get(ecode, 'See MCode Programming Manual')
+            return ecode, estr
 
     def _get_var(self, c, as_int=True):
         resp = self.ask('PR {}'.format(c))
@@ -192,12 +259,17 @@ class MDriveMotor(CoreDevice, BaseLinearDrive):
             self._block()
             self.info('move complete')
 
-    def _moving(self):
+    def _moving(self, motion_flag='MV'):
         """
         0= Not Moving
         1= Moviing
+
+
+        motion flags
+        MP= moving to position. set after MA or MR
+        MV= axis in motion
         """
-        resp = self._get_var('M')
+        resp = self._get_var(motion_flag)
         return resp == 1
 
     def _block(self):

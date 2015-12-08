@@ -101,6 +101,10 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         self.debug('lower funnel')
         if self.loader_logic.check('FD'):
             self.funnel.set_value(self.funnel.down_position)
+
+            # todo: update canvas state
+
+            return True
         else:
             self.warning('lowering funnel not enabled')
 
@@ -108,6 +112,10 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         self.debug('raise funnel')
         if self.loader_logic.check('FU'):
             self.funnel.set_value(self.funnel.up_position)
+
+            # todo: update canvas state
+
+            return True
         else:
             self.warning('raising funnel not enabled')
 

@@ -17,45 +17,52 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 import time
+
+import serial
 # ============= local library imports  ==========================
 from pychron.hardware.core.communicators.communicator import Communicator
 
+
 class MDriveCommunicator(Communicator):
+    _delay = 0.025
+
     def open(self):
         self.handle = serial.Serial(self.address, baudrate=self.baudrate, timeout=1)
-        
+
     def tell(self, cmd):
         self.handle.write(self._format_command(cmd))
+        time.sleep(self._delay)
         return self._read_command_ok()
-        
+
     def ask(self, cmd, multiline=False):
         self.handle.write(self._format_command(cmd))
+        time.sleep(self._delay)
         return self._read_response(multiline)
 
     def _read_command_ok(self):
         resp = self.handle.read(2)
-        return resp==self.terminator
+        return resp == self.terminator
 
     def _read_response(self, multiline):
-  	terminator = self.terminator
-	handle = self.handle
+        terminator = self.terminator
+        handle = self.handle
 
         if self._read_command_ok():
-            x=''
+            x = ''
             while 1:
                 r = handle.read()
-                x+=r
-                if x.endswith(terminator) and not x==terminator:
+                x += r
+                if x.endswith(terminator) and not x == terminator:
                     if multiline:
                         r = handle.read()
                         if not r:
                             break
                         else:
-                            x+=r
+                            x += r
                     else:
                         break
             return x.strip()
-        
+
     def _format_command(self, cmd):
         return '{}{}'.format(cmd, self.terminator)
 
