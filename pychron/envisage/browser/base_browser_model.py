@@ -765,6 +765,9 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         return SampleTableConfigurer()
 
     def _labnumber_tabular_adapter_default(self):
-        return LabnumberAdapter()
+        adapter = LabnumberAdapter()
+        self.table_configurer.adapter = adapter
+        self.table_configurer.load()
+        return adapter
 
 # ============= EOF =============================================

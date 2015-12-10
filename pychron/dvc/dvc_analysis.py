@@ -308,6 +308,7 @@ class DVCAnalysis(Analysis):
         if doses:
             d_o = doses[0][1]
         self.irradiation_time = time.mktime(d_o.timetuple()) if d_o else 0
+
         self.chron_segments = segments
         self.chron_dosages = doses
         self.calculate_decay_factors()

@@ -114,7 +114,7 @@ class ArArAge(MLoggable):
     irradiation = None
     irradiation_level = None
     irradiation_position = None
-    irradiation_time = None
+    irradiation_time = 0
     production_name = None
 
     chron_segments = None
@@ -407,6 +407,8 @@ class ArArAge(MLoggable):
     def get_error_component(self, key):
         # for var, error in self.uage.error_components().items():
         #     print var.tag
+        if self.uage is None:
+            self.calculate_age()
 
         v = next((error for (var, error) in self.uage.error_components().items()
                   if var.tag == key), 0)

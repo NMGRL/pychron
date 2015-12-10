@@ -221,6 +221,10 @@ class BrowserSampleView(BaseBrowserSampleView):
     def unselect_analyses(self, info, obj):
         obj.selected = []
 
+    def configure_sample_table(self, info, obj):
+        print 'asfdasdfsadf', obj
+        obj.configure_sample_table()
+
     def configure_analysis_table(self, info, obj):
         # self.model.analysis_table.configure_table()
         obj.configure_table()

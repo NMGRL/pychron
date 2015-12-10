@@ -34,7 +34,7 @@ class PointInspector(InfoInspector):
         if self.single_point:
             idx = self.component.map_index(self.current_position, threshold=threshold)
             if idx is not None:
-                return (idx,)
+                return [idx]
         else:
             xs = self.component.index.get_data()
             ys = self.component.value.get_data()
@@ -65,9 +65,9 @@ class PointInspector(InfoInspector):
             convert_index = self.convert_index
             if inds is not None and len(inds):
                 he = hasattr(self.component, 'yerror')
-
                 ys = comp.value.get_data()[inds]
                 xs = comp.index.get_data()[inds]
+
                 for i, x, y in zip(inds, xs, ys):
                     if he:
                         ye = comp.yerror.get_data()[i]

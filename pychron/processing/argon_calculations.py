@@ -230,15 +230,17 @@ def calculate_decay_factor(dc, segments):
 
         using start seems more appropriate
     """
-
-    a = sum([pi * ti for pi, ti, _ in segments])
-
-    b = sum([pi * ((1 - math.exp(-dc * ti)) / (dc * math.exp(dc * dti)))
-             for pi, ti, dti in segments])
-    try:
-        return a / b
-    except ZeroDivisionError:
+    if segments is None:
         return 1.0
+    else:
+        a = sum([pi * ti for pi, ti, _ in segments])
+
+        b = sum([pi * ((1 - math.exp(-dc * ti)) / (dc * math.exp(dc * dti)))
+                 for pi, ti, dti in segments])
+        try:
+            return a / b
+        except ZeroDivisionError:
+            return 1.0
 
 
 def abundance_sensitivity_correction(isos, abundance_sensitivity):
@@ -372,7 +374,7 @@ def calculate_F(isotopes,
     # dont include error in 40/36
     atm40 = atm36 * nominal_value(arar_constants.atm4036)
 
-    k4039 = pr['K4039']
+    k4039 = pr.get('K4039', 0)
     k40 = k39 * k4039
 
     rad40 = a40 - atm40 - k40
