@@ -177,9 +177,9 @@ def container_factory(**kw):
     c = CONTAINERS.get(kind, VPlotContainer)
 
     options = dict(
-        bgcolor='white',
-        padding=5,
-        fill_padding=True)
+            bgcolor='white',
+            padding=5,
+            fill_padding=True)
 
     for k in options:
         if k not in kw.keys():
@@ -1600,8 +1600,8 @@ class Graph(ContextMenuMixin):
             # font = '{} {}'.format(font, size)
             tfont = '{} {}'.format(font, size + 2)
             params.update(dict(
-                #                       tick_label_font=font,
-                title_font=tfont
+                    #                       tick_label_font=font,
+                    title_font=tfont
             ))
         axis.trait_set(**params)
         self.plotcontainer.request_redraw()
@@ -1631,14 +1631,11 @@ class Graph(ContextMenuMixin):
         if scale == 'log':
             try:
                 if mi <= 0:
-
                     mi = Inf
                     data = plot.data
                     for di in data.list_data():
                         if 'y' in di:
                             ya = sorted(data.get_data[di])
-                            #                             ya = np.copy(plot.data.get_data(di))
-                            #                             ya.sort()
                             i = 0
                             try:
                                 while ya[i] <= 0:
@@ -1669,25 +1666,33 @@ class Graph(ContextMenuMixin):
                     ma = 100
 
                 if ma is not None and mi is not None:
-
                     dev = ma - mi
 
-                    pad = float(pad) * dev
-                    if abs(pad) < 1e-10:
-                        pad = 1
+                    def convert(p):
+                        p = float(p) * dev
+                        if abs(p) < 1e-10:
+                            p = 1
+                        return p
+
+                    if ',' in pad:
+                        pad = [convert(p) for p in pad.split(',')]
+                    else:
+                        pad = convert(pad)
 
             if not pad:
                 pad = 0
 
-            if isinstance(ma, (int, float)):
-                if ma is not None:
-                    if pad_style in ('symmetric', 'upper'):
-                        ma += pad
-
             if isinstance(mi, (int, float)):
-                if mi is not None:
-                    if pad_style in ('symmetric', 'lower'):
-                        mi -= pad
+                if isinstance(pad, list):
+                    mi -= pad[0]
+                elif pad_style in ('symmetric', 'lower'):
+                    mi -= pad
+
+            if isinstance(ma, (int, float)):
+                if isinstance(pad, list):
+                    ma += pad[1]
+                elif pad_style in ('symmetric', 'upper'):
+                    ma += pad
 
         change = False
         if mi is not None:

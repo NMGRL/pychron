@@ -125,10 +125,7 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_sniff=False
             ymi, yma = min_max(ymi, yma, baseline.ys)
             xmi, xma = min_max(xmi, xma, baseline.xs)
 
-        # ymi = min(ymi, iso.ys.min())
-        # yma = max(yma, iso.ys.max())
-
-        g.set_x_limits(min_=xmi, max_=xma * 1.1)
+        g.set_x_limits(min_=xmi, max_=xma, pad='0.025,0.05')
         g.set_y_limits(min_=ymi, max_=yma, pad='0.05', plotid=i)
         g.set_x_title('Time (s)', plotid=i)
         g.set_y_title('{} (fA)'.format(iso.name), plotid=i)
