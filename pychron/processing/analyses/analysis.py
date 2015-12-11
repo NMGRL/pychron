@@ -93,6 +93,11 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_sniff=False
         ymi, yma = Inf, -Inf
 
         p = g.new_plot(padding=[80, 10, 10, 40])
+        g.add_limit_tool(p, 'x')
+        g.add_limit_tool(p, 'y')
+        g.add_axis_tool(p, p.x_axis)
+        g.add_axis_tool(p, p.y_axis)
+
         p.y_axis.title_spacing = 50
         if show_sniff:
             sniff = iso.sniff

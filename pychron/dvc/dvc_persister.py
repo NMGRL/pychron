@@ -229,17 +229,11 @@ class DVCPersister(BasePersister):
             pos = db.get_identifier(rs.identifier)
             an.irradiation_position = pos
             t = self.per_spec.tag
-            if t:
-                dbtag = db.get_tag(t)
-                if not dbtag:
-                    dbtag = db.add_tag(name=t)
 
             db.flush()
 
             change = db.add_analysis_change(tag=t)
             an.change = change
-            # an.change.tag_item = dbtag
-            # self._save_measured_positions()
 
             self._save_measured_positions()
 

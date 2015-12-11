@@ -22,7 +22,7 @@ from sqlalchemy.sql.schema import ForeignKey
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy import Column, Integer, String, TIMESTAMP, Float, BLOB, func, Boolean
 from pychron.core.helpers.datetime_tools import make_timef
-from pychron.database.records.isotope_record import IsotopeRecordView
+from pychron.database.records.isotope_record import DVCIsotopeRecordView
 from pychron.experiment.utilities.identifier import make_runid
 from pychron.pychron_constants import OMIT_KEYS
 
@@ -183,7 +183,7 @@ class AnalysisTbl(Base, BaseMixin):
         iv = self._record_view
         if not iv:
 
-            iv = IsotopeRecordView()
+            iv = DVCIsotopeRecordView()
             iv.extract_script_name = self.extractionName
             iv.meas_script_name = self.measurementName
 
@@ -203,7 +203,7 @@ class AnalysisTbl(Base, BaseMixin):
                         'mass_spectrometer',
                         'extract_device',
                         'rundate',
-                        'analysis_type'):
+                        'analysis_type', 'comment'):
                 setattr(iv, tag, getattr(self, tag))
 
             if irradpos.sample:
@@ -213,6 +213,8 @@ class AnalysisTbl(Base, BaseMixin):
 
             iv.timestampf = make_timef(self.timestamp)
             iv.tag = self.change.tag
+            iv.init()
+
             self._record_view = iv
 
         return iv

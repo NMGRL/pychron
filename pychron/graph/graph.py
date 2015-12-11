@@ -216,7 +216,7 @@ class Graph(ContextMenuMixin):
 
     # width = 300
     # height = 300
-    # resizable = True
+    resizable = False
     # crosshairs_enabled = False
     # editor_enabled = True
 
@@ -804,6 +804,25 @@ class Graph(ContextMenuMixin):
         """
         """
         self._set_title('y_axis', title, plotid, **font)
+
+    def add_axis_tool(self, plot, axis):
+        from pychron.graph.tools.axis_tool import AxisTool
+        t = AxisTool(component=axis)
+        plot.tools.append(t)
+
+    def add_limit_tool(self, plot, orientation, handler=None):
+        from pychron.graph.tools.limits_tool import LimitsTool
+        from pychron.graph.tools.limits_tool import LimitOverlay
+
+        t = LimitsTool(component=plot,
+                       orientation=orientation)
+
+        o = LimitOverlay(component=plot, tool=t)
+
+        plot.tools.insert(0, t)
+        plot.overlays.append(o)
+        if handler:
+            t.on_trait_change(handler, 'limits_updated')
 
     def add_plot_label(self, txt, plotid=0, overlay_position='inside top', hjustify='left', **kw):
         """
@@ -1712,7 +1731,8 @@ class Graph(ContextMenuMixin):
                  width=self.window_width,
                  height=self.window_height,
                  x=self.window_x,
-                 y=self.window_y, )
+                 y=self.window_y,
+                 resizable=self.resizable)
         return v
         # def show(self):
         #     do_after_timer(1, self.edit_traits)

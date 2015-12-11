@@ -314,8 +314,8 @@ class MetaRepo(GitRepoManager):
         if add:
             self.add(p)
 
-    def add_production(self, name, obj, commit=False, add=True):
-        p = self.get_production(name, force=True)
+    def add_production(self, irrad, name, obj, commit=False, add=True):
+        p = self.get_production(irrad, name, force=True)
 
         p.attrs = attrs = INTERFERENCE_KEYS + RATIO_KEYS
         kef = lambda x: '{}_err'.format(x)
@@ -498,7 +498,7 @@ class MetaRepo(GitRepoManager):
         return Gains(p)
 
     @cached('clear_cache')
-    def get_production(self, irrad, level):
+    def get_production(self, irrad, level, **kw):
         path = os.path.join(paths.meta_root, irrad, 'productions.json')
         obj = dvc_load(path)
         pname = obj[level]

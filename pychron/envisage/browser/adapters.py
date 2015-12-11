@@ -120,7 +120,8 @@ class AnalysisAdapter(BrowserAdapter):
                    ('EVal.', 'extract_value'),
                    ('Cleanup', 'cleanup'),
                    ('Dur', 'duration'),
-                   ('Device', 'extract_device')]
+                   ('Device', 'extract_device'),
+                   ('Comment', 'comment')]
 
     columns = [('Run ID', 'record_id'),
                ('Tag', 'tag'),

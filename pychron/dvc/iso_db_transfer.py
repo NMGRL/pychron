@@ -16,13 +16,12 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-from itertools import groupby
-import time
-import os
 import json
+import os
+import time
+from itertools import groupby
 
 from datetime import timedelta
-
 # ============= local library imports  ==========================
 from numpy import array, array_split
 from pychron.canvas.utils import make_geom
@@ -101,6 +100,14 @@ order by ant.analysis_timestamp ASC
 
             idxs = bin_timestamps(ts, tol_hrs=tol_hrs)
             return ts, idxs
+
+    def import_date_range(self, low, high, spectrometer, experiment_id, creator):
+        src = self.processor.db
+        with src.session_ctx():
+            runs = src.get_analyses_date_range(low, high, mass_spectrometers=spectrometer)
+
+            ais = [ai.record_id for ai in runs]
+        self.do_export(ais, experiment_id, creator)
 
     def bulk_import_irradiation(self, irradname, creator, dry=True):
 
@@ -219,7 +226,7 @@ order by ant.analysis_timestamp ASC
         self.dvc = DVC(bind=False,
                        organization='NMGRLData',
                        meta_repo_name='meta')
-        self.dvc.db.trait_set(name='pychronmeta1', **conn)
+        self.dvc.db.trait_set(name='pychronmeta_matt', **conn)
         if not self.dvc.initialize():
             self.warning_dialog('Failed to initialize DVC')
             return
@@ -362,7 +369,7 @@ order by ant.analysis_timestamp ASC
             dest.add_production(prodname)
             dest.flush()
 
-            meta_repo.add_production(prodname, prod, add=False)
+            # meta_repo.add_production(irradname, prodname, prod, add=False)
             # meta_repo.commit('added production {}'.format(prodname))
 
         # save db level
@@ -450,6 +457,7 @@ order by ant.analysis_timestamp ASC
             return
 
         self._transfer_meta(dest, dban)
+        # return
 
         dblab = dban.labnumber
         dbsam = dblab.sample
@@ -626,8 +634,9 @@ if __name__ == '__main__':
     # runs, expid, creator = load_path()
     # runs, expid, creator = load_import_request()
     # e.bulk_import_irradiations('root', dry=False)
-    e.bulk_import_irradiation('NM-274', 'root', dry=False)
-
+    # e.bulk_import_irradiation('NM-274', 'root', dry=False)
+    e.import_date_range('2015-12-07 12:00:43', '2015-12-09 13:45:51', 'jan',
+                        'MATT_AGU', 'root')
     # e.do_export(runs, expid, creator, create_repo=False)
 
     # experiment_id_modifier('/Users/ross/Pychron_dev/data/.dvc/experiments/Irradiation-NM-274', 'Irradiation-NM-276')
