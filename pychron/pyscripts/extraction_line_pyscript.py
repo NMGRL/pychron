@@ -685,6 +685,10 @@ class ExtractionPyScript(ValvePyScript):
     # ===============================================================================
     # private
     # ===============================================================================
+
+    def _abort_hook(self):
+        self.disable()
+
     def _cancel_hook(self):
         self.disable()
 

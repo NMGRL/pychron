@@ -112,10 +112,6 @@ class Experimentor(DVCIrradiationable):
         if not queues:
             return
 
-        self.debug('updating stats')
-        self.stats.calculate()
-        self.refresh_executable(queues)
-
         self.debug('executor executable {}'.format(self.executor.executable))
         self.debug('stats calculated')
 
@@ -123,6 +119,10 @@ class Experimentor(DVCIrradiationable):
         self.stats.nruns = len(ans)
 
         self.debug('get all runs n={}'.format(len(ans)))
+
+        self.debug('updating stats')
+        self.stats.calculate()
+        self.refresh_executable(queues)
 
         # for qi in self.experiment_queues:
             # aruns = self._get_all_automated_runs([qi])
@@ -207,6 +207,9 @@ class Experimentor(DVCIrradiationable):
         names = ','.join([e.name for e in queues])
         self.debug('queues: n={}, names={}'.format(len(queues), names))
 
+        ans = self._get_all_runs(queues)
+        self.stats.nruns = len(ans)
+
         self.executor.trait_set(
             experiment_queues=queues,
             experiment_queue=queues[0],
@@ -278,6 +281,7 @@ class Experimentor(DVCIrradiationable):
     @on_trait_change('experiment_factory:save_button')
     def _save_update(self):
         self.save_event = True
+        self.update_info()
 
     @on_trait_change('experiment_queue:refresh_info_needed')
     def _handle_refresh(self):

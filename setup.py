@@ -3,10 +3,10 @@
 # ETSConfig.toolkit = 'qt4'
 
 # required to fix atexit bug with travis ci
-import multiprocessing
-
+# import multiprocessing
 # prevent pycharm from remove multiprocessing during import optimization
-multiprocessing
+# multiprocessing
+
 from setuptools import setup
 
 import os
@@ -14,7 +14,7 @@ import os
 os.environ['TRAVIS_CI'] = 'True'
 
 setup(name='pychron',
-      version='2.1.1',
+      version='2.2',
       setup_requires=['nose>=1.0'],
       py_modules=['pychron.pychron_constants',
                   'pychron.paths',

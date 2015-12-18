@@ -49,6 +49,8 @@ class ExperimentPreferences(BasePreferencesHelper):
     preferences_path = 'pychron.experiment'
     id = 'pychron.experiment.preferences_page'
 
+    experiment_type = Enum('Ar/Ar', 'Generic')
+
     use_notifications = Bool
     notifications_port = Int
 
@@ -82,7 +84,8 @@ class ExperimentPreferences(BasePreferencesHelper):
 
     automated_runs_editable = Bool
 
-    use_xls_persister = Bool
+    use_xls_persistence = Bool
+    use_db_persistence = Bool
 
     success_color = Color
     extraction_color = Color
@@ -227,7 +230,9 @@ class ExperimentPreferencesPane(PreferencesPane):
                                  label='Min. Mass Spectrometer Pumptime (s)'),
                             show_border=True,
                             label='Overlap')
-        persist_grp = Group(Item('use_xls_persister', label='Save analyses to Excel workbook'),
+
+        persist_grp = Group(Item('use_xls_persistence', label='Save analyses to Excel workbook'),
+                            Item('use_db_persistence', label='Save analyses to Database'),
                             label='Persist', show_border=True)
 
         pc_grp = Group(
@@ -239,7 +244,8 @@ class ExperimentPreferencesPane(PreferencesPane):
             show_border=True,
             label='Peak Center')
 
-        automated_grp = Group(VGroup(Item('send_config_before_run',
+        automated_grp = Group(VGroup(Item('experiment_type', label='Experiment Type'),
+                                     Item('send_config_before_run',
                                           tooltip='Set the spectrometer configuration before each analysis',
                                           label='Set Spectrometer Configuration on Start'),
                                      Item('set_integration_time_on_start',

@@ -28,6 +28,7 @@ from pychron.graph.graph import Graph
 from pychron.core.time_series.time_series import smooth
 from pychron.globals import globalv
 from pychron.paths import paths
+from pychron.spectrometer import get_spectrometer_config_path
 
 
 def scan_generator(start, stop, n):
@@ -78,7 +79,7 @@ class CDDOperatingVoltageScan(SpectrometerTask):
                 self._save(nopv)
 
     def _save(self, nv):
-        p = os.path.join(paths.spectrometer_dir, 'config.cfg')
+        p = get_spectrometer_config_path()
         config = ConfigParser()
         config.read(p)
 

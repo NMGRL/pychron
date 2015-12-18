@@ -16,9 +16,29 @@
 
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import PreferenceBinding
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 # from apptools.preferences.api import PreferenceBinding as TPreferenceBinding
+
+def color_set_preference(preferences, obj, attr, ppath):
+    v = preferences.get(ppath)
+    if v is not None:
+        v = extract_color(v)
+        try:
+            setattr(obj, attr, v)
+        except TypeError:
+            pass
+
+
+def set_preference(preferences, obj, attr, ppath, cast=None):
+    if cast is None:
+        cast = str
+    try:
+        setattr(obj, attr, cast(preferences.get(ppath)))
+    except TypeError:
+        pass
 
 
 def extract_color(value):

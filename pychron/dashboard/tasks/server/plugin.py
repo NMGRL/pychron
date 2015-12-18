@@ -53,7 +53,7 @@ class DashboardServerPlugin(BaseTaskPlugin):
 
     @on_trait_change('application:started')
     def start_server(self):
-        do_after(1000, self.dashboard_server.activate)
+        do_after(5000, self.dashboard_server.activate)
         # self.dashboard_server.activate()
 
 # ============= EOF =============================================

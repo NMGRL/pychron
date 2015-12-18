@@ -13,6 +13,37 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+import os
+
+from pychron.core.helpers.filetools import add_extension
+from pychron.paths import paths
 
 
+def set_mftable_name(name):
+    ppath = os.path.join(paths.hidden_dir, 'mftable_name')
+    name = add_extension(name, '.csv')
+    with open(ppath, 'w') as wfile:
+        wfile.write(name)
 
+
+def get_mftable_name():
+    with open(os.path.join(paths.hidden_dir, 'mftable_name')) as rfile:
+        return rfile.read().strip()
+
+
+def set_spectrometer_config_name(name):
+    ppath = os.path.join(paths.hidden_dir, 'spectrometer_config_name')
+    name = add_extension(name, '.cfg')
+    with open(ppath, 'w') as wfile:
+        wfile.write(name)
+
+def get_spectrometer_config_name():
+    with open(os.path.join(paths.hidden_dir, 'spectrometer_config_name')) as rfile:
+        return rfile.read().strip()
+
+
+def get_spectrometer_config_path(name=None):
+    if name is None:
+        name = get_spectrometer_config_name()
+
+    return os.path.join(paths.spectrometer_config_dir, name)

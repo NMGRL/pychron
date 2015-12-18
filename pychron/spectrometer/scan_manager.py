@@ -53,6 +53,9 @@ class ScanManager(Manager):
     readout_view = Instance(ReadoutView)
 
     integration_time = DelegatesTo('spectrometer')
+    spectrometer_configurations = DelegatesTo('spectrometer')
+    spectrometer_configuration = DelegatesTo('spectrometer')
+    set_spectrometer_configuration = Button
 
     detectors = DelegatesTo('spectrometer')
     detector = Instance(Detector)
@@ -427,6 +430,10 @@ class ScanManager(Manager):
     # ===============================================================================
     # handlers
     # ===============================================================================
+    def _set_spectrometer_configuration_fired(self):
+        self.debug('user triggered send_configuration')
+        self.spectrometer.send_configuration()
+
     def _clear_button_fired(self):
         self._reset_graph()
 

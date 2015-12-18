@@ -34,7 +34,8 @@ COLORS = {'success': SUCCESS_COLOR,
           'truncated': TRUNCATED_COLOR,
           'failed': FAILED_COLOR,
           'end_after': END_AFTER_COLOR,
-          'invalid': 'red'}
+          'invalid': 'red',
+          'aborted': 'orange'}
 
 
 class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
@@ -155,9 +156,9 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
     def _get_position_text(self):
         at = self.item.analysis_type
         p = self.item.position
-        if at != 'unknown':
+        if at not in ('unknown', 'degas'):
             if at == 'blank_unknown':
-                if not ',' in p:
+                if ',' not in p:
                     p = ''
             else:
                 p = ''

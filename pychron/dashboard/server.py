@@ -85,6 +85,9 @@ class DashboardServer(Loggable):
         if self.devices:
             self.start_poll()
 
+        if self.labspy_client:
+            self.labspy_client.start()
+
     def deactivate(self):
         pass
 

@@ -39,6 +39,7 @@ from pychron.core.helpers.color_generators import colorname_generator as color_g
 from pychron.core.helpers.filetools import add_extension
 from pychron.graph.minor_tick_overlay import MinorTicksOverlay
 from guide_overlay import GuideOverlay
+from pychron.graph.offset_plot_label import OffsetPlotLabel
 from tools.contextual_menu_tool import ContextualMenuTool
 from tools.pan_tool import MyPanTool as PanTool
 from chaco.data_label import DataLabel
@@ -586,10 +587,10 @@ class Graph(Viewable, ContextMenuMixin):
 
         c = self.plots[plotid]
 
-        pl = PlotLabel(txt,
-                       component=c,
-                       overlay_position=overlay_position, hjustify=hjustify,
-                       **kw)
+        pl = OffsetPlotLabel(txt,
+                             component=c,
+                             overlay_position=overlay_position, hjustify=hjustify,
+                             **kw)
         c.overlays.append(pl)
         return pl
 

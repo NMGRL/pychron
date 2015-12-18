@@ -39,7 +39,7 @@ from pychron.experiment.tasks.experiment_actions import NewExperimentQueueAction
     DeselectAction, SendTestNotificationAction, \
     NewPatternAction, OpenPatternAction, ResetQueuesAction, OpenLastExperimentQueueAction, UndoAction, \
     QueueConditionalsAction, ConfigureEditorTableAction, SystemConditionalsAction, ResetSystemHealthAction, \
-    OpenExperimentHistoryAction
+    OpenExperimentHistoryAction, LastAnalysisRecoveryAction
 from pychron.paths import paths
 
 
@@ -97,7 +97,8 @@ class ExperimentPlugin(BaseTaskPlugin):
     def _help_tips_default(self):
         return ['You can set the Analysis State colors in Preferences>Experiment',
                 'You can set the color for Sniff, Signal, and Baseline datapoints in Preferences>Experiment',
-                'The current version of Pychron contains over 120K lines of code']
+                'The current version of Pychron contains over 140K lines of code',
+                'If the last analysis fails to save you can recover it using Tools/Recover Last Analysis']
 
     def _task_extensions_default(self):
         extensions = [TaskExtension(actions=actions, task_id=eid) for eid, actions in self._get_extensions()]
@@ -136,7 +137,9 @@ class ExperimentPlugin(BaseTaskPlugin):
                   SchemaAddition(id='pychron.experiment.new_experiment', factory=NewExperimentQueueAction,
                                  path='MenuBar/file.menu/New'),
                   SchemaAddition(id='pychron.experiment.signal_calculator', factory=SignalCalculatorAction,
-                                 path='MenuBar/Tools'),
+                                 path='MenuBar/tools.menu'),
+                  SchemaAddition(id='pychron.experiment.last_analysis_recovery', factory=LastAnalysisRecoveryAction,
+                                 path='MenuBar/tools.menu'),
                   SchemaAddition(id='pychron.experiment.new_pattern', factory=NewPatternAction,
                                  path='MenuBar/file.menu/New'),
                   SchemaAddition(id='pychron.experiment.open_pattern', factory=OpenPatternAction,

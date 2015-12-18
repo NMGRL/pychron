@@ -19,7 +19,6 @@ from traits.trait_types import Bool, Instance, Event, Int
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traits.traits import Color
-
 from pychron.loggable import Loggable
 from pychron.pychron_constants import LIGHT_YELLOW
 
@@ -39,6 +38,13 @@ class Consoleable(Loggable):
         color_bind_preference(self, 'console_default_color', '{}.textcolor'.format(prefid))
         bind_preference(self, 'console_fontsize', '{}.fontsize'.format(prefid))
 
+    def console_set_preferences(self, preferences, prefid):
+        from pychron.core.ui.preference_binding import set_preference, color_set_preference
+
+        color_set_preference(preferences, self, 'console_bgcolor', '{}.bg_color'.format(prefid))
+        color_set_preference(preferences, self, 'console_default_color', '{}.textcolor'.format(prefid))
+        set_preference(preferences, self, 'console_fontsize', '{}.fontsize'.format(prefid), cast=int)
+
     def warning(self, msg, log=True, color=None, *args, **kw):
         super(Consoleable, self).warning(msg, *args, **kw)
 
@@ -51,13 +57,13 @@ class Consoleable(Loggable):
 
         self.console_updated = '{}|{}'.format(color, msg)
 
-    def heading(self,msg, decorate_chr='*', *args, **kw):
-        d = decorate_chr*7
+    def heading(self, msg, decorate_chr='*', *args, **kw):
+        d = decorate_chr * 7
         msg = '{} {} {}'.format(d, msg, d)
         self.info(msg)
 
     def info(self, msg, log=True, color=None, *args, **kw):
-        if color is None: #or not self.use_message_colormapping:
+        if color is None:  # or not self.use_message_colormapping:
             color = self.console_default_color
 
         if self.console_display:
