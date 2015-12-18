@@ -257,6 +257,10 @@ class DVCDatabase(DatabaseAdapter):
         # self.debug('SAMPLE {},{} ALREADY EXISTS'.format(name,project))
         return a
 
+    def add_extraction_device(self, name):
+        a = ExtractDeviceTbl(name=name)
+        return self._add_item(a)
+
     def add_mass_spectrometer(self, name, kind='Argus'):
         a = MassSpectrometerTbl(name=name, kind=kind)
         return self._add_item(a)
@@ -768,6 +772,9 @@ class DVCDatabase(DatabaseAdapter):
     # single getters
     def get_user(self, name):
         return self._retrieve_item(UserTbl, name)
+
+    def get_extraction_device(self, name):
+        return self._retrieve_item(ExtractDeviceTbl, name)
 
     def get_mass_spectrometer(self, name):
         return self._retrieve_item(MassSpectrometerTbl, name)

@@ -184,27 +184,19 @@ order by ant.analysis_timestamp ASC
             j = 0
 
             for ln, ans in groupby(runs, key=key):
-                commit = False
-                with dest.session_ctx() as sess:
-                    ans = list(ans)
-                    n = len(ans)
-                    for i, a in enumerate(ans):
+                ans = list(ans)
+                n = len(ans)
+                for i, a in enumerate(ans):
+                    with dest.session_ctx() as sess:
                         st = time.time()
                         try:
                             if self._transfer_analysis(a, experiment_id):
-                                commit = True
-                                self.debug(
-                                    '************* {}/{} transfer time {:0.3f}'.format(j, total, time.time() - st))
+                                j += 1
+                                self.debug('{}/{} transfer time {:0.3f}'.format(j, total, time.time() - st))
                         except BaseException, e:
-
                             import traceback
                             traceback.print_exc()
-
                             self.warning('failed transfering {}. {}'.format(a, e))
-                        j += 1
-
-                        # if commit:
-                        #     repo.commit('<IMPORT> src= {}'.format(src.public_url))
 
     def runlist_load(self, path):
         with open(path, 'r') as rfile:
@@ -226,7 +218,21 @@ order by ant.analysis_timestamp ASC
         self.dvc = DVC(bind=False,
                        organization='NMGRLData',
                        meta_repo_name='meta')
-        self.dvc.db.trait_set(name='pychronmeta_matt', **conn)
+
+        use_local = True
+        name = 'pychronmeta_test'
+
+        if use_local:
+            dest_conn = dict(host='localhost',
+                             username=os.environ.get('LOCALHOST_DB_USER'),
+                             password=os.environ.get('LOCALHOST_DB_PWD'),
+                             kind='mysql',
+                             name=name)
+        else:
+            dest_conn = conn.copy()
+            dest_conn['name'] = name
+
+        self.dvc.db.trait_set(**dest_conn)
         if not self.dvc.initialize():
             self.warning_dialog('Failed to initialize DVC')
             return
@@ -395,7 +401,6 @@ order by ant.analysis_timestamp ASC
             dd = dest.add_irradiation_position(irradname, levelname, pos)
             dd.identifier = dblab.identifier
             dd.sample = sam
-
             dest.flush()
             try:
                 f = dban.labnumber.selected_flux_history.flux
@@ -482,6 +487,11 @@ order by ant.analysis_timestamp ASC
             dest.add_mass_spectrometer(ms)
             dest.flush()
 
+        ed = extraction.extraction_device.name if extraction.extraction_device else ''
+        if ed and not dest.get_extraction_device(ed):
+            dest.add_extraction_device(ed)
+            dest.flush()
+
         if step is None:
             inc = -1
         else:
@@ -509,7 +519,7 @@ order by ant.analysis_timestamp ASC
                               _step=inc,
                               comment=dban.comment or '',
                               aliquot=int(aliquot),
-                              extract_device=extraction.extraction_device.name if extraction.extraction_device else '',
+                              extract_device=ed,
                               duration=extraction.extract_duration,
                               cleanup=extraction.cleanup_duration,
                               beam_diameter=extraction.beam_diameter,
@@ -525,7 +535,7 @@ order by ant.analysis_timestamp ASC
                               tray='')
 
         ps = PersistenceSpec(run_spec=rs,
-                             tag=an.tag,
+                             tag=an.tag.name,
                              arar_age=an,
                              timestamp=dban.analysis_timestamp,
                              use_experiment_association=True,

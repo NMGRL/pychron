@@ -1,9 +1,19 @@
 #!/usr/bin/env bash
+# This script is used to install pychron
+# First in downloads and installs miniconda
+# miniconda is used to manage the python dependencies
+# conda is used to create a new environment
+# conda and pip are used to install the dependencies
+# a Pychron support directory is created and some boilerplate support files are written
+# the pychron source code is downloaded from the available releases stored at github (i.e the source is not a git clone just a static directory)
+# the source code is stored in the Pychron support directory
+# a launcher script is created and copied to the desktop
+
 
 # =========== Configuration ===============
 WORKING_DIR=~/pychron_install_wd
 CONDA_ENV=pychron
-PYCHRONDATA_PREFIX=~/Pychron_foo
+PYCHRONDATA_PREFIX=~/Pychron
 DOWNLOAD_URL=https://github.com/NMGRL/pychron/archive/v3.tar.gz
 MINICONDA_URL=https://repo.continuum.io/miniconda/Miniconda-latest-MacOSX-x86_64.sh
 MINICONDA_PREFIX=$HOME/miniconda2
@@ -29,13 +39,13 @@ matplotlib
 PyMySQL
 requests
 keyring
-scikit-learn
 pil"
 
 PIP_REQ="uncertainties
 pint
 GitPython"
 
+# =========== Payload text ===============
 INITIALIZATION="<root>\n
   <globals>\n
   </globals>\n
@@ -139,6 +149,3 @@ echo export PYTHONPATH=\$ROOT >> "${LAUNCHER_SCRIPT_PATH}"
 echo ${MINICONDA_PREFIX}/envs/${CONDA_ENV}/bin/python \$ENTRY_POINT >> "${LAUNCHER_SCRIPT_PATH}"
 chmod +x ${LAUNCHER_SCRIPT_PATH}
 cp ${LAUNCHER_SCRIPT_PATH} ~/Desktop/
-
-# ========== Cleanup ===============
-#rm -rf ${WORKING_DIR}
