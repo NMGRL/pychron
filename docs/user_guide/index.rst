@@ -9,3 +9,4 @@ Pychron User Guide
   operation/index
   processing/index
   entry/index
+      glossary
