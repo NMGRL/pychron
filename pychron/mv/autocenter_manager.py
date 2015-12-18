@@ -15,44 +15,29 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Float, Button, Bool
+from traits.api import Float, Button, Bool, Any
 from traitsui.api import View, Item, HGroup, RangeEditor
-
-from pychron.mv.machine_vision_manager import MachineVisionManager
-
-
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.mv.machine_vision_manager import MachineVisionManager
+
 
 class AutoCenterManager(MachineVisionManager):
+    canvas = Any
     crop_size = Float(4)
     configure_button = Button('configure')
     use_autocenter = Bool
     target_radius = Float(1.5)
 
-    def traits_view(self):
-        v = View(
-               HGroup(
-                      Item('use_autocenter', label='Enabled'),
-                      Item('configure_button', show_label=False),
-                      show_border=True,
-                      label='Autocenter'
-                      )
-               )
-        return v
-
-    def locate_center(self, cx, cy, holenum, dim=1.5):
+    def calculate_new_center(self, cx, cy, dim=1.5):
         frame = self.new_image_frame()
         im = self.new_image(frame)
-
         self.view_image(im)
 
-        loc = self.new_co2_locator()
-#         cw = ch = dim * self.crop_size
+        loc = self.get_locator()
         cw = ch = self.crop_size
-        frame = self._crop_image(im.source_frame, cw, ch)
-#        loc.croppixels=(cw,ch)
+        frame = loc.crop(im.source_frame, cw, ch)
         dx, dy = loc.find(im, frame, dim=dim * self.pxpermm)
         if dx and dy:
             pdx, pdy = round(dx), round(dy)
@@ -61,12 +46,16 @@ class AutoCenterManager(MachineVisionManager):
             self.info('calculated deviation px={:n},{:n}, mm={:0.3f},{:0.3f}'.format(pdx, pdy,
                                                                                      mdx, mdy))
 
-            return  cx + mdx, cy + mdy
+            return cx + mdx, cy + mdy
 
+    # private
+    def _get_locator(self):
+        raise NotImplementedError
+
+    # handlers
     def _configure_button_fired(self):
         w = h = self.crop_size * self.pxpermm
         cx, cy = self.canvas.get_center_rect_position(w, h)
-
 
         self.canvas.add_markup_rect(cx, cy, w, h, identifier='croprect')
 
@@ -94,10 +83,25 @@ class AutoCenterManager(MachineVisionManager):
         cx, cy = self.canvas.get_screen_center()
         self.canvas.add_markup_circle(cx, cy, r, identifier='target')
 
+    # views
     def configure_view(self):
         v = View(Item('crop_size'),
                  Item('target_radius', editor=RangeEditor(low=0., high=5.)),
-                 buttons=['OK', 'Cancel']
-                 )
+                 buttons=['OK', 'Cancel'])
         return v
+
+    def traits_view(self):
+        v = View(HGroup(
+                      Item('use_autocenter', label='Enabled'),
+                      Item('configure_button', show_label=False),
+                      show_border=True,
+                      label='Autocenter'))
+        return v
+
+
+class CO2AutocenterManager(AutoCenterManager):
+    # private
+    def _get_locator(self):
+        from pychron.mv.co2_locator import CO2Locator
+        return CO2Locator(pxpermm=self.pxpermm)
 # ============= EOF =============================================
