@@ -26,6 +26,7 @@ from skimage.morphology import watershed
 from skimage.draw import polygon
 from scipy import ndimage
 from skimage.exposure import rescale_intensity
+from skimage.filter import gaussian_filter
 # ============= local library imports  ==========================
 # from pychron.core.geometry.centroid.calculate_centroid import calculate_centroid
 from pychron.loggable import Loggable
@@ -148,9 +149,6 @@ class Locator(Loggable):
         else:
             src = grayspace(frame)
 
-        #         pychron = array(pychron)
-        #         self.test_image.setup_images(1, (640, 480))
-        #         self.test_image.set_image(pychron)
         seg = RegionSegmenter(use_adaptive_threshold=False)
 
         if start is None:
@@ -179,9 +177,9 @@ class Locator(Loggable):
             if targets:
                 return targets
 
-            # ===============================================================================
-            # filter
-            # ===============================================================================
+                # ===============================================================================
+                # filter
+                # ===============================================================================
 
     def _filter_targets(self, image, frame, dim, targets, fa, threshold=0.85):
         """
@@ -299,24 +297,28 @@ class Locator(Loggable):
                                          ti, ct, mi, ma)):
                     return ti
 
-                # ===============================================================================
-                # preprocessing
-                # ===============================================================================
+                    # ===============================================================================
+                    # preprocessing
+                    # ===============================================================================
 
     def _preprocess(self, frame,
-                    contrast=True, denoise=0):
+                    contrast=True, blur=0, denoise=0):
         """
             1. convert frame to grayscale
-            2. remove noise from frame. increase denoise value for move noise filtering
+            2. remove noise from frame. increase denoise value for more noise filtering
             3. stretch contrast
         """
 
         frm = grayspace(frame) * 255
         frm = frm.astype('uint8')
-        #         # preprocess
         if denoise:
             frm = self._denoise(frm, weight=denoise)
-        # #        contrast = False
+
+        if blur:
+            frm = gaussian_filter(frm, blur)
+
+            frm *= 255
+            frm = frm.astype('uint8')
 
         if contrast:
             frm = self._contrast_equalization(frm)
@@ -396,7 +398,7 @@ class Locator(Loggable):
             dy = hist(devys)
         else:
             def avg(s):
-                return sum(s)/len(s)
+                return sum(s) / len(s)
 
             dx = avg(devxs)
             dy = avg(devys)

@@ -22,30 +22,29 @@ from skimage.filter import sobel, threshold_adaptive
 from skimage.morphology import watershed
 # ============= local library imports  ==========================
 from pychron.mv.segment.base import BaseSegmenter
-# from skimage.exposure.exposure import rescale_intensity
-# from scipy.ndimage.morphology import binary_closing
+
 
 cnt = 0
+
+
 class RegionSegmenter(BaseSegmenter):
     use_adaptive_threshold = Bool(True)
     threshold_low = 0
     threshold_high = 255
     block_size = 20
 
-    def segment(self, src):
-        '''
+    def segment(self, image):
+        """
             pychron: preprocessing cv.Mat
-        '''
-#        image = pychron.ndarray[:]
-#         image = asarray(pychron)
-        image = src[:]
+        """
+        # image = src[:]
         if self.use_adaptive_threshold:
-#            block_size = 25
             markers = threshold_adaptive(image, self.block_size)
 
-            n = markers[:].astype('uint8')
-            n[markers == True] = 255
-            n[markers == False] = 1
+            # n = markers[:].astype('uint8')
+            n = markers.astype('uint8')
+            n[markers] = 255
+            n[not markers] = 1
             markers = n
 
         else:
@@ -56,6 +55,6 @@ class RegionSegmenter(BaseSegmenter):
         elmap = sobel(image, mask=image)
         wsrc = watershed(elmap, markers, mask=image)
 
-#         wsrc = wsrc.astype('uint8')
         return invert(wsrc)
+
 # ============= EOF =============================================

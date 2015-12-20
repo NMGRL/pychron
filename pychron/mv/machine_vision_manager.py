@@ -19,9 +19,18 @@ from traits.api import Instance, Float, Any
 # ============= standard library imports ========================
 from threading import Timer
 # ============= local library imports  ==========================
+from pychron.envisage.view_util import open_view
 from pychron.loggable import Loggable
 from pychron.image.video import Video
 from pychron.image.standalone_image import StandAloneImage
+
+
+def view_image(im, auto_close=True):
+    open_view(im)
+    if auto_close:
+        minutes = 2
+        t = Timer(60 * minutes, im.close_ui)
+        t.start()
 
 
 class MachineVisionManager(Loggable):
@@ -32,14 +41,6 @@ class MachineVisionManager(Loggable):
         if self.video:
             src = self.video.get_frame()
             return src
-
-    def view_image(self, im, auto_close=True):
-        # use a manager to open so will auto close on quit
-        self.open_view(im)
-        if auto_close:
-            minutes = 2
-            t = Timer(60 * minutes, im.close_ui)
-            t.start()
 
     def new_image(self, frame=None, title='AutoCenter',
                   view_id='target'):

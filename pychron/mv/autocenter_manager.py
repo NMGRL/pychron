@@ -20,7 +20,7 @@ from traitsui.api import View, Item, HGroup, RangeEditor
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.mv.machine_vision_manager import MachineVisionManager
+from pychron.mv.machine_vision_manager import MachineVisionManager, view_image
 
 
 class AutoCenterManager(MachineVisionManager):
@@ -28,60 +28,71 @@ class AutoCenterManager(MachineVisionManager):
     crop_size = Float(4)
     configure_button = Button('configure')
     use_autocenter = Bool
-    target_radius = Float(1.5)
+    target_radius = Float(1.0)
 
-    def calculate_new_center(self, cx, cy, dim=1.5):
+    def calculate_new_center(self, cx, cy, dim=1.0):
         frame = self.new_image_frame()
         im = self.new_image(frame)
-        self.view_image(im)
+        view_image(im)
 
-        loc = self.get_locator()
-        cw = ch = self.crop_size
-        frame = loc.crop(im.source_frame, cw, ch)
-        dx, dy = loc.find(im, frame, dim=dim * self.pxpermm)
-        if dx and dy:
-            pdx, pdy = round(dx), round(dy)
-            mdx = pdx / self.pxpermm
-            mdy = pdy / self.pxpermm
-            self.info('calculated deviation px={:n},{:n}, mm={:0.3f},{:0.3f}'.format(pdx, pdy,
-                                                                                     mdx, mdy))
-
+        mdx, mdy = self._locate_new_center(im, dim)
+        if mdx and mdy:
             return cx + mdx, cy + mdy
 
     # private
+    def _locate_new_center(self, im, dim):
+        mdx, mdy = None, None
+        loc = self._get_locator()
+
+        frame = loc.crop(im.source_frame, self.crop_size, self.crop_size)
+        dx, dy = loc.find(im, frame, dim=dim * self.pxpermm)
+        if dx and dy:
+            # pdx, pdy = round(dx), round(dy)
+            mdx = dx / self.pxpermm
+            mdy = dy / self.pxpermm
+            self.info('calculated deviation px={:n},{:n}, '
+                      'mm={:0.3f},{:0.3f}'.format(dx, dy, mdx, mdy))
+
+        return mdx, mdy
+
     def _get_locator(self):
         raise NotImplementedError
 
     # handlers
     def _configure_button_fired(self):
         w = h = self.crop_size * self.pxpermm
-        cx, cy = self.canvas.get_center_rect_position(w, h)
+        canvas = self.canvas
+        if canvas:
+            cx, cy = canvas.get_center_rect_position(w, h)
 
-        self.canvas.add_markup_rect(cx, cy, w, h, identifier='croprect')
+            canvas.add_markup_rect(cx, cy, w, h, identifier='croprect')
 
-        cx, cy = self.canvas.get_screen_center()
-        r = self.target_radius * self.pxpermm
-        print cx, cy, r
-        self.canvas.add_markup_circle(cx, cy, r, identifier='target')
+            cx, cy = canvas.get_screen_center()
+            r = self.target_radius * self.pxpermm
+            canvas.add_markup_circle(cx, cy, r, identifier='target')
 
         self.edit_traits(view='configure_view', kind='livemodal')
-
-        self.canvas.remove_item('croprect')
-        self.canvas.remove_item('target')
+        if canvas:
+            canvas.remove_item('croprect')
+            canvas.remove_item('target')
 
     def _crop_size_changed(self):
-        self.canvas.remove_item('croprect')
+        canvas = self.canvas
+        if canvas:
+            canvas.remove_item('croprect')
 
-        w = h = self.crop_size * self.pxpermm
-        cx, cy = self.canvas.get_center_rect_position(w, h)
+            w = h = self.crop_size * self.pxpermm
+            cx, cy = canvas.get_center_rect_position(w, h)
 
-        self.canvas.add_markup_rect(cx, cy, w, h, identifier='croprect')
+            canvas.add_markup_rect(cx, cy, w, h, identifier='croprect')
 
     def _target_radius_changed(self):
-        self.canvas.remove_item('target')
-        r = self.target_radius * self.pxpermm
-        cx, cy = self.canvas.get_screen_center()
-        self.canvas.add_markup_circle(cx, cy, r, identifier='target')
+        canvas = self.canvas
+        if canvas:
+            canvas.remove_item('target')
+            r = self.target_radius * self.pxpermm
+            cx, cy = canvas.get_screen_center()
+            canvas.add_markup_circle(cx, cy, r, identifier='target')
 
     # views
     def configure_view(self):
@@ -91,11 +102,10 @@ class AutoCenterManager(MachineVisionManager):
         return v
 
     def traits_view(self):
-        v = View(HGroup(
-                      Item('use_autocenter', label='Enabled'),
-                      Item('configure_button', show_label=False),
-                      show_border=True,
-                      label='Autocenter'))
+        v = View(HGroup(Item('use_autocenter', label='Enabled'),
+                        Item('configure_button', show_label=False),
+                        show_border=True,
+                        label='Autocenter'))
         return v
 
 
@@ -104,4 +114,5 @@ class CO2AutocenterManager(AutoCenterManager):
     def _get_locator(self):
         from pychron.mv.co2_locator import CO2Locator
         return CO2Locator(pxpermm=self.pxpermm)
+
 # ============= EOF =============================================

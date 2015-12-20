@@ -26,7 +26,9 @@ from traitsui.api import View, Item, UItem
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.mv.autocenter_manager import AutoCenterManager
+from pychron.core.helpers.logger_setup import logging_setup
+from pychron.image.video import Video
+from pychron.mv.autocenter_manager import CO2AutocenterManager
 
 
 class TestAutocenter(HasTraits):
@@ -34,14 +36,27 @@ class TestAutocenter(HasTraits):
 
     def _test1(self):
         print 'test1'
-        a = AutoCenterManager()
-        new = a.calculate_new_center(0,0)
-        print 'new center {}'.format(new)
+        a = CO2AutocenterManager(video=Video())
+        a.calculate_new_center(0, 0)
+
+    def _set_test_image(self):
+        from pychron.globals import globalv
+        # p = '/Users/ross/Sandbox/test_target.jpg'
+        # p = '/Users/ross/Sandbox/pos_err/pos_err_200_0-002.jpg'
+        p = '/Users/ross/Sandbox/poserror/pos_err_221_0-007.jpg'
+        p = '/Users/ross/Sandbox/poserror/snapshot009.jpg'
+
+        globalv.video_test_path = p
+        globalv.video_test = True
 
     def _test1_button_fired(self):
+        self._set_test_image()
         self._test1()
 
+
 if __name__ == '__main__':
+
+    logging_setup('mv', use_archiver=False, use_file=False)
     t = TestAutocenter()
     t.configure_traits(view=View(UItem('test1_button')))
 # ============= EOF =============================================
