@@ -16,9 +16,9 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-# ============= local library imports  ==========================
 from numpy import invert, zeros_like
 from skimage.draw import circle
+# ============= local library imports  ==========================
 
 
 class LumenDetector(object):
@@ -48,6 +48,5 @@ class LumenDetector(object):
     def _preprocess(self, src):
         threshold = self.threshold
         src[src < threshold] = 0
-
 
 # ============= EOF =============================================
