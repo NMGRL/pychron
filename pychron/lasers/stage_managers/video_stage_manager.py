@@ -182,7 +182,7 @@ class VideoStageManager(StageManager):
         return self._autocenter(*args, **kw)
 
     def snapshot(self, path=None, name=None, auto=False,
-                 inform=True, return_blob=False, pic_format='.jpg'):
+                 inform=True, return_blob=False, pic_format='.png'):
         """
             path: abs path to use
             name: base name to use if auto saving in default dir
@@ -382,24 +382,26 @@ class VideoStageManager(StageManager):
         self.video.start_recording(path, renderer)
 
     def _move_to_hole_hook(self, holenum, correct):
-        if correct and self.use_autocenter:
+        self.debug('move to hole hook holenum={}, correct={}'.format(holenum, correct))
+        if correct:# and self.use_autocenter:
             self._auto_correcting = True
-            pos, corrected, interp = self._autocenter(holenum=holenum, ntries=1)
+            pos, corrected, interp = self._autocenter(holenum=holenum, ntries=3)
             self._auto_correcting = False
 
-            self._update_visualizer(holenum, pos, interp)
+    #         self._update_visualizer(holenum, pos, interp)
+    #
+    # def _update_visualizer(self, holenum, pos, interp):
+    #     if pos:
+    #         f = 'interpolation' if interp else 'correction'
+    #     else:
+    #         f = 'uncorrected'
+    #         #                pos = sm.get_hole(holenum).nominal_position
+    #
+    #     func = getattr(self.visualizer, 'record_{}'.format(f))
+    #     func(holenum, *pos)
 
-    def _update_visualizer(self, holenum, pos, interp):
-        if pos:
-            f = 'interpolation' if interp else 'correction'
-        else:
-            f = 'uncorrected'
-            #                pos = sm.get_hole(holenum).nominal_position
-
-        func = getattr(self.visualizer, 'record_{}'.format(f))
-        func(holenum, *pos)
-
-    def _autocenter(self, holenum=None, ntries=1, save=False, use_interpolation=False):
+    def _autocenter(self, holenum=None, ntries=3, save=False, use_interpolation=False):
+        self.debug('do autocenter')
         rpos = None
         interp = False
         sm = self.stage_map
@@ -408,10 +410,11 @@ class VideoStageManager(StageManager):
             time.sleep(0.75)
             for _t in range(max(1, ntries)):
                 # use machine vision to calculate positioning error
-                #                rpos = self.autocenter_manager.locate_target(
                 rpos = self.autocenter_manager.calculate_new_center(
                     self.stage_controller.x,
                     self.stage_controller.y,
+                    self.canvas.crosshairs_offsetx,
+                    self.canvas.crosshairs_offsety,
                     dim=self.stage_map.g_dimension)
 
                 if rpos:
@@ -420,8 +423,8 @@ class VideoStageManager(StageManager):
                                      update_hole=False)
                     time.sleep(0.75)
                 else:
-                    self.snapshot(auto=True,
-                                  name='pos_err_{}_{}-'.format(holenum, _t))
+                    # self.snapshot(auto=True,
+                    #               name='pos_err_{}_{}-'.format(holenum, _t))
                     break
 
                     #            if self.use_auto_center_interpolation and rpos is None:
@@ -600,9 +603,12 @@ class VideoStageManager(StageManager):
 
     def _autocenter_manager_default(self):
         if self.parent.mode != 'client':
-            from pychron.mv.autocenter_manager import AutoCenterManager
+            # from pychron.mv.autocenter_manager import AutoCenterManager
+            if 'co2' in self.parent.name.lower():
+                from pychron.mv.autocenter_manager import CO2AutocenterManager
+                klass = CO2AutocenterManager
 
-            return AutoCenterManager(video=self.video,
+            return klass(video=self.video,
                                      canvas=self.canvas,
                                      application=self.application)
 

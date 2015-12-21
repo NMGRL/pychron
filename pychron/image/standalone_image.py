@@ -25,21 +25,15 @@ from pychron.core.ui.image_editor import ImageEditor
 
 
 class StandAloneImage(Viewable):
-
     source_frame = Array
     refresh = Event
 
     def traits_view(self):
-        v = View(
-                 UItem('source_frame',
-                       editor=ImageEditor(refresh='refresh',
-
-                                          )),
-                       width=self.window_height,
-                       height=self.window_width,
-#                  handler=self.handler_klass,
-#                 resizable=True
-                 )
+        v = View(UItem('source_frame',
+                       editor=ImageEditor(refresh='refresh')),
+                 width=self.window_height,
+                 height=self.window_width,
+                 x=self.window_x, y=self.window_y)
         return v
 
     def load(self, frame, swap_rb=False):
@@ -50,4 +44,5 @@ class StandAloneImage(Viewable):
             frame = asarray(frame)
 
         self.source_frame = frame
+
 # ============= EOF =============================================

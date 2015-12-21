@@ -753,10 +753,11 @@ class StageManager(BaseStageManager):
                 self.parent.emergency_shutoff(str(e))
                 return
 
-            if not self.tray_calibration_manager.isCalibrating():
-                self._move_to_hole_hook(key, correct_position)
-            else:
-                self._move_to_hole_hook(key, correct_position)
+            # if not self.tray_calibration_manager.isCalibrating():
+            #     self._move_to_hole_hook(key, correct_position)
+            # else:
+            #      self._move_to_hole_hook(key, correct_position)
+            self._move_to_hole_hook(key, correct_position)
             self.info('Move complete')
             # self.update_axes()  # update_hole=False)
 

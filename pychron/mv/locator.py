@@ -80,17 +80,17 @@ class Locator(Loggable):
             self.step_signal.wait()
             self.step_signal.clear()
 
-    def crop(self, src, cw, ch):
-        CX, CY = 0, 0
+    def crop(self, src, cw, ch, ox=0, oy=0):
+
         cw_px = int(cw * self.pxpermm)
         ch_px = int(ch * self.pxpermm)
         w, h = get_size(src)
 
-        x = int((w - cw_px) / 2 + CX)
-        y = int((h - ch_px) / 2 + CY)
+        x = int((w - cw_px) / 2 + ox)
+        y = int((h - ch_px) / 2 + oy)
 
-        r = 4 - cw_px % 4
-        cw_px = ch_px = cw_px + r
+        # r = 4 - cw_px % 4
+        # cw_px = ch_px = cw_px + r
 
         return asarray(crop(src, x, y, cw_px, ch_px))
 

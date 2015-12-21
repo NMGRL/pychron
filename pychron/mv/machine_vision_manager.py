@@ -19,6 +19,7 @@ from traits.api import Instance, Float, Any
 # ============= standard library imports ========================
 from threading import Timer
 # ============= local library imports  ==========================
+from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.view_util import open_view
 from pychron.loggable import Loggable
 from pychron.image.video import Video
@@ -26,11 +27,13 @@ from pychron.image.standalone_image import StandAloneImage
 
 
 def view_image(im, auto_close=True):
-    open_view(im)
-    if auto_close:
-        minutes = 2
-        t = Timer(60 * minutes, im.close_ui)
-        t.start()
+    def _func():
+        open_view(im)
+        if auto_close:
+            minutes = 2
+            t = Timer(60 * minutes, im.close_ui)
+            t.start()
+    invoke_in_main_thread(_func)
 
 
 class MachineVisionManager(Loggable):
