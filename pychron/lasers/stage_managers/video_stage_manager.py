@@ -408,13 +408,15 @@ class VideoStageManager(StageManager):
 
         if self.autocenter_manager.use_autocenter:
             time.sleep(0.75)
+            ox, oy = self.canvas.get_screen_offset()
             for _t in range(max(1, ntries)):
                 # use machine vision to calculate positioning error
                 rpos = self.autocenter_manager.calculate_new_center(
                     self.stage_controller.x,
                     self.stage_controller.y,
-                    self.canvas.crosshairs_offsetx,
-                    self.canvas.crosshairs_offsety,
+                    ox, oy,
+                    # self.canvas.crosshairs_offsetx,
+                    # self.canvas.crosshairs_offsety,
                     dim=self.stage_map.g_dimension)
 
                 if rpos:

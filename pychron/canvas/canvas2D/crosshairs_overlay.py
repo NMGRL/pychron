@@ -107,16 +107,21 @@ class CrosshairsOverlay(SimpleCrosshairsOverlay):
 
             sdp = component.show_desired_position
             dp = component.desired_position
+
+            # map offset from dataspace to screenspace
+            # ox, oy = component.map_screen([(component.crosshairs_offsetx, component.crosshairs_offsety)])[0]
+            ox, oy = component.get_screen_offset()
             if sdp and dp is not None:
-                pos_off = dp[0] + component.crosshairs_offsetx, dp[1] + component.crosshairs_offsety
+
+                pos_off = dp[0] + ox, dp[1] + oy
                 self._draw_radius_ch(gc, component, pos_off, radius, color=component.desired_position_color)
 
             if component.show_laser_position:
                 pos = (component.x + (component.x2 - component.x) / 2.0,
                        component.y + (component.y2 - component.y) / 2.0)
 
-                if component.crosshairs_offsetx or component.crosshairs_offsety:
-                    pos_off = pos[0] + component.crosshairs_offsetx, pos[1] + component.crosshairs_offsety
+                if ox or oy:
+                    pos_off = pos[0] + ox, pos[1] + oy
                     self._draw_radius_ch(gc, component, pos_off, radius, color=component.crosshairs_offset_color)
                 else:
                     self._draw_radius_ch(gc, component, pos, radius, color=component.crosshairs_color)

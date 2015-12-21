@@ -32,7 +32,6 @@ from pychron.canvas.canvas2D.scene.primitives.laser_primitives import Transect, 
 from pychron.canvas.canvas2D.crosshairs_overlay import CrosshairsOverlay
 import os
 
-
 # class Point(HasTraits):
 #    x=Float
 #    y=Float
@@ -152,8 +151,8 @@ class LaserTrayCanvas(StageCanvas):
     crosshairs_offset_color = Color('blue')
 
     crosshairs_radius = Range(0.0, 4.0, 1.0)
-    crosshairs_offsetx = Int
-    crosshairs_offsety = Int
+    crosshairs_offsetx = Float
+    crosshairs_offsety = Float
 
     show_bounds_rect = Bool(True)
     transects = List
@@ -366,11 +365,16 @@ class LaserTrayCanvas(StageCanvas):
             input a x,y tuple in data space
             return the position modified by crosshairs offset
         """
-        sx, sy = pos
-        sx += self.crosshairs_offsetx
-        sy += self.crosshairs_offsety
+        # sx, sy = pos
+        # sx += self.crosshairs_offsetx
+        # sy += self.crosshairs_offsety
+        sx, sy = self.map_data(pos)
+        return sx + self.crosshairs_offsetx, sy + self.crosshairs_offsety
+        # return self.map_data((sx, sy))
 
-        return self.map_data((sx, sy))
+    def get_screen_offset(self):
+        (cx, cy), (ox, oy) = self.map_screen([(0,0), (self.crosshairs_offsetx, self.crosshairs_offsety)])
+        return ox-cx, oy-cy
 
     def get_offset_stage_position(self):
         pos = self.get_stage_screen_position()
@@ -420,11 +424,14 @@ class LaserTrayCanvas(StageCanvas):
         """
 
         # print 'ff', self.crosshairs_offsetx, self.crosshairs_offsety
-        x = event.x - self.crosshairs_offsetx
-        y = event.y - self.crosshairs_offsety
+        # ox, oy = self.map_screen([(self.crosshairs_offsetx, self.crosshairs_offsety)])[0]
+        ox, oy = self.get_screen_offset()
+        # x = event.x - self.crosshairs_offsetx
+        # y = event.y - self.crosshairs_offsety
+        x, y = event.x - ox, event.y - oy
 
         pos = self.valid_position(x, y)
-        print 'fffff', x,y, pos
+        print 'fffff', x, y, pos
 
         if pos:
             self.stage_manager.linear_move(*pos,
