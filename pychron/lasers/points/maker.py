@@ -168,8 +168,6 @@ class BaseMaker(Loggable):
                       use_simple_render=self.use_simple_render,
                       offset_x=ox,
                       offset_y=oy,
-                      # offset_x=self.canvas.crosshairs_offsetx,
-                      # offset_y=self.canvas.crosshairs_offsety,
                       #                      mask=mask_value,
                       #                      attenuator=attenuator_value,
                       vline_length=0.1, hline_length=0.1)

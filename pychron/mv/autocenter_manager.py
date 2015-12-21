@@ -44,14 +44,16 @@ class AutoCenterManager(MachineVisionManager):
         mdx, mdy = None, None
         loc = self._get_locator()
 
-        frame = loc.crop(im.source_frame, self.crop_size, self.crop_size, offx, offy)
+        frame = loc.crop(im.source_frame, self.crop_size, self.crop_size, offx,
+                         offy)
         dx, dy = loc.find(im, frame, dim=dim * self.pxpermm)
         if dx or dy:
             # pdx, pdy = round(dx), round(dy)
             mdx = dx / self.pxpermm
             mdy = dy / self.pxpermm
             self.info('calculated deviation px={:n},{:n}, '
-                      'mm={:0.3f},{:0.3f} ({})'.format(dx, dy, mdx, mdy, self.pxpermm))
+                      'mm={:0.3f},{:0.3f} ({})'.format(dx, dy, mdx, mdy,
+                                                       self.pxpermm))
 
         return mdx, mdy
 
@@ -114,5 +116,12 @@ class CO2AutocenterManager(AutoCenterManager):
     def _get_locator(self):
         from pychron.mv.co2_locator import CO2Locator
         return CO2Locator(pxpermm=self.pxpermm)
+
+
+class DiodeAutocenterManager(AutoCenterManager):
+    # private
+    def _get_locator(self):
+        from pychron.mv.diode_locator import DiodeLocator
+        return DiodeLocator(pxpermm=self.pxpermm)
 
 # ============= EOF =============================================

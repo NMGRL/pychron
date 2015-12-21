@@ -92,11 +92,14 @@ class VideoStageManager(StageManager):
         self.debug('binding preferences')
         super(VideoStageManager, self).bind_preferences(pref_id)
         if self.autocenter_manager:
-            bind_preference(self.autocenter_manager, 'use_autocenter', '{}.use_autocenter'.format(pref_id))
+            bind_preference(self.autocenter_manager, 'use_autocenter',
+                            '{}.use_autocenter'.format(pref_id))
 
-        bind_preference(self, 'render_with_markup', '{}.render_with_markup'.format(pref_id))
+        bind_preference(self, 'render_with_markup',
+                        '{}.render_with_markup'.format(pref_id))
         bind_preference(self, 'auto_upload', 'pychron.media_server.auto_upload')
-        bind_preference(self, 'use_media_server', 'pychron.media_server.use_media_server')
+        bind_preference(self, 'use_media_server',
+                        'pychron.media_server.use_media_server')
         #        bind_preference(self.pattern_manager,
         #                        'record_patterning',
         #                         '{}.record_patterning'.format(pref_id))
@@ -128,8 +131,10 @@ class VideoStageManager(StageManager):
         bind_preference(self.video_archiver, 'root',
                         '{}.video_directory'.format(pref_id))
 
-        bind_preference(self.video, 'output_mode', '{}.video_output_mode'.format(pref_id))
-        bind_preference(self.video, 'ffmpeg_path', '{}.ffmpeg_path'.format(pref_id))
+        bind_preference(self.video, 'output_mode',
+                        '{}.video_output_mode'.format(pref_id))
+        bind_preference(self.video, 'ffmpeg_path',
+                        '{}.ffmpeg_path'.format(pref_id))
 
     def start_recording(self, new_thread=True, **kw):
         """
@@ -221,7 +226,8 @@ class VideoStageManager(StageManager):
                 upath = ''
 
             if inform:
-                self.information_dialog('Snapshot save to {}. Uploaded to'.format(path, upath))
+                self.information_dialog('Snapshot save to {}. '
+                                        'Uploaded to'.format(path, upath))
 
             # return path, upath
             if return_blob:
@@ -266,7 +272,7 @@ class VideoStageManager(StageManager):
 
     def get_brightness(self):
         ld = self._lumen_detector
-        # cw, ch = 2 * self.crop_width * self.pxpermm, 2 * self.crop_height * self.pxpermm
+
         src = self.video.get_frame()
         src = self._crop_image(src)
         # if src:
@@ -279,7 +285,8 @@ class VideoStageManager(StageManager):
         return csrc, src, v
 
     def get_frame_size(self):
-        cw, ch = 2 * self.crop_width * self.pxpermm, 2 * self.crop_height * self.pxpermm
+        cw= 2 * self.crop_width * self.pxpermm
+        ch = 2 * self.crop_height * self.pxpermm
         return cw, ch
 
     def _crop_image(self, src):
@@ -306,7 +313,8 @@ class VideoStageManager(StageManager):
 
     def _upload(self, path):
         if self.use_media_server and self.auto_upload:
-            client = self.application.get_service('pychron.media_server.client.MediaClient')
+            srv = 'pychron.media_server.client.MediaClient'
+            client = self.application.get_service(srv)
             if client is not None:
                 url = client.url()
                 self.info('uploading {} to {}'.format(path, url))
@@ -382,7 +390,8 @@ class VideoStageManager(StageManager):
         self.video.start_recording(path, renderer)
 
     def _move_to_hole_hook(self, holenum, correct):
-        self.debug('move to hole hook holenum={}, correct={}'.format(holenum, correct))
+        self.debug('move to hole hook holenum={}, '
+                   'correct={}'.format(holenum, correct))
         if correct:# and self.use_autocenter:
             self._auto_correcting = True
             pos, corrected, interp = self._autocenter(holenum=holenum, ntries=3)
@@ -400,7 +409,8 @@ class VideoStageManager(StageManager):
     #     func = getattr(self.visualizer, 'record_{}'.format(f))
     #     func(holenum, *pos)
 
-    def _autocenter(self, holenum=None, ntries=3, save=False, use_interpolation=False):
+    def _autocenter(self, holenum=None, ntries=3, save=False,
+                    use_interpolation=False):
         self.debug('do autocenter')
         rpos = None
         interp = False
@@ -415,8 +425,6 @@ class VideoStageManager(StageManager):
                     self.stage_controller.x,
                     self.stage_controller.y,
                     ox, oy,
-                    # self.canvas.crosshairs_offsetx,
-                    # self.canvas.crosshairs_offsety,
                     dim=self.stage_map.g_dimension)
 
                 if rpos:
@@ -429,13 +437,11 @@ class VideoStageManager(StageManager):
                     #               name='pos_err_{}_{}-'.format(holenum, _t))
                     break
 
-                    #            if self.use_auto_center_interpolation and rpos is None:
             if use_interpolation and rpos is None:
                 self.info('trying to get interpolated position')
                 rpos = sm.get_interpolated_position(holenum)
                 if rpos:
                     s = '{:0.3f},{:0.3f}'
-                    #                    self.visualizer.record_interpolation(holenum, *rpos)
                     interp = True
                 else:
                     s = 'None'
@@ -609,6 +615,9 @@ class VideoStageManager(StageManager):
             if 'co2' in self.parent.name.lower():
                 from pychron.mv.autocenter_manager import CO2AutocenterManager
                 klass = CO2AutocenterManager
+            else:
+                from pychron.mv.autocenter_manager import DiodeAutocenterManager
+                klass = DiodeAutocenterManager
 
             return klass(video=self.video,
                                      canvas=self.canvas,
