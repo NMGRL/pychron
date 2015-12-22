@@ -15,9 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from apptools.preferences.preference_binding import bind_preference
 from traits.api import Instance, String, Property, Button, \
     Bool, Event, on_trait_change, Str, Int
-from apptools.preferences.preference_binding import bind_preference
 
 # ============= standard library imports ========================
 import time
@@ -36,9 +36,11 @@ from stage_manager import StageManager
 from pychron.core.ui.stage_component_editor import VideoComponentEditor
 
 try:
-    from pychron.canvas.canvas2D.video_laser_tray_canvas import VideoLaserTrayCanvas
+    from pychron.canvas.canvas2D.video_laser_tray_canvas import \
+        VideoLaserTrayCanvas
 except ImportError:
-    from pychron.canvas.canvas2D.laser_tray_canvas import LaserTrayCanvas as VideoLaserTrayCanvas
+    from pychron.canvas.canvas2D.laser_tray_canvas import \
+        LaserTrayCanvas as VideoLaserTrayCanvas
 
 
 class VideoStageManager(StageManager):
@@ -56,8 +58,10 @@ class VideoStageManager(StageManager):
     autocenter_button = Button('AutoCenter')
     configure_autocenter_button = Button('Configure')
 
-    autocenter_manager = Instance('pychron.mv.autocenter_manager.AutoCenterManager')
-    autofocus_manager = Instance('pychron.mv.focus.autofocus_manager.AutoFocusManager')
+    autocenter_manager = Instance(
+            'pychron.mv.autocenter_manager.AutoCenterManager')
+    autofocus_manager = Instance(
+            'pychron.mv.focus.autofocus_manager.AutoFocusManager')
     snapshot_button = Button('Snapshot')
     auto_save_snapshot = Bool(True)
 
@@ -167,7 +171,7 @@ class VideoStageManager(StageManager):
     def initialize_video(self):
         if self.video:
             self.video.open(
-                identifier=self.video_identifier)
+                    identifier=self.video_identifier)
 
     def initialize_stage(self):
         super(VideoStageManager, self).initialize_stage()
@@ -285,7 +289,7 @@ class VideoStageManager(StageManager):
         return csrc, src, v
 
     def get_frame_size(self):
-        cw= 2 * self.crop_width * self.pxpermm
+        cw = 2 * self.crop_width * self.pxpermm
         ch = 2 * self.crop_height * self.pxpermm
         return cw, ch
 
@@ -318,9 +322,15 @@ class VideoStageManager(StageManager):
             if client is not None:
                 url = client.url()
                 self.info('uploading {} to {}'.format(path, url))
-                if not client.upload(path, dest='images/{}'.format(self.parent.name)):
-                    self.warning('failed to upload {} to media server at {}'.format(path, url))
-                    self.warning_dialog('Failed to Upload {}. Media Server at {} unavailable'.format(path, url))
+                if not client.upload(path,
+                                     dest='images/{}'.format(self.parent.name)):
+                    self.warning(
+                            'failed to upload {} to media server at {}'.format(
+                                path,
+                                url))
+                    self.warning_dialog(
+                            'Failed to Upload {}. Media Server at {} unavailable'.format(
+                                    path, url))
                 else:
                     return path
 
@@ -392,12 +402,12 @@ class VideoStageManager(StageManager):
     def _move_to_hole_hook(self, holenum, correct):
         self.debug('move to hole hook holenum={}, '
                    'correct={}'.format(holenum, correct))
-        if correct:# and self.use_autocenter:
+        if correct:  # and self.use_autocenter:
             self._auto_correcting = True
             pos, corrected, interp = self._autocenter(holenum=holenum, ntries=3)
             self._auto_correcting = False
 
-    #         self._update_visualizer(holenum, pos, interp)
+    # self._update_visualizer(holenum, pos, interp)
     #
     # def _update_visualizer(self, holenum, pos, interp):
     #     if pos:
@@ -422,10 +432,10 @@ class VideoStageManager(StageManager):
             for _t in range(max(1, ntries)):
                 # use machine vision to calculate positioning error
                 rpos = self.autocenter_manager.calculate_new_center(
-                    self.stage_controller.x,
-                    self.stage_controller.y,
-                    ox, oy,
-                    dim=self.stage_map.g_dimension)
+                        self.stage_controller.x,
+                        self.stage_controller.y,
+                        ox, oy,
+                        dim=self.stage_map.g_dimension)
 
                 if rpos:
                     self.linear_move(*rpos, block=True,
@@ -620,8 +630,8 @@ class VideoStageManager(StageManager):
                 klass = DiodeAutocenterManager
 
             return klass(video=self.video,
-                                     canvas=self.canvas,
-                                     application=self.application)
+                         canvas=self.canvas,
+                         application=self.application)
 
     def _autofocus_manager_default(self):
         if self.parent.mode != 'client':

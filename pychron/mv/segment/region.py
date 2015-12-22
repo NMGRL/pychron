@@ -18,7 +18,7 @@
 from traits.api import Bool
 # ============= standard library imports ========================
 from numpy import zeros_like, invert
-from skimage.filter import sobel, threshold_adaptive
+from skimage.filter import threshold_adaptive, canny
 from skimage.morphology import watershed
 # ============= local library imports  ==========================
 from pychron.mv.segment.base import BaseSegmenter
@@ -52,7 +52,8 @@ class RegionSegmenter(BaseSegmenter):
             markers[image < self.threshold_low] = 1
             markers[image > self.threshold_high] = 255
 
-        elmap = sobel(image, mask=image)
+        # elmap = sobel(image, mask=image)
+        elmap = canny(image, sigma=3)
         wsrc = watershed(elmap, markers, mask=image)
 
         return invert(wsrc)

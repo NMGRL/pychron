@@ -32,21 +32,16 @@ class AutoCenterManager(MachineVisionManager):
 
     def calculate_new_center(self, cx, cy, offx, offy, dim=1.0):
         frame = self.new_image_frame()
+
+        loc = self._get_locator()
+        frame = loc.crop(frame, self.crop_size, self.crop_size, offx, offy)
         im = self.new_image(frame)
         view_image(im)
 
-        mdx, mdy = self._locate_new_center(im, offx, offy, dim)
-        if mdx or mdy:
-            return cx + mdx, cy + mdy
-
-    # private
-    def _locate_new_center(self, im, offx, offy, dim):
-        mdx, mdy = None, None
-        loc = self._get_locator()
-
-        frame = loc.crop(im.source_frame, self.crop_size, self.crop_size, offx,
-                         offy)
         dx, dy = loc.find(im, frame, dim=dim * self.pxpermm)
+        frm = loc.preprocessed_frame
+        im.overlay(frm, 0.5)
+
         if dx or dy:
             # pdx, pdy = round(dx), round(dy)
             mdx = dx / self.pxpermm
@@ -54,9 +49,9 @@ class AutoCenterManager(MachineVisionManager):
             self.info('calculated deviation px={:n},{:n}, '
                       'mm={:0.3f},{:0.3f} ({})'.format(dx, dy, mdx, mdy,
                                                        self.pxpermm))
+            return cx + mdx, cy + mdy
 
-        return mdx, mdy
-
+    # private
     def _get_locator(self):
         raise NotImplementedError
 

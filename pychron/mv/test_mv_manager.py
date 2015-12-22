@@ -15,10 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import time
 
-from traits.api import Button, Instance, HasTraits
-from traitsui.api import View, Item, UItem
+from traits.api import Button, HasTraits
+from traitsui.api import View, UItem
 
 # from pychron.mv.machine_vision_manager import MachineVisionManager
 # from pychron.mv.mv_image import MVImage
@@ -37,7 +36,7 @@ class TestAutocenter(HasTraits):
     def _test1(self):
         print 'test1'
         a = CO2AutocenterManager(video=Video())
-        a.calculate_new_center(0, 0)
+        a.calculate_new_center(0, 0, 0, 0)
 
     def _set_test_image(self):
         from pychron.globals import globalv

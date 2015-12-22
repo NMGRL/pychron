@@ -17,23 +17,25 @@
 # ============= enthought library imports =======================
 from traits.api import Either, Int, Float, Str, List, Event, \
     Bool
-from traitsui.api import View
 from traitsui.api import Handler
+from traitsui.api import View
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 # from pychron.utils import IsQt
 from pychron.loggable import Loggable
 
+
 # class ViewableHandler(Controller):
 class ViewableHandler(Handler):
     def init(self, info):
-#        info.object.ui = info.ui
+        #        info.object.ui = info.ui
         info.object.initialized = True
-#        try:
+        #        try:
         info.object.opened(info.ui)
-#        except AttributeError:
-#            pass
+
+    #        except AttributeError:
+    #            pass
 
     def object_activated_changed(self, info):
         if info.initialized:
@@ -61,12 +63,12 @@ class ViewableHandler(Handler):
         info.object.close_event = True
         info.object.initialized = False
         return True
-#        info.object.ui = None
+
 
 class Viewable(Loggable):
-#    ui = Any
     id = ''
     handler_klass = ViewableHandler
+    handler = None
 
     window_x = Either(Int, Float)
     window_y = Either(Int, Float)
@@ -84,6 +86,7 @@ class Viewable(Loggable):
 
     _is_active = Bool
     initialized = Bool
+    resizable = Bool(False)
 
     def set_active(self, flag):
         self._is_active = flag
@@ -101,8 +104,9 @@ class Viewable(Loggable):
             ai.close_ui()
 
         return True
-#        return True
-#
+
+    #        return True
+    #
     def closed(self, ok):
         pass
 
@@ -122,23 +126,22 @@ class Viewable(Loggable):
 
         func(*args, **kw)
 
-
-#     def add_window(self, ui):
-#
-#         try:
-#             if self.application is not None:
-#                 self.application.uis.append(ui)
-#         except AttributeError:
-#             pass
-#
-#     def open_view(self, obj, **kw):
-#         def _open_():
-#             ui = obj.edit_traits(**kw)
-#             self.add_window(ui)
-#
-#         invoke_in_main_thread(_open_)
-#        _open_()
-#        do_after(1, _open_)
+    #     def add_window(self, ui):
+    #
+    #         try:
+    #             if self.application is not None:
+    #                 self.application.uis.append(ui)
+    #         except AttributeError:
+    #             pass
+    #
+    #     def open_view(self, obj, **kw):
+    #         def _open_():
+    #             ui = obj.edit_traits(**kw)
+    #             self.add_window(ui)
+    #
+    #         invoke_in_main_thread(_open_)
+    #        _open_()
+    #        do_after(1, _open_)
 
     def view_factory(self, *args, **kw):
         if self.window_x:
@@ -147,40 +150,35 @@ class Viewable(Loggable):
             kw['y'] = self.window_y
         if self.window_width:
             kw['width'] = self.window_width
-        if self.window_y:
+        if self.window_height:
             kw['height'] = self.window_height
 
-        if not 'resizable' in kw:
-            kw['resizable'] = True
+        if 'resizable' not in kw:
+            kw['resizable'] = self.resizable
 
-        if not 'title' in kw:
+        if 'title' not in kw:
             kw['title'] = self.title
 
-        if not 'id' in kw and self.id:
+        if 'id' not in kw and self.id:
             kw['id'] = self.id
 
-        return View(
-                    handler=self.handler_klass,
-#                    x=self.window_x,
-#                    y=self.window_y,
-#                    width=self.window_width,
-#                    height=self.window_height,
-#                    title=self.title,
-#                    resizable=True,
-                    *args,
-                    **kw
-                    )
+        if self.handler:
+            kw['handler'] = self.handler
+        else:
+            kw['handler'] = self.handler_klass()
+
+        return View(*args, **kw)
 
     def _window_width_default(self):
         return 500
 
     def _window_height_default(self):
         return 500
+
     def _window_x_default(self):
         return 0.5
 
     def _window_y_default(self):
         return 0.5
-
 
 # ============= EOF =============================================

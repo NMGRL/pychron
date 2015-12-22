@@ -32,7 +32,8 @@ from skimage.filter import gaussian_filter
 from pychron.loggable import Loggable
 from pychron.mv.segment.region import RegionSegmenter
 from pychron.image.cv_wrapper import grayspace, draw_contour_list, contour, \
-    colorspace, get_polygons, get_size, new_point, draw_circle, draw_rectangle, draw_lines, \
+    colorspace, get_polygons, get_size, new_point, draw_circle, draw_rectangle, \
+    draw_lines, \
     draw_polygons, crop
 from pychron.mv.target import Target
 # from pychron.image.image import StandAloneImage
@@ -119,7 +120,8 @@ class Locator(Loggable):
 
             # draw center indicator
             src = image.source_frame
-            self._draw_center_indicator(src, size=2, shape='rect', radius=int(dim))
+            self._draw_center_indicator(src, size=2, shape='rect',
+                                        radius=int(dim))
 
             # draw targets
             self._draw_targets(src, targets, dim)
@@ -130,7 +132,7 @@ class Locator(Loggable):
             else:
                 dx, dy = self._calculate_error(targets)
 
-            image.set_frame(src[:])
+                # image.set_frame(src[:])
 
         self.info('dx={}, dy={}'.format(dx, dy))
         return dx, dy
@@ -172,7 +174,8 @@ class Locator(Loggable):
                     image.set_frame(nf)
                 # filter targets
                 if filter_targets:
-                    targets = self._filter_targets(image, frame, dim, targets, fa)
+                    targets = self._filter_targets(image, frame, dim, targets,
+                                                   fa)
 
             if targets:
                 return targets
@@ -302,7 +305,7 @@ class Locator(Loggable):
                     # ===============================================================================
 
     def _preprocess(self, frame,
-                    contrast=True, blur=0, denoise=0):
+                    contrast=True, blur=1, denoise=0):
         """
             1. convert frame to grayscale
             2. remove noise from frame. increase denoise value for more noise filtering
@@ -311,17 +314,23 @@ class Locator(Loggable):
 
         frm = grayspace(frame) * 255
         frm = frm.astype('uint8')
-        if denoise:
-            frm = self._denoise(frm, weight=denoise)
 
+        self.preprocessed_frame = frame
+        # if denoise:
+        #     frm = self._denoise(frm, weight=denoise)
+        # print 'gray', frm.shape
         if blur:
-            frm = gaussian_filter(frm, blur)
-
-            frm *= 255
+            frm = gaussian_filter(frm, blur) * 255
             frm = frm.astype('uint8')
+
+            frm1 = gaussian_filter(self.preprocessed_frame, blur,
+                                   multichannel=True) * 255
+            self.preprocessed_frame = frm1.astype('uint8')
 
         if contrast:
             frm = self._contrast_equalization(frm)
+            self.preprocessed_frame = self._contrast_equalization(
+                    self.preprocessed_frame)
 
         return frm
 
@@ -372,8 +381,9 @@ class Locator(Loggable):
             cx, cy = dx + tx, dy + ty
             dy = -dy
 
-            self._draw_indicator(src, (cx, cy), color=(255, 0, 128), shape='rect')
-            draw_circle(src, (cx, cy), int(dim), color=(255, 0, 128), )
+            self._draw_indicator(src, (cx, cy), color=(255, 0, 128),
+                                 shape='crosshairs')
+            draw_circle(src, (cx, cy), int(dim), color=(255, 0, 128))
 
         else:
             dx, dy = self._calculate_error([target])
@@ -403,7 +413,6 @@ class Locator(Loggable):
             dx = avg(devxs)
             dy = avg(devys)
 
-        devxs, devys = zip(*[r.dev_centroid for r in targets])
         return -dx, dy
 
     # ===============================================================================
@@ -468,30 +477,16 @@ class Locator(Loggable):
             draw a crosshairs indicator
         """
 
-        wh = get_size(src)
         for ta in targets:
             pt = new_point(*ta.centroid)
             self._draw_indicator(src, pt,
                                  color=(0, 255, 0),
                                  size=10,
                                  shape='crosshairs')
-            draw_circle(src, pt,
-                        radius=int(dim)
-                        #                         color=color,
-                        #                         thickness=1
-                        )
-            #             im = zeros(wh)
-            #             points = asarray(ta.poly_points)
-            #
-            #             rr, cc = polygon(*points.T)
-            #             im[cc, rr] = 255
-            #
-            #             cx, cy = center_of_mass(im)
-            #             pt = new_point(cy, cx)
-            #             self._draw_indicator(pychron, pt,
-            #                                  color=(0, 255, 255),
-            #                                  size=10,
-            #                                  shape='crosshairs')
+            # draw_circle(src, pt,
+            #             color=(0,255,0),
+            #             radius=int(dim))
+
             draw_polygons(src, [ta.poly_points])
 
     def _draw_center_indicator(self, src, color=(0, 0, 255), shape='crosshairs',
@@ -508,7 +503,8 @@ class Locator(Loggable):
 
         draw_circle(src, cpt, radius, color=color, thickness=1)
 
-    def _draw_indicator(self, src, center, color=(255, 0, 0), shape='circle', size=4, thickness=-1):
+    def _draw_indicator(self, src, center, color=(255, 0, 0), shape='circle',
+                        size=4, thickness=-1):
         """
             convenience function for drawing indicators
         """

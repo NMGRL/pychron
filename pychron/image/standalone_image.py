@@ -15,9 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Array, Event
-from traitsui.api import View, UItem
+from traits.api import Array, Event, Range
+from traitsui.api import UItem, Item, VGroup
 # ============= standard library imports ========================
+import Image
 from numpy import asarray, array, ndarray
 # ============= local library imports  ==========================
 from pychron.viewable import Viewable
@@ -27,13 +28,14 @@ from pychron.core.ui.image_editor import ImageEditor
 class StandAloneImage(Viewable):
     source_frame = Array
     refresh = Event
+    alpha = Range(0.0, 1.0)
+    overlays = None
 
     def traits_view(self):
-        v = View(UItem('source_frame',
-                       editor=ImageEditor(refresh='refresh')),
-                 width=self.window_height,
-                 height=self.window_width,
-                 x=self.window_x, y=self.window_y)
+        v = self.view_factory(VGroup(Item('alpha'),
+                                     UItem('source_frame',
+                                           editor=ImageEditor(
+                                                   refresh='refresh'))))
         return v
 
     def load(self, frame, swap_rb=False):
@@ -43,6 +45,22 @@ class StandAloneImage(Viewable):
         if not isinstance(frame, ndarray):
             frame = asarray(frame)
 
+        self.overlays = None
         self.source_frame = frame
+
+    def overlay(self, frame, alpha):
+        im0 = Image.fromarray(self.source_frame)
+        im1 = Image.fromarray(frame)
+
+        self.overlays = (im0, im1)
+        self.alpha = alpha
+
+    def _overlay(self, im0, im1, alpha):
+        arr = Image.blend(im1, im0, alpha)
+        self.source_frame = asarray(arr)
+
+    def _alpha_changed(self):
+        im0, im1 = self.overlays
+        self._overlay(im0, im1, self.alpha)
 
 # ============= EOF =============================================

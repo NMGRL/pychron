@@ -15,10 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Instance, Float, Any
+from traits.api import Instance, Float
 # ============= standard library imports ========================
 from threading import Timer
 # ============= local library imports  ==========================
+from pychron.core.ui.close_handler import CloseHandler
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.view_util import open_view
 from pychron.loggable import Loggable
@@ -33,7 +34,14 @@ def view_image(im, auto_close=True):
             minutes = 2
             t = Timer(60 * minutes, im.close_ui)
             t.start()
+
     invoke_in_main_thread(_func)
+
+
+OX = 50
+OY = 50
+XOFFSET = 25
+YOFFSET = 25
 
 
 class MachineVisionManager(Loggable):
@@ -48,7 +56,9 @@ class MachineVisionManager(Loggable):
     def new_image(self, frame=None, title='AutoCenter',
                   view_id='target'):
         im = StandAloneImage(title=title,
-                             id='pychron.machine_vision.{}'.format(view_id))
+                             handler=CloseHandler(always_on_top=False))
+        im.window_x = OX + XOFFSET * CloseHandler.WINDOW_CNT
+        im.window_y = OY + YOFFSET * CloseHandler.WINDOW_CNT
 
         if frame is not None:
             im.load(frame, swap_rb=True)
@@ -56,37 +66,3 @@ class MachineVisionManager(Loggable):
         return im
 
 # ============= EOF =============================================
-# # ===============================================================================
-# # image manipulation
-# # ===============================================================================
-#     def _crop_image(self, src, cw, ch):
-#         CX, CY = 0, 0
-#         cw_px = int(cw * self.pxpermm)
-#         ch_px = int(ch * self.pxpermm)
-#         w, h = get_size(src)
-#
-#         x = int((w - cw_px) / 2 + CX)
-#         y = int((h - ch_px) / 2 + CY)
-#
-# #        print w / self.pxpermm, cw_px / self.pxpermm
-# #        ra = 1
-# #        print self.pxpermm * ra
-# #        print w / float(cw)
-# #        self.cpxpermm = w / float(cw) / 2.
-# #        print h / float(ch), w / float(cw)
-# #        print self.pxpermm * float(w) / cw_px
-# #        self.cpxpermm = self.pxpermm * w / cw
-# #        print self.cpxpermm, w / cw
-# #        print w, cw_px
-# #        print cw, w / (cw * self.pxpermm)
-# #        self.croppixels = (cw_px, ch_px)
-# #        self.croprect = (x, y, cw_px, ch_px)
-# #        cw_px = ch_px = 107
-#
-#         r = 4 - cw_px % 4
-#         cw_px = ch_px = cw_px + r
-#
-#         return asarray(crop(src, x, y, cw_px, ch_px))
-#
-#     def _gray_image(self, src):
-#         return grayspace(src)
