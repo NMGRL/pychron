@@ -60,7 +60,8 @@ class StandAloneImage(Viewable):
         self.source_frame = asarray(arr)
 
     def _alpha_changed(self):
-        im0, im1 = self.overlays
-        self._overlay(im0, im1, self.alpha)
+        if self.overlays:
+            im0, im1 = self.overlays
+            self._overlay(im0, im1, self.alpha)
 
 # ============= EOF =============================================

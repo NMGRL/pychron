@@ -731,6 +731,7 @@ class StageManager(BaseStageManager):
         self.temp_position = self.stage_map.get_hole_pos(key)
         pos = self.stage_map.get_corrected_hole_pos(key)
         self.info('position {}'.format(pos))
+        autocentered_position = False
         if pos is not None:
 
             if abs(pos[0]) < 1e-6:
@@ -745,6 +746,7 @@ class StageManager(BaseStageManager):
                     self.info('using an interpolated value')
                 else:
                     self.info('using previously calculated corrected position')
+                    autocentered_position = True
             try:
                 self.stage_controller.linear_move(block=True, *pos)
                 #            if self.tray_calibration_manager.calibration_style == 'MassSpec':
@@ -757,7 +759,7 @@ class StageManager(BaseStageManager):
             #     self._move_to_hole_hook(key, correct_position)
             # else:
             #      self._move_to_hole_hook(key, correct_position)
-            self._move_to_hole_hook(key, correct_position)
+            self._move_to_hole_hook(key, correct_position, autocentered_position)
             self.info('Move complete')
             # self.update_axes()  # update_hole=False)
 

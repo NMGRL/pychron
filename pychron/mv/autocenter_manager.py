@@ -25,24 +25,39 @@ from pychron.mv.machine_vision_manager import MachineVisionManager, view_image
 
 class AutoCenterManager(MachineVisionManager):
     canvas = Any
+
+    use_crop_size = Bool(False)
+    use_target_radius = Bool(False)
+
     crop_size = Float(4)
+    target_radius = Float(1.0)
+
     configure_button = Button('configure')
     use_autocenter = Bool
-    target_radius = Float(1.0)
 
     def calculate_new_center(self, cx, cy, offx, offy, dim=1.0):
         frame = self.new_image_frame()
 
         loc = self._get_locator()
-        frame = loc.crop(frame, self.crop_size, self.crop_size, offx, offy)
+
+        if self.use_target_radius:
+            dim = self.target_radius
+
+        if self.use_crop_size:
+            cropdim = self.crop_size
+        else:
+            cropdim = dim*2.5
+
+        frame = loc.crop(frame, cropdim, cropdim, offx, offy)
         im = self.new_image(frame)
         view_image(im)
 
         dx, dy = loc.find(im, frame, dim=dim * self.pxpermm)
         frm = loc.preprocessed_frame
         im.overlay(frm, 0.5)
-
-        if dx or dy:
+        if dx is None and dy is None:
+            return
+        else:
             # pdx, pdy = round(dx), round(dy)
             mdx = dx / self.pxpermm
             mdy = dy / self.pxpermm

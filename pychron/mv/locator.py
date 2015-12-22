@@ -26,7 +26,7 @@ from skimage.morphology import watershed
 from skimage.draw import polygon
 from scipy import ndimage
 from skimage.exposure import rescale_intensity
-from skimage.filter import gaussian_filter
+from skimage.filters import gaussian_filter
 # ============= local library imports  ==========================
 # from pychron.core.geometry.centroid.calculate_centroid import calculate_centroid
 from pychron.loggable import Loggable
@@ -87,8 +87,8 @@ class Locator(Loggable):
         ch_px = int(ch * self.pxpermm)
         w, h = get_size(src)
 
-        x = int((w - cw_px) / 2 + ox)
-        y = int((h - ch_px) / 2 + oy)
+        x = int((w - cw_px) / 2. + ox)
+        y = int((h - ch_px) / 2. + oy)
 
         # r = 4 - cw_px % 4
         # cw_px = ch_px = cw_px + r
@@ -342,7 +342,7 @@ class Locator(Loggable):
             http://en.wikipedia.org/wiki/Total_variation_denoising
         """
 
-        from skimage.filter import denoise_tv_chambolle
+        from skimage.filters import denoise_tv_chambolle
 
         img = denoise_tv_chambolle(img, weight=weight) * 255
 

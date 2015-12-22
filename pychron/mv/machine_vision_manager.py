@@ -59,7 +59,9 @@ class MachineVisionManager(Loggable):
                              handler=CloseHandler(always_on_top=False))
         im.window_x = OX + XOFFSET * CloseHandler.WINDOW_CNT
         im.window_y = OY + YOFFSET * CloseHandler.WINDOW_CNT
-
+        # im.window_height = 200
+        # im.window_width = 200
+        # im.resizable = True
         if frame is not None:
             im.load(frame, swap_rb=True)
 

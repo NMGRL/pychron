@@ -191,7 +191,7 @@ class VideoStageManager(StageManager):
         return self._autocenter(*args, **kw)
 
     def snapshot(self, path=None, name=None, auto=False,
-                 inform=True, return_blob=False, pic_format='.png'):
+                 inform=True, return_blob=False, pic_format='.jpg'):
         """
             path: abs path to use
             name: base name to use if auto saving in default dir
@@ -326,8 +326,8 @@ class VideoStageManager(StageManager):
                                      dest='images/{}'.format(self.parent.name)):
                     self.warning(
                             'failed to upload {} to media server at {}'.format(
-                                path,
-                                url))
+                                    path,
+                                    url))
                     self.warning_dialog(
                             'Failed to Upload {}. Media Server at {} unavailable'.format(
                                     path, url))
@@ -354,7 +354,9 @@ class VideoStageManager(StageManager):
         gc = PlotGraphicsContext((int(c.outer_width), int(c.outer_height)))
         c.do_layout()
         gc.render_component(c)
-        gc.save(path)
+        # gc.save(path)
+        from pychron.core.helpers import save_gc
+        save_gc.save(gc, path)
 
         if p is not None:
             c.show_laser_position = p
@@ -399,12 +401,14 @@ class VideoStageManager(StageManager):
 
         self.video.start_recording(path, renderer)
 
-    def _move_to_hole_hook(self, holenum, correct):
+    def _move_to_hole_hook(self, holenum, correct, autocentered_position):
         self.debug('move to hole hook holenum={}, '
-                   'correct={}'.format(holenum, correct))
+                   'correct={}, autocentered_position={}'.format(holenum, correct, autocentered_position))
         if correct:  # and self.use_autocenter:
+            ntries = 1 if autocentered_position else 3
+
             self._auto_correcting = True
-            pos, corrected, interp = self._autocenter(holenum=holenum, ntries=3)
+            pos, corrected, interp = self._autocenter(holenum=holenum, ntries=ntries, save=True)
             self._auto_correcting = False
 
     # self._update_visualizer(holenum, pos, interp)
@@ -425,9 +429,9 @@ class VideoStageManager(StageManager):
         rpos = None
         interp = False
         sm = self.stage_map
-
+        st = time.time()
         if self.autocenter_manager.use_autocenter:
-            time.sleep(0.75)
+            time.sleep(0.1)
             ox, oy = self.canvas.get_screen_offset()
             for _t in range(max(1, ntries)):
                 # use machine vision to calculate positioning error
@@ -437,25 +441,28 @@ class VideoStageManager(StageManager):
                         ox, oy,
                         dim=self.stage_map.g_dimension)
 
-                if rpos:
+                if rpos is not None:
+                    if abs(rpos[0]) < 1e-5 and abs(rpos[1]) < 1e-5:
+                        break
+
                     self.linear_move(*rpos, block=True,
                                      use_calibration=False,
                                      update_hole=False)
-                    time.sleep(0.75)
+                    time.sleep(0.1)
                 else:
-                    # self.snapshot(auto=True,
-                    #               name='pos_err_{}_{}-'.format(holenum, _t))
+                    self.snapshot(auto=True,
+                                  name='pos_err_{}_{}-'.format(holenum, _t))
                     break
 
-            if use_interpolation and rpos is None:
-                self.info('trying to get interpolated position')
-                rpos = sm.get_interpolated_position(holenum)
-                if rpos:
-                    s = '{:0.3f},{:0.3f}'
-                    interp = True
-                else:
-                    s = 'None'
-                self.info('interpolated position= {}'.format(s))
+                    # if use_interpolation and rpos is None:
+                    #     self.info('trying to get interpolated position')
+                    #     rpos = sm.get_interpolated_position(holenum)
+                    #     if rpos:
+                    #         s = '{:0.3f},{:0.3f}'
+                    #         interp = True
+                    #     else:
+                    #         s = 'None'
+                    #     self.info('interpolated position= {}'.format(s))
 
         if rpos:
             corrected = True
@@ -468,7 +475,7 @@ class VideoStageManager(StageManager):
             corrected = False
             #            f = 'uncorrected'
             rpos = sm.get_hole(holenum).nominal_position
-
+        self.debug('Autocenter duration ={}'.format(time.time()-st))
         return rpos, corrected, interp
 
     # ===============================================================================
