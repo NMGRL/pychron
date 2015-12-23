@@ -17,13 +17,12 @@
 # ============= enthought library imports =======================
 
 # ============= standard library imports ========================
-import os
 import cPickle as pickle
+import os
+
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable
 from pychron.paths import paths
-
-
 
 SIMPLE_HELP = '''1. Locate center hole
 2. Locate right hole
@@ -51,12 +50,14 @@ class BaseCalibrator(Loggable):
 
     @classmethod
     def _get_path(cls, name):
-        return os.path.join(paths.hidden_dir, '{}_stage_calibration'.format(name))
+        return os.path.join(paths.hidden_dir,
+                            '{}_stage_calibration'.format(name))
 
     def traits_view(self):
         from traitsui.api import View
 
         return View()
+
 
 class LinearCalibrator(BaseCalibrator):
     def handle(self, step, x, y, canvas):
@@ -81,15 +82,12 @@ class TrayCalibrator(BaseCalibrator):
         if step == 'Calibrate':
             canvas.new_calibration_item()
             return dict(calibration_step='Locate Center')
-        #            return 'Locate Center', None, None, None, 1
         elif step == 'Locate Center':
             canvas.calibration_item.set_center(x, y)
             return dict(calibration_step='Locate Right', cx=x, cy=y)
-        #            return 'Locate Right', x, y, None, 1
         elif step == 'Locate Right':
             canvas.calibration_item.set_right(x, y)
             self.save(canvas.calibration_item)
-            #            return 'Calibrate', None, None, canvas.calibration_item.rotation, 1
             return dict(calibration_step='Calibrate',
                         rotation=canvas.calibration_item.rotation)
 

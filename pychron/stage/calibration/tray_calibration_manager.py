@@ -15,7 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Float, Event, String, Any, Enum, Property, cached_property, Button, List
+from traits.api import Float, Event, String, Any, Enum, Property, \
+    cached_property, Button, List
 # ============= standard library imports ========================
 import shutil
 import cPickle as pickle
@@ -23,7 +24,8 @@ import os
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable
 from pychron.stage.calibration.free_calibrator import FreeCalibrator
-from pychron.stage.calibration.calibrator import TrayCalibrator, LinearCalibrator
+from pychron.stage.calibration.calibrator import TrayCalibrator, \
+    LinearCalibrator
 from pychron.paths import paths
 from pychron.stage.calibration.hole_calibrator import HoleCalibrator
 
@@ -67,7 +69,7 @@ class TrayCalibrationManager(Loggable):
     calibrate = Event
     calibration_step = String('Calibrate')
     calibration_help = String(TRAY_HELP)
-    style = Enum('Tray', 'Free', 'Hole', 'Linear')
+    style = Enum('Tray', 'Free', 'Hole', 'Linear', 'SemiAuto')
     canvas = Any
     calibrator = Property(depends_on='style')
 
@@ -144,7 +146,8 @@ class TrayCalibrationManager(Loggable):
         info = ahv.edit_traits(kind='livemodal')
         if info.result:
             name = self.parent.stage_map_name
-            root = os.path.join(paths.hidden_dir, '{}_calibrations'.format(name))
+            root = os.path.join(paths.hidden_dir,
+                                '{}_calibrations'.format(name))
             if not os.path.isdir(root):
                 os.mkdir(root)
 
@@ -170,7 +173,8 @@ class TrayCalibrationManager(Loggable):
         args = self.calibrator.handle(self.calibration_step,
                                       x, y, self.canvas)
         if args:
-            for a in ('calibration_step', 'cx', 'cy', 'scale', 'error', 'rotation'):
+            for a in ('calibration_step', 'cx', 'cy',
+                      'scale', 'error', 'rotation'):
                 if a in args:
                     setattr(self, a, args[a])
 
@@ -182,15 +186,14 @@ class TrayCalibrationManager(Loggable):
     @cached_property
     def _get_calibrator(self):
         kw = dict(name=self.parent.stage_map_name or '',
+                  stage_manager=self.parent,
+                  stage_map=self.parent.stage_map,
                   manager=self)
 
         if self.style in STYLE_DICT:
             klass = STYLE_DICT[self.style]
         else:
             klass = TrayCalibrator
-
-        if self.style == 'Hole':
-            kw['stage_map'] = self.parent.stage_map
 
         return klass(**kw)
 

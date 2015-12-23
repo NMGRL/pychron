@@ -15,14 +15,18 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from traits.api import Instance
 # ============= standard library imports ========================
-# ============= local library imports  ==========================
 import time
-
+from threading import Thread
+# ============= local library imports  ==========================
+from pychron.core.ui.gui import invoke_in_main_thread
+from pychron.envisage.view_util import open_view
+from pychron.lasers.stage_managers.stage_visualizer import StageVisualizer
 from pychron.stage.calibration.calibrator import TrayCalibrator
 
 
-class SemiautoCalibrator(TrayCalibrator):
+class SemiAutoCalibrator(TrayCalibrator):
     """
         1a. user move to center
          b. record position
@@ -32,21 +36,30 @@ class SemiautoCalibrator(TrayCalibrator):
     """
 
     _alive = False
+    stage_map = Instance('pychron.stage.maps.base_stage_map.BaseStageMap')
 
     def handle(self, step, x, y, canvas):
         if step == 'Calibrate':
-            self._alive = True
+            canvas.new_calibration_item()
             return dict(calibration_step='Locate Center')
-#            return 'Locate Center', None, None, None, None
         elif step == 'Locate Center':
-            return dict(calibration_step='Locate Right')
-#            return 'Locate Right', None, None, None, None
+            canvas.calibration_item.set_center(x, y)
+            return dict(calibration_step='Locate Right', cx=x, cy=y)
+        elif step == 'Locate Right':
+            canvas.calibration_item.set_right(x, y)
+            self.save(canvas.calibration_item)
+            return dict(calibration_step='Tranverse',
+                        rotation=canvas.calibration_item.rotation)
+        elif step == 'Tranverse':
+            self._alive = True
+            t = Thread(target=self._traverse, args=(canvas.calibration_item,))
+            t.start()
+            return dict(calibration_step='Cancel')
         elif step == 'Cancel':
             self._alive = False
             return dict(calibration_step='Calibrate')
-#            return 'Calibrate', None, None, None, None
 
-    def _traverse(self, holes):
+    def _traverse(self, calibration):
         """
             visit each hole in holes
             record autocenter position
@@ -54,6 +67,9 @@ class SemiautoCalibrator(TrayCalibrator):
         """
         sm = self.stage_manager
 
+        holes = self.stage_map.sample_holes
+        results = []
+        failures = []
         for hi in holes:
             if not self.isAlive():
                 self.info('hole tranverse canceled')
@@ -67,9 +83,18 @@ class SemiautoCalibrator(TrayCalibrator):
             time.sleep(0.5)
 
             # autocenter
-            npts, corrected, interp = sm.autocenter(save=True)
+            npt, corrected, interp = sm.autocenter(holenum=hi.id, save=True)
+            results.append((npt, corrected))
             if not corrected:
                 self.info('Failed to autocenter {}'.format(hi.id))
+            else:
+                failures.append(npt)
+
+        # display the results
+        sv = StageVisualizer()
+        sv.set_stage_map(self.stage_map, results, calibration)
+
+        invoke_in_main_thread(open_view, sv)
 
     def isAlive(self):
         return self._alive
