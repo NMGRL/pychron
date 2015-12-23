@@ -66,11 +66,14 @@ class SemiAutoCalibrator(TrayCalibrator):
             warn user about failures
         """
         sm = self.stage_manager
-
-        holes = self.stage_map.sample_holes
+        smap = self.stage_map
+        holes = smap.sample_holes
         results = []
         failures = []
-        for hi in holes:
+        center = (-calibration.center[0], -calibration.center[1])
+        for hi in holes[:5]:
+            sm.close_open_images()
+
             if not self.isAlive():
                 self.info('hole tranverse canceled')
                 break
@@ -83,12 +86,15 @@ class SemiAutoCalibrator(TrayCalibrator):
             time.sleep(0.5)
 
             # autocenter
-            npt, corrected, interp = sm.autocenter(holenum=hi.id, save=True)
-            results.append((npt, corrected))
+
+            npt, corrected, interp = sm.autocenter(holenum=hi.id, save=True, inform=False, auto_close_image=False)
             if not corrected:
                 self.info('Failed to autocenter {}'.format(hi.id))
-            else:
-                failures.append(npt)
+                npt = smap.map_to_calibration(hi.nominal_position, center, calibration.rotation)
+
+            results.append((npt, corrected))
+
+        sm.close_open_images()
 
         # display the results
         sv = StageVisualizer()

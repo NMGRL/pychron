@@ -165,7 +165,7 @@ class BaseStageManager(Manager):
     def _update_axes(self):
         pass
 
-    def _move_to_hole(self, key, correct_position=True):
+    def _move_to_hole(self, key, correct_position=True, **kw):
         pass
 
     def _stop(self):
@@ -197,6 +197,8 @@ class BaseStageManager(Manager):
         if new:
             self.debug('setting stage map to {}'.format(new))
             sm = self.stage_map_klass(file_path=os.path.join(self.root, add_extension(new, '.txt')))
+            sm.load_correction_file()
+
             self.stage_map = sm
             self.tray_calibration_manager.load_calibration(stage_map=new)
 

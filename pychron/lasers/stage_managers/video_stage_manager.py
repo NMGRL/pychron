@@ -293,6 +293,16 @@ class VideoStageManager(StageManager):
         ch = 2 * self.crop_height * self.pxpermm
         return cw, ch
 
+    def close_open_images(self):
+        if self.autocenter_manager:
+            self.autocenter_manager.close_open_images()
+
+    def finish_move_to_hole(self, user_entry):
+        self.debug('finish move to hole')
+        if user_entry:
+            self.close_open_images()
+
+    # private
     def _crop_image(self, src):
         ccx, ccy = 0, 0
         cw_px, ch_px = self.get_frame_size()
@@ -424,7 +434,7 @@ class VideoStageManager(StageManager):
     #     func(holenum, *pos)
 
     def _autocenter(self, holenum=None, ntries=3, save=False,
-                    use_interpolation=False):
+                    use_interpolation=False, inform=True, auto_close_image=True):
         self.debug('do autocenter')
         rpos = None
         interp = False
@@ -439,7 +449,8 @@ class VideoStageManager(StageManager):
                         self.stage_controller.x,
                         self.stage_controller.y,
                         ox, oy,
-                        dim=self.stage_map.g_dimension)
+                        dim=self.stage_map.g_dimension,
+                        auto_close_image=auto_close_image)
 
                 if rpos is not None:
                     if abs(rpos[0]) < 1e-5 and abs(rpos[1]) < 1e-5:
@@ -451,7 +462,8 @@ class VideoStageManager(StageManager):
                     time.sleep(0.1)
                 else:
                     self.snapshot(auto=True,
-                                  name='pos_err_{}_{}-'.format(holenum, _t))
+                                  name='pos_err_{}_{}-'.format(holenum, _t),
+                                  inform=inform)
                     break
 
                     # if use_interpolation and rpos is None:
@@ -475,7 +487,7 @@ class VideoStageManager(StageManager):
             corrected = False
             #            f = 'uncorrected'
             rpos = sm.get_hole(holenum).nominal_position
-        self.debug('Autocenter duration ={}'.format(time.time()-st))
+        self.debug('Autocenter duration ={}'.format(time.time() - st))
         return rpos, corrected, interp
 
     # ===============================================================================

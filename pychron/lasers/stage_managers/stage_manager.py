@@ -110,7 +110,7 @@ class StageManager(BaseStageManager):
             self.move_to_point(v)
 
         else:
-            self.move_to_hole(v)
+            self.move_to_hole(v, user_entry=True)
 
     def get_current_position(self):
         if self.stage_controller:
@@ -331,6 +331,9 @@ class StageManager(BaseStageManager):
         # map the position to calibrated space
         pos = self.get_calibrated_position(pos)
         return pos
+
+    def finish_move_to_hole(self, user_entry):
+        pass
 
     # private
     def _update_axes(self):
@@ -725,7 +728,7 @@ class StageManager(BaseStageManager):
         self.info('Move complete')
         self.update_axes()
 
-    def _move_to_hole(self, key, correct_position=True):
+    def _move_to_hole(self, key, correct_position=True, user_entry=False):
         self.info('Move to hole {} type={}'.format(key, str(type(key))))
         self.temp_hole = key
         self.temp_position = self.stage_map.get_hole_pos(key)
@@ -760,6 +763,7 @@ class StageManager(BaseStageManager):
             # else:
             #      self._move_to_hole_hook(key, correct_position)
             self._move_to_hole_hook(key, correct_position, autocentered_position)
+            self.finish_move_to_hole(user_entry)
             self.info('Move complete')
             # self.update_axes()  # update_hole=False)
 

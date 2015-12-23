@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Instance, Float
+from traits.api import Instance, Float, List
 # ============= standard library imports ========================
 from threading import Timer
 # ============= local library imports  ==========================
@@ -47,6 +47,7 @@ YOFFSET = 25
 class MachineVisionManager(Loggable):
     video = Instance(Video)
     pxpermm = Float(23)
+    open_images = List
 
     def new_image_frame(self):
         if self.video:
@@ -64,7 +65,19 @@ class MachineVisionManager(Loggable):
         # im.resizable = True
         if frame is not None:
             im.load(frame, swap_rb=True)
-
+        self.open_images.append(im)
+        im.on_trait_change(self._remove_image, 'close_event')
         return im
+
+    def close_open_images(self):
+        import time
+        for i in self.open_images:
+            i.close_ui()
+            time.sleep(0.05)
+
+    def _remove_image(self, obj, name, old, new):
+        self.open_images.remove(obj)
+        obj.on_trait_change(self._remove_image, 'close_event', remove=True)
+
 
 # ============= EOF =============================================

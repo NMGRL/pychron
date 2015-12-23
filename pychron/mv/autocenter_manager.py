@@ -35,7 +35,7 @@ class AutoCenterManager(MachineVisionManager):
     configure_button = Button('configure')
     use_autocenter = Bool
 
-    def calculate_new_center(self, cx, cy, offx, offy, dim=1.0):
+    def calculate_new_center(self, cx, cy, offx, offy, dim=1.0, auto_close_image=True):
         frame = self.new_image_frame()
 
         loc = self._get_locator()
@@ -50,7 +50,7 @@ class AutoCenterManager(MachineVisionManager):
 
         frame = loc.crop(frame, cropdim, cropdim, offx, offy)
         im = self.new_image(frame)
-        view_image(im)
+        view_image(im, auto_close=auto_close_image)
 
         dx, dy = loc.find(im, frame, dim=dim * self.pxpermm)
         frm = loc.preprocessed_frame

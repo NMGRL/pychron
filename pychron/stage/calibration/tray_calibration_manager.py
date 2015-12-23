@@ -23,6 +23,7 @@ import cPickle as pickle
 import os
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable
+from pychron.stage.calibration.auto_calibrator import SemiAutoCalibrator
 from pychron.stage.calibration.free_calibrator import FreeCalibrator
 from pychron.stage.calibration.calibrator import TrayCalibrator, \
     LinearCalibrator
@@ -45,7 +46,8 @@ HELP_DICT = {
 
 STYLE_DICT = {'Free': FreeCalibrator,
               'Hole': HoleCalibrator,
-              'Linear': LinearCalibrator}
+              'Linear': LinearCalibrator,
+              'SemiAuto': SemiAutoCalibrator}
 
 
 def get_hole_calibration(name, hole):

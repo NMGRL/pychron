@@ -49,13 +49,12 @@ class HoleOverlay(AbstractOverlay):
 
                 gc.stroke_path()
 
-            with gc:
-
-                for pts, color in self._cached_result_pts:
+            for pts, color, r in self._cached_result_pts:
+                with gc:
                     gc.set_fill_color(color)
                     gc.set_stroke_color(color)
                     for x, y in pts:
-                        gc.arc(x, y, 1, 0, 360)
+                        gc.arc(x, y, r, 0, 360)
                     gc.draw_path()
 
     # private
@@ -64,7 +63,7 @@ class HoleOverlay(AbstractOverlay):
 
         cpts = comp.map_screen([(x, y) for (x, y), _ in choles])
         fpts = comp.map_screen([(x, y) for (x, y), _ in fholes])
-        self._cached_result_pts = (cpts, (0, 0, 0)), (fpts, (1, 0, 0))
+        self._cached_result_pts = (cpts, (0, 0, 0), 1), (fpts, (1, 0, 0), 3)
 
     def _calculate_cached_points(self, comp):
         holes = self.holes
@@ -103,7 +102,7 @@ class StageVisualizationCanvas(BaseDataCanvas):
         holes = []
         for si in sm.sample_holes:
             x, y = sm.map_to_calibration(si.nominal_position,
-                                         cpos, rot)
+                                         (-cpos[0], -cpos[1]), rot)
             xmi = min(x, xmi)
             xma = max(x, xma)
             ymi = min(y, ymi)
