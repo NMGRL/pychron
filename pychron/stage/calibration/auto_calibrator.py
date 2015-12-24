@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Instance
+from traits.api import Instance, HasTraits, Str, Bool
 # ============= standard library imports ========================
 import time
 from threading import Thread
@@ -24,6 +24,11 @@ from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.view_util import open_view
 from pychron.lasers.stage_managers.stage_visualizer import StageVisualizer
 from pychron.stage.calibration.calibrator import TrayCalibrator
+
+
+class Result(HasTraits):
+    hole_id = Str
+    corrected = Bool
 
 
 class SemiAutoCalibrator(TrayCalibrator):
@@ -39,25 +44,94 @@ class SemiAutoCalibrator(TrayCalibrator):
     stage_map = Instance('pychron.stage.maps.base_stage_map.BaseStageMap')
 
     def handle(self, step, x, y, canvas):
+        ret = None
         if step == 'Calibrate':
             canvas.new_calibration_item()
-            return dict(calibration_step='Locate Center')
+            self.calibration_step = 'Locate Center'
         elif step == 'Locate Center':
             canvas.calibration_item.set_center(x, y)
-            return dict(calibration_step='Locate Right', cx=x, cy=y)
+
+            # check stage map has at least one calibration hole.
+            # if not issue warning and ask for manual locate right
+            if self._check_auto_calibration():
+                self.calibration_step = 'Auto Calibration'
+            else:
+                name = self.stage_map.name
+                msg = 'Auto Rotation calibration not available.\n ' \
+                      '{} has no calibration holes'.format(name)
+                self.warning_dialog(msg)
+                self.calibration_step = 'Locate Right'
+
+            ret = dict(cx=x, cy=y, clear_corrections=False)
+
         elif step == 'Locate Right':
             canvas.calibration_item.set_right(x, y)
-            self.save(canvas.calibration_item)
-            return dict(calibration_step='Tranverse',
-                        rotation=canvas.calibration_item.rotation)
-        elif step == 'Tranverse':
+            # self.save(canvas.calibration_item)
+            ret = dict(calibration_step='Traverse',
+                       clear_corrections=False,
+                       rotation=canvas.calibration_item.rotation)
+        elif step == 'Auto Calibration':
             self._alive = True
-            t = Thread(target=self._traverse, args=(canvas.calibration_item,))
+            t = Thread(target=self._auto_calibrate,
+                       args=(canvas.calibration_item,))
             t.start()
-            return dict(calibration_step='Cancel')
+            self.calibration_step = 'Cancel'
+        elif step == 'Traverse':
+            if self.confirmation_dialog('Start Autocentering Travsere'):
+                t = Thread(target=self._traverse,
+                           args=(canvas.calibration_item,))
+                t.start()
+                self.calibration_step = 'Cancel'
+            else:
+                self.calibration_step = 'Calibrate'
         elif step == 'Cancel':
             self._alive = False
-            return dict(calibration_step='Calibrate')
+            self.calibration_step = 'Calibrate'
+
+        return ret
+
+    def _auto_calibrate(self, calibration):
+        smap = self.stage_map
+
+        rrot = lrot = None
+        # locate right
+        if self._alive:
+            hole = smap.get_calibration_hole('right')
+            if hole is not None:
+                npt, corrected = self._autocenter(hole)
+                if corrected:
+                    rrot = calibration.calculate_rotation(npt)
+                    calibration.set_right(*npt)
+
+        # locate left
+        if self._alive:
+            hole = smap.get_calibration_hole('left')
+            if hole is not None:
+                npt, corrected = self._autocenter(hole)
+                if corrected:
+                    lrot = calibration.calculate_rotation(npt, sense='left')
+
+        if self._alive:
+            if lrot is None:
+                rot = rrot
+            elif rrot is None:
+                rot = lrot
+            else:
+                # average rotation
+                rot = (rrot + lrot) / 2.
+
+            if rot is None:
+                self.warning('failed calculating rotation')
+                self.calibration_step = 'Calibrate'
+                return
+
+            # set rotation
+            calibration.rotation = rot
+            self.rotation = rot
+            self.save(calibration)
+
+            # traverse holes
+            self._traverse(calibration)
 
     def _traverse(self, calibration):
         """
@@ -69,41 +143,60 @@ class SemiAutoCalibrator(TrayCalibrator):
         smap = self.stage_map
         holes = smap.sample_holes
         results = []
-        failures = []
+        points = []
         center = (-calibration.center[0], -calibration.center[1])
         for hi in holes[:5]:
             sm.close_open_images()
 
             if not self.isAlive():
-                self.info('hole tranverse canceled')
+                self.info('hole traverse canceled')
                 break
 
-            x, y = hi.x, hi.y
-            # move to nominal hole position
-            sm.linear_move(x, y, use_calibration=True, block=True)
-
-            # delay for image refresh
-            time.sleep(0.5)
-
-            # autocenter
-
-            npt, corrected, interp = sm.autocenter(holenum=hi.id, save=True, inform=False, auto_close_image=False)
+            npt, corrected = self._autocenter(hi)
             if not corrected:
                 self.info('Failed to autocenter {}'.format(hi.id))
-                npt = smap.map_to_calibration(hi.nominal_position, center, calibration.rotation)
+                npt = smap.map_to_calibration(hi.nominal_position, center,
+                                              calibration.rotation)
 
-            results.append((npt, corrected))
+            res = Result(hole_id=hi, corrected=corrected)
+            results.append(res)
+            points.append((npt, corrected))
 
         sm.close_open_images()
 
         # display the results
         sv = StageVisualizer()
-        sv.set_stage_map(self.stage_map, results, calibration)
+        sv.results = results
+        sv.set_stage_map(self.stage_map, points, calibration)
 
         invoke_in_main_thread(open_view, sv)
 
+        # reset calibration manager
+        self.calibration_step = 'Calibrate'
+
+    def _autocenter(self, hi):
+        sm = self.stage_manager
+
+        x, y = hi.x, hi.y
+        # move to nominal hole position
+        sm.linear_move(x, y, use_calibration=True, block=True)
+        # delay for image refresh
+        time.sleep(0.5)
+        # autocenter
+        npt, corrected, interp = sm.autocenter(holenum=hi.id, save=True,
+                                               inform=False,
+                                               auto_close_image=False)
+        return npt, corrected
+
     def isAlive(self):
         return self._alive
+
+    def _check_auto_calibration(self):
+        smap = self.stage_map
+        l = smap.get_calibration_hole('left')
+        r = smap.get_calibration_hole('right')
+
+        return l is not None or r is not None
 
 
 class AutoCalibrator(TrayCalibrator):
@@ -113,4 +206,5 @@ class AutoCalibrator(TrayCalibrator):
         2a. move to right position automatically
          b. autocenter
     """
+
 # ============= EOF =============================================

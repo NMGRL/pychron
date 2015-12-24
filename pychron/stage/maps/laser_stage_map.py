@@ -103,6 +103,36 @@ class LaserStageMap(BaseStageMap):
 
                     return nx, ny
 
+    @property
+    def correction_path(self):
+        p = os.path.join(paths.hidden_dir,
+                         '{}_correction_file'.format(self.name))
+        return p
+
+    def load_correction_file(self):
+        p = self.correction_path
+        if os.path.isfile(p):
+            cors = None
+            with open(p, 'rb') as f:
+                try:
+                    cors = pickle.load(f)
+                except pickle.PickleError, e:
+                    print 'exception', e
+
+            if cors:
+                self.info('loaded correction file {}'.format(p))
+                for i, x, y in cors:
+
+                    h = self.get_hole(i)
+                    if h is not None:
+                        if x is not None and y is not None:
+                            h.x_cor = x
+                            h.y_cor = y
+
+    # private
+    def _load_hook(self):
+        self.load_correction_file()
+
     def _interpolate_noncorrected(self):
         self.sample_holes.reverse()
         for h in self.sample_holes:
@@ -233,29 +263,10 @@ class LaserStageMap(BaseStageMap):
                 iholes.append(found[i])
                 iholes.append(found[j])
 
-    def load_correction_file(self):
-        p = os.path.join(paths.hidden_dir, '{}_correction_file'.format(self.name))
-        if os.path.isfile(p):
-            cors = None
-            with open(p, 'rb') as f:
-                try:
-                    cors = pickle.load(f)
-                except pickle.PickleError, e:
-                    print 'exception', e
-
-            if cors:
-                self.info('loaded correction file {}'.format(p))
-                for i, x, y in cors:
-
-                    h = self.get_hole(i)
-                    if h is not None:
-                        if x is not None and y is not None:
-                            h.x_cor = x
-                            h.y_cor = y
-
     @on_trait_change('clear_corrections')
     def clear_correction_file(self):
-        p = os.path.join(paths.hidden_dir, '{}_correction_file'.format(self.name))
+        # p = os.path.join(paths.hidden_dir, '{}_correction_file'.format(self.name))
+        p = self.correction_path
         if os.path.isfile(p):
             os.remove(p)
             self.info('removed correction file {}'.format(p))
@@ -274,8 +285,7 @@ class LaserStageMap(BaseStageMap):
             h.interpolation_holes = None
 
     def dump_correction_file(self):
-
-        p = os.path.join(paths.hidden_dir, '{}_correction_file'.format(self.name))
+        p = self.correction_path
         with open(p, 'wb') as f:
             pickle.dump([(h.id, h.x_cor, h.y_cor)
                          for h in self.sample_holes], f)

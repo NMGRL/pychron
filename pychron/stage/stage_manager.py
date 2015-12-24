@@ -75,45 +75,6 @@ class BaseStageManager(Manager):
 
         if sm:
             self.stage_map_name = sm
-            if self.stage_map:
-                self.canvas.set_map(self.stage_map)
-                self.canvas.request_redraw()
-
-                # self.stage_maps = []
-                # config = self.get_configuration()
-                # if config:
-                # load the stage maps
-
-                # mapfiles = self.config_get(config, 'General', 'mapfiles')
-                # self.stage_map_names = mapfiles.split(',')
-                # for mapfile in mapfiles.split(','):
-                #     path = os.path.join(paths.map_dir, mapfile.strip())
-                #     sm = StageMap(file_path=path)
-                #     sm.load_correction_file()
-                #     self.stage_maps.append(sm)
-
-                # load user points as stage map
-                # for di in os.listdir(paths.user_points_dir):
-                #     if di.endswith('.yaml'):
-                #         path = os.path.join(paths.user_points_dir, di)
-                # sm = self.stage_map_klass(file_path=path)
-                # self.stage_maps.append(sm)
-
-                # load the saved stage map
-                # sp = self._get_stage_map_by_name(self._load_previous_stage_map())
-                # if sp is not None:
-                #     sm = sp
-
-                # self.stage_map_name = sm
-
-                # load the points file
-                # self.canvas.load_points_file(self.points_file)
-
-                # load defaults
-                # self._default_z = self.config_get(config, 'Defaults', 'z', default=13, cast='float')
-
-                # self.canvas.set_map(sm)
-                # self.canvas.request_redraw()
 
     def kill(self):
         r = super(BaseStageManager, self).kill()
@@ -148,7 +109,9 @@ class BaseStageManager(Manager):
             cpos = ca.center
             scale = ca.scale
 
-            self.debug('Calibration parameters: rot={:0.3f}, cpos={} scale={:0.3f}'.format(rot, cpos, scale))
+            self.debug('Calibration parameters: '
+                       'rot={:0.3f}, cpos={} scale={:0.3f}'.format(rot, cpos,
+                                                                   scale))
             pos = smap.map_to_calibration(pos, cpos, rot,
                                           scale=scale,
                                           use_modified=self.use_modified)
@@ -196,14 +159,14 @@ class BaseStageManager(Manager):
     def _stage_map_name_changed(self, new):
         if new:
             self.debug('setting stage map to {}'.format(new))
-            sm = self.stage_map_klass(file_path=os.path.join(self.root, add_extension(new, '.txt')))
-            sm.load_correction_file()
-
-            self.stage_map = sm
+            path = os.path.join(self.root, add_extension(new, '.txt'))
+            sm = self.stage_map_klass(file_path=path)
             self.tray_calibration_manager.load_calibration(stage_map=new)
 
             self.canvas.set_map(sm)
             self.canvas.request_redraw()
+
+            self.stage_map = sm
 
     # defaults
     def _tray_calibration_manager_default(self):
@@ -233,3 +196,39 @@ class BaseStageManager(Manager):
                     # self.initialize_stage()
 
 # ============= EOF =============================================
+
+# self.stage_maps = []
+# config = self.get_configuration()
+# if config:
+# load the stage maps
+
+# mapfiles = self.config_get(config, 'General', 'mapfiles')
+# self.stage_map_names = mapfiles.split(',')
+# for mapfile in mapfiles.split(','):
+#     path = os.path.join(paths.map_dir, mapfile.strip())
+#     sm = StageMap(file_path=path)
+#     sm.load_correction_file()
+#     self.stage_maps.append(sm)
+
+# load user points as stage map
+# for di in os.listdir(paths.user_points_dir):
+#     if di.endswith('.yaml'):
+#         path = os.path.join(paths.user_points_dir, di)
+# sm = self.stage_map_klass(file_path=path)
+# self.stage_maps.append(sm)
+
+# load the saved stage map
+# sp = self._get_stage_map_by_name(self._load_previous_stage_map())
+# if sp is not None:
+#     sm = sp
+
+# self.stage_map_name = sm
+
+# load the points file
+# self.canvas.load_points_file(self.points_file)
+
+# load defaults
+# self._default_z = self.config_get(config, 'Defaults', 'z', default=13, cast='float')
+
+# self.canvas.set_map(sm)
+# self.canvas.request_redraw()

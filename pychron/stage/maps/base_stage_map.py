@@ -109,7 +109,8 @@ class BaseStageMap(Loggable):
                     #         hole = str(hi + 1)
                     #     except ValueError:
                     #         break
-                    h = self._hole_factory(hi, line, shape, dimension, valid_holes)
+                    h = self._hole_factory(hi, line, shape, dimension,
+                                           valid_holes)
                     if h is None:
                         break
 
@@ -118,36 +119,7 @@ class BaseStageMap(Loggable):
             else:
                 self.sample_holes = sms
 
-    def _hole_factory(self, hi, line, shape, dimension, valid_holes):
-        ah = ''
-        args = line.split(',')
-        if len(args) == 2:
-            x, y = args
-            hole = str(hi + 1)
-        elif len(args) == 3:
-            hole, x, y = args
-            if '(' in y:
-                hole = str(hi + 1)
-                x, y, ah = args
-                ah = ah.strip()
-                ah = ah[1:-1]
-
-        elif len(args) == 4:
-            hole, x, y, ah = args
-            if '(' in ah:
-                ah = ah.strip()
-                ah = ah[1:-1]
-        else:
-            self.warning(
-                'invalid stage map file. {}. Problem with line {}: {}'.format(self.file_path, hi + 3, line))
-            return
-        return SampleHole(id=hole,
-                          x=float(x),
-                          y=float(y),
-                          associated_hole=ah,
-                          render='x' if hole in valid_holes else '',
-                          shape=shape,
-                          dimension=dimension)
+            self._load_hook()
 
     def map_to_uncalibration(self, pos, cpos=None, rot=None, scale=None):
         cpos, rot, scale = self._get_calibration_params(cpos, rot, scale)
@@ -200,15 +172,17 @@ class BaseStageMap(Loggable):
         if self.sample_holes:
             hole = self.get_hole(key)
             if hole is None:
-                msg = '''{} is not a valid hole for tray '{}'. '''.format(key, self.name)
+                msg = '''{} is not a valid hole for tray '{}'. '''.format(key,
+                                                                          self.name)
             else:
                 return True
         else:
             msg = '''There a no holes in tray "{}". This is most likely because the file "{}" was not
 properly parsed. \n\n
-Check that the file is UTF-8 and Unix (LF) linefeed'''.format(self.name, self.file_path)
+Check that the file is UTF-8 and Unix (LF) linefeed'''.format(self.name,
+                                                              self.file_path)
 
-        invoke_in_main_thread(self.warning_dialog,msg)
+        invoke_in_main_thread(self.warning_dialog, msg)
 
     def get_corrected_hole_pos(self, key):
         return next(((h.x_cor, h.y_cor)
@@ -218,6 +192,41 @@ Check that the file is UTF-8 and Unix (LF) linefeed'''.format(self.name, self.fi
         pass
 
     # private
+    def _load_hook(self):
+        pass
+
+    def _hole_factory(self, hi, line, shape, dimension, valid_holes):
+        ah = ''
+        args = line.split(',')
+        if len(args) == 2:
+            x, y = args
+            hole = str(hi + 1)
+        elif len(args) == 3:
+            hole, x, y = args
+            if '(' in y:
+                hole = str(hi + 1)
+                x, y, ah = args
+                ah = ah.strip()
+                ah = ah[1:-1]
+
+        elif len(args) == 4:
+            hole, x, y, ah = args
+            if '(' in ah:
+                ah = ah.strip()
+                ah = ah[1:-1]
+        else:
+            self.warning('invalid stage map file. {}. '
+                         'Problem with line {}: {}'.format(self.file_path,
+                                                           hi + 3, line))
+            return
+        return SampleHole(id=hole,
+                          x=float(x),
+                          y=float(y),
+                          associated_hole=ah,
+                          render='x' if hole in valid_holes else '',
+                          shape=shape,
+                          dimension=dimension)
+
     def _get_bitmap_path(self):
 
         name, _ext = os.path.splitext(self.name)

@@ -17,12 +17,13 @@
 # ============= enthought library imports =======================
 import time
 
-from traits.api import HasTraits, Float, Any, Dict, Bool, Str, Property, List, Int, \
+from chaco.data_range_1d import DataRange1D
+from chaco.default_colormaps import color_map_name_dict
+from kiva.agg.agg import GraphicsContextArray
+from traits.api import HasTraits, Float, Any, Dict, Bool, Str, Property, List, \
+    Int, \
     Color, String, Either
 from traitsui.api import VGroup, Item, Group
-from chaco.default_colormaps import color_map_name_dict
-from chaco.data_range_1d import DataRange1D
-from kiva.agg.agg import GraphicsContextArray
 
 # ============= standard library imports ========================
 import Image as PImage
@@ -207,7 +208,8 @@ class Triangle(QPrimitive):
                 gc.close_path()
                 gc.stroke_path()
             else:
-                f = color_map_name_dict['hot'](DataRange1D(low_setting=0, high_setting=300))
+                f = color_map_name_dict['hot'](
+                        DataRange1D(low_setting=0, high_setting=300))
                 for x, y, v in points:
                     x, y = func((x, y))
                     gc.set_fill_color(f.map_screen(array([v]))[0])
@@ -246,7 +248,8 @@ class Circle(QPrimitive):
             gc.arc(x, y, r, 0, 360)
             gc.fill_path()
 
-        self._render_name(gc, x + self.name_offsetx, y + self.name_offsety, r / 4., r / 2.)
+        self._render_name(gc, x + self.name_offsetx, y + self.name_offsety,
+                          r / 4., r / 2.)
 
     def is_in(self, sx, sy):
         x, y = self.get_xy()
@@ -371,7 +374,8 @@ class LoadIndicator(Circle):
 
     def _render_(self, gc):
         c = (0, 0, 0)
-        if self.fill and self.fill_color and sum(self.fill_color.toTuple()[:3]) < 1.5:
+        if self.fill and self.fill_color and sum(
+                self.fill_color.toTuple()[:3]) < 1.5:
             c = (255, 255, 255)
 
         self.text_color = c
@@ -427,10 +431,12 @@ class CalibrationObject(HasTraits):
         self._rotation = rot
 
     def _get_rotation(self):
-        if not (self.rx and self.rx):
-            return self._rotation
-
-        return calc_rotation(self.cx, self.cy, self.rx, self.ry)
+        # if not (self.rx and self.rx):
+        #     return self._rotation
+        rot = self._rotation
+        if not rot:
+            rot = self.calculate_rotation(self.rx, self.ry)
+        return rot
 
     def _get_center(self):
         return self.cx, self.cy
@@ -442,6 +448,18 @@ class CalibrationObject(HasTraits):
     def set_center(self, x, y):
         self.cx = x
         self.cy = y
+
+    def calculate_rotation(self, pt, sense='right'):
+
+        rot = calc_rotation(self.cx, self.cy, *pt)
+        if sense == 'left':
+            rot -= 180
+        elif sense == 'top':
+            rot -= 90
+        elif sense == 'bottom':
+            rot -= 270
+
+        return rot
 
 
 class Label(QPrimitive):
@@ -763,7 +781,8 @@ class Image(QPrimitive):
             if self.scale:
                 gc.scale_ctm(*self.scale)
 
-            gc.draw_image(self._cached_image, rect=(0, 0, self.canvas.width, self.canvas.height))
+            gc.draw_image(self._cached_image,
+                          rect=(0, 0, self.canvas.width, self.canvas.height))
 
     def _compute_cached_image(self):
         pic = PImage.open(self.path)
@@ -776,7 +795,8 @@ class Image(QPrimitive):
         elif data.shape[2] == 4:
             kiva_depth = 'rgba32'
         else:
-            raise RuntimeError('Unknown colormap depth value: {}'.format(data.value_depth))
+            raise RuntimeError(
+                    'Unknown colormap depth value: {}'.format(data.value_depth))
 
         self._cached_image = GraphicsContextArray(data, pix_format=kiva_depth)
         self._image_cache_valid = True

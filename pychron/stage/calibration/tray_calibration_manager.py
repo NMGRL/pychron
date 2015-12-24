@@ -15,8 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Float, Event, String, Any, Enum, Property, \
-    cached_property, Button, List
+from traits.api import Float, Event, String, Any, Enum, Button, List, Instance
 # ============= standard library imports ========================
 import shutil
 import cPickle as pickle
@@ -26,7 +25,7 @@ from pychron.loggable import Loggable
 from pychron.stage.calibration.auto_calibrator import SemiAutoCalibrator
 from pychron.stage.calibration.free_calibrator import FreeCalibrator
 from pychron.stage.calibration.calibrator import TrayCalibrator, \
-    LinearCalibrator
+    LinearCalibrator, BaseCalibrator
 from pychron.paths import paths
 from pychron.stage.calibration.hole_calibrator import HoleCalibrator
 
@@ -73,7 +72,8 @@ class TrayCalibrationManager(Loggable):
     calibration_help = String(TRAY_HELP)
     style = Enum('Tray', 'Free', 'Hole', 'Linear', 'SemiAuto')
     canvas = Any
-    calibrator = Property(depends_on='style')
+    calibrator = Instance(BaseCalibrator)
+    # calibrator = Property(depends_on='style')
 
     add_holes_button = Button
     reset_holes_button = Button
@@ -105,7 +105,7 @@ class TrayCalibrationManager(Loggable):
             # force style change update
             self._style_changed()
 
-    def save_calibration(self, name=None):
+    def save_calibration(self, name=None, clear_corrections=True):
         pickle_path = os.path.join(paths.hidden_dir, '{}_stage_calibration')
         if name is None:
             # delete the corrections file
@@ -113,7 +113,8 @@ class TrayCalibrationManager(Loggable):
 
         ca = self.canvas.calibration_item
         if ca is not None:
-            self.parent.stage_map.clear_correction_file()
+            if clear_corrections:
+                self.parent.stage_map.clear_correction_file()
             ca.style = self.style
             p = pickle_path.format(name)
             self.info('saving calibration {}'.format(p))
@@ -167,36 +168,69 @@ class TrayCalibrationManager(Loggable):
         else:
             self.calibration_help = TRAY_HELP
 
+        self.calibrator = self._calibrator_factory()
+
     def _calibrate_fired(self):
 
         x, y = self.parent.get_current_position()
         self.rotation = 0
 
-        args = self.calibrator.handle(self.calibration_step,
-                                      x, y, self.canvas)
-        if args:
+        kw = self.calibrator.handle(self.calibration_step,
+                                    x, y, self.canvas)
+        if kw:
             for a in ('calibration_step', 'cx', 'cy',
                       'scale', 'error', 'rotation'):
-                if a in args:
-                    setattr(self, a, args[a])
+                if a in kw:
+                    setattr(self, a, kw[a])
 
-            self.save_calibration()
+            cc = kw.get('clear_corrections', True)
+            self.save_calibration(clear_corrections=cc)
 
-    # ===============================================================================
-    # property get/set
-    # ===============================================================================
-    @cached_property
-    def _get_calibrator(self):
+    def _destroy_calibrator(self):
+        if self.calibrator:
+            self.calibrator.stage_manager = None
+            self.calibrator.stage_map = None
+            self.calibrator.on_trait_change(self._handle_step,
+                                            'calibration_step', remove=True)
+            self.calibrator.on_trait_change(self._handle_rotation,
+                                            'rotation', remove=True)
+
+    def _calibrator_factory(self):
+        self._destroy_calibrator()
+
         kw = dict(name=self.parent.stage_map_name or '',
                   stage_manager=self.parent,
-                  stage_map=self.parent.stage_map,
-                  manager=self)
+                  stage_map=self.parent.stage_map)
 
         if self.style in STYLE_DICT:
             klass = STYLE_DICT[self.style]
         else:
             klass = TrayCalibrator
 
-        return klass(**kw)
+        cal = klass(**kw)
+        cal.on_trait_change(self._handle_step, 'calibration_step')
+        cal.on_trait_change(self._handle_rotation, 'rotation')
+        return cal
+
+    def _handle_step(self, new):
+        self.calibration_step = new
+
+    def _handle_rotation(self, new):
+        self.rotation = new
+    # ===============================================================================
+    # property get/set
+    # ===============================================================================
+        # @cached_property
+        # def _get_calibrator(self):
+        #     kw = dict(name=self.parent.stage_map_name or '',
+        #               stage_manager=self.parent,
+        #               stage_map=self.parent.stage_map)
+        #
+        #     if self.style in STYLE_DICT:
+        #         klass = STYLE_DICT[self.style]
+        #     else:
+        #         klass = TrayCalibrator
+        #
+        #     return klass(**kw)
 
 # ============= EOF =============================================

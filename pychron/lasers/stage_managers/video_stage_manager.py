@@ -64,6 +64,7 @@ class VideoStageManager(StageManager):
             'pychron.mv.focus.autofocus_manager.AutoFocusManager')
     snapshot_button = Button('Snapshot')
     auto_save_snapshot = Bool(True)
+    keep_images_open = Bool(False)
 
     record = Event
     record_label = Property(depends_on='is_recording')
@@ -74,7 +75,7 @@ class VideoStageManager(StageManager):
     use_video_archiver = Bool(True)
     video_archiver = Instance('pychron.core.helpers.archiver.Archiver')
     video_identifier = Str
-    #     video_identifier = Enum(1, 2)
+
     use_video_server = Bool(False)
     video_server_port = Int
     video_server_quality = Int
@@ -84,13 +85,12 @@ class VideoStageManager(StageManager):
     auto_upload = Bool(False)
 
     camera = Instance(Camera)
+    lumen_detector = Instance(LumenDetector, ())
 
     render_with_markup = Bool(False)
 
     _auto_correcting = False
     stop_timer = Event
-
-    _lumen_detector = Instance(LumenDetector, ())
 
     def bind_preferences(self, pref_id):
         self.debug('binding preferences')
@@ -177,13 +177,13 @@ class VideoStageManager(StageManager):
         super(VideoStageManager, self).initialize_stage()
         self.initialize_video()
 
-        s = self.stage_controller
-        if s.axes:
-            xa = s.axes['x'].drive_ratio
-            ya = s.axes['y'].drive_ratio
+        # s = self.stage_controller
+        # if s.axes:
+        #     xa = s.axes['x'].drive_ratio
+        #     ya = s.axes['y'].drive_ratio
 
-            self._drive_xratio = xa
-            self._drive_yratio = ya
+        # self._drive_xratio = xa
+        # self._drive_yratio = ya
 
         self._update_zoom(0)
 
@@ -275,7 +275,7 @@ class VideoStageManager(StageManager):
     crop_height = 2
 
     def get_brightness(self):
-        ld = self._lumen_detector
+        ld = self.lumen_detector
 
         src = self.video.get_frame()
         src = self._crop_image(src)
@@ -299,7 +299,7 @@ class VideoStageManager(StageManager):
 
     def finish_move_to_hole(self, user_entry):
         self.debug('finish move to hole')
-        if user_entry:
+        if user_entry and not self.keep_images_open:
             self.close_open_images()
 
     # private
@@ -412,29 +412,19 @@ class VideoStageManager(StageManager):
         self.video.start_recording(path, renderer)
 
     def _move_to_hole_hook(self, holenum, correct, autocentered_position):
+        args = holenum, correct, autocentered_position
         self.debug('move to hole hook holenum={}, '
-                   'correct={}, autocentered_position={}'.format(holenum, correct, autocentered_position))
-        if correct:  # and self.use_autocenter:
+                   'correct={}, autocentered_position={}'.format(*args))
+        if correct:
             ntries = 1 if autocentered_position else 3
 
             self._auto_correcting = True
-            pos, corrected, interp = self._autocenter(holenum=holenum, ntries=ntries, save=True)
+            self._autocenter(holenum=holenum, ntries=ntries, save=True)
             self._auto_correcting = False
 
-    # self._update_visualizer(holenum, pos, interp)
-    #
-    # def _update_visualizer(self, holenum, pos, interp):
-    #     if pos:
-    #         f = 'interpolation' if interp else 'correction'
-    #     else:
-    #         f = 'uncorrected'
-    #         #                pos = sm.get_hole(holenum).nominal_position
-    #
-    #     func = getattr(self.visualizer, 'record_{}'.format(f))
-    #     func(holenum, *pos)
-
     def _autocenter(self, holenum=None, ntries=3, save=False,
-                    use_interpolation=False, inform=True, auto_close_image=True):
+                    use_interpolation=False, inform=True,
+                    auto_close_image=True):
         self.debug('do autocenter')
         rpos = None
         interp = False
@@ -443,7 +433,7 @@ class VideoStageManager(StageManager):
         if self.autocenter_manager.use_autocenter:
             time.sleep(0.1)
             ox, oy = self.canvas.get_screen_offset()
-            for _t in range(max(1, ntries)):
+            for ti in range(max(1, ntries)):
                 # use machine vision to calculate positioning error
                 rpos = self.autocenter_manager.calculate_new_center(
                         self.stage_controller.x,
@@ -462,7 +452,7 @@ class VideoStageManager(StageManager):
                     time.sleep(0.1)
                 else:
                     self.snapshot(auto=True,
-                                  name='pos_err_{}_{}-'.format(holenum, _t),
+                                  name='pos_err_{}_{}'.format(holenum, ti),
                                   inform=inform)
                     break
 
@@ -725,50 +715,7 @@ class VideoStageManager(StageManager):
 #                    self.drive_yratio = rdymm / dymm
 #                except ZeroDivisionError:
 #                    self.drive_xratio = 100
-
-
-# if __name__ == '__main__':
-#     from pychron.core.helpers.logger_setup import logging_setup, new_logger
 #
-#     name = 'co2'
-#     logging_setup('stage_manager')
-#     s = VideoStageManager(name='{}stage'.format(name),
-#                           configuration_dir_name=name)
-#     #    i = Initializer()
-#     #    i.add_initialization(dict(name = 'stage_manager',
-#     #                              manager = s
-#     #                              ))
-#     #    i.run()
-#
-#     s.load()
-#     s.stage_controller.bootstrap()
-#     # s.update_axes()
-#
-#     s.configure_traits()
-# ============= EOF ====================================
-#    def _mapcenters_button_fired(self):
-#        self.info('Mapping all holes for {}'.format(self.stage_map))
-#        mv = self.machine_vision_manager
-#        sm = self._stage_map
-#        #enumerate the current stage map holes
-#        for hole in sm.sample_holes:
-#            self.info('finding center of hole= {} ({},{}) '.format(hole.id,
-#                                                                    hole.x,
-#                                                                     hole.y))
-#            self.hole = int(hole.id)
-#            x = self.stage_controller._x_position
-#            y = self.stage_controller._y_position
-#
-#            time.sleep(0.25)
-#            newpos = mv.locate_target(x, y, hole.id)
-#            if newpos:
-#                self.info('calculated center of hole= {} ({},{}) '.format(hole.id,
-#                                                                           *newpos))
-#                sm.set_hole_correction(hole.id, *newpos)
-#            time.sleep(0.25)
-#    def _camera_coefficients_changed(self):
-#        print self.camera_coefficients
-
 #    def _calibration_manager_default(self):
 #
 # #        self.video.open(user = 'calibration')
@@ -776,7 +723,7 @@ class VideoStageManager(StageManager):
 #                                  laser_manager = self.parent,
 #                               video_manager = self.video_manager,
 #                               )
-
+# ============= EOF ====================================
 #                adxs = []
 #                adys = []
 #                for p1, p2 in zip(polygons, polygons2):
@@ -800,21 +747,3 @@ class VideoStageManager(StageManager):
 #                    adys.append(ady)
 #                print 'xffset', sum(adxs) / len(adxs)
 #                print 'yffset', sum(adys) / len(adys)
-
-#    def _get_drive_xratio(self):
-#        return self._drive_xratio
-#
-#    def _set_drive_xratio(self, v):
-#        self._drive_xratio = v
-#        ax = self.stage_controller.axes['x']
-#        ax.drive_ratio = v
-#        ax.save()
-#
-#    def _get_drive_yratio(self):
-#        return self._drive_yratio
-#
-#    def _set_drive_yratio(self, v):
-#        self._drive_yratio = v
-#        ax = self.stage_controller.axes['y']
-#        ax.drive_ratio = v
-#        ax.save()

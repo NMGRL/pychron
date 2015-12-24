@@ -15,30 +15,42 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-
 from enable.component_editor import ComponentEditor
-from traits.api import Instance
-from traitsui.api import View, Item
-
+from traits.api import Instance, List
+from traitsui.api import View, HGroup, UItem, TabularEditor
+from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+
 from pychron.loggable import Loggable
 from pychron.canvas.canvas2D.stage_visualization_canvas import \
     StageVisualizationCanvas
+from pychron.pychron_constants import LIGHT_RED
 from pychron.stage.maps.laser_stage_map import LaserStageMap
+
+
+class ResultsAdapter(TabularAdapter):
+    columns = [('Hole', 'hole_id')]
+
+    def get_bg_color(self, obj, trait, row, column=0):
+        item = getattr(obj, trait)[row]
+        if not item.corrected:
+            return LIGHT_RED
 
 
 class StageVisualizer(Loggable):
     canvas = Instance(StageVisualizationCanvas, ())
+    results = List
 
-    def set_stage_map(self, smap, results, calibration):
-        self.canvas.build_map(smap, results, calibration)
+    def set_stage_map(self, smap, points, calibration):
+        self.canvas.build_map(smap, points, calibration)
 
     def traits_view(self):
         v = View(
-                Item('canvas', editor=ComponentEditor(width=550,
-                                                      height=550),
-                     show_label=False),
+                HGroup(UItem('canvas', editor=ComponentEditor(width=550,
+                                                              height=550)),
+                       UItem('results', editor=TabularEditor(
+                               adapter=ResultsAdapter()))),
                 title='Stage Visualizer',
                 resizable=True)
         return v

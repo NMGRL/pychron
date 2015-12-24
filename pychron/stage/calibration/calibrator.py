@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-
+from traits.api import Str, Float
 # ============= standard library imports ========================
 import cPickle as pickle
 import os
@@ -30,6 +30,9 @@ SIMPLE_HELP = '''1. Locate center hole
 
 
 class BaseCalibrator(Loggable):
+    calibration_step = Str
+    rotation = Float
+
     def save(self, obj):
         p = self._get_path(self.name)
         with open(p, 'wb') as f:
