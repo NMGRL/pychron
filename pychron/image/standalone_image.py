@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Array, Event, Range
+from traits.api import Array, Event, Range, Bool
 from traitsui.api import UItem, Item, VGroup
 # ============= standard library imports ========================
 import Image
@@ -30,12 +30,15 @@ class StandAloneImage(Viewable):
     refresh = Event
     alpha = Range(0.0, 1.0)
     overlays = None
+    alpha_enabled = Bool(False)
 
     def traits_view(self):
-        v = self.view_factory(VGroup(Item('alpha'),
-                                     UItem('source_frame',
-                                           editor=ImageEditor(
-                                                   refresh='refresh'))))
+        img = UItem('source_frame', editor=ImageEditor(refresh='refresh'))
+        if self.alpha_enabled:
+            vv = VGroup(Item('alpha'), img)
+        else:
+            vv = img
+        v = self.view_factory(VGroup(vv))
         return v
 
     def load(self, frame, swap_rb=False):
@@ -54,6 +57,7 @@ class StandAloneImage(Viewable):
 
         self.overlays = (im0, im1)
         self.alpha = alpha
+        self.refresh = True
 
     def _overlay(self, im0, im1, alpha):
         arr = Image.blend(im1, im0, alpha)

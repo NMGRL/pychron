@@ -449,14 +449,14 @@ class CalibrationObject(HasTraits):
         self.cx = x
         self.cy = y
 
-    def calculate_rotation(self, pt, sense='right'):
+    def calculate_rotation(self, x, y, sense='east'):
 
-        rot = calc_rotation(self.cx, self.cy, *pt)
-        if sense == 'left':
-            rot -= 180
-        elif sense == 'top':
+        rot = calc_rotation(self.cx, self.cy, x, y)
+        if sense == 'west':
+            rot -= rot
+        elif sense == 'north':
             rot -= 90
-        elif sense == 'bottom':
+        elif sense == 'south':
             rot -= 270
 
         return rot

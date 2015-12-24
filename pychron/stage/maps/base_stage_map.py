@@ -121,15 +121,19 @@ class BaseStageMap(Loggable):
 
             self._load_hook()
 
-    def get_calibration_holes(self, h):
-        for ch in self.calibration_holes:
-            try:
-                hh, hole = ch.split(':')
-            except ValueError:
-                continue
+    def get_calibration_hole(self, h):
+        d = 'north', 'east', 'south', 'west'
+        try:
+            idx = d.index(h)
+        except IndexError, e:
+            self.debug('^^^^^^^^^^^^^^^^^^^ index error: {}, {}, {}'.format(d, h, e))
+            return
 
-            if h == hh:
-                return hole
+        try:
+            key = self.calibration_holes[idx]
+            return self.get_hole(key.strip())
+        except ValueError, e:
+            self.debug('^^^^^^^^^^^^^^^^^^^ value error: {}, {}, {}'.format(idx, key, e))
 
     def map_to_uncalibration(self, pos, cpos=None, rot=None, scale=None):
         cpos, rot, scale = self._get_calibration_params(cpos, rot, scale)

@@ -113,7 +113,7 @@ class Viewable(Loggable):
     def close_ui(self):
         from pychron.core.ui.gui import invoke_in_main_thread
 
-        self.debug('disposed')
+        self.debug('close ui')
         invoke_in_main_thread(self.trait_set, disposed=True)
 
     def show(self, **kw):

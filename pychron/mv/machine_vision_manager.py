@@ -55,14 +55,14 @@ class MachineVisionManager(Loggable):
             return src
 
     def new_image(self, frame=None, title='AutoCenter',
-                  view_id='target'):
+                  view_id='target', **kw):
         im = StandAloneImage(title=title,
-                             handler=CloseHandler(always_on_top=False))
+                             handler=CloseHandler(always_on_top=False),
+                             **kw)
         im.window_x = OX + XOFFSET * CloseHandler.WINDOW_CNT
         im.window_y = OY + YOFFSET * CloseHandler.WINDOW_CNT
-        # im.window_height = 200
-        # im.window_width = 200
-        # im.resizable = True
+        im.window_height = 300
+        im.window_width = 300
         if frame is not None:
             im.load(frame, swap_rb=True)
         self.open_images.append(im)
@@ -73,7 +73,10 @@ class MachineVisionManager(Loggable):
         import time
         for i in self.open_images:
             i.close_ui()
+            i.on_trait_change(self._remove_image, 'close_event', remove=True)
             time.sleep(0.05)
+
+        self.open_images = []
 
     def _remove_image(self, obj, name, old, new):
         self.open_images.remove(obj)

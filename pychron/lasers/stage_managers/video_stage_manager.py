@@ -424,6 +424,7 @@ class VideoStageManager(StageManager):
 
     def _autocenter(self, holenum=None, ntries=3, save=False,
                     use_interpolation=False, inform=True,
+                    alpha_enabled=True,
                     auto_close_image=True):
         self.debug('do autocenter')
         rpos = None
@@ -440,6 +441,7 @@ class VideoStageManager(StageManager):
                         self.stage_controller.y,
                         ox, oy,
                         dim=self.stage_map.g_dimension,
+                        alpha_enabled=alpha_enabled,
                         auto_close_image=auto_close_image)
 
                 if rpos is not None:
