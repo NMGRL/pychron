@@ -121,6 +121,16 @@ class BaseStageMap(Loggable):
 
             self._load_hook()
 
+    def get_calibration_holes(self, h):
+        for ch in self.calibration_holes:
+            try:
+                hh, hole = ch.split(':')
+            except ValueError:
+                continue
+
+            if h == hh:
+                return hole
+
     def map_to_uncalibration(self, pos, cpos=None, rot=None, scale=None):
         cpos, rot, scale = self._get_calibration_params(cpos, rot, scale)
         a = AffineTransform()
