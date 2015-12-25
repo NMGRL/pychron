@@ -105,7 +105,7 @@ class TrayCalibrationManager(Loggable):
             # force style change update
             self._style_changed()
 
-    def save_calibration(self, name=None, clear_corrections=True):
+    def save_calibration(self, name=None, clear_corrections=True, reload=True):
         pickle_path = os.path.join(paths.hidden_dir, '{}_stage_calibration')
         if name is None:
             name = self.parent.stage_map_name
@@ -120,7 +120,8 @@ class TrayCalibrationManager(Loggable):
             with open(p, 'wb') as f:
                 pickle.dump(ca, f)
 
-            self.load_calibration(name)
+            if reload:
+                self.load_calibration(name)
 
     def _load_holes_calibrations(self, sm):
         self.holes_list = []
@@ -170,7 +171,6 @@ class TrayCalibrationManager(Loggable):
         self.calibrator = self._calibrator_factory()
 
     def _calibrate_fired(self):
-
         x, y = self.parent.get_current_position()
         self.rotation = 0
         if self.calibrator is None:
@@ -201,7 +201,8 @@ class TrayCalibrationManager(Loggable):
 
     def _calibrator_factory(self):
         self._destroy_calibrator()
-
+        self.debug('New calibrator {} for stage_map={}'.format(self.style,
+                                                               self.parent.stage_map_name))
         kw = dict(name=self.parent.stage_map_name or '',
                   stage_manager=self.parent,
                   stage_map=self.parent.stage_map)
@@ -218,8 +219,8 @@ class TrayCalibrationManager(Loggable):
         return cal
 
     def _handle_save(self, obj):
-        cc = obj.get('clear_corrections', True)
-        self.save_calibration(clear_corrections=cc)
+        cc = obj.get('clear_corrections', False)
+        self.save_calibration(clear_corrections=cc, reload=False)
 
     def _handle_step(self, new):
         self.calibration_step = new

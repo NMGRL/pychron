@@ -74,6 +74,7 @@ class BaseStageManager(Manager):
             sm = sms[0]
 
         if sm:
+            self.stage_map_name = ''
             self.stage_map_name = sm
 
     def kill(self):
@@ -160,6 +161,7 @@ class BaseStageManager(Manager):
             self.debug('setting stage map to {}'.format(new))
             path = os.path.join(self.root, add_extension(new, '.txt'))
             sm = self.stage_map_klass(file_path=path)
+
             self.tray_calibration_manager.load_calibration(stage_map=new)
 
             self.canvas.set_map(sm)

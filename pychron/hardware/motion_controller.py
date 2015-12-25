@@ -239,7 +239,7 @@ class MotionController(CoreDevice):
         """
         """
 
-        self._check_moving(axis='z', verbose=True)
+        self._check_moving(axis='z', verbose=False)
 
         z = self.get_current_position('z')
         self.z_progress = z

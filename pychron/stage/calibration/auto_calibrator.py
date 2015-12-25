@@ -108,6 +108,7 @@ class SemiAutoCalibrator(TrayCalibrator):
                     rrot = calibration.calculate_rotation(*npt)
                     calibration.set_right(*npt)
                     self.debug('Calculated rotation= {}'.format(rrot))
+                self.stage_manager.close_open_images()
 
         # locate left
         if self._alive:
@@ -118,6 +119,7 @@ class SemiAutoCalibrator(TrayCalibrator):
                 if corrected:
                     lrot = calibration.calculate_rotation(*npt, sense='west')
                     self.debug('Calculated rotation= {}'.format(lrot))
+                self.stage_manager.close_open_images()
 
         if self._alive:
             if lrot is None:
@@ -150,12 +152,11 @@ class SemiAutoCalibrator(TrayCalibrator):
         """
         sm = self.stage_manager
         smap = self.stage_map
+
         holes = smap.sample_holes
         results = []
         points = []
         center = calibration.center
-
-        # center = (-calibration.center[0], -calibration.center[1])
 
         dxs, dys = array([]), array([])
         guess = None
@@ -169,7 +170,7 @@ class SemiAutoCalibrator(TrayCalibrator):
             nominal_x, nominal_y = smap.map_to_calibration(hi.nominal_position,
                                                            center,
                                                            calibration.rotation)
-            if dxs:
+            if len(dxs):
                 dx, dy = dxs.mean(), dys.mean()
                 guess = nominal_x - dx, nominal_y - dy
 

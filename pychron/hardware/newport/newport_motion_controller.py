@@ -187,7 +187,7 @@ ABLE TO USE THE HARDWARE JOYSTICK
             axis = ax.name
 
         cmd = self._build_query('TP', xx=aid)
-        f = self.ask(cmd, verbose=True)
+        f = self.ask(cmd, verbose=False)
 
         aname = '_{}_position'.format(axis)
         if f != 'simulation' and f is not None:
