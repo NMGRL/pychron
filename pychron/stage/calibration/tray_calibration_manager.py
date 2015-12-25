@@ -108,7 +108,6 @@ class TrayCalibrationManager(Loggable):
     def save_calibration(self, name=None, clear_corrections=True):
         pickle_path = os.path.join(paths.hidden_dir, '{}_stage_calibration')
         if name is None:
-            # delete the corrections file
             name = self.parent.stage_map_name
 
         ca = self.canvas.calibration_item
@@ -118,7 +117,6 @@ class TrayCalibrationManager(Loggable):
             ca.style = self.style
             p = pickle_path.format(name)
             self.info('saving calibration {}'.format(p))
-            print id(ca), ca.rotation
             with open(p, 'wb') as f:
                 pickle.dump(ca, f)
 
@@ -198,6 +196,8 @@ class TrayCalibrationManager(Loggable):
                                             'calibration_step', remove=True)
             self.calibrator.on_trait_change(self._handle_rotation,
                                             'rotation', remove=True)
+            self.calibrator.on_trait_change(self._handle_save,
+                                            'save_event', remove=True)
 
     def _calibrator_factory(self):
         self._destroy_calibrator()
@@ -214,16 +214,21 @@ class TrayCalibrationManager(Loggable):
         cal = klass(**kw)
         cal.on_trait_change(self._handle_step, 'calibration_step')
         cal.on_trait_change(self._handle_rotation, 'rotation')
+        cal.on_trait_change(self._handle_save, 'save_event')
         return cal
+
+    def _handle_save(self, obj):
+        cc = obj.get('clear_corrections', True)
+        self.save_calibration(clear_corrections=cc)
 
     def _handle_step(self, new):
         self.calibration_step = new
 
     def _handle_rotation(self, new):
         self.rotation = new
-    # ===============================================================================
-    # property get/set
-    # ===============================================================================
+        # ===============================================================================
+        # property get/set
+        # ===============================================================================
         # @cached_property
         # def _get_calibrator(self):
         #     kw = dict(name=self.parent.stage_map_name or '',

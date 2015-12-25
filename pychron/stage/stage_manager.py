@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Event, Str, List, Instance, Bool, String
+from traits.api import Event, Str, List, Instance, String
 # ============= standard library imports ========================
 import os
 import pickle
@@ -48,7 +48,7 @@ class BaseStageManager(Manager):
     temp_position = None
     temp_hole = None
 
-    use_modified = Bool(True)  # set true to use modified affine calculation
+    # use_modified = Bool(True)  # set true to use modified affine calculation
 
     def goto_position(self, pos):
         raise NotImplementedError
@@ -113,8 +113,7 @@ class BaseStageManager(Manager):
                        'rot={:0.3f}, cpos={} scale={:0.3f}'.format(rot, cpos,
                                                                    scale))
             pos = smap.map_to_calibration(pos, cpos, rot,
-                                          scale=scale,
-                                          use_modified=self.use_modified)
+                                          scale=scale)
 
         return pos
 

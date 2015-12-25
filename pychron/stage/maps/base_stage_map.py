@@ -21,7 +21,8 @@ from traits.api import HasTraits, Str, CFloat, Float, Property, List, Enum
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.core.geometry.affine import AffineTransform
+from pychron.core.geometry.affine import transform_point, \
+    itransform_point
 # from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.loggable import Loggable
@@ -137,40 +138,23 @@ class BaseStageMap(Loggable):
 
     def map_to_uncalibration(self, pos, cpos=None, rot=None, scale=None):
         cpos, rot, scale = self._get_calibration_params(cpos, rot, scale)
-        a = AffineTransform()
-        a.scale(1 / scale, 1 / scale)
-        a.rotate(-rot)
-        a.translate(cpos[0], cpos[1])
-        #        a.translate(-cpos[0], -cpos[1])
-        #        a.translate(*cpos)
-        #        a.rotate(-rot)
-        #        a.translate(-cpos[0], -cpos[1])
+        return itransform_point(pos, cpos, rot, scale)
+        # a = AffineTransform()
+        # a.scale(1 / scale, 1 / scale)
+        # a.rotate(-rot)
+        # a.translate(cpos[0], cpos[1])
+        # #        a.translate(-cpos[0], -cpos[1])
+        # #        a.translate(*cpos)
+        # #        a.rotate(-rot)
+        # #        a.translate(-cpos[0], -cpos[1])
+        #
+        # pos = a.transform(*pos)
+        # return pos
 
-        pos = a.transform(*pos)
-        return pos
-
-    def map_to_calibration(self, pos, cpos=None, rot=None,
-                           use_modified=False,
-                           scale=None,
-                           translate=None):
+    def map_to_calibration(self, pos, cpos=None, rot=None, scale=None):
         cpos, rot, scale = self._get_calibration_params(cpos, rot, scale)
 
-        a = AffineTransform()
-        #         if translate:
-        #             a.translate(*translate)
-
-        #        if scale:
-        a.scale(scale, scale)
-        if use_modified:
-            a.translate(*cpos)
-
-        # print cpos, rot, scale
-        a.rotate(rot)
-        a.translate(-cpos[0], -cpos[1])
-        if use_modified:
-            a.translate(*cpos)
-        pos = a.transform(*pos)
-        return pos
+        return transform_point(pos, cpos, rot, scale)
 
     def get_hole(self, key):
         return next((h for h in self.sample_holes if h.id == str(key)), None)

@@ -24,7 +24,8 @@ import math
 import cPickle as pickle
 # =============local library imports  ==========================
 from pychron.hardware.core.data_helper import make_bitarray
-from pychron.hardware.motion_controller import MotionController, PositionError, TargetPositionError
+from pychron.hardware.motion_controller import MotionController, \
+    TargetPositionError
 from newport_axis import NewportAxis
 from newport_joystick import Joystick
 from newport_group import NewportGroup
@@ -811,24 +812,6 @@ ABLE TO USE THE HARDWARE JOYSTICK
             self._block(axis=block)
         self.parent.canvas.clear_desired_position()
 
-        #    def _block_(self, axis=None, event=None):
-        #        '''
-        #        '''
-        #        if event is not None:
-        #            event.clear()
-        #
-        #        if self.timer:
-        #            #timer is calling self._moving_
-        #            func = lambda: self.timer.isRunning()
-        #        else:
-        #            func = lambda: self._moving_(axis=axis)
-        #
-        #        while func():
-        #            time.sleep(0.25)
-        #
-        #        if event is not None:
-        #            event.set()
-
     def _moving(self, axis=None, verbose=False):
         """
             use TX to read the controllers state.
@@ -867,8 +850,8 @@ ABLE TO USE THE HARDWARE JOYSTICK
         return moving
 
     def _build_command(self, command, xx=None, nn=None):
-        '''
-        '''
+        """
+        """
         if isinstance(nn, list):
             nn = ','.join([str(n) for n in nn])
 

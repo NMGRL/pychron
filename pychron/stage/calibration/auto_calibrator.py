@@ -19,6 +19,7 @@ from traits.api import Instance, HasTraits, Str, Bool, Float
 # ============= standard library imports ========================
 import time
 from threading import Thread
+from numpy import array, hstack
 # ============= local library imports  ==========================
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.view_util import open_view
@@ -70,7 +71,6 @@ class SemiAutoCalibrator(TrayCalibrator):
 
         elif step == 'Locate Right':
             canvas.calibration_item.set_right(x, y)
-            # self.save(canvas.calibration_item)
             ret = dict(calibration_step='Traverse',
                        clear_corrections=False,
                        rotation=canvas.calibration_item.rotation)
@@ -107,6 +107,7 @@ class SemiAutoCalibrator(TrayCalibrator):
                 if corrected:
                     rrot = calibration.calculate_rotation(*npt)
                     calibration.set_right(*npt)
+                    self.debug('Calculated rotation= {}'.format(rrot))
 
         # locate left
         if self._alive:
@@ -116,6 +117,7 @@ class SemiAutoCalibrator(TrayCalibrator):
                 npt, corrected = self._autocenter(hole)
                 if corrected:
                     lrot = calibration.calculate_rotation(*npt, sense='west')
+                    self.debug('Calculated rotation= {}'.format(lrot))
 
         if self._alive:
             if lrot is None:
@@ -135,7 +137,7 @@ class SemiAutoCalibrator(TrayCalibrator):
             # set rotation
             calibration.rotation = rot
             self.rotation = rot
-            self.save(calibration)
+            self.save_event = {'clear_corrections': False}
 
             # traverse holes
             self._traverse(calibration)
@@ -151,9 +153,11 @@ class SemiAutoCalibrator(TrayCalibrator):
         holes = smap.sample_holes
         results = []
         points = []
-        center = (-calibration.center[0], -calibration.center[1])
+        center = calibration.center
 
-        dxs, dys = [], []
+        # center = (-calibration.center[0], -calibration.center[1])
+
+        dxs, dys = array([]), array([])
         guess = None
         for hi in holes:
             sm.close_open_images()
@@ -162,9 +166,11 @@ class SemiAutoCalibrator(TrayCalibrator):
                 self.info('hole traverse canceled')
                 break
 
-            nominal_x, nominal_y = smap.map_to_calibration(hi.nominal_position, center,
+            nominal_x, nominal_y = smap.map_to_calibration(hi.nominal_position,
+                                                           center,
                                                            calibration.rotation)
             if dxs:
+                dx, dy = dxs.mean(), dys.mean()
                 guess = nominal_x - dx, nominal_y - dy
 
             npt, corrected = self._autocenter(hi, guess=guess)
@@ -174,8 +180,9 @@ class SemiAutoCalibrator(TrayCalibrator):
 
             dx = nominal_x - npt[0]
             dy = nominal_y - npt[1]
-            dxs.append(dx)
-            dys.append(dy)
+            dxs = hstack((dxs[-5:], dx))
+            dys = hstack((dys[-5:], dy))
+
             res = Result(hole_id=hi.id, corrected=corrected,
                          dx=dx, dy=dy)
             results.append(res)

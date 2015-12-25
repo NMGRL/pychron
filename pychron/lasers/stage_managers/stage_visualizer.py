@@ -66,7 +66,9 @@ class StageVisualizer(Loggable):
 
 if __name__ == '__main__':
     from pychron.core.helpers.logger_setup import logging_setup
+    from pychron.paths import paths
 
+    paths.build('_dev')
     logging_setup('sv', use_archiver=False, use_file=False)
 
     p = '/Users/ross/Programming/github/support_pychron/setupfiles/tray_maps' \
@@ -78,11 +80,9 @@ if __name__ == '__main__':
                ((-1.9939, 15.5), False),
                ((0, 15.9512), True)]
 
-
     class CO:
-        rotation = 0
-        center = 0, 0
-
+        rotation = 1
+        center = -2, 0
 
     sv.set_stage_map(sm, results, CO())
 

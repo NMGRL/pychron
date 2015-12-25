@@ -88,10 +88,10 @@ class StageVisualizationCanvas(BaseDataCanvas):
 
     def build_map(self, sm, results, calibration=None):
 
-        cpos = 0, 0
+        center = 0, 0
         rot = 0
         if calibration is not None:
-            cpos = calibration.center
+            center = calibration.center
             rot = calibration.rotation
 
         xmi = 100
@@ -100,9 +100,10 @@ class StageVisualizationCanvas(BaseDataCanvas):
         yma = -100
 
         holes = []
+
         for si in sm.sample_holes:
             x, y = sm.map_to_calibration(si.nominal_position,
-                                         (-cpos[0], -cpos[1]), rot)
+                                         center, rot)
             xmi = min(x, xmi)
             xma = max(x, xma)
             ymi = min(y, ymi)

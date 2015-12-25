@@ -37,7 +37,6 @@ from pychron.core.geometry.convex_hull import convex_hull
 def calc_rotation(x1, y1, x2, y2):
     rise = y2 - y1
     run = x2 - x1
-
     return math.degrees(math.atan2(rise, run))
 
 
@@ -453,11 +452,11 @@ class CalibrationObject(HasTraits):
 
         rot = calc_rotation(self.cx, self.cy, x, y)
         if sense == 'west':
-            rot -= rot
+            rot += 180
         elif sense == 'north':
             rot -= 90
         elif sense == 'south':
-            rot -= 270
+            rot += 90
 
         return rot
 
