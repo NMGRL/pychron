@@ -8,7 +8,7 @@ from pychron.stage.maps.laser_stage_map import LaserStageMap
 
 class StageMapTestCase(unittest.TestCase):
     def setUp(self):
-        p = 'pychron/pyscripts/tests/data/221-hole.txt'
+        p = 'pychron/stage/tests/data/221-hole.txt'
         if not os.path.isfile(p):
             p = './data/221-hole.txt'
 
