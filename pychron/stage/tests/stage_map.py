@@ -1,4 +1,5 @@
 import math
+import os
 import unittest
 
 from pychron.core.geometry.affine import transform_point, itransform_point
@@ -7,7 +8,10 @@ from pychron.stage.maps.laser_stage_map import LaserStageMap
 
 class StageMapTestCase(unittest.TestCase):
     def setUp(self):
-        p = '/Users/ross/Programming/github/support_pychron/setupfiles/tray_maps/221-hole.txt'
+        p = 'pychron/pyscripts/tests/data/221-hole.txt'
+        if not os.path.isfile(p):
+            p = './data/221-hole.txt'
+
         self.sm = LaserStageMap(file_path=p)
 
     def test_generate_interpolation(self):
