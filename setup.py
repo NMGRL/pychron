@@ -7,9 +7,9 @@
 # prevent pycharm from remove multiprocessing during import optimization
 # multiprocessing
 
-from setuptools import setup
-
 import os
+
+from setuptools import setup
 
 os.environ['TRAVIS_CI'] = 'True'
 
@@ -25,7 +25,9 @@ setup(name='pychron',
                   'pychron.experiment.utilities.position_regex',
                   'pychron.experiment.utilities.frequency_generator',
                   'pychron.experiment.utilities.aliquot_numbering',
-                  'pychron.entry.loaders.analysis_loader'],
+                  'pychron.entry.loaders.analysis_loader',
+                  'pychron.core.geometry.affine'
+                  ],
       package_data={'pychron.pyscripts.tests': ['data/*.yaml', 'data/*.py'],
                     'pychron.entry.tests': ['data/*.xls', 'data/*.db'],
                     'pychron.processing.tests': ['data/*.db']},
@@ -35,8 +37,10 @@ setup(name='pychron',
                 'pychron.external_pipette',
                 'pychron.experiment.conditional',
                 'pychron.pyscripts',
+                'pychron.stage.maps',
 
                 # test packages
+                'pychron.stage.tests',
                 'pychron.core.regression.tests',
                 'pychron.processing.tests',
                 'pychron.external_pipette.tests',

@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+
 from traits.api import Instance, HasTraits, Str, Bool, Float
 # ============= standard library imports ========================
 import time
@@ -45,6 +46,9 @@ class SemiAutoCalibrator(TrayCalibrator):
 
     _alive = False
     stage_map = Instance('pychron.stage.maps.base_stage_map.BaseStageMap')
+
+    def isAlive(self):
+        return self._alive
 
     def handle(self, step, x, y, canvas):
         ret = None
@@ -153,17 +157,19 @@ class SemiAutoCalibrator(TrayCalibrator):
         sm = self.stage_manager
         smap = self.stage_map
 
-        holes = smap.sample_holes
+        holes = smap.row_ends(alternate=True)
+
         results = []
         points = []
         center = calibration.center
 
         dxs, dys = array([]), array([])
         guess = None
+
         for hi in holes:
             sm.close_open_images()
 
-            if not self.isAlive():
+            if not self._alive():
                 self.info('hole traverse canceled')
                 break
 
@@ -185,9 +191,12 @@ class SemiAutoCalibrator(TrayCalibrator):
             dys = hstack((dys[-5:], dy))
 
             res = Result(hole_id=hi.id, corrected=corrected,
-                         dx=dx, dy=dy)
+                         dx=dx, dy=dy,
+                         nx=nominal_x, ny=nominal_y)
             results.append(res)
             points.append((npt, corrected))
+
+        smap.generate_row_interpolated_corrections()
 
         sm.close_open_images()
 
@@ -195,6 +204,7 @@ class SemiAutoCalibrator(TrayCalibrator):
         sv = StageVisualizer()
         sv.results = results
         sv.set_stage_map(self.stage_map, points, calibration)
+        sv.save()
 
         invoke_in_main_thread(open_view, sv)
 
@@ -218,9 +228,6 @@ class SemiAutoCalibrator(TrayCalibrator):
                                                alpha_enabled=False,
                                                auto_close_image=False)
         return npt, corrected
-
-    def isAlive(self):
-        return self._alive
 
     def _check_auto_calibration(self):
         smap = self.stage_map

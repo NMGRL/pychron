@@ -2,9 +2,129 @@ import math
 import unittest
 
 from pychron.core.geometry.affine import transform_point, itransform_point
+from pychron.stage.maps.laser_stage_map import LaserStageMap
 
 
 class StageMapTestCase(unittest.TestCase):
+    def setUp(self):
+        p = '/Users/ross/Programming/github/support_pychron/setupfiles/tray_maps/221-hole.txt'
+        self.sm = LaserStageMap(file_path=p)
+
+    def test_generate_interpolation(self):
+        sm = self.sm
+        h1 = sm.get_hole('1')
+        h3 = sm.get_hole('3')
+        h5 = sm.get_hole('5')
+
+        h1.corrected = True
+        h1.x_cor = 0
+        h1.y_cor = 0
+
+        h3.corrected = True
+        h3.x_cor = 2
+        h3.y_cor = 4
+
+        h5.corrected = True
+        h5.x_cor = 4
+        h5.y_cor = 8
+
+        sm.generate_row_interpolated_corrections()
+
+        h2 = sm.get_hole('2')
+        h4 = sm.get_hole('4')
+        self.assertTupleEqual((1, 2, 3, 6),
+                              (h2.x_cor, h2.y_cor,
+                               h4.x_cor, h4.y_cor,))
+
+    def test_generate_interpolation_no_mid(self):
+        sm = self.sm
+        h1 = sm.get_hole('1')
+        h5 = sm.get_hole('5')
+
+        h1.corrected = True
+        h1.x_cor = 0
+        h1.y_cor = 0
+
+        h5.corrected = True
+        h5.x_cor = 4
+        h5.y_cor = 8
+
+        sm.generate_row_interpolated_corrections()
+
+        h2 = sm.get_hole('2')
+        h4 = sm.get_hole('4')
+        self.assertTupleEqual((1, 2, 3, 6),
+                              (h2.x_cor, h2.y_cor,
+                               h4.x_cor, h4.y_cor,))
+
+    def test_generate_interpolation_no_end(self):
+        sm = self.sm
+        h1 = sm.get_hole('1')
+        h3 = sm.get_hole('3')
+
+        h1.corrected = True
+        h1.x_cor = 0
+        h1.y_cor = 0
+
+        h3.corrected = True
+        h3.x_cor = 2
+        h3.y_cor = 4
+
+        sm.generate_row_interpolated_corrections()
+
+        h2 = sm.get_hole('2')
+        h4 = sm.get_hole('4')
+        self.assertTupleEqual((1, 2, 3, 6),
+                              (h2.x_cor, h2.y_cor,
+                               h4.x_cor, h4.y_cor,))
+
+    def test_generate_interpolation_no_start(self):
+        sm = self.sm
+        h3 = sm.get_hole('3')
+        h5 = sm.get_hole('5')
+
+        h3.corrected = True
+        h3.x_cor = 2
+        h3.y_cor = 4
+
+        h5.corrected = True
+        h5.x_cor = 4
+        h5.y_cor = 8
+
+        sm.generate_row_interpolated_corrections()
+
+        h2 = sm.get_hole('2')
+        h4 = sm.get_hole('4')
+        self.assertTupleEqual((1, 2, 3, 6),
+                              (h2.x_cor, h2.y_cor,
+                               h4.x_cor, h4.y_cor,))
+
+    def test_generate_interpolation_no_points(self):
+        sm = self.sm
+
+        sm.generate_row_interpolated_corrections()
+
+        h2 = sm.get_hole('2')
+        h4 = sm.get_hole('4')
+        self.assertTupleEqual((0, 0, 0, 0),
+                              (h2.x_cor, h2.y_cor,
+                               h4.x_cor, h4.y_cor,))
+
+    def test_row_ends(self):
+        holes = list(self.sm.row_ends())
+        hs = [hi.id for hi in holes[:6]]
+
+        self.assertListEqual(['1', '5', '6', '14', '15', '25'], hs)
+
+    def test_row_ends2(self):
+        holes = list(self.sm.row_ends(alternate=True))
+
+        hs = [hi.id for hi in holes[:6]]
+
+        self.assertListEqual(['1', '5', '14', '6', '15', '25'], hs)
+
+
+class TransformTestCase(unittest.TestCase):
     def test_itransform_point_ntran_nrot(self):
         cpos = 0, 0
         rot = 0

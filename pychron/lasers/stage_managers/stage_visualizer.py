@@ -15,12 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+
+from chaco.pdf_graphics_context import PdfPlotGraphicsContext
 from enable.component_editor import ComponentEditor
-from traits.api import Instance, List, Property
-from traitsui.api import View, HGroup, UItem, TabularEditor
+from traits.api import Instance, List, Property, Button, Str
+from traitsui.api import View, HGroup, UItem, TabularEditor, VGroup
 from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.helpers.filetools import unique_date_path
 from pychron.core.helpers.formatting import floatfmt
 from pychron.loggable import Loggable
 from pychron.canvas.canvas2D.stage_visualization_canvas import \
@@ -49,16 +52,43 @@ class ResultsAdapter(TabularAdapter):
 class StageVisualizer(Loggable):
     canvas = Instance(StageVisualizationCanvas, ())
     results = List
+    stage_map_name = Str
+
+    save_button = Button('Save')
 
     def set_stage_map(self, smap, points, calibration):
+        self.stage_map_name = smap.name
         self.canvas.build_map(smap, points, calibration)
 
+    def save(self):
+        root = paths.corrections_dir
+        base = self.stage_map_name
+        p = unique_date_path(root, base, extension='')
+        gp = '{}.{}'.format(p, 'pdf')
+        gc = PdfPlotGraphicsContext(filename=gp,
+                                    pagesize='letter')
+
+        gc.render_component(self.canvas)
+        gc.save(p)
+
+        tp = '{}.{}'.format(p, 'txt')
+        with open(tp, 'w') as wfile:
+            for r in self.results:
+                args = r.nominal_x, r.nominal_y, r.dx, r.dy
+                args = map(lambda x: '{:0.5f}'.format, args)
+                line = ','.join(r.hole_id, r.corrected, *args)
+                wfile.write('{}\n'.format(line))
+
+    def _save_button_fired(self):
+        self.save()
+
     def traits_view(self):
-        v = View(
+        v = View(VGroup(
                 HGroup(UItem('canvas', editor=ComponentEditor(width=550,
                                                               height=550)),
                        UItem('results', editor=TabularEditor(
                                adapter=ResultsAdapter()))),
+                UItem('save_button')),
                 title='Stage Visualizer',
                 resizable=True)
         return v
@@ -80,9 +110,11 @@ if __name__ == '__main__':
                ((-1.9939, 15.5), False),
                ((0, 15.9512), True)]
 
+
     class CO:
         rotation = 1
         center = -2, 0
+
 
     sv.set_stage_map(sm, results, CO())
 

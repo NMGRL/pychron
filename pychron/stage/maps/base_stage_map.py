@@ -16,9 +16,9 @@
 
 # ============= enthought library imports =======================
 import os
+from itertools import groupby
 
 from traits.api import HasTraits, Str, CFloat, Float, Property, List, Enum
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.geometry.affine import transform_point, \
@@ -122,19 +122,38 @@ class BaseStageMap(Loggable):
 
             self._load_hook()
 
+    def row_dict(self):
+        return {k: list(v) for k, v in self._grouped_rows()}
+
+    def row_ends(self, alternate=False):
+        for i, (g, ri) in enumerate(self._grouped_rows()):
+            ri = list(ri)
+
+            a, b = ri[0], ri[-1]
+            if alternate and i % 2:
+                a, b = b, a
+
+            yield a
+            yield b
+
     def get_calibration_hole(self, h):
         d = 'north', 'east', 'south', 'west'
         try:
             idx = d.index(h)
         except IndexError, e:
-            self.debug('^^^^^^^^^^^^^^^^^^^ index error: {}, {}, {}'.format(d, h, e))
+            self.debug(
+                    '^^^^^^^^^^^^^^^^^^^ index error: {}, {}, {}'.format(d, h,
+                                                                         e))
             return
 
         try:
             key = self.calibration_holes[idx]
             return self.get_hole(key.strip())
         except ValueError, e:
-            self.debug('^^^^^^^^^^^^^^^^^^^ value error: {}, {}, {}'.format(idx, key, e))
+            self.debug(
+                    '^^^^^^^^^^^^^^^^^^^ value error: {}, {}, {}'.format(idx,
+                                                                         key,
+                                                                         e))
 
     def map_to_uncalibration(self, pos, cpos=None, rot=None, scale=None):
         cpos, rot, scale = self._get_calibration_params(cpos, rot, scale)
@@ -190,6 +209,13 @@ Check that the file is UTF-8 and Unix (LF) linefeed'''.format(self.name,
         pass
 
     # private
+    def _grouped_rows(self):
+        def func(x):
+            return x.y
+
+        holes = sorted(self.sample_holes, key=func, reverse=True)
+        return groupby(holes, key=func)
+
     def _load_hook(self):
         pass
 
