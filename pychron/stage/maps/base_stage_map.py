@@ -23,8 +23,6 @@ from traits.api import HasTraits, Str, CFloat, Float, Property, List, Enum
 # ============= local library imports  ==========================
 from pychron.core.geometry.affine import transform_point, \
     itransform_point
-# from pychron.core.ui.gui import invoke_in_main_thread
-from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.loggable import Loggable
 
 
@@ -186,20 +184,22 @@ class BaseStageMap(Loggable):
                      for h in self.sample_holes if h.id == str(key)), None)
 
     def check_valid_hole(self, key):
+        msg = None
         if self.sample_holes:
             hole = self.get_hole(key)
             if hole is None:
-                msg = '''{} is not a valid hole for tray '{}'. '''.format(key,
-                                                                          self.name)
-            else:
-                return True
+                msg = '{} is not a valid hole for tray "{}".'.format(key,
+                                                                     self.name)
         else:
-            msg = '''There a no holes in tray "{}". This is most likely because the file "{}" was not
-properly parsed. \n\n
+            msg = '''There a no holes in tray "{}". This is most likely because
+the file "{}" was not properly parsed. \n\n
 Check that the file is UTF-8 and Unix (LF) linefeed'''.format(self.name,
                                                               self.file_path)
-
-        invoke_in_main_thread(self.warning_dialog, msg)
+        if msg:
+            from pychron.core.ui.gui import invoke_in_main_thread
+            invoke_in_main_thread(self.warning_dialog, msg)
+        else:
+            return True
 
     def get_corrected_hole_pos(self, key):
         return next(((h.x_cor, h.y_cor)
