@@ -302,7 +302,7 @@ ABLE TO USE THE HARDWARE JOYSTICK
 
             self.debug('doing linear move')
             # self.timer = self.timer_factory()
-            self._linear_move_(dict(x=x, y=y), **kw)
+            self._linear_move(dict(x=x, y=y), **kw)
         else:
             self.info('displacement of move too small {} < {}'.format(d, tol))
 
@@ -540,7 +540,8 @@ ABLE TO USE THE HARDWARE JOYSTICK
             if velocity is not None:
                 self.groupobj.velocity = velocity
 
-    def configure_group(self, group, displacement=None, velocity=None, force=False, **kw):
+    def configure_group(self, group, displacement=None, velocity=None,
+                        force=False, **kw):
         self.debug('configuring group')
         gobj = self.groupobj
         if not gobj and group:
@@ -553,7 +554,8 @@ ABLE TO USE THE HARDWARE JOYSTICK
                 change = abs(gobj.velocity - velocity) > 0.001
                 gobj.velocity = velocity
             else:
-                change = self._check_motion_parameters(displacement, gobj, force=force)
+                change = self._check_motion_parameters(displacement, gobj,
+                                                       force=force)
 
         if self.mode == 'grouped':
             if not group:
@@ -726,7 +728,9 @@ ABLE TO USE THE HARDWARE JOYSTICK
         if displacement <= 0:
             return
         if obj.calculate_parameters:
-            change, nv, ac, dc = self.motion_profiler.check_motion(displacement, obj, force=force)
+            change, nv, ac, dc = self.motion_profiler.check_motion(displacement,
+                                                                   obj,
+                                                                   force=force)
             self.debug('calculated {} {} {} {}'.format(change, nv, ac, dc))
             if change:
                 obj.trait_set(acceleration=ac,
@@ -747,7 +751,8 @@ ABLE TO USE THE HARDWARE JOYSTICK
             if a.id == aid:
                 return a
 
-    def _linear_move_(self, kwargs, block=False, grouped_move=True, sign_correct=True, **kw):
+    def _linear_move(self, kwargs, block=False, grouped_move=True,
+                     sign_correct=True, **kw):
         """
         """
 

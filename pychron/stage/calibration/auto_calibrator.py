@@ -217,13 +217,16 @@ class SemiAutoCalibrator(TrayCalibrator):
 
     def _autocenter(self, hi, guess=None):
         sm = self.stage_manager
+        kw = {'block': True, 'force': True}
         if guess is None:
             x, y = hi.x, hi.y
             # move to nominal hole position
-            sm.linear_move(x, y, use_calibration=True, block=True)
+            kw['use_calibration'] = True
         else:
             x, y = guess
-            sm.linear_move(x, y, use_calibration=False, block=True)
+            kw['use_calibration'] = False
+
+        sm.linear_move(x, y, **kw)
         # delay for image refresh
         time.sleep(0.5)
         # autocenter
