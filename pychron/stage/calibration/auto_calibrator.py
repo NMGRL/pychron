@@ -20,7 +20,7 @@ from traits.api import Instance, HasTraits, Str, Bool, Float
 # ============= standard library imports ========================
 import time
 from threading import Thread
-from numpy import array, hstack
+from numpy import array, hstack, average
 # ============= local library imports  ==========================
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.view_util import open_view
@@ -165,7 +165,7 @@ class SemiAutoCalibrator(TrayCalibrator):
 
         dxs, dys = array([]), array([])
         guess = None
-
+        weights = [1, 2, 3, 4, 5]
         for hi in holes:
             sm.close_open_images()
 
@@ -176,8 +176,12 @@ class SemiAutoCalibrator(TrayCalibrator):
             nominal_x, nominal_y = smap.map_to_calibration(hi.nominal_position,
                                                            center,
                                                            calibration.rotation)
-            if len(dxs):
-                dx, dy = dxs.mean(), dys.mean()
+
+            n = len(dxs)
+            if n:
+                lim = min(5, n)
+                dx = average(dxs, weights=weights[:lim])
+                dy = average(dys, weights=weights[:lim])
                 guess = nominal_x - dx, nominal_y - dy
 
             npt, corrected = self._autocenter(hi, guess=guess)
