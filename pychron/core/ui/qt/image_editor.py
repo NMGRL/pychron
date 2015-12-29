@@ -95,7 +95,6 @@ class _ImageEditor(Editor):
         self.sync_value(self.factory.refresh, 'refresh', 'from')
 
     def _refresh_fired(self):
-        print 'reasfasd'
         self.update_editor()
 
     def update_editor(self):

@@ -141,6 +141,7 @@ class Paths(object):
     data_det_ic_dir = None
     sample_image_dir = None
     sample_image_backup_dir = None
+    corrections_dir = None
 
     experiment_dataset_dir = None
     project_dir = None
@@ -340,7 +341,7 @@ class Paths(object):
         self.labbook_dir = join(self.data_dir, 'labbook')
         self.sample_image_dir = join(self.data_dir, 'sample_image_dir')
         self.sample_image_backup_dir = join(self.sample_image_dir, 'backup')
-
+        self.corrections_dir = join(self.data_dir, 'stage_corrections')
         self.dvc_dir = join(self.data_dir, '.dvc')
         # self.project_dir = join(self.dvc_dir, 'projects')
         self.experiment_dataset_dir = join(self.dvc_dir, 'experiments')

@@ -63,7 +63,7 @@ class HoleOverlay(AbstractOverlay):
 
         cpts = comp.map_screen([(x, y) for (x, y), _ in choles])
         fpts = comp.map_screen([(x, y) for (x, y), _ in fholes])
-        self._cached_result_pts = (cpts, (0, 0, 0), 1), (fpts, (1, 0, 0), 3)
+        self._cached_result_pts = (cpts, (0, 1, 1), 2), (fpts, (1, 0, 0), 3)
 
     def _calculate_cached_points(self, comp):
         holes = self.holes
@@ -85,6 +85,8 @@ class HoleOverlay(AbstractOverlay):
 
 class StageVisualizationCanvas(BaseDataCanvas):
     aspect_ratio = 1.0
+    use_zoom = False
+    use_pan = False
 
     def build_map(self, sm, results, calibration=None):
 
@@ -122,7 +124,7 @@ class StageVisualizationCanvas(BaseDataCanvas):
 
         self.set_mapper_limits('x', (xmi, xma), pad=pa)
         self.set_mapper_limits('y', (ymi, yma), pad=pa)
-        # self.invalidate_and_redraw()
+        self.invalidate_and_redraw()
 
 # def map_dimension(self, d):
 #        (w, h), (ox, oy) = self.map_screen([(d, d), (0, 0)])

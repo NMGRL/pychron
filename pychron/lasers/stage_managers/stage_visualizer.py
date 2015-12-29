@@ -30,6 +30,7 @@ from pychron.canvas.canvas2D.stage_visualization_canvas import \
     StageVisualizationCanvas
 from pychron.pychron_constants import LIGHT_RED
 from pychron.stage.maps.laser_stage_map import LaserStageMap
+from pychron.paths import paths
 
 
 class ResultsAdapter(TabularAdapter):
@@ -68,15 +69,22 @@ class StageVisualizer(Loggable):
         gc = PdfPlotGraphicsContext(filename=gp,
                                     pagesize='letter')
 
-        gc.render_component(self.canvas)
+        from reportlab.lib.pagesizes import letter
+        bounds = self.canvas.bounds
+        self.canvas.do_layout(size=letter, force=True)
+
+        gc.render_component(self.canvas, valign='center')
         gc.save(p)
+        self.canvas.do_layout(size=bounds, force=True)
+        self.canvas.invalidate_and_redraw()
 
         tp = '{}.{}'.format(p, 'txt')
         with open(tp, 'w') as wfile:
             for r in self.results:
-                args = r.nominal_x, r.nominal_y, r.dx, r.dy
-                args = map(lambda x: '{:0.5f}'.format, args)
-                line = ','.join(r.hole_id, r.corrected, *args)
+                args = r.nx, r.ny, r.dx, r.dy
+                args = map(lambda x: '{:0.5f}'.format(x), args)
+                args = [r.hole_id, str(r.corrected)] + args
+                line = ','.join(args)
                 wfile.write('{}\n'.format(line))
 
     def _save_button_fired(self):
@@ -96,13 +104,14 @@ class StageVisualizer(Loggable):
 
 if __name__ == '__main__':
     from pychron.core.helpers.logger_setup import logging_setup
-    from pychron.paths import paths
 
     paths.build('_dev')
     logging_setup('sv', use_archiver=False, use_file=False)
 
     p = '/Users/ross/Programming/github/support_pychron/setupfiles/tray_maps' \
         '/221-hole.txt'
+    p='/Users/argonlab3/Pychron_co2/setupfiles/tray_maps/221-small_hole.txt'
+
     sm = LaserStageMap(file_path=p)
 
     sv = StageVisualizer()

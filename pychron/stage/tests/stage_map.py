@@ -127,6 +127,20 @@ class StageMapTestCase(unittest.TestCase):
 
         self.assertListEqual(['1', '5', '14', '6', '15', '25'], hs)
 
+    def test_circumference_holes(self):
+        holes = list(self.sm.circumference_holes())
+        hs = [hi.id for hi in holes[:6]]
+        self.assertListEqual(['1', '6', '15', '26', '39', '54'], hs)
+
+    def test_circumference_holes2(self):
+        holes = list(self.sm.circumference_holes())
+        hs = [hi.id for hi in holes[-6:]]
+        self.assertListEqual(['68', '53', '38', '25', '14', '5'], hs)
+
+    def test_mid_holes(self):
+        holes = list(self.sm.mid_holes())
+        hs = [hi.id for hi in holes[:6]]
+        self.assertListEqual(['3', '10', '20', '32', '46', '61'], hs)
 
 class TransformTestCase(unittest.TestCase):
     def test_itransform_point_ntran_nrot(self):

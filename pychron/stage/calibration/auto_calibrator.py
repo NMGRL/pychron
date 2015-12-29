@@ -33,6 +33,8 @@ class Result(HasTraits):
     corrected = Bool
     dx = Float
     dy = Float
+    nx = Float
+    ny = Float
 
 
 class SemiAutoCalibrator(TrayCalibrator):
@@ -157,7 +159,9 @@ class SemiAutoCalibrator(TrayCalibrator):
         sm = self.stage_manager
         smap = self.stage_map
 
-        holes = smap.row_ends(alternate=True)
+        # holes = smap.row_ends(alternate=True)
+        holes = list(smap.circumference_holes())
+        holes.extend(smap.mid_holes())
 
         results = []
         points = []
@@ -165,11 +169,11 @@ class SemiAutoCalibrator(TrayCalibrator):
 
         dxs, dys = array([]), array([])
         guess = None
-        weights = [1, 2, 3, 4, 5]
+        weights = [1, 2, 3, 4, 5, 6]
         for hi in holes:
             sm.close_open_images()
 
-            if not self._alive():
+            if not self._alive:
                 self.info('hole traverse canceled')
                 break
 
@@ -179,7 +183,7 @@ class SemiAutoCalibrator(TrayCalibrator):
 
             n = len(dxs)
             if n:
-                lim = min(5, n)
+                lim = min(6, n)
                 dx = average(dxs, weights=weights[:lim])
                 dy = average(dys, weights=weights[:lim])
                 guess = nominal_x - dx, nominal_y - dy

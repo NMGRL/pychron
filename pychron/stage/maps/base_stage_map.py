@@ -123,7 +123,7 @@ class BaseStageMap(Loggable):
     def row_dict(self):
         return {k: list(v) for k, v in self._grouped_rows()}
 
-    def row_ends(self, alternate=False):
+    def row_ends(self, include_mid=False, alternate=False):
         for i, (g, ri) in enumerate(self._grouped_rows()):
             ri = list(ri)
 
@@ -132,7 +132,23 @@ class BaseStageMap(Loggable):
                 a, b = b, a
 
             yield a
+            if include_mid:
+                yield ri[len(ri)/2]
             yield b
+
+    def circumference_holes(self):
+        for i, (g, ri) in enumerate(self._grouped_rows()):
+            ri = list(ri)
+            yield ri[0]
+
+        for i, (g, ri) in enumerate(self._grouped_rows(reverse=False)):
+            ri = list(ri)
+            yield ri[-1]
+
+    def mid_holes(self):
+        for i, (g, ri) in enumerate(self._grouped_rows()):
+            ri = list(ri)
+            yield ri[len(ri)/2]
 
     def get_calibration_hole(self, h):
         d = 'north', 'east', 'south', 'west'
@@ -209,11 +225,11 @@ Check that the file is UTF-8 and Unix (LF) linefeed'''.format(self.name,
         pass
 
     # private
-    def _grouped_rows(self):
+    def _grouped_rows(self, reverse=True):
         def func(x):
             return x.y
 
-        holes = sorted(self.sample_holes, key=func, reverse=True)
+        holes = sorted(self.sample_holes, key=func, reverse=reverse)
         return groupby(holes, key=func)
 
     def _load_hook(self):
