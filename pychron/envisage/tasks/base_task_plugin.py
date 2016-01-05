@@ -17,9 +17,9 @@
 # ============= enthought library imports =======================
 import os
 
+from envisage.service_offer import ServiceOffer
 from envisage.ui.tasks.task_extension import TaskExtension
 from traits.api import List
-from envisage.service_offer import ServiceOffer
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -48,8 +48,19 @@ class BaseTaskPlugin(BasePlugin):
 
     _tests = None
 
+    def _preferences_factory(self, *names):
+        ps = []
+        for ni in names:
+            pp = self._make_preferences_path(ni)
+            if pp:
+                ps.append(pp)
+
+        return ps
+
     def _make_preferences_path(self, name):
-        return 'file://{}'.format(os.path.join(paths.preferences_dir, add_extension(name, '.ini')))
+        p = os.path.join(paths.preferences_dir, add_extension(name, '.ini'))
+        if os.path.isfile(p):
+            return 'file://{}'.format(p)
 
     def service_offer_factory(self, **kw):
         return ServiceOffer(**kw)

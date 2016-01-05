@@ -15,19 +15,21 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Int, on_trait_change, Bool, Instance, Event, Color
 from pyface.constant import CANCEL, NO
 from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter, Tabbed
 from pyface.timer.do_later import do_after
+from traits.api import Int, on_trait_change, Bool, Instance, Event, Color
+
 # ============= standard library imports ========================
 import os
 import xlrd
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import add_extension, backup
-from pychron.core.ui.preference_binding import color_bind_preference, extract_color, toTuple
+from pychron.core.ui.preference_binding import color_bind_preference, toTuple
 from pychron.envisage.tasks.editor_task import EditorTask
 from pychron.envisage.tasks.pane_helpers import ConsolePane
 from pychron.experiment.experiment_launch_history import update_launch_history
+from pychron.experiment.experimentor import Experimentor
 from pychron.experiment.queue.base_queue import extract_meta
 from pychron.experiment.tasks.experiment_editor import ExperimentEditor, UVExperimentEditor
 from pychron.experiment.tasks.experiment_panes import LoggerPane
@@ -181,7 +183,8 @@ class ExperimentEditorTask(EditorTask):
 
         # del manager. fixes problem of multiple experiments being started
         # closed tasks were still receiving execute_event(s)
-        del self.manager
+            # del self.manager
+            # self.manager = None
 
     def bind_preferences(self):
         # notifications
@@ -641,6 +644,28 @@ class ExperimentEditorTask(EditorTask):
     # ===============================================================================
     # default/factory
     # ===============================================================================
+    def _manager_default(self):
+        from pychron.envisage.initialization.initialization_parser import \
+            InitializationParser
+
+        ip = InitializationParser()
+        plugin = ip.get_plugin('Experiment', category='general')
+        mode = ip.get_parameter(plugin, 'mode')
+
+        man = Experimentor(application=self.application,
+                           mode=mode)
+
+        iso = 'pychron.database.isotope_database_manager.IsotopeDatabaseManager'
+        manager = self.application.get_service(iso)
+
+        dvc = self.application.get_service('pychron.dvc.dvc.DVC')
+        man.dvc = dvc
+        man.iso_db_manager = manager
+        man.executor.set_managers()
+        man.executor.bind_preferences()
+
+        return man
+
     def _pattern_maker_view_factory(self):
         from pychron.lasers.pattern.pattern_maker_view import PatternMakerView
 
