@@ -1,8 +1,8 @@
 
 __author__ = 'ross'
 
-import unittest
 import os
+import unittest
 
 use_logger = False
 
@@ -17,7 +17,8 @@ def suite():
     if use_logger:
         from pychron.core.helpers.logger_setup import logging_setup
         logging_setup('unittests')
-
+    from pychron.stage.tests.stage_map import StageMapTestCase, \
+        TransformTestCase
     from pychron.entry.tests.sample_loader import SampleLoaderTestCase
     from pychron.core.helpers.tests.floatfmt import FloatfmtTestCase
     from pychron.processing.tests.analysis_modifier import AnalysisModifierTestCase
@@ -45,7 +46,9 @@ def suite():
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
 
-    tests = (SampleLoaderTestCase,
+    tests = (StageMapTestCase,
+             TransformTestCase,
+             SampleLoaderTestCase,
              AnalysisModifierTestCase,
              BackupTestCase,
              MassSpecIrradExportTestCase,

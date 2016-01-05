@@ -20,41 +20,38 @@ from scipy import linalg
 
 
 class AffineTransform(object):
-    '''
-        affine transform 
-        
+    """
+        affine transform
+
         cumulative transform using augmented matrix A
-        
-    '''
+
+    """
 
     def __init__(self):
-        self.A = array([[1, 0, 0],
-                        [0, 1, 0],
-                        [0, 0, 1]])
         self.A = identity(3)
 
     def translate(self, tx, ty):
-        '''
+        """
            translation matrix
            T=[1 0 tx
               0 1 ty
               0 0 1]
-        '''
+        """
         T = identity(3)
         T[0, 2] = tx
         T[1, 2] = ty
         self.A = self.A.dot(T)
 
     def rotate(self, theta):
-        '''
+        """
             counter clockwise rotation
-            
+
             rotation matrix
-            R=[cos(t)  -si(t)  0
+            R=[cos(t)  -sin(t)  0
                sin(t)  cos(t)  0
-               0       0       1] 
-            
-        '''
+               0       0       1]
+
+        """
         theta = radians(theta)
         co = cos(theta)
         si = sin(theta)
@@ -65,25 +62,25 @@ class AffineTransform(object):
         self.A = self.A.dot(R)
 
     def scale(self, sx, sy):
-        '''
-            scale matrix 
+        """
+            scale matrix
             S= [sx  0  0
                 0  sy  0
                 0  0   1]
-        '''
+        """
         S = identity(3)
         S[0, 0] = sx
         S[1, 1] = sy
         self.A = self.A.dot(S)
 
     def shear(self, hx, hy):
-        '''
+        """
         shear matrix
         H=[1 hx 0
            hy 1 0
            0  0 1
-            
-        '''
+
+        """
         H = identity(3)
         H[0, 1] = hx
         H[1, 0] = hy
@@ -98,6 +95,26 @@ class AffineTransform(object):
         return array([[x], [y], [1]])
 
 
+def transform_point(pos, cpos, rot, scale):
+    a = AffineTransform()
+    a.scale(scale, scale)
+    a.translate(cpos[0], cpos[1])
+    a.rotate(rot)
+
+    pos = a.transform(*pos)
+    return pos
+
+
+def itransform_point(pos, cpos, rot, scale):
+    a = AffineTransform()
+    a.scale(1 / scale, 1 / scale)
+    a.rotate(-rot)
+    a.translate(-cpos[0], -cpos[1])
+
+    pos = a.transform(*pos)
+    return pos
+
+
 '''
     Programming Computer Vision with Python:
     Tools and algorithms for analyzing images
@@ -105,30 +122,30 @@ class AffineTransform(object):
 
 
 def calculate_rigid_transform(refpoints, points):
-    '''
+    """
         A=[[x1 -y1  1 0]
-           [y1  x1  0 1]           
+           [y1  x1  0 1]
            [x2 -y2  1 0]
            ...
            [yn  xn  0 1]]
-        
+
         y=[[x1]
            [y1]
            [x2]
            [y2]
            ...
-           [xn]           
-           [yn]           
+           [xn]
+           [yn]
            ]
-           
-        return 
+
+        return
             s: scale
             theta: angle of rotation in degrees
-            
+
             T: translation vector (tx,ty).  float tuple
-            err: root mean square error 
-             
-    '''
+            err: root mean square error
+
+    """
 
     # rows = []
     # ys = []
@@ -148,7 +165,7 @@ def calculate_rigid_transform(refpoints, points):
     # print A
     #    print y
     soln = linalg.lstsq(A, y)
-#    print soln
+    #    print soln
     a, b, tx, ty = soln[0]
     tx = float(tx[0])
     ty = float(ty[0])
@@ -190,7 +207,6 @@ class RigidTransformTest(unittest.TestCase):
         # print points
         f, t, c, e = calculate_rigid_transform(refpoints, points)
         self.assertLess(e, 1e-10)
-
 
 # ============= EOF ====================================
 # import math
@@ -300,4 +316,3 @@ class RigidTransformTest(unittest.TestCase):
 #       n = af.transform(px, py)
 #       self.assertEqual(tuple(s), n)
 #        af.translate(theta)
-

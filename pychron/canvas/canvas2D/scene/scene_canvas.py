@@ -27,7 +27,7 @@ from pychron.canvas.canvas2D.scene.scene import Scene
 
 
 class SceneCanvas(BaseDataCanvas):
-    scene = Instance(Scene)
+    scene = Instance(Scene, ())
 
     def __init__(self, *args, **kw):
         super(SceneCanvas, self).__init__(*args, **kw)
@@ -88,5 +88,6 @@ class SceneCanvas(BaseDataCanvas):
         if new:
             new.on_trait_change(self.request_redraw, 'layout_needed')
         if old:
-            old.on_trait_change(self.request_redraw, 'layout_needed', remove=True)
+            old.on_trait_change(self.request_redraw,
+                                'layout_needed', remove=True)
 # ============= EOF =============================================

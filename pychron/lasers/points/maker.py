@@ -25,9 +25,6 @@ from traitsui.api import View, Item, VGroup, HGroup, UItem, VSplit
 from pychron.loggable import Loggable
 
 
-
-
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -64,7 +61,7 @@ class BaseMaker(Loggable):
                     calibrated_xy=[float(pi.calibrated_x), float(pi.calibrated_y)],
                     offset_x=float(pi.offset_x),
                     offset_y=float(pi.offset_y),
-        ) for pi in self.canvas.get_points()]
+                    ) for pi in self.canvas.get_points()]
 
         lines = []
         for li in self.canvas.get_lines():
@@ -102,7 +99,7 @@ class BaseMaker(Loggable):
         elif cm == 'current point':
             self.canvas.pop_point(-1)
 
-        #        elif cm == 'current point':
+        # elif cm == 'current point':
         #            self.canvas.points.pop(-1)
 
         #        if cm.startswith('current'):
@@ -146,7 +143,7 @@ class BaseMaker(Loggable):
 
         if attenuator:
             attenuator_value = attenuator.data_position
-            #x, y = self.canvas.get_offset_stage_position()
+            # x, y = self.canvas.get_offset_stage_position()
         x, y = self.canvas.get_stage_position()
         cx, cy = sm.get_uncalibrated_xy((x, y))
 
@@ -159,6 +156,8 @@ class BaseMaker(Loggable):
         x, y = map(float, (x, y))
         cx, cy = map(float, (cx, cy))
         z = sm.get_z()
+
+        ox, oy = self.canvas.get_screen_offset()
         ptargs = dict(xy=(x, y),
                       radius=radius,
                       z=z,
@@ -167,8 +166,8 @@ class BaseMaker(Loggable):
                       spot_color=self.spot_color,
                       spot_size=self.spot_size,
                       use_simple_render=self.use_simple_render,
-                      offset_x=self.canvas.crosshairs_offsetx,
-                      offset_y=self.canvas.crosshairs_offsety,
+                      offset_x=ox,
+                      offset_y=oy,
                       #                      mask=mask_value,
                       #                      attenuator=attenuator_value,
                       vline_length=0.1, hline_length=0.1)
@@ -204,13 +203,13 @@ class BaseMaker(Loggable):
 
     def traits_view(self):
         g = VGroup(
-            HGroup(Item('accept_point', show_label=False),
-                   Item('clear'), Item('clear_mode'), show_labels=False),
-            Item('use_simple_render', label='Display Labels',
-                 tooltip='Display labels or only a small spot'),
-            Item('spot_color', label='Spot Color',
-                 tooltip='Color for the point indicator spot'),
-            Item('spot_size', label='Spot Size'))
+                HGroup(Item('accept_point', show_label=False),
+                       Item('clear'), Item('clear_mode'), show_labels=False),
+                Item('use_simple_render', label='Display Labels',
+                     tooltip='Display labels or only a small spot'),
+                Item('spot_color', label='Spot Color',
+                     tooltip='Color for the point indicator spot'),
+                Item('spot_size', label='Spot Size'))
 
         cg = self._get_controls()
         if cg:
@@ -230,6 +229,7 @@ class PointMaker(BaseMaker):
 
 class FinishableMaker(BaseMaker):
     finish = Button
+
     #    accept_enabled = Bool(True)
 
     def _finish_fired(self):
@@ -237,11 +237,11 @@ class FinishableMaker(BaseMaker):
 
     def traits_view(self):
         g = VGroup(
-            Item('accept_point',
-                 #                      enabled_when='accept_enabled',
-                 show_label=False),
-            HGroup(Item('clear'), Item('clear_mode'), show_labels=False),
-            Item('finish', show_label=False))
+                Item('accept_point',
+                     #                      enabled_when='accept_enabled',
+                     show_label=False),
+                HGroup(Item('clear'), Item('clear_mode'), show_labels=False),
+                Item('finish', show_label=False))
 
         cg = self._get_controls()
         if cg:
@@ -278,7 +278,7 @@ class PolygonMaker(FinishableMaker):
                    Item('scan_size', label='Scan H (um)'),
                    Item('find_min', label='Find Min. Lines'),
                    HGroup(Item('use_outline'), Item('offset', show_label=False, enabled_when='use_outline'))
-        )
+                   )
         return g
 
     def _save(self):
@@ -295,7 +295,7 @@ class PolygonMaker(FinishableMaker):
                          xy=[float(pi.x), float(pi.y)])
                 pts.append(d)
 
-            #            print int(pe) - 1, i
+            # print int(pe) - 1, i
             if int(pe) - 1 == i:
                 # save the selected polygon with new values
                 v = self.velocity
@@ -329,7 +329,7 @@ class PolygonMaker(FinishableMaker):
                                  use_outline=uo,
                                  offset=o,
                                  find_min=fm
-            )
+                                 )
 
         return {'polygons': polys}
 
@@ -481,7 +481,7 @@ class GridMaker(BaseMaker):
                                       self.vspacing * .001)
 
             ind_s = self.indicator_size * .001
-            #convert to screen
+            # convert to screen
             iw, ih = self.canvas.get_wh(ind_s, ind_s)
 
             go = GridOverlay(component=self.canvas,
@@ -573,13 +573,13 @@ class GridMaker(BaseMaker):
     @on_trait_change('hspacing, vspacing, indicator_size')
     def _handle_spacing_change(self, new):
         if self.grid_overlay:
-            #convert to mm then to screen
+            # convert to mm then to screen
             w, h = self.canvas.get_wh(self.hspacing * .001,
                                       self.vspacing * .001)
 
-            #convert to mm
+            # convert to mm
             ind_s = self.indicator_size * .001
-            #convert to screen
+            # convert to screen
             iw, ih = self.canvas.get_wh(ind_s, ind_s)
 
             self.grid_overlay.trait_set(hspacing=w,

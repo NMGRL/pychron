@@ -24,7 +24,8 @@ import math
 import cPickle as pickle
 # =============local library imports  ==========================
 from pychron.hardware.core.data_helper import make_bitarray
-from pychron.hardware.motion_controller import MotionController, PositionError, TargetPositionError
+from pychron.hardware.motion_controller import MotionController, \
+    TargetPositionError
 from newport_axis import NewportAxis
 from newport_joystick import Joystick
 from newport_group import NewportGroup
@@ -186,7 +187,7 @@ ABLE TO USE THE HARDWARE JOYSTICK
             axis = ax.name
 
         cmd = self._build_query('TP', xx=aid)
-        f = self.ask(cmd, verbose=True)
+        f = self.ask(cmd, verbose=False)
 
         aname = '_{}_position'.format(axis)
         if f != 'simulation' and f is not None:
@@ -301,7 +302,7 @@ ABLE TO USE THE HARDWARE JOYSTICK
 
             self.debug('doing linear move')
             # self.timer = self.timer_factory()
-            self._linear_move_(dict(x=x, y=y), **kw)
+            self._linear_move(dict(x=x, y=y), **kw)
         else:
             self.info('displacement of move too small {} < {}'.format(d, tol))
 
@@ -539,7 +540,8 @@ ABLE TO USE THE HARDWARE JOYSTICK
             if velocity is not None:
                 self.groupobj.velocity = velocity
 
-    def configure_group(self, group, displacement=None, velocity=None, force=False, **kw):
+    def configure_group(self, group, displacement=None, velocity=None,
+                        force=False, **kw):
         self.debug('configuring group')
         gobj = self.groupobj
         if not gobj and group:
@@ -552,7 +554,8 @@ ABLE TO USE THE HARDWARE JOYSTICK
                 change = abs(gobj.velocity - velocity) > 0.001
                 gobj.velocity = velocity
             else:
-                change = self._check_motion_parameters(displacement, gobj, force=force)
+                change = self._check_motion_parameters(displacement, gobj,
+                                                       force=force)
 
         if self.mode == 'grouped':
             if not group:
@@ -725,7 +728,9 @@ ABLE TO USE THE HARDWARE JOYSTICK
         if displacement <= 0:
             return
         if obj.calculate_parameters:
-            change, nv, ac, dc = self.motion_profiler.check_motion(displacement, obj, force=force)
+            change, nv, ac, dc = self.motion_profiler.check_motion(displacement,
+                                                                   obj,
+                                                                   force=force)
             self.debug('calculated {} {} {} {}'.format(change, nv, ac, dc))
             if change:
                 obj.trait_set(acceleration=ac,
@@ -746,7 +751,8 @@ ABLE TO USE THE HARDWARE JOYSTICK
             if a.id == aid:
                 return a
 
-    def _linear_move_(self, kwargs, block=False, grouped_move=True, sign_correct=True, **kw):
+    def _linear_move(self, kwargs, block=False, grouped_move=True,
+                     sign_correct=True, **kw):
         """
         """
 
@@ -811,24 +817,6 @@ ABLE TO USE THE HARDWARE JOYSTICK
             self._block(axis=block)
         self.parent.canvas.clear_desired_position()
 
-        #    def _block_(self, axis=None, event=None):
-        #        '''
-        #        '''
-        #        if event is not None:
-        #            event.clear()
-        #
-        #        if self.timer:
-        #            #timer is calling self._moving_
-        #            func = lambda: self.timer.isRunning()
-        #        else:
-        #            func = lambda: self._moving_(axis=axis)
-        #
-        #        while func():
-        #            time.sleep(0.25)
-        #
-        #        if event is not None:
-        #            event.set()
-
     def _moving(self, axis=None, verbose=False):
         """
             use TX to read the controllers state.
@@ -867,8 +855,8 @@ ABLE TO USE THE HARDWARE JOYSTICK
         return moving
 
     def _build_command(self, command, xx=None, nn=None):
-        '''
-        '''
+        """
+        """
         if isinstance(nn, list):
             nn = ','.join([str(n) for n in nn])
 

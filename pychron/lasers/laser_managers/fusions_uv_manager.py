@@ -344,8 +344,7 @@ class FusionsUVManager(FusionsLaserManager):
         args = dict(name='stage',
                     configuration_dir_name='fusions_uv',
                     stage_controller_class='Aerotech',
-                    stage_map_klass=UVLaserStageMap,
-                    use_modified=False)
+                    stage_map_klass=UVLaserStageMap)
 
         return self._stage_manager_factory(args)
 

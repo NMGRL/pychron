@@ -29,7 +29,8 @@ from pychron.experiment.utilities.position_regex import POINT_REGEX, XY_REGEX, T
 from pychron.canvas.canvas2D.laser_tray_canvas import LaserTrayCanvas
 # from pychron.core.helpers.color_generators import colors8i as colors
 
-from pychron.hardware.motion_controller import MotionController, TargetPositionError
+from pychron.hardware.motion_controller import MotionController, \
+    TargetPositionError
 from pychron.paths import paths
 # from pychron.lasers.stage_managers.stage_visualizer import StageVisualizer
 from pychron.lasers.points.points_programmer import PointsProgrammer
@@ -110,7 +111,7 @@ class StageManager(BaseStageManager):
             self.move_to_point(v)
 
         else:
-            self.move_to_hole(v)
+            self.move_to_hole(v, user_entry=True)
 
     def get_current_position(self):
         if self.stage_controller:
@@ -335,6 +336,9 @@ class StageManager(BaseStageManager):
         # map the position to calibrated space
         pos = self.get_calibrated_position(pos)
         return pos
+
+    def finish_move_to_hole(self, user_entry):
+        pass
 
     # private
     def _update_axes(self):
@@ -729,12 +733,13 @@ class StageManager(BaseStageManager):
         self.info('Move complete')
         self.update_axes()
 
-    def _move_to_hole(self, key, correct_position=True):
+    def _move_to_hole(self, key, correct_position=True, user_entry=False):
         self.info('Move to hole {} type={}'.format(key, str(type(key))))
         self.temp_hole = key
         self.temp_position = self.stage_map.get_hole_pos(key)
         pos = self.stage_map.get_corrected_hole_pos(key)
         self.info('position {}'.format(pos))
+        autocentered_position = False
         if pos is not None:
 
             if abs(pos[0]) < 1e-6:
@@ -749,22 +754,18 @@ class StageManager(BaseStageManager):
                     self.info('using an interpolated value')
                 else:
                     self.info('using previously calculated corrected position')
+                    autocentered_position = True
             try:
                 self.stage_controller.linear_move(block=True, *pos)
-                #            if self.tray_calibration_manager.calibration_style == 'MassSpec':
             except TargetPositionError, e:
                 self.warning('Move to {} failed'.format(pos))
                 self.parent.emergency_shutoff(str(e))
                 return
 
-            if not self.tray_calibration_manager.isCalibrating():
-                self._move_to_hole_hook(key, correct_position)
-            else:
-                self._move_to_hole_hook(key, correct_position)
+            self._move_to_hole_hook(key, correct_position,
+                                    autocentered_position)
+            self.finish_move_to_hole(user_entry)
             self.info('Move complete')
-            # self.update_axes()  # update_hole=False)
-
-            #        self.move_thread = None
 
     def _move_to_hole_hook(self, *args):
         pass
@@ -773,28 +774,8 @@ class StageManager(BaseStageManager):
         pass
 
     # ===============================================================================
-    # Views
-    # ===============================================================================
-
-    # ===============================================================================
-
-    # ===============================================================================
     # Property Get / Set
     # ===============================================================================
-
-    # def _get_stage_maps(self):
-    #     if self._stage_maps:
-    #         return [s.name for s in self._stage_maps]
-    #     else:
-    #         return []
-    #
-    # def _get_stage_map(self):
-    #     if self._stage_map:
-    #         return self._stage_map.name
-
-    # def _get_stage_map_by_name(self, name):
-    #     return next((sm for sm in self._stage_maps if sm.name == name), None)
-
     def _set_stage_map(self, v):
         if v in self.stage_map_names:
             for root, ext in ((self.root, '.txt'), (paths.user_points_dir, '.yaml')):
