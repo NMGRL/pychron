@@ -658,7 +658,7 @@ class VideoStageManager(StageManager):
                                     canvas=self.canvas,
                                     application=self.application)
 
-    def _zoom_calibration_manager(self):
+    def _zoom_calibration_manager_default(self):
         if self.parent.mode != 'client':
             from pychron.mv.zoom.zoom_calibration import ZoomCalibrationManager
             return ZoomCalibrationManager(laser_manager=self.parent)

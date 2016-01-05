@@ -112,7 +112,7 @@ class StageControlPane(TraitsDockPane):
         if self.model.stage_manager.__class__.__name__ == 'VideoStageManager':
             mvgrp = VGroup(
                     UItem('stage_manager.autocenter_manager', style='custom'),
-                    UItem('stage_manager.autofocus_manager', style='custom'),
+                    # UItem('stage_manager.autofocus_manager', style='custom'),
                     UItem('stage_manager.zoom_calibration_manager',
                           style='custom'),
                     label='Machine Vision', show_border=True)
