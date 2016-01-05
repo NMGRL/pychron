@@ -50,7 +50,7 @@ class ExtractionLinePlugin(BaseTaskPlugin):
     extraction_line_manager_klass = ExtractionLineManager
 
     def _preferences_default(self):
-        return ['file://{}'.format(os.path.join(paths.preferences_dir, 'extractionline.ini'))]
+        return self._preferences_factory('extractionline')
 
     def set_preference_defaults(self):
         self._set_preference_defaults((('canvas_path', os.path.join(paths.canvas2D_dir, 'canvas.xml')),
