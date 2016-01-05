@@ -18,8 +18,8 @@
 
 from chaco.pdf_graphics_context import PdfPlotGraphicsContext
 from enable.component_editor import ComponentEditor
-from traits.api import Instance, List, Property, Button, Str
-from traitsui.api import View, HGroup, UItem, TabularEditor, VGroup
+from traits.api import Instance, List, Property, Str
+from traitsui.api import View, HGroup, UItem, TabularEditor, Handler, Action
 from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -50,12 +50,15 @@ class ResultsAdapter(TabularAdapter):
         return floatfmt(self.item.dy, n=3)
 
 
+class StageVisualizerHandler(Handler):
+    def save(self, info):
+        info.object.save()
+
+
 class StageVisualizer(Loggable):
     canvas = Instance(StageVisualizationCanvas, ())
     results = List
     stage_map_name = Str
-
-    save_button = Button('Save')
 
     def set_stage_map(self, smap, points, calibration):
         self.stage_map_name = smap.name
@@ -87,18 +90,15 @@ class StageVisualizer(Loggable):
                 line = ','.join(args)
                 wfile.write('{}\n'.format(line))
 
-    def _save_button_fired(self):
-        self.save()
-
     def traits_view(self):
-        v = View(VGroup(
-                HGroup(UItem('canvas', editor=ComponentEditor(width=550,
-                                                              height=550)),
-                       UItem('results', editor=TabularEditor(
-                               adapter=ResultsAdapter()))),
-                UItem('save_button')),
-                title='Stage Visualizer',
-                resizable=True)
+        v = View(HGroup(UItem('canvas', editor=ComponentEditor(width=550,
+                                                               height=550)),
+                        UItem('results', editor=TabularEditor(
+                                adapter=ResultsAdapter()))),
+                 handler=StageVisualizerHandler(),
+                 buttons=[Action(action='save', name='Save'), ],
+                 title='Stage Visualizer',
+                 resizable=True)
         return v
 
 
@@ -110,7 +110,7 @@ if __name__ == '__main__':
 
     p = '/Users/ross/Programming/github/support_pychron/setupfiles/tray_maps' \
         '/221-hole.txt'
-    p='/Users/argonlab3/Pychron_co2/setupfiles/tray_maps/221-small_hole.txt'
+    # p = '/Users/argonlab3/Pychron_co2/setupfiles/tray_maps/221-small_hole.txt'
 
     sm = LaserStageMap(file_path=p)
 

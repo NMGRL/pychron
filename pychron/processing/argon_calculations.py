@@ -20,42 +20,29 @@
 import math
 from copy import deepcopy
 
-from numpy import asarray, average
+from numpy import asarray, average, array
 from uncertainties import ufloat, umath
-from numpy import array
 
+# ============= local library imports  ==========================
+from pychron.pychron_constants import ALPHAS
 from pychron.processing.arar_constants import ArArConstants
 from pychron.core.stats.core import calculate_weighted_mean
 
 
-
-
-
-
-
-
-
-
-
-# ============= local library imports  ==========================
-from pychron.pychron_constants import ALPHAS
-
-
-def calculate_F_ratio(m4039, m3739, m3639, pr):
-    """
-    required ratios
-    (40/39)m
-    (36/39)m
-    (37/39)m
-
-
-    """
-
-    atm4036 = 295.5
-    n = m4039 - atm4036 * m3639 + atm4036 * pr.get('ca3637') * m3739
-    d = 1 - pr.get('ca3937') * m3739
-    F = n / d - pr.get('k4039')
-    return F
+# def calculate_F_ratio(m4039, m3739, m3639, pr):
+#     """
+#     required ratios
+#     (40/39)m
+#     (36/39)m
+#     (37/39)m
+#
+#
+#     """
+#
+#     atm4036 = 295.5
+#     n = m4039 - atm4036 * m3639 + atm4036 * pr.get('ca3637') * m3739
+#     d = 1 - pr.get('ca3937') * m3739
+#     return n / d - pr.get('k4039')
 
 
 def extract_isochron_xy(analyses):
@@ -64,9 +51,7 @@ def extract_isochron_xy(analyses):
             ai.get_interference_corrected_value('Ar40'))
            for ai in analyses]
     a39, a36, a40 = array(ans).T
-    # print 'a40',a40
-    # print 'a39',a39
-    # print 'a36',a36
+
     try:
         xx = a39 / a40
         yy = a36 / a40
@@ -133,7 +118,8 @@ def isochron_regressor(xs, xes, ys, yes,
     return reg
 
 
-def calculate_plateau_age(ages, errors, k39, kind='inverse_variance', method='fleck 1977', options=None):
+def calculate_plateau_age(ages, errors, k39, kind='inverse_variance',
+                          method='fleck 1977', options=None):
     """
         ages: list of ages
         errors: list of corresponding  1sigma errors
@@ -203,19 +189,12 @@ def calculate_flux(f, age, arar_constants=None):
 
         solve age equation for J
     """
-    # if isinstance(rad40, (list, tuple)):
-    # rad40 = ufloat(*rad40)
-    # if isinstance(k39, (list, tuple)):
-    # k39 = ufloat(*k39)
-
     if isinstance(f, (list, tuple)):
         f = ufloat(*f)
 
     if isinstance(age, (list, tuple)):
         age = ufloat(*age)
-        #    age = (1 / constants.lambdak) * umath.log(1 + JR)
     try:
-        # r = rad40 / k39
         if arar_constants is None:
             arar_constants = ArArConstants()
 
@@ -225,7 +204,6 @@ def calculate_flux(f, age, arar_constants=None):
         return 1, 0
 
 
-# return j
 def calculate_decay_time(dc, f):
     return math.log(f) / dc
 
@@ -339,10 +317,13 @@ def calculate_atmospheric(a38, a36, k38, ca38, ca36, decay_time,
 
     pr = production_ratios
 
-    m = pr.get('Cl3638', 0) * arar_constants.lambda_Cl36.nominal_value * decay_time
+    lcl36 = arar_constants.lambda_Cl36.nominal_value
+    atm3836 = arar_constants.atm3836.nominal_value
+
+    m = pr.get('Cl3638', 0) * lcl36 * decay_time
     atm36 = ufloat(0, 1e-20)
     for _ in range(5):
-        ar38atm = arar_constants.atm3836.nominal_value * atm36
+        ar38atm = atm3836 * atm36
         cl38 = a38 - ar38atm - k38 - ca38
         cl36 = cl38 * m
         atm36 = a36 - ca36 - cl36
@@ -361,21 +342,18 @@ def calculate_F(isotopes,
     """
     a40, a39, a38, a37, a36 = isotopes
 
-    # a37*=113
-
     if interferences is None:
         interferences = {}
 
     if arar_constants is None:
         arar_constants = ArArConstants()
 
-    #make local copy of interferences
+    # make local copy of interferences
     pr = dict(((k, v.__copy__()) for k, v in interferences.iteritems()))
 
-    #for k,v in pr.iteritems():
-    #    print k, v
-    k37, k38, k39, ca36, ca37, ca38, ca39 = interference_corrections(a40, a39, a38, a37, a36,
-                                                                     pr, arar_constants, fixed_k3739)
+    args = interference_corrections(a40, a39, a38, a37, a36,pr,
+                                    arar_constants, fixed_k3739)
+    k37, k38, k39, ca36, ca37, ca38, ca39 = args
     atm36, cl36 = calculate_atmospheric(a38, a36, k38, ca38, ca36,
                                         decay_time,
                                         pr,
@@ -410,14 +388,13 @@ def calculate_F(isotopes,
 
     computed = dict(rad40=rad40, rad40_percent=rp,
                     k39=k39, atm40=atm40)
-    #print 'Ar40', a40-k40, a40, k40
-    #print 'Ar39', a39-k39, a39, k39
+
     interference_corrected = dict(Ar40=a40 - k40,
                                   Ar39=k39,
-                                  Ar38=a38,  #- k38 - ca38,
-                                  Ar37=a37,  #- ca37 - k37,
+                                  Ar38=a38,
+                                  Ar37=a37,
                                   Ar36=atm36)
-    ##clear errors in irrad
+    # clear errors in irrad
     for pp in pr.itervalues():
         pp.std_dev = 0
     f_wo_irrad = f
@@ -494,7 +471,6 @@ def calculate_error_t(F, ssF, j, ssJ):
     return sst ** 0.5
 
 # ============= EOF =====================================
-## ============= EOF ====================================
 # # plateau definition
 # plateau_criteria = {'number_steps': 3}
 #
