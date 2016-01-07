@@ -69,7 +69,8 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
 
     def activate(self):
         # pref_id = 'pychron.furnace'
-        # bind_preference(self, 'update_period', '{}.update_period'.format(pref_id))
+        # bind_preference(self, 'update_period',
+        # '{}.update_period'.format(pref_id))
 
         self._start_update()
 
@@ -81,7 +82,8 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         self.debug('dump sample')
 
         if self._dumper_thread is None:
-            self._dumper_thread = Thread(name='DumpSample', target=self._dump_sample)
+            self._dumper_thread = Thread(name='DumpSample',
+                                         target=self._dump_sample)
             self._dumper_thread.start()
 
     def is_dump_complete(self):
@@ -91,9 +93,12 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     def actuate_magnets(self):
         self.debug('actuate magnets')
         if self.loader_logic.check('AM'):
-            self.magnet.open()
-            # wait for actuate magnets
-            pass
+            self.magnets.open()
+
+            # jitter linear drive
+            self.stage_manager.jitter()
+
+            self.magnets.close()
         else:
             self.warning('actuate magnets not enabled')
 

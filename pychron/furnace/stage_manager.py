@@ -26,7 +26,16 @@ from pychron.stage.stage_manager import BaseStageManager
 
 
 class SampleLinearHolder(LinearAxis):
-    pass
+    def jitter(self, turns=0.125, n=20):
+        """
+        :param turns: fractional turns
+        :param n: number of times to move
+        :return:
+        """
+
+        for i in xrange(n):
+            turns *= -1
+            self._cdevice.move_relative(turns, convert_turns=True)
 
 
 class BaseFurnaceStageManager(BaseStageManager):
@@ -40,6 +49,9 @@ class BaseFurnaceStageManager(BaseStageManager):
 
 class NMGRLFurnaceStageManager(BaseFurnaceStageManager):
     sample_linear_holder = Instance(SampleLinearHolder)
+
+    def jitter(self):
+        self.sample_linear_holder.jitter()
 
     def set_sample_dumped(self):
         hole = self.stage_map.get_hole(self.calibrated_position_entry)
