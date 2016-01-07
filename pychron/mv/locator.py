@@ -14,19 +14,22 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from skimage.draw._draw import circle_perimeter
+from skimage.feature import peak_local_max
+from skimage.transform import hough_circle
 from traits.api import Float
 
 # from pychron.core.geometry.centroid import centroid
 # ============= standard library imports ========================
 
 from numpy import array, histogram, argmax, zeros, asarray, ones_like, \
-    nonzero, max
+    nonzero, max, arange, argsort
 # from skimage.morphology.watershed import is_local_maximum
 from skimage.morphology import watershed
-from skimage.draw import polygon
+from skimage.draw import polygon, circle
 from scipy import ndimage
 from skimage.exposure import rescale_intensity
-from skimage.filters import gaussian_filter
+from skimage.filters import gaussian_filter, canny
 # ============= local library imports  ==========================
 # from pychron.core.geometry.centroid.calculate_centroid import calculate_centroid
 from pychron.loggable import Loggable
@@ -94,6 +97,51 @@ class Locator(Loggable):
         # cw_px = ch_px = cw_px + r
 
         return asarray(crop(src, x, y, cw_px, ch_px))
+
+    def find_circle(self, image, frame, dim, **kw):
+        dx, dy = None, None
+
+        pframe = self._preprocess(frame, blur=0)
+        edges = canny(pframe, sigma=3)
+        hough_radii = arange(dim * 0.9, dim * 1.1, 2)
+
+        hough_res = hough_circle(edges, hough_radii)
+
+        centers = []
+        accums = []
+        radii = []
+        for radius, h in zip(hough_radii, hough_res):
+            # For each radius, extract two circles
+            num_peaks = 2
+            peaks = peak_local_max(h, num_peaks=num_peaks)
+            centers.extend(peaks)
+            accums.extend(h[peaks[:, 0], peaks[:, 1]])
+            radii.extend([radius] * num_peaks)
+
+        # for idx in argsort(accums)[::-1][:1]:
+        idx = argsort(accums)[::-1][0]
+        center_y, center_x = centers[idx]
+        radius = radii[idx]
+        cx, cy = circle_perimeter(int(center_x), int(center_y), int(radius))
+
+        # draw perimeter
+        frame[cy, cx] = (220, 20, 20)
+
+        # draw center
+        cx, cy = circle(int(center_x), int(center_y), int(2))
+        frame[cy, cx] = (220, 20, 20)
+
+        h, w = frame.shape[:2]
+
+        ox, oy = w / 2, h / 2
+        dx = ox - center_x
+        dy = oy - center_y
+
+        cx, cy = circle(int(ox), int(oy), int(2))
+        frame[cy, cx] = (20, 220, 20)
+
+        image.set_frame(frame)
+        return dx, dy
 
     def find(self, image, frame, dim, **kw):
         """

@@ -34,7 +34,8 @@ class AutoCenterManager(MachineVisionManager):
 
     configure_button = Button('configure')
     use_autocenter = Bool
-
+    use_hough_circle = Bool(True)
+    
     def calculate_new_center(self, cx, cy, offx, offy, dim=1.0,
                              alpha_enabled=True,
                              auto_close_image=True):
@@ -54,7 +55,11 @@ class AutoCenterManager(MachineVisionManager):
         im = self.new_image(frame, alpha_enabled=alpha_enabled)
         view_image(im, auto_close=auto_close_image)
 
-        dx, dy = loc.find(im, frame, dim=dim * self.pxpermm)
+        if self.use_hough_circle:
+            dx, dy = loc.find_circle(im, frame, dim=dim * self.pxpermm)
+        else:
+            dx, dy = loc.find(im, frame, dim=dim * self.pxpermm)
+
         frm = loc.preprocessed_frame
         im.overlay(frm, 0.5)
         if dx is None and dy is None:

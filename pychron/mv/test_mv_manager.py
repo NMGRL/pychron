@@ -36,7 +36,7 @@ class TestAutocenter(HasTraits):
     def _test1(self):
         print 'test1'
         a = CO2AutocenterManager(video=Video())
-        a.calculate_new_center(0, 0, 0, 0, dim=0.75)
+        a.calculate_new_center(0, 0, 0, 0, dim=1.0)
 
     def _set_test_image(self):
         from pychron.globals import globalv
@@ -44,7 +44,7 @@ class TestAutocenter(HasTraits):
         # p = '/Users/ross/Sandbox/pos_err/pos_err_200_0-002.jpg'
         p = '/Users/ross/Sandbox/poserror/pos_err_221_0-007.jpg'
         p = '/Users/ross/Sandbox/poserror/snapshot009.jpg'
-        p = '/Users/argonlab3/Pychron_co2/data/snapshots/pos_err_220_0--001.jpg'
+        # p = '/Users/argonlab3/Pychron_co2/data/snapshots/pos_err_220_0--001.jpg'
 
         globalv.video_test_path = p
         globalv.video_test = True
