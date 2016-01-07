@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2015 Jake Ross
+# Copyright 2016 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,21 +17,10 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.spectrometer.thermo.detector.helix import HelixDetector
-from pychron.spectrometer.thermo.magnet.helix import HelixMagnet
-from pychron.spectrometer.thermo.source.helix import HelixSource
-from pychron.spectrometer.thermo.spectrometer.base import ThermoSpectrometer
+from pychron.spectrometer.thermo.detector.base import ThermoDetector
 
 
-class HelixSpectrometer(ThermoSpectrometer):
-    magnet_klass = HelixMagnet
-    source_klass = HelixSource
-    detector_klass = HelixDetector
-
-
-class HelixPlusSpectrometer(HelixSpectrometer):
+class ArgusDetector(ThermoDetector):
     pass
+
 # ============= EOF =============================================
-
-
-

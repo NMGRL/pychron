@@ -16,6 +16,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.spectrometer.thermo.detector.argus import ArgusDetector
 from pychron.spectrometer.thermo.magnet.argus import ArgusMagnet
 from pychron.spectrometer.thermo.source.argus import ArgusSource
 from pychron.spectrometer.thermo.spectrometer.base import ThermoSpectrometer
@@ -32,6 +33,6 @@ class ArgusSpectrometer(ThermoSpectrometer):
     """
     magnet_klass = ArgusMagnet
     source_klass = ArgusSource
-
+    detector_klass = ArgusDetector
 
 # ============= EOF =============================================
