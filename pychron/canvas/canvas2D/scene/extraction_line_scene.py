@@ -90,15 +90,6 @@ class ExtractionLineScene(Scene):
                 # if x <= px <= x + w and y <= py <= y + h:
                 # return c
 
-    def _get_floats(self, elem, name):
-        return map(float, elem.find(name).text.split(','))
-
-    def _make_color(self, c):
-        if not isinstance(c, str):
-            c = ','.join(map(str, map(int, c)))
-            c = '({})'.format(c)
-        return c
-
     def _new_rectangle(self, elem, c, bw=3,
                        layer=1,
                        origin=None, klass=None, type_tag=''):

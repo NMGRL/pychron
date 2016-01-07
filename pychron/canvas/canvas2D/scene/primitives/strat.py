@@ -24,7 +24,7 @@ from pychron.canvas.canvas2D.scene.primitives.primitives import Label
 class StratItem(Label):
     use_end_caps = True
 
-    def _render_(self, gc):
+    def _render(self, gc):
         self._render_label(gc)
 
         x, y = self.get_xy()
