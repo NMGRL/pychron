@@ -48,13 +48,13 @@ class PatternAction(ListAction):
 class ProcedureAction(ListAction):
     script_path = Str
 
-    def __init__(self, *args, **kw):
-        super(ProcedureAction, self).__init__(*args, **kw)
-
-        ex = self.application.get_plugin('pychron.experiment.plugin')
-        if ex:
-            ex = ex.experimentor.executor
-            ex.on_trait_change(self._update_alive, 'alive')
+    # def __init__(self, *args, **kw):
+    #     super(ProcedureAction, self).__init__(*args, **kw)
+    #
+    #     ex = self.application.get_plugin('pychron.experiment.plugin')
+    #     if ex:
+    #         ex = ex.experimentor.executor
+    #         ex.on_trait_change(self._update_alive, 'alive')
 
     def _update_alive(self, new):
         self.enabled = not new

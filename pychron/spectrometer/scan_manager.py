@@ -207,6 +207,8 @@ class ScanManager(Manager):
                     params = pickle.load(f)
                 except (pickle.PickleError, EOFError):
                     self.warning('Failed unpickling scan settings file {}'.format(p))
+                    self.detector = self.detectors[-1]
+                    self.isotope = self.isotopes[-1]
                     return
 
                 if self.use_default_scan_settings:
@@ -231,12 +233,6 @@ class ScanManager(Manager):
                         setattr(self, pi, params[pi])
                     except KeyError, e:
                         print 'sm load settings', pi, e
-
-                except (pickle.PickleError, EOFError, KeyError):
-                    self.detector = self.detectors[-1]
-                    self.isotope = self.isotopes[-1]
-                    self.warning(
-                            'Failed unpickling scan settings file {}'.format(p))
         else:
             self.warning('No scan settings file {}'.format(p))
 
