@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2011 Jake Ross
+# Copyright 2015 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,24 +17,31 @@
 # ============= enthought library imports =======================
 from traits.api import Instance, Int, Property, List, \
     Any, Enum, Str, DelegatesTo, Bool, TraitError, cached_property
+from traits.api import Str, Int, Bool, Any, Property, Instance, List, Enum, \
+    DelegatesTo, cached_property
+from traits.trait_errors import TraitError
 # ============= standard library imports ========================
+import os
+import random
 from numpy import array, argmin
 import random
 import time
 import os
+import time
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import list_directory2, add_extension
 from pychron.core.progress import open_progress
 from pychron.globals import globalv
-from pychron.spectrometer.thermo.source import ArgusSource
-from pychron.spectrometer.thermo.magnet import ArgusMagnet
-from pychron.spectrometer.thermo.detector import Detector
-from pychron.spectrometer.thermo.spectrometer_device import SpectrometerDevice
-from pychron.pychron_constants import NULL_STR, QTEGRA_INTEGRATION_TIMES, DEFAULT_INTEGRATION_TIME
 from pychron.paths import paths
 from pychron.spectrometer import get_spectrometer_config_path, get_spectrometer_config_name, \
     set_spectrometer_config_name
 from pychron.core.ramper import Ramper, calculate_steps, StepRamper
+from pychron.pychron_constants import QTEGRA_INTEGRATION_TIMES, \
+    DEFAULT_INTEGRATION_TIME, NULL_STR
+from pychron.spectrometer.thermo.detector.base import ThermoDetector
+from pychron.spectrometer.thermo.magnet.base import ThermoMagnet
+from pychron.spectrometer.thermo.source.base import ThermoSource
+from pychron.spectrometer.thermo.spectrometer_device import SpectrometerDevice
 
 
 def normalize_integration_time(it):
@@ -56,20 +63,14 @@ def calculate_radius(m_e, hv, mfield):
     return r
 
 
-class Spectrometer(SpectrometerDevice):
-    """
-    Interface to a Thermo Scientific Argus Mass Spectrometer via Qtegra and RemoteControlServer.cs
-    magnet control provided by ArgusMagnet
-    source control provided by ArgusSource
+class ThermoSpectrometer(SpectrometerDevice):
+    magnet = Instance(ThermoMagnet)
+    source = Instance(ThermoSource)
+    magnet_klass = Any
+    source_klass = Any
+    detector_klass = Any
 
-    direct access to RemoteControlServer.cs API via microcontroller
-    e.g. microcontroller.ask('GetIntegrationTime')
-    """
-
-    magnet = Instance(ArgusMagnet)
-    source = Instance(ArgusSource)
-
-    detectors = List(Detector)
+    detectors = List(ThermoDetector)
 
     microcontroller = Any
     integration_time = Enum(QTEGRA_INTEGRATION_TIMES)
@@ -169,8 +170,9 @@ class Spectrometer(SpectrometerDevice):
         :return: list
         """
         if history:
-            self.debug('setting gains to {}, user={}'.format(history.create_date,
-                                                             history.username))
+            self.debug(
+                    'setting gains to {}, user={}'.format(history.create_date,
+                                                          history.username))
         for di in self.detectors:
             di.set_gain()
 
@@ -195,10 +197,12 @@ class Spectrometer(SpectrometerDevice):
             if resp:
                 try:
                     self.integration_time = float(resp)
-                    self.info('Integration Time {}'.format(self.integration_time))
+                    self.info(
+                            'Integration Time {}'.format(self.integration_time))
 
                 except (TypeError, ValueError, TraitError):
-                    self.warning('Invalid integration time. resp={}'.format(resp))
+                    self.warning(
+                            'Invalid integration time. resp={}'.format(resp))
                     self.integration_time = DEFAULT_INTEGRATION_TIME
 
         return self.integration_time
@@ -305,7 +309,8 @@ class Spectrometer(SpectrometerDevice):
         if self.simulation:
             x = [random.random() for i in keys]
         else:
-            x = self.ask('GetDeflections {}'.format(','.join(keys)), verbose=False)
+            x = self.ask('GetDeflections {}'.format(','.join(keys)),
+                         verbose=False)
             x = self._parse_word(x)
         return x
 
@@ -316,7 +321,8 @@ class Spectrometer(SpectrometerDevice):
             else:
                 x = [random.random() for i in keys]
         else:
-            x = self.ask('GetParameters {}'.format(','.join(keys)), verbose=False)
+            x = self.ask('GetParameters {}'.format(','.join(keys)),
+                         verbose=False)
             x = self._parse_word(x)
 
         return x
@@ -389,13 +395,18 @@ class Spectrometer(SpectrometerDevice):
 
         if config.has_section(pd):
 
-            self.magnet.use_beam_blank = self.config_get(config, pd, 'use_beam_blank',
-                                                         cast='boolean', default=False)
+            self.magnet.use_beam_blank = self.config_get(config, pd,
+                                                         'use_beam_blank',
+                                                         cast='boolean',
+                                                         default=False)
             self.magnet.use_detector_protection = self.config_get(config, pd,
                                                                   'use_detector_protection',
-                                                                  cast='boolean', default=False)
+                                                                  cast='boolean',
+                                                                  default=False)
             self.magnet.beam_blank_threshold = self.config_get(config, pd,
-                                                               'beam_blank_threshold', cast='float', default=0.1)
+                                                               'beam_blank_threshold',
+                                                               cast='float',
+                                                               default=0.1)
 
             # self.magnet.detector_protection_threshold = self.config_get(config, pd,
             # 'detector_protection_threshold',
@@ -405,7 +416,9 @@ class Spectrometer(SpectrometerDevice):
                 ds = ds.split(',')
                 self.magnet.protected_detectors = ds
                 for di in ds:
-                    self.info('Making protection available for detector "{}"'.format(di))
+                    self.info(
+                            'Making protection available for detector "{}"'.format(
+                                    di))
 
         if config.has_section('Deflections'):
             if config.has_option('Deflections', 'max'):
@@ -446,16 +459,22 @@ class Spectrometer(SpectrometerDevice):
         populates self.detectors
         :return:
         """
-        config = self.get_configuration(path=os.path.join(paths.spectrometer_dir, 'detectors.cfg'))
+        config = self.get_configuration(
+                path=os.path.join(paths.spectrometer_dir, 'detectors.cfg'))
         for name in config.sections():
             # relative_position = self.config_get(config, name, 'relative_position', cast='float')
-            deflection_corrrection_sign = self.config_get(config, name, 'deflection_correction_sign', cast='int')
+            deflection_corrrection_sign = self.config_get(config, name,
+                                                          'deflection_correction_sign',
+                                                          cast='int')
 
             color = self.config_get(config, name, 'color', default='black')
-            default_state = self.config_get(config, name, 'default_state', default=True, cast='boolean')
+            default_state = self.config_get(config, name, 'default_state',
+                                            default=True, cast='boolean')
             isotope = self.config_get(config, name, 'isotope')
-            kind = self.config_get(config, name, 'kind', default='Faraday', optional=True)
-            pt = self.config_get(config, name, 'protection_threshold', default=None, optional=True, cast='float')
+            kind = self.config_get(config, name, 'kind', default='Faraday',
+                                   optional=True)
+            pt = self.config_get(config, name, 'protection_threshold',
+                                 default=None, optional=True, cast='float')
 
             self._add_detector(name=name,
                                # relative_position=relative_position,
@@ -635,7 +654,9 @@ class Spectrometer(SpectrometerDevice):
             p = get_spectrometer_config_path()
             # p = os.path.join(paths.spectrometer_dir, 'config.cfg')
             if not os.path.isfile(p):
-                self.warning('Spectrometer configuration file {} not found'.format(p))
+                self.warning(
+                        'Spectrometer configuration file {} not found'.format(
+                            p))
                 return
 
             config = self.get_configuration_writer(p)
@@ -672,7 +693,7 @@ class Spectrometer(SpectrometerDevice):
         return self._config
 
     def _add_detector(self, **kw):
-        d = Detector(spectrometer=self, **kw)
+        d = self.detector_klass(spectrometer=self, **kw)
         self.detectors.append(d)
 
     def _get_simulation_data(self):
@@ -754,10 +775,10 @@ class Spectrometer(SpectrometerDevice):
     # defaults
     # ===============================================================================
     def _magnet_default(self):
-        return ArgusMagnet(spectrometer=self)
+        return self.magnet_klass(spectrometer=self)
 
     def _source_default(self):
-        return ArgusSource(spectrometer=self)
+        return self.source_klass(spectrometer=self)
 
     def _integration_time_default(self):
         return DEFAULT_INTEGRATION_TIME

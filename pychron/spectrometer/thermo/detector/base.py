@@ -15,51 +15,28 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Float, Str, Bool, Property, Color, \
-    Int
+from traits.api import Float, Property, Int
 from traitsui.api import View, Item, HGroup, \
     spring
 # ============= standard library imports ========================
 import os
-from numpy import loadtxt, polyfit, polyval, hstack, poly1d, array
+from numpy import loadtxt, polyfit, polyval, poly1d
 from scipy import optimize
 # ============= local library imports  ==========================
+from pychron.spectrometer.base_detector import BaseDetector
 from pychron.spectrometer.thermo.spectrometer_device import SpectrometerDevice
 from pychron.paths import paths
 
-charge = 1.6021764874e-19
 
-
-class Detector(SpectrometerDevice):
-    name = Str
-    kind = Str
+class ThermoDetector(BaseDetector, SpectrometerDevice):
 
     protection_threshold = None
-    deflection = Property(Float(enter_set=True, auto_set=False), depends_on='_deflection')
+    deflection = Property(Float(enter_set=True, auto_set=False),
+                          depends_on='_deflection')
     _deflection = Float(0)
 
     deflection_correction_sign = Int(1)
-
     _deflection_correction_factors = None
-    # # intensity = Property(depends_on='spectrometer:intensity_dirty')
-    # #    intensity = Float
-    # #    std = Float
-    intensity = Str
-    std = Str
-    intensities = None
-    nstd = Int(10)
-    active = Bool(True)
-    gain = Float
-
-    color = Color
-    series_id = Int
-    isotope = Str
-
-    isotopes = Property
-    # color_square = None
-    def __init__(self, *args, **kw):
-        super(Detector, self).__init__(*args, **kw)
-        self.intensities = array([])
 
     def load(self):
         self.read_deflection()
@@ -80,15 +57,16 @@ class Detector(SpectrometerDevice):
         r = self.ask('GetDeflection {}'.format(self.name))
         try:
             if r is None:
-                self.warning(
-                    'Failed reading {} deflection. Error=No response. Using previous value {}'.format(self.name,
-                                                                                                      self._deflection))
+                self.warning('Failed reading {} deflection. Error=No response. '
+                             'Using previous value {}'.format(self.name,
+                                                              self._deflection))
             else:
                 self._deflection = float(r)
 
         except (ValueError, TypeError), e:
-            self.warning('Failed reading {} deflection. Error={}. Using previous value {}'.format(self.name, e,
-                                                                                                  self._deflection))
+            self.warning('Failed reading {} deflection. Error={}. '
+                         'Using previous value {}'.format(self.name, e,
+                                                          self._deflection))
         return self._deflection
 
     def get_deflection_correction(self, current=False):
@@ -107,25 +85,12 @@ class Detector(SpectrometerDevice):
         c[-1] -= dac
         return optimize.newton(poly1d(c), 1)
 
-    @property
-    def gain_outdated(self):
-        return abs(self.get_gain() - self.gain) < 1e-7
-
-    def get_gain(self):
-        v = self.ask('GetGain {}'.format(self.name))
-        try:
-            v = float(v)
-        except (TypeError, ValueError):
-            v = 0
-        self.gain = v
-        return v
-
-    def set_gain(self):
+    # private
+    def _set_gain(self):
         self.ask('SetGain {},{}'.format(self.name, self.gain))
 
-    def _get_isotopes(self):
-        molweights = self.spectrometer.molecular_weights
-        return sorted(molweights.keys(), key=lambda x: int(x[2:]))
+    def _read_gain(self):
+        v = self.ask('GetGain {}'.format(self.name))
 
     def _set_deflection(self, v):
         if self._deflection != v:
@@ -137,20 +102,12 @@ class Detector(SpectrometerDevice):
     def _get_deflection(self):
         return self._deflection
 
-    def set_intensity(self, v):
-        if v is not None:
-            n = self.nstd
-            if self.intensities is None:
-                self.intensities = array([])
-
-            self.intensities = hstack((self.intensities[-n:], [v]))
-            self.std = '{:0.5f}'.format(self.intensities.std())
-            self.intensity = '{:0.5f}'.format(v)
-
     def _active_changed(self, new):
         self.debug('active changed {}'.format(new))
         if self.name == 'CDD':
-            self.debug('{} Ion Counter'.format('Activate' if new else 'Deactivate'))
+            self.debug(
+                    '{} Ion Counter'.format(
+                            'Activate' if new else 'Deactivate'))
             self.info('De/Activating CDD disabled')
             # self.ask('ActivateIonCounter' if new else 'DeactivateIonCounter')
 
@@ -179,7 +136,4 @@ class Detector(SpectrometerDevice):
                         show_labels=False))
         return v
 
-    def __repr__(self):
-        return self.name
-
-        # ============= EOF =============================================
+# ============= EOF =============================================

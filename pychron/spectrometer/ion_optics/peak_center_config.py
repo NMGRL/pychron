@@ -23,7 +23,7 @@ import os
 # ============= local library imports  ==========================
 from pychron.paths import paths
 from pychron.pychron_constants import QTEGRA_INTEGRATION_TIMES
-from pychron.spectrometer.thermo.detector import Detector
+from pychron.spectrometer.base_detector import BaseDetector
 
 
 class PeakCenterConfigHandler(Handler):
@@ -35,7 +35,7 @@ class PeakCenterConfigHandler(Handler):
 
 class PeakCenterConfig(HasTraits):
     detectors = List(transient=True)
-    detector = Instance(Detector, transient=True)
+    detector = Instance(BaseDetector, transient=True)
     detector_name = Str
     isotope = Str('Ar40')
     isotopes = List(transient=True)

@@ -25,14 +25,14 @@ from pyface.tasks.action.schema_addition import SchemaAddition
 from pychron.core.helpers.strtools import to_bool
 from pychron.spectrometer.readout_view import ReadoutView
 from pychron.spectrometer.tasks.base_spectrometer_plugin import BaseSpectrometerPlugin
-from pychron.spectrometer.thermo.spectrometer_manager import ArgusSpectrometerManager
+from pychron.spectrometer.thermo.manager.argus import ArgusSpectrometerManager
 from pychron.spectrometer.tasks.spectrometer_actions import PeakCenterAction, \
     CoincidenceScanAction, SpectrometerParametersAction, MagnetFieldTableAction, MagnetFieldTableHistoryAction, \
     ToggleSpectrometerTask, EditGainsAction, SendConfigAction, ViewReadoutAction, DefinePeakCenterAction
 from pychron.spectrometer.tasks.spectrometer_preferences import SpectrometerPreferencesPane
 
 
-class ArgusSpectrometerPlugin(BaseSpectrometerPlugin):
+class ThermoSpectrometerPlugin(BaseSpectrometerPlugin):
     id = 'pychron.spectrometer.argus'
     spectrometer_manager_klass = ArgusSpectrometerManager
     manager_name = 'argus_spectrometer_manager'
@@ -42,7 +42,7 @@ class ArgusSpectrometerPlugin(BaseSpectrometerPlugin):
         return self._preferences_factory('spectrometer')
 
     def start(self):
-        super(ArgusSpectrometerPlugin, self).start()
+        super(ThermoSpectrometerPlugin, self).start()
 
         if to_bool(self.application.preferences.get('pychron.spectrometer.auto_open_readout')):
             from pychron.spectrometer.readout_view import new_readout_view

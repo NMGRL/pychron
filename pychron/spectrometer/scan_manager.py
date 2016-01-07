@@ -31,9 +31,10 @@ import yaml
 from pychron.core.ui.preference_binding import bind_preference
 from pychron.managers.manager import Manager
 from pychron.graph.time_series_graph import TimeSeriesStreamGraph
-from pychron.spectrometer.graph.spectrometer_scan_graph import SpectrometerScanGraph
+from pychron.spectrometer.graph.spectrometer_scan_graph import \
+    SpectrometerScanGraph
 from pychron.spectrometer.jobs.scanner import Scanner
-from pychron.spectrometer.thermo.detector import Detector
+from pychron.spectrometer.base_detector import BaseDetector
 from pychron.spectrometer.jobs.rise_rate import RiseRate
 from pychron.paths import paths
 from pychron.managers.data_managers.csv_data_manager import CSVDataManager
@@ -45,7 +46,8 @@ from pychron.graph.tools.data_tool import DataTool, DataToolOverlay
 
 class ScanManager(Manager):
     spectrometer = Any
-    ion_optics_manager = Instance('pychron.spectrometer.ion_optics.ion_optics_manager.IonOpticsManager')
+    ion_optics_manager = Instance(
+            'pychron.spectrometer.ion_optics.ion_optics_manager.IonOpticsManager')
 
     graph = Instance(TimeSeriesStreamGraph)
     # graphs = List
@@ -58,7 +60,7 @@ class ScanManager(Manager):
     set_spectrometer_configuration = Button
 
     detectors = DelegatesTo('spectrometer')
-    detector = Instance(Detector)
+    detector = Instance(BaseDetector)
     magnet = DelegatesTo('spectrometer')
     source = DelegatesTo('spectrometer')
     scanner = Instance(Scanner)
@@ -112,8 +114,10 @@ class ScanManager(Manager):
     _suppress_isotope_change = False
 
     def _bind_listeners(self, remove=False):
-        self.on_trait_change(self._update_magnet, 'magnet:dac_changed', remove=remove)
-        self.on_trait_change(self._toggle_detector, 'detectors:active', remove=remove)
+        self.on_trait_change(self._update_magnet, 'magnet:dac_changed',
+                             remove=remove)
+        self.on_trait_change(self._toggle_detector, 'detectors:active',
+                             remove=remove)
 
     def prepare_destroy(self):
         self.stop_scan()
@@ -164,9 +168,12 @@ class ScanManager(Manager):
 
     def bind_preferences(self):
         pref_id = 'pychron.spectrometer'
-        bind_preference(self, 'use_detector_safety', '{}.use_detector_safety'.format(pref_id))
-        bind_preference(self, 'use_log_events', '{}.use_log_events'.format(pref_id))
-        bind_preference(self, 'use_vertical_markers', '{}.use_vertical_markers'.format(pref_id))
+        bind_preference(self, 'use_detector_safety',
+                        '{}.use_detector_safety'.format(pref_id))
+        bind_preference(self, 'use_log_events',
+                        '{}.use_log_events'.format(pref_id))
+        bind_preference(self, 'use_vertical_markers',
+                        '{}.use_vertical_markers'.format(pref_id))
 
         bind_preference(self, 'use_default_scan_settings', '{}.use_default_scan_settings'.format(pref_id))
         bind_preference(self, 'default_detector', '{}.default_detector'.format(pref_id))
@@ -225,9 +232,11 @@ class ScanManager(Manager):
                     except KeyError, e:
                         print 'sm load settings', pi, e
 
-                    # self.detector = self.detectors[-1]
-                    # self.isotope = self.isotopes[-1]
-
+                except (pickle.PickleError, EOFError, KeyError):
+                    self.detector = self.detectors[-1]
+                    self.isotope = self.isotopes[-1]
+                    self.warning(
+                            'Failed unpickling scan settings file {}'.format(p))
         else:
             self.warning('No scan settings file {}'.format(p))
 
@@ -256,7 +265,8 @@ class ScanManager(Manager):
         self.info('reset scan timer')
         self.timer = self._timer_factory()
 
-    def add_spec_event_marker(self, msg, mode=None, extra=None, bgcolor='white'):
+    def add_spec_event_marker(self, msg, mode=None, extra=None,
+                              bgcolor='white'):
         if self.use_log_events and self.log_events_enabled:
             if mode == 'valve' and self._valve_event_list:
                 # check valve name is configured to be displayed
@@ -297,10 +307,13 @@ class ScanManager(Manager):
 
             if self.use_log_events:
                 if iso == NULL_STR:
-                    self.add_spec_event_marker('DAC={:0.5f}'.format(self.magnet.dac), bgcolor='red')
+                    self.add_spec_event_marker(
+                            'DAC={:0.5f}'.format(self.magnet.dac),
+                            bgcolor='red')
                 else:
-                    self.add_spec_event_marker('{}:{} ({:0.5f})'.format(self.detector,
-                                                                        iso, self.magnet.dac))
+                    self.add_spec_event_marker(
+                            '{}:{} ({:0.5f})'.format(self.detector,
+                                                     iso, self.magnet.dac))
 
             self.debug('setting isotope: {}'.format(iso))
             self._suppress_isotope_change = True
@@ -408,12 +421,16 @@ class ScanManager(Manager):
                     # check that the intensity is less than threshold
                     abort = det.intensity > threshold
                     if abort:
-                        if not self.confirmation_dialog('Are you sure you want to make this move.\n'
-                                                        'This will place {} fA on {}'.format(det.intensity,
-                                                                                             self.detector)):
+                        if not self.confirmation_dialog(
+                                'Are you sure you want to make this move.\n'
+                                'This will place {} fA on {}'.format(
+                                        det.intensity,
+                                        self.detector)):
 
-                            self.debug('aborting magnet move {} intensity {} > {}'.format(det, det.intensity,
-                                                                                          threshold))
+                            self.debug(
+                                    'aborting magnet move {} intensity {} > {}'.format(
+                                            det, det.intensity,
+                                            threshold))
                             if is_detector:
                                 do_later(self.trait_set, detector=prev)
                             else:
@@ -424,7 +441,8 @@ class ScanManager(Manager):
     def _set_position(self):
         if self.isotope and self.isotope != NULL_STR \
                 and self.detector:
-            self.info('set position {} on {}'.format(self.isotope, self.detector))
+            self.info(
+                    'set position {} on {}'.format(self.isotope, self.detector))
             self.ion_optics_manager.position(self.isotope, self.detector.name)
 
     # ===============================================================================
@@ -441,14 +459,16 @@ class ScanManager(Manager):
         self.rise_rate.graph = self.graph
 
         plot = self.graph.plots[0]
-        plot.value_range.on_trait_change(self._update_graph_limits, '_low_value, _high_value')
+        plot.value_range.on_trait_change(self._update_graph_limits,
+                                         '_low_value, _high_value')
 
     def _isotope_changed(self, old, new):
         if self._suppress_isotope_change:
             return
 
         self.debug('isotope changed {}'.format(self.isotope))
-        if self.isotope != NULL_STR and not self._check_detector_protection(old, False):
+        if self.isotope != NULL_STR and not self._check_detector_protection(old,
+                                                                            False):
             t = Thread(target=self._set_position)
             t.start()
 
@@ -478,7 +498,8 @@ class ScanManager(Manager):
 
                 # thread not super necessary
                 # simple allows gui to update while the magnet is delaying for settling_time
-                t = Thread(target=self.ion_optics_manager.position, args=(mass, self.detector))
+                t = Thread(target=self.ion_optics_manager.position,
+                           args=(mass, self.detector))
                 t.start()
 
     def _graph_y_auto_changed(self, new):
@@ -610,8 +631,8 @@ class ScanManager(Manager):
                           normalize_time=True,
                           use_date_str=False)
             dto = DataToolOverlay(
-                component=plot,
-                tool=dt)
+                    component=plot,
+                    tool=dt)
             plot.tools.append(dt)
             plot.overlays.append(dto)
 
@@ -628,7 +649,8 @@ class ScanManager(Manager):
     @cached_property
     def _get_isotopes(self):
         # molweights = self.spectrometer.molecular_weights
-        return [NULL_STR] + self.spectrometer.isotopes  #sorted(molweights.keys(), key=lambda x: int(x[2:]))
+        return [
+                   NULL_STR] + self.spectrometer.isotopes  # sorted(molweights.keys(), key=lambda x: int(x[2:]))
 
     def _validate_graph_ymin(self, v):
         try:
@@ -751,32 +773,32 @@ class ScanManager(Manager):
         #         spectrometer=DummySpectrometer(detectors=detectors))
         #     # sm.load_detectors()
         #     sm.configure_traits()
-    # ============= EOF =============================================
-    # def _check_detector_protection1(self, prev):
-    # """
-    # used when detector changes
-    # return True if magnet move should be aborted
-    #     """
-    #     return self._check_detector_protection(prev, True)
-    #
-    # def _check_detector_protection2(self, prev):
-    #     """
-    #         used when isotope changes
-    #         return True if magnet move should be aborted
-    #     """
-    #     return self._check_detector_protection(prev, False)
-    #    def _graph_ymin_auto_changed(self, new):
-    #        p = self.graph.plots[0]
-    #        if new:
-    #            p.value_range.low_setting = 'auto'
-    #        else:
-    #            p.value_range.low_setting = self.graph_ymin
-    #        self.graph.redraw()
-    #
-    #    def _graph_ymax_auto_changed(self, new):
-    #        p = self.graph.plots[0]
-    #        if new:
-    #            p.value_range.high_setting = 'auto'
-    #        else:
-    #            p.value_range.high_setting = self.graph_ymax
-    #        self.graph.redraw()
+        # ============= EOF =============================================
+        # def _check_detector_protection1(self, prev):
+        # """
+        # used when detector changes
+        # return True if magnet move should be aborted
+        #     """
+        #     return self._check_detector_protection(prev, True)
+        #
+        # def _check_detector_protection2(self, prev):
+        #     """
+        #         used when isotope changes
+        #         return True if magnet move should be aborted
+        #     """
+        #     return self._check_detector_protection(prev, False)
+        #    def _graph_ymin_auto_changed(self, new):
+        #        p = self.graph.plots[0]
+        #        if new:
+        #            p.value_range.low_setting = 'auto'
+        #        else:
+        #            p.value_range.low_setting = self.graph_ymin
+        #        self.graph.redraw()
+        #
+        #    def _graph_ymax_auto_changed(self, new):
+        #        p = self.graph.plots[0]
+        #        if new:
+        #            p.value_range.high_setting = 'auto'
+        #        else:
+        #            p.value_range.high_setting = self.graph_ymax
+        #        self.graph.redraw()
