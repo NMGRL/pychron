@@ -524,7 +524,7 @@ class Label(QPrimitive):
 
 
 class ValueLabel(Label):
-    value = Either(Float, Int, Str)
+    value = Either(Int, Float, Str)
 
     def _get_text(self):
         return self.text.format(self.value)
