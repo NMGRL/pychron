@@ -17,25 +17,19 @@
 # ============= enthought library imports =======================
 from traits.api import Instance, Int, Property, List, \
     Any, Enum, Str, DelegatesTo, Bool, TraitError, cached_property
-from traits.api import Str, Int, Bool, Any, Property, Instance, List, Enum, \
-    DelegatesTo, cached_property
-from traits.trait_errors import TraitError
 # ============= standard library imports ========================
-import os
-import random
 from numpy import array, argmin
 import random
-import time
 import os
 import time
 # ============= local library imports  ==========================
-from pychron.core.helpers.filetools import list_directory2, add_extension
+from pychron.core.helpers.filetools import list_directory2
 from pychron.core.progress import open_progress
 from pychron.globals import globalv
 from pychron.paths import paths
-from pychron.spectrometer import get_spectrometer_config_path, get_spectrometer_config_name, \
-    set_spectrometer_config_name
-from pychron.core.ramper import Ramper, calculate_steps, StepRamper
+from pychron.spectrometer import get_spectrometer_config_path, \
+    get_spectrometer_config_name, set_spectrometer_config_name
+from pychron.core.ramper import StepRamper
 from pychron.pychron_constants import QTEGRA_INTEGRATION_TIMES, \
     DEFAULT_INTEGRATION_TIME, NULL_STR
 from pychron.spectrometer.thermo.detector.base import ThermoDetector
@@ -381,9 +375,10 @@ class ThermoSpectrometer(SpectrometerDevice):
         self.load_detectors()
 
         # load local configurations
-        self.spectrometer_configurations = list_directory2(paths.spectrometer_config_dir,
-                                                           remove_extension=True,
-                                                           extension='.cfg')
+        self.spectrometer_configurations = list_directory2(
+                paths.spectrometer_config_dir,
+                remove_extension=True,
+                extension='.cfg')
 
         name = get_spectrometer_config_name()
         sc, _ = os.path.splitext(name)
@@ -449,7 +444,9 @@ class ThermoSpectrometer(SpectrometerDevice):
         # self._send_configuration()
 
     def start(self):
-        self.debug('********** Spectrometer start. send configuration: {}'.format(self.send_config_on_startup))
+        self.debug(
+                '********** Spectrometer start. send configuration: {}'.format(
+                        self.send_config_on_startup))
         if self.send_config_on_startup:
             self.send_configuration(use_ramp=True)
 
@@ -656,7 +653,7 @@ class ThermoSpectrometer(SpectrometerDevice):
             if not os.path.isfile(p):
                 self.warning(
                         'Spectrometer configuration file {} not found'.format(
-                            p))
+                                p))
                 return
 
             config = self.get_configuration_writer(p)
@@ -664,7 +661,8 @@ class ThermoSpectrometer(SpectrometerDevice):
             defl = {}
             trap = {}
             for section in config.sections():
-                if section in ['Default', 'Protection', 'General', 'Trap', 'Magnet']:
+                if section in ['Default', 'Protection', 'General', 'Trap',
+                               'Magnet']:
                     continue
 
                 for attr in config.options(section):
@@ -677,7 +675,9 @@ class ThermoSpectrometer(SpectrometerDevice):
 
             section = 'Trap'
             if config.has_section(section):
-                for attr in ('current', 'ramp_step', 'ramp_period', 'ramp_tolerance'):
+                for attr in (
+                        'current', 'ramp_step', 'ramp_period',
+                        'ramp_tolerance'):
                     if config.has_option(section, attr):
                         trap[attr] = config.getfloat(section, attr)
 
@@ -725,7 +725,9 @@ class ThermoSpectrometer(SpectrometerDevice):
                     cmd = 'Set{}'.format(command_map[k])
                     self.set_parameter(cmd, v)
                 except KeyError:
-                    self.debug('$$$$$$$$$$ Not setting {}. Not in command_map'.format(k))
+                    self.debug(
+                            '$$$$$$$$$$ Not setting {}. Not in command_map'.format(
+                                    k))
 
             # set the trap current
             v = trap.get('current')
@@ -735,7 +737,8 @@ class ThermoSpectrometer(SpectrometerDevice):
                 period = trap.get('ramp_period', 1)
                 tol = trap.get('ramp_tolerance', 10)
                 if not self._ramp_trap_current(v, step, period, use_ramp, tol):
-                    self.set_parameter('SetParameter', 'Trap Current Set,{}'.format(v))
+                    self.set_parameter('SetParameter',
+                                       'Trap Current Set,{}'.format(v))
 
             # set the mftable
             mftable_name = magnet.get('mftable')
@@ -753,7 +756,8 @@ class ThermoSpectrometer(SpectrometerDevice):
 
             if v - current >= tol:
                 if self.confirmation_dialog('Would you like to ramp up the '
-                                            'Trap current from {} to {}'.format(current, v)):
+                                            'Trap current from {} to {}'.format(
+                        current, v)):
                     prog = open_progress(1)
 
                     def func(x):
