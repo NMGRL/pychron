@@ -59,6 +59,7 @@ class LaserStageMap(BaseStageMap):
 
     def load_correction_file(self):
         p = self.correction_path
+        print p, os.path.isfile(p)
         if os.path.isfile(p):
             cors = None
             with open(p, 'rb') as f:
@@ -76,6 +77,7 @@ class LaserStageMap(BaseStageMap):
                         if x is not None and y is not None:
                             h.x_cor = x
                             h.y_cor = y
+                            h.corrected = True
 
     def _get_interpolation_holes(self, h, row):
         idx = row.index(h)
@@ -157,12 +159,11 @@ class LaserStageMap(BaseStageMap):
 
     def dump_correction_file(self):
         p = self.correction_path
-        if os.path.isfile(p):
-            with open(p, 'wb') as f:
-                pickle.dump([(h.id, h.x_cor, h.y_cor)
-                             for h in self.sample_holes], f)
+        with open(p, 'wb') as f:
+            pickle.dump([(h.id, h.x_cor, h.y_cor)
+                         for h in self.sample_holes], f)
 
-            self.info('saved correction file {}'.format(p))
+        self.info('saved correction file {}'.format(p))
 
     def set_hole_correction(self, hole, x_cor, y_cor):
         if not isinstance(hole, SampleHole):

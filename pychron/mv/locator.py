@@ -29,7 +29,8 @@ from skimage.morphology import watershed
 from skimage.draw import polygon, circle
 from scipy import ndimage
 from skimage.exposure import rescale_intensity
-from skimage.filters import gaussian_filter, canny
+from skimage.filters import gaussian_filter
+from skimage.feature import canny
 # ============= local library imports  ==========================
 # from pychron.core.geometry.centroid.calculate_centroid import calculate_centroid
 from pychron.loggable import Loggable
@@ -119,13 +120,20 @@ class Locator(Loggable):
             radii.extend([radius] * num_peaks)
 
         # for idx in argsort(accums)[::-1][:1]:
-        idx = argsort(accums)[::-1][0]
+        try:
+            idx = argsort(accums)[::-1][0]
+        except IndexError:
+            return dx,dy
+
         center_y, center_x = centers[idx]
         radius = radii[idx]
         cx, cy = circle_perimeter(int(center_x), int(center_y), int(radius))
 
         # draw perimeter
-        frame[cy, cx] = (220, 20, 20)
+        try:
+            frame[cy, cx] = (220, 20, 20)
+        except IndexError:
+            pass
 
         # draw center
         cx, cy = circle(int(center_x), int(center_y), int(2))
@@ -134,14 +142,14 @@ class Locator(Loggable):
         h, w = frame.shape[:2]
 
         ox, oy = w / 2, h / 2
-        dx = ox - center_x
-        dy = oy - center_y
+        dx = center_x - ox
+        dy = center_y - oy
 
         cx, cy = circle(int(ox), int(oy), int(2))
         frame[cy, cx] = (20, 220, 20)
 
         image.set_frame(frame)
-        return dx, dy
+        return float(dx), -float(dy)
 
     def find(self, image, frame, dim, **kw):
         """
