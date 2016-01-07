@@ -77,11 +77,6 @@ class BoundsOverlay(AbstractOverlay):
             gc.draw_rect((x1 + 1, y1, w, h), constants.STROKE)
 
 
-DIRECTIONS = {'Left': ('x', -1), 'Right': ('x', 1),
-              'Down': ('y', -1), 'Up': ('y', 1)
-              }
-
-
 class ImageOverlay(AbstractOverlay):
     alpha = Range(0.0, 1.0, 1.0)
 
@@ -440,38 +435,6 @@ class LaserTrayCanvas(StageCanvas):
             #            self.parent.parent.laser_controller.set_motor('zoom', inc, relative=True)
             # #            self.parent.parent.logic_board.set_zoom(inc, relative=True)
             #            event.handled = True
-
-    def normal_key_pressed(self, event):
-        c = event.character
-        if c in ('Left', 'Right', 'Up', 'Down'):
-            ax_key, direction = DIRECTIONS[c]
-            direction = self._calc_relative_move_direction(c, direction)
-            distance = 5 if event.shift_down else 1
-            self.stage_manager.relative_move(ax_key, direction, distance)
-            event.handled = True
-        elif c in ('a', 'A'):
-            self.stage_manager.accept_point()
-
-    def key_released(self, char):
-        """
-            called from outside by StageCompnentEditor
-        """
-        pass
-
-        # if char in ('left', 'right'):
-        #     # self.stage_manager.stop(ax_key='x', update=True, verbose=False)
-        #     self.stage_manager.update_axes()
-        # elif char in ('up', 'down'):
-        #     self.stage_manager.stop(ax_key='y', verbose=False)
-        #     # self.stage_manager.update_axes()
-        sc = self.stage_manager.stage_controller
-        sc.add_consumable((sc.update_axes, tuple()))
-
-    # ===============================================================================
-    # private
-    # ===============================================================================
-    def _calc_relative_move_direction(self, char, direction):
-        return direction
 
     def _add_bounds_rect(self):
         if self.show_bounds_rect:

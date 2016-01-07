@@ -15,23 +15,37 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traitsui.api import View
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
+from pychron.canvas.canvas2D.extraction_line_canvas2D import ExtractionLineCanvas2D
+from pychron.canvas.canvas2D.scene.dumper_scene import DumperScene
 
 
-class NMGRLFurnacePreferences(BasePreferencesHelper):
-    preferences_path = 'pychron.nmgrlfurnace'
+class DumperCanvas(ExtractionLineCanvas2D):
+    def load_canvas_file(self, pathname, configpath, valvepath, canvas):
+        self.scene.load(pathname, configpath, valvepath, canvas)
 
+    def set_item_state(self, item_name, state):
+        item = self.scene.get_item(item_name)
+        if item:
+            item.state = state
+            self._select_hook(item)
+            self.invalidate_and_redraw()
 
-class NMGRLFurnacePreferencesPane(PreferencesPane):
-    category = 'NMGRL Furnace'
-    model_factory = NMGRLFurnacePreferences
+    def _select_hook(self, item):
+        if hasattr(item, 'associations'):
+            if item.associations:
+                for i in item.associations:
+                    self._set_associated(i, item.state)
 
-    def traits_view(self):
-        v = View()
-        return v
+    def _set_associated(self, i, state):
+        item = self.scene.get_item(i)
+
+        item.set_state(state)
+        item.request_layout()
+
+    def _scene_default(self):
+        s = DumperScene()
+        return s
 
 # ============= EOF =============================================

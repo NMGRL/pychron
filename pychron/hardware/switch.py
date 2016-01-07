@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Str, Any, Bool, Property, Float
+from traits.api import Str, Any, Bool, Property, Float, List
 # ============= standard library imports ========================
 import time
 # ============= local library imports  ==========================
@@ -74,11 +74,12 @@ class Switch(BaseSwitch):
 
     query_state = Bool(True)
 
-
     actuator_name = Property(depends_on='actuator')
     prefix_name = 'SWITCH'
     parent = Str
     parent_inverted = Bool(False)
+    interlocks = List
+    positive_interlocks = List
 
     settling_time = Float(0)
 
@@ -111,8 +112,7 @@ class Switch(BaseSwitch):
     def set_closed(self, mode='normal'):
         return self._actuate_state(self._close, mode, self.state, False)
 
-
-
+    # private
     def _actuate_state(self, func, mode, cur, set_value):
         """
             func: self._close, self._open

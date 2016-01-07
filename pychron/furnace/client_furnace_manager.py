@@ -15,23 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traitsui.api import View
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
+from pychron.loggable import Loggable
 
 
-class NMGRLFurnacePreferences(BasePreferencesHelper):
-    preferences_path = 'pychron.nmgrlfurnace'
-
-
-class NMGRLFurnacePreferencesPane(PreferencesPane):
-    category = 'NMGRL Furnace'
-    model_factory = NMGRLFurnacePreferences
-
-    def traits_view(self):
-        v = View()
-        return v
+class ClientNMGRLFurnaceManager(Loggable):
+    def load_sample(self, s):
+        self.ask('LoadSample {}'.format(s))
 
 # ============= EOF =============================================

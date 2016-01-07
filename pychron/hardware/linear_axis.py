@@ -41,8 +41,15 @@ class LinearAxis(AbstractDevice):
         if self._cdevice:
             self.add_consumable((self._cdevice.set_position, v))
 
-    def relative_move(self, v):
-        self.set_position(self._position + v)
+    # def relative_move(self, v):
+    #     self.set_position(self._position + v)
+    def slew(self, modifier):
+        if self._cdevice:
+            self._cdevice.slew(modifier)
+
+    def stop(self):
+        if self._cdevice:
+            self._cdevice.stop()
 
     def _get_min_limit(self):
         return abs(self._position - self.min_value) < 1e-5

@@ -15,23 +15,30 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traitsui.api import View
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
+from pychron.pychron_constants import FURNACE_PROTOCOL
+from pychron.tx.protocols.base_valve import BaseValveProtocol
 
 
-class NMGRLFurnacePreferences(BasePreferencesHelper):
-    preferences_path = 'pychron.nmgrlfurnace'
+class FurnaceProtocol(BaseValveProtocol):
+    manager_protocol = FURNACE_PROTOCOL
 
+    def _init_hook(self):
+        services = ('DumpSample', '_dump_sample',
+                    'DumpComplete', '_dump_complete')
+        self._register_services(services)
 
-class NMGRLFurnacePreferencesPane(PreferencesPane):
-    category = 'NMGRL Furnace'
-    model_factory = NMGRLFurnacePreferences
+    # command handlers
+    def _dump_sample(self, data):
+        if isinstance(data, dict):
+            data = data['value']
 
-    def traits_view(self):
-        v = View()
-        return v
+        result = self._manager.dump_sample(data)
+        return result
+
+    def _dump_complete(self, data):
+        result = self._manager.is_dump_complete()
+        return result
 
 # ============= EOF =============================================

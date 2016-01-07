@@ -17,7 +17,6 @@
 # ============= enthought library imports =======================
 from traits.api import Dict
 # ============= standard library imports ========================
-import weakref
 import os
 from numpy.core.numeric import Inf
 # ============= local library imports  ==========================
@@ -102,7 +101,9 @@ class ExtractionLineScene(Scene):
 
     def _new_rectangle(self, elem, c, bw=3,
                        layer=1,
-                       origin=None, type_tag=''):
+                       origin=None, klass=None, type_tag=''):
+        if klass is None:
+            klass = RoundedRectangle
         if origin is None:
             ox, oy = 0, 0
         else:
@@ -110,6 +111,7 @@ class ExtractionLineScene(Scene):
 
         key = elem.text.strip()
         display_name = elem.get('display_name', key)
+        # print key, display_name
         fill = to_bool(elem.get('fill', 'T'))
 
         x, y = self._get_floats(elem, 'translation')
@@ -128,8 +130,6 @@ class ExtractionLineScene(Scene):
         # elif
         # else:
         # klass = RoundedRectangle
-
-        klass = KLASS_MAP.get(type_tag, RoundedRectangle)
 
         rect = klass(x + ox, y + oy, width=w, height=h,
                      name=key,
@@ -321,6 +321,7 @@ class ExtractionLineScene(Scene):
         ox, oy = origin
         ndict = dict()
         vp = SwitchParser(vpath)
+
         for s in cp.get_elements('switch'):
             key = s.text.strip()
             x, y = self._get_floats(s, 'translation')
@@ -339,6 +340,11 @@ class ExtractionLineScene(Scene):
                     x = 0
                     y = 22
                 v.set_label(label, x, y)
+
+            associations = s.findall('association')
+            if associations:
+                for a in associations:
+                    v.associations.append(a.text.strip())
 
             self.add_item(v, layer=1)
             ndict[key] = v
@@ -430,14 +436,15 @@ class ExtractionLineScene(Scene):
     def _load_rects(self, cp, origin, color_dict):
         for key in ('stage', 'laser', 'spectrometer',
                     'turbo', 'getter', 'tank',
-                    'ionpump', 'gauge'):
+                    'ionpump', 'gauge', 'rectangle'):
             for b in cp.get_elements(key):
                 if key in color_dict:
                     c = color_dict[key]
                 else:
                     c = (204, 204, 204)
 
-                self._new_rectangle(b, c, bw=5, origin=origin, type_tag=key)
+                klass = KLASS_MAP.get(key, RoundedRectangle)
+                self._new_rectangle(b, c, bw=5, origin=origin, klass=klass, type_tag=key)
 
     def _load_pipettes(self, cp, origin, color_dict):
         if 'pipette' in color_dict:

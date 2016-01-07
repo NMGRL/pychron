@@ -15,11 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from pyface.tasks.task_layout import TaskLayout
+from pyface.tasks.task_layout import TaskLayout, PaneItem
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.base_task import BaseManagerTask
-from pychron.furnace.tasks.panes import FurnacePane
+from pychron.furnace.tasks.panes import FurnacePane, ControlPane
 
 
 class FurnaceTask(BaseManagerTask):
@@ -33,12 +33,12 @@ class FurnaceTask(BaseManagerTask):
         self.manager.prepare_destroy()
 
     def create_dock_panes(self):
-        return []
+        return [ControlPane(model=self.manager)]
 
     def create_central_pane(self):
         return FurnacePane(model=self.manager)
 
     def _default_layout_default(self):
-        return TaskLayout()
+        return TaskLayout(left=PaneItem('pychron.nmgrlfurnace.controls'))
 
 # ============= EOF =============================================

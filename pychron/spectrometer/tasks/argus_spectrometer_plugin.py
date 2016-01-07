@@ -15,16 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import os
 
-from pyface.tasks.action.schema_addition import SchemaAddition
 from envisage.ui.tasks.task_extension import TaskExtension
 from pyface.tasks.action.schema import SMenu
+from pyface.tasks.action.schema_addition import SchemaAddition
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.strtools import to_bool
-from pychron.paths import paths
 from pychron.spectrometer.readout_view import ReadoutView
 from pychron.spectrometer.tasks.base_spectrometer_plugin import BaseSpectrometerPlugin
 from pychron.spectrometer.thermo.spectrometer_manager import ArgusSpectrometerManager
@@ -41,7 +39,7 @@ class ArgusSpectrometerPlugin(BaseSpectrometerPlugin):
     name = 'ArgusSpectrometer'
 
     def _preferences_default(self):
-        return ['file://{}'.format(os.path.join(paths.preferences_dir, 'spectrometer.ini'))]
+        return self._preferences_factory('spectrometer')
 
     def start(self):
         super(ArgusSpectrometerPlugin, self).start()

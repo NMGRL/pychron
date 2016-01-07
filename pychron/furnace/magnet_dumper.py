@@ -15,23 +15,33 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traitsui.api import View
+from traits.api import Str
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
+from pychron.hardware.core.abstract_device import AbstractDevice
 
 
-class NMGRLFurnacePreferences(BasePreferencesHelper):
-    preferences_path = 'pychron.nmgrlfurnace'
+class NMGRLMagnetDumper(AbstractDevice):
+    channel_address = Str
+    in_progress_address = Str
+    _dump_in_progress = False
 
+    def load_additional_args(self, config):
+        self.set_attribute(config, 'channel_address', 'General', 'channel_address')
+        self.set_attribute(config, 'in_progress_address', 'General', 'in_progress_address')
+        super(NMGRLMagnetDumper, self).load_additional_args(config)
 
-class NMGRLFurnacePreferencesPane(PreferencesPane):
-    category = 'NMGRL Furnace'
-    model_factory = NMGRLFurnacePreferences
+    def actuate(self):
+        if self._cdevice:
+            self._dump_in_progress = True
+            self._cdevice.open_channel(self.channel_address)
 
-    def traits_view(self):
-        v = View()
-        return v
+    def dump_in_progress(self):
+        state = False
+        if self._dump_in_progress:
+            state = self._cdevice.get_channel_state(self.in_progress_address)
+            if not state:
+                self._dump_in_progress = False
+        return state
 
 # ============= EOF =============================================

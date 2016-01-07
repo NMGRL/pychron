@@ -14,8 +14,6 @@
 # limitations under the License.
 # ===============================================================================
 
-
-
 # ============= enthought library imports =======================
 
 # ============= standard library imports ========================
@@ -39,17 +37,17 @@ class GPActuator(CoreDevice):
         pass
 
     def get_channel_state(self, *args, **kw):
-        '''
-        '''
+        """
+        """
         raise NotImplementedError
 
     def open_channel(self, *args, **kw):
-        '''
-        '''
+        """
+        """
         raise NotImplementedError
 
     def close_channel(self, *args, **kw):
-        '''
-            '''
+        """
+        """
         raise NotImplementedError
 # ============= EOF ====================================

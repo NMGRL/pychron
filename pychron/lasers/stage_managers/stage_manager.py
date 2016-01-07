@@ -29,7 +29,7 @@ from pychron.experiment.utilities.position_regex import POINT_REGEX, XY_REGEX, T
 from pychron.canvas.canvas2D.laser_tray_canvas import LaserTrayCanvas
 # from pychron.core.helpers.color_generators import colors8i as colors
 
-from pychron.hardware.motion_controller import MotionController, PositionError, TargetPositionError
+from pychron.hardware.motion_controller import MotionController, TargetPositionError
 from pychron.paths import paths
 # from pychron.lasers.stage_managers.stage_visualizer import StageVisualizer
 from pychron.lasers.points.points_programmer import PointsProgrammer
@@ -267,6 +267,10 @@ class StageManager(BaseStageManager):
 
     def relative_move(self, *args, **kw):
         self.stage_controller.relative_move(*args, **kw)
+
+    def key_released(self):
+        sc = self.stage_controller
+        sc.add_consumable((sc.update_axes, tuple()))
 
     def moving(self, force_query=False, **kw):
         moving = False

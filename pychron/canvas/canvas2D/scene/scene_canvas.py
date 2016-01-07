@@ -15,7 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from kiva import JOIN_ROUND
+try:
+    from kiva import JOIN_ROUND
+except ImportError:
+    JOIN_ROUND = 0
 from traits.api import Instance
 # ============= standard library imports ========================
 # ============= local library imports  ==========================

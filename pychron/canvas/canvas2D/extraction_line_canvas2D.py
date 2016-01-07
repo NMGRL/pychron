@@ -15,10 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Any, Str, on_trait_change, Bool
 from pyface.action.menu_manager import MenuManager
-from traitsui.menu import Action
 from pyface.qt.QtGui import QToolTip
+from traits.api import Any, Str, on_trait_change, Bool
+from traitsui.menu import Action
 
 # ============= standard library imports ========================`
 import os
@@ -31,7 +31,6 @@ from pychron.canvas.scene_viewer import SceneCanvas
 from pychron.canvas.canvas2D.scene.extraction_line_scene import ExtractionLineScene
 from pychron.canvas.canvas2D.scene.primitives.valves import RoughValve, \
     BaseValve, Switch, ManualSwitch
-import weakref
 from pychron.globals import globalv
 
 W = 2
@@ -188,13 +187,13 @@ class ExtractionLineCanvas2D(SceneCanvas):
             state = item.state
             state = not state
             mode = 'normal'
-            try:
-                if state:
-                    ok, change = self.manager.open_valve(item.name, mode=mode)
-                else:
-                    ok, change = self.manager.close_valve(item.name, mode=mode)
-            except TypeError:
-                ok, change = True, True
+            # try:
+            if state:
+                ok, change = self.manager.open_valve(item.name, mode=mode)
+            else:
+                ok, change = self.manager.close_valve(item.name, mode=mode)
+                # except TypeError, e:
+                # ok, change = True, True
 
         else:
             if not isinstance(item, BaseValve):
@@ -240,6 +239,9 @@ class ExtractionLineCanvas2D(SceneCanvas):
         if ok:
             item.state = state
 
+        if change and ok:
+            self._select_hook(item)
+
         if change:
             self.invalidate_and_redraw()
 
@@ -254,6 +256,9 @@ class ExtractionLineCanvas2D(SceneCanvas):
         return (i for i in self.scene.valves.itervalues())
 
     # private
+    def _select_hook(self, item):
+        pass
+
     @on_trait_change('display_volume, volume_key')
     def _update_tool(self, name, new):
         self.tool.trait_set(**{name: new})
@@ -298,7 +303,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
             menu.show()
 
     def _scene_default(self):
-        s = ExtractionLineScene(canvas=self)
+        s = ExtractionLineScene()
         return s
 
 # ============= EOF ====================================

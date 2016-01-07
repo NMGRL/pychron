@@ -15,23 +15,48 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traitsui.api import View
+from traits.api import Str, Int
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
+from pychron.config_loadable import ConfigLoadable
+
+try:
+    from Adafruit_DHT import read_retry, DHT11
+except ImportError:
+    DHT11 = None
 
 
-class NMGRLFurnacePreferences(BasePreferencesHelper):
-    preferences_path = 'pychron.nmgrlfurnace'
+    def read_retry(sensor, pin):
+        return None, None
 
 
-class NMGRLFurnacePreferencesPane(PreferencesPane):
-    category = 'NMGRL Furnace'
-    model_factory = NMGRLFurnacePreferences
+class DHT11(ConfigLoadable):
+    pin = Int
+    units = Str
 
-    def traits_view(self):
-        v = View()
-        return v
+    _humidity = 0
+    _temperature = 0
+    _sensor = None
+
+    def load_additional_args(self, config):
+        self.set_attribute(config, 'pin', 'General', 'pin', cast='int')
+        self.set_attribute(config, 'units', 'General', 'units')
+
+    def initialize(self, *args, **kw):
+        self._sensor = DHT11
+
+    def update(self):
+        self._humidity, temp = read_retry(self._sensor, self.pin)
+        if self.units == 'F':
+            temp = temp * 9 / 5. + 32
+        self._temperature = temp
+
+    @property
+    def humidity(self):
+        return self._humidity
+
+    @property
+    def temperature(self):
+        return self._temperature
 
 # ============= EOF =============================================

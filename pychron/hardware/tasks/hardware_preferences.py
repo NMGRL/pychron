@@ -15,9 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import Bool, List, on_trait_change, String, Dict, Str, Int, HasTraits
 from traitsui.api import View, Item, VGroup, UItem, TableEditor
-from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
 
@@ -59,8 +59,7 @@ class HardwarePreferences(BasePreferencesHelper):
               ('FusionsCO2Protocol', 'pychron.tx.factories.FusionsCO2Factory'),
               ('FusionsDiodeProtocol', 'pychron.tx.factories.FusionsDiodeFactory'),
               ('FusionsUVProtocol', 'pychron.tx.factories.FusionsUVFactory'),
-              # ('FurnaceProtocol','pychron.txt.factories.LaserFactory'),
-              )
+              ('FurnaceProtocol', 'pychron.tx.factories.FurnaceFactory'))
         self._protocols = [Protocol(name=n, factory=f,
                                     port=self.ports.get(n, 8000),
                                     enabled=n in self.pnames) for n, f in ap]

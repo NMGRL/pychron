@@ -409,10 +409,9 @@ class VideoStageManager(StageManager):
             for _t in range(max(1, ntries)):
                 # use machine vision to calculate positioning error
                 #                rpos = self.autocenter_manager.locate_target(
-                rpos = self.autocenter_manager.locate_center(
+                rpos = self.autocenter_manager.calculate_new_center(
                     self.stage_controller.x,
                     self.stage_controller.y,
-                    holenum,
                     dim=self.stage_map.g_dimension)
 
                 if rpos:

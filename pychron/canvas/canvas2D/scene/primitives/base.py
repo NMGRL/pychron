@@ -16,8 +16,9 @@
 
 # ============= enthought library imports =======================
 from kiva.fonttools import str_to_font
-from traits.api import HasTraits, Str, Any, Float, Property, on_trait_change, Color, List, cached_property
-from traitsui.api import View, Item, HGroup, VGroup
+from traits.api import HasTraits, Str, Any, Float, Property, on_trait_change, Color, List
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -85,6 +86,11 @@ class Primitive(HasTraits):
     @property
     def label(self):
         return '{} {} {}'.format(self.klass_name, self.name, self.identifier)
+
+    def request_layout(self):
+        self._cached_wh = None
+        self._cached_xy = None
+        self._layout_needed = True
 
     def render(self, gc):
 

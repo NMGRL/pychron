@@ -270,13 +270,13 @@ class SwitchManager(Manager):
         """
         return next((item for item in self.explanable_items if item.name == n), None)
 
-    def get_state_by_name(self, n):
+    def get_state_by_name(self, n, force=False):
         """
         """
         v = self.get_switch_by_name(n)
         state = None
         if v is not None:
-            state = self._get_state_by(v)
+            state = self._get_state_by(v, force=force)
 
         return state
 
@@ -309,6 +309,12 @@ class SwitchManager(Manager):
 
         if v is not None:
             return v.software_lock
+
+    def open_switch(self, *args, **kw):
+        return self.open_by_name(*args, **kw)
+
+    def close_switch(self, *args, **kw):
+        return self.close_by_name(*args, **kw)
 
     def open_by_name(self, name, mode='normal'):
         """
@@ -367,6 +373,19 @@ class SwitchManager(Manager):
         self._save_soft_lock_states()
         self._save_manual_states()
 
+    def _check_positive_interlocks(self, name):
+        interlocks = []
+        cv = self.get_switch_by_name(name)
+        if cv is not None:
+            switches = self.switches
+            pinterlocks = cv.positive_interlocks
+            for pp in pinterlocks:
+                if pp in switches:
+                    v = switches[pp]
+                    if not v.state:
+                        interlocks.append(pp)
+        return interlocks
+
     def _check_soft_interlocks(self, name):
         """
         """
@@ -384,12 +403,14 @@ class SwitchManager(Manager):
                         self.debug('interlocked {}'.format(interlock))
                         return v
 
-    def _get_state_by(self, v):
+    def _get_state_by(self, v, force=False):
         """
         """
         state = None
-        if self.query_valve_state and v.query_state:
+        if (self.query_valve_state and v.query_state) or force:
             state = v.get_hardware_state(verbose=False)
+            if v.actuator.simulation:
+                state = None
 
         if state is None:
             state = v.state
@@ -521,7 +542,14 @@ class SwitchManager(Manager):
             msg = 'Software Interlock. {} is OPEN!. Will not open {}'.format(interlocked_valve.name, name)
             self.console_message = (msg, 'red')
             self.warning(msg)
-            return
+            return False, False
+
+        positive_interlocks = self._check_positive_interlocks(name)
+        if positive_interlocks:
+            msg = 'Positive Interlocks not all enabled. {} not opened'.format(','.join(positive_interlocks))
+            self.console_message = (msg, 'red')
+            self.warning(msg)
+            return False, False
 
         r, c = self._actuate_(name, action, mode)
         if r and c:
@@ -536,6 +564,13 @@ class SwitchManager(Manager):
 
     def _close_(self, name, mode):
         action = 'set_closed'
+        interlocked_valve = self._check_soft_interlocks(name)
+        if interlocked_valve:
+            msg = 'Software Interlock. {} is OPEN!. Will not close {}'.format(interlocked_valve.name, name)
+            self.console_message = (msg, 'red')
+            self.warning(msg)
+            return False, False
+
         return self._actuate_(name, action, mode)
 
     def _actuate_(self, name, action, mode, address=None):
@@ -624,6 +659,7 @@ class SwitchManager(Manager):
         act_elem = v_elem.find('actuator')
         description = v_elem.find('description')
 
+        positive_interlocks = [i.text.strip() for i in v_elem.findall('positive_interlock')]
         interlocks = [i.text.strip() for i in v_elem.findall('interlock')]
         if description is not None:
             description = description.text.strip()
@@ -674,6 +710,7 @@ class SwitchManager(Manager):
                    actuator=actuator,
                    description=description,
                    query_state=qs,
+                   positive_interlocks=positive_interlocks,
                    interlocks=interlocks,
                    settling_time=st or 0)
         return name, hv

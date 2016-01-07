@@ -15,23 +15,40 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traitsui.api import View
+from traits.api import Dict
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
+from pychron.canvas.canvas2D.scene.primitives.rounded import RoundedRectangle
 
 
-class NMGRLFurnacePreferences(BasePreferencesHelper):
-    preferences_path = 'pychron.nmgrlfurnace'
+class StateableRectangle(RoundedRectangle):
+    states = Dict
+
+    def set_state(self, state):
+        if isinstance(state, bool):
+            state = 'open' if state else 'closed'
+
+        state_dict = self.states[state]
+
+        self._set_dimensions(state_dict.get('dimension'))
+        self._set_translation(state_dict.get('translation'))
+        self.request_layout()
+
+    def _set_dimensions(self, wh):
+        if wh:
+            self.width, self.height = wh
+
+    def _set_translation(self, xy):
+        if xy:
+            self.x, self.y = xy
 
 
-class NMGRLFurnacePreferencesPane(PreferencesPane):
-    category = 'NMGRL Furnace'
-    model_factory = NMGRLFurnacePreferences
+class Gate(StateableRectangle):
+    pass
 
-    def traits_view(self):
-        v = View()
-        return v
+
+class Funnel(StateableRectangle):
+    pass
 
 # ============= EOF =============================================
