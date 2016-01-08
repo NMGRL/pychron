@@ -50,16 +50,15 @@ class DVCIrradiationable(Loggable):
 
     @cached_property
     def _get_irradiations(self):
+        names = []
         if self.dvc.connected:
             with self.dvc.db.session_ctx():
                 irs = self.dvc.db.get_irradiations()
-                names = [i.name for i in irs]
-                if names:
+                if irs:
+                    names = [i.name for i in irs]
                     if not self._suppress_auto_select_irradiation:
                         self.irradiation = names[0]
-                return names
-        else:
-            return []
+        return names
 
     @cached_property
     def _get_levels(self):

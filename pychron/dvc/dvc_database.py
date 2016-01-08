@@ -943,7 +943,9 @@ class DVCDatabase(DatabaseAdapter):
 
     def get_usernames(self):
         with self.session_ctx():
-            return [ui.name for ui in self.get_users()]
+            users = self.get_users()
+            if users:
+                return [ui.name for ui in users]
 
     def get_project_names(self):
         return self._get_table_names(ProjectTbl)
