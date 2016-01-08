@@ -454,7 +454,8 @@ class VideoStageManager(StageManager):
 
                     self.linear_move(*rpos, block=True,
                                      use_calibration=False,
-                                     update_hole=False)
+                                     update_hole=False,
+                                     velocity_scalar=0.1)
                     time.sleep(0.1)
                 else:
                     self.snapshot(auto=True,
