@@ -25,7 +25,8 @@ from pyface.tasks.action.schema import SToolBar
 from pychron.envisage.tasks.base_task import BaseManagerTask
 from pychron.globals import globalv
 from pychron.loading.panes import LoadPane, LoadControlPane, LoadTablePane
-from pychron.loading.actions import SaveLoadingAction, ConfigurePDFAction, EntryAction, InfoAction, EditAction
+from pychron.loading.actions import SaveLoadingPDFAction, ConfigurePDFAction, EntryAction, InfoAction, EditAction, \
+    SaveLoadingDBAction
 from apptools.preferences.preference_binding import bind_preference
 
 
@@ -38,8 +39,9 @@ class LoadingTask(BaseManagerTask):
     canvas = Any
     _positions = List
 
-    tool_bars = [SToolBar(SaveLoadingAction(),
-        ConfigurePDFAction()),
+    tool_bars = [SToolBar(SaveLoadingPDFAction(),
+                          ConfigurePDFAction()),
+                 SToolBar(SaveLoadingDBAction()),
                  SToolBar(EntryAction(), InfoAction(), EditAction())]
 
     def activated(self):
@@ -91,40 +93,11 @@ class LoadingTask(BaseManagerTask):
     def configure_pdf(self):
         self.manager.configure_pdf()
 
-    def save_loading(self):
+    def save_loading_pdf(self):
         self.manager.save_pdf()
 
-        # self.manager.canvas.invalidate_and_redraw()
-
-    # @on_trait_change('manager:load_name')
-    # def _load_changed(self, new):
-    # if new:
-    # self.manager.tray = ''
-    # self.manager.load_load(new)
-
-    # @on_trait_change('manager:tray')
-    # def _tray_changed(self, new):
-    #     if new:
-    #         # c = LoadingCanvas(
-    #         #     view_x_range=(-2.2, 2.2),
-    #         #     view_y_range=(-2.2, 2.2))
-    #
-    #         # c.load_scene(new,
-    #         #              show_hole_numbers=self.manager.show_hole_numbers)
-    #         print 'new', new
-    #         c = self.manager.make_canvas(new)
-    #         self.canvas = c
-    #         self.load_pane.component = c
-    #
-    #         self.manager.canvas = c
-    #         self.manager.positions = []
-
-        # @on_trait_change('manager:canvas')
-        # def _canvas_changed(self, new):
-        # self.load_pane.component = new
-        # self.canvas = new
-        # self.manager.canvas = c
-        # self.manager.positions = []
+    def save_loading_db(self):
+        self.manager.save(inform=True)
 
     def _prompt_for_save(self):
         if self.manager.dirty:
@@ -134,20 +107,6 @@ class LoadingTask(BaseManagerTask):
                 return self.manager.save()
             return ret
         return True
-
-        # @on_trait_change('window:closing')
-        # def _prompt_on_close(self, event):
-        #     """
-        #         Prompt the user to save when exiting.
-        #     """
-        #     if self.dirty:
-        #
-        #         # result = self._confirmation('ffoo')
-        #
-        #         if result in (CANCEL, NO):
-        #             event.veto = True
-        #         else:
-        #             self._save()
 
 # ============= EOF =============================================
 # def save_loading2(self):

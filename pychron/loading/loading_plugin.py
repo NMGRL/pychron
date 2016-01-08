@@ -22,19 +22,8 @@ from envisage.ui.tasks.task_extension import TaskExtension
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
-# from pychron.experiment.signal_calculator import SignalCalculator
-# from pychron.experiment.image_browser import ImageBrowser
-# from pychron.experiment.tasks.experiment_task import ExperimentEditorTask
-# from pychron.experiment.tasks.experiment_preferences import ExperimentPreferencesPane
-# from pychron.experiment.tasks.experiment_actions import NewExperimentQueueAction, \
-#     OpenExperimentQueueAction, SaveExperimentQueueAction, \
-#     SaveAsExperimentQueueAction, SignalCalculatorAction, \
-#     UpdateDatabaseAction, DeselectAction, SendTestNotificationAction, \
-#     NewPatternAction, OpenPatternAction, ResetQueuesAction
-# from pychron.experiment.tasks.constants_preferences import ConstantsPreferencesPane
-# from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.loading.load_task import LoadingTask
-from pychron.loading.actions import SaveLoadingAction
+from pychron.loading.actions import SaveLoadingPDFAction
 from pychron.loading.loading_preferences import LoadingPreferencesPane
 from pychron.loading.panes import LoadDockPane, LoadTablePane
 from pychron.loading.loading_manager import LoadingManager
@@ -44,10 +33,11 @@ class LoadingPlugin(BaseTaskPlugin):
     id = 'pychron.loading'
 
     def _task_extensions_default(self):
+        actions = [SchemaAddition(id='save_loading_figure',
+                                  factory=SaveLoadingPDFAction,
+                                  path='MenuBar/file.menu')]
         return [TaskExtension(task_id='pychron.loading',
-                              actions=[SchemaAddition(id='save_loading_figure',
-                                                      factory=SaveLoadingAction,
-                                                      path='MenuBar/file.menu')])]
+                              actions=actions)]
 
     def _tasks_default(self):
         return [TaskFactory(id='pychron.loading',
@@ -57,14 +47,14 @@ class LoadingPlugin(BaseTaskPlugin):
                             task_group='experiment')]
 
     def _service_offers_default(self):
-
         load = self.service_offer_factory(protocol=LoadDockPane,
                                           factory=LoadDockPane)
         table = self.service_offer_factory(protocol=LoadTablePane,
                                            factory=LoadTablePane)
         man = self.service_offer_factory(protocol=LoadingManager,
                                          factory=LoadingManager,
-                                         properties={'application': self.application})
+                                         properties={
+                                             'application': self.application})
 
         return [load, table, man]
 

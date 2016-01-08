@@ -28,7 +28,8 @@ import time
 from uncertainties import ufloat
 from pychron.canvas.utils import iter_geom
 from pychron.core.helpers.datetime_tools import ISO_FORMAT_STR
-from pychron.core.helpers.filetools import list_directory2, add_extension
+from pychron.core.helpers.filetools import list_directory2, add_extension, \
+    list_directory
 from pychron.dvc import dvc_dump, dvc_load
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths, r_mkdir
@@ -396,6 +397,10 @@ class MetaRepo(GitRepoManager):
                     wfile.write('{:0.4f},{:0.4f},{:0.4f}\n'.format(x, y, r))
             if add:
                 self.add(p, commit=commit)
+
+    def get_load_holders(self):
+        p = os.path.join(paths.meta_root, 'load_holders')
+        return list_directory(p, extension='.txt', remove_extension=True)
 
     def add_load_holder(self, name, path_or_txt, commit=False, add=True):
         p = os.path.join(paths.meta_root, 'load_holders', name)

@@ -39,6 +39,6 @@ class LoadingTest(unittest.TestCase):
         c = lm.make_canvas('1401')
 
         self.t.canvas = c
-        self.t.save_loading()
+        self.t.save_loading_pdf()
 
 # ============= EOF =============================================

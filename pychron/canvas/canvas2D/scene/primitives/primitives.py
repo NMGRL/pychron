@@ -207,7 +207,8 @@ class Triangle(QPrimitive):
                 gc.close_path()
                 gc.stroke_path()
             else:
-                f = color_map_name_dict['hot'](DataRange1D(low_setting=0, high_setting=300))
+                f = color_map_name_dict['hot'](DataRange1D(low_setting=0,
+                                                           high_setting=300))
                 for x, y, v in points:
                     x, y = func((x, y))
                     gc.set_fill_color(f.map_screen(array([v]))[0])
@@ -246,7 +247,8 @@ class Circle(QPrimitive):
             gc.arc(x, y, r, 0, 360)
             gc.fill_path()
 
-        self._render_name(gc, x + self.name_offsetx, y + self.name_offsety, r / 4., r / 2.)
+        self._render_name(gc, x + self.name_offsetx, y + self.name_offsety,
+                          r / 4., r / 2.)
 
     def is_in(self, sx, sy):
         x, y = self.get_xy()
@@ -371,8 +373,9 @@ class LoadIndicator(Circle):
 
     def _render_(self, gc):
         c = (0, 0, 0)
-        if self.fill and self.fill_color and sum(self.fill_color.toTuple()[:3]) < 1.5:
-            c = (255, 255, 255)
+        if self.fill and self.fill_color \
+                and sum(self.fill_color.toTuple()[:3]) < 1.5:
+            c = (100, 100, 100)
 
         self.text_color = c
         for p in self.primitives:
@@ -763,7 +766,8 @@ class Image(QPrimitive):
             if self.scale:
                 gc.scale_ctm(*self.scale)
 
-            gc.draw_image(self._cached_image, rect=(0, 0, self.canvas.width, self.canvas.height))
+            gc.draw_image(self._cached_image, rect=(0, 0, self.canvas.width,
+                                                    self.canvas.height))
 
     def _compute_cached_image(self):
         pic = PImage.open(self.path)
@@ -776,7 +780,8 @@ class Image(QPrimitive):
         elif data.shape[2] == 4:
             kiva_depth = 'rgba32'
         else:
-            raise RuntimeError('Unknown colormap depth value: {}'.format(data.value_depth))
+            raise RuntimeError('Unknown colormap depth value: '
+                               '{}'.format(data.value_depth))
 
         self._cached_image = GraphicsContextArray(data, pix_format=kiva_depth)
         self._image_cache_valid = True
@@ -810,7 +815,8 @@ class Animation(object):
             self.cnt -= self.cnt_tol
 
     def refresh_required(self):
-        if not self._last_refresh or time.time() - self._last_refresh > self.tol:
+        if not self._last_refresh or \
+                                time.time() - self._last_refresh > self.tol:
             self._last_refresh = time.time()
             return True
 

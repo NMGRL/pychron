@@ -36,7 +36,11 @@ class DVCIrradiationable(Loggable):
         # return self.dvc.initialize(inform)
         self.debug('Verify database connection')
 
-        return self.dvc.initialize(inform)
+        ret = self.dvc.initialize(inform)
+        if ret:
+            # trigger reload of irradiations, and levels
+            self.updated = True
+        return ret
 
     def load(self):
         pass
@@ -73,6 +77,3 @@ class DVCIrradiationable(Loggable):
             return []
 
 # ============= EOF =============================================
-
-
-

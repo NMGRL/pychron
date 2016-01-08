@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from traits.api import HasTraits, List, Bool
+from traits.api import Color as TraitsColor
 from traitsui.api import View, Item, Group, VGroup, HGroup
 # ============= standard library imports ========================
 # from reportlab.platypus.flowables import PageBreak, Flowable
@@ -29,7 +30,7 @@ from reportlab.platypus.frames import Frame
 # from chaco.pdf_graphics_context import PdfPlotGraphicsContext
 # ============= local library imports  ==========================
 from pychron.core.pdf.items import Row, RowItem
-from pychron.core.pdf.options import BasePDFOptions
+from pychron.core.pdf.options import BasePDFOptions, dumpable
 from pychron.loading.component_flowable import ComponentFlowable
 from pychron.canvas.canvas2D.scene.primitives.primitives import LoadIndicator
 from reportlab.platypus.flowables import Spacer
@@ -39,19 +40,21 @@ from pychron.core.pdf.base_table_pdf_writer import BasePDFTableWriter
 class LoadingPDFOptions(BasePDFOptions):
     _persistence_name = 'load_pdf_options'
 
-    show_colors = Bool
-    show_labnumbers = Bool
-    show_weights = Bool
-    show_hole_numbers = Bool
-    view_pdf = Bool
+    show_colors = dumpable(Bool)
+    show_labnumbers = dumpable(Bool)
+    show_weights = dumpable(Bool)
+    show_hole_numbers = dumpable(Bool)
+    view_pdf = dumpable(Bool)
+    use_alternating_background = dumpable(Bool)
+    alternating_background = dumpable(TraitsColor)
 
     def _show_colors_changed(self, new):
         if new:
             self.use_alternating_background = False
 
-    def _get_dump_attrs(self):
-        d = super(LoadingPDFOptions, self)._get_dump_attrs()
-        return d + ('show_colors', 'show_labnumbers', 'show_weights', 'show_hole_numbers')
+    def get_alternating_background(self):
+        t = self.alternating_background.toTuple()[:3]
+        return map(lambda x: x / 255., t)
 
     def traits_view(self):
         layout_grp = VGroup(Item('orientation'),
@@ -67,11 +70,12 @@ class LoadingPDFOptions(BasePDFOptions):
                      Item('show_weights'),
                      Item('show_hole_numbers'),
                      Item('show_colors'),
-                     Item('use_alternating_background', enabled_when='not show_colors'),
-                     Item('alternating_background', enabled_when='use_alternating_background'))
+                     Item('use_alternating_background',
+                          enabled_when='not show_colors'),
+                     Item('alternating_background',
+                          enabled_when='use_alternating_background'))
         v = View(VGroup(layout_grp,
-                        grp,
-                        ),
+                        grp),
                  title='Configure PDF',
                  kind='livemodal', buttons=['OK', 'Cancel'])
         return v
@@ -94,7 +98,8 @@ class LoadingPDFWriter(BasePDFTableWriter):
 
         t3 = self._make_notes_table(component)
 
-        flowables = [meta, Spacer(0, 5 * mm), ComponentFlowable(component=component),
+        flowables = [meta, Spacer(0, 5 * mm),
+                     ComponentFlowable(component=component),
                      FrameBreak(),
 
                      Spacer(0, 5 * mm), t1,
@@ -127,7 +132,8 @@ class LoadingPDFWriter(BasePDFTableWriter):
 
     def _make_meta_table(self, meta):
         ts = self._new_style()
-        items = '<b>Load:</b> {load_name}|<b>Loader</b>: {username}|<b>Date</b>: {load_date}'.format(**meta).split('|')
+        items = '<b>Load:</b> {load_name}|<b>Loader</b>: ' \
+                '{username}|<b>Date</b>: {load_date}'.format(**meta).split('|')
         row1 = [self._new_paragraph(ti) for ti in items]
         row1 = Row(items=[RowItem(value=v) for v in row1])
 
@@ -203,7 +209,8 @@ class LoadingPDFWriter(BasePDFTableWriter):
             # row = (pi.labnumber, pi.irradiation_str, pi.sample,
             # pi.position_str)
 
-            items = [RowItem(i) for i in (pi.labnumber, pi.irradiation_str, pi.sample,
+            items = [RowItem(i) for i in (pi.labnumber, pi.irradiation_str,
+                                          pi.sample,
                                           pi.position_str)]
             row = Row(items=items)
 
@@ -212,7 +219,8 @@ class LoadingPDFWriter(BasePDFTableWriter):
             if self.options.show_colors:
                 cc = pi.color
                 if sum(cc) < 1.5:
-                    ts.add('TEXTCOLOR', (0, idx + 1), (-1, idx + 1), colors.white)
+                    ts.add('TEXTCOLOR', (0, idx + 1), (-1, idx + 1),
+                           colors.white)
 
                 c = Color(*cc)
             elif self.options.use_alternating_background:
@@ -220,7 +228,8 @@ class LoadingPDFWriter(BasePDFTableWriter):
                     c = self.options.get_alternating_background()
 
                     if sum(c) < 1.5:
-                        ts.add('TEXTCOLOR', (0, idx + 1), (-1, idx + 1), colors.white)
+                        ts.add('TEXTCOLOR', (0, idx + 1), (-1, idx + 1),
+                               colors.white)
 
             ts.add('BACKGROUND', (0, idx + 1), (-1, idx + 1), c)
 

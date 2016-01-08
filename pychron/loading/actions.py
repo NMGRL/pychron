@@ -19,12 +19,19 @@ from pyface.tasks.action.task_action import TaskAction
 
 from pychron.envisage.resources import icon
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
-class SaveLoadingAction(TaskAction):
+class SaveLoadingDBAction(TaskAction):
+    name = 'Save DB'
+    method = 'save_loading_db'
+    image = icon('database_save')
+
+
+class SaveLoadingPDFAction(TaskAction):
     name = 'Save PDF'
-    method = 'save_loading'
+    method = 'save_loading_pdf'
     image = icon('file_pdf')
 
 

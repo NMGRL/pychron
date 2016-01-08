@@ -90,7 +90,7 @@ class PersistenceMixin(object):
             with open(p, 'r') as rfile:
                 try:
                     d = pickle.load(rfile)
-                except (pickle.PickleError, EOFError):
+                except (pickle.PickleError, EOFError, BaseException):
                     self.warning('Invalid pickle file {}'.format(p))
             if d:
                 if verbose:
