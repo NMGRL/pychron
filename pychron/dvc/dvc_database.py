@@ -930,7 +930,8 @@ class DVCDatabase(DatabaseAdapter):
                 kw = self._append_filters(LoadTbl.name.in_(names), kw)
 
             loads = self._retrieve_items(LoadTbl, **kw)
-            return [ui.name for ui in loads]
+            if loads:
+                return [ui.name for ui in loads]
 
     def get_extraction_devices(self):
         with self.session_ctx():

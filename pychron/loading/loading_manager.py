@@ -356,7 +356,7 @@ class LoadingManager(DVCIrradiationable):
         p = os.path.join(paths.loading_dir, self.tray)
         gc = PdfPlotGraphicsContext(filename=p)
         gc.render_component(self.canvas)
-        gc.save(p)
+        gc.save()
 
     def save(self, save_positions=True, inform=False):
         self.debug('saving load to database')
