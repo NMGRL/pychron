@@ -34,10 +34,6 @@ class Scene(HasTraits):
     _xrange = -1, 1
     _yrange = -1, 1
 
-    @on_trait_change('layers:visible')
-    def _refresh(self):
-        self.layout_needed = True
-
     def set_canvas(self, c):
         for li in self.layers:
             for ci in li.components:
@@ -73,14 +69,6 @@ class Scene(HasTraits):
         self._render(gc, canvas, (ci for li in self.layers if li.visible
                                   for ci in li.components
                                   if ci.scene_visible and ci.visible), bounds)
-
-    def _render(self, gc, canvas, components, bounds):
-        for ci in components:
-            if ci.is_in_region(*bounds):
-                if self.font:
-                    ci.font = self.font
-                ci.set_canvas(canvas)
-                ci.render(gc)
 
     def iteritems(self, exclude=None, klass=None):
         if exclude is None:
@@ -205,6 +193,28 @@ class Scene(HasTraits):
             new.set_selected(True)
 
         self.layout_needed = True
+
+    @on_trait_change('layers:visible')
+    def _refresh(self):
+        self.layout_needed = True
+
+    # private
+    def _render(self, gc, canvas, components, bounds):
+        for ci in components:
+            if ci.is_in_region(*bounds):
+                if self.font:
+                    ci.font = self.font
+                ci.set_canvas(canvas)
+                ci.render(gc)
+
+    def _get_floats(self, elem, name):
+        return map(float, elem.find(name).text.split(','))
+
+    def _make_color(self, c):
+        if not isinstance(c, str):
+            c = ','.join(map(str, map(int, c)))
+            c = '({})'.format(c)
+        return c
 
     def _get_canvas_parser(self, p=None):
         if p is not None:

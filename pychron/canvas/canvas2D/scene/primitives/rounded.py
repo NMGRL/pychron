@@ -52,7 +52,7 @@ class RoundedRectangle(Rectangle, Connectable, Bordered):
     def get_tooltip_text(self):
         return 'Stage={}\nVolume={}'.format(self.name, self.volume)
 
-    def _render_(self, gc):
+    def _render(self, gc):
         corner_radius = self.corner_radius
         with gc:
             width, height = self.get_wh()

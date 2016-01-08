@@ -65,7 +65,7 @@ class Fork(QPrimitive, Bordered):
         self.mid.set_canvas(canvas)
         super(Fork, self).set_canvas(canvas)
 
-    def _render_(self, gc):
+    def _render(self, gc):
         lx, ly = self.left.get_xy()
         rx, ry = self.right.get_xy()
         mx, my = self.mid.get_xy()
@@ -116,7 +116,7 @@ def tee_v(gc, x1, y1, x2, mx, y2):
 
 
 class Tee(Fork):
-    def _render_(self, gc):
+    def _render(self, gc):
         lx, ly = self.left.get_xy()
         rx, ry = self.right.get_xy()
         mx, my = self.mid.get_xy()
@@ -189,7 +189,7 @@ def elbow(gc, sx, sy, ex, ey, corner='ul'):
 class Elbow(BorderLine):
     corner = 'ul'
 
-    def _render_(self, gc):
+    def _render(self, gc):
         sx, sy = self.start_point.get_xy()
         ex, ey = self.end_point.get_xy()
         with gc:

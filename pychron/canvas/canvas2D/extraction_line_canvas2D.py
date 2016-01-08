@@ -44,6 +44,8 @@ class ExtractionLineAction(Action):
 class ExtractionLineCanvas2D(SceneCanvas):
     """
     """
+    scene_klass = ExtractionLineScene
+
     use_backbuffer = True
     border_visible = False
     active_item = Any
@@ -301,9 +303,5 @@ class ExtractionLineCanvas2D(SceneCanvas):
             self._active_item = self.active_item
             menu = menu_manager.create_menu(event.window.control, None)
             menu.show()
-
-    def _scene_default(self):
-        s = ExtractionLineScene()
-        return s
 
 # ============= EOF ====================================
