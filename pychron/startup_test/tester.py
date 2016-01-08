@@ -57,7 +57,7 @@ class StartupTester(Loggable):
             try:
                 func = getattr(plugin, ti)
             except AttributeError:
-                self.warning('Invalid test "{}" for plugin "{}"'.format(pname, ti))
+                self.warning('Invalid test "{}" for plugin "{}"'.format(ti, pname))
                 self.add_test_result(plugin=pname, name=ti, result='Invalid')
                 continue
 
