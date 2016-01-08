@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pyface.message_dialog import warning
 from pyface.tasks.action.task_action import TaskAction
 from traitsui.menu import Action
 
@@ -76,7 +77,10 @@ class PullAnalysesAction(Action):
 
         dvc = app.get_service('pychron.dvc.dvc.DVC')
         dvc.initialize()
-        bmodel = app.get_service('pychron.envisage.browser.browser_model.BrowserModel')
+
+        bserivce = 'pychron.envisage.browser.browser_model.BrowserModel'
+        bmodel = app.get_service(bserivce)
+
         bmodel.activated()
         bmodel.activate_sample_browser()
         browser_view = StandaloneBrowserView(model=bmodel)
@@ -89,9 +93,25 @@ class PullAnalysesAction(Action):
 
                 def func(x, prog, i, n):
                     if prog:
-                        prog.change_message('Adding to Index: {}'.format(x.record_id))
+                        prog.change_message(
+                                'Adding to Index: {}'.format(x.record_id))
                     db.add_analysis_to_index(x.experiment_identifier, x)
 
                 progress_iterator(analyses, func, threshold=1)
+
+
+class ShareMetaDBAction(Action):
+    name = 'Share Meta DB'
+    image = icon('arrow_up')
+
+    def perform(self, event):
+        app = event.task.window.application
+        dvc = app.get_service('pychron.dvc.dvc.DVC')
+        if dvc.db.kind == 'mysql':
+            warning('Your are using a MySQL database. Only SQLite databases '
+                    'are sharable')
+        else:
+            sv = app.get_service('pychron.dvc.share_view.ShareMetaDBView')
+            sv.edit_traits()
 
 # ============= EOF =============================================
