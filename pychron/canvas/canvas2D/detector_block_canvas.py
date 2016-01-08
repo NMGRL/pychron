@@ -17,9 +17,6 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-
-
-# ============= EOF =============================================
 from pychron.canvas.canvas2D.scene.detector_block_scene import \
     DetectorBlockScene
 from pychron.canvas.canvas2D.scene.scene_canvas import SceneCanvas
@@ -38,3 +35,8 @@ class DetectorBlockCanvas(SceneCanvas):
     def set_detector_offset(self, det, v):
         self.scene.set_detector_offset(det, v)
         self.invalidate_and_redraw()
+
+    def set_detector_deflection(self, det, v):
+        self.scene.set_detector_deflection(det, v)
+
+# ============= EOF =============================================
