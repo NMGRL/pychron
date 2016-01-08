@@ -23,7 +23,7 @@ from envisage.ui.tasks.task_extension import TaskExtension
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.loading.load_task import LoadingTask
-from pychron.loading.actions import SaveLoadingPDFAction
+from pychron.loading.actions import SaveLoadingPDFAction, SaveTrayPDFAction
 from pychron.loading.loading_preferences import LoadingPreferencesPane
 from pychron.loading.panes import LoadDockPane, LoadTablePane
 from pychron.loading.loading_manager import LoadingManager
@@ -35,6 +35,9 @@ class LoadingPlugin(BaseTaskPlugin):
     def _task_extensions_default(self):
         actions = [SchemaAddition(id='save_loading_figure',
                                   factory=SaveLoadingPDFAction,
+                                  path='MenuBar/file.menu'),
+                   SchemaAddition(id='save_tray',
+                                  factory=SaveTrayPDFAction,
                                   path='MenuBar/file.menu')]
         return [TaskExtension(task_id='pychron.loading',
                               actions=actions)]

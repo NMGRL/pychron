@@ -30,6 +30,7 @@ from pychron.core.helpers.filetools import view_file
 from pychron.canvas.canvas2D.loading_canvas import LoadingCanvas, group_position
 
 from pychron.canvas.canvas2D.scene.primitives.primitives import LoadIndicator
+from pychron.core.pdf.pdf_graphics_context import PdfPlotGraphicsContext
 from pychron.dvc.dvc_irradiationable import DVCIrradiationable
 from pychron.loading.loading_pdf_writer import LoadingPDFWriter
 from pychron.paths import paths
@@ -249,6 +250,7 @@ class LoadingManager(DVCIrradiationable):
                         editable=editable)
 
             if lt and lt.holderName:
+                self.tray = lt.holderName
                 holes = self.dvc.get_load_holder_holes(lt.holderName)
                 load_holder_canvas(c, holes,
                                    show_hole_numbers=self.show_hole_numbers)
@@ -349,6 +351,12 @@ class LoadingManager(DVCIrradiationable):
 
         else:
             self.information_dialog('Please select a load')
+
+    def save_tray_pdf(self):
+        p = os.path.join(paths.loading_dir, self.tray)
+        gc = PdfPlotGraphicsContext(filename=p)
+        gc.render_component(self.canvas)
+        gc.save(p)
 
     def save(self, save_positions=True, inform=False):
         self.debug('saving load to database')

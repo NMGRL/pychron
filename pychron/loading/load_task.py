@@ -99,6 +99,9 @@ class LoadingTask(BaseManagerTask):
     def save_loading_db(self):
         self.manager.save(inform=True)
 
+    def save_tray_pdf(self):
+        self.manager.save_tray_pdf()
+
     def _prompt_for_save(self):
         if self.manager.dirty:
             message = 'You have unsaved changes. Save changes to Database?'

@@ -35,6 +35,12 @@ class SaveLoadingPDFAction(TaskAction):
     image = icon('file_pdf')
 
 
+class SaveTrayPDFAction(TaskAction):
+    name = 'Save Tray PDF'
+    method = 'save_tray_pdf'
+    image = icon('file_pdf')
+
+
 class ConfigurePDFAction(TaskAction):
     name = 'Configure PDF'
     method = 'configure_pdf'
