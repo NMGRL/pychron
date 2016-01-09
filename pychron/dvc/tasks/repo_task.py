@@ -61,7 +61,7 @@ class ExperimentRepoTask(BaseTask):
     def activated(self):
         self._preference_binder('pychron.dvc', ('organization',))
         org = Organization(self.organization)
-        self.repository_names = org.repos
+        self.repository_names = org.repo_names
         self.refresh_local_names()
 
     def refresh_local_names(self):

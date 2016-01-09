@@ -23,8 +23,7 @@ from pyface.tasks.action.schema_addition import SchemaAddition
 
 from pychron.dvc.dvc import DVC
 from pychron.dvc.dvc_persister import DVCPersister
-from pychron.dvc.share_view import ShareMetaDBView
-from pychron.dvc.tasks.actions import PullAnalysesAction, ShareMetaDBAction
+from pychron.dvc.tasks.actions import WorkOfflineAction, UseOfflineDatabase
 from pychron.dvc.tasks.preferences import DVCPreferencesPane, \
     DVCDBConnectionPreferencesPane
 from pychron.dvc.tasks.repo_task import ExperimentRepoTask
@@ -54,8 +53,8 @@ class DVCPlugin(BaseTaskPlugin):
         self._fetched = True
 
     def _service_offers_default(self):
-        p = {'dvc': self.dvc_factory()}
-        self.debug('DDDDD {}'.format(p))
+        # p = {'dvc': self.dvc_factory()}
+        # self.debug('DDDDD {}'.format(p))
         so = self.service_offer_factory(protocol=DVCPersister,
                                         factory=DVCPersister,
                                         properties={'dvc': self.dvc_factory()})
@@ -63,10 +62,7 @@ class DVCPlugin(BaseTaskPlugin):
         so2 = self.service_offer_factory(protocol=DVC,
                                          factory=self.dvc_factory)
 
-        so3 = self.service_offer_factory(protocol=ShareMetaDBView,
-                                         factory=ShareMetaDBView,
-                                         properties={'dvc': self.dvc_factory()})
-        return [so, so2, so3]
+        return [so, so2]
 
     def dvc_factory(self):
         d = DVC()
@@ -107,9 +103,9 @@ class DVCPlugin(BaseTaskPlugin):
         #         repo.commit('added {}'.format(db.path))
 
     def _task_extensions_default(self):
-        actions = [SchemaAddition(factory=PullAnalysesAction,
+        actions = [SchemaAddition(factory=WorkOfflineAction,
                                   path='MenuBar/data.menu'),
-                   SchemaAddition(factory=ShareMetaDBAction,
+                   SchemaAddition(factory=UseOfflineDatabase,
                                   path='MenuBar/data.menu')]
 
         return [TaskExtension(actions=actions), ]

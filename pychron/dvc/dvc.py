@@ -212,6 +212,19 @@ class DVC(Loggable):
             # self._defaults()
             return True
 
+    def remote_repositories(self):
+        org = Organization(self.organization, usr=self.github_user,
+                           pwd=self.github_password)
+        return org.repo_names
+
+    def check_github_connection(self):
+        org = Organization(self.organization, usr=self.github_user,
+                           pwd=self.github_password)
+        try:
+            return org.info is not None
+        except BaseException:
+            pass
+
     def make_url(self, name):
         return make_remote_url(self.organization, name)
 
@@ -508,8 +521,9 @@ class DVC(Loggable):
             self.db.add_irradiation_level(*args)
 
     def add_experiment(self, identifier):
-        org = Organization(self.organization, usr=self.github_user, pwd=self.github_password)
-        if identifier in org.repos:
+        org = Organization(self.organization, usr=self.github_user,
+                           pwd=self.github_password)
+        if identifier in org.repo_names:
             self.warning_dialog('Experiment "{}" already exists'.format(identifier))
         else:
             root = os.path.join(paths.experiment_dataset_dir, identifier)
@@ -653,6 +667,7 @@ class DVC(Loggable):
             names = [i.name for i in irrads]
 
         return names
+
     # IDatastore
     def get_greatest_aliquot(self, identifier):
         return self.db.get_greatest_aliquot(identifier)

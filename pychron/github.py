@@ -77,17 +77,23 @@ class Organization(GithubObject):
 
     @property
     def base_cmd(self):
-        return '/orgs/{}/repos'.format(self._name)
+        return '/orgs/{}'.format(self._name)
 
     @property
-    def repos(self):
+    def repo_names(self):
 
-        cmd = make_request(self.base_cmd)
+        cmd = make_request('{}/repos'.format(self.base_cmd))
         doc = requests.get(cmd)
         return [repo['name'] for repo in json.loads(doc.text)]
 
+    @property
+    def info(self):
+        cmd = make_request(self.base_cmd)
+        doc = requests.get(cmd)
+        return json.loads(doc.text)
+
     def has_repo(self, name):
-        return name in self.repos
+        return name in self.repo_names
 
     def create_repo(self, name, usr, pwd, **payload):
         create_organization_repository(self._name, name, usr, pwd)
@@ -105,7 +111,7 @@ if __name__ == '__main__':
         pwd = rfile.readline().strip()
     # print get_organization_repositiories('NMGRL')
     org = Organization('NMGRLData', usr, pwd)
-    print org.repos, len(org.repos)
+    print org.repo_names, len(org.repo_names)
     # print org.create_repo('test2', auto_init=True)
     # print org.repos, len(org.repos)
 # ============= EOF =============================================

@@ -42,7 +42,8 @@ matplotlib
 PyMySQL
 requests
 keyring
-pil"
+pil
+paramiko"
 
 PIP_REQ="uncertainties
 pint
