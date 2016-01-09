@@ -16,11 +16,14 @@
 
 # ============= enthought library imports =======================
 from traits.api import Str, Button, List
-from traitsui.api import View, UItem, VGroup, ListStrEditor
+from traitsui.api import View, UItem, VGroup
 # ============= standard library imports ========================
 import os
 import paramiko
 # ============= local library imports  ==========================
+from traitsui.editors import TabularEditor
+from traitsui.tabular_adapter import TabularAdapter
+
 from pychron.loggable import Loggable
 from pychron.paths import paths
 
@@ -36,12 +39,19 @@ def switch_to_offline_database(preferences):
 
     preferences.set(kind, 'sqlite')
     preferences.set(path, database_path())
+    preferences.save()
+
+
+class RepositoryTabularAdapter(TabularAdapter):
+    columns = [('Name', 'name'),
+               ('Create Date', 'created_at'),
+               ('Last Change', 'pushed_at')]
 
 
 class WorkOffline(Loggable):
     """
-    1. Select set of experiments
-    2. clone experiments
+    1. Select set of repositories
+    2. clone repositories
     3. update the meta repo
     4. copy the central db to a sqlite db
     5. set DVC db preferences to sqlite
@@ -49,8 +59,8 @@ class WorkOffline(Loggable):
     work_offline_user = Str
     work_offline_password = Str
 
-    experiments = List
-    selected_experiments = List
+    repositories = List
+    selected_repositories = List
 
     work_offline_button = Button('Work Offline')
 
@@ -62,19 +72,33 @@ class WorkOffline(Loggable):
         """
         if self._check_database_connection():
             if self._check_github_connection():
-                self.experiments = self.dvc.repo_names
-                self._load_preferences()
-                return True
+                if self._load_preferences():
+                    repos = self.dvc.remote_repositories(attributes=('name',
+                                                                     'created_at',
+                                                                     'pushed_at'))
+                    repos = sorted([ri for ri in repos if ri.name != 'meta'],
+                                   key=lambda x: x.name)
+                    self.repositories = repos
+                    return True
 
     # private
     def _load_preferences(self):
         prefs = self.application.preferences
         prefid = 'pychron.dvc'
         wou = prefs.get('{}.work_offline_user'.format(prefid))
+        if wou is None:
+            self.warning_dialog('No WorkOffline user set in preferences')
+            return
+
         self.work_offline_user = wou
 
         wop = prefs.get('{}.work_offline_password'.format(prefid))
+        if wop is None:
+            self.warning_dialog('No WorkOffline password set in preferences')
+            return
+
         self.work_offline_password = wop
+        return True
 
     def _check_database_connection(self):
         return self.dvc.connect()
@@ -85,8 +109,8 @@ class WorkOffline(Loggable):
     def _work_offline(self):
         self.debug('work offline')
 
-        # clone experiments
-        if not self._clone_experiments():
+        # clone repositories
+        if not self._clone_repositories():
             return
 
         # update meta
@@ -101,14 +125,14 @@ class WorkOffline(Loggable):
             # update DVC preferences
             self._update_preferences()
 
-    def _clone_experiments(self):
-        self.debug('clone experiments')
+    def _clone_repositories(self):
+        self.debug('clone repositories')
 
-        # check for selected experiments
-        if not self.selected_experiments:
+        # check for selected repositories
+        if not self.selected_repositories:
             return
 
-        # clone the experiments
+        # clone the repositories
         return True
 
     def _clone_central_db(self):
@@ -151,12 +175,15 @@ class WorkOffline(Loggable):
         self._work_offline()
 
     def traits_view(self):
-        v = View(VGroup(
-                UItem('experiments',
-                      editor=ListStrEditor(selected='selected_experiments',
-                                           multi_select=True)),
-                UItem('work_offline_button',
-                      enabled_when='selected_experiments')))
+        v = View(VGroup(UItem('repositories',
+                              editor=TabularEditor(adapter=RepositoryTabularAdapter(),
+                                                   selected='selected_repositories',
+                                                   multi_select=True)),
+                        UItem('work_offline_button',
+                              enabled_when='selected_repositories')),
+                 title='Work Offline',
+                 resizable=True,
+                 width=500, height=500)
         return v
 
 # ============= EOF =============================================

@@ -17,13 +17,11 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pyface.message_dialog import warning
+from pyface.message_dialog import information
 from pyface.tasks.action.task_action import TaskAction
 from traitsui.menu import Action
 
-from pychron.core.progress import progress_iterator
 from pychron.envisage.resources import icon
-from pychron.paths import paths
 
 
 class LocalRepositoryAction(TaskAction):
@@ -106,14 +104,20 @@ class WorkOfflineAction(Action):
     def perform(self, event):
         app = event.task.window.application
         dvc = app.get_service('pychron.dvc.dvc.DVC')
-        if dvc.db.kind != 'mysql':
-            warning('Your are not using a centralized MySQL database')
-        else:
-            from pychron.dvc.work_offline import WorkOffline
-            wo = WorkOffline(dvc=dvc,
-                             application=app)
-            if wo.initialize():
-                wo.edit_traits()
+        from pychron.dvc.work_offline import WorkOffline
+        wo = WorkOffline(dvc=dvc,
+                         application=app)
+        if wo.initialize():
+            wo.edit_traits()
+
+            # if dvc.db.kind != 'mysql':
+            #     warning(None, 'Your are not using a centralized MySQL database')
+            # else:
+            #     from pychron.dvc.work_offline import WorkOffline
+            #     wo = WorkOffline(dvc=dvc,
+            #                      application=app)
+            #     if wo.initialize():
+            #         wo.edit_traits()
 
 
 class UseOfflineDatabase(Action):
@@ -123,5 +127,7 @@ class UseOfflineDatabase(Action):
         from pychron.dvc.work_offline import switch_to_offline_database
         app = event.task.window.application
         switch_to_offline_database(app.preferences)
+        information(None, 'You are now using the offline database. Close any Browser or Pipeline windows to activate '
+                          'offline database')
 
 # ============= EOF =============================================

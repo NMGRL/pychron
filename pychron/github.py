@@ -15,12 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+# ============= standard library imports ========================
 import base64
 import json
 import urllib2
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+
 import requests
+from datetime import datetime
+
+
+# ============= local library imports  ==========================
 
 
 def get_branches(new):
@@ -70,6 +74,10 @@ class GithubObject(object):
         pass
 
 
+class RepositoryRecord:
+    pass
+
+
 class Organization(GithubObject):
     def __init__(self, name, *args, **kw):
         self._name = name
@@ -81,14 +89,19 @@ class Organization(GithubObject):
 
     @property
     def repo_names(self):
-
-        cmd = make_request('{}/repos'.format(self.base_cmd))
-        doc = requests.get(cmd)
-        return [repo['name'] for repo in json.loads(doc.text)]
+        return [repo['name'] for repo in self.get_repos()]
 
     @property
     def info(self):
         cmd = make_request(self.base_cmd)
+        doc = requests.get(cmd)
+        return json.loads(doc.text)
+
+    def repos(self, attributes):
+        return [self._repo_factory(ri, attributes) for ri in self.get_repos()]
+
+    def get_repos(self):
+        cmd = make_request('{}/repos'.format(self.base_cmd))
         doc = requests.get(cmd)
         return json.loads(doc.text)
 
@@ -103,6 +116,17 @@ class Organization(GithubObject):
         # headers = self._make_headers(auth=True)
         # r = requests.post(cmd, data=json.dumps(payload), headers=headers)
         # self._process_post(r)
+
+    def _repo_factory(self, ri, attributes):
+        repo = RepositoryRecord()
+        date_attrs = ('pushed_at', 'created_at')
+        for ai in attributes:
+            v = ri[ai]
+            if ai in date_attrs:
+                date = datetime.strptime(v, '%Y-%m-%dT%H:%M:%SZ')
+                v = date.strftime('%m-%d-%Y %H:%M')
+            setattr(repo, ai, v)
+        return repo
 
 
 if __name__ == '__main__':

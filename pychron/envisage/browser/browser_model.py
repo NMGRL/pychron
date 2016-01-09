@@ -86,6 +86,8 @@ class BrowserModel(BaseBrowserModel):
         self.activate_browser(force)
 
     def activate_browser(self, force=False):
+        db = self.db
+        self.datasource_url = db.datasource_url
         if not self.is_activated or force:
             self._suppress_load_labnumbers = True
             self.load_projects()
@@ -96,11 +98,9 @@ class BrowserModel(BaseBrowserModel):
 
             # self._load_associated_labnumbers()
 
-            db = self.db
             with db.session_ctx():
                 self._load_mass_spectrometers()
 
-            self.datasource_url = db.datasource_url
             self.load_browser_selection()
 
     def refresh_samples(self):

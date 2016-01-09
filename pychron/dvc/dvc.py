@@ -50,17 +50,6 @@ from pychron.pychron_constants import RATIO_KEYS, INTERFERENCE_KEYS
 TESTSTR = {'blanks': 'auto update blanks', 'iso_evo': 'auto update iso_evo'}
 
 
-class DVCException(BaseException):
-    def __init__(self, attr):
-        self._attr = attr
-
-    def __repr__(self):
-        return 'DVCException: neither DVCDatabase or MetaRepo have {}'.format(self._attr)
-
-    def __str__(self):
-        return self.__repr__()
-
-
 def experiment_has_staged(ps):
     if not hasattr(ps, '__iter__'):
         ps = (ps,)
@@ -119,6 +108,21 @@ def find_interpreted_age_path(idn, experiments, prefixlen=3):
             return ps[0]
 
 
+def make_remote_url(org, name):
+    return '{}/{}/{}.git'.format(paths.git_base_origin, org, name)
+
+
+class DVCException(BaseException):
+    def __init__(self, attr):
+        self._attr = attr
+
+    def __repr__(self):
+        return 'DVCException: neither DVCDatabase or MetaRepo have {}'.format(self._attr)
+
+    def __str__(self):
+        return self.__repr__()
+
+
 class Tag(object):
     name = None
     path = None
@@ -166,10 +170,6 @@ class GitSessionCTX(object):
                 self._parent.experiment_commit(self._experiment_id, self._message)
 
 
-def make_remote_url(org, name):
-    return '{}/{}/{}.git'.format(paths.git_base_origin, org, name)
-
-
 @provides(IDatastore)
 class DVC(Loggable):
     db = Instance('pychron.dvc.dvc_database.DVCDatabase')
@@ -212,30 +212,16 @@ class DVC(Loggable):
             # self._defaults()
             return True
 
-    def remote_repositories(self):
-        org = Organization(self.organization, usr=self.github_user,
-                           pwd=self.github_password)
-        return org.repo_names
+    def synchronize(self, pull=True):
+        """
+        pull meta_repo changes
 
-    def check_github_connection(self):
-        org = Organization(self.organization, usr=self.github_user,
-                           pwd=self.github_password)
-        try:
-            return org.info is not None
-        except BaseException:
-            pass
-
-    def make_url(self, name):
-        return make_remote_url(self.organization, name)
-
-    def git_session_ctx(self, experiment_id, message):
-        return GitSessionCTX(self, experiment_id, message)
-
-    def get_local_experiment_repositories(self):
-        return list_subdirectories(paths.experiment_dataset_dir)
-
-    def get_experiment_repo(self, exp):
-        return self._get_experiment_repo(exp)
+        :return:
+        """
+        if pull:
+            self.meta_repo.pull()
+        else:
+            self.meta_repo.push()
 
     def load_analysis_backend(self, ln, arar_age):
         db = self.db
@@ -312,50 +298,6 @@ class DVC(Loggable):
             self.experiment_commit(experiment_identifier, msg)
 
     # analysis processing
-    def add_interpreted_age(self, ia):
-        db = self.db
-        a = ia.get_ma_scaled_age()
-        mswd = ia.preferred_mswd
-
-        if isnan(mswd):
-            mswd = 0
-
-        d = dict(age=float(nominal_value(a)),
-                 age_err=float(std_dev(a)),
-                 display_age_units=ia.age_units,
-                 age_kind=ia.preferred_age_kind,
-                 kca_kind=ia.preferred_kca_kind,
-                 kca=float(ia.preferred_kca_value),
-                 kca_err=float(ia.preferred_kca_error),
-                 mswd=float(mswd),
-                 include_j_error_in_mean=ia.include_j_error_in_mean,
-                 include_j_error_in_plateau=ia.include_j_error_in_plateau,
-                 include_j_error_in_individual_analyses=ia.include_j_error_in_individual_analyses,
-                 sample=ia.sample,
-                 material=ia.material,
-                 identifier=ia.identifier,
-                 nanalyses=ia.nanalyses,
-                 irradiation=ia.irradiation)
-
-        # db_ia = db.add_interpreted_age(**d)
-
-        d['analyses'] = [dict(uuid=ai.uuid, tag=ai.tag, plateau_step=ia.get_is_plateau_step(ai))
-                         for ai in ia.all_analyses]
-
-        self._add_interpreted_age(ia, d)
-
-        # for ai in ia.all_analyses:
-        #     plateau_step = ia.get_is_plateau_step(ai)
-        #
-        #     db_ai = db.get_analysis_uuid(ai.uuid)
-        #     db.add_interpreted_age_set(db_ia, db_ai,
-        #                                tag=ai.tag,
-        #                                plateau_step=plateau_step)
-
-    def _add_interpreted_age(self, ia, d):
-        p = analysis_path(ia.identifier, ia.experiment_identifier, modifier='ia', mode='w')
-        dvc_dump(d, p)
-
     def analysis_has_review(self, ai, attr):
         return True
         # test_str = TESTSTR[attr]
@@ -390,15 +332,6 @@ class DVC(Loggable):
 
         expid = an.experiment_identifier
         return self.experiment_add_paths(expid, tag.path)
-
-    def experiment_add_paths(self, experiment_id, paths):
-        repo = self._get_experiment_repo(experiment_id)
-        return repo.add_paths(paths)
-
-    def experiment_commit(self, experiment, msg):
-        self.debug('Experiment commit: {} msg: {}'.format(experiment, msg))
-        repo = self._get_experiment_repo(experiment)
-        repo.commit(msg)
 
     def save_icfactors(self, ai, dets, fits, refs):
         if fits and dets:
@@ -488,21 +421,196 @@ class DVC(Loggable):
         self.debug('Make analysis time, total: {}, n: {}, average: {}'.format(et, n, et / float(n)))
         return ret
 
-    def synchronize(self, pull=True):
-        """
-        pull meta_repo changes
-
-        :return:
-        """
-        if pull:
-            self.meta_repo.pull()
-        else:
-            self.meta_repo.push()
-
     # adders db
     # def add_analysis(self, **kw):
     #     with self.db.session_ctx():
     #         self.db.add_material(**kw)
+
+    # updaters
+    # def update_chronology(self, name, doses):
+    # self.meta_repo.update_chronology(name, doses)
+    #
+    # def update_scripts(self, name, path):
+    # self.meta_repo.update_scripts(name, path)
+    #
+    # def update_experiment_queue(self, name, path):
+    #     self.meta_repo.update_experiment_queue(name, path)
+
+    # repositories
+    def experiment_add_paths(self, experiment_id, paths):
+        repo = self._get_experiment_repo(experiment_id)
+        return repo.add_paths(paths)
+
+    def experiment_commit(self, experiment, msg):
+        self.debug('Experiment commit: {} msg: {}'.format(experiment, msg))
+        repo = self._get_experiment_repo(experiment)
+        repo.commit(msg)
+
+    def remote_repositories(self, attributes=None):
+        org = self._organization_factory()
+        if attributes:
+            return org.repos(attributes)
+        else:
+            return org.repo_names
+
+    def check_github_connection(self):
+        org = self._organization_factory()
+        try:
+            return org.info is not None
+        except BaseException:
+            pass
+
+    def make_url(self, name):
+        return make_remote_url(self.organization, name)
+
+    def git_session_ctx(self, experiment_id, message):
+        return GitSessionCTX(self, experiment_id, message)
+
+    def sync_repo(self, name):
+        """
+        pull or clone an experiment repo
+
+        """
+        root = os.path.join(paths.experiment_dataset_dir, name)
+        exists = os.path.isdir(os.path.join(root, '.git'))
+
+        if exists:
+            repo = self._get_experiment_repo(name)
+            repo.pull()
+        else:
+            url = self.make_url(name)
+            GitRepoManager.clone_from(url, root)
+
+        return True
+
+    def rollback_experiment_repo(self, expid):
+        repo = self._get_experiment_repo(expid)
+
+        cpaths = repo.get_local_changes()
+        # cover changed paths to a list of analyses
+
+        # select paths to revert
+        rpaths = ('.',)
+        repo.cmd('checkout', '--', ' '.join(rpaths))
+        for p in rpaths:
+            self.debug('revert changes for {}'.format(p))
+
+        head = repo.get_head(hexsha=False)
+        msg = 'Changes to {} reverted to Commit: {}\n' \
+              'Date: {}\n' \
+              'Message: {}'.format(expid, head.hexsha[:10],
+                                   format_date(head.committed_date),
+                                   head.message)
+        self.information_dialog(msg)
+
+    # IDatastore
+    def get_greatest_aliquot(self, identifier):
+        return self.db.get_greatest_aliquot(identifier)
+
+    def get_greatest_step(self, identifier, aliquot):
+        return self.db.get_greatest_step(identifier, aliquot)
+
+    def is_connected(self):
+        return self.db.connected
+
+    def connect(self, *args, **kw):
+        return self.db.connect(*args, **kw)
+
+    # meta repo
+    def update_chronology(self, name, doses):
+        self.meta_repo.update_chronology(name, doses)
+        self.meta_commit('updated chronology for {}'.format(name))
+
+    def meta_pull(self, **kw):
+        self.meta_repo.smart_pull(**kw)
+
+    def meta_push(self):
+        self.meta_repo.push()
+
+    def meta_commit(self, msg):
+        changes = self.meta_repo.has_staged()
+        if changes:
+            self.debug('meta repo has changes: {}'.format(changes))
+            self.meta_repo.report_status()
+            self.meta_repo.commit(msg)
+            self.meta_repo.clear_cache = True
+        else:
+            self.debug('no changes to meta repo')
+
+    # get
+    def get_local_experiment_repositories(self):
+        return list_subdirectories(paths.experiment_dataset_dir)
+
+    def get_experiment_repo(self, exp):
+        return self._get_experiment_repo(exp)
+
+    def get_meta_head(self):
+        return self.meta_repo.get_head()
+
+    def get_irradiation_geometry(self, irrad, level):
+        with self.db.session_ctx():
+            dblevel = self.db.get_irradiation_level(irrad, level)
+            return self.meta_repo.get_irradiation_holder_holes(dblevel.holder)
+
+    def get_irradiation_names(self):
+        with self.db.session_ctx():
+            irrads = self.db.get_irradiations()
+            names = [i.name for i in irrads]
+
+        return names
+
+    # add
+    def add_interpreted_age(self, ia):
+
+        a = ia.get_ma_scaled_age()
+        mswd = ia.preferred_mswd
+
+        if isnan(mswd):
+            mswd = 0
+
+        d = dict(age=float(nominal_value(a)),
+                 age_err=float(std_dev(a)),
+                 display_age_units=ia.age_units,
+                 age_kind=ia.preferred_age_kind,
+                 kca_kind=ia.preferred_kca_kind,
+                 kca=float(ia.preferred_kca_value),
+                 kca_err=float(ia.preferred_kca_error),
+                 mswd=float(mswd),
+                 include_j_error_in_mean=ia.include_j_error_in_mean,
+                 include_j_error_in_plateau=ia.include_j_error_in_plateau,
+                 include_j_error_in_individual_analyses=ia.include_j_error_in_individual_analyses,
+                 sample=ia.sample,
+                 material=ia.material,
+                 identifier=ia.identifier,
+                 nanalyses=ia.nanalyses,
+                 irradiation=ia.irradiation)
+
+        d['analyses'] = [dict(uuid=ai.uuid, tag=ai.tag, plateau_step=ia.get_is_plateau_step(ai))
+                         for ai in ia.all_analyses]
+
+        self._add_interpreted_age(ia, d)
+
+    def add_experiment_association(self, expid, runspec):
+        db = self.db
+        with db.session_ctx():
+            dban = db.get_analysis_uuid(runspec.uuid)
+            for e in dban.experiment_associations:
+                if e.experimentName == expid:
+                    break
+            else:
+                db.add_experiment_association(expid, dban)
+
+            src_expid = runspec.experiment_identifier
+            if src_expid != expid:
+                repo = self._get_experiment_repo(expid)
+
+                for m in PATH_MODIFIERS:
+                    src = analysis_path(runspec.record_id, src_expid, modifier=m)
+                    dest = analysis_path(runspec.record_id, expid, modifier=m, mode='w')
+
+                    shutil.copyfile(src, dest)
+                    repo.add(dest, commit=False)
+                repo.commit('added experiment association')
 
     def add_measured_position(self, *args, **kw):
         with self.db.session_ctx():
@@ -521,8 +629,7 @@ class DVC(Loggable):
             self.db.add_irradiation_level(*args)
 
     def add_experiment(self, identifier):
-        org = Organization(self.organization, usr=self.github_user,
-                           pwd=self.github_password)
+        org = self._organization_factory()
         if identifier in org.repo_names:
             self.warning_dialog('Experiment "{}" already exists'.format(identifier))
         else:
@@ -564,133 +671,10 @@ class DVC(Loggable):
             self.db.add_load_holder(name)
         self.meta_repo.add_load_holder(name, path_or_txt)
 
-    # updaters
-    # def update_chronology(self, name, doses):
-    # self.meta_repo.update_chronology(name, doses)
-    #
-    # def update_scripts(self, name, path):
-    # self.meta_repo.update_scripts(name, path)
-    #
-    # def update_experiment_queue(self, name, path):
-    #     self.meta_repo.update_experiment_queue(name, path)
-    def update_chronology(self, name, doses):
-        self.meta_repo.update_chronology(name, doses)
-        self.meta_commit('updated chronology for {}'.format(name))
-
-    def meta_pull(self, **kw):
-        self.meta_repo.smart_pull(**kw)
-
-    def meta_push(self):
-        self.meta_repo.push()
-
-    def meta_commit(self, msg):
-        changes = self.meta_repo.has_staged()
-        if changes:
-            self.debug('meta repo has changes: {}'.format(changes))
-            self.meta_repo.report_status()
-            self.meta_repo.commit(msg)
-            self.meta_repo.clear_cache = True
-        else:
-            self.debug('no changes to meta repo')
-
-    def get_meta_head(self):
-        return self.meta_repo.get_head()
-
-    def sync_repo(self, name):
-        """
-        pull or clone an experiment repo
-
-        """
-        root = os.path.join(paths.experiment_dataset_dir, name)
-        exists = os.path.isdir(os.path.join(root, '.git'))
-
-        if exists:
-            repo = self._get_experiment_repo(name)
-            repo.pull()
-        else:
-            url = self.make_url(name)
-            GitRepoManager.clone_from(url, root)
-
-        return True
-
-    def add_experiment_association(self, expid, runspec):
-        db = self.db
-        with db.session_ctx():
-            dban = db.get_analysis_uuid(runspec.uuid)
-            for e in dban.experiment_associations:
-                if e.experimentName == expid:
-                    break
-            else:
-                db.add_experiment_association(expid, dban)
-
-            src_expid = runspec.experiment_identifier
-            if src_expid != expid:
-                repo = self._get_experiment_repo(expid)
-
-                for m in PATH_MODIFIERS:
-                    src = analysis_path(runspec.record_id, src_expid, modifier=m)
-                    dest = analysis_path(runspec.record_id, expid, modifier=m, mode='w')
-
-                    shutil.copyfile(src, dest)
-                    repo.add(dest, commit=False)
-                repo.commit('added experiment association')
-
-    def rollback_experiment_repo(self, expid):
-        repo = self._get_experiment_repo(expid)
-
-        cpaths = repo.get_local_changes()
-        # cover changed paths to a list of analyses
-
-        # select paths to revert
-        rpaths = ('.',)
-        repo.cmd('checkout', '--', ' '.join(rpaths))
-        for p in rpaths:
-            self.debug('revert changes for {}'.format(p))
-
-        head = repo.get_head(hexsha=False)
-        msg = 'Changes to {} reverted to Commit: {}\n' \
-              'Date: {}\n' \
-              'Message: {}'.format(expid, head.hexsha[:10],
-                                   format_date(head.committed_date),
-                                   head.message)
-        self.information_dialog(msg)
-
-    def get_irradiation_geometry(self, irrad, level):
-        with self.db.session_ctx():
-            dblevel = self.db.get_irradiation_level(irrad, level)
-            return self.meta_repo.get_irradiation_holder_holes(dblevel.holder)
-
-    def get_irradiation_names(self):
-        names = []
-        with self.db.session_ctx():
-            irrads = self.db.get_irradiations()
-            names = [i.name for i in irrads]
-
-        return names
-
-    # IDatastore
-    def get_greatest_aliquot(self, identifier):
-        return self.db.get_greatest_aliquot(identifier)
-
-    def get_greatest_step(self, identifier, aliquot):
-        return self.db.get_greatest_step(identifier, aliquot)
-
-    def is_connected(self):
-        return self.db.connected
-
-    def connect(self, *args, **kw):
-        return self.db.connect(*args, **kw)
-
     # private
-    def __getattr__(self, item):
-        try:
-            return getattr(self.db, item)
-        except AttributeError:
-            try:
-                return getattr(self.meta_repo, item)
-            except AttributeError, e:
-                # print e, item
-                raise DVCException(item)
+    def _add_interpreted_age(self, ia, d):
+        p = analysis_path(ia.identifier, ia.experiment_identifier, modifier='ia', mode='w')
+        dvc_dump(d, p)
 
     def _load_repository(self, expid, prog, i, n):
         if prog:
@@ -759,6 +743,12 @@ class DVC(Loggable):
                 else:
                     a.calculate_age()
         return a
+
+    def _organization_factory(self):
+        org = Organization(self.organization,
+                           usr=self.github_user,
+                           pwd=self.github_password)
+        return org
 
     def _get_experiment_repo(self, experiment_id):
         repo = self.experiment_repo
@@ -831,6 +821,17 @@ class DVC(Loggable):
         if commit:
             repo.commit('added default {}'.format(root.replace('_', ' ')))
 
+    def __getattr__(self, item):
+        try:
+            return getattr(self.db, item)
+        except AttributeError:
+            try:
+                return getattr(self.meta_repo, item)
+            except AttributeError, e:
+                # print e, item
+                raise DVCException(item)
+
+    # defaults
     def _db_default(self):
         return DVCDatabase(kind='mysql',
                            username='root',
