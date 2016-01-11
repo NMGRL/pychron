@@ -71,9 +71,10 @@ class WorkOffline(Loggable):
             a. check database
             b. check github
         """
-        if self._check_database_connection():
-            if self._check_github_connection():
-                if self._load_preferences():
+        if self._load_preferences():
+            if self._check_database_connection():
+                if self._check_github_connection():
+
                     repos = self.dvc.remote_repositories(attributes=('name',
                                                                      'created_at',
                                                                      'pushed_at'))
@@ -86,19 +87,15 @@ class WorkOffline(Loggable):
     def _load_preferences(self):
         prefs = self.application.preferences
         prefid = 'pychron.dvc'
-        wou = prefs.get('{}.work_offline_user'.format(prefid))
-        if wou is None:
-            self.warning_dialog('No WorkOffline user set in preferences')
-            return
 
-        self.work_offline_user = wou
+        for label in ('host', 'user', 'password'):
+            attr = 'work_offline_{}'.format(label)
+            v = prefs.get('{}.{}'.format(prefid, attr))
+            if not v:
+                self.warning_dialog('No WorkOffline {} set in preferences'.format(label))
+                return
+            setattr(self, attr, v)
 
-        wop = prefs.get('{}.work_offline_password'.format(prefid))
-        if wop is None:
-            self.warning_dialog('No WorkOffline password set in preferences')
-            return
-
-        self.work_offline_password = wop
         return True
 
     def _check_database_connection(self):
@@ -160,18 +157,30 @@ class WorkOffline(Loggable):
         # dump the mysql database to sqlite
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        ssh.connect(self.dvc.db.host,
-                    username=self.work_offline_user,
-                    password=self.work_offline_password)
 
-        cmd = '/Users/Shared/work_offline.sh'
+        ssh.connect(self.work_offline_host,
+                    username=self.work_offline_user,
+                    password=self.work_offline_password,
+                    allow_agent=False,
+                    look_for_keys=False)
+
+        cmd = '/Users/{}/workoffline/workoffline.sh'.format(self.work_offline_user)
         stdin, stdout, stderr = ssh.exec_command(cmd)
+        self.debug('============ Output ============')
+        for line in stdout:
+            self.debug(line)
+        self.debug('============ Output ============')
+
+        self.debug('============ Error ============')
+        for line in stderr:
+            self.debug('****** {}'.format(line))
+        self.debug('============ Error ============')
 
         # fetch the sqlite file
         ftp = ssh.open_sftp()
-        rp = '/Users/Shared/database.sqlite'
+        rp = '/Users/{}/workoffline/database.sqlite3'.format(self.work_offline_user)
 
-        ftp.get(database_path(), rp)
+        ftp.get(rp, database_path())
 
     def _update_preferences(self):
         self.debug('update dvc preferences')

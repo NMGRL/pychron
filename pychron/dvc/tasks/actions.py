@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pyface.message_dialog import information
+from pyface.message_dialog import information, warning
 from pyface.tasks.action.task_action import TaskAction
 from traitsui.menu import Action
 
@@ -105,19 +105,13 @@ class WorkOfflineAction(Action):
         app = event.task.window.application
         dvc = app.get_service('pychron.dvc.dvc.DVC')
 
-        from pychron.dvc.work_offline import WorkOffline
-        wo = WorkOffline(dvc=dvc,
-                         application=app)
-        if wo.initialize():
-            wo.edit_traits()
-
-            # if dvc.db.kind != 'mysql':
-            #     warning(None, 'Your are not using a centralized MySQL database')
-            # else:
-            #     from pychron.dvc.work_offline import WorkOffline
-            #     wo = WorkOffline(dvc=dvc, application=app)
-            #     if wo.initialize():
-            #         wo.edit_traits()
+        if dvc.db.kind != 'mysql':
+            warning(None, 'Your are not using a centralized MySQL database')
+        else:
+            from pychron.dvc.work_offline import WorkOffline
+            wo = WorkOffline(dvc=dvc, application=app)
+            if wo.initialize():
+                wo.edit_traits()
 
 
 class UseOfflineDatabase(Action):

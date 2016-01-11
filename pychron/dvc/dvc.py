@@ -633,8 +633,12 @@ class DVC(Loggable):
 
     def clone_experiment(self, identifier):
         root = os.path.join(paths.experiment_dataset_dir, identifier)
-        url = self.make_url(identifier)
-        Repo.clone_from(url, root)
+        if not os.path.isdir(root):
+            self.debug('cloning {}'.format(root))
+            url = self.make_url(identifier)
+            Repo.clone_from(url, root)
+        else:
+            self.debug('{} already exists'.format(identifier))
 
     def add_experiment(self, identifier):
         org = self._organization_factory()

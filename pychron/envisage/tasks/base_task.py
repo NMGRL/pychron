@@ -17,17 +17,17 @@
 # ============= enthought library imports =======================
 from itertools import groupby
 
-from pyface.tasks.task_layout import TaskLayout
-from traits.api import Any, on_trait_change, List, Unicode, DelegatesTo, Instance
-from pyface.directory_dialog import DirectoryDialog
-from pyface.timer.do_later import do_later, do_after
-from pyface.tasks.task import Task
-from pyface.tasks.action.schema import SMenu, SMenuBar, SGroup
-from pyface.action.api import ActionItem, Group
 from envisage.ui.tasks.action.task_window_launch_group import TaskWindowLaunchAction
-from pyface.file_dialog import FileDialog
-from pyface.constant import OK, CANCEL, YES
+from pyface.action.api import ActionItem, Group
 from pyface.confirmation_dialog import ConfirmationDialog
+from pyface.constant import OK, CANCEL, YES
+from pyface.directory_dialog import DirectoryDialog
+from pyface.file_dialog import FileDialog
+from pyface.tasks.action.schema import SMenu, SMenuBar, SGroup
+from pyface.tasks.task import Task
+from pyface.tasks.task_layout import TaskLayout
+from pyface.timer.do_later import do_later, do_after
+from traits.api import Any, on_trait_change, List, Unicode, DelegatesTo, Instance
 
 
 
@@ -123,12 +123,12 @@ class myTaskWindowLaunchAction(TaskWindowLaunchAction):
         application = event.task.window.application
         import time
 
-        print 'start open task'
-        print time.time()
+        # print 'start open task'
+        # print time.time()
         st = time.time()
         application.open_task(self.task_id)
-        print time.time()
-        print 'open task duration: {:0.3f}'.format(time.time() - st)
+        # print time.time()
+        # print 'open task duration: {:0.3f}'.format(time.time() - st)
         self.checked = True
 
     @on_trait_change('task:window:opened')

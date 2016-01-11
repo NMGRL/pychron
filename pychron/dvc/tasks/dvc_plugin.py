@@ -104,9 +104,9 @@ class DVCPlugin(BaseTaskPlugin):
 
     def _task_extensions_default(self):
         actions = [SchemaAddition(factory=WorkOfflineAction,
-                                  path='MenuBar/data.menu'),
+                                  path='MenuBar/tools.menu'),
                    SchemaAddition(factory=UseOfflineDatabase,
-                                  path='MenuBar/data.menu')]
+                                  path='MenuBar/tools.menu')]
 
         return [TaskExtension(actions=actions), ]
 
