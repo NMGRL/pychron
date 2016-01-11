@@ -146,6 +146,7 @@ class Paths(object):
     image_cache_dir = None
     default_cache = None
     loading_dir = None
+    load_results_dir = None
     power_map_dir = None
     labbook_dir = None
     data_det_ic_dir = None
@@ -370,6 +371,7 @@ class Paths(object):
         self.image_cache_dir = join(self.data_dir, 'image_cache')
         self.default_cache = join(self.data_dir, 'cache')
         self.loading_dir = join(self.data_dir, 'loads')
+        self.load_results_dir = join(self.loading_dir, 'results')
         self.power_map_dir = join(self.data_dir, 'power_maps')
         self.labbook_dir = join(self.data_dir, 'labbook')
         self.sample_image_dir = join(self.data_dir, 'sample_image_dir')

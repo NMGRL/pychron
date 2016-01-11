@@ -104,6 +104,7 @@ class WorkOfflineAction(Action):
     def perform(self, event):
         app = event.task.window.application
         dvc = app.get_service('pychron.dvc.dvc.DVC')
+
         from pychron.dvc.work_offline import WorkOffline
         wo = WorkOffline(dvc=dvc,
                          application=app)
@@ -114,8 +115,7 @@ class WorkOfflineAction(Action):
             #     warning(None, 'Your are not using a centralized MySQL database')
             # else:
             #     from pychron.dvc.work_offline import WorkOffline
-            #     wo = WorkOffline(dvc=dvc,
-            #                      application=app)
+            #     wo = WorkOffline(dvc=dvc, application=app)
             #     if wo.initialize():
             #         wo.edit_traits()
 

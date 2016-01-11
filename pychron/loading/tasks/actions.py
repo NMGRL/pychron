@@ -61,4 +61,9 @@ class EditAction(TaskAction):
     name = 'Edit'
     method = 'set_edit'
 
+
+class GenerateResultsAction(TaskAction):
+    name = 'Generate Results'
+    method = 'generate_results'
+
 # ============= EOF =============================================

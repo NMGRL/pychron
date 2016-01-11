@@ -25,12 +25,15 @@ from datetime import datetime
 from matplotlib.cm import get_cmap, cmap_d
 from itertools import groupby
 # ============= local library imports  ==========================
+from xlwt import Workbook
+
 from pychron.canvas.utils import load_holder_canvas
-from pychron.core.helpers.filetools import view_file
+from pychron.core.helpers.filetools import view_file, unique_path
 from pychron.canvas.canvas2D.loading_canvas import LoadingCanvas, group_position
 
 from pychron.canvas.canvas2D.scene.primitives.primitives import LoadIndicator
 from pychron.core.pdf.pdf_graphics_context import PdfPlotGraphicsContext
+from pychron.core.progress import progress_iterator
 from pychron.dvc.dvc_irradiationable import DVCIrradiationable
 from pychron.loading.loading_pdf_writer import LoadingPDFWriter
 from pychron.paths import paths
@@ -291,6 +294,43 @@ class LoadingManager(DVCIrradiationable):
             return True
 
     # actions
+    def generate_results(self):
+        self.debug('generate results')
+        dvc = self.dvc
+        db = dvc.db
+
+        positions = sorted([pp for p in self.positions
+                            for pp in p.positions])
+
+        wb = Workbook()
+        sh = wb.add_sheet('Results')
+
+        sh.write(0, 0, 'Analysis')
+        sh.write(0, 1, 'Position')
+        sh.write(0, 2, 'Age')
+        sh.write(0, 3, 'Error')
+
+        def func(x, prog, i, n):
+            dbmp = db.get_measured_position(self.load_name, x)
+            rid = dbmp.analysis.record_id
+
+            if prog:
+                prog.change_message('Write results for {},{}'.format(rid, x))
+
+            ai = dvc.make_analyses((rid,))
+            age, error = 0, 0
+
+            sh.write(i + 1, 0, rid)
+            sh.write(i + 1, 1, x)
+            sh.write(i + 1, 2, age)
+            sh.write(i + 1, 3, error)
+
+        with db.session_ctx():
+            progress_iterator(positions, func, threshold=1)
+
+        path, _ = unique_path(paths.load_results_dir, self.load_name, extension='.xls')
+        wb.save(path)
+
     def configure_pdf(self):
         options = self._pdf_writer.options
 
@@ -306,6 +346,8 @@ class LoadingManager(DVCIrradiationable):
             options.dump()
 
     def save_pdf(self):
+        self.debug('save pdf')
+
         # p = LoadingPDFWriter()
         ln = self.load_name
         if ln:
@@ -390,7 +432,6 @@ class LoadingManager(DVCIrradiationable):
         self.interaction_mode = 'Info'
 
     # private
-
     def _get_load_names(self):
         return self.dvc.db.get_loads()
         # with self.dvc.db.session_ctx():
@@ -547,7 +588,7 @@ class LoadingManager(DVCIrradiationable):
                 return 'duplicate name'
             else:
                 self.info(
-                    'adding load {} {} to database'.format(nln, self.tray))
+                        'adding load {} {} to database'.format(nln, self.tray))
 
                 dbtray = db.get_load_holder(self.tray)
                 if dbtray is None:
@@ -571,9 +612,7 @@ class LoadingManager(DVCIrradiationable):
 
             for pi in self.positions:
                 ln = pi.labnumber
-                self.info(
-                    'updating positions for load:{}, labnumber: {}'.format(
-                        lt.name, ln))
+                self.info('updating positions for load:{}, labnumber: {}'.format(lt.name, ln))
                 scene = self.canvas.scene
                 for pp in pi.positions:
                     ip = scene.get_item(str(pp))
@@ -703,7 +742,7 @@ class LoadingManager(DVCIrradiationable):
                 dbload = self.dvc.db.get_loadtable(name=ln)
                 if dbload:
                     for ps in (
-                    dbload.loaded_positions, dbload.measured_positions):
+                            dbload.loaded_positions, dbload.measured_positions):
                         for pos in ps:
                             sess.delete(pos)
 

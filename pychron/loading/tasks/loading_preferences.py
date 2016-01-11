@@ -15,30 +15,26 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import unittest
-
-from pychron.loading.loading_manager import LoadingManager
-from pychron.loading.tasks.load_task import LoadingTask
-from test.database import isotope_manager_factory
+from envisage.ui.tasks.preferences_pane import PreferencesPane
+from traits.api import Directory
+from traitsui.api import View, Item
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
-class LoadingTest(unittest.TestCase):
-    def setUp(self):
-    #         self.t = LoadingTask()
-        db = isotope_manager_factory().db
-        lm = LoadingManager(db=db)
 
-        #         lm.irradiation = 'NM-251'
-        #         lm.level = 'H'
-        self.t = LoadingTask(manager=lm)
+class LoadingPreferences(BasePreferencesHelper):
+    name = 'Loading'
+    preferences_path = 'pychron.loading'
+    id = 'pychron.loading.preferences_page'
+    save_directory = Directory
 
-    def testSave(self):
-        lm = self.t.manager
-        c = lm.make_canvas('1401')
-
-        self.t.canvas = c
-        self.t.save_loading_pdf()
+class LoadingPreferencesPane(PreferencesPane):
+    model_factory = LoadingPreferences
+    category = 'Loading'
+    def traits_view(self):
+        v = View(Item('save_directory', label='Output Directory'))
+        return v
 
 # ============= EOF =============================================

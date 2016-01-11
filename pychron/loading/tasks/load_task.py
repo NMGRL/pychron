@@ -24,9 +24,9 @@ from pyface.tasks.action.schema import SToolBar
 
 from pychron.envisage.tasks.base_task import BaseManagerTask
 from pychron.globals import globalv
-from pychron.loading.panes import LoadPane, LoadControlPane, LoadTablePane
-from pychron.loading.actions import SaveLoadingPDFAction, ConfigurePDFAction, EntryAction, InfoAction, EditAction, \
-    SaveLoadingDBAction
+from pychron.loading.tasks.panes import LoadPane, LoadControlPane, LoadTablePane
+from pychron.loading.tasks.actions import SaveLoadingPDFAction, ConfigurePDFAction, EntryAction, InfoAction, EditAction, \
+    SaveLoadingDBAction, GenerateResultsAction
 from apptools.preferences.preference_binding import bind_preference
 
 
@@ -41,7 +41,8 @@ class LoadingTask(BaseManagerTask):
 
     tool_bars = [SToolBar(SaveLoadingPDFAction(),
                           ConfigurePDFAction()),
-                 SToolBar(SaveLoadingDBAction()),
+                 SToolBar(SaveLoadingDBAction(),
+                          GenerateResultsAction()),
                  SToolBar(EntryAction(), InfoAction(), EditAction())]
 
     def activated(self):
@@ -101,6 +102,9 @@ class LoadingTask(BaseManagerTask):
 
     def save_tray_pdf(self):
         self.manager.save_tray_pdf()
+
+    def generate_results(self):
+        self.manager.generate_results()
 
     def _prompt_for_save(self):
         if self.manager.dirty:

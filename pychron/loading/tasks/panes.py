@@ -15,13 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from enable.component_editor import ComponentEditor
+from pyface.tasks.traits_dock_pane import TraitsDockPane
+from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traits.api import Int, Property
 from traitsui.api import View, UItem, Item, EnumEditor, \
     VGroup, TabularEditor, HGroup, spring
-from pyface.tasks.traits_task_pane import TraitsTaskPane
-from enable.component_editor import ComponentEditor
-from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traitsui.tabular_adapter import TabularAdapter
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.ui.combobox_editor import ComboboxEditor

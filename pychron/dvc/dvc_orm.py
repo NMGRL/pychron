@@ -132,6 +132,7 @@ class AnalysisTbl(Base, BaseMixin):
     comment = Column(String(80))
     experiment_associations = relationship('ExperimentAssociationTbl', backref='analysis')
     change = relationship('AnalysisChangeTbl', uselist=False, backref='analysis')
+    measured_position = relationship('MeasuredPositionTbl', uselist=False, backref='analysis')
 
     _record_view = None
 

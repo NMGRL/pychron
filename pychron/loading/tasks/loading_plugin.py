@@ -15,17 +15,18 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.task_factory import TaskFactory
 from pyface.tasks.action.schema_addition import SchemaAddition
-from envisage.ui.tasks.task_extension import TaskExtension
+
 # from pyface.action.group import Group
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
-from pychron.loading.load_task import LoadingTask
-from pychron.loading.actions import SaveLoadingPDFAction, SaveTrayPDFAction
-from pychron.loading.loading_preferences import LoadingPreferencesPane
-from pychron.loading.panes import LoadDockPane, LoadTablePane
+from pychron.loading.tasks.load_task import LoadingTask
+from pychron.loading.tasks.actions import SaveLoadingPDFAction, SaveTrayPDFAction, GenerateResultsAction
+from pychron.loading.tasks.loading_preferences import LoadingPreferencesPane
+from pychron.loading.tasks.panes import LoadDockPane, LoadTablePane
 from pychron.loading.loading_manager import LoadingManager
 
 
@@ -38,6 +39,9 @@ class LoadingPlugin(BaseTaskPlugin):
                                   path='MenuBar/file.menu'),
                    SchemaAddition(id='save_tray',
                                   factory=SaveTrayPDFAction,
+                                  path='MenuBar/file.menu'),
+                   SchemaAddition(id='generate_results',
+                                  factory=GenerateResultsAction,
                                   path='MenuBar/file.menu')]
         return [TaskExtension(task_id='pychron.loading',
                               actions=actions)]

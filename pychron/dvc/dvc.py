@@ -195,6 +195,16 @@ class DVC(Loggable):
 
     def initialize(self, inform=False):
         self.debug('Initialize DVC')
+        self.open_meta_repo()
+
+        # update meta repo.
+        self.meta_pull()
+
+        if self.db.connect():
+            # self._defaults()
+            return True
+
+    def open_meta_repo(self):
         mrepo = self.meta_repo
         root = os.path.join(paths.dvc_dir, self.meta_repo_name)
         if os.path.isdir(os.path.join(root, '.git')):
@@ -204,13 +214,6 @@ class DVC(Loggable):
             url = self.make_url(self.meta_repo_name)
             path = os.path.join(paths.dvc_dir, self.meta_repo_name)
             self.meta_repo.clone(url, path)
-
-        # update meta repo.
-        self.meta_pull()
-
-        if self.db.connect():
-            # self._defaults()
-            return True
 
     def synchronize(self, pull=True):
         """
@@ -627,6 +630,11 @@ class DVC(Loggable):
     def add_irradiation_level(self, *args):
         with self.db.session_ctx():
             self.db.add_irradiation_level(*args)
+
+    def clone_experiment(self, identifier):
+        root = os.path.join(paths.experiment_dataset_dir, identifier)
+        url = self.make_url(identifier)
+        Repo.clone_from(url, root)
 
     def add_experiment(self, identifier):
         org = self._organization_factory()

@@ -128,9 +128,11 @@ def progress_iterator(xs, func, threshold=50, progress=None, reraise_cancel=Fals
                 elif prog.accepted:
                     break
                 func(x, prog, i, n)
+            if prog:
+                prog.close()
         else:
-            for x in xs:
-                func(x, None, 0, 0)
+            for i, x in enumerate(xs):
+                func(x, None, i, n)
 
     try:
         gen(progress)

@@ -24,6 +24,7 @@ import paramiko
 from traitsui.editors import TabularEditor
 from traitsui.tabular_adapter import TabularAdapter
 
+from pychron.core.progress import progress_iterator
 from pychron.loggable import Loggable
 from pychron.paths import paths
 
@@ -114,6 +115,7 @@ class WorkOffline(Loggable):
             return
 
         # update meta
+        self.dvc.open_meta_repo()
         self.dvc.meta_pull()
 
         # clone central db
@@ -133,6 +135,13 @@ class WorkOffline(Loggable):
             return
 
         # clone the repositories
+        def func(x, prog, i, n):
+            if prog is not None:
+                prog.change_message('Cloning {}'.format(x.name))
+            self.dvc.clone_experiment(x.name)
+
+        progress_iterator(self.selected_repositories, func, threshold=0)
+
         return True
 
     def _clone_central_db(self):
