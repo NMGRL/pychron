@@ -43,6 +43,7 @@ from pychron.dvc.meta_repo import MetaRepo
 from pychron.envisage.browser.record_views import InterpretedAgeRecordView
 from pychron.git_archive.repo_manager import GitRepoManager, format_date, get_repository_branch
 from pychron.github import Organization
+from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.pychron_constants import RATIO_KEYS, INTERFERENCE_KEYS
@@ -627,9 +628,20 @@ class DVC(Loggable):
         with self.db.session_ctx():
             self.db.add_sample(name, project, material)
 
-    def add_irradiation_level(self, *args):
+    def add_irradiation_position(self, irrad, level, pos):
         with self.db.session_ctx():
-            self.db.add_irradiation_level(*args)
+            dbip = self.db.add_irradiation_position(irrad, level, pos)
+
+            self.meta_repo.add_position(irrad, level, pos)
+            return dbip
+
+    def add_irradiation_level(self, name, irradiation, holder, production_name):
+        with self.db.session_ctx():
+            self.db.add_irradiation_level(name, irradiation, holder, production_name)
+
+        self.meta_repo.add_level(irradiation, name)
+        self.meta_repo.update_level_production(irradiation, name, production_name)
+        return True
 
     def clone_experiment(self, identifier):
         root = os.path.join(paths.experiment_dataset_dir, identifier)
@@ -660,7 +672,7 @@ class DVC(Loggable):
 
                 # url = '{}/{}/{}.git'.format(paths.git_base_origin, self.organization, identifier)
                 Repo.clone_from(self.make_url(identifier), root)
-                self.db.add_experiment(identifier)
+                self.db.add_experiment(identifier, globalv.username)
                 return True
 
     def add_irradiation(self, name, doses=None):
@@ -673,6 +685,12 @@ class DVC(Loggable):
 
         self.meta_repo.add_irradiation(name)
         self.meta_repo.add_chronology(name, doses)
+
+        root = os.path.join(paths.meta_root, name)
+        os.mkdir(os.path.join(root, 'productions'))
+        with open(os.path.join(root, 'productions.json'), 'w') as wfile:
+            json.dump({}, wfile)
+
         self.meta_repo.commit('added irradiation {}'.format(name))
         self.meta_repo.push()
 

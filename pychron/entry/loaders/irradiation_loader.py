@@ -25,15 +25,15 @@ from pychron.core.helpers.strtools import to_bool
 from pychron.loggable import Loggable
 from pychron.managers.data_managers.xls_data_manager import XLSDataManager
 
-
 NAME = ('Name', 'irradiation', 'irrad')
 PR = ('ProductionRatio', 'PR', 'Production Ratios', 'ProductionRatios', 'Production Ratio')
 LEVEL = ('Level', 'Tray')
-HOLDER = ('Holder', )
+HOLDER = ('Holder',)
 
 
 class XLSIrradiationLoader(Loggable):
     # columns = ('position', 'sample', 'material', 'weight', 'project', 'level', 'note')
+    dvc = Instance('pychron.dvc.dvc.DVC')
     db = Any
     progress = Any
     canvas = Any
@@ -76,7 +76,7 @@ class XLSIrradiationLoader(Loggable):
             else:
                 setattr(self, name, v)
 
-    def load_irradiation(self, p, dry_run=True):
+    def load_irradiation(self, p, dry_run=False):
         if not os.path.isfile(p):
             self.warning('{} does not exist'.format(p))
             return
@@ -162,17 +162,18 @@ class XLSIrradiationLoader(Loggable):
         def func(s):
             prev = None
             for i, ri in enumerate(dm.iterrows(sheet, s)):
-                if not prev:
+                if prev is None:
                     prev = ri[nameidx].value
 
                 if ctype_text[ri[0].ctype] == 'empty' \
                         or prev != ri[nameidx].value:
                     prev = ri[nameidx].value
-                    # print s, i
+                    # print 'yeild {},{}'.format(s, s+i)
                     yield dm.iterrows(sheet, s, s + i)
-                    s = i
+                    s = i + 1
 
-            yield dm.iterrows(sheet, s + 1)
+            # print 'yeild2 {}'.format(s)
+            yield dm.iterrows(sheet, s)
 
         return func(start)
 
@@ -228,8 +229,10 @@ class XLSIrradiationLoader(Loggable):
                     if idn_idx is not None:
                         idn = row[idn_idx].value
 
-                d = {'irradiation': irrad, 'level': lv, 'position': pos,
-                     'identifier': int(idn)}
+                d = {'irradiation': irrad, 'level': lv, 'position': pos}
+
+                if idn is not None:
+                    d['identifier'] = int(idn)
 
                 for ai in ('sample', 'material', 'weight', 'note', 'project'):
                     d[ai] = row[idxdict[ai]].value
@@ -261,8 +264,9 @@ class XLSIrradiationLoader(Loggable):
             for i, row in enumerate(igen):
                 irrad = row[nameidx].value
                 if i == 0:
-                    chron = self._add_chronology(irrad)
-                    self._add_irradiation(irrad, chron)
+                    # chron = self._add_chronology(irrad)
+                    # self._add_irradiation(irrad, chron)
+                    self._add_irradiation(irrad)
                     if not dry_run and self.db:
                         self.db.commit()
 
@@ -324,19 +328,20 @@ class XLSIrradiationLoader(Loggable):
         irrad, level, pos = pdict['irradiation'], pdict['level'], pdict['position']
         db = self.db
         if db:
-            dbip = db.add_irradiation_position(pos, None, irrad, level)
+            dbip = self.dvc.add_irradiation_position(irrad, level, pos)
             if dbip:
                 self._added_positions.append((irrad, level, pos))
-                labnumber = pdict['identifier']
+                labnumber = pdict.get('identifier', None)
 
-                if labnumber is not None:
-                    dbprj = self._add_project(db, pdict['project'])
-                    if dbprj:
-                        dbmat = self._add_material(db, pdict['material'])
-                        if dbmat:
-                            dbsam = self._add_sample(db, pdict['sample'], dbprj, dbmat)
-                            if dbsam:
-                                db.add_labnumber(labnumber, dbsam, irradiation_position=dbip)
+                dbprj = self._add_project(db, pdict['project'])
+                if dbprj:
+                    dbmat = self._add_material(db, pdict['material'])
+                    if dbmat:
+                        dbsam = self._add_sample(db, pdict['sample'], dbprj, dbmat)
+                        dbip.sample = dbsam
+
+                        if dbsam and labnumber is not None:
+                            db.add_labnumber(labnumber, dbsam, irradiation_position=dbip)
 
         else:
             self._added_positions.append((irrad, level, pos))
@@ -349,16 +354,19 @@ class XLSIrradiationLoader(Loggable):
 
     def _add_sample(self, db, sam, dbprj, dbmat):
         def func(v):
-            return db.add_sample(v, dbprj, dbmat)
+            return db.add_sample(*v)
 
-        return self._user_confirm_add(db, sam, 'sample', adder=func)
+        return self._user_confirm_add(db, (sam, dbprj.name, dbmat.name), 'sample', adder=func)
 
     def _user_confirm_add(self, db, v, key, adder=None):
         if adder is None:
             adder = getattr(db, 'add_{}'.format(key))
 
         if not self.quiet:
-            obj = getattr(db, 'get_{}'.format(key))(v)
+            if isinstance(v, tuple):
+                obj = getattr(db, 'get_{}'.format(key))(*v)
+            else:
+                obj = getattr(db, 'get_{}'.format(key))(v)
             if not obj:
                 try:
                     ret = self._user_confirmation[key]
@@ -366,9 +374,9 @@ class XLSIrradiationLoader(Loggable):
                     ret = self.confirmation_dialog('{} "{}" not in database. Do you want to add it.\n'
                                                    'If "No" a labnumber will not be '
                                                    'generated fro this position'.format(key.capitalize(), v))
-                rem = self.confirmation_dialog('Remember decision?')
-                if rem:
-                    self._user_confirmation[key] = ret
+                    rem = self.confirmation_dialog('Remember decision?')
+                    if rem:
+                        self._user_confirmation[key] = ret
 
                 if ret:
                     obj = adder(v)
@@ -376,27 +384,37 @@ class XLSIrradiationLoader(Loggable):
         else:
             obj = adder(v)
             # dbprj = db.add_project(v)
-        db.flush()
+        db.commit()
         return obj
 
     def _add_level(self, irrad, name, pr, holder, add_positions=True):
-        db = self.db
-        if db:
-            with db.session_ctx():
-                dblevel = db.add_irradiation_level(name, irrad, holder, pr)
-                if dblevel:
-                    self._added_levels.append((irrad, name, pr, holder))
-                    if add_positions:
-                        self.add_positions()
+        dvc = self.dvc
+        if dvc:
+            if self.dvc.add_irradiation_level(name, irrad, holder, pr):
+                self._added_levels.append((irrad, name, pr, holder))
+                if add_positions:
+                    self.add_positions()
+
+                    # with db.session_ctx():
+                    #     dblevel = db.add_irradiation_level(name, irrad, holder, pr)
+                    #     if dblevel:
+                    #         self._added_levels.append((irrad, name, pr, holder))
+                    #         if add_positions:
+                    #             self.add_positions()
         else:
             self._added_levels.append((irrad, name, pr, holder))
 
-    def _add_irradiation(self, name, chron):
-        db = self.db
-        if db:
-            with db.session_ctx():
-                if db.add_irradiation(name, chron):
-                    self._added_irradiations.append(name)
+    def _add_irradiation(self, name):
+        dvc = self.dvc
+        if dvc:
+            if dvc.add_irradiation(name):
+                self._added_irradiations.append(name)
+
+                # with db.session_ctx():
+                #     if db.add_irradiation(name):
+                #
+                #     # if db.add_irradiation(name, chron):
+                #         self._added_irradiations.append(name)
         else:
             self._added_irradiations.append(name)
 

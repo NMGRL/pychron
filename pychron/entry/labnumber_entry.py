@@ -336,10 +336,13 @@ class LabnumberEntry(DVCIrradiationable):
 
     def import_irradiation_load_xls(self, p):
         loader = XLSIrradiationLoader(db=self.dvc.db,
+                                      dvc=self.dvc,
                                       monitor_name=self.monitor_name)
-        prog = open_progress()
-        loader.progress = prog
-        loader.canvas = self.canvas
+        # prog = open_progress()
+        # loader.progress = prog
+        # loader.canvas = self.canvas
+
+        loader.load_irradiation(p)
 
         # loader.load_level(p, self.irradiated_positions,
         #             self.irradiation, self.level)

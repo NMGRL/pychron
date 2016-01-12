@@ -280,6 +280,7 @@ cached = Cached
 
 class MetaRepo(GitRepoManager):
     clear_cache = Bool
+
     # clear_gain_cache = Bool
     # clear_production_cache = Bool
     # clear_chronology_cache = Bool
@@ -306,6 +307,16 @@ class MetaRepo(GitRepoManager):
 
     def update_experiment_queue(self, rootname, name, path_or_blob):
         self._update_text(os.path.join('experiments', rootname), name, path_or_blob)
+
+    def update_level_production(self, irrad, name, prname):
+        src = os.path.join(paths.meta_root, 'productions', '{}.json'.format(prname))
+        if os.path.isfile(src):
+            dest = os.path.join(paths.meta_root, irrad, 'productions', '{}.json'.format(prname))
+            if not os.path.isfile(dest):
+                shutil.copyfile(src, dest)
+            self.update_productions(irrad, name, prname)
+        else:
+            self.warning_dialog('Invalid production name'.format(prname))
 
     def add_production_to_irradiation(self, irrad, name, params, add=True):
         p = os.path.join(paths.meta_root, irrad, '{}.json'.format(name))
@@ -375,12 +386,32 @@ class MetaRepo(GitRepoManager):
         if add:
             self.add(p, commit=False)
 
-    def add_irradiation(self, name, add=True):
+    def add_irradiation(self, name):
         p = os.path.join(paths.meta_root, name)
         if not os.path.isdir(p):
             os.mkdir(p)
-            if add:
-                self.add(p, commit=False)
+
+    def add_position(self, irradiation, level, pos, add=True):
+        p = self.get_level_path(irradiation, level)
+        jd = dvc_load(p)
+
+        pd = next((p for p in jd if p['position'] == pos), None)
+        if pd is None:
+            jd.append({'position': pos, 'decay_constants': {}})
+        # for pd in jd:
+        #     if pd['position'] == pos:
+
+        # njd = [ji if ji['position'] != pos else {'position': pos, 'j': j, 'j_err': e,
+        #                                          'decay_constants': decay,
+        #                                          'identifier': identifier,
+        #                                          'analyses': [{'uuid': ai.uuid,
+        #                                                        'record_id': ai.record_id,
+        #                                                        'status': ai.is_omitted()}
+        #                                                       for ai in analyses]} for ji in jd]
+
+        dvc_dump(jd, p)
+        if add:
+            self.add(p, commit=False)
 
     def add_irradiation_holder(self, name, blob, commit=False, overwrite=False, add=True):
         root = os.path.join(paths.meta_root, 'irradiation_holders')

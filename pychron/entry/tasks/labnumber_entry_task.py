@@ -17,8 +17,8 @@
 # ============= enthought library imports =======================
 
 from pyface.tasks.action.schema import SToolBar
-from traits.api import on_trait_change, Button, Float, Str, Int, Bool
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter, Tabbed
+from traits.api import on_trait_change, Button, Float, Str, Int, Bool
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -148,10 +148,12 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
         self.manager.preview_generate_identifiers()
 
     def import_irradiation_load_xls(self):
-        path = self.open_file_dialog()
-        if path:
-            # p = '/Users/ross/Sandbox/irrad_load_template.xls'
-            self.manager.import_irradiation_load_xls(path)
+        # path = self.open_file_dialog()
+        # if path:
+        #     # p = '/Users/ross/Sandbox/irrad_load_template.xls'
+        #     self.manager.import_irradiation_load_xls(path)
+        path = '/Users/ross/Sandbox/template.xls'
+        self.manager.import_irradiation_load_xls(path)
 
     def make_irradiation_load_template(self):
         path = self.save_file_dialog()
@@ -161,7 +163,7 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
             self.manager.make_irradiation_load_template(path)
 
             self.information_dialog('Template saved to {}'.format(path))
-            self.view_xls(path)
+            # self.view_xls(path)
 
     def import_sample_from_file(self):
         # path = self.open_file_dialog(default_directory=paths.root_dir,

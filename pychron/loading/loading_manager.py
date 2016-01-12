@@ -305,25 +305,34 @@ class LoadingManager(DVCIrradiationable):
         wb = Workbook()
         sh = wb.add_sheet('Results')
 
-        sh.write(0, 0, 'Analysis')
-        sh.write(0, 1, 'Position')
-        sh.write(0, 2, 'Age')
-        sh.write(0, 3, 'Error')
+        for i, attr in enumerate(('Analysis', 'Position', 'Age',
+                                  'Error', 'Weight', 'Note')):
+            wb.sheet(0, i, attr)
+
+        wb.nrows = 1
 
         def func(x, prog, i, n):
-            dbmp = db.get_measured_position(self.load_name, x)
-            rid = dbmp.analysis.record_id
+            dbmps = db.get_measured_positions(self.load_name, x)
+            dbpos = db.get_load_position(self.load_name, x)
 
-            if prog:
-                prog.change_message('Write results for {},{}'.format(rid, x))
+            weight, note = dbpos.weight, dbpos.note
 
-            ai = dvc.make_analyses((rid,))
-            age, error = 0, 0
+            for dbmp in dbmps:
+                rid = dbmp.analysis.record_id
+                # rid = 1
+                if prog:
+                    prog.change_message('Write results for {},{}'.format(rid, x))
 
-            sh.write(i + 1, 0, rid)
-            sh.write(i + 1, 1, x)
-            sh.write(i + 1, 2, age)
-            sh.write(i + 1, 3, error)
+                # ai = dvc.make_analyses((rid,))
+                age, error = 0, 0
+
+                sh.write(wb.nrows, 0, rid)
+                sh.write(wb.nrows, 1, x)
+                sh.write(wb.nrows, 2, age)
+                sh.write(wb.nrows, 3, error)
+                sh.write(wb.nrows, 4, weight)
+                sh.write(wb.nrows, 5, note)
+                wb.nrows += 1
 
         with db.session_ctx():
             progress_iterator(positions, func, threshold=1)
