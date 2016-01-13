@@ -207,67 +207,78 @@ class DVCDatabase(DatabaseAdapter):
             return self._add_item(obj)
 
     def add_measured_position(self, position=None, load=None, **kw):
-        a = MeasuredPositionTbl(**kw)
-        if position:
-            a.position = position
-        if load:
-            a.loadName = load
-        return self._add_item(a)
+        with self.session_ctx():
+            a = MeasuredPositionTbl(**kw)
+            if position:
+                a.position = position
+            if load:
+                a.loadName = load
+            return self._add_item(a)
 
     def add_load_holder(self, name):
-        a = LoadHolderTbl(name=name)
-        return self._add_item(a)
+        with self.session_ctx():
+            a = LoadHolderTbl(name=name)
+            return self._add_item(a)
 
     def add_load(self, name, holder):
-        a = LoadTbl(name=name, holderName=holder)
-        return self._add_item(a)
+        with self.session_ctx():
+            a = LoadTbl(name=name, holderName=holder)
+            return self._add_item(a)
 
     def add_user(self, name, **kw):
-        a = UserTbl(name=name, **kw)
-        return self._add_item(a)
+        with self.session_ctx():
+            a = UserTbl(name=name, **kw)
+            return self._add_item(a)
 
     def add_analysis(self, **kw):
-        a = AnalysisTbl(**kw)
-        return self._add_item(a)
+        with self.session_ctx():
+            a = AnalysisTbl(**kw)
+            return self._add_item(a)
 
     def add_analysis_change(self, **kw):
-        a = AnalysisChangeTbl(**kw)
-        return self._add_item(a)
+        with self.session_ctx():
+            a = AnalysisChangeTbl(**kw)
+            return self._add_item(a)
 
     def add_experiment_association(self, experiment, analysis):
-        self.debug('add association {}'.format(experiment))
-        experiment = self.get_experiment(experiment)
-        e = ExperimentAssociationTbl()
-        e.experiment = experiment
-        e.analysis = analysis
-        self._add_item(e)
+        with self.session_ctx():
+            self.debug('add association {}'.format(experiment))
+            experiment = self.get_experiment(experiment)
+            e = ExperimentAssociationTbl()
+            e.experiment = experiment
+            e.analysis = analysis
+            return self._add_item(e)
 
     def add_material(self, name):
-        a = self.get_material(name)
-        if a is None:
-            a = MaterialTbl(name=name)
-            a = self._add_item(a)
-        return a
+        with self.session_ctx():
+            a = self.get_material(name)
+            if a is None:
+                a = MaterialTbl(name=name)
+                a = self._add_item(a)
+            return a
 
     def add_sample(self, name, project, material):
-        a = self.get_sample(name, project, material)
-        if a is None:
-            self.debug('ADDING SAMPLE {},{},{}'.format(name, project, material))
-            a = SampleTbl(name=name)
-            a.project = self.get_project(project)
-            a.material = self.get_material(material)
-            a = self._add_item(a)
-        # else:
-        # self.debug('SAMPLE {},{} ALREADY EXISTS'.format(name,project))
-        return a
+        with self.session_ctx():
+            a = self.get_sample(name, project, material)
+            if a is None:
+                self.debug('ADDING SAMPLE {},{},{}'.format(name, project, material))
+                a = SampleTbl(name=name)
+                a.project = self.get_project(project)
+                a.material = self.get_material(material)
+                a = self._add_item(a)
+            # else:
+            # self.debug('SAMPLE {},{} ALREADY EXISTS'.format(name,project))
+            return a
 
     def add_extraction_device(self, name):
-        a = ExtractDeviceTbl(name=name)
-        return self._add_item(a)
+        with self.session_ctx():
+            a = ExtractDeviceTbl(name=name)
+            return self._add_item(a)
 
     def add_mass_spectrometer(self, name, kind='Argus'):
-        a = MassSpectrometerTbl(name=name, kind=kind)
-        return self._add_item(a)
+        with self.session_ctx():
+            a = MassSpectrometerTbl(name=name, kind=kind)
+            return self._add_item(a)
 
     def add_irradiation(self, name):
         with self.session_ctx():
@@ -295,11 +306,12 @@ class DVCDatabase(DatabaseAdapter):
             return dblevel
 
     def add_project(self, name):
-        a = self.get_project(name)
-        if a is None:
-            a = ProjectTbl(name=name)
-            a = self._add_item(a)
-        return a
+        with self.session_ctx():
+            a = self.get_project(name)
+            if a is None:
+                a = ProjectTbl(name=name)
+                a = self._add_item(a)
+            return a
 
     def add_irradiation_position(self, irrad, level, pos, **kw):
         with self.session_ctx():
@@ -311,28 +323,32 @@ class DVCDatabase(DatabaseAdapter):
             return dbpos
 
     def add_load_position(self, ln, position, weight=0, note=''):
-        a = LoadPositionTbl(identifier=ln, position=position, weight=weight,
-                            note=note)
-        return self._add_item(a)
+        with self.session_ctx():
+            a = LoadPositionTbl(identifier=ln, position=position, weight=weight,
+                                note=note)
+            return self._add_item(a)
 
     def add_experiment(self, name, creator_name, **kw):
-        creator = self.get_user(creator_name)
-        if not creator:
-            creator = self.add_user(creator_name)
-            self.flush()
+        with self.session_ctx():
+            creator = self.get_user(creator_name)
+            if not creator:
+                creator = self.add_user(creator_name)
+                self.flush()
 
-        a = ExperimentTbl(name=name, creator=creator.name, **kw)
-        return self._add_item(a)
+            a = ExperimentTbl(name=name, creator=creator.name, **kw)
+            return self._add_item(a)
 
     def add_interpreted_age(self, **kw):
-        a = InterpretedAgeTbl(**kw)
-        return self._add_item(a)
+        with self.session_ctx():
+            a = InterpretedAgeTbl(**kw)
+            return self._add_item(a)
 
     def add_interpreted_age_set(self, interpreted_age, analysis, **kw):
-        a = InterpretedAgeSetTbl(**kw)
-        a.interpreted_age = interpreted_age
-        a.analysis = analysis
-        return self._add_item(a)
+        with self.session_ctx():
+            a = InterpretedAgeSetTbl(**kw)
+            a.interpreted_age = interpreted_age
+            a.analysis = analysis
+            return self._add_item(a)
 
     # special getters
     def get_greatest_identifier(self, **kw):

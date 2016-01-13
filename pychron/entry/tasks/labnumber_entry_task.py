@@ -140,7 +140,7 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
         self.manager.save_pdf(p)
         self.view_pdf(p)
 
-    def save_labbook_pdf(self):
+    def make_irradiation_book_pdf(self):
         if globalv.entry_labbook_debug:
             p = '/Users/ross/Sandbox/irradiation.pdf'
         else:

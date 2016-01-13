@@ -60,6 +60,17 @@ class Gains(MetaObject):
         self.gains = json.load(rfile)
 
 
+def irradiation_holder_holes(name):
+    p = os.path.join(paths.meta_root, 'irradiation_holders', add_extension(name))
+    holder = IrradiationHolder(p)
+    return holder.holes
+
+
+def irradiation_chronology(name):
+    p = os.path.join(paths.meta_root, name, 'chronology.txt')
+    return Chronology(p)
+
+
 def dump_chronology(path, doses):
     if doses is None:
         doses = []
@@ -124,6 +135,13 @@ class Chronology(MetaObject):
         return [(p, convert_days(en - st), convert_days(analts - st)) for p, st, en in self._doses]
 
     @property
+    def total_duration_seconds(self):
+        dur = 0
+        for pwr, st, en in self._doses:
+            dur += (en - st).total_seconds()
+        return dur
+
+    @property
     def irradiation_time(self):
         try:
             d_o = self._doses[0][1]
@@ -142,8 +160,12 @@ class Chronology(MetaObject):
         # d = datetime.strptime(doses[0][1], '%Y-%m-%d %H:%M:%S')
         # return d.strftime('%m-%d-%Y')
         # d = datetime.strptime(doses[0][1], '%Y-%m-%d %H:%M:%S')
-        d = self.get_doses()[0][1]
-        return d.strftime('%m-%d-%Y')
+        date = ''
+        doses = self.get_doses()
+        if doses:
+            d = doses[0][1]
+            date = d.strftime('%m-%d-%Y')
+        return date
 
 
 class Production2(MetaObject):
@@ -555,14 +577,13 @@ class MetaRepo(GitRepoManager):
 
     @cached('clear_cache')
     def get_chronology(self, name, **kw):
-        p = self._chron_name(name)
-        return Chronology(p)
+        return irradiation_chronology(name)
+        # p = self._chron_name(name)
+        # return Chronology(p)
 
     @cached('clear_cache')
     def get_irradiation_holder_holes(self, name, **kw):
-        p = os.path.join(paths.meta_root, 'irradiation_holders', add_extension(name))
-        holder = IrradiationHolder(p)
-        return holder.holes
+        return irradiation_holder_holes(name)
 
     @cached('clear_cache')
     def get_load_holder_holes(self, name, **kw):

@@ -117,6 +117,9 @@ class LabnumberEntry(DVCIrradiationable):
         bind_preference(self, 'j_multiplier',
                         'pychron.entry.j_multiplier')
 
+    def activated(self):
+        pass
+
     def get_igsns(self, igsn_repo):
         items = self.selected
         if not items:
@@ -211,13 +214,16 @@ class LabnumberEntry(DVCIrradiationable):
             if info.result:
                 if table.selected:
                     w = LabbookPDFWriter()
-                    irrads = db.get_irradiations(names=table.selected,
-                                                 order_func='asc')
+                    info = w.options.edit_traits()
+                    if info.result:
+                        irrads = db.get_irradiations(names=table.selected,
+                                                     order_func='asc')
 
-                    n = sum([len(irrad.levels) for irrad in irrads])
-                    prog = open_progress(n=n)
+                        n = sum([len(irrad.levels) for irrad in irrads])
+                        prog = open_progress(n=n)
 
-                    w.build(out, irrads, progress=prog)
+                        w.build(out, irrads, progress=prog)
+                        prog.close()
 
     def save_pdf(self, out):
         db = self.dvc.db
@@ -278,7 +284,8 @@ class LabnumberEntry(DVCIrradiationable):
         loader = XLSIrradiationLoader(db=self.dvc.db,
                                       dvc=self.dvc,
                                       monitor_name=self.monitor_name)
-        loader.load_irradiation(p)
+        if loader.load_irradiation(p):
+            self.dvc.meta_push()
 
         self.refresh_table = True
 

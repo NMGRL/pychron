@@ -24,7 +24,8 @@ from pyface.tasks.action.schema_addition import SchemaAddition
 # ============= local library imports  ==========================
 from pychron.entry.editors.flux_monitor_editor import FluxMonitorEditor
 from pychron.entry.tasks.preferences import LabnumberEntryPreferencesPane
-from pychron.entry.tasks.actions import SaveLabbookPDFAction, MakeIrradiationTemplateAction, LabnumberEntryAction, \
+from pychron.entry.tasks.actions import MakeIrradiationBookPDFAction, MakeIrradiationTemplateAction, \
+    LabnumberEntryAction, \
     SensitivityEntryAction, AddMolecularWeightAction, AddFluxMonitorAction, \
     GenerateTrayAction, \
     ImportIrradiationHolderAction, ExportIrradiationAction, ImportIrradiationAction, \
@@ -97,7 +98,7 @@ class EntryPlugin(BaseTaskPlugin):
                   SchemaAddition(id='pychron.entry2.import_irradiations_from_file', factory=ImportIrradiationFileAction,
                                  path=g2path),
                   SchemaAddition(id='pychron.entry2.generate_tray', factory=GenerateTrayAction, path=g2path, ),
-                  SchemaAddition(id='pychron.entry2.save_labbook', factory=SaveLabbookPDFAction, path=g2path),
+                  SchemaAddition(id='pychron.entry2.save_labbook', factory=MakeIrradiationBookPDFAction, path=g2path),
                   SchemaAddition(id='pychron.entry2.make_template', factory=MakeIrradiationTemplateAction,
                                  path=g2path)]),
                 (self.id, '', 'Entry',

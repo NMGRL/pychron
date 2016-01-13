@@ -87,6 +87,9 @@ class XLSIrradiationLoader(Loggable):
         try:
             with self.db.session_ctx(commit=not dry_run):
                 self._load_irradiation_from_file(p, dry_run)
+
+                if not dry_run:
+                    self.dvc.meta_commit('imported irradiation file {}'.format(p))
                 return True
         except BaseException, e:
             print 'exception', e
@@ -94,8 +97,6 @@ class XLSIrradiationLoader(Loggable):
     def identifier_generator(self):
         """
         make a new generator after each irradiation+set of levels.
-
-
 
         :return: generator
         """
@@ -169,11 +170,11 @@ class XLSIrradiationLoader(Loggable):
                 if ctype_text[ri[0].ctype] != 'empty' \
                         and prev != ri[nameidx].value:
                     prev = ri[nameidx].value
-                    print 'yeild {},{}'.format(s, s + i)
+                    # print 'yeild {},{}'.format(s, s + i)
                     yield dm.iterrows(sheet, s, s + i)
                     s = i + 1
 
-            print 'yeild2 {}'.format(s)
+            # print 'yeild2 {}'.format(s)
             yield dm.iterrows(sheet, s)
 
         return func(start)
@@ -296,6 +297,24 @@ class XLSIrradiationLoader(Loggable):
         #         for pos in level:
         #             pass
 
+    def _add_irradiation(self, name, chronology=None):
+        dvc = self.dvc
+        if dvc:
+            if dvc.add_irradiation(name, chronology):
+                self._added_irradiations.append(name)
+        else:
+            self._added_irradiations.append(name)
+
+    def _add_level(self, irrad, name, pr, holder, add_positions=True):
+        dvc = self.dvc
+        if dvc:
+            if self.dvc.add_irradiation_level(name, irrad, holder, pr):
+                self._added_levels.append((irrad, name, pr, holder))
+                if add_positions:
+                    self.add_positions()
+        else:
+            self._added_levels.append((irrad, name, pr, holder))
+
     def _add_chronology(self, irrad):
         dm = self.dm
         sheet = dm.get_sheet(('Chronologies', 1))
@@ -323,9 +342,6 @@ class XLSIrradiationLoader(Loggable):
             self._added_chronologies.append((irrad, sd, ed, power))
 
         return doses
-
-            # if self.db:
-            #     return self.db.add_irradiation_chronology('$'.join(chronblob))
 
     def _add_position(self, pdict):
         irrad, level, pos = pdict['irradiation'], pdict['level'], pdict['position']
@@ -383,43 +399,11 @@ class XLSIrradiationLoader(Loggable):
 
                 if ret:
                     obj = adder(v)
-                    # dbprj = db.add_project(v)
         else:
             obj = adder(v)
-            # dbprj = db.add_project(v)
-        db.commit()
+
+        db.flush()
         return obj
-
-    def _add_level(self, irrad, name, pr, holder, add_positions=True):
-        dvc = self.dvc
-        if dvc:
-            if self.dvc.add_irradiation_level(name, irrad, holder, pr):
-                self._added_levels.append((irrad, name, pr, holder))
-                if add_positions:
-                    self.add_positions()
-
-                    # with db.session_ctx():
-                    #     dblevel = db.add_irradiation_level(name, irrad, holder, pr)
-                    #     if dblevel:
-                    #         self._added_levels.append((irrad, name, pr, holder))
-                    #         if add_positions:
-                    #             self.add_positions()
-        else:
-            self._added_levels.append((irrad, name, pr, holder))
-
-    def _add_irradiation(self, name, chronology=None):
-        dvc = self.dvc
-        if dvc:
-            if dvc.add_irradiation(name, chronology):
-                self._added_irradiations.append(name)
-
-                # with db.session_ctx():
-                #     if db.add_irradiation(name):
-                #
-                #     # if db.add_irradiation(name, chron):
-                #         self._added_irradiations.append(name)
-        else:
-            self._added_irradiations.append(name)
 
     def _get_idx_dict(self, sheet, columns):
         dm = self.dm
@@ -441,107 +425,4 @@ class XLSIrradiationLoader(Loggable):
         dm.open(p)
         return dm
 
-        # ============= EOF =============================================
-        # def get_nlevels(self, irradname):
-        # dm =self.dm
-        # if not dm:
-        # raise AttributeError
-        #
-        # sheet = self.dm.get_sheet(('Irradiations',0))
-        # idx = dm.get_column_idx('Name', sheet=sheet)
-        # lidx = dm.get_column_idx('Levels', sheet=sheet)
-        # for ri, ni in enumerate(sheet.col(idx)):
-        # if ni.value==irradname:
-        # level_str = sheet.cell(ri, lidx)
-        # ps = parse_level_str(level_str.value)
-        # return len(ps) if ps else 0
-        # def iterate_irradiations2(self):
-        # dm = self.dm
-        #         sheet = dm.get_sheet(('Irradiations', 0))
-        #
-        #         irrads=[]
-        #         rows = []
-        #         for ri in dm.iterrows(sheet):
-        #             # for ji in dm.iterrows(sheet):
-        #             if ctype_text[ri[1].ctype]=='empty':
-        #                 irrads.append(rows)
-        #                 rows=[]
-        #             else:
-        #                 rows.append(ri)
-        #
-        #         if rows:
-        #             irrads.append(rows)
-        #         return irrads
-        #
-        #
-
-        # def _load_level_from_file(self, p, positions, irradiation, level):
-        #         """
-        #             use an xls file to enter irradiation positions
-        #
-        #             looks for sheet named "IrradiationLoading"
-        #                 if not present use 0th sheet
-        #         """
-        #
-        #         # dm = XLSDataManager()
-        #         # dm.open(p)
-        #         dm = self._dm_factory(p)
-        #
-        #         header_offset = 1
-        #         sheet = dm.get_sheet(('IrradiationLoading', 0))
-        #         idxs = self._get_idxs(dm, sheet)
-        #
-        #         if not idxs:
-        #             return
-        #
-        #         rows = [ri for ri in range(sheet.nrows - header_offset)
-        #                 if sheet.cell_value(ri + header_offset, idxs['level']) == level]
-        #
-        #         prog = self.progress
-        #         if prog:
-        #             prog.max = len(rows) - 1
-        #
-        #         for ri in rows:
-        #             ri += header_offset
-        #
-        #             project, material = None, None
-        #             sample = sheet.cell_value(ri, idxs['sample'])
-        #             if sample.lower() == 'monitor':
-        #                 sample = self.monitor_name
-        #
-        #             if sample:
-        #                 #is this a sample in the database
-        #                 dbsam = self.db.get_sample(sample)
-        #                 if dbsam:
-        #                     if dbsam.project:
-        #                         project = dbsam.project.name
-        #                     if dbsam.material:
-        #                         material = dbsam.material.name
-        #
-        #             if project is None:
-        #                 project = sheet.cell_value(ri, idxs['project'])
-        #             if material is None:
-        #                 material = sheet.cell_value(ri, idxs['material'])
-        #
-        #             pos = sheet.cell_value(ri, idxs['position'])
-        #
-        #             weight = sheet.cell_value(ri, idxs['weight'])
-        #             note = sheet.cell_value(ri, idxs['note'])
-        #
-        #             if prog:
-        #                 prog.change_message('Importing {}'.format(pos))
-        #                 prog.increment()
-        #
-        #             ir_pos, canvas_pos = self._get_position(pos, positions)
-        #             if ir_pos:
-        #                 ir_pos.trait_set(weight=weight,
-        #                                  project=project,
-        #                                  material=material,
-        #                                  sample=sample,
-        #                                  note=note)
-        #                 if sample:
-        #                     canvas_pos.fill = True
-        #             else:
-        #                 msg = 'Invalid position for this tray {}'.format(ir_pos)
-        #                 #self.warning_dialog()
-        #                 self.warning(msg)
+# ============= EOF =============================================

@@ -97,12 +97,12 @@ class SavePDFAction(TaskAction):
     method = 'save_pdf'
 
 
-class SaveLabbookPDFAction(TaskAction):
-    name = 'Save Labbook'
-    dname = 'Save Labbook'
+class MakeIrradiationBookPDFAction(TaskAction):
+    name = 'Make Irradiation Book'
+    dname = 'Make Irradiation Book'
     image = icon('file_pdf')
 
-    method = 'save_labbook_pdf'
+    method = 'make_irradiation_book_pdf'
 
 
 class GenerateIdentifiersAction(TaskAction):
