@@ -112,7 +112,7 @@ class XLSIrradiationLoader(Loggable):
 
             i = 0
             while 1:
-                yield idn + i + offset
+                yield int(idn + i + offset)
                 i += 1
 
         return func()

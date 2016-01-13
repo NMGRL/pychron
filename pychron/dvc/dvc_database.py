@@ -299,15 +299,13 @@ class DVCDatabase(DatabaseAdapter):
         if a is None:
             a = ProjectTbl(name=name)
             a = self._add_item(a)
-
-        print 'add project {}'.format(a)
         return a
 
-    def add_irradiation_position(self, irrad, level, pos):
+    def add_irradiation_position(self, irrad, level, pos, **kw):
         with self.session_ctx():
             dbpos = self.get_irradiation_position(irrad, level, pos)
             if dbpos is None:
-                a = IrradiationPositionTbl(position=pos)
+                a = IrradiationPositionTbl(position=pos, **kw)
                 a.level = self.get_irradiation_level(irrad, level)
                 dbpos = self._add_item(a)
             return dbpos
