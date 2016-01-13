@@ -19,7 +19,6 @@ from apptools.preferences.preference_binding import bind_preference
 from pyface.constant import YES, CANCEL
 from traits.api import Property, Str, cached_property, \
     List, Event, Button, Instance, Bool, on_trait_change, Float, HasTraits, Any
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.irradiation_canvas import IrradiationCanvas
@@ -35,21 +34,8 @@ from pychron.entry.irradiation_pdf_writer import IrradiationPDFWriter, LabbookPD
 from pychron.entry.irradiation_table_view import IrradiationTableView
 from pychron.entry.identifier_generator import IdentifierGenerator
 from pychron.paths import paths
-# from pychron.entry.irradiation import Irradiation
-# from pychron.entry.level import Level, load_holder_canvas, iter_geom
 from pychron.pychron_constants import PLUSMINUS
 from pychron.entry.irradiated_position import IrradiatedPosition
-
-
-# class save_ctx(object):
-# def __init__(self, p):
-# self._p = p
-#
-# def __enter__(self):
-# pass
-#
-# def __exit__(self, exc_type, exc_val, exc_tb):
-# self._p.information_dialog('Changes saved to database')
 
 
 class NeutronDose(HasTraits):
@@ -82,7 +68,6 @@ class LabnumberEntry(DVCIrradiationable):
     edit_irradiation_enabled = Property(depends_on='irradiation')
 
     tray_name = Str
-    # irradiation_tray_image = Property(Image, depends_on='level, irradiation, saved')
     irradiated_positions = List(IrradiatedPosition)
 
     add_irradiation_button = Button('Add Irradiation')
@@ -90,7 +75,6 @@ class LabnumberEntry(DVCIrradiationable):
     edit_level_button = Button('Edit')
 
     load_file_button = Button('Load File')
-    generate_labnumbers_button = Button('Generate Labnumbers')
 
     level_note = Str
     level_production_name = Str
@@ -115,7 +99,6 @@ class LabnumberEntry(DVCIrradiationable):
     suppress_dirty = Bool
     _no_update = Bool
 
-    # labnumber_generator = Instance(LabnumberGenerator)
     monitor_name = Str
 
     _level_editor = None
@@ -127,30 +110,12 @@ class LabnumberEntry(DVCIrradiationable):
     def __init__(self, *args, **kw):
         super(LabnumberEntry, self).__init__(*args, **kw)
 
-        # self.labnumber_generator = LabnumberGenerator(db=self.dvc.db)
-
         bind_preference(self, 'irradiation_prefix',
                         'pychron.entry.irradiation_prefix')
         bind_preference(self, 'monitor_name',
                         'pychron.entry.monitor_name')
         bind_preference(self, 'j_multiplier',
                         'pychron.entry.j_multiplier')
-
-        # bind_preference(self, 'use_dvc', 'pychron.dvc.enabled')
-
-    def activated(self):
-        pass
-        # if not self.irradiations:
-        #     self.dvc.add_irradiation('NM-300')
-        #     self.dvc.add_irradiation_level('A', 'NM-300', '24Spokes')
-        #
-        #     with self.dvc.session_ctx():
-        #         self.dvc.add_project('Foo')
-        #     with self.dvc.session_ctx():
-        #         self.dvc.add_material('san')
-        #     with self.dvc.session_ctx():
-        #         self.dvc.add_sample('bar01', 'Foo', 'san')
-        #     self.updated = True
 
     def get_igsns(self, igsn_repo):
         items = self.selected
@@ -201,23 +166,6 @@ class LabnumberEntry(DVCIrradiationable):
         for ip in pos:
             ip.trait_set(j=j, j_err=j * 1e-3)
         self.refresh_table = True
-
-        # def _estimate_j(self):
-        # j = self._estimated_j_value
-        # print j
-        # return j, j*0.001
-        # self.debug('estimate J. irradiation={}'.format(self.irradiation))
-        # db = self.dvc.db
-        # with db.session_ctx():
-        #     dbirrad = db.get_irradiation(self.irradiation)
-        #     j = dbirrad.chronology.duration
-        #     j *= self.j_multiplier
-        #     return j, j * 0.001
-
-    # def set_selected_sample(self, new):
-    # self.selected_sample = new
-    # self.set_selected_attr(new.name, 'sample')
-    # #self.canvas.selected_samples=new
 
     def select_positions(self, freq, eoflag):
         positions = self.irradiated_positions
@@ -287,27 +235,22 @@ class LabnumberEntry(DVCIrradiationable):
             return True
 
     def generate_identifiers(self):
-        self.warning('GENERATE LABNUMBERS DISABLED')
-        return
-
         if self.check_monitor_name():
             return
 
-        ok = True
-        ok = self.confirmation_dialog('Are you sure you want to generate the labnumbers for this irradiation?')
+        ok = self.confirmation_dialog('Are you sure you want to generate the identifiers for this irradiation?')
         if ok:
-            ret = YES
-            ret = self.confirmation_dialog('Overwrite existing labnumbers?', return_retval=True, cancel=True)
+            ret = self.confirmation_dialog('Overwrite existing identifiers?', return_retval=True, cancel=True)
             if ret != CANCEL:
                 overwrite = ret == YES
                 lg = IdentifierGenerator(monitor_name=self.monitor_name,
                                          irradiation=self.irradiation,
                                          overwrite=overwrite,
+                                         dvc=self.dvc,
                                          db=self.dvc.db)
                 if lg.setup():
-                    prog = open_progress()
-                    lg.generate_identifiers(prog, overwrite)
-                    prog.close()
+                    lg.overwrite = overwrite
+                    lg.generate_identifiers()
                     self._update_level()
 
     def preview_generate_identifiers(self):
@@ -318,9 +261,7 @@ class LabnumberEntry(DVCIrradiationable):
                                  overwrite=True,
                                  db=self.dvc.db)
         if lg.setup():
-            prog = open_progress()
-            lg.preview(prog, self.irradiated_positions, self.irradiation, self.level)
-            prog.close()
+            lg.preview(self.irradiated_positions, self.irradiation, self.level)
             self.refresh_table = True
 
     def check_monitor_name(self):
@@ -331,21 +272,13 @@ class LabnumberEntry(DVCIrradiationable):
 
     def make_irradiation_load_template(self, p):
         loader = XLSIrradiationLoader()
-        # n = len(self.irradiated_positions)
         loader.make_template(p)
 
     def import_irradiation_load_xls(self, p):
         loader = XLSIrradiationLoader(db=self.dvc.db,
                                       dvc=self.dvc,
                                       monitor_name=self.monitor_name)
-        # prog = open_progress()
-        # loader.progress = prog
-        # loader.canvas = self.canvas
-
         loader.load_irradiation(p)
-
-        # loader.load_level(p, self.irradiated_positions,
-        #             self.irradiation, self.level)
 
         self.refresh_table = True
 
@@ -394,7 +327,7 @@ class LabnumberEntry(DVCIrradiationable):
         """
         no = []
         for irs in self.irradiated_positions:
-            if irs.labnumber:
+            if irs.identifier:
                 n = []
                 if not irs.sample:
                     n.append('No sample')
@@ -404,7 +337,7 @@ class LabnumberEntry(DVCIrradiationable):
                     n.append('No material')
 
                 if n:
-                    no.append('Position={} L#={}\n    {}'.format(irs.hole, irs.labnumber, ', '.join(n)))
+                    no.append('Position={} L#={}\n    {}'.format(irs.hole, irs.identifier, ', '.join(n)))
         if no:
             self.information_dialog('Missing Information\n{}'.format('\n'.join(no)))
             return
@@ -422,7 +355,7 @@ class LabnumberEntry(DVCIrradiationable):
             prog = open_progress(n)
 
             for irs in self.irradiated_positions:
-                ln = irs.labnumber
+                ln = irs.identifier
 
                 dbpos = db.get_irradiation_position(self.irradiation, self.level, irs.hole)
                 if not dbpos:
@@ -533,8 +466,8 @@ class LabnumberEntry(DVCIrradiationable):
         sam = self.selected_sample
         if sam:
             ok = True
-            if new.labnumber:
-                ok = self.confirmation_dialog('This position already has a labnumber. \
+            if new.identifier:
+                ok = self.confirmation_dialog('This position already has a identifier. \
 Are you sure you want to change the Sample info? \
 THIS CHANGE CANNOT BE UNDONE')
 
@@ -631,7 +564,7 @@ THIS CHANGE CANNOT BE UNDONE')
                 ir.sample = dbpos.sample.name
                 ir.material = dbpos.sample.material.name
                 ir.project = dbpos.sample.project.name
-                ir.labnumber = dbpos.identifier or ''
+                ir.identifier = dbpos.identifier or ''
                 ir.hole = dbpos.position
 
                 item = self.canvas.scene.get_item(str(ir.hole))

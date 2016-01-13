@@ -521,6 +521,9 @@ class DVC(Loggable):
         return self.db.connect(*args, **kw)
 
     # meta repo
+    def set_identifier(self, *args):
+        self.meta_repo.set_identifier(*args)
+
     def update_chronology(self, name, doses):
         self.meta_repo.update_chronology(name, doses)
         self.meta_commit('updated chronology for {}'.format(name))

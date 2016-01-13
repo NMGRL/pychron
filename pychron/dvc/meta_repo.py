@@ -369,6 +369,16 @@ class MetaRepo(GitRepoManager):
         if add:
             self.add(p, commit=False)
 
+    def set_identifier(self, irradiation, level, pos, identifier):
+        p = self.get_level_path(irradiation, level)
+        jd = dvc_load(p)
+
+        d = next((p for p in jd if p['position'] != pos), None)
+        if d:
+            d['identifier'] = identifier
+
+        dvc_dump(jd, p)
+
     def get_level_path(self, irrad, level):
         return os.path.join(paths.meta_root, irrad, '{}.json'.format(level))
 

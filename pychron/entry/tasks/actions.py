@@ -105,23 +105,23 @@ class SaveLabbookPDFAction(TaskAction):
     method = 'save_labbook_pdf'
 
 
-class GenerateLabnumbersAction(TaskAction):
-    name = 'Generate Labnumbers'
-    dname = 'Generate Labnumbers'
+class GenerateIdentifiersAction(TaskAction):
+    name = 'Generate Identifiers'
+    # dname = 'Generate Labnumbers'
     image = icon('table_lightning')
 
-    method = 'generate_labnumbers'
+    method = 'generate_identifiers'
 
     ddescription = 'Automatically generate labnumbers (aka identifiers) for each irradiation position in the ' \
                    'currently selected irradiation.'
 
 
-class PreviewGenerateLabnumbersAction(TaskAction):
-    name = 'Preview Generate Labnumbers'
-    dname = 'Preview Generate Labnumbers'
+class PreviewGenerateIdentifiersAction(TaskAction):
+    name = 'Preview Generate Identifiers'
+    # dname = 'Preview Generate Labnumbers'
     image = icon('table_lightning')
 
-    method = 'preview_generate_labnumbers'
+    method = 'preview_generate_identifiers'
 
 
 class ImportIrradiationAction(TaskAction):

@@ -94,6 +94,9 @@ class Globals(object):
     use_testbot = False
     random_tip_enabled = True
 
+    entry_labbook_debug = False
+    entry_irradiation_import_from_file_debug = False
+
     def build(self, ip):
 
         for attr, func in [('use_ipc', to_bool),
@@ -127,7 +130,11 @@ class Globals(object):
                            ('dev_confirm_exit', to_bool),
                            ('random_tip_enabled', to_bool),
                            ('test_experiment_set', str),
-                           ('system_monitor_debug', to_bool)]:
+                           ('system_monitor_debug', to_bool),
+                           ('entry_labbook_debug', to_bool),
+                           ('entry_irradiation_import_from_file_debug', to_bool)
+
+                           ]:
             a = ip.get_global(attr)
             if a:
                 setattr(globalv, attr, func(a))

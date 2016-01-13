@@ -33,11 +33,13 @@ from pychron.envisage.browser.base_browser_model import BaseBrowserModel
 from pychron.entry.entry_views.project_entry import ProjectEntry
 from pychron.entry.entry_views.sample_entry import SampleEntry
 from pychron.entry.labnumber_entry import LabnumberEntry
-from pychron.entry.tasks.actions import SavePDFAction, DatabaseSaveAction
+from pychron.entry.tasks.actions import SavePDFAction, DatabaseSaveAction, PreviewGenerateIdentifiersAction, \
+    GenerateIdentifiersAction
 # from pychron.entry.tasks.importer_panes import ImporterPane
 from pychron.entry.tasks.labnumber_entry_panes import LabnumbersPane, \
     IrradiationPane, IrradiationEditorPane, IrradiationCanvasPane, LevelInfoPane, ChronologyPane
 from pychron.envisage.tasks.base_task import BaseManagerTask
+from pychron.globals import globalv
 
 
 class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
@@ -52,11 +54,15 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     edit_project_button = Button
     edit_sample_button = Button
 
-    generate_identifiers_button = Button
-    preview_generate_identifiers_button = Button
+    # generate_identifiers_button = Button
+    # preview_generate_identifiers_button = Button
 
     tool_bars = [SToolBar(SavePDFAction(),
                           DatabaseSaveAction(),
+                          image_size=(16, 16)),
+                 SToolBar(GenerateIdentifiersAction(),
+                          PreviewGenerateIdentifiersAction(),
+                          # ImportIrradiationLevelAction(),
                           image_size=(16, 16))]
     # SToolBar(GenerateLabnumbersAction(),
     # PreviewGenerateLabnumbersAction(),
@@ -135,11 +141,14 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
         self.view_pdf(p)
 
     def save_labbook_pdf(self):
-        p = '/Users/ross/Sandbox/irradiation.pdf'
-        # p=self.save_file_dialog()
+        if globalv.entry_labbook_debug:
+            p = '/Users/ross/Sandbox/irradiation.pdf'
+        else:
+            p = self.save_file_dialog()
 
-        self.manager.make_labbook(p)
-        self.view_pdf(p)
+        if p:
+            self.manager.make_labbook(p)
+            self.view_pdf(p)
 
     def generate_identifiers(self):
         self.manager.generate_identifiers()
@@ -148,12 +157,13 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
         self.manager.preview_generate_identifiers()
 
     def import_irradiation_load_xls(self):
-        # path = self.open_file_dialog()
-        # if path:
-        #     # p = '/Users/ross/Sandbox/irrad_load_template.xls'
-        #     self.manager.import_irradiation_load_xls(path)
-        path = '/Users/ross/Sandbox/template.xls'
-        self.manager.import_irradiation_load_xls(path)
+        if globalv.entry_irradiation_import_from_file_debug:
+            path = self.open_file_dialog()
+        else:
+            path = '/Users/ross/Sandbox/template.xls'
+
+        if path:
+            self.manager.import_irradiation_load_xls(path)
 
     def make_irradiation_load_template(self):
         path = self.save_file_dialog()
@@ -224,17 +234,17 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
 
     def _default_layout_default(self):
         return TaskLayout(
-            left=Splitter(
-                PaneItem('pychron.labnumber.irradiation'),
-                Tabbed(
-                    # PaneItem('pychron.labnumber.extractor'),
-                    PaneItem('pychron.labnumber.editor')),
-                orientation='vertical'),
-            right=Splitter(
-                PaneItem('pychron.entry.level'),
-                PaneItem('pychron.entry.chronology'),
-                PaneItem('pychron.entry.irradiation_canvas'),
-                orientation='vertical'))
+                left=Splitter(
+                        PaneItem('pychron.labnumber.irradiation'),
+                        Tabbed(
+                                # PaneItem('pychron.labnumber.extractor'),
+                                PaneItem('pychron.labnumber.editor')),
+                        orientation='vertical'),
+                right=Splitter(
+                        PaneItem('pychron.entry.level'),
+                        PaneItem('pychron.entry.chronology'),
+                        PaneItem('pychron.entry.irradiation_canvas'),
+                        orientation='vertical'))
 
     def create_central_pane(self):
         return LabnumbersPane(model=self.manager)
@@ -300,11 +310,11 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     def _update_irradiations(self):
         self.manager.updated = True
 
-    def _generate_identifiers_button_fired(self):
-        self.generate_identifiers()
-
-    def _preview_generate_identifiers_button_fired(self):
-        self.preview_generate_identifiers()
+    # def _generate_identifiers_button_fired(self):
+    #     self.generate_identifiers()
+    #
+    # def _preview_generate_identifiers_button_fired(self):
+    #     self.preview_generate_identifiers()
 
     def _add_project_button_fired(self):
         dvc = self.manager.dvc
