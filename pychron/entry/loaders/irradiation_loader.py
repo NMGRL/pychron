@@ -57,9 +57,10 @@ class XLSIrradiationLoader(Loggable):
 
     _user_confirmation = Dict
 
-    def open(self, p):
+    def open(self, p, load_configuration=True):
         self.dm = self._dm_factory(p)
-        self.load_configuration()
+        if load_configuration:
+            self.load_configuration()
 
     def load_configuration(self):
         dm = self.dm
@@ -165,14 +166,14 @@ class XLSIrradiationLoader(Loggable):
                 if prev is None:
                     prev = ri[nameidx].value
 
-                if ctype_text[ri[0].ctype] == 'empty' \
-                        or prev != ri[nameidx].value:
+                if ctype_text[ri[0].ctype] != 'empty' \
+                        and prev != ri[nameidx].value:
                     prev = ri[nameidx].value
-                    # print 'yeild {},{}'.format(s, s+i)
+                    print 'yeild {},{}'.format(s, s + i)
                     yield dm.iterrows(sheet, s, s + i)
                     s = i + 1
 
-            # print 'yeild2 {}'.format(s)
+            print 'yeild2 {}'.format(s)
             yield dm.iterrows(sheet, s)
 
         return func(start)
@@ -262,8 +263,8 @@ class XLSIrradiationLoader(Loggable):
         for igen in self.iterate_irradiations():
             self._added_levels = []
             for i, row in enumerate(igen):
-                irrad = row[nameidx].value
                 if i == 0:
+                    irrad = row[nameidx].value
                     chron = self._add_chronology(irrad)
                     self._add_irradiation(irrad, chron)
 
@@ -309,7 +310,7 @@ class XLSIrradiationLoader(Loggable):
 
         gv = get_row_value(idx_d)
 
-        chronblob = []
+        doses = []
         for row in dm.iterrows(sheet):
             if not gv(row, 'name') == irrad:
                 continue
@@ -318,8 +319,10 @@ class XLSIrradiationLoader(Loggable):
             sd = dm.strftime(sd, '%Y-%m-%d %H:%M:%S')
             ed = dm.strftime(ed, '%Y-%m-%d %H:%M:%S')
             dose = '{}|{}%{}'.format(power, sd, ed)
-            chronblob.append(dose)
+            doses.append(dose)
             self._added_chronologies.append((irrad, sd, ed, power))
+
+        return doses
 
             # if self.db:
             #     return self.db.add_irradiation_chronology('$'.join(chronblob))

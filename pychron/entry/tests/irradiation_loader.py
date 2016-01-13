@@ -172,6 +172,7 @@ class XLSIrradiationLoaderLoadTestCase(unittest.TestCase):
         gen = self.loader.identifier_generator()
 
         self.assertEqual((gen.next(), gen.next()), (3500, 3501))
+
         # @unittest.skipIf(DEBUGGING, 'Debugging tests')
         # def test_generate_offsets2(self):
         #     # add a placeholder labnumber
@@ -254,6 +255,51 @@ class XLSIrradiationLoaderParseTestCase(unittest.TestCase):
 
         self.assertEqual('NM-1000', aheader[0].value)
         self.assertEqual('NM-1001', bheader[0].value)
+
+    def test_iteration3(self):
+        p = os.path.join(get_data_dir(), 'iterate_irradiations.xls')
+        self.loader.open(p)
+
+        irrads = self.loader.iterate_irradiations()
+        irrads = list(irrads)
+        self.assertListEqual([(i[0].value, i[1].value) for i in irrads[0]],
+                             [('NM-1000', 'A'), ('NM-1000', 'B')])
+
+    def test_iteration4(self):
+        p = os.path.join(get_data_dir(), 'iterate_irradiations1.xls')
+        self.loader.open(p)
+
+        irrads = self.loader.iterate_irradiations()
+        irrads = list(irrads)
+        self.assertListEqual([(i[0].value, i[1].value) for i in irrads[0]],
+                             [('NM-1000', 'A'), ('', 'B'), ('', 'C')])
+
+        self.assertListEqual([(i[0].value, i[1].value) for i in irrads[1]],
+                             [('NM-1001', 'A'), ('', 'B')])
+
+    def test_iteration4(self):
+        p = os.path.join(get_data_dir(), 'iterate_irradiations2.xls')
+        self.loader.open(p)
+
+        irrads = self.loader.iterate_irradiations()
+        irrads = list(irrads)
+        self.assertListEqual([(i[0].value, i[1].value) for i in irrads[0]],
+                             [('NM-1000', 'A'), ('', 'B'), ('NM-1000', 'C')])
+
+        self.assertListEqual([(i[0].value, i[1].value) for i in irrads[1]],
+                             [('NM-1001', 'A'), ('', 'B')])
+
+    def test_iteration4(self):
+        p = os.path.join(get_data_dir(), 'iterate_irradiations3.xls')
+        self.loader.open(p)
+
+        irrads = self.loader.iterate_irradiations()
+        irrads = list(irrads)
+        self.assertListEqual([(i[0].value, i[1].value) for i in irrads[0]],
+                             [('NM-1000', 'A'), ('', 'B'), ('NM-1000', 'C')])
+
+        self.assertListEqual([(i[0].value, i[1].value) for i in irrads[1]],
+                             [('NM-1001', 'A'), ('NM-1001', 'B')])
 
     def test_add_irradiations(self):
         self.loader.add_irradiations()
