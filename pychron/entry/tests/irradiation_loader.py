@@ -343,5 +343,30 @@ class XLSIrradiationLoaderParseTestCase(unittest.TestCase):
         self.assertTrue(self.loader.quiet)
 
 
+class SimilarTestCase(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.db = dvc_db_factory(os.path.join(get_data_dir(), 'similar.db'), remove=False, echo=True)
+
+    def test_similar_pi_lower(self):
+        with self.db.session_ctx():
+            obj = self.db.get_similar_pi('ferguson')
+            self.assertEqual(obj.name, 'Ferguson')
+
+    def test_similar_pi_misspell(self):
+        with self.db.session_ctx():
+            obj = self.db.get_similar_pi('fergsuon')
+            self.assertEqual(obj.name, 'Ferguson')
+
+    def test_similar_material_lower(self):
+        with self.db.session_ctx():
+            obj = self.db.get_similar_material('sanidine')
+            self.assertEqual(obj.name, 'Sanidine')
+
+    def test_similar_materail_misspell(self):
+        with self.db.session_ctx():
+            obj = self.db.get_similar_material('sandine')
+            self.assertEqual(obj.name, 'Sanidine')
+
 if __name__ == '__main__':
     unittest.main()

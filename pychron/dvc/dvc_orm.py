@@ -223,6 +223,8 @@ class AnalysisTbl(Base, BaseMixin):
 
 class ProjectTbl(Base, NameMixin):
     idprojectTbl = Column(Integer, primary_key=True)
+    pi = Column(String(140), ForeignKey('PITbl.name'))
+
     samples = relationship('SampleTbl', backref='project')
 
 
@@ -295,6 +297,12 @@ class MassSpectrometerTbl(Base, BaseMixin):
 
 class ExtractDeviceTbl(Base, BaseMixin):
     name = Column(String(45), primary_key=True)
+
+
+class PITbl(Base, BaseMixin):
+    name = Column(String(140), primary_key=True)
+    affiliation = Column(String(140))
+    email = Column(String(140))
 
 
 class UserTbl(Base, BaseMixin):

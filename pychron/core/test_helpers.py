@@ -26,17 +26,17 @@ def get_data_dir(op):
     return op
 
 
-def dvc_db_factory(path, remove=True):
+def dvc_db_factory(path, remove=True, **kw):
     from pychron.dvc.dvc_database import DVCDatabase
     from pychron.dvc.dvc_orm import Base
 
-    return _db_factory(DVCDatabase, Base, path, remove)
+    return _db_factory(DVCDatabase, Base, path, remove, **kw)
 
 
-def _db_factory(klass, base, path, remove):
+def _db_factory(klass, base, path, remove, **kw):
     db = klass()
     # db.verbose_retrieve_query = True
-    db.trait_set(kind='sqlite', path=path)
+    db.trait_set(kind='sqlite', path=path, **kw)
     db.connect()
 
     if remove and os.path.isfile(db.path):

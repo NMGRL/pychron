@@ -21,7 +21,7 @@ import xlwt
 
 IRRADIATION_COLUMNS = ('Name', 'Level', 'PR', 'Holder')
 CHRONOLOGY_COLUMNS = ('Name', 'Start', 'End', 'Power')
-POSITION_COLUMNS = ('Irradiation', 'Level', 'Position', 'Sample', 'Project', 'Material', 'Weight', 'Note')
+POSITION_COLUMNS = ('Irradiation', 'Level', 'Position', 'Sample', 'PI', 'Project', 'Material', 'Weight', 'Note')
 CONFIG_COLUMNS = ('Name', 'Value', 'Description')
 CONFIG_ATTRS = (('autogenerate_labnumber', 'False', 'Automatically generate labnumbers'),
                 ('base_irradiation_offset', 100,

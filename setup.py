@@ -23,7 +23,7 @@ setup(name='pychron',
                   'pychron.core.ui.__init__',
                   'pychron.core.test_helpers',
                   'pychron.core.filtering',
-
+                  'pychron.core.spell_correct',
                   'pychron.experiment.automated_run.spec',
                   'pychron.experiment.utilities.experiment_identifier',
                   'pychron.experiment.utilities.identifier',

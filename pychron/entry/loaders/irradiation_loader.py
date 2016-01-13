@@ -212,7 +212,7 @@ class XLSIrradiationLoader(Loggable):
         sheet = dm.get_sheet(('Positions', 2))
         idxdict = self._get_idx_dict(sheet, ('position', 'sample', 'material', 'weight',
                                              'irradiation',
-                                             'project', 'level', 'note'))
+                                             'project', 'level', 'note', 'pi'))
         if self.autogenerate_labnumber:
             gen = self.identifier_generator()
         else:
@@ -236,7 +236,7 @@ class XLSIrradiationLoader(Loggable):
                 if idn is not None:
                     d['identifier'] = int(idn)
 
-                for ai in ('sample', 'material', 'weight', 'note', 'project'):
+                for ai in ('sample', 'material', 'weight', 'note', 'project', 'pi'):
                     d[ai] = row[idxdict[ai]].value
                 # d = {'irradiation': irrad, 'level': lv, 'position': pos,
                 # 'identifier': gen.next(), 'sample':sample, 'project':''}
@@ -352,21 +352,26 @@ class XLSIrradiationLoader(Loggable):
                 self._added_positions.append((irrad, level, pos))
                 labnumber = pdict.get('identifier', None)
 
-                dbprj = self._add_project(db, pdict['project'])
-                if dbprj:
-                    dbmat = self._add_material(db, pdict['material'])
-                    if dbmat:
-                        dbsam = self._add_sample(db, pdict['sample'], dbprj, dbmat)
-                        dbip.sample = dbsam
+                dbpi = self._add_pi(db, pdict['pi'])
+                if dbpi:
+                    dbprj = self._add_project(db, pdict['project'], dbpi)
+                    if dbprj:
+                        dbmat = self._add_material(db, pdict['material'])
+                        if dbmat:
+                            dbsam = self._add_sample(db, pdict['sample'], dbprj, dbmat)
+                            dbip.sample = dbsam
 
-                        if dbsam and labnumber is not None:
-                            db.add_labnumber(labnumber, dbsam, irradiation_position=dbip)
+                            if dbsam and labnumber is not None:
+                                db.add_labnumber(labnumber, dbsam, irradiation_position=dbip)
 
         else:
             self._added_positions.append((irrad, level, pos))
 
-    def _add_project(self, db, prj):
-        return self._user_confirm_add(db, prj, 'project')
+    def _add_pi(self, db, pi):
+        return self._user_confirm_add(db, pi, 'pi')
+
+    def _add_project(self, db, prj, pi):
+        return self._user_confirm_add(db, (prj, pi.name), 'project')
 
     def _add_material(self, db, mat):
         return self._user_confirm_add(db, mat, 'material')
@@ -377,28 +382,57 @@ class XLSIrradiationLoader(Loggable):
 
         return self._user_confirm_add(db, (sam, dbprj.name, dbmat.name), 'sample', adder=func)
 
+    def _check_similar(self, db, v, key):
+        try:
+            func = getattr(db, 'get_similar_{}'.format(key))
+        except AttributeError:
+            return
+
+        if isinstance(v, tuple):
+            obj = func(*v)
+            vv = v[0]
+        else:
+            obj = func(v)
+            vv = v
+
+        key = 'similar_{}_{}'.format(key, vv)
+        if obj is not None:
+            msg = 'Found a similar entry for "{}"\n\n. Would you like to use "{}" instead?'.format(vv, obj)
+            ret = self._user_confirm_message(msg, key)
+            if ret:
+                return obj
+
+    def _user_confirm_message(self, msg, key):
+        try:
+            ret = self._user_confirmation[key]
+        except KeyError:
+            ret = self.confirmation_dialog()
+
+            rem = self.confirmation_dialog('Remember decision?')
+            if rem:
+                self._user_confirmation[key] = ret
+        return ret
+
     def _user_confirm_add(self, db, v, key, adder=None):
         if adder is None:
             adder = getattr(db, 'add_{}'.format(key))
 
         if not self.quiet:
+            func = getattr(db, 'get_{}'.format(key))
             if isinstance(v, tuple):
-                obj = getattr(db, 'get_{}'.format(key))(*v)
+                obj = func(*v)
             else:
-                obj = getattr(db, 'get_{}'.format(key))(v)
-            if not obj:
-                try:
-                    ret = self._user_confirmation[key]
-                except KeyError:
-                    ret = self.confirmation_dialog('{} "{}" not in database. Do you want to add it.\n'
-                                                   'If "No" a labnumber will not be '
-                                                   'generated fro this position'.format(key.capitalize(), v))
-                    rem = self.confirmation_dialog('Remember decision?')
-                    if rem:
-                        self._user_confirmation[key] = ret
+                obj = func(v)
 
-                if ret:
-                    obj = adder(v)
+            if obj is None:
+
+                # check for similar
+                obj = self._check_similar(db, v, key)
+                if obj is None:
+                    msg = '{} "{}" not in database. Do you want to add it?'.format(key.capitalize(), v)
+                    ret = self._user_confirm_message(msg, key)
+                    if ret:
+                        obj = adder(v)
         else:
             obj = adder(v)
 

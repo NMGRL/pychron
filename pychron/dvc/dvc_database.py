@@ -24,6 +24,7 @@ from sqlalchemy.util import OrderedSet
 from datetime import timedelta, datetime
 from sqlalchemy import not_, func, distinct, or_
 # ============= local library imports  ==========================
+from pychron.core.spell_correct import correct
 from pychron.database.core.database_adapter import DatabaseAdapter
 from pychron.database.core.query import compile_query, in_func
 from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, \
@@ -32,7 +33,7 @@ from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, \
     LoadHolderTbl, LoadPositionTbl, \
     MeasuredPositionTbl, ProductionTbl, VersionTbl, ExperimentAssociationTbl, \
     ExperimentTbl, AnalysisChangeTbl, \
-    InterpretedAgeTbl, InterpretedAgeSetTbl
+    InterpretedAgeTbl, InterpretedAgeSetTbl, PITbl
 from pychron.pychron_constants import ALPHAS, alpha_to_int
 
 
@@ -305,11 +306,16 @@ class DVCDatabase(DatabaseAdapter):
                 dblevel = self._add_item(a)
             return dblevel
 
-    def add_project(self, name):
+    def add_project(self, name, pi=None):
         with self.session_ctx():
-            a = self.get_project(name)
+            a = self.get_project(name, pi)
             if a is None:
                 a = ProjectTbl(name=name)
+                if pi:
+                    dbpi = self.get_pi(pi)
+                    if dbpi:
+                        a.pi = dbpi
+
                 a = self._add_item(a)
             return a
 
@@ -869,8 +875,19 @@ class DVCDatabase(DatabaseAdapter):
     def get_production(self, name):
         return self._retrieve_item(ProductionTbl, name)
 
-    def get_project(self, name):
-        return self._retrieve_item(ProjectTbl, name)
+    def get_project(self, name, pi=None):
+        if pi:
+            with self.session_ctx() as sess:
+                q = sess.query(ProjectTbl)
+                q = q.join(PITbl)
+                q = q.filter(ProjectTbl.name == name)
+                q = q.filter(PITbl.name == name)
+                return self._query_one(q)
+        else:
+            return self._retrieve_item(ProjectTbl, name)
+
+    def get_pi(self, name):
+        return self._retrieve_item(PITbl, name)
 
     def get_irradiation_level(self, irrad, name):
         with self.session_ctx() as sess:
@@ -915,7 +932,49 @@ class DVCDatabase(DatabaseAdapter):
         return self._retrieve_first(LoadTbl,
                                     order_by=LoadTbl.create_date.desc())
 
+    # similar getters
+
+    def get_similar_pi(self, name):
+        name = name.lower()
+        with self.session_ctx() as sess:
+            q = sess.query(PITbl)
+            attr = func.lower(PITbl.name)
+            return self._get_similar(name, attr, q)
+
+    def get_similar_material(self, name):
+        name = name.lower()
+        with self.session_ctx() as sess:
+            q = sess.query(MaterialTbl)
+            attr = func.lower(MaterialTbl.name)
+            return self._get_similar(name, attr, q)
+
+    # def get_similar_project(self, name, pi):
+    #     name = name.lower()
+    #     with self.session_ctx() as sess:
+    #         q = sess.query(ProjectTbl)
+    #         q = q.join(PITbl)
+    #         q = q.filter(PITbl.name == pi)
+    #
+    #         attr = func.lower(ProjectTbl.name)
+    #
+    #         return self._get_similar(name, attr, q)
+
+    def _get_similar(self, name, attr, q):
+        f = or_(attr == name,
+                attr.like('{}%{}'.format(name[0], name[-1])))
+        q = q.filter(f)
+        items = self._query_all(q)
+        if len(items) > 1:
+            # get the most likely name
+            obj = self.get_pi(correct(name, [i.name for i in items]))
+            return obj
+        elif items:
+            return items[0]
+
     # multi getters
+    def get_pis(self):
+        return self._retrieve_items(PITbl)
+
     def get_analyses(self, analysis_type=None, mass_spectrometer=None,
                      reverse_order=False):
         with self.session_ctx() as sess:

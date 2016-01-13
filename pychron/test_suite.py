@@ -1,3 +1,5 @@
+from pychron.core.tests.spell_correct import SpellCorrectTestCase
+from pychron.entry.tests.irradiation_loader import SimilarTestCase
 
 __author__ = 'ross'
 import unittest
@@ -43,7 +45,9 @@ def suite():
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
 
-    tests = (FilteringTestCase,
+    tests = (SpellCorrectTestCase,
+             SimilarTestCase,
+             FilteringTestCase,
              MultiPeakDetectionTestCase,
              ExperimentIdentifierTestCase,
              SampleLoaderTestCase,
@@ -54,6 +58,7 @@ def suite():
              XLSIrradiationLoaderLoadTestCase,
              XLSIrradiationLoaderParseTestCase,
              XLSAnalysisLoaderTestCase,
+
              RatioTestCase,
              InterpolationTestCase,
              DocstrContextTestCase,
