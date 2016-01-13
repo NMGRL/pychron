@@ -687,7 +687,9 @@ class DVC(Loggable):
         self.meta_repo.add_chronology(name, doses)
 
         root = os.path.join(paths.meta_root, name)
-        os.mkdir(os.path.join(root, 'productions'))
+        p = os.path.join(root, 'productions')
+        if not os.path.isdir(p):
+            os.mkdir(p)
         with open(os.path.join(root, 'productions.json'), 'w') as wfile:
             json.dump({}, wfile)
 

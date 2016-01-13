@@ -264,9 +264,9 @@ class XLSIrradiationLoader(Loggable):
             for i, row in enumerate(igen):
                 irrad = row[nameidx].value
                 if i == 0:
-                    # chron = self._add_chronology(irrad)
-                    # self._add_irradiation(irrad, chron)
-                    self._add_irradiation(irrad)
+                    chron = self._add_chronology(irrad)
+                    self._add_irradiation(irrad, chron)
+
                     if not dry_run and self.db:
                         self.db.commit()
 
@@ -321,8 +321,8 @@ class XLSIrradiationLoader(Loggable):
             chronblob.append(dose)
             self._added_chronologies.append((irrad, sd, ed, power))
 
-        if self.db:
-            return self.db.add_irradiation_chronology('$'.join(chronblob))
+            # if self.db:
+            #     return self.db.add_irradiation_chronology('$'.join(chronblob))
 
     def _add_position(self, pdict):
         irrad, level, pos = pdict['irradiation'], pdict['level'], pdict['position']
@@ -404,10 +404,10 @@ class XLSIrradiationLoader(Loggable):
         else:
             self._added_levels.append((irrad, name, pr, holder))
 
-    def _add_irradiation(self, name):
+    def _add_irradiation(self, name, chronology=None):
         dvc = self.dvc
         if dvc:
-            if dvc.add_irradiation(name):
+            if dvc.add_irradiation(name, chronology):
                 self._added_irradiations.append(name)
 
                 # with db.session_ctx():

@@ -270,27 +270,29 @@ class DVCDatabase(DatabaseAdapter):
         return self._add_item(a)
 
     def add_irradiation(self, name):
-        a = IrradiationTbl(name=name)
-        return self._add_item(a)
+        with self.session_ctx():
+            a = IrradiationTbl(name=name)
+            return self._add_item(a)
 
     def add_irradiation_level(self, name, irradiation, holder, production_name,
                               z=0, note=''):
-        dblevel = self.get_irradiation_level(irradiation, name)
-        if dblevel is None:
+        with self.session_ctx():
+            dblevel = self.get_irradiation_level(irradiation, name)
+            if dblevel is None:
 
-            irradiation = self.get_irradiation(irradiation)
-            production = self.get_production(production_name)
-            if not production:
-                production = self.add_production(production_name)
+                irradiation = self.get_irradiation(irradiation)
+                production = self.get_production(production_name)
+                if not production:
+                    production = self.add_production(production_name)
 
-            a = LevelTbl(name=name,
-                         irradiation=irradiation,
-                         holder=holder,
-                         z=z,
-                         note=note)
-            a.production = production
-            dblevel = self._add_item(a)
-        return dblevel
+                a = LevelTbl(name=name,
+                             irradiation=irradiation,
+                             holder=holder,
+                             z=z,
+                             note=note)
+                a.production = production
+                dblevel = self._add_item(a)
+            return dblevel
 
     def add_project(self, name):
         a = self.get_project(name)
@@ -302,12 +304,13 @@ class DVCDatabase(DatabaseAdapter):
         return a
 
     def add_irradiation_position(self, irrad, level, pos):
-        dbpos = self.get_irradiation_position(irrad, level, pos)
-        if dbpos is None:
-            a = IrradiationPositionTbl(position=pos)
-            a.level = self.get_irradiation_level(irrad, level)
-            dbpos = self._add_item(a)
-        return dbpos
+        with self.session_ctx():
+            dbpos = self.get_irradiation_position(irrad, level, pos)
+            if dbpos is None:
+                a = IrradiationPositionTbl(position=pos)
+                a.level = self.get_irradiation_level(irrad, level)
+                dbpos = self._add_item(a)
+            return dbpos
 
     def add_load_position(self, ln, position, weight=0, note=''):
         a = LoadPositionTbl(identifier=ln, position=position, weight=weight,
