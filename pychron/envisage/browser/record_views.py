@@ -212,4 +212,15 @@ class AnalysisRecordView(RecordView):
         for attr in ('record_id', 'tag'):
             setattr(self, attr, getattr(dbrecord, attr))
 
+
+class PrincipalInvestigatorRecordView(RecordView):
+    name = ''
+    email = ''
+    affiliation = ''
+
+    def _create(self, dbrecord):
+        self.name = dbrecord.name
+        self.email = dbrecord.email
+        self.affiliation = dbrecord.affiliation
+
 # ============= EOF =============================================

@@ -126,6 +126,15 @@ class BaseBrowserSampleView(PaneModelView):
             visible_when='identifier_visible')
         return ln_grp
 
+    def _get_pi_group(self):
+        pi_grp = HGroup(UItem('principal_investigator_enabled'),
+                        UItem('principal_investigator',
+                              enabled_when='principal_investigator_enabled',
+                              editor=EnumEditor(name='principal_investigators')),
+                        label='PIs', show_border=True)
+
+        return pi_grp
+
     def _get_sample_group(self):
         irrad_grp = self._get_irrad_group()
         project_grp = self._get_project_group()
@@ -134,13 +143,14 @@ class BaseBrowserSampleView(PaneModelView):
         date_grp = self._get_date_group()
         ms_grp = self._get_mass_spectrometer_group()
         ln_grp = self._get_identifier_group()
+        pi_grp = self._get_pi_group()
 
         top_level_filter_grp = VGroup(
             # CustomLabel('filter_label',
             #             style='custom',
             #             width=-1.0,
             #             visible_when='not filter_focus'),
-            HGroup(ms_grp, ln_grp),
+                HGroup(pi_grp, ms_grp, ln_grp),
             HGroup(project_grp, exp_grp, irrad_grp),
             analysis_type_group,
             date_grp)

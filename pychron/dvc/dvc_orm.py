@@ -88,6 +88,7 @@ class ExperimentTbl(Base, BaseMixin):
         v.name = self.name
         return v
 
+
 class ExperimentAssociationTbl(Base, BaseMixin):
     idexperimentassociationTbl = Column(Integer, primary_key=True)
     experimentName = Column(String(80), ForeignKey('ExperimentTbl.name'))
@@ -304,6 +305,11 @@ class PITbl(Base, BaseMixin):
     affiliation = Column(String(140))
     email = Column(String(140))
 
+    @property
+    def record_view(self):
+        from pychron.envisage.browser.record_views import PrincipalInvestigatorRecordView
+        r = PrincipalInvestigatorRecordView(self)
+        return r
 
 class UserTbl(Base, BaseMixin):
     name = Column(String(45), primary_key=True)

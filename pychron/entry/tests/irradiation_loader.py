@@ -363,10 +363,21 @@ class SimilarTestCase(unittest.TestCase):
             obj = self.db.get_similar_material('sanidine')
             self.assertEqual(obj.name, 'Sanidine')
 
-    def test_similar_materail_misspell(self):
+    def test_similar_material_misspell(self):
         with self.db.session_ctx():
             obj = self.db.get_similar_material('sandine')
             self.assertEqual(obj.name, 'Sanidine')
+
+    def test_similar_project_lower(self):
+        with self.db.session_ctx():
+            obj = self.db.get_similar_project('nmdetrital', 'Finn')
+            self.assertEqual(obj.name, 'NMDetrital')
+
+    def test_similar_project_misspell(self):
+        with self.db.session_ctx():
+            obj = self.db.get_similar_project('nmdetirtal', 'Finn')
+            self.assertEqual(obj.name, 'NMDetrital')
+
 
 if __name__ == '__main__':
     unittest.main()

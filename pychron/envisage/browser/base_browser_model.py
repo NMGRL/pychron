@@ -86,6 +86,9 @@ def extract_mass_spectrometer_name(name):
 class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     plot_selected = Event
 
+    principal_investigator = Str
+    principal_investigators = List
+
     projects = List
     oprojects = List
     experiments = List
@@ -95,6 +98,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
     project_enabled = Bool(True)
     experiment_enabled = Bool(True)
+    principal_investigator_enabled = Bool(False)
 
     analysis_groups = List
 
@@ -258,6 +262,13 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             ad = self._make_project_records(ps, include_recent=include_recent)
             self.projects = ad
             self.oprojects = ad
+
+    def load_principal_investigators(self):
+        db = self.db
+        with db.session_ctx():
+            ps = db.get_pis(order='asc', verbose_query=True)
+            if ps:
+                self.principal_investigators = [p.name for p in ps]
 
     def get_analysis_groups(self, names):
         if not isinstance(names[0], (str, unicode)):

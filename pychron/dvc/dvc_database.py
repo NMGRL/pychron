@@ -746,7 +746,8 @@ class DVCDatabase(DatabaseAdapter):
             q = q.order_by(LevelTbl.name.asc())
             return self._query_all(q)
 
-    def get_labnumbers(self, projects=None, experiments=None,
+    def get_labnumbers(self, principal_investigator=None,
+                       projects=None, experiments=None,
                        mass_spectrometers=None,
                        irradiation=None, level=None,
                        analysis_types=None,
@@ -754,6 +755,7 @@ class DVCDatabase(DatabaseAdapter):
                        low_post=None):
 
         self.debug('------- Get Labnumbers -------')
+        self.debug('------- principal_investigator: {}'.format(principal_investigator))
         self.debug('------- projects: {}'.format(projects))
         self.debug('------- experiments: {}'.format(experiments))
         self.debug('------- mass_spectrometers: {}'.format(mass_spectrometers))
@@ -773,6 +775,9 @@ class DVCDatabase(DatabaseAdapter):
             if experiments:
                 at = True
                 q = q.join(AnalysisTbl, ExperimentAssociationTbl, ExperimentTbl)
+
+            if principal_investigator:
+                q = q.join(PITbl)
 
             if projects:
                 q = q.join(SampleTbl, ProjectTbl)
@@ -797,6 +802,8 @@ class DVCDatabase(DatabaseAdapter):
             # filters
             if experiments:
                 q = q.filter(ExperimentTbl.name.in_(experiments))
+            if principal_investigator:
+                q = q.filter(PITbl.name == principal_investigator)
             if projects:
                 q = q.filter(ProjectTbl.name.in_(projects))
             if mass_spectrometers:
@@ -948,16 +955,15 @@ class DVCDatabase(DatabaseAdapter):
             attr = func.lower(MaterialTbl.name)
             return self._get_similar(name, attr, q)
 
-    # def get_similar_project(self, name, pi):
-    #     name = name.lower()
-    #     with self.session_ctx() as sess:
-    #         q = sess.query(ProjectTbl)
-    #         q = q.join(PITbl)
-    #         q = q.filter(PITbl.name == pi)
-    #
-    #         attr = func.lower(ProjectTbl.name)
-    #
-    #         return self._get_similar(name, attr, q)
+    def get_similar_project(self, name, pi):
+        name = name.lower()
+        with self.session_ctx() as sess:
+            q = sess.query(ProjectTbl)
+            q = q.join(PITbl)
+            q = q.filter(PITbl.name == pi)
+
+            attr = func.lower(ProjectTbl.name)
+            return self._get_similar(name, attr, q)
 
     def _get_similar(self, name, attr, q):
         f = or_(attr == name,
@@ -972,8 +978,11 @@ class DVCDatabase(DatabaseAdapter):
             return items[0]
 
     # multi getters
-    def get_pis(self):
-        return self._retrieve_items(PITbl)
+    def get_pis(self, order=None, **kw):
+        if order:
+            order = getattr(PITbl.name, order)()
+
+        return self._retrieve_items(PITbl, order=order, **kw)
 
     def get_analyses(self, analysis_type=None, mass_spectrometer=None,
                      reverse_order=False):
@@ -1098,33 +1107,46 @@ class DVCDatabase(DatabaseAdapter):
 
         return self._retrieve_items(IrradiationTbl, order=order, **kw)
 
-    def get_projects(self, irradiation=None, level=None,
+    def get_projects(self, principal_investigator=None,
+                     irradiation=None, level=None,
                      mass_spectrometers=None, order=None):
 
         if order:
             order = getattr(ProjectTbl.name, order)()
 
-        if irradiation or mass_spectrometers:
+        if principal_investigator or irradiation or mass_spectrometers:
             with self.session_ctx() as sess:
                 q = sess.query(ProjectTbl)
-                q = q.join(SampleTbl, IrradiationPositionTbl)
+
+                # joins
+                if principal_investigator:
+                    q = q.join(PITbl)
+
                 if irradiation:
-                    q = q.join(LevelTbl, IrradiationPositionTbl)
+                    q = q.join(SampleTbl, IrradiationPositionTbl)
+                    if level:
+                        q = q.join(LevelTbl)
+
+                if mass_spectrometers:
+                    q = q.join(SampleTbl, IrradiationPositionTbl, AnalysisTbl)
+
+                # filters
+                if principal_investigator:
+                    q = q.filter(PITbl.name == principal_investigator)
+
+                if irradiation:
                     if level:
                         q = q.filter(LevelTbl.name == level)
-
                     q = q.filter(IrradiationTbl.name == irradiation)
 
-                else:
+                if mass_spectrometers:
                     if not hasattr(mass_spectrometers, '__iter__'):
                         mass_spectrometers = (mass_spectrometers,)
+                    q = q.filter(AnalysisTbl.mass_spectrometer.in_(mass_spectrometers))
 
-                    q = q.join(AnalysisTbl)
+                if order:
+                    q = q.order_by(order)
 
-                    q = q.filter(
-                            AnalysisTbl.mass_spectrometer.in_(mass_spectrometers))
-                    if order:
-                        q = q.order_by(order)
                 ps = self._query_all(q)
         else:
             ps = self._retrieve_items(ProjectTbl, order=order)

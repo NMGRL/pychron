@@ -90,6 +90,7 @@ class BrowserModel(BaseBrowserModel):
         self.datasource_url = db.datasource_url
         if not self.is_activated or force:
             self._suppress_load_labnumbers = True
+            self.load_principal_investigators()
             self.load_projects()
             self.load_experiments()
             self._suppress_load_labnumbers = False
@@ -127,6 +128,10 @@ class BrowserModel(BaseBrowserModel):
                 break
 
     # handlers
+    def _principal_investigator_changed(self, new):
+        if new:
+            self._load_projects_for_principal_investigator()
+
     def _irradiation_enabled_changed(self, new):
         if not new:
             self._top_level_filter = None
@@ -240,6 +245,10 @@ class BrowserModel(BaseBrowserModel):
             if self.mass_spectrometer_includes:
                 ms = self.mass_spectrometer_includes
 
+        principal_investigator = None
+        if self.principal_investigator_enabled:
+            principal_investigator = self.principal_investigator
+
         if self.experiment_enabled:
             if self.selected_experiments:
                 es = [e.name for e in self.selected_experiments]
@@ -262,7 +271,9 @@ class BrowserModel(BaseBrowserModel):
                             ms.append(mi)
                         self._recent_mass_spectrometers.append(mi)
 
-        ls = self.db.get_labnumbers(projects=ps, experiments=es, mass_spectrometers=ms,
+        ls = self.db.get_labnumbers(principal_investigator=principal_investigator,
+                                    projects=ps, experiments=es,
+                                    mass_spectrometers=ms,
                                     irradiation=self.irradiation if self.irradiation_enabled else None,
                                     level=self.level if self.irradiation_enabled else None,
                                     analysis_types=self.analysis_include_types if self.use_analysis_type_filtering else None,
@@ -297,6 +308,23 @@ class BrowserModel(BaseBrowserModel):
                 self.irradiations = irrads
                 if irrads:
                     self.irradiation = irrads[0]
+
+    def _load_projects_for_principal_investigator(self):
+        ms = None
+        if self.mass_spectrometers_enabled:
+            ms = self.mass_spectrometer_includes
+
+        p_i = self.principal_investigator
+        self.debug('load projects for principal investigator= {}'.format(p_i))
+        db = self.db
+        with db.session_ctx():
+            ps = db.get_projects(principal_investigator=p_i,
+                                 mass_spectrometers=ms)
+
+            ps = self._make_project_records(ps, include_recent_first=True)
+            old_selection = [p.name for p in self.selected_projects]
+            self.projects = ps
+            self.selected_projects = [p for p in ps if p.name in old_selection]
 
     def _load_projects_for_irradiation(self):
         ms = None
