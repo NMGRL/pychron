@@ -263,7 +263,7 @@ class AnalysisEditView(HasTraits):
         model = self.editor.analysis
 
         runid = model.record_id
-        experiment_identifier = model.experiment_identifier
+        repository_identifier = model.repository_identifier
 
         dvc = self.dvc
         ps = []
@@ -284,19 +284,19 @@ class AnalysisEditView(HasTraits):
                         updated_errors[name] = item.error
                         edited_items.append('{}.{}_error'.format(name, tag))
 
-            p = dvc.manual_edit(runid, experiment_identifier,
+            p = dvc.manual_edit(runid, repository_identifier,
                                 updated_values, updated_errors, modifier)
             ps.append(p)
 
         msg = '<MANUAL> {}'.format(','.join(edited_items))
-        dvc.commit_manual_edits(experiment_identifier, ps, msg)
+        dvc.commit_manual_edits(repository_identifier, ps, msg)
         self._refresh_history()
 
     def _revert_original_button_fired(self):
         analysis = self.editor.analysis
-        experiment_identifier = analysis.experiment_identifier
+        repository_identifier = analysis.repository_identifier
         runid = analysis.record_id
-        self.dvc.revert_manual_edits(runid, experiment_identifier)
+        self.dvc.revert_manual_edits(runid, repository_identifier)
 
         tags = ('intercepts', 'baselines', 'blanks', 'icfactors')
         analysis.load_paths(tags)

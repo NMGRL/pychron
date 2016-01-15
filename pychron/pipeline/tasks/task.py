@@ -26,7 +26,7 @@ import os
 from pychron.core.helpers.filetools import list_gits
 from pychron.core.pdf.save_pdf_dialog import save_pdf
 from pychron.dvc import dvc_dump
-from pychron.dvc.dvc import experiment_has_staged, push_experiments
+from pychron.dvc.dvc import repository_has_staged, push_repositories
 from pychron.envisage.tasks.actions import ToggleFullWindowAction
 from pychron.globals import globalv
 from pychron.paths import paths
@@ -51,7 +51,7 @@ class DataMenu(SMenu):
 
 
 def select_experiment_repo():
-    a = list_gits(paths.experiment_dataset_dir)
+    a = list_gits(paths.repository_dataset_dir)
     v = SelectExperimentIDView(available=a)
     info = v.edit_traits()
     if info.result:
@@ -174,7 +174,7 @@ class PipelineTask(BaseBrowserTask):
             if tag and items:
                 dvc = self.dvc
                 db = dvc.db
-                key = lambda x: x.experiment_identifier
+                key = lambda x: x.repository_identifier
 
                 for expid, ans in groupby(sorted(items, key=key), key=key):
                     cs = []
@@ -194,7 +194,7 @@ class PipelineTask(BaseBrowserTask):
                             cstr = '{} - {}'.format(cc[0], cc[-1])
                         else:
                             cstr = cc[0]
-                        dvc.experiment_commit(expid, '<TAG> {:<6s} {}'.format(tag, cstr))
+                        dvc.repository_commit(expid, '<TAG> {:<6s} {}'.format(tag, cstr))
                         for ci in cs:
                             ci.refresh_view()
 
@@ -258,7 +258,7 @@ class PipelineTask(BaseBrowserTask):
     def set_interpreted_age(self):
         ias = self.active_editor.get_interpreted_ages()
 
-        experiment_identifiers = self.dvc.get_local_experiment_repositories()
+        experiment_identifiers = self.dvc.get_local_repositories()
         model = InterpretedAgeFactoryModel(groups=ias)
 
         iaf = InterpretedAgeFactoryView(model=model,
@@ -271,7 +271,7 @@ class PipelineTask(BaseBrowserTask):
         # select experiment
         expid = select_experiment_repo()
         if expid:
-            self.dvc.rollback_experiment_repo(expid)
+            self.dvc.rollback_repository(expid)
 
     def clear(self):
         self.reset()
@@ -442,13 +442,13 @@ class PipelineTask(BaseBrowserTask):
         ps = self.engine.get_experiment_ids()
 
         if ps:
-            changed = experiment_has_staged(ps)
+            changed = repository_has_staged(ps)
             self.debug('task has changes to {}'.format(changed))
             if changed:
                 m = 'You have changes to analyses. Would you like to share them?'
                 ret = self._handle_prompt_for_save(m, 'Share Changes')
                 if ret == 'save':
-                    push_experiments(changed)
+                    push_repositories(changed)
 
         return ret
 

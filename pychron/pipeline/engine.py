@@ -77,7 +77,7 @@ class Pipeline(HasTraits):
         ps = set()
         for node in self.nodes:
             if isinstance(node, UnknownNode):
-                ps = ps.union({ai.experiment_identifier for ai in node.unknowns})
+                ps = ps.union({ai.repository_identifier for ai in node.unknowns})
         return ps
 
     def move_up(self, node):

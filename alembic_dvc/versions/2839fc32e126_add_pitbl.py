@@ -15,14 +15,15 @@ from alembic import op
 
 
 def upgrade():
-    op.create_table('PITbl', sa.Column('name', sa.String(140), primary_key=True),
+    op.create_table('PrincipalInvestigatorTbl', sa.Column('name', sa.String(140), primary_key=True),
                     sa.Column('email', sa.String(140)),
                     sa.Column('affiliation', sa.String(140)))
 
-    op.add_column('ProjectTbl', sa.Column('pi', sa.String(140), sa.ForeignKey('PITbl.name')))
+    op.add_column('ProjectTbl', sa.Column('principal_investigator', sa.String(140), sa.ForeignKey(
+            'PrincipalInvestigatorTbl.name')))
 
 
 def downgrade():
     op.drop_constraint('projecttbl_ibfk_1', 'ProjectTbl', type_='foreignkey')
-    op.drop_column('ProjectTbl', 'pi')
-    op.drop_table('PITbl')
+    op.drop_column('ProjectTbl', 'principal_investigator')
+    op.drop_table('PrincipalInvestigatorTbl')

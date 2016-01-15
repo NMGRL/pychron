@@ -15,12 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change
-from traitsui.api import View, UItem, Item, HGroup, VGroup
 # ============= standard library imports ========================
 import os
-import yaml
 
+import yaml
 # ============= local library imports  ==========================
 from pychron.dvc.dvc import DVC
 from pychron.loggable import Loggable
@@ -46,7 +44,7 @@ class QARunner(Loggable):
         dvc.trait_set(**dvc_obj['traits'])
 
         paths.dvc_dir = dvc_obj['root']
-        paths.experiment_dataset_dir = os.path.join(paths.dvc_dir, 'experiments')
+        paths.repository_dataset_dir = os.path.join(paths.dvc_dir, 'repositories')
 
         dvc.initialize()
 

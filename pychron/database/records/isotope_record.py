@@ -69,7 +69,7 @@ def get_selected_history_item(sh, key):
 class DVCIsotopeRecordView:
     __slots__ = ('is_plateau_step', 'extract_script_name',
                  'meas_script_name', 'analysis_type', 'group_id', 'graph_id', 'identifier', 'labnumber', 'aliquot',
-                 'increment', 'step', 'tag', 'uuid', 'experiment_identifier', 'experiment_ids', 'rundate', 'timestampf',
+                 'increment', 'step', 'tag', 'uuid', 'repository_identifier', 'repository_ids', 'rundate', 'timestampf',
                  'delta_time', 'record_id', 'sample', 'project', 'irradiation_info', 'irradiation', 'irradiation_level',
                  'irradiation_position_position', 'mass_spectrometer', 'extract_device', 'comment', 'review_status',
                  'extract_value', 'cleanup', 'duration')
@@ -89,8 +89,8 @@ class DVCIsotopeRecordView:
         self.step = ''
         self.tag = ''
         self.uuid = ''
-        self.experiment_identifier = ''
-        self.experiment_ids = None
+        self.repository_identifier = ''
+        self.repository_ids = None
         self.rundate = ''
         self.timestampf = 0
         self.delta_time = 0
@@ -164,8 +164,8 @@ class IsotopeRecordView(object):
         self.step = ''
         self.tag = ''
         self.uuid = ''
-        self.experiment_identifier = ''
-        self.experiment_ids = None
+        self.repository_identifier = ''
+        self.repository_ids = None
         self.rundate = ''
         self.timestampf = 0
         self.delta_time = 0

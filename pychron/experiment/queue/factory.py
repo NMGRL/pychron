@@ -67,7 +67,7 @@ class ExperimentQueueFactory(PersistenceLoggable):
     load_name = Str
     load_names = Property
 
-    experiment_identifier = Str
+    repository_identifier = Str
     experiment_identifiers = Property(depends_on='experiment_identifier_dirty, db_refresh_needed')
     add_experiment_identifier = Event
     experiment_identifier_dirty = Event
@@ -76,7 +76,7 @@ class ExperimentQueueFactory(PersistenceLoggable):
 
     pattributes = ('mass_spectrometer',
                    'extract_device',
-                   'experiment_identifier',
+                   'repository_identifier',
                    'use_group_email',
                    'delay_between_analyses',
                    'delay_before_analyses',
@@ -223,7 +223,7 @@ class ExperimentQueueFactory(PersistenceLoggable):
         a.available = self.dvc.get_experiment_identifiers()
         if a.do():
             self.experiment_identifier_dirty = True
-            self.experiment_identifier = a.value
+            self.repository_identifier = a.value
 
     def _edit_user_fired(self):
         a = UserEntry(dvc=self.dvc)

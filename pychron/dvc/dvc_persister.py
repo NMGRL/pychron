@@ -33,28 +33,28 @@ from pychron.paths import paths
 from pychron.pychron_constants import DVC_PROTOCOL
 
 
-def format_experiment_identifier(project):
+def format_repository_identifier(project):
     return project.replace('/', '_').replace('\\', '_')
 
 
 class DVCPersister(BasePersister):
-    experiment_repo = Instance(GitRepoManager)
+    active_repository = Instance(GitRepoManager)
     dvc = Instance(DVC_PROTOCOL)
     isotope_classifier = Instance(IsotopeClassifier, ())
     stage_files = Bool(True)
 
-    def per_spec_save(self, pr, experiment_id=None, commit=False, msg_prefix=None):
+    def per_spec_save(self, pr, repository_identifier=None, commit=False, msg_prefix=None):
         self.per_spec = pr
 
-        if experiment_id:
-            self.initialize(experiment_id, False)
+        if repository_identifier:
+            self.initialize(repository_identifier, False)
 
         self.pre_extraction_save()
         self.pre_measurement_save()
         self.post_extraction_save('', '', None)
         self.post_measurement_save(commit=commit, msg_prefix=msg_prefix)
 
-    def initialize(self, experiment, pull=True):
+    def initialize(self, repository, pull=True):
         """
         setup git repos.
 
@@ -63,20 +63,20 @@ class DVCPersister(BasePersister):
 
         :return:
         """
-        self.debug('^^^^^^^^^^^^^ Initialize DVCPersister {} pull={}'.format(experiment, pull))
+        self.debug('^^^^^^^^^^^^^ Initialize DVCPersister {} pull={}'.format(repository, pull))
 
         self.dvc.initialize()
 
-        experiment = format_experiment_identifier(experiment)
-        self.experiment_repo = repo = GitRepoManager()
+        repository = format_repository_identifier(repository)
+        self.active_repository = repo = GitRepoManager()
 
-        root = os.path.join(paths.experiment_dataset_dir, experiment)
+        root = os.path.join(paths.repository_dataset_dir, repository)
         repo.open_repo(root)
 
         remote = 'origin'
         if repo.has_remote(remote) and pull:
-            self.info('pulling changes from experiment repo: {}'.format(experiment))
-            self.experiment_repo.pull(remote=remote)
+            self.info('pulling changes from repo: {}'.format(repository))
+            self.active_repository.pull(remote=remote)
 
     def pre_extraction_save(self):
         pass
@@ -155,7 +155,7 @@ class DVCPersister(BasePersister):
         """
         # save spectrometer
         spec_sha = self._get_spectrometer_sha()
-        spec_path = os.path.join(self.experiment_repo.path, '{}.json'.format(spec_sha))
+        spec_path = os.path.join(self.active_repository.path, '{}.json'.format(spec_sha))
         if not os.path.isfile(spec_path):
             self._save_spectrometer_file(spec_path)
 
@@ -180,15 +180,15 @@ class DVCPersister(BasePersister):
 
             for p in paths:
                 if os.path.isfile(p):
-                    self.experiment_repo.add(p, commit=False, msg_prefix=msg_prefix)
+                    self.active_repository.add(p, commit=False, msg_prefix=msg_prefix)
                 else:
                     self.debug('not at valid file {}'.format(p))
 
             if commit:
-                self.experiment_repo.smart_pull(accept_their=True)
+                self.active_repository.smart_pull(accept_their=True)
 
                 # commit files
-                self.experiment_repo.commit('added analysis {}'.format(self.per_spec.run_spec.runid))
+                self.active_repository.commit('added analysis {}'.format(self.per_spec.run_spec.runid))
 
                 # update meta
                 self.dvc.meta_pull(accept_our=True)
@@ -223,8 +223,8 @@ class DVCPersister(BasePersister):
 
             # # special associations are handled by the ExperimentExecutor._retroactive_experiment_identifiers
             # if not is_special(rs.runid):
-            if self.per_spec.use_experiment_association:
-                db.add_experiment_association(rs.experiment_identifier, an)
+            if self.per_spec.use_repository_association:
+                db.add_repository_association(rs.repository_identifier, an)
 
             pos = db.get_identifier(rs.identifier)
             an.irradiation_position = pos
@@ -375,8 +375,8 @@ class DVCPersister(BasePersister):
 
     def _make_path(self, modifier=None, extension='.json'):
         runid = self.per_spec.run_spec.runid
-        experiment_id = self.per_spec.run_spec.experiment_identifier
-        return analysis_path(runid, experiment_id, modifier, extension, mode='w')
+        repository_identifier = self.per_spec.run_spec.repository_identifier
+        return analysis_path(runid, repository_identifier, modifier, extension, mode='w')
 
     def _get_spectrometer_sha(self):
         """

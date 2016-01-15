@@ -137,7 +137,7 @@ class AutomatedRunSpec(HasTraits):
     _step_heat = False
     conflicts_checked = False
 
-    experiment_identifier = Str
+    repository_identifier = Str
     identifier = Property
 
     def is_detector_ic(self):

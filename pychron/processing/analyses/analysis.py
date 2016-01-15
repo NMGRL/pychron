@@ -182,7 +182,7 @@ class Analysis(ArArAge):
     collection_version = ''
     # source_parameters = Dict
     # deflections = Dict
-    experiment_identifier = ''
+    repository_identifier = ''
 
     # processing
     is_plateau_step = False

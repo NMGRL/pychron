@@ -155,7 +155,7 @@ class Paths(object):
     figure_dir = None
     table_dir = None
 
-    experiment_dataset_dir = None
+    repository_dataset_dir = None
     project_dir = None
     meta_root = None
     dvc_dir = None
@@ -380,7 +380,7 @@ class Paths(object):
         self.table_dir = join(self.data_dir, 'tables')
 
         self.dvc_dir = join(self.data_dir, '.dvc')
-        self.experiment_dataset_dir = join(self.dvc_dir, 'experiments')
+        self.repository_dataset_dir = join(self.dvc_dir, 'repositories')
         self.meta_root = join(self.dvc_dir, 'meta')
 
         # ==============================================================================

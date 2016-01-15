@@ -15,14 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traits.api import Color, Instance, DelegatesTo, List, Any, Property
 from traitsui.api import View, Item, UItem, VGroup, HGroup, spring, \
     EnumEditor, Group, Spring, VFold, Label, InstanceEditor, \
     VSplit, TabularEditor, UReadonly, ListEditor, RangeEditor, Readonly
-from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traitsui.editors import TableEditor
 from traitsui.table_column import ObjectColumn
 from traitsui.tabular_adapter import TabularAdapter
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.ui.combobox_editor import ComboboxEditor
@@ -102,10 +103,10 @@ class ExperimentFactoryPane(TraitsDockPane):
                                       label='Group'),
                    icon_button_editor(queue_factory_name('edit_emails'), 'cog',
                                       tooltip='Edit user group')),
-            HGroup(queue_factory_item('experiment_identifier',
-                                      label='Experiment ID',
-                                      editor=ComboboxEditor(name=queue_factory_name('experiment_identifiers'))),
-                   icon_button_editor(queue_factory_name('add_experiment_identifier'), 'add')),
+                HGroup(queue_factory_item('repository_identifier',
+                                          label='Experiment ID',
+                                          editor=ComboboxEditor(name=queue_factory_name('experiment_identifiers'))),
+                       icon_button_editor(queue_factory_name('add_experiment_identifier'), 'add')),
             HGroup(
                 queue_factory_item('mass_spectrometer',
                                    show_label=False,

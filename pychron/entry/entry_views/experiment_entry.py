@@ -24,7 +24,7 @@ class ExperimentIdentifierEntry(BaseEntry):
 
     def _add_item(self):
         # db = self.dvc.db
-        return self.dvc.add_experiment(self.value)
+        return self.dvc.add_repository(self.value)
         # return True
 
 

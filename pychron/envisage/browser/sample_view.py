@@ -61,20 +61,20 @@ class BaseBrowserSampleView(PaneModelView):
                             label='Projects')
         return project_grp
 
-    def _get_experiments_group(self):
-        exp_grp = Group(UItem('experiments',
+    def _get_repositories_group(self):
+        exp_grp = Group(UItem('repositories',
                               height=-150,
                               editor=FilterTabularEditor(editable=False,
                                                          use_fuzzy=True,
-                                                         enabled_cb='experiment_enabled',
+                                                         enabled_cb='repository_enabled',
                                                          refresh='refresh_needed',
-                                                         selected='selected_experiments',
+                                                         selected='selected_repositories',
                                                          adapter=ProjectAdapter(),
                                                          multi_select=True)),
                         springy=False,
-                        visible_when='experiment_visible',
+                        visible_when='repository_visible',
                         show_border=True,
-                        label='Experiments')
+                        label='Repositories')
         return exp_grp
 
     def _get_analysis_type_group(self):
@@ -138,7 +138,7 @@ class BaseBrowserSampleView(PaneModelView):
     def _get_sample_group(self):
         irrad_grp = self._get_irrad_group()
         project_grp = self._get_project_group()
-        exp_grp = self._get_experiments_group()
+        exp_grp = self._get_repositories_group()
         analysis_type_group = self._get_analysis_type_group()
         date_grp = self._get_date_group()
         ms_grp = self._get_mass_spectrometer_group()

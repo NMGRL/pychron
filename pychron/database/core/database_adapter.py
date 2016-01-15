@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+import traceback
 
 from traits.api import Password, Bool, Str, on_trait_change, Any, Property, cached_property
 # =============standard library imports ========================
@@ -91,6 +92,8 @@ class SessionCTX(object):
 
             except Exception, e:
                 # print 'exception commiting session: {}'.format(e)
+                traceback.print_exc()
+
                 if self._parent:
                     self._parent.debug('$%$%$%$%$%$%$%$ commiting changes error:\n{}'.format(str(e)))
                 self._sess.rollback()

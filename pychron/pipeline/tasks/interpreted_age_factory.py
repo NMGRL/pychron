@@ -40,7 +40,7 @@ class InterpretedAgeFactoryView(Controller):
     def traits_view(self):
         cols = [UObjectColumn(name='identifier'),
                 ObjectColumn(name='name'),
-                ObjectColumn(name='experiment_identifier',
+                ObjectColumn(name='repository_identifier',
                              editor=EnumEditor(name='controller.experiment_identifiers')),
                 ObjectColumn(name='preferred_age_kind', label='Age Type',
                              editor=EnumEditor(name='preferred_ages')),

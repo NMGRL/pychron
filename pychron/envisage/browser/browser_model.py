@@ -92,7 +92,7 @@ class BrowserModel(BaseBrowserModel):
             self._suppress_load_labnumbers = True
             self.load_principal_investigators()
             self.load_projects()
-            self.load_experiments()
+            self.load_repositories()
             self._suppress_load_labnumbers = False
 
             self._load_projects_and_irradiations()
@@ -120,11 +120,11 @@ class BrowserModel(BaseBrowserModel):
                 self.project_enabled = True
                 break
 
-    def select_experiment(self, exp):
-        for e in self.experiments:
+    def select_repository(self, exp):
+        for e in self.repositories:
             if e.name == exp:
-                self.selected_experiments = [e]
-                self.experiment_enabled = True
+                self.selected_repositories = [e]
+                self.repository_enabled = True
                 break
 
     # handlers
@@ -213,12 +213,12 @@ class BrowserModel(BaseBrowserModel):
             obj = self.manager
         return obj
 
-    def _selected_experiments_changed_hook(self, names):
+    def _selected_repositories_changed_hook(self, names):
         self.irradiations = []
         # get all irradiations contained within these experiments
         db = self.db
         with db.session_ctx():
-            irrads = db.get_irradiations_by_experiments(names)
+            irrads = db.get_irradiations_by_repositories(names)
             if irrads:
                 self.irradiations = [i.name for i in irrads]
 
@@ -249,9 +249,9 @@ class BrowserModel(BaseBrowserModel):
         if self.principal_investigator_enabled:
             principal_investigator = self.principal_investigator
 
-        if self.experiment_enabled:
-            if self.selected_experiments:
-                es = [e.name for e in self.selected_experiments]
+        if self.repository_enabled:
+            if self.selected_repositories:
+                es = [e.name for e in self.selected_repositories]
         if self.project_enabled:
             if self.selected_projects:
                 rs, ps = partition([p.name for p in self.selected_projects], lambda x: x.startswith('RECENT'))
@@ -272,7 +272,7 @@ class BrowserModel(BaseBrowserModel):
                         self._recent_mass_spectrometers.append(mi)
 
         ls = self.db.get_labnumbers(principal_investigator=principal_investigator,
-                                    projects=ps, experiments=es,
+                                    projects=ps, repositories=es,
                                     mass_spectrometers=ms,
                                     irradiation=self.irradiation if self.irradiation_enabled else None,
                                     level=self.level if self.irradiation_enabled else None,

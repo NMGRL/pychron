@@ -74,24 +74,25 @@ class InterpretedAgeSetTbl(Base, BaseMixin):
     analysis = relationship('AnalysisTbl', uselist=False)
 
 
-class ExperimentTbl(Base, BaseMixin):
+class RepositoryTbl(Base, BaseMixin):
     name = Column(String(80), primary_key=True)
-    timestamp = Column(TIMESTAMP, default=func.now())
-    creator = Column(String(80))
+    principal_investigator = Column(String(140), ForeignKey('PrincipalInvestigatorTbl.name'))
+    # timestamp = Column(TIMESTAMP, default=func.now())
+    # creator = Column(String(80))
 
-    experiment_associations = relationship('ExperimentAssociationTbl', backref='experiment')
+    repository_associations = relationship('RepositoryAssociationTbl', backref='repository_item')
 
     def record_view(self):
-        from pychron.envisage.browser.record_views import ExperimentRecordView
+        from pychron.envisage.browser.record_views import RepositoryRecordView
 
-        v = ExperimentRecordView()
+        v = RepositoryRecordView()
         v.name = self.name
         return v
 
 
-class ExperimentAssociationTbl(Base, BaseMixin):
-    idexperimentassociationTbl = Column(Integer, primary_key=True)
-    experimentName = Column(String(80), ForeignKey('ExperimentTbl.name'))
+class RepositoryAssociationTbl(Base, BaseMixin):
+    idrepositoryassociationTbl = Column(Integer, primary_key=True)
+    repository = Column(String(80), ForeignKey('RepositoryTbl.name'))
     analysisID = Column(Integer, ForeignKey('AnalysisTbl.idanalysisTbl'))
     # experiments = relationship('ExperimentTbl')
     # analyses = relationship('AnalysisTbl', backref='experiment_associations')
@@ -131,7 +132,7 @@ class AnalysisTbl(Base, BaseMixin):
 
     weight = Column(Float)
     comment = Column(String(80))
-    experiment_associations = relationship('ExperimentAssociationTbl', backref='analysis')
+    repository_associations = relationship('RepositoryAssociationTbl', backref='analysis')
     change = relationship('AnalysisChangeTbl', uselist=False, backref='analysis')
     measured_position = relationship('MeasuredPositionTbl', uselist=False, backref='analysis')
 
@@ -153,6 +154,7 @@ class AnalysisTbl(Base, BaseMixin):
     @property
     def tag_dict(self):
         return {k: getattr(self.change.tag_item, k) for k in ('name',) + OMIT_KEYS}
+
     # @property
     # def labnumber(self):
     #     return self.irradiation_position
@@ -166,17 +168,17 @@ class AnalysisTbl(Base, BaseMixin):
         return self.timestamp
 
     @property
-    def experiment_id(self):
-        if self.experiment_associations and len(self.experiment_associations) == 1:
-            return self.experiment_associations[0].experimentName
+    def repository_identifier(self):
+        if self.repository_associations and len(self.repository_associations) == 1:
+            return self.repository_associations[0].repository
 
     @property
     def record_id(self):
         return make_runid(self.irradiation_position.identifier, self.aliquot, self.increment)
 
     @property
-    def experiment_identifier(self):
-        es = [e.experimentName for e in self.experiment_associations]
+    def repository_identifier(self):
+        es = [e.repository for e in self.repository_associations]
         if len(es) == 1:
             return es[0]
 
@@ -196,9 +198,9 @@ class AnalysisTbl(Base, BaseMixin):
             iv.irradiation_position_position = irradpos.position
 
             iv.labnumber = iv.identifier
-            iv.experiment_ids = es = [e.experimentName for e in self.experiment_associations]
+            iv.repository_ids = es = [e.repository for e in self.repository_associations]
             if len(es) == 1:
-                iv.experiment_identifier = es[0]
+                iv.repository_identifier = es[0]
 
             for tag in ('aliquot', 'increment', 'uuid',
                         'extract_value', 'cleanup', 'duration',
@@ -224,7 +226,7 @@ class AnalysisTbl(Base, BaseMixin):
 
 class ProjectTbl(Base, NameMixin):
     idprojectTbl = Column(Integer, primary_key=True)
-    pi = Column(String(140), ForeignKey('PITbl.name'))
+    principal_investigator = Column(String(140), ForeignKey('PrincipalInvestigatorTbl.name'))
 
     samples = relationship('SampleTbl', backref='project')
 
@@ -261,7 +263,6 @@ class LevelTbl(Base, NameMixin):
 class IrradiationTbl(Base, NameMixin):
     idirradiationTbl = Column(Integer, primary_key=True)
     levels = relationship('LevelTbl', backref='irradiation')
-    # production = Column(String(45))
 
 
 class IrradiationPositionTbl(Base, BaseMixin):
@@ -300,7 +301,7 @@ class ExtractDeviceTbl(Base, BaseMixin):
     name = Column(String(45), primary_key=True)
 
 
-class PITbl(Base, BaseMixin):
+class PrincipalInvestigatorTbl(Base, BaseMixin):
     name = Column(String(140), primary_key=True)
     affiliation = Column(String(140))
     email = Column(String(140))
@@ -310,6 +311,7 @@ class PITbl(Base, BaseMixin):
         from pychron.envisage.browser.record_views import PrincipalInvestigatorRecordView
         r = PrincipalInvestigatorRecordView(self)
         return r
+
 
 class UserTbl(Base, BaseMixin):
     name = Column(String(45), primary_key=True)

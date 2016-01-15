@@ -91,13 +91,13 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
     projects = List
     oprojects = List
-    experiments = List
-    oexperiments = List
+    repositories = List
+    orepositories = List
     samples = List
     osamples = List
 
     project_enabled = Bool(True)
-    experiment_enabled = Bool(True)
+    repository_enabled = Bool(True)
     principal_investigator_enabled = Bool(False)
 
     analysis_groups = List
@@ -109,7 +109,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     date_configure_button = Button
 
     selected_projects = Any
-    selected_experiments = Any
+    selected_repositories = Any
     selected_samples = Any
     selected_analysis_groups = Any
 
@@ -165,7 +165,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     db = Property
     use_fuzzy = True
     pattributes = ('project_enabled',
-                   'experiment_enabled',
+                   'repository_enabled',
                    'sample_view_active', 'use_low_post', 'use_high_post',
                    'use_named_date_range', 'named_date_range',
                    'low_post', 'high_post')
@@ -204,12 +204,12 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             ss = [p.identifier for p in self.selected_samples]
 
         es = []
-        if self.selected_experiments:
-            es = [e.name for e in self.selected_experiments]
+        if self.selected_repositories:
+            es = [e.name for e in self.selected_repositories]
 
         obj = dict(projects=ps,
                    samples=ss,
-                   experiments=es,
+                   repositories=es,
                    use_low_post=self.use_low_post,
                    use_high_post=self.use_high_post,
                    use_named_date_range=self.use_named_date_range,
@@ -245,15 +245,15 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         self.osamples = s
         self.trait_set(selected_samples=sel)
 
-    def load_experiments(self):
+    def load_repositories(self):
         db = self.db
         with db.session_ctx():
-            es = db.get_experiments()
+            es = db.get_repositories()
             if es:
                 es = [e.record_view() for e in es]
 
-                self.experiments = es
-                self.oexperiments = es
+                self.repositories = es
+                self.orepositories = es
 
     def load_projects(self, include_recent=True):
         db = self.db
@@ -266,7 +266,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     def load_principal_investigators(self):
         db = self.db
         with db.session_ctx():
-            ps = db.get_pis(order='asc', verbose_query=True)
+            ps = db.get_principal_investigators(order='asc', verbose_query=True)
             if ps:
                 self.principal_investigators = [p.name for p in ps]
 
@@ -292,8 +292,8 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         return v
 
     # database querying
-    def _load_experiment_date_range(self, names):
-        lp, hp = self.db.get_experiment_date_range(names)
+    def _load_repository_date_range(self, names):
+        lp, hp = self.db.get_repository_date_range(names)
         if lp.date() == hp.date():
             hp += timedelta(days=1)
         self._set_posts(lp, hp)
@@ -380,8 +380,8 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             self.trait_property_changed('low_post', self._low_post)
             self._recent_mass_spectrometers.append(ms)
 
-            es = [e.name for e in self.selected_experiments] if self.selected_experiments else []
-            ls = db.get_labnumbers(experiments=es, mass_spectrometers=(ms,), low_post=lpost)
+            es = [e.name for e in self.selected_repositories] if self.selected_repositories else []
+            ls = db.get_labnumbers(repositories=es, mass_spectrometers=(ms,), low_post=lpost)
 
             sams = self._load_sample_record_views(ls)
 
@@ -468,7 +468,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
                            exclude_uuids=None,
                            include_invalid=False,
                            mass_spectrometers=None,
-                           experiments=None,
+                           repositories=None,
                            make_records=True):
         db = self.db
         with db.session_ctx():
@@ -487,13 +487,13 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
                                                     exclude_uuids=exclude_uuids,
                                                     include_invalid=include_invalid,
                                                     mass_spectrometers=mass_spectrometers,
-                                                    experiments=experiments)
+                                                    repositories=repositories)
                 self.debug('retrieved analyses n={}'.format(tc))
             else:
                 ans = db.get_analyses_by_date_range(low_post, high_post,
                                                     order=order,
                                                     mass_spectrometers=mass_spectrometers,
-                                                    experiments=experiments,
+                                                    repositories=repositories,
                                                     limit=limit)
 
             if make_records:
@@ -569,7 +569,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             setattr(self, 'selected_{}'.format(attr), vs)
 
         load('projects', self.projects)
-        load('experiments', self.experiments)
+        load('experiments', self.repositories)
         load('samples', self.samples)
 
     # handlers
@@ -600,12 +600,12 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     def _identifier_change_hook(self, db, new, lns):
         pass
 
-    def _selected_experiments_changed(self, old, new):
-        if new and self.experiment_enabled:
+    def _selected_repositories_changed(self, old, new):
+        if new and self.repository_enabled:
             names = [n.name for n in new]
-            self._load_experiment_date_range(names)
+            self._load_repository_date_range(names)
             self._load_associated_labnumbers()
-            self._selected_experiments_changed_hook(names)
+            self._selected_repositories_changed_hook(names)
 
     def _selected_projects_changed(self, old, new):
 

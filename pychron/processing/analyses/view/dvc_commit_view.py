@@ -272,10 +272,10 @@ class DVCCommitView(HasTraits):
     def __init__(self, an, *args, **kw):
         super(DVCCommitView, self).__init__(*args, **kw)
 
-        self.repo = Repo(os.path.join(paths.experiment_dataset_dir, an.experiment_identifier))
+        self.repo = Repo(os.path.join(paths.repository_dataset_dir, an.repository_identifier))
         self.initialize(an)
         self.record_id = an.record_id
-        self.experiment_identifier = an.experiment_identifier
+        self.repository_identifier = an.repository_identifier
 
     # def initialize(self, an):
     #     path = self._make_path(an)
@@ -320,7 +320,7 @@ class DVCCommitView(HasTraits):
                 if lhs.tag == 'IMPORT':
                     diffs = []
                     for a in ('blanks', 'icfactors', 'tags', 'intercepts'):
-                        p = analysis_path(self.record_id, self.experiment_identifier, modifier=a)
+                        p = analysis_path(self.record_id, self.repository_identifier, modifier=a)
                         dd = get_diff(self.repo, lhs.hexsha, 'HEAD', p)
                         if dd:
                             diffs.append((a, dd))

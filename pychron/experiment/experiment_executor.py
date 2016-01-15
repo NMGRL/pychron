@@ -16,11 +16,12 @@
 
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
-from traits.api import Event, Button, String, Bool, Enum, Property, Instance, Int, List, Any, Color, Dict, \
-    on_trait_change, Long, Float, Str
 from pyface.constant import CANCEL, YES, NO
 from pyface.timer.do_later import do_after
+from traits.api import Event, Button, String, Bool, Enum, Property, Instance, Int, List, Any, Color, Dict, \
+    on_trait_change, Long, Float, Str
 from traits.trait_errors import TraitError
+
 # ============= standard library imports ========================
 from threading import Thread, Event as Flag, Lock, currentThread
 from datetime import datetime
@@ -52,7 +53,7 @@ from pychron.experiment.stats import StatsGroup
 from pychron.experiment.utilities.conditionals import test_queue_conditionals_name, SYSTEM, QUEUE, RUN, \
     CONDITIONAL_GROUP_TAGS
 from pychron.experiment.utilities.conditionals_results import reset_conditional_results
-from pychron.experiment.utilities.experiment_identifier import retroactive_experiment_identifiers
+from pychron.experiment.utilities.repository_identifier import retroactive_experiment_identifiers
 from pychron.experiment.utilities.identifier import convert_extract_device, is_special
 from pychron.extraction_line.ipyscript_runner import IPyScriptRunner
 from pychron.globals import globalv
@@ -1071,7 +1072,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             arun.dvc_persister = self.application.get_service('pychron.dvc.dvc_persister.DVCPersister')
             arun.dvc_persister.load_name = exp.load_name
 
-            expid = spec.experiment_identifier
+            expid = spec.repository_identifier
             arun.dvc_persister.initialize(expid)
 
         mon = self.monitor
@@ -1495,10 +1496,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         crun, expid = retroactive_experiment_identifiers(spec, self._cached_runs, self._active_experiment_identifier)
         self._cached_runs, self._active_experiment_identifier = crun, expid
 
-        db.add_experiment_association(spec.experiment_identifier, spec)
+        db.add_repository_association(spec.repository_identifier, spec)
         if not is_special(spec.identifier) and self._cached_runs:
             for c in self._cached_runs:
-                db.add_experiment_association(expid, c)
+                db.add_repository_association(expid, c)
             self._cached_runs = []
             # if is_special(spec.identifier):
             #     self._cached_runs.append(spec)
@@ -1524,7 +1525,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 identifiers = [idn for idn in identifiers if not is_special(idn)]
 
                 experiments = {}
-                eas = db.get_associated_experiments(identifiers)
+                eas = db.get_associated_repositories(identifiers)
                 for idn, exps in groupby(eas, key=lambda x: x[1]):
                     experiments[idn] = [e[0] for e in exps]
 
@@ -1534,15 +1535,15 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     if not is_special(identifier):
                         try:
                             es = experiments[identifier]
-                            if ai.experiment_identifier not in es:
+                            if ai.repository_identifier not in es:
                                 if ai.sample == self.monitor_name:
-                                    ai.experiment_identifier = ai.irradiation
+                                    ai.repository_identifier = ai.irradiation
 
                                 else:
 
                                     self.debug('Experiment association conflict. '
                                                'experimentID={} '
-                                               'previous_associations={}'.format(ai.experiment_identifier,
+                                               'previous_associations={}'.format(ai.repository_identifier,
                                                                                  ','.join(es)))
                                     conflicts.append((ai, es))
                         except KeyError:
@@ -1553,7 +1554,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     cr.add_conflicts(ei, conflicts)
 
             if cr.conflicts:
-                cr.available_ids = db.get_experiment_identifiers()
+                cr.available_ids = db.get_repository_identifiers()
 
                 info = cr.edit_traits(kind='livemodal')
                 if info.result:
@@ -1564,7 +1565,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 return True
 
     def _sync_repositories(self, prog):
-        experiment_ids = {a.experiment_identifier for q in self.experiment_queues for a in q.cleaned_automated_runs}
+        experiment_ids = {a.repository_identifier for q in self.experiment_queues for a in q.cleaned_automated_runs}
         for e in experiment_ids:
             if prog:
                 prog.change_message('Syncing {}'.format(e))
@@ -1645,7 +1646,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         no_exp = False
         for i, ai in enumerate(runs):
-            if not ai.experiment_identifier:
+            if not ai.repository_identifier:
                 self.warning('No experiment identifier for i={}, {}'.format(i + 1, ai.runid))
                 no_exp = True
 

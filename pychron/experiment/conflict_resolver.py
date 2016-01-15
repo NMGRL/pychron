@@ -27,7 +27,7 @@ class Conflict(HasTraits):
     runspec = Instance('pychron.experiment.automated_run.spec.AutomatedRunSpec')
     identifier = Str
     position = Str
-    experiment_id = Str
+    repository_identifier = Str
     experiment_ids = Str
     available_ids = List
 
@@ -38,14 +38,14 @@ class ConflictResolver(HasTraits):
 
     def apply(self):
         for c in self.conflicts:
-            c.runspec.experiment_id = c.experiment_identifier
+            c.runspec.repository_identifier = c.repository_identifier
 
     def add_conflicts(self, qname, cs):
         for ai, exps in cs:
             self.conflicts.append(Conflict(queue_name=qname,
                                            runspec=ai,
                                            position=ai.position,
-                                           experiment_id=ai.experiment_identifier,
+                                           repository_identifier=ai.repository_identifier,
                                            identifier=ai.identifier,
                                            experiment_ids=','.join(exps),
                                            available_ids=self.available_ids))
@@ -54,8 +54,8 @@ class ConflictResolver(HasTraits):
         cols = [ObjectColumn(name='queue_name', editable=False),
                 ObjectColumn(name='identifier', editable=False),
                 ObjectColumn(name='position', editable=False),
-                ObjectColumn(name='experiment_identifier', editor=EnumEditor(name='available_ids')),
-                ObjectColumn(name='experiment_ids', editable=False)]
+                ObjectColumn(name='repository_identifier', editor=EnumEditor(name='available_ids')),
+                ObjectColumn(name='repository_ids', editable=False)]
 
         v = View(UItem('conflicts', editor=TableEditor(columns=cols)),
                  title='Resolve Experiment Conflicts',
@@ -77,19 +77,19 @@ if __name__ == '__main__':
         db = DVCDatabase(kind='mysql', host='localhost', username='root', name='pychronmeta', password='Argon')
         db.connect()
         identifiers = ['63290', '63291']
-        runs = [AutomatedRunSpec(identifier='63290', experiment_id='Cather_McIntoshd')]
+        runs = [AutomatedRunSpec(identifier='63290', repository_identifier='Cather_McIntoshd')]
         cr = ConflictResolver()
         experiments = {}
         with db.session_ctx():
-            cr.available_ids = db.get_experiment_identifiers()
-            eas = db.get_associated_experiments(identifiers)
+            cr.available_ids = db.get_repository_identifiers()
+            eas = db.get_associated_repositories(identifiers)
             for idn, exps in groupby(eas, key=lambda x: x[1]):
                 experiments[idn] = [e[0] for e in exps]
             conflicts = []
             for ai in runs:
                 identifier = ai.identifier
                 es = experiments[identifier]
-                if ai.experiment_identifier not in es:
+                if ai.repository_identifier not in es:
                     conflicts.append((ai, es))
             if conflicts:
                 cr.add_conflicts('Foo', conflicts)

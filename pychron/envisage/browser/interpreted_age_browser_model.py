@@ -61,9 +61,9 @@ class InterpretedAgeBrowserModel(BrowserModel):
         self.interpreted_age_table.set_interpreted_ages(ias)
 
     def _retrieve_interpreted_ages(self, identifiers):
-        ses = self.selected_experiments
+        ses = self.selected_repositories
         if not ses:
-            ses = self.experiments
+            ses = self.repositories
 
         idns = [idn.identifier for idn in identifiers]
         experiments = [e.name for e in ses]

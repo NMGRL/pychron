@@ -181,7 +181,7 @@ class NameView(HasTraits):
         return self.name
 
 
-class ExperimentRecordView(NameView):
+class RepositoryRecordView(NameView):
     pass
 
 

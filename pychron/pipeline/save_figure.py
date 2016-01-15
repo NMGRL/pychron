@@ -29,7 +29,7 @@ class SaveFigureModel(SaveModel):
     pdf_options = Instance(FigurePDFOptions)
 
     def __init__(self, analyses, *args, **kw):
-        self.experiment_identifiers = tuple({ai.experiment_identifier for ai in analyses})
+        self.experiment_identifiers = tuple({ai.repository_identifier for ai in analyses})
         self.root_directory = self.experiment_identifiers[0]
 
         identifiers = tuple({ai.identifier for ai in analyses})
@@ -74,7 +74,7 @@ if __name__ == '__main__':
 
     class A(object):
         def __init__(self):
-            self.experiment_identifier = random.choice(['Foo', 'Bar', 'Bat'])
+            self.repository_identifier = random.choice(['Foo', 'Bar', 'Bat'])
             self.identifier = '1000'
 
 

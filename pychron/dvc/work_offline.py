@@ -135,7 +135,7 @@ class WorkOffline(Loggable):
         def func(x, prog, i, n):
             if prog is not None:
                 prog.change_message('Cloning {}'.format(x.name))
-            self.dvc.clone_experiment(x.name)
+            self.dvc.clone_repository(x.name)
 
         progress_iterator(self.selected_repositories, func, threshold=0)
 

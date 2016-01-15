@@ -1,6 +1,6 @@
-from pychron.experiment.utilities.experiment_identifier import retroactive_experiment_identifiers
-from pychron.experiment.utilities.identifier import is_special
 from pychron.experiment.automated_run.spec import AutomatedRunSpec
+from pychron.experiment.utilities.identifier import is_special
+from pychron.experiment.utilities.repository_identifier import retroactive_experiment_identifiers
 
 __author__ = 'ross'
 
@@ -17,7 +17,7 @@ class DummyExecutor(object):
         # print '{} added to {}'.format(spec.experiment_id, spec.runid)
         self.cruns, self.expid = retroactive_experiment_identifiers(spec, self.cruns, self.expid)
 
-        self.associate(spec.experiment_identifier, spec.runid)
+        self.associate(spec.repository_identifier, spec.runid)
         if not is_special(spec.identifier) and self.cruns:
             for c in self.cruns:
                 # print 'add {} {} {}'.format(self.expid, c.experiment_id, c.runid)
@@ -74,13 +74,13 @@ class ExperimentIdentifierTestCase(unittest.TestCase):
         spec = AutomatedRunSpec(identifier='bu-FD-j', aliquot=2)
         d.retroactive_experiment_identifiers(spec)
 
-        spec = AutomatedRunSpec(identifier='10000', experiment_identifier='foo')
+        spec = AutomatedRunSpec(identifier='10000', repository_identifier='foo')
         d.retroactive_experiment_identifiers(spec)
 
-        spec = AutomatedRunSpec(identifier='20000', experiment_identifier='bar')
+        spec = AutomatedRunSpec(identifier='20000', repository_identifier='bar')
         d.retroactive_experiment_identifiers(spec)
 
-        spec = AutomatedRunSpec(identifier='20000', aliquot=1, experiment_identifier='bar')
+        spec = AutomatedRunSpec(identifier='20000', aliquot=1, repository_identifier='bar')
         d.retroactive_experiment_identifiers(spec)
 
         spec = AutomatedRunSpec(identifier='bu-FD-j', aliquot=3)

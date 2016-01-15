@@ -100,7 +100,7 @@ class MainView(HasTraits):
             MeasurementValue(name='DAQ Version',
                              value=an.collection_version),
             MeasurementValue(name='ExperimentID',
-                             value=an.experiment_identifier),
+                             value=an.repository_identifier),
             # MeasurementValue(name='AnalysisID',
             #                  value=self.analysis_ida),
             MeasurementValue(name='Spectrometer',

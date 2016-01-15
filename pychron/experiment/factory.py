@@ -232,15 +232,15 @@ class ExperimentFactory(Loggable, ConsumerMixin):
     @on_trait_change('''queue_factory:[mass_spectrometer,
 extract_device, delay_+, tray, username, load_name,
 email, use_email, use_group_email,
-queue_conditionals_name, experiment_identifier]''')
+queue_conditionals_name, repository_identifier]''')
     def _update_queue(self, name, new):
         self.debug('update queue {}={}'.format(name, new))
         if self.queue:
             self.queue.trait_set(**{name: new})
             self.queue.changed = True
-            if name == 'experiment_identifier':
+            if name == 'repository_identifier':
                 for a in self.queue.automated_runs:
-                    a.experiment_identifier = new
+                    a.repository_identifier = new
 
         if name == 'mass_spectrometer':
             self.debug('_update_queue "{}"'.format(new))

@@ -86,7 +86,7 @@ class BaseExperimentQueue(RunBlock):
     initialized = True
 
     load_name = Str
-    experiment_identifier = Str
+    repository_identifier = Str
 
     _no_update = False
     _frequency_group_counter = 0
@@ -227,8 +227,8 @@ class BaseExperimentQueue(RunBlock):
         if self.selected:
             idx = aruns.index(self.selected[-1])
             for ri in reversed(runspecs):
-                if not ri.experiment_identifier:
-                    ri.experiment_identifier = self.experiment_identifier
+                if not ri.repository_identifier:
+                    ri.repository_identifier = self.repository_identifier
 
                 aruns.insert(idx + 1, ri)
         else:
@@ -272,7 +272,7 @@ class BaseExperimentQueue(RunBlock):
         self._set_meta_param('use_group_email', meta, bool_default)
         self._set_meta_param('load_name', meta, default, metaname='load')
         self._set_meta_param('queue_conditionals_name', meta, default)
-        self._set_meta_param('experiment_identifier', meta, default)
+        self._set_meta_param('repository_identifier', meta, default)
         self._load_meta_hook(meta)
 
     def _load_meta_hook(self, meta):
@@ -329,7 +329,7 @@ class BaseExperimentQueue(RunBlock):
                ('dis_btw_pos', 'disable_between_positons'),
                'weight', 'comment',
                'autocenter', 'frequency_group',
-               'experiment_identifier']
+               'repository_identifier']
 
         if self.extract_device == 'Fusions UV':
             # header.extend(('reprate', 'mask', 'attenuator', 'image'))

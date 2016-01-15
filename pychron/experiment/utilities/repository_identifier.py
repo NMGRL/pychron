@@ -27,9 +27,9 @@ def retroactive_experiment_identifiers(spec, cruns, active_experiment_identifier
     if is_special(spec.identifier):
         cruns.append(spec)
         if active_experiment_identifier:
-            spec.experiment_identifier = active_experiment_identifier
+            spec.repository_identifier = active_experiment_identifier
     else:
-        exp_id = spec.experiment_identifier
+        exp_id = spec.repository_identifier
         # if cruns:
         #     for c in self._cached_runs:
         #         self.datahub.maintstore.add_experiment_association(c, exp_id)

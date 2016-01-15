@@ -22,6 +22,7 @@ import time
 
 import datetime
 from uncertainties import ufloat, std_dev, nominal_value
+
 # ============= local library imports  ==========================
 from pychron.core.helpers.datetime_tools import make_timef
 from pychron.core.helpers.filetools import add_extension, subdirize
@@ -45,7 +46,7 @@ META_ATTRS = ('analysis_type', 'uuid', 'sample', 'project', 'material', 'aliquot
               'irradiation', 'irradiation_level', 'irradiation_position',
               'comment', 'mass_spectrometer',
               'username', 'queue_conditionals_name', 'identifier',
-              'experiment_identifier')
+              'repository_identifier')
 
 PATH_MODIFIERS = (
     None, '.data', 'blanks', 'intercepts', 'icfactors', 'baselines', 'tags', 'peakcenter', 'extraction', 'monitor')
@@ -60,8 +61,8 @@ class AnalysisNotAnvailableError(BaseException):
         return 'Analysis Not Available. {} - {}'.format(self._root, self._runid)
 
 
-def analysis_path(runid, experiment, modifier=None, extension='.json', mode='r'):
-    root = os.path.join(paths.experiment_dataset_dir, experiment)
+def analysis_path(runid, repository, modifier=None, extension='.json', mode='r'):
+    root = os.path.join(paths.repository_dataset_dir, repository)
 
     l = 3
     if runid.count('-') > 1:
@@ -102,8 +103,8 @@ def analysis_path(runid, experiment, modifier=None, extension='.json', mode='r')
     return os.path.join(root, name)
 
 
-def experiment_path(project):
-    return os.path.join(paths.dvc_dir, 'experiments', project)
+def repository_path(project):
+    return os.path.join(paths.dvc_dir, 'repositories', project)
 
 
 def make_ref_list(refs):
@@ -136,11 +137,11 @@ class DVCAnalysis(Analysis):
     icfactor_reviewed = False
     blank_reviewed = False
 
-    def __init__(self, record_id, experiment_id, *args, **kw):
+    def __init__(self, record_id, repository_identifier, *args, **kw):
         super(DVCAnalysis, self).__init__(*args, **kw)
         self.record_id = record_id
-        path = analysis_path(record_id, experiment_id)
-        self.experiment_identifier = experiment_id
+        path = analysis_path(record_id, repository_identifier)
+        self.repository_identifier = repository_identifier
         self.rundate = datetime.datetime.now()
         root = os.path.dirname(path)
         bname = os.path.basename(path)
@@ -435,10 +436,10 @@ class DVCAnalysis(Analysis):
 
         dvc_dump(obj, path)
 
-    def _analysis_path(self, experiment_id=None, **kw):
-        if experiment_id is None:
-            experiment_id = self.experiment_identifier
+    def _analysis_path(self, repository_identifier=None, **kw):
+        if repository_identifier is None:
+            repository_identifier = self.repository_identifier
 
-        return analysis_path(self.record_id, experiment_id, **kw)
+        return analysis_path(self.record_id, repository_identifier, **kw)
 
 # ============= EOF ============================================

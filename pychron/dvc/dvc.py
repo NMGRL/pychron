@@ -36,14 +36,13 @@ from pychron.core.progress import progress_loader
 from pychron.database.interpreted_age import InterpretedAge
 from pychron.dvc import dvc_dump, dvc_load
 from pychron.dvc.defaults import TRIGA, HOLDER_24_SPOKES, LASER221, LASER65
-from pychron.dvc.dvc_analysis import DVCAnalysis, experiment_path, analysis_path, PATH_MODIFIERS, \
+from pychron.dvc.dvc_analysis import DVCAnalysis, repository_path, analysis_path, PATH_MODIFIERS, \
     AnalysisNotAnvailableError
 from pychron.dvc.dvc_database import DVCDatabase
 from pychron.dvc.meta_repo import MetaRepo
 from pychron.envisage.browser.record_views import InterpretedAgeRecordView
 from pychron.git_archive.repo_manager import GitRepoManager, format_date, get_repository_branch
 from pychron.github import Organization
-from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.pychron_constants import RATIO_KEYS, INTERFERENCE_KEYS
@@ -51,14 +50,14 @@ from pychron.pychron_constants import RATIO_KEYS, INTERFERENCE_KEYS
 TESTSTR = {'blanks': 'auto update blanks', 'iso_evo': 'auto update iso_evo'}
 
 
-def experiment_has_staged(ps):
+def repository_has_staged(ps):
     if not hasattr(ps, '__iter__'):
         ps = (ps,)
 
     changed = []
     repo = GitRepoManager()
     for p in ps:
-        pp = os.path.join(paths.experiment_dataset_dir, p)
+        pp = os.path.join(paths.repository_dataset_dir, p)
         repo.open_repo(pp)
         if repo.has_unpushed_commits():
             changed.append(p)
@@ -66,10 +65,10 @@ def experiment_has_staged(ps):
     return changed
 
 
-def push_experiments(ps):
+def push_repositories(ps):
     repo = GitRepoManager()
     for p in ps:
-        pp = os.path.join(paths.experiment_dataset_dir, p)
+        pp = os.path.join(paths.repository_dataset_dir, p)
         repo.open_repo(pp)
         repo.push()
 
@@ -77,7 +76,7 @@ def push_experiments(ps):
 def get_review_status(record):
     ms = 0
     for m in ('blanks', 'intercepts', 'icfactors'):
-        p = analysis_path(record.record_id, record.experiment_identifier, modifier=m)
+        p = analysis_path(record.record_id, record.repository_identifier, modifier=m)
         date = ''
         with open(p, 'r') as rfile:
             obj = json.load(rfile)
@@ -98,12 +97,12 @@ def get_review_status(record):
     record.review_status = ret
 
 
-def find_interpreted_age_path(idn, experiments, prefixlen=3):
+def find_interpreted_age_path(idn, repositories, prefixlen=3):
     prefix = idn[:prefixlen]
     suffix = '{}.ia.json'.format(idn[prefixlen:])
 
-    for e in experiments:
-        pathname = '{}/{}/{}/ia/{}'.format(paths.experiment_dataset_dir, e, prefix, suffix)
+    for e in repositories:
+        pathname = '{}/{}/{}/ia/{}'.format(paths.repository_dataset_dir, e, prefix, suffix)
         ps = glob.glob(pathname)
         if ps:
             return ps[0]
@@ -133,15 +132,15 @@ class Tag(object):
         tag = cls()
         tag.name = an.tag
         tag.record_id = an.record_id
-        tag.experiment_identifier = an.experiment_identifier
-        tag.path = analysis_path(an.record_id, an.experiment_identifier, modifier='tags')
+        tag.repository_identifier = an.repository_identifier
+        tag.path = analysis_path(an.record_id, an.repository_identifier, modifier='tags')
 
         return tag
 
     def dump(self):
         obj = {'name': self.name}
         if not self.path:
-            self.path = analysis_path(self.record_id, self.experiment_identifier, modifier='tags', mode='w')
+            self.path = analysis_path(self.record_id, self.repository_identifier, modifier='tags', mode='w')
 
         # with open(self.path, 'w') as wfile:
         #     json.dump(obj, wfile, indent=4)
@@ -156,11 +155,11 @@ class DVCInterpretedAge(InterpretedAge):
 
 
 class GitSessionCTX(object):
-    def __init__(self, parent, experiment_id, message):
+    def __init__(self, parent, repository_identifier, message):
         self._parent = parent
-        self._experiment_id = experiment_id
+        self._repository_id = repository_identifier
         self._message = message
-        self._parent.get_experiment_repo(experiment_id)
+        self._parent.get_repository(repository_identifier)
 
     def __enter__(self):
         pass
@@ -168,7 +167,7 @@ class GitSessionCTX(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         if exc_type is None:
             if self._parent.is_dirty():
-                self._parent.experiment_commit(self._experiment_id, self._message)
+                self._parent.repository_commit(self._repository_id, self._message)
 
 
 @provides(IDatastore)
@@ -181,10 +180,10 @@ class DVC(Loggable):
     github_user = Str
     github_password = Str
 
-    experiment_repo = Instance(GitRepoManager)
+    current_repository = Instance(GitRepoManager)
     auto_add = True
-    pulled_experiments = Set
-    selected_experiments = List
+    pulled_repositories = Set
+    selected_repositories = List
 
     def __init__(self, bind=True, *args, **kw):
         super(DVC, self).__init__(*args, **kw)
@@ -265,8 +264,8 @@ class DVC(Loggable):
     # def manual_baselines(self, runid, experiment_identifier, values, errors):
     #     return self._manual_edit(runid, experiment_identifier, values, errors, 'baselines')
 
-    def manual_edit(self, runid, experiment_identifier, values, errors, modifier):
-        path = analysis_path(runid, experiment_identifier, modifier=modifier)
+    def manual_edit(self, runid, repository_identifier, values, errors, modifier):
+        path = analysis_path(runid, repository_identifier, modifier=modifier)
         with open(path, 'r') as rfile:
             obj = json.load(rfile)
             for k, v in values.iteritems():
@@ -281,10 +280,10 @@ class DVC(Loggable):
         dvc_dump(obj, path)
         return path
 
-    def revert_manual_edits(self, runid, experiment_identifier):
+    def revert_manual_edits(self, runid, repository_identifier):
         ps = []
         for mod in ('intercepts', 'blanks', 'baselines', 'icfactors'):
-            path = analysis_path(runid, experiment_identifier, modifier=mod)
+            path = analysis_path(runid, repository_identifier, modifier=mod)
             with open(path, 'r') as rfile:
                 obj = json.load(rfile)
                 for item in obj.itervalues():
@@ -295,11 +294,11 @@ class DVC(Loggable):
             dvc_dump(obj, path)
 
         msg = '<MANUAL> reverted to non manually edited'
-        self.commit_manual_edits(experiment_identifier, ps, msg)
+        self.commit_manual_edits(repository_identifier, ps, msg)
 
-    def commit_manual_edits(self, experiment_identifier, ps, msg):
-        if self.experiment_add_paths(experiment_identifier, ps):
-            self.experiment_commit(experiment_identifier, msg)
+    def commit_manual_edits(self, repository_identifier, ps, msg):
+        if self.repository_add_paths(repository_identifier, ps):
+            self.repository_commit(repository_identifier, msg)
 
     # analysis processing
     def analysis_has_review(self, ai, attr):
@@ -314,28 +313,28 @@ class DVC(Loggable):
         #     self.debug('{} {} not reviewed'.format(ai, attr))
 
     def update_analyses(self, ans, modifier, msg):
-        key = lambda x: x.experiment_identifier
+        key = lambda x: x.repository_identifier
         ans = sorted(ans, key=key)
-        mod_experiments = []
+        mod_repositories = []
         for expid, ais in groupby(ans, key=key):
-            paths = map(lambda x: analysis_path(x.record_id, x.experiment_identifier, modifier=modifier), ais)
+            paths = map(lambda x: analysis_path(x.record_id, x.repository_identifier, modifier=modifier), ais)
             # print expid, modifier, paths
-            if self.experiment_add_paths(expid, paths):
-                self.experiment_commit(expid, msg)
-                mod_experiments.append(expid)
+            if self.repository_add_paths(expid, paths):
+                self.repository_commit(expid, msg)
+                mod_repositories.append(expid)
 
         # ais = map(analysis_path, ais)
         #     if self.experiment_add_analyses(exp, ais):
         #         self.experiment_commit(exp, msg)
         #         mod_experiments.append(exp)
-        return mod_experiments
+        return mod_repositories
 
     def update_tag(self, an):
         tag = Tag.from_analysis(an)
         tag.dump()
 
-        expid = an.experiment_identifier
-        return self.experiment_add_paths(expid, tag.path)
+        expid = an.repository_identifier
+        return self.repository_add_paths(expid, tag.path)
 
     def save_icfactors(self, ai, dets, fits, refs):
         if fits and dets:
@@ -363,10 +362,10 @@ class DVC(Loggable):
             ip.j = j
             ip.j_err = e
 
-    def find_interpreted_ages(self, identifiers, experiments):
+    def find_interpreted_ages(self, identifiers, repositories):
         ias = []
         for idn in identifiers:
-            path = find_interpreted_age_path(idn, experiments)
+            path = find_interpreted_age_path(idn, repositories)
             if path:
                 obj = dvc_load(path)
                 name = obj.get('name')
@@ -399,13 +398,13 @@ class DVC(Loggable):
 
         # load repositories
         # {r.experiment_id for r in records}
-        exps = {r.experiment_identifier for r in records}
-        if self.pulled_experiments:
-            exps = exps - self.pulled_experiments
+        exps = {r.repository_identifier for r in records}
+        if self.pulled_repositories:
+            exps = exps - self.pulled_repositories
 
-            self.pulled_experiments.union(exps)
+            self.pulled_repositories.union(exps)
         else:
-            self.pulled_experiments = exps
+            self.pulled_repositories = exps
 
         # if exps:
         #     org = Organization(self.organization)
@@ -441,13 +440,13 @@ class DVC(Loggable):
     #     self.meta_repo.update_experiment_queue(name, path)
 
     # repositories
-    def experiment_add_paths(self, experiment_id, paths):
-        repo = self._get_experiment_repo(experiment_id)
+    def repository_add_paths(self, repository_identifier, paths):
+        repo = self._get_repository(repository_identifier)
         return repo.add_paths(paths)
 
-    def experiment_commit(self, experiment, msg):
-        self.debug('Experiment commit: {} msg: {}'.format(experiment, msg))
-        repo = self._get_experiment_repo(experiment)
+    def repository_commit(self, repository, msg):
+        self.debug('Experiment commit: {} msg: {}'.format(repository, msg))
+        repo = self._get_repository(repository)
         repo.commit(msg)
 
     def remote_repositories(self, attributes=None):
@@ -467,19 +466,19 @@ class DVC(Loggable):
     def make_url(self, name):
         return make_remote_url(self.organization, name)
 
-    def git_session_ctx(self, experiment_id, message):
-        return GitSessionCTX(self, experiment_id, message)
+    def git_session_ctx(self, repository_identifier, message):
+        return GitSessionCTX(self, repository_identifier, message)
 
     def sync_repo(self, name):
         """
-        pull or clone an experiment repo
+        pull or clone an repo
 
         """
-        root = os.path.join(paths.experiment_dataset_dir, name)
+        root = os.path.join(paths.repository_dataset_dir, name)
         exists = os.path.isdir(os.path.join(root, '.git'))
 
         if exists:
-            repo = self._get_experiment_repo(name)
+            repo = self._get_repository(name)
             repo.pull()
         else:
             url = self.make_url(name)
@@ -487,8 +486,8 @@ class DVC(Loggable):
 
         return True
 
-    def rollback_experiment_repo(self, expid):
-        repo = self._get_experiment_repo(expid)
+    def rollback_repository(self, expid):
+        repo = self._get_repository(expid)
 
         cpaths = repo.get_local_changes()
         # cover changed paths to a list of analyses
@@ -545,11 +544,11 @@ class DVC(Loggable):
             self.debug('no changes to meta repo')
 
     # get
-    def get_local_experiment_repositories(self):
-        return list_subdirectories(paths.experiment_dataset_dir)
+    def get_local_repositories(self):
+        return list_subdirectories(paths.repository_dataset_dir)
 
-    def get_experiment_repo(self, exp):
-        return self._get_experiment_repo(exp)
+    def get_repository(self, exp):
+        return self._get_repository(exp)
 
     def get_meta_head(self):
         return self.meta_repo.get_head()
@@ -597,19 +596,19 @@ class DVC(Loggable):
 
         self._add_interpreted_age(ia, d)
 
-    def add_experiment_association(self, expid, runspec):
+    def add_repository_association(self, expid, runspec):
         db = self.db
         with db.session_ctx():
             dban = db.get_analysis_uuid(runspec.uuid)
-            for e in dban.experiment_associations:
-                if e.experimentName == expid:
+            for e in dban.repository_associations:
+                if e.repository == expid:
                     break
             else:
-                db.add_experiment_association(expid, dban)
+                db.add_repository_association(expid, dban)
 
-            src_expid = runspec.experiment_identifier
+            src_expid = runspec.repository_identifier
             if src_expid != expid:
-                repo = self._get_experiment_repo(expid)
+                repo = self._get_repository(expid)
 
                 for m in PATH_MODIFIERS:
                     src = analysis_path(runspec.record_id, src_expid, modifier=m)
@@ -617,7 +616,7 @@ class DVC(Loggable):
 
                     shutil.copyfile(src, dest)
                     repo.add(dest, commit=False)
-                repo.commit('added experiment association')
+                repo.commit('added repository association')
 
     def add_measured_position(self, *args, **kw):
         with self.db.session_ctx():
@@ -646,8 +645,8 @@ class DVC(Loggable):
         self.meta_repo.update_level_production(irradiation, name, production_name)
         return True
 
-    def clone_experiment(self, identifier):
-        root = os.path.join(paths.experiment_dataset_dir, identifier)
+    def clone_repository(self, identifier):
+        root = os.path.join(paths.repository_dataset_dir, identifier)
         if not os.path.isdir(root):
             self.debug('cloning {}'.format(root))
             url = self.make_url(identifier)
@@ -655,12 +654,12 @@ class DVC(Loggable):
         else:
             self.debug('{} already exists'.format(identifier))
 
-    def add_experiment(self, identifier):
+    def add_repository(self, identifier, principal_investigator):
         org = self._organization_factory()
         if identifier in org.repo_names:
-            self.warning_dialog('Experiment "{}" already exists'.format(identifier))
+            self.warning_dialog('Repository "{}" already exists'.format(identifier))
         else:
-            root = os.path.join(paths.experiment_dataset_dir, identifier)
+            root = os.path.join(paths.repository_dataset_dir, identifier)
 
             if os.path.isdir(root):
                 self.warning_dialog('{} already exists.'.format(root))
@@ -675,10 +674,10 @@ class DVC(Loggable):
 
                 # url = '{}/{}/{}.git'.format(paths.git_base_origin, self.organization, identifier)
                 Repo.clone_from(self.make_url(identifier), root)
-                self.db.add_experiment(identifier, globalv.username)
+                self.db.add_repository(identifier, principal_investigator)
                 return True
 
-    def add_irradiation(self, name, doses=None):
+    def add_irradiation(self, name, doses=None, commit=False, push=False, add_repo=False):
         with self.db.session_ctx():
             if self.db.get_irradiation(name):
                 self.warning('irradiation {} already exists'.format(name))
@@ -695,11 +694,13 @@ class DVC(Loggable):
             os.mkdir(p)
         with open(os.path.join(root, 'productions.json'), 'w') as wfile:
             json.dump({}, wfile)
+        if commit:
+            self.meta_repo.commit('added irradiation {}'.format(name))
+            if push:
+                self.meta_repo.push()
 
-        self.meta_repo.commit('added irradiation {}'.format(name))
-        self.meta_repo.push()
-
-        self.add_experiment(name)
+        if add_repo:
+            self.add_repository(name)
 
     def add_load_holder(self, name, path_or_txt):
         with self.db.session_ctx():
@@ -708,7 +709,7 @@ class DVC(Loggable):
 
     # private
     def _add_interpreted_age(self, ia, d):
-        p = analysis_path(ia.identifier, ia.experiment_identifier, modifier='ia', mode='w')
+        p = analysis_path(ia.identifier, ia.repository_identifier, modifier='ia', mode='w')
         dvc_dump(d, p)
 
     def _load_repository(self, expid, prog, i, n):
@@ -723,14 +724,14 @@ class DVC(Loggable):
         if prog:
             prog.change_message('Loading analysis {}. {}/{}'.format(record.record_id, i, n))
 
-        expid = record.experiment_identifier
+        expid = record.repository_identifier
         if not expid:
-            exps = record.experiment_ids
-            self.debug('Analysis {} is associated multiple experiments '
+            exps = record.repository_ids
+            self.debug('Analysis {} is associated multiple repositories '
                        '{}'.format(record.record_id, ','.join(exps)))
             expid = None
-            if self.selected_experiments:
-                rr = [si for si in self.selected_experiments if si in exps]
+            if self.selected_repositories:
+                rr = [si for si in self.selected_repositories if si in exps]
                 if rr:
                     if len(rr) > 1:
                         expid = self._get_requested_experiment_id(rr)
@@ -755,7 +756,7 @@ class DVC(Loggable):
                     return
 
             # get repository branch
-            a.branch = get_repository_branch(os.path.join(paths.experiment_dataset_dir, expid))
+            a.branch = get_repository_branch(os.path.join(paths.repository_dataset_dir, expid))
 
             a.set_tag(record.tag)
 
@@ -785,16 +786,16 @@ class DVC(Loggable):
                            pwd=self.github_password)
         return org
 
-    def _get_experiment_repo(self, experiment_id):
-        repo = self.experiment_repo
-        path = experiment_path(experiment_id)
+    def _get_repository(self, repository_identifier):
+        repo = self.current_repository
+        path = repository_path(repository_identifier)
 
         if repo is None or repo.path != path:
             self.debug('make new repomanager for {}'.format(path))
             repo = GitRepoManager()
             repo.path = path
             repo.open_repo(path)
-            self.experiment_repo = repo
+            self.current_repository = repo
 
         return repo
 
@@ -807,6 +808,8 @@ class DVC(Loggable):
         prefid = 'pychron.dvc.db'
         for attr in ('username', 'password', 'name', 'host', 'kind', 'path'):
             bind_preference(self.db, attr, '{}.{}'.format(prefid, attr))
+
+        paths.meta_root = os.path.join(paths.dvc_dir, self.meta_repo_name)
 
     def _defaults(self):
         self.debug('writing defaults')
