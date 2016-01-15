@@ -533,6 +533,9 @@ class DVC(Loggable):
     def meta_push(self):
         self.meta_repo.push()
 
+    def meta_add_all(self):
+        self.meta_repo.add_unstaged(paths.meta_root, add_all=True)
+
     def meta_commit(self, msg):
         changes = self.meta_repo.has_staged()
         if changes:
@@ -633,6 +636,7 @@ class DVC(Loggable):
     def add_irradiation_position(self, irrad, level, pos, identifier=None):
         with self.db.session_ctx():
             dbip = self.db.add_irradiation_position(irrad, level, pos, identifier)
+            # self.db.commit()
 
             self.meta_repo.add_position(irrad, level, pos)
             return dbip
@@ -640,6 +644,7 @@ class DVC(Loggable):
     def add_irradiation_level(self, name, irradiation, holder, production_name):
         with self.db.session_ctx():
             self.db.add_irradiation_level(name, irradiation, holder, production_name)
+            # self.db.commit()
 
         self.meta_repo.add_level(irradiation, name)
         self.meta_repo.update_level_production(irradiation, name, production_name)
@@ -655,6 +660,7 @@ class DVC(Loggable):
             self.debug('{} already exists'.format(identifier))
 
     def add_repository(self, identifier, principal_investigator):
+        self.debug('trying to add repository identifier={}, pi={}'.format(identifier, principal_investigator))
         org = self._organization_factory()
         if identifier in org.repo_names:
             self.warning_dialog('Repository "{}" already exists'.format(identifier))
@@ -677,7 +683,7 @@ class DVC(Loggable):
                 self.db.add_repository(identifier, principal_investigator)
                 return True
 
-    def add_irradiation(self, name, doses=None, commit=False, push=False, add_repo=False):
+    def add_irradiation(self, name, doses=None, add_repo=False, principal_investigator=None):
         with self.db.session_ctx():
             if self.db.get_irradiation(name):
                 self.warning('irradiation {} already exists'.format(name))
@@ -694,13 +700,9 @@ class DVC(Loggable):
             os.mkdir(p)
         with open(os.path.join(root, 'productions.json'), 'w') as wfile:
             json.dump({}, wfile)
-        if commit:
-            self.meta_repo.commit('added irradiation {}'.format(name))
-            if push:
-                self.meta_repo.push()
 
-        if add_repo:
-            self.add_repository(name)
+        if add_repo and principal_investigator:
+            self.add_repository('Irradiation-{}'.format(name), principal_investigator)
 
     def add_load_holder(self, name, path_or_txt):
         with self.db.session_ctx():

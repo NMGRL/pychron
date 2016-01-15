@@ -77,7 +77,9 @@ class XLSDataManager(DataManager):
 
             header = map(str.lower, map(str, header))
             for attr in names:
-                for ai in (attr, attr.replace('_', ''), attr.lower(), attr.upper(), attr.capitalize()):
+                for ai in (attr, attr.replace('_', ''),
+                           attr.replace('_', ' '),
+                           attr.replace(' ', ''), attr.lower()):
                     if ai in header:
                         return header.index(ai)
 

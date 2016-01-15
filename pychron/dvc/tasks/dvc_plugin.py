@@ -38,7 +38,7 @@ class DVCPlugin(BaseTaskPlugin):
 
         dvc = self.application.get_service(DVC)
         if not self._fetched:
-            dvc.meta_repo.pull()
+            dvc.meta_pull()
 
     # def stop(self):
     #     dvc = self.application.get_service(DVC)
@@ -49,7 +49,7 @@ class DVCPlugin(BaseTaskPlugin):
     def test_dvc_fetch_meta(self):
         dvc = self.application.get_service(DVC)
         # dvc.fetch_meta()
-        dvc.meta_repo.pull()
+        dvc.meta_pull()
         self._fetched = True
 
     def _service_offers_default(self):

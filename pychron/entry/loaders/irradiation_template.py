@@ -34,7 +34,9 @@ CONFIG_COLUMNS = ('Name', 'Value', 'Description')
 #                                    'just do it'))
 
 CONFIG_ATTRS = (('quiet', 'False', 'If true do not ask for confirmation if project, material, sample does not exist, '
-                                   'just do it'),)
+                                   'just do it'),
+                ('principal_investigator', 'NMGRL', 'Principal investigator to associate with added Irradiation '
+                                                    'repositories'))
 
 
 class IrradiationTemplate(object):

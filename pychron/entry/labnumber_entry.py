@@ -282,12 +282,8 @@ class LabnumberEntry(DVCIrradiationable):
 
     def import_irradiation_load_xls(self, p):
         loader = XLSIrradiationLoader(db=self.dvc.db,
-                                      dvc=self.dvc,
-                                      monitor_name=self.monitor_name)
-        if loader.load_irradiation(p):
-            self.dvc.meta_push()
-
-        self.refresh_table = True
+                                      dvc=self.dvc)
+        loader.load_irradiation(p)
 
     def push_changes(self):
         if self.dvc.meta_repo.has_unpushed_commits():

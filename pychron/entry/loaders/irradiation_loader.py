@@ -39,6 +39,7 @@ class XLSIrradiationLoader(Loggable):
 
     # configuation attributes
     quiet = False
+    principal_investigator = None
 
     # when adding a new level bump identifier by irradiation_offset+level_offset
     # if offset is zero bump by 1
@@ -76,15 +77,21 @@ class XLSIrradiationLoader(Loggable):
             return
 
         self.info('loading irradiation file. {}'.format(p))
+        self.open(p)
+
         self.info('dry= {}'.format(dry_run))
         try:
             with self.db.session_ctx(commit=not dry_run):
-                self._load_irradiation_from_file(p, dry_run)
+                self.add_irradiations(dry_run)
 
                 if not dry_run:
+                    self.dvc.meta_add_all()
                     self.dvc.meta_commit('imported irradiation file {}'.format(p))
+                    self.dvc.meta_push()
                 return True
         except BaseException, e:
+            import traceback
+            traceback.print_exc()
             print 'exception', e
 
     def identifier_generator(self):
@@ -179,7 +186,7 @@ class XLSIrradiationLoader(Loggable):
         for row in dm.iterrows(sheet, 1):
             irrad = row[idxdict['irradiation']].value
             lv = row[idxdict['level']].value
-            if (irradiation is None and level is None) or irrad == irradiation and lv == level:
+            if (irradiation is None and level is None) or (irrad == irradiation and lv == level):
                 pos = int(row[idxdict['position']].value)
 
                 d = {'irradiation': irrad, 'level': lv, 'position': pos}
@@ -214,88 +221,69 @@ class XLSIrradiationLoader(Loggable):
             for i, row in enumerate(igen):
                 if i == 0:
                     irrad = row[nameidx].value
-                    chron = self._add_chronology(irrad)
-                    self._add_irradiation(irrad, chron)
-
+                    self._add_irradiation(irrad, dry_run=dry_run)
                     if not dry_run and self.db:
                         self.db.commit()
 
                 self._add_level(irrad, row[levelidx].value,
                                 row[pridx].value, row[holderidx].value)
+                if not dry_run and self.db:
+                    self.db.commit()
 
-    # private
-    def _load_irradiation_from_file(self, p, dry_run):
-        """
+    # # private
+    # def _load_irradiation_from_file(self, p, dry_run):
+    #     """
+    #
+    #     :param p: abs path to xls file
+    #     :return:
+    #     """
+    #
+    #     # self.dm = self._dm_factory(p)
+    #     self.add_irradiations(dry_run)
+    #     # if self.autogenerate_labnumber:
+    #     # self._add_labnumbers()
+    #
+    #     # self.add_positions()
+    #     # self.set_identifiers()
+    #
+    #     # def _add_labnumbers(self):
+    #     # for irrad in self.position_iterator():
+    #     # for level in irrad:
+    #     #         for pos in level:
+    #     #             pass
 
-        :param p: abs path to xls file
-        :return:
-        """
-
-        self.dm = self._dm_factory(p)
-        self.add_irradiations(dry_run)
-        # if self.autogenerate_labnumber:
-        # self._add_labnumbers()
-
-        # self.add_positions()
-        # self.set_identifiers()
-
-        # def _add_labnumbers(self):
-        # for irrad in self.position_iterator():
-        # for level in irrad:
-        #         for pos in level:
-        #             pass
-
-    def _add_irradiation(self, name, chronology=None):
+    def _add_irradiation(self, name, dry_run=False):
+        self.debug('Add irradiation {}'.format(name))
         dvc = self.dvc
         if dvc:
-            if dvc.add_irradiation(name, chronology):
+            doses = self._parse_doses(name)
+            if dvc.add_irradiation(name, doses=doses, add_repo=not dry_run,
+                                   principal_investigator=self.principal_investigator):
                 self._added_irradiations.append(name)
         else:
             self._added_irradiations.append(name)
 
     def _add_level(self, irrad, name, pr, holder, add_positions=True):
+        self.debug('Add level {} {} {} {}'.format(irrad, name, pr, holder))
         dvc = self.dvc
         if dvc:
             if self.dvc.add_irradiation_level(name, irrad, holder, pr):
                 self._added_levels.append((irrad, name, pr, holder))
                 if add_positions:
-                    self.add_positions()
+                    self.add_positions(irradiation=irrad, level=name)
         else:
             self._added_levels.append((irrad, name, pr, holder))
 
-    def _add_chronology(self, irrad):
-        dm = self.dm
-        sheet = dm.get_sheet(('Chronologies', 1))
-
-        idx_d = self._get_idx_dict(sheet, ('name', 'start', 'end', 'power'))
-
-        def get_row_value(idx_d):
-            def func(row, key):
-                return row[idx_d[key]].value
-
-            return func
-
-        gv = get_row_value(idx_d)
-
-        doses = []
-        for row in dm.iterrows(sheet):
-            if not gv(row, 'name') == irrad:
-                continue
-
-            sd, ed, power = gv(row, 'start'), gv(row, 'end'), gv(row, 'power')
-            sd = dm.strftime(sd, '%Y-%m-%d %H:%M:%S')
-            ed = dm.strftime(ed, '%Y-%m-%d %H:%M:%S')
-            dose = '{}|{}%{}'.format(power, sd, ed)
-            doses.append(dose)
-            self._added_chronologies.append((irrad, sd, ed, power))
-
-        return doses
-
     def _add_position(self, pdict):
+
         irrad, level, pos, identifier = pdict['irradiation'], pdict['level'], \
                                         pdict['position'], pdict['identifier']
         db = self.db
         if db:
+
+            if not pdict['sample']:
+                self.debug('------------------- no sample for position {}'.format(pos))
+                return
 
             dbip = self.dvc.add_irradiation_position(irrad, level, pos, identifier=identifier)
             if dbip is None:
@@ -333,10 +321,7 @@ class XLSIrradiationLoader(Loggable):
         return self._user_confirm_add(db, mat, 'material')
 
     def _add_sample(self, db, sam, dbprj, dbmat):
-        def func(v):
-            return db.add_sample(*v)
-
-        return self._user_confirm_add(db, (sam, dbprj.name, dbmat.name), 'sample', adder=func)
+        return self._user_confirm_add(db, (sam, dbprj.name, dbmat.name), 'sample')
 
     def _check_similar(self, db, v, key):
         try:
@@ -390,7 +375,10 @@ class XLSIrradiationLoader(Loggable):
                     if ret:
                         obj = adder(v)
         else:
-            obj = adder(v)
+            if isinstance(v, tuple):
+                obj = adder(*v)
+            else:
+                obj = adder(v)
 
         db.flush()
         return obj
@@ -409,6 +397,34 @@ class XLSIrradiationLoader(Loggable):
         if ir:
             cr = self.canvas.scene.get_item(pid)
         return ir, cr
+
+    def _parse_doses(self, irrad):
+        dm = self.dm
+        sheet = dm.get_sheet(('Chronologies', 1))
+
+        idx_d = self._get_idx_dict(sheet, ('name', 'start', 'end', 'power'))
+
+        def get_row_value(idx_d):
+            def func(row, key):
+                return row[idx_d[key]].value
+
+            return func
+
+        gv = get_row_value(idx_d)
+
+        doses = []
+        for row in dm.iterrows(sheet):
+            if not gv(row, 'name') == irrad:
+                continue
+
+            sd, ed, power = gv(row, 'start'), gv(row, 'end'), gv(row, 'power')
+            sd = dm.strftime(sd, '%Y-%m-%d %H:%M:%S')
+            ed = dm.strftime(ed, '%Y-%m-%d %H:%M:%S')
+            # dose = '{}|{}%{}'.format(power, sd, ed)
+            doses.append((power, sd, ed))
+            self._added_chronologies.append((irrad, sd, ed, power))
+
+        return doses
 
     def _dm_factory(self, p):
         dm = XLSDataManager()
@@ -438,4 +454,5 @@ class XLSIrradiationLoader(Loggable):
     @property
     def added_chronologies(self):
         return self._added_chronologies
+
 # ============= EOF =============================================

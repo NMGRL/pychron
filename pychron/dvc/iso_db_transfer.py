@@ -79,7 +79,7 @@ class IsoDBTransfer(Loggable):
                              password=os.environ.get('LOCALHOST_DB_PWD'),
                              kind='mysql',
                              # echo=True,
-                             name='pychrondvc_dev2')
+                             name='pychrondvc_dev')
         else:
             dest_conn = conn.copy()
             dest_conn['name'] = 'pychrondvc'

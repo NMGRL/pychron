@@ -109,7 +109,7 @@ class Organization(GithubObject):
         return name in self.repo_names
 
     def create_repo(self, name, usr, pwd, **payload):
-        create_organization_repository(self._name, name, usr, pwd)
+        create_organization_repository(self._name, name, usr, pwd, **payload)
         # cmd = make_request(self.base_cmd)
         # payload['name'] = name
         #

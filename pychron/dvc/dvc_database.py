@@ -306,6 +306,13 @@ class DVCDatabase(DatabaseAdapter):
                 dblevel = self._add_item(a)
             return dblevel
 
+    def add_principal_investigator(self, name):
+        pi = self.get_principal_investigator(name)
+        if pi is None:
+            pi = PrincipalInvestigatorTbl(name=name)
+            pi = self._add_item(pi)
+        return pi
+
     def add_project(self, name, pi=None):
         with self.session_ctx():
             a = self.get_project(name, pi)
@@ -341,7 +348,7 @@ class DVCDatabase(DatabaseAdapter):
         with self.session_ctx():
             creator = self.get_principal_investigator(principal_investigator)
             if not creator:
-                principal_investigator = self.add_user(principal_investigator)
+                principal_investigator = self.add_principal_investigator(principal_investigator)
                 self.flush()
 
             a = RepositoryTbl(name=name, principal_investigator=principal_investigator, **kw)
@@ -889,10 +896,14 @@ class DVCDatabase(DatabaseAdapter):
     def get_project(self, name, pi=None):
         if pi:
             with self.session_ctx() as sess:
+
                 q = sess.query(ProjectTbl)
                 q = q.join(PrincipalInvestigatorTbl)
                 q = q.filter(ProjectTbl.name == name)
-                q = q.filter(PrincipalInvestigatorTbl.name == name)
+
+                if pi:
+                    pi = self.get_principal_investigator(pi)
+                q = q.filter(PrincipalInvestigatorTbl.name == pi.name)
                 return self._query_one(q)
         else:
             return self._retrieve_item(ProjectTbl, name)

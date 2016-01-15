@@ -372,9 +372,9 @@ class GitRepoManager(Loggable):
         # return self._repo.git.log('--not', '--remotes', '--oneline')
         return self._repo.git.log('{}/{}..HEAD'.format(remote, branch), '--oneline')
 
-    def add_unstaged(self, root, extension=None, use_diff=False):
-        index = self.index
+    def add_unstaged(self, root, add_all=False, extension=None, use_diff=False):
 
+        index = self.index
         def func(ps, extension):
             if extension:
                 if not isinstance(extension, tuple):
@@ -383,6 +383,7 @@ class GitRepoManager(Loggable):
 
             if ps:
                 self.debug('adding to index {}'.format(ps))
+
                 index.add(ps)
 
         if use_diff:
@@ -392,8 +393,11 @@ class GitRepoManager(Loggable):
             # func(ps, extension)
             # except IOError,e:
             # print 'exception', e
+        elif add_all:
+            self._repo.get.add('.')
         else:
             for r, ds, fs in os.walk(root):
+                ds[:] = [d for d in ds if d[0] != '.']
                 ps = [os.path.join(r, fi) for fi in fs]
                 func(ps, extension)
 
