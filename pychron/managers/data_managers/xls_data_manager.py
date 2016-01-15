@@ -15,15 +15,20 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from datetime import datetime
-
 import xlrd
+from datetime import datetime
 from xlrd.biffh import XLRDError
-
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.managers.data_managers.data_manager import DataManager
+
+
+def camel_case(a):
+    if '_' in a:
+        items = a.split('_')
+        a = ''.join(map(str.capitalize, items))
+    return a
 
 
 class XLSDataManager(DataManager):
@@ -72,7 +77,7 @@ class XLSDataManager(DataManager):
 
             header = map(str.lower, map(str, header))
             for attr in names:
-                for ai in (attr, attr.lower(), attr.upper(), attr.capitalize()):
+                for ai in (attr, attr.replace('_', ''), attr.lower(), attr.upper(), attr.capitalize()):
                     if ai in header:
                         return header.index(ai)
 

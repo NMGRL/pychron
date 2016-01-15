@@ -130,30 +130,15 @@ class XLSIrradiationLoaderLoadTestCase(unittest.TestCase):
         self.loader.db.add_irradiation('NM-1000')
         self.loader.db.add_irradiation_level('A', 'NM-1000', '8-Hole', 'TRIGA', 1)
 
-        self.loader.db.add_irradiation_position('NM-1000', 'A', 1)
+        self.loader.db.add_irradiation_position('NM-1000', 'A', 1, identifier='1000')
         with self.loader.db.session_ctx():
             obj = self.loader.db.get_irradiation_position('NM-1000', 'A', 1)
-            self.assertTupleEqual((obj.position, obj.level.name, obj.level.irradiation.name),
-                                  (1, 'A', 'NM-1000'))
-
-    @unittest.skipIf(DEBUGGING, 'Debugging tests')
-    def test_generate_offsets1(self):
-        # fool loader into thinking 1 irradiation and 1 level were added
-        self.loader._added_irradiations = [0]
-        self.loader._added_levels = [0]
-
-        io, lo = self.loader.update_offsets()
-        self.assertTupleEqual((io, lo), (1000, 0))
+            self.assertTupleEqual((obj.position, obj.level.name, obj.level.irradiation.name, obj.identifier),
+                                  (1, 'A', 'NM-1000', '1000'))
 
     @unittest.skipIf(DEBUGGING, 'Debugging tests')
     def test_generate_labnumber(self):
-        # add a placeholder labnumber
-        # self.loader.db.add_labnumber(1000, 'FC-2')
-
-        # fool loader into thinking 1 irradiation and 1 level were added
-        self.loader._added_irradiations = [0]
-        self.loader._added_levels = [0]
-
+        self.loader.irradiation_offset = 1000
         gen = self.loader.identifier_generator()
 
         self.assertEqual((gen.next(), gen.next()), (1000, 1001))
@@ -165,13 +150,10 @@ class XLSIrradiationLoaderLoadTestCase(unittest.TestCase):
         self.loader.db.add_irradiation_level('A', 'NM-1000', '8-Hole', 'TRIGA', 1)
         self.loader.db.add_irradiation_position('NM-1000', 'A', 1, identifier='2500')
 
-        # fool loader into thinking 1 irradiation and 1 level were added
-        self.loader._added_irradiations = [0]
-        self.loader._added_levels = [0]
-
+        self.loader.irradiation_offset = 100
         gen = self.loader.identifier_generator()
 
-        self.assertEqual((gen.next(), gen.next()), (3500, 3501))
+        self.assertEqual((gen.next(), gen.next()), (2600, 2601))
 
         # @unittest.skipIf(DEBUGGING, 'Debugging tests')
         # def test_generate_offsets2(self):
@@ -329,15 +311,6 @@ class XLSIrradiationLoaderParseTestCase(unittest.TestCase):
                                                            ('NM-1000', 'B', 1),
                                                            ('NM-1000', 'B', 2),
                                                            ('NM-1000', 'B', 3)])
-
-    def test_config_autogen(self):
-        self.assertFalse(self.loader.autogenerate_labnumber)
-
-    def test_config_ioffset(self):
-        self.assertEqual(self.loader.base_irradiation_offset, 1000)
-
-    def test_config_loffset(self):
-        self.assertEqual(self.loader.base_level_offset, 10)
 
     def test_config_quiet(self):
         self.assertTrue(self.loader.quiet)
