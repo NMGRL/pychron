@@ -55,6 +55,7 @@ class SemiAutoCalibrator(TrayCalibrator):
     def handle(self, step, x, y, canvas):
         ret = None
         if step == 'Calibrate':
+            self.stage_map.clear_correction_file()
             canvas.new_calibration_item()
             self.calibration_step = 'Locate Center'
         elif step == 'Locate Center':
@@ -170,6 +171,8 @@ class SemiAutoCalibrator(TrayCalibrator):
         dxs, dys = array([]), array([])
         guess = None
         weights = [1, 2, 3, 4, 5, 6]
+        # holes = [smap.get_hole(1), smap.get_hole(3), smap.get_hole(5)]
+
         for hi in holes:
             sm.close_open_images()
 
