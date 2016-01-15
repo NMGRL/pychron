@@ -29,8 +29,8 @@ class SaveFigureModel(SaveModel):
     pdf_options = Instance(FigurePDFOptions)
 
     def __init__(self, analyses, *args, **kw):
-        self.experiment_identifiers = tuple({ai.repository_identifier for ai in analyses})
-        self.root_directory = self.experiment_identifiers[0]
+        self.repository_identifiers = tuple({ai.repository_identifier for ai in analyses})
+        self.root_directory = self.repository_identifiers[0]
 
         identifiers = tuple({ai.identifier for ai in analyses})
         self.name = '_'.join(identifiers)
@@ -47,7 +47,7 @@ class SaveFigureModel(SaveModel):
 class SaveFigureView(SaveController):
     def _get_root_item(self):
         item = Item('root_directory', label='Directory',
-                    editor=ComboboxEditor(name='experiment_identifiers'))
+                    editor=ComboboxEditor(name='repository_identifiers'))
         return item
 
     def traits_view(self):

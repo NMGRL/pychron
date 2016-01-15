@@ -104,9 +104,9 @@ class ExperimentFactoryPane(TraitsDockPane):
                    icon_button_editor(queue_factory_name('edit_emails'), 'cog',
                                       tooltip='Edit user group')),
                 HGroup(queue_factory_item('repository_identifier',
-                                          label='Experiment ID',
-                                          editor=ComboboxEditor(name=queue_factory_name('experiment_identifiers'))),
-                       icon_button_editor(queue_factory_name('add_experiment_identifier'), 'add')),
+                                          label='Repository',
+                                          editor=ComboboxEditor(name=queue_factory_name('repository_identifiers'))),
+                       icon_button_editor(queue_factory_name('add_repository_identifier'), 'add')),
             HGroup(
                 queue_factory_item('mass_spectrometer',
                                    show_label=False,

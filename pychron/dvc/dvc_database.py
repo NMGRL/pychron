@@ -319,11 +319,14 @@ class DVCDatabase(DatabaseAdapter):
                 a = self._add_item(a)
             return a
 
-    def add_irradiation_position(self, irrad, level, pos, **kw):
+    def add_irradiation_position(self, irrad, level, pos, identifier=None, **kw):
         with self.session_ctx():
             dbpos = self.get_irradiation_position(irrad, level, pos)
             if dbpos is None:
                 a = IrradiationPositionTbl(position=pos, **kw)
+                if identifier:
+                    a.identifier = str(identifier)
+
                 a.level = self.get_irradiation_level(irrad, level)
                 dbpos = self._add_item(a)
             return dbpos

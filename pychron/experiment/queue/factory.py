@@ -22,7 +22,7 @@ import os
 from ConfigParser import ConfigParser
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import list_directory2
-from pychron.entry.entry_views.experiment_entry import ExperimentIdentifierEntry
+from pychron.entry.entry_views.repository_entry import RepositoryIdentifierEntry
 from pychron.entry.entry_views.user_entry import UserEntry
 from pychron.persistence_loggable import PersistenceLoggable
 from pychron.globals import globalv
@@ -68,9 +68,9 @@ class ExperimentQueueFactory(PersistenceLoggable):
     load_names = Property
 
     repository_identifier = Str
-    experiment_identifiers = Property(depends_on='experiment_identifier_dirty, db_refresh_needed')
-    add_experiment_identifier = Event
-    experiment_identifier_dirty = Event
+    repository_identifiers = Property(depends_on='repository_identifier_dirty, db_refresh_needed')
+    add_repository_identifier = Event
+    repository_identifier_dirty = Event
 
     ok_make = Property(depends_on='mass_spectrometer, username')
 
@@ -204,11 +204,11 @@ class ExperimentQueueFactory(PersistenceLoggable):
         return ['Spectrometer', LINE_STR] + names
 
     @cached_property
-    def _get_experiment_identifiers(self):
+    def _get_erepository_identifiers(self):
         db = self.dvc
         ids = []
         if db and db.connected:
-            ids = self.dvc.get_experiment_identifiers()
+            ids = self.dvc.get_repository_identifiers()
         return ids
 
     def _get_names_from_config(self, cp, section):
@@ -218,11 +218,11 @@ class ExperimentQueueFactory(PersistenceLoggable):
             return [config.get(section, option) for option in config.options(section)]
 
     # handlers
-    def _add_experiment_identifier_fired(self):
-        a = ExperimentIdentifierEntry(dvc=self.dvc)
-        a.available = self.dvc.get_experiment_identifiers()
+    def _add_repository_identifier_fired(self):
+        a = RepositoryIdentifierEntry(dvc=self.dvc)
+        a.available = self.dvc.get_repository_identifiers()
         if a.do():
-            self.experiment_identifier_dirty = True
+            self.repository_identifier_dirty = True
             self.repository_identifier = a.value
 
     def _edit_user_fired(self):

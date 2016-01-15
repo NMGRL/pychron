@@ -630,9 +630,9 @@ class DVC(Loggable):
         with self.db.session_ctx():
             self.db.add_sample(name, project, material)
 
-    def add_irradiation_position(self, irrad, level, pos):
+    def add_irradiation_position(self, irrad, level, pos, identifier=None):
         with self.db.session_ctx():
-            dbip = self.db.add_irradiation_position(irrad, level, pos)
+            dbip = self.db.add_irradiation_position(irrad, level, pos, identifier)
 
             self.meta_repo.add_position(irrad, level, pos)
             return dbip

@@ -61,8 +61,8 @@ class AnalysisGroup(HasTraits):
     isochron_age_error_kind = Str
     identifier = Property
 
-    repository_identifier = Property(depends_on='_experiment_identifier')
-    _experiment_identifier = Str
+    repository_identifier = Property(depends_on='_repository_identifier')
+    _repository_identifier = Str
 
     irradiation = Property
     sample = Property
@@ -132,14 +132,14 @@ class AnalysisGroup(HasTraits):
         return self.analyses[0].labnumber
 
     @cached_property
-    def _get_experiment_identifier(self):
-        if self._experiment_identifier:
-            return self._experiment_identifier
+    def _get_repository_identifier(self):
+        if self._repository_identifier:
+            return self._repository_identifier
         else:
             return self.analyses[0].repository_identifier
 
-    def _set_experiment_identifier(self, v):
-        self._experiment_identifier = v
+    def _set_repository_identifier(self, v):
+        self._repository_identifier = v
 
     @cached_property
     def _get_irradiation(self):

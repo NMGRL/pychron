@@ -35,13 +35,13 @@ class UObjectColumn(ObjectColumn):
 
 
 class InterpretedAgeFactoryView(Controller):
-    experiment_identifiers = List
+    repository_identifiers = List
 
     def traits_view(self):
         cols = [UObjectColumn(name='identifier'),
                 ObjectColumn(name='name'),
                 ObjectColumn(name='repository_identifier',
-                             editor=EnumEditor(name='controller.experiment_identifiers')),
+                             editor=EnumEditor(name='controller.repository_identifiers')),
                 ObjectColumn(name='preferred_age_kind', label='Age Type',
                              editor=EnumEditor(name='preferred_ages')),
                 ObjectColumn(name='preferred_age_error_kind', label='Age Error Type',

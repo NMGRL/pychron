@@ -15,12 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from traits.api import Instance
 # ============= standard library imports ========================
 import json
 import os
 import time
 from itertools import groupby
-
 from datetime import timedelta
 # ============= local library imports  ==========================
 from numpy import array, array_split
@@ -55,18 +55,62 @@ class IsoDBTransfer(Loggable):
     """
     transfer analyses from an isotope_db database to a dvc database
     """
-    # meta_repo = Instance(MetaRepo)
-    # root = None
-    # repo_man = Instance(GitRepoManager)
+    dvc = Instance(DVC)
+    processor = Instance(IsotopeDatabaseManager)
+    persister = Instance(DVCPersister)
+
     quiet = False
 
     def init(self):
-        self._init_src_dest()
+        conn = dict(host=os.environ.get('ARGONSERVER_HOST'),
+                    username=os.environ.get('ARGONSERVER_DB_USER'),
+                    password=os.environ.get('ARGONSERVER_DB_PWD'),
+                    kind='mysql')
+
+        self.dvc = DVC(bind=False,
+                       organization='NMGRLData',
+                       meta_repo_name='MetaData')
+        paths.meta_root = os.path.join(paths.dvc_dir, self.dvc.meta_repo_name)
+
+        use_local = True
+        if use_local:
+            dest_conn = dict(host='localhost',
+                             username=os.environ.get('LOCALHOST_DB_USER'),
+                             password=os.environ.get('LOCALHOST_DB_PWD'),
+                             kind='mysql',
+                             # echo=True,
+                             name='pychrondvc_dev2')
+        else:
+            dest_conn = conn.copy()
+            dest_conn['name'] = 'pychrondvc'
+
+        self.dvc.db.trait_set(**dest_conn)
+        if not self.dvc.initialize():
+            self.warning_dialog('Failed to initialize DVC')
+            return
+
+        self.dvc.meta_repo.smart_pull(quiet=self.quiet)
+        self.persister = DVCPersister(dvc=self.dvc, stage_files=False)
+
+        proc = IsotopeDatabaseManager(bind=False, connect=False)
+
+        use_local_src = True
+        if use_local_src:
+            conn = dict(host='localhost',
+                        username=os.environ.get('LOCALHOST_DB_USER'),
+                        password=os.environ.get('LOCALHOST_DB_PWD'),
+                        kind='mysql',
+                        # echo=True,
+                        name='pychrondata_dev')
+        else:
+            conn['name'] = 'pychrondata'
+
+        proc.db.trait_set(**conn)
+        src = proc.db
+        src.connect()
+        self.processor = proc
 
     def bulk_import_irradiations(self, creator, dry=True):
-        src = self.processor.db
-        # with src.session_ctx() as sess:
-        #     irradnames = [i.name for i in src.get_irradiations()]
 
         # for i in xrange(251, 277):
         # for i in xrange(258, 259):
@@ -82,42 +126,13 @@ class IsoDBTransfer(Loggable):
             #         for o in runs:
             #             wfile.write('{}\n'.format(o))
 
-    def get_irradiation_timestamps(self, irradname, tol_hrs=6):
-        src = self.processor.db
-        with src.session_ctx() as sess:
-            sql = """SELECT ant.analysis_timestamp from meas_analysistable as ant
-join gen_labtable as lt on lt.id = ant.lab_id
-join gen_sampletable as st on lt.sample_id = st.id
-join irrad_PositionTable as irp on lt.irradiation_id = irp.id
-join irrad_leveltable as il on irp.level_id = il.id
-join irrad_irradiationtable as ir on il.irradiation_id = ir.id
-
-where ir.name = "{}" and st.name ="FC-2"
-order by ant.analysis_timestamp ASC
-
-""".format(irradname)
-
-            result = sess.execute(sql)
-            ts = array([make_timef(ri[0]) for ri in result.fetchall()])
-
-            idxs = bin_timestamps(ts, tol_hrs=tol_hrs)
-            return ts, idxs
-
-    def import_date_range(self, low, high, spectrometer, repository_identifier, creator):
-        src = self.processor.db
-        with src.session_ctx():
-            runs = src.get_analyses_date_range(low, high, mass_spectrometers=spectrometer)
-
-            ais = [ai.record_id for ai in runs]
-        self.do_export(ais, repository_identifier, creator)
-
     def bulk_import_irradiation(self, irradname, creator, dry=True):
 
         src = self.processor.db
         tol_hrs = 6
         self.debug('bulk import irradiation {}'.format(irradname))
         oruns = []
-        ts, idxs = self.get_irradiation_timestamps(irradname, tol_hrs=tol_hrs)
+        ts, idxs = self._get_irradiation_timestamps(irradname, tol_hrs=tol_hrs)
         repository_identifier = 'Irradiation-{}'.format(irradname)
 
         def filterfunc(x):
@@ -169,6 +184,67 @@ order by ant.analysis_timestamp ASC
 
         return oruns
 
+    def bulk_import_project(self, project, principal_investigator, dry=True):
+        src = self.processor.db
+        tol_hrs = 6
+        self.debug('bulk import project={}, pi={}'.format(project, principal_investigator))
+        oruns = []
+        ts, idxs = self._get_project_timestamps(project, tol_hrs=tol_hrs)
+        repository_identifier = project
+
+        # def filterfunc(x):
+        #     a = x.labnumber.irradiation_position is None
+        #     b = False
+        #     if not a:
+        #         b = x.labnumber.irradiation_position.level.irradiation.name == irradname
+        #
+        #     d = False
+        #     if x.extraction:
+        #         ed = x.extraction.extraction_device
+        #         if not ed:
+        #             d = True
+        #         else:
+        #             d = ed.name == 'Fusions CO2'
+        #
+        #     return (a or b) and d
+        #
+        for ms in ('jan', 'obama'):
+            for i, ais in enumerate(array_split(ts, idxs + 1)):
+                if not ais.shape[0]:
+                    self.debug('skipping {}'.format(i))
+                    continue
+
+                low = get_datetime(ais[0]) - timedelta(hours=tol_hrs / 2.)
+                high = get_datetime(ais[-1]) + timedelta(hours=tol_hrs / 2.)
+
+                print ms, low, high
+        # with src.session_ctx():
+        #             ans = src.get_analyses_date_range(low, high,
+        #                                               mass_spectrometers=(ms,))
+        #
+        #             # runs = filter(lambda x: x.labnumber.irradiation_position is None or
+        #             #                         x.labnumber.irradiation_position.level.irradiation.name == irradname, ans)
+        #
+        #             runs = filter(filterfunc, ans)
+        #             if dry:
+        #                 for ai in runs:
+        #                     oruns.append(ai.record_id)
+        #                     print ms, ai.record_id
+        #             else:
+        #                 self.debug('================= Do Export i: {} low: {} high: {}'.format(i, low, high))
+        #                 self.debug('N runs: {}'.format(len(runs)))
+        #                 self.do_export([ai.record_id for ai in runs], repository_identifier, principal_investigator)
+
+        return oruns
+
+    def import_date_range(self, low, high, spectrometer, repository_identifier, creator):
+        src = self.processor.db
+        with src.session_ctx():
+            runs = src.get_analyses_date_range(low, high, mass_spectrometers=spectrometer)
+
+            ais = [ai.record_id for ai in runs]
+        self.do_export(ais, repository_identifier, creator)
+
     def do_export(self, runs, repository_identifier, creator, create_repo=False):
 
         # self._init_src_dest()
@@ -213,44 +289,43 @@ order by ant.analysis_timestamp ASC
         return filter(None, runs)
 
     # private
-    def _init_src_dest(self):
-        conn = dict(host=os.environ.get('ARGONSERVER_HOST'),
-                    username=os.environ.get('ARGONSERVER_DB_USER'),
-                    password=os.environ.get('ARGONSERVER_DB_PWD'),
-                    kind='mysql')
+    def _get_project_timestamps(self, project, tol_hrs=6):
+        src = self.processor.db
+        with src.session_ctx() as sess:
+            sql = """SELECT ant.analysis_timestamp from meas_analysistable as ant
+join gen_labtable as lt on lt.id = ant.lab_id
+join gen_sampletable as st on lt.sample_id = st.id
+join gen_projecttable as pt on st.project_id = pt.id
+where pt.name="{}"
+order by ant.analysis_timestamp ASC
+""".format(project)
 
-        self.dvc = DVC(bind=False,
-                       organization='NMGRLData',
-                       meta_repo_name='MetaData')
-        paths.meta_root = os.path.join(paths.dvc_dir, self.dvc.meta_repo_name)
+            result = sess.execute(sql)
+            ts = array([make_timef(ri[0]) for ri in result.fetchall()])
 
-        use_local = True
-        name = 'pychrondvc_dev'
+            idxs = bin_timestamps(ts, tol_hrs=tol_hrs)
+            return ts, idxs
 
-        if use_local:
-            dest_conn = dict(host='localhost',
-                             username=os.environ.get('LOCALHOST_DB_USER'),
-                             password=os.environ.get('LOCALHOST_DB_PWD'),
-                             kind='mysql',
-                             # echo=True,
-                             name=name)
-        else:
-            dest_conn = conn.copy()
-            dest_conn['name'] = name
+    def _get_irradiation_timestamps(self, irradname, tol_hrs=6):
+        src = self.processor.db
+        with src.session_ctx() as sess:
+            sql = """SELECT ant.analysis_timestamp from meas_analysistable as ant
+join gen_labtable as lt on lt.id = ant.lab_id
+join gen_sampletable as st on lt.sample_id = st.id
+join irrad_PositionTable as irp on lt.irradiation_id = irp.id
+join irrad_leveltable as il on irp.level_id = il.id
+join irrad_irradiationtable as ir on il.irradiation_id = ir.id
 
-        self.dvc.db.trait_set(**dest_conn)
-        if not self.dvc.initialize():
-            self.warning_dialog('Failed to initialize DVC')
-            return
+where ir.name = "{}" and st.name ="FC-2"
+order by ant.analysis_timestamp ASC
 
-        self.dvc.meta_repo.smart_pull(quiet=self.quiet)
-        self.persister = DVCPersister(dvc=self.dvc, stage_files=False)
+""".format(irradname)
 
-        proc = IsotopeDatabaseManager(bind=False, connect=False)
-        proc.db.trait_set(name='pychrondata', **conn)
-        src = proc.db
-        src.connect()
-        self.processor = proc
+            result = sess.execute(sql)
+            ts = array([make_timef(ri[0]) for ri in result.fetchall()])
+
+            idxs = bin_timestamps(ts, tol_hrs=tol_hrs)
+            return ts, idxs
 
     def _add_repository(self, dest, repository_identifier, creator, create_repo):
         repository_identifier = format_repository_identifier(repository_identifier)
@@ -658,6 +733,8 @@ if __name__ == '__main__':
     # runs, expid, creator = load_path()
     # runs, expid, creator = load_import_request()
     e.bulk_import_irradiations('NMGRL', dry=False)
+    e.bulk_import_project('')
+
     # e.bulk_import_irradiation('NM-274', 'root', dry=False)
     # e.import_date_range('2015-12-07 12:00:43', '2015-12-09 13:45:51', 'jan',
     #                     'MATT_AGU', 'root')
@@ -682,137 +759,4 @@ if __name__ == '__main__':
     # e.do_export(path, expid, creator, create_repo=False)
     # e.export_production('Triga PR 275', db=False)
     # ============= EOF =============================================
-    # def _transfer_labnumber(self, ln, src, dest, exp=None, create_repo=False):
-    # if exp is None:
-    #     dbln = src.get_labnumber(ln)
-    #     exp = dbln.sample.project.name
-    #     # if exp in ('Chevron', 'J-Curve'):
-    #     if exp in ('Chevron',):  # 'J-Curve'):
-    #         return
-    #
 
-    # if not dest.get_experiment(exp):
-    #     dest.add_experiment(name=exp)
-    #     dest.flush()
-    # if not dest.get_project(project):
-    #     dest.add_project(project)
-
-    # return self.repo_man
-
-    # def _export_project(self, project, src, dest):
-    #     proot = os.path.join(self.root, 'projects', project)
-    #     # proot = os.path.join(paths.dvc_dir, 'projects', project)
-    #     if not os.path.isdir(proot):
-    #         os.mkdir(proot)
-    #     repo = GitRepoManager()
-    #     repo.open_repo(proot)
-    #
-    #     if not dest.get_project(project):
-    #         dest.add_project(project)
-    #
-    #     return repo
-    # def transfer_holder(self, name):
-    #     self.root = os.path.join(os.path.expanduser('~'), 'Pychron_dev', 'data', '.dvc')
-    #
-    #     conn = dict(host=os.environ.get('HOST'), username='root', password='', kind='mysql')
-    #     # conn = dict(host=os.environ.get('HOST'), username='root', password='', kind='mysql')
-    #     # dest = DVCDatabase('/Users/ross/Sandbox/dvc/meta/testdb.sqlite')
-    #     # dest = DVCDatabase(name='pychronmeta', **conn)
-    #     # self.dvc = DVC(bind=False)
-    #     # self.dvc.db.trait_set(name='pychronmeta', username='root',
-    #     #                       password='Argon', kind='mysql', host='localhost')
-    #
-    #     self.meta_repo = MetaRepo()
-    #     self.meta_repo.open_repo(os.path.join(self.root, 'meta'))
-    #     proc = IsotopeDatabaseManager(bind=False, connect=False)
-    #     proc.db.trait_set(name='pychrondata', **conn)
-    #     src = proc.db
-    #     # src = IsotopeAdapter(name='pychrondata', **conn)
-    #     # src.trait_set()
-    #     src.connect()
-    #     with src.session_ctx():
-    #         holder = src.get_irradiation_holder(name)
-    #         self.meta_repo.add_irradiation_holder(name, holder.geometry)
-
-    # def export_production(self, prodname, db=False):
-    #     if db:
-    #         pass
-    #
-    #     # self.root = os.path.join(os.path.expanduser('~'), 'Pychron_dev', 'data', '.dvc')
-    #     self.meta_repo = MetaRepo(os.path.join(self.root, 'meta'))
-    #
-    #     conn = dict(host=os.environ.get('HOST'), username='root', password='', kind='mysql')
-    #     dest = DVCDatabase('/Users/ross/Sandbox/dvc/meta/testdb.sqlite')
-    #     # dest = DVCDatabase(name='pychronmeta', **conn)
-    #     dest.connect()
-    #     src = IsotopeAdapter(name='pychrondata', **conn)
-    #     # src.trait_set()
-    #     src.connect()
-    #     with src.session_ctx():
-    #         if not dest.get_production(prodname):
-    #             dest.add_production(prodname)
-    #             dest.flush()
-    #
-    #             dbprod = src.get_irradiation_production(prodname)
-    #             self.meta_repo.add_production(prodname, dbprod)
-    #             self.meta_repo.commit('added production {}'.format(prodname))
-    # def do_export_monitors(self, path, experiment_id, creator, create_repo=False):
-    #     self.root = os.path.join(os.path.expanduser('~'), 'Pychron_dev', 'data', '.dvc')
-    #     self.meta_repo = MetaRepo()
-    #     self.meta_repo.open_repo(os.path.join(self.root, 'meta'))
-    #
-    #     conn = dict(host=os.environ.get('HOST'), username='root', password='', kind='mysql')
-    #     # conn = dict(host=os.environ.get('HOST'), username='root', password='', kind='mysql')
-    #     # dest = DVCDatabase('/Users/ross/Sandbox/dvc/meta/testdb.sqlite')
-    #     # dest = DVCDatabase(name='pychronmeta', **conn)
-    #     self.dvc = DVC(bind=False,
-    #                    meta_repo_name='meta')
-    #     self.dvc.db.trait_set(name='pychronmeta', username='root',
-    #                           password='Argon', kind='mysql', host='localhost')
-    #     if not self.dvc.initialize():
-    #         self.warning_dialog('Failed to initialize DVC')
-    #         return
-    #
-    #     self.persister = DVCPersister(dvc=self.dvc)
-    #
-    #     dest = self.dvc.db
-    #
-    #     proc = IsotopeDatabaseManager(bind=False, connect=False)
-    #     proc.db.trait_set(name='pychrondata', **conn)
-    #     src = proc.db
-    #     # src = IsotopeAdapter(name='pychrondata', **conn)
-    #     # src.trait_set()
-    #     src.connect()
-    #     with src.session_ctx():
-    #         with open(path, 'r') as rfile:
-    #             runs = [line.strip() for line in rfile if line.strip()]
-    #
-    #         key = lambda x: x.split('-')[0]
-    #         runs = sorted(runs, key=key)
-    #
-    #         for r in runs:
-    #             args = r.split('-')
-    #             idn = '-'.join(args[:-1])
-    #             t = args[-1]
-    #             try:
-    #                 aliquot = int(t)
-    #                 step = None
-    #             except ValueError:
-    #                 aliquot = int(t[:-1])
-    #                 step = t[-1]
-    #             try:
-    #                 int(idn)
-    #             except:
-    #                 continue
-    #             dban = src.get_analysis_runid(idn, aliquot, step)
-    #             if dban:
-    #                 print idn, dban.labnumber.irradiation_position.level.irradiation.name
-    #                 # runs = proc.make_analyses(runs)
-    #                 # iv = IsotopeRecordView()
-    #                 # iv.uuid = dban.uuid
-    #                 # an = proc.make_analysis(iv, unpack=True, use_cache=False)
-    #
-    #                 # key = lambda x: x.irradiation
-    #                 # runs = sorted(runs, key=key)
-    #                 # for irrad, ais in groupby(runs, key=key):
-    #                 #     print irrad, len(list(ais))

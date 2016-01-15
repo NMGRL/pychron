@@ -501,12 +501,12 @@ class AutomatedRunPersister(BasePersister):
                 run_spec.analysis_dbid = a.id
                 run_spec.analysis_timestamp = a.analysis_timestamp
 
-                experiment = db.get_experiment(self.per_spec.experiment_id, key='id')
+                experiment = db.get_experiment(self.dbexperiment_identifier, key='id')
                 if experiment is not None:
                     # added analysis to experiment
                     a.experiment_id = experiment.id
                 else:
-                    self.warning('no experiment found for {}'.format(self.per_spec.experiment_id))
+                    self.warning('no experiment found for {}'.format(self.dbexperiment_identifier))
 
                 # save measurement
                 meas = self._save_measurement(db, a)

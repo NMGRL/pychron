@@ -192,7 +192,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     _cv_info = None
     _cached_runs = List
-    _active_experiment_identifier = Str
+    _active_repository_identifier = Str
 
     def __init__(self, *args, **kw):
         super(ExperimentExecutor, self).__init__(*args, **kw)
@@ -465,8 +465,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if self.labspy_enabled:
             self.labspy_client.add_experiment(exp)
 
-        # self.datahub.add_experiment(exp)
-
+        self.datahub.add_experiment(exp)
         # reset conditionals result file
         reset_conditional_results()
 
@@ -1493,8 +1492,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     def _retroactive_repository_identifiers(self, spec):
         db = self.datahub.mainstore
-        crun, expid = retroactive_repository_identifiers(spec, self._cached_runs, self._active_experiment_identifier)
-        self._cached_runs, self._active_experiment_identifier = crun, expid
+        crun, expid = retroactive_repository_identifiers(spec, self._cached_runs, self._active_repository_identifier)
+        self._cached_runs, self._active_repository_identifier = crun, expid
 
         db.add_repository_association(spec.repository_identifier, spec)
         if not is_special(spec.identifier) and self._cached_runs:
@@ -1513,7 +1512,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             #         self._cached_runs = []
             #     self._active_experiment_identifier = exp_id
 
-    def _check_experiment_identifiers(self):
+    def _check_repository_identifiers(self):
         db = self.datahub.mainstore.db
         print 'main stored db', id(db)
 
@@ -1524,17 +1523,17 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 identifiers = {ai.identifier for ai in ei.cleaned_automated_runs}
                 identifiers = [idn for idn in identifiers if not is_special(idn)]
 
-                experiments = {}
+                repositories = {}
                 eas = db.get_associated_repositories(identifiers)
                 for idn, exps in groupby(eas, key=lambda x: x[1]):
-                    experiments[idn] = [e[0] for e in exps]
+                    repositories[idn] = [e[0] for e in exps]
 
                 conflicts = []
                 for ai in ei.cleaned_automated_runs:
                     identifier = ai.identifier
                     if not is_special(identifier):
                         try:
-                            es = experiments[identifier]
+                            es = repositories[identifier]
                             if ai.repository_identifier not in es:
                                 if ai.sample == self.monitor_name:
                                     ai.repository_identifier = ai.irradiation
@@ -1578,7 +1577,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if prog:
             prog.change_message('Checking Experiment Identifiers')
 
-        if not self._check_experiment_identifiers():
+        if not self._check_repository_identifiers():
             return
 
         if prog:
@@ -1661,7 +1660,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if prog:
             prog.change_message('Checking Experiment Identifiers')
 
-        if not self._check_experiment_identifiers():
+        if not self._check_repository_identifiers():
             return
 
         if prog:

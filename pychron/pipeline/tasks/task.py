@@ -258,11 +258,11 @@ class PipelineTask(BaseBrowserTask):
     def set_interpreted_age(self):
         ias = self.active_editor.get_interpreted_ages()
 
-        experiment_identifiers = self.dvc.get_local_repositories()
+        repository_identifiers = self.dvc.get_local_repositories()
         model = InterpretedAgeFactoryModel(groups=ias)
 
         iaf = InterpretedAgeFactoryView(model=model,
-                                        experiment_identifiers=experiment_identifiers)
+                                        repository_identifiers=repository_identifiers)
         info = iaf.edit_traits()
         if info.result:
             self._add_interpreted_ages(ias)

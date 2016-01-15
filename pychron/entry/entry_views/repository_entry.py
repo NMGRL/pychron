@@ -19,13 +19,10 @@
 from pychron.entry.entry_views.entry import BaseEntry
 
 
-class ExperimentIdentifierEntry(BaseEntry):
-    tag = 'Experiment Identifier'
+class RepositoryIdentifierEntry(BaseEntry):
+    tag = 'Repository Identifier'
 
     def _add_item(self):
-        # db = self.dvc.db
         return self.dvc.add_repository(self.value)
-        # return True
-
 
 # ============= EOF =============================================

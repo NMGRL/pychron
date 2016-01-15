@@ -135,36 +135,6 @@ class Datahub(Loggable):
     def load_analysis_backend(self, ln, arar_age):
         dvc = self.mainstore
         return dvc.load_analysis_backend(ln, arar_age)
-        # arar_age.trait_set(j=an.j,
-        #                    production_ratios=an.production_ratios,
-        #                    interference_corrections=an.interference_corrections,
-        #                    chron_segments=an.chron_segments,
-        #                    irradiation_time=an.irradiation_time,
-        #                    timestamp=now)
-        # with db.session_ctx():
-        #     ln = db.get_labnumber(ln)
-        #     if ln:
-        #         an = DBAnalysis()
-        #         x = datetime.now()
-        #         now = time.mktime(x.timetuple())
-        #         an.timestamp = now
-        #         try:
-        #             an.sync_irradiation(ln)
-        #         except NoProductionError:
-        #             self.information_dialog('Irradiation={} Level={} has '
-        #                                     'no Correction/Production Ratio set defined'.format(an.irradiation,
-        #                                                                                         an.irradiation_level))
-        #             return
-        #
-        #         arar_age.trait_set(j=an.j,
-        #                            production_ratios=an.production_ratios,
-        #                            interference_corrections=an.interference_corrections,
-        #                            chron_segments=an.chron_segments,
-        #                            irradiation_time=an.irradiation_time,
-        #                            timestamp=now)
-        #
-        #         arar_age.calculate_decay_factors()
-        #     return True
 
     def add_experiment(self, exp):
         db = self.mainstore.db
@@ -172,7 +142,7 @@ class Datahub(Loggable):
             dbexp = db.add_experiment(exp.path)
 
             sess.flush()
-            # exp.database_identifier = dbexp.
+            exp.database_identifier = dbexp.id
 
     def get_greatest_aliquot(self, identifier, store='main'):
         # store = getattr(self, '{}store'.format(store))
