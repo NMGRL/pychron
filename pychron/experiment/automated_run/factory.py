@@ -924,19 +924,23 @@ class AutomatedRunFactory(PersistenceLoggable):
                         self.sample = ln.sample.name
                         d['sample'] = self.sample
 
-                        project = ln.sample.project
-                        print 'fff', project.name
-                        if project.name == 'J-Curve':
-                            irrad = ln.irradiation_position.level.irradiation.name
-                            self.experiment_identifier = 'Irradiation-{}'.format(irrad)
-                        elif project.name != 'REFERENCES':
-                            pi_name = project.principal_investigators[0].name
-                            pi_name = pi_name.replace(' ', '_').replace('/', '_')
-
-                            project_name = project.name
-                            project_name = project_name.replace(' ', '_').replace('/', '_')
-
-                            self.experiment_identifier = '{}_{}'.format(pi_name, project_name)
+                        # project = ln.sample.project
+                        # print 'fff', project.name
+                        # if project.name == 'J-Curve':
+                        #     irrad = ln.irradiation_position.level.irradiation.name
+                        #     self.experiment_identifier = 'Irradiation-{}'.format(irrad)
+                        # elif project.name != 'REFERENCES':
+                        #     project_name = project.name
+                        #     project_name = project_name.replace(' ', '_').replace('/', '_')
+                        #     try:
+                        #         pi_name = project.principal_investigators[0].name
+                        #         pi_name = pi_name.replace(' ', '_').replace('/', '_')
+                        #     except IndexError:
+                        #         self.debug('No principal investigator '
+                        #                    'specified for this project "{}". Using NMGRL'.format(project_name))
+                        #         pi_name = 'NMGRL'
+                        #
+                        #     self.experiment_identifier = '{}_{}'.format(pi_name, project_name)
 
                     except AttributeError:
                         pass
