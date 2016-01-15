@@ -53,7 +53,7 @@ from pychron.experiment.stats import StatsGroup
 from pychron.experiment.utilities.conditionals import test_queue_conditionals_name, SYSTEM, QUEUE, RUN, \
     CONDITIONAL_GROUP_TAGS
 from pychron.experiment.utilities.conditionals_results import reset_conditional_results
-from pychron.experiment.utilities.repository_identifier import retroactive_experiment_identifiers
+from pychron.experiment.utilities.repository_identifier import retroactive_repository_identifiers
 from pychron.experiment.utilities.identifier import convert_extract_device, is_special
 from pychron.extraction_line.ipyscript_runner import IPyScriptRunner
 from pychron.globals import globalv
@@ -713,7 +713,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.info('Automated run {} {} duration: {:0.3f} s'.format(run.runid, run.state, t))
 
         run.finish()
-        self._retroactive_experiment_identifiers(run.spec)
+        self._retroactive_repository_identifiers(run.spec)
 
         if self.use_autoplot:
             self.autoplot_event = run
@@ -1491,9 +1491,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self._wait_for_save()
         self.heading('Pre Run Check Passed')
 
-    def _retroactive_experiment_identifiers(self, spec):
+    def _retroactive_repository_identifiers(self, spec):
         db = self.datahub.mainstore
-        crun, expid = retroactive_experiment_identifiers(spec, self._cached_runs, self._active_experiment_identifier)
+        crun, expid = retroactive_repository_identifiers(spec, self._cached_runs, self._active_experiment_identifier)
         self._cached_runs, self._active_experiment_identifier = crun, expid
 
         db.add_repository_association(spec.repository_identifier, spec)

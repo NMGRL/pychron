@@ -20,27 +20,22 @@
 from pychron.experiment.utilities.identifier import is_special
 
 
-def retroactive_experiment_identifiers(spec, cruns, active_experiment_identifier):
+def retroactive_repository_identifiers(spec, cruns, active_respository_identifier):
     if cruns is None:
         cruns = []
 
     if is_special(spec.identifier):
         cruns.append(spec)
-        if active_experiment_identifier:
-            spec.repository_identifier = active_experiment_identifier
+        if active_respository_identifier:
+            spec.repository_identifier = active_respository_identifier
     else:
         exp_id = spec.repository_identifier
         # if cruns:
         #     for c in self._cached_runs:
         #         self.datahub.maintstore.add_experiment_association(c, exp_id)
         #     self._cached_runs = []
-        active_experiment_identifier = exp_id
+        active_respository_identifier = exp_id
 
-    return cruns, active_experiment_identifier
-
-
+    return cruns, active_respository_identifier
 
 # ============= EOF =============================================
-
-
-

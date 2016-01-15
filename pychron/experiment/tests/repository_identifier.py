@@ -1,6 +1,6 @@
 from pychron.experiment.automated_run.spec import AutomatedRunSpec
 from pychron.experiment.utilities.identifier import is_special
-from pychron.experiment.utilities.repository_identifier import retroactive_experiment_identifiers
+from pychron.experiment.utilities.repository_identifier import retroactive_repository_identifiers
 
 __author__ = 'ross'
 
@@ -13,9 +13,9 @@ class DummyExecutor(object):
         self.expid = None
         self.associations = []
 
-    def retroactive_experiment_identifiers(self, spec):
+    def retroactive_repository_identifiers(self, spec):
         # print '{} added to {}'.format(spec.experiment_id, spec.runid)
-        self.cruns, self.expid = retroactive_experiment_identifiers(spec, self.cruns, self.expid)
+        self.cruns, self.expid = retroactive_repository_identifiers(spec, self.cruns, self.expid)
 
         self.associate(spec.repository_identifier, spec.runid)
         if not is_special(spec.identifier) and self.cruns:
@@ -69,22 +69,22 @@ class ExperimentIdentifierTestCase(unittest.TestCase):
     def test3(self):
         d = DummyExecutor()
         spec = AutomatedRunSpec(identifier='bu-FD-j', aliquot=1)
-        d.retroactive_experiment_identifiers(spec)
+        d.retroactive_repository_identifiers(spec)
 
         spec = AutomatedRunSpec(identifier='bu-FD-j', aliquot=2)
-        d.retroactive_experiment_identifiers(spec)
+        d.retroactive_repository_identifiers(spec)
 
         spec = AutomatedRunSpec(identifier='10000', repository_identifier='foo')
-        d.retroactive_experiment_identifiers(spec)
+        d.retroactive_repository_identifiers(spec)
 
         spec = AutomatedRunSpec(identifier='20000', repository_identifier='bar')
-        d.retroactive_experiment_identifiers(spec)
+        d.retroactive_repository_identifiers(spec)
 
         spec = AutomatedRunSpec(identifier='20000', aliquot=1, repository_identifier='bar')
-        d.retroactive_experiment_identifiers(spec)
+        d.retroactive_repository_identifiers(spec)
 
         spec = AutomatedRunSpec(identifier='bu-FD-j', aliquot=3)
-        d.retroactive_experiment_identifiers(spec)
+        d.retroactive_repository_identifiers(spec)
 
         self.assertListEqual(d.associations, [
                                               ('foo','10000-00'),
