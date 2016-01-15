@@ -346,7 +346,7 @@ class XLSIrradiationLoaderParseTestCase(unittest.TestCase):
 class SimilarTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.db = dvc_db_factory(os.path.join(get_data_dir(), 'similar.db'), remove=False, echo=True)
+        cls.db = dvc_db_factory(os.path.join(get_data_dir(), 'similar.db'), remove=False, echo=False)
 
     def test_similar_pi_lower(self):
         with self.db.session_ctx():
