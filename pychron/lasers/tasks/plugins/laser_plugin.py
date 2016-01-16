@@ -107,11 +107,15 @@ class BaseLaserPlugin(BaseTaskPlugin):
                         attr, func = attr
 
                     try:
-                        v = tag.find(attr).text.strip()
-                        if func:
-                            v = func(v)
+                        elem = tag.find(attr)
+                        if elem is not None:
+                            v = elem.text.strip()
+                            if func:
+                                v = func(v)
 
-                        params[attr] = v
+                            params[attr] = v
+                        else:
+                            self.debug('No communications attribute {}'.format(attr))
                     except Exception, e:
                         print 'client comms fail a', attr, e
             except Exception, e:

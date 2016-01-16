@@ -192,6 +192,7 @@ class AutomatedRun(Loggable):
                            ('peak_center_threshold1', int),
                            ('peak_center_threshold2', int),
                            ('peak_center_threshold_window', int)):
+
             set_preference(preferences, self, attr, 'pychron.experiment.{}'.format(attr), cast)
 
         self.persister.set_preferences(preferences)

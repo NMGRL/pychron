@@ -268,7 +268,7 @@ class LevelEditor(Loggable):
         db = self.db
         with db.session_ctx():
             ps = []
-            for pr in self.repo.get_irradiation_productions():
+            for pr in db.get_irradiation_productions():
                 p = IrradiationProduction(name=pr.name)
                 p.create(pr)
                 ps.append(p)
@@ -310,8 +310,9 @@ class LevelEditor(Loggable):
 
     def _selected_tray_changed(self):
         with self.db.session_ctx():
-            holes = self.repo.get_irradiation_holder_holes(self.selected_tray)
-            load_holder_canvas(self.canvas, holes)
+            holder = self.db.get_irradiation_holder(self.selected_tray)
+            if holder:
+                load_holder_canvas(self.canvas, holder.geometry)
 
     def _add_tray_button_fired(self):
         dlg = FileDialog(action='open', default_directory=paths.irradiation_tray_maps_dir)

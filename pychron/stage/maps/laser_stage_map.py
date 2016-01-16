@@ -58,8 +58,8 @@ class LaserStageMap(BaseStageMap):
         return p
 
     def load_correction_file(self):
+        self.debug('load correction file')
         p = self.correction_path
-        print p, os.path.isfile(p)
         if os.path.isfile(p):
             cors = None
             with open(p, 'rb') as f:
