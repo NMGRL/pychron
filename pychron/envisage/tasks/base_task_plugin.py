@@ -17,9 +17,9 @@
 # ============= enthought library imports =======================
 import os
 
+from envisage.service_offer import ServiceOffer
 from envisage.ui.tasks.task_extension import TaskExtension
 from traits.api import List
-from envisage.service_offer import ServiceOffer
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -112,10 +112,16 @@ class BaseTaskPlugin(BasePlugin):
         xx = []
         sadditions = []
         # print self.id, self.name
-        for tid, action in self.application.get_task_extensions(self.id):
-
+        for tid, action_id in self.application.get_task_extensions(self.id):
+            # print 'a', tid, action
+            # for _, _, _, actions in self.available_task_extensions:
+            #     for av in actions:
+            #         print 'b', tid, action, av.id
             action = next((av for _, _, _, actions in self.available_task_extensions
-                           for av in actions if av.id == action))
+                           for av in actions if av.id == action_id), None)
+            if action is None:
+                self.debug('no action found for {}'.format(action_id))
+                continue
 
             if ctid is None:
                 ctid = tid

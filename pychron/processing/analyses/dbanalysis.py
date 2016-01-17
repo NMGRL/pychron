@@ -34,7 +34,7 @@ from pychron.processing.analyses.changes import BlankChange, FitChange
 from pychron.processing.analyses.exceptions import NoProductionError
 from pychron.processing.analyses.view.snapshot_view import Snapshot
 from pychron.processing.isotope import Baseline, Sniff, Isotope
-from pychron.pychron_constants import INTERFERENCE_KEYS
+from pychron.pychron_constants import INTERFERENCE_KEYS, QTEGRA_SOURCE_KEYS, QTEGRA_SOURCE_NAMES
 
 
 class DValue(HasTraits):
@@ -319,8 +319,8 @@ class DBAnalysis(Analysis):
                     try:
                         sp = meas.spectrometer_parameters
 
-                        keys = ('extraction_lens', 'ysymmetry', 'zsymmetry', 'zfocus')
-                        names = ('ExtractionLens', 'Y-Symmetry', 'Z-Symmetry', 'Z-Focus')
+                        keys = QTEGRA_SOURCE_KEYS
+                        names = QTEGRA_SOURCE_NAMES
                         sd = [DValue(n, getattr(sp, k)) for n, k in zip(names, keys)]
 
                         self.source_parameters = sd

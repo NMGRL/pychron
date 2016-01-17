@@ -185,6 +185,7 @@ class DVCAnalysis(Analysis):
         self.aliquot_step_str = make_aliquot_step(self.aliquot, self.step)
 
         self.load_paths()
+        self.load_spectrometer_parameters(jd['spec_sha'])
 
     def load_paths(self, modifiers=None):
         if modifiers is None:
@@ -196,6 +197,14 @@ class DVCAnalysis(Analysis):
                 jd = dvc_load(path)
                 func = getattr(self, '_load_{}'.format(modifier))
                 func(jd)
+
+    def load_spectrometer_parameters(self, spec_sha):
+        p = os.path.join(paths.repository_dataset_dir, self.repository_identifier, '{}.json'.format(spec_sha))
+        sd = dvc_load(p)
+
+        self.source_parameters = sd['spectrometer']
+        self.gains = sd['gains']
+        self.deflections = sd['deflections']
 
     def _load_tags(self, jd):
         self.set_tag(jd)

@@ -19,7 +19,7 @@ from numpy import Inf
 from pyface.message_dialog import information
 from pyface.qt import QtCore
 
-from traits.api import Event
+from traits.api import Event, Dict, List
 
 # ============= standard library imports ========================
 from collections import namedtuple
@@ -169,7 +169,7 @@ class Analysis(ArArAge):
     experiment_txt = ''
     extraction_script_blob = ''
     measurement_script_blob = ''
-    # snapshots = List
+    snapshots = List
     extraction_script_name = ''
     measurement_script_name = ''
     xyz_position = ''
@@ -180,8 +180,9 @@ class Analysis(ArArAge):
     ramp_rate = 0
     peak_center_data = None
     collection_version = ''
-    # source_parameters = Dict
-    # deflections = Dict
+    source_parameters = Dict
+    deflections = Dict
+    gains = Dict
     repository_identifier = ''
 
     # processing
@@ -203,8 +204,8 @@ class Analysis(ArArAge):
     # omit_iso = False
     # omit_series = False
 
-    # blank_changes = List
-    # fit_changes = List
+    blank_changes = List
+    fit_changes = List
 
     # meta
     has_raw_data = False
@@ -214,13 +215,14 @@ class Analysis(ArArAge):
     tag_event = Event
     invalid_event = Event
 
-    def __init__(self, *args, **kw):
-        super(Analysis, self).__init__(*args, **kw)
-        self.snapshots = []
-        self.source_parameters = []
-        self.deflections = []
-        self.blank_changes = []
-        self.fit_changes = []
+    # def __init__(self, *args, **kw):
+    #     super(Analysis, self).__init__(*args, **kw)
+    #     self.snapshots = []
+    #     self.source_parameters = {}
+    #     self.deflections = {}
+    #     self.gains = {}
+    #     self.blank_changes = []
+    #     self.fit_changes = []
 
     def get_ic_factor(self, det):
         iso = next((i for i in self.isotopes.itervalues() if i.detector == det), None)

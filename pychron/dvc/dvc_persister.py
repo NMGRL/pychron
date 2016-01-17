@@ -37,6 +37,16 @@ def format_repository_identifier(project):
     return project.replace('/', '_').replace('\\', '_')
 
 
+def spectrometer_sha(src, defl, gains):
+    sha = hashlib.sha1()
+    for d in (src, defl, gains):
+        for k, v in sorted(d.items()):
+            sha.update(k)
+            sha.update(str(v))
+
+    return sha.hexdigest()
+
+
 class DVCPersister(BasePersister):
     active_repository = Instance(GitRepoManager)
     dvc = Instance(DVC_PROTOCOL)
@@ -396,13 +406,7 @@ class DVCPersister(BasePersister):
         for key,value in sorted(dictionary)
         :return:
         """
-        sha = hashlib.sha1()
-        for d in (self.per_spec.spec_dict, self.per_spec.defl_dict, self.per_spec.gains):
-            for k, v in sorted(d.items()):
-                sha.update(k)
-                sha.update(str(v))
-
-        return sha.hexdigest()
+        return spectrometer_sha(self.per_spec.spec_dict, self.per_spec.defl_dict, self.per_spec.gains)
 
     def _save_monitor(self):
         if self.per_spec.monitor:

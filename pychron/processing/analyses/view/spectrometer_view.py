@@ -22,6 +22,7 @@ from traitsui.api import View, UItem, VGroup, TabularEditor, Group
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.helpers.isotope_utils import sort_detectors
+from pychron.pychron_constants import QTEGRA_SOURCE_NAMES, QTEGRA_SOURCE_KEYS, NULL_STR
 
 
 class DictTabularAdapter(TabularAdapter):
@@ -50,26 +51,27 @@ class SpectrometerView(HasTraits):
     name = 'Spectrometer'
     source_parameters = List
     deflections = List
+    gains = List
 
     def __init__(self, an, *args, **kw):
         super(SpectrometerView, self).__init__(*args, **kw)
+
+        # source
         sp = an.source_parameters
-
-        keys = ('extraction_lens', 'ysymmetry', 'zsymmetry', 'zfocus')
-        names = ('ExtractionLens', 'Y-Symmetry', 'Z-Symmetry', 'Z-Focus')
-
-        sd = [DValue(n, sp.get(k)) for n, k in zip(names, keys)]
+        sd = [DValue(n, sp.get(k, NULL_STR)) for n, k in zip(QTEGRA_SOURCE_NAMES,
+                                                             QTEGRA_SOURCE_KEYS)]
         self.source_parameters = sd
 
+        # deflections
         defls = an.deflections
         names = sort_detectors(defls.keys())
-        ds = [DValue(ni, defls[ni] or '---') for ni in names]
+        ds = [DValue(ni, defls.get(ni, NULL_STR)) for ni in names]
         self.deflections = ds
 
-        # self.model = an
-
-    # def trait_context(self):
-    #     return {'object': self.model}
+        # gains
+        gains = an.gains
+        gs = [DValue(ni, gains.get(ni, NULL_STR)) for ni in names]
+        self.gains = gs
 
     def traits_view(self):
         g1 = Group(UItem('source_parameters',
@@ -83,11 +85,13 @@ class SpectrometerView(HasTraits):
                                               editable=False)),
                    show_border=True,
                    label='Deflections')
-        v = View(VGroup(g1, g2))
+
+        g3 = Group(UItem('gains',
+                         editor=TabularEditor(adapter=DictTabularAdapter(),
+                                              editable=False)),
+                   show_border=True,
+                   label='Gains')
+        v = View(VGroup(g1, g2, g3))
         return v
 
-
 # ============= EOF =============================================
-
-
-

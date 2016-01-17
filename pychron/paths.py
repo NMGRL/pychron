@@ -381,7 +381,7 @@ class Paths(object):
 
         self.dvc_dir = join(self.data_dir, '.dvc')
         self.repository_dataset_dir = join(self.dvc_dir, 'repositories')
-        self.meta_root = join(self.dvc_dir, 'meta')
+        self.meta_root = join(self.dvc_dir, 'MetaData')
 
         # ==============================================================================
         # processing

@@ -143,4 +143,7 @@ FLUX_CONSTANTS = {'Min et al., 2000': (5.80e-11, 0, 4.884e-10, 0, 28.201),
 # ('NM-220', ['L', 'M', 'N', 'O']),
 # ('NM-222', ['A', 'B', 'C', 'D']),
 # ('NM-256', ['E', 'F'])]
+
+QTEGRA_SOURCE_KEYS = ('extraction_lens', 'ysymmetry', 'zsymmetry', 'zfocus')
+QTEGRA_SOURCE_NAMES = ('ExtractionLens', 'Y-Symmetry', 'Z-Symmetry', 'Z-Focus')
 # ============= EOF =============================================
