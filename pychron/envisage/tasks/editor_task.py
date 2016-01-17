@@ -98,8 +98,9 @@ class BaseEditorTask(BaseManagerTask):
             do a save as
         """
         if self.active_editor:
-            if self.active_editor.path:
-                path = self.active_editor.path
+            if not path:
+                if self.active_editor.path:
+                    path = self.active_editor.path
 
             if not path:
                 path = self.save_file_dialog()

@@ -20,14 +20,12 @@ from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.task_factory import TaskFactory
 from pyface.tasks.action.schema import SGroup
 from pyface.tasks.action.schema_addition import SchemaAddition
-from traits.api import Instance
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.entry.entry_views.sensitivity_entry import SensitivitySelector
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 # from pychron.experiment.experiment_executor import ExperimentExecutor
-from pychron.experiment.experimentor import Experimentor
 from pychron.experiment.signal_calculator import SignalCalculator
 from pychron.experiment.image_browser import ImageBrowser
 from pychron.experiment.tasks.experiment_task import ExperimentEditorTask
@@ -38,7 +36,8 @@ from pychron.experiment.tasks.experiment_actions import NewExperimentQueueAction
     DeselectAction, SendTestNotificationAction, \
     NewPatternAction, OpenPatternAction, ResetQueuesAction, OpenLastExperimentQueueAction, UndoAction, \
     QueueConditionalsAction, ConfigureEditorTableAction, SystemConditionalsAction, ResetSystemHealthAction, \
-    OpenExperimentHistoryAction, LastAnalysisRecoveryAction, OpenCurrentExperimentQueueAction
+    OpenExperimentHistoryAction, LastAnalysisRecoveryAction, OpenCurrentExperimentQueueAction, \
+    SaveAsCurrentExperimentAction
 
 
 class ExperimentPlugin(BaseTaskPlugin):
@@ -153,7 +152,11 @@ class ExperimentPlugin(BaseTaskPlugin):
                   SchemaAddition(id='pychron.experiment.edit.undo', factory=UndoAction,
                                  path='MenuBar/Edit/experiment.group'),
                   SchemaAddition(id='pychron.experiment.edit.configure', factory=ConfigureEditorTableAction,
-                                 path='MenuBar/Edit/experiment.group')])]
+                                 path='MenuBar/Edit/experiment.group'),
+                  SchemaAddition(id='pychron.experiment.save_as_current_experiment',
+                                 factory=SaveAsCurrentExperimentAction,
+                                 path='MenuBar/file.menu/Save')
+                  ])]
 
     def _service_offers_default(self):
         so_signal_calculator = self.service_offer_factory(
