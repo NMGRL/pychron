@@ -599,7 +599,7 @@ class ExtractionLineManager(Manager, Consoleable):
             scene = c.canvas2D.scene
             obj = scene.get_item('vlabel_{}Pipette'.format(name))
             if obj is not None:
-                obj.value = value
+                obj.value = int(value)
                 c.refresh()
 
     def _sample_changer_factory(self):

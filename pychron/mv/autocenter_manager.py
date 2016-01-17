@@ -34,7 +34,7 @@ class AutoCenterManager(MachineVisionManager):
 
     configure_button = Button('configure')
     use_autocenter = Bool
-    use_hough_circle = Bool(True)
+    use_hough_circle = Bool(False)
     
     def calculate_new_center(self, cx, cy, offx, offy, dim=1.0,
                              alpha_enabled=True,

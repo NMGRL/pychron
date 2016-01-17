@@ -30,7 +30,7 @@ from pychron.canvas.canvas2D.scene.primitives.laser_primitives import Transect, 
     VelocityPolyLine, RasterPolygon, LaserPoint, DrillPoint
 from pychron.canvas.canvas2D.crosshairs_overlay import CrosshairsOverlay
 import os
-from pychron.canvas.canvas2D.stage_canvas import StageCanvas
+from pychron.canvas.canvas2D.stage_canvas import StageCanvas, DIRECTIONS
 from pychron.experiment.utilities.position_regex import TRANSECT_REGEX, \
     DRILL_REGEX
 

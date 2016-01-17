@@ -20,8 +20,6 @@ from traits.api import Any, Property
 import os
 # ============= local library imports  ==========================
 from pychron.envisage.view_util import open_view
-from pychron.spectrometer.base_spectrometer_manager import BaseSpectrometerManager
-from pychron.spectrometer.thermo.spectrometer import Spectrometer
 from pychron.paths import paths
 from pychron.spectrometer.jobs.relative_detector_positions import RelativeDetectorPositions
 from pychron.spectrometer.jobs.cdd_operating_voltage_scan import CDDOperatingVoltageScan

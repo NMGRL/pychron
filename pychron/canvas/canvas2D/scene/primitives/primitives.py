@@ -443,6 +443,7 @@ class CalibrationObject(HasTraits):
     def set_right(self, x, y):
         self.rx = x
         self.ry = y
+        self._rotation = 0
 
     def set_center(self, x, y):
         self.cx = x
@@ -524,7 +525,7 @@ class Label(QPrimitive):
 
 
 class ValueLabel(Label):
-    value = Either(Float, Int, Str)
+    value = Either(Int, Float, Str)
 
     def _get_text(self):
         return self.text.format(self.value)

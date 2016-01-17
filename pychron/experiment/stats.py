@@ -143,7 +143,7 @@ class ExperimentStats(Loggable):
             post = datetime.now()
 
         dt = post + timedelta(seconds=int(dur))
-        return dt.strftime('%I:%M:%S %p %a %m/%d')
+        return dt.strftime('%H:%M:%S %a %m/%d')
 
     def _calculate_duration(self, runs):
 

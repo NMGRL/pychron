@@ -36,7 +36,9 @@ def set_preference(preferences, obj, attr, ppath, cast=None):
     if cast is None:
         cast = str
     try:
-        setattr(obj, attr, cast(preferences.get(ppath)))
+        v = preferences.get(ppath)
+        if v is not None:
+            setattr(obj, attr, cast(v))
     except TypeError:
         pass
 

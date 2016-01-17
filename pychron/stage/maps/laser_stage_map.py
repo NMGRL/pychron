@@ -58,6 +58,7 @@ class LaserStageMap(BaseStageMap):
         return p
 
     def load_correction_file(self):
+        self.debug('load correction file')
         p = self.correction_path
         if os.path.isfile(p):
             cors = None
@@ -76,6 +77,7 @@ class LaserStageMap(BaseStageMap):
                         if x is not None and y is not None:
                             h.x_cor = x
                             h.y_cor = y
+                            h.corrected = True
 
     def _get_interpolation_holes(self, h, row):
         idx = row.index(h)
@@ -114,13 +116,18 @@ class LaserStageMap(BaseStageMap):
         return a, b, p
 
     def generate_row_interpolated_corrections(self):
+        self.debug('generate row interpolated corrections')
         rowdict = self.row_dict()
         for i, h in enumerate(self.sample_holes):
+
+            self.debug('{:03n} {} has correction ={}'.format(i, h.id, h.has_correction()))
             if not h.has_correction():
+
                 row = rowdict[h.y]
                 args = self._get_interpolation_holes(h, row)
                 if args:
                     a, b, p = args
+                    self.debug('interpolation holes a={}, b={}, p={}'.format(a.id, b.id, p))
 
                     dx = b.x_cor - a.x_cor
                     dy = b.y_cor - a.y_cor
@@ -157,18 +164,19 @@ class LaserStageMap(BaseStageMap):
 
     def dump_correction_file(self):
         p = self.correction_path
-        if os.path.isfile(p):
-            with open(p, 'wb') as f:
-                pickle.dump([(h.id, h.x_cor, h.y_cor)
-                             for h in self.sample_holes], f)
+        with open(p, 'wb') as f:
+            pickle.dump([(h.id, h.x_cor, h.y_cor)
+                         for h in self.sample_holes], f)
 
-            self.info('saved correction file {}'.format(p))
+        self.info('saved correction file {}'.format(p))
 
     def set_hole_correction(self, hole, x_cor, y_cor):
+        self.debug('set hole correction {}, x={}, y={}'.format(hole, x_cor, y_cor))
         if not isinstance(hole, SampleHole):
             hole = next((h for h in self.sample_holes if h.id == hole), None)
 
         if hole is not None:
+            self.debug('setting correction {}'.format(hole.id))
             hole.x_cor = x_cor
             hole.y_cor = y_cor
             hole.corrected = True
