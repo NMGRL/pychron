@@ -241,7 +241,7 @@ class IncrementalHeatTemplate(Viewable):
                 h.update(str(getattr(s, a)))
 
         d = h.hexdigest()
-        return '{}Step{}-{}_{}'.format(n, first.value, last.value, d[:8])
+        return '{}Step{}-{}_{}.txt'.format(n, first.value, last.value, d[:8])
 
     # ===============================================================================
     # handlers
