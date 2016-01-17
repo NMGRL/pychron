@@ -15,9 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.tasks.api import IEditor, IEditorAreaPane
 from pyface.tasks.task_layout import PaneItem, Splitter
 from traits.api import Property, Instance
-from pyface.tasks.api import IEditor, IEditorAreaPane
+
 # ============= standard library imports ========================
 import os
 # ============= local library imports  ==========================
@@ -97,8 +98,9 @@ class BaseEditorTask(BaseManagerTask):
             do a save as
         """
         if self.active_editor:
-            if self.active_editor.path:
-                path = self.active_editor.path
+            if not path:
+                if self.active_editor.path:
+                    path = self.active_editor.path
 
             if not path:
                 path = self.save_file_dialog()

@@ -76,6 +76,12 @@ class ExperimentEditorTask(EditorTask):
     load_table_pane = Instance('pychron.loading.panes.LoadTablePane')
     laser_control_client_pane = None
 
+    def save_as_current_experiment(self):
+        self.debug('save as current experiment')
+        if self.has_active_editor():
+            path = os.path.join(paths.experiment_dir, 'Current Experiment.txt')
+            self.save(path=path)
+
     def configure_experiment_table(self):
         if self.has_active_editor():
             self.active_editor.show_table_configurer()
