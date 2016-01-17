@@ -17,17 +17,18 @@
 # ============= enthought library imports =======================
 from difflib import ndiff
 
+from pyface.constant import OK
+from pyface.file_dialog import FileDialog
 from traits.api import HasTraits, Float, Enum, List, Int, \
     File, Property, Button, on_trait_change, Any, Event, cached_property
 from traits.trait_errors import TraitError
 from traitsui.api import View, UItem, HGroup, Item, spring, EnumEditor
-from pyface.file_dialog import FileDialog
-from pyface.constant import OK
 from traitsui.tabular_adapter import TabularAdapter
 
 # ============= standard library imports ========================
 import csv
 import os
+from hashlib import sha256
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import list_directory
 from pychron.core.ui.tabular_editor import myTabularEditor
@@ -95,6 +96,10 @@ class IncrementalHeatStep(HasTraits):
 
     def to_string(self):
         return ','.join(map(str, self.make_row()))
+
+    @property
+    def is_valid(self):
+        return self.value and self.duration
 
 
 # def _get_is_ok(self):
@@ -186,28 +191,8 @@ class IncrementalHeatTemplate(Viewable):
             writer.writerow(header)
             for step in self.steps:
                 writer.writerow(step.make_row())
-                # ===============================================================================
-                # handlers
-                # ===============================================================================
 
-    @on_trait_change('steps[]')
-    def _steps_updated(self):
-        for i, si in enumerate(self.steps):
-            si.step_id = i + 1
-
-    def _add_row_fired(self):
-        if self.selected:
-            for si in self.selected:
-                step = si.clone_traits()
-                self.steps.append(step)
-        else:
-            if self.steps:
-                step = self.steps[-1].clone_traits()
-            else:
-                step = IncrementalHeatStep()
-
-            self.steps.append(step)
-
+    # private
     def _calculate_similarity(self, template2):
         with open(self.path, 'r') as rfile:
             s1 = rfile.read()
@@ -220,34 +205,6 @@ class IncrementalHeatTemplate(Viewable):
         for line in diff:
             if line[0] in ('+', '-'):
                 e += 1
-
-        # n = max(len(self.steps), len(template2.steps))
-        # A = 1
-        # B = 1
-        # C = 1
-        # e = 0
-        # for i in range(n):
-        #     try:
-        #         tt1 = self.steps[i]
-        #         d1 = tt1.duration
-        #         c1 = tt1.cleanup
-        #         T1 = tt1.value
-        #     except IndexError:
-        #         d1, T1, c1 = 0, 0, 0
-        #
-        #     try:
-        #         tt2 = template2.steps[i]
-        #         d2 = tt2.duration
-        #         c2 = tt2.cleanup
-        #         T2 = tt2.value
-        #     except IndexError:
-        #         d2, T2, c2 = 0, 0, 0
-        #
-        #     a = A * (d1 - d2) ** 2
-        #     b = B * (T1 - T2) ** 2
-        #     c = C * (c1 - c2) ** 2
-        #     e += (a + b + c) ** 0.5
-
         return e
 
     def _check_similarity(self):
@@ -271,6 +228,42 @@ class IncrementalHeatTemplate(Viewable):
                 sims.append(ti)
         return sims
 
+    def _generate_name(self):
+        # get active steps
+        steps = [s for s in self.steps if s.is_valid]
+        n = len(steps)
+        first, last = steps[0], steps[-1]
+
+        h = sha256()
+        attrs = ('step_id', 'duration', 'cleanup', 'value')
+        for s in steps:
+            for a in attrs:
+                h.update(str(getattr(s, a)))
+
+        d = h.hexdigest()
+        return '{}Step{}-{}_{}'.format(n, first.value, last.value, d[:8])
+
+    # ===============================================================================
+    # handlers
+    # ===============================================================================
+    @on_trait_change('steps[]')
+    def _steps_updated(self):
+        for i, si in enumerate(self.steps):
+            si.step_id = i + 1
+
+    def _add_row_fired(self):
+        if self.selected:
+            for si in self.selected:
+                step = si.clone_traits()
+                self.steps.append(step)
+        else:
+            if self.steps:
+                step = self.steps[-1].clone_traits()
+            else:
+                step = IncrementalHeatStep()
+
+            self.steps.append(step)
+
     def _save_button_fired(self):
         sims = self._check_similarity()
         if sims:
@@ -288,7 +281,10 @@ class IncrementalHeatTemplate(Viewable):
                                             'Are you sure you want to save this template?'.format(','.join(sims))):
                 return
 
+        default_filename = self._generate_name()
+
         dlg = FileDialog(action='save as',
+                         default_filename=default_filename,
                          default_directory=paths.incremental_heat_template_dir)
         if dlg.open() == OK:
             path = dlg.path
@@ -320,24 +316,23 @@ class IncrementalHeatTemplate(Viewable):
 
         v = View(
 
-            HGroup(UItem('name', editor=EnumEditor(name='names')),
-                   UItem('add_row'), spring, Item('units')),
-            UItem('steps',
-                  style='custom',
-                  editor=editor),
+                HGroup(UItem('name', editor=EnumEditor(name='names')),
+                       UItem('add_row'), spring, Item('units')),
+                UItem('steps',
+                      style='custom',
+                      editor=editor),
 
-            HGroup(UItem('save_button', enabled_when='path'),
-                   UItem('save_as_button')),
-            height=500,
-            width=600,
-            resizable=True,
-            title=self.title,
-            handler=self.handler_klass)
+                HGroup(UItem('save_button', enabled_when='path'),
+                       UItem('save_as_button')),
+                height=500,
+                width=600,
+                resizable=True,
+                title=self.title,
+                handler=self.handler_klass)
         return v
 
 
 if __name__ == '__main__':
-
     paths.build('_dev')
     im = IncrementalHeatTemplate()
     im.load(os.path.join(paths.incremental_heat_template_dir,
