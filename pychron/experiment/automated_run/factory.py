@@ -43,7 +43,7 @@ from pychron.experiment.utilities.identifier import convert_special_name, ANALYS
 from pychron.experiment.automated_run.spec import AutomatedRunSpec
 from pychron.paths import paths
 from pychron.experiment.script.script import Script, ScriptOptions
-from pychron.experiment.queue.increment_heat_template import IncrementalHeatTemplate
+from pychron.experiment.queue.increment_heat_template import LaserIncrementalHeatTemplate, BaseIncrementalHeatTemplate
 from pychron.experiment.utilities.human_error_checker import HumanErrorChecker
 from pychron.core.helpers.filetools import list_directory, add_extension, list_directory2, remove_extension
 from pychron.lasers.pattern.pattern_maker_view import PatternMakerView
@@ -654,11 +654,14 @@ class AutomatedRunFactory(PersistenceLoggable):
             return pm
 
     def _new_template(self):
-        template = IncrementalHeatTemplate()
+
+        if self.extract_device in ('FusionsCO2', 'FusionsDiode'):
+            klass = LaserIncrementalHeatTemplate
+        else:
+            klass = BaseIncrementalHeatTemplate
+
+        template = klass()
         if self._use_template():
-            # t = self.template
-            # if not t.endswith('.txt'):
-            # t = '{}.txt'.format(t)
             t = os.path.join(paths.incremental_heat_template_dir, add_extension(self.template))
             template.load(t)
 

@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from difflib import ndiff
 
 from pyface.constant import OK
 from pyface.file_dialog import FileDialog
@@ -26,6 +25,7 @@ from traitsui.api import View, UItem, HGroup, Item, spring, EnumEditor
 from traitsui.tabular_adapter import TabularAdapter
 
 # ============= standard library imports ========================
+from difflib import ndiff
 import csv
 import os
 from hashlib import sha256
@@ -41,24 +41,16 @@ from pychron.pychron_constants import alphas
 # build_directories(paths)
 
 
-class IncrementalHeatAdapter(TabularAdapter):
+class BaseIncrementalHeatAdapter(TabularAdapter):
     columns = [('Step', 'step_id'),
                ('Value', 'value'),
                ('Units', 'units'),
                ('Duration (s)', 'duration'),
-               ('Cleanup (s)', 'cleanup'),
-               ('Beam Diameter', 'beam_diameter')]
+               ('Cleanup (s)', 'cleanup')]
 
     step_id_width = Int(40)
     step_id_text = Property
     units_text = Property
-    beam_diameter_text = Property
-
-    def _get_beam_diameter_text(self):
-        bd = self.item.beam_diameter
-        if bd is None:
-            bd = ''
-        return bd
 
     def _get_units_text(self):
         return self.item.units
@@ -73,14 +65,30 @@ class IncrementalHeatAdapter(TabularAdapter):
         return alphas(self.item.step_id - 1)
 
 
-class IncrementalHeatStep(HasTraits):
+class LaserIncrementalHeatAdapter(BaseIncrementalHeatAdapter):
+    columns = [('Step', 'step_id'),
+               ('Value', 'value'),
+               ('Units', 'units'),
+               ('Duration (s)', 'duration'),
+               ('Cleanup (s)', 'cleanup'),
+               ('Beam Diameter', 'beam_diameter')]
+
+    beam_diameter_text = Property
+
+    def _get_beam_diameter_text(self):
+        bd = self.item.beam_diameter
+        if bd is None:
+            bd = ''
+        return bd
+
+
+class BaseIncrementalHeatStep(HasTraits):
     step_id = Int
     duration = Float
     cleanup = Float
     value = Float
     units = Enum('watts', 'temp', 'percent')
-    beam_diameter = Property(depends_on='_beam_diameter')
-    _beam_diameter = Float(default_value=None)
+
     #    is_ok = Property
     step = Property(depends_on='step_id')
 
@@ -88,15 +96,8 @@ class IncrementalHeatStep(HasTraits):
     def _get_step(self):
         return alphas(self.step_id - 1)
 
-    def _get_beam_diameter(self):
-        return self._beam_diameter
-
-    def _set_beam_diameter(self, v):
-        self._beam_diameter = v
-
     def make_row(self):
-        return self.value, self.units,
-        self.duration, self.cleanup, self.beam_diameter if self.beam_diameter is not None else ''
+        return self.value, self.units, self.duration, self.cleanup
 
     def make_dict(self, gdur, gcleanup):
         dur = self.duration
@@ -111,8 +112,6 @@ class IncrementalHeatStep(HasTraits):
                  extract_units=self.units,
                  duration=dur,
                  cleanup=cleanup)
-        if self.beam_diameter is not None:
-            d['beam_diameter'] = self.beam_diameter
 
         return d
 
@@ -124,12 +123,32 @@ class IncrementalHeatStep(HasTraits):
         return self.value and self.duration
 
 
-# def _get_is_ok(self):
-#        return self.value and (self.duration or self.cleanup)
+class LaserIncrementalHeatStep(BaseIncrementalHeatStep):
+    beam_diameter = Property(depends_on='_beam_diameter')
+    _beam_diameter = Float(default_value=None)
+
+    def make_dict(self, gdur, gcleanup):
+        d = super(LaserIncrementalHeatStep, self).make_dict(gdur, gcleanup)
+        if self.beam_diameter is not None:
+            d['beam_diameter'] = self.beam_diameter
+        return d
+
+    def make_row(self):
+        return self.value, self.units, self.duration, \
+               self.cleanup, self.beam_diameter if self.beam_diameter is not None else ''
+
+    def _get_beam_diameter(self):
+        return self._beam_diameter
+
+    def _set_beam_diameter(self, v):
+        self._beam_diameter = v
 
 
-class IncrementalHeatTemplate(Viewable):
+class BaseIncrementalHeatTemplate(Viewable):
     steps = List
+    step_klass = BaseIncrementalHeatStep
+    adapter_klass = BaseIncrementalHeatAdapter
+
     name = Property(depends_on='path')
     path = File
     names = List
@@ -140,8 +159,6 @@ class IncrementalHeatTemplate(Viewable):
     title = Property
 
     selected = Any
-    # copy_cache = List
-    # pasted = Event
     refresh_needed = Event
 
     units = Enum('', 'watts', 'temp', 'percent')
@@ -156,17 +173,6 @@ class IncrementalHeatTemplate(Viewable):
                 si.units = self.units
             self.refresh_needed = True
 
-    # def _pasted_fired(self):
-    #     if self.selected:
-    #         idx = self.steps.index(self.selected[-1]) + 1
-    #         for ci in self.copy_cache[::-1]:
-    #             nc = ci.clone_traits()
-    #             self.steps.insert(idx, nc)
-    #     else:
-    #         for ci in self.copy_cache:
-    #             nc = ci.clone_traits()
-    #             self.steps.append(nc)
-
     def _get_title(self):
         if self.path:
             return os.path.basename(self.path)
@@ -174,7 +180,7 @@ class IncrementalHeatTemplate(Viewable):
             return ' '
 
     def _steps_default(self):
-        return [IncrementalHeatStep(step_id=i + 1) for i in range(20)]
+        return [self.step_klass(step_id=i + 1) for i in range(20)]
 
     def _get_name(self):
         return os.path.basename(self.path)
@@ -195,29 +201,20 @@ class IncrementalHeatTemplate(Viewable):
             cnt = 1
             for row in reader:
                 if row:
-                    params = dict()
-                    for a, cast in (('value', float), ('units', str),
-                                    ('duration', float), ('cleanup', float)):
-                        idx = header.index(a)
-                        params[a] = cast(row[idx])
+                    params = self._parse_row(row, header)
 
-                    try:
-                        idx = header.index('beam_diameter')
-                    except ValueError:
-                        idx = None
-
-                    if idx is not None:
-                        v = row[idx]
-                        if v.strip():
-                            try:
-                                params['beam_diameter'] = float(v)
-                            except ValueError:
-                                self.warning('Invalid beam_diameter value {}'.format(v))
-
-                    step = IncrementalHeatStep(step_id=cnt,
-                                               **params)
+                    step = self.step_klass(step_id=cnt,
+                                           **params)
                     self.steps.append(step)
                     cnt += 1
+
+    def _parse_row(self, row, header):
+        params = dict()
+        for a, cast in (('value', float), ('units', str),
+                        ('duration', float), ('cleanup', float)):
+            idx = header.index(a)
+            params[a] = cast(row[idx])
+        return params
 
     def dump(self, path):
         with open(path, 'w') as wfile:
@@ -249,7 +246,7 @@ class IncrementalHeatTemplate(Viewable):
             if ti == self.name:
                 continue
 
-            t = IncrementalHeatTemplate()
+            t = self.__class__()
             p = os.path.join(paths.incremental_heat_template_dir, ti)
             try:
                 t.load(p)
@@ -295,7 +292,7 @@ class IncrementalHeatTemplate(Viewable):
             if self.steps:
                 step = self.steps[-1].clone_traits()
             else:
-                step = IncrementalHeatStep()
+                step = self.step_klass()
 
             self.steps.append(step)
 
@@ -331,7 +328,7 @@ class IncrementalHeatTemplate(Viewable):
             self.close_ui()
 
     def traits_view(self):
-        editor = myTabularEditor(adapter=IncrementalHeatAdapter(),
+        editor = myTabularEditor(adapter=self.adapter_klass(),
                                  refresh='refresh_needed',
                                  selected='selected',
                                  # copy_cache='copy_cache',
@@ -367,9 +364,29 @@ class IncrementalHeatTemplate(Viewable):
         return v
 
 
+class LaserIncrementalHeatTemplate(BaseIncrementalHeatTemplate):
+    step_klass = LaserIncrementalHeatStep
+    adapter_klass = LaserIncrementalHeatAdapter
+
+    def _parse_row(self, row, header):
+        params = super(LaserIncrementalHeatTemplate, self)._parse_row(row, header)
+        try:
+            idx = header.index('beam_diameter')
+        except ValueError:
+            idx = None
+
+        if idx is not None:
+            v = row[idx]
+            if v.strip():
+                try:
+                    params['beam_diameter'] = float(v)
+                except ValueError:
+                    self.warning('Invalid beam_diameter value {}'.format(v))
+        return params
+
 if __name__ == '__main__':
     paths.build('_dev')
-    im = IncrementalHeatTemplate()
+    im = LaserIncrementalHeatTemplate()
     im.load(os.path.join(paths.incremental_heat_template_dir,
                          'a.txt'
                          ))
