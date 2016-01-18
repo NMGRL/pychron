@@ -46,11 +46,19 @@ class IncrementalHeatAdapter(TabularAdapter):
                ('Value', 'value'),
                ('Units', 'units'),
                ('Duration (s)', 'duration'),
-               ('Cleanup (s)', 'cleanup')]
+               ('Cleanup (s)', 'cleanup'),
+               ('Beam Diameter', 'beam_diameter')]
 
     step_id_width = Int(40)
     step_id_text = Property
     units_text = Property
+    beam_diameter_text = Property
+
+    def _get_beam_diameter_text(self):
+        bd = self.item.beam_diameter
+        if bd is None:
+            bd = ''
+        return bd
 
     def _get_units_text(self):
         return self.item.units
@@ -71,6 +79,8 @@ class IncrementalHeatStep(HasTraits):
     cleanup = Float
     value = Float
     units = Enum('watts', 'temp', 'percent')
+    beam_diameter = Property(depends_on='_beam_diameter')
+    _beam_diameter = Float(default_value=None)
     #    is_ok = Property
     step = Property(depends_on='step_id')
 
@@ -78,8 +88,15 @@ class IncrementalHeatStep(HasTraits):
     def _get_step(self):
         return alphas(self.step_id - 1)
 
+    def _get_beam_diameter(self):
+        return self._beam_diameter
+
+    def _set_beam_diameter(self, v):
+        self._beam_diameter = v
+
     def make_row(self):
-        return self.value, self.units, self.duration, self.cleanup
+        return self.value, self.units,
+        self.duration, self.cleanup, self.beam_diameter if self.beam_diameter is not None else ''
 
     def make_dict(self, gdur, gcleanup):
         dur = self.duration
@@ -90,9 +107,14 @@ class IncrementalHeatStep(HasTraits):
         if not cleanup:
             cleanup = gcleanup
 
-        return dict(extract_value=self.value, extract_units=self.units,
-                    duration=dur,
-                    cleanup=cleanup)
+        d = dict(extract_value=self.value,
+                 extract_units=self.units,
+                 duration=dur,
+                 cleanup=cleanup)
+        if self.beam_diameter is not None:
+            d['beam_diameter'] = self.beam_diameter
+
+        return d
 
     def to_string(self):
         return ','.join(map(str, self.make_row()))
@@ -179,6 +201,19 @@ class IncrementalHeatTemplate(Viewable):
                         idx = header.index(a)
                         params[a] = cast(row[idx])
 
+                    try:
+                        idx = header.index('beam_diameter')
+                    except ValueError:
+                        idx = None
+
+                    if idx is not None:
+                        v = row[idx]
+                        if v.strip():
+                            try:
+                                params['beam_diameter'] = float(v)
+                            except ValueError:
+                                self.warning('Invalid beam_diameter value {}'.format(v))
+
                     step = IncrementalHeatStep(step_id=cnt,
                                                **params)
                     self.steps.append(step)
@@ -187,7 +222,7 @@ class IncrementalHeatTemplate(Viewable):
     def dump(self, path):
         with open(path, 'w') as wfile:
             writer = csv.writer(wfile)
-            header = ('value', 'units', 'duration', 'cleanup')
+            header = ('value', 'units', 'duration', 'cleanup', 'beam_diameter')
             writer.writerow(header)
             for step in self.steps:
                 writer.writerow(step.make_row())
@@ -235,7 +270,7 @@ class IncrementalHeatTemplate(Viewable):
         first, last = steps[0], steps[-1]
 
         h = sha256()
-        attrs = ('step_id', 'duration', 'cleanup', 'value')
+        attrs = ('step_id', 'duration', 'cleanup', 'value', 'beam_diameter')
         for s in steps:
             for a in attrs:
                 h.update(str(getattr(s, a)))
