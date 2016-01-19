@@ -15,13 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.action.menu_manager import MenuManager
 from traits.api import HasTraits, Str, Int, Any, on_trait_change, List, Event, Button, Date
 from traitsui.api import View, UItem, Item, HGroup, VGroup, EnumEditor, spring
 from traitsui.editors import DateEditor
 from traitsui.handler import Controller, Handler
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
-from pyface.action.menu_manager import MenuManager
+
 # ============= standard library imports ========================
 from datetime import datetime, timedelta
 import os
@@ -234,7 +235,7 @@ class TimeViewModel(HasTraits):
         def func(xi, prog, i, n):
             if prog:
                 prog.change_message('Loading {}'.format(xi.record_id))
-            return xi.record_view
+            return xi.record_views
 
         return progress_loader(ans, func, threshold=25)
 

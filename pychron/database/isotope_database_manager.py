@@ -16,10 +16,11 @@
 
 # ============= enthought library imports =======================
 
+from apptools.preferences.preference_binding import bind_preference
 from traits.api import Property, Event, \
     cached_property, Any, Int, Str
 from traits.has_traits import provides
-from apptools.preferences.preference_binding import bind_preference
+
 # ============= standard library imports ========================
 from itertools import groupby
 import weakref
@@ -342,6 +343,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                     db_ans, new_ans = self._construct_analyses(no_db_ans, db_ans, progress,
                                                                calculate_age, calculate_F,
                                                                unpack, use_cache,
+                                                               use_progress,
                                                                load_aux=load_aux, **kw)
                     db_ans.extend(new_ans)
 
@@ -396,7 +398,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
     # private
     # ===============================================================================
     def _construct_analyses(self, no_db_ans, db_ans, progress, calculate_age, calculate_F,
-                            unpack, use_cache, **kw):
+                            unpack, use_cache, use_progress, **kw):
 
         uuids = [ri.uuid for ri in no_db_ans]
         # for ui in uuids:
@@ -426,7 +428,8 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
             return a
 
         try:
-            return db_ans, progress_loader(no_db_ans, func, progress=progress, reraise_cancel=True)
+            return db_ans, progress_loader(no_db_ans, func, progress=progress, use_progress=use_progress,
+                                           reraise_cancel=True)
         except CancelLoadingError:
             return [], []
 

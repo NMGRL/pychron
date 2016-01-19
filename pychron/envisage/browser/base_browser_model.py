@@ -250,7 +250,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         with db.session_ctx():
             es = db.get_repositories()
             if es:
-                es = [e.record_view() for e in es]
+                es = [e.record_view for e in es]
 
                 self.repositories = es
                 self.orepositories = es
@@ -543,7 +543,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             if prog:
                 # if prog and i % 25 == 0:
                 prog.change_message('Loading {}'.format(xi.record_id))
-            return xi.record_view
+            return xi.record_views
 
         return progress_loader(ans, func, threshold=25, step=25)
 

@@ -709,6 +709,20 @@ class DVC(Loggable):
             self.db.add_load_holder(name)
         self.meta_repo.add_load_holder(name, path_or_txt)
 
+    def copy_production(self, pr):
+        """
+
+        @param pr: irrad_ProductionTable object
+        @return:
+        """
+        pname = pr.name.replace(' ', '_')
+        path = os.path.join(paths.meta_root, 'productions', '{}.json'.format(pname))
+        if not os.path.isfile(path):
+            obj = {}
+            for attr in INTERFERENCE_KEYS + RATIO_KEYS:
+                obj[attr] = [getattr(pr, attr), getattr(pr, '{}_err'.format(attr))]
+            dvc_dump(obj, path)
+
     # private
     def _add_interpreted_age(self, ia, d):
         p = analysis_path(ia.identifier, ia.repository_identifier, modifier='ia', mode='w')

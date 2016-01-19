@@ -82,6 +82,7 @@ class RepositoryTbl(Base, BaseMixin):
 
     repository_associations = relationship('RepositoryAssociationTbl', backref='repository_item')
 
+    @property
     def record_view(self):
         from pychron.envisage.browser.record_views import RepositoryRecordView
 
@@ -183,45 +184,54 @@ class AnalysisTbl(Base, BaseMixin):
             return es[0]
 
     @property
-    def record_view(self):
-        iv = self._record_view
-        if not iv:
+    def record_views(self):
+        # iv = self._record_view
+        # if not iv:
+        repos = self.repository_associations
+        if len(repos) == 1:
+            return self._make_record_view(repos[0].repository),
+        else:
+            return [self._make_record_view(r.repository, use_suffix=True) for r in repos]
 
-            iv = DVCIsotopeRecordView()
-            iv.extract_script_name = self.extractionName
-            iv.meas_script_name = self.measurementName
+    def _make_record_view(self, repo, use_suffix=False):
+        iv = DVCIsotopeRecordView()
+        iv.extract_script_name = self.extractionName
+        iv.meas_script_name = self.measurementName
 
-            irradpos = self.irradiation_position
-            iv.identifier = irradpos.identifier
-            iv.irradiation = irradpos.level.irradiation.name
-            iv.irradiation_level = irradpos.level.name
-            iv.irradiation_position_position = irradpos.position
+        irradpos = self.irradiation_position
+        iv.identifier = irradpos.identifier
+        iv.irradiation = irradpos.level.irradiation.name
+        iv.irradiation_level = irradpos.level.name
+        iv.irradiation_position_position = irradpos.position
 
-            iv.labnumber = iv.identifier
-            iv.repository_ids = es = [e.repository for e in self.repository_associations]
-            if len(es) == 1:
-                iv.repository_identifier = es[0]
+        iv.labnumber = iv.identifier
+        # iv.repository_ids = es = [e.repository for e in self.repository_associations]
+        # if len(es) == 1:
+        #     iv.repository_identifier = es[0]
+        iv.repository_identifier = repo
+        iv.use_repository_suffix = use_suffix
 
-            for tag in ('aliquot', 'increment', 'uuid',
-                        'extract_value', 'cleanup', 'duration',
-                        'mass_spectrometer',
-                        'extract_device',
-                        'rundate',
-                        'analysis_type', 'comment'):
-                setattr(iv, tag, getattr(self, tag))
+        for tag in ('aliquot', 'increment', 'uuid',
+                    'extract_value', 'cleanup', 'duration',
+                    'mass_spectrometer',
+                    'extract_device',
+                    'rundate',
+                    'analysis_type', 'comment'):
+            setattr(iv, tag, getattr(self, tag))
 
-            if irradpos.sample:
-                iv.sample = irradpos.sample.name
-                if irradpos.sample.project:
-                    iv.project = irradpos.sample.project.name
+        if irradpos.sample:
+            iv.sample = irradpos.sample.name
+            if irradpos.sample.project:
+                iv.project = irradpos.sample.project.name
 
-            iv.timestampf = make_timef(self.timestamp)
-            iv.tag = self.change.tag
-            iv.init()
-
-            self._record_view = iv
-
+        iv.timestampf = make_timef(self.timestamp)
+        iv.tag = self.change.tag
+        iv.init()
         return iv
+
+        # self._record_view = iv
+
+        # return iv
 
 
 class ProjectTbl(Base, NameMixin):

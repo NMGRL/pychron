@@ -38,7 +38,9 @@ def open_progress(n, close_at_end=True, busy=False, **kw):
     return pd
 
 
-def progress_loader(xs, func, threshold=50, progress=None, reraise_cancel=False, n=None, busy=False, step=1):
+def progress_loader(xs, func, threshold=50, progress=None,
+                    use_progress=True,
+                    reraise_cancel=False, n=None, busy=False, step=1):
     """
         xs: list or tuple
         func: callable with signature func(xi, prog, i, n)
@@ -59,7 +61,7 @@ def progress_loader(xs, func, threshold=50, progress=None, reraise_cancel=False,
 
     n = n / step
 
-    if not progress:
+    if not progress and use_progress:
         progress = open_progress(n, busy=busy)
 
     def gen():

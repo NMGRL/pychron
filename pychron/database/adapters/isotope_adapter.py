@@ -29,7 +29,7 @@ from sqlalchemy.orm.exc import NoResultFound
 # ============= local library imports  ==========================
 from pychron.database.core.functions import delete_one
 from pychron.database.core.database_adapter import DatabaseAdapter
-from pychron.database.core.query import compile_query
+from pychron.database.core.query import compile_query, in_func
 from pychron.database.i_browser import IBrowser
 
 # spec_
@@ -1344,7 +1344,7 @@ class IsotopeAdapter(DatabaseAdapter):
                                 analysis_type=None,
                                 mass_spectrometers=None,
                                 extract_device=None,
-                                project=None,
+                                projects=None,
                                 order='asc',
                                 exclude_invalid=True):
         with self.session_ctx() as sess:
@@ -1355,7 +1355,7 @@ class IsotopeAdapter(DatabaseAdapter):
                 q = q.join(gen_LabTable, gen_SampleTable)
                 # if irradiations:
                 #     q = q.join(irrad_PositionTable, irrad_LevelTable, irrad_IrradiationTable)
-            elif project:
+            elif projects:
                 q = q.join(gen_SampleTable, gen_ProjectTable)
 
             if mass_spectrometers:
@@ -1369,10 +1369,11 @@ class IsotopeAdapter(DatabaseAdapter):
                 q = q.filter(gen_LabTable.identifier == labnumber)
 
             if samples:
-                if isinstance(samples, (tuple, list)):
-                    q = q.filter(gen_SampleTable.name.in_(samples))
-                else:
-                    q = q.filter(gen_SampleTable.name == samples)
+                # if isinstance(samples, (tuple, list)):
+                #     q = q.filter(gen_SampleTable.name.in_(samples))
+                # else:
+                #     q = q.filter(gen_SampleTable.name == samples)
+                q = in_func(q, gen_SampleTable.name, samples)
 
             # if irradiations:
             #     if isinstance(irradiations, (tuple, list)):
@@ -1386,16 +1387,18 @@ class IsotopeAdapter(DatabaseAdapter):
             #         q = q.filter(irrad_IrradiationTable.name == irradiations)
 
             if mass_spectrometers:
-                if hasattr(mass_spectrometers, '__iter__'):
-                    q = q.filter(gen_MassSpectrometerTable.name.in_(mass_spectrometers))
-                else:
-                    q = q.filter(gen_MassSpectrometerTable.name == mass_spectrometers)
+                q = in_func(q, gen_MassSpectrometerTable.name, mass_spectrometers)
+                # if hasattr(mass_spectrometers, '__iter__'):
+                #     q = q.filter(gen_MassSpectrometerTable.name.in_(mass_spectrometers))
+                # else:
+                #     q = q.filter(gen_MassSpectrometerTable.name == mass_spectrometers)
             if extract_device:
                 q = q.filter(gen_ExtractionDeviceTable.name == extract_device)
             if analysis_type:
                 q = q.filter(gen_AnalysisTypeTable.name == analysis_type)
-            if project:
-                q = q.filter(gen_ProjectTable.name == project)
+            if projects:
+                q = in_func(q, gen_ProjectTable.name, projects)
+                # q = q.filter(gen_ProjectTable.name == project)
             if mi:
                 q = q.filter(self._get_post_filter(mi, '__ge__', cast=False))
             if ma:

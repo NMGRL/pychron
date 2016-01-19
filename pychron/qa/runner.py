@@ -54,7 +54,7 @@ class QARunner(Loggable):
         dvc = self.dvc
         with dvc.session_ctx():
             records = dvc.db.get_analyses_uuid(metadata['uuids'])
-            records = [r.record_view for r in records]
+            records = [ri for r in records for ri in r.record_views]
             ans = dvc.make_analyses(records)
             state.unknowns = ans
 

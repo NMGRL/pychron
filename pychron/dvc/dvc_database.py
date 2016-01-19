@@ -161,7 +161,7 @@ class DVCDatabase(DatabaseAdapter):
                 # print rs
                 # print ti, low, high, rs, refs
             # print 'refs', refs
-            return [ri.record_view for ri in refs]
+            return [rii for ri in refs for rii in ri.record_views]
 
     # def get_analyses_data_range(self, low, high, atypes, exclude=None, exclude_uuids=None):
     #     with self.session_ctx() as sess:
@@ -346,12 +346,12 @@ class DVCDatabase(DatabaseAdapter):
 
     def add_repository(self, name, principal_investigator, **kw):
         with self.session_ctx():
-            creator = self.get_principal_investigator(principal_investigator)
-            if not creator:
+            principal_investigator = self.get_principal_investigator(principal_investigator)
+            if not principal_investigator:
                 principal_investigator = self.add_principal_investigator(principal_investigator)
                 self.flush()
 
-            a = RepositoryTbl(name=name, principal_investigator=principal_investigator, **kw)
+            a = RepositoryTbl(name=name, principal_investigator=principal_investigator.name, **kw)
             return self._add_item(a)
 
     def add_interpreted_age(self, **kw):
@@ -522,6 +522,9 @@ class DVCDatabase(DatabaseAdapter):
             q = q.order_by(IrradiationPositionTbl.identifier)
 
             return self._query_all(q, verbose_query=False)
+
+    def get_analysis(self, value):
+        return self._retrieve_item(AnalysisTbl, value, key='idanalysisTbl')
 
     def get_analysis_uuid(self, value):
         return self._retrieve_item(AnalysisTbl, value, key='uuid')

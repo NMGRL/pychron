@@ -23,14 +23,16 @@ import time
 from itertools import groupby
 from datetime import timedelta
 # ============= local library imports  ==========================
-from numpy import array, array_split
+from numpy import array_split
 from pychron.canvas.utils import make_geom
-from pychron.core.helpers.datetime_tools import make_timef, bin_timestamps, get_datetime
+from pychron.core.helpers.datetime_tools import get_datetime
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.dvc import dvc_dump
 from pychron.dvc.dvc import DVC
 from pychron.dvc.dvc_persister import DVCPersister, format_repository_identifier
+from pychron.dvc.pychrondata_transfer_helpers import get_irradiation_timestamps, get_project_timestamps, \
+    set_spectrometer_files
 from pychron.experiment.automated_run.persistence_spec import PersistenceSpec
 from pychron.experiment.automated_run.spec import AutomatedRunSpec
 from pychron.experiment.utilities.identifier import make_runid, IDENTIFIER_REGEX, SPECIAL_IDENTIFIER_REGEX
@@ -38,7 +40,7 @@ from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.github import Organization
 from pychron.loggable import Loggable
 from pychron.paths import paths
-from pychron.pychron_constants import ALPHAS
+from pychron.pychron_constants import ALPHAS, QTEGRA_SOURCE_KEYS
 
 ORG = 'NMGRLData'
 
@@ -101,7 +103,7 @@ class IsoDBTransfer(Loggable):
                         password=os.environ.get('LOCALHOST_DB_PWD'),
                         kind='mysql',
                         # echo=True,
-                        name='pychrondata_dev')
+                        name='pychrondata')
         else:
             conn['name'] = 'pychrondata'
 
@@ -110,7 +112,28 @@ class IsoDBTransfer(Loggable):
         src.connect()
         self.processor = proc
 
-    def bulk_import_irradiations(self, creator, dry=True):
+    def copy_productions(self):
+        src = self.processor.db
+        dvc = self.dvc
+        dest = dvc.db
+        with src.session_ctx():
+            pr = src.get_irradiation_productions()
+            for p in pr:
+                # copy to database
+                pname = p.name.replace(' ', '_')
+                if not dest.get_production(pname):
+                    dest.add_production(pname)
+
+                # copy to meta
+                dvc.copy_production(p)
+
+    def set_spectrometer_files(self, repository):
+        set_spectrometer_files(self.processor.db,
+                               self.dvc.db,
+                               repository,
+                               os.path.join(paths.repository_dataset_dir, repository))
+
+    def bulk_import_irradiations(self, irradiations, creator, dry=True):
 
         # for i in xrange(251, 277):
         # for i in xrange(258, 259):
@@ -118,7 +141,7 @@ class IsoDBTransfer(Loggable):
         # for i in (262, 263, 264, 265):
         # for i in (266, 267, 268, 269):
         # for i in (270, 271, 272, 273):
-        for i in (273,):
+        for i in irradiations:
             irradname = 'NM-{}'.format(i)
             runs = self.bulk_import_irradiation(irradname, creator, dry=dry)
             # if runs:
@@ -189,7 +212,7 @@ class IsoDBTransfer(Loggable):
         tol_hrs = 6
         self.debug('bulk import project={}, pi={}'.format(project, principal_investigator))
         oruns = []
-        ts, idxs = self._get_project_timestamps(project, tol_hrs=tol_hrs)
+
         repository_identifier = project
 
         # def filterfunc(x):
@@ -209,6 +232,7 @@ class IsoDBTransfer(Loggable):
         #     return (a or b) and d
         #
         for ms in ('jan', 'obama'):
+            ts, idxs = self._get_project_timestamps(project, ms, tol_hrs=tol_hrs)
             for i, ais in enumerate(array_split(ts, idxs + 1)):
                 if not ais.shape[0]:
                     self.debug('skipping {}'.format(i))
@@ -217,25 +241,58 @@ class IsoDBTransfer(Loggable):
                 low = get_datetime(ais[0]) - timedelta(hours=tol_hrs / 2.)
                 high = get_datetime(ais[-1]) + timedelta(hours=tol_hrs / 2.)
 
-                print ms, low, high
-        # with src.session_ctx():
-        #             ans = src.get_analyses_date_range(low, high,
-        #                                               mass_spectrometers=(ms,))
-        #
-        #             # runs = filter(lambda x: x.labnumber.irradiation_position is None or
-        #             #                         x.labnumber.irradiation_position.level.irradiation.name == irradname, ans)
-        #
-        #             runs = filter(filterfunc, ans)
-        #             if dry:
-        #                 for ai in runs:
-        #                     oruns.append(ai.record_id)
-        #                     print ms, ai.record_id
-        #             else:
-        #                 self.debug('================= Do Export i: {} low: {} high: {}'.format(i, low, high))
-        #                 self.debug('N runs: {}'.format(len(runs)))
-        #                 self.do_export([ai.record_id for ai in runs], repository_identifier, principal_investigator)
+                print '========{}, {}, {}'.format(ms, low, high)
+                with src.session_ctx():
+                    runs = src.get_analyses_date_range(low, high,
+                                                       projects=('REFERENCES', project),
+                                                       mass_spectrometers=(ms,))
+
+                    if dry:
+                        for ai in runs:
+                            oruns.append(ai.record_id)
+                            print ai.measurement.mass_spectrometer.name, ai.record_id, ai.labnumber.sample.name, \
+                                ai.analysis_timestamp
+                    else:
+                        self.debug('================= Do Export i: {} low: {} high: {}'.format(i, low, high))
+                        self.debug('N runs: {}'.format(len(runs)))
+                        self.do_export([ai.record_id for ai in runs], repository_identifier, principal_investigator)
 
         return oruns
+
+    def find_project_overlaps(self, projects):
+        tol_hrs = 6
+        src = self.processor.db
+
+        pdict = {}
+        for p in projects:
+            for ms in ('jan', 'obama'):
+                ts, idxs = self._get_project_timestamps(p, ms, tol_hrs=tol_hrs)
+                for i, ais in enumerate(array_split(ts, idxs + 1)):
+                    if not ais.shape[0]:
+                        self.debug('skipping {}'.format(i))
+                        continue
+
+                    low = get_datetime(ais[0]) - timedelta(hours=tol_hrs / 2.)
+                    high = get_datetime(ais[-1]) + timedelta(hours=tol_hrs / 2.)
+
+                    print '========{}, {}, {}'.format(ms, low, high)
+                    with src.session_ctx():
+                        runs = src.get_analyses_date_range(low, high,
+                                                           projects=('REFERENCES',),
+                                                           mass_spectrometers=(ms,))
+
+                        pdict[p] = [ai.record_id for ai in runs]
+
+        for p in projects:
+            for o in projects:
+                if p == o:
+                    continue
+                pruns = pdict[p]
+                oruns = pdict[o]
+                for ai in pruns:
+                    if ai in oruns:
+                        print p, o, ai
+
 
     def import_date_range(self, low, high, spectrometer, repository_identifier, creator):
         src = self.processor.db
@@ -278,54 +335,14 @@ class IsoDBTransfer(Loggable):
                             traceback.print_exc()
                             self.warning('failed transfering {}. {}'.format(a, e))
 
-    def runlist_load(self, path):
-        with open(path, 'r') as rfile:
-            runs = [li.strip() for li in rfile]
-            # runs = [line.strip() for line in rfile if line.strip()]
-            return filter(None, runs)
-
-    def runlist_loads(self, txt):
-        runs = [li.strip() for li in txt.striplines()]
-        return filter(None, runs)
-
     # private
-    def _get_project_timestamps(self, project, tol_hrs=6):
+    def _get_project_timestamps(self, project, mass_spectrometer, tol_hrs=6):
         src = self.processor.db
-        with src.session_ctx() as sess:
-            sql = """SELECT ant.analysis_timestamp from meas_analysistable as ant
-join gen_labtable as lt on lt.id = ant.lab_id
-join gen_sampletable as st on lt.sample_id = st.id
-join gen_projecttable as pt on st.project_id = pt.id
-where pt.name="{}"
-order by ant.analysis_timestamp ASC
-""".format(project)
-
-            result = sess.execute(sql)
-            ts = array([make_timef(ri[0]) for ri in result.fetchall()])
-
-            idxs = bin_timestamps(ts, tol_hrs=tol_hrs)
-            return ts, idxs
+        return get_project_timestamps(src, project, mass_spectrometer, tol_hrs)
 
     def _get_irradiation_timestamps(self, irradname, tol_hrs=6):
         src = self.processor.db
-        with src.session_ctx() as sess:
-            sql = """SELECT ant.analysis_timestamp from meas_analysistable as ant
-join gen_labtable as lt on lt.id = ant.lab_id
-join gen_sampletable as st on lt.sample_id = st.id
-join irrad_PositionTable as irp on lt.irradiation_id = irp.id
-join irrad_leveltable as il on irp.level_id = il.id
-join irrad_irradiationtable as ir on il.irradiation_id = ir.id
-
-where ir.name = "{}" and st.name ="FC-2"
-order by ant.analysis_timestamp ASC
-
-""".format(irradname)
-
-            result = sess.execute(sql)
-            ts = array([make_timef(ri[0]) for ri in result.fetchall()])
-
-            idxs = bin_timestamps(ts, tol_hrs=tol_hrs)
-            return ts, idxs
+        return get_irradiation_timestamps(src, irradname, tol_hrs)
 
     def _add_repository(self, dest, repository_identifier, creator, create_repo):
         repository_identifier = format_repository_identifier(repository_identifier)
@@ -541,7 +558,7 @@ order by ant.analysis_timestamp ASC
 
         self.debug('make analysis idn:{}, aliquot:{} step:{}'.format(idn, aliquot, step))
         try:
-            an = proc.make_analysis(iv, unpack=True, use_cache=False)
+            an = proc.make_analysis(iv, unpack=True, use_cache=False, use_progress=False)
         except:
             self.warning('Failed to make {}'.format(make_runid(idn, aliquot, step)))
             return
@@ -623,10 +640,27 @@ order by ant.analysis_timestamp ASC
                               queue_conditionals_name='',
                               tray='')
 
+        meas = dban.measurement
+        # get spectrometer parameters
+        # gains
+        gains = {}
+        gain_history = dban.gain_history
+        if gain_history:
+            gains = {d.detector.name: d.value for d in gain_history.gains}
+
+        # deflections
+        deflections = {d.detector.name: d.deflection for d in meas.deflections}
+
+        # source
+        src = {k: getattr(meas.spectrometer_parameters, k) for k in QTEGRA_SOURCE_KEYS}
+
         ps = PersistenceSpec(run_spec=rs,
                              tag=an.tag.name,
                              arar_age=an,
                              timestamp=dban.analysis_timestamp,
+                             defl_dict=deflections,
+                             gains=gains,
+                             spec_dict=src,
                              use_repository_association=True,
                              positions=[p.position for p in extraction.positions])
 
@@ -648,78 +682,6 @@ order by ant.analysis_timestamp ASC
         return pos
 
 
-def experiment_id_modifier(root, expid):
-    for r, ds, fs in os.walk(root, topdown=True):
-        fs = [f for f in fs if not f[0] == '.']
-        ds[:] = [d for d in ds if not d[0] == '.']
-
-        # print 'fff',r, os.path.basename(r)
-        if os.path.basename(r) in ('intercepts', 'blanks', '.git',
-                                   'baselines', 'icfactors', 'extraction', 'tags', '.data', 'monitor', 'peakcenter'):
-            continue
-        # dcnt+=1
-        for fi in fs:
-            # if not fi.endswith('.py') or fi == '__init__.py':
-            #     continue
-            # cnt+=1
-            p = os.path.join(r, fi)
-            # if os.path.basename(os.path.dirname(p)) =
-            print p
-            write = False
-            with open(p, 'r') as rfile:
-                jd = json.load(rfile)
-                if 'repository_identifier' in jd:
-                    jd['repository_identifier'] = expid
-                    write = True
-
-            if write:
-                dvc_dump(jd, p)
-
-
-def load_path():
-    # path = '/Users/ross/Sandbox/dvc_imports/NM-276.txt'
-    # expid = 'Irradiation-NM-276'
-    # creator = 'mcintosh'
-
-    path = '/Users/ross/Sandbox/dvc_imports/chesner_unknowns.txt'
-    expid = 'toba'
-    creator = 'root'
-
-    runs = e.runlist_load(path)
-    return runs, expid, creator
-
-
-def load_import_request():
-    import pymysql.cursors
-    # Connect to the database
-    connection = pymysql.connect(host='localhost',
-                                 user=os.environ.get('DB_USER'),
-                                 passwd=os.environ.get('DB_PWD'),
-                                 db='labspy',
-                                 cursorclass=pymysql.cursors.DictCursor)
-
-    try:
-        # connection is not autocommit by default. So you must commit to save
-        # your changes.
-        # connection.commit()
-
-        with connection.cursor() as cursor:
-            # Read a single record
-            # sql = "SELECT `id`, `password` FROM `users` WHERE `email`=%s"
-            # cursor.execute(sql, ('webmaster@python.org',))
-            sql = '''SELECT * FROM importer_importrequest'''
-            cursor.execute(sql)
-            result = cursor.fetchone()
-
-            runs = result['runlist_blob']
-            expid = result['repository_identifier']
-            creator = result['requestor_name']
-
-            return runs, expid, creator
-    finally:
-        connection.close()
-
-
 if __name__ == '__main__':
     from pychron.core.helpers.logger_setup import logging_setup
 
@@ -732,8 +694,38 @@ if __name__ == '__main__':
 
     # runs, expid, creator = load_path()
     # runs, expid, creator = load_import_request()
-    e.bulk_import_irradiations('NMGRL', dry=False)
-    e.bulk_import_project('')
+    # irrads = ('NM-264', 'NM-266', 'NM-267', 'NM-269', 'NM-274', 'NM-278')
+    # for i in irrads:
+    #     project = 'Irradiation-{}'.format(i)
+    #     create_repo_for_existing_local(project, paths.repository_dataset_dir)
+    #     commit_initial_import(project, paths.repository_dataset_dir)
+    # e.bulk_import_irradiation('NM-278', 'NMGRL', dry=False)
+
+    ps = ('Valles',
+          'RatonClayton',
+          'ZuniBandera',
+          'ValleyOfFire',
+          'Potrillo',
+          'RedHillQuemado',
+          'ZeroAge',
+          'Animas',
+          'BrazosCones',
+          'Jornada',
+          'Lucero',
+          'CatHills',
+          'SanFrancisco',
+          'AlbuquerqueVolcanoes')
+
+    e.find_project_overlaps(ps)
+
+    # for project in ps:
+    # print 'project={}'.format(project)
+    # fix_a_steps(e.dvc.db, project, paths.repository_dataset_dir)
+    # commit_initial_import(project, paths.repository_dataset_dir)
+    #     create_repo_for_existing_local(project, paths.repository_dataset_dir)
+    # e.bulk_import_project(project, 'Zimmerer', dry=False)
+    # e.copy_productions()
+    # e.set_spectrometer_files('Irradiation-NM-273')
 
     # e.bulk_import_irradiation('NM-274', 'root', dry=False)
     # e.import_date_range('2015-12-07 12:00:43', '2015-12-09 13:45:51', 'jan',
@@ -759,4 +751,3 @@ if __name__ == '__main__':
     # e.do_export(path, expid, creator, create_repo=False)
     # e.export_production('Triga PR 275', db=False)
     # ============= EOF =============================================
-
