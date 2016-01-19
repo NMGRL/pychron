@@ -33,7 +33,8 @@ from pychron.managers.manager import Manager
 from pychron.graph.time_series_graph import TimeSeriesStreamGraph
 from pychron.spectrometer.graph.spectrometer_scan_graph import \
     SpectrometerScanGraph
-from pychron.spectrometer.jobs.scanner import Scanner
+from pychron.spectrometer.jobs.mass_scanner import MassScanner
+from pychron.spectrometer.jobs.dac_scanner import DACScanner
 from pychron.spectrometer.base_detector import BaseDetector
 from pychron.spectrometer.jobs.rise_rate import RiseRate
 from pychron.paths import paths
@@ -63,7 +64,8 @@ class ScanManager(Manager):
     detector = Instance(BaseDetector)
     magnet = DelegatesTo('spectrometer')
     source = DelegatesTo('spectrometer')
-    scanner = Instance(Scanner)
+    dac_scanner = Instance(DACScanner)
+    mass_scanner = Instance(MassScanner)
     rise_rate = Instance(RiseRate)
     isotope = String
     isotopes = Property
@@ -128,6 +130,9 @@ class ScanManager(Manager):
         plot.value_range.on_trait_change(self._update_graph_limits,
                                          '_low_value, _high_value', remove=True)
         self.readout_view.stop()
+
+        self.mass_scanner.dump()
+        self.dac_scanner.dump()
 
     def stop(self):
         self.prepare_destroy()
@@ -471,7 +476,7 @@ class ScanManager(Manager):
     def _detector_changed(self, old, new):
         self.debug('detector changed {}'.format(self.detector))
         if self.detector and not self._check_detector_protection(old, True):
-            self.scanner.detector = self.detector
+            # self.scanner.detector = self.detector
             self.rise_rate.detector = self.detector
             self.magnet.detector = self.detector
             nominal_width = 1
@@ -708,14 +713,19 @@ class ScanManager(Manager):
                      graph=self.graph)
         return r
 
-    def _scanner_default(self):
-        s = Scanner(spectrometer=self.spectrometer)
+    def _dac_scanner_default(self):
+        s = DACScanner(spectrometer=self.spectrometer)
+        s.load()
         return s
 
     def _readout_view_default(self):
         rd = ReadoutView(spectrometer=self.spectrometer)
         return rd
 
+    def _mass_scanner_default(self):
+        ms = MassScanner(spectrometer=self.spectrometer)
+        ms.load()
+        return ms
 
         # if __name__ == '__main__':
         # from pychron.spectrometer.molecular_weights import MOLECULAR_WEIGHTS

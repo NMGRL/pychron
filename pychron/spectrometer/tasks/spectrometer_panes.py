@@ -15,10 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traits.api import Str
 from traitsui.api import View, Item, VGroup, HGroup, EnumEditor, spring, \
     Label, Spring, ListEditor, Group, InstanceEditor, UItem, TableEditor
-from pyface.tasks.traits_dock_pane import TraitsDockPane
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.extras.checkbox_column import CheckboxColumn
@@ -126,13 +127,40 @@ class RecordControlsPane(TraitsDockPane):
         return v
 
 
-class ScannerPane(TraitsDockPane):
-    id = 'pychron.spectroemter.scanner'
-    name = 'Scanner'
+class MassScannerPane(TraitsDockPane):
+    id = 'pychron.spectrometer.scanner'
+    name = 'Mass Scanner'
 
     def trait_context(self):
-        ctx = super(ScannerPane, self).trait_context()
-        ctx['scanner'] = self.model.scanner
+        ctx = super(MassScannerPane, self).trait_context()
+        ctx['scanner'] = self.model.mass_scanner
+        return ctx
+
+    def traits_view(self):
+        grp = VGroup(UItem('scanner.new_scanner',
+                           tooltip='Open a new magnet scan',
+                           enabled_when='scanner.new_scanner_enabled'),
+                     HGroup(Item('scanner.step', format_str='%0.5f')),
+                     HGroup(Item('scanner.start_mass', format_str='%0.3f'),
+                            Item('scanner.stop_mass', format_str='%0.3f')),
+                     HGroup(icon_button_editor('scanner.start_scanner', 'start',
+                                               tooltip='Start the magnet scan',
+                                               enabled_when='scanner.start_scanner_enabled'),
+                            icon_button_editor('scanner.stop_scanner', 'stop',
+                                               tooltip='Stop the magnet scan',
+                                               enabled_when='scanner.stop_scanner_enabled'),
+                            icon_button_editor('scanner.clear_graph_button', 'clear')))
+        v = View(grp)
+        return v
+
+
+class DACScannerPane(TraitsDockPane):
+    id = 'pychron.spectrometer.scanner'
+    name = 'DAC Scanner'
+
+    def trait_context(self):
+        ctx = super(DACScannerPane, self).trait_context()
+        ctx['scanner'] = self.model.dac_scanner
         return ctx
 
     def traits_view(self):

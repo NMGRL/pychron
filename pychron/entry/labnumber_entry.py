@@ -17,10 +17,9 @@
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
 from pyface.constant import YES, CANCEL
+from pyface.image_resource import ImageResource
 from traits.api import Property, Str, cached_property, \
     List, Event, Any, Button, Instance, Bool, on_trait_change, Float, HasTraits
-from traitsui.api import Image
-from pyface.image_resource import ImageResource
 
 # ============= standard library imports ========================
 import os
@@ -165,8 +164,17 @@ class LabnumberEntry(IsotopeDatabaseManager):
         self._inform_save()
 
     def estimate_j(self):
+        """
+        estimate j for selected positions if a selection is available
+        otherwise for all positions
+        :return:
+        """
         j, je = self._estimate_j()
-        for ip in self.irradiated_positions:
+        positions = self.selected
+        if not positions:
+            positions = self.irradiated_positions
+
+        for ip in positions:
             ip.trait_set(j=j, j_err=je)
         self.refresh_table = True
 

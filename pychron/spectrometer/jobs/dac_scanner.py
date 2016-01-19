@@ -15,20 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from threading import Thread, Event
+
 from chaco.abstract_overlay import AbstractOverlay
 from enable.tools.drag_tool import DragTool
 from kiva.trait_defs.kiva_font_trait import KivaFont
-from numpy import hstack
-import time
-from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change, Instance, List, Button, Enum
 from traits.api import Event as TEvent
-from traitsui.api import View, UItem, Item, HGroup, VGroup
+from traits.api import Float, List, Button, Enum
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.graph.graph import Graph
 from pychron.graph.tools.limits_tool import LimitsTool, LimitOverlay
-from pychron.loggable import Loggable
+from pychron.spectrometer.jobs.base_scanner import BaseScanner
 
 
 class ScannerBoundsTool(DragTool):
@@ -154,116 +151,60 @@ class MFTableOverlay(AbstractOverlay):
                 gc.show_text(iso)
 
 
-class Scanner(Loggable):
+class DACScanner(BaseScanner):
     min_dac = Float(0)
     max_dac = Float(10)
 
     scan_min_dac = Float(1)
     scan_max_dac = Float(9)
 
-    step = Float(0.1)
-    _cancel_event = None
-
     use_mftable_limits = Button
-    clear_graph_button = Button
     scan_time_length = Enum('10 s', '20 s', '30 s', '60 s')
-    graph = Instance(Graph)
-    plotid = 0
 
-    start_scanner = Button
-    stop_scanner = Button
-    new_scanner = Button('New Magnet Scan')
-
-    start_scanner_enabled = Bool
-    stop_scanner_enabled = Bool
-    new_scanner_enabled = Bool(True)
     help_str = 'Drag the green rulers to define the scan limits'
 
+    pattributes = ('step', 'scan_min_dac', 'scan_max_dac', 'min_dac', 'max_dac')
+
     def __init__(self, *args, **kw):
-        super(Scanner, self).__init__(*args, **kw)
-        graph = Graph()
-        self.graph = graph
+        super(DACScanner, self).__init__(*args, **kw)
+        # graph = Graph()
+        # self.graph = graph
+        #
+        # p = graph.new_plot(padding_top=30, padding_right=10)
+        #
+        # self._add_bounds(p)
+        # self._add_mftable_overlay(p)
+        # self._add_limit_tool(p)
+        # p.index_range.on_trait_change(self._handle_xbounds_change, 'updated')
+        # # graph.set_x_limits(self.min_dac, self.max_dac)
+        # graph.new_series()
+        # graph.set_x_title('Magnet DAC (Voltage)')
+        # graph.set_y_title('Intensity')
 
-        p = graph.new_plot(padding_top=30, padding_right=10)
+        self._use_mftable_limits_fired()
 
-        self._add_bounds(p)
-        self._add_mftable_overlay(p)
-        self._add_limit_tool(p)
-        p.index_range.on_trait_change(self._handle_xbounds_change, 'updated')
-        # graph.set_x_limits(self.min_dac, self.max_dac)
+    # private
+    def _reset_hook(self):
+        self._use_mftable_limits_fired()
+
+    def _setup_graph(self, graph, plot):
+        self._add_bounds(plot)
+        self._add_mftable_overlay(plot)
+        self._add_limit_tool(plot)
+        plot.index_range.on_trait_change(self._handle_xbounds_change, 'updated')
         graph.new_series()
         graph.set_x_title('Magnet DAC (Voltage)')
         graph.set_y_title('Intensity')
 
-        self._use_mftable_limits_fired()
+    # scan methods
+    def _do_step(self, magnet, step):
+        magnet.set_dac(step, verbose=False)
 
-    def reset(self):
-        self._clear_graph_button_fired()
-        self._use_mftable_limits_fired()
+    def _get_limits(self):
+        return self.tool.low, self.tool.high
 
-    def stop_scan(self):
-        """
-        Cancel the current scan
-
-        :return:
-        """
-        self._cancel_event.set()
-
-    def scan(self):
-        """
-        Start a scan thread. calls ``Scanner._scan`` on a new thread
-
-        :return:
-        """
-        # if self.plotid>0:
-        # self.graph.new_series()
-
-        self._cancel_event = Event()
-
-        t = Thread(target=self._scan)
-        t.start()
-
-    # private
-    def _scan(self):
-        plot = self.graph.plots[0]
-        try:
-            line = plot.plots['plot{}'.format(self.plotid)][0]
-        except KeyError:
-            line, _ = self.graph.new_series()
-        xs = line.index.get_data()
-        ys = line.index.get_data()
-
-        spec = self.spectrometer
-        magnet = spec.magnet
-
-        period = spec.integration_time - magnet.settling_time
-        # period = 0.1
-        st = time.time()
-        self.debug('scan limits: low={}, high={}'.format(self.tool.low, self.tool.high))
-        for i, dac in enumerate(self._calculate_steps()):
-            if self._cancel_event.is_set():
-                self.debug('exiting scan. dac={}'.format(dac))
-                break
-
-            magnet.set_dac(dac, verbose=False)
-            time.sleep(period)
-            if i == 0:
-                time.sleep(3)
-
-            v = spec.get_intensity(self.spectrometer.reference_detector)
-
-            xs = hstack((xs, [dac]))
-            ys = hstack((ys, [v]))
-            line.index.set_data(xs)
-            line.value.set_data(ys)
-
-
-        self.plotid += 1
-        self.debug('duration={:0.3f}'.format(time.time() - st))
-        self.new_scanner_enabled = True
-
-    def _calculate_steps(self):
-        l, h = self.tool.low, self.tool.high
+    def _calculate_steps(self, l, h):
+        self.debug('scan limits: low={}, high={}'.format(l, h))
         si = l
         while 1:
             yield si
@@ -309,28 +250,28 @@ class Scanner(Loggable):
         plot.overlays.append(o)
 
     # handlers
-    def _start_scanner_fired(self):
-        print 'start scanner'
-        self.info('starting scanner')
-        self.new_scanner_enabled = False
-        self.stop_scanner_enabled = True
-        self.scan()
-
-    def _stop_scanner_fired(self):
-        self.stop_scan()
-        self.stop_scanner_enabled = False
-        self.new_scanner_enabled = True
-
-    def _new_scanner_fired(self):
-        print 'new scanner'
-        self.info('new scanner')
-        self.new_scanner_enabled = False
-        self.start_scanner_enabled = True
-
-    def _clear_graph_button_fired(self):
-        self.graph.clear_plots()
-        self.plotid = 0
-        self.graph.redraw()
+    # def _start_scanner_fired(self):
+    #     print 'start scanner'
+    #     self.info('starting scanner')
+    #     self.new_scanner_enabled = False
+    #     self.stop_scanner_enabled = True
+    #     self.scan()
+    #
+    # def _stop_scanner_fired(self):
+    #     self.stop_scan()
+    #     self.stop_scanner_enabled = False
+    #     self.new_scanner_enabled = True
+    #
+    # def _new_scanner_fired(self):
+    #     print 'new scanner'
+    #     self.info('new scanner')
+    #     self.new_scanner_enabled = False
+    #     self.start_scanner_enabled = True
+    #
+    # def _clear_graph_button_fired(self):
+    #     self.graph.clear_plots()
+    #     self.plotid = 0
+    #     self.graph.redraw()
 
     def _use_mftable_limits_fired(self):
         mft = self.spectrometer.magnet.mftable.get_table()
@@ -345,7 +286,7 @@ class Scanner(Loggable):
     def _scan_time_length_changed(self):
         mi, ma = self.scan_min_dac, self.scan_max_dac
         st = self.spectrometer.integration_time
-        t = int(self.scan_time_length[:-2])-1 # * st
+        t = int(self.scan_time_length[:-2]) - 1  # * st
         # print t, int(self.scan_time_length[:-2]), st
         d = ma - mi
         self.step = st * d / t
@@ -387,6 +328,3 @@ class Scanner(Loggable):
             # self.tool.set_high(self.max_dac)
 
 # ============= EOF =============================================
-
-
-

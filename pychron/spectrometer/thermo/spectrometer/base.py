@@ -752,7 +752,8 @@ class ThermoSpectrometer(SpectrometerDevice):
         if use_ramp:
             current = self.source.read_trap_current()
             if current is None:
-                current = 0
+                self.debug('could not read current trap. skipping ramp')
+                return
 
             if v - current >= tol:
                 if self.confirmation_dialog('Would you like to ramp up the '

@@ -16,16 +16,17 @@
 
 # ============= enthought library imports =======================
 from pyface.tasks.action.schema import SToolBar
+from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter, VSplitter
 from pyface.ui.qt4.tasks.advanced_editor_area_pane import EditorWidget
 from traits.api import Any, Instance, on_trait_change
-from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter, VSplitter
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.editor_task import EditorTask
-from pychron.spectrometer.tasks.editor import PeakCenterEditor, ScanEditor, CoincidenceEditor
+from pychron.spectrometer.tasks.editor import PeakCenterEditor, ScanEditor, CoincidenceEditor, ScannerEditor
 from pychron.spectrometer.tasks.spectrometer_actions import StopScanAction
 from pychron.spectrometer.tasks.spectrometer_panes import ControlsPane, \
-    ReadoutPane, IntensitiesPane, RecordControlsPane, ScannerPane
+    ReadoutPane, IntensitiesPane, RecordControlsPane, DACScannerPane, MassScannerPane
 
 
 class SpectrometerTask(EditorTask):
@@ -125,7 +126,8 @@ class SpectrometerTask(EditorTask):
         panes = [
             ControlsPane(model=self.scan_manager),
             RecordControlsPane(model=self.scan_manager),
-            ScannerPane(model=self.scan_manager),
+            MassScannerPane(model=self.scan_manager),
+            DACScannerPane(model=self.scan_manager),
             ReadoutPane(model=self.scan_manager),
             IntensitiesPane(model=self.scan_manager)]
 
@@ -163,16 +165,23 @@ class SpectrometerTask(EditorTask):
         # g = ScanPane(model=self.scan_manager)
         # return g
 
-    @on_trait_change('scan_manager:scanner:new_scanner')
-    def _handle_scan_event(self):
+    @on_trait_change('scan_manager:mass_scanner:new_scanner')
+    def _handle_mass_scan_event(self):
+        self._scan_event(self.scan_manager.mass_scanner)
+
+    @on_trait_change('scan_manager:dac_scanner:new_scanner')
+    def _handle_dac_scan_event(self):
+        self._scan_event(self.scan_manager.dac_scanner)
+
+    def _scan_event(self, scanner):
         sim = self.scan_manager.spectrometer.simulation
         name = 'Magnet Scan (Simulation)' if sim else 'Magnet Scan'
 
         editor = next((e for e in self.editor_area.editors if e.id == 'pychron.scanner'), None)
         if editor is not None:
-            self.scan_manager.scanner.reset()
+            scanner.reset()
         else:
-            editor = ScanEditor(model=self.scan_manager.scanner, name=name, id='pychron.scanner')
+            editor = ScannerEditor(model=scanner, name=name, id='pychron.scanner')
             self._open_editor(editor, activate=False)
             self.split_editors(0, 1, h2=300, orientation='vertical')
 
