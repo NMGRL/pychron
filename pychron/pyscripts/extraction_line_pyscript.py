@@ -327,7 +327,7 @@ class ExtractionPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def move_to_position(self, position='', autocenter=False):
+    def move_to_position(self, position='', autocenter=True):
         if position == '':
             position = self.position
 
