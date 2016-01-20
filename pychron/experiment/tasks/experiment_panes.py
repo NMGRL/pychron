@@ -70,19 +70,21 @@ class ExperimentFactoryPane(TraitsDockPane):
 
     def traits_view(self):
         ss = '''
-QLineEdit {font-size: 10px}
+QLineEdit {font-size: 14px}
 QGroupBox {background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
                                       stop: 0 #E0E0E0, stop: 1 #FFFFFF);
            border: 2px solid gray;
            border-radius: 5px;
            margin-top: 1ex; /* leave space at the top for the title */
-           font-size: 10px;
+           font-size: 14px;
            font-weight: bold;}
 QGroupBox::title {subcontrol-origin: margin;
                   subcontrol-position: top left; /* position at the top center */
-                  padding: 1 3px;}
-QComboBox {font-size: 10px}
-QLabel {font-size: 10px}
+                  padding: 2 3px;}
+QComboBox {font-size: 14px}
+QLabel {font-size: 14px}
+QToolBox::tab {font-size: 15px}
+QToolTip {font-size: 14px}
 '''
 
         add_button = icon_button_editor('add_button', 'add',

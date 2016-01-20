@@ -246,7 +246,7 @@ class AutomatedRunFactory(PersistenceLoggable):
                         'rad40_percent',
                         'Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36'])
     trunc_comp = Enum('>', '<', '>=', '<=', '=')
-    trunc_crit = Float(enter_set=True, auto_set=False)
+    trunc_crit = Float(5000, enter_set=True, auto_set=False)
     trunc_start = Int(100, enter_set=True, auto_set=False)
     use_simple_truncation = Bool
 
