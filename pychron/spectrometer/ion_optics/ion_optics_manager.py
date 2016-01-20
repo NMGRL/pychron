@@ -89,7 +89,11 @@ class IonOpticsManager(Manager):
         spec = self.spectrometer
         mag = spec.magnet
 
-        det = spec.get_detector(detector)
+        if isinstance(detector, str):
+            det = spec.get_detector(detector)
+        else:
+            det = detector
+
         self.debug('detector {}'.format(det))
 
         if use_dac:
