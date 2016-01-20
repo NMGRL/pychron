@@ -32,6 +32,7 @@ from pychron.spectrometer import get_spectrometer_config_path, \
 from pychron.core.ramper import StepRamper
 from pychron.pychron_constants import QTEGRA_INTEGRATION_TIMES, \
     DEFAULT_INTEGRATION_TIME, NULL_STR
+from pychron.spectrometer.base_detector import BaseDetector
 from pychron.spectrometer.thermo.detector.base import ThermoDetector
 from pychron.spectrometer.thermo.magnet.base import ThermoMagnet
 from pychron.spectrometer.thermo.source.base import ThermoSource
@@ -271,10 +272,10 @@ class ThermoSpectrometer(SpectrometerDevice):
         :param name: str
         :return: Detector
         """
-        if not isinstance(name, str):
-            name = str(name)
-
-        return next((det for det in self.detectors if det.name == name), None)
+        if isinstance(name, BaseDetector):
+            return name
+        else:
+            return next((det for det in self.detectors if det.name == name), None)
 
     def update_isotopes(self, isotope, detector):
         """

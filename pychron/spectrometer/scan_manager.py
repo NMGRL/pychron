@@ -61,7 +61,11 @@ class ScanManager(Manager):
     set_spectrometer_configuration = Button
 
     detectors = DelegatesTo('spectrometer')
-    detector = Instance(BaseDetector)
+    detector_names = DelegatesTo('spectrometer')
+
+    detector = Property(Instance(BaseDetector), depends_on='_detector')
+    _detector = Str
+
     magnet = DelegatesTo('spectrometer')
     source = DelegatesTo('spectrometer')
     dac_scanner = Instance(DACScanner)
@@ -301,7 +305,10 @@ class ScanManager(Manager):
             # covnert dac into a mass
             # convert mass to isotope
             #            d = self.magnet.dac
-            iso = self.magnet.map_dac_to_isotope(current=False)
+            if not self._suppress_isotope_change:
+                iso = self.magnet.map_dac_to_isotope(current=False)
+            else:
+                iso = self.isotope
 
             if iso is None or iso not in self.isotopes:
                 iso = NULL_STR
@@ -442,8 +449,7 @@ class ScanManager(Manager):
     def _set_position(self):
         if self.isotope and self.isotope != NULL_STR \
                 and self.detector:
-            self.info(
-                    'set position {} on {}'.format(self.isotope, self.detector))
+            self.info('set position {} on {}'.format(self.isotope, self.detector))
             self.ion_optics_manager.position(self.isotope, self.detector.name)
 
     # ===============================================================================
@@ -470,7 +476,12 @@ class ScanManager(Manager):
         self.debug('isotope changed {}'.format(self.isotope))
         if self.isotope != NULL_STR and not self._check_detector_protection(old,
                                                                             False):
-            t = Thread(target=self._set_position)
+            def func():
+                self._suppress_isotope_change = True
+                self._set_position()
+                self._suppress_isotope_change = False
+
+            t = Thread(target=func)
             t.start()
 
     def _detector_changed(self, old, new):
@@ -497,10 +508,16 @@ class ScanManager(Manager):
 
                 self.info('set position {} on {}'.format(mass, self.detector))
 
+                def func():
+                    self._suppress_isotope_change = True
+                    self.ion_optics_manager.position(mass, self.detector)
+                    self._suppress_isotope_change = False
+
                 # thread not super necessary
                 # simple allows gui to update while the magnet is delaying for settling_time
-                t = Thread(target=self.ion_optics_manager.position,
-                           args=(mass, self.detector))
+                # t = Thread(target=self.ion_optics_manager.position,
+                #            args=(mass, self.detector))
+                t = Thread(target=func)
                 t.start()
 
     def _graph_y_auto_changed(self, new):
@@ -647,6 +664,14 @@ class ScanManager(Manager):
     # ===============================================================================
     # property get/set
     # ===============================================================================
+    def _get_detector(self):
+        return self.spectrometer.get_detector(self._detector)
+
+    def _set_detector(self, v):
+        if isinstance(v, BaseDetector):
+            v = v.name
+        self._detector = v
+
     @cached_property
     def _get_isotopes(self):
         # molweights = self.spectrometer.molecular_weights

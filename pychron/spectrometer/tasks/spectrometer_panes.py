@@ -202,8 +202,8 @@ class ControlsPane(TraitsDockPane):
     def traits_view(self):
         magnet_grp = VGroup(
             HGroup(
-                UItem('detector',
-                      editor=EnumEditor(name='detectors')),
+                UItem('_detector',
+                      editor=EnumEditor(name='detector_names')),
                 UItem('isotope',
                       editor=EnumEditor(name='isotopes'))),
             UItem('magnet', style='custom'),

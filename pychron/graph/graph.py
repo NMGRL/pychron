@@ -15,23 +15,23 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-from chaco.scales.time_scale import CalendarScaleSystem
-from chaco.scales_tick_generator import ScalesTickGenerator
-from traits.api import Instance, Bool, \
-    List, Str, Property, Dict, Callable, Event
-from traitsui.api import View, Item
-from enable.component_editor import ComponentEditor
 from chaco.api import OverlayPlotContainer, \
     VPlotContainer, HPlotContainer, GridPlotContainer, \
     BasePlotContainer, Plot, ArrayPlotData, PlotLabel
+from chaco.axis import PlotAxis
+from chaco.scales.time_scale import CalendarScaleSystem
+from chaco.scales_tick_generator import ScalesTickGenerator
 from chaco.tools.api import ZoomTool, LineInspector, RangeSelection, \
     RangeSelectionOverlay
-from chaco.axis import PlotAxis
+from enable.component_editor import ComponentEditor
 from pyface.api import FileDialog, OK
 from pyface.timer.api import do_after as do_after_timer
+from traits.api import Instance, List, Str, Property, Dict, Callable, Event
+from traitsui.api import View, Item
+
 # =============standard library imports ========================
 import os
-from numpy import array, hstack, Inf
+from numpy import array, hstack, Inf, savetxt, column_stack
 import csv
 import math
 # =============local library imports  ==========================
@@ -1053,7 +1053,6 @@ class Graph(Viewable, ContextMenuMixin):
         return p
 
     def _export_data(self, path, plotid):
-        writer = csv.writer(open(path, 'w'))
 
         if plotid is not None:
             plot = self.plots[plotid]
@@ -1064,25 +1063,13 @@ class Graph(Viewable, ContextMenuMixin):
             return
 
         data = plot.data
-        names = data.list_data()
-        xs = names[len(names) / 2:]
-        xs.sort()
-        ys = names[:len(names) / 2]
-        ys.sort()
-        cols = []
-        nnames = []
-        for xn, yn in zip(xs, ys):
-            yd = data.get_data(yn)
-            xd = data.get_data(xn)
+        names = sorted(data.list_data())
 
-            cols.append(fmt(xd))
-            cols.append(fmt(yd))
-            nnames.append(xn)
-            nnames.append(yn)
+        a = array(data.get_data(names[0]))
+        for ni in names[1:]:
+            a = column_stack((a, data.get_data(ni)))
 
-        writer.writerow(nnames)
-        rows = zip(*cols)
-        writer.writerows(rows)
+        savetxt(path, a, fmt='%.8f', delimiter=',', header=','.join(names))
 
     def _series_factory(self, x, y, yer=None, plotid=0, add=True, **kw):
         """
