@@ -151,7 +151,8 @@ class Primitive(HasTraits):
         return rx, ry
 
     def request_layout(self):
-        self._layout_needed = True
+        self._cached_xy = None
+        self._cached_wh = None
 
     def get_wh(self):
         w, h = 0, 0

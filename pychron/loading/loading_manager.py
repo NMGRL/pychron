@@ -774,10 +774,9 @@ class LoadingManager(DVCIrradiationable):
             for lp in self.positions:
                 for pid in lp.positions:
                     item = self.canvas.scene.get_item(str(pid))
-
                     item.labnumber_label.visible = new
                     item.weight_label.oy = -20 if new else -10
-                    item.request_layout()
+                    item.labnumber_label.request_layout()
 
             self.canvas.request_redraw()
 
@@ -787,7 +786,7 @@ class LoadingManager(DVCIrradiationable):
                 for pid in lp.positions:
                     item = self.canvas.scene.get_item(str(pid))
                     item.weight_label.visible = new
-                    item.request_layout()
+                    item.weight_label.request_layout()
 
             self.canvas.request_redraw()
 
@@ -822,6 +821,9 @@ class LoadingManager(DVCIrradiationable):
 
     @on_trait_change('canvas:selected')
     def _update_selected(self, new):
+        if not new:
+            return
+
         if not self.load_name:
             self.warning_dialog('Select a load')
             return
@@ -839,9 +841,6 @@ class LoadingManager(DVCIrradiationable):
 
         if not self.username:
             self.warning_dialog('Set a username')
-            return
-
-        if not new:
             return
 
         if self.canvas.event_state in ('edit', 'info'):
@@ -907,6 +906,6 @@ class LoadingManager(DVCIrradiationable):
             p.color = color
             for pp in p.positions:
                 pp = scene.get_item(str(pp), klass=LoadIndicator)
-                pp.fill_color = color
+                pp.fill_color = ','.join(map(lambda x: str(int(x * 255)), color))
 
 # ============= EOF =============================================

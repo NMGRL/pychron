@@ -17,12 +17,12 @@
 # ============= enthought library imports =======================
 import time
 
+from chaco.data_range_1d import DataRange1D
+from chaco.default_colormaps import color_map_name_dict
+from kiva.agg.agg import GraphicsContextArray
 from traits.api import HasTraits, Float, Any, Dict, Bool, Str, Property, List, Int, \
     Color, String, Either
 from traitsui.api import VGroup, Item, Group
-from chaco.default_colormaps import color_map_name_dict
-from chaco.data_range_1d import DataRange1D
-from kiva.agg.agg import GraphicsContextArray
 
 # ============= standard library imports ========================
 import Image as PImage
@@ -241,6 +241,7 @@ class Circle(QPrimitive):
         gc.arc(x, y, r, 0, 360)
         gc.stroke_path()
 
+        # print self.fill, self.fill_color
         if self.fill:
             if self.fill_color:
                 gc.set_fill_color(self._convert_color(self.fill_color))
