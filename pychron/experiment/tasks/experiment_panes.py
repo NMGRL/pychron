@@ -29,6 +29,7 @@ from traitsui.tabular_adapter import TabularAdapter
 from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.core.ui.led_editor import LEDEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
+from pychron.envisage.stylesheets import load_stylesheet
 from pychron.experiment.utilities.identifier import SPECIAL_NAMES
 from pychron.pychron_constants import MEASUREMENT_COLOR, EXTRACTION_COLOR, \
     NOT_EXECUTABLE_COLOR, SKIP_COLOR, SUCCESS_COLOR, CANCELED_COLOR, \
@@ -69,24 +70,6 @@ class ExperimentFactoryPane(TraitsDockPane):
         return '<font size="12" color="green"><b>{}</b></font>'.format(self.model.run_factory.info_label)
 
     def traits_view(self):
-        ss = '''
-QLineEdit {font-size: 14px}
-QGroupBox {background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                                      stop: 0 #E0E0E0, stop: 1 #FFFFFF);
-           border: 2px solid gray;
-           border-radius: 5px;
-           margin-top: 1ex; /* leave space at the top for the title */
-           font-size: 14px;
-           font-weight: bold;}
-QGroupBox::title {subcontrol-origin: margin;
-                  subcontrol-position: top left; /* position at the top center */
-                  padding: 2 3px;}
-QComboBox {font-size: 14px}
-QLabel {font-size: 14px}
-QToolBox::tab {font-size: 15px}
-QToolTip {font-size: 14px}
-'''
-
         add_button = icon_button_editor('add_button', 'add',
                                         # enabled_when='ok_add',
                                         tooltip='Add run')
@@ -170,9 +153,7 @@ QToolTip {font-size: 14px}
                         button_bar2,
                         UItem('pane.info_label', style='readonly'),
                         edit_grp,
-
-                        # lower_button_bar,
-                        style_sheet=ss),
+                        style_sheet=load_stylesheet('experiment_factory')),
                  kind='live',
                  width=225)
         return v
