@@ -547,7 +547,6 @@ class LoadingManager(DVCIrradiationable):
             idx = self.labnumbers.index(self.labnumber)
             try:
                 self.labnumber = self.labnumbers[idx + 1]
-                print self.labnumber, idx
                 self.refresh_labnumber = True
             except IndexError:
                 idx = self.levels.index(self.level)
@@ -555,7 +554,7 @@ class LoadingManager(DVCIrradiationable):
                     self.level = self.levels[idx + 1]
                     self.labnumber = self.labnumbers[0]
                     self.refresh_level = True
-                    print 'increment level', self.level
+                    self.debug('increment level {}'.format(self.level))
                 except IndexError:
                     idx = self.irradiations.index(self.irradiation)
                     try:
@@ -564,9 +563,7 @@ class LoadingManager(DVCIrradiationable):
                         self.labnumber = self.labnumbers[0]
                         self.refresh_irradiation = True
                     except IndexError:
-                        pass
-
-                        print self.level, self.levels, self.level in self.levels, self.labnumber
+                        print 'lm autoincrement', self.level, self.levels, self.level in self.levels, self.labnumber
 
     def _set_position(self, canvas_hole):
 
@@ -780,6 +777,7 @@ class LoadingManager(DVCIrradiationable):
 
                     item.labnumber_label.visible = new
                     item.weight_label.oy = -20 if new else -10
+                    item.request_layout()
 
             self.canvas.request_redraw()
 
@@ -789,6 +787,7 @@ class LoadingManager(DVCIrradiationable):
                 for pid in lp.positions:
                     item = self.canvas.scene.get_item(str(pid))
                     item.weight_label.visible = new
+                    item.request_layout()
 
             self.canvas.request_redraw()
 

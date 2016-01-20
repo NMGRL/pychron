@@ -146,7 +146,8 @@ class LoadControlPane(TraitsDockPane):
                                       label='Loads'),
                                  icon_button_editor('add_button', 'add', tooltip='Add a load'),
                                  icon_button_editor('delete_button', 'delete', tooltip='Delete selected load'),
-                                 icon_button_editor('archive_button', 'foo', tooltip='Archive a set of loads')),
+                                 icon_button_editor('archive_button', 'application-x-archive',
+                                                    tooltip='Archive a set of loads')),
                           label='Load',
                           show_border=True)
         samplegrp = VGroup(
