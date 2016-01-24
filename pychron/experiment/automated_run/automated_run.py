@@ -1507,18 +1507,28 @@ anaylsis_type={}
         if attr == 'age' and self.spec.analysis_type not in ('unknown', 'cocktail'):
             self.debug('not adding because analysis_type not unknown or cocktail')
 
-        if not self.isotope_group.has_attr(attr):
-            self.warning('invalid {} attribute "{}"'.format(name, attr))
-        else:
-            obj = getattr(self, '{}_conditionals'.format(name))
-            con = conditional_from_dict(cd, klass)
-            if con:
-                self.info(
-                    'adding {} attr="{}" test="{}" start="{}"'.format(name, con.attr, con.teststr, con.start_count))
-                obj.append(con)
-            else:
-                self.warning('Failed adding {}, {}'.format(name, cd))
+        # if not self.isotope_group.has_attr(attr):
+        #     self.warning('invalid {} attribute "{}"'.format(name, attr))
+        # else:
+        #     obj = getattr(self, '{}_conditionals'.format(name))
+        #     con = conditional_from_dict(cd, klass)
+        #     if con:
+        #         self.info(
+        #             'adding {} attr="{}" test="{}" start="{}"'.format(name, con.attr, con.teststr, con.start_count))
+        #         obj.append(con)
+        #     else:
+        #         self.warning('Failed adding {}, {}'.format(name, cd))
 
+        # don't check if isotope_group has the attribute. it may be added to isotope group later
+        obj = getattr(self, '{}_conditionals'.format(name))
+        con = conditional_from_dict(cd, klass)
+        if con:
+            self.info(
+                'adding {} attr="{}" test="{}" start="{}"'.format(name, con.attr, con.teststr, con.start_count))
+            obj.append(con)
+        else:
+            self.warning('Failed adding {}, {}'.format(name, cd))
+            
     def _refresh_scripts(self):
         for name in SCRIPT_KEYS:
             setattr(self, '{}_script'.format(name), self._load_script(name))

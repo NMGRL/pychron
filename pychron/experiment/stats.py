@@ -253,6 +253,7 @@ class ExperimentStats(Loggable):
     def finish_run(self):
         self._run_start = 0
         self.nruns_finished += 1
+        self.debug('finish run. runs completed={}'.format(self.nruns_finished))
         if self.clock:
             self.clock.stop()
 

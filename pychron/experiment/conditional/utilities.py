@@ -27,6 +27,7 @@ from pychron.experiment.conditional.regexes import COMP_REGEX, ARGS_REGEX, DEFLE
 def interpolate_teststr():
     pass
 
+
 def get_teststr_attr_func(token):
     for args in (
             (DEVICE_REGEX, 'obj.get_device_value(attr)', wrapper, device_teststr),
@@ -112,7 +113,7 @@ def between_wrapper(fstr, token, ai):
         return wrapper(fstr, token, ai)
 
 
-#teststr
+# teststr
 def teststr_func(token):
     c = remove_attr(token)
     a = extract_attr(token)
@@ -253,6 +254,3 @@ def extract_attr(key):
     return key
 
 # ============= EOF =============================================
-
-
-
