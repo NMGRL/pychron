@@ -825,6 +825,9 @@ class DVC(Loggable):
         for attr in ('username', 'password', 'name', 'host', 'kind', 'path'):
             bind_preference(self.db, attr, '{}.{}'.format(prefid, attr))
 
+        self._meta_repo_name_changed()
+
+    def _meta_repo_name_changed(self):
         paths.meta_root = os.path.join(paths.dvc_dir, self.meta_repo_name)
 
     def _defaults(self):

@@ -273,10 +273,13 @@ class DVCCommitView(HasTraits):
         super(DVCCommitView, self).__init__(*args, **kw)
 
         self.repo = Repo(os.path.join(paths.repository_dataset_dir, an.repository_identifier))
-        self.initialize(an)
         self.record_id = an.record_id
         self.repository_identifier = an.repository_identifier
 
+        self.initialize(an)
+
+    def initialize(self, an):
+        pass
     # def initialize(self, an):
     #     path = self._make_path(an)
     #
@@ -365,23 +368,23 @@ class DVCCommitView(HasTraits):
 
     def traits_view(self):
         v = View(VGroup(
-            icon_button_editor('do_diff', 'edit_diff', tooltip='Make Diff between two commits'),
-            UItem('commits', editor=myTabularEditor(adapter=HistoryCommitAdapter(),
-                                                    multi_select=True,
-                                                    editable=False,
-                                                    selected='selected_commits'))))
+                icon_button_editor('do_diff', 'edit_diff', tooltip='Make Diff between two commits'),
+                UItem('commits', editor=myTabularEditor(adapter=HistoryCommitAdapter(),
+                                                        multi_select=True,
+                                                        editable=False,
+                                                        selected='selected_commits'))))
         return v
 
 
 class HistoryView(DVCCommitView):
     def initialize(self, an):
         repo = self.repo
-
         cs = []
         for a, b in (('TAG', 'tag'), ('ISOEVO', 'intercepts'),
                      ('BLANKS', 'blanks'),
                      ('ICFactor', 'icfactors'),
-                     ('IMPORT', '')):
+                     ('IMPORT', ''),
+                     ('MANUAL', '')):
             path = an.make_path(b)
             if path:
                 args = [repo, repo.active_branch.name, path, a]

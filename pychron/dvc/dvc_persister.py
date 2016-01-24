@@ -169,8 +169,8 @@ class DVCPersister(BasePersister):
         if not os.path.isfile(spec_path):
             self._save_spectrometer_file(spec_path)
 
-        self.dvc.meta_repo.save_gains(self.per_spec.run_spec.mass_spectrometer,
-                                      self.per_spec.gains)
+        # self.dvc.meta_repo.save_gains(self.per_spec.run_spec.mass_spectrometer,
+        #                               self.per_spec.gains)
 
         # save analysis
         t = datetime.now()
@@ -426,8 +426,8 @@ class DVCPersister(BasePersister):
         obj = dict(spectrometer=dict(self.per_spec.spec_dict),
                    gains=dict(self.per_spec.gains),
                    deflections=dict(self.per_spec.defl_dict))
-        hexsha = self.dvc.get_meta_head()
-        obj['commit'] = str(hexsha)
+        # hexsha = self.dvc.get_meta_head()
+        # obj['commit'] = str(hexsha)
 
         dvc_dump(obj, path)
 

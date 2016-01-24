@@ -50,7 +50,7 @@ class SessionCTX(object):
     _commit = True
     _parent = None
 
-    def __init__(self, sess=None, commit=True, parent=None):
+    def __init__(self, sess=None, commit=True, rollback=True, parent=None):
         """
         :param sess: existing Session object
         :param commit: commit Session at exit
@@ -59,6 +59,7 @@ class SessionCTX(object):
         """
         self._sess = sess
         self._commit = commit
+        self._rollback = rollback
         self._parent = parent
         if sess:
             self._close_at_exit = False
@@ -88,7 +89,8 @@ class SessionCTX(object):
                     self._sess.commit()
                     self._parent.post_commit()
                 else:
-                    self._sess.rollback()
+                    if self._rollback:
+                        self._sess.rollback()
 
             except Exception, e:
                 # print 'exception commiting session: {}'.format(e)
@@ -167,7 +169,7 @@ class DatabaseAdapter(Loggable):
         with self.session_ctx() as sess:
             metadata.create_all(sess.bind)
 
-    def session_ctx(self, sess=None, commit=True):
+    def session_ctx(self, sess=None, commit=True, rollback=True):
         """
         Make a new session context.
 
@@ -176,7 +178,7 @@ class DatabaseAdapter(Loggable):
         with self._session_lock:
             if sess is None:
                 sess = self.sess
-            return SessionCTX(sess, parent=self, commit=commit)
+            return SessionCTX(sess, parent=self, commit=commit, rollback=rollback)
 
     @property
     def enabled(self):
@@ -375,7 +377,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
         return driver
 
     def _test_db_connection(self, version_warn):
-        with self.session_ctx():
+        with self.session_ctx(commit=False, rollback=False):
             try:
                 self.info('testing database connection {}'.format(self.test_func))
                 ver = getattr(self, self.test_func)(reraise=True)
