@@ -65,7 +65,7 @@ class BaseNode(HasTraits):
     def disable(self):
         self.enabled = False
 
-    def pre_run(self, state):
+    def pre_run(self, state, configure=True):
 
         if not self.auto_configure:
             return True
@@ -77,13 +77,16 @@ class BaseNode(HasTraits):
         if state.references:
             self.references = state.references
 
-        if self.skip_configure:
-            return True
+        if configure:
+            if self.skip_configure:
+                return True
 
-        if self.configure(refresh=False, pre_run=True):
-            return True
+            if self.configure(refresh=False, pre_run=True):
+                return True
+            else:
+                state.canceled = True
         else:
-            state.canceled = True
+            return True
 
     def run(self, state):
         raise NotImplementedError(self.__class__.__name__)

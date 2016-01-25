@@ -35,6 +35,7 @@ from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode, F
 from pychron.pipeline.nodes.grouping import GroupingNode
 from pychron.pipeline.nodes.persist import PDFFigureNode, IsotopeEvolutionPersistNode, \
     BlanksPersistNode, ICFactorPersistNode, FluxPersistNode
+from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.state import EngineState
 from pychron.pipeline.template import PipelineTemplate
 
@@ -405,6 +406,55 @@ class PipelineEngine(Loggable):
     def resume_pipeline(self):
         return self.run_pipeline(state=self.state)
 
+    def refresh_figure_editors(self):
+        for ed in self.state.editors:
+            if isinstance(ed, FigureEditor):
+                ed.refresh_needed = True
+
+    def rerun_with(self, unks, post_run=True):
+        if not self.state:
+            return
+
+        state = self.state
+        state.unknowns = unks
+
+        ost = time.time()
+        for idx, node in enumerate(self.pipeline.iternodes(None)):
+            if node.enabled:
+                with ActiveCTX(node):
+                    if not node.pre_run(state, configure=False):
+                        self.debug('Pre run failed {}'.format(node))
+                        return True
+
+                    node.unknowns = []
+                    st = time.time()
+                    try:
+                        node.run(state)
+                        node.visited = True
+                        self.selected = node
+                    except NoAnalysesError:
+                        self.information_dialog('No Analyses in Pipeline!')
+                        self.pipeline.reset()
+                        return True
+                    self.debug('{:02n}: {} Runtime: {:0.4f}'.format(idx, node, time.time() - st))
+
+                    if state.veto:
+                        self.debug('pipeline vetoed by {}'.format(node))
+                        return
+
+                    if state.canceled:
+                        self.debug('pipeline canceled by {}'.format(node))
+                        return True
+
+            else:
+                self.debug('Skip node {:02n}: {}'.format(idx, node))
+        else:
+            self.debug('pipeline run finished')
+            self.debug('pipeline runtime {}'.format(time.time() - ost))
+            if post_run:
+                self.post_run(state)
+            return True
+
     def run_pipeline(self, run_from=None, state=None):
         if state is None:
             state = EngineState()
@@ -455,6 +505,9 @@ class PipelineEngine(Loggable):
         else:
             self.debug('pipeline run finished')
             self.debug('pipeline runtime {}'.format(time.time() - ost))
+
+            self.post_run(state)
+
             # self.state = None
             return True
 
@@ -614,9 +667,9 @@ class PipelineEngine(Loggable):
     #     self._suppress_handle_unknowns = False
     #     print 'asdfasdfasfsafs', obj, new
 
-    def refresh_unknowns(self, unks):
+    def refresh_unknowns(self, unks, refresh_editor=False):
         self.selected.unknowns = unks
-        self.selected.editor.set_items(unks)
+        self.selected.editor.set_items(unks, refresh=refresh_editor)
 
     _len_unknowns_cnt = 0
     _len_unknowns_removed = 0

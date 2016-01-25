@@ -234,6 +234,7 @@ class Paths(object):
     inverse_isochron_template = None
     analysis_table_template = None
     interpreted_age_table_template = None
+    auto_ideogram_template = None
 
     def write_default_file(self, p, default, overwrite=False):
         return self._write_default_file(p, default, overwrite)
@@ -443,7 +444,7 @@ class Paths(object):
         self.vertical_flux_template = join(self.pipeline_template_dir, 'vertical_flux.yaml')
         self.analysis_table_template = join(self.pipeline_template_dir, 'analysis_table.yaml')
         self.interpreted_age_table_template = join(self.pipeline_template_dir, 'interpreted_age_table.yaml')
-
+        self.auto_ideogram_template = join(self.pipeline_template_dir, 'auto_ideogram.yaml')
         build_directories()
 
     def write_defaults(self):
@@ -455,7 +456,6 @@ class Paths(object):
         # self.write_file_defaults(self.plot_factory_defaults, force=True)
 
     def write_file_defaults(self, fs, force=False):
-        # print fs
         for p, d, o in fs:
             txt = get_file_text(d)
             try:

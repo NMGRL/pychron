@@ -16,9 +16,10 @@
 
 # ============= enthought library imports =======================
 
+from enable.component_editor import ComponentEditor as EnableComponentEditor
 from traits.api import List, Property, Event, cached_property, Any
 from traitsui.api import View, UItem
-from enable.component_editor import ComponentEditor as EnableComponentEditor
+
 # ============= standard library imports ========================
 import os
 from itertools import groupby
@@ -67,7 +68,7 @@ class GraphEditor(BaseTraitsEditor):
 
             # self.rebuild_graph()
 
-    def set_items(self, ans, is_append=False):
+    def set_items(self, ans, is_append=False, refresh=False):
         if is_append:
             self.analyses.extend(ans)
         else:
@@ -76,7 +77,8 @@ class GraphEditor(BaseTraitsEditor):
         if self.analyses:
             self._set_name()
             self._compress_groups()
-            # self.refresh_needed = True
+            if refresh:
+                self.refresh_needed = True
 
     def _set_name(self):
         na = list(set([ni.labnumber for ni in self.analyses]))

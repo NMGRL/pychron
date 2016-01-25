@@ -437,6 +437,13 @@ INTERPRETED_AGE_TABLE = """- klass: InterpretedAgeNode
 - klass: ReviewNode
 - klass: InterpretedAgeTablePersistNode
 """
+
+AUTO_IDEOGRAM = """- klass: ListenUnknownNode
+- klass: GroupingNode
+  key: Identifier
+- klass: IdeogramNode
+  no_analyses_warning: False
+"""
 # SYSTEM_HEALTH = '''
 # values:
 #  - Ar40/Ar36

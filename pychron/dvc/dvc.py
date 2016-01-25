@@ -397,7 +397,6 @@ class DVC(Loggable):
             return
 
         # load repositories
-        # {r.experiment_id for r in records}
         exps = {r.repository_identifier for r in records}
         if self.pulled_repositories:
             exps = exps - self.pulled_repositories
@@ -406,18 +405,16 @@ class DVC(Loggable):
         else:
             self.pulled_repositories = exps
 
-        # if exps:
-        #     org = Organization(self.organization)
-        #     exps = filter(lambda x: org.has_repo(x), exps)
-        #
-        #     progress_iterator(exps, self._load_repository, threshold=1)
-
         st = time.time()
-        wrapper = lambda *args: self._make_record(meta_repo=self.meta_repo,
-                                                  calculate_f_only=calculate_f_only, *args)
-        # print 'records', records
-        # records =ret= map(wrapper, records)
-        ret = progress_loader(records, wrapper, threshold=1)
+
+        make_record = self._make_record
+        meta_repo = self.meta_repo
+
+        def func(*args):
+            return make_record(meta_repo=meta_repo,
+                               calculate_f_only=calculate_f_only, *args)
+
+        ret = progress_loader(records, func, threshold=1, step=25)
         et = time.time() - st
         n = len(records)
 
