@@ -427,7 +427,7 @@ class VideoStageManager(StageManager):
             self._auto_correcting = False
 
     def _autocenter(self, holenum=None, ntries=3, save=False,
-                    use_interpolation=False, inform=True,
+                    use_interpolation=False, inform=False,
                     alpha_enabled=True,
                     auto_close_image=True):
         self.debug('do autocenter')
