@@ -23,7 +23,6 @@ import time
 from threading import Event
 # ============= local library imports  ==========================
 from pychron.envisage.consoleable import Consoleable
-from pychron.experiment.utilities.conditionals_results import check_conditional_results
 from pychron.globals import globalv
 from pychron.pychron_constants import AR_AR
 
@@ -368,8 +367,10 @@ class DataCollector(Consoleable):
             truncation_conditional = self._check_conditionals(self.truncation_conditionals, i)
             if truncation_conditional:
                 self.info('truncation conditional {}. measurement iteration executed {}/{} counts'.format(
-                    truncation_conditional.message, j, original_counts), color='red')
+                        truncation_conditional.message, j, original_counts), color='red')
                 self.state = 'truncated'
+                self.automated_run.truncated = True
+                self.automated_run.state = 'truncated'
                 self.measurement_script.abbreviated_count_ratio = truncation_conditional.abbreviated_count_ratio
                 self.automated_run.show_conditionals(tripped=truncation_conditional)
                 #                self.condition_truncated = True
@@ -378,9 +379,9 @@ class DataCollector(Consoleable):
             action_conditional = self._check_conditionals(self.action_conditionals, i)
             if action_conditional:
                 self.info(
-                    'action conditional {}. measurement iteration executed {}/{} counts'.format(
-                        action_conditional.message,
-                        j, original_counts), color='red')
+                        'action conditional {}. measurement iteration executed {}/{} counts'.format(
+                                action_conditional.message,
+                                j, original_counts), color='red')
                 self.automated_run.show_conditionals(tripped=action_conditional)
                 action_conditional.perform(self.measurement_script)
                 if not action_conditional.resume:
@@ -389,7 +390,7 @@ class DataCollector(Consoleable):
             termination_conditional = self._check_conditionals(self.termination_conditionals, i)
             if termination_conditional:
                 self.info('termination conditional {}. measurement iteration executed {}/{} counts'.format(
-                    termination_conditional.message, j, original_counts), color='red')
+                        termination_conditional.message, j, original_counts), color='red')
 
                 self.automated_run.show_conditionals(tripped=termination_conditional)
                 return 'terminate'
@@ -404,7 +405,7 @@ class DataCollector(Consoleable):
             cancelation_conditional = self._check_conditionals(self.cancelation_conditionals, i)
             if cancelation_conditional:
                 self.info('cancelation conditional {}. measurement iteration executed {}/{} counts'.format(
-                    cancelation_conditional.message, j, original_counts), color='red')
+                        cancelation_conditional.message, j, original_counts), color='red')
                 self.automated_run.show_conditionals(tripped=cancelation_conditional)
 
                 return 'cancel'
@@ -439,37 +440,37 @@ class DataCollector(Consoleable):
         if self.automated_run:
             return self.automated_run.cancelation_conditionals
 
-        # ============= EOF =============================================
-        # def _iter(self, con, evt, i, prev=0):
-        #
-        #     result = self._check_iteration(evt, i)
-        #
-        #     if not result:
-        #         try:
-        #             if i <= 1:
-        #                 self.automated_run.plot_panel.counts = 1
-        #             else:
-        #                 self.automated_run.plot_panel.counts += 1
-        #         except AttributeError:
-        #             pass
-        #
-        #         if not self._iter_hook(con, i):
-        #             evt.set()
-        #             return
-        #
-        #         ot = time.time()
-        #         p = self.period_ms * 0.001
-        #         t = Timer(max(0, p - prev), self._iter, args=(con, evt, i + 1,
-        #                                                       time.time() - ot))
-        #
-        #         t.name = 'iter_{}'.format(i + 1)
-        #         t.start()
-        #
-        #     else:
-        #         if result == 'cancel':
-        #             self.canceled = True
-        #         elif result == 'terminate':
-        #             self.terminated = True
-        #
-        #         # self.debug('no more iter')
-        #         evt.set()
+            # ============= EOF =============================================
+            # def _iter(self, con, evt, i, prev=0):
+            #
+            #     result = self._check_iteration(evt, i)
+            #
+            #     if not result:
+            #         try:
+            #             if i <= 1:
+            #                 self.automated_run.plot_panel.counts = 1
+            #             else:
+            #                 self.automated_run.plot_panel.counts += 1
+            #         except AttributeError:
+            #             pass
+            #
+            #         if not self._iter_hook(con, i):
+            #             evt.set()
+            #             return
+            #
+            #         ot = time.time()
+            #         p = self.period_ms * 0.001
+            #         t = Timer(max(0, p - prev), self._iter, args=(con, evt, i + 1,
+            #                                                       time.time() - ot))
+            #
+            #         t.name = 'iter_{}'.format(i + 1)
+            #         t.start()
+            #
+            #     else:
+            #         if result == 'cancel':
+            #             self.canceled = True
+            #         elif result == 'terminate':
+            #             self.terminated = True
+            #
+            #         # self.debug('no more iter')
+            #         evt.set()

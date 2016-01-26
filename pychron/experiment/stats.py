@@ -131,12 +131,6 @@ class ExperimentStats(Loggable):
         self._total_time = dur  # + ff
         return self._total_time
 
-    #    def calculate_etf(self):
-    #        runs = self.experiment_queue.cleaned_automated_runs
-    #        dur = self._calculate_duration(runs)
-    #        self._total_time = dur
-    #        self.etf = self.format_duration(dur)
-
     def format_duration(self, dur):
         post = self._post
         if not post:
@@ -144,55 +138,6 @@ class ExperimentStats(Loggable):
 
         dt = post + timedelta(seconds=int(dur))
         return dt.strftime('%H:%M:%S %a %m/%d')
-
-    def _calculate_duration(self, runs):
-
-        dur = 0
-        if runs:
-            script_ctx = dict()
-            warned = []
-            ni = len(runs)
-
-            run_dur = 0
-            for a in runs:
-                sh = a.script_hash
-                if sh in self.duration_tracker:
-                    run_dur += self.duration_tracker[sh]
-                else:
-                    run_dur += a.get_estimated_duration(script_ctx, warned, True)
-
-            # run_dur = sum([a.get_estimated_duration(script_ctx, warned, True) for a in runs])
-
-            btw = self.delay_between_analyses * (ni - 1)
-            dur = run_dur + btw + self.delay_before_analyses
-            self.debug('nruns={} before={}, run_dur={}, btw={}'.format(ni, self.delay_before_analyses,
-                                                                       run_dur, btw))
-
-        return dur
-
-    def _get_run_elapsed(self):
-        return str(timedelta(seconds=self._run_elapsed))
-
-    def _get_elapsed(self):
-        return str(timedelta(seconds=self._elapsed))
-
-    def _get_total_time(self):
-        dur = timedelta(seconds=round(self._total_time))
-        return str(dur)
-
-    # def traits_view(self):
-    #     v = View(VGroup(Readonly('nruns', label='Total Runs'),
-    #                     Readonly('nruns_finished', label='Completed'),
-    #                     Readonly('total_time'),
-    #                     Readonly('start_at'),
-    #                     Readonly('end_at'),
-    #                     Readonly('run_duration'),
-    #                     Readonly('current_run_duration', ),
-    #                     Readonly('etf', label='Est. finish'),
-    #                     Readonly('elapsed'),
-    #                     Readonly('run_elapsed'),
-    #                     show_border=True))
-    #     return v
 
     def start_timer(self):
         st = time.time()
@@ -227,8 +172,9 @@ class ExperimentStats(Loggable):
         self._run_start = 0
 
     def update_run_duration(self, run, t):
-        a = self.duration_tracker
-        a.update(run.spec.script_hash, t)
+        if not run.truncated:
+            a = self.duration_tracker
+            a.update(run.spec.script_hash, t)
 
     def start_run(self, run):
         self._run_start = time.time()
@@ -279,6 +225,41 @@ class ExperimentStats(Loggable):
                                   [ec, mc])
             self.clock.start()
 
+    # private
+    def _calculate_duration(self, runs):
+
+        dur = 0
+        if runs:
+            script_ctx = dict()
+            warned = []
+            ni = len(runs)
+
+            run_dur = 0
+            for a in runs:
+                sh = a.script_hash
+                if sh in self.duration_tracker:
+                    run_dur += self.duration_tracker[sh]
+                else:
+                    run_dur += a.get_estimated_duration(script_ctx, warned, True)
+
+            # run_dur = sum([a.get_estimated_duration(script_ctx, warned, True) for a in runs])
+
+            btw = self.delay_between_analyses * (ni - 1)
+            dur = run_dur + btw + self.delay_before_analyses
+            self.debug('nruns={} before={}, run_dur={}, btw={}'.format(ni, self.delay_before_analyses,
+                                                                       run_dur, btw))
+
+        return dur
+
+    def _get_run_elapsed(self):
+        return str(timedelta(seconds=self._run_elapsed))
+
+    def _get_elapsed(self):
+        return str(timedelta(seconds=self._elapsed))
+
+    def _get_total_time(self):
+        dur = timedelta(seconds=round(self._total_time))
+        return str(dur)
 
 class StatsGroup(ExperimentStats):
     experiment_queues = List
