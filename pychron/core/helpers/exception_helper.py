@@ -120,6 +120,10 @@ def create_issue(issue):
     headers = {"Authorization": "Basic {}".format(auth)}
 
     r = requests.post(cmd, data=json.dumps(issue), headers=headers)
+
+    if r.status_code == 401:
+        warning(None, 'Failed to submit issue. Username/Password incorrect.')
+
     return r.status_code in (201, 422)
 
 

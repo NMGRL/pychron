@@ -245,6 +245,7 @@ class SemiAutoCalibrator(TrayCalibrator):
 
     def _check_auto_calibration(self):
         smap = self.stage_map
+
         l = smap.get_calibration_hole('west')
         r = smap.get_calibration_hole('east')
 

@@ -155,19 +155,16 @@ class BaseStageMap(Loggable):
         try:
             idx = d.index(h)
         except IndexError, e:
-            self.debug(
-                    '^^^^^^^^^^^^^^^^^^^ index error: {}, {}, {}'.format(d, h,
-                                                                         e))
+            self.debug('^^^^^^^^^^^^^^^^^^^ index error: {}, {}, {}'.format(d, h, e))
             return
 
         try:
             key = self.calibration_holes[idx]
-            return self.get_hole(key.strip())
-        except ValueError, e:
-            self.debug(
-                    '^^^^^^^^^^^^^^^^^^^ value error: {}, {}, {}'.format(idx,
-                                                                         key,
-                                                                         e))
+        except IndexError, e:
+            self.debug('^^^^^^^^^^^^^^^^^^^ index error: {}, {}'.format(idx, e))
+            return
+
+        return self.get_hole(key.strip())
 
     def map_to_uncalibration(self, pos, cpos=None, rot=None, scale=None):
         cpos, rot, scale = self._get_calibration_params(cpos, rot, scale)
