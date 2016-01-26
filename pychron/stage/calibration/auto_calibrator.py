@@ -88,7 +88,8 @@ class SemiAutoCalibrator(TrayCalibrator):
             t.start()
             self.calibration_step = 'Cancel'
         elif step == 'Traverse':
-            if self.confirmation_dialog('Start Autocentering Travsere'):
+            if self.confirmation_dialog('Start Autocentering Traverse'):
+                self._alive = True
                 t = Thread(target=self._traverse,
                            args=(canvas.calibration_item,))
                 t.start()
