@@ -756,7 +756,7 @@ class StageManager(BaseStageManager):
                     self.info('using previously calculated corrected position')
                     autocentered_position = True
             try:
-                self.stage_controller.linear_move(block=True, *pos)
+                self.stage_controller.linear_move(block=True, raise_zero_displacement=True, *pos)
             except TargetPositionError, e:
                 self.warning('Move to {} failed'.format(pos))
                 self.parent.emergency_shutoff(str(e))

@@ -260,7 +260,7 @@ ABLE TO USE THE HARDWARE JOYSTICK
             if not points:
                 break
 
-    def linear_move(self, x, y, **kw):
+    def linear_move(self, x, y, raise_zero_displacement=False, **kw):
 
         # calc the displacement
         dx = self._x_position - x
@@ -268,7 +268,7 @@ ABLE TO USE THE HARDWARE JOYSTICK
 
         d = math.sqrt(math.pow(dx, 2) + math.pow(dy, 2))
         self.debug('dx={}, dy={}, d={}'.format(dx, dy, d))
-        if d < 0.033:
+        if d < 0.033 and raise_zero_displacement:
             raise ZeroDisplacementException()
 
         tol = 0.033
