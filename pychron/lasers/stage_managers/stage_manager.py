@@ -30,7 +30,7 @@ from pychron.canvas.canvas2D.laser_tray_canvas import LaserTrayCanvas
 # from pychron.core.helpers.color_generators import colors8i as colors
 
 from pychron.hardware.motion_controller import MotionController, \
-    TargetPositionError
+    TargetPositionError, ZeroDisplacementException
 from pychron.paths import paths
 # from pychron.lasers.stage_managers.stage_visualizer import StageVisualizer
 from pychron.lasers.points.points_programmer import PointsProgrammer
@@ -761,6 +761,8 @@ class StageManager(BaseStageManager):
                 self.warning('Move to {} failed'.format(pos))
                 self.parent.emergency_shutoff(str(e))
                 return
+            except ZeroDisplacementException:
+                correct_position = False
 
             self._move_to_hole_hook(key, correct_position,
                                     autocentered_position)

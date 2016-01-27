@@ -51,6 +51,11 @@ class TargetPositionError(BaseException):
                                                                                self._tx, self._ty)
 
 
+class ZeroDisplacementException(BaseException):
+    pass
+
+
+
 class MotionController(CoreDevice):
     """
     """

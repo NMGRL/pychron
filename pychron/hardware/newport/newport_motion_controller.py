@@ -25,7 +25,7 @@ import cPickle as pickle
 # =============local library imports  ==========================
 from pychron.hardware.core.data_helper import make_bitarray
 from pychron.hardware.motion_controller import MotionController, \
-    TargetPositionError
+    TargetPositionError, ZeroDisplacementException
 from newport_axis import NewportAxis
 from newport_joystick import Joystick
 from newport_group import NewportGroup
@@ -305,6 +305,7 @@ ABLE TO USE THE HARDWARE JOYSTICK
             self._linear_move(dict(x=x, y=y), **kw)
         else:
             self.info('displacement of move too small {} < {}'.format(d, tol))
+            raise ZeroDisplacementException()
 
     def single_axis_move(self, key, value, block=False, mode='absolute',
                          velocity=None, update=250,
