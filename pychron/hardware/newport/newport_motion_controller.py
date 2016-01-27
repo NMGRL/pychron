@@ -265,6 +265,12 @@ ABLE TO USE THE HARDWARE JOYSTICK
         # calc the displacement
         dx = self._x_position - x
         dy = self._y_position - y
+
+        d = math.sqrt(math.pow(dx, 2) + math.pow(dy, 2))
+        self.debug('dx={}, dy={}, d={}'.format(dx, dy, d))
+        if d < 0.033:
+            raise ZeroDisplacementException()
+
         tol = 0.033
 
         if abs(dx) < tol:
@@ -292,8 +298,7 @@ ABLE TO USE THE HARDWARE JOYSTICK
         if errx is None and erry is None:
             return 'invalid position {},{}'.format(x, y)
 
-        d = math.sqrt(math.pow(dx, 2) + math.pow(dy, 2))
-        tol = 0.001  # should be set to the motion controllers resolution
+        tol = 0.033  # should be set to the motion controllers resolution
         if d > tol:
             kw['displacement'] = d
             self.parent.canvas.set_desired_position(x, y)
