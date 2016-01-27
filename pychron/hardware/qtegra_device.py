@@ -49,15 +49,16 @@ class QtegraDevice(CoreDevice):
               enabled: True
               period: on_change
     """
-    def read_decabin_temperature(self):
+
+    def read_decabin_temperature(self, **kw):
         v = self.ask('GetParameter Temp1')
         return self._parse_response(v)
 
-    def read_trap_current(self):
+    def read_trap_current(self, **kw):
         v = self.ask('GetParameter Trap Current Readback')
         return self._parse_response(v)
 
-    def read_emission(self):
+    def read_emission(self, **kw):
         v = self.ask('GetParameter Source Current Readback')
         return self._parse_response(v)
 
