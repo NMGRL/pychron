@@ -97,6 +97,8 @@ class ExperimentStats(Loggable):
     run_elapsed = Property(depends_on='_run_elapsed')
     _run_elapsed = Float
 
+    remaining = Property(depends_on='_elapsed, _total_time')
+
     nruns = Int
     nruns_finished = Int
     etf = String
@@ -118,6 +120,7 @@ class ExperimentStats(Loggable):
     clock = Instance(PieClockModel, ())
     duration_tracker = Instance(AutomatedRunDurationTracker, ())
     _run_start = 0
+
     # experiment_queue = Any
 
     def calculate_duration(self, runs=None):
@@ -131,10 +134,11 @@ class ExperimentStats(Loggable):
         self._total_time = dur  # + ff
         return self._total_time
 
-    def format_duration(self, dur):
-        post = self._post
-        if not post:
-            post = datetime.now()
+    def format_duration(self, dur, post=None):
+        if post is None:
+            post = self._post
+            if not post:
+                post = datetime.now()
 
         dt = post + timedelta(seconds=int(dur))
         return dt.strftime('%H:%M:%S %a %m/%d')
@@ -261,6 +265,11 @@ class ExperimentStats(Loggable):
         dur = timedelta(seconds=round(self._total_time))
         return str(dur)
 
+    def _get_remaining(self):
+        dur = timedelta(seconds=round(self._total_time-self._elapsed))
+        return str(dur)
+
+
 class StatsGroup(ExperimentStats):
     experiment_queues = List
 
@@ -296,6 +305,13 @@ class StatsGroup(ExperimentStats):
             # self.etf = self.format_duration(tt - offset)
             self.etf = self.format_duration(tt)
 
+    def recalculate_etf(self):
+        tt = sum([ei.stats.calculate_duration(ei.cleaned_automated_runs)
+                  for ei in self.experiment_queues])
+
+        self._total_time = tt + self.elapsed
+        self.etf = self.format_duration(tt, post=datetime.now())
+
     def calculate_at(self, sel, at_times=True):
         """
             calculate the time at which a selected run will execute
@@ -309,7 +325,7 @@ class StatsGroup(ExperimentStats):
                 si = ei.cleaned_automated_runs.index(sel)
 
                 st += ei.stats.calculate_duration(
-                    ei.executed_runs + ei.cleaned_automated_runs[:si]) + ei.delay_between_analyses
+                        ei.executed_runs + ei.cleaned_automated_runs[:si]) + ei.delay_between_analyses
                 # et += ei.stats.calculate_duration(ei.executed_runs+ei.cleaned_automated_runs[:si + 1])
 
                 rd = self.get_run_duration(sel)

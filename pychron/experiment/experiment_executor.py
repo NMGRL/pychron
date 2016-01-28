@@ -709,7 +709,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.stats.finish_run()
             if run.state == 'success':
                 self.stats.update_run_duration(run, t)
-                self.stats.calculate(force=True)
+                self.stats.recalculate_etf()
 
     def _overlapped_run(self, v):
         self._overlapping = True
