@@ -309,7 +309,7 @@ class StatsGroup(ExperimentStats):
         tt = sum([ei.stats.calculate_duration(ei.cleaned_automated_runs)
                   for ei in self.experiment_queues])
 
-        self._total_time = tt + self.elapsed
+        self._total_time = tt + self._elapsed
         self.etf = self.format_duration(tt, post=datetime.now())
 
     def calculate_at(self, sel, at_times=True):

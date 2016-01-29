@@ -325,9 +325,9 @@ class StatsPane(TraitsDockPane):
     name = 'Stats'
 
     def traits_view(self):
-        gen_grp = VGroup(HGroup(Readonly('nruns', width=350, label='Total Runs'),
+        gen_grp = VGroup(HGroup(Readonly('nruns', width=150, label='Total Runs'),
                                 UReadonly('total_time')),
-                         HGroup(Readonly('nruns_finished', label='Completed'),
+                         HGroup(Readonly('nruns_finished', width=150, label='Completed'),
                                 UReadonly('elapsed')),
                          Readonly('remaining', label='Remaining'),
                          Readonly('etf', label='Est. finish'),
