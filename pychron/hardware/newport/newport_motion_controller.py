@@ -25,7 +25,7 @@ import cPickle as pickle
 # =============local library imports  ==========================
 from pychron.hardware.core.data_helper import make_bitarray
 from pychron.hardware.motion_controller import MotionController, \
-    TargetPositionError
+    TargetPositionError, ZeroDisplacementException
 from newport_axis import NewportAxis
 from newport_joystick import Joystick
 from newport_group import NewportGroup
@@ -272,11 +272,17 @@ class NewportMotionController(MotionController):
             if not points:
                 break
 
-    def linear_move(self, x, y, **kw):
+    def linear_move(self, x, y, raise_zero_displacement=False, **kw):
 
         # calc the displacement
         dx = self._x_position - x
         dy = self._y_position - y
+
+        d = math.sqrt(math.pow(dx, 2) + math.pow(dy, 2))
+        self.debug('dx={}, dy={}, d={}'.format(dx, dy, d))
+        if d < 0.033 and raise_zero_displacement:
+            raise ZeroDisplacementException()
+
         tol = 0.033
 
         if abs(dx) < tol:
@@ -300,8 +306,7 @@ class NewportMotionController(MotionController):
         if errx is None and erry is None:
             return 'invalid position {},{}'.format(x, y)
 
-        d = math.sqrt(math.pow(dx, 2) + math.pow(dy, 2))
-        tol = 0.001  # should be set to the motion controllers resolution
+        tol = 0.033  # should be set to the motion controllers resolution
         if d > tol:
             kw['displacement'] = d
             self.parent.canvas.set_desired_position(x, y)
@@ -313,6 +318,7 @@ class NewportMotionController(MotionController):
             self._linear_move(dict(x=x, y=y), **kw)
         else:
             self.info('displacement of move too small {} < {}'.format(d, tol))
+            raise ZeroDisplacementException()
 
     def single_axis_move(self, key, value, block=False, mode='absolute',
                          velocity=None,

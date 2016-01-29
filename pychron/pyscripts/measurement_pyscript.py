@@ -16,10 +16,11 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-from ConfigParser import ConfigParser
 import ast
-import time
 import os
+import time
+from ConfigParser import ConfigParser
+
 import yaml
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import fileiter
@@ -768,7 +769,7 @@ class MeasurementPyScript(ValvePyScript):
 
         :return: bool
         """
-        return self._automated_run_call(lambda: self.automated_run.truncated)
+        return self._automated_run_call(lambda: self.automated_run.truncated) or self.is_truncated()
 
     @property
     def eqtime(self):
