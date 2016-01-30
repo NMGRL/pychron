@@ -31,6 +31,9 @@ class DVCPreferences(BasePreferencesHelper):
     github_user = Str
     github_password = Password
     default_team = Str
+    work_offline_user = Str
+    work_offline_password = Password
+    work_offline_host = Str
 
 
 class DVCDBConnectionPreferences(ConnectionPreferences):
@@ -57,8 +60,15 @@ class DVCPreferencesPane(PreferencesPane):
                      label='Organization', show_border=True)
         meta = VGroup(UItem('meta_repo_name'), label='Meta', show_border=True)
         # proj = VGroup(Item(''), label='Projects', show_border=True)
+        offline = VGroup(Item('work_offline_host', label='Host'),
+                         Item('work_offline_user', label='Username'),
+                         Item('work_offline_password', label='Password'),
+                         label='Work Offline',
+                         show_border=True)
 
-        v = View(VGroup(repo, VGroup(org, meta), label='Git', show_border=True))
+        v = View(VGroup(repo, VGroup(org, meta), label='Git',
+                        show_border=True),
+                 offline)
         return v
 
 # class DVCPreferences(FavoritesPreferencesHelper):

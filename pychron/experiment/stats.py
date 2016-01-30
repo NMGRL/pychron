@@ -273,7 +273,9 @@ class ExperimentStats(Loggable):
 class StatsGroup(ExperimentStats):
     experiment_queues = List
 
+    # @caller
     def reset(self):
+        # print 'resetwas'
         ExperimentStats.reset(self)
         self.calculate(force=True)
 

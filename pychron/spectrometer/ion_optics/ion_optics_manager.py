@@ -23,20 +23,17 @@ import cPickle as pickle
 import os
 import time
 # ============= local library imports  ==========================
+from pychron.envisage.view_util import open_view
 from pychron.managers.manager import Manager
 from pychron.graph.graph import Graph
 from pychron.spectrometer.ion_optics.coincidence_config import CoincidenceConfig
 from pychron.spectrometer.ion_optics.peak_center_config import PeakCenterConfig
 from pychron.spectrometer.jobs.coincidence import Coincidence
 from pychron.spectrometer.jobs.peak_center import PeakCenter
-# from threading import Thread
 from pychron.pychron_constants import NULL_STR
 from pychron.core.ui.thread import Thread
 from pychron.paths import paths
 from pychron.core.helpers.isotope_utils import sort_isotopes
-
-
-# from pychron.core.ui.gui import invoke_in_main_thread
 
 
 class IonOpticsManager(Manager):
@@ -292,7 +289,7 @@ class IonOpticsManager(Manager):
                 graph.window_title = 'Peak Center {}({}) @ {:0.3f}'.format(ref, isotope, center_dac)
                 graph.window_width = 300
                 graph.window_height = 250
-                self.open_view(graph)
+                open_view(graph)
 
         return self.peak_center
 

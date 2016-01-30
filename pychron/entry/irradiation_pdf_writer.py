@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from traits.api import Bool
-
+from traitsui.api import View, Item
 # ============= standard library imports ========================
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER
@@ -24,15 +24,30 @@ from reportlab.lib.units import inch
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.irradiation_canvas import IrradiationCanvas
 # from pychron.entry.level import load_holder_canvas
+from pychron.core.pdf.options import BasePDFOptions
+from pychron.dvc.meta_repo import irradiation_holder_holes, irradiation_chronology
 from pychron.entry.editors.level_editor import load_holder_canvas
 from pychron.loading.component_flowable import ComponentFlowable
 from pychron.core.pdf.base_table_pdf_writer import BasePDFTableWriter
 from pychron.core.pdf.items import Row
 
 
+class IrradiationPDFTableOptions(BasePDFOptions):
+    _persistence_name = 'irradiation_pdf_table_options'
+
+    def traits_view(self):
+        v = View(Item('orientation'),
+                 kind='livemodal',
+                 buttons=['OK', 'Cancel'],
+                 title='PDF Save Options',
+                 resizable=True)
+        return v
+
+
 class IrradiationPDFWriter(BasePDFTableWriter):
     page_break_between_levels = Bool(True)
     show_page_numbers = True
+    _options_klass = IrradiationPDFTableOptions
 
     def _build(self, doc, irrad, *args, **kw):
         return self._make_levels(irrad)
@@ -75,7 +90,7 @@ class IrradiationPDFWriter(BasePDFTableWriter):
         ts.add('LINEBELOW', (0, 1), (-1, -1), 1.0, colors.black)
 
         t = self._new_table(ts, rows)
-        t._argW[0] = 0.35 * inch
+        t._argW[0] = 0.5 * inch
         t._argW[1] = 1. * inch
         t._argW[2] = 2 * inch
 
@@ -92,17 +107,20 @@ class IrradiationPDFWriter(BasePDFTableWriter):
         return p
 
     def _make_row(self, pos, canvas):
-        ln = pos.labnumber
-        sample = ''
-        identifier = ''
-        if ln:
-            if ln.sample:
-                sample = ln.sample.name
-            identifier = ln.identifier
-
+        # ln = pos.identifier
+        # sample = ''
+        # identifier = ''
+        # if ln:
+        #     if ln.sample:
+        #         sample = ln.sample.name
+        #     identifier = ln.identifier
         r = Row()
+        sample = pos.sample
+        if sample:
+            sample = sample.name
+
         r.add_item(value=pos.position)
-        r.add_item(value=identifier)
+        r.add_item(value=pos.identifier)
         r.add_item(value=sample)
         r.add_item(value='')
 
@@ -114,9 +132,9 @@ class IrradiationPDFWriter(BasePDFTableWriter):
 
     def _make_canvas(self, level):
         if level.holder:
-            geom = level.holder.geometry
+            holes = irradiation_holder_holes(level.holder)
             canvas = IrradiationCanvas()
-            load_holder_canvas(canvas, geom)
+            load_holder_canvas(canvas, holes)
             return canvas
 
 
@@ -154,22 +172,24 @@ class LabbookPDFWriter(IrradiationPDFWriter):
         name = irrad.name
         levels = ', '.join(sorted([li.name for li in irrad.levels]))
 
-        date = '1/1/1'
-        chron = irrad.chronology
-        dur = 0
-        if chron:
-            doses = chron.get_doses()
-            for pwr, st, en in doses:
-                dur += (en - st).total_seconds()
-            _, _, date = chron.get_doses(todatetime=False)[-1]
+        chron = irradiation_chronology(name)
+        dur = chron.total_duration_seconds
+        date = chron.start_date
+
+        # dur = 0
+        # if chron:
+        #     doses = chron.get_doses()
+        #     for pwr, st, en in doses:
+        #         dur += (en - st).total_seconds()
+        #     _, _, date = chron.get_doses(todatetime=False)[-1]
 
         dur /= (60 * 60.)
         date = 'Irradiation Date: {}'.format(date)
         dur = 'Irradiation Duration: {:0.1f} hrs'.format(dur)
 
         name = fontsize(name, 40)
-        #levels = fontsize(levels, 28)
-        #dur = fontsize(dur, 28)
+        # levels = fontsize(levels, 28)
+        # dur = fontsize(dur, 28)
         txt = '<br/>'.join((name, levels, date, dur))
         p = self._new_paragraph(txt,
                                 s='Title',

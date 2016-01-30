@@ -60,16 +60,16 @@ class SelectionPane(TraitsDockPane):
     name = 'Repositories'
 
     def traits_view(self):
-        repo_grp = VGroup(UItem('repository_names',
-                                editor=ListStrEditor(selected='selected_repository_name',
-                                                     editable=False)),
-                          show_border=True, label='Repository')
+        origin_grp = VGroup(UItem('repository_names',
+                                  editor=ListStrEditor(selected='selected_repository_name',
+                                                       editable=False)),
+                            show_border=True, label='Origin')
         local_grp = VGroup(UItem('local_names',
                                  editor=ListStrEditor(selected='selected_local_repository_name',
                                                       editable=False)),
                            show_border=True, label='Local')
 
-        v = View(VGroup(repo_grp, local_grp))
+        v = View(VGroup(local_grp, origin_grp))
         return v
 
 # ============= EOF =============================================

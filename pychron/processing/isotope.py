@@ -15,17 +15,26 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Float, Property, Instance, \
-    Array, String, Either, Dict, cached_property, Event, List, Bool, Int
+# from traits.api import HasTraits, Str, Float, Property, Instance, \
+#     String, Either, Dict, cached_property, Event, List, Bool, Int, Array
 # ============= standard library imports ========================
-from uncertainties import ufloat, Variable, AffineScalarFunc
-from numpy import array, Inf, polyfit
 from binascii import hexlify
 from itertools import izip
 import struct
 import re
+
+from uncertainties import ufloat
+from numpy import array, Inf, polyfit
+
+
+
+
+
+
+
 # ============= local library imports  ==========================
-from pychron.core.helpers.fits import natural_name_fit
+from pychron.core.helpers.fits import natural_name_fit, fit_to_degree
+from pychron.core.regression.mean_regressor import MeanRegressor
 
 
 def fit_abbreviation(fit, ):
@@ -35,35 +44,59 @@ def fit_abbreviation(fit, ):
     return f
 
 
-class BaseMeasurement(HasTraits):
+class BaseMeasurement(object):
     # xs = Array
     # ys = Array
-    xs = None
-    ys = None
+    # xs = None
+    # ys = None
 
-    n = Property(depends_on='xs')
-    _n = Int
-    name = Str
-    mass = Float
-    detector = Str
+    # n = Property(depends_on='xs')
+    # _n = Int
+    # name = Str
+    # mass = Float
+    # detector = Str
 
     unpack_error = None
     endianness = '>'
     reverse_unpack = False
-    time_zero_offset = Float
-    offset_xs = Property
+    use_manual_value = False
+    use_manual_error = False
+
+    _n = None
+    # time_zero_offset = Float
+    # offset_xs = Property
 
     # __slots__ = ['xs', 'ys', 'n', 'name', 'mass', 'detector', 'time_zero_offset']
+    @property
+    def n(self):
+        if self._n:
+            return self._n
 
-    def __init__(self, dbrecord=None, unpack=False, unpacker=None, *args, **kw):
+        return self.xs.shape[0]
+
+    @n.setter
+    def n(self, v):
+        self._n = v
+
+    @property
+    def offset_xs(self):
+        return self.xs - self.time_zero_offset
+
+    def __init__(self, name, detector):
+        self.name = name
+        self.detector = detector
         self.xs, self.ys = array([]), array([])
-        super(BaseMeasurement, self).__init__(*args, **kw)
-        if dbrecord and unpack:
-            if unpacker is None:
-                unpacker = lambda x: x.signal.data
+        self.mass = 0
+        self.time_zero_offset = 0
 
-            blob = unpacker(dbrecord)
-            self.unpack_data(blob)
+        # def __init__(self, dbrecord=None, unpack=False, unpacker=None, *args, **kw):
+        # super(BaseMeasurement, self).__init__(*args, **kw)
+        # if dbrecord and unpack:
+        #     if unpacker is None:
+        #         unpacker = lambda x: x.signal.data
+        #
+        #     blob = unpacker(dbrecord)
+        #     self.unpack_data(blob)
 
     def pack(self, endianness=None, as_hex=True):
         if endianness is None:
@@ -80,10 +113,13 @@ class BaseMeasurement(HasTraits):
             xs, ys = self._unpack_blob(blob)
         except (ValueError, TypeError, IndexError, AttributeError), e:
             self.unpack_error = e
+            print e
             return
 
         self.xs = array(xs)
         self.ys = array(ys)
+        # print self.name, self.xs.shape, self.ys.shape
+        # print self.name, self.ys
 
     def _unpack_blob(self, blob, endianness=None):
         if endianness is None:
@@ -99,20 +135,20 @@ class BaseMeasurement(HasTraits):
         except struct.error, e:
             print 'unpack_blob', e
 
-    def _get_n(self):
-        if not self._n:
-            return len(self.xs)
-        else:
-            return self._n
+    # def _get_n(self):
+    #     if not self._n:
+    #         return len(self.xs)
+    #     else:
+    #         return self._n
 
-    def _set_n(self, v):
-        self._n = v
-
-    def _get_offset_xs(self):
-        return self.xs - self.time_zero_offset
+    # def _set_n(self, v):
+    #     self._n = v
+    #
+    # def _get_offset_xs(self):
+    #     return self.xs - self.time_zero_offset
 
     def get_slope(self, n):
-        if len(self.xs) and len(self.ys) and len(self.xs) == len(self.ys):
+        if self.xs.shape[0] and self.ys.shape[0] and self.xs.shape[0] == self.ys.shape[0]:
             xs = self.xs
             ys = self.ys
             if n != -1:
@@ -123,36 +159,38 @@ class BaseMeasurement(HasTraits):
 
 
 class IsotopicMeasurement(BaseMeasurement):
-    uvalue = Property(depends_on='dirty')  # depends_on='value, error, _value, _error, dirty')
+    # uvalue = Property(depends_on='dirty')  # depends_on='value, error, _value, _error, dirty')
 
     # value = Property(depends_on='_value, dirty')
     # error = Property(depends_on='_error, dirty')
-    value = Property(Float(enter_set=True, auto_set=False),
-                     depends_on='dirty')
-    error = Property(Float(enter_set=True, auto_set=False),
-                     depends_on='dirty')
-    _value = Float
-    _error = Float
+    # value = Property(Float(enter_set=True, auto_set=False),
+    # depends_on='dirty')
+    # error = Property(Float(enter_set=True, auto_set=False),
+    #                  depends_on='dirty')
+    _value = 0
+    _error = 0
+    _regressor = None
 
-    fit = Property(depends_on='_fit')
-    _fit = String
-    fit_abbreviation = Property(depends_on='dirty')
-    fit_blocks = List
-    error_type = String('SEM')
-
-    filter_outliers_dict = Dict
-
-    regressor = Property(depends_on='fit, time_zero_offset, dirty')
-    # regressor = Property(depends_on='fit, dirty, error_type')
-    dirty = Event
-    include_baseline_error = Bool
-
-    use_static = Bool
-    user_defined_value = Bool
-    user_defined_error = Bool
+    # _uvalue = None
+    _fit = None
+    # _fit = String
+    # fit_abbreviation = Property(depends_on='dirty')
+    fit_blocks = None
+    error_type = None
+    #
+    filter_outliers_dict = None
+    #
+    # regressor = Property(depends_on='fit, time_zero_offset, dirty')
+    # # regressor = Property(depends_on='fit, dirty, error_type')
+    include_baseline_error = False
+    #
+    use_static = False
+    user_defined_value = False
+    user_defined_error = False
 
     _oerror = None
     _ovalue = None
+    _dirty = False
 
     # __slots__ = ['_fit', '_value', '_error', 'filter_outliers_dict',
     # 'include_baseline_error',
@@ -161,19 +199,27 @@ class IsotopicMeasurement(BaseMeasurement):
     #              'user_defined_value',
     #              'user_defined_error', 'fit_blocks', 'error_type']
 
-    def __init__(self, dbresult=None, *args, **kw):
+    # def __init__(self, dbresult=None, *args, **kw):
 
-        if dbresult:
-            self._value = dbresult.signal_
-            self._error = dbresult.signal_err
-        # else:
-        #     kw['unpack'] = True
+    # if dbresult:
+    #     self._value = dbresult.signal_
+    #     self._error = dbresult.signal_err
+    # else:
+    #     kw['unpack'] = True
 
+    # super(IsotopicMeasurement, self).__init__(*args, **kw)
+
+    # @property
+    # def uvalue(self):
+    #     return ufloat((1,0))
+
+    def __init__(self, *args, **kw):
         super(IsotopicMeasurement, self).__init__(*args, **kw)
+        self.filter_outliers_dict = dict()
 
     def set_filtering(self, d):
         self.filter_outliers_dict = d.copy()
-        self.dirty = True
+        # self.dirty = True
         # print self.filter_outliers_dict
         # self.regressor.filter_outliers_dict=self.filter_outliers_dict
         # self.regressor.calculate()
@@ -235,31 +281,41 @@ class IsotopicMeasurement(BaseMeasurement):
         self.filter_outliers_dict = {'filter_outliers': filter_outliers,
                                      'iterations': iterations,
                                      'std_devs': std_devs}
-        self.dirty = notify
+        self._dirty = notify
+
+    def attr_set(self, **kw):
+        for k, v in kw.iteritems():
+            setattr(self, k, v)
 
     def set_fit(self, fit, notify=True):
         if fit is not None:
-            if isinstance(fit, (int, str)):
-                self.trait_set(fit=fit, trait_change_notify=notify)
+            self.user_defined_value = False
+            self.user_defined_error = False
+
+            if isinstance(fit, (int, str, unicode)):
+                self.attr_set(fit=fit)
             else:
+
                 self.filter_outliers_dict = dict(filter_outliers=bool(fit.filter_outliers),
                                                  iterations=int(fit.filter_outlier_iterations or 0),
                                                  std_devs=int(fit.filter_outlier_std_devs or 0))
                 # self.error_type=fit.error_type or 'SEM'
-                self.trait_set(fit=fit.fit,
-                               time_zero_offset=fit.time_zero_offset or 0,
-                               error_type=fit.error_type or 'SEM',
-                               trait_change_notify=notify)
-                self.include_baseline_error = fit.include_baseline_error or False
+                self.attr_set(fit=fit.fit,
+                              time_zero_offset=fit.time_zero_offset or 0,
+                              error_type=fit.error_type or 'SEM',
+                              include_baseline_error=fit.include_baseline_error or False)
+                if self._regressor:
+                    self._regressor.error_calc_type = self.error_type
+                    # self.include_baseline_error = fit.include_baseline_error or False
 
-    def set_uvalue(self, v, dirty=True):
+                    # self._value = 0
+                    # self._error = 0
+            if notify:
+                self._dirty = True
+
+    def set_uvalue(self, v):
         if isinstance(v, tuple):
             self._value, self._error = v
-        else:
-            self._value = v.nominal_value
-            self._error = v.std_dev
-
-        self.dirty = dirty
 
     def _revert_user_defined(self):
         self.user_defined_error = False
@@ -269,51 +325,55 @@ class IsotopicMeasurement(BaseMeasurement):
         if self._oerror is not None:
             self._error = self._oerror
 
-    def _set_error(self, v):
-        self.user_defined_error = True
-        try:
-            self._oerror = self._error
-            self._error = float(v)
-        except ValueError:
-            pass
-
-    def _set_value(self, v):
-        self.user_defined_value = True
-        try:
-            self._ovalue = self._value
-            self._value = float(v)
-        except ValueError:
-            pass
-
-    def _get_value(self):
+    @property
+    def value(self):
         # if not (self.name.endswith('bs') or self.name.endswith('bk')):
         #     print self.name, self.use_static,self.user_defined_value
+        # print 'get value', self.name, self.use_static, self._value, self.user_defined_value
+        # if self.use_static and self._value:
+        #     return self._value
+        # elif self.user_defined_value:
+        #     return self._value
 
-        if self.use_static and self._value is not None:
-            return self._value
-        elif self.user_defined_value:
-            return self._value
-
-        if len(self.xs) > 1:
+        if not self.user_defined_value and self.xs.shape[0] > 1:
             v = self.regressor.predict(0)
             return v
         else:
             return self._value
 
-    def _get_error(self):
-        if self.use_static and self._error is not None:
-            return self._error
-        elif self.user_defined_error:
-            return self._error
+    @property
+    def error(self):
+        # if self.use_static and self._error:
+        #     return self._error
+        # elif self.user_defined_error:
+        #     return self._error
 
-        if len(self.xs) > 1:
+        if not self.user_defined_value and self.xs.shape[0] > 1:
             v = self.regressor.predict_error(0)
             return v
         else:
             return self._error
 
+    @error.setter
+    def error(self, v):
+        self.user_defined_error = True
+        try:
+            # self._oerror = self._error
+            self._error = float(v)
+        except ValueError:
+            pass
+
+    @value.setter
+    def value(self, v):
+        self.user_defined_value = True
+        try:
+            # self._ovalue = self._value
+            self._value = float(v)
+        except ValueError:
+            pass
+
     def _mean_regressor_factory(self):
-        from pychron.core.regression.mean_regressor import MeanRegressor
+        # from pychron.core.regression.mean_regressor import MeanRegressor
 
         xs = self.offset_xs
         reg = MeanRegressor(xs=xs, ys=self.ys,
@@ -321,49 +381,70 @@ class IsotopicMeasurement(BaseMeasurement):
                             error_calc_type=self.error_type or 'SEM')
         return reg
 
-    @cached_property
-    def _get_regressor(self):
-        if 'average' in self.fit.lower():
+    @property
+    def regressor(self):
+        # print self.name, self.fit, self.__class__.__name__
+        is_mean = 'average' in self.fit.lower()
+        reg = self._regressor
+        if reg is None:
+            if is_mean:
+                reg = self._mean_regressor_factory()
+            else:
+                # print 'doing import of regressor {}'.format(self.__class__)
+                # st=time.time()
+                from pychron.core.regression.ols_regressor import PolynomialRegressor
+                # print 'doing import of regressor {}'.format(time.time()-st)
+
+                reg = PolynomialRegressor(tag=self.name,
+                                          xs=self.offset_xs,
+                                          ys=self.ys,
+                                          # fit=self.fit,
+                                          # filter_outliers_dict=self.filter_outliers_dict,
+                                          error_calc_type=self.error_type)
+        elif is_mean and not isinstance(reg, MeanRegressor):
             reg = self._mean_regressor_factory()
-        else:
-            # print 'doing import of regresor {}'.format(self.__class__)
-            # st=time.time()
-            from pychron.core.regression.ols_regressor import PolynomialRegressor
-            # print 'doing import of regresor {}'.format(time.time()-st)
 
-            reg = PolynomialRegressor(tag=self.name,
-                                      xs=self.offset_xs,
-                                      ys=self.ys,
-                                      # fit=self.fit,
-                                      # filter_outliers_dict=self.filter_outliers_dict,
-                                      error_calc_type=self.error_type)
-
-            reg.set_degree(self.fit, refresh=False)
-            reg.filter_outliers_dict = self.filter_outliers_dict
-
+        if not is_mean:
+            reg.set_degree(fit_to_degree(self.fit), refresh=False)
+        reg.filter_outliers_dict = self.filter_outliers_dict
+        self._regressor = reg
         reg.calculate()
         return reg
 
-    @cached_property
-    def _get_uvalue(self):
-        return ufloat(self.value, self.error, tag=self.name)
+    # @cached_property
+    @property
+    def uvalue(self):
+        # v = self._uvalue
+        # if v is None or self._dirty:
+        # if self.name == 'Ar39':
+        #     print self.__class__.__name__, self.value, self.error
+        v = ufloat(self.value, self.error, tag=self.name)
 
-    def _get_fit_abbreviation(self):
+        return v
+
+    @property
+    def fit_abbreviation(self):
         return '{}{}'.format(fit_abbreviation(self.fit),
                              '*' if self.filter_outliers_dict.get('filter_outliers') else '')
 
-    def _get_fit(self):
+    # def _get_fit_abbreviation(self):
+    #     return '{}{}'.format(fit_abbreviation(self.fit),
+    #                          '*' if self.filter_outliers_dict.get('filter_outliers') else '')
+
+    @property
+    def fit(self):
         return self._fit
 
-    def _set_fit(self, f):
+    @fit.setter
+    def fit(self, f):
         f = natural_name_fit(f)
         self._fit = f
 
-    def _error_type_changed(self):
-        self.regressor.error_calc_type = self.error_type
+    # def _error_type_changed(self):
+    #     self.regressor.error_calc_type = self.error_type
 
     # ===============================================================================
-    # arthmetic
+    # arithmetic
     # ===============================================================================
     def __add__(self, a):
         return self.uvalue + a
@@ -391,12 +472,13 @@ class IsotopicMeasurement(BaseMeasurement):
 
 
 class CorrectionIsotopicMeasurement(IsotopicMeasurement):
-    def __init__(self, dbrecord=None, *args, **kw):
-        if dbrecord:
-            self._value = dbrecord.user_value if dbrecord.user_value is not None else 0
-            self._error = dbrecord.user_error if dbrecord.user_value is not None else 0
-
-        super(IsotopicMeasurement, self).__init__(*args, **kw)
+    pass
+    # def __init__(self, dbrecord=None, *args, **kw):
+    #     if dbrecord:
+    #         self._value = dbrecord.user_value if dbrecord.user_value is not None else 0
+    #         self._error = dbrecord.user_error if dbrecord.user_value is not None else 0
+    #
+    #     super(IsotopicMeasurement, self).__init__(*args, **kw)
 
 
 class Background(CorrectionIsotopicMeasurement):
@@ -416,12 +498,33 @@ class Whiff(BaseMeasurement):
 
 
 class BaseIsotope(IsotopicMeasurement):
-    baseline = Instance(Baseline, ())
-    baseline_fit_abbreviation = Property(depends_on='baseline:fit')
+    baseline = None
+    # baseline_fit_abbreviation = Property(depends_on='baseline:fit')
 
-    def get_baseline_corrected_value(self):
+    @property
+    def intercept_percent_error(self):
+        try:
+            return self.error / self.value
+        except ZeroDivisionError:
+            return -1
+
+    @property
+    def baseline_fit_abbreviation(self):
+        if self.baseline:
+            return self.baseline.fit_abbreviation
+        else:
+            return ''
+
+    def __init__(self, name, detector):
+        IsotopicMeasurement.__init__(self, name, detector)
+        self.baseline = Baseline(name, detector)
+
+    def get_baseline_corrected_value(self, include_baseline_error=None):
+        if include_baseline_error is None:
+            include_baseline_error = self.include_baseline_error
+
         b = self.baseline.uvalue
-        if not self.include_baseline_error:
+        if not include_baseline_error:
             b = b.nominal_value
             nv = self.uvalue - b
             return ufloat(nv.nominal_value, nv.std_dev, tag=self.name)
@@ -439,29 +542,27 @@ class Blank(BaseIsotope):
 class Isotope(BaseIsotope):
     _kind = 'signal'
 
-    blank = Instance(Blank, ())
-    background = Instance(Background)
-    sniff = Instance(Sniff)
-    whiff = Instance(Whiff)
-
+    # blank = Instance(Blank)
+    # background = Instance(Background)
+    # sniff = Instance(Sniff)
+    temporary_blank = None
+    ic_factor = None
     correct_for_blank = True
-    ic_factor = Either(Variable, AffineScalarFunc)
+    # ic_factor = Either(Variable, AffineScalarFunc)
 
-    age_error_component = Float(0.0)
-    temporary_ic_factor = None
+    age_error_component = 0.0
+    # temporary_ic_factor = None
+    # temporary_blank = Instance(Blank)
     decay_corrected = None
 
-    discrimination = Either(Variable, AffineScalarFunc)
+    discrimination = None
+    interference_corrected_value = None
 
-    interference_corrected_value = Either(Variable, AffineScalarFunc)
-
-    # __slots__ = ['interference_corrected_value',
-    # 'discrimination', 'ic_factor',
-    # 'sniff', 'blank', 'background'
-    #                                'age_error_component']
-
-    def get_filtered_data(self):
-        return self.regressor.calculate_filtered_data()
+    def __init__(self, name, detector):
+        BaseIsotope.__init__(self, name, detector)
+        self.blank = Blank(name, detector)
+        self.sniff = Sniff(name, detector)
+        self.background = Background(name, detector)
 
     def get_filtered_data(self):
         return self.regressor.calculate_filtered_data()
@@ -487,12 +588,13 @@ class Isotope(BaseIsotope):
         """
             return the discrimination and ic_factor corrected value
         """
+        # st=time.time()
         v = self.get_disc_corrected_value() * (self.ic_factor or 1.0)
 
-        #this is a temporary hack for handling Minna bluff data
+        # this is a temporary hack for handling Minna bluff data
         if self.detector.lower() == 'faraday':
             v = v - self.blank.uvalue
-
+        # print self.name, time.time()-st
         return v
 
     def get_disc_corrected_value(self):
@@ -505,10 +607,17 @@ class Isotope(BaseIsotope):
     def get_ic_corrected_value(self):
         return self.get_non_detector_corrected_value() * (self.ic_factor or 1.0)
 
+    def no_baseline_error(self):
+        v = self.get_baseline_corrected_value(include_baseline_error=False)
+
+        if self.correct_for_blank:
+            v = v - self.blank.value
+        return v
+
     def get_non_detector_corrected_value(self):
         v = self.get_baseline_corrected_value()
 
-        #this is a temporary hack for handling Minna bluff data
+        # this is a temporary hack for handling Minna bluff data
         if self.correct_for_blank and self.detector.lower() != 'faraday':
             v = v - self.blank.uvalue
 
@@ -531,6 +640,9 @@ class Isotope(BaseIsotope):
 
     def _background_default(self):
         return Background()
+
+    def _blank_default(self):
+        return Blank()
 
     def __eq__(self, other):
         return self.get_baseline_corrected_value().__eq__(other)

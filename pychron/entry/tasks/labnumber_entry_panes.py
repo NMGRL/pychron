@@ -32,7 +32,7 @@ from pychron.envisage.stylesheets import load_stylesheet
 from pychron.envisage.tasks.pane_helpers import spacer
 from pychron.entry.irradiated_position import IrradiatedPositionAdapter
 from pychron.envisage.browser.adapters import ProjectAdapter, SampleAdapter
-from pychron.pychron_constants import PLUSMINUS_SIGMA
+from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
 
 class LevelInfoPane(TraitsDockPane):
@@ -73,6 +73,8 @@ class IrradiationEditorPane(TraitsDockPane):
     labnumber_tabular_adapter = Instance(SampleAdapter, ())
 
     def traits_view(self):
+        self.labnumber_tabular_adapter.columns = [('Sample', 'name'),
+                                                  ('Material', 'material')]
         tgrp = HGroup(VGroup(icon_button_editor('add_project_button', 'database_add',
                                                 tooltip='Add project'),
                              show_border=True,
@@ -84,13 +86,13 @@ class IrradiationEditorPane(TraitsDockPane):
                       VGroup(icon_button_editor('add_sample_button', 'database_add',
                                                 tooltip='Add sample'),
                              show_border=True,
-                             label='Sample'),
-                      icon_button_editor('generate_identifiers_button',
-                                         'table_lightning',
-                                         tooltip='Generate Identifiers for this irradiation'),
-                      icon_button_editor('preview_generate_identifiers_button',
-                                         'document-preview',
-                                         tooltip='Preview identifiers generated for this irradiation level'))
+                             label='Sample')),
+        # icon_button_editor('generate_identifiers_button',
+        #                    'table_lightning',
+        #                    tooltip='Generate Identifiers for this irradiation'),
+        # icon_button_editor('preview_generate_identifiers_button',
+        #                    'document-preview',
+        #                    tooltip='Preview identifiers generated for this irradiation level'))
 
         project_grp = VGroup(UItem('projects',
                                    editor=FilterTabularEditor(editable=False,
@@ -126,7 +128,6 @@ class IrradiationEditorPane(TraitsDockPane):
         ngrp = HGroup(UItem('note'),
                       UItem('weight'),
                       show_border=True, label='Note')
-        # wgrp = HGroup(UItem('weight'), show_border=True, label='Weight')
         sgrp = HGroup(UItem('invert_flag'),
                       Item('selection_freq', label='Freq'),
                       show_border=True,

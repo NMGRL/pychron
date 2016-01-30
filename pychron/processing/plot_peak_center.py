@@ -17,13 +17,12 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 import csv
-from datetime import datetime, timedelta
+import os
 
+from datetime import datetime, timedelta
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-
-
 
 
 # ============= local library imports  ==========================
@@ -124,9 +123,9 @@ def write_analyses_to_csv(p, ms):
     man = IsotopeDatabaseManager(bind=False, connect=False)
     man.db.trait_set(name='pychrondata',
                      kind='mysql',
-                     host='129.138.12.160',
+                     host=os.environ.get('HOST'),
                      username='root',
-                     password='DBArgon')
+                     password=os.environ.get('DB_PWD'))
 
     man.connect()
     db = man.db
@@ -134,7 +133,7 @@ def write_analyses_to_csv(p, ms):
     with db.session_ctx():
         h = datetime.now()
         l = h - timedelta(days=60)
-        ans = db.get_analyses_date_range(l, h, mass_spectrometers=ms)
+        ans = db.get_analyses_by_date_range(l, h, mass_spectrometers=ms)
 
         with open(p, 'w') as wfile:
             writer = csv.writer(wfile)

@@ -15,32 +15,29 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import weakref
 
-from traits.api import Any
 from traitsui.handler import Controller
-
-from pychron.core.ui.gui import invoke_in_main_thread
 
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
 class ApplicationController(Controller):
-    application = Any
-
-    def add_window(self, ui):
-        try:
-            if self.application is not None:
-                self.application.uis.append(weakref.ref(ui)())
-        except AttributeError:
-            pass
-
-    def open_view(self, obj, **kw):
-        def _open_():
-            ui = obj.edit_traits(**kw)
-            self.add_window(ui)
-
-        invoke_in_main_thread(_open_)
+    pass
+    # application = Any
+    #
+    # def add_window(self, ui):
+    #     try:
+    #         if self.application is not None:
+    #             self.application.uis.append(weakref.ref(ui)())
+    #     except AttributeError:
+    #         pass
+    #
+    # def open_view(self, obj, **kw):
+    #     def _open_():
+    #         ui = obj.edit_traits(**kw)
+    #         self.add_window(ui)
+    #
+    #     invoke_in_main_thread(_open_)
 
 # ============= EOF =============================================

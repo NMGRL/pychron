@@ -21,18 +21,11 @@ from traitsui.api import View, Item, Group, VGroup, HGroup, UItem
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.pychron_traits import PositiveInteger
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper, BaseConsolePreferences, \
     BaseConsolePreferencesPane
 from pychron.pychron_constants import QTEGRA_INTEGRATION_TIMES
-
-
-class PositiveInteger(Int):
-    def validate(self, object, name, value):
-        if value >= 0:
-            return value
-
-        self.error(object, name, value)
 
 
 class LabspyPreferences(BasePreferencesHelper):
@@ -53,6 +46,7 @@ class ExperimentPreferences(BasePreferencesHelper):
 
     use_notifications = Bool
     notifications_port = Int
+    use_autoplot = Bool
 
     send_config_before_run = Bool
     use_auto_save = Bool
@@ -164,6 +158,7 @@ class ExperimentPreferencesPane(PreferencesPane):
                                    label='System Health')
 
         notification_grp = VGroup(
+            Item('use_autoplot'),
             Item('use_notifications'),
             Item('notifications_port',
                  enabled_when='use_notifications',

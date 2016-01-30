@@ -23,8 +23,10 @@ from traits.api import Event, Button, String, Bool, Enum, Property, Instance, In
 from traits.trait_errors import TraitError
 
 # ============= standard library imports ========================
-from datetime import datetime
 from threading import Thread, Event as Flag, Lock, currentThread
+from datetime import datetime
+from itertools import groupby
+import weakref
 import time
 import os
 import yaml
@@ -33,6 +35,7 @@ from pychron.consumer_mixin import consumable
 from pychron.core.codetools.memory_usage import mem_available
 from pychron.core.helpers.filetools import add_extension, get_path
 from pychron.core.notification_manager import NotificationManager
+from pychron.core.progress import open_progress
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.core.ui.led_editor import LED
 from pychron.database.selectors.isotope_selector import IsotopeAnalysisSelector
@@ -41,6 +44,7 @@ from pychron.envisage.preference_mixin import PreferenceMixin
 from pychron.envisage.view_util import open_view
 from pychron.experiment.automated_run.persistence import ExcelPersister
 from pychron.experiment.conditional.conditional import conditionals_from_file
+from pychron.experiment.conflict_resolver import ConflictResolver
 from pychron.experiment.datahub import Datahub
 from pychron.experiment.health.series import SystemHealthSeries
 from pychron.experiment.notifier.user_notifier import UserNotifier
@@ -48,12 +52,25 @@ from pychron.experiment.stats import StatsGroup
 from pychron.experiment.utilities.conditionals import test_queue_conditionals_name, SYSTEM, QUEUE, RUN, \
     CONDITIONAL_GROUP_TAGS
 from pychron.experiment.utilities.conditionals_results import reset_conditional_results
-from pychron.experiment.utilities.identifier import convert_extract_device
+from pychron.experiment.utilities.repository_identifier import retroactive_repository_identifiers
+from pychron.experiment.utilities.identifier import convert_extract_device, is_special
 from pychron.extraction_line.ipyscript_runner import IPyScriptRunner
 from pychron.globals import globalv
 from pychron.paths import paths
 from pychron.pychron_constants import DEFAULT_INTEGRATION_TIME, LINE_STR
 from pychron.wait.wait_group import WaitGroup
+
+
+def remove_backup(uuid_str):
+    """
+        remove uuid from backup recovery file
+    """
+    with open(paths.backup_recovery_file, 'r') as rfile:
+        r = rfile.read()
+
+    r = r.replace('{}\n'.format(uuid_str), '')
+    with open(paths.backup_recovery_file, 'w') as wfile:
+        wfile.write(r)
 
 
 class ExperimentExecutor(Consoleable, PreferenceMixin):
@@ -67,7 +84,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     connectables = List
     active_editor = Any
     console_bgcolor = 'black'
-    selected_run = Instance('pychron.experiment.automated_run.spec.AutomatedRunSpec')
+    selected_run = Instance('pychron.experiment.automated_run.spec.AutomatedRunSpec', )
+    autoplot_event = Event
     run_completed = Event
 
     # ===========================================================================
@@ -93,7 +111,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         quick     1= measure_iteration stopped at current step, script continues using 0.25*counts
 
         old-style
-            immediate 0= is the standard truncation, measure_iteration stopped at current step and measurement_script truncated
+            immediate 0= is the standard truncation, measure_iteration stopped at current step and measurement_script
+                         truncated
             quick     1= the current measure_iteration is truncated and a quick baseline is collected, peak center?
             next_int. 2= same as setting ncounts to < current step. measure_iteration is truncated but script continues
     '''
@@ -143,6 +162,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     default_integration_time = Float(DEFAULT_INTEGRATION_TIME)
     use_memory_check = Bool(True)
     memory_threshold = Int
+    use_dvc = Bool(False)
+    use_autoplot = Bool(False)
+    monitor_name = 'FC-2'
 
     use_xls_persistence = Bool(False)
     use_db_persistence = Bool(True)
@@ -170,7 +192,11 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     _prev_blank_runid = String
     _err_message = String
     _prev_blank_id = Long
+    _prev_blank_runid = Str
+
     _cv_info = None
+    _cached_runs = List
+    _active_repository_identifier = Str
 
     def __init__(self, *args, **kw):
         super(ExperimentExecutor, self).__init__(*args, **kw)
@@ -178,14 +204,31 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         # self.set_managers()
         self.notification_manager = NotificationManager()
 
-    def set_managers(self):
+    def set_managers(self, prog=None):
         p1 = 'pychron.extraction_line.extraction_line_manager.ExtractionLineManager'
         p2 = 'pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager'
         p3 = 'pychron.spectrometer.ion_optics.ion_optics_manager.IonOpticsManager'
         if self.application:
+            if prog:
+                prog.change_message('Setting Spectrometer')
             self.spectrometer_manager = self.application.get_service(p2)
-            self.extraction_line_manager = self.application.get_service(p1)
+            if self.spectrometer_manager is None:
+                self.warning_dialog('Spectrometer Plugin is required for Experiment')
+                return
             self.ion_optics_manager = self.application.get_service(p3)
+
+            if prog:
+                prog.change_message('Setting Extraction Line')
+            self.extraction_line_manager = self.application.get_service(p1)
+            if self.extraction_line_manager is None:
+                self.warning_dialog('Extraction Line Plugin is required for Experiment')
+                return
+
+        dh = self.datahub
+        dh.mainstore = self.application.get_service('pychron.dvc.dvc.DVC')
+        dh.mainstore.precedence = 1
+
+        return True
 
     def bind_preferences(self):
         self.datahub.bind_preferences()
@@ -193,6 +236,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         prefid = 'pychron.experiment'
 
         attrs = ('use_auto_save',
+                 'use_autoplot',
                  'auto_save_delay',
                  'use_labspy',
                  'min_ms_pumptime',
@@ -248,13 +292,11 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                                                 'Required for sending email notifications. '
                                                 'Are you sure you want to continue?'):
                     return
+        prog = open_progress(30)
 
-        self.set_managers()
-
-        if self.use_automated_run_monitor:
-            self.monitor = self._monitor_factory()
-
-        if self._pre_execute_check():
+        if self._pre_execute_check(prog):
+            self.info('pre execute check successful')
+            prog.close()
             # reset executor
             self._reset()
 
@@ -274,6 +316,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             t.start()
             return t
         else:
+            prog.close()
             self.alive = False
             self.info('pre execute check failed')
 
@@ -430,7 +473,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.labspy_client.add_experiment(exp)
 
         self.datahub.add_experiment(exp)
-
         # reset conditionals result file
         reset_conditional_results()
 
@@ -473,7 +515,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     self.debug('stop iteration')
                     break
 
-                if self._pre_run_check():
+                if self._pre_run_check(spec):
                     self.warning('pre run check failed')
                     break
 
@@ -583,7 +625,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 items = [(i['name'], i['email']) for i in yl if i['enabled'] and i['email'] != email]
             if items:
                 names, addrs = zip(*items)
-
         return names, addrs
 
     def _wait_for(self, predicate, period=1, invert=False):
@@ -625,7 +666,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 pb = run.get_baseline_corrected_signals()
                 if pb is not None:
                     self._prev_blank_runid = run.spec.runid
-                    self._prev_blank_id = run.spec.analysis_dbid
+                    # self._prev_blank_id = run.spec.analysis_dbid
                     self._prev_blanks = pb
                     self.debug('previous blanks ={}'.format(pb))
 
@@ -686,7 +727,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if run.state in ('success', 'truncated'):
             self.run_completed = run
 
-        self._remove_backup(run.uuid)
+        remove_backup(run.uuid)
 
         # check to see if action should be taken
         if run.state not in ('canceled', 'failed'):
@@ -700,11 +741,19 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.info('Automated run {} {} duration: {:0.3f} s'.format(run.runid, run.state, t))
 
         run.finish()
+        self._retroactive_repository_identifiers(run.spec)
+
+        if self.use_autoplot:
+            self.autoplot_event = run
 
         self.wait_group.pop()
         if self.labspy_enabled:
             self.labspy_client.add_run(run, self.experiment_queue)
 
+        if self.use_system_health:
+            self._add_system_health(run)
+
+        mem_log('end run')
         if self.stats:
             self.stats.finish_run()
             if run.state == 'success':
@@ -736,7 +785,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if run.analysis_type.startswith('blank'):
             pb = run.get_baseline_corrected_signals()
             if pb is not None:
-                self._prev_blank_id = run.spec.analysis_dbid
+                # self._prev_blank_id = run.spec.analysis_dbid
                 self._prev_blanks = pb
         self._report_execution_state(run)
         # run.teardown()
@@ -918,13 +967,29 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if tripped:
                 v.select_conditional(tripped, tripped=True)
 
-            self._cv_info = self.application.open_view(v, kind=kind)
+            self._cv_info = open_view(v, kind=kind)
 
         except BaseException:
             import traceback
 
             self.warning('******** Exception trying to open conditionals. Notify developer ********')
             self.debug(traceback.format_exc())
+
+    def _add_system_health(self, run):
+        # save analysis. don't cancel immediately
+        ret = None
+        if self.system_health:
+            ret = self.system_health.add_analysis(self)
+
+        # cancel the experiment if failed to save to the secondary database
+        # cancel/terminate if system health returns a value
+
+        if ret == 'cancel':
+            self.cancel(cancel_run=True, msg=self.system_health.error_msg)
+        elif ret == 'terminate':
+            self.cancel('run', cancel_run=True, msg=self.system_health.error_msg)
+        else:
+            return True
 
     # ===============================================================================
     # execution steps
@@ -1008,8 +1073,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         """
         if not ai.do_post_measurement():
             self._failed_execution_step('Post Measurement Failed')
-
-        return ai.post_measurement_save()
+        else:
+            # self._retroactive_experiment_identifiers(ai.spec)
+            return True
 
     def _failed_execution_step(self, msg):
         if not self._canceled:
@@ -1078,11 +1144,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             dvcp = self.application.get_service('pychron.dvc.dvc_persister.DVCPersister')
             if dvcp:
                 dvcp.load_name = exp.load_name
-
-                expid = spec.experiment_identifier
-                dvcp.initialize(expid)
-
                 arun.dvc_persister = dvcp
+
+                expid = spec.repository_identifier
+                arun.dvc_persister.initialize(expid)
 
         mon = self.monitor
         if mon is not None:
@@ -1296,21 +1361,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         with open(paths.backup_recovery_file, 'a') as rfile:
             rfile.write('{}\n'.format(uuid_str))
 
-    def _remove_backup(self, uuid_str):
-        """
-            remove uuid from backup recovery file
-        """
-        with open(paths.backup_recovery_file, 'r') as rfile:
-            r = rfile.read()
-
-        r = r.replace('{}\n'.format(uuid_str), '')
-        with open(paths.backup_recovery_file, 'w') as wfile:
-            wfile.write(r)
-
     # ===============================================================================
     # checks
     # ===============================================================================
-    def _check_dashboard(self):
+    def _check_dashboard(self, prog=None):
         """
         return True if dashboard has an error
         :return: boolean
@@ -1318,11 +1372,14 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if self.use_dashboard_client:
             if self.dashboard_client:
                 ef = self.dashboard_client.error_flag
+                if prog:
+                    prog.change_message('Checking Dashboard client for errors')
+
                 if ef:
                     self.warning('Canceling experiment. Dashboard client reports an error\n {}'.format(ef))
                     return ef
 
-    def _check_memory(self, threshold=None):
+    def _check_memory(self, prog=None, threshold=None):
         """
             if avaliable memory is less than threshold  (MB)
             stop the experiment
@@ -1332,6 +1389,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             otherwise None
         """
         if self.use_memory_check:
+            if prog:
+                prog.change_message('Checking available memory')
             if threshold is None:
                 threshold = self.memory_threshold
 
@@ -1474,12 +1533,12 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     ed_tray = man.get_tray()
                     return ed_tray != exp.tray
 
-    def _pre_run_check(self):
+    def _pre_run_check(self, spec):
         """
             return True to stop execution loop
         """
-
         self.heading('Pre Run Check')
+
         ef = self._check_dashboard()
         if ef:
             self._err_message = 'Dashboard error. {}'.format(ef)
@@ -1506,6 +1565,114 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self._wait_for_save()
         self.heading('Pre Run Check Passed')
 
+    def _retroactive_repository_identifiers(self, spec):
+        db = self.datahub.mainstore
+        crun, expid = retroactive_repository_identifiers(spec, self._cached_runs, self._active_repository_identifier)
+        self._cached_runs, self._active_repository_identifier = crun, expid
+
+        db.add_repository_association(spec.repository_identifier, spec)
+        if not is_special(spec.identifier) and self._cached_runs:
+            for c in self._cached_runs:
+                db.add_repository_association(expid, c)
+            self._cached_runs = []
+            # if is_special(spec.identifier):
+            #     self._cached_runs.append(spec)
+            #     if self._active_experiment_identifier:
+            #         spec.experiment_identifier = self._active_experiment_identifier
+            # else:
+            #     exp_id = spec.experiment_identifier
+            #     if self._cached_runs:
+            #         for c in self._cached_runs:
+            #             self.datahub.maintstore.add_experiment_association(c, exp_id)
+            #         self._cached_runs = []
+            #     self._active_experiment_identifier = exp_id
+
+    def _check_repository_identifiers(self):
+        db = self.datahub.mainstore.db
+        print 'main stored db', id(db)
+
+        with db.session_ctx():
+
+            cr = ConflictResolver()
+            for ei in self.experiment_queues:
+                identifiers = {ai.identifier for ai in ei.cleaned_automated_runs}
+                identifiers = [idn for idn in identifiers if not is_special(idn)]
+
+                repositories = {}
+                eas = db.get_associated_repositories(identifiers)
+                for idn, exps in groupby(eas, key=lambda x: x[1]):
+                    repositories[idn] = [e[0] for e in exps]
+
+                conflicts = []
+                for ai in ei.cleaned_automated_runs:
+                    identifier = ai.identifier
+                    if not is_special(identifier):
+                        try:
+                            es = repositories[identifier]
+                            if ai.repository_identifier not in es:
+                                if ai.sample == self.monitor_name:
+                                    ai.repository_identifier = ai.irradiation
+
+                                else:
+
+                                    self.debug('Experiment association conflict. '
+                                               'experimentID={} '
+                                               'previous_associations={}'.format(ai.repository_identifier,
+                                                                                 ','.join(es)))
+                                    conflicts.append((ai, es))
+                        except KeyError:
+                            pass
+
+                if conflicts:
+                    self.debug('Experiment association warning')
+                    cr.add_conflicts(ei, conflicts)
+
+            if cr.conflicts:
+                cr.available_ids = db.get_repository_identifiers()
+
+                info = cr.edit_traits(kind='livemodal')
+                if info.result:
+                    cr.apply()
+                    self.experiment_queue.refresh_table_needed = True
+                    return True
+            else:
+                return True
+
+    def _sync_repositories(self, prog):
+        experiment_ids = {a.repository_identifier for q in self.experiment_queues for a in q.cleaned_automated_runs}
+        for e in experiment_ids:
+            if prog:
+                prog.change_message('Syncing {}'.format(e))
+                if not self.datahub.mainstore.sync_repo(e):
+                    break
+        else:
+            return True
+
+    def _pre_execute_check(self, prog=None, inform=True):
+        if prog:
+            prog.change_message('Checking Experiment Identifiers')
+
+        if not self._check_repository_identifiers():
+            return
+
+        if prog:
+            prog.change_message('Syncing repositories')
+        if not self._sync_repositories(prog):
+            return
+
+        if self.user_notifier.emailer is None:
+            if any((eq.use_email or eq.use_group_email for eq in self.experiment_queues)):
+                if not self.confirmation_dialog('Email Plugin not initialized. '
+                                                'Required for sending email notifications. '
+                                                'Are you sure you want to continue?'):
+                    return
+
+        if not self.set_managers(prog):
+            return
+
+        if prog:
+            prog.change_message('Checking secondary database')
+
     def _check_for_errors(self):
         self.debug('checking for connectable errors')
         for c in self.connectables:
@@ -1522,7 +1689,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     self._err_message = e
                     break
 
-    def _pre_execute_check(self, inform=True):
+    def _pre_execute_check(self, prog=None, inform=True):
         if not self.use_db_persistence and not self.use_xls_persistence and not self.use_dvc_persistence:
             if not self.confirmation_dialog('You do not have any Database or XLS saving enabled. '
                                             'Are you sure you want to continue?\n\n'
@@ -1535,68 +1702,112 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                         'Not connected to a Mass Spec database. Do you want to continue with pychron only?'):
                     return
 
+        if prog:
+            prog.change_message('Checking queue length')
+
         exp = self.experiment_queue
         runs = exp.cleaned_automated_runs
         if not len(runs):
+            if inform:
+                self.warning_dialog('No analysis in the queue')
             return
+
+        if self.user_notifier.emailer is None:
+            if any((eq.use_email or eq.use_group_email for eq in self.experiment_queues)):
+                if not self.confirmation_dialog('Email Plugin not initialized. '
+                                                'Required for sending email notifications. '
+                                                'Are you sure you want to continue?'):
+                    return
+
+        if not self.datahub.secondary_connect():
+            if not self.confirmation_dialog(
+                    'Not connected to a Mass Spec database. Do you want to continue with pychron only?'):
+                return
+
+        if prog:
+            prog.change_message('Setting aliquot for first analysis')
 
         # check the first aliquot before delaying
         arv = runs[0]
         if not self._set_run_aliquot(arv):
+            if inform:
+                self.warning_dialog('Failed setting aliquot')
             return
 
         if self.use_dvc_persistence:
             no_exp = False
             for i, ai in enumerate(runs):
-                if not ai.experiment_identifier:
-                    self.warning('No experiment identifier for i={}, {}'.format(i + 1, ai.runid))
+                if not ai.repository_identifier:
+                    self.warning('No repository identifier for i={}, {}'.format(i + 1, ai.runid))
                     no_exp = True
 
-            if no_exp:
-                self.warning_dialog('No Experiment Identifiers')
-                return
+                if no_exp:
+                    self.warning_dialog('No Experiment Identifiers')
+                    return
 
         if globalv.experiment_debug:
             self.debug('********************** NOT DOING PRE EXECUTE CHECK ')
             return True
 
-        if self._check_dashboard():
+        if prog:
+            prog.change_message('Checking Experiment Identifiers')
+
+        if not self._check_repository_identifiers():
             return
 
-        if self._check_memory():
+        if prog:
+            prog.change_message('Syncing repositories')
+        if not self._sync_repositories(prog):
             return
 
-        if not self._check_managers(inform=inform):
+        if self._check_dashboard(prog):
             return
 
-        if self.monitor:
-            self.monitor.set_additional_connections(self.connectables)
-            self.monitor.clear_errors()
-            if not self.monitor.check():
-                self.warning_dialog('Automated Run Monitor Failed')
-                return
+        if self._check_memory(prog):
+            return
 
-        with self.datahub.mainstore.db.session_ctx():
-            an = self._get_preceding_blank_or_background(inform=inform)
-            if not an is True:
-                if an is None:
+        if not self._check_managers(prog, inform=inform):
+            return
+
+        if self.use_automated_run_monitor:
+            self.monitor = self._monitor_factory()
+            if self.monitor:
+                if prog:
+                    prog.change_message('Checking Automated Run Monitor')
+                self.monitor.set_additional_connections(self.connectables)
+                self.monitor.clear_errors()
+                if not self.monitor.check():
+                    if inform:
+                        self.warning_dialog('Automated Run Monitor Failed')
                     return
-                else:
-                    self.info('using {} as the previous blank'.format(an.record_id))
-                    try:
-                        self._prev_blank_id = an.meas_analysis_id
-                        self._prev_blanks = an.get_baseline_corrected_signal_dict()
-                        self._prev_baselines = an.get_baseline_dict()
-                    except TraitError:
-                        self.debug_exception()
-                        self.warning('failed loading previous blank')
-                        return
 
+        if prog:
+            prog.change_message('Get preceding blank')
+
+        an = self._get_preceding_blank_or_background(inform=inform)
+        if an is not True:
+            if an is None:
+                return
+            else:
+                self.info('using {} as the previous blank'.format(an.record_id))
+                try:
+                    # self._prev_blank_id = an.meas_analysis_id
+                    self._prev_blanks = an.get_baseline_corrected_signal_dict()
+                    self._prev_baselines = an.get_baseline_dict()
+                except TraitError:
+                    self.debug_exception()
+                    self.warning('failed loading previous blank')
+                    return
+        if prog:
+            prog.change_message('Checking PyScript Runner')
         if not self.pyscript_runner.connect():
             self.info('Failed connecting to pyscript_runner')
             msg = 'Failed connecting to a pyscript_runner. Is the extraction line computer running?'
             invoke_in_main_thread(self.warning_dialog, msg)
             return
+
+        if prog:
+            prog.change_message('Pre execute check complete')
 
         self.debug('pre execute check complete')
         return True
@@ -1795,6 +2006,7 @@ Use Last "blank_{}"= {}
         mainstore = self.datahub.mainstore
         db = mainstore.db
         selected = False
+        dbr = None
         with db.session_ctx():
             if last:
                 dbr = db.retrieve_blank(kind, ms, ed, last)
@@ -1933,7 +2145,7 @@ Use Last "blank_{}"= {}
             if isok:
                 return mon
             else:
-                self.warning('no automated run monitor avaliable. '
+                self.warning('no automated run monitor available. '
                              'Make sure config file is located at setupfiles/monitors/automated_run_monitor.cfg')
 
     @property

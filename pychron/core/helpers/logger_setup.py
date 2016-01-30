@@ -15,12 +15,12 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-
 # =============standard library imports ========================
-import os
 import logging
-from logging.handlers import RotatingFileHandler
+import os
 import shutil
+from logging.handlers import RotatingFileHandler
+
 # =============local library imports  =========================
 from pychron.paths import paths
 from pychron.core.helpers.filetools import list_directory
@@ -79,28 +79,6 @@ def tail(f, lines=20):
     return '\n'.join(all_read_text.splitlines()[-total_lines_wanted:])
 
 
-def set_exception_handler(func=None):
-    """
-        set sys.excepthook to func.  if func is None use a default handler
-
-        default handler formats and logs the traceback as critical and calls sys.__excepthook__
-        for normal exception handling
-
-    :return:
-    """
-    import sys
-    import traceback
-
-    root = logging.getLogger()
-    if func is None:
-        def func(exctype, value, tb):
-            for ti in traceback.format_exc():
-                root.critical(ti.strip())
-            sys.__excepthook__(exctype, value, tb)
-
-    sys.excepthook = func
-
-
 # def anomaly_setup(name):
 #     ld = logging.Logger.manager.loggerDict
 #     print 'anomaly setup ld={}'.format(ld)
@@ -113,14 +91,14 @@ def set_exception_handler(func=None):
 #         logger.addHandler(h)
 
 
-def logging_setup(name, use_archiver=True, use_file=True, **kw):
+def logging_setup(name, use_archiver=True, root=None, use_file=True, **kw):
     """
     """
     # set up deprecation warnings
     # import warnings
     #     warnings.simplefilter('default')
+    bdir = paths.log_dir if root is None else root
 
-    bdir = paths.log_dir
 
     # make sure we have a log directory
     # if not os.path.isdir(bdir):
@@ -161,7 +139,7 @@ def logging_setup(name, use_archiver=True, use_file=True, **kw):
     handlers = [shandler]
     if use_file:
         rhandler = RotatingFileHandler(
-            logpath, maxBytes=1e7, backupCount=5)
+                logpath, maxBytes=1e7, backupCount=5)
         handlers.append(rhandler)
 
     for hi in handlers:

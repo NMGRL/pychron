@@ -18,6 +18,7 @@
 from traits.api import HasTraits, Instance, Str, Float, Unicode, Bool, on_trait_change
 from traitsui.api import View, Item, HGroup, VGroup, UCustom, Tabbed, UItem, Group
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 class ProductionValue(HasTraits):
@@ -38,7 +39,7 @@ class EUCustom(UCustom):
 
 
 class IrradiationProduction(HasTraits):
-    name = Str
+    name = 'Default Production'
     reactor = Str
     note = Str
     last_modified = Str
@@ -50,13 +51,12 @@ class IrradiationProduction(HasTraits):
     k3839 = Instance(ProductionValue, (), {'name': 'K 38/39'})
     k3739 = Instance(ProductionValue, (), {'name': 'K 37/39'})
 
-
-    #Ca interferences
+    # Ca interferences
     ca3937 = Instance(ProductionValue, (), {'name': 'Ca 39/37'})
     ca3837 = Instance(ProductionValue, (), {'name': 'Ca 38/37'})
     ca3637 = Instance(ProductionValue, (), {'name': 'Ca 36/37'})
 
-    #Cl interference
+    # Cl interference
     cl3638 = Instance(ProductionValue, (), {'name': 'Cl 36/38'})
 
     # elemental production ratio
@@ -64,11 +64,15 @@ class IrradiationProduction(HasTraits):
     Cl_K = Instance(ProductionValue, (), {'name': 'Cl/K'})
     editable = Bool(False)
 
-    def __init__(self, *args, **kw):
+    def __init__(self, name=None, d=None, *args, **kw):
         super(IrradiationProduction, self).__init__(*args, **kw)
 
         self.__edited__ = dict()
         self.__dirty__ = []
+        if name:
+            self.name = name
+        if d:
+            self.create_from_dict(d)
 
     @on_trait_change('''k+:[value,error],ca+:[value,error],cl+:[value,error],
 Ca_K:[value,error],Cl_K:[value,error],note''')
@@ -116,6 +120,25 @@ Ca_K:[value,error],Cl_K:[value,error],note''')
         params['Cl_K_err'] = self.Cl_K.error
         return params
 
+    def create_from_dict(self, d):
+        for attr in ('K4039', 'K3839', 'K3739',
+                     'Ca3937', 'Ca3837', 'Ca3637',
+                     'Cl3638'):
+            # v = getattr(dbrecord, attr)
+            # e = getattr(dbrecord, '{}_err'.format(attr))
+            v, e = d.get(attr, (0, 0))
+            obj = getattr(self, attr.lower())
+            obj.value = v  # if v is not None else 0
+            obj.error = e  # if e is not None else 0
+
+        v, e = d.get('Ca_K', (0, 0))
+        self.Ca_K.value = v  # dbrecord.Ca_K if dbrecord.Ca_K else 0
+        self.Ca_K.error = e  # dbrecord.Ca_K_err if dbrecord.Ca_K_err else 0
+
+        v, e = d.get('Cl_K', (0, 0))
+        self.Cl_K.value = v  # dbrecord.Cl_K if dbrecord.Cl_K else 0
+        self.Cl_K.error = e  # dbrecord.Cl_K_err if dbrecord.Cl_K_err else 0
+
     def create(self, dbrecord):
         for attr in ('K4039', 'K3839', 'K3739',
                      'Ca3937', 'Ca3837', 'Ca3637',
@@ -156,10 +179,10 @@ Ca_K:[value,error],Cl_K:[value,error],note''')
 
         v = View(
             Tabbed(VGroup(HGroup(kgrp,
-                              cagrp),
-                       clgrp,
-                       elem_grp,
-                    label='Ratios'),
+                                 cagrp),
+                          clgrp,
+                          elem_grp,
+                          label='Ratios'),
                    Group(UItem('note', enabled_when='editable',
                                style='custom'),
                          label='Note')),
@@ -167,4 +190,3 @@ Ca_K:[value,error],Cl_K:[value,error],note''')
         return v
 
 # ============= EOF =============================================
-

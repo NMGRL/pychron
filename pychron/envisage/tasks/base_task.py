@@ -17,17 +17,17 @@
 # ============= enthought library imports =======================
 from itertools import groupby
 
-from pyface.tasks.task_layout import TaskLayout
-from traits.api import Any, on_trait_change, List, Unicode, DelegatesTo, Instance
-from pyface.directory_dialog import DirectoryDialog
-from pyface.timer.do_later import do_later, do_after
-from pyface.tasks.task import Task
-from pyface.tasks.action.schema import SMenu, SMenuBar, SGroup
-from pyface.action.api import ActionItem, Group
 from envisage.ui.tasks.action.task_window_launch_group import TaskWindowLaunchAction
-from pyface.file_dialog import FileDialog
-from pyface.constant import OK, CANCEL, YES
+from pyface.action.api import ActionItem, Group
 from pyface.confirmation_dialog import ConfirmationDialog
+from pyface.constant import OK, CANCEL, YES
+from pyface.directory_dialog import DirectoryDialog
+from pyface.file_dialog import FileDialog
+from pyface.tasks.action.schema import SMenu, SMenuBar, SGroup
+from pyface.tasks.task import Task
+from pyface.tasks.task_layout import TaskLayout
+from pyface.timer.do_later import do_later, do_after
+from traits.api import Any, on_trait_change, List, Unicode, DelegatesTo, Instance
 
 
 
@@ -41,7 +41,7 @@ from pychron.envisage.tasks.actions import GenericSaveAction, GenericSaveAsActio
     GenericFindAction, RaiseAction, RaiseUIAction, ResetLayoutAction, \
     MinimizeAction, PositionAction, IssueAction, CloseAction, CloseOthersAction, AboutAction, OpenAdditionalWindow, \
     NoteAction, RestartAction, DocumentationAction, CopyPreferencesAction, SwitchUserAction, KeyBindingsAction, \
-    ChangeLogAction, StartupTestsAction
+    ChangeLogAction, StartupTestsAction, WaffleAction
 from pychron.loggable import Loggable
 
 
@@ -136,6 +136,20 @@ class BaseTask(Task, Loggable, PreferenceMixin):
     application = DelegatesTo('window')
 
     _full_window = False
+
+    def _activate_task(self, tid):
+        if self.window:
+            for task in self.window.tasks:
+                if task.id == tid:
+                    print 'found task'
+                    break
+            else:
+                print 'add task'
+                task = self.application.create_task(tid)
+                self.window.add_task(task)
+
+            self.window.activate_task(task)
+            return task
 
     def toggle_full_window(self):
         if self._full_window:
@@ -277,6 +291,8 @@ class BaseTask(Task, Loggable, PreferenceMixin):
 
                 action = myTaskWindowLaunchAction(task_id=factory.id,
                                                   checked=checked)
+                # if hasattr(factory, 'size'):
+                # action.size = factory.size
 
                 if hasattr(factory, 'accelerator'):
                     action.accelerator = factory.accelerator
@@ -306,8 +322,15 @@ class BaseTask(Task, Loggable, PreferenceMixin):
     def _confirmation(self, message=''):
         dialog = ConfirmationDialog(parent=self.window.control,
                                     message=message, cancel=True,
-                                    default=CANCEL, title='Save Changes?')
+                                    default=CANCEL, title=title)
         return dialog.open()
+
+    @on_trait_change('window:opened')
+    def _on_open(self, event):
+        self._opened_hook()
+
+    def _opened_hook(self):
+        pass
 
     @on_trait_change('window:closing')
     def _on_close(self, event):
@@ -317,8 +340,8 @@ class BaseTask(Task, Loggable, PreferenceMixin):
         close = self._prompt_for_save()
         event.veto = not close
 
-    def _handle_prompt_for_save(self, message):
-        result = self._confirmation(message)
+    def _handle_prompt_for_save(self, message, title='Save Changes?'):
+        result = self._confirmation(message, title)
         if result == CANCEL:
             return False
         elif result == YES:

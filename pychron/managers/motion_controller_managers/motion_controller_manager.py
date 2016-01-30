@@ -18,9 +18,11 @@
 
 # =============enthought library imports=======================
 from threading import Thread
+
 from traits.api import Instance, Enum, DelegatesTo, Property, Button, Any, Float
 from traitsui.api import View, Item, HGroup, spring, \
     ListEditor, VGroup, UItem
+
 # =============standard library imports ========================
 
 # =============local library imports  ==========================
@@ -89,6 +91,7 @@ class MotionControllerManager(Manager):
             self.motion_controller.destroy_group()
             self.motion_controller._axis_move('{}PA{}'.format(ax.id, v), block=k)
             self.motion_controller.update_axes()
+
         t = Thread(target=func)
         t.start()
 

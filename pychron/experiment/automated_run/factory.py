@@ -29,6 +29,7 @@ import os
 from pychron.core.helpers.iterfuncs import partition
 from pychron.dvc.dvc import DVC
 from pychron.entry.entry_views.experiment_entry import ExperimentIdentifierEntry
+from pychron.envisage.view_util import open_view
 from pychron.experiment.conditional.conditionals_edit_view import edit_conditionals
 from pychron.experiment.datahub import Datahub
 from pychron.experiment.queue.run_block import RunBlock
@@ -119,9 +120,34 @@ def generate_positions(pos):
         return [pos]
 
 
+def get_run_blocks():
+    p = paths.run_block_dir
+    blocks = list_directory2(p, '.txt', remove_extension=True)
+    return ['RunBlock', LINE_STR] + blocks
+
+
+def get_comment_templates():
+    p = paths.comment_templates
+    templates = list_directory(p)
+    return templates
+
+
+def remove_file_extension(name, ext='.py'):
+    if not name:
+        return name
+
+    if name is NULL_STR:
+        return NULL_STR
+
+    if name.endswith('.py'):
+        name = name[:-3]
+
+    return name
+
+
 class AutomatedRunFactory(PersistenceLoggable):
     db = Any
-    dvc = Instance(DVC)
+    dvc = Instance('pychron.dvc.dvc.DVC')
     datahub = Instance(Datahub)
     undoer = Any
     edit_event = Event
@@ -377,7 +403,7 @@ class AutomatedRunFactory(PersistenceLoggable):
     # self.comment_templates = self._get_comment_templates()
 
     def load_run_blocks(self):
-        self.run_blocks = self._get_run_blocks()
+        self.run_blocks = get_run_blocks()
 
     def load_templates(self):
         self.templates = self._get_templates()
@@ -396,6 +422,7 @@ class AutomatedRunFactory(PersistenceLoggable):
 
     def set_selected_runs(self, runs):
         self.debug('len selected runs {}'.format(len(runs)))
+        run = None
 
         self._selected_runs = runs
 
@@ -739,13 +766,13 @@ class AutomatedRunFactory(PersistenceLoggable):
         invoke_in_main_thread(self.load_patterns)
 
     def _use_pattern(self):
-        return self.pattern and not self.pattern in (LINE_STR, 'None', '',
+        return self.pattern and self.pattern not in (LINE_STR, 'None', '',
                                                      'Pattern',
                                                      'Local Patterns',
                                                      'Remote Patterns')
 
     def _use_template(self):
-        return self.template and not self.template in ('Step Heat Template',
+        return self.template and self.template not in ('Step Heat Template',
                                                        LINE_STR, 'None')
 
     def _update_run_values(self, attr, v):
@@ -771,10 +798,9 @@ class AutomatedRunFactory(PersistenceLoggable):
         if self._flux_error is None:
             self._flux_error = self.flux_error
 
-        if self._flux != self.flux or \
-                        self._flux_error != self.flux_error:
+        if self._flux != self.flux or self._flux_error != self.flux_error:
             v, e = self._flux, self._flux_error
-            self.db.save_flux(self.labnumber, v, e)
+            self.dvc.save_flux(self.labnumber, v, e)
 
             # db = self.db
             # with db.session_ctx():
@@ -829,8 +855,7 @@ class AutomatedRunFactory(PersistenceLoggable):
         if '-' in old:
             old = old.split('-')[0]
 
-        if new in ANALYSIS_MAPPING or \
-                        old in ANALYSIS_MAPPING or not old and new:
+        if new in ANALYSIS_MAPPING or old in ANALYSIS_MAPPING or not old and new:
             # set default scripts
             self._load_default_scripts(new)
 
@@ -864,9 +889,8 @@ class AutomatedRunFactory(PersistenceLoggable):
                 for skey in keys:
                     new_script_name = default_scripts.get(skey) or ''
 
-                    new_script_name = self._remove_file_extension(new_script_name)
-                    if labnumber in ('u', 'bu') and \
-                            not self.extract_device in (NULL_STR, 'ExternalPipette'):
+                    new_script_name = remove_file_extension(new_script_name)
+                    if labnumber in ('u', 'bu') and self.extract_device not in (NULL_STR, 'ExternalPipette'):
 
                         # the default value trumps pychron's
                         if self.extract_device:
@@ -916,7 +940,7 @@ class AutomatedRunFactory(PersistenceLoggable):
             # get a default experiment_identifier
 
             d = dict(sample='')
-            db = self.db
+            db = self.dvc
             with db.session_ctx():
                 # convert labnumber (a, bg, or 10034 etc)
                 self.debug('load meta')
@@ -990,7 +1014,7 @@ class AutomatedRunFactory(PersistenceLoggable):
         if '-' in ln:
             ln = ln.split('-')[0]
 
-        return not ln in NON_EXTRACTABLE
+        return ln not in NON_EXTRACTABLE
 
     @cached_property
     def _get_experiment_identifiers(self):
@@ -1002,27 +1026,27 @@ class AutomatedRunFactory(PersistenceLoggable):
 
     @cached_property
     def _get_irradiations(self):
-        db = self.db
+        db = self.dvc
         if db is None or not db.connected:
             return []
 
         irradiations = []
-        if self.db:
-            irradiations = [pi.name for pi in self.db.get_irradiations()]
+        if self.dvc:
+            irradiations = [pi.name for pi in self.dvc.get_irradiations()]
 
         return ['Irradiation', LINE_STR] + irradiations
 
     @cached_property
     def _get_levels(self):
         levels = []
-        db = self.db
+        db = self.dvc
         if db is None or not db.connected:
             return []
 
-        if self.db:
-            with self.db.session_ctx():
-                if not self.selected_irradiation in ('IRRADIATION', LINE_STR):
-                    irrad = self.db.get_irradiation(self.selected_irradiation)
+        if self.dvc:
+            with self.dvc.session_ctx():
+                if self.selected_irradiation not in ('IRRADIATION', LINE_STR):
+                    irrad = self.dvc.get_irradiation(self.selected_irradiation)
                     if irrad:
                         levels = sorted([li.name for li in irrad.levels])
         if levels:
@@ -1033,12 +1057,12 @@ class AutomatedRunFactory(PersistenceLoggable):
     @cached_property
     def _get_projects(self):
 
-        if self.db:
-            db = self.db
+        if self.dvc:
+            db = self.dvc
             if not db.connected:
                 return dict()
 
-            keys = [(pi, pi.name) for pi in self.db.get_projects()]
+            keys = [(pi, pi.name) for pi in self.dvc.get_projects()]
             keys = [(NULL_STR, NULL_STR)] + keys
             return dict(keys)
         else:
@@ -1047,14 +1071,14 @@ class AutomatedRunFactory(PersistenceLoggable):
     @cached_property
     def _get_labnumbers(self):
         lns = []
-        db = self.db
+        db = self.dvc
         if db:
             # db=self.db
             if not db.connected:
                 return []
 
             with db.session_ctx():
-                if self.selected_level and not self.selected_level in ('Level', LINE_STR):
+                if self.selected_level and self.selected_level not in ('Level', LINE_STR):
                     level = db.get_irradiation_level(self.selected_irradiation,
                                                      self.selected_level)
                     if level:
@@ -1104,16 +1128,6 @@ class AutomatedRunFactory(PersistenceLoggable):
 
     def _get_edit_template_label(self):
         return 'Edit' if self._use_template() else 'New'
-
-    def _get_run_blocks(self):
-        p = paths.run_block_dir
-        blocks = list_directory2(p, '.txt', remove_extension=True)
-        return ['RunBlock', LINE_STR] + blocks
-
-    def _get_comment_templates(self):
-        p = paths.comment_templates
-        templates = list_directory(p)
-        return templates
 
     def _get_patterns(self):
         return ['Pattern', LINE_STR] + self.remote_patterns
@@ -1197,9 +1211,8 @@ class AutomatedRunFactory(PersistenceLoggable):
         r = ''
         if self.conditionals_path != NULL_STR:
             r = os.path.basename(self.conditionals_path)
-        elif self.use_simple_truncation and self.trunc_attr is not None and \
-                        self.trunc_comp is not None and \
-                        self.trunc_crit is not None:
+        elif self.use_simple_truncation and self.trunc_attr is not None and self.trunc_comp is not None \
+                and self.trunc_crit is not None:
             r = '{}{}{}, {}'.format(self.trunc_attr, self.trunc_comp,
                                     self.trunc_crit, self.trunc_start)
         return r
@@ -1220,16 +1233,16 @@ class AutomatedRunFactory(PersistenceLoggable):
         identifier = self.labnumber
         if not (self.suppress_meta or '-##-' in identifier):
             if identifier:
-                with self.db.session_ctx():
+                with self.dvc.session_ctx():
                     self.debug('load flux')
-                    # dbpos = self.db.get_identifier(identifier)
-                    # if dbpos:
-                    #     j = getattr(dbpos, attr)
-                    dbln = self.db.get_labnumber(self.labnumber)
-                    if dbln:
-                        if dbln.selected_flux_history:
-                            f = dbln.selected_flux_history.flux
-                            j = getattr(f, attr)
+                    dbpos = self.dvc.get_identifier(identifier)
+                    if dbpos:
+                        j = getattr(dbpos, attr)
+                        # dbln = self.db.get_labnumber(self.labnumber)
+                        # if dbln:
+                        # if dbln.selected_flux_history:
+                        # f = dbln.selected_flux_history.flux
+                        #         j = getattr(f, attr)
         return j
 
     def _set_flux(self, a):
@@ -1507,13 +1520,13 @@ post_equilibration_script:name''')
         temp = self._new_template()
         temp.names = list_directory(paths.incremental_heat_template_dir, extension='.txt')
         temp.on_trait_change(self._template_closed, 'close_event')
-        self.application.open_view(temp)
+        open_view(temp)
         # self.open_view(temp)
 
     def _edit_pattern_fired(self):
         pat = self._new_pattern()
         pat.on_trait_change(self._pattern_closed, 'close_event')
-        self.application.open_view(pat)
+        open_view(pat)
         # self.open_view(pat)
 
     def _edit_mode_button_fired(self):

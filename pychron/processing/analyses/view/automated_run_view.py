@@ -40,7 +40,16 @@ class AutomatedRunAnalysisView(MainView):
         pass
 
     def traits_view(self):
-        teditor, ieditor, ceditor, eeditor, meditor = es = self._get_editors()
+        teditor = myTabularEditor(adapter=IsotopeTabularAdapter(),
+                                  drag_enabled=False,
+                                  stretch_last_section=False,
+                                  editable=False,
+                                  multi_select=True,
+                                  selected='selected',
+                                  refresh='refresh_needed')
+
+        # teditor, ieditor, ceditor, eeditor, meditor = es = self._get_editors()
+        ceditor, eeditor, meditor = es = self._get_editors()
         for ei in es:
             ei.adapter.font = '10'
 

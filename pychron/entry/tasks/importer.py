@@ -29,7 +29,6 @@ from pychron.pychron_constants import NULL_STR
 from pychron.core.ui.qt.thread import Thread
 from pychron.core.ui.gui import invoke_in_main_thread
 
-
 records = namedtuple('Record', 'name')
 
 
@@ -68,13 +67,13 @@ class ImporterModel(Loggable):
         invoke_in_main_thread(pd.change_message, m)
 
     def _do_import(self, selected, pd):
-        #func = getattr(self.extractor, 'import_{}'.format(self.import_kind))
+        # func = getattr(self.extractor, 'import_{}'.format(self.import_kind))
 
         st = time.time()
         db = self.db
         with db.session_ctx(commit=not self.dry_run):
             for irrad, levels in selected:
-                #pd.max = len(levels) + 2
+                # pd.max = len(levels) + 2
                 self._progress_message(pd, 'Importing {} {}'.format(irrad, levels))
                 r = self.extractor.import_irradiation(db,
                                                       irrad,
@@ -96,7 +95,7 @@ class ImporterModel(Loggable):
 
         self.info('====== Import Finished elapsed_time= {}s======'.format(int(time.time() - st)))
         return True
-        #if self.imported_names:
+        # if self.imported_names:
         #    self.update_irradiations_needed = True
 
     @cached_property

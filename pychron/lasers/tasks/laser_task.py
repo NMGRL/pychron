@@ -19,6 +19,7 @@ from traits.api import Property
 # from traitsui.api import View, Item, TextEditor
 from pychron.envisage.tasks.base_task import BaseHardwareTask
 from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter, Tabbed
+from pychron.envisage.view_util import open_view
 from pychron.lasers.pattern.pattern_maker_view import PatternMakerView
 # from pychron.lasers.tasks.panes.co2 import FusionsCO2Pane, FusionsCO2StagePane, \
 # FusionsCO2ControlPane
@@ -68,16 +69,16 @@ class FusionsTask(BaseLaserTask):
         if self.manager:
             pc = self.manager.power_calibration_manager
             if pc:
-                self.window.application.open_view(pc)
+                open_view(pc)
 
     def new_pattern(self):
         pm = PatternMakerView()
-        self.window.application.open_view(pm)
+        open_view(pm)
 
     def open_pattern(self):
         pm = PatternMakerView()
         if pm.load_pattern():
-            self.window.application.open_view(pm)
+            open_view(pm)
 
             # def open_pattern(self):
             #         if self.manager:

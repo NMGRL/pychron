@@ -137,7 +137,7 @@ class AutomatedRunSpec(HasTraits):
     _step_heat = False
     conflicts_checked = False
 
-    experiment_identifier = Str
+    repository_identifier = Str
     identifier = Property
 
     def is_detector_ic(self):
@@ -408,6 +408,7 @@ extract_+, position, duration, cleanup''')
                 args = map(int, v.split(','))
             except ValueError:
                 logger.debug('Invalid overlap string "{}". Should be of the form "10,60" or "10" '.format(v))
+                return
 
         if len(args) == 1:
             self._overlap = args[0]

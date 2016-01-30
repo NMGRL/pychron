@@ -81,6 +81,14 @@ class AddSensitivityAction(TaskAction):
     method = 'add'
 
 
+class DatabaseSaveAction(TaskAction):
+    name = 'Database Save'
+    dname = 'Database Save'
+    description = 'Save current changes to the database'
+    method = 'save_to_db'
+    image = icon('database_save')
+
+
 class SavePDFAction(TaskAction):
     name = 'Save PDF'
     dname = 'Save PDF'
@@ -89,31 +97,31 @@ class SavePDFAction(TaskAction):
     method = 'save_pdf'
 
 
-class SaveLabbookPDFAction(TaskAction):
-    name = 'Save Labbook'
-    dname = 'Save Labbook'
+class MakeIrradiationBookPDFAction(TaskAction):
+    name = 'Make Irradiation Book'
+    dname = 'Make Irradiation Book'
     image = icon('file_pdf')
 
-    method = 'save_labbook_pdf'
+    method = 'make_irradiation_book_pdf'
 
 
-class GenerateLabnumbersAction(TaskAction):
-    name = 'Generate Labnumbers'
-    dname = 'Generate Labnumbers'
+class GenerateIdentifiersAction(TaskAction):
+    name = 'Generate Identifiers'
+    # dname = 'Generate Labnumbers'
     image = icon('table_lightning')
 
-    method = 'generate_labnumbers'
+    method = 'generate_identifiers'
 
     ddescription = 'Automatically generate labnumbers (aka identifiers) for each irradiation position in the ' \
                    'currently selected irradiation.'
 
 
-class PreviewGenerateLabnumbersAction(TaskAction):
-    name = 'Preview Generate Labnumbers'
-    dname = 'Preview Generate Labnumbers'
+class PreviewGenerateIdentifiersAction(TaskAction):
+    name = 'Preview Generate Identifiers'
+    # dname = 'Preview Generate Labnumbers'
     image = icon('table_lightning')
 
-    method = 'preview_generate_labnumbers'
+    method = 'preview_generate_identifiers'
 
 
 class ImportIrradiationAction(TaskAction):
@@ -168,18 +176,29 @@ class ExportIrradiationAction(TaskAction):
     method = 'export_irradiation'
 
 
-class GenerateIrradiationTableAction(Action):
+class GenerateIrradiationTableAction(TaskAction):
     name = 'Generate Irradiation Table'
     dname = 'Generate Irradiation Table'
     accelerator = 'Ctrl+0'
 
-    ddescription = 'Do not use!'
+    # ddescription = 'Do not use!'
 
     def perform(self, event):
-        from pychron.entry.irradiation_table_writer import IrradiationTableWriter
+        # from pychron.entry.irradiation_table_writer import IrradiationTableWriter
+        # a = IrradiationTableWriter()
+        # a.make()
 
-        a = IrradiationTableWriter()
-        a.make()
+        from pychron.entry.irradiation_xls_writer import IrradiationXLSTableWriter
+        dvc = self.task.window.application.get_service('pychron.dvc.dvc.DVC')
+        if dvc is not None:
+            if dvc.db.connect():
+                names = dvc.get_irradiation_names()
+
+                a = IrradiationXLSTableWriter(dvc=dvc)
+                a.make(names)
+        else:
+            from pyface.message_dialog import warning
+            warning(None, 'DVC Plugin is required. Please enable')
 
 
 class ImportIrradiationHolderAction(Action):
@@ -202,4 +221,10 @@ class TransferJAction(TaskAction):
     name = 'Transfer J Data...'
     dname = 'Transfer J Data'
     method = 'transfer_j'
+
+
+class GetIGSNAction(TaskAction):
+    name = 'Get IGSNs'
+    dname = 'Get IGSNs'
+    method = 'get_igsns'
 # ============= EOF =============================================

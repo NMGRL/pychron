@@ -24,6 +24,9 @@ import sys
 import serial
 
 
+
+
+
 # =============local library imports  ==========================
 from communicator import Communicator, process_response, prep_str, remove_eol_func
 from pychron.globals import globalv

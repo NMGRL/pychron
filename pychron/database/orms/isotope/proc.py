@@ -101,6 +101,9 @@ class proc_TagTable(Base):
 
     analyses = relationship('meas_AnalysisTable', backref='tag_item')
 
+    def to_dict(self):
+        return {k: getattr(self, k) for k in ('name', 'omit_ideo', 'omit_series',
+                                              'omit_spec', 'omit_iso')}
 
 class proc_ArArHistoryTable(Base, HistoryMixin):
     arar_result = relationship('proc_ArArTable', backref='history',

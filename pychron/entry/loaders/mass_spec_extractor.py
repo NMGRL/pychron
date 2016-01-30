@@ -19,18 +19,17 @@ from apptools.preferences.preference_binding import bind_preference
 from traits.api import HasTraits, Str, Bool, Instance, Button, Any
 # ============= standard library imports ========================
 import struct
-import datetime
+from datetime import timedelta
 from sqlalchemy.sql.expression import and_, not_
 from sqlalchemy.orm.exc import NoResultFound
 # ============= local library imports  ==========================
-from pychron.database.orms.massspec_orm import AnalysesTable, MachineTable, \
+from pychron.mass_spec.database.massspec_orm import AnalysesTable, MachineTable, \
     LoginSessionTable, RunScriptTable
 from pychron.core.helpers.filetools import unique_path
 from pychron.paths import paths
 from pychron.entry.loaders.extractor import Extractor
-from pychron.database.adapters.massspec_database_adapter import MassSpecDatabaseAdapter
+from pychron.mass_spec.database.massspec_database_adapter import MassSpecDatabaseAdapter
 from pychron.database.database_connection_spec import DBConnectionSpec
-
 
 SAMPLE_DICT = {'ba': 'blank_air', 'bc': 'blank_cocktail', 'bu': 'blank_unknown',
                'a': 'air', 'c': 'cocktail'}
@@ -59,17 +58,17 @@ class MassSpecExtractor(Extractor):
     # def _dbconn_spec_default(self):
     # #        return DBConnectionSpec(database='massspecdata_minnabluff',
     # #                                username='root',
-    # #                                password='Argon',
+    # #                                password='',
     # #                                host='localhost'
     # #                                )
     #     return DBConnectionSpec(database='massspecdata',
     #                             username='root',
-    #                             password='DBArgon',
-    #                             host='129.138.12.160')
+    #                             password='',
+    #                             host=os.environ.get('HOST'))
     #
     #     return DBConnectionSpec(database='massspecdata_minnabluff',
     #                             username='root',
-    #                             password='Argon',
+    #                             password='',
     #                             host='localhost')
     def __init__(self, *args, **kw):
         super(MassSpecExtractor, self).__init__(*args, **kw)
@@ -136,7 +135,7 @@ class MassSpecExtractor(Extractor):
             self.warning('no irradiation found or created for {}. not adding levels'.format(name))
         self.debug('irradiation import dry_run={}'.format(dry_run))
 
-        #if not dry_run:
+        # if not dry_run:
         #    dest.sess.commit()
 
         self.import_err_file.close()
@@ -160,7 +159,7 @@ class MassSpecExtractor(Extractor):
         with db.session_ctx() as sess:
             levels = db.get_irradiation_levels(name,
                                                levels=include_list)
-            #if not include_list:
+            # if not include_list:
             #    include_list = [li.Level for li in levels]
 
             progress.increase_max(len(levels))
@@ -173,8 +172,8 @@ class MassSpecExtractor(Extractor):
                     break
 
                 progress.change_message('importing level {} {}'.format(name, mli.Level))
-                #print mli.Level, include_list
-                #if mli.Level not in include_list:
+                # print mli.Level, include_list
+                # if mli.Level not in include_list:
                 #    continue
 
                 dbpr = self._add_production_ratios(dest, name, mli.Level)
@@ -183,7 +182,7 @@ class MassSpecExtractor(Extractor):
                 dbl = dest.get_irradiation_level(name, mli.Level)
                 if dbl is None:
                     hname = mli.SampleHolder
-                    #check that irradiation holder is in the database
+                    # check that irradiation holder is in the database
                     dbholder = dest.get_irradiation_holder(hname)
                     if not dbholder:
                         self.warning_dialog('Irradiation Holder "{}" does not exist in the database\n'
@@ -211,7 +210,7 @@ class MassSpecExtractor(Extractor):
                     if not ln:
                         self.debug('{} not in dest'.format(ip.IrradPosition))
                         ln = dest.add_labnumber(ip.IrradPosition, sample=sample)
-                        #dest.sess.flush()
+                        # dest.sess.flush()
 
                         dbpos = dest.add_irradiation_position(ip.HoleNumber, ln,
                                                               name, mli.Level)
@@ -222,7 +221,7 @@ class MassSpecExtractor(Extractor):
                         fh.flux = fl
                         added_to_db = True
 
-                    #dest.sess.flush()
+                    # dest.sess.flush()
 
                     ln.sample = sample
                     ln.note = ip.Note
@@ -249,7 +248,7 @@ class MassSpecExtractor(Extractor):
                                 if self._add_associated_cocktails(dest, ai):
                                     added_to_db = True
 
-                    #dest.sess.flush()
+                    # dest.sess.flush()
                     # if not dry_run:
                     dest.sess.commit()
 
@@ -259,7 +258,7 @@ class MassSpecExtractor(Extractor):
         ms = dba.login_session.machine
         if ms:
             ms = ms.Label
-            if not ms in ('Pychron Obama', 'Pychron Jan', 'Obama', 'Jan'):
+            if ms not in ('Pychron Obama', 'Pychron Jan', 'Obama', 'Jan'):
                 return
 
             self.info('============ Adding Associated Cocktails ============')
@@ -280,15 +279,13 @@ class MassSpecExtractor(Extractor):
                                         atype=1,
                                         add_hook=add_hook,
                                         analysis_type='cocktail',
-            )
+                                        )
 
     def _add_associated_airs(self, dest, dba):
-        '''
-        '''
         ms = dba.login_session.machine
         if ms:
             ms = ms.Label
-            if not ms in ('Pychron Obama', 'Pychron Jan', 'Obama', 'Jan'):
+            if ms not in ('Pychron Obama', 'Pychron Jan', 'Obama', 'Jan'):
                 return
 
             self.info('============ Adding Associated Airs ============')
@@ -309,7 +306,7 @@ class MassSpecExtractor(Extractor):
                                         atype=2,
                                         add_hook=add_hook,
                                         analysis_type='air',
-            )
+                                        )
 
     def _add_air_blanks(self, dest, dba):
         def make_labnumber(bi):
@@ -325,7 +322,7 @@ class MassSpecExtractor(Extractor):
 
         return self._add_associated(dest, dba, make_labnumber, atype=5,
                                     analysis_type='blank_air',
-        )
+                                    )
 
     def _add_cocktail_blanks(self, dest, dba):
         def make_labnumber(bi):
@@ -431,25 +428,25 @@ class MassSpecExtractor(Extractor):
             return []
 
     def _filter_analyses(self, ms, post, delta, lim, at, filter_hook=None):
-        '''
-            ms= spectrometer 
+        """
+            ms= spectrometer
             post= timestamp
             delta= time in hours
             at=analysis type
-            
-            if delta is negative 
+
+            if delta is negative
             get all before post and after post-delta
 
-            if delta is post 
+            if delta is post
             get all before post+delta and after post
-        '''
+        """
         with self.db.session_ctx() as sess:
             #         sess = self.db.get_session()
             q = sess.query(AnalysesTable)
             q = q.join(LoginSessionTable)
             q = q.join(MachineTable)
             #
-            win = datetime.timedelta(hours=delta)
+            win = timedelta(hours=delta)
             dt = post + win
             if delta < 0:
                 a, b = dt, post
@@ -505,7 +502,7 @@ class MassSpecExtractor(Extractor):
         if dest_an is None:
             return
 
-        #dest.sess.flush()
+        # dest.sess.flush()
 
         if isinstance(dest_labnumber, (str, int, long)):
             iden = str(dest_labnumber)
@@ -537,7 +534,7 @@ class MassSpecExtractor(Extractor):
         if ed not in _ed_cache:
             dest.add_extraction_device(ed)
             _ed_cache.append(ed)
-            #dest.sess.flush()
+            # dest.sess.flush()
 
         ext = dest.add_extraction(dest_an,
                                   cleanup_duration=dbanalysis.FirstStageDly + dbanalysis.SecondStageDly,
@@ -545,7 +542,7 @@ class MassSpecExtractor(Extractor):
                                   extract_value=dbanalysis.FinalSetPwr,
                                   extract_device=ed)
 
-        #dest.sess.flush()
+        # dest.sess.flush()
         pos = sorted(dbanalysis.positions, key=lambda x: x.PositionOrder)
 
         for pi in pos:
@@ -581,7 +578,7 @@ class MassSpecExtractor(Extractor):
                 det = dest.get_detector(detname)
                 if det is None:
                     det = dest.add_detector(detname)
-                    #dest.sess.flush()
+                    # dest.sess.flush()
             except AttributeError, e:
                 self.debug('mass spec extractor {}', e)
 
@@ -620,12 +617,12 @@ class MassSpecExtractor(Extractor):
             for data, k in ((baseline, 'baseline'),
                             (data, 'signal')):
                 dbiso = dest.add_isotope(dest_an, iso.Label, det, kind=k)
-                #dest.sess.flush()
+                # dest.sess.flush()
 
                 dest.add_signal(dbiso, data)
 
                 # add to fit history
-                #### How to extract fits from Mass Spec???? #####
+                # ### How to extract fits from Mass Spec???? #####
                 #            fit = None
                 #            if fit:
                 #                if fit_hist is None:
@@ -638,7 +635,7 @@ class MassSpecExtractor(Extractor):
         dest.add_selected_histories(dest_an)
 
         dest_an.import_id = self.dbimport.id
-        #self.dbimport.analyses.append(dest_an)
+        # self.dbimport.analyses.append(dest_an)
         return True
 
     def _add_sample_project(self, dest, dbpos):
@@ -655,8 +652,8 @@ class MassSpecExtractor(Extractor):
             project = self.mapper.map_project(project)
 
         project = dest.add_project(project)
-        #print sample, sample.Sample
-        #sam=convert_sample(dbpos, sample.Sample)
+        # print sample, sample.Sample
+        # sam=convert_sample(dbpos, sample.Sample)
 
         return dest.add_sample(
             sample.Sample,
@@ -686,7 +683,7 @@ class MassSpecExtractor(Extractor):
                            ('P36Cl38Cl', 'Cl3638'),
                            ('CaOverKMultiplier', 'Ca_K'),
                            ('ClOverKMultiplier', 'Cl_K')
-                    ]
+                           ]
                     for k in prs:
                         if not isinstance(k, tuple):
                             ko = k

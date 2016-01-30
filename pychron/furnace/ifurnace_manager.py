@@ -19,6 +19,7 @@ from traits.api import Interface
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
+
 class IFurnaceManager(Interface):
     def set_setpoint(self, v):
         pass

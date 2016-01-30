@@ -15,11 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Array
+from traits.api import Array, Tuple
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.lineplot import LinePlot
 # ============= standard library imports ========================
 from numpy import array, zeros
+
+
 # ============= local library imports  ==========================
 
 class ErrorEnvelopeOverlay(AbstractOverlay):
@@ -29,6 +31,8 @@ class ErrorEnvelopeOverlay(AbstractOverlay):
     upper = Array
     lower = Array
     use_downsampling = False
+    line_color = Tuple((1, 0, 0))
+    xs = None
 
     def invalidate(self):
         self._cache_valid = False
@@ -41,7 +45,10 @@ class ErrorEnvelopeOverlay(AbstractOverlay):
             if not index or not value:
                 return
 
-            xs = index.get_data()
+            xs = self.xs
+            if xs is None:
+                xs = index.get_data()
+
             ls = self.lower
             us = self.upper
 
@@ -62,15 +69,14 @@ class ErrorEnvelopeOverlay(AbstractOverlay):
 
     def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
         with gc:
-            gc.clip_to_rect(0, 0, self.component.width, self.component.height)
+            gc.clip_to_rect(0, 0, other_component.width, other_component.height)
             upts, lpts = self.get_screen_points()
             gc.set_line_dash((5, 5))
-            gc.set_stroke_color((1, 0, 0))
+            gc.set_stroke_color(self.line_color)
             LinePlot._render_normal(gc, upts, '')
             LinePlot._render_normal(gc, lpts, '')
 
     def _downsample(self):
-#         print self._screen_cache_valid
         if not self._screen_cache_valid:
             self._cached_screen_pts_u = self.component.map_screen(self._cached_data_pts_u)[0]
             self._cached_screen_pts_l = self.component.map_screen(self._cached_data_pts_l)[0]
@@ -84,7 +90,6 @@ class ErrorEnvelopeOverlay(AbstractOverlay):
                 m = self.component.index_mapper
                 total_numpoints = r * c
                 if (total_numpoints < 400) or (total_numpoints < m.high_pos - m.low_pos):
-#                     print self._cached_screen_pts_l
                     return [self._cached_screen_pts_l], [self._cached_screen_pts_u]
 
                 # the new point array and a counter of how many actual points we've added

@@ -101,6 +101,7 @@ class Experiment(Base, BaseMixin):
 
     # HashID = stringcolumn()
     analyses = relationship('Analysis', backref='experiment')
+
 #
 #
 # class AnalysisType(Base,BaseMixin):

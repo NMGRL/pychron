@@ -30,9 +30,17 @@ class DVCIrradiationable(Loggable):
     irradiations = Property(depends_on='updated')
 
     updated = Event
+    _suppress_auto_select_irradiation = False
 
     def verify_database_connection(self, inform=True):
-        return self.dvc.db.connect(warn=inform)
+        # return self.dvc.initialize(inform)
+        self.debug('Verify database connection')
+
+        ret = self.dvc.initialize(inform)
+        if ret:
+            # trigger reload of irradiations, and levels
+            self.updated = True
+        return ret
 
     def load(self):
         pass
@@ -64,6 +72,3 @@ class DVCIrradiationable(Loggable):
                     return []
 
 # ============= EOF =============================================
-
-
-

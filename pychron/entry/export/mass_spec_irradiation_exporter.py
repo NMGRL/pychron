@@ -22,7 +22,7 @@ from traits.api import Instance
 # ============= standard library imports ========================
 import binascii
 # ============= local library imports  ==========================
-from pychron.database.adapters.massspec_database_adapter import MassSpecDatabaseAdapter, PR_KEYS
+from pychron.mass_spec.database.massspec_database_adapter import MassSpecDatabaseAdapter, PR_KEYS
 from pychron.entry.export.base_irradiation_exporter import BaseIrradiationExporter
 
 

@@ -15,23 +15,23 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, List, Event, Instance, Bool, Any, Property, cached_property
-from traitsui.api import View, UItem, HSplit, VSplit, Handler
+from traits.api import HasTraits, Str, List, Event, Instance, Any, Property, cached_property, Dict
+from traitsui.api import View, UItem, VGroup, HGroup
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from uncertainties import std_dev, nominal_value, ufloat
 from pychron.core.helpers.formatting import floatfmt, format_percent_error
-from pychron.processing.analyses.view.adapters import IsotopeTabularAdapter, ComputedValueTabularAdapter, \
-    DetectorRatioTabularAdapter, ExtractionTabularAdapter, MeasurementTabularAdapter, IntermediateTabularAdapter
+from pychron.processing.analyses.view.adapters import ComputedValueTabularAdapter, \
+    DetectorRatioTabularAdapter, ExtractionTabularAdapter, MeasurementTabularAdapter
 from pychron.processing.analyses.view.values import ExtractionValue, ComputedValue, MeasurementValue, DetectorRatio
 from pychron.core.ui.tabular_editor import myTabularEditor
 
 
-class MainViewHandler(Handler):
-    def show_isotope_evolution(self, uiinfo, obj):
-        isos = obj.selected
-        obj.show_iso_evo_needed = isos
+# class MainViewHandler(Handler):
+#     def show_isotope_evolution(self, uiinfo, obj):
+#         isos = obj.selected
+#         obj.show_iso_evo_needed = isos
 
 
 class MainView(HasTraits):
@@ -40,7 +40,7 @@ class MainView(HasTraits):
     analysis_id = Str
     analysis_type = Str
 
-    isotopes = List
+    isotopes = Dict
     refresh_needed = Event
 
     computed_values = List
@@ -50,13 +50,9 @@ class MainView(HasTraits):
 
     _corrected_enabled = True
 
-    isotope_adapter = Instance(IsotopeTabularAdapter, ())
-    intermediate_adapter = Instance(IntermediateTabularAdapter, ())
     measurement_adapter = Instance(MeasurementTabularAdapter, ())
     extraction_adapter = Instance(ExtractionTabularAdapter, ())
     computed_adapter = Property(depends_on='analysis_type')
-
-    show_intermediate = Bool(True)
 
     selected = Any
     show_iso_evo_needed = Event
@@ -72,7 +68,8 @@ class MainView(HasTraits):
             self.refresh_needed = True
 
     def _load(self, an):
-        self.isotopes = [an.isotopes[k] for k in an.isotope_keys]
+        self.isotopes = an.isotopes
+        # self.isotopes = [an.isotopes[k] for k in an.isotope_keys]
         self.load_computed(an)
         self.load_extraction(an)
         self.load_measurement(an, an)
@@ -80,27 +77,32 @@ class MainView(HasTraits):
     def _get_irradiation(self, an):
         return an.irradiation_label
 
-    def _get_j(self, an):
-        return an.j
+        # def _get_j(self, an):
+        # return ufloat(an.j, an.j_err)
 
     def load_measurement(self, an, ar):
 
-        j = self._get_j(an)
+        # j = self._get_j(an)
+        j = an.j
         jf = 'NaN'
         if j is not None:
-            jj = floatfmt(j.nominal_value, n=7, s=5)
-            pe = format_percent_error(j.nominal_value, j.std_dev, include_percent_sign=True)
-            jf = u'{} \u00b1{:0.2e}({})'.format(jj, j.std_dev, pe)
+            jj = floatfmt(nominal_value(j), n=7, s=5)
+            pe = format_percent_error(nominal_value(j), std_dev(j), include_percent_sign=True)
+            jf = u'{} \u00b1{:0.2e}({})'.format(jj, std_dev(j), pe)
 
         a39 = ar.ar39decayfactor
         a37 = ar.ar37decayfactor
         ms = [
-            MeasurementValue(name='DR Version',
-                             value=an.data_reduction_tag),
+            # MeasurementValue(name='DR Version',
+            #                  value=an.data_reduction_tag),
+            MeasurementValue(name='Branch',
+                             value=an.branch),
             MeasurementValue(name='DAQ Version',
                              value=an.collection_version),
-            MeasurementValue(name='AnalysisID',
-                             value=self.analysis_id),
+            MeasurementValue(name='ExperimentID',
+                             value=an.repository_identifier),
+            # MeasurementValue(name='AnalysisID',
+            #                  value=self.analysis_ida),
             MeasurementValue(name='Spectrometer',
                              value=an.mass_spectrometer),
             MeasurementValue(name='Run Date',
@@ -109,7 +111,8 @@ class MainView(HasTraits):
                              value=self._get_irradiation(an)),
             MeasurementValue(name='J',
                              value=jf),
-
+            MeasurementValue(name='Lambda K',
+                             value=nominal_value(ar.arar_constants.lambda_k)),
             MeasurementValue(name='Project',
                              value=an.project),
             MeasurementValue(name='Sample',
@@ -186,12 +189,12 @@ class MainView(HasTraits):
                 self._load_corrected_values(an, new_list)
 
         elif self.analysis_type in ('air', 'blank_air', 'blank_unknown', 'blank_cocktail'):
-            self._load_air_computed(an, new_list)
+            self._load_air_computed(new_list)
         elif self.analysis_type == 'cocktail':
-            self._load_cocktail_computed(an, new_list)
+            self._load_cocktail_computed(new_list)
 
-    def _get_isotope(self, name):
-        return next((iso for iso in self.isotopes if iso.name == name), None)
+    # def _get_isotope(self, name):
+    #     return next((iso for iso in self.isotopes if iso.name == name), None)
 
     def _make_ratios(self, ratios):
         cv = []
@@ -246,12 +249,14 @@ class MainView(HasTraits):
                 pass
         return ufloat(0, 1e-20), 1
 
-    def _update_ratios(self, an):
+    def _update_ratios(self):
         for ci in self.computed_values:
+            if not isinstance(ci, DetectorRatio):
+                continue
+
             nd = ci.detectors
             n, d = nd.split('/')
-            niso, diso = self._get_isotope(n), self._get_isotope(d)
-
+            niso, diso = self.isotopes.get(n), self.isotopes.get(d)
             noncorrected = self._get_non_corrected_ratio(niso, diso)
             corrected, ic = self._get_corrected_ratio(niso, diso)
 
@@ -261,21 +266,21 @@ class MainView(HasTraits):
                          noncorrected_error=std_dev(noncorrected),
                          ic_factor=nominal_value(ic))
 
-    def _load_air_computed(self, an, new_list):
+    def _load_air_computed(self, new_list):
         if new_list:
             ratios = [('40Ar/36Ar', 'Ar40/Ar36', 295.5), ('40Ar/38Ar', 'Ar40/Ar38', 1)]
             cv = self._make_ratios(ratios)
             self.computed_values = cv
 
-        self._update_ratios(an)
+        self._update_ratios()
 
-    def _load_cocktail_computed(self, an, new_list):
+    def _load_cocktail_computed(self, new_list):
         if new_list:
             ratios = [('40Ar/36Ar', 'Ar40/Ar36', 295.5), ('40Ar/39Ar', 'Ar40/Ar39', 1)]
             cv = self._make_ratios(ratios)
             self.computed_values = cv
         else:
-            self._update_ratios(an)
+            self._update_ratios()
 
     def _load_corrected_values(self, an, new_list):
         attrs = (('40/39', 'Ar40/Ar39_decay_corrected'),
@@ -345,7 +350,7 @@ class MainView(HasTraits):
                 return ComputedValue(name=n,
                                      tag=a,
                                      value=nominal_value(value) or 0,
-                                     value_tag=value_tag,
+                                     value_tag=value_tag or '',
                                      display_value=display_value,
                                      error=e or 0)
 
@@ -378,23 +383,10 @@ class MainView(HasTraits):
         return adapter()
 
     def _get_editors(self):
-        teditor = myTabularEditor(adapter=self.isotope_adapter,
-                                  drag_enabled=False,
-                                  stretch_last_section=False,
-                                  editable=False,
-                                  multi_select=True,
-                                  selected='selected',
-                                  refresh='refresh_needed')
 
         ceditor = myTabularEditor(adapter=self.computed_adapter,
                                   editable=False,
                                   drag_enabled=False,
-                                  refresh='refresh_needed')
-
-        ieditor = myTabularEditor(adapter=self.intermediate_adapter,
-                                  editable=False,
-                                  drag_enabled=False,
-                                  stretch_last_section=False,
                                   refresh='refresh_needed')
 
         eeditor = myTabularEditor(adapter=self.extraction_adapter,
@@ -407,38 +399,25 @@ class MainView(HasTraits):
                                   editable=False,
                                   refresh='refresh_needed')
 
-        return teditor, ieditor, ceditor, eeditor, meditor
+        return ceditor, eeditor, meditor
 
     def traits_view(self):
-        teditor, ieditor, ceditor, eeditor, meditor = self._get_editors()
+        ceditor, eeditor, meditor = self._get_editors()
 
-        v = View(
-            VSplit(
-                HSplit(
-                    UItem('measurement_values',
+        g1 = HGroup(UItem('measurement_values',
                           editor=meditor,
-                          height=300,
+                          height=200,
                           width=0.4),
                     UItem('extraction_values',
                           editor=eeditor,
-                          height=300,
-                          width=0.6)),
-                UItem('isotopes',
-                      editor=teditor,
-                      height=0.25),
-                UItem('isotopes',
-                      editor=ieditor,
-                      defined_when='show_intermediate',
-                      height=0.25),
-                HSplit(UItem('computed_values',
-                             editor=ceditor,
-                             height=200),
-                       UItem('corrected_values',
-                             height=200,
-                             editor=ceditor))),
-            handler=MainViewHandler()
-        )
-        return v
+                          height=200,
+                          width=0.6))
+        g2 = HGroup(UItem('computed_values',
+                          editor=ceditor, ),
+                    UItem('corrected_values',
+                          editor=ceditor))
+        v = View(VGroup(g1, g2))
 
+        return v
 
 # ============= EOF =============================================

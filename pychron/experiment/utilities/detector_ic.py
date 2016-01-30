@@ -20,6 +20,8 @@ import os
 
 from traits.api import HasTraits, Str, Float
 
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from uncertainties import nominal_value, std_dev
@@ -35,11 +37,14 @@ class RatioItem(HasTraits):
     intensity = Str
     intensity_err = Str
 
-    def add_ratio(self, x):
-        v = x.get_non_detector_corrected_value() / self.refvalue
-
-        self.add_trait(x.detector, Float(round(nominal_value(v), 5)))
-        self.add_trait('{}_err'.format(x.detector), Float(round(std_dev(v), 5)))
+    def add_ratio(self, detector, v):
+        v /= self.refvalue
+        # v = x.get_non_detector_corrected_value() / self.refvalue
+        # print 'asfasfd', self.name, x.detector, nominal_value(v)
+        # self.add_trait(x.detector, Float(round(nominal_value(v), 5)))
+        # self.add_trait('{}_err'.format(x.detector), Float(round(std_dev(v), 5)))
+        self.add_trait(detector, Float(nominal_value(v)))
+        self.add_trait('{}_err'.format(detector), Float(std_dev(v)))
 
     def to_row(self):
         vs = [self.name, self.intensity, self.intensity_err]
@@ -62,12 +67,13 @@ def make_items(isotopes):
                           refvalue=rv,
                           intensity=floatfmt(nominal_value(rv)),
                           intensity_err=floatfmt(std_dev(rv)))
-            r.add_ratio(ai)
+            r.add_ratio(ai.detector, ai.get_non_detector_corrected_value())
             for bi in isotopes.values():
-                r.add_ratio(bi)
+                r.add_ratio(bi.detector, bi.get_non_detector_corrected_value())
 
             items.append(r)
     return items
+
 
 def save_csv(record_id, items):
     path = os.path.join(paths.data_det_ic_dir, add_extension(record_id, '.csv'))
@@ -77,7 +83,14 @@ def save_csv(record_id, items):
         for i in items:
             wrt.writerow(i.to_row())
 
+
+def get_columns(isos):
+    def closure():
+        for det in DETECTOR_ORDER:
+            iso = next((iso for iso in isos if iso.detector.upper() == det), None)
+            if iso:
+                yield det, iso.detector
+
+    return list(closure())
+
 # ============= EOF =============================================
-
-
-

@@ -171,7 +171,7 @@ class ThermoSpectrometer(SpectrometerDevice):
         for di in self.detectors:
             di.set_gain()
 
-        return [(di.name, di.gain) for di in self.detectors]
+        return {di.name:di.gain for di in self.detectors}
 
     def load_current_detector_gains(self):
         """

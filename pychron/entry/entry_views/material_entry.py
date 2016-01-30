@@ -15,15 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Str
-from traitsui.api import Item
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.entry.entry_views.entry import BaseEntry
 
 
 class MaterialEntry(BaseEntry):
-    material = Str
+    tag = 'Material'
 
     def _add_item(self):
         name = self.material
@@ -36,8 +34,8 @@ class MaterialEntry(BaseEntry):
         else:
             self.warning_dialog('"{}" already exists'.format(name))
 
-    def traits_view(self):
-        return self._new_view(Item('material'), title='New Material')
+    # def traits_view(self):
+    #     return self._new_view(Item('material'), title='New Material')
 
 # ============= EOF =============================================
 

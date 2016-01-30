@@ -124,7 +124,6 @@ class ComputedValueTabularAdapter(BaseTabularAdapter):
         return format_percent_error(v, e)
 
 
-
 class IntermediateTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
     all_columns = [('Iso.', 'name'),
                    ('I', 'intercept'),
@@ -171,17 +170,17 @@ class IntermediateTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
     interference_corrected_percent_error_text = Property
     interference_corrected_tooltip = Str('Interference corrected isotopic value')
 
-    bs_corrected_width = Int(60)
-    bs_corrected_error_width = eewidth
-    bs_corrected_percent_error_width = pwidth
+    # bs_corrected_width = Int(60)
+    # bs_corrected_error_width = eewidth
+    # bs_corrected_percent_error_width = pwidth
 
-    bs_bk_corrected_width = Int(60)
-    bs_bk_corrected_error_width = eewidth
-    bs_bk_corrected_percent_error_width = pwidth
+    # bs_bk_corrected_width = Int(60)
+    # bs_bk_corrected_error_width = eewidth
+    # bs_bk_corrected_percent_error_width = pwidth
 
-    disc_corrected_width = Int(60)
-    disc_corrected_error_width = Int(60)
-    disc_corrected_percent_error_width = Int(60)
+    # disc_corrected_width = Int(60)
+    # disc_corrected_error_width = Int(60)
+    # disc_corrected_percent_error_width = Int(60)
 
     name_width = Int(40)
     intercept_width = vwidth
@@ -284,6 +283,7 @@ class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
                    (sigmaf('Bk'), 'blank_error'),
                    ('%(Bk)', 'blank_percent_error'),
                    ('IC', 'ic_factor'),
+                   (sigmaf('IC'), 'ic_factor_error'),
                    ('Disc', 'discrimination'),
                    ('Error Comp.', 'age_error_component')]
     columns = [('Iso.', 'name'),
@@ -300,10 +300,7 @@ class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
                ('Bk', 'blank_value'),
                (sigmaf('Bk'), 'blank_error'),
                ('%(Bk)', 'blank_percent_error'),
-               ('IC', 'ic_factor'),
-               # ('Disc', 'discrimination'),
-               # ('Error Comp.', 'age_error_component')
-                ]
+               ('IC', 'ic_factor')]
 
     value_tooltip = Str('Baseline, Blank, IC and/or Discrimination corrected')
     value_text = Property
@@ -313,6 +310,7 @@ class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
     blank_value_text = Property
     blank_error_text = Property
     ic_factor_text = Property
+    ic_factor_error_text = Property
     discrimination_text = Property
     include_baseline_error_text = Property
 
@@ -342,15 +340,35 @@ class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
     ic_factor_width = Int(50)
     discrimination_width = Int(50)
 
-    def get_menu(self, object, trait, row, column):
-        return MenuManager(Action(name='Show Isotope Evolution', action='show_isotope_evolution'))
+    def get_menu(self, obj, trait, row, column):
+        return MenuManager(Action(name='Show Isotope Evolution',
+                                  action='show_isotope_evolution'),
+                           Action(name='Show Isotope Evolution w/Equilibration',
+                                  action='show_isotope_evolution_with_sniff'),
+                           Action(name='Show Isotope Evolution w/Baseline',
+                                  action='show_isotope_evolution_with_baseline'),
+                           Action(name='Show Baseline',
+                                  action='show_baseline'),
+                           Action(name='Show Sniff',
+                                  action='show_sniff'),
+                           Action(name='Show All',
+                                  action='show_all'))
 
     def _get_ic_factor_text(self):
         ic = self.item.ic_factor
         if ic is None:
             v = 0.0
         else:
-            v = ic.nominal_value
+            v = nominal_value(ic)
+
+        return floatfmt(v, n=4)
+
+    def _get_ic_factor_error_text(self):
+        ic = self.item.ic_factor
+        if ic is None:
+            v = 0.0
+        else:
+            v = std_dev(ic)
 
         return floatfmt(v, n=4)
 
@@ -365,23 +383,35 @@ class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
 
     def _get_value_text(self, *args, **kw):
         v = self.item.get_intensity()
-        return floatfmt(v.nominal_value, n=6)
+        return self._format(self.item, nominal_value(v), 'value')
 
     def _get_error_text(self, *args, **kw):
         v = self.item.get_intensity()
-        return floatfmt(v.std_dev, n=6)
+        return self._format(self.item, std_dev(v), 'error')
+
+    def _format(self, item, v, v_or_e, n=6):
+        if isinstance(item, str):
+            item = getattr(self.item, item)
+
+        if isinstance(v, str):
+            v = getattr(item, v)
+
+        t = floatfmt(v, n=n)
+        if getattr(item, 'use_manual_{}'.format(v_or_e)):
+            t = '#{}'.format(t)
+        return t
 
     def _get_base_value_text(self, *args, **kw):
-        return floatfmt(self.item.baseline.value, n=6)
+        return self._format('baseline', 'value', 'value')
 
     def _get_base_error_text(self, *args, **kw):
-        return floatfmt(self.item.baseline.error, n=6)
+        return self._format('baseline', 'error', 'error')
 
     def _get_blank_value_text(self, *args, **kw):
-        return floatfmt(self.item.blank.value, n=6)
+        return self._format('blank', 'value', 'value')
 
     def _get_blank_error_text(self, *args, **kw):
-        return floatfmt(self.item.blank.error, n=6)
+        return self._format('blank', 'error', 'error')
 
     def _get_baseline_percent_error_text(self, *args):
         b = self.item.baseline

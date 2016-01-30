@@ -172,6 +172,7 @@ class MapView(Viewable):
                 self.labnumbers[hi - 1] = ln
                 self.set_hole_state(hi - 1, -1.1)
 
+
 # self.scatter.states[holenum - 1] = 1
 
 if __name__ == '__main__':

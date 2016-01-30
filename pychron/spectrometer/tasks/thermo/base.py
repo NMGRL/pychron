@@ -23,6 +23,7 @@ from pyface.tasks.action.schema_addition import SchemaAddition
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.strtools import to_bool
+from pychron.envisage.view_util import open_view
 from pychron.spectrometer.readout_view import ReadoutView
 from pychron.spectrometer.tasks.base_spectrometer_plugin import BaseSpectrometerPlugin
 from pychron.spectrometer.thermo.manager.argus import ArgusSpectrometerManager
@@ -52,7 +53,7 @@ class ThermoSpectrometerPlugin(BaseSpectrometerPlugin):
             # ro, v = new_readout_view(spectrometer=spec.spectrometer)
             rv = self.application.get_service(ReadoutView)
             v = new_readout_view(rv)
-            self.application.open_view(rv, view=v)
+            open_view(rv, view=v)
 
     # ===============================================================================
     # tests

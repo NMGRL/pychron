@@ -23,6 +23,7 @@ from pychron.experiment.classifier.base_classifier import BaseClassifier
 
 
 def make_sample(iso):
+    # print 'make sample {} {} {}'.format(iso.mass, iso.n, iso.intercept_percent_error)
     return iso.mass, iso.n, iso.intercept_percent_error
 
 
@@ -33,6 +34,7 @@ class IsotopeClassifier(BaseClassifier):
             1= Good
     """
     _clf = None
+    _persistence_name = 'clf.isotope.p'
 
     def classifier_factory(self, klass=None, *args, **kw):
         kw['n_neighbors'] = 3

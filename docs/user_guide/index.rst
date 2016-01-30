@@ -9,4 +9,5 @@ Pychron User Guide
   operation/index
   processing/index
   entry/index
-      dashboard/index
+  dashboard/index
+  glossary

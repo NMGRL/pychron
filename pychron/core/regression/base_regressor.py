@@ -25,7 +25,7 @@ from numpy import where, delete
 # ============= local library imports  ==========================
 from tinv import tinv
 from pychron.core.stats.core import calculate_mswd, validate_mswd
-from pychron.pychron_constants import ALPHAS
+from pychron.pychron_constants import ALPHAS, PLUSMINUS
 
 import logging
 
@@ -160,7 +160,10 @@ class BaseRegressor(HasTraits):
         return s
 
     def calculate_residuals(self):
-        return self.predict(self.clean_xs) - self.clean_ys
+        if self._result:
+            return self._result.resid
+        else:
+            return self.clean_ys - self.predict(self.clean_xs)
 
     def calculate_error_envelope(self, rx, rmodel=None):
         if rmodel is None:
@@ -182,6 +185,7 @@ class BaseRegressor(HasTraits):
         return rmodel - es, rmodel + es
 
     def calculate_ci(self, rx, rmodel):
+
         cors = self.calculate_ci_error(rx)
         if rmodel is not None and cors is not None:
             if rmodel.shape[0] and cors.shape[0]:
@@ -189,12 +193,11 @@ class BaseRegressor(HasTraits):
 
     def calculate_ci_error(self, rx):
         cors = self._calculate_ci(rx)
-        return 2*cors
+        return cors
 
     def get_syx(self):
         n = self.clean_xs.shape[0]
         obs = self.clean_ys
-
         model = self.predict(self.clean_xs)
         if model is not None:
             return (1. / (n - 2) * ((obs - model) ** 2).sum()) ** 0.5
@@ -205,7 +208,6 @@ class BaseRegressor(HasTraits):
         x = self.clean_xs
         if xm is None:
             xm = x.mean()
-
         return ((x - xm) ** 2).sum()
 
     def tostring(self, sig_figs=5):
@@ -222,7 +224,7 @@ class BaseRegressor(HasTraits):
             fmt = '{{:0.{}e}}' if abs(ei) < math.pow(10, -sig_figs) else '{{:0.{}f}}'
             ei = fmt.format(sig_figs).format(ei)
 
-            vfmt = u'{}= {} +/- {} {}'
+            vfmt = u'{{}}= {{}} {} {{}} {{}}'.format(PLUSMINUS)
             coeffs.append(vfmt.format(a, ci, ei, pp))
 
         s = u', '.join(coeffs)
@@ -272,13 +274,13 @@ class BaseRegressor(HasTraits):
         if n > 2:
             xm = x.mean()
 
-            ti = tinv(alpha, n - 2)
-
+            ti = tinv(alpha, n - 1)
             syx = self.get_syx()
             ssx = self.get_ssx(xm)
-
             d = n ** -1 + (rx - xm) ** 2 / ssx
             cors = ti * syx * d ** 0.5
+
+            # print rx, cors[0]
 
             return cors
 

@@ -22,6 +22,8 @@ from traits.api import HasTraits, Bool, List, Any, Float
 from traitsui.api import View, Item,UItem, Controller, VGroup, HGroup, TabularEditor
 
 
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from uncertainties import ufloat
@@ -29,7 +31,7 @@ from pychron.core.ui.progress_dialog import myProgressDialog
 from pychron.envisage.browser.adapters import AnalysisAdapter
 from pychron.paths import paths
 # from pychron.processing.tasks.browser.panes import AnalysisAdapter
-from pychron.pychron_constants import PLUSMINUS_SIGMA
+from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
 
 class K3739EditModel(HasTraits):
@@ -105,7 +107,7 @@ class K3739EditView(Controller):
                 Item('normal_k3739', label='Normal (37/39)K'),
                 HGroup(
                     Item('k3739', label='(37/39)K'),
-                    Item('k3739_err', label=PLUSMINUS_SIGMA),
+                    Item('k3739_err', label=PLUSMINUS_ONE_SIGMA),
                     show_border=True,
                     enabled_when='not normal_k3739')),
             UItem('analyses', editor=TabularEditor(adapter=AnalysisAdapter())),

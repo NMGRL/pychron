@@ -21,13 +21,13 @@ from traits.api import Any, Bool, Tuple
 # ============= standard library imports ========================
 import os
 import cStringIO
-# ============= local library imports  ==========================
-from pychron.hardware.motion_controller import PositionError
-
-from pychron.paths import paths
-from pychron.lasers.pattern.patternable import Patternable
 import time
 from threading import Thread
+# ============= local library imports  ==========================
+from pychron.envisage.view_util import open_view
+from pychron.hardware.motion_controller import PositionError
+from pychron.paths import paths
+from pychron.lasers.pattern.patternable import Patternable
 
 
 class PeriodCTX:
@@ -154,7 +154,7 @@ class PatternExecutor(Patternable):
     def show_pattern(self):
         self.pattern.window_x = 50
         self.pattern.window_y = 50
-        self.open_view(self.pattern, view='graph_view')
+        open_view(self.pattern, view='graph_view')
 
     def execute(self, block=False):
         """

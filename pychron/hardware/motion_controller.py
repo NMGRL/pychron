@@ -48,7 +48,7 @@ class TargetPositionError(BaseException):
         dx = self._x - self._tx
         dy = self._y - self._ty
         return 'PositionError. Dev:{},{} Current: x={}, y={}, Target: x={}, y={}'.format(dx, dy, self._x, self._y,
-                                                                               self._tx, self._ty)
+                                                                                         self._tx, self._ty)
 
 
 class ZeroDisplacementException(BaseException):

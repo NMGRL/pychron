@@ -15,10 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import os
-import time
 from traits.api import Instance, Event, Bool, Any, Property, Str, Float, provides
 # ============= standard library imports ========================
+import os
+import time
 # ============= local library imports  ==========================
 from pychron.core.helpers.strtools import to_bool
 from pychron.hardware.meter_calibration import MeterCalibration

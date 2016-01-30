@@ -39,11 +39,12 @@ def image(name):
 
 def icon(name):
     name = add_extension(name, '.png')
-    for si in paths.icon_search_path:
-        if si and os.path.isfile(os.path.join(si, name)):
-            break
-    else:
-        print 'no icon for "{}"'.format(name)
+    if paths.icon_search_path:
+        for si in paths.icon_search_path:
+            if si and os.path.isfile(os.path.join(si, name)):
+                break
+        else:
+            print 'no icon for "{}"'.format(name)
 
     return ImageResource(name=name, search_path=paths.icon_search_path)
 

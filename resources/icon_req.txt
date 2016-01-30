@@ -79,10 +79,6 @@ tag-blue-add
 document-open
 application-form-edit
 window-new
-window-new
-window-new
-window-new
-window-new
 arrow-right-2
 arrow-left-2
 image_add
@@ -92,6 +88,7 @@ green_ball
 gray_ball
 red_ball
 yellow_ball
+orange_ball
 project-open
 irc-server
 configure-2
@@ -120,3 +117,6 @@ update-product
 bricks
 brick-go
 control_play_blue
+table_filter
+table
+pipe

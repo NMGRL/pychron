@@ -390,6 +390,9 @@ class AutomatedRunPersister(BasePersister):
         :param oblob: output blob. binary time, value. time versus requested output
         :param snapshots: list of snapshot paths
         """
+        self.debug('AutomatedRunPersister post_extraction_save deprecated')
+        return
+
         if DEBUG:
             self.debug('Not saving extraction to database')
             return
@@ -400,7 +403,7 @@ class AutomatedRunPersister(BasePersister):
             with db.session_ctx() as sess:
                 loadtable = db.get_loadtable(self.per_spec.load_name)
                 if loadtable is None:
-                    loadtable = db.add_load(self.per_spec.load_name)
+                    loadtable = db.add_load(self.per_spec.load_name, 'None')
 
                 ext = self._save_extraction(db, loadtable=loadtable,
                                             response_blob=rblob,
@@ -442,6 +445,9 @@ class AutomatedRunPersister(BasePersister):
         #. save detector_ic to csv if applicable
         #. save to secondary database
         """
+        self.debug('AutomatedRunPersister post_measurement_save deprecated')
+        return
+
         if DEBUG:
             self.debug('Not measurement saving to database')
             return

@@ -687,10 +687,7 @@ def edit_conditionals(name, detectors=None, app=None, root=None, save_as=False,
     if kinds:
         cev.group_names = kinds
 
-    if app:
-        info = app.open_view(cev, kind='livemodal')
-    else:
-        info = cev.edit_traits(kind='livemodal')
+    info = open_view(cev, kind='livemodal')
 
     if info.result:
         cev.dump()

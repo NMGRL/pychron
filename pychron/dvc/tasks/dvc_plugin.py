@@ -23,8 +23,9 @@ from pyface.tasks.action.schema_addition import SchemaAddition
 
 from pychron.dvc.dvc import DVC
 from pychron.dvc.dvc_persister import DVCPersister
-from pychron.dvc.tasks.actions import PullAnalysesAction
-from pychron.dvc.tasks.preferences import DVCPreferencesPane, DVCDBConnectionPreferencesPane
+from pychron.dvc.tasks.actions import WorkOfflineAction, UseOfflineDatabase
+from pychron.dvc.tasks.preferences import DVCPreferencesPane, \
+    DVCDBConnectionPreferencesPane
 from pychron.dvc.tasks.repo_task import ExperimentRepoTask
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 
@@ -36,8 +37,9 @@ class DVCPlugin(BaseTaskPlugin):
         super(DVCPlugin, self).start()
 
         dvc = self.application.get_service(DVC)
-        # if not self._fetched:
-        #     dvc.meta_repo.smart_pull()
+        if not self._fetched:
+            dvc.initialize()
+            dvc.meta_pull()
 
     # def stop(self):
     #     dvc = self.application.get_service(DVC)
@@ -48,22 +50,19 @@ class DVCPlugin(BaseTaskPlugin):
     def test_dvc_fetch_meta(self):
         dvc = self.application.get_service(DVC)
         # dvc.fetch_meta()
-        dvc.meta_repo.smart_pull()
+        dvc.meta_pull()
         self._fetched = True
 
     def _service_offers_default(self):
-        p = {'dvc': self.dvc_factory()}
-        self.debug('DDDDD {}'.format(p))
+        # p = {'dvc': self.dvc_factory()}
+        # self.debug('DDDDD {}'.format(p))
         so = self.service_offer_factory(protocol=DVCPersister,
                                         factory=DVCPersister,
-                                        properties=p,
-                                        )
-        # so1 = self.service_offer_factory(protocol=DVCDatabase,
-        # factory=DVCDatabase)
-        # so2 = self.service_offer_factory(protocol=MetaRepo,
-        # factory=MetaRepo)
+                                        properties={'dvc': self.dvc_factory()})
+
         so2 = self.service_offer_factory(protocol=DVC,
                                          factory=self.dvc_factory)
+
         return [so, so2]
 
     def dvc_factory(self):
@@ -105,9 +104,11 @@ class DVCPlugin(BaseTaskPlugin):
         #         repo.commit('added {}'.format(db.path))
 
     def _task_extensions_default(self):
-        return [TaskExtension(actions=[SchemaAddition(factory=PullAnalysesAction,
-                                                      path='MenuBar/data.menu')]), ]
+        actions = [SchemaAddition(factory=WorkOfflineAction,
+                                  path='MenuBar/tools.menu'),
+                   SchemaAddition(factory=UseOfflineDatabase,
+                                  path='MenuBar/tools.menu')]
+
+        return [TaskExtension(actions=actions), ]
+
 # ============= EOF =============================================
-
-
-

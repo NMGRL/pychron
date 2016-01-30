@@ -15,15 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from git.exc import GitCommandError
-from gitdb.util import hex_to_bin
 from traits.api import HasTraits, Str, Bool, Date
 # ============= standard library imports ========================
 from datetime import datetime
 import os
+from gitdb.util import hex_to_bin
 from git import Repo, Blob, Diff
-
-
 # ============= local library imports  ==========================
 
 
@@ -64,21 +61,30 @@ def get_commits(repo, branch, path, tag, *args):
             return
         repo = Repo(repo)
 
-    fmt = 'format:%H|%cn|%ce|%ct|%s'
-
-    cmd = ['git', 'log', branch, '--pretty={}'.format(fmt)]
+    fmt = '%H|%cn|%ce|%ct|%s'
+    cmd = [branch, '--pretty={}'.format(fmt)]
     cmd.extend(args)
     if path:
         cmd.extend(['--', path])
 
-    proc = repo.git.execute(cmd, as_process=True)
-    try:
-        proc.wait()
-    except GitCommandError:
-        return []
+    txt = repo.git.log(*cmd)
 
-    if not proc.returncode:
-        return [from_gitlog(l.strip(), path, tag) for l in proc.stdout]
+    return [from_gitlog(l.strip(), path, tag) for l in txt.split('\n')] if txt else []
+
+    # print ' '.join(cmd)
+    # print repo.git.execute(' '.join(cmd))
+    # return []
+    # proc = repo.git.execute(cmd, as_process=True)
+    # try:
+    #     proc.wait()
+    # except GitCommandError, e:
+    #     print 'eee', e
+    #     return []
+    # print 'ret', proc.returncode
+    # if not proc.returncode:
+    #     for l in proc.stdout:
+    #         print l.strip()
+    #     return [from_gitlog(l.strip(), path, tag) for l in proc.stdout]
 
 
 def get_diff(repo, a, b, path, change_type='M'):

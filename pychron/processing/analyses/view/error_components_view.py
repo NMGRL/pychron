@@ -68,7 +68,7 @@ class ErrorComponentsView(HasTraits):
             es.append(ErrorComponent(name=d,
                                      value=an.get_error_component(d)))
 
-        for k in INTERFERENCE_KEYS + ['J', ]:
+        for k in INTERFERENCE_KEYS + ('J',):
             v = an.get_error_component(k)
             es.append(ErrorComponent(name=k, value=v))
 

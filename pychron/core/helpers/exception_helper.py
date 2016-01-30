@@ -179,10 +179,10 @@ class ExceptionHandler(Controller):
                 UItem('helpstr',
                       style='readonly'),
                 Item('title'),
-                HGroup(
-                        VGroup(UItem('labels', style='custom', editor=CheckListEditor(values=LABELS)),
+                HGroup(VGroup(UItem('labels', style='custom', editor=CheckListEditor(values=LABELS)),
                                show_border=True, label='Labels (optional)'),
-                        VGroup(UItem('description', style='custom'), show_border=True, label='Description (optional)')),
+                        VGroup(UItem('description', style='custom'), show_border=True,
+                               label='Description (optional)')),
                 UItem('exctext',
                       style='custom',
                       editor=TextEditor(read_only=True))),

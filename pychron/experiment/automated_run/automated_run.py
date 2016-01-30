@@ -116,7 +116,7 @@ class AutomatedRun(Loggable):
     dvc_persister = Instance('pychron.dvc.dvc_persister.DVCPersister')
 
     xls_persister = Instance('pychron.experiment.automated_run.persistence.ExcelPersister')
-    system_health = Instance('pychron.experiment.health.series.SystemHealthSeries')
+    # system_health = Instance('pychron.experiment.health.series.SystemHealthSeries')
 
     collector = Property
 
@@ -1528,7 +1528,7 @@ anaylsis_type={}
             obj.append(con)
         else:
             self.warning('Failed adding {}, {}'.format(name, cd))
-            
+
     def _refresh_scripts(self):
         for name in SCRIPT_KEYS:
             setattr(self, '{}_script'.format(name), self._load_script(name))

@@ -24,7 +24,7 @@ import struct
 from datetime import datetime
 from uncertainties import std_dev, nominal_value
 # ============= local library imports  ==========================
-from pychron.dvc import jdump
+from pychron.dvc import dvc_dump
 from pychron.dvc.dvc_analysis import META_ATTRS, EXTRACTION_ATTRS, analysis_path, PATH_MODIFIERS
 from pychron.experiment.automated_run.persistence import BasePersister
 from pychron.experiment.classifier.isotope_classifier import IsotopeClassifier
@@ -33,25 +33,39 @@ from pychron.paths import paths
 from pychron.pychron_constants import DVC_PROTOCOL
 
 
-def format_experiment_identifier(project):
+def format_repository_identifier(project):
     return project.replace('/', '_').replace('\\', '_')
 
 
+def spectrometer_sha(src, defl, gains):
+    sha = hashlib.sha1()
+    for d in (src, defl, gains):
+        for k, v in sorted(d.items()):
+            sha.update(k)
+            sha.update(str(v))
+
+    return sha.hexdigest()
+
+
 class DVCPersister(BasePersister):
-    experiment_repo = Instance(GitRepoManager)
+    active_repository = Instance(GitRepoManager)
     dvc = Instance(DVC_PROTOCOL)
     use_isotope_classifier = Bool(False)
     isotope_classifier = Instance(IsotopeClassifier, ())
+    stage_files = Bool(True)
 
-    def per_spec_save(self, pr, commit=False, msg_prefix=None):
+    def per_spec_save(self, pr, repository_identifier=None, commit=False, msg_prefix=None):
         self.per_spec = pr
-        self.initialize(False)
+
+        if repository_identifier:
+            self.initialize(repository_identifier, False)
+
         self.pre_extraction_save()
         self.pre_measurement_save()
         self.post_extraction_save('', '', None)
         self.post_measurement_save(commit=commit, msg_prefix=msg_prefix)
 
-    def initialize(self, experiment, pull=True):
+    def initialize(self, repository, pull=True):
         """
         setup git repos.
 
@@ -60,20 +74,20 @@ class DVCPersister(BasePersister):
 
         :return:
         """
-        self.debug('^^^^^^^^^^^^^ Initialize DVCPersister {} pull={}'.format(experiment, pull))
+        self.debug('^^^^^^^^^^^^^ Initialize DVCPersister {} pull={}'.format(repository, pull))
 
         self.dvc.initialize()
 
-        experiment = format_experiment_identifier(experiment)
-        self.experiment_repo = repo = GitRepoManager()
+        repository = format_repository_identifier(repository)
+        self.active_repository = repo = GitRepoManager()
 
-        root = os.path.join(paths.experiment_dataset_dir, experiment)
+        root = os.path.join(paths.repository_dataset_dir, repository)
         repo.open_repo(root)
 
         remote = 'origin'
         if repo.has_remote(remote) and pull:
-            self.info('pulling changes from experiment repo: {}'.format(experiment))
-            self.experiment_repo.pull(remote=remote, use_progress=False)
+            self.info('pulling changes from repo: {}'.format(repository))
+            self.active_repository.pull(remote=remote)
 
     def pre_extraction_save(self):
         pass
@@ -119,7 +133,7 @@ class DVCPersister(BasePersister):
         hexsha = self.dvc.get_meta_head()
         obj['commit'] = str(hexsha)
 
-        jdump(obj, p)
+        dvc_dump(obj, p)
 
     def pre_measurement_save(self):
         pass
@@ -127,6 +141,7 @@ class DVCPersister(BasePersister):
     def _save_peak_center(self, pc):
         self.info('DVC saving peakcenter')
         p = self._make_path(modifier='peakcenter')
+
         obj = {}
         if pc:
             obj['reference_detector'] = pc.reference_detector
@@ -147,7 +162,7 @@ class DVCPersister(BasePersister):
                 for det, pts in data:
                     obj[det] = base64.b64encode(''.join([struct.pack(fmt, *di) for di in pts]))
 
-        jdump(obj, p)
+        dvcdump(obj, p)
 
     def post_measurement_save(self, commit=True, msg_prefix='Collection'):
         """
@@ -163,12 +178,12 @@ class DVCPersister(BasePersister):
         self.debug('================= post measurement started')
         # save spectrometer
         spec_sha = self._get_spectrometer_sha()
-        spec_path = os.path.join(self.experiment_repo.path, '{}.json'.format(spec_sha))
+        spec_path = os.path.join(self.active_repository.path, '{}.json'.format(spec_sha))
         if not os.path.isfile(spec_path):
             self._save_spectrometer_file(spec_path)
 
-        self.dvc.meta_repo.save_gains(self.per_spec.run_spec.mass_spectrometer,
-                                      self.per_spec.gains)
+        # self.dvc.meta_repo.save_gains(self.per_spec.run_spec.mass_spectrometer,
+        #                               self.per_spec.gains)
 
         # save analysis
         t = datetime.now()
@@ -183,27 +198,28 @@ class DVCPersister(BasePersister):
         self._save_peak_center(self.per_spec.peak_center)
 
         # stage files
-        paths = [spec_path, ] + [self._make_path(modifier=m) for m in PATH_MODIFIERS]
+        if self.stage_files:
+            paths = [spec_path, ] + [self._make_path(modifier=m) for m in PATH_MODIFIERS]
 
-        for p in paths:
-            if os.path.isfile(p):
-                self.experiment_repo.add(p, commit=False, msg_prefix=msg_prefix)
-            else:
-                self.debug('not at valid file {}'.format(p))
+            for p in paths:
+                if os.path.isfile(p):
+                    self.active_repository.add(p, commit=False, msg_prefix=msg_prefix)
+                else:
+                    self.debug('not at valid file {}'.format(p))
 
-        if commit:
-            self.experiment_repo.smart_pull(accept_their=True)
+            if commit:
+                self.active_repository.smart_pull(accept_their=True)
 
-            # commit files
-            self.experiment_repo.commit('added analysis {}'.format(self.per_spec.run_spec.runid))
+                # commit files
+                self.active_repository.commit('added analysis {}'.format(self.per_spec.run_spec.runid))
 
-            # update meta
-            self.dvc.meta_pull(accept_our=True)
+                # update meta
+                self.dvc.meta_pull(accept_our=True)
 
-            self.dvc.meta_commit('repo updated for analysis {}'.format(self.per_spec.run_spec.runid))
+                self.dvc.meta_commit('repo updated for analysis {}'.format(self.per_spec.run_spec.runid))
 
-            # push commit
-            self.dvc.meta_push()
+                # push commit
+                self.dvc.meta_push()
 
         self.debug('================= post measurement finished')
 
@@ -232,19 +248,17 @@ class DVCPersister(BasePersister):
 
             # # special associations are handled by the ExperimentExecutor._retroactive_experiment_identifiers
             # if not is_special(rs.runid):
-            if self.per_spec.use_experiment_association:
-                self.dvc.add_experiment_association(rs.experiment_identifier, rs)
+            if self.per_spec.use_repository_association:
+                db.add_repository_association(rs.repository_identifier, an)
 
             pos = db.get_identifier(rs.identifier)
             an.irradiation_position = pos
             t = self.per_spec.tag
-            if t:
-                dbtag = db.get_tag(t)
-                if not dbtag:
-                    dbtag = db.add_tag(name=t)
 
             db.flush()
-            an.change.tag_item = dbtag
+
+            change = db.add_analysis_change(tag=t)
+            an.change = change
 
             change = db.add_analysis_change(tag=t)
             an.change = change
@@ -358,6 +372,7 @@ class DVCPersister(BasePersister):
             name = getattr(self.per_spec, '{}_name'.format(si))
             blob = getattr(self.per_spec, '{}_blob'.format(si))
             self.dvc.meta_repo.update_script(ms, name, blob)
+            obj[si] = name
 
         # save experiment
         self.dvc.update_experiment_queue(ms, self.per_spec.experiment_queue_name,
@@ -368,20 +383,20 @@ class DVCPersister(BasePersister):
 
         # dump runid.json
         p = self._make_path()
-        jdump(obj, p)
+        dvc_dump(obj, p)
 
         p = self._make_path(modifier='intercepts')
-        jdump(intercepts, p)
+        dvc_dump(intercepts, p)
 
         # dump runid.blank.json
         p = self._make_path(modifier='blanks')
-        jdump(blanks, p)
+        dvc_dump(blanks, p)
 
         p = self._make_path(modifier='baselines')
-        jdump(cbaselines, p)
+        dvc_dump(cbaselines, p)
 
         p = self._make_path(modifier='icfactors')
-        jdump(icfactors, p)
+        dvc_dump(icfactors, p)
 
         # dump runid.data.json
         p = self._make_path(modifier='.data')
@@ -389,12 +404,12 @@ class DVCPersister(BasePersister):
                 'encoding': 'base64',
                 'format': '{}ff'.format(endianness),
                 'signals': signals, 'baselines': baselines, 'sniffs': sniffs}
-        jdump(data, p)
+        dvc_dump(data, p)
 
     def _make_path(self, modifier=None, extension='.json'):
         runid = self.per_spec.run_spec.runid
-        experiment_id = self.per_spec.run_spec.experiment_identifier
-        return analysis_path(runid, experiment_id, modifier, extension, mode='w')
+        repository_identifier = self.per_spec.run_spec.repository_identifier
+        return analysis_path(runid, repository_identifier, modifier, extension, mode='w')
 
     def _get_spectrometer_sha(self):
         """
@@ -414,13 +429,7 @@ class DVCPersister(BasePersister):
         for key,value in sorted(dictionary)
         :return:
         """
-        sha = hashlib.sha1()
-        for d in (self.per_spec.spec_dict, self.per_spec.defl_dict, self.per_spec.gains):
-            for k, v in sorted(d.items()):
-                sha.update(k)
-                sha.update(str(v))
-
-        return sha.hexdigest()
+        return spectrometer_sha(self.per_spec.spec_dict, self.per_spec.defl_dict, self.per_spec.gains)
 
     def _save_monitor(self):
         if self.per_spec.monitor:
@@ -434,15 +443,15 @@ class DVCPersister(BasePersister):
                               data=data)
                 checks.append(params)
 
-            jdump(checks, p)
+            dvc_dump(checks, p)
 
     def _save_spectrometer_file(self, path):
         obj = dict(spectrometer=dict(self.per_spec.spec_dict),
                    gains=dict(self.per_spec.gains),
                    deflections=dict(self.per_spec.defl_dict))
-        hexsha = self.dvc.get_meta_head()
-        obj['commit'] = str(hexsha)
+        # hexsha = self.dvc.get_meta_head()
+        # obj['commit'] = str(hexsha)
 
-        jdump(obj, path)
+        dvc_dump(obj, path)
 
 # ============= EOF =============================================

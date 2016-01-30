@@ -15,14 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import shutil
-
+from traits.api import Int, on_trait_change, Bool, Instance, Event, Color
 from pyface.constant import CANCEL, NO
 from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter, Tabbed
 from pyface.timer.do_later import do_after
-from traits.api import Int, on_trait_change, Bool, Instance, Event, Color
-
 # ============= standard library imports ========================
+import shutil
+import time
 import os
 import xlrd
 # ============= local library imports  ==========================
@@ -30,14 +29,16 @@ from pychron.core.helpers.filetools import add_extension, backup
 from pychron.core.ui.preference_binding import color_bind_preference, toTuple
 from pychron.envisage.tasks.editor_task import EditorTask
 from pychron.envisage.tasks.pane_helpers import ConsolePane
+from pychron.envisage.view_util import open_view
 from pychron.experiment.experiment_launch_history import update_launch_history
 from pychron.experiment.experimentor import Experimentor
 from pychron.experiment.queue.base_queue import extract_meta
 from pychron.experiment.tasks.experiment_editor import ExperimentEditor, UVExperimentEditor
 from pychron.experiment.tasks.experiment_panes import LoggerPane
-from pychron.experiment.utilities.identifier import convert_extract_device
+from pychron.experiment.utilities.identifier import convert_extract_device, is_special
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.paths import paths
+from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pychron_constants import SPECTROMETER_PROTOCOL
 from pychron.experiment.tasks.experiment_panes import ExperimentFactoryPane, StatsPane, \
     ControlsPane, IsotopeEvolutionPane, ConnectionStatusPane
@@ -90,12 +91,12 @@ class ExperimentEditorTask(EditorTask):
 
     def new_pattern(self):
         pm = self._pattern_maker_view_factory()
-        self.window.application.open_view(pm)
+        open_view(pm)
 
     def open_pattern(self):
         pm = self._pattern_maker_view_factory()
         if pm.load_pattern():
-            self.window.application.open_view(pm)
+            open_view(pm)
 
     def send_test_notification(self):
         self.debug('sending test notification')
@@ -284,6 +285,7 @@ class ExperimentEditorTask(EditorTask):
             path = (path,)
 
         manager = self.manager
+        # print 'asdfa', manager
         if manager.verify_database_connection(inform=True):
             if manager.load():
                 manager.experiment_factory.activate(load_persistence=False)
@@ -375,7 +377,7 @@ class ExperimentEditorTask(EditorTask):
             f = (l for l in txt.split('\n'))
             meta, metastr = extract_meta(f)
             is_uv = False
-            if meta.has_key('extract_device'):
+            if 'extract_device' in meta:
                 is_uv = meta['extract_device'] in ('Fusions UV',)
 
         return txt, is_uv
@@ -636,16 +638,63 @@ class ExperimentEditorTask(EditorTask):
             if self.active_editor:
                 qs.insert(0, self.active_editor.queue)
 
-            # launch execution thread
-            # if successful open an auto figure task
             if self.manager.execute_queues(qs):
                 # self._show_pane(self.wait_pane)
                 self._set_last_experiment(self.active_editor.path)
             else:
                 self.warning('experiment queue did not start properly')
 
+    @on_trait_change('manager:executor:autoplot_event')
+    def _handle_autoplot(self, new):
+        if new:
+            editor = self._new_autoplot_editor(new)
+            ans = self._get_autoplot_analyses(new)
+            editor.set_items(ans)
+
+            self._open_editor(editor)
+
+            fs = [e for e in self.iter_editors(FigureEditor)]
+
+            # close the oldest editor
+            if len(fs) > 5:
+                fs = sorted(fs, key=lambda x: x.last_update)
+                self.close_editor(fs[0])
+
+    def _get_autoplot_analyses(self, new):
+        dvc = self.window.application.get_service('pychron.dvc.dvc.DVC')
+        db = dvc.db
+        with db.session_ctx():
+            ans, _ = db.get_labnumber_analyses(new.identifier)
+            return dvc.make_analyses(ans)
+
+    def _new_autoplot_editor(self, new):
+        from pychron.pipeline.plot.editors.figure_editor import FigureEditor
+
+        for editor in self.editor_area.editors:
+            if isinstance(editor, FigureEditor):
+                if new.identifier == editor.identifier:
+                    break
+        else:
+            if is_special(new.identifier):
+                from pychron.pipeline.plot.editors.series_editor import SeriesEditor
+
+                editor = SeriesEditor()
+            elif new.step:
+                from pychron.pipeline.plot.editors.spectrum_editor import SpectrumEditor
+
+                editor = SpectrumEditor()
+            else:
+                from pychron.pipeline.plot.editors.ideogram_editor import IdeogramEditor
+
+                editor = IdeogramEditor()
+
+            editor.identifier = new.identifier
+
+        editor.last_update = time.time()
+        return editor
+
     @on_trait_change('manager:executor:[measuring,extracting]')
-    def _update_measuring(self, name, new):
+    def _handle_measuring(self, name, new):
         if new:
             if name == 'measuring':
                 self._show_pane(self.isotope_evolution_pane)

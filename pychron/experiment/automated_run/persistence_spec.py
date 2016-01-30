@@ -33,7 +33,7 @@ class PersistenceSpec(HasTraits):
     baseline_fods = Dict
 
     save_as_peak_hop = Bool(False)
-    experiment_identifier = Int
+    experiment_id = Int
     sensitivity_multiplier = Float
     experiment_queue_name = Str
     experiment_queue_blob = Str
@@ -67,7 +67,7 @@ class PersistenceSpec(HasTraits):
 
     whiff_result = None
     timestamp = None
-    use_experiment_association = False
+    use_repository_association = False
     tag = 'ok'
-
+    peak_center = None
 # ============= EOF =============================================

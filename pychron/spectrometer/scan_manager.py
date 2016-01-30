@@ -302,7 +302,7 @@ class ScanManager(Manager):
 
     def _update_magnet(self, obj, name, old, new):
         if new and self.magnet.detector:
-            # covnert dac into a mass
+            # convert dac into a mass
             # convert mass to isotope
             #            d = self.magnet.dac
             if not self._suppress_isotope_change:
@@ -674,9 +674,7 @@ class ScanManager(Manager):
 
     @cached_property
     def _get_isotopes(self):
-        # molweights = self.spectrometer.molecular_weights
-        return [
-                   NULL_STR] + self.spectrometer.isotopes  # sorted(molweights.keys(), key=lambda x: int(x[2:]))
+        return [NULL_STR] + self.spectrometer.isotopes
 
     def _validate_graph_ymin(self, v):
         try:
@@ -751,85 +749,4 @@ class ScanManager(Manager):
         ms = MassScanner(spectrometer=self.spectrometer)
         ms.load()
         return ms
-
-        # if __name__ == '__main__':
-        # from pychron.spectrometer.molecular_weights import MOLECULAR_WEIGHTS
-        #
-        #     class Magnet(HasTraits):
-        #         dac = Range(0.0, 6.0)
-        #
-        #         def map_mass_to_dac(self, d):
-        #             return d
-        #
-        #     class Source(HasTraits):
-        #         y_symmetry = Float
-        #
-        #     class DummySpectrometer(HasTraits):
-        #         detectors = List
-        #         magnet = Instance(Magnet, ())
-        #         source = Instance(Source, ())
-        #         molecular_weights = MOLECULAR_WEIGHTS
-        #
-        #         def get_intensities(self):
-        #             return [d.name for d in self.detectors], [random.random() + (i * 12.3) for i in range(len(self.detectors))]
-        #
-        #         def get_intensity(self, *args, **kw):
-        #             return 1
-        #
-        #     detectors = [
-        #         Detector(name='H2',
-        #                  color='black',
-        #                  isheader=True
-        #         ),
-        #         Detector(name='H1',
-        #                  color='red'
-        #         ),
-        #         Detector(name='AX',
-        #                  color='violet'
-        #         ),
-        #         Detector(name='L1',
-        #                  color='maroon'
-        #         ),
-        #         Detector(name='L2',
-        #                  color='yellow'
-        #         ),
-        #         Detector(name='CDD',
-        #                  color='lime green',
-        #                  active=False
-        #         ),
-        #
-        #     ]
-        #     sm = ScanManager(
-        #         # detectors=detectors,
-        #         spectrometer=DummySpectrometer(detectors=detectors))
-        #     # sm.load_detectors()
-        #     sm.configure_traits()
-        # ============= EOF =============================================
-        # def _check_detector_protection1(self, prev):
-        # """
-        # used when detector changes
-        # return True if magnet move should be aborted
-        #     """
-        #     return self._check_detector_protection(prev, True)
-        #
-        # def _check_detector_protection2(self, prev):
-        #     """
-        #         used when isotope changes
-        #         return True if magnet move should be aborted
-        #     """
-        #     return self._check_detector_protection(prev, False)
-        #    def _graph_ymin_auto_changed(self, new):
-        #        p = self.graph.plots[0]
-        #        if new:
-        #            p.value_range.low_setting = 'auto'
-        #        else:
-        #            p.value_range.low_setting = self.graph_ymin
-        #        self.graph.redraw()
-        #
-        #    def _graph_ymax_auto_changed(self, new):
-        #        p = self.graph.plots[0]
-        #        if new:
-        #            p.value_range.high_setting = 'auto'
-        #        else:
-        #            p.value_range.high_setting = self.graph_ymax
-        #        self.graph.redraw()
+# ============= EOF =====================================

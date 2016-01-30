@@ -69,7 +69,8 @@ class LoadingOverlay(AbstractOverlay):
             with gc:
                 gc.set_font(self.font)
                 lines = self.info_str.split('\n')
-                lws, lhs = zip(*[gc.get_full_text_extent(mi)[:2] for mi in lines])
+                lws, lhs = zip(*[gc.get_full_text_extent(mi)[:2]
+                                 for mi in lines])
                 rect_width = max(lws) + 4
                 rect_height = (max(lhs) + 2) * len(lhs)
 
@@ -87,10 +88,12 @@ class LoadingOverlay(AbstractOverlay):
 
     def set_item(self, item):
         if item and item.fill:
-            self.info_str = 'hole: {}\nlabnumber: {}\nweight: {}mg\nnote: {}'.format(item.name,
-                                                                                     item.labnumber_label.text,
-                                                                                     item.weight_label.text,
-                                                                                     item.note)
+            msg = 'hole: {}\nlabnumber: ' \
+                  '{}\nweight: {}mg\nnote: {}'.format(item.name,
+                                                      item.labnumber_label.text,
+                                                      item.weight_label.text,
+                                                      item.note)
+            self.info_str = msg
 
         else:
             self.info_str = ''
@@ -134,7 +137,8 @@ class LoadingCanvas(SceneCanvas):
         self.overlays.append(self.popup)
 
     def get_selection(self):
-        return [item for item in self.scene.get_items(LoadIndicator) if item.state]
+        return [item for item in self.scene.get_items(LoadIndicator) if
+                item.state]
 
     def edit_left_down(self, event):
         if self.editable:
@@ -180,7 +184,8 @@ class LoadingCanvas(SceneCanvas):
 
     def normal_key_pressed(self, event):
         if event.character == 'Enter':
-            self.selected = self.scene.get_item(str(self._last_position), klass=LoadIndicator)
+            self.selected = self.scene.get_item(str(self._last_position),
+                                                klass=LoadIndicator)
         self.request_redraw()
 
     def info_left_down(self, event):

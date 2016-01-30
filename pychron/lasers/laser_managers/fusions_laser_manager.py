@@ -479,6 +479,7 @@ class FusionsLaserManager(LaserManager):
         """
         return FiberLight(name='fiber_light')
 
+
 # def _optics_view_default(self):
 #        return OpticsView(laser_controller=self.laser_controller)
 
