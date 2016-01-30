@@ -91,7 +91,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     '''
         immediate 0= measure_iteration stopped at current step, script continues
         quick     1= measure_iteration stopped at current step, script continues using 0.25*counts
-        
+
         old-style
             immediate 0= is the standard truncation, measure_iteration stopped at current step and measurement_script truncated
             quick     1= the current measure_iteration is truncated and a quick baseline is collected, peak center?
@@ -710,6 +710,19 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if run.state == 'success':
                 self.stats.update_run_duration(run, t)
                 self.stats.recalculate_etf()
+
+        # write rem and ex queues
+        self._write_rem_ex_experiment_queues()
+
+    def _write_rem_ex_experiment_queues(self):
+        self.debug('write rem/ex queues')
+        q = self.experiment_queue
+        for runs, tag in ((q.automated_runs, 'rem'),
+                          (q.executed_runs, 'ex')):
+            path = os.path.join(paths.experiment_rem_dir, '{}.{}.txt'.format(q.name, tag))
+            self.debug(path)
+            with open(path, 'w') as wfile:
+                q.dump(wfile, runs=runs)
 
     def _overlapped_run(self, v):
         self._overlapping = True

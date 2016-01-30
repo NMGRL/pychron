@@ -63,6 +63,7 @@ class Paths(object):
     # ==============================================================================
     scripts_dir = None
     experiment_dir = None
+    experiment_rem_dir = None
     auto_save_experiment_dir = None
 
     run_block_dir = None
@@ -272,6 +273,7 @@ class Paths(object):
         self.fits_dir = join(self.measurement_dir, 'fits')
 
         self.experiment_dir = join(root, 'experiments')
+        self.experiment_rem_dir = join(self.experiment_dir, 'rem')
         self.auto_save_experiment_dir = join(self.experiment_dir, 'auto_save')
         self.run_block_dir = join(self.experiment_dir, 'blocks')
         self.generic_experiment_dir = join(self.experiment_dir, 'generic')
