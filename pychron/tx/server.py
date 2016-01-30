@@ -25,17 +25,22 @@ from twisted.internet.endpoints import TCP4ServerEndpoint
 
 class TxServer:
     factory = None
-
+    _has_endpoints = False
     def bootstrap(self):
-        self.start()
+        if self._has_endpoints:
+            self.start()
 
     def add_endpoint(self, port, factory):
+        self._has_endpoints = True
+
         endpoint = TCP4ServerEndpoint(reactor, port)
         endpoint.listen(factory)
 
     def start(self):
         from threading import Thread
-        Thread(target=reactor.run, args=(False,)).start()
+        t = Thread(target=reactor.run, args=(False,))
+        t.setDaemon(True)
+        t.start()
 
     def stop(self):
         reactor.stop()
