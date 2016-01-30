@@ -61,6 +61,24 @@ gen_sampletable.name like "NMGS-%") as t1)
 """
 
 
+def fix_import_commit(repo_identifier, root):
+    from pychron.git_archive.repo_manager import GitRepoManager
+    rm = GitRepoManager()
+    proot = os.path.join(root, repo_identifier)
+    rm.open_repo(proot)
+
+    repo = rm._repo
+    print '========= {} ======'.format(repo_identifier)
+    txt = repo.git.log('--pretty=oneline')
+    print txt
+    # first_commit = txt.split('\n')[0]
+    # # print first_commit, 'initial import' in first_commit
+    # if 'initial import' in first_commit:
+    #     print 'amend'
+    #     repo.git.commit('--amend', '-m', '<Import> initial')
+    #     repo.git.push('--force')
+
+
 def fix_a_steps(dest, repo_identifier, root):
     with dest.session_ctx():
         repo = dest.get_repository(repo_identifier)
@@ -115,7 +133,7 @@ def commit_initial_import(repo_identifier, root):
 
     repo = rm._repo
     repo.git.add('.')
-    repo.git.commit('-m', 'initial import')
+    repo.git.commit('-m', '<IMPORT> initial')
     repo.git.push('--set-upstream', 'origin', 'master')
 
 
