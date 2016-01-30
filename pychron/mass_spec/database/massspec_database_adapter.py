@@ -23,8 +23,6 @@ import math
 from sqlalchemy.sql.expression import func, distinct
 from uncertainties import std_dev, nominal_value
 
-
-
 # =============local library imports  ==========================
 from pychron.mass_spec.database.massspec_orm import IsotopeResultsTable, \
     AnalysesChangeableItemsTable, BaselinesTable, DetectorTable, \

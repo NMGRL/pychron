@@ -15,9 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from numpy import array, array_split
 from traits.api import Str
 from traitsui.api import View, UItem, EnumEditor
-from numpy import array, array_split
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.datetime_tools import bin_timestamps

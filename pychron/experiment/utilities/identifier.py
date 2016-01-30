@@ -20,9 +20,6 @@ import os
 import re
 
 import yaml
-
-
-
 # ============= local library imports  ==========================
 from pychron.file_defaults import IDENTIFIERS_DEFAULT
 from pychron.pychron_constants import LINE_STR, ALPHAS

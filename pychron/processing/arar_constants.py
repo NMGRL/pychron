@@ -21,7 +21,6 @@ from uncertainties import ufloat, nominal_value, std_dev
 from pychron.pychron_constants import AGE_SCALARS
 
 
-
 # =============local library imports  ==========================
 
 # class ICFactor(HasTraits):

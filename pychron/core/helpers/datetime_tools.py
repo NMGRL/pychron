@@ -14,8 +14,8 @@
 # limitations under the License.
 # ===============================================================================
 
-import time
 import math
+import time
 
 from datetime import datetime
 from numpy import ediff1d, asarray

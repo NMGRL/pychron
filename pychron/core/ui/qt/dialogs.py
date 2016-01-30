@@ -14,13 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
-from PySide.QtGui import QMessageBox
-
 from PySide.QtCore import Qt
+from PySide.QtGui import QMessageBox
 from PySide.QtGui import QSizePolicy, QCheckBox
 from pyface.api import OK, YES
-from pyface.ui.qt4.confirmation_dialog import ConfirmationDialog
 from pyface.message_dialog import MessageDialog
+from pyface.ui.qt4.confirmation_dialog import ConfirmationDialog
 
 # ============= standard library imports ========================
 import time

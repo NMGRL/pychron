@@ -16,10 +16,11 @@
 
 # ============= enthought library imports =======================
 from envisage.extension_point import ExtensionPoint
-from pyface.dialog import Dialog
-from traits.api import List, Instance
 from envisage.ui.tasks.tasks_application import TasksApplication
+from pyface.dialog import Dialog
 from pyface.tasks.task_window_layout import TaskWindowLayout
+from traits.api import List, Instance
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.strtools import to_bool

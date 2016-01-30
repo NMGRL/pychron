@@ -23,7 +23,7 @@ import os
 # ============= local library imports  ==========================
 from uncertainties import nominal_value, std_dev
 from pychron.processing.export.destinations import XMLDestination
-from pychron.processing.export.export_spec import MassSpecExportSpec, XMLExportSpec
+from pychron.processing.export.export_spec import XMLExportSpec
 from pychron.processing.export.exporter import Exporter
 
 

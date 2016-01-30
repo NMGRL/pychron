@@ -18,8 +18,9 @@
 
 # =============enthought library imports=======================
 # =============standard library imports =======================
-import struct
 import binascii
+import struct
+
 # =============local library imports  =========================
 from pychron.hardware.core.exceptions import CRCError
 from serial_communicator import SerialCommunicator

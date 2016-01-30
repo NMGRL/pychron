@@ -16,12 +16,10 @@
 
 # ============= enthought library imports =======================
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traitsui.api import View, Item, HGroup, VGroup
+from traitsui.api import View
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.core.ui.custom_label_editor import CustomLabel
-from pychron.envisage.tasks.base_preferences_helper import GitRepoPreferencesHelper, test_connection_item, \
-    remote_status_item
+from pychron.envisage.tasks.base_preferences_helper import GitRepoPreferencesHelper, remote_status_item
 
 
 class LabBookPreferences(GitRepoPreferencesHelper):

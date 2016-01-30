@@ -16,10 +16,11 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-from ConfigParser import ConfigParser
 import ast
 import os
 import time
+from ConfigParser import ConfigParser
+
 import yaml
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import fileiter

@@ -132,8 +132,8 @@ class DVCIsotopeRecordView:
         n, t = os.path.splitext(n)
         return n
 
-    def to_string(self):
-        return '{} {} {} {}'.format(self.identifier, self.aliquot, self.timestamp, self.uuid)
+        # def to_string(self):
+        #     return '{} {} {} {}'.format(self.identifier, self.aliquot, self.timestamp, self.uuid)
 
 
 class IsotopeRecordView(object):

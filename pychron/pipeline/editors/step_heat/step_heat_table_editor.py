@@ -19,12 +19,12 @@
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.pipeline.editors.arar_table_editor import ArArTableEditor
+from pychron.pipeline.editors.step_heat.step_heat_adapter import StepHeatTableAdapter, StepHeatGroupTableAdapter
 from pychron.processing.analyses.analysis_group import StepHeatAnalysisGroup
 from pychron.processing.tables.step_heat.csv_writer import StepHeatTableCSVWriter
 from pychron.processing.tables.step_heat.pdf_writer import StepHeatPDFTableWriter
 from pychron.processing.tables.step_heat.xls_writer import StepHeatTableXLSWriter
-from pychron.pipeline.editors.arar_table_editor import ArArTableEditor
-from pychron.pipeline.editors.step_heat.step_heat_adapter import StepHeatTableAdapter, StepHeatGroupTableAdapter
 
 
 class StepHeatTableEditor(ArArTableEditor):

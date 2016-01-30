@@ -15,14 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from pyface.message_dialog import information
-
-from pyface.tasks.task_window_layout import TaskWindowLayout
-from traits.api import Any, List
 from pyface.action.action import Action
-from pyface.tasks.action.task_action import TaskAction
 from pyface.confirmation_dialog import confirm
 from pyface.constant import YES
+from pyface.message_dialog import information
+from pyface.tasks.action.task_action import TaskAction
+from pyface.tasks.task_window_layout import TaskWindowLayout
+from traits.api import Any, List
 # ============= standard library imports ========================
 import os
 import shutil

@@ -16,8 +16,10 @@
 
 # ============= enthought library imports =======================
 from traits.api import Str, Instance, Color, Enum, Bool, Int
-from traitsui.qt4.code_editor import SourceEditor
 from traitsui.basic_editor_factory import BasicEditorFactory
+from traitsui.qt4.code_editor import SourceEditor
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 

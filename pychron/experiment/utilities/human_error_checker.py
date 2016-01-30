@@ -15,9 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from pychron.loggable import Loggable
 from pychron.experiment.utilities.identifier import get_analysis_type
-from pychron.pychron_constants import LINE_STR
+from pychron.loggable import Loggable
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 

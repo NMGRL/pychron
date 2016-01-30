@@ -22,8 +22,8 @@ from traits.api import HasTraits, Str, Int, Bool, Float, Property, Enum, List, R
     Color, Button
 from traitsui.api import View, Item, HGroup, VGroup, EnumEditor, Spring, Group, \
     spring, UItem, ListEditor, InstanceEditor
-from traitsui.handler import Controller
 from traitsui.extras.checkbox_column import CheckboxColumn
+from traitsui.handler import Controller
 from traitsui.table_column import ObjectColumn
 # ============= standard library imports ========================
 import os

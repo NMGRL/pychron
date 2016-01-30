@@ -115,7 +115,7 @@ class LoadingCanvas(SceneCanvas):
 
     aspect_ratio = 1
     editable = True
-    _scene_klass = LoadingScene
+    scene_klass = LoadingScene
 
     current_item = None
     popup = None
@@ -124,7 +124,7 @@ class LoadingCanvas(SceneCanvas):
 
     def load_scene(self, t, **kw):
         self.overlays = []
-        scene = self._scene_klass()
+        scene = self.scene_klass()
         scene.load(t, **kw)
 
         self.view_x_range = scene.get_xrange()

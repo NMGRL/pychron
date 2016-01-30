@@ -3,7 +3,6 @@ see http://paulbourke.net/geometry/polyarea/
 
 
 '''
-import numpy as np
 cimport numpy as np
 
 

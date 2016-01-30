@@ -15,15 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from chaco.abstract_overlay import AbstractOverlay
 from chaco.data_label import draw_arrow
 from chaco.label import Label
 from chaco.plot_label import PlotLabel
 from enable.colors import convert_from_pyqt_color
 from enable.font_metrics_provider import font_metrics_provider
+from enable.tools.drag_tool import DragTool
 from kiva.trait_defs.kiva_font_trait import KivaFont
 from traits.api import Array, Int, Float, Str, Color, Bool, List
-from chaco.abstract_overlay import AbstractOverlay
-from enable.tools.drag_tool import DragTool
+
 # ============= standard library imports ========================
 from numpy import where, array
 # ============= local library imports  ==========================

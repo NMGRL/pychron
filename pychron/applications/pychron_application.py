@@ -15,12 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from datetime import datetime
-
 from apptools.preferences.preference_binding import bind_preference
-from traits.api import List, Str, Bool
+from datetime import datetime
 from pyface.api import SplashScreen
 from pyface.image_resource import ImageResource
+from traits.api import List, Str, Bool
 
 
 # ============= standard library imports ========================

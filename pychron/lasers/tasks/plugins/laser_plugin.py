@@ -15,11 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import List, Str
-from envisage.ui.tasks.task_factory import TaskFactory
-from pyface.tasks.action.schema_addition import SchemaAddition
 from envisage.ui.tasks.task_extension import TaskExtension
+from envisage.ui.tasks.task_factory import TaskFactory
 from pyface.tasks.action.schema import SMenu
+from pyface.tasks.action.schema_addition import SchemaAddition
+from traits.api import List, Str
+
 # ============= standard library imports ========================
 import os
 # ============= local library imports  ==========================

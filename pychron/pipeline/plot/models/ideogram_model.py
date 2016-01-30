@@ -18,8 +18,8 @@
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.pipeline.plot.panels.ideogram_panel import IdeogramPanel
 from pychron.pipeline.plot.models.figure_model import FigureModel
+from pychron.pipeline.plot.panels.ideogram_panel import IdeogramPanel
 
 
 class IdeogramModel(FigureModel):

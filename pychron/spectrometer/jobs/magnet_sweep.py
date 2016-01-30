@@ -15,14 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Any, Float, DelegatesTo, List, Bool, Property
+from traits.api import Float
 from traitsui.api import View, Item, EnumEditor, Group, HGroup, spring, ButtonEditor
-from pyface.timer.do_later import do_after
 # ============= standard library imports ========================
-from numpy import linspace, hstack, array, Inf
+from numpy import linspace
 from numpy.core.umath import exp
 import random
-import time
 # ============= local library imports  ==========================
 from pychron.spectrometer.jobs.sweep import BaseSweep
 

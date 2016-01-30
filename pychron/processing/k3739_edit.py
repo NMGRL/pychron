@@ -21,9 +21,6 @@ import pickle
 from traits.api import HasTraits, Bool, List, Any, Float
 from traitsui.api import View, Item,UItem, Controller, VGroup, HGroup, TabularEditor
 
-
-
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from uncertainties import ufloat

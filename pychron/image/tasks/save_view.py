@@ -15,8 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change
-from traitsui.api import View, UItem, Item, HGroup, VGroup
+from traits.api import HasTraits, Str
+from traitsui.api import View, UItem, Item, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 

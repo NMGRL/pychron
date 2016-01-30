@@ -19,11 +19,11 @@
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.pipeline.editors.arar_table_editor import ArArTableEditor
+from pychron.pipeline.editors.fusion.fusion_adapter import FusionTableAdapter, FusionGroupTableAdapter
 from pychron.processing.tables.fusion.csv_writer import FusionTableCSVWriter
 from pychron.processing.tables.fusion.pdf_writer import FusionPDFTableWriter
 from pychron.processing.tables.fusion.xls_writer import FusionTableXLSWriter
-from pychron.pipeline.editors.arar_table_editor import ArArTableEditor
-from pychron.pipeline.editors.fusion.fusion_adapter import FusionTableAdapter, FusionGroupTableAdapter
 
 
 class FusionTableEditor(ArArTableEditor):

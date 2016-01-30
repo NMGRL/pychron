@@ -17,10 +17,11 @@
 
 
 # =============enthought library imports=======================
+from chaco.api import AbstractOverlay
 from enable.colors import ColorTrait
 from enable.enable_traits import LineStyle
 from traits.api import Enum, Float
-from chaco.api import AbstractOverlay
+
 
 # =============standard library imports ========================
 

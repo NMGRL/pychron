@@ -16,12 +16,9 @@
 
 # ============= enthought library imports =======================
 import os
+
 from datetime import datetime
-
 from traits.api import Str, List
-
-
-
 
 # ============= standard library imports ========================
 import yaml

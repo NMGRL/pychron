@@ -19,11 +19,10 @@
 import csv
 import os
 
-from datetime import datetime, timedelta
-import numpy as np
-import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-
+import matplotlib.pyplot as plt
+import numpy as np
+from datetime import datetime, timedelta
 
 # ============= local library imports  ==========================
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager

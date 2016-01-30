@@ -22,6 +22,7 @@ from traitsui.table_column import ObjectColumn
 
 from pychron.canvas.canvas2D.laser_tray_canvas import ImageOverlay
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 

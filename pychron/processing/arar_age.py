@@ -16,10 +16,12 @@
 
 
 # ============= enthought library imports =======================
+
 from traits.has_traits import HasTraits
 # ============= standard library imports ========================
-import random
 from uncertainties import ufloat, std_dev, nominal_value
+import os
+import random
 from numpy import hstack
 from ConfigParser import ConfigParser
 from copy import copy
@@ -28,7 +30,7 @@ from pychron.processing.isotope_group import IsotopeGroup
 from pychron.processing.argon_calculations import calculate_F, abundance_sensitivity_correction, age_equation, \
     calculate_decay_factor, calculate_flux
 from pychron.processing.arar_constants import ArArConstants
-from pychron.processing.isotope import Isotope, Baseline, Blank
+from pychron.processing.isotope import Isotope, Blank
 
 from pychron.core.helpers.isotope_utils import sort_isotopes, sort_detectors
 from pychron.core.helpers.logger_setup import new_logger
@@ -731,7 +733,7 @@ class ArArAge(IsotopeGroup):
         # j.std_dev = 0
         # self.age_err_wo_j_irrad = age.std_dev
         #
-        for iso in isotopes.itervalues():
+        for iso in self.isotopes.itervalues():
             iso.age_error_component = self.get_error_component(iso.name)
 
     # def _get_isotope_keys(self):

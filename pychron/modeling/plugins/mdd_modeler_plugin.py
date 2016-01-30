@@ -22,9 +22,9 @@
 
 # ============= local library imports  ==========================
 from apptools.preferences.preference_binding import bind_preference
+from pychron.envisage.core.core_plugin import CorePlugin
 
 from pychron.modeling.modeler_manager import ModelerManager
-from pychron.envisage.core.core_plugin import CorePlugin
 
 
 class MDDModelerPlugin(CorePlugin):

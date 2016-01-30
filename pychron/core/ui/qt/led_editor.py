@@ -18,8 +18,9 @@
 
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Property, Int, Callable, Any
-from traitsui.qt4.editor import Editor
 from traitsui.basic_editor_factory import BasicEditorFactory
+from traitsui.qt4.editor import Editor
+
 # ============= standard library imports ========================
 from PySide.QtGui import QColor
 # ============= local library imports  ==========================

@@ -41,7 +41,7 @@ from pychron.envisage.tasks.actions import GenericSaveAction, GenericSaveAsActio
     GenericFindAction, RaiseAction, RaiseUIAction, ResetLayoutAction, \
     MinimizeAction, PositionAction, IssueAction, CloseAction, CloseOthersAction, AboutAction, OpenAdditionalWindow, \
     NoteAction, RestartAction, DocumentationAction, CopyPreferencesAction, SwitchUserAction, KeyBindingsAction, \
-    ChangeLogAction, StartupTestsAction, WaffleAction
+    ChangeLogAction, StartupTestsAction
 from pychron.loggable import Loggable
 
 
@@ -246,10 +246,14 @@ class BaseTask(Task, Loggable, PreferenceMixin):
             # DemoAction(),
             id='help.menu',
             name='Help')
+
+        grps = self._view_groups()
+        view_menu = SMenu(*grps, id='view.menu', name='&View')
+
         mb = SMenuBar(
             file_menu,
             edit_menu,
-            self._view_menu(),
+            view_menu,
             tools_menu,
             window_menu,
             help_menu)
@@ -312,14 +316,7 @@ class BaseTask(Task, Loggable, PreferenceMixin):
         # groups.append(DockPaneToggleGroup())
         return groups
 
-    def _view_menu(self):
-        grps = self._view_groups()
-        view_menu = SMenu(
-            *grps,
-            id='view.menu', name='&View')
-        return view_menu
-
-    def _confirmation(self, message=''):
+    def _confirmation(self, message='', title='Save Changes?'):
         dialog = ConfirmationDialog(parent=self.window.control,
                                     message=message, cancel=True,
                                     default=CANCEL, title=title)

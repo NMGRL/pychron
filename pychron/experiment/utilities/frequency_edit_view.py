@@ -17,8 +17,10 @@
 # ============= enthought library imports =======================
 import os
 import pickle
+
 from traits.api import HasTraits, Bool, Str, Int, Property, List
 from traitsui.api import View, Item, Controller
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.ui.combobox_editor import ComboboxEditor

@@ -27,7 +27,6 @@ import yaml
 import os
 # ============= local library imports  ==========================
 from pychron.core.helpers.iterfuncs import partition
-from pychron.dvc.dvc import DVC
 from pychron.entry.entry_views.experiment_entry import ExperimentIdentifierEntry
 from pychron.envisage.view_util import open_view
 from pychron.experiment.conditional.conditionals_edit_view import edit_conditionals
@@ -187,10 +186,10 @@ class AutomatedRunFactory(PersistenceLoggable):
     project = Any
     projects = Property(depends_on='db, db_refresh_needed')
 
-    experiment_identifier = Str
-    experiment_identifiers = Property(depends_on='experiment_identifier_dirty, db_refresh_needed')
-    add_experiment_identifier = Event
-    experiment_identifier_dirty = Event
+    repository_identifier = Str
+    repository_identifiers = Property(depends_on='repository_identifier_dirty, db_refresh_needed')
+    add_repository_identifier = Event
+    repository_identifier_dirty = Event
 
     selected_irradiation = Str('Irradiation')
     irradiations = Property(depends_on='db, db_refresh_needed')
@@ -933,11 +932,11 @@ class AutomatedRunFactory(PersistenceLoggable):
         if labnumber in self._meta_cache:
             self.debug('using cached meta values for {}'.format(labnumber))
             d = self._meta_cache[labnumber]
-            for attr in ('sample', 'irradiation', 'comment', 'experiment_identifier'):
+            for attr in ('sample', 'irradiation', 'comment', 'repository_identifier'):
                 setattr(self, attr, d[attr])
             return True
         else:
-            # get a default experiment_identifier
+            # get a default repository_identifier
 
             d = dict(sample='')
             db = self.dvc
@@ -955,7 +954,7 @@ class AutomatedRunFactory(PersistenceLoggable):
                         # print 'fff', project.name
                         # if project.name == 'J-Curve':
                         #     irrad = ln.irradiation_position.level.irradiation.name
-                        #     self.experiment_identifier = 'Irradiation-{}'.format(irrad)
+                        #     self.repository_identifier = 'Irradiation-{}'.format(irrad)
                         # elif project.name != 'REFERENCES':
                         #     project_name = project.name
                         #     project_name = project_name.replace(' ', '_').replace('/', '_')
@@ -967,12 +966,12 @@ class AutomatedRunFactory(PersistenceLoggable):
                         #                    'specified for this project "{}". Using NMGRL'.format(project_name))
                         #         pi_name = 'NMGRL'
                         #
-                        #     self.experiment_identifier = '{}_{}'.format(pi_name, project_name)
+                        #     self.repository_identifier = '{}_{}'.format(pi_name, project_name)
 
                     except AttributeError:
                         pass
 
-                    d['experiment_identifier'] = self.experiment_identifier
+                    d['repository_identifier'] = self.repository_identifier
                     self.irradiation = self._make_irrad_level(ln)
                     d['irradiation'] = self.irradiation
 
@@ -1017,11 +1016,11 @@ class AutomatedRunFactory(PersistenceLoggable):
         return ln not in NON_EXTRACTABLE
 
     @cached_property
-    def _get_experiment_identifiers(self):
+    def _get_repository_identifiers(self):
         dvc = self.dvc
         ids = []
         if dvc and dvc.connect():
-            ids = dvc.get_experiment_identifiers()
+            ids = dvc.get_repository_identifiers()
         return ids
 
     @cached_property
@@ -1294,12 +1293,12 @@ class AutomatedRunFactory(PersistenceLoggable):
             if self.extract_units == NULL_STR:
                 self.extract_units = self._default_extract_units
 
-    def _add_experiment_identifier_fired(self):
+    def _add_repository_identifier_fired(self):
         a = ExperimentIdentifierEntry(dvc=self.dvc)
-        a.available = self.dvc.get_experiment_identifiers()
+        a.available = self.dvc.get_repository_identifiers()
         if a.do():
-            self.experiment_identifier_dirty = True
-            self.experiment_identifier = a.name
+            self.repository_identifier_dirty = True
+            self.repository_identifier = a.name
 
     @on_trait_change('use_name_prefix, name_prefix')
     def _handle_prefix(self, name, new):
@@ -1409,7 +1408,7 @@ use_cdd_warming,
 extract_units,
 pattern,
 position,
-weight, comment, skip, overlap, experiment_identifier''')
+weight, comment, skip, overlap, repository_identifier''')
     def _edit_handler(self, name, new):
         # self._auto_save()
 

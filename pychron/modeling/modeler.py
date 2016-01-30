@@ -15,13 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.api import FileDialog, OK
+from pyface.directory_dialog import DirectoryDialog
 from traits.api import  Any, Instance, Str, \
     Directory, List, on_trait_change, Property, Enum, Int, Button
 from traitsui.api import View, Item, VSplit, TableEditor, EnumEditor, HGroup, VGroup
-from traitsui.table_column import ObjectColumn
 from traitsui.extras.checkbox_column import CheckboxColumn
-from pyface.api import FileDialog, OK
-from pyface.directory_dialog import DirectoryDialog
+from traitsui.table_column import ObjectColumn
+
 # from enthought.pyface.timer import do_later
 # from traitsui.menu import Action, Menu, MenuBar
 # import apptools.sweet_pickle as pickle

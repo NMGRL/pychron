@@ -15,8 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Float, Enum, Bool
 from chaco.abstract_overlay import AbstractOverlay
+from traits.api import Float, Enum, Bool
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 

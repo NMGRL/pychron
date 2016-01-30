@@ -14,12 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
-from datetime import timedelta
-from traits.api import HasTraits, Instance, List, Int, Bool, on_trait_change, Button, Str, Any, Float
-from traitsui.api import View, Controller, UItem, HGroup, VGroup, Item, spring
 from chaco.scales.api import CalendarScaleSystem
 from chaco.scales_tick_generator import ScalesTickGenerator
 from chaco.tools.broadcaster import BroadcasterTool
+from datetime import timedelta
+from traits.api import HasTraits, Instance, List, Int, Bool, on_trait_change, Button, Str, Any, Float
+from traitsui.api import View, Controller, UItem, HGroup, VGroup, Item, spring
+
 # ============= standard library imports ========================
 from itertools import groupby
 import math

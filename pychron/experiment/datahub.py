@@ -64,7 +64,7 @@ class Datahub(Loggable):
             bind_preference(self.secondarystore.db, 'password', '{}.password'.format(prefid))
 
     def secondary_connect(self):
-        print self.massspec_enabled
+        self.debug('secondary enabled {}'.format(self.massspec_enabled))
         if self.massspec_enabled:
             if self.secondarystore:
                 return self.secondarystore.connect()

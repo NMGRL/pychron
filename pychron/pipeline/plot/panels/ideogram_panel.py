@@ -18,8 +18,8 @@
 # ============= standard library imports ========================
 from numpy import Inf
 
-from pychron.pipeline.plot.plotter.ideogram import Ideogram
 from pychron.pipeline.plot.panels.figure_panel import FigurePanel
+from pychron.pipeline.plot.plotter.ideogram import Ideogram
 
 # ============= local library imports  ==========================
 

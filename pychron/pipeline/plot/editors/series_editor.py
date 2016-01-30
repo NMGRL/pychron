@@ -17,8 +17,8 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.pipeline.plot.models.series_model import SeriesModel
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
+from pychron.pipeline.plot.models.series_model import SeriesModel
 
 
 class SeriesEditor(FigureEditor):

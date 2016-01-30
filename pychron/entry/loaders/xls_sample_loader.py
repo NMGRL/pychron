@@ -16,8 +16,10 @@
 
 # ============= enthought library imports =======================
 import os
-from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change, Instance
-from traitsui.api import View, UItem, Item, HGroup, VGroup
+
+from traits.api import HasTraits, Bool, Instance
+from traitsui.api import View, Item
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.xls.xls_parser import XLSParser

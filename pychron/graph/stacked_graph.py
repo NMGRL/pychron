@@ -17,8 +17,9 @@
 
 
 # =============enthought library imports=======================
-from traits.api import Bool, on_trait_change, Event
 from chaco.scatterplot import ScatterPlot
+from traits.api import Bool, on_trait_change, Event
+
 # =============standard library imports ========================
 
 # =============local library imports  ==========================

@@ -16,13 +16,9 @@
 
 # ============= enthought library imports =======================
 import csv
-import re
-from traits.api import HasTraits, Button, Any, Instance
-from traitsui.api import View, Item
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 import time
-from pychron.core.helpers.isotope_utils import extract_mass
 from pychron.loggable import Loggable
 from pychron.paths import paths
 

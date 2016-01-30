@@ -15,10 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Int, on_trait_change, Bool, Instance, Event, Color
 from pyface.constant import CANCEL, NO
 from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter, Tabbed
 from pyface.timer.do_later import do_after
+from traits.api import Int, on_trait_change, Bool, Instance, Event, Color
+
 # ============= standard library imports ========================
 import shutil
 import time
@@ -75,8 +76,8 @@ class ExperimentEditorTask(EditorTask):
     isotope_evolution_pane = Instance(IsotopeEvolutionPane)
     experiment_factory_pane = Instance(ExperimentFactoryPane)
     # wait_pane = Instance(WaitPane)
-    load_pane = Instance('pychron.loading.panes.LoadDockPane')
-    load_table_pane = Instance('pychron.loading.panes.LoadTablePane')
+    load_pane = Instance('pychron.loading.tasks.panes.LoadDockPane')
+    load_table_pane = Instance('pychron.loading.tasks.panes.LoadTablePane')
     laser_control_client_pane = None
 
     def save_as_current_experiment(self):
@@ -244,8 +245,8 @@ class ExperimentEditorTask(EditorTask):
                  wait_pane]
 
         if self.loading_manager:
-            self.load_pane = self.window.application.get_service('pychron.loading.panes.LoadDockPane')
-            self.load_table_pane = self.window.application.get_service('pychron.loading.panes.LoadTablePane')
+            self.load_pane = self.window.application.get_service('pychron.loading.tasks.panes.LoadDockPane')
+            self.load_table_pane = self.window.application.get_service('pychron.loading.tasks.panes.LoadTablePane')
 
             self.load_pane.model = self.loading_manager
             self.load_table_pane.model = self.loading_manager
@@ -733,14 +734,14 @@ class ExperimentEditorTask(EditorTask):
         man = Experimentor(application=self.application,
                            mode=mode)
 
-        iso = 'pychron.database.isotope_database_manager.IsotopeDatabaseManager'
-        manager = self.application.get_service(iso)
+        # iso = 'pychron.database.isotope_database_manager.IsotopeDatabaseManager'
+        # manager = self.application.get_service(iso)
 
         dvc = self.application.get_service('pychron.dvc.dvc.DVC')
         if dvc:
             man.dvc = dvc
 
-        man.iso_db_manager = manager
+        # man.iso_db_manager = manager
         man.executor.set_managers()
         man.executor.bind_preferences()
 
@@ -754,7 +755,8 @@ class ExperimentEditorTask(EditorTask):
     def _loading_manager_default(self):
         lm = self.window.application.get_service('pychron.loading.loading_manager.LoadingManager')
         if lm:
-            lm.trait_set(db=self.manager.iso_db_manager.db,
+            dvc = self.window.application.get_service('pychron.dvc.dvc.DVC')
+            lm.trait_set(db=dvc.db,
                          show_group_positions=True)
             return lm
 

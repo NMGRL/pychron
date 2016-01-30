@@ -15,8 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Any
 from chaco.plot_containers import GridPlotContainer
+from traits.api import HasTraits, Any
+
 
 # from pychron.processing.plotters.graph_panel_info import GraphPanelInfo
 # ============= standard library imports ========================

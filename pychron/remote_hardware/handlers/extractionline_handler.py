@@ -18,10 +18,11 @@
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.remote_hardware.errors import InvalidArgumentsErrorCode, InvalidValveErrorCode, \
-    ValveSoftwareLockErrorCode, ValveActuationErrorCode
 from base_remote_hardware_handler import BaseRemoteHardwareHandler
 from dummies import DummyELM
+from pychron.remote_hardware.errors import InvalidArgumentsErrorCode, InvalidValveErrorCode, \
+    ValveSoftwareLockErrorCode, ValveActuationErrorCode
+
 # from pychron.envisage.core.action_helper import open_manager
 from pychron.remote_hardware.errors.extraction_line_errors import InvalidGaugeErrorCode
 from pychron.remote_hardware.registry import MetaHandler

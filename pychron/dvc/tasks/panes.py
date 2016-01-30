@@ -15,9 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Int, Property
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
+from traits.api import Int, Property
 from traitsui.api import View, UItem, VGroup, ListStrEditor, TabularEditor, EnumEditor
 from traitsui.tabular_adapter import TabularAdapter
 

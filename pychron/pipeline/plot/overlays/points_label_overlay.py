@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from chaco.abstract_overlay import AbstractOverlay
 from kiva.fonttools import str_to_font
-from traits.api import cached_property, Property, Str, Bool
+from traits.api import Str, Bool
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 

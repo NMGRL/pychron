@@ -18,7 +18,6 @@
 # from traits.api import HasTraits
 # from traitsui.api import View, Item
 from pyface.action.action import Action
-
 from pyface.tasks.action.task_action import TaskAction
 
 from pychron.envisage.view_util import open_view

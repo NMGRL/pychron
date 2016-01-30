@@ -15,8 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traitsui.api import View, UItem, VGroup, HGroup, spring, EnumEditor, Item
 from pyface.tasks.traits_task_pane import TraitsTaskPane
+from traitsui.api import View, UItem, VGroup, HGroup, spring, EnumEditor, Item
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================

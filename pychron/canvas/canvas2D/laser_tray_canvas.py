@@ -16,7 +16,7 @@
 
 # =============enthought library imports=======================
 from traits.api import Color, Float, Any, Bool, Range, on_trait_change, \
-    Enum, List, Int, File
+    Enum, List, File
 # from traitsui.api import View, Item, VGroup, HGroup, ColorEditor
 from chaco.api import AbstractOverlay
 from kiva import constants

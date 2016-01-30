@@ -18,10 +18,11 @@
 from pyface.action.menu_manager import MenuManager
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traits.api import Int, Property, List
+from traitsui.api import View, UItem, VGroup, EnumEditor
 from traitsui.handler import Handler
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
-from traitsui.api import View, UItem, VGroup, EnumEditor
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from uncertainties import nominal_value, std_dev

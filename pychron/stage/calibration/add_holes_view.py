@@ -16,9 +16,10 @@
 
 # ============= enthought library imports =======================
 
-from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change, BaseStr
-from traitsui.api import View, UItem, Item, HGroup, VGroup
 from hashlib import md5
+
+from traits.api import HasTraits, BaseStr
+from traitsui.api import View, UItem
 
 
 # ============= standard library imports ========================

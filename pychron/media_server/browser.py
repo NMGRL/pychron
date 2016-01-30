@@ -15,11 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from enable.base_tool import BaseTool
+from enable.component_editor import ComponentEditor
 from traits.api import Any, List, Instance, String, on_trait_change, \
     Button, Tuple
 from traitsui.api import View, Item, VGroup
-from enable.component_editor import ComponentEditor
-from enable.base_tool import BaseTool
+
 # ============= standard library imports ========================
 import os
 # import Image

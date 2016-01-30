@@ -15,8 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from pyface.tasks.task_layout import TaskLayout, PaneItem
-from traits.api import Instance
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================

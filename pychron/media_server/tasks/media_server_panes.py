@@ -15,9 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traitsui.api import View, UItem
-from pyface.tasks.traits_task_pane import TraitsTaskPane
 from pyface.tasks.traits_dock_pane import TraitsDockPane
+from pyface.tasks.traits_task_pane import TraitsTaskPane
+from traitsui.api import View, UItem
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 

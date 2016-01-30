@@ -15,18 +15,18 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.timer.do_later import do_later
 from traits.api import Any, on_trait_change, Int, List, Bool, \
     Instance, Property, Str, HasTraits, Event, Long
 from traits.trait_types import Date
 from traitsui.api import View, Item
-from pyface.timer.do_later import do_later
+
 # ============= standard library imports ========================
 import time
 from itertools import groupby
 import os
 # ============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
-from pychron.core.helpers.filetools import replace_extension
 from pychron.core.ui.qt.tabular_editor import MoveToRow
 from pychron.experiment.queue.base_queue import BaseExperimentQueue
 from pychron.experiment.queue.select_attr_view import SelectAttrView

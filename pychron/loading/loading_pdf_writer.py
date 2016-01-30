@@ -15,9 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, List, Bool
+from traits.api import Bool
 from traits.api import Color as TraitsColor
-from traitsui.api import View, Item, Group, VGroup, HGroup
+from traitsui.api import View, Item, VGroup
 # ============= standard library imports ========================
 # from reportlab.platypus.flowables import PageBreak, Flowable
 from reportlab.lib.colors import Color

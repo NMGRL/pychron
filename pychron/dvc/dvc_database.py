@@ -1061,9 +1061,15 @@ class DVCDatabase(DatabaseAdapter):
                 return [ui.name for ui in loads]
 
     def get_extraction_devices(self):
+        return self.get_extract_devices()
+
+    def get_extraction_device_names(self):
+        names = []
         with self.session_ctx():
-            eds = self._retrieve_items(ExtractDeviceTbl)
-            return [ui.name for ui in eds]
+            eds = self.get_extract_devices()
+            if eds:
+                names = [e.name for e in eds]
+        return names
 
     def get_users(self):
         return self._retrieve_items(UserTbl)

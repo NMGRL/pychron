@@ -16,10 +16,11 @@
 
 
 # ============= enthought library imports =======================
-from traits.api import Property
 from pyface.action.api import Action
-from pyface.timer.do_later import do_later
 from pyface.tasks.action.task_action import TaskAction
+from pyface.timer.do_later import do_later
+from traits.api import Property
+
 # ============= standard library imports ========================
 
 # ============= local library imports  ==========================

@@ -15,9 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
 from pychron.pyscripts.pyscript import verbose_skip, makeRegistry
-from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 command_register = makeRegistry()

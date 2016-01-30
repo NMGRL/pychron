@@ -26,8 +26,8 @@
 import time
 
 from aerotech_axis import AerotechAxis
-from pychron.hardware.motion_controller import MotionController
 from pychron.hardware.core.data_helper import make_bitarray
+from pychron.hardware.motion_controller import MotionController
 
 
 ACK = chr(6)

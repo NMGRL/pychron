@@ -15,12 +15,13 @@
 # ===============================================================================
 # ============= enthought library imports =======================
 from pyface.action.menu_manager import MenuManager
-from traitsui.menu import Action
 from pyface.confirmation_dialog import confirm
 from pyface.constant import YES
 from pyface.tasks.action.schema_addition import SchemaAddition
 from traits.api import HasTraits, Str, Instance, Event, Bool, List, Enum, Any
 from traitsui.api import View, UItem, VGroup, TreeNode, Handler, HGroup, TextEditor
+from traitsui.menu import Action
+
 # ============= standard library imports ========================
 import yaml
 import hashlib

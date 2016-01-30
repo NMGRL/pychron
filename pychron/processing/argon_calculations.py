@@ -21,7 +21,7 @@ import math
 from copy import deepcopy
 
 from numpy import asarray, average, array
-from uncertainties import ufloat, umath
+from uncertainties import ufloat, umath, nominal_value
 
 # ============= local library imports  ==========================
 from pychron.pychron_constants import ALPHAS

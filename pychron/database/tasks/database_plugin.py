@@ -19,9 +19,9 @@
 # ============= local library imports  ==========================
 from envisage.ui.tasks.task_factory import TaskFactory
 
-from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
-from pychron.database.tasks.connection_preferences import ConnectionPreferencesPane
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
+from pychron.database.tasks.connection_preferences import ConnectionPreferencesPane
+from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 
 
 class DatabasePlugin(BaseTaskPlugin):

@@ -1,13 +1,11 @@
-import os
-import sys
-import shutil
 import copy
-from traits.has_traits import HasTraits
+import os
+import shutil
+import sys
 
 from pychron.core.test_helpers import isotope_db_factory, get_data_dir as mget_data_dir, massspec_db_factory
 from pychron.experiment.utilities.identifier import make_runid
 from pychron.processing.analysis_modifier import AnalysisModifier
-
 
 __author__ = 'ross'
 

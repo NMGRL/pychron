@@ -20,7 +20,6 @@ from traits.api import Instance, Enum, Any, List
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable
-from pychron.processing.export.export_spec import MassSpecExportSpec
 from pychron.processing.export.exporter import Exporter
 from pychron.processing.export.massspec_analysis_exporter import MassSpecAnalysisExporter
 from pychron.processing.export.sqlite_analysis_exporter import SQLiteAnalysisExporter

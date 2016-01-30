@@ -15,9 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Array, Tuple
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.lineplot import LinePlot
+from traits.api import Array, Tuple
+
 # ============= standard library imports ========================
 from numpy import array, zeros
 

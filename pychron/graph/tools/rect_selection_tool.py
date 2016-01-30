@@ -15,8 +15,9 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-from traits.api import Any, Str
 from chaco.api import AbstractOverlay, BaseTool
+from traits.api import Any, Str
+
 # =============standard library imports ========================
 from numpy import vstack
 # =============local library imports  ==========================

@@ -19,9 +19,9 @@ from numpy import std, mean, where, delete
 from traits.api import CStr, Str, CInt, Float, \
     TraitError, Property, Any, Either, Dict, Bool, List
 from uncertainties import ufloat
-from pychron.core.regression.mean_regressor import MeanRegressor
 
 from pychron.loggable import Loggable
+
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================

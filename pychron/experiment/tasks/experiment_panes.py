@@ -41,7 +41,6 @@ from pychron.experiment.plot_panel import PlotPanel
 # ===============================================================================
 # editing
 # ===============================================================================
-from pychron.stylesheeets import default_sheet
 
 
 def spacer(w):
@@ -72,7 +71,6 @@ class ExperimentFactoryPane(TraitsDockPane):
     def _get_info_label(self):
         return '<font size="12" color="green"><b>{}</b></font>'.format(self.model.run_factory.info_label)
 
-    @property
     def traits_view(self):
         add_button = icon_button_editor('add_button', 'add',
                                         # enabled_when='ok_add',

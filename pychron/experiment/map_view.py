@@ -17,13 +17,13 @@
 # ============= enthought library imports =======================
 import os
 
-from traits.api import HasTraits, Instance, on_trait_change, Str, List, Property
-from traitsui.api import View, Item, HGroup
+import numpy as np
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.tools.scatter_inspector import ScatterInspector
-from kiva.constants import FILL_STROKE
 from enable.markers import CircleMarker
-import numpy as np
+from kiva.constants import FILL_STROKE
+from traits.api import HasTraits, Instance, on_trait_change, Str, List, Property
+from traitsui.api import View, Item, HGroup
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================

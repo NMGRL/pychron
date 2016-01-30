@@ -16,13 +16,11 @@
 
 # ============= enthought library imports =======================
 import os
-from threading import Thread
 import time
 import uuid
+from threading import Thread
 
 from traits.api import HasTraits, Instance, Str, Dict, Property, Bool, Float
-
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 import yaml

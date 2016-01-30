@@ -17,8 +17,8 @@ import os
 import traceback
 
 from pychron.canvas.utils import make_geom
-from pychron.spectrometer.molecular_weights import MOLECULAR_WEIGHTS
 from pychron.paths import paths
+from pychron.spectrometer.molecular_weights import MOLECULAR_WEIGHTS
 
 
 def iterdir(d, exclude=None):

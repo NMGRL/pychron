@@ -16,7 +16,7 @@
 # ============= enthought library imports =======================
 from traits.api import Str
 from traits.trait_types import BaseStr
-from traitsui.api import Item, VGroup, UItem, Label
+from traitsui.api import Item, VGroup, UItem
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================

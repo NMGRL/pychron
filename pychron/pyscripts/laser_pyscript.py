@@ -17,9 +17,9 @@
 # ============= enthought library imports =======================
 import time
 
+from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
 from pychron.pyscripts.pyscript import makeRegistry, verbose_skip
-from pychron.core.ui.gui import invoke_in_main_thread
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================

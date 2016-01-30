@@ -14,18 +14,17 @@
 # limitations under the License.
 # ===============================================================================
 import os
+
 from pychron.core.ui import set_qt
 from pychron.paths import paths
-from pychron.persistence_loggable import load_persistence_dict, load_persistence_values, dump_persistence_values
+from pychron.persistence_loggable import load_persistence_values, dump_persistence_values
 
 set_qt()
 
 # ============= enthought library imports =======================
-import time
 from pyface.timer.do_later import do_after
 from traits.api import HasTraits, Button, List, Int, on_trait_change
 from traits.trait_types import Str, Password
-from traitsui.api import View, Item
 # ============= standard library imports ========================
 import pymysql
 # ============= local library imports  ==========================

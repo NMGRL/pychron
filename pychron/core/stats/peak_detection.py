@@ -22,7 +22,7 @@
 """
     https://gist.github.com/sixtenbe/1178136
 """
-from numpy import Inf, isscalar, array, argmax, polyfit, asarray
+from numpy import Inf, isscalar, array, argmax, polyfit, asarray, argsort, vstack
 
 
 def _datacheck_peakdetect(x_axis, y_axis):

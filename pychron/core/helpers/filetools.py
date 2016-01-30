@@ -17,9 +17,9 @@
 # ========== standard library imports ==========
 import glob
 import os
-import subprocess
-import shutil
 import re
+import shutil
+import subprocess
 
 from datetime import datetime
 

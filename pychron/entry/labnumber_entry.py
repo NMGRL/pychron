@@ -19,12 +19,12 @@ from apptools.preferences.preference_binding import bind_preference
 from pyface.constant import YES, CANCEL
 from pyface.image_resource import ImageResource
 from traits.api import Property, Str, cached_property, \
-    List, Event, Button, Instance, Bool, on_trait_change, Float, HasTraits, Any
     List, Event, Any, Button, Instance, Bool, on_trait_change, Float, HasTraits
 
 # ============= standard library imports ========================
 import os
 # ============= local library imports  ==========================
+from pychron.dvc.dvc_irradiationable import DVCIrradiationable
 from pychron.canvas.canvas2D.irradiation_canvas import IrradiationCanvas
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.core.helpers.formatting import floatfmt
@@ -37,7 +37,7 @@ from pychron.entry.irradiation_pdf_writer import IrradiationPDFWriter, LabbookPD
 from pychron.entry.irradiation_table_view import IrradiationTableView
 from pychron.entry.identifier_generator import IdentifierGenerator
 from pychron.paths import paths
-from pychron.pychron_constants import PLUSMINUS
+from pychron.pychron_constants import PLUSMINUS, NULL_STR
 from pychron.entry.irradiated_position import IrradiatedPosition
 from pychron.database.orms.isotope.gen import gen_ProjectTable, gen_SampleTable
 

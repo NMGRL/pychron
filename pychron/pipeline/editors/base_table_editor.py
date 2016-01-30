@@ -15,8 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import List, Any, Event, Bool
 from pyface.file_dialog import FileDialog
+from traits.api import List, Any, Event, Bool
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.base_editor import grouped_name, BaseTraitsEditor

@@ -15,10 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Float, Instance, Str, Tuple, Event
 from chaco.abstract_overlay import AbstractOverlay
 from enable.base_tool import BaseTool
 from enable.colors import ColorTrait
+from traits.api import Float, Instance, Str, Tuple, Event
+
 # ============= standard library imports ========================
 import string
 # ============= local library imports  ==========================

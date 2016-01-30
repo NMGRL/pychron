@@ -15,8 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from pychron.pipeline.plot.models.icfactor_model import ICFactorModel
 from pychron.pipeline.plot.editors.interpolation_editor import InterpolationEditor
+from pychron.pipeline.plot.models.icfactor_model import ICFactorModel
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 # from pychron.processing.tasks.detector_calibration.detector_calibration_tool import DetectorCalibrationTool

@@ -17,9 +17,9 @@
 # ============= enthought library imports =======================
 from traits.api import on_trait_change, Any, Instance
 
+from pychron.displays.gdisplays import gLoggerDisplay, gWarningDisplay
 from pychron.envisage.tasks.base_task import BaseTask
 from pychron.logger.tasks.logger_panes import DisplayPane
-from pychron.displays.gdisplays import gLoggerDisplay, gWarningDisplay
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 

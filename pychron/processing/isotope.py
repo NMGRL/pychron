@@ -18,19 +18,13 @@
 # from traits.api import HasTraits, Str, Float, Property, Instance, \
 #     String, Either, Dict, cached_property, Event, List, Bool, Int, Array
 # ============= standard library imports ========================
+import re
+import struct
 from binascii import hexlify
 from itertools import izip
-import struct
-import re
 
-from uncertainties import ufloat
 from numpy import array, Inf, polyfit
-
-
-
-
-
-
+from uncertainties import ufloat
 
 # ============= local library imports  ==========================
 from pychron.core.helpers.fits import natural_name_fit, fit_to_degree

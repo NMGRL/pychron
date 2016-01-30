@@ -15,9 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from chaco.data_label import DataLabel
 from chaco.plot_label import PlotLabel
 from traits.api import Bool, Str
-from chaco.data_label import DataLabel
+
 # ============= standard library imports ========================
 from numpy import max
 # ============= local library imports  ==========================

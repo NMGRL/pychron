@@ -14,22 +14,22 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
-from traitsui.menu import Action
+from pyface.file_dialog import FileDialog
 from traits.api import HasTraits, List, Instance, Any, \
     Enum, Float, on_trait_change, Str, Int, Property, Button, Bool, CStr
-
-from pyface.file_dialog import FileDialog
 from traitsui.api import View, UItem, \
     TabularEditor, VGroup, EnumEditor, Item, HGroup, Handler, HSplit, ListEditor
+from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
+
 # ============= standard library imports ========================
 import os
 import yaml
 # ============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.core.helpers.filetools import get_path
+from pychron.envisage.view_util import open_view
 from pychron.paths import paths
-from pychron.core.helpers.formatting import floatfmt
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.resources import icon
 from pychron.experiment.conditional.conditional import conditional_from_dict, ActionConditional, TruncationConditional, \

@@ -16,12 +16,11 @@
 
 # ============= enthought library imports =======================
 # from pyface.tasks.task import Task
-from traits.api import Instance
 from pyface.tasks.task_layout import PaneItem, TaskLayout, VSplitter, Tabbed
+from traits.api import Instance
 
-from pychron.hardware.tasks.hardware_pane import CurrentDevicePane, DevicesPane, InfoPane, ConfigurationPane
 from pychron.envisage.tasks.base_task import BaseHardwareTask
-
+from pychron.hardware.tasks.hardware_pane import CurrentDevicePane, DevicesPane, InfoPane, ConfigurationPane
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================

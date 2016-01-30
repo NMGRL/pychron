@@ -43,7 +43,6 @@ from pychron.dvc.meta_repo import MetaRepo
 from pychron.envisage.browser.record_views import InterpretedAgeRecordView
 from pychron.git_archive.repo_manager import GitRepoManager, format_date, get_repository_branch
 from pychron.github import Organization
-from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.pychron_constants import RATIO_KEYS, INTERFERENCE_KEYS

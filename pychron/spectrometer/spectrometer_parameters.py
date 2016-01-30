@@ -22,7 +22,6 @@ from traitsui.api import View, UItem, TableEditor, ListEditor, Handler
 from traitsui.table_column import ObjectColumn
 # ============= standard library imports ========================
 from ConfigParser import ConfigParser
-import os
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable
 from pychron.paths import paths

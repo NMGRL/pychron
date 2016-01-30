@@ -16,8 +16,9 @@
 
 # ============= enthought library imports =======================
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traitsui.api import View, Item, VGroup
 from traits.api import Directory, Bool, String
+from traitsui.api import View, Item, VGroup
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.base_preferences_helper import GitRepoPreferencesHelper, remote_status_item

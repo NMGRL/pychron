@@ -15,10 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.timer.do_later import do_after
 from traits.api import HasTraits, Str, List, Any, Event, Button, Int, Bool, Float
 from traitsui.api import View, Item, HGroup, spring
 from traitsui.handler import Handler
-from pyface.timer.do_later import do_after
+
 # ============= standard library imports ========================
 import ConfigParser
 import os
@@ -290,8 +291,6 @@ def new_readout_view(rv):
     c = VGroup(UItem('deflections', editor=TableEditor(columns=dcols,
                                                        sortable=False,
                                                        editable=False)), label='Deflections')
-    from pychron.spectrometer.readout_view import ReadoutHandler
-
     v = View(VGroup(a, Tabbed(b, c)),
              handler=ReadoutHandler(),
              title='Spectrometer Readout',

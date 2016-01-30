@@ -15,9 +15,10 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+from apptools.preferences.preference_binding import bind_preference
 from pyface.timer.do_later import do_after
 from traits.api import Instance, List, Any, Bool, on_trait_change, Str, Int, Dict, File, Float
-from apptools.preferences.preference_binding import bind_preference
+
 # =============standard library imports ========================
 import time
 from threading import Thread

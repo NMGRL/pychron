@@ -15,16 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from chaco.api import ArrayPlotData, Plot, HPlotContainer
+from chaco.tools.api import ZoomTool, PanTool
+from chaco.tools.image_inspector_tool import ImageInspectorOverlay, \
+    ImageInspectorTool
+from enable.component import Component
+from enable.component_editor import ComponentEditor
 from traits.api import HasTraits, Instance, List, Str, Bool, on_trait_change, String, \
     Button, Dict, Any
 from traitsui.api import View, Item, ListStrEditor, HGroup, VGroup, \
     spring, VSplit, Group
-from chaco.api import ArrayPlotData, Plot, HPlotContainer
-from chaco.tools.image_inspector_tool import ImageInspectorOverlay, \
-    ImageInspectorTool
-from chaco.tools.api import ZoomTool, PanTool
-from enable.component_editor import ComponentEditor
-from enable.component import Component
+
 # ============= standard library imports ========================
 import Image
 from numpy import array

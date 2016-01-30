@@ -26,9 +26,7 @@ import inspect
 import traceback
 import yaml
 import sys
-import weakref
 # ============= local library imports  ==========================
-from pychron.core.codetools.inspection import caller
 from pychron.paths import paths
 from pychron.loggable import Loggable
 from pychron.globals import globalv

@@ -19,9 +19,10 @@ from traitsui.api import View, UItem, Group
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
+from pychron.core.ui.tabular_editor import myTabularEditor
+from pychron.processing.analyses.view.adapters import IsotopeTabularAdapter
 from pychron.processing.analyses.view.main_view import MainView
 from pychron.processing.analyses.view.values import MeasurementValue
-from pychron.pychron_constants import AR_AR
 
 
 class AutomatedRunAnalysisView(MainView):

@@ -15,10 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import Str, Int, \
     Bool, Password, Color, Property, Float, Enum
 from traitsui.api import View, Item, Group, VGroup, HGroup, UItem
-from envisage.ui.tasks.preferences_pane import PreferencesPane
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.pychron_traits import PositiveInteger

@@ -19,9 +19,6 @@ import csv
 import os
 
 from traits.api import HasTraits, Str, Float
-
-
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from uncertainties import nominal_value, std_dev

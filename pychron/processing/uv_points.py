@@ -15,14 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from chaco.abstract_overlay import AbstractOverlay
+from enable.component_editor import ComponentEditor
 from traits.api import Button, String
 from traitsui.api import View, Item, ButtonEditor
-from enable.component_editor import ComponentEditor
-from chaco.abstract_overlay import AbstractOverlay
 
 from pychron.media_server.image_viewer import ImageViewer
-
-
 # ============= standard library imports ========================
 from numpy import loadtxt
 import os

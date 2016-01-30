@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
+from envisage.ui.tasks.preferences_pane import PreferencesPane
 from pyface.message_dialog import warning
 from pyface.timer.do_later import do_later, do_after
 from traits.api import Str, Password, Enum, Button, on_trait_change, Color, String, List, Event, File
 from traits.has_traits import HasTraits
 from traitsui.api import View, Item, Group, VGroup, HGroup, ListStrEditor, spring, Label, Spring
-from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traitsui.editors import TextEditor
 
 # ============= standard library imports ========================

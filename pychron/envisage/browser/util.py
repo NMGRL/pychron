@@ -19,18 +19,13 @@ import os
 import pickle
 
 from datetime import datetime, timedelta
+from pyface.tasks.task_layout import PaneItem
 from traits.has_traits import HasTraits
 from traits.trait_types import Float, Date, Time
 from traits.traits import Property
 from traitsui.group import HGroup, VGroup
 from traitsui.item import UItem
 from traitsui.view import View
-from pyface.tasks.task_layout import PaneItem
-
-
-
-
-
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================

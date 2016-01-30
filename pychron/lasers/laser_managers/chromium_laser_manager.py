@@ -19,7 +19,6 @@ from traits.api import HasTraits, provides
 # ============= standard library imports ========================
 import time
 # ============= local library imports  ==========================
-from pychron.globals import globalv
 from pychron.lasers.laser_managers.ethernet_laser_manager import EthernetLaserManager
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 

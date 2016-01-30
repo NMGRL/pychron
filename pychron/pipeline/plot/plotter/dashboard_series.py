@@ -17,8 +17,9 @@
 # ============= enthought library imports =======================
 from chaco.scales.time_scale import CalendarScaleSystem
 from chaco.scales_tick_generator import ScalesTickGenerator
-from traits.api import Array, Dict
 from numpy import Inf
+from traits.api import Array, Dict
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure

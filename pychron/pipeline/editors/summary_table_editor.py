@@ -15,16 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import os
 import cPickle as pickle
+import os
 
 from traits.api import Str
 from traitsui.api import View, UItem
-
-
-
-
-
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================

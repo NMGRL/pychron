@@ -16,8 +16,9 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-from pychron.pipeline.plot.plotter.isochron import Isochron, InverseIsochron
 from pychron.pipeline.plot.panels.figure_panel import FigurePanel
+from pychron.pipeline.plot.plotter.isochron import Isochron, InverseIsochron
+
 
 # ============= local library imports  ==========================
 

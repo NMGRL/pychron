@@ -20,9 +20,9 @@
 # ============= local library imports  ==========================
 
 # from pychron.core.ui.thread import Thread
-from threading import Thread
-from Queue import Queue, Empty
 import time
+from Queue import Queue, Empty
+from threading import Thread
 
 
 class ConsumerMixin(object):

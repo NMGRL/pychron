@@ -24,7 +24,6 @@ from ConfigParser import ConfigParser
 from pychron.core.helpers.filetools import list_directory2
 from pychron.entry.entry_views.repository_entry import RepositoryIdentifierEntry
 from pychron.entry.entry_views.user_entry import UserEntry
-from pychron.github import Organization
 from pychron.persistence_loggable import PersistenceLoggable
 from pychron.globals import globalv
 from pychron.pychron_constants import NULL_STR, LINE_STR
@@ -134,7 +133,7 @@ class ExperimentQueueFactory(PersistenceLoggable):
             names = []
             ts = db.get_loads()
             if ts:
-                names = [ti.name for ti in ts]
+                names = ts
             return names
 
     @cached_property
@@ -171,8 +170,8 @@ class ExperimentQueueFactory(PersistenceLoggable):
         if db:
             if not db.connected:
                 return []
-            eds = self.dvc.get_extraction_devices()
-            names = [ei.name for ei in eds]
+            names = self.dvc.get_extraction_device_names()
+
         elif os.path.isfile(cp):
             names = self._get_names_from_config(cp, 'Extraction Devices')
         else:
@@ -193,7 +192,6 @@ class ExperimentQueueFactory(PersistenceLoggable):
                 return []
             ms = self.dvc.get_mass_spectrometers()
             names = [mi.name.capitalize() for mi in ms]
-            print 'asdfasdf', names
         elif os.path.isfile(cp):
             names = self._get_names_from_config(cp, 'Mass Spectrometers')
         else:
@@ -202,7 +200,7 @@ class ExperimentQueueFactory(PersistenceLoggable):
         return ['Spectrometer', LINE_STR] + names
 
     @cached_property
-    def _get_erepository_identifiers(self):
+    def _get_repository_identifiers(self):
         db = self.dvc
         ids = []
         if db and db.connected:

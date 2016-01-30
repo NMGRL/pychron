@@ -15,8 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traitsui.api import View
 from envisage.ui.tasks.preferences_pane import PreferencesPane
+from traitsui.api import View
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper

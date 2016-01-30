@@ -20,7 +20,6 @@ from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.task_factory import TaskFactory
 from pyface.tasks.action.schema import SGroup
 from pyface.tasks.action.schema_addition import SchemaAddition
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.entry.entry_views.sensitivity_entry import SensitivitySelector
@@ -42,16 +41,15 @@ from pychron.experiment.tasks.experiment_actions import NewExperimentQueueAction
 
 class ExperimentPlugin(BaseTaskPlugin):
     id = 'pychron.experiment.plugin'
-    experimentor = Instance(Experimentor)
 
-    def start(self):
-        super(ExperimentPlugin, self).start()
-        # manager = self.application.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
-        dvc = self.application.get_service('pychron.dvc.dvc.DVC')
-        self.experimentor.dvc = dvc
-        # self.experimentor.iso_db_manager = manager
-        self.experimentor.executor.set_managers()
-        self.experimentor.executor.bind_preferences()
+    # def start(self):
+    #     super(ExperimentPlugin, self).start()
+    #     # manager = self.application.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
+    #     dvc = self.application.get_service('pychron.dvc.dvc.DVC')
+    #     self.experimentor.dvc = dvc
+    #     # self.experimentor.iso_db_manager = manager
+    #     self.experimentor.executor.set_managers()
+    #     self.experimentor.executor.bind_preferences()
 
     def _signal_calculator_factory(self, *args, **kw):
         return SignalCalculator()

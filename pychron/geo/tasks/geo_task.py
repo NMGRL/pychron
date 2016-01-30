@@ -15,9 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Button, List, Any, Event
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem
+from traits.api import Button, List, Any, Event
+
 # ============= standard library imports ========================
 import os
 from pyproj import Proj, transform

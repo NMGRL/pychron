@@ -217,7 +217,7 @@ class Experimentor(DVCIrradiationable):
         return self.executor.execute()
 
     def verify_database_connection(self, inform=True):
-        db = self.iso_db_manager.db
+        db = self.dvc.db
         if db is not None:
             if db.connect(force=True):
                 return True

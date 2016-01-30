@@ -32,7 +32,7 @@ from xlwt import Workbook
 from pychron.core.helpers.datetime_tools import get_datetime
 from pychron.core.helpers.filetools import subdirize
 from pychron.core.helpers.strtools import to_bool
-from pychron.core.ui.preference_binding import bind_preference, set_preference
+from pychron.core.ui.preference_binding import set_preference
 from pychron.database.adapters.local_lab_adapter import LocalLabAdapter
 from pychron.experiment.automated_run.hop_util import parse_hops
 

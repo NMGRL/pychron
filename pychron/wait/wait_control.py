@@ -16,15 +16,12 @@
 
 # ============= enthought library imports =======================
 from traits.api import Str, Color, Button, Float, Bool
-from traitsui.api import View, Item, VGroup, HGroup, \
-    Spring, UItem, spring, RangeEditor
 # ============= standard library imports ========================
 from threading import Event
 import time
 # ============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.loggable import Loggable
-from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.core.helpers.timer import Timer
 
 

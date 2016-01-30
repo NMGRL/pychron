@@ -16,12 +16,13 @@
 
 # ============= enthought library imports =======================
 
+from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import Str, Bool, Int, Float
 from traitsui.api import View, Item, VGroup, HGroup, spring
-from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traitsui.editors import FileEditor
 from traitsui.group import Tabbed
 from traitsui.item import UItem
+
 # ============= standard library imports ========================
 import os
 # ============= local library imports  ==========================

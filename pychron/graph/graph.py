@@ -17,17 +17,13 @@
 # =============enthought library imports=======================
 from chaco.api import OverlayPlotContainer, \
     VPlotContainer, HPlotContainer, GridPlotContainer, \
-    BasePlotContainer, Plot, ArrayPlotData, PlotLabel
+    BasePlotContainer, Plot, ArrayPlotData
+from chaco.array_data_source import ArrayDataSource
 from chaco.axis import PlotAxis
-from chaco.scales.time_scale import CalendarScaleSystem
-from chaco.scales_tick_generator import ScalesTickGenerator
-from chaco.tools.api import ZoomTool, LineInspector, RangeSelection, \
-    RangeSelectionOverlay
 from enable.component_editor import ComponentEditor
-from pyface.api import FileDialog, OK
 from pyface.timer.api import do_after as do_after_timer
-from traits.api import Instance, List, Str, Property, Dict, Callable, Event
-from traitsui.api import View, Item
+from traits.api import Instance, List, Str, Property, Dict, Event, Bool
+from traitsui.api import View, Item, UItem
 
 # =============standard library imports ========================
 import os
@@ -37,12 +33,9 @@ import math
 # =============local library imports  ==========================
 from pychron.core.helpers.color_generators import colorname_generator as color_generator
 from pychron.core.helpers.filetools import add_extension
-from pychron.graph.minor_tick_overlay import MinorTicksOverlay
 from guide_overlay import GuideOverlay
 from pychron.graph.offset_plot_label import OffsetPlotLabel
 from tools.contextual_menu_tool import ContextualMenuTool
-from tools.pan_tool import MyPanTool as PanTool
-from chaco.data_label import DataLabel
 from pychron.graph.context_menu_mixin import ContextMenuMixin
 
 VALID_FONTS = [
@@ -734,8 +727,6 @@ class Graph(ContextMenuMixin):
     def add_plot_label(self, txt, plotid=0, overlay_position='inside top', hjustify='left', **kw):
         """
         """
-
-        from chaco.plot_label import PlotLabel
 
         c = self.plots[plotid]
 

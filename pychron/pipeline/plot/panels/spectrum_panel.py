@@ -16,8 +16,9 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-from pychron.pipeline.plot.plotter.spectrum import Spectrum
 from pychron.pipeline.plot.panels.figure_panel import FigurePanel
+from pychron.pipeline.plot.plotter.spectrum import Spectrum
+
 
 # ============= local library imports  ==========================
 

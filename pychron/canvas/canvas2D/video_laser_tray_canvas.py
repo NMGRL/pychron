@@ -17,8 +17,8 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.canvas.canvas2D.video_canvas import VideoCanvas
 from laser_tray_canvas import LaserTrayCanvas
+from pychron.canvas.canvas2D.video_canvas import VideoCanvas
 
 
 class VideoLaserTrayCanvas(LaserTrayCanvas, VideoCanvas):

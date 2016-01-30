@@ -17,10 +17,11 @@
 # ============= enthought library imports =======================
 
 # ============= standard library imports ========================
+from sqlalchemy import Column, Integer, String, BLOB, DateTime
 from sqlalchemy.ext.declarative import declared_attr, declarative_base
 from sqlalchemy.orm import relationship
-from sqlalchemy import Column, Integer, String, BLOB, DateTime
 from sqlalchemy.sql.expression import func
+
 # ============= local library imports  ==========================
 from pychron.database.orms.isotope.util import foreignkey
 

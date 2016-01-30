@@ -13,8 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from pychron.utils import get_display_size
 from pychron.displays.display import ErrorDisplay, DisplayController
+from pychron.utils import get_display_size
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================

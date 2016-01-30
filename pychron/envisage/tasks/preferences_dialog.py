@@ -18,9 +18,10 @@
 from envisage.ui.tasks.preferences_category import PreferencesCategory
 from envisage.ui.tasks.preferences_dialog import PreferencesDialog as PD, PreferencesTab
 from pyface.tasks.topological_sort import before_after_sort
+from traits.api import on_trait_change, Property
 from traitsui.api import View, UItem
 from traitsui.group import HGroup
-from traits.api import on_trait_change, Property
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter

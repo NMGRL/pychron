@@ -17,11 +17,11 @@
 
 
 # ============= enthought library imports ======================
+from pyface.constant import OK
+from pyface.file_dialog import FileDialog
 from traits.api import HasTraits, List, CStr, Button
 from traitsui.api import View, Item, HGroup, spring, TabularEditor
 from traitsui.tabular_adapter import TabularAdapter
-from pyface.file_dialog import FileDialog
-from pyface.constant import OK
 
 # ============= standard library imports =======================
 

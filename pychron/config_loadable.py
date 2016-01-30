@@ -16,8 +16,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from pychron.paths import paths
 from loggable import Loggable
+from pychron.paths import paths
+
 # ============= standard library imports ========================
 import os
 import ConfigParser

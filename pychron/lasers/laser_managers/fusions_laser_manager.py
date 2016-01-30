@@ -15,10 +15,11 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+from apptools.preferences.preference_binding import bind_preference
 from traits.api import DelegatesTo, Property, Instance, Str, List, Dict, \
     on_trait_change, Event, Bool, Any
 from traitsui.api import VGroup, Item, HGroup, spring
-from apptools.preferences.preference_binding import bind_preference
+
 # =============standard library imports ========================
 # from threading import Thread, Timer as DoLaterTimer, Lock
 # import os

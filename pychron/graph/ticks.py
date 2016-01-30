@@ -17,10 +17,10 @@
 # ============= enthought library imports =======================
 import math
 
-from numpy.core.umath import log10
-from numpy import hstack
-from traits.api import Int
 from chaco.ticks import DefaultTickGenerator
+from numpy import hstack
+from numpy.core.umath import log10
+from traits.api import Int
 
 
 # ============= standard library imports ========================

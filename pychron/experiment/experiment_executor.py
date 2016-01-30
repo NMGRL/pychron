@@ -26,7 +26,6 @@ from traits.trait_errors import TraitError
 from threading import Thread, Event as Flag, Lock, currentThread
 from datetime import datetime
 from itertools import groupby
-import weakref
 import time
 import os
 import yaml
@@ -753,7 +752,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if self.use_system_health:
             self._add_system_health(run)
 
-        mem_log('end run')
+        # mem_log('end run')
         if self.stats:
             self.stats.finish_run()
             if run.state == 'success':

@@ -16,14 +16,13 @@
 
 # ============= enthought library imports =======================
 from enable.component_editor import ComponentEditor
-from traits.api import HasTraits, List, Str, Float, Instance, Bool
-from traitsui.api import View, UItem, VGroup, Item, VSplit, HGroup
+from traits.api import HasTraits, List, Str, Float, Bool
+from traitsui.api import View, UItem, VGroup, VSplit
 from traitsui.editors import TableEditor
 from traitsui.table_column import ObjectColumn
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.canvas.canvas2D.piechart_canvas import PieChartCanvas
 from pychron.core.helpers.formatting import floatfmt
 from pychron.processing.analyses.view.magnitude_editor import MagnitudeColumn
 from pychron.pychron_constants import INTERFERENCE_KEYS
@@ -45,8 +44,8 @@ class ErrorComponentsView(HasTraits):
     name = 'Error Components'
 
     error_components = List
-    pie_canvas = Instance(PieChartCanvas, ())
-    pie_enabled = Bool
+    # pie_canvas = Instance(PieChartCanvas, ())
+    pie_enabled = Bool(False)
 
     def __init__(self, an, *args, **kw):
         super(ErrorComponentsView, self).__init__(*args, **kw)
@@ -77,7 +76,7 @@ class ErrorComponentsView(HasTraits):
         # print sum([e.value for e in es])
 
         self.error_components = es
-        self.pie_canvas.load_scene(es)
+        # self.pie_canvas.load_scene(es)
 
     def traits_view(self):
         cols = [ObjectColumn(name='name', label='Component'),
@@ -93,7 +92,7 @@ class ErrorComponentsView(HasTraits):
         v = View(VGroup(
             # Item('pie_enabled', label='Show Pie Chart',
             #      visible_when='pie_enabled'),
-            HGroup(Item('pie_enabled', label='Show Pie Chart')),
+            # HGroup(Item('pie_enabled', label='Show Pie Chart')),
             VGroup(
                 UItem('error_components', editor=editor),
                 visible_when='not pie_enabled'),

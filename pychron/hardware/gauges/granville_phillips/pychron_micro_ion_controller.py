@@ -17,7 +17,6 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-import time
 from pychron.hardware.gauges.granville_phillips.micro_ion_controller import MicroIonController
 
 

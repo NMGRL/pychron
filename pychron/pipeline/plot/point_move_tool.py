@@ -15,9 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from chaco.tools.api import DragTool
 from enable.enable_traits import Pointer
 from traits.api import Enum, CArray
-from chaco.tools.api import DragTool
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 normal_pointer = Pointer('normal')

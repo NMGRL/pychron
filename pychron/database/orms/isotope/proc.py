@@ -16,10 +16,11 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy import Column, Integer, String, \
     BLOB, Float, Boolean, DateTime, TIMESTAMP, ForeignKey
+from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship
+
 # ============= local library imports  ==========================
 
 from pychron.database.core.base_orm import BaseMixin, NameMixin

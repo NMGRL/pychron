@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # # ============= enthought library imports =======================
-from apptools.preferences.preference_binding import bind_preference
 from traits.api import Any, Str, List, Property, \
     Event, Instance, Bool, HasTraits, Float, Int, Long
 # ============= standard library imports ========================
@@ -1739,7 +1738,6 @@ anaylsis_type={}
     #     return ln not in ('dg', 'pa')
 
     def _new_plot_panel(self, plot_panel, stack_order='bottom_to_top'):
-        from pychron.processing.analyses.view.automated_run_view import ArArAutomatedRunAnalysisView
 
         title = self.runid
         sample, irradiation = self.spec.sample, self.spec.display_irradiation

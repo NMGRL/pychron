@@ -18,12 +18,14 @@
 # =============enthought library imports=======================
 
 # =============standard library imports ========================
+import os
+
 from sqlalchemy import Column, Integer, Float, String, \
     ForeignKey, DateTime, Date, BLOB
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relation, relationship
 from sqlalchemy.sql.expression import func
-import os
+
 # =============local library imports  ==========================
 from pychron.database.orms.isotope.util import doublecolumn
 

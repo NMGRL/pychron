@@ -15,14 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.message_dialog import information
 from traits.api import HasTraits, Button, Str, Int, Float, List, Any, Date
 from traitsui.api import View, UItem, HGroup, VGroup, HSplit, InstanceEditor, \
     TabularEditor
-from pyface.message_dialog import information
 from traitsui.editors import ListEditor
+from traitsui.handler import Controller
 from traitsui.item import UReadonly
 from traitsui.tabular_adapter import TabularAdapter
-from traitsui.handler import Controller
+
 # ============= standard library imports ========================
 from datetime import datetime
 # ============= local library imports  ==========================

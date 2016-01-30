@@ -16,9 +16,10 @@
 
 # ============= enthought library imports =======================
 import os
+
 from datetime import datetime
-from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change, List, Instance
-from traitsui.api import View, UItem, Item, HGroup, VGroup
+from traits.api import Str, List, Instance
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.xml.xml_parser import XMLParser

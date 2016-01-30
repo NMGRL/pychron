@@ -15,15 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from datetime import datetime, timedelta
 import os
-import urllib2
 import sys
+import urllib2
 
 from apptools.preferences.preference_binding import bind_preference
+from datetime import datetime, timedelta
 from git import GitCommandError
 from traits.api import Button, Bool, Str, Property, List
-
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================

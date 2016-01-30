@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change, Dict
+from traits.api import Property, Dict
 # ============= standard library imports ========================
 import os
 from ConfigParser import ConfigParser

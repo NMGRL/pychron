@@ -15,10 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from pyface.tasks.task_layout import TaskLayout, PaneItem
-from traits.api import HasTraits, List, Str, Bool, Enum, on_trait_change, Instance
-from traits.api import HasTraits, Button, List, Str, Bool, Enum, Property, cached_property, on_trait_change
-from traitsui.api import View, Item
+from pyface.tasks.task_layout import TaskLayout
+from traits.api import HasTraits, List, Str, Bool, Enum, on_trait_change
+from traits.api import Instance
+
 # ============= standard library imports ========================
 import hashlib
 import os

@@ -32,7 +32,6 @@ from pychron.envisage.stylesheets import load_stylesheet
 from pychron.envisage.tasks.pane_helpers import spacer
 from pychron.entry.irradiated_position import IrradiatedPositionAdapter
 from pychron.envisage.browser.adapters import ProjectAdapter, SampleAdapter
-from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
 
 class LevelInfoPane(TraitsDockPane):

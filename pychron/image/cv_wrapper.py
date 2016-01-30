@@ -19,8 +19,8 @@
 from collections import namedtuple
 
 from numpy import array, asarray, ndarray
-from scipy.ndimage.filters import laplace
 from numpy.lib.function_base import percentile
+from scipy.ndimage.filters import laplace
 
 try:
     from cv2 import VideoCapture, VideoWriter, imwrite, line, fillPoly, \

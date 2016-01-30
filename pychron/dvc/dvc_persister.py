@@ -162,7 +162,7 @@ class DVCPersister(BasePersister):
                 for det, pts in data:
                     obj[det] = base64.b64encode(''.join([struct.pack(fmt, *di) for di in pts]))
 
-        dvcdump(obj, p)
+        dvc_dump(obj, p)
 
     def post_measurement_save(self, commit=True, msg_prefix='Collection'):
         """

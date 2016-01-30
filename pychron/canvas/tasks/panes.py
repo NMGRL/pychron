@@ -17,8 +17,8 @@
 # ============= enthought library imports =======================
 from enable.component_editor import ComponentEditor
 from pyface.tasks.traits_task_pane import TraitsTaskPane
-from traitsui.api import View, UItem, TreeEditor, TreeNode, HSplit
 from traits.api import List
+from traitsui.api import View, UItem, TreeEditor, TreeNode, HSplit
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================

@@ -15,12 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from envisage.ui.tasks.preferences_pane import PreferencesPane
 from pyface.confirmation_dialog import confirm
 from pyface.constant import YES
 from pyface.message_dialog import warning
 from traits.api import HasTraits, Float, Enum, Str, Bool, on_trait_change, Property, Button, List, Dict
 from traitsui.api import View, Item, UItem, Spring, Label, spring, VGroup, HGroup, EnumEditor, ButtonEditor
-from envisage.ui.tasks.preferences_pane import PreferencesPane
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.resources import icon

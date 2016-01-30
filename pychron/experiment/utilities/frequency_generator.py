@@ -17,8 +17,9 @@
 # ============= enthought library imports =======================
 
 # ============= standard library imports ========================
-from itertools import groupby
 import re
+from itertools import groupby
+
 # ============= local library imports  ==========================
 FREQ_REG = re.compile(r'(\d,)*\d(,[eE])?$|(s(,\d)+(,[eE])?)$|^s$|(s,[eE])$|^e$')
 

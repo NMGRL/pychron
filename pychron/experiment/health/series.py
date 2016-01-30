@@ -197,13 +197,15 @@ class SystemHealthSeries(Loggable):
         :return:
         """
         p = os.path.join(paths.setup_dir, 'system_health.yaml')
-        with open(p, 'r') as rfile:
-            config = yaml.load(rfile)
-            self._values = config['values']
-            self._conditionals = config['conditionals']
+        if os.path.isfile(p):
+            with open(p, 'r') as rfile:
+                config = yaml.load(rfile)
+                if config:
+                    self._values = config['values']
+                    self._conditionals = config['conditionals']
 
-            general = config['general']
-            self._limit = general['limit']
+                    general = config['general']
+                    self._limit = general['limit']
 
     def _make_analysis_dict(self, an):
         """
