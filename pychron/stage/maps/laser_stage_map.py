@@ -115,7 +115,7 @@ class LaserStageMap(BaseStageMap):
 
         return a, b, p
 
-    def generate_row_interpolated_corrections(self):
+    def generate_row_interpolated_corrections(self, dump_corrections=True):
         self.debug('generate row interpolated corrections')
         rowdict = self.row_dict()
         for i, h in enumerate(self.sample_holes):
@@ -136,7 +136,8 @@ class LaserStageMap(BaseStageMap):
 
                     self.set_hole_correction(h, cx, cy)
 
-        self.dump_correction_file()
+        if dump_corrections:
+            self.dump_correction_file()
 
     # private
     def _load_hook(self):
