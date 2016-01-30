@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import shutil
+
 from pyface.constant import CANCEL, NO
 from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter, Tabbed
 from pyface.timer.do_later import do_after
@@ -122,7 +124,7 @@ class ExperimentEditorTask(EditorTask):
 
             dnames = None
             spec = self.application.get_service(
-                'pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager')
+                    'pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager')
             if spec:
                 dnames = spec.spectrometer.detector_names
 
@@ -187,8 +189,8 @@ class ExperimentEditorTask(EditorTask):
         if self.use_notifications:
             self.notifier.close()
 
-        # del manager. fixes problem of multiple experiments being started
-        # closed tasks were still receiving execute_event(s)
+            # del manager. fixes problem of multiple experiments being started
+            # closed tasks were still receiving execute_event(s)
             # del self.manager
             # self.manager = None
 
@@ -227,7 +229,6 @@ class ExperimentEditorTask(EditorTask):
         self.isotope_evolution_pane = IsotopeEvolutionPane(name=name)
 
         self.experiment_factory_pane = ExperimentFactoryPane(model=self.manager.experiment_factory)
-        # self.wait_pane = WaitPane(model=self.manager.executor.wait_group)
         wait_pane = WaitPane(model=self.manager.executor.wait_group)
 
         ex = self.manager.executor
@@ -280,7 +281,7 @@ class ExperimentEditorTask(EditorTask):
 
     def _open_file(self, path, **kw):
         if not isinstance(path, (tuple, list)):
-            path = (path, )
+            path = (path,)
 
         manager = self.manager
         if manager.verify_database_connection(inform=True):
@@ -298,7 +299,24 @@ class ExperimentEditorTask(EditorTask):
     def _open_experiment(self, path):
         name = os.path.basename(path)
         self.info('------------------------------ Open Experiment {} -------------------------------'.format(name))
+
+        reopen_editor = False
+        if name.endswith('.rem.txt') or name.endswith('.ex.txt'):
+            ps = name.split('.')
+            nname = '{}.txt'.format('.'.join(ps[:-2]))
+            msg = 'Rename {} as {}'.format(name, nname)
+            if self.confirmation_dialog(message=msg):
+                reopen_editor = True
+                npath = os.path.join(paths.experiment_dir, nname)
+
+                shutil.copy(path, npath)
+                path = npath
+
         editor = self._check_opened(path)
+        if reopen_editor and editor:
+            self.close_editor(editor)
+            editor = None
+
         if not editor:
             if path.endswith('.xls'):
                 txt, is_uv = self._open_xls(path)
@@ -358,7 +376,7 @@ class ExperimentEditorTask(EditorTask):
             meta, metastr = extract_meta(f)
             is_uv = False
             if meta.has_key('extract_device'):
-                is_uv = meta['extract_device'] in ('Fusions UV', )
+                is_uv = meta['extract_device'] in ('Fusions UV',)
 
         return txt, is_uv
 
@@ -631,8 +649,8 @@ class ExperimentEditorTask(EditorTask):
         if new:
             if name == 'measuring':
                 self._show_pane(self.isotope_evolution_pane)
-            # elif name == 'extracting':
-            #     self._show_pane(self.wait_pane)
+                # elif name == 'extracting':
+                #     self._show_pane(self.wait_pane)
 
     @on_trait_change('active_editor:queue:dclicked')
     def _edit_event(self):
@@ -647,10 +665,10 @@ class ExperimentEditorTask(EditorTask):
     def _update_active_editor_dirty(self, new):
         if new and self.manager:
             self.manager.executor.executable = False
-        # if self.active_editor:
-        #     if self.active_editor.dirty:
-        #         if self.manager:
-        #             self.manager.executor.executable = False
+            # if self.active_editor:
+            #     if self.active_editor.dirty:
+            #         if self.manager:
+            #             self.manager.executor.executable = False
 
     # ===============================================================================
     # default/factory
@@ -696,21 +714,21 @@ class ExperimentEditorTask(EditorTask):
 
     def _default_layout_default(self):
         return TaskLayout(
-            left=Splitter(
-                PaneItem('pychron.wait', height=100),
-                Tabbed(
-                    PaneItem('pychron.experiment.factory'),
-                    PaneItem('pychron.experiment.isotope_evolution')),
-                orientation='vertical'),
-            right=Splitter(
-                Tabbed(
-                    PaneItem('pychron.experiment.stats'),
-                    PaneItem('pychron.console', height=425),
-                    PaneItem('pychron.experiment.explanation', height=425),
-                    PaneItem('pychron.experiment.connection_status')),
-                PaneItem('pychron.extraction_line.canvas_dock'),
-                orientation='vertical'),
-            top=PaneItem('pychron.experiment.controls'))
+                left=Splitter(
+                        PaneItem('pychron.wait', height=100),
+                        Tabbed(
+                                PaneItem('pychron.experiment.factory'),
+                                PaneItem('pychron.experiment.isotope_evolution')),
+                        orientation='vertical'),
+                right=Splitter(
+                        Tabbed(
+                                PaneItem('pychron.experiment.stats'),
+                                PaneItem('pychron.console', height=425),
+                                PaneItem('pychron.experiment.explanation', height=425),
+                                PaneItem('pychron.experiment.connection_status')),
+                        PaneItem('pychron.extraction_line.canvas_dock'),
+                        orientation='vertical'),
+                top=PaneItem('pychron.experiment.controls'))
 
         # ============= EOF =============================================
         # def _use_syslogger_changed(self):
