@@ -120,6 +120,74 @@ class IsotopeAdapter(DatabaseAdapter):
     #     from pychron.database.selectors.isotope_selector import IsotopeAnalysisSelector
     #
     #     return IsotopeAnalysisSelector
+    def get_mass_spectrometer_names(self):
+        return self._get_names(self.get_mass_spectrometers)
+
+    def _get_names(self, func):
+        names = []
+        with self.session_ctx():
+            eds = func()
+            if eds:
+                names = [e.name for e in eds]
+        return names
+
+    def get_extraction_device_names(self):
+        return self._get_names(self.get_extract_devices)
+
+    def get_flux_value(self, identifier, attr):
+        j = 0
+        with self.session_ctx():
+            dbln = self.db.get_labnumber(identifier)
+            if dbln and dbln.selected_flux_history:
+                f = dbln.selected_flux_history.flux
+                j = getattr(f, attr)
+        return j
+
+    def get_level_identifiers(self, irrad, level):
+        lns = []
+        with self.session_ctx():
+            level = self.get_irradiation_level(irrad, level)
+            if level:
+                lns = [str(pi.labnumber.identifier).strip()
+                       for pi in level.positions if pi.labnumber.identifier]
+                lns = [li for li in lns if li]
+                lns = sorted(lns)
+        return lns
+
+    def get_irradiation_names(self, **kw):
+        names = []
+        with self.session_ctx():
+            ns = self.get_irradiations(**kw)
+            if ns:
+                names = [i.name for i in ns]
+
+        return names
+
+    def get_analysis_info(self, li):
+        with self.session_ctx():
+            dbln = self.get_labnumber(li)
+            if not dbln:
+                return None
+            else:
+                project, sample, material, irradiation, level, pos = '', '', '', '', '', 0
+                sample = dbln.sample
+                if sample:
+                    if sample.project:
+                        project = sample.project.name
+
+                    if sample.material:
+                        material = sample.material.name
+                    sample = sample.name
+
+                dbpos = dbln.irradiation_position
+                if dbpos:
+                    level = dbpos.level
+
+                    irradiation = level.irradiation.name
+                    level = level.name
+                    pos = dbpos.position
+
+            return project, sample, material, irradiation, level, pos
 
     def set_analysis_sensitivity(self, analysis, v, e):
         hist = proc_SensitivityHistoryTable()

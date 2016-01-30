@@ -27,7 +27,8 @@ import yaml
 import os
 # ============= local library imports  ==========================
 from pychron.core.helpers.iterfuncs import partition
-from pychron.entry.entry_views.experiment_entry import ExperimentIdentifierEntry
+from pychron.dvc.dvc_irradiationable import DVCAble
+from pychron.entry.entry_views.repository_entry import RepositoryIdentifierEntry
 from pychron.envisage.view_util import open_view
 from pychron.experiment.conditional.conditionals_edit_view import edit_conditionals
 from pychron.experiment.datahub import Datahub
@@ -144,9 +145,7 @@ def remove_file_extension(name, ext='.py'):
     return name
 
 
-class AutomatedRunFactory(PersistenceLoggable):
-    db = Any
-    dvc = Instance('pychron.dvc.dvc.DVC')
+class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     datahub = Instance(Datahub)
     undoer = Any
     edit_event = Event
@@ -799,18 +798,10 @@ class AutomatedRunFactory(PersistenceLoggable):
 
         if self._flux != self.flux or self._flux_error != self.flux_error:
             v, e = self._flux, self._flux_error
-            self.dvc.save_flux(self.labnumber, v, e)
-
-            # db = self.db
-            # with db.session_ctx():
-            # dbln = db.get_labnumber(self.labnumber)
-            # if dbln:
-            # dbpos = dbln.irradiation_position
-            #         dbhist = db.add_flux_history(dbpos)
-            #         dbflux = db.add_flux(float(v), float(e))
-            #         dbflux.history = dbhist
-            #         dbln.selected_flux_history = dbhist
-            #         self.information_dialog(u'Flux for {} {} \u00b1{} saved to database'.format(self.labnumber, v, e))
+            if self.dvc:
+                self.dvc.save_flux(self.labnumber, v, e)
+            elif self.iso_db_man:
+                self.iso_db_man.save_flux(self.labnumber, v, e)
 
     # ===============================================================================
     #
@@ -939,7 +930,7 @@ class AutomatedRunFactory(PersistenceLoggable):
             # get a default repository_identifier
 
             d = dict(sample='')
-            db = self.dvc
+            db = self.get_database()
             with db.session_ctx():
                 # convert labnumber (a, bg, or 10034 etc)
                 self.debug('load meta')
@@ -1017,77 +1008,57 @@ class AutomatedRunFactory(PersistenceLoggable):
 
     @cached_property
     def _get_repository_identifiers(self):
-        dvc = self.dvc
+        db = self.get_database()
         ids = []
-        if dvc and dvc.connect():
-            ids = dvc.get_repository_identifiers()
+        if db and db.connect():
+            ids = db.get_repository_identifiers()
         return ids
 
     @cached_property
     def _get_irradiations(self):
-        db = self.dvc
-        if db is None or not db.connected:
+        db = self.get_database()
+        if db is None or not db.connect():
             return []
 
-        irradiations = []
-        if self.dvc:
-            irradiations = [pi.name for pi in self.dvc.get_irradiations()]
-
+        irradiations = db.get_irradiation_names()
         return ['Irradiation', LINE_STR] + irradiations
 
     @cached_property
     def _get_levels(self):
         levels = []
-        db = self.dvc
-        if db is None or not db.connected:
+        db = self.get_database()
+        if db is None or not db.connect():
             return []
 
-        if self.dvc:
-            with self.dvc.session_ctx():
-                if self.selected_irradiation not in ('IRRADIATION', LINE_STR):
-                    irrad = self.dvc.get_irradiation(self.selected_irradiation)
-                    if irrad:
-                        levels = sorted([li.name for li in irrad.levels])
+        with db.session_ctx():
+            if self.selected_irradiation not in ('IRRADIATION', LINE_STR):
+                irrad = db.get_irradiation(self.selected_irradiation)
+                if irrad:
+                    levels = sorted([li.name for li in irrad.levels])
         if levels:
             self.selected_level = levels[0] if levels else 'LEVEL'
 
         return ['Level', LINE_STR] + levels
 
-    @cached_property
-    def _get_projects(self):
-
-        if self.dvc:
-            db = self.dvc
-            if not db.connected:
-                return dict()
-
-            keys = [(pi, pi.name) for pi in self.dvc.get_projects()]
-            keys = [(NULL_STR, NULL_STR)] + keys
-            return dict(keys)
-        else:
-            return dict()
+    # @cached_property
+    # def _get_projects(self):
+    #     db = self.get_database()
+    #     if db is None or not db.connect():
+    #         return dict()
+    #
+    #     keys = [(pi, pi.name) for pi in self.dvc.get_projects()]
+    #     keys = [(NULL_STR, NULL_STR)] + keys
+    #     return dict(keys)
 
     @cached_property
     def _get_labnumbers(self):
         lns = []
-        db = self.dvc
-        if db:
-            # db=self.db
-            if not db.connected:
-                return []
+        db = self.get_database()
+        if db is None or not db.connect():
+            return []
 
-            with db.session_ctx():
-                if self.selected_level and self.selected_level not in ('Level', LINE_STR):
-                    level = db.get_irradiation_level(self.selected_irradiation,
-                                                     self.selected_level)
-                    if level:
-                        # lns = [str(pi.identifier).strip()
-                        #        for pi in level.positions if pi.identifier]
-
-                        lns = [str(pi.labnumber.identifier).strip()
-                               for pi in level.positions if pi.labnumber.identifier]
-                        lns = [li for li in lns if li]
-                        lns = sorted(lns)
+        if self.selected_level and self.selected_level not in ('Level', LINE_STR):
+            lns = db.get_level_identifiers(self.selected_irradiation, self.selected_level)
 
         return lns
 
@@ -1232,16 +1203,9 @@ class AutomatedRunFactory(PersistenceLoggable):
         identifier = self.labnumber
         if not (self.suppress_meta or '-##-' in identifier):
             if identifier:
-                with self.dvc.session_ctx():
-                    self.debug('load flux')
-                    dbpos = self.dvc.get_identifier(identifier)
-                    if dbpos:
-                        j = getattr(dbpos, attr)
-                        # dbln = self.db.get_labnumber(self.labnumber)
-                        # if dbln:
-                        # if dbln.selected_flux_history:
-                        # f = dbln.selected_flux_history.flux
-                        #         j = getattr(f, attr)
+                db = self.get_database()
+                j = db.get_flux_value(identifier, attr)
+
         return j
 
     def _set_flux(self, a):
@@ -1294,11 +1258,14 @@ class AutomatedRunFactory(PersistenceLoggable):
                 self.extract_units = self._default_extract_units
 
     def _add_repository_identifier_fired(self):
-        a = ExperimentIdentifierEntry(dvc=self.dvc)
-        a.available = self.dvc.get_repository_identifiers()
-        if a.do():
-            self.repository_identifier_dirty = True
-            self.repository_identifier = a.name
+        if self.dvc:
+            a = RepositoryIdentifierEntry(dvc=self.dvc)
+            a.available = self.dvc.get_repository_identifiers()
+            if a.do():
+                self.repository_identifier_dirty = True
+                self.repository_identifier = a.name
+        else:
+            self.warning_dialog('DVC Plugin not enabled')
 
     @on_trait_change('use_name_prefix, name_prefix')
     def _handle_prefix(self, name, new):

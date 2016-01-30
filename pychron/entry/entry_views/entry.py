@@ -15,12 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Instance, List, Property, Str
+from traits.api import List, Property, Str
 from traitsui.api import View, VGroup, UItem
 from traitsui.menu import Action
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.loggable import Loggable
+from pychron.dvc.dvc_irradiationable import DVCAble
 
 
 class OKButton(Action):
@@ -28,8 +28,8 @@ class OKButton(Action):
     enabled_when = 'ok_enabled'
 STYLESHEET = 'QLabel {font-size: 14px; color: red}'
 
-class BaseEntry(Loggable):
-    dvc = Instance('pychron.dvc.dvc.DVC')
+
+class BaseEntry(DVCAble):
 
     value = Str
     available = List
@@ -52,7 +52,7 @@ class BaseEntry(Loggable):
         while 1:
             info = self.edit_traits()
             if info.result:
-                db = self.dvc.db
+                db = self.get_database()
                 with db.session_ctx():
                     if self._add_item():
                         return True

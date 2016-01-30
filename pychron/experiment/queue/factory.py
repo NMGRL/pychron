@@ -16,12 +16,13 @@
 
 # ============= enthought library imports =======================
 from traits.api import Str, Property, cached_property, Int, \
-    Any, String, Event, Bool, Dict, List, Button, Instance
+    Any, String, Event, Bool, Dict, List, Button
 # ============= standard library imports ========================
 import os
 from ConfigParser import ConfigParser
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import list_directory2
+from pychron.dvc.dvc_irradiationable import DVCAble
 from pychron.entry.entry_views.repository_entry import RepositoryIdentifierEntry
 from pychron.entry.entry_views.user_entry import UserEntry
 from pychron.persistence_loggable import PersistenceLoggable
@@ -30,8 +31,7 @@ from pychron.pychron_constants import NULL_STR, LINE_STR
 from pychron.paths import paths
 
 
-class ExperimentQueueFactory(PersistenceLoggable):
-    dvc = Instance('pychron.dvc.dvc.DVC')
+class ExperimentQueueFactory(DVCAble, PersistenceLoggable):
     application = Any
 
     username = String
@@ -125,8 +125,8 @@ class ExperimentQueueFactory(PersistenceLoggable):
 
     # @cached_property
     def _get_load_names(self):
-        db = self.dvc
-        if db is None or not db.connected:
+        db = self.get_database()
+        if db is None or not db.connect():
             return []
 
         with db.session_ctx():
@@ -148,8 +148,8 @@ class ExperimentQueueFactory(PersistenceLoggable):
 
     @cached_property
     def _get_usernames(self):
-        db = self.dvc
-        if db is None or not db.connected:
+        db = self.get_database()
+        if db is None or not db.connect():
             return []
         with db.session_ctx():
             dbus = db.get_users()
@@ -165,12 +165,12 @@ class ExperimentQueueFactory(PersistenceLoggable):
             then look for a config file
             then use hardcorded defaults
         """
-        db = self.dvc
+        db = self.get_database()
         cp = os.path.join(paths.setup_dir, 'names')
         if db:
-            if not db.connected:
+            if not db.connect():
                 return []
-            names = self.dvc.get_extraction_device_names()
+            names = db.get_extraction_device_names()
 
         elif os.path.isfile(cp):
             names = self._get_names_from_config(cp, 'Extraction Devices')
@@ -185,12 +185,12 @@ class ExperimentQueueFactory(PersistenceLoggable):
             then look for a config file
             then use hardcorded defaults
         """
-        db = self.dvc
+        db = self.get_database()
         cp = os.path.join(paths.setup_dir, 'names')
         if db:
-            if not db.connected:
+            if not db.connect():
                 return []
-            ms = self.dvc.get_mass_spectrometers()
+            ms = db.get_mass_spectrometer_names()
             names = [mi.name.capitalize() for mi in ms]
         elif os.path.isfile(cp):
             names = self._get_names_from_config(cp, 'Mass Spectrometers')
@@ -203,8 +203,8 @@ class ExperimentQueueFactory(PersistenceLoggable):
     def _get_repository_identifiers(self):
         db = self.dvc
         ids = []
-        if db and db.connected:
-            ids = self.dvc.get_repository_identifiers()
+        if db and db.connect():
+            ids = db.get_repository_identifiers()
         return ids
 
     def _get_names_from_config(self, cp, section):
@@ -215,14 +215,19 @@ class ExperimentQueueFactory(PersistenceLoggable):
 
     # handlers
     def _add_repository_identifier_fired(self):
-        a = RepositoryIdentifierEntry(dvc=self.dvc)
-        a.available = self.dvc.get_repository_identifiers()
-        if a.do():
-            self.repository_identifier_dirty = True
-            self.repository_identifier = a.value
+        if self.dvc:
+            a = RepositoryIdentifierEntry(dvc=self.dvc)
+            a.available = self.dvc.get_repository_identifiers()
+            if a.do():
+                self.repository_identifier_dirty = True
+                self.repository_identifier = a.value
+        else:
+            self.warning_dialog('DVC Plugin not enabled')
 
     def _edit_user_fired(self):
-        a = UserEntry(dvc=self.dvc)
+        a = UserEntry(dvc=self.dvc,
+                      iso_db_man=self.iso_db_man)
+
         nuser = a.edit(self.username)
         if nuser:
             self.users_dirty = True

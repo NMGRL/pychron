@@ -731,21 +731,20 @@ class ExperimentEditorTask(EditorTask):
         plugin = ip.get_plugin('Experiment', category='general')
         mode = ip.get_parameter(plugin, 'mode')
 
-        man = Experimentor(application=self.application,
-                           mode=mode)
+        experimentor = Experimentor(application=self.application, mode=mode)
 
-        # iso = 'pychron.database.isotope_database_manager.IsotopeDatabaseManager'
-        # manager = self.application.get_service(iso)
+        proto = 'pychron.database.isotope_database_manager.IsotopeDatabaseManager'
+        iso_db_man = self.application.get_service(proto)
+        experimentor.iso_db_man = iso_db_man
 
-        dvc = self.application.get_service('pychron.dvc.dvc.DVC')
-        if dvc:
-            man.dvc = dvc
+        proto = 'pychron.dvc.dvc.DVC'
+        dvc = self.application.get_service(proto)
+        experimentor.dvc = dvc
 
-        # man.iso_db_manager = manager
-        man.executor.set_managers()
-        man.executor.bind_preferences()
+        experimentor.executor.set_managers()
+        experimentor.executor.bind_preferences()
 
-        return man
+        return experimentor
 
     def _pattern_maker_view_factory(self):
         from pychron.lasers.pattern.pattern_maker_view import PatternMakerView

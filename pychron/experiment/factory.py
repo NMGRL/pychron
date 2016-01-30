@@ -20,7 +20,7 @@ from traits.api import Instance, Button, Bool, Property, \
     on_trait_change, DelegatesTo, List, Str
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.core.ui.progress_dialog import myProgressDialog
+from pychron.dvc.dvc_irradiationable import DVCAble
 from pychron.experiment.auto_gen_config import AutoGenConfig
 from pychron.experiment.automated_run.uv.factory import UVAutomatedRunFactory
 from pychron.experiment.automated_run.factory import AutomatedRunFactory
@@ -29,13 +29,11 @@ from pychron.experiment.queue.experiment_queue import ExperimentQueue
 from pychron.experiment.undoer import ExperimentUndoer
 from pychron.pychron_constants import LINE_STR
 from pychron.experiment.utilities.identifier import convert_extract_device
-from pychron.loggable import Loggable
 from pychron.consumer_mixin import ConsumerMixin
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 
 
-class ExperimentFactory(Loggable, ConsumerMixin):
-    dvc = Instance('pychron.dvc.dvc.DVC')
+class ExperimentFactory(DVCAble, ConsumerMixin):
     run_factory = Instance(AutomatedRunFactory)
     queue_factory = Instance(ExperimentQueueFactory)
 
@@ -321,6 +319,7 @@ queue_conditionals_name, repository_identifier]''')
             klass = AutomatedRunFactory
 
         rf = klass(dvc=self.dvc,
+                   iso_db_man=self.iso_db_man,
                    application=self.application,
                    extract_device=self.extract_device,
                    mass_spectrometer=self.default_mass_spectrometer)
@@ -333,20 +332,20 @@ queue_conditionals_name, repository_identifier]''')
         return rf
 
     # handlers
-    def _generate_runs_from_load(self, ):
-        def gen():
-            dvc = self.dvc
-            load_name = self.load_name
-            with dvc.session_ctx():
-                dbload = dvc.get_loadtable(load_name)
-                for poss in dbload.loaded_positions:
-                    # print poss
-                    ln_id = poss.lab_identifier
-                    dbln = dvc.get_labnumber(ln_id, key='id')
-
-                    yield dbln.identifier, dbln.sample.name, str(poss.position)
-
-        return gen
+    # def _generate_runs_from_load(self, ):
+    #     def gen():
+    #         dvc = self.dvc
+    #         load_name = self.load_name
+    #         with dvc.session_ctx():
+    #             dbload = dvc.get_loadtable(load_name)
+    #             for poss in dbload.loaded_positions:
+    #                 # print poss
+    #                 ln_id = poss.lab_identifier
+    #                 dbln = dvc.get_labnumber(ln_id, key='id')
+    #
+    #                 yield dbln.identifier, dbln.sample.name, str(poss.position)
+    #
+    #     return gen
 
     def _edit_queue_config_button_fired(self):
         self.auto_gen_config.run_blocks = self.run_factory.run_blocks
@@ -355,14 +354,14 @@ queue_conditionals_name, repository_identifier]''')
         if info.result:
             self.auto_gen_config.dump()
 
-    def _generate_queue_button_fired(self):
-        pd = myProgressDialog()
-        pd.open()
-
-        ans = list(self._generate_runs_from_load()())
-        self._gen_func(pd, ans)
-        # t=Thread(target=self._gen_func, args=(pd, ans))
-        # t.start()
+    # def _generate_queue_button_fired(self):
+    #     pd = myProgressDialog()
+    #     pd.open()
+    #
+    #     ans = list(self._generate_runs_from_load()())
+    #     self._gen_func(pd, ans)
+    #     # t=Thread(target=self._gen_func, args=(pd, ans))
+    #     # t.start()
 
     def _gen_func(self, pd, ans):
         import time
@@ -444,13 +443,13 @@ queue_conditionals_name, repository_identifier]''')
         rf.labnumber = ''
         rf.sample = ''
 
-    def _dvc_changed(self):
-        self.queue_factory.dvc = self.dvc
-        self.run_factory.dvc = self.dvc
-
-    def _application_changed(self):
-        self.run_factory.application = self.application
-        self.queue_factory.application = self.application
+    # def _dvc_changed(self):
+    #     self.queue_factory.dvc = self.dvc
+    #     self.run_factory.dvc = self.dvc
+    #
+    # def _application_changed(self):
+    #     self.run_factory.application = self.application
+    #     self.queue_factory.application = self.application
 
     def _default_mass_spectrometer_changed(self):
         self.debug('default mass spec changed "{}"'.format(self.default_mass_spectrometer))
@@ -475,6 +474,7 @@ queue_conditionals_name, repository_identifier]''')
 
     def _queue_factory_default(self):
         eq = ExperimentQueueFactory(dvc=self.dvc,
+                                    iso_db_man=self.iso_db_man,
                                     application=self.application)
         # eq.activate()
         return eq

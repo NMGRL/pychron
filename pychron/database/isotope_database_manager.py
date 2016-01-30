@@ -158,6 +158,18 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
     saved = Event
     updated = Event
 
+    def save_flux(self, labnumber, v, e):
+        db = self.db
+        with db.session_ctx():
+            dbln = db.get_labnumber(labnumber)
+            if dbln:
+                dbpos = dbln.irradiation_position
+                dbhist = db.add_flux_history(dbpos)
+                dbflux = db.add_flux(float(v), float(e))
+                dbflux.history = dbhist
+                dbln.selected_flux_history = dbhist
+                self.information_dialog(u'Flux for {} {} \u00b1{} saved to database'.format(labnumber, v, e))
+
     def filter_analysis_tag(self, ans, exclude):
         if not isinstance(exclude, (list, tuple)):
             exclude = (exclude,)

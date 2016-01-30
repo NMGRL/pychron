@@ -133,6 +133,31 @@ class DVCDatabase(DatabaseAdapter):
     #                      omit_series=v)
     #         return self._add_item(tag)
 
+    def get_analysis_info(self, li):
+        with self.session_ctx():
+            dbpos = self.get_identifier(li)
+            if not dbpos:
+                self.warning('{} is not an identifier in the database'.format(li))
+                return None
+            else:
+                project, sample, material, irradiation, level, pos = '', '', '', '', '', ''
+                sample = dbpos.sample
+                if sample:
+                    if sample.project:
+                        project = sample.project.name
+
+                    if sample.material:
+                        material = sample.material.name
+                    sample = sample.name
+
+                level = dbpos.level.name
+                pos = dbpos.position
+                irradiation = dbpos.level.irradiation.name
+                # irradiation = '{} {}:{}'.format(level.irradiation.name,
+                #                                 level.name, dbpos.position)
+
+            return project, sample, material, irradiation, level, pos
+
     def set_analysis_tag(self, uuid, tagname):
         with self.session_ctx():
             an = self.get_analysis_uuid(uuid)
@@ -367,6 +392,14 @@ class DVCDatabase(DatabaseAdapter):
             return self._add_item(a)
 
     # special getters
+    def get_flux_value(self, identifier, attr):
+        j = 0
+        with self.session_ctx():
+            dbpos = self.get_identifier(identifier)
+            if dbpos:
+                j = getattr(dbpos, attr)
+        return j
+
     def get_greatest_identifier(self, **kw):
         with self.session_ctx() as sess:
             q = sess.query(IrradiationPositionTbl.identifier)
@@ -1103,6 +1136,27 @@ class DVCDatabase(DatabaseAdapter):
 
             q = in_func(q, RepositoryTbl.name, repositories)
             return self._query_all(q)
+
+    def get_level_identifiers(self, irrad, level):
+        lns = []
+        with self.session_ctx():
+            level = self.get_irradiation_level(irrad, level)
+            if level:
+                lns = [str(pi.identifier).strip()
+                       for pi in level.positions if pi.identifier]
+                lns = [li for li in lns if li]
+                lns = sorted(lns)
+        return lns
+
+    def get_irradiation_names(self, **kw):
+        names = []
+        with self.session_ctx():
+            ns = self.get_irradiations(**kw)
+            if ns:
+                names = [i.name for i in ns]
+
+        return names
+
 
     def get_irradiations(self, names=None, order_func='desc',
                          project_names=None,
