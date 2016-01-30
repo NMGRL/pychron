@@ -255,8 +255,8 @@ class XLSIrradiationLoader(Loggable):
     def _add_irradiation(self, name, dry_run=False):
         self.debug('Add irradiation {}'.format(name))
         dvc = self.dvc
+        doses = self._parse_doses(name)
         if dvc:
-            doses = self._parse_doses(name)
             if dvc.add_irradiation(name, doses=doses, add_repo=not dry_run,
                                    principal_investigator=self.principal_investigator):
                 self._added_irradiations.append(name)
