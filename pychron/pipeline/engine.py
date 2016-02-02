@@ -183,6 +183,14 @@ class PipelineEngine(Loggable):
 
                 p.set_detectors(list(udets.union(rdets)))
 
+    def get_unknowns_node(self):
+        nodes = self.get_nodes(UnknownNode)
+        if nodes:
+            return nodes[0]
+
+    def get_nodes(self, klass):
+        return [n for n in self.pipeline.nodes if n.__class__ == klass]
+
     def unknowns_clear_all_grouping(self):
         self._set_grouping(self.selected.unknowns, 0)
 

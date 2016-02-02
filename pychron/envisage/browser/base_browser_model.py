@@ -139,14 +139,14 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     available_mass_spectrometers = List
 
     named_date_range = Enum('this month', 'this week', 'yesterday')
-    low_post = Property(Date, depends_on='_low_post, use_low_post')
-    high_post = Property(Date, depends_on='_high_post, use_high_post')
+    low_post = Property(Date, depends_on='_low_post, use_low_post, use_named_date_range, named_date_range')
+    high_post = Property(Date, depends_on='_high_post, use_high_post, use_named_date_range, named_date_range')
 
     use_low_post = Bool
     use_high_post = Bool
     use_named_date_range = Bool
-    _low_post = None
-    _high_post = None
+    _low_post = Date
+    _high_post = Date
     _recent_low_post = None
     _recent_mass_spectrometers = None
     _previous_recent_name = ''
@@ -184,7 +184,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         self.dump_browser_selection()
 
     def load_browser_options(self):
-        self.load()
+        self.load(verbose=True)
 
     def load_browser_selection(self):
         obj = self._get_browser_persistence()
@@ -280,6 +280,12 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             gs = db.get_analysis_groups(projects=names)
             grps = [AnalysisGroupRecordView(gi) for gi in gs]
         return grps
+
+    def do_filter(self):
+        self._filter_by_hook()
+
+    def select_all(self):
+        self.selected_samples = self.samples[:]
 
     # private
     # column sort mixin interface
@@ -677,6 +683,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         if not self._suppress_post_update:
             self._high_post = v
 
+    @cached_property
     def _get_high_post(self):
         hp = None
 
@@ -690,8 +697,10 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             hp = self._high_post
             if not hp:
                 hp = tdy
+        self.debug('GET HPOST={}'.format(hp))
         return hp
 
+    @cached_property
     def _get_low_post(self):
         lp = None
         tdy = datetime.today()
@@ -711,6 +720,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         if not lp:
             lp = tdy
 
+        self.debug('GET LPOST={}'.format(lp))
         return lp
 
     @cached_property

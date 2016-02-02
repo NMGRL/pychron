@@ -118,6 +118,19 @@ class PipelineAction(Action):
             getattr(task, self.action)()
 
 
+class BrowserAction(Action):
+    def perform(self, event):
+        app = event.task.window.application
+        task = app.get_task('pychron.browser.task')
+        if hasattr(task, self.action):
+            getattr(task, self.action)()
+
+
+class TimeViewBrowserAction(BrowserAction):
+    name = 'Time View Recall...'
+    action = 'open_time_view_browser'
+
+
 class ReductionAction(PipelineAction):
     pass
 
@@ -176,6 +189,32 @@ class SeriesAction(PlotAction):
 class VerticalFluxAction(PipelineAction):
     name = 'Vertical Flux'
     action = 'set_vertical_flux_template'
+
+
+# ============= Quick Series ====================================
+class LastNAnalysesSeriesAction(PipelineAction):
+    name = 'Last N...'
+    action = 'set_last_n_analyses_template'
+
+
+class LastNHoursSeriesAction(PipelineAction):
+    name = 'Last N Hours...'
+    action = 'set_last_n_hours_template'
+
+
+class LastDaySeriesAction(PipelineAction):
+    name = 'Last Day'
+    action = 'set_last_day_template'
+
+
+class LastWeekSeriesAction(PipelineAction):
+    name = 'Last Week'
+    action = 'set_last_week_template'
+
+
+class LastMonthSeriesAction(PipelineAction):
+    name = 'Last Month'
+    action = 'set_last_month_template'
 
 
 # ============= tag =============================================

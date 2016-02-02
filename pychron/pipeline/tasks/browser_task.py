@@ -20,6 +20,7 @@ from pyface.tasks.task_layout import TaskLayout, PaneItem
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traits.api import Instance, Bool
 # ============= standard library imports ========================
+from datetime import datetime, timedelta
 # ============= local library imports  ==========================
 from pychron.envisage.browser.browser_task import BaseBrowserTask
 from pychron.envisage.browser.view import PaneBrowserView
@@ -27,6 +28,7 @@ from pychron.envisage.tasks.actions import ToggleFullWindowAction
 from pychron.globals import globalv
 from pychron.pipeline.tasks.actions import ConfigureRecallAction, ConfigureAnalysesTableAction, \
     LoadReviewStatusAction, EditAnalysisAction, DiffViewAction
+from pychron.pipeline.tasks.analysis_range_selector import AnalysisRangeSelector
 
 
 class BrowserPane(TraitsDockPane, PaneBrowserView):
@@ -79,8 +81,72 @@ class BrowserTask(BaseBrowserTask):
                 r = self.browser_model.analysis_table.analyses[0]
                 self.recall(r)
 
-    # toolbar actions
+    # menu actions
+    def open_time_view_browser(self):
+        self.debug('open time view')
 
+        v = AnalysisRangeSelector()
+        v.load()
+
+        db = self.dvc.db
+        spec_names = db.get_mass_spectrometer_names()
+        v.set_mass_spectrometers(spec_names)
+
+        # open a time view selector
+        info = v.edit_traits(kind='livemodal')
+        if info.result:
+            v.dump()
+
+        sms = v.selected_mass_spectrometers
+        ants = v.selected_analysis_types
+        # with db.session_ctx():
+        #     if v.use_date_range:
+        #         h, l = v.high_post, v.low_post
+        #         ans = db.get_analyses_date_range(l, h,
+        #                                          analysis_type=ants,
+        #                                          mass_spectrometers=sms)
+        #     else:
+        #         # get analyses
+        #         ans, h, l = db.get_last_nhours_analyses(v.nhours,
+        #                                                 return_limits=True,
+        #                                                 analysis_types=ants,
+        #                                                 mass_spectrometers=sms)
+        #
+        #     def func(x, prog, i, n):
+        #         return x.record_views
+        #
+        #     records = progress_loader(ans, func)
+        #
+        # # set analysis_table.analyses
+        # bm.analysis_table.set_analyses(records)
+        # bm.analysis_table.scroll_to_row = len(records)
+        if v.use_date_range:
+            h, l = v.high_post, v.low_post
+        else:
+            now = datetime.now()
+            h, l = now, now - timedelta(hours=v.nhours)
+        bm = self.browser_model
+        if sms:
+            bm.mass_spectrometers_enabled = True
+            bm.mass_spectrometer_includes = v.selected_mass_spectrometers
+        if ants:
+            bm.use_analysis_type_filtering = True
+            bm._analysis_include_types = ants
+
+        bm._low_post = l.date()
+        bm.use_low_post = True
+
+        bm._high_post = h.date()
+        bm.use_high_post = True
+
+        bm.do_filter()
+        bm.select_all()
+
+        at = bm.analysis_table
+        end = len(at.analyses)
+        at.scroll_to_row = end
+
+    # toolbar actions
     def diff_analysis(self):
         self.debug('Edit analysis data')
         if not self.has_active_editor():

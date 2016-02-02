@@ -28,7 +28,9 @@ from pychron.envisage.browser.interpreted_age_browser_model import InterpretedAg
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.paths import paths, get_file_text
 from pychron.pipeline.tasks.actions import ConfigureRecallAction, IdeogramAction, IsochronAction, SpectrumAction, \
-    SeriesAction, BlanksAction, ICFactorAction, ResetFactoryDefaultsAction, VerticalFluxAction
+    SeriesAction, BlanksAction, ICFactorAction, ResetFactoryDefaultsAction, VerticalFluxAction, \
+    LastNAnalysesSeriesAction, \
+    LastNHoursSeriesAction, LastMonthSeriesAction, LastWeekSeriesAction, LastDaySeriesAction, TimeViewBrowserAction
 from pychron.pipeline.tasks.browser_task import BrowserTask
 from pychron.pipeline.tasks.preferences import PipelinePreferencesPane
 from pychron.pipeline.tasks.task import PipelineTask
@@ -44,6 +46,7 @@ class PipelinePlugin(BaseTaskPlugin):
                  ['iso_evo_template', 'ISOEVO', ov],
                  ['ideogram_template', 'IDEO', ov],
                  ['spectrum_template', 'SPEC', ov],
+                 ['series_template', 'SERIES', ov],
                  ['isochron_template', 'ISOCHRON', ov],
                  ['csv_ideogram_template', 'CSV_IDEO', ov],
                  ['vertical_flux_template', 'VERTICAL_FLUX', ov],
@@ -112,8 +115,13 @@ class PipelinePlugin(BaseTaskPlugin):
         def reduction_group():
             return SGroup(id='reduction.group')
 
+        def quick_series_group():
+            return SGroup(id='quick_series.group')
+
         pg = 'MenuBar/data.menu/plot.group'
         rg = 'MenuBar/data.menu/reduction.group'
+        qsg = 'MenuBar/data.menu/quick_series.group'
+
         plotting_actions = [SchemaAddition(factory=data_menu,
                                            path='MenuBar',
                                            before='tools.menu',
@@ -143,11 +151,30 @@ class PipelinePlugin(BaseTaskPlugin):
                                           path='MenuBar/Edit')
         browser_actions = [configure_recall]
 
+        quick_series_actions = [SchemaAddition(factory=quick_series_group,
+                                               path='MenuBar/data.menu'),
+                                SchemaAddition(factory=LastNAnalysesSeriesAction,
+                                               path=qsg),
+                                SchemaAddition(factory=LastNHoursSeriesAction,
+                                               path=qsg),
+                                SchemaAddition(factory=LastDaySeriesAction,
+                                               path=qsg),
+                                SchemaAddition(factory=LastWeekSeriesAction,
+                                               path=qsg),
+                                SchemaAddition(factory=LastMonthSeriesAction,
+                                               path=qsg), ]
+
+        actions = plotting_actions
+        actions.extend(reduction_actions)
+        actions.extend(help_actions)
+        actions.extend(quick_series_actions)
+        actions.append(SchemaAddition(factory=TimeViewBrowserAction,
+                                      path='MenuBar/data.menu'))
         return [TaskExtension(task_id='pychron.pipeline.task',
                               actions=[configure_recall]),
                 TaskExtension(task_id='pychron.browser.task',
                               actions=browser_actions),
-                TaskExtension(actions=plotting_actions + reduction_actions + help_actions)]
+                TaskExtension(actions=actions)]
 
     def _tasks_default(self):
         return [TaskFactory(id='pychron.pipeline.task',

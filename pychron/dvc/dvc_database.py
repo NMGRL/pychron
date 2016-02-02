@@ -107,7 +107,7 @@ class DVCDatabase(DatabaseAdapter):
                         else:
                             while 1:
                                 self.information_dialog(
-                                        'No Mass spectrometer in the database. Add one now')
+                                    'No Mass spectrometer in the database. Add one now')
                                 nv = NewMassSpectrometerView(name='Jan',
                                                              kind='ArgusVI')
                                 info = nv.edit_traits()
@@ -407,12 +407,46 @@ class DVCDatabase(DatabaseAdapter):
             ret = self._query_first(q)
             return int(ret[0]) if ret else 0
 
+    def get_last_nhours_analyses(self, n, return_limits=False,
+                                 mass_spectrometers=None, analysis_types=None):
+        with self.session_ctx() as sess:
+            q = sess.query(AnalysisTbl)
+
+            hpost = datetime.now()
+            lpost = hpost - timedelta(hours=n)
+            self.debug('last nhours n={}, lpost={}, mass_spec={}'.format(n, lpost, mass_spectrometers))
+            if mass_spectrometers:
+                q = in_func(q, AnalysisTbl.mass_spectrometer, mass_spectrometers)
+
+            if analysis_types:
+                if hasattr(analysis_types, '__iter__'):
+                    analysis_types = map(str.lower, analysis_types)
+                else:
+                    analysis_types = analysis_types.lower()
+
+                q = in_func(q, AnalysisTbl.analysis_type, analysis_types)
+                if 'blank' in analysis_types:
+                    q = q.filter(AnalysisTbl.analysis_type.like('blank_%'))
+
+            q = q.filter(AnalysisTbl.timestamp >= lpost)
+            q = q.order_by(AnalysisTbl.timestamp.asc())
+            ans = self._query_all(q)
+            if return_limits:
+                return ans, hpost, lpost
+
+    def get_last_n_analyses(self, n):
+        with self.session_ctx() as sess:
+            q = sess.query(AnalysisTbl)
+            q = q.order_by(AnalysisTbl.timestamp.asc())
+            q = q.limit(n)
+            return self._query_all(q)
+
     def get_last_analysis(self, ln=None, aliquot=None, spectrometer=None,
                           hours_limit=None,
                           analysis_type=None):
         self.debug(
-                'get last analysis labnumber={}, aliquot={}, spectrometer={}'.format(
-                        ln, aliquot, spectrometer))
+            'get last analysis labnumber={}, aliquot={}, spectrometer={}'.format(
+                ln, aliquot, spectrometer))
         with self.session_ctx() as sess:
             if ln:
                 ln = self.get_identifier(ln)
@@ -443,8 +477,8 @@ class DVCDatabase(DatabaseAdapter):
             try:
                 r = q.one()
                 self.debug(
-                        'got last analysis {}-{}'.format(r.labnumber.identifier,
-                                                         r.aliquot))
+                    'got last analysis {}-{}'.format(r.labnumber.identifier,
+                                                     r.aliquot))
                 return r
             except NoResultFound, e:
                 if ln:
@@ -535,10 +569,10 @@ class DVCDatabase(DatabaseAdapter):
                 q = q.join(AnalysisTbl)
 
             q = q.filter(IrradiationPositionTbl.identifier.like(
-                    '%{}%'.format(partial_id)))
+                '%{}%'.format(partial_id)))
             if mass_spectrometers:
                 q = q.filter(
-                        AnalysisTbl.mass_spectrometer.in_(mass_spectrometers))
+                    AnalysisTbl.mass_spectrometer.in_(mass_spectrometers))
             if filter_non_run:
                 q = q.group_by(IrradiationPositionTbl.idirradiationpositionTbl)
                 q = q.having(count(AnalysisTbl.idanalysisTbl) > 0)
@@ -699,10 +733,10 @@ class DVCDatabase(DatabaseAdapter):
             if mass_spectrometers:
                 if hasattr(mass_spectrometers, '__iter__'):
                     q = q.filter(
-                            AnalysisTbl.mass_spectrometer.in_(mass_spectrometers))
+                        AnalysisTbl.mass_spectrometer.in_(mass_spectrometers))
                 else:
                     q = q.filter(
-                            AnalysisTbl.mass_spectrometer == mass_spectrometers)
+                        AnalysisTbl.mass_spectrometer == mass_spectrometers)
             if extract_device:
                 q = q.filter(AnalysisTbl.extract_device == extract_device)
             if analysis_type:
@@ -751,7 +785,7 @@ class DVCDatabase(DatabaseAdapter):
                     if not hasattr(mass_spectrometers, '__iter__'):
                         mass_spectrometers = (mass_spectrometers,)
                     q = q.filter(
-                            AnalysisTbl.mass_spectrometer.in_(mass_spectrometers))
+                        AnalysisTbl.mass_spectrometer.in_(mass_spectrometers))
 
                 if analysis_types:
                     q = q.filter(AnalysisTbl.analysis_type.in_(analysis_types))
@@ -855,7 +889,7 @@ class DVCDatabase(DatabaseAdapter):
                 q = q.filter(ProjectTbl.name.in_(projects))
             if mass_spectrometers:
                 q = q.filter(
-                        AnalysisTbl.mass_spectrometer.in_(mass_spectrometers))
+                    AnalysisTbl.mass_spectrometer.in_(mass_spectrometers))
             if low_post:
                 q = q.filter(AnalysisTbl.timestamp >= low_post)
             if high_post:
@@ -864,8 +898,8 @@ class DVCDatabase(DatabaseAdapter):
                 if 'blank' in analysis_types:
                     analysis_types.remove('blank')
                     q = q.filter(
-                            or_(AnalysisTbl.analysis_type.startswith('blank'),
-                                AnalysisTbl.analysis_type.in_(analysis_types)))
+                        or_(AnalysisTbl.analysis_type.startswith('blank'),
+                            AnalysisTbl.analysis_type.in_(analysis_types)))
                 else:
                     q = q.filter(AnalysisTbl.analysis_type.in_(analysis_types))
             if irradiation:
@@ -1157,7 +1191,6 @@ class DVCDatabase(DatabaseAdapter):
 
         return names
 
-
     def get_irradiations(self, names=None, order_func='desc',
                          project_names=None,
                          mass_spectrometers=None, **kw):
@@ -1171,11 +1204,11 @@ class DVCDatabase(DatabaseAdapter):
         if project_names:
             kw = self._append_filters(ProjectTbl.name.in_(project_names), kw)
             kw = self._append_joins(
-                    (LevelTbl, IrradiationPositionTbl, SampleTbl), kw)
+                (LevelTbl, IrradiationPositionTbl, SampleTbl), kw)
 
         if mass_spectrometers:
             kw = self._append_filters(
-                    AnalysisTbl.mass_spectrometer.name.in_(mass_spectrometers), kw)
+                AnalysisTbl.mass_spectrometer.name.in_(mass_spectrometers), kw)
             kw = self._append_joins(LevelTbl, IrradiationPositionTbl,
                                     AnalysisTbl, kw)
 

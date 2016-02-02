@@ -294,24 +294,62 @@ class PipelineTask(BaseBrowserTask):
 
     # action handlers
     def set_ideogram_template(self):
-        self.engine.set_template('ideogram')
+        self.engine.selected_pipeline_template = 'Ideogram'
         self.run()
 
     def set_spectrum_template(self):
-        self.engine.set_template('spectrum')
+        self.engine.selected_pipeline_template = 'Spectrum'
         self.run()
 
     def set_isochron_template(self):
-        self.engine.set_template('isochron')
+        self.engine.selected_pipeline_template = 'Isochron'
         self.run()
 
     def set_series_template(self):
-        self.engine.set_template('series')
+        self.engine.selected_pipeline_template = 'Series'
         self.run()
 
     def set_vertical_flux_template(self):
-        self.engine.set_template('vertical_flux')
+        self.engine.selected_pipeline_template = 'VerticalFlux'
         self.run()
+
+    def set_last_n_analyses_template(self):
+        self.engine.selected_pipeline_template = 'Series'
+        # get n analyses from user
+        n = 10
+
+        # get the unknowns node
+        node = self.engine.get_unknowns_node()
+        if node:
+            # get last n analyses as unks
+            # set node.unknowns = unks
+            node.set_last_n_analyses(n)
+
+            self.run()
+
+    def _set_last_nhours(self, n):
+        node = self.engine.get_unknowns_node()
+        if node:
+            node.set_last_n_hours_analyses(n)
+            self.run()
+
+    def set_last_n_hours_template(self):
+        self.engine.selected_pipeline_template = 'Series'
+        # get last n hours from user
+        n = 10
+        self._set_last_nhours(n)
+
+    def set_last_day_template(self):
+        self.engine.selected_pipeline_template = 'Series'
+        self._set_last_nhours(24)
+
+    def set_last_week_template(self):
+        self.engine.selected_pipeline_template = 'Series'
+        self._set_last_nhours(24 * 7)
+
+    def set_last_month_template(self):
+        self.engine.selected_pipeline_template = 'Series'
+        self._set_last_nhours(24 * 7 * 30.5)
 
     # private
     def _make_save_figure_object(self, editor):

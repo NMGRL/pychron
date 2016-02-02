@@ -444,6 +444,10 @@ AUTO_IDEOGRAM = """- klass: ListenUnknownNode
 - klass: IdeogramNode
   no_analyses_warning: False
 """
+
+SERIES = """- klass: UnknownNode
+- klass: SeriesNode
+"""
 # SYSTEM_HEALTH = '''
 # values:
 #  - Ar40/Ar36

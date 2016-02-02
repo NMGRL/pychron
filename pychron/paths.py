@@ -239,6 +239,7 @@ class Paths(object):
     analysis_table_template = None
     interpreted_age_table_template = None
     auto_ideogram_template = None
+    series_template = None
 
     def write_default_file(self, p, default, overwrite=False):
         return self._write_default_file(p, default, overwrite)
@@ -440,7 +441,7 @@ class Paths(object):
         self.notification_triggers = join(self.setup_dir, 'notification_triggers.yaml')
 
         # =======================================================================
-        # templates
+        # pipeline templates
         # =======================================================================
         self.icfactor_template = join(self.pipeline_template_dir, 'icfactor.yaml')
         self.blanks_template = join(self.pipeline_template_dir, 'blanks.yaml')
@@ -454,6 +455,7 @@ class Paths(object):
         self.analysis_table_template = join(self.pipeline_template_dir, 'analysis_table.yaml')
         self.interpreted_age_table_template = join(self.pipeline_template_dir, 'interpreted_age_table.yaml')
         self.auto_ideogram_template = join(self.pipeline_template_dir, 'auto_ideogram.yaml')
+        self.series_template = join(self.pipeline_template_dir, 'series.yaml')
         build_directories()
 
     def write_defaults(self):

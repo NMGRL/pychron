@@ -164,6 +164,21 @@ class UnknownNode(DataNode):
     name = 'Unknowns'
     analysis_kind = 'unknowns'
 
+    def set_last_n_analyses(self, n):
+        db = self.dvc.db
+        with db.session_ctx():
+            ans = db.get_last_n_analyses(n)
+            # ans = db.get_analyses_by_date_range(mi,ma)
+            records = [ri for ai in ans for ri in ai.record_views]
+            self.unknowns = self.dvc.make_analyses(records)
+
+    def set_last_n_hours_analyses(self, n):
+        db = self.dvc.db
+        with db.session_ctx():
+            ans = db.get_last_nhours_analyses(n)
+            records = [ri for ai in ans for ri in ai.record_views]
+            self.unknowns = self.dvc.make_analyses(records)
+
     def run(self, state):
         if not self.unknowns and not state.unknowns:
             if not self.configure():
