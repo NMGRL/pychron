@@ -191,7 +191,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     _prev_blank_runid = String
     _err_message = String
     _prev_blank_id = Long
-    _prev_blank_runid = Str
 
     _cv_info = None
     _cached_runs = List
@@ -689,7 +688,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if self.stats:
             self.stats.start_run(run)
 
-        run.state = 'not run'
+        run.spec.state = 'not run'
 
         q = self.experiment_queue
         # is this the last run in the queue. queue is not empty until _start runs so n==1 means last run
@@ -710,26 +709,26 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
             if self.monitor and self.monitor.has_fatal_error():
                 run.cancel_run()
-                run.state = 'failed'
+                run.spec.state = 'failed'
                 break
 
             f = getattr(self, step)
             if not f(run):
                 self.warning('{} did not complete successfully'.format(step[1:]))
-                run.state = 'failed'
+                run.spec.state = 'failed'
                 break
         else:
-            self.debug('$$$$$$$$$$$$$$$$$$$$ state at run end {}'.format(run.state))
-            if run.state not in ('truncated', 'canceled', 'failed'):
-                run.state = 'success'
+            self.debug('$$$$$$$$$$$$$$$$$$$$ state at run end {}'.format(run.spec.state))
+            if run.spec.state not in ('truncated', 'canceled', 'failed'):
+                run.spec.state = 'success'
 
-        if run.state in ('success', 'truncated'):
+        if run.spec.state in ('success', 'truncated'):
             self.run_completed = run
 
         remove_backup(run.uuid)
 
         # check to see if action should be taken
-        if run.state not in ('canceled', 'failed'):
+        if run.spec.state not in ('canceled', 'failed'):
             if self._post_run_check(run):
                 self._err_message = 'Post Run Check Failed'
                 self.warning('post run check failed')
@@ -737,7 +736,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 self.heading('Post Run Check Passed')
 
         t = time.time() - st
-        self.info('Automated run {} {} duration: {:0.3f} s'.format(run.runid, run.state, t))
+        self.info('Automated run {} {} duration: {:0.3f} s'.format(run.runid, run.spec.state, t))
 
         run.finish()
         self._retroactive_repository_identifiers(run.spec)
@@ -755,12 +754,20 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         # mem_log('end run')
         if self.stats:
             self.stats.finish_run()
-            if run.state == 'success':
+            if run.spec.state == 'success':
                 self.stats.update_run_duration(run, t)
                 self.stats.recalculate_etf()
 
         # write rem and ex queues
         self._write_rem_ex_experiment_queues()
+
+        # close conditionals view
+        if self._cv_info:
+            try:
+                self._cv_info.control.close()
+            except (AttributeError, ValueError, TypeError):
+                pass
+                # window could already be closed
 
     def _write_rem_ex_experiment_queues(self):
         self.debug('write rem/ex queues')
@@ -891,10 +898,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     def _show_conditionals(self, active_run=None, tripped=None, kind='livemodal'):
         try:
-            if self._cv_info:
-                if self._cv_info.control:
-                    self._cv_info.control.raise_()
-                    return
+            # if self._cv_info:
+            #     if self._cv_info.control:
+            #         self._cv_info.control.raise_()
+            #         return
 
             from pychron.experiment.conditional.conditionals_view import ConditionalsView
 
@@ -1004,7 +1011,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if not run.start():
             self.alive = False
             ret = False
-            run.state = 'failed'
+            run.spec.state = 'failed'
 
             msg = 'Run {} did not start properly'.format(run.runid)
             self._err_message = msg
@@ -1401,7 +1408,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 invoke_in_main_thread(self.warning_dialog, msg)
                 return True
 
-    def _check_managers(self, inform=True):
+    def _check_managers(self, prog, inform=True):
         self.debug('checking for managers')
         if globalv.experiment_debug:
             self.debug('********************** NOT DOING  managers check')
@@ -1648,47 +1655,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             return True
 
     def _pre_execute_check(self, prog=None, inform=True):
-        if prog:
-            prog.change_message('Checking Experiment Identifiers')
-
-        if not self._check_repository_identifiers():
-            return
-
-        if prog:
-            prog.change_message('Syncing repositories')
-        if not self._sync_repositories(prog):
-            return
-
-        if self.user_notifier.emailer is None:
-            if any((eq.use_email or eq.use_group_email for eq in self.experiment_queues)):
-                if not self.confirmation_dialog('Email Plugin not initialized. '
-                                                'Required for sending email notifications. '
-                                                'Are you sure you want to continue?'):
-                    return
-
-        if not self.set_managers(prog):
-            return
-
-        if prog:
-            prog.change_message('Checking secondary database')
-
-    def _check_for_errors(self):
-        self.debug('checking for connectable errors')
-        for c in self.connectables:
-            self.debug('check connectable name: {} manager: {}'.format(c.name, c.manager))
-            man = c.manager
-            if man is None:
-                man = self.application.get_service(c.protocol, 'name=="{}"'.format(c.name))
-
-            self.debug('connectable manager: {}'.format(man))
-            if man:
-                e = man.get_error()
-                self.debug('connectable get error {}'.format(e))
-                if e and e.lower() != 'ok':
-                    self._err_message = e
-                    break
-
-    def _pre_execute_check(self, prog=None, inform=True):
         if not self.use_db_persistence and not self.use_xls_persistence and not self.use_dvc_persistence:
             if not self.confirmation_dialog('You do not have any Database or XLS saving enabled. '
                                             'Are you sure you want to continue?\n\n'
@@ -1850,6 +1816,22 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                                    'Post Run Termination'):
             return True
 
+    def _check_for_errors(self):
+        self.debug('checking for connectable errors')
+        for c in self.connectables:
+            self.debug('check connectable name: {} manager: {}'.format(c.name, c.manager))
+            man = c.manager
+            if man is None:
+                man = self.application.get_service(c.protocol, 'name=="{}"'.format(c.name))
+
+            self.debug('connectable manager: {}'.format(man))
+            if man:
+                e = man.get_error()
+                self.debug('connectable get error {}'.format(e))
+                if e and e.lower() != 'ok':
+                    self._err_message = e
+                    break
+
     def _load_system_conditionals(self, term_name, **kw):
         self.debug('loading system conditionals {}'.format(term_name))
         # p = paths.system_conditionals
@@ -1873,10 +1855,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 self.debug('queue conditionals path {}'.format(p))
                 return self._extract_conditionals(p, term_name, level=QUEUE, **kw)
 
-    def _extract_conditionals(self, p, term_name, level=RUN):
+    def _extract_conditionals(self, p, term_name, level=RUN, **kw):
         if p and os.path.isfile(p):
             self.debug('loading condiitonals from {}'.format(p))
-            return conditionals_from_file(p, name=term_name, level=level)
+            return conditionals_from_file(p, name=term_name, level=level, **kw)
 
     def _action_conditionals(self, run, conditionals, message1, message2):
         if conditionals:

@@ -45,7 +45,7 @@ def dictgetter(d, attrs, default=None):
         return default
 
 
-def conditionals_from_file(p, name=None, level=SYSTEM):
+def conditionals_from_file(p, name=None, level=SYSTEM, **kw):
     with open(p, 'r') as rfile:
         yd = yaml.load(rfile)
         cs = (('TruncationConditional', 'truncation', 'truncations'),
@@ -67,7 +67,7 @@ def conditionals_from_file(p, name=None, level=SYSTEM):
 
             # print 'yyyy', yl
             # var = getattr(self, '{}_conditionals'.format(var))
-            conds = [conditional_from_dict(ti, klass, level=level, location=p) for ti in yl]
+            conds = [conditional_from_dict(ti, klass, level=level, location=p, **kw) for ti in yl]
             # print 'ffff', conds
             conds = [c for c in conds if c is not None]
             if conds:
@@ -84,7 +84,7 @@ def conditionals_from_file(p, name=None, level=SYSTEM):
         return conddict
 
 
-def conditional_from_dict(cd, klass, level=None, location=None):
+def conditional_from_dict(cd, klass, level=None, location=None, **kw):
     if isinstance(klass, str):
         klass = globals()[klass]
 
@@ -115,7 +115,9 @@ def conditional_from_dict(cd, klass, level=None, location=None):
     attr = extract_attr(teststr)
     cx = klass(teststr, start_count=start, frequency=freq,
                attr=attr,
-               window=win, mapper=mapper, action=action, ntrips=ntrips, analysis_types=analysis_types)
+               window=win, mapper=mapper, action=action,
+               ntrips=ntrips, analysis_types=analysis_types,
+               **kw)
     if level:
         cx.level = level
     if location:
@@ -179,6 +181,10 @@ class AutomatedRunConditional(BaseConditional):
     value = Float
     ntrips = Int(1)
     trips = 0
+
+    _teststr = None
+    _ctx = None
+
     # def __init__(self, attr, teststr,
     # start_count=0,
     # frequency=1,
@@ -199,6 +205,26 @@ class AutomatedRunConditional(BaseConditional):
     def to_string(self):
         s = '{} {}'.format(self.teststr, self.message)
         return s
+
+    def to_dict(self):
+        d = self._attr_dict()
+        d['hash_id'] = self._hash_id(d)
+        return d
+
+    def _hash_id(self, d=None):
+        if d is None:
+            d = self._attr_dict()
+        return hash(frozenset(d.items()))
+
+    def _attr_dict(self):
+        return {'teststr': self.teststr, 'start_count': self.start_count,
+                'frequency': self.frequency, 'ntrips': self.ntrips,
+                'level': self.level,
+                'analysis_types': self.analysis_types, 'location': self.location}
+
+    def result_dict(self):
+        hash_id = self._hash_id()
+        return {'teststr': self._teststr, 'context': self._ctx, 'hash_id': hash_id}
 
     def _should_check(self, run, data, cnt):
         if self.analysis_types:
@@ -227,6 +253,7 @@ class AutomatedRunConditional(BaseConditional):
 
         """
         teststr, ctx = self._make_context(run, data)
+        self._teststr, self._ctx = teststr, ctx
 
         self.value_context = vc = pprint.pformat(ctx, width=1)
 

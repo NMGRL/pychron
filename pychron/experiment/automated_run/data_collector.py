@@ -344,7 +344,7 @@ class DataCollector(Consoleable):
         def set_truncated():
             self.state = 'truncated'
             self.automated_run.truncated = True
-            self.automated_run.state = 'truncated'
+            self.automated_run.spec.state = 'truncated'
             return 'break'
 
         if not self._alive:

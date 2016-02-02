@@ -138,32 +138,6 @@ class DVCPersister(BasePersister):
     def pre_measurement_save(self):
         pass
 
-    def _save_peak_center(self, pc):
-        self.info('DVC saving peakcenter')
-        p = self._make_path(modifier='peakcenter')
-
-        obj = {}
-        if pc:
-            obj['reference_detector'] = pc.reference_detector
-            obj['reference_isotope'] = pc.reference_isotope
-            if pc.result:
-                xs, ys, _mx, _my = pc.result
-                obj.update({'low_dac': xs[0],
-                            'center_dac': xs[1],
-                            'high_dac': xs[2],
-                            'low_signal': ys[0],
-                            'center_signal': ys[1],
-                            'high_signal': ys[2]})
-
-            data = pc.get_data()
-            if data:
-                fmt = '>ff'
-                obj['fmt'] = fmt
-                for det, pts in data:
-                    obj[det] = base64.b64encode(''.join([struct.pack(fmt, *di) for di in pts]))
-
-        dvc_dump(obj, p)
-
     def post_measurement_save(self, commit=True, msg_prefix='Collection'):
         """
         save
@@ -186,10 +160,15 @@ class DVCPersister(BasePersister):
         #                               self.per_spec.gains)
 
         # save analysis
-        t = datetime.now()
-        self._save_analysis(timestamp=t, spec_sha=spec_sha)
 
-        self._save_analysis_db(t)
+        if not self.per_spec.timestamp:
+            timestamp = datetime.now()
+        else:
+            timestamp = self.per_spec.timestamp
+
+        self._save_analysis(timestamp)
+
+        self._save_analysis_db(timestamp)
 
         # save monitor
         self._save_monitor()
@@ -231,10 +210,7 @@ class DVCPersister(BasePersister):
                                          'extract_device', 'weight', 'comment',
                                          'cleanup', 'duration', 'extract_value', 'extract_units')}
 
-        if not self.per_spec.timestamp:
-            d['timestamp'] = timestamp
-        else:
-            d['timestamp'] = self.per_spec.timestamp
+        d['timestamp'] = timestamp
 
         # save script names
         d['measurementName'] = self.per_spec.measurement_name
@@ -290,15 +266,7 @@ class DVCPersister(BasePersister):
                 except IndexError:
                     self.debug('no extraction position for {}'.format(pp))
 
-    def _make_analysis_dict(self, keys=None):
-        rs = self.per_spec.run_spec
-        if keys is None:
-            keys = META_ATTRS
-
-        d = {k: getattr(rs, k) for k in keys}
-        return d
-
-    def _save_analysis(self, timestamp, **kw):
+    def _save_analysis(self, timestamp):
 
         isos = {}
         dets = {}
@@ -356,15 +324,15 @@ class DVCPersister(BasePersister):
         from pychron.experiment import __version__ as eversion
         from pychron.dvc import __version__ as dversion
 
-        if not self.per_spec.timestamp:
-            obj['timestamp'] = timestamp.isoformat()
-        else:
-            obj['timestamp'] = self.per_spec.timestamp.isoformat()
-
+        obj['timestamp'] = timestamp.isoformat()
         obj['collection_version'] = '{}:{}'.format(eversion, dversion)
         obj['detectors'] = dets
         obj['isotopes'] = isos
-        obj.update(**kw)
+        obj['spec_sha'] = self._get_spectrometer_sha()
+
+        # save the conditionals
+        obj['conditionals'] = [c.to_dict() for c in self.per_spec.conditionals]
+        obj['tripped_conditional'] = self.per_spec.tripped_conditional.result_dict()
 
         # save the scripts
         ms = self.per_spec.run_spec.mass_spectrometer
@@ -406,31 +374,6 @@ class DVCPersister(BasePersister):
                 'signals': signals, 'baselines': baselines, 'sniffs': sniffs}
         dvc_dump(data, p)
 
-    def _make_path(self, modifier=None, extension='.json'):
-        runid = self.per_spec.run_spec.runid
-        repository_identifier = self.per_spec.run_spec.repository_identifier
-        return analysis_path(runid, repository_identifier, modifier, extension, mode='w')
-
-    def _get_spectrometer_sha(self):
-        """
-        return a sha-1 hash.
-
-        generate using spec_dict, defl_dict, and gains
-        spec_dict: source parameters, cdd operating voltage
-        defl_dict: detector deflections
-        gains: detector gains
-
-        make hash using
-        for key,value in dictionary:
-            sha1.update(key)
-            sha1.update(value)
-
-        to ensure consistence, dictionaries are sorted by key
-        for key,value in sorted(dictionary)
-        :return:
-        """
-        return spectrometer_sha(self.per_spec.spec_dict, self.per_spec.defl_dict, self.per_spec.gains)
-
     def _save_monitor(self):
         if self.per_spec.monitor:
             p = self._make_path(modifier='monitor')
@@ -453,5 +396,64 @@ class DVCPersister(BasePersister):
         # obj['commit'] = str(hexsha)
 
         dvc_dump(obj, path)
+
+    def _save_peak_center(self, pc):
+        self.info('DVC saving peakcenter')
+        p = self._make_path(modifier='peakcenter')
+
+        obj = {}
+        if pc:
+            obj['reference_detector'] = pc.reference_detector
+            obj['reference_isotope'] = pc.reference_isotope
+            if pc.result:
+                xs, ys, _mx, _my = pc.result
+                obj.update({'low_dac': xs[0],
+                            'center_dac': xs[1],
+                            'high_dac': xs[2],
+                            'low_signal': ys[0],
+                            'center_signal': ys[1],
+                            'high_signal': ys[2]})
+
+            data = pc.get_data()
+            if data:
+                fmt = '>ff'
+                obj['fmt'] = fmt
+                for det, pts in data:
+                    obj[det] = base64.b64encode(''.join([struct.pack(fmt, *di) for di in pts]))
+
+        dvc_dump(obj, p)
+
+    def _make_path(self, modifier=None, extension='.json'):
+        runid = self.per_spec.run_spec.runid
+        repository_identifier = self.per_spec.run_spec.repository_identifier
+        return analysis_path(runid, repository_identifier, modifier, extension, mode='w')
+
+    def _make_analysis_dict(self, keys=None):
+        rs = self.per_spec.run_spec
+        if keys is None:
+            keys = META_ATTRS
+
+        d = {k: getattr(rs, k) for k in keys}
+        return d
+
+    def _get_spectrometer_sha(self):
+        """
+        return a sha-1 hash.
+
+        generate using spec_dict, defl_dict, and gains
+        spec_dict: source parameters, cdd operating voltage
+        defl_dict: detector deflections
+        gains: detector gains
+
+        make hash using
+        for key,value in dictionary:
+            sha1.update(key)
+            sha1.update(value)
+
+        to ensure consistence, dictionaries are sorted by key
+        for key,value in sorted(dictionary)
+        :return:
+        """
+        return spectrometer_sha(self.per_spec.spec_dict, self.per_spec.defl_dict, self.per_spec.gains)
 
 # ============= EOF =============================================
