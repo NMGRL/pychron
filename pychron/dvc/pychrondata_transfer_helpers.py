@@ -66,7 +66,7 @@ def fix_a_steps(dest, repo_identifier, root):
         repo = dest.get_repository(repo_identifier)
 
         ans = [(ra.analysis.irradiation_position.identifier, ra.analysis.aliquot, ra.analysis.increment,
-                ra.analysis.record_id, ra.analysis.idanalysisTbl)
+                ra.analysis.record_id, ra.analysis.id)
                for ra in repo.repository_associations]
         key = lambda x: x[0]
         ans = sorted(ans, key=key)

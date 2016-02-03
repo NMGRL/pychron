@@ -66,7 +66,7 @@ class InterpretedAgeTbl(Base, BaseMixin):
 class InterpretedAgeSetTbl(Base, BaseMixin):
     idinterpretedagesettbl = Column(Integer, primary_key=True)
     interpreted_ageID = Column(Integer, ForeignKey('InterpretedAgeTbl.idinterpretedagetbl'))
-    analysisID = Column(Integer, ForeignKey('AnalysisTbl.idanalysisTbl'))
+    analysisID = Column(Integer, ForeignKey('AnalysisTbl.id'))
     forced_plateau_step = Column(Boolean)
     plateau_step = Column(Boolean)
     tag = Column(String(80))
@@ -94,7 +94,7 @@ class RepositoryTbl(Base, BaseMixin):
 class RepositoryAssociationTbl(Base, BaseMixin):
     idrepositoryassociationTbl = Column(Integer, primary_key=True)
     repository = Column(String(80), ForeignKey('RepositoryTbl.name'))
-    analysisID = Column(Integer, ForeignKey('AnalysisTbl.idanalysisTbl'))
+    analysisID = Column(Integer, ForeignKey('AnalysisTbl.id'))
     # experiments = relationship('ExperimentTbl')
     # analyses = relationship('AnalysisTbl', backref='experiment_associations')
 
@@ -105,11 +105,11 @@ class AnalysisChangeTbl(Base, BaseMixin):
     tag = Column(String(40))
     timestamp = Column(TIMESTAMP)
     user = Column(String(40))
-    analysisID = Column(Integer, ForeignKey('AnalysisTbl.idanalysisTbl'))
+    analysisID = Column(Integer, ForeignKey('AnalysisTbl.id'))
 
 
 class AnalysisTbl(Base, BaseMixin):
-    idanalysisTbl = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True)
     timestamp = Column(TIMESTAMP)
     # tag = Column(String(45))
     uuid = Column(String(32))
@@ -117,7 +117,7 @@ class AnalysisTbl(Base, BaseMixin):
     aliquot = Column(Integer)
     increment = Column(Integer)
 
-    irradiation_positionID = Column(Integer, ForeignKey('IrradiationPositionTbl.idirradiationpositionTbl'))
+    irradiation_positionID = Column(Integer, ForeignKey('IrradiationPositionTbl.id'))
 
     measurementName = Column(String(45))
     extractionName = Column(String(45))
@@ -235,33 +235,33 @@ class AnalysisTbl(Base, BaseMixin):
 
 
 class ProjectTbl(Base, NameMixin):
-    idprojectTbl = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True)
     principal_investigator = Column(String(140), ForeignKey('PrincipalInvestigatorTbl.name'))
 
     samples = relationship('SampleTbl', backref='project')
 
 
 class MaterialTbl(Base, NameMixin):
-    idmaterialTbl = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True)
     samples = relationship('SampleTbl', backref='material')
 
 
 class SampleTbl(Base, NameMixin):
-    idsampleTbl = Column(Integer, primary_key=True)
-    materialID = Column(Integer, ForeignKey('MaterialTbl.idmaterialTbl'))
-    projectID = Column(Integer, ForeignKey('ProjectTbl.idprojectTbl'))
+    id = Column(Integer, primary_key=True)
+    materialID = Column(Integer, ForeignKey('MaterialTbl.id'))
+    projectID = Column(Integer, ForeignKey('ProjectTbl.id'))
     positions = relationship('IrradiationPositionTbl', backref='sample')
 
 
 class ProductionTbl(Base, NameMixin):
-    idproductionTbl = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True)
     levels = relationship('LevelTbl', backref='production')
 
 
 class LevelTbl(Base, NameMixin):
-    idlevelTbl = Column(Integer, primary_key=True)
-    irradiationID = Column(Integer, ForeignKey('IrradiationTbl.idirradiationTbl'))
-    productionID = Column(Integer, ForeignKey('ProductionTbl.idproductionTbl'))
+    id = Column(Integer, primary_key=True)
+    irradiationID = Column(Integer, ForeignKey('IrradiationTbl.id'))
+    productionID = Column(Integer, ForeignKey('ProductionTbl.id'))
     holder = Column(String(45))
     z = Column(Float)
 
@@ -271,21 +271,22 @@ class LevelTbl(Base, NameMixin):
 
 
 class IrradiationTbl(Base, NameMixin):
-    idirradiationTbl = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True)
     levels = relationship('LevelTbl', backref='irradiation')
 
 
 class IrradiationPositionTbl(Base, BaseMixin):
-    idirradiationpositionTbl = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True)
     identifier = Column(String(80))
-    sampleID = Column(Integer, ForeignKey('SampleTbl.idsampleTbl'))
-    levelID = Column(Integer, ForeignKey('LevelTbl.idlevelTbl'))
+    sampleID = Column(Integer, ForeignKey('SampleTbl.id'))
+    levelID = Column(Integer, ForeignKey('LevelTbl.id'))
     position = Column(Integer)
-    analyses = relationship('AnalysisTbl', backref='irradiation_position')
     note = Column(BLOB)
     weight = Column(Float)
     j = Column(Float)
     j_err = Column(Float)
+
+    analyses = relationship('AnalysisTbl', backref='irradiation_position')
 
     # @property
     # def irradiation_position(self):
@@ -346,7 +347,7 @@ class LoadHolderTbl(Base, BaseMixin):
 
 
 class LoadPositionTbl(Base, BaseMixin):
-    idloadpositionTbl = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True)
     identifier = Column(String(80), ForeignKey('IrradiationPositionTbl.identifier'))
     position = Column(Integer)
     loadName = Column(String(45), ForeignKey('LoadTbl.name'))
@@ -355,14 +356,14 @@ class LoadPositionTbl(Base, BaseMixin):
 
 
 class MeasuredPositionTbl(Base, BaseMixin):
-    idmeasuredpositionTbl = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True)
     position = Column(Integer)
     x = Column(Float)
     y = Column(Float)
     z = Column(Float)
 
     is_degas = Column(Boolean)
-    analysisID = Column(Integer, ForeignKey('AnalysisTbl.idanalysisTbl'))
+    analysisID = Column(Integer, ForeignKey('AnalysisTbl.id'))
     loadName = Column(String(45), ForeignKey('LoadTbl.name'))
 
 

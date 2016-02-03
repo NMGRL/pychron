@@ -182,7 +182,7 @@ class DVCDatabase(DatabaseAdapter):
                                                      exclude_uuids=exclude,
                                                      exclude_invalid=exclude_invalid)
                 refs.update(rs)
-                ex = [r.idanalysisTbl for r in refs]
+                ex = [r.id for r in refs]
                 # print rs
                 # print ti, low, high, rs, refs
             # print 'refs', refs
@@ -574,8 +574,8 @@ class DVCDatabase(DatabaseAdapter):
                 q = q.filter(
                     AnalysisTbl.mass_spectrometer.in_(mass_spectrometers))
             if filter_non_run:
-                q = q.group_by(IrradiationPositionTbl.idirradiationpositionTbl)
-                q = q.having(count(AnalysisTbl.idanalysisTbl) > 0)
+                q = q.group_by(IrradiationPositionTbl.id)
+                q = q.having(count(AnalysisTbl.id) > 0)
 
             return self._query_all(q, verbose_query=True)
 
@@ -591,7 +591,7 @@ class DVCDatabase(DatabaseAdapter):
             return self._query_all(q, verbose_query=False)
 
     def get_analysis(self, value):
-        return self._retrieve_item(AnalysisTbl, value, key='idanalysisTbl')
+        return self._retrieve_item(AnalysisTbl, value, key='id')
 
     def get_analysis_uuid(self, value):
         return self._retrieve_item(AnalysisTbl, value, key='uuid')
@@ -752,7 +752,7 @@ class DVCDatabase(DatabaseAdapter):
             if exclude_invalid:
                 q = q.filter(AnalysisChangeTbl.tag != 'invalid')
             if exclude:
-                q = q.filter(not_(AnalysisTbl.idanalysisTbl.in_(exclude)))
+                q = q.filter(not_(AnalysisTbl.id.in_(exclude)))
             if exclude_uuids:
                 q = q.filter(not_(AnalysisTbl.uuid.in_(exclude_uuids)))
 
@@ -792,7 +792,7 @@ class DVCDatabase(DatabaseAdapter):
                     project_names.append('references')
 
                 q = q.group_by(IrradiationPositionTbl.identifier)
-                q = q.having(count(AnalysisTbl.idanalysisTbl) > 0)
+                q = q.having(count(AnalysisTbl.id) > 0)
                 if low_post:
                     q = q.filter(AnalysisTbl.timestamp >= str(low_post))
                 if high_post:
@@ -849,7 +849,7 @@ class DVCDatabase(DatabaseAdapter):
 
         with self.session_ctx() as sess:
             q = sess.query(IrradiationPositionTbl)
-            q = q.distinct(IrradiationPositionTbl.idirradiationpositionTbl)
+            q = q.distinct(IrradiationPositionTbl.id)
 
             # joins
             at = False
@@ -986,7 +986,7 @@ class DVCDatabase(DatabaseAdapter):
             irrad = self.get_irradiation(irrad)
             if irrad:
                 q = sess.query(LevelTbl)
-                q = q.filter(LevelTbl.irradiationID == irrad.idirradiationTbl)
+                q = q.filter(LevelTbl.irradiationID == irrad.id)
                 q = q.filter(LevelTbl.name == name)
                 return self._query_one(q)
 
@@ -1324,7 +1324,7 @@ class DVCDatabase(DatabaseAdapter):
 
     def delete_tag(self, name):
         with self.session_ctx() as sess:
-            q = sess.query(AnalysisTbl.idanalysisTbl)
+            q = sess.query(AnalysisTbl.id)
             q = q.join(AnalysisChangeTbl)
             q = q.filter(AnalysisChangeTbl.tag == name)
             n = q.count()
