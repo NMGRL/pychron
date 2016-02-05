@@ -1,0 +1,50 @@
+endpoint: pychron/psycho.sock
+
+support:
+  - root: Pychron_psychodrama
+  - path: Pychron_psychodrama/setupfiles/initialization.xml
+    text: "<root>\n
+  <globals>\n
+  </globals>\n
+  <plugins>\n
+    <general>\n
+      <plugin enabled='true'>ArArConstants</plugin>\n
+      <plugin enabled='true'>DVC</plugin>\n
+      <plugin enabled='true'>Pipeline</plugin>\n
+    </general>\n
+    <hardware>\n
+    </hardware>\n
+    <data>\n
+    </data>\n
+    <social>\n
+      <plugin enabled='false'>Email</plugin>\n
+      <plugin enabled='false'>Twitter</plugin>\n
+    </social>\n
+  </plugins>\n
+</root>\n"
+  - path: .enthought/pychron.application.root/preferences.ini
+    text: "[pychron.dvc]\n
+organization=NMGRL\n
+meta_repo_name=meta\n"
+
+environment:
+  name: pychron_pd
+  dependencies:
+    - traits
+    - traitsui
+    - envisage
+    - qt
+    - pyside
+
+pre_run:
+  - start_sim:PychronSimulator
+  - start_app:PyExperiment
+
+run:
+  - move_laser
+  - fire_laser
+  - execute_experiment:experiment1
+
+post_run:
+  - stop_sim
+  - report_results
