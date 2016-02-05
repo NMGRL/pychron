@@ -69,7 +69,9 @@ PACKAGE_DICT = dict(
     UpdatePlugin='pychron.updater.tasks.update_plugin',
     ImagePlugin='pychron.image.tasks.image_plugin',
     NMGRLFurnacePlugin='pychron.furnace.tasks.furnace_plugin',
-    IGSNPlugin='pychron.repo.tasks.igsn_plugin'
+    IGSNPlugin='pychron.repo.tasks.igsn_plugin',
+
+    PsychoDramaPlugin='pychron.psychodrama.tasks.plugin'
 )
 
 
