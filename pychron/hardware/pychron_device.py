@@ -15,8 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Button, CInt, Str
-from traitsui.api import View, Item
+from traits.api import CInt, Str, Bool
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.hardware.core.communicators.ethernet_communicator import EthernetCommunicator
@@ -24,22 +23,28 @@ from pychron.hardware.core.communicators.ethernet_communicator import EthernetCo
 from pychron.loggable import Loggable
 
 
-class PychronDevice(Loggable):
+class EthernetDeviceMixin(Loggable):
     communicator = None
     connected = False
     port = CInt
     host = Str
+    kind = Str
+    message_frame = Str
+    use_end = Bool
 
     def setup_communicator(self):
         host = self.host
         port = self.port
-
         self.communicator = ec = EthernetCommunicator(host=host,
-                                                      port=port)
+                                                      port=port,
+                                                      kind=self.kind,
+                                                      use_end=self.use_end,
+                                                      message_frame=self.message_frame)
+
         r = ec.open()
         if r:
-            self.connected = True
-            self.opened()
+            r = self.opened()
+            self.connected = bool(r)
 
         return r
 
@@ -65,10 +70,10 @@ class PychronDevice(Loggable):
             self.communicator.close()
 
     def _ask(self, *args, **kw):
+        if not self.communicator:
+            self.setup_communicator()
+
         if self.communicator:
             return self.communicator.ask(*args, **kw)
 
 # ============= EOF =============================================
-
-
-

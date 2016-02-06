@@ -17,9 +17,9 @@
 # ============= enthought library imports =======================
 from matplotlib.cm import get_cmap
 from traits.api import Float, Int, Str
+from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.editor import Editor
 
-from traitsui.basic_editor_factory import BasicEditorFactory
 # ============= standard library imports ========================
 from PySide.QtGui import QPainter, QColor, QFrame
 # ============= local library imports  ==========================

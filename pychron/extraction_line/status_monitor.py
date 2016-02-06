@@ -34,9 +34,11 @@ class StatusMonitor(Loggable):
     _clients = 0
 
     state_freq = Int(3)
+    checksum_freq = Int(3)
+
     lock_freq = Int(5)
     owner_freq = Int(5)
-    update_period = Int(2)
+    update_period = Int(1)
 
     def start(self, vm):
         if not self._clients:
@@ -78,6 +80,14 @@ class StatusMonitor(Loggable):
 
         if not i % self.owner_freq:
             vm.load_valve_owners()
+
+        if not i % self.checksum_freq:
+            if not vm.state_checksum:
+                self.debug('State checksum failed')
+
+        #         vm.load_valve_states()
+        #         vm.load_valve_lock_states()
+        #         vm.load_valve_owners()
 
         if i > 100:
             i = 0

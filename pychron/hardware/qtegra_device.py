@@ -21,12 +21,45 @@ from pychron.hardware.core.core_device import CoreDevice
 
 
 class QtegraDevice(CoreDevice):
-    def read_decabin_temperature(self):
-        v = self.ask('GetDecabinTemperature', verbose=True)
+    """
+        qtegra_monitor.cfg
+
+        [General]
+        name=Jan
+        [Communications]
+        type=ethernet
+        host=localhost
+        port=1069
+
+        dashboard.yaml
+        - name: JanMonitor
+          enabled: True
+          device: qtegra_monitor
+          values:
+            - name: JanTrapCurrent
+              func: get_trap_current
+              enabled: True
+              period: on_change
+            - name: JanEmission
+              func: get_emission
+              enabled: True
+              period: on_change
+            - name: JanDecabinTemp
+              func: get_decabin_temperature
+              enabled: True
+              period: on_change
+    """
+
+    def read_decabin_temperature(self, **kw):
+        v = self.ask('GetParameter Temp1')
         return self._parse_response(v)
 
-    def read_emission(self):
-        v = self.ask('GetEmission')
+    def read_trap_current(self, **kw):
+        v = self.ask('GetParameter Trap Current Readback')
+        return self._parse_response(v)
+
+    def read_emission(self, **kw):
+        v = self.ask('GetParameter Source Current Readback')
         return self._parse_response(v)
 
     def read_hv(self):
@@ -39,40 +72,4 @@ class QtegraDevice(CoreDevice):
         except (ValueError, TypeError):
             return self.get_random_value()
 
-
-            # scan_func = 'read_temperature'
-            # get_func = 'check_cdd'
-
-            # def get(self, *args, **kw):
-            #     try:
-            #         func = getattr(self, self.get_func)
-            #         return func()
-            #     except AttributeError:
-            #         pass
-            # def load_additional_args(self, config):
-            #     self.set_attribute(config, 'get_func', 'General', 'get_func')
-            #     return True
-
-            # def _build_command(self, cmd, *args, **kw):
-            #     return cmd
-            #
-            # def _parse_response(self, resp):
-            #     if resp is not None:
-            #         resp = resp.strip()
-            #     return resp
-            #
-            # def read_temperature(self, **kw):
-            #     cmd = 'Get {}'.format('Temp1')
-            #     x = self.repeat_command(cmd, **kw)
-            #     return x
-            #
-            # def check_cdd(self, **kw):
-            #     x = self.repeat_command('GetData', **kw)
-            #     tags = [xi.split(':')[0].strip() for xi in x.split(',')]
-            #     return 'CDD' in tags
-
-
 # ============= EOF =============================================
-
-
-

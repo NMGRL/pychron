@@ -15,11 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from envisage.ui.tasks.task_factory import TaskFactory
+
 from envisage.ui.tasks.task_extension import TaskExtension
+from envisage.ui.tasks.task_factory import TaskFactory
+from pyface.tasks.action.schema import SMenu
 from pyface.tasks.action.schema_addition import SchemaAddition
 from pyface.tasks.action.task_action import TaskAction
-from pyface.tasks.action.schema import SMenu
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
@@ -78,7 +80,7 @@ class PyScriptPlugin(BaseTaskPlugin):
                             name='PyScript',
                             factory=self._task_factory,
                             task_group='experiment',
-                            image='script.png'),
+                            image='script'),
                 TaskFactory(id='pychron.pyscript.visual_el_programmer',
                             name='Visual Programmer',
                             factory=self._visual_task_factory,
@@ -96,5 +98,8 @@ class PyScriptPlugin(BaseTaskPlugin):
 
     def _preferences_panes_default(self):
         return [PyScriptPreferencesPane]
+
+    def _preferences_default(self):
+        return self._preferences_factory('script')
 
 # ============= EOF =============================================

@@ -22,6 +22,9 @@ from pychron.loggable import Loggable
 
 
 class Exporter(Loggable):
+    def add(self, analysis):
+        pass
+
     def start_export(self):
         return True
 

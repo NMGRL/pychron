@@ -15,12 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import pickle
 
-from traits.api import HasTraits, List, Any, Bool, Int, Instance, Enum, \
-    Event, Str, Callable, Button, Property
+from traits.api import HasTraits, List, Bool, Int, Instance, Enum, \
+    Str, Callable, Button, Property
 from traits.trait_errors import TraitError
 from traitsui.api import View, Item, UItem, CheckListEditor, VGroup, Handler, HGroup, Tabbed
-import apptools.sweet_pickle as pickle
+# import apptools.sweet_pickle as pickle
 # ============= standard library imports ========================
 from datetime import datetime
 import os
@@ -91,7 +92,11 @@ class TableConfigurer(HasTraits):
 
     def set_font(self):
         if self.adapter:
-            self.adapter.font = 'arial {}'.format(self.font)
+            font = 'arial {}'.format(self.font)
+            self.adapter.font = font
+            for ci in self.children:
+                ci.font = font
+
             if self.refresh_func:
                 self.refresh_func()
 
@@ -114,8 +119,8 @@ class TableConfigurer(HasTraits):
         p = os.path.join(paths.hidden_dir, self.id)
         if os.path.isfile(p):
             try:
-                with open(p, 'rb') as fp:
-                    state = pickle.load(fp)
+                with open(p, 'rb') as rfile:
+                    state = pickle.load(rfile)
 
             except (pickle.PickleError, OSError, EOFError, TraitError):
                 return
@@ -145,9 +150,9 @@ class TableConfigurer(HasTraits):
         p = os.path.join(paths.hidden_dir, self.id)
         obj = self._get_dump()
 
-        with open(p, 'wb') as fp:
+        with open(p, 'wb') as wfile:
             try:
-                pickle.dump(obj, fp)
+                pickle.dump(obj, wfile)
             except pickle.PickleError:
                 pass
 
@@ -172,8 +177,8 @@ class TableConfigurer(HasTraits):
         if os.path.isfile(p):
             import yaml
 
-            with open(p, 'r') as fp:
-                yd = yaml.load(fp)
+            with open(p, 'r') as rfile:
+                yd = yaml.load(rfile)
                 try:
                     self.columns = yd['columns']
                 except KeyError:
@@ -264,15 +269,18 @@ class ExperimentTableConfigurer(TableConfigurer):
 class AnalysisTableConfigurer(TableConfigurer):
     id = 'analysis.table'
     limit = Int
+    omit_invalid = Bool(True)
 
     def _get_dump(self):
         obj = super(AnalysisTableConfigurer, self)._get_dump()
         obj['limit'] = self.limit
+        obj['omit_invalid'] = self.omit_invalid
 
         return obj
 
     def _load_hook(self, obj):
         self.limit = obj.get('limit', 500)
+        self.omit_invalid = obj.get('omit_invalid', True)
 
     def traits_view(self):
         v = View(VGroup(VGroup(UItem('columns',
@@ -283,9 +291,10 @@ class AnalysisTableConfigurer(TableConfigurer):
                         # VGroup(HGroup(Heading('Lower Bound'), UItem('use_low_post')),
                         # UItem('low_post', style='custom', enabled_when='use_low_post')),
                         # VGroup(HGroup(Heading('Upper Bound'), UItem('use_high_post')),
-                        #            UItem('high_post', style='custom', enabled_when='use_high_post')),
+                        # UItem('high_post', style='custom', enabled_when='use_high_post')),
                         #     VGroup(HGroup(Heading('Named Range'), UItem('use_named_date_range')),
                         #            UItem('named_date_range', enabled_when='use_named_date_range'))),
+                        Item('omit_invalid'),
                         Item('limit',
                              tooltip='Limit number of displayed analyses',
                              label='Limit'),
@@ -321,16 +330,16 @@ class SampleTableConfigurer(TableConfigurer):
                          style='custom',
                          editor=CheckListEditor(name='available_columns', cols=3)),
                    label='Columns', show_border=True),
-            # Item('filter_non_run_samples',
-            # tooltip='Omit samples that have not been analyzed to date',
-            #      label='Exclude Non-Run')
+            Item('filter_non_run_samples',
+                 tooltip='Omit samples that have not been analyzed to date',
+                 label='Exclude Non-Run')
         ),
-                 buttons=['OK', 'Cancel', 'Revert'],
-                 # kind='modal',
-                 title=self.title,
-                 handler=TableConfigurerHandler,
-                 resizable=True,
-                 width=300)
+            buttons=['OK', 'Cancel', 'Revert'],
+            # kind='modal',
+            title=self.title,
+            handler=TableConfigurerHandler,
+            resizable=True,
+            width=300)
         return v
 
 

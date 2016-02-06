@@ -14,16 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
-
 from envisage.core_plugin import CorePlugin
-from envisage.api import Plugin
 from pyface.message_dialog import warning
 # ============= standard library imports ========================
-import os
 import logging
 # ============= local library imports  ==========================
 from pychron.displays.gdisplays import gTraceDisplay
 from pychron.envisage.key_bindings import update_key_bindings
+from pychron.envisage.tasks.base_plugin import BasePlugin
 from pychron.envisage.tasks.tasks_plugin import PychronTasksPlugin, myTasksPlugin
 from pychron.logger.tasks.logger_plugin import LoggerPlugin
 from pychron.envisage.initialization.initialization_parser import InitializationParser
@@ -31,9 +29,8 @@ from pychron.user.tasks.plugin import UsersPlugin
 
 logger = logging.getLogger()
 
-
 PACKAGE_DICT = dict(
-    CanvasDesignerPlugin='pychron.canvas.tasks.canvas_plugin',
+    # CanvasDesignerPlugin='pychron.canvas.tasks.canvas_plugin',
     ArArConstantsPlugin='pychron.constants.tasks.arar_constants_plugin',
     DashboardServerPlugin='pychron.dashboard.tasks.server.plugin',
     DashboardClientPlugin='pychron.dashboard.tasks.client.plugin',
@@ -42,25 +39,38 @@ PACKAGE_DICT = dict(
     ExperimentPlugin='pychron.experiment.tasks.experiment_plugin',
     ExternalPipettePlugin='pychron.external_pipette.tasks.external_pipette_plugin',
     ExtractionLinePlugin='pychron.extraction_line.tasks.extraction_line_plugin',
-    GeoPlugin='pychron.geo.tasks.geo_plugin',
+    ClientExtractionLinePlugin='pychron.extraction_line.tasks.client_extraction_line_plugin',
+    # GeoPlugin='pychron.geo.tasks.geo_plugin',
     VideoPlugin='pychron.image.tasks.video_plugin',
+    ChromiumCO2Plugin='pychron.lasers.tasks.plugins.chromium_co2',
+    ChromiumUVPlugin='pychron.lasers.tasks.plugins.chromium_uv',
     FusionsDiodePlugin='pychron.lasers.tasks.plugins.diode',
     FusionsCO2Plugin='pychron.lasers.tasks.plugins.co2',
     FusionsUVPlugin='pychron.lasers.tasks.plugins.uv',
-    LoadingPlugin='pychron.loading.loading_plugin',
+        LoadingPlugin='pychron.loading.tasks.loading_plugin',
     CoreLaserPlugin='pychron.lasers.tasks.plugins.laser_plugin',
-    MediaServerPlugin='pychron.media_server.tasks.media_server_plugin',
-    ProcessingPlugin='pychron.processing.tasks.processing_plugin',
+    # MediaServerPlugin='pychron.media_server.tasks.media_server_plugin',
+    # ProcessingPlugin='pychron.processing.tasks.processing_plugin',
+    PipelinePlugin='pychron.pipeline.tasks.plugin',
     PyScriptPlugin='pychron.pyscripts.tasks.pyscript_plugin',
-    ArgusSpectrometerPlugin='pychron.spectrometer.tasks.argus_spectrometer_plugin',
+
+    # spectrometers
+    ArgusSpectrometerPlugin='pychron.spectrometer.tasks.thermo.argus',
+    HelixSpectrometerPlugin='pychron.spectrometer.tasks.thermo.helix',
     MapSpectrometerPlugin='pychron.spectrometer.tasks.map_spectrometer_plugin',
+
     EmailPlugin='pychron.social.email.tasks.plugin',
-    SystemMonitorPlugin='pychron.system_monitor.tasks.system_monitor_plugin',
-    WorkspacePlugin='pychron.workspace.tasks.workspace_plugin',
+    MassSpecPlugin='pychron.mass_spec.tasks.plugin',
+    # SystemMonitorPlugin='pychron.system_monitor.tasks.system_monitor_plugin',
+    DVCPlugin='pychron.dvc.tasks.dvc_plugin',
+    # WorkspacePlugin='pychron.workspace.tasks.workspace_plugin',
     LabBookPlugin='pychron.labbook.tasks.labbook_plugin',
     LabspyClientPlugin='pychron.labspy.tasks.plugin',
     UpdatePlugin='pychron.updater.tasks.update_plugin',
-    ImagePlugin='pychron.image.tasks.image_plugin')
+    ImagePlugin='pychron.image.tasks.image_plugin',
+    NMGRLFurnacePlugin='pychron.furnace.tasks.furnace_plugin',
+    IGSNPlugin='pychron.repo.tasks.igsn_plugin'
+)
 
 
 def get_module_name(klass):
@@ -108,21 +118,18 @@ def get_plugin(pname):
     if not pname.endswith('Plugin'):
         pname = '{}Plugin'.format(pname)
 
-    #print PACKAGE_DICT.keys()
-    #print pname,pname in PACKAGE_DICT.keys()
+    # print PACKAGE_DICT.keys()
+    # print pname,pname in PACKAGE_DICT.keys()
     if pname in PACKAGE_DICT:
         package = PACKAGE_DICT[pname]
         klass = get_klass(package, pname)
-    # elif pname == 'Update':
-    #     klass = UpdatePlugin
-
     else:
         logger.warning('****** {} not a valid plugin name******'.format(pname),
                        extra={'threadName_': 'Launcher'})
 
     if klass is not None:
         plugin = klass()
-        if isinstance(plugin, Plugin):
+        if isinstance(plugin, BasePlugin):
             check = plugin.check()
             if check is True:
                 return plugin
@@ -190,9 +197,6 @@ def app_factory(klass, user):
     return app
 
 
-
-
-
 def launch(klass, user):
     """
     """
@@ -203,7 +207,7 @@ def launch(klass, user):
     # from pychron.login.login import check_login
     # from pychron.paths import paths
     # import os
-    # with open(os.path.join(paths.hidden_dir, 'login_pwd'), 'r') as fp:
+    # with open(os.path.join(paths.hidden_dir, 'login_pwd'), 'r') as rfile:
     #     if not check_login(fp.read()):
     #         logger.critical('Login failed')
     #         return
@@ -211,9 +215,17 @@ def launch(klass, user):
     app = app_factory(klass, user)
 
     try:
+
+        # root = os.path.dirname(__file__)
+        # r = QtGui.QApplication.instance()
+        # p = os.path.join(root, 'stylesheets', 'qdark.css')
+        # with open(p) as rfile:
+        #     r.setStyleSheet(rfile.read())
+
         app.run()
-        logger.info('Quitting {}'.format(app.name), extra={'threadName_': 'Launcher'})
+
     except Exception:
+        logger.info('Quitting {}'.format(app.name), extra={'threadName_': 'Launcher'})
         logger.exception('Launching error')
         import traceback
 
@@ -221,11 +233,10 @@ def launch(klass, user):
         gTraceDisplay.add_text(tb)
         gTraceDisplay.edit_traits(kind='livemodal')
 
-    finally:
-        app.exit()
-        os._exit(0)
+        # finally:
 
-    return
+        # os._exit(0)
 
+        # return
 
 # ============= EOF ====================================

@@ -14,11 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-
-
-import time
 import math
+import time
+
 from datetime import datetime
+from numpy import ediff1d, asarray
+from numpy import where
 
 ISO_FORMAT_STR = "%Y-%m-%d %H:%M:%S"
 
@@ -30,27 +31,9 @@ def time_generator(start=None):
         yield time.time() - start
 
 
-def current_time_generator(start):
-    '''
-    '''
-    yt = start
-    prev_time = 0
-    i = 0
-    while (1):
-
-        current_time = time.time()
-        if prev_time != 0:
-            interval = current_time - prev_time
-            yt += interval
-
-        yield (yt)
-        prev_time = current_time
-        i += 1
-
-
 def generate_datetimestamp(resolution='seconds'):
-    '''
-    '''
+    """
+    """
     ti = time.time()
     if resolution == 'seconds':
         r = time.strftime(ISO_FORMAT_STR)
@@ -79,14 +62,15 @@ def get_date():
     return time.strftime('%Y-%m-%d')
 
 
-def get_time(timestamp=None):
+def make_timef(timestamp=None):
     if timestamp is None:
-        timestamp = time.time()
+        t = time.time()
+    elif isinstance(timestamp, float):
+        t = timestamp
+        # timestamp = datetime.fromtimestamp(timestamp)
+    else:
+        t = time.mktime(timestamp.timetuple())
 
-    if isinstance(timestamp, float):
-        timestamp = datetime.fromtimestamp(timestamp)
-
-    t = time.mktime(timestamp.timetuple())
     return t
 
 
@@ -95,6 +79,7 @@ def convert_timestamp(timestamp, fmt=None):
         fmt = ISO_FORMAT_STR
     t = get_datetime(timestamp)
     return datetime.strftime(t, fmt)
+
 
 #    return time.mktime(t.timetuple()) + 1e-6 * t.microsecond
 # def convert_float(timestamp):
@@ -110,3 +95,12 @@ def diff_timestamp(end, start=0):
     s = (t.seconds % 3600) % 60
 
     return t, h, m, s
+
+
+def bin_timestamps(ts, tol_hrs=1):
+    ts = asarray(ts)
+    tol = 60 * 60 * tol_hrs
+    dts = ediff1d(ts)
+    # print dts
+    idxs = where(dts > tol)[0]
+    return idxs

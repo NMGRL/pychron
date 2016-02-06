@@ -50,13 +50,14 @@ class StartupTester(Loggable):
             return
 
         if not tests:
+            self.debug('No tests for {}'.format(pname))
             return
 
         for ti in tests:
             try:
                 func = getattr(plugin, ti)
             except AttributeError:
-                self.warning('Invalid test "{}" for plugin "{}"'.format(pname, ti))
+                self.warning('Invalid test "{}" for plugin "{}"'.format(ti, pname))
                 self.add_test_result(plugin=pname, name=ti, result='Invalid')
                 continue
 
@@ -108,8 +109,8 @@ class StartupTester(Loggable):
 
     def _load(self):
         if os.path.isfile(paths.startup_tests):
-            with open(paths.startup_tests, 'r') as fp:
-                yd = yaml.load(fp)
+            with open(paths.startup_tests, 'r') as rfile:
+                yd = yaml.load(rfile)
             return yd
         else:
             self.warning('No Startup Test file located at "{}"'.format(paths.startup_tests))

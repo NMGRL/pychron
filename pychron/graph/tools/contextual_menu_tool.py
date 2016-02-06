@@ -16,8 +16,9 @@
 
 
 # ============= enthought library imports =======================
-from traits.api import Any
 from enable.api import Interactor
+from traits.api import Any
+
 # from chaco.base_plot_container import BasePlotContainer
 from chaco.plot import Plot
 
@@ -56,6 +57,8 @@ class ContextualMenuTool(Interactor):
     #    self.parent.status_text = ''
 
     def normal_right_down(self, event):
+        if event.handled:
+            return
 
         comps = self.component.components_at(event.x, event.y)
         if comps:

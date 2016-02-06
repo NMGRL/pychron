@@ -10,7 +10,7 @@ from traitsui.editors import TextEditor
 from traitsui.handler import Controller
 from traitsui.item import UItem
 from traitsui.view import View
-from pychron.core.helpers.filetools import to_bool
+from pychron.core.helpers.strtools import to_bool
 from pychron.core.helpers.logger_setup import logging_setup
 from pychron.loggable import Loggable
 

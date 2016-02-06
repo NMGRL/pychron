@@ -16,14 +16,13 @@
 
 # ============= enthought library imports =======================
 from envisage.ui.tasks.task_extension import TaskExtension
-from pyface.tasks.action.schema_addition import SchemaAddition
 from pyface.action.group import Group
+from pyface.tasks.action.schema_addition import SchemaAddition
 
-from pychron.lasers.tasks.plugins.laser_plugin import FusionsPlugin
-from pychron.lasers.tasks.laser_preferences import FusionsCO2PreferencesPane
 from pychron.lasers.tasks.laser_actions import PowerMapAction, \
-    PowerCalibrationAction, TestDegasAction
-
+    PowerCalibrationAction, ExecutePatternAction
+from pychron.lasers.tasks.laser_preferences import FusionsCO2PreferencesPane
+from pychron.lasers.tasks.plugins.laser_plugin import FusionsPlugin
 
 
 # ============= standard library imports ========================
@@ -39,6 +38,7 @@ class FusionsCO2Plugin(FusionsPlugin):
 
     def _task_factory(self):
         from pychron.lasers.tasks.laser_task import FusionsCO2Task
+
         t = FusionsCO2Task(manager=self._get_manager())
         return t
 
@@ -53,8 +53,12 @@ class FusionsCO2Plugin(FusionsPlugin):
                                                      factory=lambda: Group(PowerMapAction(),
                                                                            PowerCalibrationAction()),
                                                      path='MenuBar/Laser'),
-                                      SchemaAddition(factory=TestDegasAction,
-                                                     path='MenuBar/Laser')])
+                                      SchemaAddition(
+                                          factory=lambda: ExecutePatternAction(self._get_manager()),
+                                          path='MenuBar/Laser'),
+                                      # SchemaAddition(factory=TestDegasAction,
+                                      #                path='MenuBar/Laser')
+                                      ])
 
         return exts + [ext1]
 

@@ -21,10 +21,10 @@
 # ============= standard library imports ========================
 
 # ============= local library imports  ==========================
-from pychron.managers.motion_controller_managers.motion_controller_manager import MotionControllerManager
-from pychron.hardware.aerotech.aerotech_motion_controller import AerotechMotionController
-from pychron.paths import paths
 from pychron.globals import globalv
+from pychron.hardware.aerotech.aerotech_motion_controller import AerotechMotionController
+from pychron.managers.motion_controller_managers.motion_controller_manager import MotionControllerManager
+from pychron.paths import paths
 
 
 class AerotechMotionControllerManager(MotionControllerManager):

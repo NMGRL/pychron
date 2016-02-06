@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,12 +23,16 @@ import os
 import select
 # ============= local library imports  ==========================
 from pychron.config_loadable import ConfigLoadable
-from pychron.remote_hardware.errors.error import ErrorCode
+from pychron.hardware.core.checksum_helper import computeCRC
+# from pychron.remote_hardware.errors.error import ErrorCode
 from pychron.remote_hardware.context import ContextFilter
-from pychron.remote_hardware.errors import SystemLockErrorCode, \
-    SecurityErrorCode
+# from pychron.remote_hardware.errors import SystemLockErrorCode, \
+#     SecurityErrorCode
 from pychron.globals import globalv
+from pychron.tx.errors import SystemLockErrorCode, SecurityErrorCode, ErrorCode
+
 BUFSIZE = 2048
+
 
 def end_request(fn):
     def end(obj, rtype, data, sender, sock=None):
@@ -38,23 +42,23 @@ def end_request(fn):
 
         if globalv.use_ipc:
             # self.debug('Result: {}'.format(data))
-#            if isinstance(data, ErrorCode):
-#                data = str(data)
+            # if isinstance(data, ErrorCode):
+            # data = str(data)
             try:
                 if globalv.ipc_dgram:
                     sock.sendto(data, obj.path)
                 else:
                     sock.send(str(data))
-                # sock.close()
+                    # sock.close()
             except Exception, err:
                 obj.debug('End Request Exception: {}'.format(err))
         else:
             return data
-#            if not isinstance(data, ErrorCode) and data:
-#                data = data.split('|')[-1]
-#            else:
-#                print data
-#            return str(data)
+        #            if not isinstance(data, ErrorCode) and data:
+            # data = data.split('|')[-1]
+            # else:
+            #                print data
+            #            return str(data)
 
     return end
 
@@ -85,10 +89,10 @@ def end_request(fn):
 
 
 class CommandProcessor(ConfigLoadable):
-    '''
+    """
     listens to a specified port for incoming requests.
     request will come from the repeater
-    '''
+    """
     # port = None
     path = None
 
@@ -105,6 +109,7 @@ class CommandProcessor(ConfigLoadable):
     _manager_lock = None
 
     use_security = False
+
     _hosts = None
 
     def __init__(self, *args, **kw):
@@ -154,7 +159,7 @@ class CommandProcessor(ConfigLoadable):
             self._sock.listen(10)
 
         self.info('listening to {} using {}'.format(self.path,
-                        'DATAGRAM' if globalv.ipc_dgram else 'STREAM'))
+                                                    'DATAGRAM' if globalv.ipc_dgram else 'STREAM'))
 
         t = Thread(name='processor.listener',
                    target=self._listener)
@@ -177,6 +182,7 @@ class CommandProcessor(ConfigLoadable):
             except Exception, err:
                 self.debug('Listener Exception {}'.format(err))
                 import traceback
+
                 tb = traceback.format_exc()
                 self.debug(tb)
 
@@ -204,25 +210,29 @@ class CommandProcessor(ConfigLoadable):
             data, address = self._sock.recv(BUFSIZE)
             print data, address, 'f'
             if data is not None:
-                self._process_data(self._sock, data)
+                self._process(self._sock, data)
         except socket.error:
             pass
-#            args = [self._sock] + data.split('|')
-#            if len(args) == 4:
-# #            if self._threaded:
-# #                t = Thread(target=self._process_request, args=args)
-# #                t.start()
-# #            else:
-#                self._process_request(*args)
+        #            args = [self._sock] + data.split('|')
+            # if len(args) == 4:
+            # #            if self._threaded:
+            # #                t = Thread(target=self._process_request, args=args)
+            # #                t.start()
+            # #            else:
+            # self._process_request(*args)
 
     def _read(self, sock):
         data = sock.recv(BUFSIZE)
+        l = 2
+        if globalv.use_message_len_checking:
+            l =4
+
         if data:
-            mlen = int(data[:4], 16)
-            while len(data) < (mlen + 4):
+            mlen = int(data[:l], 16)
+            while len(data) < (mlen + l):
                 data += sock.recv(BUFSIZE)
 
-            return data[4:]
+            return data[l:]
 
     def _process(self, sock, data):
         args = data.split('|')
@@ -237,7 +247,7 @@ class CommandProcessor(ConfigLoadable):
                 return
 
         resp = self._process_request(request_type, data, sender_addr)
-        if resp:
+        if resp is not None:
             self._end_request(sock, resp)
 
     def _process_request(self, request_type, data, sender_addr):
@@ -247,7 +257,7 @@ class CommandProcessor(ConfigLoadable):
             auth_err = self._authenticate(data, sender_addr)
             if auth_err:
                 return auth_err
-
+            request_type = request_type[2:]
             if not request_type in ['Extractionline',
                                     'Diode',
                                     'Synrad',
@@ -255,7 +265,7 @@ class CommandProcessor(ConfigLoadable):
                                     'UV',
                                     'Hardware',
                                     'test']:
-                self.warning('Invalid request type ' + request_type)
+                self.warning('Invalid request type {}'.format(request_type))
                 return
 
             if request_type == 'test':
@@ -300,9 +310,9 @@ class CommandProcessor(ConfigLoadable):
         if isinstance(data, ErrorCode):
             data = str(data)
 
-        n = len(data) + 4
-        data = '{:04X}{}'.format(n, data)
-        #self.debug('response len={}'.format(n))
+        n = len(data) + 8
+        data = '{:04X}{}{}'.format(n, data, computeCRC(data))
+        # self.debug('response len={}'.format(n))
         if globalv.use_ipc:
             try:
                 if globalv.ipc_dgram:
@@ -315,7 +325,7 @@ class CommandProcessor(ConfigLoadable):
                 while totalsent < mlen:
                     try:
                         totalsent += func(data[totalsent:])
-                        #self.debug('totalsent={} n={}'.format(totalsent, mlen))
+                        # self.debug('totalsent={} n={}'.format(totalsent, mlen))
                     except socket.error:
                         continue
 
@@ -325,19 +335,19 @@ class CommandProcessor(ConfigLoadable):
             return data
 
     def _check_system_lock(self, addr):
-        '''
+        """
             return true if addr is not equal to the system lock address
             ie this isnt who locked us so we deny access
-        '''
+        """
         if self.system_lock:
-            if not addr in [None, 'None']:
+            if addr not in (None, 'None'):
                 return self.system_lock_address != addr
 
     def _authenticate(self, data, sender_addr):
         if self.use_security:
             # check sender addr is in hosts
             if self._hosts:
-                if not sender_addr in self._hosts:
+                if sender_addr not in self._hosts:
                     for h in self._hosts:
                         # match to any computer on the subnet
                         hargs = h.split('.')
@@ -351,8 +361,9 @@ class CommandProcessor(ConfigLoadable):
 
         if self._check_system_lock(sender_addr):
             return str(SystemLockErrorCode(self.system_lock_name,
-                                         self.system_lock_address,
-                                         sender_addr, logger=self.logger))
+                                           self.system_lock_address,
+                                           sender_addr, logger=self.logger))
+
 # if __name__ == '__main__':
 #    setup('command server')
 #    e = CommandProcessor(name='command_server',

@@ -35,8 +35,8 @@ class RawExporter(IsotopeDatabaseManager):
         ans = self.make_analyses(ans, unpack=True)
         root = os.path.join(paths.data_dir, 'apis')
         p, _ = unique_path(root, 'data', extension='.csv')
-        with open(p, 'w') as fp:
-            writer = csv.writer(fp)
+        with open(p, 'w') as wfile:
+            writer = csv.writer(wfile)
             for ai in ans:
                 self._write_analysis(ai, writer)
 
@@ -78,8 +78,8 @@ class RawExporter(IsotopeDatabaseManager):
 
     def _get_analyses(self, name):
         p = os.path.join(paths.data_dir, 'apis', '{}.yaml'.format(name))
-        with open(p, 'r') as fp:
-            yd = yaml.load(fp)
+        with open(p, 'r') as rfile:
+            yd = yaml.load(rfile)
 
         def gen():
             db = self.db

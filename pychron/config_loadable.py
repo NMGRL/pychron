@@ -16,8 +16,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from pychron.paths import paths
 from loggable import Loggable
+from pychron.paths import paths
+
 # ============= standard library imports ========================
 import os
 import ConfigParser
@@ -120,6 +121,16 @@ class ConfigLoadable(ConfigMixin):
     """
     """
 
+    def update_configuration(self, **kw):
+        config = self.get_configuration()
+        for section, options in kw.iteritems():
+            if not config.has_section(section):
+                config.add_section(section)
+
+            for option, value in options.iteritems():
+                config.set(section, option, value)
+        self.write_configuration(config)
+
     def bootstrap(self, *args, **kw):
         """
         """
@@ -136,7 +147,6 @@ class ConfigLoadable(ConfigMixin):
                 self.warning('failed opening')
         else:
             self.warning('failed loading')
-
 
     def open(self, *args, **kw):
         """

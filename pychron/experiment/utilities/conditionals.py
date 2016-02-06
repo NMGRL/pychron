@@ -17,14 +17,14 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.pychron_constants import LINE_STR, NULL_STR, LIGHT_RED, LIGHT_YELLOW
+from pychron.pychron_constants import LINE_STR, NULL_STR, LIGHT_YELLOW
 
 SYSTEM = 10
 QUEUE = 20
 RUN = 30
 
 LEVEL_TXT_MAP = {SYSTEM: 'system', QUEUE: 'queue', RUN: 'run'}
-LEVEL_COLOR_MAP = {SYSTEM: LIGHT_RED, QUEUE: 'lightblue', RUN: LIGHT_YELLOW}
+LEVEL_COLOR_MAP = {SYSTEM: 'white', QUEUE: 'lightblue', RUN: LIGHT_YELLOW}
 
 CONDITIONAL_GROUP_TAGS = ('action', 'cancelation', 'truncation', 'termination')
 

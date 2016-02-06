@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,14 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-
-
 # ============= enthought library imports =======================
-
+from traits.api import provides
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.core.data_helper import make_bitarray
+from pychron.hardware.ichiller import IChiller
+# from pychron.remote_hardware.registry import register
+from pychron.tx.registry import tx_register_functions, register
 
 SET_BITS = '111'
 GET_BITS = '110'
@@ -30,21 +31,26 @@ FAULT_BITS = '01000'
 COOLANT_BITS = '01001'
 
 FAULTS_TABLE = ['Tank Level Low',
-              'Fan Fail',
-              None,
-              'Pump Fail',
-              'RTD open',
-              'RTD short',
-              None,
-              None]
+                'Fan Fail',
+                None,
+                'Pump Fail',
+                'RTD open',
+                'RTD short',
+                None,
+                None]
 
 
+@provides(IChiller)
 class ThermoRack(CoreDevice):
-    '''
-    '''
+    """
+    """
     convert_to_C = True
 
     scan_func = 'get_coolant_out_temperature'
+
+    def __init__(self, *args, **kw):
+        super(ThermoRack, self).__init__(*args, **kw)
+        tx_register_functions(self)
 
     # ===========================================================================
     # icore device interface
@@ -63,30 +69,19 @@ class ThermoRack(CoreDevice):
         kw['is_hex'] = True
         super(ThermoRack, self).write(*args, **kw)
 
-
     def ask(self, *args, **kw):
-        '''
-
-        '''
+        """
+        """
         kw['is_hex'] = True
         return super(ThermoRack, self).ask(*args, **kw)
 
-    def _get_read_command_str(self, b):
-        return self._get_command_str(GET_BITS, b)
-
-    def _get_write_command_str(self, b):
-        return self._get_command_str(SET_BITS, b)
-
-    def _get_command_str(self, bits, bits_):
-        cmd = '{:x}'.format(int(bits + bits_, 2))
-        return cmd
-
+    # ichiller interface
     def set_setpoint(self, v):
-        '''
+        """
             input temp in c
-            
+
             thermorack whats f
-        '''
+        """
         if self.convert_to_C:
             v = 9 / 5. * v + 32
 
@@ -103,61 +98,74 @@ class ThermoRack(CoreDevice):
         return cmd, high_byte, low_byte
 
     def get_setpoint(self):
-        '''
-        '''
+        """
+        """
         cmd = self._get_read_command_str(SETPOINT_BITS)
         resp = self.ask(cmd, nbytes=2)
         sp = None
         if not self.simulation and resp is not None:
-            sp = self.parse_response(resp, scale=0.1)
+            sp = self._parse_response(resp, scale=0.1)
         return sp
 
-    def get_faults(self, **kw):
-        '''
-        '''
+    @register(camel_case=True, postprocess=','.join)
+    def get_faults(self, verbose=False, **kw):
+        """
+        """
         cmd = self._get_read_command_str(FAULT_BITS)
-        resp = self.ask(cmd, nbytes=1)
+        resp = self.ask(cmd, nbytes=1, verbose=verbose)
 
         if self.simulation:
             resp = '0'
 
         # parse the fault byte
         fault_byte = make_bitarray(int(resp, 16))
-#        faults = []
-#        for i, fault in enumerate(FAULTS_TABLE):
-#            if fault and fault_byte[7 - i] == '1':
-#                faults.append(fault)
+        # faults = []
+        # for i, fault in enumerate(FAULTS_TABLE):
+        #            if fault and fault_byte[7 - i] == '1':
+        #                faults.append(fault)
         faults = [fault for i, fault in enumerate(FAULTS_TABLE)
-                    if fault and fault_byte[7 - i] == '1']
+                  if fault and fault_byte[7 - i] == '1']
         return faults
 
-    def get_coolant_out_temperature(self, **kw):
-        '''
-        '''
-        if not kw.has_key('verbose'):
-            kw['verbose'] = False
-
+    @register(camel_case=True)
+    def get_coolant_out_temperature(self, force=False, verbose=False, **kw):
+        """
+        """
         cmd = self._get_read_command_str(COOLANT_BITS)
 
-        resp = self.ask(cmd, nbytes=2, **kw)
+        resp = self.ask(cmd, nbytes=2, verbose=verbose, **kw)
         if not self.simulation and resp is not None:
-            temp = self.parse_response(resp, scale=0.1)
+            temp = self._parse_response(resp, scale=0.1)
         else:
             temp = self.get_random_value(0, 40)
 
         return temp
 
-    def parse_response(self, resp, scale=1):
-        '''
-        '''
+    # private
+    def _get_read_command_str(self, b):
+        return self._get_command_str(GET_BITS, b)
+
+    def _get_write_command_str(self, b):
+        return self._get_command_str(SET_BITS, b)
+
+    def _get_command_str(self, bits, bits_):
+        cmd = '{:x}'.format(int(bits + bits_, 2))
+        return cmd
+
+    def _parse_response(self, resp, scale=1.0):
+        """
+        """
         # resp low byte high byte
         # flip to high byte low byte
         # split the response into high and low bytes
         if resp is not None:
             h = resp[2:]
             l = resp[:2]
+            try:
+                resp = int(h + l, 16) * scale
+            except ValueError:
+                return 0
 
-            resp = int(h + l, 16) * scale
             if self.convert_to_C:
                 resp = 5.0 * (resp - 32) / 9.0
 

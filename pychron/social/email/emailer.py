@@ -17,9 +17,11 @@
 # ============= enthought library imports =======================
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+
 from apptools.preferences.preference_binding import bind_preference
-from traits.api import HasTraits, Str, List, Enum, Bool, Int
+from traits.api import HasTraits, Str, Enum, Bool, Int
 from traitsui.api import View
+
 # ============= standard library imports ========================
 import smtplib
 # ============= local library imports  ==========================
@@ -64,40 +66,48 @@ class Emailer(Loggable):
         return bool(self.connect(warn=False, test=True))
 
     def connect(self, warn=True, test=False):
-        if self._server is None:
-            try:
-                server = smtplib.SMTP(self.server_host, self.server_port, timeout=5)
-                server.ehlo()
-                server.starttls()
-                server.ehlo()
-                server.login(self.server_username, self.server_password)
-                if test:
-                    server.quit()
-                    return True
-            except (smtplib.SMTPServerDisconnected, BaseException), e:
-                if warn:
-                    self.warning('SMTPServer not properly configured')
-                server = None
+        try:
+            server = smtplib.SMTP(self.server_host, self.server_port, timeout=5)
+            server.ehlo()
+            server.starttls()
+            server.ehlo()
+            server.login(self.server_username, self.server_password)
+            if test:
+                server.quit()
+                return True
+        except (smtplib.SMTPServerDisconnected, BaseException), e:
+            if warn:
+                self.warning('SMTPServer not properly configured')
+            server = None
 
-            self._server = server
+        return server
 
-        return self._server
+    def send(self, addrs, sub, msg):
+        self.debug('Send email. addrs: {}'.format(addrs, sub))
+        self.debug('========= Message ========')
+        for m in msg.split('\n'):
+            self.debug(m)
+        self.debug('==========================')
 
-    def send(self, addr, sub, msg):
         server = self.connect()
         if server:
-            msg = self._message_factory(addr, sub, msg)
-            try:
-                server.sendmail(self.sender, [addr], msg.as_string())
-                server.close()
-                return True
-            except BaseException:
-                pass
+            if isinstance(addrs, (str, unicode)):
+                addrs = [addrs]
 
-    def _message_factory(self, addr, sub, txt):
+            msg = self._message_factory(addrs, sub, msg)
+            try:
+                server.sendmail(self.sender, addrs, msg.as_string())
+                server.quit()
+                return True
+            except BaseException, e:
+                self.warning('Failed sending mail. {}'.format(e))
+        else:
+            self.warning('Failed connecting to server')
+
+    def _message_factory(self, addrs, sub, txt):
         msg = MIMEMultipart()
         msg['From'] = self.sender  # 'nmgrl@gmail.com'
-        msg['To'] = addr
+        msg['To'] = ','.join(addrs)
         msg['Subject'] = sub
 
         msg.attach(MIMEText(txt))

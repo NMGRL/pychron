@@ -69,7 +69,6 @@
 #        db = MassSpecDatabaseAdapter(name='massspecdata_local',
 #                                  #host='129.138.12.131',
 # #                                  user='massspec',
-# #                                  password='DBArgon'
 #                                  )
 #        db.connect()
 #        m = MassSpecSelector(_db=db,
@@ -220,7 +219,7 @@
 #        ages = np.asarray(ages)
 #        wm, we = self._weighted_mean(ages, errors)
 #        print ages
-#        print errors
+# print 'exception', errors
 #        print 'waieht', wm, we
 #        for ai, ei in zip(ages, errors):
 #            for j, bj in enumerate(bins):

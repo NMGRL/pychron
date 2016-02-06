@@ -21,13 +21,13 @@ from collections import namedtuple
 import time
 
 # ============= local library imports  ==========================
-from pychron.experiment.importer.mass_spec_extractor import Extractor, \
-    MassSpecExtractor
+from pychron.core.progress import open_progress
+from pychron.entry.loaders.extractor import Extractor
+from pychron.entry.loaders.mass_spec_extractor import MassSpecExtractor
 from pychron.loggable import Loggable
 from pychron.pychron_constants import NULL_STR
 from pychron.core.ui.qt.thread import Thread
 from pychron.core.ui.gui import invoke_in_main_thread
-
 
 records = namedtuple('Record', 'name')
 
@@ -67,13 +67,13 @@ class ImporterModel(Loggable):
         invoke_in_main_thread(pd.change_message, m)
 
     def _do_import(self, selected, pd):
-        #func = getattr(self.extractor, 'import_{}'.format(self.import_kind))
+        # func = getattr(self.extractor, 'import_{}'.format(self.import_kind))
 
         st = time.time()
         db = self.db
         with db.session_ctx(commit=not self.dry_run):
             for irrad, levels in selected:
-                #pd.max = len(levels) + 2
+                # pd.max = len(levels) + 2
                 self._progress_message(pd, 'Importing {} {}'.format(irrad, levels))
                 r = self.extractor.import_irradiation(db,
                                                       irrad,
@@ -95,7 +95,7 @@ class ImporterModel(Loggable):
 
         self.info('====== Import Finished elapsed_time= {}s======'.format(int(time.time() - st)))
         return True
-        #if self.imported_names:
+        # if self.imported_names:
         #    self.update_irradiations_needed = True
 
     @cached_property
@@ -140,8 +140,8 @@ class ImporterModel(Loggable):
     def _open_button_fired(self):
         p = self.open_file_dialog()
         if p:
-            with open(p, 'r') as fp:
-                rids = [records(ri.strip()) for ri in fp.read().split('\n')]
+            with open(p, 'r') as rfile:
+                rids = [records(ri.strip()) for ri in rfile.read().split('\n')]
                 self.names = rids
 
     _import_thread = None
@@ -170,7 +170,7 @@ class ImporterModel(Loggable):
                     # get import func from extractor
 
                     n = len(selected) * 2
-                    pd = self.open_progress(n=n)
+                    pd = open_progress(n=n)
 
                     if new_thread:
                         t = Thread(target=self._do_import, args=(selected, pd))

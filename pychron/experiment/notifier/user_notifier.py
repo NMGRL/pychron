@@ -97,7 +97,7 @@ class UserNotifier(Loggable):
 
     def notify_group(self, exp, last_runid, err, addrs):
         subject, msg = self._assemble_message(exp, last_runid, err)
-        failed = addrs[:]
+        failed = list(addrs[:])
         for email in addrs:
             if self._notify(email, subject, msg):
                 break

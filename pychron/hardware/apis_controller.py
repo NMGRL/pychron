@@ -170,7 +170,7 @@ class ApisController(CoreDevice):
         return self.ask(cmd)
 
     def _get_connection_url(self):
-        return '{}:{}'.format(self._communicator.host, self._communicator.port)
+        return '{}:{}'.format(self.communicator.host, self.communicator.port)
 
 # ============= EOF =============================================
 

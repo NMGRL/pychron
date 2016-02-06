@@ -37,7 +37,7 @@ class AgilentUnit(CoreDevice):
 
         """
 
-        self._communicator.write_terminator = chr(10)
+        self.communicator.write_terminator = chr(10)
         cmds = (
             '*CLS',
             'FORM:READING:ALARM OFF',

@@ -21,6 +21,7 @@ from traitsui.api import View, UItem
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from uncertainties import nominal_value
 from pychron.graph.graph import Graph
 from pychron.graph.tools.cursor_tool_overlay import CursorToolOverlay
 
@@ -50,8 +51,9 @@ class PeakCenterView(HasTraits):
             p.overlays.append(dto)
             t.current_position = an.peak_center, 0
 
-            g.add_vertical_rule(an.peak_center)
-            g.add_plot_label('Center={:0.5f} V'.format(an.peak_center),
+            v = nominal_value(an.peak_center)
+            g.add_vertical_rule(v)
+            g.add_plot_label('Center={:0.5f} V'.format(v),
                              font='modern 12',
                              color='darkgreen')
             g.set_y_limits(pad='0.05', plotid=0)

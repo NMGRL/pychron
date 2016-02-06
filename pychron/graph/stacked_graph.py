@@ -17,8 +17,9 @@
 
 
 # =============enthought library imports=======================
-from traits.api import Bool, on_trait_change, Event
 from chaco.scatterplot import ScatterPlot
+from traits.api import Bool, on_trait_change, Event
+
 # =============standard library imports ========================
 
 # =============local library imports  ==========================
@@ -28,7 +29,7 @@ from graph import Graph
 class StackedGraph(Graph):
     """
     """
-    #indices=List
+    # indices=List
 
     bind_index = Bool(True)
     bind_padding = Bool(True)
@@ -54,7 +55,7 @@ class StackedGraph(Graph):
             grid = 'x_grid' if obj.orientation == 'vertical' else 'y_grid'
             for p in self.plots:
                 setattr(getattr(p, grid), name, new)
-                #getattr(p, grid).visible = new
+                # getattr(p, grid).visible = new
 
     @on_trait_change('plots:[padding_left, padding_right]')
     def _update_padding(self, obj, name, old, new):
@@ -101,7 +102,7 @@ class StackedGraph(Graph):
 
         p = super(StackedGraph, self).new_plot(**kw)
         p.value_axis.ensure_labels_bounded = True
-        p.value_axis.title_spacing = 30
+        p.value_axis.title_spacing = 50
 
         if n >= 1:
             pm = self.plotcontainer.components[0]
@@ -169,18 +170,11 @@ class StackedGraph(Graph):
                         #                pi.padding_bottom = 0
 
     def new_series(self, *args, **kw):
-        # if not 'plotid' in kw:
-        #     kw['plotid'] = 0
-        if not 'bind_id' in kw:
-            kw['bind_id'] = None
-
-        bind_id = kw['bind_id']
-        #print bind_id, self.bind_index, self
         s, _p = super(StackedGraph, self).new_series(*args, **kw)
-        #print 'new series', bind_id
-        #series_id = self.series[plotid][-1]
-
         if self.bind_index:
+            if 'bind_id' not in kw:
+                kw['bind_id'] = None
+            bind_id = kw['bind_id']
             if isinstance(s, ScatterPlot):
                 s.bind_id = bind_id
                 self._bind_index(s, bind_id=bind_id)
@@ -215,15 +209,24 @@ class StackedGraph(Graph):
                 pass
 
     def _update_metadata(self, bind_id, obj, name, old, new):
-        #print bind_id, obj, name, old, new
+        if obj:
+            if hasattr(obj, 'suppress_update') and obj.suppress_update:
+                return
+            elif hasattr(obj, 'suppress_hover_update') and obj.suppress_hover_update:
+                return
+
+        obj.suppress_update = True
         for plot in self.plots:
             for k, ps in plot.plots.iteritems():
                 si = ps[0]
 
-                if not si.index is obj:
+                if si.index is not obj:
                     if hasattr(si, 'bind_id'):
                         if si.bind_id == bind_id:
-                            si.index.metadata = obj.metadata
+                            md = obj.metadata
+                            si.index.metadata = md
+                            si.index.suppress_update = False
+        obj.suppress_update = False
 
     def _bind_index(self, scatter, bind_id=0, bind_selection=True, **kw):
         if bind_selection:
@@ -231,10 +234,10 @@ class StackedGraph(Graph):
                                                                   obj, name, old, new)
             scatter.index.on_trait_change(u, 'metadata_changed')
 
-            #self.indices.append(scatter.index)
-            #print 'fff', len(self.indices)
+            # self.indices.append(scatter.index)
+            # print 'fff', len(self.indices)
 
-            #def clear(self):
+            # def clear(self):
             #    print 'clear', self.indices
             #    for idx in self.indices:
             #        print 'removing', idx

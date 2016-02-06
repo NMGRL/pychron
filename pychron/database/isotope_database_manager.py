@@ -16,10 +16,11 @@
 
 # ============= enthought library imports =======================
 
-from traits.api import String, Property, Event, \
-    cached_property, Any, Int
-from traits.has_traits import provides
 from apptools.preferences.preference_binding import bind_preference
+from traits.api import Property, Event, \
+    cached_property, Any, Int, Str
+from traits.has_traits import provides
+
 # ============= standard library imports ========================
 from itertools import groupby
 import weakref
@@ -32,7 +33,6 @@ from pychron.loggable import Loggable
 from pychron.database.orms.isotope.meas import meas_AnalysisTable
 from pychron.experiment.utilities.identifier import make_runid
 from pychron.processing.analyses.dbanalysis import DBAnalysis
-
 
 ANALYSIS_CACHE = {}
 ANALYSIS_CACHE_COUNT = {}
@@ -60,7 +60,7 @@ class BaseIsotopeDatabaseManager(Loggable):
         if connect:
             self.db.connect(warn=warn, version_warn=version_warn, attribute_warn=attribute_warn)
 
-    #IDatastore protocol
+    # IDatastore protocol
     def get_greatest_aliquot(self, identifier):
         ret = 0
         if self.db:
@@ -98,15 +98,6 @@ class BaseIsotopeDatabaseManager(Loggable):
                 self.debug('defaults finished')
                 return True
 
-    def verify_database_connection(self, inform=True):
-        if self.db is not None:
-            if self.db.connect(force=True):
-                return True
-                #                 self.db.flush()
-                #                 self.db.reset()
-        elif inform:
-            self.warning_dialog('Not Database available')
-
     def bind_preferences(self):
         if self.db is None:
             self.db = self._db_factory()
@@ -126,8 +117,8 @@ class BaseIsotopeDatabaseManager(Loggable):
 
     def _open_progress(self, n, close_at_end=True):
         from pychron.core.ui.progress_dialog import myProgressDialog
+
         pd = myProgressDialog(max=n - 1,
-                              #dialog_size=(0,0, 550, 15),
                               close_at_end=close_at_end,
                               can_cancel=True,
                               can_ok=True)
@@ -158,8 +149,8 @@ class BaseIsotopeDatabaseManager(Loggable):
 class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
     _db_klass = IsotopeAdapter
 
-    irradiation = String
-    level = String
+    irradiation = Str
+    level = Str
 
     irradiations = Property(depends_on='saved, updated')
     levels = Property(depends_on='irradiation, saved, updated')
@@ -167,48 +158,23 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
     saved = Event
     updated = Event
 
-    # use_vcs = Bool
-    # use_offline_database = Bool
-    # vcs = Any
-    # offline_bridge = Any
-
-    def bind_preferences(self):
-        super(IsotopeDatabaseManager, self).bind_preferences()
-
-        # prefid = 'pychron.vcs'
-        # bind_preference(self, 'use_vcs', '{}.use_vcs'.format(prefid))
-        # self._use_vcs_changed()
-
-        # prefid = 'pychron.offline'
-        # bind_preference(self, 'use_offline_database', '{}.use_offline_database'.format(prefid))
-        # self._use_offline_database_changed()
-
-    # def _use_offline_database_changed(self):
-    #     if self.use_offline_database:
-    #         from pychron.database.offline_bridge import OfflineBridge
-    #
-    #         if not self.offline_bridge:
-    #             self.offline_bridge = OfflineBridge()
-    #             self.offline_bridge.init()
-    # def _use_vcs_changed(self):
-    #     if self.use_vcs:
-    #         from pychron.processing.vcs_data.vcs_manager import IsotopeVCSManager
-    #
-    #         if not self.vcs:
-    #             self.vcs = IsotopeVCSManager()
-    # def update_vcs_analysis(self, an, msg):
-    #     if self.use_vcs:
-    #         self.vcs.update_analysis(an, msg)
-    #
-    # def update_vcs_analyses(self, ans, msg):
-    #     if self.use_vcs:
-    #         self.vcs.update_analyses(ans, msg)
+    def save_flux(self, labnumber, v, e):
+        db = self.db
+        with db.session_ctx():
+            dbln = db.get_labnumber(labnumber)
+            if dbln:
+                dbpos = dbln.irradiation_position
+                dbhist = db.add_flux_history(dbpos)
+                dbflux = db.add_flux(float(v), float(e))
+                dbflux.history = dbhist
+                dbln.selected_flux_history = dbhist
+                self.information_dialog(u'Flux for {} {} \u00b1{} saved to database'.format(labnumber, v, e))
 
     def filter_analysis_tag(self, ans, exclude):
         if not isinstance(exclude, (list, tuple)):
             exclude = (exclude,)
 
-        return filter(lambda x: not x.tag in exclude, ans)
+        return filter(lambda x: x.tag not in exclude, ans)
 
     def load_raw_data(self, ai):
         if not ai.has_raw_data:
@@ -340,7 +306,6 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
             # partition into DBAnalysis vs IsotopeRecordView
             db_ans, no_db_ans = map(list, partition(ans, lambda x: isinstance(x, DBAnalysis)))
             self._calculate_cached_ages(db_ans, calculate_age, calculate_F)
-
             if unpack:
                 for di in db_ans:
                     if not di.has_raw_data:
@@ -376,7 +341,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                             no_db_ans.extend(b)
                     else:
                         self._calculate_cached_ages(cns, calculate_age, calculate_F)
-                        #add analyses from cache to db_ans
+                        # add analyses from cache to db_ans
                         db_ans.extend(cns)
 
                     # increment value in cache_count
@@ -390,6 +355,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                     db_ans, new_ans = self._construct_analyses(no_db_ans, db_ans, progress,
                                                                calculate_age, calculate_F,
                                                                unpack, use_cache,
+                                                               use_progress,
                                                                load_aux=load_aux, **kw)
                     db_ans.extend(new_ans)
 
@@ -405,7 +371,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                     # if self.use_offline_database:
                     #     if progress:
                     #         progress.increase_max(len(new_ans) + 1)
-                    #         progress.change_message('Transfering analyses for offline usage')
+                    #         progress.change_message('Transferring analyses for offline usage')
                     #     self.offline_bridge.add_analyses(db, new_ans, progress=progress)
 
             if progress:
@@ -430,18 +396,30 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                 ANALYSIS_CACHE.pop(uuid)
                 ANALYSIS_CACHE_COUNT.pop(uuid)
 
+    def verify_database_connection(self, inform=True):
+        db = self.db
+        if db is not None:
+            if db.connect(force=True):
+                return True
+                # self.db.flush()
+                # self.db.reset()
+        elif inform:
+            self.warning_dialog('Not Database available')
+
     # ===============================================================================
     # private
     # ===============================================================================
     def _construct_analyses(self, no_db_ans, db_ans, progress, calculate_age, calculate_F,
-                            unpack, use_cache, **kw):
+                            unpack, use_cache, use_progress, **kw):
 
         uuids = [ri.uuid for ri in no_db_ans]
         # for ui in uuids:
         #     self.debug('loading uuid={}'.format(ui))
 
         # get all dbrecords with one call
+        # print uuids
         ms = self.db.get_analyses_uuid(uuids)
+        # print ms
         # ms = timethis(self.db.get_analyses_uuid, args=(uuids,))
 
         construct = self._construct_analysis
@@ -456,13 +434,14 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
             a = construct(x, gi, prog, unpack=unpack,
                           calculate_age=calculate_age,
                           calculate_F=calculate_F, **kw)
-
+            # print a
             if use_cache:
                 add_to_cache(a)
             return a
 
         try:
-            return db_ans, progress_loader(no_db_ans, func, progress=progress, reraise_cancel=True)
+            return db_ans, progress_loader(no_db_ans, func, progress=progress, use_progress=use_progress,
+                                           reraise_cancel=True)
         except CancelLoadingError:
             return [], []
 
@@ -490,7 +469,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
             atype = rec.analysis_type
 
         if prog:
-            m=''
+            m = ''
             if calculate_age:
                 show_age = atype in ('unknown', 'cocktail')
                 m = 'calculating age' if show_age else ''
@@ -508,13 +487,15 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                 ai.sync(group, unpack=unpack, load_aux=load_aux)
         else:
             ai = DBAnalysis()  # if not self.use_vcs else VCSAnalysis
+            # print ai
             ai.sync(group, unpack=unpack, load_aux=load_aux)
+            # print ai, group
 
             # ai = klass(group_id=group_id,
             #        graph_id=graph_id)
 
-        ai.trait_set(group_id=group_id,
-                     graph_id=graph_id)
+        # ai.trait_set(group_id=group_id,
+        #              graph_id=graph_id)
 
         # if not self.use_vcs:
         #
@@ -526,7 +507,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                 # timethis(ai.sync, args=(meas_analysis, ),
                 #          kwargs=dict(unpack=unpack, load_aux=load_aux))
                 # timethis(ai.calculate_age, kwargs=dict(force=not self.use_vcs))
-                ai.calculate_age()  #force=not self.use_vcs)
+                ai.calculate_age()
                 # timethis(ai.sync, args=(meas_analysis,),
                 #          kwargs=dict(unpack=unpack, load_aux=load_aux))
                 # timethis(ai.calculate_age)
@@ -544,7 +525,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
         if rec is None:
             self.debug('cannot add None to cache')
 
-        if not rec.uuid in ANALYSIS_CACHE:
+        if rec.uuid not in ANALYSIS_CACHE:
             # self.debug('Adding {} to cache'.format(rec.record_id))
             ANALYSIS_CACHE[rec.uuid] = weakref.ref(rec)()
             ANALYSIS_CACHE_COUNT[rec.uuid] = 1
@@ -568,7 +549,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
         db = self.db
         if db and db.connected:
             with db.session_ctx():
-                r = [str(ri.name) for ri in db.get_irradiations()
+                r = [ri.name for ri in db.get_irradiations()
                      if ri.name]
 
             if r and not self.irradiation:
@@ -584,7 +565,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
             with self.db.session_ctx():
                 irrad = self.db.get_irradiation(self.irradiation)
                 if irrad:
-                    r = sorted([str(ri.name) for ri in irrad.levels
+                    r = sorted([ri.name for ri in irrad.levels
                                 if ri.name])
                     if r and not self.level:
                         self.level = r[0]
@@ -596,33 +577,5 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
     # ===============================================================================
     def _irradiation_changed(self):
         self.level = ''
+
 # ============= EOF =============================================
-# def _add_arar(self, meas_analysis, analysis):
-#
-#         db = self.db
-#         with db.session_ctx() as sess:
-#             hist = db.add_arar_history(meas_analysis)
-#             #a, e=age.nominal_value, age.std_dev
-#             d = dict()
-#             attrs = ['k39', 'ca37', 'cl36', 'rad40',
-#                      'Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36']
-#
-#             for a in attrs:
-#                 v = getattr(analysis, a)
-#                 ek = '{}_err'.format(a)
-#                 d[a] = float(v.nominal_value)
-#                 d[ek] = float(v.std_dev)
-#
-#             age_scalar = analysis.arar_constants.age_scalar
-#             d['age_err_wo_j'] = analysis.age_error_wo_j * age_scalar
-#
-#             age = analysis.age
-#             d['age'] = age.nominal_value * age_scalar
-#             d['age_err'] = age.std_dev * age_scalar
-#
-#             db.add_arar(hist, **d)
-#
-#             meas_analysis.selected_histories.selected_arar = hist
-#             sess.commit()
-#             #hist.selected=analysis.selected_histories
-#             #analysis.selected_histories.selected_arar=hist

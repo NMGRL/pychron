@@ -444,7 +444,7 @@ if __name__ == '__main__':
 #
 #        cymin = eymin
 # #        print bucket
-# #        print eymin, cymin, '   ', m, eymin, exmin, eymax
+# #        print 'exception', eymin, cymin, '   ', m, eymin, exmin, eymax
 #
 #    buckets.append(bucket)
 #    AT = []

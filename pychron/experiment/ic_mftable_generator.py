@@ -16,13 +16,9 @@
 
 # ============= enthought library imports =======================
 import csv
-import re
-from traits.api import HasTraits, Button, Any, Instance
-from traitsui.api import View, Item
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 import time
-from pychron.core.helpers.isotope_utils import extract_mass
 from pychron.loggable import Loggable
 from pychron.paths import paths
 
@@ -66,8 +62,8 @@ class ICMFTableGenerator(Loggable):
     def _write_table(self, detectors, refiso, results):
         p = paths.ic_mftable
         self.info('Writing new IC MFTable to {}'.format(p))
-        with open(p, 'w') as fp:
-            w = csv.writer(fp)
+        with open(p, 'w') as wfile:
+            w = csv.writer(wfile)
             header = ['iso'] + list(detectors)
             w.writerow(header)
             w.writerow([refiso] + results)

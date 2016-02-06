@@ -18,19 +18,23 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
-class no_update(object):
-    model = None
 
-    def __init__(self, model):
-        self.model = model
+class no_update(object):
+    _model = None
+
+    def __init__(self, model, fire_update_needed=True):
+        self._model = model
+        self._fire_update_needed = fire_update_needed
 
     def __enter__(self):
-        if self.model:
-            self.model._no_update = True
+        if self._model:
+            self._model._no_update = True
 
     def __exit__(self, _type, value, _traceback):
-        if self.model:
-            self.model._no_update = False
-            self.model.update_needed = True
+        if self._model:
+            self._model._no_update = False
+            if self._fire_update_needed:
+                if hasattr(self._model, 'update_needed'):
+                    self._model.update_needed = True
 
 # ============= EOF =============================================

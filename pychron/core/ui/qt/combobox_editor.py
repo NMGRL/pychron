@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from PySide import QtGui, QtCore
 from PySide.QtGui import QCompleter, QSizePolicy, QComboBox, QHBoxLayout, QPushButton, QWidget
-from traits.api import Str, Bool, List
+from traits.api import Str, Bool, Event
 from traits.trait_errors import TraitError
 from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.constants import OKColor, ErrorColor
@@ -59,7 +59,8 @@ class ComboBoxWidget(QWidget):
 
 
 class _ComboboxEditor(SimpleEditor):
-    _no_enum_update = 0
+    # _no_enum_update = 0
+    refresh = Event
 
     def init(self, parent):
         super(_ComboboxEditor, self).init(parent)
@@ -86,12 +87,18 @@ class _ComboboxEditor(SimpleEditor):
                                        self.update_autoset_text_object)
             control.setInsertPolicy(QtGui.QComboBox.NoInsert)
 
-        self._no_enum_update = 0
+        # self._no_enum_update = 0
         self.set_tooltip()
         control.setCompleter(QCompleter(control))
+        self.sync_value(self.factory.refresh,
+                        'refresh',
+                        'from')
 
         if self.factory.addable:
             self.control.button.clicked.connect(self.update_add)
+
+    def _refresh_fired(self):
+        self.update_editor()
 
     def create_combo_box(self):
         if self.factory.addable:
@@ -136,6 +143,26 @@ class _ComboboxEditor(SimpleEditor):
 
             self._no_enum_update -= 1
 
+    def update_editor(self):
+        """ Updates the editor when the object trait changes externally to the
+            editor.
+        """
+        if self._no_enum_update == 0:
+            self._no_enum_update += 1
+            if not self.factory.evaluate:
+                try:
+                    index = self.names.index(self.inverse_mapping[self.value])
+
+                    self.control.setCurrentIndex(index)
+                except BaseException, e:
+                    self.control.setEditText(str(self.value))
+            else:
+                try:
+                    self.control.setEditText(self.str_value)
+                except:
+                    self.control.setEditText('')
+            self._no_enum_update -= 1
+
 
 class ComboboxEditor(BasicEditorFactory):
     klass = _ComboboxEditor
@@ -144,6 +171,7 @@ class ComboboxEditor(BasicEditorFactory):
     auto_set = Bool(True)
     use_strict_values = Bool(False)
     addable = Bool(False)
+    refresh = Str
 
 # ============= EOF =============================================
 

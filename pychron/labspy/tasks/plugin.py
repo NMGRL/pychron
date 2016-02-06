@@ -15,10 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from traits.api import on_trait_change
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
-# from pychron.labspy.client import MeteorLabspyClient
 from pychron.labspy.client import LabspyClient
 from pychron.labspy.tasks.preferences import LabspyPreferencesPane
 
@@ -28,7 +28,7 @@ class LabspyClientPlugin(BaseTaskPlugin):
     id = 'pychron.labspy_client.plugin'
 
     def _labspy_client_factory(self, *args, **kw):
-        return LabspyClient()
+        return LabspyClient(application=self.application)
 
     def _service_offers_default(self):
         so = self.service_offer_factory(protocol=LabspyClient,
@@ -39,9 +39,14 @@ class LabspyClientPlugin(BaseTaskPlugin):
         return [LabspyPreferencesPane]
 
     def test_communication(self):
-        lc=self.application.get_service(LabspyClient)
+        lc = self.application.get_service(LabspyClient)
         return lc.test_connection(warn=False)
+
+    @on_trait_change('application:started')
+    def _start(self):
+        plugin = self.application.get_plugin('pychron.dashboard.tasks.server.plugin.DashboardServerPlugin')
+        if not plugin:
+            client = self.application.get_service(LabspyClient)
+            client.start()
+
 # ============= EOF =============================================
-
-
-

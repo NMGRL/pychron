@@ -16,9 +16,9 @@
 
 # ============= enthought library imports =======================
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traits.trait_types import Str
+from traits.api import Directory, Bool, String
 from traitsui.api import View, Item, VGroup
-from traits.api import Directory, Bool
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.base_preferences_helper import GitRepoPreferencesHelper, remote_status_item
@@ -30,6 +30,14 @@ class GeneralPreferences(GitRepoPreferencesHelper):
     use_login = Bool
     multi_user = Bool
     confirm_quit = Bool
+    show_random_tip = Bool
+    # use_advanced_ui = Bool
+
+    organization = String(enter_set=True, auto_set=False)
+
+    def _organization_changed(self, new):
+        if not self.remote and new:
+            self.remote = '{}/Laboratory'.format(new)
 
 
 class GeneralPreferencesPane(PreferencesPane):
@@ -41,11 +49,21 @@ class GeneralPreferencesPane(PreferencesPane):
                           show_border=True, label='Root')
         login_grp = VGroup(Item('use_login'), Item('multi_user'),
                            label='Login', show_border=True)
+
+        o_grp = VGroup(Item('organization', label='Name'),
+                       remote_status_item('Laboratory Repo'),
+                       show_border=True,
+                       label='Organization')
+
         v = View(VGroup(Item('confirm_quit', label='Confirm Quit',
                              tooltip='Ask user for confirmation when quitting application'),
+                        Item('show_random_tip', label='Random Tip',
+                             tooltip='Display a Random Tip whe the application starts'),
+                        # Item('use_advanced_ui', label='Advanced UI',
+                        #      tooltip='Display the advanced UI'),
                         root_grp,
                         login_grp,
-                        remote_status_item('Laboratory Repo'),
+                        o_grp,
                         label='General',
                         show_border=True))
         return v

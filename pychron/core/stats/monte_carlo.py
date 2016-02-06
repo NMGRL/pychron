@@ -66,7 +66,7 @@ def perturb(pred, exog, nominal_ys, y_es, ga, yp):
 #     j = []
 #     je = []
 #     p = '/Users/ross/Sandbox/monte_carlo.txt'
-#     with open(p, 'r') as fp:
+#     with open(p, 'r') as rfile:
 #         reader = csv.reader(fp)
 #         for l in reader:
 #             if not l[0][0] == '#':

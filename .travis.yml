@@ -1,3 +1,4 @@
+sudo: false
 language: python
 notifications:
   email:
@@ -21,7 +22,7 @@ before_install:
   - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
   - chmod +x miniconda.sh
   - ./miniconda.sh -b
-  - export PATH=/home/travis/miniconda/bin:$PATH
+  - export PATH=/home/travis/miniconda2/bin:$PATH
   - conda update --yes --quiet conda
   # Fix for headless TravisCI
   - "export DISPLAY=:99.0"
@@ -38,7 +39,7 @@ before_install:
 install:
   - conda create --yes --quiet -n pychron-test ${PKGS} ${OPTIONAL}
   - source activate pychron-test
-  - conda install --yes --file requirements_tests.txt
-  - pip install -r pip_requirements.txt
+  - conda install --yes statsmodels PyYAML traits pyface traitsui enable chaco xlrd xlwt lxml sqlalchemy apptools
+  - pip install uncertainties pint
 
 script: python setup.py test

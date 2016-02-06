@@ -26,26 +26,37 @@ def get_data_dir(op):
     return op
 
 
-def isotope_db_factory(path, remove=True):
-    from pychron.database.adapters.isotope_adapter import IsotopeAdapter
-    from pychron.database.orms.isotope.util import Base
+def dvc_db_factory(path, remove=True, **kw):
+    from pychron.dvc.dvc_database import DVCDatabase
+    from pychron.dvc.dvc_orm import Base
 
-    db = IsotopeAdapter()
+    return _db_factory(DVCDatabase, Base, path, remove, **kw)
+
+
+def _db_factory(klass, base, path, remove, **kw):
+    db = klass()
     # db.verbose_retrieve_query = True
-    db.trait_set(kind='sqlite', path=path)
+    db.trait_set(kind='sqlite', path=path, **kw)
     db.connect()
 
     if remove and os.path.isfile(db.path):
         os.remove(db.path)
 
-    metadata = Base.metadata
+    metadata = base.metadata
     db.create_all(metadata)
     return db
 
 
+def isotope_db_factory(path, remove=True):
+    from pychron.database.adapters.isotope_adapter import IsotopeAdapter
+    from pychron.database.orms.isotope.util import Base
+
+    return _db_factory(IsotopeAdapter, Base, path, remove)
+
+
 def massspec_db_factory(path, remove=True):
-    from pychron.database.adapters.massspec_database_adapter import MassSpecDatabaseAdapter
-    from pychron.database.orms.massspec_orm import Base
+    from pychron.mass_spec.database.massspec_database_adapter import MassSpecDatabaseAdapter
+    from pychron.mass_spec.database.massspec_orm import Base
 
     if remove and os.path.isfile(path):
         os.remove(path)
@@ -58,7 +69,5 @@ def massspec_db_factory(path, remove=True):
     metadata = Base.metadata
     db.create_all(metadata)
     return db
+
 # ============= EOF =============================================
-
-
-

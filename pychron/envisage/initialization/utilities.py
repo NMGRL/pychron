@@ -19,12 +19,13 @@
 # ============= local library imports  ==========================
 import os
 
-from pychron.core.helpers.filetools import to_bool
+from pychron.core.helpers.strtools import to_bool
 from pychron.envisage.initialization.initialization_parser import InitializationParser
 from pychron.envisage.initialization.nodes import Plugin, PluginTree, GlobalTree, GlobalValue, InitializationModel
 
 
 DESCRIPTION_MAP = {'Experiment': 'Execute sets of automated runs',
+                   'MassSpec': 'Mass Spec plugin',
                    'PyScript': "Edit PyScripts; pychron's internal scripting language",
                    'ArArConstants': 'List of Ar/Ar geochronology constants',
                    'Database': 'SQL database interface',
@@ -32,7 +33,7 @@ DESCRIPTION_MAP = {'Experiment': 'Execute sets of automated runs',
                    'Processing': 'Ar/Ar Processing plugin',
                    'Entry': 'Enter/Edit irradiation data',
                    'Workspace': 'Git-enabled workspace repository',
-                   'SystemMonitor': 'Auto plot analyses and system variables',
+                   'DVC': "Pychron's custom Data Version Control system",
                    'MediaServer': 'Image server/client',
                    'LabBook': 'Git-enabled labbook repository',
                    'Video': 'Video server/client',
@@ -43,13 +44,18 @@ DESCRIPTION_MAP = {'Experiment': 'Execute sets of automated runs',
                    'Image': 'Use to take snapshots with a connected camera\n'
                             'and save to file or database',
                    'ExtractionLine': 'Control extraction line components',
+                   'ClientExtractionLine': 'Remotely control extraction line components',
                    'ArgusSpectrometer': 'Thermo ArgusVI plugin',
+                   'NMGRLFurnace': "NMGRL's resistance furnace plugin",
                    'FusionsCO2': 'Photon Machines Fusions CO2',
                    'FusionsDiode': 'Photon Machines Fusions Diode',
                    'FusionsUV': "NMGRL's custom Fusions UV",
                    'ExternalPipette': 'Interface with the APIS pipette system',
+                   'CanvasDesigner': 'Visual editor for the Extraction Line Schematic',
+                   'IGSN': 'International Geo Sample Number',
 
                    'Email': 'Allows pychron to send emails',
+                   'Pipeline': "Pychron's pipeline based processing workflow",
 
                    'Use IPC': 'use Inter Process Communication e.g. use RemotHardwareServer',
                    'Ignore Initialization Warnings': 'Ignore initialization warnings',
@@ -59,13 +65,15 @@ DESCRIPTION_MAP = {'Experiment': 'Execute sets of automated runs',
                    'Dashboard Simulation': 'Use a dummy device if none available'}
 
 DEFAULT_PLUGINS = (('General', ('Experiment',
+                                'MassSpec',
                                 'PyScript',
                                 'ArArConstants',
                                 'Loading',
                                 'Processing',
                                 'Database',
+                                'DVC',
+                                'Pipeline',
                                 'Entry',
-                                'SystemMonitor',
                                 'DashboardServer',
                                 'DashboardClient',
                                 'LabspyClient',
@@ -74,9 +82,13 @@ DEFAULT_PLUGINS = (('General', ('Experiment',
                                 'MediaServer',
                                 'Update',
                                 'Video',
-                                'Image')),
+                                'Image',
+                                'CanvasDesigner',
+                                'IGSN')),
                    ('Hardware', ('ArgusSpectrometer',
                                  'ExtractionLine',
+                                 'ClientExtractionLine',
+                                 'NMGRLFurnace',
                                  'FusionsCO2',
                                  'FusionsDiode',
                                  'FusionsUV',
@@ -84,15 +96,17 @@ DEFAULT_PLUGINS = (('General', ('Experiment',
                    ('Social', ('Email',)))
 
 DEFAULT_GLOBALS = (('Use IPC', 'use_ipc'),
+                   ('Pipeline Debug', 'pipeline_debug'),
                    ('Use Startup Tests', 'use_startup_tests'),
                    ('Ignore Initialization Warnings', 'ignore_initialization_warnings'),
                    ('Ignore Initialization Questions', 'ignore_initialization_questions'),
                    ('Ignore Initialization Required', 'ignore_initialization_required'),
+                   ('Ignore Connection Warnings', 'ignore_connection_warnings'),
                    ('Communication Simulation', 'communication_simulation'),
                    ('Dashboard Simulation', 'dashboard_simulation'),)
 
 DEFAULTS_MAP = {'Ar Data Reduction': {'globals': ('Use Startup Tests',),
-                                      'general': ('Processing', 'Database', 'Entry', 'ArArConstants'),
+                                      'general': ('Pipeline', 'DVC', 'Entry', 'ArArConstants'),
                                       'hardware': None,
                                       'social': None},
                 'Extraction Line': {'globals': ('Use IPC', 'Use Startup Tests',),
@@ -100,24 +114,24 @@ DEFAULTS_MAP = {'Ar Data Reduction': {'globals': ('Use Startup Tests',),
                                     'hardware': ('ExtractionLine', ),
                                     'social': ('Email',)},
                 'Loading': {'globals': None,
-                            'general': ('Database', 'Loading', 'Image', 'Entry'),
+                            'general': ('DVC', 'Loading', 'Image', 'Entry'),
                             'hardware': None,
                             'social': None},
                 'Experiment': {'globals': ('Use Startup Tests',),
-                               'general': ('Experiment', 'Database', 'ArArConstants', 'PyScript', 'Entry',),
-                               'hardware': ('ArgusSpectrometer', 'ExtractionLine'),
+                               'general': ('Experiment', 'DVC', 'ArArConstants', 'PyScript', 'Entry',),
+                               'hardware': ('ArgusSpectrometer', 'ClientExtractionLine'),
                                'social': ('Email',)},
                 'Experiment CO2': {'globals': ('Use Startup Tests',),
-                                   'general': ('Experiment', 'Database', 'ArArConstants', 'PyScript'),
-                                   'hardware': ('ArgusSpectrometer', 'ExtractionLine', 'FusionsCO2'),
+                                   'general': ('Experiment', 'DVC', 'ArArConstants', 'PyScript'),
+                                   'hardware': ('ArgusSpectrometer', 'ClientExtractionLine', 'FusionsCO2'),
                                    'social': ('Email',)},
                 'Experiment Diode': {'globals': ('Use Startup Tests',),
-                                     'general': ('Experiment', 'Database', 'ArArConstants', 'PyScript'),
-                                     'hardware': ('ArgusSpectrometer', 'ExtractionLine', 'FusionsDiode'),
+                                     'general': ('Experiment', 'DVC', 'ArArConstants', 'PyScript'),
+                                     'hardware': ('ArgusSpectrometer', 'ClientExtractionLine', 'FusionsDiode'),
                                      'social': ('Email',)},
                 'Experiment UV': {'globals': ('Use Startup Tests',),
-                                  'general': ('Experiment', 'Database', 'ArArConstants', 'PyScript'),
-                                  'hardware': ('ArgusSpectrometer', 'ExtractionLine', 'FusionsUV'),
+                                  'general': ('Experiment', 'DVC', 'ArArConstants', 'PyScript'),
+                                  'hardware': ('ArgusSpectrometer', 'ClientExtractionLine', 'FusionsUV'),
                                   'social': ('Email',)}}
 
 NOMINAL_DEFAULTS = ['Ar Data Reduction',
@@ -174,10 +188,12 @@ def get_initialization_model():
     for gi in ip.get_plugin_groups():
         tree = get_tree(gi, rtree)
         if tree:
-            for pp in ip.get_plugins(gi, element=True):
-                plugin = get_plugin(pp.text.strip(), tree)
-                if plugin:
-                    plugin.enabled = to_bool(pp.get('enabled'))
+            ps = ip.get_plugins(gi, element=True)
+            if ps:
+                for pp in ps:
+                    plugin = get_plugin(pp.text.strip(), tree)
+                    if plugin:
+                        plugin.enabled = to_bool(pp.get('enabled'))
 
     for gi in ip.get_globals():
         gv = gtree.get_value(gi.tag)
@@ -192,5 +208,3 @@ def get_initialization_model():
     return model
 
 # ============= EOF =============================================
-
-

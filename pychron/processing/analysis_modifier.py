@@ -15,25 +15,22 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from copy import copy
-import os
-
 from traits.api import Instance, HasTraits, List, Str, Bool, Event, Int
 from traitsui.api import View, VGroup, Item, EnumEditor
-
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from traitsui.editors import TabularEditor
 from traitsui.group import HGroup
 from traitsui.item import UItem
 from traitsui.tabular_adapter import TabularAdapter
+# ============= standard library imports ========================
+from copy import copy
+import os
+# ============= local library imports  ==========================
 from pychron.database.adapters.isotope_adapter import IsotopeAdapter
-from pychron.database.adapters.massspec_database_adapter import MassSpecDatabaseAdapter
+from pychron.mass_spec.database.massspec_database_adapter import MassSpecDatabaseAdapter
 from pychron.experiment.utilities.identifier import make_runid
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.persistence_loggable import PersistenceMixin
-from pychron.processing.tasks.analysis_edit.selection_view import AnalysisAdapter
 
 
 class AnalysisAdapter(TabularAdapter):
@@ -237,7 +234,7 @@ class AnalysisModifier(Loggable):
                     if dbirradpos:
                         dban.RID = make_runid(ident, ni.aliquot, ni.step)
                         self.debug('setting {} to {}'.format(ident, dban.RID))
-                        dban.Aliquot = '{:02n}'.format(int(ni.aliquot))
+                        dban.Aliquot = '{:02d}'.format(int(ni.aliquot))
                         dban.Increment = ni.step
                         dban.Aliquot_pychron = ni.aliquot
 

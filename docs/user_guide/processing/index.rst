@@ -4,7 +4,7 @@ Processing
   :maxdepth: 1
 
   browser
-  ..easy
+      pipeline
   ..ideogram
   ..isochron
   ..spectrum

@@ -14,22 +14,30 @@
 # limitations under the License.
 # ===============================================================================
 
-
 # ============= enthought library imports =======================
-
 from pyface.message_dialog import warning
 from pyface.tasks.task_window_layout import TaskWindowLayout
-
-from pychron.envisage.tasks.actions import PAction as Action, PTaskAction as TaskAction
-
 
 # ============= standard library imports ========================
 import os
 # ============= local library imports  ==========================
+from pychron.core.helpers.filetools import get_path
+from pychron.envisage.tasks.actions import PAction as Action, PTaskAction as TaskAction
 from pychron.envisage.resources import icon
+from pychron.envisage.view_util import open_view
 from pychron.paths import paths
 
 EXP_ID = 'pychron.experiment.task'
+
+
+class ResetSystemHealthAction(Action):
+    name = 'Reset System Health'
+    dname = 'Reset System Health'
+
+    def perform(self, event):
+        from pychron.experiment.health.series import reset_system_health_series
+
+        reset_system_health_series()
 
 
 class ExperimentAction(Action):
@@ -49,6 +57,7 @@ class ExperimentAction(Action):
 
 class ConfigureEditorTableAction(TaskAction):
     name = 'Configure Experiment Table'
+    dname = 'Configure Experiment Table'
     method = 'configure_experiment_table'
 
 
@@ -86,22 +95,26 @@ class BasePatternAction(TaskAction):
 
 class OpenPatternAction(BasePatternAction):
     name = 'Open Pattern...'
+    dname = 'Open Pattern'
     method = 'open_pattern'
 
 
 class NewPatternAction(BasePatternAction):
     name = 'New Pattern...'
+    dname = 'New Pattern'
     method = 'new_pattern'
 
 
 class SendTestNotificationAction(TaskAction):
     name = 'Send Test Notification'
+    dname = 'Send Test Notification'
     method = 'send_test_notification'
     # accelerator = 'Ctrl+Shift+N'
 
 
 class DeselectAction(TaskAction):
     name = 'Deselect'
+    dname = 'Deselect'
     method = 'deselect'
     tooltip = 'Deselect the selected run(s)'
     id = 'pychron.deselect'
@@ -109,12 +122,14 @@ class DeselectAction(TaskAction):
 
 class UndoAction(TaskAction):
     name = 'Undo'
+    dname = 'Undo'
     method = 'undo'
     accelerator = 'Ctrl+Z'
 
 
 class QueueConditionalsAction(Action):
     name = 'Edit Queue Conditionals'
+    dname = 'Edit Queue Conditionals'
 
     def perform(self, event):
         task = event.task
@@ -136,6 +151,7 @@ class QueueConditionalsAction(Action):
 
 class SystemConditionalsAction(Action):
     name = 'Edit System Conditionals'
+    dname = 'Edit System Conditionals'
 
     def perform(self, event):
         from pychron.experiment.conditional.conditionals_edit_view import edit_conditionals
@@ -147,29 +163,33 @@ class SystemConditionalsAction(Action):
         if spec:
             dnames = spec.spectrometer.detector_names
 
-        p = paths.system_conditionals
-        if os.path.isfile(p):
+        p = get_path(paths.spectrometer_dir, '.*conditionals', ('.yaml', '.yml'))
+        if p:
             edit_conditionals(p, detectors=dnames, app=task.application)
         else:
             warning(None, 'No system conditionals file at {}'.format(p))
 
 
-class QueueAction(ExperimentAction):
-    def _open_experiment(self, event, path=None):
-
-        app = event.task.window.application
-        task = event.task
-        if task.id == EXP_ID:
-            task.open(path)
-        else:
-            task = app.get_task(EXP_ID, False)
-            if task.open(path):
-                task.window.open()
+def open_experiment(event, path=None):
+    app = event.task.window.application
+    task = event.task
+    if task.id == EXP_ID:
+        task.open(path)
+    else:
+        task = app.get_task(EXP_ID, False)
+        if task.open(path):
+            task.window.open()
 
 
-class NewExperimentQueueAction(QueueAction):
+# class QueueAction(ExperimentAction):
+#     def _open_experiment(self, event, path=None):
+#         open_experiment(event, path)
+
+
+class NewExperimentQueueAction(ExperimentAction):
     description = 'Create a new experiment queue'
     name = 'New Experiment'
+    dname = 'New Experiment'
     id = 'pychron.new_experiment'
 
     def perform(self, event):
@@ -179,13 +199,29 @@ class NewExperimentQueueAction(QueueAction):
             application = event.task.window.application
             win = application.create_window(TaskWindowLayout(EXP_ID))
             task = win.active_task
-            task.new()
-            win.open()
+            if task.new():
+                win.open()
 
 
-class OpenLastExperimentQueueAction(QueueAction):
+class OpenExperimentHistoryAction(Action):
+    name = 'Experiment Launch History'
+    dname = 'Experiment Launch History'
+
+    def perform(self, event):
+        from pychron.experiment.experiment_launch_history import ExperimentLaunchHistory
+
+        elh = ExperimentLaunchHistory()
+        elh.load()
+        info = elh.edit_traits()
+        if info.result:
+            if elh.selected:
+                open_experiment(event, elh.selected.path)
+
+
+class OpenLastExperimentQueueAction(ExperimentAction):
     description = 'Open last executed experiment'
     name = 'Open Last Experiment...'
+    dname = 'Open Last Experiment'
     id = 'pychron.open_last_experiment'
 
     def __init__(self, *args, **kw):
@@ -195,11 +231,11 @@ class OpenLastExperimentQueueAction(QueueAction):
     def perform(self, event):
         path = self._get_last_experiment()
         if path:
-            self._open_experiment(event, path)
+            open_experiment(event, path)
         else:
             warning(None, 'No last experiment available')
             # if os.path.isfile(paths.last_experiment):
-            # with open(paths.last_experiment, 'r') as fp:
+            # with open(paths.last_experiment, 'r') as rfile:
             #         path = fp.readline()
             #         if os.path.isfile(path):
             #             self._open_experiment(event, path)
@@ -210,22 +246,42 @@ class OpenLastExperimentQueueAction(QueueAction):
 
     def _get_last_experiment(self):
         if os.path.isfile(paths.last_experiment):
-            with open(paths.last_experiment, 'r') as fp:
-                path = fp.readline()
+            with open(paths.last_experiment, 'r') as rfile:
+                path = rfile.readline()
                 if os.path.isfile(path):
                     return path
 
 
-class OpenExperimentQueueAction(QueueAction):
+class OpenExperimentQueueAction(ExperimentAction):
     description = 'Open experiment'
     name = 'Open Experiment...'
+    dname = 'Open Experiment'
     image = icon('project-open')
     id = 'pychron.open_experiment'
 
     def perform(self, event):
-        path = '/Users/ross/Pychron_dev/experiments/Current Experiment.txt'
-        # path = '/Users/ross/Pychrondata_dev/experiments/test.txt'
-        self._open_experiment(event, path)
+        open_experiment(event)
+
+
+class OpenCurrentExperimentQueueAction(ExperimentAction):
+    description = 'Open Current Experiment'
+    name = 'Open Current Experiment...'
+    dname = 'Open Current Experiment'
+    image = icon('project-open')
+    id = 'pychron.open_current_experiment'
+
+    def perform(self, event):
+        path = os.path.join(paths.experiment_dir, 'Current Experiment.txt')
+        open_experiment(event, path)
+
+
+class SaveAsCurrentExperimentAction(TaskAction):
+    description = 'Save As Current Experiment'
+    name = 'Save As Current Experiment...'
+    dname = 'Save As Current Experiment'
+    image = icon('document-save-as')
+    id = 'pychron.experiment.save_as_current_experiment'
+    method = 'save_as_current_experiment'
 
 
 # ===============================================================================
@@ -233,16 +289,27 @@ class OpenExperimentQueueAction(QueueAction):
 # ===============================================================================
 class SignalCalculatorAction(ExperimentAction):
     name = 'Signal Calculator'
+    dname = 'Signal Calculator'
 
     def perform(self, event):
         obj = self._get_service(event, 'pychron.experiment.signal_calculator.SignalCalculator')
         app = event.task.window.application
-        app.open_view(obj)
+        open_view(obj)
 
 
 class ResetQueuesAction(TaskAction):
     method = 'reset_queues'
     name = 'Reset Queues'
+    dname = 'Reset Queues'
 
+
+class LastAnalysisRecoveryAction(Action):
+    name = 'Recover Last Analysis'
+    dname = 'Recover Last Analysis'
+
+    def perform(self, event):
+        from pychron.experiment.analysis_recovery import AnalysisRecoverer
+        a = AnalysisRecoverer()
+        a.recover_last_analysis()
 
 # ============= EOF ====================================

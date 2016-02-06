@@ -22,7 +22,7 @@ from traits.api import Instance
 # ============= standard library imports ========================
 import binascii
 # ============= local library imports  ==========================
-from pychron.database.adapters.massspec_database_adapter import MassSpecDatabaseAdapter, PR_KEYS
+from pychron.mass_spec.database.massspec_database_adapter import MassSpecDatabaseAdapter, PR_KEYS
 from pychron.entry.export.base_irradiation_exporter import BaseIrradiationExporter
 
 
@@ -59,8 +59,8 @@ def generate_source_pr_id(dbpr):
 
 def pr_dict(dbpr):
     d = {dk: getattr(dbpr, sk) for sk, dk in zip(SRC_PR_KEYS, PR_KEYS)}
-
     dd = {dk: getattr(dbpr, sk) for sk, dk in zip(('name',), ('Label',))}
+
     d.update(dd)
 
     return d
@@ -77,9 +77,6 @@ class MassSpecIrradiationExporter(BaseIrradiationExporter):
             return True if connection to dest made
         """
         return self.destination.connect()
-
-    def export_production_ratio(self):
-        pass
 
     def export_chronology(self, irradname):
         with self.destination.session_ctx():
@@ -103,11 +100,11 @@ class MassSpecIrradiationExporter(BaseIrradiationExporter):
                 self._export_level(irradname, level)
 
     def _export_chronology(self, src_irr):
-        self.info('exporting chronology for "{}"'.format(src_irr.name))
+        self.info('Exporting chronology for "{}"'.format(src_irr.name))
         dest = self.destination
 
         for p, s, e in src_irr.chronology.get_doses():
-            self.debug('adding dose power={} start={} end={}'.format(p, s, e))
+            self.debug('Adding dose power={} start={} end={}'.format(p, s, e))
             dest.add_irradiation_chronology_entry(src_irr.name, s, e)
 
     def _export_level(self, irradname, src_level):
@@ -117,7 +114,7 @@ class MassSpecIrradiationExporter(BaseIrradiationExporter):
 
         dest_level = dest.get_irradiation_level(irradname, levelname)
         if not dest_level:
-            self.debug('exporting level {} {}'.format(irradname, levelname))
+            self.debug('Exporting level {} {}'.format(irradname, levelname))
             dest_pr = self._export_production_ratios(src_level.production)
             try:
                 holder = src_level.holder.name
@@ -125,7 +122,7 @@ class MassSpecIrradiationExporter(BaseIrradiationExporter):
                 holder = ''
 
             dest.add_irradiation_level(irradname, src_level.name,
-                                                    holder, dest_pr)
+                                       holder, dest_pr)
         else:
             self.debug('Irradiation="{}", Level="{}" already exists. {}'.format(irradname, levelname, action))
 
@@ -133,13 +130,15 @@ class MassSpecIrradiationExporter(BaseIrradiationExporter):
             self._export_position(dest, '{}{}'.format(irradname, src_level.name), pos)
 
     def _export_production_ratios(self, source_pr):
+
         dest = self.destination
         action = 'Skipping'
         pid = generate_source_pr_id(source_pr)
         dest_pr = dest.get_production_ratio_by_id(pid)
         if not dest_pr:
+            self.debug('Add Production Ratios="{}"'.format(source_pr.name))
             pdict = pr_dict(source_pr)
-            pdict['ProductionRatiosID']=pid
+            pdict['ProductionRatiosID'] = pid
             dest_pr = dest.add_production_ratios(pdict)
             dest.flush()
         else:
@@ -154,7 +153,45 @@ class MassSpecIrradiationExporter(BaseIrradiationExporter):
         dest_pos = dest.get_irradiation_position(idn)
         if not dest_pos:
             self.debug('Exporting position {} {}'.format(idn, irradiation_level))
-            dest.add_irradiation_position(idn, irradiation_level, pos.position)
+            try:
+                mat = pos.labnumber.sample.material.name
+                dbmat = dest.get_material(mat)
+                if not dbmat:
+                    dest.add_material(mat)
+
+            except AttributeError:
+                mat = ''
+            try:
+                f = pos.labnumber.selected_flux_history.flux
+                j, jerr = f.j, f.j_err
+            except AttributeError:
+                j, jerr = 0, 0
+
+            note = pos.labnumber.note
+            sample_name = pos.labnumber.sample.name
+            sam = dest.get_sample(sample_name)
+            if sam:
+                sampleid = sam.SampleID
+            else:
+                try:
+                    pname = pos.labnumber.sample.project.name
+                    proj = dest.get_project(pname)
+                    if not proj:
+                        proj = dest.add_project(pname)
+                except AttributeError:
+                    proj = None
+
+                sam = dest.add_sample(sample_name)
+                if proj:
+                    sam.project = proj
+
+                dest.commit()
+                sampleid = sam.SampleID
+
+            dest.add_irradiation_position(idn, irradiation_level, pos.position,
+                                          material=mat,
+                                          sample=sampleid,
+                                          j=j, jerr=jerr, note=note)
 
         else:
             self.debug('Irradiation Position="{}" already exists {}'.format(idn, action))

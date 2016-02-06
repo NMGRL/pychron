@@ -19,7 +19,8 @@
 # ============= standard library imports ========================
 import math
 from functools import partial
-from decimal import Decimal
+
+
 # ============= local library imports  ==========================
 
 def format_percent_error(v, e, n=2, include_percent_sign=False):

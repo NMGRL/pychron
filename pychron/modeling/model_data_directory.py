@@ -153,5 +153,5 @@ class ModelDataDirectory(HasTraits):
 #                    v[self.id][1].edge_color = self.secondary_color
 #
 #        except Exception, err:
-#            print err
+# print 'exception', err
 # ============= EOF ====================================

@@ -142,20 +142,20 @@ class XMLParser(object):
             self._root = Element('root')
 
     def _parse_file(self, p):
-        path = None
+        txt = None
         if isinstance(p, (str, unicode)):
             if os.path.isfile(p):
-                if isinstance(p, str):
-                    path = open(p, 'r')
+                with open(p, 'r') as rfile:
+                    txt = rfile.read()
 
-        if path:
-            txt = path.read()
-            self._root = XML(txt)
-            path.close()
-            return True
+        if txt is None:
+            txt = p.read()
 
-    def load(self, fp):
-        return self._parse_file(fp)
+        self._root = XML(txt)
+        return True
+
+    def load(self, rfile):
+        return self._parse_file(rfile)
 
     def add(self, tag, value, root, **kw):
         if root is None:
@@ -180,15 +180,15 @@ class XMLParser(object):
         if p is None:
             p = self.path
         if p and os.path.isdir(os.path.dirname(p)):
-            txt = self.tostring(pretty_print)
-            with open(p,'w') as fp:
-                fp.write(pprint_xml(txt))
+            # txt = self.tostring(pretty_print)
+            # with open(p,'w') as fp:
+                # fp.write(pprint_xml(txt))
 
-            # tree = self.get_tree()
-            # tree.write(p,
-            #            xml_declaration=True,
-            #            method='xml',
-            #            pretty_print=pretty_print)
+            tree = self.get_tree()
+            tree.write(p,
+                       xml_declaration=True,
+                       method='xml',
+                       pretty_print=pretty_print)
 
 
 

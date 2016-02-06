@@ -1,4 +1,4 @@
-from pychron.experiment.importer.mass_spec_binary_extractor import MassSpecBinaryExtractor
+from pychron.entry.loaders.mass_spec_binary_extractor import MassSpecBinaryExtractor
 
 __author__ = 'ross'
 

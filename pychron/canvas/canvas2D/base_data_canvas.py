@@ -15,10 +15,11 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-from traits.api import Tuple, Bool, on_trait_change
-from enable.api import Pointer
 from chaco.api import LinePlot, LinearMapper, DataView, ArrayDataSource
 from chaco.tools.api import ZoomTool, PanTool
+from enable.api import Pointer
+from traits.api import Tuple, Bool, on_trait_change
+
 # =============standard library imports ========================
 from numpy import hstack
 # =============local library imports  ==========================
@@ -27,12 +28,13 @@ from numpy import hstack
 class BaseDataCanvas(DataView):
     """
     """
-    fill_padding = True
+    # fill_padding = True
     #    bgcolor = (0.9, 0.9, 1.0)
     #    bgcolor = (0, 1.0, 0)
     #    border_visible = True
-    #    use_backbuffer = True
+    # use_backbuffer = True
     #    bgcolor = 'lightblue'
+    unified_draw = True
     x_range = Tuple
     y_range = Tuple
     view_x_range = Tuple
@@ -143,9 +145,9 @@ class BaseDataCanvas(DataView):
         #            self.index_axis.visible = False
         self.value_axis.visible = self.show_axes
         self.index_axis.visible = self.show_axes
+
         self.x_grid.visible = self.show_grids
         self.y_grid.visible = self.show_grids
-
 
     @on_trait_change('view_x_range')
     def _update_xrange(self):
@@ -215,7 +217,6 @@ class BaseDataCanvas(DataView):
 
         return w, h
 
-
     def _vertical_line(self, gc, x, y1, y2, color=(0, 0, 0)):
         """
         """
@@ -225,9 +226,8 @@ class BaseDataCanvas(DataView):
         self.line_segment(gc, p1, p2, color)
 
     def _horizontal_line(self, gc, y, x1, x2, color=(0, 0, 0)):
-        '''
-
-        '''
+        """
+        """
         p1 = (x1, y)
         p2 = (x2, y)
         self.line_segment(gc, p1, p2, color)
@@ -240,31 +240,20 @@ class BaseDataCanvas(DataView):
         gc.line_to(*p2)
         gc.draw_path()
 
-    def _draw_hook(self, gc, *args, **kw):
-        """
+        # def _draw_underlay(self, gc, *args, **kw):
+        #     """
+        #     """
+        #     pass
+        #
+        # def _draw_underlay(self, *args, **kw):
+        #     super(BaseDataCanvas, self)._draw_underlay(*args, **kw)
+        #     self._draw_hook(*args, **kw)
 
-        """
-        pass
-
-    def draw(self, gc, *args, **kw):
-        """
-        """
-        with gc:
-
-            DataView._draw(self, gc, *args, **kw)
-
-            #with gc:
-            #gc.translate_ctm(0,0.5)
-            #gc.clip_to_rect(self.x-0.5, self.y-2, self.width+1, self.height+4)
-            #gc.clip_to_rect(self.outer_x, self.outer_y, self.outer_width, self.outer_height)
-            self._draw_hook(gc, *args, **kw)
-
-            for o in self.overlays:
-                if o.visible:
-                    o.overlay(None, gc, *args, **kw)
-
-                    #DataView._draw(self, gc, *args, **kw)
-                    # super(BaseDataCanvas, self).draw(gc, *args, **kw)
-
+        # def draw(self, *args, **kw):
+        #     """
+        #     """
+        #
+        #     super(BaseDataCanvas, self).draw(*args, **kw)
+        #     self._draw_hook(*args, **kw)
 
 # ====================EOF==================

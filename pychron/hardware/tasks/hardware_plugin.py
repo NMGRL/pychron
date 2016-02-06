@@ -17,10 +17,13 @@
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Bool, Instance, List, Dict
 # from traitsui.api import View, Item
+from pychron.core.helpers.importtools import import_klass
+from pychron.core.helpers.strtools import to_bool
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from envisage.extension_point import ExtensionPoint
 # from pychron.managers.hardware_manager import HardwareManager
 # from pychron.remote_hardware.remote_hardware_manager import RemoteHardwareManager
+from pychron.envisage.view_util import open_view
 from pychron.hardware.flag_manager import FlagManager
 # from apptools.preferences.preference_binding import bind_preference
 from pychron.hardware.core.i_core_device import ICoreDevice
@@ -30,9 +33,12 @@ from envisage.ui.tasks.task_extension import TaskExtension
 from pyface.action.action import Action
 from pyface.tasks.action.schema_addition import SchemaAddition
 from pychron.hardware.tasks.hardware_preferences import HardwarePreferencesPane
-from apptools.preferences.preference_binding import bind_preference
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+
+
 class Preference(HasTraits):
     pass
 
@@ -56,7 +62,7 @@ class OpenFlagManagerAction(Action):
         app = event.task.window.application
         man = app.get_service('pychron.hardware.flag_manager.FlagManager')
 
-        app.open_view(man)
+        open_view(man)
 
 
 class HardwarePlugin(BaseTaskPlugin):
@@ -73,8 +79,8 @@ class HardwarePlugin(BaseTaskPlugin):
 
     #    def _system_lock_manager_factory(self):
     #        return SystemLockManager(application=self.application)
-    enable_hardware_server = Bool
-    _remote_hardware_manager = Instance('pychron.remote_hardware.remote_hardware_manager.RemoteHardwareManager')
+    _remote_hardware_manager = None
+    # _remote_hardware_manager = Instance('pychron.remote_hardware.remote_hardware_manager.RemoteHardwareManager')
     # _hardware_manager = Instance('pychron.managers.hardware_manager.HardwareManager')
 
     def start(self):
@@ -85,9 +91,8 @@ class HardwarePlugin(BaseTaskPlugin):
         afh = self.application.preferences.get('pychron.hardware.auto_find_handle')
         awh = self.application.preferences.get('pychron.hardware.auto_write_handle')
         if afh is not None:
-            toBool = lambda x: True if x == 'True' else False
-            dp.serial_preference.auto_find_handle = toBool(afh)
-            dp.serial_preference.auto_write_handle = toBool(awh)
+            dp.serial_preference.auto_find_handle = to_bool(afh)
+            dp.serial_preference.auto_write_handle = to_bool(awh)
 
         ini = Initializer(device_prefs=dp)
         for m in self.managers:
@@ -96,47 +101,48 @@ class HardwarePlugin(BaseTaskPlugin):
         # any loaded managers will be registered as services
         if not ini.run(application=self.application):
             self.application.exit()
+            # self.application.starting
             return
 
-        # create the hardware server
-        # rhm = self.application.get_service(RemoteHardwareManager)
-        # bind_preference(rhm, 'enable_hardware_server', 'pychron.hardware.enable_hardware_server')
-        # bind_preference(rhm, 'enable_directory_server', 'pychron.hardware.enable_directory_server')
-        # rhm.bootstrap()
-        bind_preference(self, 'enable_hardware_server', 'pychron.hardware.enable_hardware_server')
+        # create the hardware proxy server
+        ehs = to_bool(self.application.preferences.get('pychron.hardware.enable_hardware_server'))
+        if ehs:
+            use_tx = to_bool(self.application.preferences.get('pychron.hardware.use_twisted'))
+            if use_tx:
+                from pychron.tx.server import TxServer
+                rhm = TxServer()
+                node = self.application.preferences.node('pychron.hardware')
+                ports = eval(node.get('ports'))
+                factories = eval(node.get('factories'))
+                for protocol in eval(node.get('pnames')):
+                    factory = import_klass(factories[protocol])
+                    port = int(ports[protocol])
+                    rhm.add_endpoint(port, factory(self.application))
+                    self.debug('Added Pychron Proxy Service: {}:{}'.format(protocol, port))
 
-        if self.enable_hardware_server:
-            from pychron.remote_hardware.remote_hardware_manager import RemoteHardwareManager
-            rhm = RemoteHardwareManager(application=self.application)
-            rhm.bootstrap()
+            else:
+                from pychron.remote_hardware.remote_hardware_manager import RemoteHardwareManager
+                rhm = RemoteHardwareManager(application=self.application)
+
             self._remote_hardware_manager = rhm
+            rhm.bootstrap()
 
     def stop(self):
         if self._remote_hardware_manager:
             self._remote_hardware_manager.kill()
-
-        # if self._hardware_manager:
-        #     self._hardware_manager.kill()
 
         if self.managers:
             for m in self.managers:
                 man = m['manager']
                 if man:
                     man.kill()
-                    # man.close_ui()
 
         for s in self.application.get_services(ICoreDevice):
             if s.is_scanable:
                 s.stop_scan()
-                #if s._scanning and not s._auto_started:
-
-#                s.save_to_db()
 
     def _factory(self):
-        # man = self.application.get_service(HardwareManager)
-        # man = HardwareManager(application=self.application)
         task = HardwareTask()
-        # self._hardware_manager = man
         return task
 
     def _flag_manager_factory(self):

@@ -16,14 +16,13 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-from time import mktime
 import uuid
+from time import mktime
 
 from sqlalchemy import Column, Integer, String, \
     ForeignKey, BLOB, Float, Time, Boolean, DateTime
 from sqlalchemy.orm import relationship, deferred
 from sqlalchemy.sql.expression import func
-
 
 # ============= local library imports  ==========================
 from pychron.database.orms.isotope.util import foreignkey, stringcolumn
@@ -166,6 +165,7 @@ class meas_GainHistoryTable(Base, UserMixin):
     applied_date = Column(DateTime, default=func.now())
     hash = stringcolumn(32)
     gains = relationship('meas_GainTable')
+    analyses = relationship('meas_AnalysisTable', backref='gain_history')
     save_type = Column(String(20), default=1)
 
 
@@ -262,7 +262,6 @@ class meas_MonitorTable(Base, NameMixin):
     tripped = Column(Boolean)
 
     analysis_id = foreignkey('meas_AnalysisTable')
-
 
 # class meas_PositionsTable(Base, BaseMixin):
 #     load_identifier = Column(String(80), ForeignKey('loading_LoadTable.name'))

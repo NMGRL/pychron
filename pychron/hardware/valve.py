@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Str, Any, List, Float, Int, Property, Bool
+from traits.api import Str, Any, Float, Int, Property, Bool
 from traitsui.api import View, Item, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -38,7 +38,7 @@ class HardwareValve(Switch):
     # description = Str
     # software_lock = Bool(False)
     # enabled = Bool(True)
-    interlocks = List
+
     check_actuation_enabled = Bool(True)
     check_actuation_delay = Float(0)  # time to delay before checking actuation
 
@@ -47,13 +47,12 @@ class HardwareValve(Switch):
     sample_period = Float(1)
 
     evalve = Any
-    owner = Str
     prefix_name = 'VALVE'
 
-    def is_name(self, name):
-        if len(name) == 1:
-            name = 'VALVE-{}'.format(name)
-        return name == self.name
+    # def is_name(self, name):
+    #     if len(name) == 1:
+    #         name = '{}-{}'.format(self.prefix_name, name)
+    #     return name == self.name
 
     def _state_changed(self):
         if self.evalve:

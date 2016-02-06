@@ -134,7 +134,7 @@
 #     # subprocess.call(['pip', 'install', '-r{}'.format(rp)])
 #     # reqs=['pyproj','lxml','uncertainties','xlrd','xlwt',
 #     #       'statsmodels','pyshp','pytables','sqlalchemy','reportlab']
-#     with open(rp, 'r') as fp:
+#     with open(rp, 'r') as rfile:
 #         for req in fp:
 #             subprocess.call(['easy_install', req])
 #

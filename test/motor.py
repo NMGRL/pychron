@@ -17,36 +17,10 @@
 # ============= enthought library imports =======================
 import unittest
 
-from pychron.hardware.linear_mapper import LinearMapper
-from pychron.hardware.core.motion.motion_profiler import MotionProfiler
-from pychron.hardware.core.motion.motion_profiler_old import MotionProfiler as MotionProfilerOld
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.hardware.linear_mapper import LinearMapper
 
-
-class MotionProfilerTest(unittest.TestCase):
-    def setUp(self):
-        self.mp = MotionProfiler()
-        self.mpold = MotionProfilerOld()
-
-    def testCheckParameters2(self):
-        displacement = 100
-        mv, mac, mdc = 0.1, 10, 10
-        args = self.mp.calculate_corrected_parameters(0, displacement,
-                                                        mac, mdc)
-#         print args2
-
-        print 'new', self.mp.calculate_transit_parameters(displacement, *args)
-        argsold = self.mpold.calculate_corrected_parameters(displacement,
-                                                       mv, mac, mdc)
-
-        print 'old', self.mpold.calculate_transit_parameters(displacement, *argsold)
-#         print nv, na, nd
-#         print args1
-#         print self.mp.calculate_transit_parameters(displacement, *args1)
-
-        self.assertTupleEqual(args, argsold)
 
 class LinearMapperTest(unittest.TestCase):
     def setUp(self):
@@ -56,8 +30,8 @@ class LinearMapperTest(unittest.TestCase):
         self.mapper.high_data = 6
         self.mapper.low_step = 0
         self.mapper.high_step = 9500
-    def testMapData(self):
 
+    def testMapData(self):
         m = self.mapper
 
         # map from steps to data
@@ -68,7 +42,8 @@ class LinearMapperTest(unittest.TestCase):
         ds = 9500
         steps = m.map_data(ds)
         self.assertEqual(steps, 6)
-#
+
+    #
     def testMapSteps(self):
         # map from data to steps
         m = self.mapper
@@ -84,7 +59,5 @@ class LinearMapperTest(unittest.TestCase):
         ds = 4
         steps = m.map_steps(ds)
         self.assertEqual(steps, 9500 / 2.)
-
-
 
 # ============= EOF =============================================

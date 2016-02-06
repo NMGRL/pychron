@@ -1,5 +1,8 @@
 from uncertainties import ufloat, umath
+
 from pychron.processing.arar_constants import ArArConstants
+
+
 def mcalc_fractional_error(*args):
     '''
         args= a,b,...,k,T
@@ -83,10 +86,10 @@ def calc_error_contrib(ar40, ar39, ar38, ar37, ar36, s40, s39, s38, s37, s36, J,
 
     errJ = Je * feJR
     errLambdaK = feLambdaK
-#    print err40, err36, err39, errJ
-#    print err36 + err40 + err39 + errJ
+    # print 'exception', err40, err36, err39, errJ
+    # print 'exception', err36 + err40 + err39 + errJ
 
-#    print err36 + err37 + err38 + err40 + err39 + errJ + errLambdaK - 1
+    # print 'exception', err36 + err37 + err38 + err40 + err39 + errJ + errLambdaK - 1
     assert abs(err36 + err37 + err38 + err40 + err39 + errJ + errLambdaK - 1) < 1e-10
     return err40, err39, err38, err37, err36, errJ, errLambdaK
 

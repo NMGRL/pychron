@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,23 +23,18 @@ from uncertainties import ufloat
 from pychron.loggable import Loggable
 
 
-
-
-
-
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
 
-class ExportSpec(Loggable):
+class MassSpecExportSpec(Loggable):
     runid = CStr
-    labnumber=CStr
+    labnumber = CStr
     aliquot = Either(CInt, Str)
     step = Str
     irradpos = CStr
 
-    isotopes=Dict
+    isotopes = Dict
 
     mass_spectrometer = Str
     extract_device = Str
@@ -50,6 +45,7 @@ class ExportSpec(Loggable):
     timestamp = Float
     power_requested = Float(0)
     power_achieved = Float(0)
+    extract_value = Float(0)
     duration = Float(0)
     cleanup = Float(0)
     duration_at_request = Float(0)
@@ -76,6 +72,8 @@ class ExportSpec(Loggable):
     production_name = Str
     j = Any
 
+    shared_logger = True
+
     @property
     def second_stage_delay(self):
         return self.cleanup
@@ -84,24 +82,41 @@ class ExportSpec(Loggable):
         attrs = [('labnumber', 'labnumber'),
                  ('aliquot', 'aliquot'),
                  ('step', 'step'),
-                 ('uuid','uuid'),
+                 ('uuid', 'uuid'),
                  ('irradpos', 'labnumber'),
                  ('timestamp', 'timestamp'),
                  ('extract_device', 'extract_device'), ('tray', 'tray'),
-                 ('position', 'position'), ('power_requested', 'extract_value'),
-                 ('power_achieved', 'extract_value'), ('duration', 'duration'),
-                 ('duration_at_request', 'duration'), ('first_stage_delay', 'duration'),
+                 ('position', 'position'),
+                 ('power_requested', 'extract_value'),
+                 ('power_achieved', 'extract_value'),
+                 ('extract_value', 'extract_value'),
+                 ('duration', 'duration'),
+                 ('duration_at_request', 'duration'),
+                 ('first_stage_delay', 'duration'),
                  ('cleanup', 'cleanup'),
                  ('comment', 'comment'),
                  ('irradiation', 'irradiation'),
                  ('irradiation_position', 'irradiation_pos'),
+                 ('irradiation_pos', 'irradiation_pos'),
                  ('level', 'irradiation_level'),
-                 ('isotopes','isotopes')]
+                 ('irradiation_level', 'irradiation_level'),
+                 ('isotopes', 'isotopes'),
+                 ('tag', 'tag'),
+                 ('sample', 'sample'),
+                 ('material', 'material'),
+                 ('project', 'project'),
+                 ('mass_spectrometer', 'mass_spectrometer'),
+                 ('age', 'age'),
+                 ('age_err', 'age_err'),
+                 ('age_err_wo_j', 'age_err_wo_j'),
+                 ('age_err_wo_j_irrad', 'age_err_wo_j_irrad'),
+                 ('ar39decayfactor', 'ar39decayfactor'),
+                 ('ar37decayfactor', 'ar37decayfactor')]
 
         # if hasattr(record, 'spec'):
-        #     spec = record.spec
+        # spec = record.spec
         # else:
-        #     spec = record
+        # spec = record
 
         for exp_attr, run_attr in attrs:
             if hasattr(record, run_attr):
@@ -113,8 +128,8 @@ class ExportSpec(Loggable):
                     self.debug(e)
 
         # if hasattr(record, 'cdd_ic_factor'):
-        #     ic = record.cdd_ic_factor
-        #     if ic is None:
+        # ic = record.cdd_ic_factor
+        # if ic is None:
         #         self.debug('Using default CDD IC factor 1.0')
         #         ic = ufloat(1, 1.0e-20)
         #
@@ -133,17 +148,17 @@ class ExportSpec(Loggable):
                 self.debug('no attribute {}'.format(a))
 
     # def open_file(self):
-    #     return self.data_manager.open_file(self.data_path)
+    # return self.data_manager.open_file(self.data_path)
 
     def iter_isotopes(self):
         return ((iso.name, iso.detector) for iso in self.isotopes.itervalues())
         # def _iter():
-        #     dm = self.data_manager
-        #     hfile = dm._frame
-        #     root = dm._frame.root
+        # dm = self.data_manager
+        # hfile = dm._frame
+        # root = dm._frame.root
         #     signal = root.signal
-        #     for isogroup in hfile.listNodes(signal):
-        #         for dettable in hfile.listNodes(isogroup):
+        #     for isogroup in hfile.list_nodes(signal):
+        #         for dettable in hfile.list_nodes(isogroup):
         #             iso = isogroup._v_name
         #             det = dettable.name
         #             self.debug('iter_isotopes yield: {} {}'.format(iso, det))
@@ -172,7 +187,7 @@ class ExportSpec(Loggable):
 
     def get_signal_uvalue(self, iso, det):
         try:
-            ps=self.isotopes[iso].uvalue
+            ps = self.isotopes[iso].uvalue
             # ps = self.signal_intercepts['{}signal'.format(iso)]
         except KeyError, e:
             self.debug('no key {} {}'.format(iso,
@@ -183,7 +198,7 @@ class ExportSpec(Loggable):
 
     def get_signal_fit(self, iso):
         try:
-            f=self.isotopes[iso].get_fit(-1)
+            f = self.isotopes[iso].get_fit(-1)
         except KeyError:
             f = 'linear'
         return f
@@ -197,7 +212,7 @@ class ExportSpec(Loggable):
         """
         self.debug('get baseline data {} {}'.format(iso, det))
         # if self.is_peak_hop and det == self.peak_hop_detector:
-        #     iso = None
+        # iso = None
 
         return self._get_data('baseline', iso, det)
 
@@ -205,32 +220,46 @@ class ExportSpec(Loggable):
         self.debug('get signal data {} {}'.format(iso, det))
         return self._get_data('signal', iso, det, **kw)
 
-    def get_filtered_baseline_uvalue(self, iso, nsigma=2, niter=1):
-        m,s=0,0
-        n_filtered_pts = 0
+    def get_filtered_baseline_uvalue(self, iso, nsigma=2, niter=1, error='sem'):
+        m, s, fncnts = 0, 0, 0
+        # n_filtered_pts = 0
         if iso in self.isotopes:
-            iso=self.isotopes[iso]
-            xs,ys=iso.baseline.xs, iso.baseline.ys
+            iso = self.isotopes[iso]
+            xs, ys = iso.baseline.xs, iso.baseline.ys
+# s_dict={'filter_outliers':filter_outliers,
+#                                    'iterations':iterations,
+#                                    'std_devs':std_devs}
+#         self.dirty=notify
+            fod = iso.baseline.filter_outliers_dict
+            niter = fod.get('iterations', niter)
+            nsigma = fod.get('std_devs', nsigma)
+            # reg = MeanRegressor(xs=xs, ys=ys)
+            # reg.calculate()
+            # reg.
             for i in range(niter):
-                m,s=mean(ys), std(ys)
-                res=abs(ys-m)
+                m, s = mean(ys), std(ys, ddof=1)
+                res = abs(ys - m)
 
-                outliers=where(res > (s * nsigma))[0]
-                ys=delete(ys, outliers)
-                n_filtered_pts += len(outliers)
+                outliers = where(res > (s * nsigma))[0]
+                ys = delete(ys, outliers)
+                # n_filtered_pts += len(outliers)
 
-            m, s = mean(ys), std(ys)
+            m, s = mean(ys), std(ys, ddof=1)
+            fncnts = ys.shape[0]
 
-        return ufloat(m, s), len(ys)
+        if error == 'sem':
+            s = (s / fncnts ** 0.5) if fncnts else 0
+
+        return ufloat(m, s), fncnts
 
     def get_baseline_uvalue(self, iso):
         try:
-            v=self.isotopes[iso].baseline.uvalue
+            v = self.isotopes[iso].baseline.uvalue
         except KeyError:
-            v=ufloat(0,0)
+            v = ufloat(0, 0)
         return v
 
-    # def get_baseline_uvalue(self, det):
+        # def get_baseline_uvalue(self, det):
         # vb = []
         #
         # dm = self.data_manager
@@ -238,9 +267,9 @@ class ExportSpec(Loggable):
         # root = dm._frame.root
         # v, e = 0, 0
         # if hasattr(root, 'baseline'):
-        #     baseline = root.baseline
-        #     for isogroup in hfile.listNodes(baseline):
-        #         for dettable in hfile.listNodes(isogroup):
+        # baseline = root.baseline
+        # for isogroup in hfile.list_nodes(baseline):
+        # for dettable in hfile.list_nodes(isogroup):
         #             if dettable.name == det:
         #                 vb = [r['value'] for r in dettable.iterrows()]
         #                 break
@@ -252,17 +281,17 @@ class ExportSpec(Loggable):
         # return ufloat(v, e)
 
     # def _get_baseline_detector(self, iso, det):
-    #     if self.is_peak_hop:
-    #         det = self.peak_hop_detector
-    #         msg = 'is_peak_hop using peak_hop_det baseline {} for {}'.format(det, iso)
+    # if self.is_peak_hop:
+    # det = self.peak_hop_detector
+    # msg = 'is_peak_hop using peak_hop_det baseline {} for {}'.format(det, iso)
     #         self.debug(msg)
     #     return det
 
     def _get_data(self, group, iso, det, verbose=True):
         try:
             iso = self.isotopes[iso]
-            if group!='signal':
-                iso=getattr(iso, group)
+            if group != 'signal':
+                iso = getattr(iso, group)
             t, v = iso.xs, iso.ys
 
         except KeyError:
@@ -278,8 +307,8 @@ class ExportSpec(Loggable):
         # try:
         #     group = getattr(root, group)
         #     if iso is None:
-        #         tab = next((di for ii in hfile.listNodes(group)
-        #                     for di in hfile.listNodes(ii)
+        #         tab = next((di for ii in hfile.list_nodes(group)
+        #                     for di in hfile.list_nodes(ii)
         #                     if di.name == det))
         #     else:
         #         isog = getattr(group, iso)
@@ -312,24 +341,12 @@ class ExportSpec(Loggable):
     def _get_position(self):
         return self._position
 
-        # ============= EOF =============================================
+
+class XMLExportSpec(MassSpecExportSpec):
+    pass
 
 
-def assemble_script_blob(scripts, kinds=None):
-    """
-        make one blob of all the script text
+class YAMLExportSpec(Loggable):
+    shared_logger = True
 
-        return csv-list of names, blob
-    """
-    if kinds is None:
-        kinds = ['extraction', 'measurement', 'post_equilibration', 'post_measurement']
-
-    ts = []
-    for (name, blob), kind in zip(scripts, kinds):
-        ts.append('#' + '=' * 79)
-        ts.append('# {} SCRIPT {}'.format(kind.replace('_', ' ').upper(), name))
-        ts.append('#' + '=' * 79)
-        if blob:
-            ts.append(blob)
-
-    return 'Pychron Script', '\n'.join(ts)
+    # ============= EOF =============================================

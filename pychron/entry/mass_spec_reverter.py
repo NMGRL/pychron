@@ -20,13 +20,14 @@ set_qt()
 # ============= enthought library reverts =======================
 from traits.api import Any, Str
 # ============= standard library imports ========================
+import os
 import struct
 from numpy import array
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import pathtolist
 from pychron.loggable import Loggable
 from pychron.core.helpers.logger_setup import logging_setup
-from pychron.database.adapters.massspec_database_adapter import MassSpecDatabaseAdapter
+from pychron.mass_spec.database.massspec_database_adapter import MassSpecDatabaseAdapter
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.experiment.utilities.identifier import convert_identifier_to_int, strip_runid
 
@@ -61,9 +62,9 @@ class MassSpecReverter(Loggable):
         db = src.db
         db.trait_set(name='pychrondata',
                      kind='mysql',
-                     host='129.138.12.160',
+                     host=os.environ.get('HOST'),
                      username='root',
-                     password='DBArgon')
+                     password=os.environ.get('DB_PWD'))
         self.source = src
 
     def setup_destination(self):
@@ -71,7 +72,7 @@ class MassSpecReverter(Loggable):
         dest.trait_set(name='massspecdata_crow',
                        kind='mysql',
                        username='root',
-                       password='Argon')
+                       password=os.environ.get('DB_PWD'))
         self.destination = dest
 
     def _connect_to_source(self):
@@ -128,11 +129,11 @@ class MassSpecReverter(Loggable):
         return array(sx), array(sy)
 
     def _get_analysis_from_source(self, rid):
-        if rid.count('-')>1:
-            args=rid.split('-')
-            step=None
-            lan='-'.join(args[:-1])
-            aliquot=args[-1]
+        if rid.count('-') > 1:
+            args = rid.split('-')
+            step = None
+            lan = '-'.join(args[:-1])
+            aliquot = args[-1]
         else:
             lan, aliquot, step = strip_runid(rid)
             lan = convert_identifier_to_int(lan)
@@ -193,12 +194,12 @@ class MassSpecReverter(Loggable):
                     self.debug('{} deleting {} refits'.format(isol, nf - 1))
                     # delete peak time blobs
                     for i, pt in enumerate(iso.peak_time_series[1:]):
-                        self.debug('{} A {:02n} deleting pt series {}'.format(isol, i + 1, pt.Counter))
+                        self.debug('{} A {:02d} deleting pt series {}'.format(isol, i + 1, pt.Counter))
                         sess.delete(pt)
 
                     # delete isotope results
                     for i, ir in enumerate(iso.results[1:]):
-                        self.debug('{} B {:02n} deleting results {}'.format(isol, i + 1, ir.Counter))
+                        self.debug('{} B {:02d} deleting results {}'.format(isol, i + 1, ir.Counter))
                         sess.delete(ir)
 
 
@@ -217,6 +218,3 @@ if __name__ == '__main__':
 # db = self.source.db
 # with db.session_ctx():
 #         pass
-
-
-

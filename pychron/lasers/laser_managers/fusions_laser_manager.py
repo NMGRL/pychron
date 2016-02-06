@@ -15,10 +15,11 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+from apptools.preferences.preference_binding import bind_preference
 from traits.api import DelegatesTo, Property, Instance, Str, List, Dict, \
     on_trait_change, Event, Bool, Any
 from traitsui.api import VGroup, Item, HGroup, spring
-from apptools.preferences.preference_binding import bind_preference
+
 # =============standard library imports ========================
 # from threading import Thread, Timer as DoLaterTimer, Lock
 # import os
@@ -37,7 +38,7 @@ from pychron.hardware.fiber_light import FiberLight
 from laser_manager import LaserManager
 # from pychron.lasers.laser_managers.brightness_pid_manager import BrightnessPIDManager
 # from pychron.viewable import Viewable
-from pychron.core.helpers.filetools import to_bool
+from pychron.core.helpers.strtools import to_bool
 from pychron.core.ui.thread import Thread
 # from pychron.core.ui.gui import invoke_in_main_thread
 # from pychron.lasers.laser_managers.degas_manager import DegasManager
@@ -54,8 +55,8 @@ from pychron.core.ui.thread import Thread
 
 
 class FusionsLaserManager(LaserManager):
-    '''
-    '''
+    """
+    """
 
     laser_controller = Instance(FusionsLogicBoard)
     fiber_light = Instance(FiberLight)
@@ -127,6 +128,7 @@ class FusionsLaserManager(LaserManager):
 
     def end_extract(self):
         self.disable_laser()
+        self.stop_pattern()
 
     def open_motor_configure(self):
         self.laser_controller.open_motor_configure()
@@ -200,8 +202,8 @@ class FusionsLaserManager(LaserManager):
                 pd.close()
 
     def set_beam_diameter(self, bd, force=False, **kw):
-        '''
-        '''
+        """
+        """
         result = False
         motor = self.get_motor('beam')
         if motor is not None:
@@ -213,8 +215,8 @@ class FusionsLaserManager(LaserManager):
         return result
 
     def set_zoom(self, z, **kw):
-        '''
-        '''
+        """
+        """
         self.set_motor('zoom', z, **kw)
 
     def set_motor_lock(self, name, value):
@@ -272,6 +274,12 @@ class FusionsLaserManager(LaserManager):
             else:
                 func()
 
+    def get_brightness(self):
+        if self.use_video:
+            return self.stage_manager.get_brightness()
+        else:
+            return super(FusionsLaserManager, self).get_brightness()
+
     def is_degassing(self):
         if self._degas_thread:
             return self._degas_thread.isRunning()
@@ -312,8 +320,8 @@ class FusionsLaserManager(LaserManager):
         return resp
 
     def show_motion_controller_manager(self):
-        '''
-        '''
+        """
+        """
         stage_controller = self.stage_manager.stage_controller
         package = 'pychron.managers.motion_controller_managers'
         if 'Aerotech' in stage_controller.__class__.__name__:
@@ -326,18 +334,14 @@ class FusionsLaserManager(LaserManager):
         module = __import__(package, globals(), locals(), [klass], -1)
         factory = getattr(module, klass)
         m = factory(motion_controller=stage_controller)
-        m.edit_traits()
+        self.open_view(m)
 
     # ========================= views =========================
 
     def get_control_buttons(self):
-        '''
-        '''
-        return [('enable', 'enable_label', None),
-                #                ('record', 'record_label', None),
-                # ('pointer', 'pointer_label', None),
-                # ('light', 'light_label', None)
-        ]
+        """
+        """
+        return [('enable', 'enable_label', None), ]
 
     #    def get_control_items(self):
     #        '''
@@ -382,18 +386,15 @@ class FusionsLaserManager(LaserManager):
             HGroup(
                 Item('requested_power', style='readonly',
                      format_str='%0.2f',
-                     width=100
-                ),
+                     width=100),
                 spring,
                 Item('units', show_label=False, style='readonly'),
-                spring
-            ),
+                spring),
             #                           Item('laser_script_executor', show_label=False, style='custom'),
             #                           self._button_factory('execute_button', 'execute_label'),
             show_border=True,
             #                           springy=True,
-            label='Power'
-        )
+            label='Power')
 
         ps = self.get_power_slider()
         if ps:
@@ -437,8 +438,8 @@ class FusionsLaserManager(LaserManager):
     #         return g
 
     def _get_pointer_label(self):
-        '''
-        '''
+        """
+        """
         return 'Pointer ON' if not self.pointer_state else 'Pointer OFF'
 
     def _get_record_label(self):
@@ -448,25 +449,24 @@ class FusionsLaserManager(LaserManager):
         return self.record_brightness and self._get_machine_vision() is not None
 
     # ========================= defaults =======================
-    def get_power_database(self):
-        from pychron.database.adapters.power_adapter import PowerAdapter
+    # def get_power_database(self):
+    # from pychron.database.adapters.power_adapter import PowerAdapter
+    #
+    #     db = PowerAdapter(name=self.dbname,
+    #                       kind='sqlite')
+    #     return db
 
-        db = PowerAdapter(name=self.dbname,
-                          kind='sqlite')
-        return db
-
-    def get_power_calibration_database(self):
-        from pychron.database.adapters.power_calibration_adapter import PowerCalibrationAdapter
-
-        db = PowerCalibrationAdapter(name=self.dbname,
-                                     kind='sqlite')
-        return db
+    # def get_power_calibration_database(self):
+    # from pychron.database.adapters.power_calibration_adapter import PowerCalibrationAdapter
+    #
+    #     db = PowerCalibrationAdapter(name=self.dbname,
+    #                                  kind='sqlite')
+    #     return db
 
     #    def _subsystem_default(self):
     #        '''
     #        '''
     #        return ArduinoSubsystem(name='arduino_subsystem_2')
-
 
     #    def _brightness_meter_default(self):
     #        if self.use_video:
@@ -476,16 +476,17 @@ class FusionsLaserManager(LaserManager):
     #            return b
 
     def _fiber_light_default(self):
-        '''
-        '''
+        """
+        """
         return FiberLight(name='fiber_light')
 
-#    def _optics_view_default(self):
+
+# def _optics_view_default(self):
 #        return OpticsView(laser_controller=self.laser_controller)
 
 if __name__ == '__main__':
     d = FusionsLaserManager()
-#    d.open_power_graph('1')
+# d.open_power_graph('1')
 #    d.configure_traits()
 # ========================== EOF ====================================
 # def collect_baseline_brightness(self, **kw):

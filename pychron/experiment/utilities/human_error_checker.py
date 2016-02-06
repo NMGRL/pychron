@@ -15,9 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from pychron.loggable import Loggable
 from pychron.experiment.utilities.identifier import get_analysis_type
-from pychron.pychron_constants import LINE_STR
+from pychron.loggable import Loggable
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -28,7 +29,7 @@ class HumanErrorChecker(Loggable):
     def check_queue(self, qi):
         self.info('check queue {}'.format(qi.name))
         if self._extraction_line_required:
-            if not qi.extract_device or qi.extract_device in ('Extract Device', LINE_STR):
+            if not qi.extract_device or qi.extract_device in ('Extract Device',):
                 if not self.confirmation_dialog('No extract device set.\n'
                                                 'Are you sure you want to continue?'):
                     msg = '"Extract Device is not set". Not saving experiment!'
@@ -37,7 +38,7 @@ class HumanErrorChecker(Loggable):
 
         if self._mass_spec_required:
             if not qi.mass_spectrometer or \
-                            qi.mass_spectrometer in ('Spectrometer', LINE_STR):
+                            qi.mass_spectrometer in ('Spectrometer',):
                 msg = '"Spectrometer" is not set. Not saving experiment!'
                 return msg
 

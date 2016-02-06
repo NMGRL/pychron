@@ -207,6 +207,8 @@ class VueDiodeControlModule(CoreDevice):
         v = self.read_laser_voltage_adc(verbose=False)
         if v is not None:
             self.laser_voltage = v
+            
+        return any((a,t,p,v))
 
     def get_control_group(self):
         g = VGroup(

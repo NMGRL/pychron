@@ -15,11 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from distutils.core import run_setup
 import os
 import shutil
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.globals import globalv
+
 
 def copy_resources(root, dest, app_name):
     icon_name = 'py{}_icon.icns'.format(app_name)
@@ -31,15 +32,16 @@ def copy_resources(root, dest, app_name):
 
     # copy icons
     iroot = os.path.join(root, 'resources', 'icons')
-    idest = os.path.join(dest, 'icons')
+    rdest = os.path.join(dest, 'Resources')
+    idest = os.path.join(rdest, 'icons')
     if not os.path.isdir(idest):
         os.mkdir(idest)
 
     includes = []
     icon_req = os.path.join(root, 'resources','icon_req.txt')
     if os.path.isfile(icon_req):
-        with open(icon_req, 'r') as fp:
-            includes = [ri.strip() for ri in fp.read().split('\n')]
+        with open(icon_req, 'r') as rfile:
+            includes = [ri.strip() for ri in rfile.read().split('\n')]
 
     for di in os.listdir(iroot):
         head,_ = os.path.splitext(di)
@@ -54,16 +56,16 @@ def copy_resources(root, dest, app_name):
         copy_resource(idest, os.path.join(root, 'resources', nd, sname), name='{}.png'.format(ni))
 
     # copy helper mod
-    for a in ('helpers', ):
-        m = os.path.join(root, 'launchers', '{}.py'.format(a))
-        copy_resource(dest, m)
+    for a in ('helpers.py', 'ENV.txt'):
+        m = os.path.join(root, 'launchers', a)
+        copy_resource(rdest, m)
 
     # copy qt_menu.nib
     p = '/anaconda/python.app/Contents/Resources/qt_menu.nib'
     if not os.path.isdir(p):
         p = '{}/{}'.format(os.path.expanduser('~'),
                            'anaconda/python.app/Contents/Resources/qt_menu.nib')
-    copy_resource_dir(p)
+    copy_resource_dir(rdest, p)
 
 
 def make_egg(root, dest, pkg_name, version):
@@ -77,39 +79,48 @@ def make_egg(root, dest, pkg_name, version):
     try:
         setup(name=pkg_name,
               script_args=('bdist_egg',),
-              version=version,
               packages=pkgs)
     except BaseException, e:
         import traceback
         traceback.print_exc()
 
-    eggname = '{}-{}-py2.7.egg'.format(pkg_name, version)
+    eggname = '{}-0.0.0-py2.7.egg'.format(pkg_name)
     # make the .pth file
+
     if dest.endswith('Contents'):
-        with open(os.path.join(dest,
-                               'Resources',
-                               '{}.pth'.format(pkg_name)), 'w') as fp:
-            fp.write('{}\n'.format(eggname))
+        rdest = os.path.join(dest, 'Resources')
+        with open(os.path.join(rdest,
+                               '{}.pth'.format(pkg_name)), 'w') as wfile:
+            if not globalv.debug:
+                wfile.write('{}\n'.format(eggname))
 
-        egg_root = os.path.join(root, 'dist', eggname)
-        copy_resource(dest, egg_root)
+        if not globalv.debug:
+            egg_root = os.path.join(root, 'dist', eggname)
+            copy_resource(rdest, egg_root)
 
-    # remove build dir
-    for di in ('build', 'dist','pychron.egg-info'):
-        p = os.path.join(root, di)
-        print 'removing entire {} dir {}'.format(di, p)
-        shutil.rmtree(p)
+    if not globalv.debug:
+        # remove build dir
+        for di in ('build', 'dist','pychron.egg-info'):
+            p = os.path.join(root, di)
+            print 'removing entire {} dir {}'.format(di, p)
+            if os.path.isdir(p):
+                shutil.rmtree(p)
+            else:
+                print 'not a directory {}'.format(p)
 
 
 def resource_path(dest, name):
-    return os.path.join(dest, 'Resources', name)
+    return os.path.join(dest, name)
 
 
-def copy_resource_dir(src, name=None):
+def copy_resource_dir(dest, src, name=None):
     if os.path.exists(src):
         if name is None:
             name = os.path.basename(src)
-        shutil.copytree(src, resource_path(name))
+
+        rd = resource_path(dest, name)
+        if not os.path.exists(rd):
+            shutil.copytree(src, rd)
     else:
         print '++++++++++++++++++++++ Not a valid Resource {} +++++++++++++++++++++++'.format(src)
 

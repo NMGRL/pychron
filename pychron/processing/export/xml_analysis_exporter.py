@@ -15,20 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from traits.api import Instance
+# ============= standard library imports ========================
 import base64
 import struct
-
-from traits.api import Instance
-
-
-
-
-# ============= standard library imports ========================
 import os
 # ============= local library imports  ==========================
 from uncertainties import nominal_value, std_dev
 from pychron.processing.export.destinations import XMLDestination
-from pychron.processing.export.export_spec import ExportSpec
+from pychron.processing.export.export_spec import XMLExportSpec
 from pychron.processing.export.exporter import Exporter
 
 
@@ -45,14 +40,33 @@ class XMLAnalysisExporter(Exporter):
     def set_destination(self, destination):
         self.destination = destination
 
-    def add(self, spec):
-        if not isinstance(spec, ExportSpec):
-            s = ExportSpec()
-            s.load_record(spec)
-            spec = s
+    def _make_spec(self, ai):
+        rs_name, rs_text = '', ''
+        rid = ai.record_id
+        exp = XMLExportSpec(runid=rid,
+                            runscript_name=rs_name,
+                            runscript_text=rs_text,
+                            mass_spectrometer=ai.mass_spectrometer.capitalize(),
+                            isotopes=ai.isotopes)
+
+        exp.load_record(ai)
+        return exp
+
+    def add(self, analysis):
+        spec = self._make_spec(analysis)
+        # if not isinstance(spec, MassSpecExportSpec):
+        # s = MassSpecExportSpec()
+        # s.load_record(spec)
+        #     spec = s
 
         self._make_xml_analysis(self._parser, spec)
         return True
+
+    def start_export(self):
+        isdir = os.path.isdir(os.path.dirname(self.destination.destination))
+        if not isdir:
+            self.warning_dialog('Invalid destination. {} does not exist'.format(isdir))
+        return isdir
 
     def export(self):
         if os.path.isdir(os.path.dirname(self.destination.destination)):
@@ -66,7 +80,7 @@ class XMLAnalysisExporter(Exporter):
 
     def _make_xml_analysis(self, xmlp, spec):
         vertag = xmlp.add('version', '', None)
-        xmlp.add('ver','0.1', vertag)
+        xmlp.add('ver', '0.1', vertag)
         xmlp.add('encoding', 'RFC3548-Base64', vertag)
         xmlp.add('endian', 'big', vertag)
         xmlp.add('format', 'ff', vertag)
@@ -103,7 +117,7 @@ class XMLAnalysisExporter(Exporter):
                 xmlp.add('value', nominal_value(pv), pp)
                 xmlp.add('error', std_dev(pv), pp)
 
-        isostag = xmlp.add('isotopes','', an)
+        isostag = xmlp.add('isotopes', '', an)
         for isotope in spec.isotopes.itervalues():
             isok = isotope.name
             det = isotope.detector

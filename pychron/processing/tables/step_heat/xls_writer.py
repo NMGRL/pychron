@@ -18,10 +18,10 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
-from xlwt.Workbook import Workbook
-from xlwt.Style import XFStyle, default_style
-from xlwt.Formatting import Borders
 from xlwt import Alignment
+from xlwt.Formatting import Borders
+from xlwt.Style import XFStyle, default_style
+from xlwt.Workbook import Workbook
 
 from pychron.processing.tables.fusion.text_writer import LaserTableTextWriter
 

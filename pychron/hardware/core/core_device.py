@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,14 +16,12 @@
 
 # =============enthought library imports=======================
 
-from traits.api import HasTraits, Str, Any, List, \
-    Bool, Enum, provides
+from traits.api import provides
 
 # from pyface.timer.api import Timer
 # =============standard library imports ========================
 import random
 # from threading import Lock
-from datetime import datetime
 import inspect
 import time
 # =============local library imports  ==========================
@@ -35,7 +33,6 @@ from i_core_device import ICoreDevice
 from pychron.globals import globalv
 from pychron.hardware.core.exceptions import TimeoutError, CRCError
 from pychron.hardware.core.scanable_device import ScanableDevice
-from pychron.rpc.rpcable import RPCable
 from pychron.has_communicator import HasCommunicator
 from pychron.hardware.core.communicators.scheduler import CommunicationScheduler
 from pychron.consumer_mixin import ConsumerMixin
@@ -52,72 +49,64 @@ def crc_caller(func):
     return d
 
 
-class Alarm(HasTraits):
-    alarm_str = Str
-    triggered = False
-
-    def get_alarm_params(self):
-        als = self.alarm_str
-        cond = als[0]
-        if cond not in ['<', '>']:
-            cond = '='
-            trigger = float(als)
-        else:
-            trigger = float(als[1:])
-        return cond, trigger
-
-    def test_condition(self, value):
-        cond, trigger = self.get_alarm_params()
-
-        expr = 'value {} {}'.format(cond, trigger)
-
-        triggered = eval(expr, {}, dict(value=value))
-
-        if triggered:
-            if not self.triggered:
-                self.triggered = True
-        else:
-            self.triggered = False
-
-        return self.triggered
-
-    def get_message(self, value):
-        cond, trigger = self.get_alarm_params()
-        tstamp = datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S')
-
-        return '<<<<<<ALARM {}>>>>>> {} {} {}'.format(tstamp, value, cond, trigger)
+#
+# class Alarm(HasTraits):
+# alarm_str = Str
+# triggered = False
+#
+#     def get_alarm_params(self):
+#         als = self.alarm_str
+#         cond = als[0]
+#         if cond not in ['<', '>']:
+#             cond = '='
+#             trigger = float(als)
+#         else:
+#             trigger = float(als[1:])
+#         return cond, trigger
+#
+#     def test_condition(self, value):
+#         cond, trigger = self.get_alarm_params()
+#
+#         expr = 'value {} {}'.format(cond, trigger)
+#
+#         triggered = eval(expr, {}, dict(value=value))
+#
+#         if triggered:
+#             if not self.triggered:
+#                 self.triggered = True
+#         else:
+#             self.triggered = False
+#
+#         return self.triggered
+#
+#     def get_message(self, value):
+#         cond, trigger = self.get_alarm_params()
+#         tstamp = datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S')
+#
+#         return '<<<<<<ALARM {}>>>>>> {} {} {}'.format(tstamp, value, cond, trigger)
 
 
 @provides(ICoreDevice)
-class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
+class CoreDevice(ScanableDevice, HasCommunicator, ConsumerMixin):
     """
     """
-    #    graph_klass = TimeSeriesStreamGraph
 
-    # implements(ICoreDevice)
-    # provides(ICoreDevice)
-
-    name = Str
-    #    id_query = ''
-    #    id_response = ''
-
-    current_scan_value = 0
-
-    application = Any
-
-    _no_response_counter = 0
-    alarms = List(Alarm)
-
-    dm_kind = Enum('h5', 'csv')
-    use_db = Bool(False)
     _auto_started = False
-
+    _no_response_counter = 0
     _scheduler_name = None
 
-    #ICoreDevice protocol
+    def send_email_notification(self, message):
+        if self.application:
+            tm = self.application.get_service('pychron.social.emailer.Emailer')
+            if tm:
+                tm.broadcast(message)
+            else:
+                self.warning('No emailer available')
+
+    # ICoreDevice protocol
     def close(self):
-        if self._communicator:
-            self._communicator.close()
+        if self.communicator:
+            self.communicator.close()
 
     def get(self, *args, **kw):
         return self.current_scan_value
@@ -126,20 +115,16 @@ class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
         pass
 
     def is_connected(self):
-        if self._communicator:
-            return not self._communicator.simulation
+        if self.communicator:
+            return not self.communicator.simulation
 
     def test_connection(self):
-        if self._communicator:
-            return self._communicator.test_connection()
+        if self.communicator:
+            return self.communicator.test_connection()
 
     def set_simulation(self, tf):
-        if self._communicator:
-            self._communicator.simulation=tf
-    # ==============================================================================================================
-    def _communicate_hook(self, cmd, r):
-        self.last_command = cmd
-        self.last_response = r if r else ''
+        if self.communicator:
+            self.communicator.simulation = tf
 
     def load(self, *args, **kw):
         """
@@ -169,11 +154,15 @@ class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
                 self._loaded = True
             return r
 
+    def open(self, *args, **kw):
+        self.debug('open device')
+        return HasCommunicator.open(self, **kw)
+
     def initialize(self, *args, **kw):
         a = super(CoreDevice, self).initialize(*args, **kw)
         b = False
-        if self._communicator is not None:
-            b = self._communicator.initialize(*args, **kw)
+        if self.communicator is not None:
+            b = self.communicator.initialize(*args, **kw)
 
         return a and b
 
@@ -214,7 +203,7 @@ class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
     def ask(self, cmd, **kw):
         """
         """
-        comm = self._communicator
+        comm = self.communicator
         if comm is not None:
             if comm.scheduler:
                 r = comm.scheduler.schedule(comm.ask, args=(cmd,),
@@ -236,17 +225,17 @@ class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
     def tell(self, *args, **kw):
         """
         """
-        if self._communicator is not None:
+        if self.communicator is not None:
             cmd = ' '.join(map(str, args) + map(str, kw.iteritems()))
             self._communicate_hook(cmd, '-')
-            return self._communicator.tell(*args, **kw)
+            return self.communicator.tell(*args, **kw)
 
     @crc_caller
     def read(self, *args, **kw):
         """
         """
-        if self._communicator is not None:
-            return self._communicator.read(*args, **kw)
+        if self.communicator is not None:
+            return self.communicator.read(*args, **kw)
 
     #        if self.simulation:
     #            return 'simulation'
@@ -290,15 +279,11 @@ class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
                 self.set_scheduler(sc)
 
     def set_scheduler(self, s):
-        if self._communicator is not None:
-            self._communicator.scheduler = s
-            #            self._communicator._lock=s._lock
-
-    def _parse_response(self, v):
-        return v
+        if self.communicator is not None:
+            self.communicator.scheduler = s
 
     def repeat_command(self, cmd, ntries=2, check_val=None, check_type=None,
-                       verbose=True):
+                       verbose=True, **kw):
 
         if isinstance(cmd, tuple):
             cmd = self._build_command(*cmd)
@@ -349,5 +334,11 @@ class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
                     manager.post(alarm_msg)
                 break
 
+    def _parse_response(self, v):
+        return v
+
+    def _communicate_hook(self, cmd, r):
+        self.last_command = cmd
+        self.last_response = r if r else ''
 
 # ========================= EOF ============================================

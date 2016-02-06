@@ -13,14 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from apptools.preferences.preference_binding import bind_preference
 
 # ============= enthought library imports =======================
-import shutil
-from traits.api import HasTraits, List, Str, Dict, Float, Bool, Property
-from traitsui.api import View, Controller, TableEditor, UItem
-from traitsui.table_column import ObjectColumn
+from traits.api import HasTraits, List, Str, Dict, Float, Bool, Property, cached_property
+# from traitsui.table_column import ObjectColumn
 # ============= standard library imports ========================
+import shutil
 import csv
 import os
 import hashlib
@@ -30,6 +28,7 @@ from scipy.optimize import leastsq
 from pychron.core.helpers.filetools import add_extension
 from pychron.loggable import Loggable
 from pychron.paths import paths
+from pychron.spectrometer import set_mftable_name, get_mftable_name
 
 
 def get_detector_name(det):
@@ -39,7 +38,7 @@ def get_detector_name(det):
 
 
 def mass_cal_func(p, x):
-    return p[2] + (p[0] ** 2 * x / p[1]) ** 0.5
+    return p[0]*x**2+p[1]*x+p[2]
 
 
 def least_squares(func, xs, ys, initial_guess):
@@ -57,6 +56,9 @@ class FieldItem(HasTraits):
 
 
 class MagnetFieldTable(Loggable):
+    """
+        map a voltage to a mass
+    """
     items = List
     molweights = Dict
 
@@ -68,7 +70,6 @@ class MagnetFieldTable(Loggable):
     use_local_archive = Bool
     use_db_archive = Bool
     path = Property
-    _path = Str
 
     def __init__(self, *args, **kw):
         super(MagnetFieldTable, self).__init__(*args, **kw)
@@ -77,6 +78,8 @@ class MagnetFieldTable(Loggable):
         # self.warning_dialog('No Magnet Field Table. Create {}'.format(p))
         # else:
         # self.load_mftable()
+
+        # if os.environ.get('RTD', 'False') == 'False':
         self.bind_preferences()
 
     def initialize(self, molweights):
@@ -89,6 +92,8 @@ class MagnetFieldTable(Loggable):
             self.load_mftable(load_items=True)
 
     def bind_preferences(self):
+        from apptools.preferences.preference_binding import bind_preference
+
         prefid = 'pychron.spectrometer'
         bind_preference(self, 'use_local_archive',
                         '{}.use_local_mftable_archive'.format(prefid))
@@ -195,16 +200,16 @@ class MagnetFieldTable(Loggable):
             Isotope, Dac_i, Dac_j,....
 
             Dac_i is the magnet dac setting to center Isotope on detector i
+            example::
 
-            iso, H2,     H1,      AX,     L1,     L2,     CDD
-            Ar40,5.78790,5.895593,6.00675,6.12358,6.24510,6.35683
-            Ar39,5.89692,5.788276,5.89692,5.89692,5.89692,5.89692
-            Ar36,5.56072,5.456202,5.56072,5.56072,5.56072,5.56072
+                iso, H2,     H1,      AX,     L1,     L2,     CDD
+                Ar40,5.78790,5.895593,6.00675,6.12358,6.24510,6.35683
+                Ar39,5.89692,5.788276,5.89692,5.89692,5.89692,5.89692
+                Ar36,5.56072,5.456202,5.56072,5.56072,5.56072,5.56072
 
         """
-        # p = paths.mftable
-        p = self.path
 
+        p = self.path
         self.debug('Using mftable located at {}'.format(p))
 
         mws = self.molweights
@@ -267,8 +272,6 @@ class MagnetFieldTable(Loggable):
         if not self._mftable or not self._check_mftable_hash():
             self.load_mftable()
 
-
-
         return self._mftable
 
     def _check_mftable_hash(self):
@@ -280,8 +283,8 @@ class MagnetFieldTable(Loggable):
         return self._mftable_hash != current_hash
 
     def _make_hash(self, p):
-        with open(p, 'U') as fp:
-            return hashlib.md5(fp.read())
+        with open(p, 'U') as rfile:
+            return hashlib.md5(rfile.read())
 
     def _set_mftable_hash(self, p):
         self._mftable_hash = self._make_hash(p)
@@ -290,8 +293,8 @@ class MagnetFieldTable(Loggable):
         if self.use_db_archive:
             if self.db:
                 self.info('db archiving mftable')
-                with open(p, 'r') as fp:
-                    self.db.add_mftable(self.spectrometer_name, fp.read())
+                with open(p, 'r') as rfile:
+                    self.db.add_mftable(self.spectrometer_name, rfile.read())
             else:
                 self.debug('no db instance available for archiving')
 
@@ -311,55 +314,29 @@ class MagnetFieldTable(Loggable):
             archive.close()
             self.info('locally archiving mftable')
 
-    def _name_to_path(self, name):
-        if name:
-            name = os.path.join(paths.spectrometer_dir, add_extension(name, '.csv'))
-        return name or ''
+    def _set_path(self, name):
+        set_mftable_name(name)
 
-    def _set_path(self, v):
-        self._path = self._name_to_path(v)
-
+    @cached_property
     def _get_path(self):
-        if self._path:
-            p = self._path
-        else:
-            p = paths.mftable
-        return p
+        name = get_mftable_name()
+        return os.path.join(paths.mftable_dir, add_extension(name, '.csv'))
+
+    # def _name_to_path(self, name):
+    #     if name:
+    #         name = os.path.join(paths.mftable_dir, add_extension(name, '.csv'))
+    #     return name or ''
+    #
+    # def _set_path(self, v):
+    #     self._path = self._name_to_path(v)
+    #
+    # def _get_path(self):
+    #     if self._path:
+    #         p = self._path
+    #     else:
+    #         p = paths.mftable
+    #     return p
 
 
-class MagnetFieldTableView(Controller):
-    model = MagnetFieldTable
-
-    def closed(self, info, is_ok):
-        if is_ok:
-            self.model.save()
-
-    def traits_view(self):
-
-        # self.model.load_mftable(True)
-
-        cols = [ObjectColumn(name='isotope', editable=False)]
-
-        for di in self.model._detectors:
-            cols.append(ObjectColumn(name=di,
-                                     format='%0.5f',
-                                     label=di))
-
-        v = View(UItem('items',
-                       editor=TableEditor(columns=cols,
-                                          sortable=False)),
-                 title='Edit Magnet Field Table',
-                 buttons=['OK', 'Cancel'],
-                 kind='livemodal',
-                 resizable=True)
-        return v
-
-
-if __name__ == '__main__':
-    from pychron.spectrometer.molecular_weights import MOLECULAR_WEIGHTS as molweights
-
-    m = MagnetFieldTable(molweights=molweights)
-    mv = MagnetFieldTableView(model=m)
-    mv.configure_traits()
 # ============= EOF =============================================
 

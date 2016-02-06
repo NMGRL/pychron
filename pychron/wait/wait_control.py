@@ -16,14 +16,12 @@
 
 # ============= enthought library imports =======================
 from traits.api import Str, Color, Button, Float, Bool
-from traitsui.api import View, Item, VGroup, HGroup, \
-    Spring, UItem, spring, RangeEditor
 # ============= standard library imports ========================
 from threading import Event
 import time
 # ============= local library imports  ==========================
+from pychron.core.helpers.ctx_managers import no_update
 from pychron.loggable import Loggable
-from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.core.helpers.timer import Timer
 
 
@@ -45,6 +43,7 @@ class WaitControl(Loggable):
 
     _continued = Bool
     _canceled = Bool
+    _no_update = False
 
     def __init__(self, *args, **kw):
         self.reset()
@@ -68,10 +67,12 @@ class WaitControl(Loggable):
         time.sleep(0.25)
         # while not self.end_evt.is_set():
         while not evt.is_set():
-            time.sleep(0.05)
+            # time.sleep(0.005)
+            evt.wait(0.005)
+
         self.debug('Join finished')
 
-    def start(self, block=True, evt=None, duration=None):
+    def start(self, block=True, evt=None, duration=None, message=None):
         if self.end_evt:
             self.end_evt.set()
 
@@ -87,15 +88,20 @@ class WaitControl(Loggable):
             self.timer.wait_for_completion()
 
         if duration:
+            # self.duration = 1
             self.duration = duration
             self.reset()
 
-        self.timer = Timer(1000, self._update_time,
-                           delay=1000)
+        if message:
+            self.message = message
+
+        self.timer = Timer(1000, self._update_time, delay=1000)
         self._continued = False
 
         if block:
             self.join(evt=evt)
+            if evt == self.end_evt:
+                self.end_evt = None
 
     def stop(self):
         self._end()
@@ -103,11 +109,12 @@ class WaitControl(Loggable):
         if self.current_time > 1:
             self.message = 'Stopped'
             self.message_color = 'red'
-        self.current_time = 0
+            # self.current_time = 0
 
     def reset(self):
-        self.high = self.duration
-        self.current_time = self.duration
+        with no_update(self, fire_update_needed=False):
+            self.high = self.duration
+            self.current_time = self.duration
 
     # ===============================================================================
     # private
@@ -127,17 +134,21 @@ class WaitControl(Loggable):
             self.end_evt.set()
 
     def _update_time(self):
+        ct = self.current_time
         if self.timer and self.timer.isActive():
             self.current_time -= 1
-            self.debug('Current Time={}/{}'.format(self.current_time, self.duration))
-            if self.current_time <= 0:
+            ct -= 1
+            self.debug('Current Time={}/{}'.format(ct, self.duration))
+            if ct <= 0:
                 self._end()
                 self._canceled = False
+            else:
+                self.current_time = ct
 
                 # def _current_time_changed(self):
                 # if self.current_time <= 0:
-                #         self._end()
-                #         self._canceled = False
+                # self._end()
+                # self._canceled = False
 
     # ===============================================================================
     # handlers
@@ -146,24 +157,31 @@ class WaitControl(Loggable):
         self._continue()
 
     def _high_changed(self, v):
+        if self._no_update:
+            return
+
         self.duration = v
         self.current_time = v
 
-    def traits_view(self):
-        v = View(VGroup(
-            CustomLabel('message',
-                        size=14,
-                        weight='bold',
-                        color_name='message_color'),
-            HGroup(Spring(width=-5, springy=False),
-                   Item('high', label='Set Max. Seconds'),
-                   spring, UItem('continue_button')),
-            HGroup(Spring(width=-5, springy=False),
-                   Item('current_time', show_label=False,
-                        editor=RangeEditor(mode='slider',
-                                           low=1,
-                                           # low_name='low_name',
-                                           high_name='duration')))))
-        return v
+        # def traits_view(self):
+        # v = View(VGroup(
+        #         CustomLabel('message',
+        #                     size=14,
+        #                     weight='bold',
+        #                     color_name='message_color'),
+        #
+        #         HGroup(Spring(width=-5, springy=False),
+        #                Item('high', label='Set Max. Seconds'),
+        #                spring, UItem('continue_button')),
+        #         HGroup(Spring(width=-5, springy=False),
+        #                Item('current_time', show_label=False,
+        #                     editor=RangeEditor(mode='slider',
+        #                                        low=1,
+        #                                        # low_name='low_name',
+        #                                        high_name='duration')),
+        #                CustomLabel('current_time',
+        #                            size=14,
+        #                            weight='bold'))))
+        #     return v
 
 # ============= EOF =============================================

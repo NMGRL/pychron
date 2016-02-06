@@ -21,7 +21,6 @@ import math
 import random
 
 from numpy import linspace, cos, sin, hstack
-
 # ============= local library imports  ==========================
 from pychron.core.geometry.affine import AffineTransform
 

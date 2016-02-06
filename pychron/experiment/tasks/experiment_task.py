@@ -15,35 +15,39 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import shutil
-from traits.api import on_trait_change, Bool, Instance, Event, Color, Int
-# from traitsui.api import View, Item
-from pyface.timer.do_later import do_later, do_after
-from traits.api import on_trait_change, Bool, Instance, Event, Color
-from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter, Tabbed
 from pyface.constant import CANCEL, NO
+from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter, Tabbed
+from pyface.timer.do_later import do_after
+from traits.api import Int, on_trait_change, Bool, Instance, Event, Color
+
 # ============= standard library imports ========================
-import weakref
+import shutil
+import time
 import os
 import xlrd
 # ============= local library imports  ==========================
-from pychron.core.helpers.filetools import add_extension, backup, unique_date_path
-from pychron.core.ui.preference_binding import color_bind_preference
+from pychron.core.helpers.filetools import add_extension, backup
+from pychron.core.ui.preference_binding import color_bind_preference, toTuple
 from pychron.envisage.tasks.editor_task import EditorTask
 from pychron.envisage.tasks.pane_helpers import ConsolePane
+from pychron.envisage.view_util import open_view
+from pychron.experiment.experiment_launch_history import update_launch_history
+from pychron.experiment.experimentor import Experimentor
 from pychron.experiment.queue.base_queue import extract_meta
 from pychron.experiment.tasks.experiment_editor import ExperimentEditor, UVExperimentEditor
 from pychron.experiment.tasks.experiment_panes import LoggerPane
-from pychron.experiment.utilities.identifier import convert_extract_device
+from pychron.experiment.utilities.identifier import convert_extract_device, is_special
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
-from pychron.messaging.notify.notifier import Notifier
 from pychron.paths import paths
+from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pychron_constants import SPECTROMETER_PROTOCOL
 from pychron.experiment.tasks.experiment_panes import ExperimentFactoryPane, StatsPane, \
-    ControlsPane, WaitPane, IsotopeEvolutionPane, ConnectionStatusPane
+    ControlsPane, IsotopeEvolutionPane, ConnectionStatusPane
+from pychron.envisage.tasks.wait_pane import WaitPane
 
 
 class ExperimentEditorTask(EditorTask):
+    id = 'pychron.experiment.task'
     name = 'Experiment'
 
     default_filename = 'Experiment Current.txt'
@@ -54,6 +58,7 @@ class ExperimentEditorTask(EditorTask):
     use_notifications = Bool
     use_syslogger = Bool
     notifications_port = Int
+    notifier = Instance('pychron.messaging.notify.notifier.Notifier', ())
 
     loading_manager = Instance('pychron.loading.loading_manager.LoadingManager')
 
@@ -70,10 +75,16 @@ class ExperimentEditorTask(EditorTask):
 
     isotope_evolution_pane = Instance(IsotopeEvolutionPane)
     experiment_factory_pane = Instance(ExperimentFactoryPane)
-    wait_pane = Instance(WaitPane)
-    load_pane = Instance('pychron.loading.panes.LoadDockPane')
-    load_table_pane = Instance('pychron.loading.panes.LoadTablePane')
+    # wait_pane = Instance(WaitPane)
+    load_pane = Instance('pychron.loading.tasks.panes.LoadDockPane')
+    load_table_pane = Instance('pychron.loading.tasks.panes.LoadTablePane')
     laser_control_client_pane = None
+
+    def save_as_current_experiment(self):
+        self.debug('save as current experiment')
+        if self.has_active_editor():
+            path = os.path.join(paths.experiment_dir, 'Current Experiment.txt')
+            self.save(path=path)
 
     def configure_experiment_table(self):
         if self.has_active_editor():
@@ -81,12 +92,12 @@ class ExperimentEditorTask(EditorTask):
 
     def new_pattern(self):
         pm = self._pattern_maker_view_factory()
-        self.window.application.open_view(pm)
+        open_view(pm)
 
     def open_pattern(self):
         pm = self._pattern_maker_view_factory()
         if pm.load_pattern():
-            self.window.application.open_view(pm)
+            open_view(pm)
 
     def send_test_notification(self):
         self.debug('sending test notification')
@@ -115,7 +126,7 @@ class ExperimentEditorTask(EditorTask):
 
             dnames = None
             spec = self.application.get_service(
-                'pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager')
+                    'pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager')
             if spec:
                 dnames = spec.spectrometer.detector_names
 
@@ -127,8 +138,6 @@ class ExperimentEditorTask(EditorTask):
         for editor in self.editor_area.editors:
             editor.queue.reset()
 
-        # reset the experimentors db session
-        # since the executor session will have made changes
         man = self.manager
         ex = man.executor
         man.update_info()
@@ -137,19 +146,34 @@ class ExperimentEditorTask(EditorTask):
         ex.end_at_run_completion = False
         ex.set_extract_state('')
 
+    def _assemble_state_colors(self):
+        colors = {}
+        for c in ('success', 'extraction', 'measurement', 'canceled', 'truncated',
+                  'failed', 'end_after', 'invalid'):
+            v = self.application.preferences.get('pychron.experiment.{}_color'.format(c))
+            # tt = toTuple(v)
+            # print 'fff',v, tt, type(tt[0]), type(tt[1]), type(tt[2])
+            colors[c] = '#{:02X}{:02X}{:02X}'.format(*toTuple(v)[:3])
+        return colors
+
     def new(self):
         manager = self.manager
         if manager.verify_database_connection(inform=True):
+
             if manager.load():
                 self.manager.experiment_factory.activate(load_persistence=True)
 
                 editor = ExperimentEditor()
-                editor.setup_tabular_adapters(self.bgcolor, self.even_bgcolor)
+                editor.setup_tabular_adapters(self.bgcolor, self.even_bgcolor, self._assemble_state_colors())
                 editor.new_queue()
 
                 self._open_editor(editor)
+                if self.loading_manager:
+                    self.loading_manager.clear()
+
                 if not self.manager.executor.is_alive():
                     self.manager.executor.executable = False
+                return True
 
     def execute(self):
         if not self.manager.executor.is_alive():
@@ -167,12 +191,17 @@ class ExperimentEditorTask(EditorTask):
         if self.use_notifications:
             self.notifier.close()
 
+            # del manager. fixes problem of multiple experiments being started
+            # closed tasks were still receiving execute_event(s)
+            # del self.manager
+            # self.manager = None
+
     def bind_preferences(self):
         # notifications
 
         self._preference_binder('pychron.experiment',
                                 ('use_notifications',
-                                 # 'notifications_port',
+                                 'notifications_port',
                                  'automated_runs_editable'))
 
         # force notifier setup
@@ -202,10 +231,10 @@ class ExperimentEditorTask(EditorTask):
         self.isotope_evolution_pane = IsotopeEvolutionPane(name=name)
 
         self.experiment_factory_pane = ExperimentFactoryPane(model=self.manager.experiment_factory)
-        self.wait_pane = WaitPane(model=self.manager.executor)
+        wait_pane = WaitPane(model=self.manager.executor.wait_group)
 
         ex = self.manager.executor
-        panes = [StatsPane(model=self.manager),
+        panes = [StatsPane(model=self.manager.stats),
                  ControlsPane(model=ex),
                  ConsolePane(model=ex),
                  LoggerPane(),
@@ -213,11 +242,13 @@ class ExperimentEditorTask(EditorTask):
                  ConnectionStatusPane(model=ex),
                  self.experiment_factory_pane,
                  self.isotope_evolution_pane,
-                 self.wait_pane]
+                 wait_pane]
 
         if self.loading_manager:
-            self.load_pane = self.window.application.get_service('pychron.loading.panes.LoadDockPane')
-            self.load_table_pane = self.window.application.get_service('pychron.loading.panes.LoadTablePane')
+            self.load_pane = self.window.application.get_service('pychron.loading.tasks.panes.LoadDockPane')
+            self.load_table_pane = self.window.application.get_service('pychron.loading.tasks.panes.LoadTablePane')
+
+            self.load_pane.model = self.loading_manager
             self.load_table_pane.model = self.loading_manager
 
             panes.extend([self.load_pane,
@@ -225,25 +256,25 @@ class ExperimentEditorTask(EditorTask):
 
         panes = self._add_canvas_pane(panes)
 
-        app = self.window.application
-        man = app.get_service('pychron.lasers.laser_managers.ilaser_manager.ILaserManager')
-        if man:
-            if hasattr(man.stage_manager, 'video'):
-                from pychron.image.tasks.video_pane import VideoDockPane
-
-                video = man.stage_manager.video
-                man.initialize_video()
-                pane = VideoDockPane(video=video)
-                panes.append(pane)
-
-            from pychron.lasers.tasks.laser_panes import ClientDockPane
-
-            lc = ClientDockPane(model=man)
-            self.laser_control_client_pane = lc
-            panes.append(lc)
+        # app = self.window.application
+        # man = app.get_service('pychron.lasers.laser_managers.ilaser_manager.ILaserManager')
+        # if man:
+        #     if hasattr(man.stage_manager, 'video'):
+        #         from pychron.image.tasks.video_pane import VideoDockPane
+        #
+        #         video = man.stage_manager.video
+        #         man.initialize_video()
+        #         pane = VideoDockPane(video=video)
+        #         panes.append(pane)
+        #
+        #     from pychron.lasers.tasks.laser_panes import ClientDockPane
+        #     lc = ClientDockPane(model=man)
+        #     self.laser_control_client_pane = lc
+        #     panes.append(lc)
 
         return panes
 
+    # private
     def _open_abort(self):
         try:
             self.notifier.close()
@@ -252,9 +283,10 @@ class ExperimentEditorTask(EditorTask):
 
     def _open_file(self, path, **kw):
         if not isinstance(path, (tuple, list)):
-            path = (path, )
+            path = (path,)
 
         manager = self.manager
+        # print 'asdfa', manager
         if manager.verify_database_connection(inform=True):
             if manager.load():
                 manager.experiment_factory.activate(load_persistence=False)
@@ -270,7 +302,24 @@ class ExperimentEditorTask(EditorTask):
     def _open_experiment(self, path):
         name = os.path.basename(path)
         self.info('------------------------------ Open Experiment {} -------------------------------'.format(name))
+
+        reopen_editor = False
+        if name.endswith('.rem.txt') or name.endswith('.ex.txt'):
+            ps = name.split('.')
+            nname = '{}.txt'.format('.'.join(ps[:-2]))
+            msg = 'Rename {} as {}'.format(name, nname)
+            if self.confirmation_dialog(message=msg):
+                reopen_editor = True
+                npath = os.path.join(paths.experiment_dir, nname)
+
+                shutil.copy(path, npath)
+                path = npath
+
         editor = self._check_opened(path)
+        if reopen_editor and editor:
+            self.close_editor(editor)
+            editor = None
+
         if not editor:
             if path.endswith('.xls'):
                 txt, is_uv = self._open_xls(path)
@@ -280,7 +329,7 @@ class ExperimentEditorTask(EditorTask):
             klass = UVExperimentEditor if is_uv else ExperimentEditor
             editor = klass(path=path,
                            automated_runs_editable=self.automated_runs_editable)
-            editor.setup_tabular_adapters(self.bgcolor, self.even_bgcolor)
+            editor.setup_tabular_adapters(self.bgcolor, self.even_bgcolor, self._assemble_state_colors())
             editor.new_queue(txt)
             self._open_editor(editor)
         else:
@@ -291,9 +340,6 @@ class ExperimentEditorTask(EditorTask):
         # clear dirty flag
         editor.dirty = False
         self._show_pane(self.experiment_factory_pane)
-
-    def _check_opened(self, path):
-        return next((e for e in self.editor_area.editors if e.path == path), None)
 
     def _open_xls(self, path):
         """
@@ -326,14 +372,14 @@ class ExperimentEditorTask(EditorTask):
         return txt, is_uv
 
     def _open_txt(self, path):
-        with open(path, 'r') as fp:
-            txt = fp.read()
+        with open(path, 'r') as rfile:
+            txt = rfile.read()
 
             f = (l for l in txt.split('\n'))
             meta, metastr = extract_meta(f)
             is_uv = False
-            if meta.has_key('extract_device'):
-                is_uv = meta['extract_device'] in ('Fusions UV', )
+            if 'extract_device' in meta:
+                is_uv = meta['extract_device'] in ('Fusions UV',)
 
         return txt, is_uv
 
@@ -341,9 +387,11 @@ class ExperimentEditorTask(EditorTask):
         return next((e for e in self.editor_area.editors if e.path == path), None)
 
     def _set_last_experiment(self, p):
-        with open(paths.last_experiment, 'w') as fp:
-            fp.write(p)
+        with open(paths.last_experiment, 'w') as wfile:
+            wfile.write(p)
         self.last_experiment_changed = True
+
+        update_launch_history(p)
 
     def _save_file(self, path):
         if self.active_editor.save(path):
@@ -351,6 +399,11 @@ class ExperimentEditorTask(EditorTask):
             self.debug('queues saved')
             self.manager.reset_run_generator()
             return True
+
+    def _generate_default_filename(self):
+        name = self.active_editor.queue.load_name
+        if name:
+            return 'Load {}.txt'.format(name)
 
     def _publish_notification(self, run):
         if self.use_notifications:
@@ -384,13 +437,6 @@ class ExperimentEditorTask(EditorTask):
             bp, pp = backup(p, paths.backup_experiment_dir)
             self.info('{} - saving a backup copy to {}'.format(bp, pp))
 
-            # bp, _ = os.path.splitext(os.path.basename(p))
-            #
-            # pp = unique_date_path(paths.backup_experiment_dir, bp)
-            #
-            # shutil.copyfile(p, pp)
-
-
     def _close_external_windows(self):
         """
             ask user if ok to close open spectrometer and extraction line windows
@@ -402,6 +448,7 @@ class ExperimentEditorTask(EditorTask):
         windows = []
         names = []
         # print self.window, self.application
+        self.debug('{} calling close_external_windows'.format(id(self)))
         if self.application:
             for wi in self.application.windows:
                 wid = wi.active_task.id
@@ -431,50 +478,27 @@ class ExperimentEditorTask(EditorTask):
             self.manager.executor.active_editor = self.active_editor
             self._show_pane(self.experiment_factory_pane)
 
-    # def _use_syslogger_changed(self):
-    # if self.use_syslogger:
-    # from pychron.experiment.sys_log import SysLogger
-    #
-    #         prefid = 'pychron.syslogger'
-    #         self.syslogger = SysLogger()
-    #         for attr in ('username', 'password', 'host'):
-    #             bind_preference(self.syslogger, attr, '{}.{}'.format(prefid, attr))
-
     @on_trait_change('manager:executor:auto_save_event')
     def _auto_save(self):
         self.save()
 
-    @on_trait_change('source_pane:[selected_connection, source:+]')
-    def _update_source(self, name, new):
-        from pychron.image.video_source import parse_url
-
-        if name == 'selected_connection':
-            islocal, r = parse_url(new)
-            if islocal:
-                pass
-            else:
-                self.source_pane.source.host = r[0]
-                self.source_pane.source.port = r[1]
-        else:
-            url = self.source_pane.source.url()
-
-            self.video_source.set_url(url)
-
     @on_trait_change('loading_manager:group_positions')
     def _update_group_positions(self, new):
-        if not new:
-            ef = self.manager.experiment_factory
-            rf = ef.run_factory
-            rf.position = ''
-        else:
-            pos = self.loading_manager.selected_positions
-            self._update_selected_positions(pos)
+        # if not new:
+        # ef = self.manager.experiment_factory
+        # rf = ef.run_factory
+        #
+        #     rf.position = ''
+        #
+        # else:
+        pos = self.loading_manager.selected_positions
+        self._update_selected_positions(pos)
 
     @on_trait_change('loading_manager:selected_positions')
     def _update_selected_positions(self, new):
         ef = self.manager.experiment_factory
-        ef.selected_positions = new
         if new:
+            ef.selected_positions = new
             rf = ef.run_factory
 
             nn = new[0]
@@ -488,9 +512,15 @@ class ExperimentEditorTask(EditorTask):
                   if ni.labnumber == nn.labnumber]
 
             group_positions = self.loading_manager.group_positions
-            #             group_positions = False
+            # group_positions = False
             if group_positions:
                 rf.position = ','.join(ns)
+            else:
+                n = len(ns)
+                if n > 1 and abs(int(ns[0]) - int(ns[-1])) == n - 1:
+                    rf.position = '{}-{}'.format(ns[0], ns[-1])
+                else:
+                    rf.position = str(ns[0])
 
     @on_trait_change('manager:experiment_factory:extract_device')
     def _handle_extract_device(self, new):
@@ -500,7 +530,8 @@ class ExperimentEditorTask(EditorTask):
                 ed = convert_extract_device(new)
                 man = app.get_service(ILaserManager, 'name=="{}"'.format(ed))
                 if man:
-                    self.laser_control_client_pane.model = man
+                    if self.laser_control_client_pane:
+                        self.laser_control_client_pane.model = man
 
         if new == 'Fusions UV':
             if self.active_editor and not isinstance(self.active_editor, UVExperimentEditor):
@@ -510,15 +541,15 @@ class ExperimentEditorTask(EditorTask):
                 editor.new_queue(mass_spectrometer=ms)
                 editor.dirty = False
 
-                #print self.active_editor
-                #ask user to copy runs into the new editor
+                # print self.active_editor
+                # ask user to copy runs into the new editor
                 ans = self.active_editor.queue.cleaned_automated_runs
                 if ans:
                     if self.confirmation_dialog('Copy runs to the new UV Editor?'):
-                        #editor.queue.executed_runs=self.active_editor.queue.executed_runs
+                        # editor.queue.executed_runs=self.active_editor.queue.executed_runs
                         editor.queue.automated_runs = self.active_editor.queue.automated_runs
 
-                        #self.warning_dialog('Copying runs not yet implemented')
+                        # self.warning_dialog('Copying runs not yet implemented')
 
                 self.active_editor.close()
 
@@ -530,24 +561,17 @@ class ExperimentEditorTask(EditorTask):
     def _update_load(self, new):
         lm = self.loading_manager
         if lm is not None:
-            if lm.load_name != new:
-                lm.load_name = new
-                canvas = lm.make_canvas(new, editable=False)
-                self.load_pane.component = weakref.ref(canvas)()
+            lm.suppress_update = True
+            lm.load_name = ''
+            lm.load_name = new
+            lm.suppress_update = False
 
-            lm.load_load(new, group_labnumbers=False)
-
-            self.load_pane.load_name = new
+            lm.load_load_by_name(new, group_labnumbers=False)
+            lm.canvas.editable = False
 
     @on_trait_change('active_editor:queue:refresh_blocks_needed')
     def _update_blocks(self):
         self.manager.experiment_factory.run_factory.load_run_blocks()
-
-    # @on_trait_change('active_editor:queue:update_needed')
-    # def _update_runs(self, new):
-    #     self.manager.update_info()
-    #     if self.active_editor.queue.initialized:
-    #         self.active_editor.dirty = True
 
     @on_trait_change('editor_area:editors[]')
     def _update_editors(self, new):
@@ -564,7 +588,7 @@ class ExperimentEditorTask(EditorTask):
             self.notifier.send_console_message(new)
 
             # if self.use_syslogger:
-            #     self.syslogger.executor = self.manager.executor
+            # self.syslogger.executor = self.manager.executor
             #     self.syslogger.trigger(new)
 
     @on_trait_change('manager:executor:run_completed')
@@ -591,58 +615,20 @@ class ExperimentEditorTask(EditorTask):
                     pass
                 break
 
-    def _backup_editor(self, editor):
-        p = editor.path
-        p = add_extension(p, '.txt')
-
-        if os.path.isfile(p):
-            # make a backup copy of the original experiment file
-            bp, _ = os.path.splitext(os.path.basename(p))
-
-            pp = unique_date_path(paths.backup_experiment_dir, bp)
-
-            self.info('{} - saving a backup copy to {}'.format(bp, pp))
-            shutil.copyfile(p, pp)
-
-    def _close_external_windows(self):
-        """
-            ask user if ok to close open spectrometer and extraction line windows
-        """
-
-        if not self.application:
-            return
-
-        # ask user if ok to close windows
-        windows = []
-        names = []
-
-        for wi in self.application.windows:
-            wid = wi.active_task.id
-            if wid == 'pychron.spectrometer':
-                windows.append(wi)
-                names.append('Spectrometer')
-            elif wid == 'pychron.extraction_line':
-                windows.append(wi)
-                names.append('Extraction Line')
-
-        if windows:
-            is_are, them = 'is', 'it'
-            if len(windows) > 1:
-                is_are, them = 'are', 'them'
-            msg = '{} {} open. Is it ok to close {}?'.format(','.join(names), is_are, them)
-
-            if self.confirmation_dialog(msg):
-                for wi in windows:
-                    wi.close()
-
     @on_trait_change('manager:execute_event')
-    def _execute(self):
+    def _execute(self, obj, name, old, new):
+        self.debug('execute event {} {}'.format(id(self), id(obj)))
+
         if self.editor_area.editors:
-            self._close_external_windows()
+            try:
+                # this method is error prone. just wrap in a try statement for now
+                self._close_external_windows()
+            except AttributeError:
+                pass
 
             # bind the window control to the notification manager
-            if self.window:
-                self.manager.executor.notification_manager.parent = self.window.control
+            # if self.window:
+            #     self.manager.executor.notification_manager.parent = self.window.control
 
             for ei in self.editor_area.editors:
                 self._backup_editor(ei)
@@ -653,21 +639,68 @@ class ExperimentEditorTask(EditorTask):
             if self.active_editor:
                 qs.insert(0, self.active_editor.queue)
 
-            # launch execution thread
-            # if successful open an auto figure task
             if self.manager.execute_queues(qs):
-                self._show_pane(self.wait_pane)
+                # self._show_pane(self.wait_pane)
                 self._set_last_experiment(self.active_editor.path)
             else:
                 self.warning('experiment queue did not start properly')
 
+    @on_trait_change('manager:executor:autoplot_event')
+    def _handle_autoplot(self, new):
+        if new:
+            editor = self._new_autoplot_editor(new)
+            ans = self._get_autoplot_analyses(new)
+            editor.set_items(ans)
+
+            self._open_editor(editor)
+
+            fs = [e for e in self.iter_editors(FigureEditor)]
+
+            # close the oldest editor
+            if len(fs) > 5:
+                fs = sorted(fs, key=lambda x: x.last_update)
+                self.close_editor(fs[0])
+
+    def _get_autoplot_analyses(self, new):
+        dvc = self.window.application.get_service('pychron.dvc.dvc.DVC')
+        db = dvc.db
+        with db.session_ctx():
+            ans, _ = db.get_labnumber_analyses(new.identifier)
+            return dvc.make_analyses(ans)
+
+    def _new_autoplot_editor(self, new):
+        from pychron.pipeline.plot.editors.figure_editor import FigureEditor
+
+        for editor in self.editor_area.editors:
+            if isinstance(editor, FigureEditor):
+                if new.identifier == editor.identifier:
+                    break
+        else:
+            if is_special(new.identifier):
+                from pychron.pipeline.plot.editors.series_editor import SeriesEditor
+
+                editor = SeriesEditor()
+            elif new.step:
+                from pychron.pipeline.plot.editors.spectrum_editor import SpectrumEditor
+
+                editor = SpectrumEditor()
+            else:
+                from pychron.pipeline.plot.editors.ideogram_editor import IdeogramEditor
+
+                editor = IdeogramEditor()
+
+            editor.identifier = new.identifier
+
+        editor.last_update = time.time()
+        return editor
+
     @on_trait_change('manager:executor:[measuring,extracting]')
-    def _update_measuring(self, name, new):
+    def _handle_measuring(self, name, new):
         if new:
             if name == 'measuring':
                 self._show_pane(self.isotope_evolution_pane)
-            elif name == 'extracting':
-                self._show_pane(self.wait_pane)
+                # elif name == 'extracting':
+                #     self._show_pane(self.wait_pane)
 
     @on_trait_change('active_editor:queue:dclicked')
     def _edit_event(self):
@@ -679,30 +712,50 @@ class ExperimentEditorTask(EditorTask):
         self.save()
 
     @on_trait_change('active_editor:dirty')
-    def _update_active_editor_dirty(self):
-        if self.active_editor:
-            if self.active_editor.dirty:
-                self.manager.executor.executable = False
+    def _update_active_editor_dirty(self, new):
+        if new and self.manager:
+            self.manager.executor.executable = False
+            # if self.active_editor:
+            #     if self.active_editor.dirty:
+            #         if self.manager:
+            #             self.manager.executor.executable = False
 
     # ===============================================================================
     # default/factory
     # ===============================================================================
+    def _manager_default(self):
+        from pychron.envisage.initialization.initialization_parser import \
+            InitializationParser
+
+        ip = InitializationParser()
+        plugin = ip.get_plugin('Experiment', category='general')
+        mode = ip.get_parameter(plugin, 'mode')
+
+        experimentor = Experimentor(application=self.application, mode=mode)
+
+        proto = 'pychron.database.isotope_database_manager.IsotopeDatabaseManager'
+        iso_db_man = self.application.get_service(proto)
+        experimentor.iso_db_man = iso_db_man
+
+        proto = 'pychron.dvc.dvc.DVC'
+        dvc = self.application.get_service(proto)
+        experimentor.dvc = dvc
+
+        experimentor.executor.set_managers()
+        experimentor.executor.bind_preferences()
+
+        return experimentor
+
     def _pattern_maker_view_factory(self):
         from pychron.lasers.pattern.pattern_maker_view import PatternMakerView
 
         return PatternMakerView()
 
-    # def _manager_default(self):
-    #     return self.application.get_service('pychron.experiment.experimentor.Experimentor')
-
-    # def _analysis_health_default(self):
-    #     ah = AnalysisHealth(db=self.manager.db)
-    #     return ah
-
     def _loading_manager_default(self):
         lm = self.window.application.get_service('pychron.loading.loading_manager.LoadingManager')
         if lm:
-            lm.trait_set(db=self.manager.db,
+            dvc = self.window.application.get_service('pychron.dvc.dvc.DVC')
+            lm.trait_set(db=dvc.db,
                          show_group_positions=True)
             return lm
 
@@ -711,23 +764,47 @@ class ExperimentEditorTask(EditorTask):
 
     def _default_layout_default(self):
         return TaskLayout(
-            left=Splitter(
-                PaneItem('pychron.experiment.wait', height=100),
-                Tabbed(
-                    PaneItem('pychron.experiment.factory'),
-                    PaneItem('pychron.experiment.isotope_evolution')),
-                orientation='vertical'),
-            right=Splitter(
-                Tabbed(
-                    PaneItem('pychron.experiment.stats'),
-                    PaneItem('pychron.console', height=425),
-                    PaneItem('pychron.experiment.explanation', height=425),
-                    PaneItem('pychron.experiment.connection_status')),
-                PaneItem('pychron.extraction_line.canvas_dock'),
-                orientation='vertical'),
-            top=PaneItem('pychron.experiment.controls'))
+                left=Splitter(
+                        PaneItem('pychron.wait', height=100),
+                        Tabbed(
+                                PaneItem('pychron.experiment.factory'),
+                                PaneItem('pychron.experiment.isotope_evolution')),
+                        orientation='vertical'),
+                right=Splitter(
+                        Tabbed(
+                                PaneItem('pychron.experiment.stats'),
+                                PaneItem('pychron.console', height=425),
+                                PaneItem('pychron.experiment.explanation', height=425),
+                                PaneItem('pychron.experiment.connection_status')),
+                        PaneItem('pychron.extraction_line.canvas_dock'),
+                        orientation='vertical'),
+                top=PaneItem('pychron.experiment.controls'))
 
         # ============= EOF =============================================
+        # def _use_syslogger_changed(self):
+        # if self.use_syslogger:
+        # from pychron.experiment.sys_log import SysLogger
+        #
+        # prefid = 'pychron.syslogger'
+        # self.syslogger = SysLogger()
+        # for attr in ('username', 'password', 'host'):
+        # bind_preference(self.syslogger, attr, '{}.{}'.format(prefid, attr))
+        # @on_trait_change('source_pane:[selected_connection, source:+]')
+        # def _update_source(self, name, new):
+        # from pychron.image.video_source import parse_url
+        #
+        # if name == 'selected_connection':
+        # islocal, r = parse_url(new)
+        # if islocal:
+        #             pass
+        #         else:
+        #             self.source_pane.source.host = r[0]
+        #             self.source_pane.source.port = r[1]
+        #     else:
+        #         url = self.source_pane.source.url()
+        #
+        #         self.video_source.set_url(url)
+
         # self._testing()
         #
         # def _testing(self):

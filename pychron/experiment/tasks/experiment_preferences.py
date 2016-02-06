@@ -15,24 +15,18 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import Str, Int, \
     Bool, Password, Color, Property, Float, Enum
 from traitsui.api import View, Item, Group, VGroup, HGroup, UItem
-from envisage.ui.tasks.preferences_pane import PreferencesPane
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.pychron_traits import PositiveInteger
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper, BaseConsolePreferences, \
     BaseConsolePreferencesPane
 from pychron.pychron_constants import QTEGRA_INTEGRATION_TIMES
-
-
-class PositiveInteger(Int):
-    def validate(self, object, name, value):
-        if value >= 0:
-            return value
-
-        self.error(object, name, value)
 
 
 class LabspyPreferences(BasePreferencesHelper):
@@ -40,12 +34,20 @@ class LabspyPreferences(BasePreferencesHelper):
     use_labspy = Bool
 
 
+class DVCPreferences(BasePreferencesHelper):
+    preferences_path = 'pychron.experiment'
+    use_dvc_persistence = Bool
+
+
 class ExperimentPreferences(BasePreferencesHelper):
     preferences_path = 'pychron.experiment'
     id = 'pychron.experiment.preferences_page'
 
+    experiment_type = Enum('Ar/Ar', 'Generic')
+
     use_notifications = Bool
     notifications_port = Int
+    use_autoplot = Bool
 
     send_config_before_run = Bool
     use_auto_save = Bool
@@ -59,6 +61,8 @@ class ExperimentPreferences(BasePreferencesHelper):
     even_bg_color = Color
 
     min_ms_pumptime = Int
+
+    use_system_health = Bool
 
     use_memory_check = Bool
     memory_threshold = Property(PositiveInteger,
@@ -74,6 +78,23 @@ class ExperimentPreferences(BasePreferencesHelper):
     default_integration_time = Enum(*QTEGRA_INTEGRATION_TIMES)
 
     automated_runs_editable = Bool
+
+    use_xls_persistence = Bool
+    use_db_persistence = Bool
+
+    success_color = Color
+    extraction_color = Color
+    measurement_color = Color
+    canceled_color = Color
+    truncated_color = Color
+    failed_color = Color
+    end_after_color = Color
+    invalid_color = Color
+
+    use_peak_center_threshold = Bool
+    peak_center_threshold1 = Int(10)
+    peak_center_threshold2 = Int(3)
+    peak_center_threshold_window = Int(10)
 
     def _get_memory_threshold(self):
         return self._memory_threshold
@@ -98,7 +119,7 @@ class ConsolePreferences(BaseConsolePreferences):
 
 
 # class SysLoggerPreferences(BasePreferencesHelper):
-#     use_syslogger = Bool
+# use_syslogger = Bool
 #     preferences_path = 'pychron.syslogger'
 #     username = Str
 #     password = Password
@@ -112,10 +133,20 @@ class ConsolePreferences(BaseConsolePreferences):
 class LabspyPreferencesPane(PreferencesPane):
     model_factory = LabspyPreferences
     category = 'Experiment'
-#
+
     def traits_view(self):
         v = View(VGroup(Item('use_labspy', label='Use Labspy'),
                         label='Labspy', show_border=True))
+        return v
+
+
+class DVCPreferencesPane(PreferencesPane):
+    model_factory = DVCPreferences
+    category = 'Experiment'
+
+    def traits_view(self):
+        v = View(VGroup(Item('use_dvc_persistence', label='Use DVC Persistence'),
+                        label='DVC', show_border=True))
         return v
 
 
@@ -124,7 +155,11 @@ class ExperimentPreferencesPane(PreferencesPane):
     category = 'Experiment'
 
     def traits_view(self):
+        system_health_grp = VGroup(Item('use_system_health'),
+                                   label='System Health')
+
         notification_grp = VGroup(
+            Item('use_autoplot'),
             Item('use_notifications'),
             Item('notifications_port',
                  enabled_when='use_notifications',
@@ -150,6 +185,16 @@ class ExperimentPreferencesPane(PreferencesPane):
                             Item('signal_color', label='Signal'),
                             label='Measurement Colors')
 
+        state_color_grp = VGroup(Item('success_color', label='Success'),
+                                 Item('extraction_color', label='Extraction'),
+                                 Item('measurement_color', label='Measurement'),
+                                 Item('canceled_color', label='Canceled'),
+                                 Item('truncated_color', label='Truncated'),
+                                 Item('failed_color', label='Failed'),
+                                 Item('end_after_color', label='End After'),
+                                 Item('invalid_color', label='Invalid'),
+
+                                 label='State Colors')
         analysis_grouping_grp = Group(Item('use_analysis_grouping',
                                            label='Auto group analyses',
                                            tooltip=''),
@@ -182,7 +227,21 @@ class ExperimentPreferencesPane(PreferencesPane):
                             show_border=True,
                             label='Overlap')
 
-        automated_grp = Group(VGroup(Item('send_config_before_run',
+        persist_grp = Group(Item('use_xls_persistence', label='Save analyses to Excel workbook'),
+                            Item('use_db_persistence', label='Save analyses to Database'),
+                            label='Persist', show_border=True)
+
+        pc_grp = Group(
+            Item('use_peak_center_threshold', label='Use Peak Center Threshold',
+                 tooltip='Only peak center if intensity is greater than the peak center threshold'),
+            Item('peak_center_threshold1', label='Threshold 1', enabled_when='use_peak_center_threshold'),
+            Item('peak_center_threshold2', label='Threshold 2', enabled_when='use_peak_center_threshold'),
+            Item('peak_center_threshold_window', label='Window', enabled_when='use_peak_center_threshold'),
+            show_border=True,
+            label='Peak Center')
+
+        automated_grp = Group(VGroup(Item('experiment_type', label='Experiment Type'),
+                                     Item('send_config_before_run',
                                           tooltip='Set the spectrometer configuration before each analysis',
                                           label='Set Spectrometer Configuration on Start'),
                                      Item('set_integration_time_on_start',
@@ -190,13 +249,17 @@ class ExperimentPreferencesPane(PreferencesPane):
                                           label='Set Integration Time on Start'),
                                      Item('default_integration_time',
                                           enabled_when='set_integration_time_on_start'),
+                                     pc_grp,
+                                     persist_grp,
                                      monitor_grp, overlap_grp),
                               label='Automated Run')
 
         return View(color_group,
-                    automated_grp, notification_grp,
+                    automated_grp,
+                    state_color_grp,
+                    notification_grp,
                     editor_grp,
-                    analysis_grouping_grp, memory_grp)
+                    analysis_grouping_grp, memory_grp, system_health_grp)
 
 
 class UserNotifierPreferencesPane(PreferencesPane):
@@ -230,7 +293,6 @@ class ConsolePreferencesPane(BaseConsolePreferencesPane):
                         show_border=True,
                         label=self.label))
         return v
-
 
 # class SysLoggerPreferencesPane(PreferencesPane):
 #     model_factory = SysLoggerPreferences

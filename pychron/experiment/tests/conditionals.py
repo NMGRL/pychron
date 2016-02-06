@@ -11,9 +11,9 @@ DEBUGGING = False
 import sys
 
 if sys.platform == 'darwin':
-    from pychron.core.helpers.logger_setup import logging_setup
-
-    logging_setup('conditionals')
+    pass
+    # from pychron.core.helpers.logger_setup import logging_setup
+    # logging_setup('conditionals')
 else:
     DEBUGGING = False
 
@@ -24,7 +24,7 @@ class MSpec(object):
 
 class Arun(object):
     def __init__(self):
-        self.arar_age = ArArAge()
+        self.isotope_group = ArArAge()
         self.spec = MSpec()
 
     def get_deflection(self, *args, **kw):
@@ -88,16 +88,23 @@ class ConditionalsTestCase(unittest.TestCase):
         xs = linspace(0, 100)
         ys = 2 * xs + 4
 
-        ar40 = Isotope(name='Ar40', xs=xs, ys=ys)
+        # ar40 = Isotope(name='Ar40', xs=xs, ys=ys)
+        ar40 = Isotope('Ar40', 'H1')
+        ar40.xs = xs
+        ar40.ys = ys
+        ar40.fit = 'parabolic'
         ar40.baseline.value = 0.25
         ar40.blank.value = 0.75
 
         ys = 2 * xs + 1
-        ar39 = Isotope(name='Ar39', xs=xs, ys=ys)
+        ar39 = Isotope('Ar39', 'AX')
+        ar39.fit = 'parabolic'
+        ar39.xs = xs
+        ar39.ys = ys
         # ar39.baseline.value = 0.25
         # ar39.blank.value = 0.75
-        self.arun.arar_age.isotopes = {'Ar40': ar40, 'Ar39': ar39}
-        self.arun.arar_age.age = 10
+        self.arun.isotope_group.isotopes = {'Ar40': ar40, 'Ar39': ar39}
+        self.arun.isotope_group.age = 10
         # print ar40
         # print 'bs', ar40.get_baseline_corrected_value()
         # print 'int', ar40.uvalue, ar40.baseline.uvalue
@@ -205,7 +212,7 @@ class ConditionalsTestCase(unittest.TestCase):
 
     @unittest.skipIf(DEBUGGING, 'Debugging')
     def test_NotBetween(self):
-        self.arun.arar_age.isotopes['Ar40'].value = 10
+        self.arun.isotope_group.isotopes['Ar40'].value = 10
         d = {'check': 'not between(Ar40,0,5)', 'attr': 'Ar40'}
         self._test(d)
 
@@ -282,7 +289,7 @@ class ConditionalsTestCase(unittest.TestCase):
         self._test(d)
 
     def _test_between(self, l, h):
-        self.arun.arar_age.isotopes['Ar40'].value = 3.4
+        self.arun.isotope_group.isotopes['Ar40'].value = 3.4
         d = {'check': 'between(Ar40,{},{})'.format(l, h), 'attr': 'Ar40'}
         self._test(d)
 

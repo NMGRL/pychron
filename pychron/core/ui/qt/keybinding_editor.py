@@ -18,12 +18,13 @@
 from PySide import QtGui, QtCore
 from traits.trait_types import Event
 from traitsui.api import View, UItem
+from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.editors import TableEditor
 from traitsui.handler import Controller
-from traitsui.qt4.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.editor import Editor
 from traitsui.qt4.key_event_to_name import key_event_to_name
 from traitsui.table_column import ObjectColumn
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 # from traitsui.basic_editor_factory import BasicEditorFactory

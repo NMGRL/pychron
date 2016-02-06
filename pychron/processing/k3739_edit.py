@@ -21,14 +21,14 @@ import pickle
 from traits.api import HasTraits, Bool, List, Any, Float
 from traitsui.api import View, Item,UItem, Controller, VGroup, HGroup, TabularEditor
 
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from uncertainties import ufloat
 from pychron.core.ui.progress_dialog import myProgressDialog
+from pychron.envisage.browser.adapters import AnalysisAdapter
 from pychron.paths import paths
-from pychron.processing.tasks.browser.panes import AnalysisAdapter
-from pychron.pychron_constants import PLUSMINUS_SIGMA
+# from pychron.processing.tasks.browser.panes import AnalysisAdapter
+from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
 
 class K3739EditModel(HasTraits):
@@ -65,8 +65,8 @@ class K3739EditModel(HasTraits):
         p = self.pickle_path
         if os.path.isfile(p):
             try:
-                with open(p, 'rb') as fp:
-                    d = pickle.load(fp)
+                with open(p, 'rb') as rfile:
+                    d = pickle.load(rfile)
                     self.trait_set(**d)
             except BaseException:
                 pass
@@ -74,8 +74,8 @@ class K3739EditModel(HasTraits):
     def dump(self):
         d = dict(k3739=self.k3739, k3739_err=self.k3739_err)
         try:
-            with open(self.pickle_path, 'wb') as fp:
-                pickle.dump(d, fp)
+            with open(self.pickle_path, 'wb') as wfile:
+                pickle.dump(d, wfile)
         except BaseException:
             pass
 
@@ -104,7 +104,7 @@ class K3739EditView(Controller):
                 Item('normal_k3739', label='Normal (37/39)K'),
                 HGroup(
                     Item('k3739', label='(37/39)K'),
-                    Item('k3739_err', label=PLUSMINUS_SIGMA),
+                    Item('k3739_err', label=PLUSMINUS_ONE_SIGMA),
                     show_border=True,
                     enabled_when='not normal_k3739')),
             UItem('analyses', editor=TabularEditor(adapter=AnalysisAdapter())),

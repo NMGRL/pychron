@@ -26,8 +26,8 @@
 import time
 
 from aerotech_axis import AerotechAxis
-from pychron.hardware.motion_controller import MotionController
 from pychron.hardware.core.data_helper import make_bitarray
+from pychron.hardware.motion_controller import MotionController
 
 
 ACK = chr(6)
@@ -39,10 +39,10 @@ class AerotechMotionController(MotionController):
     def initialize(self, *args, **kw):
         '''
         '''
-        self._communicator.write_terminator = None
+        self.communicator.write_terminator = None
         self.tell('##')
-        self._communicator.write_terminator = chr(13)
-        self._communicator.read_delay = 25
+        self.communicator.write_terminator = chr(13)
+        self.communicator.read_delay = 25
         self.enable()
 #        self.home()
 #        for a in self.axes.itervalues():
@@ -224,7 +224,7 @@ class AerotechMotionController(MotionController):
 #        resp = self.ask(cmd)
 #        return self._parse_response(resp)
 
-    def _moving_(self, *args, **kw):
+    def _moving(self, *args, **kw):
         '''
             unidex 511 6-12 Serial Pol
         '''

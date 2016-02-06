@@ -22,7 +22,7 @@ from traits.api import Any, Instance
 # ============= local library imports  ==========================
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.envisage.tasks.editor_task import BaseEditorTask
-from pychron.spectrometer.mass_cal.mass_calibrator import MassCalibratorScan
+from pychron.spectrometer.mass_cal.mass_calibrator import MassCalibratorSweep
 from pychron.spectrometer.tasks.mass_cal.editor import MassCalibrationEditor
 from pychron.spectrometer.tasks.mass_cal.panes import MassCalibrationTablePane, \
     MassCalibrationsPane, MassCalibrationControlPane
@@ -32,7 +32,7 @@ class MassCalibrationTask(BaseEditorTask):
     name = 'Mass Calibration'
     spectrometer_manager = Any
 
-    scanner = Instance(MassCalibratorScan)
+    scanner = Instance(MassCalibratorSweep)
 
     def _active_editor_changed(self):
         if self.active_editor:
@@ -43,7 +43,7 @@ class MassCalibrationTask(BaseEditorTask):
         spec = self.spectrometer_manager.spectrometer
 
 
-        s = MassCalibratorScan(spectrometer=spec,
+        s = MassCalibratorSweep(spectrometer=spec,
                                db=IsotopeDatabaseManager())
         if spec.simulation:
             s.integration_time =0.065536

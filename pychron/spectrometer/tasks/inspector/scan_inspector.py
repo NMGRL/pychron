@@ -34,8 +34,8 @@ class ScanInspector(HasTraits):
     def activated(self):
         p = os.path.join(paths.spectrometer_scans_dir, 'scan-005.txt')
         g = self.graph
-        with open(p, 'r') as fp:
-            fi = fileiter(fp, strip=True)
+        with open(p, 'r') as rfile:
+            fi = fileiter(rfile, strip=True)
 
             fi.next().split(',')
             plot = g.new_plot(padding=[60, 5, 5, 50])

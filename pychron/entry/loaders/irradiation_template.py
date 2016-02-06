@@ -21,14 +21,22 @@ import xlwt
 
 IRRADIATION_COLUMNS = ('Name', 'Level', 'PR', 'Holder')
 CHRONOLOGY_COLUMNS = ('Name', 'Start', 'End', 'Power')
-POSITION_COLUMNS = ('Irradiation', 'Level', 'Position', 'Sample', 'Project', 'Material', 'Weight', 'Note')
+POSITION_COLUMNS = ('Irradiation', 'Level', 'Position', 'Identifier',
+                    'Sample', 'PrincipalInvestigator', 'Project', 'Material',
+                    'Weight',
+                    'Note')
 CONFIG_COLUMNS = ('Name', 'Value', 'Description')
-CONFIG_ATTRS = (('autogenerate_labnumber', 'False', 'Automatically generate labnumbers'),
-                ('base_irradiation_offset', 100,
-                 'Increment labnumbers by irradiation offset for each irradiation added'),
-                ('base_level_offset', 0, 'Increment labnumbers by level offset for each level added'),
-                ('quiet', 'False', 'If true do not ask for confirmation if project, material, sample does not exist, '
-                                   'just do it'))
+# CONFIG_ATTRS = (('autogenerate_labnumber', 'False', 'Automatically generate labnumbers'),
+#                 ('base_irradiation_offset', 100,
+#                  'Increment labnumbers by irradiation offset for each irradiation added'),
+#                 ('base_level_offset', 0, 'Increment labnumbers by level offset for each level added'),
+#                 ('quiet', 'False', 'If true do not ask for confirmation if project, material, sample does not exist, '
+#                                    'just do it'))
+
+CONFIG_ATTRS = (('quiet', 'False', 'If true do not ask for confirmation if project, material, sample does not exist, '
+                                   'just do it'),
+                ('principal_investigator', 'NMGRL', 'Principal investigator to associate with added Irradiation '
+                                                    'repositories'))
 
 
 class IrradiationTemplate(object):
@@ -37,6 +45,7 @@ class IrradiationTemplate(object):
         self._make_irradiations_sheet(wb)
         self._make_chronologies_sheet(wb)
         self._make_positions_sheet(wb)
+        self._make_configuration_sheet(wb)
         wb.save(p)
 
     def _make_irradiations_sheet(self, wb):
@@ -51,7 +60,7 @@ class IrradiationTemplate(object):
         sheet = wb.add_sheet('Positions')
         self._make_header(sheet, POSITION_COLUMNS)
 
-    def _make_positions_sheet(self, wb):
+    def _make_configuration_sheet(self, wb):
         sheet = wb.add_sheet('Configuration')
         self._make_header(sheet, CONFIG_COLUMNS)
         for i, (ai, vi, di) in enumerate(CONFIG_ATTRS):

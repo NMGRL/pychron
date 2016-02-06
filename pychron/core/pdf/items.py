@@ -62,8 +62,12 @@ class BaseItem(HasTraits):
     value = Any
     fmt = Either(Str, Callable)
     fontsize = Int(8)
-    fontname = 'Helvetica'
+    fontname = Str#'Helvetica'
     italic = False
+
+    def __init__(self, value=None, *args, **kw):
+        self.value = value
+        super(BaseItem, self).__init__(*args, **kw)
 
     def render(self):
         v = self.value
@@ -88,7 +92,7 @@ class BaseItem(HasTraits):
                     frag.fontSize = size - 2
                 else:
                     frag.fontSize = size
-        else:
+        elif name:
             v = self._new_paragraph(u'<font size="{}" name="{}">{}</font>'.format(size, name, v))
 
         return v

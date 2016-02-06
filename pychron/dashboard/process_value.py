@@ -43,6 +43,10 @@ class ProcessValue(HasTraits):
     conditionals = List(DashboardConditional)
     flag = Enum(NOERROR, WARNING, CRITICAL)
 
+    path = Str
+    record = Bool(False)
+    display_name = Property
+
     def is_different(self, v):
         ret = None
         ct = time.time()
@@ -58,8 +62,14 @@ class ProcessValue(HasTraits):
             self.last_value = v
             ret = True
 
-        self.last_time = time.time()
+
         return ret
+
+    def _get_display_name(self):
+        n = self.name
+        if self.units:
+            n = '{} ({})'.format(n, self.units)
+        return n
 
     def traits_view(self):
         v = View(VGroup(HGroup(UItem('enabled'), Readonly('name')),

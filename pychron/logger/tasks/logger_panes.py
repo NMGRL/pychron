@@ -15,9 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traits.api import List, Any
 from traitsui.api import View, UItem, ListEditor
-from pyface.tasks.traits_task_pane import TraitsTaskPane
+
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================

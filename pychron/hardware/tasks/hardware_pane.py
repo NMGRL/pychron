@@ -15,10 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traitsui.api import View, UItem, InstanceEditor, TableEditor, \
-    ObjectColumn, Readonly, HGroup, VGroup, Item, UReadonly
-from pyface.tasks.traits_task_pane import TraitsTaskPane
 from pyface.tasks.traits_dock_pane import TraitsDockPane
+from pyface.tasks.traits_task_pane import TraitsTaskPane
+from traitsui.api import View, UItem, InstanceEditor, TableEditor, \
+    ObjectColumn, HGroup, VGroup, Item, UReadonly
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.icon_button_editor import icon_button_editor
@@ -58,6 +59,7 @@ class ConfigurationPane(TraitsDockPane):
                                  Item('scan.auto_start'),
                                  Item('scan.period'),
                                  enabled_when='scan.enabled'),
+                          UItem('save_button'),
                           show_border=True, label='Scan')
 
         v = View(VGroup(HGroup(UReadonly('config_name'),

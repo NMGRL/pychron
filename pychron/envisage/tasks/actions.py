@@ -15,30 +15,27 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.action.action import Action
+from pyface.confirmation_dialog import confirm
+from pyface.constant import YES
+from pyface.message_dialog import information
+from pyface.tasks.action.task_action import TaskAction
+from pyface.tasks.task_window_layout import TaskWindowLayout
+from traits.api import Any, List
+# ============= standard library imports ========================
 import os
 import shutil
 import sys
-
-from pyface.tasks.task_window_layout import TaskWindowLayout
-from traits.api import on_trait_change, Any, List
-from pyface.action.action import Action
-from pyface.tasks.action.task_action import TaskAction
-
-
-
-
-# ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.envisage.resources import icon
 
-import webbrowser
-from pyface.confirmation_dialog import confirm
-from pyface.constant import YES
+# from pychron.processing.tasks.actions.processing_actions import myTaskAction
+
 
 # ===============================================================================
 # help
 # ===============================================================================
-from pychron.envisage.resources import icon
-# from pychron.processing.tasks.actions.processing_actions import myTaskAction
+from pychron.envisage.user_login import login_file
 
 
 def restart():
@@ -100,6 +97,42 @@ class PTaskAction(TaskAction):
         self.accelerator = acc or self.accelerator
 
 
+class DemoAction(Action):
+    name = 'Demo'
+    accelerator = 'Shift+Ctrl+0'
+
+    def perform(self, event):
+        app = event.task.application
+        app.info('Demo message: {}'.format('Hello version 2.0'))
+
+
+class StartupTestsAction(Action):
+    name = 'Run Startup Tests'
+
+    def perform(self, event):
+        app = event.task.application
+        from pychron.globals import globalv
+
+        ov = globalv.use_startup_tests
+        globalv.use_startup_tests = True
+
+        st = app.startup_tester
+        st.results = []
+        for plugin in app.plugin_manager:
+            if hasattr(plugin, 'startup_test'):
+                plugin.startup_test()
+
+        globalv.use_startup_tests = ov
+
+        if st.results:
+            from pychron.startup_test.results_view import ResultsView
+
+            v = ResultsView(model=st,
+                            _cancel_auto_close=True,
+                            can_cancel=False)
+            app.open_view(v)
+
+
 class KeyBindingsAction(PAction):
     name = 'Edit Key Bindings'
 
@@ -128,10 +161,10 @@ class SwitchUserAction(UserAction):
         base_id, cuser = self._get_current_user(event)
         user = get_user(current=cuser)
         if user:
-            from pychron.paths import paths
-            #set login file
-            with open(paths.login_file, 'w') as fp:
-                fp.write(user)
+            # from pychron.paths import paths
+            # set login file
+            with open(login_file, 'w') as wfile:
+                wfile.write(user)
             restart()
 
 
@@ -173,7 +206,18 @@ class RestartAction(PAction):
 
 class WebAction(PAction):
     def _open_url(self, url):
+
+        import webbrowser
+        import urllib2
+
+        try:
+            urllib2.urlopen(url)
+        except (urllib2.HTTPError, urllib2.URLError), e:
+            print 'web action url:{} exception:{}'.format(url, e)
+            return
+
         webbrowser.open_new(url)
+        return True
 
 
 class IssueAction(WebAction):
@@ -184,7 +228,14 @@ class IssueAction(WebAction):
         """
             goto issues page add an request or report bug
         """
-        url = 'https://github.com/NMGRL/pychron/issues/new'
+
+        app = event.task.window.application
+        name = app.preferences.get('pychron.general.organization')
+        if not name:
+            information(event.task.window.control, 'Please set an "Organziation" in General Preferences')
+            return
+
+        url = 'https://github.com/{}/pychron/issues/new'.format(name)
         self._open_url(url)
 
 
@@ -199,7 +250,8 @@ class NoteAction(WebAction):
         app = event.task.window.application
         name = app.preferences.get('pychron.general.remote')
         if not name:
-            name = 'NMGRL/Laboratory'
+            information(event.task.window.control, 'Please set an "Laboratory Repo" in General Preferences')
+            return
 
         url = 'https://github.com/{}/issues/new'.format(name)
         self._open_url(url)
@@ -217,19 +269,35 @@ class DocumentationAction(WebAction):
         self._open_url(url)
 
 
+class WaffleAction(WebAction):
+    name = 'View Waffle Board'
+    image = icon('waffle')
+
+    def perform(self, event):
+        """
+            goto waffle page
+        """
+        url = 'https://waffle.io/NMGRL/pychron'
+        self._open_url(url)
+
+
 class ChangeLogAction(WebAction):
     name = "What's New"
     image = icon('documentation')
     description = 'View changelog'
-
 
     def perform(self, event):
         """
             goto issues page add an request or report bug
         """
         from pychron.version import __version__
-        url = 'https://github.com/NMGRL/pychron/blob/release/v{}/CHANGELOG.md'.format(__version__)
-        self._open_url(url)
+        app = event.task.window.application
+        org = app.preferences.get('pychron.general.organization')
+
+        url = 'https://github.com/{}/pychron/blob/release/v{}/CHANGELOG.md'.format(org, __version__)
+        if not self._open_url(url):
+            url = 'https://github.com/{}/pychron/blob/develop/CHANGELOG.md'.format(org)
+            self._open_url(url)
 
 
 class AboutAction(PAction):
@@ -311,9 +379,9 @@ class RaiseAction(PTaskAction):
         self.window.activate()
         self.checked = True
 
-    @on_trait_change('window:deactivated')
-    def _on_deactivate(self):
-        self.checked = False
+        # @on_trait_change('window:deactivated')
+        # def _on_deactivate(self):
+        #     self.checked = False
 
 
 class RaiseUIAction(PTaskAction):
@@ -393,11 +461,10 @@ class NewAction(PAction):
 #            manager = self._get_experimentor(event)
 #            manager.save_as_experiment_queues()
 
-class ToggleFullWindowAction(myTaskAction):
+class ToggleFullWindowAction(TaskAction):
     name = 'Toggle Full Window'
     method = 'toggle_full_window'
     image = icon('view-fullscreen-8')
-    task_ids = ['pychron.recall', 'pychron.labbook', 'pychron.processing.figures']
 
 
 class EditInitializationAction(Action):
@@ -408,6 +475,16 @@ class EditInitializationAction(Action):
         from pychron.envisage.initialization.initialization_edit_view import edit_initialization
 
         if edit_initialization():
+            restart()
+
+
+class EditTaskExtensionsAction(Action):
+    name = 'Edit UI...'
+
+    def perform(self, event):
+        app = event.task.window.application
+        from pychron.envisage.task_extensions import edit_task_extensions
+        if edit_task_extensions(app.available_task_extensions):
             restart()
 
 # ============= EOF =============================================

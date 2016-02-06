@@ -81,15 +81,15 @@ class NoteEditor(BaseTraitsEditor):
 
         self.path = path
         # self.root, name = os.path.split(path)
-        with open(path, 'r') as fp:
-            note = fp.read()
+        with open(path, 'r') as rfile:
+            note = rfile.read()
             self.reset_hash(note)
             self.note = note
             self.name_editable = False
 
     def save(self, p):
-        with open(p, 'w') as fp:
-            fp.write(self.note)
+        with open(p, 'w') as wfile:
+            wfile.write(self.note)
 
         self.path = p
         self.reset_hash(self.note)

@@ -57,6 +57,7 @@ def make():
         if name in flavors:
             template = Template()
             template.root = args.root[0]
+
             template.version = args.version[0]
             template.name = name
             template.use_egg = not args.egg
@@ -76,6 +77,7 @@ def make():
                                      'pychron.remote_hardware',
                                      'pychron.remote_hardware.errors',
                                      'pychron.core',
+                                     'pychron.hardware.core',
                                      'pychron.core.helpers',
                                      'pychron.core.ui', 'pychron.core.ui.qt',
                                      'pychron.core.xml',
@@ -83,6 +85,7 @@ def make():
                 template.modules = ['pychron.managers.remote_hardware_server_manager',
                                     'pychron.managers.manager',
                                     'pychron.paths',
+                                    'pychron.file_defaults',
                                     'pychron.globals',
                                     'pychron.config_loadable',
                                     'pychron.version',
@@ -91,6 +94,7 @@ def make():
                                     'pychron.viewable',
                                     'pychron.saveable',
                                     'pychron.rpc.rpcable',
+                                    # 'pychron.hardware.core.checksum_helper',
                                     'pychron.utils',
                                     'pychron.application_controller']
             else:
@@ -186,8 +190,8 @@ class Template(object):
         includes = []
         icon_req = os.path.join(root, 'resources', 'icon_req.txt')
         if os.path.isfile(icon_req):
-            with open(icon_req, 'r') as fp:
-                includes = [ri.strip() for ri in fp.read().split('\n')]
+            with open(icon_req, 'r') as rfile:
+                includes = [ri.strip() for ri in rfile.read().split('\n')]
 
         cnt, total = 0, 0
         for di in os.listdir(iroot):
@@ -206,12 +210,12 @@ class Template(object):
             ins.copy_resource(os.path.join(root, 'resources', nd, sname), name='icons/{}.png'.format(ni))
 
         # copy helper mod
-        for a in ('helpers', ):
-            m = os.path.join(self.root, 'launchers', '{}.py'.format(a))
+        for a in ('helpers.py', 'ENV.txt'):
+            m = os.path.join(self.root, 'launchers', a)
             ins.copy_resource(m)
 
         # for anaconda builds
-        #copy qt.nib
+        # copy qt.nib
         p = '/anaconda/python.app/Contents/Resources/qt_menu.nib'
         if not os.path.isdir(p):
             p = '{}/{}'.format(os.path.expanduser('~'),
@@ -222,7 +226,12 @@ class Template(object):
         # =======================================================================
         # rename
         # =======================================================================
-        ins.rename_app()
+        appname = ins.rename_app()
+
+        # =======================================================================
+        # intsall
+        # =======================================================================
+        ins.install_app(appname)
 
 
 class PychronTemplate(Template):
@@ -285,15 +294,16 @@ class Maker(object):
               script_args=('bdist_egg',),
               py_modules=modules,
               #                           '-b','/Users/argonlab2/Sandbox'),
-              version=self.version,
+              # version=self.version,
               packages=pkgs)
 
-        eggname = 'pychron-{}-py2.7.egg'.format(self.version)
+        # eggname = 'pychron-{}-py2.7.egg'.format(self.version)
+        eggname = 'pychron-0.0.0-py2.7.egg'
         # make the .pth file
         with open(os.path.join(self.dest,
                                'Resources',
-                               'pychron.pth'), 'w') as fp:
-            fp.write('{}\n'.format(eggname))
+                               'pychron.pth'), 'w') as rfile:
+            rfile.write('{}\n'.format(eggname))
 
         egg_root = os.path.join(self.root, 'dist', eggname)
         shutil.copyfile(egg_root,
@@ -312,8 +322,8 @@ execfile(os.path.join(os.path.split(__file__)[0], "{}.py"))
 '''.format(self.name)
 
         p = self._resource_path('__argvemulator_{}.py'.format(self.name))
-        with open(p, 'w') as fp:
-            fp.write(argv)
+        with open(p, 'w') as rfile:
+            rfile.write(argv)
 
     def set_plist(self, dest, bundle_name, icon_name):
         info_plist = os.path.join(dest, 'Info.plist')
@@ -342,6 +352,10 @@ execfile(os.path.join(os.path.split(__file__)[0], "{}.py"))
                                rsrcname=rsrcfilename, others=extras, raw=raw,
                                progress=verbose, destroot=destroot)
 
+    def install_app(self, appname):
+        print 'copy to applications {}'.format(appname)
+        shutil.move(appname, '/Applications/{}'.format(os.path.basename(appname)))
+
     def rename_app(self):
         old = self.apppath
         new = os.path.join(os.path.dirname(old),
@@ -352,9 +366,9 @@ execfile(os.path.join(os.path.split(__file__)[0], "{}.py"))
             #        for i in range(3):
             try:
                 os.rename(old, new)
-                break
+                return new
             except OSError, e:
-                #                print e
+                # print 'exception', e
                 name = new[:-4]
                 bk = '{}_{:03d}bk.app'.format(name, i)
                 print '{} already exists. backing it up as {}'.format(new, bk)

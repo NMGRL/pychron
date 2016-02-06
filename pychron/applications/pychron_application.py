@@ -15,12 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from datetime import datetime
-
 from apptools.preferences.preference_binding import bind_preference
-from traits.api import List, Str, Bool
+from datetime import datetime
 from pyface.api import SplashScreen
 from pyface.image_resource import ImageResource
+from traits.api import List, Str, Bool
 
 
 # ============= standard library imports ========================
@@ -88,6 +87,9 @@ class PychronApplication(BaseTasksApplication):
         # self.dump_user_file()
         from pychron.envisage.user_login import set_last_login
 
+        # print 'set last login', self.username, self.use_login, self.multi_user
+        self.debug('set last login. username={} use_login={} multi_user={}'.format(self.username,
+                                                                                   self.use_login, self.multi_user))
         set_last_login(self.username, self.use_login, self.multi_user)
 
         if self.multi_user:
@@ -102,7 +104,8 @@ class PychronApplication(BaseTasksApplication):
         man = self.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
         if man:
             names = man.db.get_usernames()
-            dump_user_file(names=names, last_login_name=self.username)
+            if names:
+                dump_user_file(names=names, last_login_name=self.username)
 
     def set_changes(self, changelist):
         self.about_dialog.changes = changelist

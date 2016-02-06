@@ -15,8 +15,9 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-from traits.api import Any, Str
 from chaco.api import AbstractOverlay, BaseTool
+from traits.api import Any, Str
+
 # =============standard library imports ========================
 from numpy import vstack
 # =============local library imports  ==========================
@@ -47,6 +48,7 @@ class RectSelectionTool(BaseTool):
     hover_metadata_name = Str('hover')
     persistent_hover = False
     selection_metadata_name = Str('selections')
+    # mask_metadata_name = Str('selections_mask')
     #    active = True
     _start_pos = None
     _end_pos = None
@@ -56,6 +58,11 @@ class RectSelectionTool(BaseTool):
         if event.character=='Esc':
             self._end_select(event)
 
+    def normal_mouse_enter(self, event):
+        event.window.set_pointer('arrow')
+
+    def normal_mouse_leave(self, event):
+        event.window.set_pointer('arrow')
 
     def normal_mouse_move(self, event):
         if event.handled:
@@ -66,15 +73,22 @@ class RectSelectionTool(BaseTool):
 
         if index is not None:
             #            plot.index.metadata['mouse_xy'] = mxy
-
+            plot.index.suppress_hover_update = True
             plot.index.metadata[self.hover_metadata_name] = [index]
             if hasattr(plot, "value"):
+                plot.value.suppress_hover_update = True
                 plot.value.metadata[self.hover_metadata_name] = [index]
+                plot.value.suppress_hover_update = False
+            plot.index.suppress_hover_update = False
 
         elif not self.persistent_hover:
+            plot.index.suppress_hover_update = True
             plot.index.metadata.pop(self.hover_metadata_name, None)
             if hasattr(plot, "value"):
+                plot.value.suppress_hover_update = True
                 plot.value.metadata.pop(self.hover_metadata_name, None)
+                plot.value.suppress_hover_update = False
+            plot.index.suppress_hover_update = False
 
         return
 
@@ -90,8 +104,11 @@ class RectSelectionTool(BaseTool):
             md = getattr(plot, name).metadata
             if md is None or self.selection_metadata_name not in md:
                 continue
+
+            # print token, md[self.selection_metadata_name]
             if token in md[self.selection_metadata_name]:
                 already = True
+                break
 
         return already
 
@@ -104,6 +121,7 @@ class RectSelectionTool(BaseTool):
             self.component.index.metadata[self.selection_metadata_name] = []
 
     def normal_left_down(self, event):
+
         if not event.handled:
             token = self._get_selection_token(event)
             if token is None:
@@ -114,7 +132,10 @@ class RectSelectionTool(BaseTool):
                     self._deselect_token(token)
                 else:
                     self._select_token(token)
-                    event.handled = True
+                event.handled = True
+
+    def select_mouse_leave(self, event):
+        self._end_select(event)
 
     def _near_edge(self, event, tol=5):
         if self.filter_near_edge:
@@ -135,13 +156,12 @@ class RectSelectionTool(BaseTool):
             if not hasattr(plot, name):
                 continue
             md = getattr(plot, name).metadata
-            if not self.selection_metadata_name in md:
-                pass
-            elif token in md[self.selection_metadata_name]:
-                new = md[self.selection_metadata_name][:]
-                new.remove(token)
-                md[self.selection_metadata_name] = new
-                # getattr(plot, name).metadata_changed = True
+            if self.selection_metadata_name in md:
+                if token in md[self.selection_metadata_name]:
+                    new = md[self.selection_metadata_name][:]
+                    new.remove(token)
+
+                    md[self.selection_metadata_name] = new
 
     def _select_token(self, token, append=True):
         plot = self.component

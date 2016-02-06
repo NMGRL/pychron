@@ -15,7 +15,6 @@
 # ===============================================================================
 
 
-
 # =============enthought library imports=======================
 
 # ============= standard library imports ========================
@@ -24,7 +23,6 @@
 
 
 def make_bitarray(data, width=8):
-    # ba = ''.join(str((data >> i) & 1) for i in xrange(width - 1, -1, -1))
     ba = '{{:0{}b}}'.format(width).format(data)
     return ba
 

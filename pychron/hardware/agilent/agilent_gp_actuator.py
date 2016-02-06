@@ -37,7 +37,7 @@ class AgilentGPActuator(GPActuator):
         self.debug('initializing')
 
         self.debug('setting write_terminator to chr(10)')
-        self._communicator.write_terminator = chr(10)
+        self.communicator.write_terminator = chr(10)
 
         # clear and record any accumulated errors
         errs = self._get_errors()
@@ -45,14 +45,14 @@ class AgilentGPActuator(GPActuator):
             self.warning('\n'.join(errs))
         return True
 
-    def get_channel_state(self, obj):
+    def get_channel_state(self, obj, verbose=False):
         """
             Query the hardware for the channel state
         """
 
         # returns one if channel close  0 for open
         cmd = 'ROUT:OPEN? (@{})'.format(self._get_address(obj))
-        s = self.ask(cmd)
+        s = self.ask(cmd, verbose=verbose)
         if self.simulation:
             return
 

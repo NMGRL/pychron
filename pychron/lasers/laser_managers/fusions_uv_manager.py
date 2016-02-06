@@ -15,7 +15,6 @@
 # ===============================================================================
 
 
-
 # ============= enthought library imports =======================
 from traits.api import Instance, Enum, Button, Str, DelegatesTo, Event, Property
 
@@ -30,17 +29,18 @@ from pychron.hardware.fusions.atl_laser_control_unit import ATLLaserControlUnit
 from pychron.monitors.fusions_uv_laser_monitor import FusionsUVLaserMonitor
 # from pychron.machine_vision.mosaic_manager import MosaicManager
 from pychron.lasers.laser_managers.uv_gas_handler_manager import UVGasHandlerManager
-from pychron.lasers.stage_managers.stage_map import UVStageMap
+from pychron.stage.maps.laser_stage_map import UVLaserStageMap
 from pychron.lasers.laser_managers.laser_script_executor import UVLaserScriptExecutor
 from pychron.core.geometry.geometry import calc_point_along_line
-from pychron.paths import paths
 from threading import Thread
 
 
 class FusionsUVManager(FusionsLaserManager):
     """
     """
-    name = 'fusions_uv'
+    stage_manager_id = 'fusions.uv'
+
+    name = 'FusionsUV'
     monitor_name = 'uv_laser_monitor'
     monitor_klass = FusionsUVLaserMonitor
 
@@ -71,8 +71,8 @@ class FusionsUVManager(FusionsLaserManager):
     _is_tracing = False
     _cancel_tracing = False
 
-    dbname = paths.uvlaser_db
-    db_root = paths.uvlaser_db_root
+    # dbname = paths.uvlaser_db
+    # db_root = paths.uvlaser_db_root
 
     def get_achieved_output(self):
         return self.atl_controller.get_mean_energy()
@@ -107,7 +107,7 @@ class FusionsUVManager(FusionsLaserManager):
         #        pt = sm.get_point(pos)
         self.debug('goto point. pos={} pt={}'.format(pos, pt))
         if pt:
-            #self.set_motors_for_point(pt)
+            # self.set_motors_for_point(pt)
             self.stage_manager.move_to_point(pt)
             result = True
         else:
@@ -150,7 +150,7 @@ class FusionsUVManager(FusionsLaserManager):
         atl.set_burst_mode(False)
         sm = self.stage_manager
 
-        smap = sm._stage_map
+        smap = sm.stage_map
         poly = smap.get_polygon(name)
 
         print poly
@@ -173,7 +173,7 @@ class FusionsUVManager(FusionsLaserManager):
 
             sc = sm.stage_controller
 
-            smap = sm._stage_map
+            smap = sm.stage_map
             line = smap.get_line(path)
 
             # do smooth transitions between points
@@ -182,13 +182,12 @@ class FusionsUVManager(FusionsLaserManager):
             # enqueue all points
             sm._move_polyline(line,
                               start_callback=atl.laser_run,
-                              end_callback=atl.laser_stop,
-            )
+                              end_callback=atl.laser_stop)
 
             # turn off smooth transitions
             sc.set_smooth_transitions(False)
         else:
-            smap = sm._stage_map
+            smap = sm.stage_map
             line = smap.get_line(path)
             seg = line[0]
             x, y = seg['xy']
@@ -217,7 +216,7 @@ class FusionsUVManager(FusionsLaserManager):
             self.stage_manager.linear_move(x, y, block=True)
             self.single_burst()
 
-        sm = self.stage_manager._stage_map
+        sm = self.stage_manager.stage_map
         line = sm.get_line(path)
         points = line.points
         pt = points[0]
@@ -345,8 +344,7 @@ class FusionsUVManager(FusionsLaserManager):
         args = dict(name='stage',
                     configuration_dir_name='fusions_uv',
                     stage_controller_class='Aerotech',
-                    stage_map_klass=UVStageMap,
-                    use_modified=False)
+                    stage_map_klass=UVLaserStageMap)
 
         return self._stage_manager_factory(args)
 
@@ -369,7 +367,7 @@ class FusionsUVManager(FusionsLaserManager):
     def _laser_script_executor_default(self):
         return UVLaserScriptExecutor(laser_manager=self)
 
-#    def _shot_history_default(self):
+# def _shot_history_default(self):
 #        '''
 #        '''
 #        return LaserShotHistory(view_mode='simple')

@@ -15,10 +15,11 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+from pyface.api import FileDialog, OK, DirectoryDialog
 from traits.api import Str, Float, Any, Button, Int, List, Bool, Property
 from traitsui.api import Item, HGroup, VGroup, \
     ButtonEditor, spring
-from pyface.api import FileDialog, OK, DirectoryDialog
+
 # =============standard library imports ========================
 import os
 from threading import Thread
@@ -192,9 +193,10 @@ class Manager(Viewable, ConfigLoadable):
         return self._directory_dialog(True)
 
     def get_error(self):
-        e = self.error_code
-        self.error_code = None
-        return str(e)
+        if self.error_code:
+            e = self.error_code
+            self.error_code = None
+            return str(e)
 
     def get_managers(self):
 

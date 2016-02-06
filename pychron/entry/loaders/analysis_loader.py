@@ -18,12 +18,12 @@
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from functools import partial
-from datetime import datetime
 import uuid
+from functools import partial
 
 import xlrd
 import yaml
+from datetime import datetime
 
 from pychron.core.xls.xls_parser import XLSParser
 from pychron.experiment.utilities.identifier import make_runid
@@ -256,12 +256,12 @@ class XLSAnalysisLoader(BaseAnalysisLoader):
 
 class YAMLAnalysisLoader(BaseAnalysisLoader):
     def load_analyses(self, p):
-        with open(p, 'r') as fp:
+        with open(p, 'r') as rfile:
             try:
-                for d in yaml.load_all(fp.read()):
+                for d in yaml.load_all(rfile.read()):
                     self._import_analysis(d)
             except yaml.YAMLError, e:
-                print e
+                print 'exception', e
 
     def _import_analysis(self, d):
         self._add_meta(d)

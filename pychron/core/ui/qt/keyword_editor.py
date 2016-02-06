@@ -78,7 +78,7 @@ class _KeywordEditor(SimpleEditor):
 
     def update_cursor_position(self):
         user_object = self.context_object
-        print user_object
+        print 'uasdf', user_object
 
 
 class KeywordEditor(BasicEditorFactory):

@@ -92,7 +92,7 @@ class DeflectionCalibraiton(HasTraits):
                     break
                 self.info('Peak center ni = {}'.format(n + 1))
 
-                p = os.path.join(root_dir, 'peak_scan_{:02n}_{:02n}.csv'.format(int(ni), n))
+                p = os.path.join(root_dir, 'peak_scan_{:02d}_{:02d}.csv'.format(int(ni), n))
                 dm.new_frame(path=p)
                 dm.write_to_frame(['DAC (V)', 'Intensity (fA)'])
 

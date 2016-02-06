@@ -14,17 +14,16 @@
 # limitations under the License.
 # ===============================================================================
 
-
-
 # ============= enthought library imports =======================
 from traits.api import Bool, HasTraits, Instance
 # from traitsui.api import View, Item, Group, HGroup, VGroup, HSplit, VSplit
 # ============= standard library imports ========================
-# from tables import openFile
+# from tables import open_file
 from numpy import transpose, array, shape, max, linspace, rot90, \
     min
 # ============= local library imports  ==========================
 from pychron.graph.contour_graph import ContourGraph
+from pychron.graph.graph import container_factory
 from pychron.managers.data_managers.h5_data_manager import H5DataManager
 
 from scipy.interpolate.ndgriddata import griddata
@@ -32,8 +31,8 @@ from scipy.interpolate.ndgriddata import griddata
 
 
 class PowerMapProcessor(HasTraits):
-    '''
-    '''
+    """
+    """
     correct_baseline = Bool(False)
     color_map = 'hot'
     levels = 15
@@ -59,7 +58,7 @@ class PowerMapProcessor(HasTraits):
                                 #                                               padding=40,
                                 #                                               shape=(2, 2),
                                 #                                               spacing=(12, 12)
-            )
+                                )
         )
 
         z, metadata = self._extract_power_map_data(reader)
@@ -79,7 +78,7 @@ class PowerMapProcessor(HasTraits):
         #         from skimage.morphology import label
         #         z = label(z)
         bounds = metadata['bounds']
-        #center_plot, names, rd = cg.new_series(z=z, style='contour',
+        # center_plot, names, rd = cg.new_series(z=z, style='contour',
         cg.new_series(z=z, style='contour',
                       xbounds=bounds,
                       ybounds=bounds, )
@@ -134,11 +133,10 @@ class PowerMapProcessor(HasTraits):
         #         z = self._plot_properties(z, metadata, cg)
         #         cg.plots[0].data.set_data('z0', z)
 
-
-        gridcontainer = cg._container_factory(kind='g',
-                                              padding=40,
-                                              shape=(2, 2),
-                                              spacing=(12, 12))
+        gridcontainer = container_factory(kind='g',
+                                          padding=40,
+                                          shape=(2, 2),
+                                          spacing=(12, 12))
 
         gridcontainer.add(center_plot)
         gridcontainer.add(right_plot)
@@ -178,7 +176,7 @@ class PowerMapProcessor(HasTraits):
             props = regionprops(nim.astype(int), ['EquivDiameter', 'Centroid',
                                                   'MajorAxisLength', 'MinorAxisLength',
                                                   'Orientation'
-            ])
+                                                  ])
         except TypeError, e:
             pass
         return props, nim
@@ -198,8 +196,8 @@ class PowerMapProcessor(HasTraits):
         return cx, cy, radius, scale
 
     def _extract_power_map_data(self, reader):
-        '''
-        '''
+        """
+        """
         if isinstance(reader, H5DataManager):
             d = self._extract_h5(reader)
         else:
@@ -214,7 +212,7 @@ class PowerMapProcessor(HasTraits):
         try:
             b = tab._v_attrs['bounds']
         except Exception, e:
-            print e
+            print 'exception', e
             b = 1
 
         metadata['bounds'] = -float(b), float(b)
@@ -222,13 +220,13 @@ class PowerMapProcessor(HasTraits):
         try:
             bd = tab._v_attrs['beam_diameter']
         except Exception, e:
-            print e
+            print 'exception', e
             bd = 0
 
         try:
             po = tab._v_attrs['power']
         except Exception, e:
-            print e
+            print 'exception', e
             po = 0
 
         metadata['beam_diameter'] = bd
@@ -249,7 +247,7 @@ class PowerMapProcessor(HasTraits):
         power = griddata((xs, ys), power, (X, Y),
                          fill_value=0,
                          #                          method='cubic'
-        )
+                         )
         return rot90(power, k=2), metadata
 
     #        return flipud(fliplr(power)), metadata
@@ -309,8 +307,6 @@ class PowerMapProcessor(HasTraits):
                 pwr = float(row[2])
             nr.append(max(pwr - baseline, 0))
 
-
-
         # metadata now is supposed to be a dict
         md = dict(bounds=(-float(metadata[1][1]), float(metadata[1][1])))
 
@@ -318,8 +314,8 @@ class PowerMapProcessor(HasTraits):
         return rot90(array(cells), k=2), md
 
     def _calc_baseline(self, table, index):
-        '''
-        '''
+        """
+        """
 
         try:
             b1 = table.attrs.baseline1
@@ -337,9 +333,9 @@ class PowerMapProcessor(HasTraits):
         return bi
 
     def _prep_2D_data(self, z):
-        '''
-     
-        '''
+        """
+
+        """
         z = transpose(z)
         #        print z
         mx = float(max(z))

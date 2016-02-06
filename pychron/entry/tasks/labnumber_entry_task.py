@@ -17,31 +17,34 @@
 # ============= enthought library imports =======================
 
 from pyface.tasks.action.schema import SToolBar
-from traits.api import on_trait_change, Button, Float, Str, Int, Bool
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter, Tabbed
+from traits.api import on_trait_change, Button, Float, Str, Int, Bool
 
 # ============= standard library imports ========================
-import os
 # ============= local library imports  ==========================
+from pychron.entry.entry_views.material_entry import MaterialEntry
+from pychron.core.helpers.filetools import add_extension
 
 from pychron.entry.graphic_generator import GraphicModel, GraphicGeneratorController
 from pychron.entry.tasks.importer_view import ImporterView
 from pychron.envisage.browser.record_views import SampleRecordView
 from pychron.entry.tasks.importer import ImporterModel
-from pychron.envisage.browser.browser_mixin import BrowserMixin
+from pychron.envisage.browser.base_browser_model import BaseBrowserModel
 from pychron.entry.entry_views.project_entry import ProjectEntry
 from pychron.entry.entry_views.sample_entry import SampleEntry
 from pychron.entry.labnumber_entry import LabnumberEntry
-from pychron.entry.tasks.actions import SavePDFAction
+from pychron.entry.tasks.actions import SavePDFAction, DatabaseSaveAction, PreviewGenerateIdentifiersAction, \
+    GenerateIdentifiersAction
 # from pychron.entry.tasks.importer_panes import ImporterPane
 from pychron.entry.tasks.labnumber_entry_panes import LabnumbersPane, \
     IrradiationPane, IrradiationEditorPane, IrradiationCanvasPane, LevelInfoPane, ChronologyPane
-from pychron.processing.tasks.actions.edit_actions import DatabaseSaveAction
 from pychron.envisage.tasks.base_task import BaseManagerTask
+from pychron.globals import globalv
 
 
-class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
+class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     name = 'Labnumber'
+    id = 'pychron.entry.irradiation.task'
     # importer = Instance(ImportManager)
 
     add_sample_button = Button
@@ -51,16 +54,20 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
     edit_project_button = Button
     edit_sample_button = Button
 
-    generate_identifiers_button = Button
-    preview_generate_identifiers_button = Button
+    # generate_identifiers_button = Button
+    # preview_generate_identifiers_button = Button
 
     tool_bars = [SToolBar(SavePDFAction(),
                           DatabaseSaveAction(),
+                          image_size=(16, 16)),
+                 SToolBar(GenerateIdentifiersAction(),
+                          PreviewGenerateIdentifiersAction(),
+                          # ImportIrradiationLevelAction(),
                           image_size=(16, 16))]
-                 # SToolBar(GenerateLabnumbersAction(),
-                 #          PreviewGenerateLabnumbersAction(),
-                 #          ImportIrradiationLevelAction(),
-                 #          image_size=(16, 16))]
+    # SToolBar(GenerateLabnumbersAction(),
+    # PreviewGenerateLabnumbersAction(),
+    # ImportIrradiationLevelAction(),
+    # image_size=(16, 16))]
 
     invert_flag = Bool
     selection_freq = Int
@@ -72,7 +79,21 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
     weight = Float
 
     def activated(self):
-        self.load_projects(include_recent=False)
+        if self.manager.verify_database_connection(inform=True):
+            if self.db.connected:
+                self.manager.activated()
+                self.load_projects(include_recent=False)
+
+    def get_igsns(self):
+        self.info('Get IGSNs')
+
+        igsn_repo = self.application.get_service('pychron.repo.igsn.IGSNRepository')
+        if not igsn_repo.url:
+            self.warning_dialog('No IGSN URL set in preferences. '
+                                'The url is required before proceeding. ')
+            return
+
+        self.manager.get_igsns(igsn_repo)
 
     def transfer_j(self):
         self.info('Transferring J Data')
@@ -94,7 +115,7 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
             gm.srcpath = p
             # gm.xmlpath=p
             # p = make_xml(p,
-            #              default_radius=radius,
+            # default_radius=radius,
             #              default_bounds=bounds,
             #              convert_mm=convert_mm,
             #              use_label=use_label,
@@ -112,19 +133,22 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
 
     def save_pdf(self):
         p = '/Users/ross/Sandbox/irradiation.pdf'
-        #p=self.save_file_dialog()
+        # p=self.save_file_dialog()
 
         self.debug('saving pdf to {}'.format(p))
-        #self.manager.make_labbook(p)
+        # self.manager.make_labbook(p)
         self.manager.save_pdf(p)
         self.view_pdf(p)
 
-    def save_labbook_pdf(self):
-        p = '/Users/ross/Sandbox/irradiation.pdf'
-        #p=self.save_file_dialog()
+    def make_irradiation_book_pdf(self):
+        if globalv.entry_labbook_debug:
+            p = '/Users/ross/Sandbox/irradiation.pdf'
+        else:
+            p = self.save_file_dialog()
 
-        self.manager.make_labbook(p)
-        self.view_pdf(p)
+        if p:
+            self.manager.make_labbook(p)
+            self.view_pdf(p)
 
     def generate_identifiers(self):
         self.manager.generate_identifiers()
@@ -133,28 +157,57 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
         self.manager.preview_generate_identifiers()
 
     def import_irradiation_load_xls(self):
-        path = self.open_file_dialog()
+        if globalv.entry_irradiation_import_from_file_debug:
+            path = self.open_file_dialog()
+        else:
+            path = '/Users/ross/Sandbox/template.xls'
+
         if path:
-            #p = '/Users/ross/Sandbox/irrad_load_template.xls'
             self.manager.import_irradiation_load_xls(path)
 
     def make_irradiation_load_template(self):
-        path = self.open_file_dialog()
+        path = self.save_file_dialog()
         if path:
             #        p = '/Users/ross/Sandbox/irrad_load_template.xls'
+            path = add_extension(path, '.xls')
             self.manager.make_irradiation_load_template(path)
-            #self.information_dialog('Template saved to {}'.format(p))
-            self.view_xls(path)
+
+            self.information_dialog('Template saved to {}'.format(path))
+            # self.view_xls(path)
+
+    def import_sample_from_file(self):
+        # path = self.open_file_dialog(default_directory=paths.root_dir,
+        # wildcard='*.xls')
+        path = '/Users/ross/Desktop/sample_import.xls'
+        if path:
+            from pychron.entry.loaders.xls_sample_loader import XLSSampleLoader
+
+            sample_loader = XLSSampleLoader()
+            sample_loader.do_loading(self.manager, self.manager.db, path)
+
+            spnames = []
+            if self.selected_projects:
+                spnames = [ni.name for ni in self.selected_projects]
+
+            self.load_projects(include_recent=False)
+
+            if spnames:
+                sel = [si for si in self.projects if si.name in spnames]
+                self.selected_projects = sel
+
+            self._load_associated_samples()
 
     def import_sample_metadata(self):
-        path = '/Users/ross/Programming/git/dissertation/data/minnabluff/lithologies.xls'
-        path = '/Users/ross/Programming/git/dissertation/data/minnabluff/tables/TAS.xls'
-        path = '/Users/ross/Programming/git/dissertation/data/minnabluff/tables/environ.xls'
-        if not os.path.isfile(path):
-            path = self.open_file_dialog()
+        self.warning('Import sample metadata Deprecated')
 
-        if path:
-            self.manager.import_sample_metadata(path)
+    #     path = '/Users/ross/Programming/git/dissertation/data/minnabluff/lithologies.xls'
+    #     path = '/Users/ross/Programming/git/dissertation/data/minnabluff/tables/TAS.xls'
+    #     path = '/Users/ross/Programming/git/dissertation/data/minnabluff/tables/environ.xls'
+    #     if not os.path.isfile(path):
+    #         path = self.open_file_dialog()
+    #
+    #     if path:
+    #         self.manager.import_sample_metadata(path)
 
     def export_irradiation(self):
         from pychron.entry.export.export_selection_view import ExportSelectionView
@@ -167,10 +220,13 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
         info = es.edit_traits(kind='livemodal')
         if info.result:
             from pychron.entry.export.export_util import do_export
+
             do_export(self.manager, es.export_type, es.destination_dict, es.irradiations)
 
     def _manager_default(self):
-        return LabnumberEntry(application=self.application)
+        dvc = self.application.get_service('pychron.dvc.dvc.DVC')
+        dvc.connect()
+        return LabnumberEntry(application=self.application, dvc=dvc)
 
     # def _importer_default(self):
     #     return ImportManager(db=self.manager.db,
@@ -178,17 +234,17 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
 
     def _default_layout_default(self):
         return TaskLayout(
-            left=Splitter(
-                PaneItem('pychron.labnumber.irradiation'),
-                Tabbed(
-                    # PaneItem('pychron.labnumber.extractor'),
-                    PaneItem('pychron.labnumber.editor')),
-                orientation='vertical'),
-            right=Splitter(
-                PaneItem('pychron.entry.level'),
-                PaneItem('pychron.entry.chronology'),
-                PaneItem('pychron.entry.irradiation_canvas'),
-                           orientation='vertical'))
+                left=Splitter(
+                        PaneItem('pychron.labnumber.irradiation'),
+                        Tabbed(
+                                # PaneItem('pychron.labnumber.extractor'),
+                                PaneItem('pychron.labnumber.editor')),
+                        orientation='vertical'),
+                right=Splitter(
+                        PaneItem('pychron.entry.level'),
+                        PaneItem('pychron.entry.chronology'),
+                        PaneItem('pychron.entry.irradiation_canvas'),
+                        orientation='vertical'))
 
     def create_central_pane(self):
         return LabnumbersPane(model=self.manager)
@@ -203,6 +259,7 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
             # ImporterPane(model=self.importer),
             iep,
             IrradiationCanvasPane(model=self.manager)]
+
     # ===========================================================================
     # GenericActon Handlers
     # ===========================================================================
@@ -230,9 +287,15 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
 
     def _selected_samples_changed(self, new):
         if new:
-            self.manager.set_selected_attr(new.name, 'sample')
+            # self.manager.set_selected_attr(new.name, 'sample')
+            self.manager.set_selected_attrs((new.name, new.material, new.project),
+                                            ('sample', 'material', 'project'))
 
-    def _load_associated_samples(self, names):
+    def _load_associated_samples(self, names=None):
+        if names is None:
+            if self.selected_projects:
+                names = [ni.name for ni in self.selected_projects]
+
         db = self.db
         with db.session_ctx():
             # load associated samples
@@ -247,14 +310,16 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
     def _update_irradiations(self):
         self.manager.updated = True
 
-    def _generate_identifiers_button_fired(self):
-        self.generate_identifiers()
-
-    def _preview_generate_identifiers_button_fired(self):
-        self.preview_generate_identifiers()
+    # def _generate_identifiers_button_fired(self):
+    #     self.generate_identifiers()
+    #
+    # def _preview_generate_identifiers_button_fired(self):
+    #     self.preview_generate_identifiers()
 
     def _add_project_button_fired(self):
-        pr = ProjectEntry(db=self.manager.db)
+        dvc = self.manager.dvc
+        pr = ProjectEntry(dvc=self.manager.dvc)
+        pr.available = dvc.get_project_names()
         if pr.do():
             self.load_projects(include_recent=False)
 
@@ -264,17 +329,19 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
             project = self.selected_projects[0].name
 
         mats = self.db.get_material_names()
-        sam = SampleEntry(db=self.manager.db,
+        sam = SampleEntry(dvc=self.manager.dvc,
                           project=project,
-                          projects = [p.name for p in self.projects],
-                          materials = mats)
+                          projects=[p.name for p in self.projects],
+                          materials=mats)
         if sam.do():
-            self._load_associated_samples([si.name for si in self.selected_projects])
+            self._load_associated_samples()
 
-    # def _add_material_button_fired(self):
-    #     mat = MaterialEntry(db=self.manager.db)
-    #     if mat.do():
-    #         self._load_materials()
+    def _add_material_button_fired(self):
+        dvc = self.manager.dvc
+        mat = MaterialEntry(dvc=dvc)
+        mat.available = dvc.get_material_names()
+        mat.do()
+        # self._load_materials()
 
     # def _edit_project_button_fired(self):
     #     pr = ProjectEntry(db=self.manager.db)
@@ -290,7 +357,6 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
 
     def _selected_projects_changed(self, old, new):
         if new and self.project_enabled:
-
             names = [ni.name for ni in new]
             self.debug('selected projects={}'.format(names))
 
@@ -299,6 +365,8 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
             # self.dump_browser_selection()
 
     def _prompt_for_save(self):
+        self.manager.push_changes()
+
         if self.manager.dirty:
             message = 'You have unsaved changes. Save changes to Database?'
             ret = self._handle_prompt_for_save(message)

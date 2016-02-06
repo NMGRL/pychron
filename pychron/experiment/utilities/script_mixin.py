@@ -134,8 +134,8 @@
 #             self.warning('Script defaults file does not exist {}'.format(p))
 #             return
 #
-#         with open(p, 'r') as fp:
-#             defaults = yaml.load(fp)
+#         with open(p, 'r') as rfile:
+#             defaults = yaml.load(rfile)
 #
 #         # convert keys to lowercase
 #         defaults = dict([(k.lower(), v) for k, v in defaults.iteritems()])
@@ -153,8 +153,8 @@
 #             self.warning('Script defaults file does not exist {}'.format(p))
 #             return
 #
-#         with open(p, 'r') as fp:
-#             defaults = yaml.load(fp)
+#         with open(p, 'r') as rfile:
+#             defaults = yaml.load(rfile)
 #
 #         # convert keys to lowercase
 #         defaults = dict([(k.lower(), v) for k, v in defaults.iteritems()])

@@ -15,17 +15,30 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Button
-from traitsui.api import View, Item
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.menu import Action
+
 from pychron.envisage.resources import icon
+
+
+class BuildApplicationAction(Action):
+    name = 'Build'
+    dname = 'Build'
+    image = icon('bricks')
+
+    def perform(self, event):
+        app = event.task.window.application
+        up = app.get_service('pychron.updater.updater.Updater')
+        up.build()
 
 
 class CheckForUpdatesAction(Action):
     name = 'Check For Updates'
     image = icon('update-product')
+
+    dname = 'Check For Updates'
+    ddescription = 'Check for updates to Pychron by examining the public Github.'
 
     def perform(self, event):
         app = event.task.window.application
@@ -35,12 +48,28 @@ class CheckForUpdatesAction(Action):
 
 class ManageVersionAction(Action):
     name = 'Manage Version'
+    dname = 'Manage Version'
     image = icon('update-product')
     accelerator = 'Ctrl+;'
+
     def perform(self, event):
         app = event.task.window.application
         up = app.get_service('pychron.updater.updater.Updater')
         up.manage_version()
+
+
+class ManageBranchAction(Action):
+    name = 'Manage Branch'
+    dname = 'Manage Branch'
+    image = icon('update-product')
+    accelerator = 'Ctrl+.'
+
+    def perform(self, event):
+        app = event.task.window.application
+        up = app.get_service('pychron.updater.updater.Updater')
+        up.manage_branches()
+
+
 # ============= EOF =============================================
 
 

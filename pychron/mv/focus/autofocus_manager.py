@@ -15,9 +15,11 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+import cPickle as pickle
+
 from traits.api import Bool, Any, Instance, Button, Property, Event, on_trait_change
 from traitsui.api import View, Item, Handler, HGroup
-import apptools.sweet_pickle as pickle
+
 # ============= standard library imports ========================
 # from threading import Thread
 from threading import Event as TEvent
@@ -50,13 +52,13 @@ class ConfigureHandler(Handler):
 
 
 class AutoFocusManager(Manager):
-    '''
+    """
         currently uses passive focus techniques
         see
 
         http://en.wikipedia.org/wiki/Autofocus
 
-    '''
+    """
 
     video = Any
     laser_manager = Any

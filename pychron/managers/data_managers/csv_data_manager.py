@@ -34,6 +34,7 @@ class CSVDataManager(DataManager):
     format_str = '{:0.6f}'
     _writer = None
     _file = None
+    delimiter = ','
     def load(self, frame_key=None):
         if frame_key is None:
             frame_key = self._current_frame
@@ -71,7 +72,7 @@ class CSVDataManager(DataManager):
             mode = 'a'
         with open(p, mode) as f:
 #            writer = self.writer
-            writer = csv.writer(f)
+            writer = csv.writer(f, delimiter=self.delimiter)
             if isinstance(datum[0], (list, tuple)):
                 writer.writerows(datum)
             else:

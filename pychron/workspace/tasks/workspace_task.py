@@ -25,7 +25,7 @@ from traits.api import Instance
 import yaml
 from pychron.core.progress import progress_iterator
 from pychron.processing.export.yaml_analysis_exporter import YAMLAnalysisExporter
-from pychron.processing.tasks.browser.browser_task import BaseBrowserTask
+from pychron.envisage.browser.browser_task import BaseBrowserTask
 from pychron.workspace.tasks.actions import NewWorkspaceAction, OpenWorkspaceAction, CheckoutAnalysesAction, \
     AddBranchAction, TestModificationAction, TagBranchAction, PullAction, PushAction, CommitChangesAction
 from pychron.workspace.tasks.panes import WorkspaceCentralPane, WorkspaceControlPane
@@ -78,13 +78,13 @@ class WorkspaceTask(BaseBrowserTask):
         import random
         p=os.path.join(self.workspace.path, '23447-02.yaml')
 
-        with open(p, 'r') as fp:
-            yd = yaml.load(fp)
+        with open(p, 'r') as rfile:
+            yd = yaml.load(rfile)
 
         yd['23447-02']['age'] = random.random()
         yd['23447-02']['tag'] = 'omit'
-        with open(p, 'w') as fp:
-            fp.write(yaml.dump(yd, default_flow_style=False))
+        with open(p, 'w') as wfile:
+            wfile.write(yaml.dump(yd, default_flow_style=False))
 
         self.workspace.modify_analysis(p)
 

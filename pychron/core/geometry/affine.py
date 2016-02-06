@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,40 +20,38 @@ from scipy import linalg
 
 
 class AffineTransform(object):
-    '''
-        affine transform 
-        
+    """
+        affine transform
+
         cumulative transform using augmented matrix A
-        
-    '''
+
+    """
+
     def __init__(self):
-        self.A = array([[1, 0, 0],
-                        [0, 1, 0],
-                        [0, 0, 1]])
         self.A = identity(3)
 
     def translate(self, tx, ty):
-        '''
+        """
            translation matrix
            T=[1 0 tx
               0 1 ty
               0 0 1]
-        '''
+        """
         T = identity(3)
         T[0, 2] = tx
         T[1, 2] = ty
         self.A = self.A.dot(T)
 
     def rotate(self, theta):
-        '''
+        """
             counter clockwise rotation
-            
+
             rotation matrix
-            R=[cos(t)  -si(t)  0
+            R=[cos(t)  -sin(t)  0
                sin(t)  cos(t)  0
-               0       0       1] 
-            
-        '''
+               0       0       1]
+
+        """
         theta = radians(theta)
         co = cos(theta)
         si = sin(theta)
@@ -64,25 +62,25 @@ class AffineTransform(object):
         self.A = self.A.dot(R)
 
     def scale(self, sx, sy):
-        '''
-            scale matrix 
+        """
+            scale matrix
             S= [sx  0  0
                 0  sy  0
                 0  0   1]
-        '''
+        """
         S = identity(3)
         S[0, 0] = sx
         S[1, 1] = sy
         self.A = self.A.dot(S)
 
     def shear(self, hx, hy):
-        '''
+        """
         shear matrix
         H=[1 hx 0
            hy 1 0
            0  0 1
-            
-        '''
+
+        """
         H = identity(3)
         H[0, 1] = hx
         H[1, 0] = hy
@@ -97,68 +95,94 @@ class AffineTransform(object):
         return array([[x], [y], [1]])
 
 
+def transform_point(pos, cpos, rot, scale):
+    a = AffineTransform()
+    a.scale(scale, scale)
+    a.translate(cpos[0], cpos[1])
+    a.rotate(rot)
+
+    pos = a.transform(*pos)
+    return pos
+
+
+def itransform_point(pos, cpos, rot, scale):
+    a = AffineTransform()
+    a.scale(1 / scale, 1 / scale)
+    a.rotate(-rot)
+    a.translate(-cpos[0], -cpos[1])
+
+    pos = a.transform(*pos)
+    return pos
+
+
 '''
     Programming Computer Vision with Python:
     Tools and algorithms for analyzing images
 '''
+
+
 def calculate_rigid_transform(refpoints, points):
-    '''
+    """
         A=[[x1 -y1  1 0]
-           [y1  x1  0 1]           
+           [y1  x1  0 1]
            [x2 -y2  1 0]
            ...
            [yn  xn  0 1]]
-        
+
         y=[[x1]
            [y1]
            [x2]
            [y2]
            ...
-           [xn]           
-           [yn]           
+           [xn]
+           [yn]
            ]
-           
-        return 
+
+        return
             s: scale
             theta: angle of rotation in degrees
-            
+
             T: translation vector (tx,ty).  float tuple
-            err: root mean square error 
-             
-    '''
+            err: root mean square error
 
+    """
 
-    rows = []
-    ys = []
-    for (rx, ry), (x, y) in zip(refpoints, points):
-        row = [x, -y, 1, 0]
-        rows.append(row)
-        row = [y, x, 0, 1]
-        rows.append(row)
-        ys.append([rx])
-        ys.append([ry])
+    # rows = []
+    # ys = []
+    # for (rx, ry), (x, y) in zip(refpoints, points):
+    # row = [x, -y, 1, 0]
+    # rows.append(row)
+    #     row = [y, x, 0, 1]
+    #     rows.append(row)
+    #     ys.append([rx])
+    #     ys.append([ry])
+
+    ys = [(a,) for args in refpoints for a in args]
+    rows = [row for x, y in points for row in ((x, -y, 1, 0), (y, x, 0, 1))]
 
     A = array(rows)
     y = array(ys)
-#    print A
-#    print y
+    # print A
+    #    print y
     soln = linalg.lstsq(A, y)
-#    print soln
+    #    print soln
     a, b, tx, ty = soln[0]
-    tx = tx[0]
-    ty = ty[0]
-    sum_residuals = soln[1][0]
+    tx = float(tx[0])
+    ty = float(ty[0])
+    sum_residuals = soln[1, 0]
 
-#    R = array([[a, -b], [b, a]])
-    scale = (a ** 2 + b ** 2) ** 0.5
+    #    R = array([[a, -b], [b, a]])
+    scale = float((a ** 2 + b ** 2) ** 0.5)
     theta = math.degrees(math.acos(a / scale))
-    err = (sum_residuals / len(points)) ** 0.5 / float(scale)
-#    print err
-#    print scale, float(scale)
-    return float(scale), theta, map(float, (tx, ty)), err
+    err = (sum_residuals / len(points)) ** 0.5 / scale
+    # print err
+    #    print scale, float(scale)
+    return scale, theta, (tx, ty), err
 
 
 import unittest
+
+
 class RigidTransformTest(unittest.TestCase):
     def testtransfrom(self):
         dpt1, spt1 = (-5.933, -6.22), (-19686, 21622)
@@ -177,19 +201,17 @@ class RigidTransformTest(unittest.TestCase):
         dpt8, spt8 = (0, -1), (0, -100)
         dpt9, spt9 = (1, -1), (100, -101)
 
-
         refpoints = [spt1, spt2, spt3, spt4, spt5, spt6, spt7, spt8, spt9]
         points = [dpt1, dpt2, dpt3, dpt4, dpt5, dpt6, dpt7, dpt8, dpt9]
-#        refpoints = list(map(lambda a: (a[0] / 10., a[1] / 10.), refpoints))
-#        print points
+        # refpoints = list(map(lambda a: (a[0] / 10., a[1] / 10.), refpoints))
+        # print points
         f, t, c, e = calculate_rigid_transform(refpoints, points)
         self.assertLess(e, 1e-10)
-
 
 # ============= EOF ====================================
 # import math
 # class AffineTransform2:
-#   "Represents a 2D + 1 affine transformation"
+# "Represents a 2D + 1 affine transformation"
 #   # use this for transforming points
 #   # A = [ a c e]
 #   #     [ b d f]
@@ -294,4 +316,3 @@ class RigidTransformTest(unittest.TestCase):
 #       n = af.transform(px, py)
 #       self.assertEqual(tuple(s), n)
 #        af.translate(theta)
-

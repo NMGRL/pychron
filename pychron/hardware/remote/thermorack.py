@@ -17,23 +17,21 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.hardware.thermorack import ThermoRack
-from pychron.rpc.query import rpc_query
 
 
-class RemoteThermoRack(ThermoRack):
-
-    @rpc_query
-    def get_coolant_out_temperature(self, **kw):
-        pass
-
-    @rpc_query
-    def get_faults(self):
-        pass
-
-    @rpc_query
-    def get_setpoint(self):
-        pass
+# class RemoteThermoRack(ThermoRack):
+#
+# @rpc_query
+# def get_coolant_out_temperature(self, **kw):
+#         pass
+#
+#     @rpc_query
+#     def get_faults(self):
+#         pass
+#
+#     @rpc_query
+#     def get_setpoint(self):
+#         pass
 
 
 

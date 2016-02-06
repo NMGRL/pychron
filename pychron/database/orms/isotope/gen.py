@@ -16,11 +16,12 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy import Column, Integer, String, \
     ForeignKey, BLOB, Float, Boolean, DateTime, CHAR
+from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship
 from sqlalchemy.schema import Table
+
 # ============= local library imports  ==========================
 
 from pychron.database.core.base_orm import BaseMixin, NameMixin
@@ -87,6 +88,7 @@ class gen_LabTable(Base, BaseMixin):
                             backref='labnumber')
 
     figures = relationship('proc_FigureLabTable', backref='labnumber')
+    loads = relationship('loading_PositionsTable', backref='labnumber')
 
 
 class gen_MassSpectrometerTable(Base, NameMixin):
@@ -105,15 +107,24 @@ class gen_MolecularWeightTable(Base, NameMixin):
     mass = Column(Float)
 
 
-association_table = Table('association', Base.metadata,
-                          Column('project_id', Integer, ForeignKey('gen_ProjectTable.id')),
-                          Column('user_id', Integer, ForeignKey('gen_UserTable.id')))
+ProjectUserAssociationTable = Table('ProjectUserAssociationTable', Base.metadata,
+                                    Column('project_id', Integer, ForeignKey('gen_ProjectTable.id')),
+                                    Column('pi_id', Integer, ForeignKey('gen_PrincipalInvestigatorTable.id')))
+
+
+class gen_PrincipalInvestigatorTable(Base, NameMixin):
+    affiliation = stringcolumn(140)
+    category = Column(Integer)
+    email = stringcolumn(140)
+    projects = relationship('gen_ProjectTable', secondary='ProjectUserAssociationTable')
 
 
 class gen_ProjectTable(Base, NameMixin):
     samples = relationship('gen_SampleTable', backref='project')
     figures = relationship('proc_FigureTable', backref='project')
-    users = relationship('gen_UserTable', secondary=association_table)
+    principal_investigators = relationship('gen_PrincipalInvestigatorTable',
+                                           backref='project',
+                                           secondary='ProjectUserAssociationTable')
 
 
 class gen_SampleTable(Base, NameMixin):
@@ -155,7 +166,6 @@ class gen_UserTable(Base, NameMixin):
     dr_tags = relationship('proc_DataReductionTagTable', backref='user')
     gain_histories = relationship('meas_GainHistoryTable', backref='user')
     #    project_id = foreignkey('gen_ProjectTable')
-    projects = relationship('gen_ProjectTable', secondary=association_table)
 
     password = stringcolumn(80)
     salt = stringcolumn(80)

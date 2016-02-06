@@ -55,7 +55,7 @@ class BaseRemoteHardwareHandler(Loggable):
                 if err is None:
                     err, response = eh.check_response(func, manager, args[1:] +
                                                       [sender_addr])
-
+                    # print 'err: {} response: {}'.format(err, response)
                     if err is None:
                         return response
 
@@ -75,7 +75,7 @@ class BaseRemoteHardwareHandler(Loggable):
             pass
 
     def get_device(self, name, protocol=None, owner=None):
-        dev  = None
+        dev = None
         if self.application is not None:
             if protocol is None:
                 protocol = 'pychron.hardware.core.i_core_device.ICoreDevice'
@@ -88,7 +88,8 @@ class BaseRemoteHardwareHandler(Loggable):
                     if dev is None:
                         dev = m.get_mass_spec_param(name)
                     else:
-                        dev.set_owner(owner)
+                        if owner:
+                            dev.set_owner(owner)
 
         #         else:
         #             dev = DummyDevice()

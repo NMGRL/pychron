@@ -19,7 +19,6 @@ from _socket import gethostname, gethostbyname
 from threading import Thread, Lock
 
 from traits.api import Int, Dict
-
 # ============= standard library imports ========================
 import zmq
 # ============= local library imports  ==========================

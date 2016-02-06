@@ -18,9 +18,9 @@
 from envisage.ui.tasks.task_factory import TaskFactory
 
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
-from pychron.media_server.tasks.media_server_task import MediaServerTask
 from pychron.media_server.browser import MediaBrowser
 from pychron.media_server.client import MediaClient
+from pychron.media_server.tasks.media_server_task import MediaServerTask
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================

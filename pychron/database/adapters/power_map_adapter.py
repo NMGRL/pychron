@@ -19,11 +19,12 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
-from pychron.database.selectors.power_map_selector import PowerMapSelector
-from pychron.database.orms.power_map_orm import PowerMapTable, PowerMapPathTable
-from pychron.database.core.database_adapter import PathDatabaseAdapter
-from pychron.paths import paths
 from pychron.database.migrate.manage_database import manage_database
+
+from pychron.database.core.database_adapter import PathDatabaseAdapter
+from pychron.database.orms.power_map_orm import PowerMapTable, PowerMapPathTable
+from pychron.database.selectors.power_map_selector import PowerMapSelector
+from pychron.paths import paths
 
 
 class PowerMapAdapter(PathDatabaseAdapter):

@@ -25,16 +25,16 @@ from pychron.loggable import Loggable
 
 def load_persistence_dict(p):
     if os.path.isfile(p):
-        with open(p, 'r') as fp:
+        with open(p, 'r') as rfile:
             try:
-                return pickle.load(fp)
+                return pickle.load(rfile)
             except (pickle.PickleError, EOFError):
                 pass
 
 
 def dump_persistence_dict(p, d):
-    with open(p, 'w') as fp:
-        pickle.dump(d, fp)
+    with open(p, 'w') as wfile:
+        pickle.dump(d, wfile)
 
 
 def load_persistence_values(obj, p, attrs):
@@ -54,39 +54,60 @@ def dump_persistence_values(obj, p, attrs):
 class PersistenceMixin(object):
     pattributes = None
 
+    def get_attributes(self):
+        attrs = self.pattributes
+        try:
+            dattrs = tuple(self.traits(dump=True).keys())
+            if attrs:
+                attrs += dattrs
+            else:
+                attrs = dattrs
+        except AttributeError, e:
+            print 'ddddd', e
+            pass
+
+        return attrs
+
     def get_persistence_path(self):
         try:
             return self._make_persistence_path(self.persistence_path)
         except (AttributeError, NotImplementedError):
             self.warning('persistence path not implemented')
 
-    def load(self):
-        self.debug('***************** loading')
-        if not self.pattributes:
+    def load(self, verbose=False):
+        attrs = self.get_attributes()
+        if not attrs:
             raise NotImplementedError
+
+        if verbose:
+            self.debug('***************** loading')
 
         p = self.get_persistence_path()
         self.debug(p)
         if p and os.path.isfile(p):
             self.debug('loading {}'.format(p))
             d = None
-            with open(p, 'r') as fp:
+            with open(p, 'r') as rfile:
                 try:
-                    d = pickle.load(fp)
-                except (pickle.PickleError, EOFError):
+                    d = pickle.load(rfile)
+                except (pickle.PickleError, EOFError, BaseException):
                     self.warning('Invalid pickle file {}'.format(p))
             if d:
-                self.debug('***************** loading has d')
-                for k in self.pattributes:
+                if verbose:
+                    self.debug('***************** loading pickled object')
+
+                for k in attrs:
                     try:
                         v = d[k]
-                        self.debug('setting {} to {}'.format(k, v))
+                        if verbose:
+                            self.debug('setting {} to {}'.format(k, v))
                         setattr(self, k, v)
                     except KeyError:
                         pass
 
     def dump(self, verbose=False):
-        if not self.pattributes:
+        attrs = self.get_attributes()
+        if not attrs:
             raise NotImplementedError
 
         p = self.get_persistence_path()
@@ -95,14 +116,14 @@ class PersistenceMixin(object):
             if verbose:
                 self.debug('***************** dumping')
                 d = {}
-                for a in self.pattributes:
+                for a in attrs:
                     v = getattr(self, a)
                     self.debug('dump {}="{}"'.format(a, v))
                     d[a] = v
             else:
-                d = {a: getattr(self, a) for a in self.pattributes}
-            with open(p, 'w') as fp:
-                pickle.dump(d, fp)
+                d = {a: getattr(self, a) for a in attrs}
+            with open(p, 'w') as wfile:
+                pickle.dump(d, wfile)
 
     def _make_persistence_path(self, p):
         return '{}.{}'.format(p, globalv.username)
@@ -121,4 +142,3 @@ class PersistenceLoggable(Loggable, PersistenceMixin):
     pass
 
 # ============= EOF =============================================
-

@@ -16,20 +16,20 @@
 
 
 
-'''
+"""
 Eurotherm 2000 series device abstraction
 
 see 2000 Series Communications Manual - Issue 2
 http://eurotherm.com/document-library/?ignoreeveryonegroup=0&assetdetesctl1390419=1833&search=2000+series&searchcontent=0
 
-'''
+"""
 
 # ============= enthought library imports =======================
-from traits.api import Float, Property
-from traitsui.api import View, Item
+from traits.api import Float, Property, provides
 # ============= standard library imports ========================
 import os
 # ============= local library imports  ==========================
+from pychron.furnace.furnace_controller import IFurnaceController
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.paths import paths
 
@@ -41,53 +41,40 @@ ACK = chr(6)
 NAK = chr(15)
 
 
+@provides(IFurnaceController)
 class Eurotherm(CoreDevice):
-    '''
-    '''
+    """
+    """
     scan_func = 'get_process_value'
     GID = 0
     UID = 1
     protocol = 'ei_bisynch'
     process_value = Float
     process_setpoint = Property(Float(enter_set=True, auto_set=False),
-                              depends_on='_setpoint')
+                                depends_on='_setpoint')
     _setpoint = Float
     setpoint_min = 0
     setpoint_max = 1800
     use_pid_table = False
 
-    def _get_process_setpoint(self):
-        '''
-        '''
-        return self._setpoint
+    # ifurnacecontroller
+    def read_setpoint(self, force=False):
+        if force or not self.process_value:
+            self.get_process_value()
+        return self.process_value
 
-    def _set_process_setpoint(self, v):
-        '''
-           
-        '''
-        if v is not None:
-            self.set_process_setpoint(v)
+    def set_setpoint(self, v):
+        self.process_setpoint = v
 
-    def _validate_process_setpoint(self, v):
-        '''
-        '''
-        try:
-            float(v)
-        except ValueError:
-            pass
-
-        if self.setpoint_min <= v < self.setpoint_max:
-            return v
-
+    # configloadable
     def load_additional_args(self, config):
-        '''
-
-        '''
+        """
+        """
 
         self.set_attribute(config, 'protocol', 'Communications', 'protocol', optional=True)
 
         if self.protocol == 'ei_bisynch':
-            self._communicator.write_terminator = None
+            self.communicator.write_terminator = None
 
             self.set_attribute(config, 'GID', 'Communications', 'GID', cast='int', optional=True)
 
@@ -95,43 +82,119 @@ class Eurotherm(CoreDevice):
 
         return True
 
-    def modbus_build_query(self, s):
-        '''
-        '''
-        return s
+    def set_pid_parameters(self, v):
+        """
+        """
 
-    def modbus_parse_response(self, resp):
-        '''
-        '''
+        params = self.get_pid_parameters(v)
+
+        if params:
+            builder = getattr(self, '_{}_build_command'.format(self.protocol))
+            # parser = getattr(self, '%s_parse_command_response' % self.protocol)
+
+            for pa in params[1].split(';'):
+                self.debug('set pid parameters {}'.format(pa))
+                cmd, value = pa.split(',')
+                cmd = builder(cmd, value)
+                self.ask(cmd, verbose=True)
+
+    def get_pid_parameters(self, v):
+        """
+        """
+
+        p = os.path.join(paths.device_dir, 'Eurotherm_control_parameters.txt')
+        with open(p) as f:
+            params = [l.split('\t') for l in f]
+
+        for i, pa in enumerate(params[:-1]):
+
+            low_t = int(pa[0])
+            if i == 0:
+                if v < low_t:
+                    return pa
+                continue
+
+            try:
+                high_t = int(params[i + 1][0])
+            except ValueError:
+                return None
+
+            if low_t <= v < high_t:
+                return pa
+
+    def set_process_setpoint(self, v):
+        """
+        """
+        if v and self.use_pid_table:
+            self.set_pid_parameters(v)
+
+        cmd = 'SL'
+        resp = self._command(cmd, v)
+        if not self.simulation:
+            if resp is None:
+                self.warning('Failed setting setpoint to {:0.2f}'.format(v))
+            else:
+                return True
+        else:
+            return True
+
+    def get_process_value(self, **kw):
+        """
+        """
+        resp = self._query('PV', **kw)
+        if resp is None or resp == 'simulation':
+            resp = self.get_random_value(0, 10) + self.process_setpoint
+
+        self.process_value = resp
+
         return resp
 
-    def ei_bisynch_build_command(self, cmd, value):
+    # private
+    def _command(self, cmd, v, **kw):
+        builder = getattr(self, '_{}_build_command'.format(self.protocol))
+        resp = self.ask(builder(cmd, v), **kw)
+        parser = getattr(self, '_{}_parse_command_response'.format(self.protocol))
+
+        if not self.simulation:
+            resp = parser(resp)
+        return resp
+
+    def _query(self, cmd, **kw):
+        builder = getattr(self, '_{}_build_query'.format(self.protocol))
+
+        resp = self.ask(builder(cmd), **kw)
+
+        parser = getattr(self, '_{}_parse_response'.format(self.protocol))
+        if not self.simulation:
+            resp = parser(resp)
+        return resp
+
+    # ei_bisynch
+    def _ei_bisynch_build_command(self, cmd, value):
         def calculate_cksum(p):
             return chr(reduce(lambda x, y: x ^ y, [ord(pi) for pi in p[1:]]))
 
-        GID = str(self.GID)
-        UID = str(self.UID)
+        gid = str(self.GID)
+        uid = str(self.UID)
         v = str(value)
 
         packet = ''.join((STX, cmd, v, ETX))
 
         cksum = calculate_cksum(packet)
-        return ''.join((EOT, GID, GID, UID, UID, packet, cksum))
+        return ''.join((EOT, gid, gid, uid, uid, packet, cksum))
 
-    def ei_bisynch_build_query(self, s):
-        '''
+    def _ei_bisynch_build_query(self, s):
+        """
+        """
 
-        '''
+        gid = str(self.GID)
+        uid = str(self.UID)
 
-        GID = str(self.GID)
-        UID = str(self.UID)
+        return ''.join((EOT, gid, gid, uid, uid, s, ENQ))
 
-        return ''.join((EOT, GID, GID, UID, UID, s, ENQ))
-
-    def ei_bisynch_parse_response(self, resp):
-        '''
-
-        '''
+    def _ei_bisynch_parse_response(self, resp):
+        """
+        """
         if resp is not None:
             # remove frame chrs
             resp = resp[1:-2]
@@ -148,108 +211,41 @@ class Eurotherm(CoreDevice):
 
         return resp
 
-    def ei_bisynch_parse_command_response(self, resp):
-        '''
-
-        '''
+    def _ei_bisynch_parse_command_response(self, resp):
+        """
+        """
         return resp == ACK
 
-    def set_pid_parameters(self, v):
-        '''
-        '''
+    def _get_process_setpoint(self):
+        """
+        """
+        return self._setpoint
 
-        params = self.get_pid_parameters(v)
+    def _set_process_setpoint(self, v):
+        """
+        """
+        if v is not None:
+            self._setpoint = v
+            self.set_process_setpoint(v)
 
-        if params:
-            builder = getattr(self, '{}_build_command'.format(self.protocol))
-            # parser = getattr(self, '%s_parse_command_response' % self.protocol)
+    def _validate_process_setpoint(self, v):
+        """
+        """
+        try:
+            float(v)
+        except ValueError:
+            pass
 
-            for pi in params[1].split(';'):
-                cmd, value = pi.split(',')
+        if self.setpoint_min <= v < self.setpoint_max:
+            return v
 
-                cmd = builder(cmd, value)
-                self.ask(cmd)
+            # def traits_view(self):
+            #     """
+            #     """
+            #     return View(Item('process_setpoint'),
+            #                 Item('process_value', style='readonly')
+            #                 )
 
-    def get_pid_parameters(self, v):
-        '''
-
-        '''
-
-        p = os.path.join(paths.device_dir, 'Eurotherm_control_parameters.txt')
-        with open(p) as f:
-            params = []
-
-            for l in f.read().split('\n'):
-                args = l.split('\t')
-                params.append(args)
-            f.close()
-
-        for i, pi in enumerate(params[:-1]):
-
-            if i == 0:
-                continue
-
-            low_t = int(pi[0])
-            try:
-                high_t = int(params[i + 1][0])
-            except ValueError:
-                return None
-
-            if low_t <= v < high_t:
-                return pi
-
-    def set_process_setpoint(self, v):
-        '''
-
-        '''
-        if v and self.use_pid_table:
-            self.set_pid_parameters(v)
-
-        cmd = 'SL'
-        builder = getattr(self, '{}_build_command'.format(self.protocol))
-        cmd = builder(cmd, v)
-        resp = self.ask(cmd)
-        parser = getattr(self, '{}_parse_command_response'.format(self.protocol))
-
-        if not self.simulation:
-            resp = parser(resp)
-            if not resp:
-                self.warning('Failed setting setpoint to {:0.2f}'.format(v))
-            else:
-                self._setpoint
-                return True
-        else:
-            self._setpoint
-            return True
-
-    def get_process_value(self, **kw):
-        '''
-        '''
-        cmd = 'PV'
-
-        builder = getattr(self, '{}_build_query'.format(self.protocol))
-
-        resp = self.ask(builder(cmd),
-                        **kw
-                        )
-
-        parser = getattr(self, '{}_parse_response'.format(self.protocol))
-        if not self.simulation:
-            resp = parser(resp)
-
-        if resp is None or resp == 'simulation':
-            resp = self.get_random_value(0, 10)
-
-        self.process_value = resp
-
-        return resp
-
-    def traits_view(self):
-        '''
-        '''
-        return View(Item('process_setpoint'),
-                    Item('process_value', style='readonly')
-                    )
 # ============= EOF ====================================
 # def __init__(self, *args, **kw):
 #        super(Eurotherm, self).__init__(*args, **kw)

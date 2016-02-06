@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from traits.api import Int, Str
-from traitsui.qt4.basic_editor_factory import BasicEditorFactory
+from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.editor import Editor
 # ============= standard library imports ========================
 from PySide.QtGui import QProgressBar, QVBoxLayout, QLabel
@@ -50,8 +50,6 @@ class _ProgressEditor(Editor):
         self._message_control.setText('     ')
         layout.addWidget(self._message_control)
         layout.addWidget(pb)
-        print parent
-        # parent.addLayout(layout)
 
         return pb
 

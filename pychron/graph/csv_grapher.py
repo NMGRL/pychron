@@ -15,13 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.constant import OK
+from pyface.file_dialog import FileDialog
+from pyface.timer.do_later import do_later
 from traits.api import HasTraits, Instance, Button, Bool, List, Str, Property, Any, \
     Enum, File, Int
 from traitsui.api import View, Item, EnumEditor, HGroup, ListEditor, InstanceEditor, Label, Spring, \
     VGroup, spring
-from pyface.constant import OK
-from pyface.file_dialog import FileDialog
-from pyface.timer.do_later import do_later
+
 # ============= standard library imports ========================
 import numpy as np
 import csv
@@ -155,9 +156,9 @@ class CSVGrapher(Loggable):
                   window_x=40,
                   window_y=20
         )
-        with open(p, 'r') as fp:
+        with open(p, 'r') as rfile:
             # gather data
-            reader = csv.reader(fp)
+            reader = csv.reader(rfile)
             header = reader.next()
             groups = self._parse_data(reader)
             '''
@@ -215,10 +216,10 @@ class CSVGrapher(Loggable):
         if dlg.open() == OK:
             self._path = dlg.path
 
-        with open(self._path, 'U') as fp:
+        with open(self._path, 'U') as rfile:
 
 
-            reader = csv.reader(fp, delimiter=self.delimiter)
+            reader = csv.reader(rfile, delimiter=self.delimiter)
             self.column_names = names = reader.next()
             try:
                 cs = DataSelector(column_names=names,
@@ -260,8 +261,8 @@ class CSVGrapher(Loggable):
 
 
     def _plot_button_fired(self):
-        with open(self._path, 'U') as fp:
-            reader = csv.reader(fp, delimiter=self.delimiter)
+        with open(self._path, 'U') as rfile:
+            reader = csv.reader(rfile, delimiter=self.delimiter)
             _header = reader.next()
             groups = self._parse_data(reader)
             #            print groups

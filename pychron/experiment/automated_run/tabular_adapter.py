@@ -16,12 +16,12 @@
 
 # ============= enthought library imports=======================
 from pyface.action.menu_manager import MenuManager
-from traits.api import Property, Int, List, Dict
+from traits.api import Property, Int, Dict
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
 from pychron.core.configurable_tabular_adapter import ConfigurableMixin
-from pychron.core.helpers.filetools import to_bool
+from pychron.core.helpers.strtools import to_bool
 from pychron.experiment.utilities.identifier import make_aliquot_step
 from pychron.pychron_constants import EXTRACTION_COLOR, MEASUREMENT_COLOR, SUCCESS_COLOR, \
     SKIP_COLOR, NOT_EXECUTABLE_COLOR, CANCELED_COLOR, TRUNCATED_COLOR, \
@@ -34,7 +34,8 @@ COLORS = {'success': SUCCESS_COLOR,
           'truncated': TRUNCATED_COLOR,
           'failed': FAILED_COLOR,
           'end_after': END_AFTER_COLOR,
-          'invalid': 'red'}
+          'invalid': 'red',
+          'aborted': 'orange'}
 
 
 class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
@@ -42,6 +43,7 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
         ('Labnumber', 'labnumber'),
         ('Aliquot', 'aliquot'),
         ('Sample', 'sample'),
+        ('RepositoryID', 'repository_identifier'),
         ('Position', 'position'),
         ('Extract', 'extract_value'),
         ('Units', 'extract_units'),
@@ -118,23 +120,30 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
     post_equilibration_script_text = Property
     sample_text = Property
     use_cdd_warming_text = Property
+    colors = Dict(COLORS)
+
+    def get_tooltip(self, obj, trait, row, column):
+        name = self.column_map[column]
+        item = getattr(obj, trait)[row]
+        return '{}= {}'.format(name, getattr(item, name))
 
     def get_row_label(self, section, obj=None):
         return section + 1
 
-    def get_bg_color(self, obj, trait, row, column):
-        item = self.item
+    def get_bg_color(self, obj, trait, row, column=0):
+        # item = self.item
+        item = getattr(obj, trait)[row]
+        # print item.identifier, item.state, item.executable
         if not item.executable:
             color = NOT_EXECUTABLE_COLOR
         else:
             if item.skip:
                 color = SKIP_COLOR  # '#33CCFF'  # light blue
-            elif item.state in COLORS:
-                color = COLORS[item.state]
+            elif item.state in self.colors:
+                color = self.colors[item.state]
             elif item.end_after:
-                color = COLORS['end_after']
+                color = END_AFTER_COLOR
             else:
-
                 if row % 2 == 0:
                     # color = 'white'
                     # color = self.even_bg_color
@@ -149,9 +158,9 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
     def _get_position_text(self):
         at = self.item.analysis_type
         p = self.item.position
-        if at != 'unknown':
+        if at not in ('unknown', 'degas'):
             if at == 'blank_unknown':
-                if not ',' in p:
+                if ',' not in p:
                     p = ''
             else:
                 p = ''
@@ -319,7 +328,8 @@ class AutomatedRunMixin(object):
         blocks = MenuManager(Action(name='Make Block', action='make_block'),
                              Action(name='Repeat Block', action='repeat_block'),
                              name='Blocks')
-        selects = MenuManager(Action(name='Select Same', action='select_same'),
+        selects = MenuManager(Action(name='Select Unknowns', action='select_unknowns'),
+                              Action(name='Select Same Labnumber', action='select_same'),
                               Action(name='Select Same Attributes...', action='select_same_attr'),
                               name='Select')
 

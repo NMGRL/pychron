@@ -15,20 +15,19 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from pyface.constant import YES
-from pyface.timer.do_later import do_after
-from traits.api import HasTraits, Str, List, Event, Instance, Dict, Button
-from pyface.confirmation_dialog import confirm
 from pyface.action.menu_manager import MenuManager
-from traitsui.menu import Action
+from pyface.confirmation_dialog import confirm
+from pyface.constant import YES
+from traits.api import HasTraits, Str, List, Event, Instance, Dict, Button
 from traitsui.api import View, UItem, Handler, VGroup, HGroup, EnumEditor, Item
+from traitsui.menu import Action
 from traitsui.tree_node import TreeNode
+
 # ============= standard library imports ========================
 import os
 import pickle
 # ============= local library imports  ==========================
 from pychron.core.ui.tree_editor import TreeEditor
-from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.initialization.nodes import Plugin, PluginTree, PluginTreeNode, GlobalsTreeNode, GlobalTree, \
     InitializationModel, PackageTreeNode, GlobalValue, BaseNode
 from pychron.envisage.initialization.utilities import DESCRIPTION_MAP, get_initialization_model, NOMINAL_DEFAULTS, \
@@ -74,9 +73,9 @@ class InitializationEditView(HasTraits):
         nominal_defaults = NOMINAL_DEFAULTS[:]
         p = os.path.join(paths.hidden_dir, 'initialization_defaults')
         if os.path.isfile(p):
-            with open(p, 'r') as fp:
+            with open(p, 'r') as rfile:
                 try:
-                    ds = pickle.load(fp)
+                    ds = pickle.load(rfile)
                     nominal_defaults.extend(ds)
                 except (pickle.PickleError, OSError, EOFError):
                     pass

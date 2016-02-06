@@ -20,77 +20,31 @@ Global path structure
 add a path verification function
 make sure directory exists and build if not
 """
-from os import path, mkdir
 import os
+from os import path, mkdir
+
+from pyface.message_dialog import warning
+
+from pychron.file_defaults import TASK_EXTENSION_DEFAULT, SIMPLE_UI_DEFAULT, \
+    EDIT_UI_DEFAULT, IDENTIFIERS_DEFAULT
 
 
-DEFAULT_INITIALIZATION = '''<root>
-    <globals>
-    </globals>
-    <plugins>
-        <general>
-            <plugin enabled="false">Processing</plugin>
-            <plugin enabled="false">MediaServer</plugin>
-            <plugin enabled="false">PyScript</plugin>
-            <plugin enabled="false">Video</plugin>
-            <plugin enabled="false">Database</plugin>
-            <plugin enabled="false">Entry</plugin>
-            <plugin enabled="false">SystemMonitor</plugin>
-            <plugin enabled="false">ArArConstants</plugin>
-            <plugin enabled="false">Loading</plugin>
-            <plugin enabled="false">Workspace</plugin>
-            <plugin enabled="false">LabBook</plugin>
-            <plugin enabled="false">DashboardServer</plugin>
-            <plugin enabled="false">DashboardClient</plugin>
-        </general>
-        <hardware>
-        </hardware>
-        <social>
-        </social>
-    </plugins>
-</root>
-'''
+def get_file_text(d):
+    txt = ''
+    try:
+        mod = __import__('pychron.file_defaults', fromlist=[d])
+        txt = getattr(mod, d)
+    except BaseException, e:
+        pass
+    return txt
 
-DEFAULT_STARTUP_TESTS = '''
-- plugin: Database
-  tests:
-    - test_pychron
-    - test_massspec
-- plugin: LabBook
-  tests:
-- plugin: ArArConstants
-  tests:
-- plugin: ArgusSpectrometer
-  tests:
-    - test_communication
-- plugin: ExtractionLine
-  tests:
-    - test_valve_communication
-    - test_gauge_communication
-'''
-
-EXPERIMENT_DEFAULTS = '''
-columns:
-  - Labnumber
-  - Aliquot
-  - Sample
-  - Position
-  - Extract
-  - Units
-  - Duration (s)
-  - Cleanup (s)
-  - Beam (mm)
-  - Pattern
-  - Extraction
-  - Measurement
-  - Conditionals
-  - Comment
-'''
 
 class Paths(object):
+    git_base_origin = 'https://github.com'
+
     dissertation = '/Users/ross/Programming/git/dissertation'
-    enthought = path.join(path.expanduser('~'), '.enthought')
-    users_file = path.join(enthought, 'users')
+    # enthought = path.join(path.expanduser('~'), '.enthought')
+    # users_file = path.join(enthought, 'users')
     base = path.expanduser('~')
 
     # version = None
@@ -119,8 +73,9 @@ class Paths(object):
     # ==============================================================================
     # root
     # ==============================================================================
-    scripts_dir = scripts_dir = None
+    scripts_dir = None
     experiment_dir = None
+    experiment_rem_dir = None
     auto_save_experiment_dir = None
 
     run_block_dir = None
@@ -132,6 +87,7 @@ class Paths(object):
     labspy_dir = None
     labspy_context_dir = None
     # users_file = None
+    build_repo = None
     login_file = None
     preferences_dir = None
     comment_templates_dir = None
@@ -154,9 +110,11 @@ class Paths(object):
     # ==============================================================================
     # setup
     # ==============================================================================
-    setup_dir = setup_dir = None
+    setup_dir = None
     device_dir = None
     spectrometer_dir = None
+    spectrometer_config_dir = None
+    mftable_dir = None
     backup_deflection_dir = None
 
     queue_conditionals_dir = None
@@ -171,6 +129,7 @@ class Paths(object):
     block_dir = None
     heating_schedule_dir = None
     map_dir = None
+    furnace_map_dir = None
     user_points_dir = None
     irradiation_tray_maps_dir = None
     # ==============================================================================
@@ -190,15 +149,38 @@ class Paths(object):
     image_cache_dir = None
     default_cache = None
     loading_dir = None
+    load_results_dir = None
     power_map_dir = None
     labbook_dir = None
     data_det_ic_dir = None
     sample_image_dir = None
     sample_image_backup_dir = None
+    corrections_dir = None
+    figure_dir = None
+    table_dir = None
+
+    repository_dataset_dir = None
+    project_dir = None
+    meta_root = None
+    dvc_dir = None
+    device_scan_dir = None
+    isotope_dir = None
+
+    index_db = None
     # vcs_dir = None
     # initialization_dir = None
     # device_creator_dir = None
 
+    # ==============================================================================
+    # processing
+    # ==============================================================================
+    formatting_dir = None
+
+    pipeline_dir = None
+    pipeline_template_dir = None
+
+    user_pipeline_dir = None
+    user_pipeline_template_dir = None
     # ==============================================================================
     # lovera exectuables
     # ==============================================================================
@@ -207,6 +189,9 @@ class Paths(object):
     # ===========================================================================
     # files
     # ===========================================================================
+    template_manifest_file = None
+    pipeline_template_file = None
+    identifiers_file = None
     backup_recovery_file = None
     last_experiment = None
     mftable = None
@@ -215,6 +200,49 @@ class Paths(object):
     ic_mftable = None
     system_conditionals = None
     experiment_defaults = None
+    system_health = None
+
+    ideogram_defaults = None
+    spectrum_defaults = None
+    inverse_isochron_defaults = None
+    composites_defaults = None
+    sys_mon_ideogram_defaults = None
+    # screen_formatting_options = None
+    # presentation_formatting_options = None
+    # display_formatting_options = None
+    plotter_options = None
+    task_extensions_file = None
+    simple_ui_file = None
+    edit_ui_defaults = None
+
+    duration_tracker = None
+    experiment_launch_history = None
+    notification_triggers = None
+
+    # plot_factory_defaults = (('ideogram_defaults', 'IDEOGRAM_DEFAULTS', True),
+    #                          ('spectrum_defaults', 'SPECTRUM_DEFAULTS', True))
+
+    # ('inverse_isochron_defaults', 'INVERSE_ISOCHRON_DEFAULTS', False),
+    # ('composites_defaults', 'COMPOSITE_DEFAULTS', False))
+    # ('screen_formatting_options', 'SCREEN_FORMATTING_DEFAULTS', False),
+    # ('presentation_formatting_options', 'PRESENTATION_FORMATTING_DEFAULTS', False),
+    # ('display_formatting_options', 'DISPLAY_FORMATTING_DEFAULTS', False))
+    icfactor_template = None
+    blanks_template = None
+    iso_evo_template = None
+    ideogram_template = None
+    vertical_flux_template = None
+    csv_ideogram_template = None
+    spectrum_template = None
+    isochron_template = None
+    inverse_isochron_template = None
+    analysis_table_template = None
+    interpreted_age_table_template = None
+    auto_ideogram_template = None
+    series_template = None
+
+    def write_default_file(self, p, default, overwrite=False):
+        return self._write_default_file(p, default, overwrite)
 
     def set_search_paths(self, app_rec=None):
         self.app_resources = app_rec
@@ -288,30 +316,35 @@ class Paths(object):
         self.fits_dir = join(self.measurement_dir, 'fits')
 
         self.experiment_dir = join(root, 'experiments')
-        self.auto_save_experiment_dir = join(self.experiment_dir, 'auto_save_experiment_dir')
+        self.experiment_rem_dir = join(self.experiment_dir, 'rem')
+        self.auto_save_experiment_dir = join(self.experiment_dir, 'auto_save')
         self.run_block_dir = join(self.experiment_dir, 'blocks')
         self.generic_experiment_dir = join(self.experiment_dir, 'generic')
         self.backup_experiment_dir = join(self.experiment_dir, 'backup')
 
         self.hidden_dir = join(root, '.hidden')
-        # self.users_file = join(self.hidden_dir, 'users')
-        self.login_file = join(self.hidden_dir, 'login')
+
+        self.preferences_dir = join(root, 'preferences')
+        self.template_dir = join(root, 'templates')
+        self.queue_conditionals_dir = join(root, 'queue_conditionals')
+        # ==============================================================================
+        # hidden
+        # ==============================================================================
         self.labspy_dir = join(self.hidden_dir, 'labspy')
         self.labspy_context_dir = join(self.labspy_dir, 'context')
-        self.preferences_dir = join(root, 'preferences')
+
         self.plotter_options_dir = join(self.hidden_dir, 'plotter_options')
         self.comment_templates_dir = join(self.hidden_dir, 'comment_templates')
-        # self.test_dir = join(root, 'testing')
-        # self.custom_queries_dir = join(root, 'custom_queries')
-        self.template_dir = join(root, 'templates')
-
-        self.queue_conditionals_dir = join(root, 'queue_conditionals')
+        self.build_repo = join(self.hidden_dir, 'updates', 'pychron')
         # ==============================================================================
         # setup
         # ==============================================================================
         self.setup_dir = setup_dir = join(root, 'setupfiles')
         self.spectrometer_dir = join(setup_dir, 'spectrometer')
         self.backup_deflection_dir = join(self.spectrometer_dir, 'deflection_backup')
+        self.spectrometer_config_dir = join(self.spectrometer_dir, 'configurations')
+        self.mftable_dir = join(self.spectrometer_dir, 'mftables')
+
         self.device_dir = join(setup_dir, 'devices')
         self.backup_device_dir = join(self.device_dir, 'backup')
         self.canvas2D_dir = join(setup_dir, 'canvas2D')
@@ -324,7 +357,7 @@ class Paths(object):
         self.block_dir = join(setup_dir, 'blocks')
         self.map_dir = map_dir = join(setup_dir, 'tray_maps')
         self.user_points_dir = join(map_dir, 'user_points')
-
+        self.furnace_map_dir = join(map_dir, 'furnace')
         self.irradiation_tray_maps_dir = join(setup_dir, 'irradiation_tray_maps')
         # ==============================================================================
         # data
@@ -339,21 +372,37 @@ class Paths(object):
         self.stage_visualizer_dir = join(data_dir, 'stage_visualizer')
         self.data_det_ic_dir = join(data_dir, 'det_ic')
         # self.arar_dir = join(data_dir, 'arar')
-
+        self.device_scan_dir = join(data_dir, 'device_scans')
         self.isotope_dir = join(self.data_dir, 'isotopes')
-        self.workspace_root_dir = join(self.data_dir, 'workspaces')
-        self.default_workspace_dir = join(self.workspace_root_dir, 'collection')
-        self.processed_dir = join(self.data_dir, 'processed')
-        # initialization_dir = join(setup_dir, 'initializations')
-        # device_creator_dir = join(device_dir, 'device_creator')
+        # self.workspace_root_dir = join(self.data_dir, 'workspaces')
+        # self.default_workspace_dir = join(self.workspace_root_dir, 'collection')
+        # self.processed_dir = join(self.data_dir, 'processed')
+
         self.image_cache_dir = join(self.data_dir, 'image_cache')
         self.default_cache = join(self.data_dir, 'cache')
         self.loading_dir = join(self.data_dir, 'loads')
+        self.load_results_dir = join(self.loading_dir, 'results')
         self.power_map_dir = join(self.data_dir, 'power_maps')
         self.labbook_dir = join(self.data_dir, 'labbook')
         self.sample_image_dir = join(self.data_dir, 'sample_image_dir')
         self.sample_image_backup_dir = join(self.sample_image_dir, 'backup')
-        # self.vcs_dir = join(self.data_dir, 'vcs')
+        self.figure_dir = join(self.data_dir, 'figures')
+        self.table_dir = join(self.data_dir, 'tables')
+
+        self.corrections_dir = join(self.data_dir, 'stage_corrections')
+        self.dvc_dir = join(self.data_dir, '.dvc')
+        self.repository_dataset_dir = join(self.dvc_dir, 'repositories')
+        self.meta_root = join(self.dvc_dir, 'MetaData')
+
+        # ==============================================================================
+        # processing
+        # ==============================================================================
+        # self.formatting_dir = join(self.setup_dir, 'formatting')
+        self.user_pipeline_dir = join(self.setup_dir, 'pipeline')
+        self.user_pipeline_template_dir = join(self.user_pipeline_dir, 'templates')
+
+        self.pipeline_dir = join(self.hidden_dir, 'pipeline')
+        self.pipeline_template_dir = join(self.pipeline_dir, 'templates')
         # ==============================================================================
         # lovera exectuables
         # ==============================================================================
@@ -361,6 +410,9 @@ class Paths(object):
         # =======================================================================
         # files
         # =======================================================================
+        self.template_manifest_file = join(self.pipeline_dir, 'pipeline_manifest.p')
+        self.pipeline_template_file = join(self.pipeline_dir, 'template_order.yaml')
+        self.identifiers_file = join(self.hidden_dir, 'identifiers.yaml')
         self.backup_recovery_file = join(self.hidden_dir, 'backup_recovery')
         self.last_experiment = join(self.hidden_dir, 'last_experiment')
         self.mftable = join(self.spectrometer_dir, 'mftable.csv')
@@ -369,25 +421,82 @@ class Paths(object):
         self.deflection = join(self.spectrometer_dir, 'deflection.yaml')
         self.startup_tests = join(self.setup_dir, 'startup_tests.yaml')
         self.set_search_paths()
-        self.system_conditionals = join(self.spectrometer_dir, 'default_conditionals.yaml')
+        self.system_conditionals = join(self.spectrometer_dir, 'system_conditionals.yaml')
         self.experiment_defaults = join(setup_dir, 'experiment_defaults.yaml')
+        self.ideogram_defaults = join(self.hidden_dir, 'ideogram_defaults.yaml')
+        self.spectrum_defaults = join(self.hidden_dir, 'spectrum_defaults.yaml')
+        self.inverse_isochron_defaults = join(self.hidden_dir, 'inverse_isochron_defaults.yaml')
+        self.composites_defaults = join(self.hidden_dir, 'composite_defaults.yaml')
+        self.system_health = join(self.setup_dir, 'system_health.yaml')
+        # self.screen_formatting_options = join(self.formatting_dir, 'screen.yaml')
+        # self.presentation_formatting_options = join(self.formatting_dir, 'presentation.yaml')
+        # self.display_formatting_options = join(self.formatting_dir, 'display.yaml')
+        self.plotter_options = join(self.plotter_options_dir, 'plotter_options.p')
+        self.task_extensions_file = join(self.hidden_dir, 'task_extensions.yaml')
+        self.simple_ui_file = join(self.hidden_dir, 'simple_ui.yaml')
+        self.edit_ui_defaults = join(self.hidden_dir, 'edit_ui.yaml')
 
-        self._write_default_files()
+        self.duration_tracker = join(self.hidden_dir, 'duration_tracker.txt')
+        self.experiment_launch_history = join(self.hidden_dir, 'experiment_launch_history.txt')
+        self.notification_triggers = join(self.setup_dir, 'notification_triggers.yaml')
+
+        # =======================================================================
+        # pipeline templates
+        # =======================================================================
+        self.icfactor_template = join(self.pipeline_template_dir, 'icfactor.yaml')
+        self.blanks_template = join(self.pipeline_template_dir, 'blanks.yaml')
+        self.iso_evo_template = join(self.pipeline_template_dir, 'iso_evo.yaml')
+        self.ideogram_template = join(self.pipeline_template_dir, 'ideogram.yaml')
+        self.csv_ideogram_template = join(self.pipeline_template_dir, 'csv_ideogram.yaml')
+        self.spectrum_template = join(self.pipeline_template_dir, 'spectrum.yaml')
+        self.isochron_template = join(self.pipeline_template_dir, 'isochron.yaml')
+        self.inverse_isochron_template = join(self.pipeline_template_dir, 'inverse_isochron.yaml')
+        self.vertical_flux_template = join(self.pipeline_template_dir, 'vertical_flux.yaml')
+        self.analysis_table_template = join(self.pipeline_template_dir, 'analysis_table.yaml')
+        self.interpreted_age_table_template = join(self.pipeline_template_dir, 'interpreted_age_table.yaml')
+        self.auto_ideogram_template = join(self.pipeline_template_dir, 'auto_ideogram.yaml')
+        self.series_template = join(self.pipeline_template_dir, 'series.yaml')
+        build_directories()
+
+    def write_defaults(self):
+        if os.environ.get('TRAVIS_CI', 'False') == 'False' and os.environ.get('RTD', 'False') == 'False':
+            self._write_default_files()
+
+    def reset_plot_factory_defaults(self):
+        warning(None, 'Reset plot factor defaults not enabled')
+        # self.write_file_defaults(self.plot_factory_defaults, force=True)
+
+    def write_file_defaults(self, fs, force=False):
+        for p, d, o in fs:
+            txt = get_file_text(d)
+            try:
+                p = getattr(paths, p)
+            except AttributeError:
+                pass
+            self.write_default_file(p, txt, o or force)
 
     def _write_default_files(self):
+        from pychron.file_defaults import DEFAULT_INITIALIZATION, DEFAULT_STARTUP_TESTS, SYSTEM_HEALTH
+
         for p, d in ((path.join(self.setup_dir, 'initialization.xml'), DEFAULT_INITIALIZATION),
                      (self.startup_tests, DEFAULT_STARTUP_TESTS),
-                     (self.experiment_defaults, EXPERIMENT_DEFAULTS)):
-            self._write_default_file(p, d)
+                     (self.system_health, SYSTEM_HEALTH),
+                     (self.simple_ui_file, SIMPLE_UI_DEFAULT),
+                     (self.edit_ui_defaults, EDIT_UI_DEFAULT),
+                     (self.task_extensions_file, TASK_EXTENSION_DEFAULT),
+                     (self.identifiers_file, IDENTIFIERS_DEFAULT),
+                     # (self.pipeline_template_file, PIPELINE_TEMPLATES)
+                     ):
+            overwrite = d in (SYSTEM_HEALTH, SIMPLE_UI_DEFAULT,)
+            # overwrite = d in (SYSTEM_HEALTH, SIMPLE_UI_DEFAULT,)
+            # print p
+            self._write_default_file(p, d, overwrite)
 
-    def _write_default_file(self, p, default):
-        if not path.isfile(p):
-            with open(p, 'w') as fp:
-                fp.write(default)
-
-
-paths = Paths()
-paths.build('_dev')
+    def _write_default_file(self, p, default, overwrite=False):
+        if not path.isfile(p) or overwrite:
+            with open(p, 'w') as wfile:
+                wfile.write(default)
+                return True
 
 
 def r_mkdir(p):
@@ -407,40 +516,6 @@ def build_directories():
         if l.endswith('_dir'):
             r_mkdir(getattr(paths, l))
 
-            # ============= EOF ==============================================
-            # ==============================================================================
-            # # #database
-            # # ==============================================================================
-            # device_scan_root = device_scan_root = None
-            # device_scan_db = None
-            #
-            # co2laser_db_root = None
-            # co2laser_db = None
-            #
-            # diodelaser_db_root = None
-            # diodelaser_db = None
-            #
-            # isotope_db_root = None
-            # isotope_db = None
-            # ==============================================================================
-            # #database
-            # ==============================================================================
-            # db_path = '/usr/local/pychron
-            # db_path = stable_root
-            # self.device_scan_root = device_scan_root = join(db_path, 'device_scans')
-            # self.device_scan_db = join(device_scan_root, 'device_scans.sqlite')
 
-            # self.co2laser_db_root = join(db_path, 'co2laserdb')
-            # self.co2laser_db = join(db_path, 'co2.sqlite')
-            # self.uvlaser_db_root = join(db_path, 'uvlaserdb')
-            # self.uvlaser_db = join(db_path, 'uv.sqlite')
-            #
-            # self.powermap_db_root = join(db_path, 'powermap')
-            # self.powermap_db = join(db_path, 'powermap.sqlite')
-            #
-            # self.diodelaser_db_root = join(db_path, 'diodelaserdb')
-            # self.diodelaser_db = join(db_path, 'diode.sqlite')
-            # self.isotope_db_root = join(db_path, 'isotopedb')
-
-            # ROOT = '/Users/ross/Sandbox/pychron_test_data/data'
-            # self.isotope_db = join(ROOT, 'isotopedb.sqlite')
+paths = Paths()
+# ============= EOF ==============================================

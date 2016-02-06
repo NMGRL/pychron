@@ -13,28 +13,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-# from traits.api import HasTraits
+# ============= enthought library imports =======================
+from PySide.QtCore import Qt
+from PySide.QtGui import QMessageBox
+from PySide.QtGui import QSizePolicy, QCheckBox
+from pyface.api import OK, YES
+from pyface.message_dialog import MessageDialog
+from pyface.ui.qt4.confirmation_dialog import ConfirmationDialog
+
+# ============= standard library imports ========================
 import time
 from threading import Event, currentThread, _MainThread, Thread
-
-from PySide.QtGui import QSizePolicy
-from pyface.api import OK, YES
-from pyface.ui.qt4.confirmation_dialog import ConfirmationDialog
-from pyface.message_dialog import MessageDialog
-
+# ============= local library imports  ==========================
 from pychron.core.ui.gui import invoke_in_main_thread
 
 
-
-
-
-
-
-#from pyface.confirmation_dialog import ConfirmationDialog
-
-# ============= enthought library imports =======================
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 class myMessageMixin(object):
     """
         makes  message dialogs thread save.
@@ -97,40 +90,49 @@ class myMessageDialog(myMessageMixin, MessageDialog):
     pass
 
 
-class _ConfirmationDialog(ConfirmationDialog):
+class myConfirmationDialog(myMessageMixin, ConfirmationDialog):
+
+    default_button = 'yes'
+
     def _create_control(self, parent):
-        dlg = super(_ConfirmationDialog, self)._create_control(parent)
-        dlg.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        dlg = super(myConfirmationDialog, self)._create_control(parent)
 
         if self.size != (-1, -1):
             dlg.resize(*self.size)
-            dlg.event = self._handle_evt
 
         dlg.buttonClicked.connect(self._handle_button)
+        if self.default_button == 'yes':
+            dlg.setDefaultButton(QMessageBox.Yes)
+        else:
+            dlg.setDefaultButton(QMessageBox.No)
+
         return dlg
 
     def _handle_button(self, evt):
         if self._closed_evt:
             self._closed_evt.set()
 
-    def _handle_evt(self, evt):
-        return True
 
-    def _show_modal(self):
-        self.control.setModal(True)
-        # self.control.setWindowModality(QtCore.Qt.ApplicationModal)
-        retval = self.control.exec_()
-        clicked_button = self.control.clickedButton()
-        if clicked_button in self._button_result_map:
-            retval = self._button_result_map[clicked_button]
-            # else:
-            #     retva
-            # retval = _RESULT_MAP[retval]
-        return retval
+class RememberConfirmationDialog(myConfirmationDialog):
+    def _create_control(self, parent):
+        dlg = super(RememberConfirmationDialog, self)._create_control(parent)
 
+        dlg.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
-class myConfirmationDialog(myMessageMixin, _ConfirmationDialog):
-    pass
+        if self.size != (-1, -1):
+            dlg.resize(*self.size)
+            dlg.event = self._handle_evt
 
+        # dlg.buttonClicked.connect(self._handle_button)
+
+        cb = QCheckBox('Remember this choice')
+        lay = dlg.layout()
+        lay.addWidget(cb)
+        self.cb = cb
+        return dlg
+
+    @property
+    def remember(self):
+        return self.cb.checkState() == Qt.Checked
 
 # ============= EOF =============================================

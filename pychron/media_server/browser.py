@@ -15,11 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from enable.base_tool import BaseTool
+from enable.component_editor import ComponentEditor
 from traits.api import Any, List, Instance, String, on_trait_change, \
     Button, Tuple
 from traitsui.api import View, Item, VGroup
-from enable.component_editor import ComponentEditor
-from enable.base_tool import BaseTool
+
 # ============= standard library imports ========================
 import os
 # import Image
@@ -145,8 +146,8 @@ class MediaBrowser(Loggable):
     def _open_fired(self):
         dlg = FileDialog(action='open')
         if dlg.open() == OK:
-            with open(dlg.path, 'rb') as fp:
-                self.viewer.set_image(fp)
+            with open(dlg.path, 'rb') as rfile:
+                self.viewer.set_image(rfile)
                 self.hierarchy.files.append(os.path.basename(dlg.path))
 
             self.client.cache(dlg.path)

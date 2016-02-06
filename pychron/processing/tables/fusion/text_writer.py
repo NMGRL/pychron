@@ -21,10 +21,6 @@ from uncertainties import nominal_value, std_dev
 from pychron.loggable import Loggable
 
 
-
-
-
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -182,20 +178,20 @@ class LaserTableTextWriter(Loggable):
         ('JEr', 'j', error),
         ('39ArDecay', 'ar39decayfactor', value),
         ('37ArDecay', 'ar37decayfactor', value),
-        ('K4039', 'k4039', correction_value()),
-        ('K4039_err', 'k4039', correction_value(ve='error')),
-        ('K3839', 'k3839', correction_value()),
-        ('K3839_err', 'k3839', correction_value(ve='error')),
-        ('K3739', 'k3739', correction_value()),
-        ('K3739_err', 'k3739', correction_value(ve='error')),
-        ('Ca3937', 'ca3937', correction_value()),
-        ('Ca3937_err', 'ca3937', correction_value(ve='error')),
-        ('Ca3837', 'ca3837', correction_value()),
-        ('Ca3837_err', 'ca3837', correction_value(ve='error')),
-        ('Ca3637', 'ca3637', correction_value()),
-        ('Ca3637_err', 'ca3637', correction_value(ve='error')),
-        ('Cl3638', 'cl3638', correction_value()),
-        ('Cl3638_err', 'cl3638', correction_value(ve='error')),
+        ('K4039', 'K4039', correction_value()),
+        ('K4039_err', 'K4039', correction_value(ve='error')),
+        ('K3839', 'K3839', correction_value()),
+        ('K3839_err', 'K3839', correction_value(ve='error')),
+        ('K3739', 'K3739', correction_value()),
+        ('K3739_err', 'K3739', correction_value(ve='error')),
+        ('Ca3937', 'Ca3937', correction_value()),
+        ('Ca3937_err', 'Ca3937', correction_value(ve='error')),
+        ('Ca3837', 'Ca3837', correction_value()),
+        ('Ca3837_err', 'Ca3837', correction_value(ve='error')),
+        ('Ca3637', 'Ca3637', correction_value()),
+        ('Ca3637_err', 'Ca3637', correction_value(ve='error')),
+        ('Cl3638', 'Cl3638', correction_value()),
+        ('Cl3638_err', 'Cl3638', correction_value(ve='error')),
         ('Ca_K', 'Ca_K', correction_value()),
         ('Ca_K_err', 'Ca_K', correction_value(ve='error')),
         ('Cl_K ', 'Cl_K', correction_value()),
@@ -203,31 +199,52 @@ class LaserTableTextWriter(Loggable):
     )
     default_style = None
 
-    def build(self, p, iagroups, groups, use_summary_sheet=False, title=None):
+    def build(self, p, groups, use_summary_sheet=False, title=None):
         self.info('saving table to {}'.format(p))
         wb = self._new_workbook()
-        options = self.options
-        if options.use_sample_sheets:
-            for gi in groups:
-                # for sam, ais in self._group_samples(ans):
-                sh = self._add_sample_sheet(wb, gi.sample)
-                #                 ais = list(ais)
+        # options = self.options
+        # if options.use_sample_sheets:
+        #     for gi in groups:
+        #         # for sam, ais in self._group_samples(ans):
+        #         sh = self._add_sample_sheet(wb, gi.sample)
+        #         #                 ais = list(ais)
+        #
+        #         #                 self._add_metadata(sh, ais[0])
+        #         self._add_header_row(sh, 0)
+        #         self._add_analyses(sh, gi.analyses, start=2)
+        # else:
+        #     # if use_summary_sheet:
+        #     # self._write_summary_sheet(wb, groups)
+        #
+        #     sh = wb.add_sheet('ArArData')
+        #     start = 2
+        #     hrow = 0
+        #     if title:
+        #         self._add_title_row(sh, title)
+        #         start += 1
+        #         hrow = 1
+        #
+        #     for i, gi in enumerate(groups):
+        #         if i == 0:
+        #             self._add_header_row(sh, hrow)
+        #
+        #         self._add_analyses(sh, gi.analyses, start=start)
+        #         start += len(gi.analyses) + 1
 
-                #                 self._add_metadata(sh, ais[0])
-                self._add_header_row(sh, 0)
-                self._add_analyses(sh, gi.analyses, start=2)
-        else:
-            if use_summary_sheet:
-                self._write_summary_sheet(wb, iagroups)
+        sh = wb.add_sheet('ArArData')
+        start = 2
+        hrow = 0
+        if title:
+            self._add_title_row(sh, title)
+            start += 1
+            hrow = 1
 
-            sh = wb.add_sheet('ArArData')
-            start = 2
-            for i, gi in enumerate(groups):
-                if i == 0:
-                    self._add_header_row(sh, 0)
+        for i, gi in enumerate(groups):
+            if i == 0:
+                self._add_header_row(sh, hrow)
 
-                self._add_analyses(sh, gi.all_analyses, start=start)
-                start += len(gi.all_analyses) + 1
+            self._add_analyses(sh, gi.analyses, start=start)
+            start += len(gi.analyses) + 1
 
         wb.save(p)
 
@@ -254,11 +271,15 @@ class LaserTableTextWriter(Loggable):
                 ('Age', 'age'),
                 (u'{}\u03c3'.format(self.options.age_nsigma),
                  'age_err', set_nsigma('age')),
-        ]
+                ]
         start = 1
         self._add_summary_header_row(sh, cols)
         for i, gi in enumerate(groups):
             self._add_summary_row(sh, gi, i + start, cols)
+
+    def _add_title_row(self, sh, title):
+        sh.write(0, 0, title)
+        sh.merge(0, 0, 0, 10)
 
     def _add_summary_header_row(self, sh, cols, start=0):
         s1, s2 = self._get_header_styles()

@@ -16,7 +16,6 @@
 
 # ============= enthought library imports =======================
 from pyface.tasks.traits_task_pane import TraitsTaskPane
-from traits.api import HasTraits, Button
 from traitsui.api import View, Item, UItem, TabularEditor, VGroup, UReadonly, HGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================

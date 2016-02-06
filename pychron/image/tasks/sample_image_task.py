@@ -17,14 +17,13 @@
 # ============= enthought library imports =======================
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem
-from traits.api import Event, List, Str, HasTraits, Instance
+from traits.api import Event, List, Instance
 # ============= standard library imports ========================
 import os
 # ============= local library imports  ==========================
 from pychron.core.progress import progress_loader
-from pychron.envisage.browser.browser_mixin import BrowserMixin
+from pychron.envisage.browser.base_browser_model import BaseBrowserModel
 from pychron.envisage.browser.record_views import SampleRecordView, SampleImageRecordView
-from pychron.envisage.tasks.base_task import BaseManagerTask
 # from pychron.image.camera import Camera
 from pychron.envisage.tasks.editor_task import BaseEditorTask
 from pychron.image.tasks.actions import SnapshotAction, DBSnapshotAction, UploadAction
@@ -32,12 +31,11 @@ from pychron.image.tasks.actions import SnapshotAction, DBSnapshotAction, Upload
 from pychron.image.tasks.pane import SampleBrowserPane, InfoPane  # , CameraTabPane
 from pychron.image.tasks.save_view import DBSaveView
 from pychron.image.tasks.tab import CameraTab, ImageTabEditor, ImageModel
-from pychron.image.tasks.video_pane import VideoPane
 from pychron.image.toupcam.camera import ToupCamCamera
 from pychron.paths import paths
 
 
-class SampleImageTask(BaseEditorTask, BrowserMixin):
+class SampleImageTask(BaseEditorTask, BaseBrowserModel):
     name = 'Sample Imager'
     id = 'pychron.image.sample_imager'
 
@@ -83,8 +81,8 @@ class SampleImageTask(BaseEditorTask, BrowserMixin):
 
         path = self.open_file_dialog(default_directory=os.path.expanduser('~'), wildcard='*.jpg|*.jpeg')
         if path is not None:
-            with open(path, 'rb') as fp:
-                self.save_db_snapshot(fp.read())
+            with open(path, 'rb') as rfile:
+                self.save_db_snapshot(rfile.read())
 
         self._load_associated_images(self.selected_samples)
 
@@ -92,6 +90,7 @@ class SampleImageTask(BaseEditorTask, BrowserMixin):
         from pychron.core.helpers.filetools import unique_path2
 
         p, _ = unique_path2(paths.sample_image_dir, 'nosample', extension='.jpg')
+        p, _ = unique_path2(paths.sample_image_dir, 'nosample', extension='.tiff')
         self.camera.save(p)
 
     def save_db_snapshot(self, blob=None):
@@ -113,7 +112,7 @@ class SampleImageTask(BaseEditorTask, BrowserMixin):
                                                 identifier=sample.identifier)
                 cnt += 1
 
-            name = '{}{:03n}'.format(sample.name, cnt)
+            name = '{}{:03d}'.format(sample.name, cnt)
 
         v = DBSaveView(name=name)
         info = v.edit_traits()

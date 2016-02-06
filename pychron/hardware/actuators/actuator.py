@@ -34,8 +34,9 @@ from pychron.hardware.core.abstract_device import AbstractDevice
 
 PACKAGES = dict(AgilentGPActuator='pychron.hardware.agilent.agilent_gp_actuator',
                 ArduinoGPActuator='pychron.hardware.arduino.arduino_gp_actuator',
-                ArgusGPActuator='pychron.hardware.actuators.argus_gp_actuator',
-                PychronGPActuator='pychron.hardware.actuators.pychron_gp_actuator')
+                QtegraGPActuator='pychron.hardware.actuators.qtegra_gp_actuator',
+                PychronGPActuator='pychron.hardware.actuators.pychron_gp_actuator',
+                RPiGPIO='pychron.hardware.rpi_gpio')
 
 
 class Actuator(AbstractDevice):
@@ -56,8 +57,8 @@ class Actuator(AbstractDevice):
 
         klass = name = self.config_get(config, 'General', 'type')
 
-        if 'Argus' in klass:
-            klass = 'ArgusGPActuator'
+        if 'qtegra' in klass.lower():
+            klass = 'QtegraGPActuator'
 
         self._type = klass
         if klass is not None:

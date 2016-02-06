@@ -17,8 +17,9 @@
 # ============= enthought library imports =======================
 
 # ============= standard library imports ========================
-from sqlalchemy.orm import relationship
 from sqlalchemy import Column, DateTime, BLOB, String
+from sqlalchemy.orm import relationship
+
 # ============= local library imports  ==========================
 from pychron.database.core.base_orm import BaseMixin, NameMixin
 from util import Base, foreignkey

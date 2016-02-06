@@ -17,10 +17,12 @@
 # ============= enthought library imports =======================
 import ConfigParser
 import os
+
 from traits.api import HasTraits, Button, Instance, List, Str, \
-    Any, Enum, CStr, Int, Float
-from traits.trait_types import Bool, String
+    Enum, Int, Float
+from traits.trait_types import Bool
 from traitsui.api import View, Item, VGroup
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -171,8 +173,8 @@ class DeviceConfigurer(Loggable):
         # putting the device dir under git control is a good idea
 
         self._backup()
-        with open(self.config_path, 'w') as fp:
-            self._config.write(fp)
+        with open(self.config_path, 'w') as wfile:
+            self._config.write(wfile)
 
     def _backup(self):
         bp, pp = backup(self.config_path, paths.backup_device_dir, extension='.cfg')

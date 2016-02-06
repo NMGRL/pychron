@@ -13,10 +13,10 @@ HOPS = [('Ar40:H1, Ar36:CDD', 2, 1),
 class PeakHopCase(unittest.TestCase):
     def setUp(self):
         p = '../data/hop.txt'
-        with open(p, 'r') as fp:
+        with open(p, 'r') as rfile:
             # lines=filetolist(fp)
             # lines = fileiter(fp)
-            hops = [eval(li) for li in fileiter(fp)]
+            hops = [eval(li) for li in fileiter(rfile)]
             # hops = [eval(line) for line in fp if line.strip() and not line.strip().startswith('#')]
             self.gen = parse_hops(hops)
 

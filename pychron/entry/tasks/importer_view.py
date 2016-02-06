@@ -15,10 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Button, Property, Instance
+from traits.api import Property, Instance
 from traitsui.api import View, Item, Controller, VGroup, HGroup, spring, UItem
-from traitsui.tabular_adapter import TabularAdapter
 from traitsui.editors import TabularEditor
+from traitsui.tabular_adapter import TabularAdapter
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.entry.tasks.importer import ImporterModel

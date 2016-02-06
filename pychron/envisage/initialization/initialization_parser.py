@@ -22,7 +22,7 @@ import os
 import sys
 import inspect
 # ============= local library imports  ==========================
-from pychron.core.helpers.filetools import to_bool
+from pychron.core.helpers.strtools import to_bool
 from pychron.core.xml.xml_parser import XMLParser
 from pychron.paths import paths
 
@@ -114,8 +114,9 @@ class InitializationParser(XMLParser):
             except AttributeError:
                 plugins = tree.getiterator(tag='plugin')
 
-        return [p if element else p.text.strip()
-                for p in plugins if all_ or to_bool(p.get('enabled'))]
+        if plugins:
+            return [p if element else p.text.strip()
+                    for p in plugins if all_ or to_bool(p.get('enabled'))]
 
     #    def get_plugins_as_elements(self, category):
     #        tree = self._tree.find('plugins')
@@ -218,13 +219,26 @@ class InitializationParser(XMLParser):
         return None, None, None
 
     def get_device(self, manager, devname, plugin, element=False):
-        if plugin is None:
-            man = self.get_plugin(manager)
-        else:
-            man = self.get_manager(manager, plugin)
+        if plugin:
+            man = self.get_plugin(plugin)
+            nman = next((d for d in man.findall('manager')
+                    if d.text.strip() == manager), None)
+            if nman is not None:
+                man = nman
 
-        if man is None:
-            man = self.get_plugin_group(manager)
+        else:
+            man = self.get_plugin(manager)
+
+        # print manager, devname, plugin, man.text.strip()
+        # else:
+        #     man = self.get_manager()
+        # if plugin is None:
+        #     man = self.get_plugin(manager)
+        # else:
+        # man = self.get_manager(manager, plugin)
+
+        # if man is None:
+        #     man = self.get_plugin_group(manager)
 
         dev = next((d for d in man.findall('device')
                     if d.text.strip() == devname), None)
@@ -270,7 +284,8 @@ class InitializationParser(XMLParser):
         return servers
 
     def _get_parameters(self, subtree, tag, all_=False, element=False):
-
+        if subtree is None:
+            print subtree
         return [d if element else d.text.strip()
                 for d in subtree.findall(tag)
                 if all_ or to_bool(d.get('enabled'))]
@@ -307,6 +322,7 @@ class InitializationParser(XMLParser):
 
         if 'Manager' in plugin:
             plugin = plugin.replace('Manager', '')
+
         p = self.get_plugin(plugin)
 
         man = next((pi for pi in p.findall('manager') if pi.text.strip() == name), None)

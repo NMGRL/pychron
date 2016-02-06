@@ -22,9 +22,8 @@ HW_PACKAGE_MAP = {
     'CommandProcessor': 'pychron.messaging.command_processor',
     'RemoteCommandServer': 'pychron.messaging.remote_command_server',
 
-    'ArduinoSubsystem': 'pychron.hardware.subsystems.arduino_subsystem',
     'DPi32TemperatureMonitor': 'pychron.hardware.temperature_monitor',
-    'ValveController': 'pychron.hardware.actuators.valve_controller',
+    'SwitchController': 'pychron.hardware.actuators.switch_controller',
     'AnalogPowerMeter': 'pychron.hardware.analog_power_meter',
     'ADC': 'pychron.hardware.adc.adc_device',
     'AgilentADC': 'pychron.hardware.adc.analog_digital_converter',
@@ -32,6 +31,7 @@ HW_PACKAGE_MAP = {
     'ThermoRack': 'pychron.hardware.thermorack',
     'MicroIonController': 'pychron.hardware.gauges.granville_phillips.micro_ion_controller',
     'PychronMicroIonController': 'pychron.hardware.gauges.granville_phillips.pychron_micro_ion_controller',
+    'QtegraMicroIonController': 'pychron.hardware.gauges.granville_phillips.pychron_micro_ion_controller',
     'ArgusController': 'pychron.hardware.argus_controller',
     'FerrupsUPS': 'pychron.hardware.FerrupsUPS',
     'QtegraDevice': 'pychron.hardware.qtegra_device',
@@ -43,13 +43,13 @@ HW_PACKAGE_MAP = {
 
     'Pneumatics': 'pychron.hardware.pneumatics',
     'PychronPneumatics': 'pychron.hardware.pneumatics',
+    'PychronChiller': 'pychron.hardware.pychron_chiller',
 
-
-    # RPC classes
-    'RemoteThermoRack': 'pychron.hardware.remote.thermorack',
+    # 'RemoteThermoRack': 'pychron.hardware.remote.thermorack',
     'RemoteNewportMotionController': 'pychron.hardware.remote.newport_motion_controller',
 
-    'TempHumMicroServer':'pychron.hardware.environmental_probe',
-    'AirTransducer':'pychron.hardware.transducer'
+    'TempHumMicroServer': 'pychron.hardware.environmental_probe',
+    'AirTransducer': 'pychron.hardware.transducer',
+    'NMGRLMagnetDumper': 'pychron.furnace.magnet_dumper'
     # 'ControlModule': 'pychron.hardware.fusions.vue_diode_control_module'
 }

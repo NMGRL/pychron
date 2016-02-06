@@ -20,7 +20,6 @@ from pyface.constant import OK
 
 from pychron.core.ui import set_qt
 
-
 set_qt()
 
 
@@ -171,8 +170,8 @@ class ExtractionLineScriptWriter(Loggable):
     def _save(self, p):
         p = add_extension(p, ext='.py')
         self.debug('saving script to path {}'.format(p))
-        with open(p, 'w') as fp:
-            fp.write(self.script_text)
+        with open(p, 'w') as wfile:
+            wfile.write(self.script_text)
 
     def _open_file(self, p):
 
@@ -188,11 +187,11 @@ class ExtractionLineScriptWriter(Loggable):
         sleep_re = re.compile(r'''(?P<action>(sleep\())+((?P<value>(\d+.*\d*)))\)''')
         info_re = re.compile(r'''(info\()+['"]{1}(?P<value>[\w\s\d'"]*)['"]{1}\)''')
         actions = []
-        with open(p, 'r') as fp:
+        with open(p, 'r') as rfile:
             _docstring_started = False
             has__docstring = False
             ds = []
-            for li in fileiter(fp):
+            for li in fileiter(rfile):
                 if not has__docstring and (li.startswith('"""') or li.startswith("'''")):
                     if _docstring_started:
                         has__docstring = True

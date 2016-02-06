@@ -24,25 +24,18 @@ from pyface.tasks.action.task_action import TaskAction
 # from pychron.envisage.core.action_helper import open_manager
 
 from pychron.envisage.resources import icon
+from pychron.envisage.view_util import open_view
 
 
-# sample change actions
-class IsolateChamberAction(TaskAction):
-    name = 'Isolate Chamber'
-    method = 'isolate_chamber'
-    image = icon('arrow_in')
+class AutoReloadAction(TaskAction):
+    name = 'Auto Reload'
+    method = 'enable_auto_reload'
 
 
-class EvacuateChamberAction(TaskAction):
-    name = 'Evacuate Chamber'
-    method = 'evacuate_chamber'
+class SampleLoadingAction(TaskAction):
+    name = 'Load Samples'
+    method = 'do_sample_loading'
     image = icon('arrow_out')
-
-
-class FinishChamberChangeAction(TaskAction):
-    name = 'Finish'
-    method = 'finish_chamber_change'
-    image = icon('tick')
 
 
 class ExtractionLineAction(Action):
@@ -60,33 +53,28 @@ class OpenExtractionLineManager(ExtractionLineAction):
 
     def perform(self, event):
         man = self._get_manager(event)
+        open_view(man)
 
-        app = self.window.application
-        app.open_view(man)
-
-    #        open_manager(app, man)
 
 class OpenExtractionLineExplanation(ExtractionLineAction):
     description = 'Open extraction line explanation'
 
     def perform(self, event):
         man = self._get_manager(event)
-        app = self.window.application
-        app.open_view(man.explanation)
+        open_view(man.explanation)
 
-    #        open_manager(app, man.explanation)
 
 class LoadCanvasAction(ExtractionLineAction):
-    '''
-    '''
+    """
+    """
     description = 'load an updated canvas file'
     name = 'Load Canvas'
     enabled = False
 
     def perform(self, event):
-        '''
-        
-        '''
+        """
+
+        """
         manager = self._get_manager(event)
         #        manager.window = self.window
         manager.load_canvas()
@@ -96,6 +84,7 @@ class RefreshCanvasAction(ExtractionLineAction):
     description = 'reload the scene graph to reflect changes made to setupfiles'
     name = 'Refresh Canvas'
     #    enabled = False
+
     def perform(self, event):
         manager = self._get_manager(event)
         #        manager.window = self.window
@@ -151,8 +140,7 @@ class RefreshCanvasAction(ExtractionLineAction):
 class OpenPyScriptEditorAction(ExtractionLineAction):
     def perform(self, event):
         manager = self._get_manager(event)
-        app = event.window.application
-        app.open_view(manager.pyscript_editor)
+        open_view(manager.pyscript_editor)
 
 
 class OpenMultiplexerAction(ExtractionLineAction):
@@ -167,7 +155,6 @@ class OpenMultiplexerAction(ExtractionLineAction):
     def perform(self, event):
         manager = self._get_manager(event)
         if manager.multiplexer_manager:
-            app = event.window.application
-            app.open_view(manager.multiplexer_manager)
+            open_view(manager.multiplexer_manager)
 
 # ============= EOF ====================================

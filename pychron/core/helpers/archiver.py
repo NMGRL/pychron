@@ -120,7 +120,7 @@ class Archiver(HasTraits):
         if not os.path.isdir(yarch):
             os.mkdir(yarch)
 
-        mname = '{:02n}-{}'.format(month_idx, month)
+        mname = '{:02d}-{}'.format(month_idx, month)
         march = os.path.join(yarch, mname)
         if not os.path.isdir(march):
             os.mkdir(march)
@@ -128,7 +128,7 @@ class Archiver(HasTraits):
         src = os.path.join(root, p)
         dst = os.path.join(march, p)
 
-        self.info('Archiving {:30s} to ./archive/{}/{}'.format(p, year, mname))
+        self.info('Archiving {:15s} to ./archive/{}/{}'.format(p, year, mname))
         try:
             shutil.move(src, dst)
         except Exception, e:

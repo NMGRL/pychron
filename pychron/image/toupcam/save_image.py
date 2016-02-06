@@ -15,11 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from numpy import load, random, uint8, roll
 import Image as pil
-from numpy.core.umath import bitwise_or, bitwise_and
-from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change
-from traitsui.api import View, UItem, Item, HGroup, VGroup
+from numpy import load, uint8
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 def main():

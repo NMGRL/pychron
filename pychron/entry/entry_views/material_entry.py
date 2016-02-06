@@ -15,29 +15,27 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Str
-from traitsui.api import Item
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.entry.entry_views.entry import BaseEntry
 
 
 class MaterialEntry(BaseEntry):
-    material = Str
+    tag = 'Material'
 
-    def _add_item(self, db):
+    def _add_item(self):
         name = self.material
         self.info('Attempting to add Material="{}"'.format(name))
-
-        mat = db.get_material(name)
+        dvc = self.dvc
+        mat = dvc.get_material(name)
         if mat is None:
-            db.add_material(name)
+            dvc.add_material(name)
             return True
         else:
             self.warning_dialog('"{}" already exists'.format(name))
 
-    def traits_view(self):
-        return self._new_view(Item('material'), title='New Material')
+    # def traits_view(self):
+    #     return self._new_view(Item('material'), title='New Material')
 
 # ============= EOF =============================================
 

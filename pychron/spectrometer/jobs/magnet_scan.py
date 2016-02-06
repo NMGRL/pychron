@@ -15,16 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Any, Float, DelegatesTo, List, Bool
-from traitsui.api import View, Item, EnumEditor, Group, HGroup, spring, ButtonEditor
 from pyface.timer.do_later import do_after
+from traits.api import Any, Float, DelegatesTo, List, Bool, Property
+from traitsui.api import View, Item, EnumEditor, Group, HGroup, spring, ButtonEditor
+
 # ============= standard library imports ========================
-from numpy import linspace, exp, hstack, array, Inf
+from numpy import linspace, hstack, array, Inf
+from numpy.core.umath import exp
 import random
 import time
 from threading import Event
 # ============= local library imports  ==========================
-from pychron.pychron_constants import QTEGRA_INTEGRATION_TIMES
 from spectrometer_task import SpectrometerTask
 from pychron.core.ui.gui import invoke_in_main_thread
 
@@ -60,6 +61,7 @@ class MagnetScan(SpectrometerTask):
 
     reference_detector = Any
     additional_detectors = List
+    active_detectors = Property
 
     start_mass = Float(36)
     stop_mass = Float(40)
@@ -86,13 +88,16 @@ class MagnetScan(SpectrometerTask):
         while not evt.isSet():
             time.sleep(0.01)
 
-        self.integration_time = QTEGRA_INTEGRATION_TIMES[5]
+        # self.integration_time = QTEGRA_INTEGRATION_TIMES[4]
         return True
+
+    def _get_active_detectors(self):
+        return [self.reference_detector] + self.additional_detectors
 
     def _iter_dac(self, di, gen, evt, intensities):
         # self.debug('iter dac {}'.format(di))
         mag = self.spectrometer.magnet
-        mag.set_dac(di, verbose=self.verbose)
+        mag.set_dac(di, verbose=self.verbose, settling_time=self.integration_time*2)
 
         d = self._magnet_step_hook()
 
@@ -133,18 +138,19 @@ class MagnetScan(SpectrometerTask):
             oys = array([v]) if oys is None else hstack((oys, v))
             setattr(plot, k, oys)
 
-            if i == 0:
-                # calculate ref range
-                miR = min(oys)
-                maR = max(oys)
-                R = maR - miR
-            else:
-                mir = min(oys)
-                mar = max(oys)
-                r = mar - mir
+            if self.normalize:
+                if i == 0:
+                    # calculate ref range
+                    miR = min(oys)
+                    maR = max(oys)
+                    R = maR - miR
+                else:
+                    mir = min(oys)
+                    mar = max(oys)
+                    r = mar - mir
 
-            if r and R and self.normalize:
-                oys = (oys - mir) * R / r + miR
+                if r and R:
+                    oys = (oys - mir) * R / r + miR
 
             xs = get_data('x{}'.format(i))
             xs = hstack((xs, di))
@@ -165,11 +171,13 @@ class MagnetScan(SpectrometerTask):
         spec = self.spectrometer
         ds = [str(self.reference_detector)] + self.additional_detectors
         intensity = spec.get_intensity(ds)
+        # print ds,intensity
         # intensity = intensity[1]
-        if self._peak_generator:
-            # print 'asdfas', intensity
-            v = self._peak_generator.next()
-            intensity = [v+random.random() for i in range(len(ds))]
+        # print self._peak_generator
+        # if self._peak_generator:
+        #     # print 'asdfas', intensity
+        #     v = self._peak_generator.next()
+        #     intensity = [v+random.random() for i in range(len(ds))]
 
         # debug
         # if globalv.experiment_debug:

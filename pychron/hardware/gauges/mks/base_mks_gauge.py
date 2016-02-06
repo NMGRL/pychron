@@ -82,7 +82,7 @@ class BaseMKSGauge(BaseGauge):
         '''
         base = '@%s%s!%s;FF'
         if typetag == 'power':
-            tag = 'FP'
+            tag = 'wfile'
 
             s = base % (addr, tag, ('ON' if value else 'OFF'))
             # s='@%s%s!%s;FF' % (addr, tag, value)

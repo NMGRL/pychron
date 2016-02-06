@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,41 +20,29 @@
 import math
 from copy import deepcopy
 
-from numpy import asarray, average
-from uncertainties import ufloat, umath
-from numpy import array
+from numpy import asarray, average, array
+from uncertainties import ufloat, umath, nominal_value
 
+# ============= local library imports  ==========================
+from pychron.pychron_constants import ALPHAS
 from pychron.processing.arar_constants import ArArConstants
 from pychron.core.stats.core import calculate_weighted_mean
 
 
-
-
-
-
-
-
-
-
-
-# ============= local library imports  ==========================
-
-
-def calculate_F_ratio(m4039, m3739, m3639, pr):
-    """
-    required ratios
-    (40/39)m
-    (36/39)m
-    (37/39)m
-
-
-    """
-
-    atm4036 = 295.5
-    n = m4039 - atm4036 * m3639 + atm4036 * pr.get('ca3637') * m3739
-    d = 1 - pr.get('ca3937') * m3739
-    F = n / d - pr.get('k4039')
-    return F
+# def calculate_F_ratio(m4039, m3739, m3639, pr):
+#     """
+#     required ratios
+#     (40/39)m
+#     (36/39)m
+#     (37/39)m
+#
+#
+#     """
+#
+#     atm4036 = 295.5
+#     n = m4039 - atm4036 * m3639 + atm4036 * pr.get('ca3637') * m3739
+#     d = 1 - pr.get('ca3937') * m3739
+#     return n / d - pr.get('k4039')
 
 
 def extract_isochron_xy(analyses):
@@ -63,9 +51,7 @@ def extract_isochron_xy(analyses):
             ai.get_interference_corrected_value('Ar40'))
            for ai in analyses]
     a39, a36, a40 = array(ans).T
-    # print 'a40',a40
-    # print 'a39',a39
-    # print 'a36',a36
+
     try:
         xx = a39 / a40
         yy = a36 / a40
@@ -97,7 +83,7 @@ def calculate_isochron(analyses, reg='NewYork'):
     xns, xnes = zip(*[(xi.nominal_value, xi.std_dev) for xi in a39])
 
     regx = isochron_regressor(ys, yerrs, xs, xerrs,
-                              xds,xdes, yns, ynes, xns, xnes)
+                              xds, xdes, yns, ynes, xns, xnes)
 
     reg = isochron_regressor(xs, xerrs, ys, yerrs,
                              xds, xdes, xns, xnes, yns, ynes,
@@ -132,7 +118,7 @@ def isochron_regressor(xs, xes, ys, yes,
     return reg
 
 
-def calculate_plateau_age(ages, errors, k39, kind='inverse_variance', method='fleck 1977'):
+def calculate_plateau_age(ages, errors, k39, kind='inverse_variance', method='fleck 1977', options=None, excludes=None):
     """
         ages: list of ages
         errors: list of corresponding  1sigma errors
@@ -143,23 +129,47 @@ def calculate_plateau_age(ages, errors, k39, kind='inverse_variance', method='fl
     # print 'ages=array({})'.format(ages)
     # print 'errors=array({})'.format(errors)
     # print 'k39=array({})'.format(k39)
+    if options is None:
+        options = {}
 
     ages = asarray(ages)
     errors = asarray(errors)
-
     k39 = asarray(k39)
-    from pychron.processing.plateau import Plateau
 
-    p = Plateau(ages=ages,
-                errors=errors,
-                signals=k39)
-    pidx = p.find_plateaus(method)
-    # pidx = find_plateaus(ages, errors, k39,
-    #                      overlap_sigma=2)
+    force_steps = options.get('force_steps', False)
+    if force_steps:
+        sstep, estep = force_steps
+        sstep, estep = sstep.upper(), estep.upper()
+        if not sstep:
+            sidx = 0
+        else:
+            sidx = ALPHAS.index(sstep)
+
+        n = ages.shape[0] - 1
+        if not estep:
+            eidx = n
+        else:
+            eidx = ALPHAS.index(estep)
+
+        sidx, eidx = min(sidx, eidx), min(max(sidx, eidx), n)
+        pidx = (sidx, eidx) if sidx < n else None
+
+    else:
+
+        from pychron.processing.plateau import Plateau
+
+        p = Plateau(ages=ages,
+                    errors=errors,
+                    signals=k39,
+                    excludes=excludes,
+                    nsteps=options.get('nsteps', 3),
+                    gas_fraction=options.get('gas_fraction', 50))
+
+        pidx = p.find_plateaus(method)
+
     if pidx:
-        sx = slice(*pidx)
+        sx = slice(pidx[0], pidx[1] + 1)
         plateau_ages = ages[sx]
-
         if kind == 'vol_fraction':
             weights = k39[sx]
             wm, we = average(plateau_ages, weights=weights)
@@ -170,7 +180,7 @@ def calculate_plateau_age(ages, errors, k39, kind='inverse_variance', method='fl
         return wm, we, pidx
 
 
-def calculate_flux(f, age, arar_constants=None):
+def calculate_flux(f, age, arar_constants=None, lambda_k=None):
     """
         #rad40: radiogenic 40Ar
         #k39: 39Ar from potassium
@@ -179,29 +189,23 @@ def calculate_flux(f, age, arar_constants=None):
 
         solve age equation for J
     """
-    # if isinstance(rad40, (list, tuple)):
-    #     rad40 = ufloat(*rad40)
-    # if isinstance(k39, (list, tuple)):
-    #     k39 = ufloat(*k39)
-
     if isinstance(f, (list, tuple)):
         f = ufloat(*f)
 
     if isinstance(age, (list, tuple)):
         age = ufloat(*age)
-        #    age = (1 / constants.lambdak) * umath.log(1 + JR)
     try:
-        # r = rad40 / k39
-        if arar_constants is None:
-            arar_constants = ArArConstants()
+        if not lambda_k:
+            if arar_constants is None:
+                arar_constants = ArArConstants()
+            lambda_k = nominal_value(arar_constants.lambda_k)
 
-        j = (umath.exp(age * arar_constants.lambda_k.nominal_value) - 1) / f
-        return j.nominal_value, j.std_dev
+        j = (umath.exp(age * lambda_k) - 1) / f
+        return j
     except ZeroDivisionError:
-        return 1, 0
+        return ufloat(1, 0)
 
 
-#    return j
 def calculate_decay_time(dc, f):
     return math.log(f) / dc
 
@@ -217,15 +221,17 @@ def calculate_decay_factor(dc, segments):
 
         using start seems more appropriate
     """
-
-    a = sum([pi * ti for pi, ti, _ in segments])
-
-    b = sum([pi * ((1 - math.exp(-dc * ti)) / (dc * math.exp(dc * dti)))
-             for pi, ti, dti in segments])
-    try:
-        return a / b
-    except ZeroDivisionError:
+    if segments is None:
         return 1.0
+    else:
+        a = sum([pi * ti for pi, ti, _ in segments])
+
+        b = sum([pi * ((1 - math.exp(-dc * ti)) / (dc * math.exp(dc * dti)))
+                 for pi, ti, dti in segments])
+        try:
+            return a / b
+        except ZeroDivisionError:
+            return 1.0
 
 
 def abundance_sensitivity_correction(isos, abundance_sensitivity):
@@ -272,6 +278,7 @@ def interference_corrections(a40, a39, a38, a37, a36,
 
     pr = production_ratios
     k37 = ufloat(0, 1e-20)
+    # print 'aaaa', a40, a39
 
     if arar_constants.k3739_mode.lower() == 'normal' and not fixed_k3739:
         # iteratively calculate 37, 39
@@ -314,11 +321,16 @@ def calculate_atmospheric(a38, a36, k38, ca38, ca36, decay_time,
         arar_constants = ArArConstants()
 
     pr = production_ratios
+    m = pr.get('Cl3638', 0) * nominal_value(arar_constants.lambda_Cl36) * decay_time
+    a3836 = nominal_value(arar_constants.atm3836)
 
-    m = pr.get('cl3638', 0) * arar_constants.lambda_Cl36.nominal_value * decay_time
+    lcl36 = arar_constants.lambda_Cl36.nominal_value
+    atm3836 = arar_constants.atm3836.nominal_value
+
+    m = pr.get('Cl3638', 0) * lcl36 * decay_time
     atm36 = ufloat(0, 1e-20)
     for _ in range(5):
-        ar38atm = arar_constants.atm3836.nominal_value * atm36
+        ar38atm = atm3836 * atm36
         cl38 = a38 - ar38atm - k38 - ca38
         cl36 = cl38 * m
         atm36 = a36 - ca36 - cl36
@@ -337,19 +349,15 @@ def calculate_F(isotopes,
     """
     a40, a39, a38, a37, a36 = isotopes
 
-    #a37*=113
-
     if interferences is None:
         interferences = {}
 
     if arar_constants is None:
         arar_constants = ArArConstants()
 
-    #make local copy of interferences
-    pr = dict(((k, v.__copy__()) for k, v in interferences.iteritems()))
+    # make local copy of interferences
+    pr = {k: v.__copy__() for k, v in interferences.iteritems()}
 
-    #for k,v in pr.iteritems():
-    #    print k, v
     k37, k38, k39, ca36, ca37, ca38, ca39 = interference_corrections(a40, a39, a38, a37, a36,
                                                                      pr, arar_constants, fixed_k3739)
     atm36, cl36 = calculate_atmospheric(a38, a36, k38, ca38, ca36,
@@ -357,10 +365,12 @@ def calculate_F(isotopes,
                                         pr,
                                         arar_constants)
 
-    # calculate rodiogenic
+    # calculate radiogenic
     # dont include error in 40/36
-    atm40 = atm36 * arar_constants.atm4036.nominal_value
-    k40 = k39 * pr.get('k4039', 1)
+    atm40 = atm36 * nominal_value(arar_constants.atm4036)
+
+    k4039 = pr.get('K4039', 0)
+    k40 = k39 * k4039
 
     rad40 = a40 - atm40 - k40
     try:
@@ -369,7 +379,7 @@ def calculate_F(isotopes,
         f = ufloat(1.0, 0)
 
     rf = deepcopy(f)
-    # f = ufloat(f.nominal_value, f.std_dev, tag='F')
+
     non_ar_isotopes = dict(k40=k40,
                            ca39=ca39,
                            k38=k38,
@@ -386,14 +396,13 @@ def calculate_F(isotopes,
 
     computed = dict(rad40=rad40, rad40_percent=rp,
                     k39=k39, atm40=atm40)
-    #print 'Ar40', a40-k40, a40, k40
-    #print 'Ar39', a39-k39, a39, k39
+
     interference_corrected = dict(Ar40=a40 - k40,
                                   Ar39=k39,
-                                  Ar38=a38,  #- k38 - ca38,
-                                  Ar37=a37,  #- ca37 - k37,
+                                  Ar38=a38,
+                                  Ar37=a37,
                                   Ar36=atm36)
-    ##clear errors in irrad
+    # clear errors in irrad
     for pp in pr.itervalues():
         pp.std_dev = 0
     f_wo_irrad = f
@@ -403,6 +412,8 @@ def calculate_F(isotopes,
 
 def age_equation(j, f,
                  include_decay_error=False,
+                 lambda_k=None,
+                 scalar=None,
                  arar_constants=None):
     if isinstance(j, tuple):
         j = ufloat(*j)
@@ -413,15 +424,21 @@ def age_equation(j, f,
         f = ufloat(*f)
     elif isinstance(f, str):
         f = ufloat(f)
-    if arar_constants is None:
-        arar_constants = ArArConstants()
 
-    scalar = float(arar_constants.age_scalar)
-    lk = arar_constants.lambda_k
+    if not lambda_k:
+        if arar_constants is None:
+            arar_constants = ArArConstants()
+        lambda_k = arar_constants.lambda_k
+
+    if not scalar:
+        if arar_constants is None:
+            arar_constants = ArArConstants()
+        scalar = float(arar_constants.age_scalar)
+
     if not include_decay_error:
-        lk = lk.nominal_value
+        lambda_k = nominal_value(lambda_k)
     try:
-        return (lk ** -1 * umath.log(1 + j * f)) / scalar
+        return (lambda_k ** -1 * umath.log(1 + j * f)) / scalar
     except (ValueError, TypeError):
         return ufloat(0, 0)
 
@@ -470,13 +487,12 @@ def calculate_error_t(F, ssF, j, ssJ):
     return sst ** 0.5
 
 # ============= EOF =====================================
-## ============= EOF ====================================
 # # plateau definition
 # plateau_criteria = {'number_steps': 3}
 #
 #
 # def overlap(a1, a2, e1, e2, overlap_sigma):
-#     e1 *= overlap_sigma
+# e1 *= overlap_sigma
 #     e2 *= overlap_sigma
 #     if a1 - e1 < a2 + e2 and a1 + e1 > a2 - e2:
 #         return True
@@ -657,7 +673,7 @@ def calculate_error_t(F, ssF, j, ssJ):
 #    k4039er, ca3637er, ca3937er = ratio_errs
 # #    a37decayfactor = 1
 # #    a39decayfactor = 1
-#    #convert to ufloats
+#    #convert to ufloat
 #    from uncertainties import ufloat
 #    from uncertainties.umath import log
 #
@@ -729,7 +745,8 @@ def calculate_error_t(F, ssF, j, ssJ):
 #    T = ca3637 * D * T37
 #    G = D3 * T39 - s
 # #    P = mcl * (ca3837 * D * T37 + A3836 * (T36 - T) - D2 * T38 + k3839 * G)
-#    R = (-k4039 * G - A4036 * (T36 - T - mcl * (ca3837 * D * T37 + A3836 * (T36 - T) - D2 * T38 + k3839 * G)) + D4 * T40)
+#    R = (-k4039 * G - A4036 * (T36 - T - mcl * (ca3837 * D * T37 + A3836 *
+#        (T36 - T) - D2 * T38 + k3839 * G)) + D4 * T40)
 #    G2 = G * G
 #
 #    er40 = square(D4 * j / G) * square(Tot40Er)
@@ -764,20 +781,22 @@ def calculate_error_t(F, ssF, j, ssJ):
 #
 #    er4039 = square(j * (s - D3 * T39) / G) * square(k4039er)
 #
-#    er3937 = square((j * (D * k4039 * T37 - A4036 * D * k3839 * mcl * T37)) / G + (D * j * T37 * R) / G2) * square(ca3937er)
+#    er3937 = square((j * (D * k4039 * T37 - A4036 * D * k3839 * mcl * T37)) / G +
+#             (D * j * T37 * R) / G2) * square(ca3937er)
 #
 #    er3637 = square(-((A4036 * j * (-D * T37 + A3836 * D * mcl * T37)) / G)) * square(ca3637er)
 #
 #    erJ = square(R / G) * square(jer)
 #    JRer = (er40 + er39 + er38 + er37 + er36 + erD + er4039 + er3937 + er3637 + erJ) ** 0.5
 #    age_err = (1e-6 / constants.lambdak) * JRer / (1 + ar40rad / k39 * j)
-## ===============================================================================
+# ===============================================================================
 # # error pychron port
-## ===============================================================================
+# ===============================================================================
 # #    s = ca3937 * s37
 # #    T = ca3637 * s37
 # #    G = s39 - s
-# #    R = (-k4039 * G - constants.atm4036 * (s36 - T - mcl * (ca3837 * s37 + constants.atm3836 * (s36 - T) - s38 + k3839 * G)) + s40)
+# #    R = (-k4039 * G - constants.atm4036 * (s36 - T - mcl * (ca3837 * s37 +
+#              constants.atm3836 * (s36 - T) - s38 + k3839 * G)) + s40)
 # #    #ErComp(1) = square(D4 * j / G) * square(Tot40Er)
 # #    er40 = (d ** 4 * j / G) ** 2 * s40er ** 2
 # #
@@ -813,13 +832,15 @@ def calculate_error_t(F, ssF, j, ssJ):
 # #        - 2 * s38 / d))))
 # #        / (s39 / d - s) - (1 * j * (3 * s39 / d - ca3937 * s37 / d)
 # #        * (s40 / d - k4039 * (s40 / d - s)
-# #        - constants.atm4036 * (s36 - T - mcl * (-(s38 / d) + ca3837 * s37 + constants.atm3836 * (s36 - T) + k3839 * (s39 / d - s)))))
+# #        - constants.atm4036 * (s36 - T - mcl * (-(s38 / d) + ca3837 * s37 +
+#             constants.atm3836 * (s36 - T) + k3839 * (s39 / d - s)))))
 # #        / (s39 / d - s) ** 2) ** 2 * der ** 2
 # #    #square(j * (s - D3 * T39) / G) * square(K4039Er)
 # #    er4039 = (j * (s - s39 / d) / G) ** 2 * k4039er ** 2
 # #
 # #    #square((j * (D * K4039 * T37 - A4036 * D * K3839 * MCl * T37)) / G + (D * j * T37 * R) / G2) * square(Ca3937Er)
-# #    er3937 = ((j * (k4039 * s37 - constants.atm4036 * k3839 * mcl * s37)) / G + (j * s37 * R) / G ** 2) ** 2 * ca3937er ** 2
+# #    er3937 = ((j * (k4039 * s37 - constants.atm4036 * k3839 * mcl * s37)) / G +
+#          (j * s37 * R) / G ** 2) ** 2 * ca3937er ** 2
 # #
 # #    #square(-((A4036 * j * (-D * T37 + A3836 * D * MCl * T37)) / G)) * square(Ca3637Er)
 # #    er3637 = (-((constants.atm4036 * j * (-s37 + constants.atm3836 * mcl * s37)) / G)) ** 2 * ca3637er ** 2

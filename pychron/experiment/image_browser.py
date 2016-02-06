@@ -15,16 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from chaco.api import ArrayPlotData, Plot, HPlotContainer
+from chaco.tools.api import ZoomTool, PanTool
+from chaco.tools.image_inspector_tool import ImageInspectorOverlay, \
+    ImageInspectorTool
+from enable.component import Component
+from enable.component_editor import ComponentEditor
 from traits.api import HasTraits, Instance, List, Str, Bool, on_trait_change, String, \
     Button, Dict, Any
 from traitsui.api import View, Item, ListStrEditor, HGroup, VGroup, \
     spring, VSplit, Group
-from chaco.api import ArrayPlotData, Plot, HPlotContainer
-from chaco.tools.image_inspector_tool import ImageInspectorOverlay, \
-    ImageInspectorTool
-from chaco.tools.api import ZoomTool, PanTool
-from enable.component_editor import ComponentEditor
-from enable.component import Component
+
 # ============= standard library imports ========================
 import Image
 from numpy import array
@@ -193,8 +194,8 @@ class ImageBrowser(IsotopeDatabaseManager):
     def _get_cached(self, name):
         self.info('retrieve {} from cache directory'.format(name))
         p = os.path.join(self.cache_dir, name)
-        with open(p, 'r') as fp:
-            im = Image.open(fp)
+        with open(p, 'r') as rfile:
+            im = Image.open(rfile)
             im = im.convert('RGB')
             return array(im)
 

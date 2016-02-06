@@ -98,8 +98,8 @@ class InitializationModel(BaseNode):
         self._hash = self._current_hash()
 
     def _current_hash(self):
-        with open(self.parser.path) as fp:
-            return hashlib.md5(fp.read()).hexdigest()
+        with open(self.parser.path) as rfile:
+            return hashlib.md5(rfile.read()).hexdigest()
 
     def is_dirty(self):
         return self._current_hash() != self._hash

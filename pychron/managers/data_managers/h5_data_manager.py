@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from traits.api import Any
 # ============= standard library imports ========================
-from tables import openFile, Filters
+from tables import open_file, Filters
 # ============= local library imports  ==========================
 from data_manager import DataManager
 from table_descriptions import table_description_factory
@@ -39,7 +39,7 @@ def get_table(name, group, frame):
 
 class TableCTX(object):
     def __init__(self, p, t, g, complevel, mode):
-        self._file = openFile(p, mode,
+        self._file = open_file(p, mode,
                               filters=Filters(complevel=complevel))
         self._t = t
         self._g = g
@@ -54,7 +54,7 @@ class TableCTX(object):
 
 class FileCTX(object):
     def __init__(self, parent, p, m, complevel):
-        self._file = openFile(p, m,
+        self._file = open_file(p, m,
                               filters=Filters(complevel=complevel))
         self._parent = parent
         self._parent._frame = self._file
@@ -121,7 +121,7 @@ class H5DataManager(DataManager):
         try:
             os.remove(p)
         except Exception, e:
-            print e
+            print 'exception', e
 
     def new_frame_ctx(self, *args, **kw):
         p = self._new_frame_path(*args, **kw)
@@ -133,7 +133,7 @@ class H5DataManager(DataManager):
         """
         p = self._new_frame_path(*args, **kw)
         try:
-            self._frame = openFile(p, mode='w')
+            self._frame = open_file(p, mode='w')
 
             return self._frame
         except ValueError:
@@ -149,7 +149,7 @@ class H5DataManager(DataManager):
         grp = self.get_group(group_name, parent)
 
         if grp is None:
-            grp = self._frame.createGroup(parent, group_name, description)
+            grp = self._frame.create_group(parent, group_name, description)
 
         return grp
 
@@ -159,14 +159,14 @@ class H5DataManager(DataManager):
         """
         tab = self.get_table(table_name, group)
         if tab is None:
-            tab = self._frame.createTable(group, table_name,
+            tab = self._frame.create_table(group, table_name,
                                           table_description_factory(table_style))
 
         tab.flush()
         return tab
 
     def new_array(self, group, name, data):
-        self._frame.createArray(group, name, data)
+        self._frame.create_array(group, name, data)
 
     def get_table(self, name, group, frame=None):
         if frame is None:
@@ -183,16 +183,16 @@ class H5DataManager(DataManager):
             if isinstance(grp, str):
                 grp = getattr(self._frame.root, grp)
                 #            print 'wget', grp
-            return [g for g in grp._f_walkGroups() if g != grp]
+            return [g for g in grp._f_walk_groups() if g != grp]
         else:
-            return [g for g in self._frame.walkGroups() if g != self._frame.root]
+            return [g for g in self._frame.walk_groups() if g != self._frame.root]
 
     def get_tables(self, grp):
         if isinstance(grp, str):
             grp = '/{}'.format(grp)
 
         f = self._frame
-        return [n for n in f.walkNodes(grp, 'Table')]
+        return [n for n in f.walk_nodes(grp, 'Table')]
 
     def isfile(self, path):
         return os.path.isfile(path)
@@ -208,7 +208,7 @@ class H5DataManager(DataManager):
             path = out
 
         try:
-            self._frame = openFile(path, mode, filters=Filters(complevel=self.compression_level))
+            self._frame = open_file(path, mode, filters=Filters(complevel=self.compression_level))
             return True
         except Exception:
             self._frame = None
@@ -220,7 +220,7 @@ class H5DataManager(DataManager):
         try:
             self.debug('flush and close file {}'.format(self._frame.filename))
 
-            for node in self._frame.walkNodes('/', 'Table'):
+            for node in self._frame.walk_nodes('/', 'Table'):
                 node.flush()
 
             self._frame.flush()

@@ -14,11 +14,6 @@
 # limitations under the License.
 # ===============================================================================
 from traitsui.view import View
-from pychron.core.ui import set_qt
-from pychron.experiment.utilities.conditionals import CONDITIONAL_GROUP_TAGS
-
-set_qt()
-
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -35,7 +30,7 @@ class ConditionalsView(ConditionalsViewable):
         self._add_pre_post('PostRunTerminations', items, PostRunGroup)
 
     def add_pre_run_terminations(self, items):
-        self._add_pre_post( 'PreRunTerminations', items, PreRunGroup)
+        self._add_pre_post('PreRunTerminations', items, PreRunGroup)
 
     def _add_pre_post(self, label, items, klass):
         if not items:
@@ -58,14 +53,19 @@ class ConditionalsView(ConditionalsViewable):
                 self._group_factory(items, klass, conditional_klass=cklass,
                                     auto_select=False, label=name.capitalize())
 
-    def add_conditionals(self, ditems):
-        for tag in CONDITIONAL_GROUP_TAGS:
-            tag = '{}s'.format(tag)
-            # grp = getattr(self, '{}s_group'.format(tag))
-            grp = next((gi for gi in self.groups if gi.label == tag.capitalize()), None)
-            items = ditems.get(tag)
-            if items:
-                grp.conditionals.extend(items)
+    def add_conditionals(self, ditems, **kw):
+        if ditems:
+            for name, klass, cklass in (('actions', ConditionalGroup, ActionConditional),
+                                        ('truncations', ConditionalGroup, TruncationConditional),
+                                        ('cancelations', ConditionalGroup, CancelationConditional),
+                                        ('terminations', ConditionalGroup, TerminationConditional)):
+                items = ditems.get(name, [])
+                grp = next((gi for gi in self.groups if gi.label == name.capitalize()), None)
+                if not grp:
+                    self._group_factory(items, klass, auto_select=False,
+                                        label=name.capitalize(), **kw)
+                else:
+                    grp.conditionals.extend(items)
 
     def traits_view(self):
         v = View(self._view_tabs(),

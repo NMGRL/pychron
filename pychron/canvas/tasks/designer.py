@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -27,6 +27,7 @@ from pychron.canvas.canvas2D.extraction_line_canvas2D import ExtractionLineCanva
 from pychron.canvas.canvas2D.scene.canvas_parser import CanvasParser
 from pychron.canvas.canvas2D.scene.extraction_line_scene import ExtractionLineScene
 from pychron.canvas.canvas2D.scene.primitives.valves import Valve
+from pychron.paths import paths
 
 
 class Designer(HasTraits):
@@ -58,12 +59,23 @@ class Designer(HasTraits):
             self._set_element_translation(ei)
 
         for ei in cp.get_elements('connection'):
-            name = ei.text.strip()
-            obj = self.scene.get_item(name)
-            if obj.clear_orientation:
-                ei.set('orientation', '')
+            # name = ei.text.strip()
+            start = ei.find('start').text.strip()
+            end = ei.find('end').text.strip()
+            name = '{}_{}'.format(start, end)
 
-        p = os.path.join(os.path.dirname(p, ), 'test.xml')
+            obj = self.scene.get_item(name)
+            for t, tt in ((obj.clear_vorientation, 'vertical',),
+                          (obj.clear_horientation, 'horizontal')):
+                if t and obj.get('orientation') == tt:
+                    ei.set('orientation', '')
+
+                    # if obj.clear_vorientation and obj.orientation=='vertical':
+                    # ei.set('orientation', '')
+                    # if obj.clear_orientation and obj.orientation=='':
+                    # ei.set('orientation', '')
+
+        # p = os.path.join(os.path.dirname(p, ), 'test.xml')
         cp.save()
 
     def _set_element_translation(self, elem):
@@ -77,7 +89,7 @@ class Designer(HasTraits):
             if color is not None:
                 c = ','.join(map(lambda x: str(x),
                                  obj.default_color.toTuple()
-                ))
+                                 ))
                 color.text = c
 
         self._set_element_attr(func, elem, 'color')
@@ -94,18 +106,19 @@ class Designer(HasTraits):
         for elem in self.scene.iteritems():
             if type(elem) in tags:
                 tag = tags[type(elem)]
-                print tag, elem
+                print 'adsfafd', tag, elem
             elif hasattr(elem, 'type_tag'):
-                print elem.type_tag, elem
+                print 'fffff', elem.type_tag, elem
 
     def open_xml(self, p):
         #cp=CanvasParser(p)
         #print cp
 
-        scene = ExtractionLineScene(canvas=self.canvas)
+        scene = ExtractionLineScene()
         self.canvas.scene = scene
         cp = os.path.join(os.path.dirname(p), 'canvas_config.xml')
-        scene.load(p, cp)
+        vp = os.path.join(paths.extraction_line_dir, 'valves.xml')
+        scene.load(p, cp, vp, self.canvas)
 
         self.scene = scene
 

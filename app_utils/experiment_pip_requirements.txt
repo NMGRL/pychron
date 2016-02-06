@@ -1,4 +1,0 @@
-uncertainties
-PyMySQL
-pint
-#pyproj

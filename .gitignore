@@ -8,3 +8,4 @@ htmlcov
 *.hidden
 *.project
 *.pydevproject
+.DS_Store

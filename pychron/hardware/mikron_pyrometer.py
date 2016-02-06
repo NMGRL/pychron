@@ -24,7 +24,7 @@ from traitsui.api import Item, spring, Group, HGroup, \
 
 # =============local library imports  ==========================
 from core.core_device import CoreDevice
-from pychron.core import Q_
+# from pychron.core import Q_
 from pychron.core.ui.color_map_bar_editor import BarGaugeEditor
 
 TIME_CONSTANTS = {'0': 'Intrinsic', '1': '0.01 s',
@@ -80,7 +80,7 @@ class MikronGA140Pyrometer(CoreDevice):
         """
 
         """
-        self._communicator.char_write = True
+        self.communicator.char_write = True
         return True
 
     #REsponseRecorder Interface
@@ -91,8 +91,8 @@ class MikronGA140Pyrometer(CoreDevice):
         """
 
         """
-        fmt = '{}{}' if value is None else '{}{}{:04n}' if per_mil else \
-            '{}{}{:n}' if single_digit else '{}{}{:02n}'
+        fmt = '{}{}' if value is None else '{}{}{:04d}' if per_mil else \
+            '{}{}{:d}' if single_digit else '{}{}{:02d}'
         args = (self.device_address, cmd)
 
         if value is not None:
@@ -129,7 +129,7 @@ class MikronGA140Pyrometer(CoreDevice):
         cmd = self._build_command('ms')
         temp = self._parse_response(self.ask(cmd, **kw))
 
-        self.qtemperature = Q_(temp, 'C')
+        # self.qtemperature = Q_(temp, 'C')
         self.temperature = temp or 0
 
         return self.temperature

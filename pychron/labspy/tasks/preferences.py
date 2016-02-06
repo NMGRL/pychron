@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traits.api import Int, Str, Password
+from traits.api import Int, Str, Password, Bool
 from traitsui.api import View, Item, Spring, Label, VGroup, HGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -34,6 +34,9 @@ class LabspyPreferences(BasePreferencesHelper, ConnectionMixin):
     name = Str
     username = Str
 
+    use_connection_status = Bool
+    connection_status_period = Int
+
     def _get_connection_dict(self):
         return dict(username=self.username,
                     host=self.host,
@@ -47,21 +50,27 @@ class LabspyPreferencesPane(PreferencesPane):
     category = 'Labspy'
 
     def traits_view(self):
+        dbconngrp = HGroup(icon_button_editor('test_connection_button', 'database_connect',
+                                              tooltip='Test connection'),
+                           Spring(width=10, springy=False),
+                           Label('Status:'),
+                           CustomLabel('_connected_label',
+                                       label='Status',
+                                       weight='bold',
+                                       color_name='_connected_color'))
+        csgrp = VGroup(Item('use_connection_status', label='Use Connection Status',
+                            tooltip='Enable connection status checking'),
+                       Item('connection_status_period',
+                            label='Connection Status Period (s)',
+                            tooltip='Check connection status every X seconds',
+                            enabled_when='use_connection_status'))
+
         v = View(VGroup(Item('name'),
-                 Item('host'),
-                 Item('username'),
-                 Item('password'),
-                 HGroup(icon_button_editor('test_connection_button', 'database_connect',
-                                    tooltip='Test connection'),
-                 Spring(width=10, springy=False),
-                 Label('Status:'),
-                 CustomLabel('_connected_label',
-                             label='Status',
-                             weight='bold',
-                             color_name='_connected_color'))))
+                        Item('host'),
+                        Item('username'),
+                        Item('password'),
+                        dbconngrp,
+                        csgrp))
         return v
 
 # ============= EOF =============================================
-
-
-

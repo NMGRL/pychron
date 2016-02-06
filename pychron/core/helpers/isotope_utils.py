@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -37,7 +37,7 @@ def sort_isotopes(keys, reverse=True, key=None):
         rf = lambda x: rank_func(key(x))
     else:
         rf = rank_func
-    keys = list(keys)
+    # keys = list(keys)
     return sorted(keys, key=rf,
                   reverse=reverse)
 
@@ -49,7 +49,7 @@ def sort_detectors(idets):
         else:
             return 0
 
-    dets=sorted(idets, key=f)
+    dets = sorted(idets, key=f)
     # dets = ['', ] * len(idets)
     # edets = []
 

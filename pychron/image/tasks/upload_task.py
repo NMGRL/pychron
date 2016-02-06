@@ -16,19 +16,19 @@
 
 # ============= enthought library imports =======================
 import os
+import shutil
+
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem
-import shutil
-from traits.api import HasTraits, Button, Str, List, Property, Bool
-from traitsui.api import View, Item
+from traits.api import HasTraits, Str, List, Bool
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.envisage.browser.browser_mixin import BrowserMixin
-from pychron.envisage.tasks.base_task import BaseTask, BaseManagerTask
+from pychron.envisage.browser.base_browser_model import BaseBrowserModel
+from pychron.envisage.tasks.base_task import BaseManagerTask
 from pychron.image.tasks.actions import AssociateAction, SaveAction
 from pychron.image.tasks.pane import SampleBrowserPane
 from pychron.image.tasks.upload_pane import UploadPane
-from pychron.loggable import Loggable
 from pychron.paths import paths
 
 
@@ -37,7 +37,7 @@ class UploadItem(HasTraits):
     sample = Str
 
 
-class ImageUploadTask(BaseManagerTask, BrowserMixin):
+class ImageUploadTask(BaseManagerTask, BaseBrowserModel):
     id = 'pychron.image.upload'
     name = 'Image Uploader'
     tool_bars = [SToolBar(AssociateAction(),

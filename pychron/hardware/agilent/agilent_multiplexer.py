@@ -105,7 +105,7 @@ class AgilentMultiplexer(AgilentUnit):
                         cs = 1, 0
                     eq = Polynomial(coefficients=cs)
 
-                ch = Channel(address='{}{:02n}'.format(self.slot, int(section[7:])),
+                ch = Channel(address='{}{:02d}'.format(self.slot, int(section[7:])),
                              kind=kind,
                              name=name,
                              equation=eq)
@@ -233,7 +233,7 @@ class AgilentSingleADC(AgilentUnit):
         channel = self.config_get(config, 'General', 'channel', cast='int')
 
         if self.slot is not None and channel is not None:
-            self.address = '{}{:02n}'.format(self.slot, channel)
+            self.address = '{}{:02d}'.format(self.slot, channel)
             return True
 
     def initialize(self, *args, **kw):

@@ -16,11 +16,11 @@
 
 # ============= enthought library imports =======================
 # from pyface.tasks.task import Task
-from traits.api import Instance
 from pyface.tasks.task_layout import PaneItem, TaskLayout, VSplitter, Tabbed
+from traits.api import Instance
 
-from pychron.hardware.tasks.hardware_pane import CurrentDevicePane, DevicesPane, InfoPane, ConfigurationPane
 from pychron.envisage.tasks.base_task import BaseHardwareTask
+from pychron.hardware.tasks.hardware_pane import CurrentDevicePane, DevicesPane, InfoPane, ConfigurationPane
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -36,7 +36,8 @@ class HardwareTask(BaseHardwareTask):
         devs = self.application.get_services('pychron.hardware.core.i_core_device.ICoreDevice',
                                              "display==True")
         self.manager.devices = devs
-        self.manager.selected=devs[1]
+        if devs:
+            self.manager.selected = devs[0]
 
     def create_central_pane(self):
         pane = CurrentDevicePane(model=self.manager)

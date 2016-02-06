@@ -15,8 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Str
-from traitsui.api import Item
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -24,19 +22,17 @@ from pychron.entry.entry_views.entry import BaseEntry
 
 
 class ProjectEntry(BaseEntry):
-    project = Str
+    tag = 'Project'
 
-    def _add_item(self, db):
-        name = self.project
+    def _add_item(self):
+        name = self.value
+        dvc = self.dvc
         self.info('Attempting to add Project="{}"'.format(name))
-        if not db.get_project(name):
+        if not dvc.get_project(name):
             self.info('added project={}'.format(name))
-            db.add_project(name)
-            return True
+            if dvc.add_project(name):
+                return True
         else:
             self.warning_dialog('{} already exists'.format(name))
-
-    def traits_view(self):
-        return self._new_view(Item('project'), title='Edit Project')
 
 # ============= EOF =============================================

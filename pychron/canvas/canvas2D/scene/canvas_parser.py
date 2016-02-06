@@ -33,8 +33,8 @@ def get_volume(elem, tag='volume', default=0):
 
 
 class CanvasParser(XMLParser):
-    '''
-    '''
+    """
+    """
 
 #    def get_valves(self, group=None, element=True):
 #        return self._get_elements(group, element, 'valve')

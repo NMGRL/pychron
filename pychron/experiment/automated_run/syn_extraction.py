@@ -16,13 +16,11 @@
 
 # ============= enthought library imports =======================
 import os
-from threading import Thread
 import time
 import uuid
+from threading import Thread
 
 from traits.api import HasTraits, Instance, Str, Dict, Property, Bool, Float
-
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 import yaml
@@ -221,8 +219,8 @@ class SynExtractionCollector(Loggable):
     def _load_config(self):
         p = self.path
         if os.path.isfile(p):
-            with open(p, 'r') as fp:
-                return yaml.load(fp)
+            with open(p, 'r') as rfile:
+                return yaml.load(rfile)
 
     def _static_spec_factory(self, config):
         config = config.get('static')

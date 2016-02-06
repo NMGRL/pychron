@@ -15,10 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from pyface.qt import QtCore
 from PySide.QtCore import QRect, QSize
 from PySide.QtGui import QRegion, QWidget, QVBoxLayout, QLabel, QFont, QFontMetrics, QSizePolicy, QHBoxLayout, QPalette, \
-    QColor, QFrame, QPainter, QPen
+    QColor, QPainter, QPen
+from pyface.qt import QtCore
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 

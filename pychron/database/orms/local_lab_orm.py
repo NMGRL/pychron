@@ -15,23 +15,34 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from sqlalchemy import Column, Integer, DateTime, String, Float, BLOB
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, DateTime, String
 from sqlalchemy.sql.expression import func
-
-from pychron.database.core.base_orm import BaseMixin
-
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.database.core.base_orm import BaseMixin
 
 Base = declarative_base()
+
+
 class LabTable(Base, BaseMixin):
     labnumber = Column(String(40))
     step = Column(String(20))
     uuid = Column(String(40))
     aliquot = Column(Integer)
+    mass_spectrometer = Column(String(40))
+    extract_device = Column(String(40))
+    extract_units = Column(String(10))
+    extract_value = Column(Float)
+    cleanup = Column(Float)
+    duration = Column(Float)
+
+    weight = Column(Float)
+    comment = Column(BLOB)
+
     collection_path = Column(String(200))
     repository_path = Column(String(200))
     create_date = Column(DateTime, default=func.now())
+
 # ============= EOF =============================================

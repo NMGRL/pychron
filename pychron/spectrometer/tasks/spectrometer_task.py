@@ -15,19 +15,18 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from pyface.qt import QtGui
+from pyface.tasks.action.schema import SToolBar
+from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter, VSplitter
 from pyface.ui.qt4.tasks.advanced_editor_area_pane import EditorWidget
 from traits.api import Any, Instance, on_trait_change
-from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter, Tabbed
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-
-
-from pychron.envisage.tasks.base_task import BaseExtractionLineTask
 from pychron.envisage.tasks.editor_task import EditorTask
-from pychron.spectrometer.tasks.editor import PeakCenterEditor, ScanEditor, CoincidenceEditor
+from pychron.spectrometer.tasks.editor import PeakCenterEditor, ScanEditor, CoincidenceEditor, ScannerEditor
+from pychron.spectrometer.tasks.spectrometer_actions import StopScanAction
 from pychron.spectrometer.tasks.spectrometer_panes import ControlsPane, \
-    ReadoutPane, IntensitiesPane
+    ReadoutPane, IntensitiesPane, RecordControlsPane, DACScannerPane, MassScannerPane
 
 
 class SpectrometerTask(EditorTask):
@@ -35,63 +34,100 @@ class SpectrometerTask(EditorTask):
     name = 'Scan'
     id = 'pychron.spectrometer'
     _scan_editor = Instance(ScanEditor)
+    tool_bars = [SToolBar(StopScanAction(), )]
+
+    def stop_scan(self):
+        self.debug('stop scan fired')
+        editor = self.active_editor
+        self.debug('active editor {}'.format(editor))
+        if editor:
+            if isinstance(editor, (ScanEditor, PeakCenterEditor, CoincidenceEditor)):
+                self.debug('editor stop')
+                editor.stop()
 
     def do_coincidence(self):
-        es = [int(e.name.split(' '))
+        es = [int(e.name.split(' ')[-1])
               for e in self.editor_area.editors
               if isinstance(e, CoincidenceEditor)]
 
         i = max(es) + 1 if es else 1
         man = self.scan_manager.ion_optics_manager
-        name = 'Coincidence {:02n}'.format(i)
+        name = 'Coincidence {:02d}'.format(i)
 
         if man.setup_coincidence():
             self._open_editor(CoincidenceEditor(model=man.coincidence, name=name))
             man.do_coincidence_scan()
 
     def do_peak_center(self):
-        # man = self.ion_optics_manager
-        # if len(self.graphs) > 1:
-        # i = int(self.graphs[-1].split(' ')[2]) + 1
-        # else:
-        #     i = 1
-
-        # i = 1
-        self.scan_manager.log_events_enabled = False
-        es = [int(e.name.split(' '))
+        es = [int(e.name.split(' ')[-1])
               for e in self.editor_area.editors
               if isinstance(e, PeakCenterEditor)]
 
         i = max(es) + 1 if es else 1
 
         man = self.scan_manager.ion_optics_manager
-        name = 'Peak Center {:02n}'.format(i)
+        name = 'Peak Center {:02d}'.format(i)
         if man.setup_peak_center(new=True, standalone_graph=False):
-            def func():
-                setattr(self.scan_manager, 'log_events_enabled', True)
+            self._on_peak_center_start()
 
             self._open_editor(PeakCenterEditor(model=man.peak_center,
                                                name=name))
 
             man.do_peak_center(confirm_save=True, warn=True,
                                message='manual peakcenter',
-                               on_end=func)
+                               on_end=self._on_peak_center_end)
+
+    def define_peak_center(self):
+        from pychron.spectrometer.ion_optics.define_peak_center_view import DefinePeakCenterView
+
+        man = self.scan_manager.ion_optics_manager
+        spec = man.spectrometer
+        dets = spec.detector_names
+        isos = spec.isotopes
+
+        dpc = DefinePeakCenterView(detectors=dets,
+                                   isotopes=isos,
+                                   detector=dets[0],
+                                   isotope=isos[0])
+        info = dpc.edit_traits()
+        if info.result:
+            det = dpc.detector
+            isotope = dpc.isotope
+            dac = dpc.dac
+            self.debug('manually setting mftable to {}:{}:{}'.format(det, isotope, dac))
+            message = 'manually define peak center {}:{}:{}'.format(det, isotope, dac)
+            man.spectrometer.magnet.update_field_table(det, isotope, dac, message)
+
+    def _on_peak_center_start(self):
+        self.scan_manager.log_events_enabled = False
+        self.scan_manager.scan_enabled = False
+
+    def _on_peak_center_end(self):
+        self.scan_manager.log_events_enabled = True
+        self.scan_manager.scan_enabled = True
 
     def send_configuration(self):
         self.scan_manager.spectrometer.send_configuration()
 
     def prepare_destroy(self):
+        for e in self.editor_area.editors:
+            if hasattr(e, 'stop'):
+                e.stop()
+
         self.scan_manager.prepare_destroy()
         super(SpectrometerTask, self).prepare_destroy()
 
     # def activated(self):
-    #     self.scan_manager.activate()
-    #     self._scan_factory()
-    #     super(SpectrometerTask, self).activated()
+    # self.scan_manager.activate()
+    # self._scan_factory()
+    # super(SpectrometerTask, self).activated()
 
     def create_dock_panes(self):
         panes = [
             ControlsPane(model=self.scan_manager),
+            RecordControlsPane(model=self.scan_manager),
+            MassScannerPane(model=self.scan_manager),
+            DACScannerPane(model=self.scan_manager),
             ReadoutPane(model=self.scan_manager),
             IntensitiesPane(model=self.scan_manager)]
 
@@ -99,7 +135,7 @@ class SpectrometerTask(EditorTask):
         return panes
 
     # def _active_editor_changed(self, new):
-    #     if not new:
+    # if not new:
     #         try:
     #             self._scan_factory()
     #         except AttributeError:
@@ -120,14 +156,36 @@ class SpectrometerTask(EditorTask):
         return TaskLayout(
             left=Splitter(
                 PaneItem('pychron.spectrometer.controls'),
-                Tabbed(PaneItem('pychron.spectrometer.intensities'),
-                       PaneItem('pychron.spectrometer.readout')),
-                orientation='vertical'))
+                orientation='vertical'),
+            right=VSplitter(PaneItem('pychron.spectrometer.intensities'),
+                            PaneItem('pychron.spectrometer.readout')))
 
         # def create_central_pane(self):
 
         # g = ScanPane(model=self.scan_manager)
         # return g
+
+    @on_trait_change('scan_manager:mass_scanner:new_scanner')
+    def _handle_mass_scan_event(self):
+        self._scan_event(self.scan_manager.mass_scanner)
+
+    @on_trait_change('scan_manager:dac_scanner:new_scanner')
+    def _handle_dac_scan_event(self):
+        self._scan_event(self.scan_manager.dac_scanner)
+
+    def _scan_event(self, scanner):
+        sim = self.scan_manager.spectrometer.simulation
+        name = 'Magnet Scan (Simulation)' if sim else 'Magnet Scan'
+
+        editor = next((e for e in self.editor_area.editors if e.id == 'pychron.scanner'), None)
+        if editor is not None:
+            scanner.reset()
+        else:
+            editor = ScannerEditor(model=scanner, name=name, id='pychron.scanner')
+            self._open_editor(editor, activate=False)
+            self.split_editors(0, 1, h2=300, orientation='vertical')
+
+        self.activate_editor(editor)
 
     @on_trait_change('window:opened')
     def _opened(self):
@@ -139,4 +197,5 @@ class SpectrometerTask(EditorTask):
         # ee.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
         # print int(ee.features())
         # ee.update_title()
+
 # ============= EOF =============================================

@@ -18,10 +18,11 @@
 
 
 # =============enthought library imports=======================
+from chaco.polygon_plot import PolygonPlot
 from traits.api import HasTraits, Property, Any, Str, Int, Float, List
 from traitsui.api import View, Item, VGroup, Group, \
     TextEditor, TableEditor, Handler, InstanceEditor
-from chaco.polygon_plot import PolygonPlot
+
 # =============standard library imports ========================
 # =============local library imports  ==========================
 from series_editor import SeriesEditor, PolygonPlotEditor

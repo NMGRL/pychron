@@ -13,12 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+import yaml
 from mako.template import Template
 from traitsui.handler import Controller
-import yaml
 
 from pychron.core.ui import set_qt
-
 
 set_qt()
 
@@ -40,8 +39,8 @@ class DeviceModel(HasTraits):
         tmp = self.get_template()
 
         p = '/Users/ross/Sandbox/device_creator.yaml'
-        with open(p, 'r') as fp:
-            yd = yaml.load(fp)
+        with open(p, 'r') as rfile:
+            yd = yaml.load(rfile)
             print yd
 
         print tmp.render(**yd)

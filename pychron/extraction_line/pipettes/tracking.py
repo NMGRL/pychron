@@ -63,17 +63,17 @@ class PipetteTracker(Loggable):
     def load(self):
         p = self._get_path_id()
         if os.path.isfile(p):
-            with open(p, 'r') as fp:
+            with open(p, 'r') as rfile:
                 try:
-                    params = pickle.load(fp)
+                    params = pickle.load(rfile)
                     self._load(params)
                 except (pickle.PickleError, OSError):
                     pass
 
     def dump(self):
         p = self._get_path_id()
-        with open(p, 'w') as fp:
-            pickle.dump(self._dump(), fp)
+        with open(p, 'w') as wfile:
+            pickle.dump(self._dump(), wfile)
             self.debug('saved current shot count {}'.format(self.counts))
 
     def _load(self, params):

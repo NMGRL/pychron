@@ -19,6 +19,7 @@
 from datetime import datetime
 # ============= local library imports  ==========================
 from pychron.hardware.core.core_device import CoreDevice
+from pychron.hardware.core.properties import DeviceProperty
 
 
 class FerrupsUPS(CoreDevice):
@@ -26,52 +27,23 @@ class FerrupsUPS(CoreDevice):
     _power_out = False
     min_voltage_in = 5
 
-    def _parse_response(self, resp):
-        if self.simulation:
-            resp = 'query', self.get_random_value(0, 10)
-
-        elif resp is not None:
-            resp = resp.strip()
-            if '\n' in resp:
-                EOF = '\n'
-            else:
-                EOF = '\r'
-            resp = resp.split(EOF)
-        return resp
-
-    def _build_command(self, cmd):
-        return cmd
-
-    def _build_query(self, qry):
-        return qry
-
     def set_password(self, pwd):
         qry = 'password {}'.format(pwd)
-        qry = self._build_query(qry)
         resp = self.ask(qry)
         return self._parse_response(resp)
 
     def get_parameter(self, pname, **kw):
         qry = 'pa {}'.format(pname)
-        qry = self._build_query(qry)
         resp = self.ask(qry, **kw)
         return self._parse_response(resp)
 
     def get_parameters(self, start=1, end=2):
         qry = 'pa {} {}'.format(start, end)
-        qry = self._build_query(qry)
         resp = self.ask(qry)
         return self._parse_response(resp)
 
     def get_status(self):
         qry = 'status'
-        qry = self._build_query(qry)
-        resp = self.ask(qry)
-        return self._parse_response(resp)
-
-    def get_ambient_temperature(self):
-        qry = 'ambtemp'
-        qry = self._build_query(qry)
         resp = self.ask(qry)
         return self._parse_response(resp)
 
@@ -82,44 +54,47 @@ class FerrupsUPS(CoreDevice):
 
         if vin < self.min_voltage_in:
             self._power_out = True
-            if self.application:
-                tm = self.application.get_service('pychron.social.emailer.Emailer')
-                if tm:
-                    tm.broadcast('Power Outage {} Vin= {}'.format(datetime.strftime(datetime.today(),
-                                                                                    '%Y-%m-%d %H:%M:%S')), vin)
-                else:
-                    self.warning('No emailer available. Power out')
+            self.send_email_notification('{} Power Outage. Vin= {}'.format(datetime.isoformat(), vin))
+
         elif self._power_out:
             self._power_out = False
-            if self.application:
-                tm = self.application.get_service('pychron.social.emailer.Emailer')
-                if tm:
-                    tm.broadcast('Power Returned {} Vin= {}'.format(datetime.strftime(datetime.today(),
-                                                                                      '%Y-%m-%d %H:%M:%S')), vin)
-                else:
-                    self.warning('No emailer available. Power returned')
+            self.send_email_notification('{} Power Returned. Vin= {}'.format(datetime.isoformat(), vin))
 
         return vin
 
-    def get_voltage_in(self):
-        """
+    @DeviceProperty(float)
+    def ambient_temperature(self):
+        qry = 'ambtemp'
+        resp = self.ask(qry)
+        return self._parse_response(resp)
 
-        """
+    @DeviceProperty(float)
+    def voltage_in(self):
         _query, resp = self.get_parameter(1, verbose=False)
-
-        if self.simulation:
-            # ensures True...  random 0-10
-            return self.get_random_value() < 100
-            # return not self._power_out
-
         vin = resp.split(' ')[-1]
-        try:
-            vin = float(vin)
-        except ValueError, e:
-            print e
-            return
-
         return vin
+
+    # private
+    def _parse_response(self, resp):
+        if resp is not None:
+            resp = resp.strip()
+            if '\n' in resp:
+                eof = '\n'
+            else:
+                eof = '\r'
+            resp = resp.split(eof)
+        return resp
+        # if self.simulation:
+        # resp = 'query', self.get_random_value(0, 10)
+        #
+        # elif resp is not None:
+        # resp = resp.strip()
+        # if '\n' in resp:
+        #         EOF = '\n'
+        #     else:
+        #         EOF = '\r'
+        #     resp = resp.split(EOF)
+        # return resp
 
 
 if __name__ == '__main__':
@@ -127,4 +102,4 @@ if __name__ == '__main__':
     f.bootstrap()
 
     print f.check_power_outage()
-#============ EOF ==============================================
+# ============ EOF ==============================================

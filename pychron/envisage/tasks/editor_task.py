@@ -15,8 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Property, Instance
 from pyface.tasks.api import IEditor, IEditorAreaPane
+from pyface.tasks.task_layout import PaneItem, Splitter
+from traits.api import Property, Instance
+
 # ============= standard library imports ========================
 import os
 # ============= local library imports  ==========================
@@ -29,6 +31,16 @@ class BaseEditorTask(BaseManagerTask):
                              depends_on='editor_area.active_editor')
     editor_area = Instance(IEditorAreaPane)
 
+    def set_editor_layout(self, layout):
+        ea = self.editor_area
+        ea.set_layout(layout)
+
+    def split_editors(self, a, b, h1=-1, h2=-1, orientation='horizontal'):
+        layout = Splitter(PaneItem(id=a, height=h1),
+                          PaneItem(id=b, height=h2),
+                          orientation=orientation)
+        self.set_editor_layout(layout)
+
     def db_save_info(self):
         self.information_dialog('Changes saved to the database')
 
@@ -37,6 +49,9 @@ class BaseEditorTask(BaseManagerTask):
 
     def get_editor_names(self):
         return [e.name for e in self.editor_area.editors]
+
+    def iter_editors(self, klass):
+        return (e for e in self.editor_area.editors if isinstance(e, klass))
 
     def has_active_editor(self, klass=None):
         if not self.active_editor:
@@ -48,6 +63,12 @@ class BaseEditorTask(BaseManagerTask):
                 return
 
         return self.active_editor
+
+    def get_editors(self, klass):
+        return (ei for ei in self.editor_area.editors if isinstance(ei, klass))
+
+    def close_editor(self, editor):
+        self.editor_area.remove_editor(editor)
 
     def activate_editor(self, editor):
         if self.editor_area:
@@ -79,8 +100,9 @@ class BaseEditorTask(BaseManagerTask):
             do a save as
         """
         if self.active_editor:
-            if self.active_editor.path:
-                path = self.active_editor.path
+            if not path:
+                if self.active_editor.path:
+                    path = self.active_editor.path
 
             if not path:
                 path = self.save_file_dialog()
@@ -94,12 +116,24 @@ class BaseEditorTask(BaseManagerTask):
         pass
 
     def save_as(self):
-        path = self.save_file_dialog()
+        kw = {}
+        df = self._generate_default_filename()
+        if df:
+            kw['default_filename'] = df
+        path = self.save_file_dialog(**kw)
         if path:
             if self._save_file(path):
                 self.active_editor.path = path
                 self.active_editor.dirty = False
                 return True
+
+    def close_all(self):
+        for e in self.editor_area.editors:
+            self.close_editor(e)
+
+    # private
+    def _generate_default_filename(self):
+        return
 
     def _save_file(self, path):
         pass
@@ -113,14 +147,12 @@ class BaseEditorTask(BaseManagerTask):
     def _pre_open_hook(self):
         pass
 
-    def _open_editor(self, editor, **kw):
+    def _open_editor(self, editor, activate=True, **kw):
         if self.editor_area:
-            self.editor_area.add_editor(editor)
-            self.editor_area.activate_editor(editor)
-
-            # ===============================================================================
-            # property get/set
-            # ===============================================================================
+            if editor not in self.editor_area.editors:
+                self.editor_area.add_editor(editor)
+                if activate:
+                    self.editor_area.activate_editor(editor)
 
     def _get_active_editor(self):
         if self.editor_area is not None:
@@ -128,21 +160,14 @@ class BaseEditorTask(BaseManagerTask):
 
         return None
 
-    #     def _confirmation(self, message=''):
-    #         dialog = ConfirmationDialog(parent=self.window.control,
-    #                                     message=message, cancel=True,
-    #                                     default=CANCEL, title='Save Changes?')
-    #         return dialog.open()
-
     def _prompt_for_save(self):
         if self.editor_area is None:
             return True
-            #return self._handle_prompt_for_save()
 
         dirty_editors = dict([(editor.name, editor)
                               for editor in self.editor_area.editors
                               if editor.dirty])
-        if not dirty_editors.keys():
+        if not dirty_editors:
             return True
 
         message = 'You have unsaved files. Would you like to save them?'
@@ -152,8 +177,6 @@ class BaseEditorTask(BaseManagerTask):
                 editor.save(editor.path)
 
         return ret
-
-        #### Trait change handlers ################################################
 
 
 class EditorTask(BaseExtractionLineTask, BaseEditorTask):

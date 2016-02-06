@@ -50,7 +50,7 @@
 #                                 filter_str=filter_str)
 #            return q.all()
 #        except Exception, e:
-#            print e
+# print 'exception', e
 #
 # #    def _get_query(self, klass, join_table=None, filter_str=None, **clause):
 # #        sess = self.get_session()
