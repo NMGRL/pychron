@@ -39,8 +39,9 @@ setup(name='pychron',
                 'pychron.experiment.conditional',
                 'pychron.pyscripts',
                 'pychron.stage.maps',
-
+                'pychron.canvas.canvas2D.scene.primitives',
                 # test packages
+                'pychron.canvas2D.tests',
                 'pychron.stage.tests',
                 'pychron.core.regression.tests',
                 'pychron.processing.tests',

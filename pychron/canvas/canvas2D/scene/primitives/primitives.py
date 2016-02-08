@@ -31,7 +31,7 @@ import math
 from numpy import array
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.scene.primitives.base import QPrimitive, Primitive
-from pychron.core.geometry.convex_hull import convex_hull
+
 
 
 def calc_rotation(x1, y1, x2, y2):
@@ -208,7 +208,7 @@ class Triangle(QPrimitive):
                 gc.stroke_path()
             else:
                 f = color_map_name_dict['hot'](
-                        DataRange1D(low_setting=0, high_setting=300))
+                    DataRange1D(low_setting=0, high_setting=300))
                 for x, y, v in points:
                     x, y = func((x, y))
                     gc.set_fill_color(f.map_screen(array([v]))[0])
@@ -453,7 +453,10 @@ class CalibrationObject(HasTraits):
 
         rot = calc_rotation(self.cx, self.cy, x, y)
         if sense == 'west':
-            rot += 180
+            if y > self.cy:
+                rot -= 180
+            else:
+                rot += 180
         elif sense == 'north':
             rot -= 90
         elif sense == 'south':
@@ -754,6 +757,7 @@ class Polygon(QPrimitive):
 
             else:
                 if len(pts) > 2 and self.use_convex_hull:
+                    from pychron.core.geometry.convex_hull import convex_hull
                     pts = convex_hull(pts)
 
                 if pts is not None and len(pts) > 2:
@@ -796,7 +800,7 @@ class Image(QPrimitive):
             kiva_depth = 'rgba32'
         else:
             raise RuntimeError(
-                    'Unknown colormap depth value: {}'.format(data.value_depth))
+                'Unknown colormap depth value: {}'.format(data.value_depth))
 
         self._cached_image = GraphicsContextArray(data, pix_format=kiva_depth)
         self._image_cache_valid = True

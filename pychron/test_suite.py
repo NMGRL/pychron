@@ -17,6 +17,8 @@ def suite():
     if use_logger:
         from pychron.core.helpers.logger_setup import logging_setup
         logging_setup('unittests')
+
+    from pychron.canvas.canvas2D.tests.calibration_item import CalibrationObjectTestCase
     from pychron.stage.tests.stage_map import StageMapTestCase, \
         TransformTestCase
     from pychron.entry.tests.sample_loader import SampleLoaderTestCase
@@ -46,7 +48,8 @@ def suite():
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
 
-    tests = (StageMapTestCase,
+    tests = (CalibrationObjectTestCase,
+             StageMapTestCase,
              TransformTestCase,
              SampleLoaderTestCase,
              AnalysisModifierTestCase,
