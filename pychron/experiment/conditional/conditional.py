@@ -34,7 +34,7 @@ from pychron.paths import paths
 
 def dictgetter(d, attrs, default=None):
     if not isinstance(attrs, tuple):
-        attrs = (attrs, )
+        attrs = (attrs,)
 
     for ai in attrs:
         try:
@@ -367,6 +367,58 @@ class ActionConditional(AutomatedRunConditional):
         elif hasattr(action, '__call__'):
             action()
 
+
+class QueueModificationConditional(AutomatedRunConditional):
+    use_truncation = Bool
+    n = Int
+    action = Enum(('Skip Next Run', 'Skip N Runs', 'Skip Aliquot', 'Skip to Last in Aliquot'))
+
+    def __init__(self, *args, **kw):
+        super(QueueModificationConditional, self).__init__(*args, **kw)
+
+    def do_modifications(self, queue, current_run):
+        runs = queue.cleaned_automated_runs
+        func = getattr(self, self.action.lower().replace(' ', '_'))
+        func(runs, current_run)
+        queue.refresh_table_needed = True
+
+    def _skip_n_runs(self, runs, current_run, n=None):
+        if n is None:
+            n = self.n
+
+        for i in xrange(n):
+            r = runs[i]
+            r.skip = True
+
+    def _skip_next_run(self, runs, current_run):
+        self._skip_n_runs(runs, current_run, 1)
+
+    def _skip_aliquot(self, runs, current_run):
+
+        identifier = current_run.spec.identifier
+        aliquot = current_run.spec.aliquot
+        for r in runs:
+            if r.is_special():
+                continue
+
+            if r.identifier == identifier and r.aliquot == aliquot:
+                r.skip = True
+
+    def _skip_to_last_in_aliquot(self, runs, current_run):
+        identifier = current_run.spec.identifier
+        for i, r in enumerate(runs):
+            if r.is_special():
+                continue
+
+            try:
+                nrun = runs[i + 1]
+                if nrun.identifier != identifier:
+                    break
+                else:
+                    r.skip = True
+
+            except IndexError:
+                pass
 
 # ============= EOF =============================================
 # attr = extract_attr(token)

@@ -36,7 +36,8 @@ from pychron.core.ui.preference_binding import set_preference
 from pychron.experiment.automated_run.hop_util import parse_hops
 from pychron.experiment.automated_run.persistence_spec import PersistenceSpec
 from pychron.experiment.conditional.conditional import TruncationConditional, \
-    ActionConditional, TerminationConditional, conditional_from_dict, CancelationConditional, conditionals_from_file
+    ActionConditional, TerminationConditional, conditional_from_dict, CancelationConditional, conditionals_from_file, \
+    QueueModificationConditional
 from pychron.experiment.utilities.conditionals import test_queue_conditionals_name
 from pychron.experiment.utilities.identifier import convert_identifier
 from pychron.experiment.utilities.script import assemble_script_blob
@@ -157,6 +158,8 @@ class AutomatedRun(Loggable):
     truncation_conditionals = List
     action_conditionals = List
     cancelation_conditionals = List
+    modification_conditionals = List
+
     tripped_conditional = Instance('pychron.experiment.conditional.conditional.BaseConditional')
 
     peak_center = None
@@ -617,6 +620,9 @@ class AutomatedRun(Loggable):
     def py_clear_actions(self):
         self.action_conditionals = []
 
+    def py_clear_modifications(self):
+        self.modification_conditionals = []
+
     # ===============================================================================
     # run termination
     # ===============================================================================
@@ -939,7 +945,7 @@ class AutomatedRun(Loggable):
     def post_measurement_save(self):
         if self._measured:
             conds = (self.termination_conditionals, self.truncation_conditionals,
-                     self.action_conditionals, self.cancelation_conditionals)
+                     self.action_conditionals, self.cancelation_conditionals, self.modification_conditionals)
 
             self._update_persister_spec(active_detectors=self._active_detectors,
                                         conditionals=conds,
@@ -1633,7 +1639,8 @@ anaylsis_type={}
 
     def _add_conditionals(self):
         klass_dict = {'actions': ActionConditional, 'truncations': TruncationConditional,
-                      'terminations': TerminationConditional, 'cancelations': CancelationConditional}
+                      'terminations': TerminationConditional, 'cancelations': CancelationConditional,
+                      'modifications': QueueModificationConditional}
 
         t = self.spec.conditionals
         self.debug('adding conditionals {}'.format(t))
@@ -1646,30 +1653,19 @@ anaylsis_type={}
                     for kind, items in yd.iteritems():
                         try:
                             klass = klass_dict[kind]
-                            for i in items:
-                                try:
-                                    # trim off s
-                                    if kind.endswith('s'):
-                                        kind = kind[:-1]
-
-                                    self._conditional_appender(kind, i, klass, p)
-                                except BaseException, e:
-                                    self.debug('Failed adding {}. excp="{}", cd={}'.format(kind, e, i))
-
                         except KeyError:
                             self.debug('Invalid conditional kind="{}"'.format(kind))
-                            #
-                            # for c in doc:
-                            # try:
-                            # attr = c['attr']
-                            # comp = c['check']
-                            # start = c['start']
-                            # freq = c.get('frequency', 1)
-                            # acr = c.get('abbreviated_count_ratio', 1)
-                            #             self.py_add_truncation(attr, comp, int(start), freq, acr)
-                            #         except BaseException:
-                            #             self.warning('Failed adding truncation. {}'.format(c))
+                            continue
 
+                        for cd in items:
+                            try:
+                                # trim off s
+                                if kind.endswith('s'):
+                                    kind = kind[:-1]
+
+                                self._conditional_appender(kind, cd, klass, p)
+                            except BaseException, e:
+                                self.debug('Failed adding {}. excp="{}", cd={}'.format(kind, e, cd))
             else:
                 try:
                     c, start = t.split(',')
