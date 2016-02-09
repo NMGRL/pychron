@@ -390,6 +390,8 @@ class DataCollector(Consoleable):
                 self.measurement_script.abbreviated_count_ratio = tr.abbreviated_count_ratio
                 if tr.use_truncation:
                     return set_truncated()
+                elif tr.use_termination:
+                    return 'terminate'
 
             def truncation_func(tr):
                 self.measurement_script.abbreviated_count_ratio = tr.abbreviated_count_ratio

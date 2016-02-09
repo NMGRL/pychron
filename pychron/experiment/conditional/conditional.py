@@ -103,21 +103,25 @@ def conditional_from_dict(cd, klass, level=None, location=None, **kw):
     if not teststr:
         return
 
-    start = dictgetter(cd, ('start', 'start_count'), default=50)
-    freq = cd.get('frequency', 1)
-    win = cd.get('window', 0)
-    mapper = cd.get('mapper', '')
-    action = cd.get('action', '')
-    ntrips = cd.get('ntrips', 1)
-    analysis_types = cd.get('analysis_types')
-    if analysis_types:
-        analysis_types = [a.lower() for a in analysis_types]
-    attr = extract_attr(teststr)
-    cx = klass(teststr, start_count=start, frequency=freq,
-               attr=attr,
-               window=win, mapper=mapper, action=action,
-               ntrips=ntrips, analysis_types=analysis_types,
-               **kw)
+    # start = dictgetter(cd, ('start', 'start_count'), default=50)
+    # freq = cd.get('frequency', 1)
+    # win = cd.get('window', 0)
+    # mapper = cd.get('mapper', '')
+    #
+    # ntrips = cd.get('ntrips', 1)
+    #
+    # analysis_types = cd.get('analysis_types')
+    # if analysis_types:
+    #     analysis_types = [a.lower() for a in analysis_types]
+    # attr = extract_attr(teststr)
+    # cx = klass(teststr, start_count=start, frequency=freq,
+    #            attr=attr,
+    #            window=win, mapper=mapper, action=action,
+    #            ntrips=ntrips, analysis_types=analysis_types,
+    #            **kw)
+    cx = klass(teststr)
+    cx.from_dict(teststr, cd, kw)
+
     if level:
         cx.level = level
     if location:
@@ -134,6 +138,29 @@ class BaseConditional(Loggable):
     level = Enum(None, SYSTEM, QUEUE, RUN)
     tripped = Bool
     location = Str
+
+    def from_dict(self, teststr, cd, kw):
+        start = dictgetter(cd, ('start', 'start_count'), default=50)
+        freq = cd.get('frequency', 1)
+        win = cd.get('window', 0)
+        mapper = cd.get('mapper', '')
+
+        ntrips = cd.get('ntrips', 1)
+
+        analysis_types = cd.get('analysis_types')
+        if analysis_types:
+            analysis_types = [a.lower() for a in analysis_types]
+        attr = extract_attr(teststr)
+
+        self.trait_set(start_count=start, frequency=freq,
+                       attr=attr,
+                       window=win, mapper=mapper,
+                       ntrips=ntrips, analysis_types=analysis_types,
+                       **kw)
+        self._from_dict_hook(cd)
+
+    def _from_dict_hook(self, cd):
+        pass
 
     def to_string(self):
         raise NotImplementedError
@@ -349,6 +376,11 @@ class ActionConditional(AutomatedRunConditional):
     action = Either(Str, Callable)
     resume = Bool  # resume==True the script continues execution else break out of measure_iteration
 
+    def _from_dict_hook(self, cd):
+        for tag in ('action', 'resume'):
+            if tag in cd:
+                setattr(self, tag, cd[tag])
+
     def perform(self, script):
         """
         perform the specified action.
@@ -368,13 +400,14 @@ class ActionConditional(AutomatedRunConditional):
             action()
 
 
+MODIFICATION_ACTIONS = ('Skip Next Run', 'Skip N Runs', 'Skip Aliquot', 'Skip to Last in Aliquot')
+
+
 class QueueModificationConditional(AutomatedRunConditional):
     use_truncation = Bool
-    n = Int
-    action = Enum(('Skip Next Run', 'Skip N Runs', 'Skip Aliquot', 'Skip to Last in Aliquot'))
-
-    def __init__(self, *args, **kw):
-        super(QueueModificationConditional, self).__init__(*args, **kw)
+    use_termination = Bool
+    nskip = Int
+    action = Enum(MODIFICATION_ACTIONS)
 
     def do_modifications(self, queue, current_run):
         runs = queue.cleaned_automated_runs
@@ -382,9 +415,14 @@ class QueueModificationConditional(AutomatedRunConditional):
         func(runs, current_run)
         queue.refresh_table_needed = True
 
+    def _from_dict_hook(self, cd):
+        for tag in ('action', 'nskip', 'use_truncation', 'use_termination'):
+            if tag in cd:
+                setattr(self, tag, cd[tag])
+
     def _skip_n_runs(self, runs, current_run, n=None):
         if n is None:
-            n = self.n
+            n = self.nskip
 
         for i in xrange(n):
             r = runs[i]
