@@ -25,7 +25,8 @@ from pychron.core.helpers.ctx_managers import no_update
 from pychron.experiment.conditional.tabular_adapters import EActionConditionalsAdapter, EPRConditionalsAdapter, \
     EConditionalsAdapter, EModificationConditionalsAdapter, PRConditionalsAdapter, ConditionalsAdapter
 from pychron.envisage.icon_button_editor import icon_button_editor
-from pychron.experiment.conditional.conditional import conditional_from_dict, BaseConditional, MODIFICATION_ACTIONS
+from pychron.experiment.conditional.conditional import conditional_from_dict, BaseConditional, MODIFICATION_ACTIONS, \
+    ExtractionStr
 from pychron.experiment.conditional.regexes import CP_REGEX, STD_REGEX, ACTIVE_REGEX, BASELINECOR_REGEX, BASELINE_REGEX, \
     MAX_REGEX, MIN_REGEX, AVG_REGEX, COMP_REGEX, ARGS_REGEX, BETWEEN_REGEX, SLOPE_REGEX
 
@@ -390,6 +391,7 @@ class ModificationGroup(ConditionalGroup):
     nskip = Int
     use_truncation = Bool
     use_termination = Bool
+    extraction_str = ExtractionStr
 
     def __init__(self, *args, **kw):
         super(ModificationGroup, self).__init__(*args, **kw)
@@ -397,9 +399,10 @@ class ModificationGroup(ConditionalGroup):
         self.dump_attrs.append(('nskip', ''))
         self.dump_attrs.append(('use_truncation', ''))
         self.dump_attrs.append(('use_termination', ''))
+        self.dump_attrs.append(('extraction_str', ''))
 
     def _selected_changed_hook(self):
-        for a in ('action', 'nskip', 'use_truncation', 'use_termination'):
+        for a in ('action', 'nskip', 'use_truncation', 'use_termination', 'extraction_str'):
             setattr(self, a, getattr(self.selected, a))
 
     @on_trait_change('action, nskip, use_truncation, use_termination')
@@ -419,6 +422,12 @@ class ModificationGroup(ConditionalGroup):
         act_grp = VGroup(HGroup(Item('action'), Item('nskip', enabled_when='action=="Skip N Runs"', label='N')),
                          HGroup(Item('use_truncation', label='Truncate'),
                                 Item('use_termination', label='Terminate')),
+                         HGroup(UItem('extraction_str', tooltip='''modify extract value for associated runs. e.g.
+1. 1,2,3 (increase step i by 1W, step i+1 by 2W, step i+2 by 3W)
+2. 10%,50% (increase step i by 10%, step i+1 by 50%)'''),
+                                visible_when='action=="Set Extract"',
+                                show_border=True,
+                                label='Extraction'),
                          show_border=True,
                          label='Modification')
         edit_grp = VGroup(Item('attr',

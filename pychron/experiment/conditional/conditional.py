@@ -20,12 +20,13 @@ import os
 from traits.api import Str, Either, Int, Callable, Bool, Float, Enum
 
 # ============= standard library imports ========================
+from traits.trait_types import BaseStr
 from uncertainties import nominal_value, std_dev
 import pprint
 # ============= local library imports  ==========================
 import yaml
 from pychron.experiment.conditional.regexes import MAPPER_KEY_REGEX, \
-    STD_REGEX, INTERPOLATE_REGEX
+    STD_REGEX, INTERPOLATE_REGEX, EXTRACTION_STR_ABS_REGEX, EXTRACTION_STR_PERCENT_REGEX
 from pychron.experiment.conditional.utilities import tokenize, get_teststr_attr_func, extract_attr
 from pychron.experiment.utilities.conditionals import RUN, QUEUE, SYSTEM
 from pychron.loggable import Loggable
@@ -400,7 +401,33 @@ class ActionConditional(AutomatedRunConditional):
             action()
 
 
-MODIFICATION_ACTIONS = ('Skip Next Run', 'Skip N Runs', 'Skip Aliquot', 'Skip to Last in Aliquot')
+MODIFICATION_ACTIONS = ('Skip Next Run', 'Skip N Runs', 'Skip Aliquot', 'Skip to Last in Aliquot', 'Set Extract')
+
+
+class ExtractionStr(BaseStr):
+    def validate(self, obj, name, value):
+        if value == '':
+            return value
+
+        for r in (EXTRACTION_STR_ABS_REGEX, EXTRACTION_STR_PERCENT_REGEX):
+            if r.match(value):
+                return value
+        else:
+            self.error(obj, name, value)
+
+
+def get_extraction_steps(s):
+    use_percent = bool(EXTRACTION_STR_PERCENT_REGEX.match(s))
+
+    def gen():
+        for si in s.split(','):
+            si = si.strip()
+            if si.endswith('%'):
+                si = si[:-1]
+            yield float(si)
+        raise StopIteration
+
+    return gen, use_percent
 
 
 class QueueModificationConditional(AutomatedRunConditional):
@@ -408,6 +435,7 @@ class QueueModificationConditional(AutomatedRunConditional):
     use_termination = Bool
     nskip = Int
     action = Enum(MODIFICATION_ACTIONS)
+    extraction_str = ExtractionStr
 
     def do_modifications(self, queue, current_run):
         runs = queue.cleaned_automated_runs
@@ -457,6 +485,30 @@ class QueueModificationConditional(AutomatedRunConditional):
 
             except IndexError:
                 pass
+
+    def _set_extract(self, runs, current_run):
+
+        es = self.extraction_str
+
+        identifier = current_run.spec.identifier
+        aliquot = current_run.spec.aliquot
+
+        steps_gen, use_percent = get_extraction_steps(es)
+        for r in runs:
+            if r.is_special():
+                continue
+
+            if r.identifier != identifier or r.aliquot != aliquot:
+                break
+
+            try:
+                nstep = steps_gen.next()
+                if use_percent:
+                    r.extract_value *= (1 + nstep / 100.)
+                else:
+                    r.extract_value += nstep
+            except StopIteration:
+                break
 
 # ============= EOF =============================================
 # attr = extract_attr(token)
