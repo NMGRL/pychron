@@ -33,7 +33,6 @@ from numpy import array
 from pychron.canvas.canvas2D.scene.primitives.base import QPrimitive, Primitive
 
 
-
 def calc_rotation(x1, y1, x2, y2):
     rise = y2 - y1
     run = x2 - x1
@@ -450,17 +449,23 @@ class CalibrationObject(HasTraits):
         self.cy = y
 
     def calculate_rotation(self, x, y, sense='east'):
+        def rotation(a, b):
+            return calc_rotation(self.cx, self.cy, a, b)
 
-        rot = calc_rotation(self.cx, self.cy, x, y)
         if sense == 'west':
             if y > self.cy:
-                rot -= 180
+                rot = calc_rotation(self.cx, self.cy, y, x)
             else:
-                rot += 180
+                rot = calc_rotation(self.cx, self.cy, -x, -y)
         elif sense == 'north':
-            rot -= 90
+            if x > self.cx:
+                rot = rotation(x, -y)
+            else:
+                rot = rotation(y, -x)
         elif sense == 'south':
-            rot += 90
+            rot = rotation(-y, x)
+        else:
+            rot = rotation(x, y)
 
         return rot
 
