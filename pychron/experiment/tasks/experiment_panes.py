@@ -138,7 +138,7 @@ QToolTip {font-size: 14px}
                            HGroup(queue_factory_item('queue_conditionals_name',
                                                      label='Queue Conditionals',
                                                      editor=EnumEditor(
-                                                             name=queue_factory_name('available_conditionals')))),
+                                                         name=queue_factory_name('available_conditionals')))),
                            label='Spectrometer/Extract Device',
                            show_border=True)
         delay_grp = VGroup(queue_factory_item('delay_before_analyses'),
@@ -413,6 +413,11 @@ class ExplanationPane(TraitsDockPane):
     failed = Color(FAILED_COLOR)
     not_executable = Color(NOT_EXECUTABLE_COLOR)
     end_after = Color(END_AFTER_COLOR)
+
+    def set_colors(self, cd):
+        for k, v in cd.iteritems():
+            if hasattr(self, k):
+                setattr(self, k, v)
 
     def traits_view(self):
         v = View(VGroup(HGroup(Label('Extraction'), spring,

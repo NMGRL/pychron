@@ -34,7 +34,7 @@ from pychron.experiment.experiment_launch_history import update_launch_history
 from pychron.experiment.experimentor import Experimentor
 from pychron.experiment.queue.base_queue import extract_meta
 from pychron.experiment.tasks.experiment_editor import ExperimentEditor, UVExperimentEditor
-from pychron.experiment.tasks.experiment_panes import LoggerPane
+from pychron.experiment.tasks.experiment_panes import LoggerPane, ExplanationPane
 from pychron.experiment.utilities.identifier import convert_extract_device
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.paths import paths
@@ -231,6 +231,9 @@ class ExperimentEditorTask(EditorTask):
         self.experiment_factory_pane = ExperimentFactoryPane(model=self.manager.experiment_factory)
         wait_pane = WaitPane(model=self.manager.executor.wait_group)
 
+        explanation_pane = ExplanationPane()
+        explanation_pane.set_colors(self._assemble_state_colors())
+
         ex = self.manager.executor
         panes = [StatsPane(model=self.manager.stats),
                  ControlsPane(model=ex),
@@ -240,6 +243,7 @@ class ExperimentEditorTask(EditorTask):
                  ConnectionStatusPane(model=ex),
                  self.experiment_factory_pane,
                  self.isotope_evolution_pane,
+                 explanation_pane,
                  wait_pane]
 
         if self.loading_manager:
