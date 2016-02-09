@@ -143,9 +143,6 @@ class DataCollector(Consoleable):
 
     def _iter(self, i):
         result = self._check_iteration(i)
-
-        result = self._check_modification_conditionals(i)
-
         if not result:
             try:
                 if i <= 1:
