@@ -141,6 +141,9 @@ class AutomatedRunSpec(HasTraits):
     def is_special(self):
         return is_special(self.labnumber)
 
+    def is_truncated(self):
+        return self.state == 'truncated'
+
     def to_string(self):
         attrs = ['labnumber', 'aliquot', 'step',
                  'extract_value', 'extract_units', 'ramp_duration',
@@ -452,9 +455,29 @@ post_equilibration_script, extraction_script, script_options, position, duration
     def extract_duration(self, v):
         self.duration = v
 
+    def make_truncated_script_hash(self):
+        h = self._base_script_hash()
+        h.update('truncated')
+        h.update('True')
+        return h.hexdigest()
+
+    @property
+    def has_conditionals(self):
+        return bool(self.conditionals)
+
+    @property
+    def script_hash_truncated(self):
+        h = self._base_script_hash()
+        h.update('truncated')
+        h.update(str(self.is_truncated()))
+        return h.hexdigest()
+
     @property
     def script_hash(self):
+        h = self._base_script_hash()
+        return h.hexdigest()
 
+    def _base_script_hash(self):
         # ctx should only contain values that affect the length of the analysis
         ctx = dict(nposition=len(self.get_position_list()),
                    disable_between_positions=self.disable_between_positions,
@@ -471,6 +494,7 @@ post_equilibration_script, extraction_script, script_options, position, duration
         for k, v in sorted(ctx.items()):
             md5.update(str(k))
             md5.update(str(v))
-        return md5.hexdigest()
+        return md5
+
 
 # ============= EOF =============================================

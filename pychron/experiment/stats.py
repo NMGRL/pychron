@@ -15,8 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Property, String, Float, Any, Int, List, Instance, Bool
+from traits.api import Property, String, Float, Any, Int, List, Instance, Bool, Dict
 # ============= standard library imports ========================
+from numpy.random import random
 from datetime import datetime, timedelta
 import os
 import time
@@ -27,28 +28,48 @@ from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.pychron_constants import MEASUREMENT_COLOR, EXTRACTION_COLOR
 
-FUDGE_COEFFS = (0, 0, 0)  # x**n+x**n-1....+c
+
+def write_txt_file(p, out):
+    with open(p, 'w') as wfile:
+        for line in out:
+            wfile.write('{}\n'.format(','.join(map(str, line))))
 
 
 class AutomatedRunDurationTracker(Loggable):
-    items = List
+    _items = Dict
+    _frequencies = Dict
 
     def __init__(self, *args, **kw):
         super(AutomatedRunDurationTracker, self).__init__(*args, **kw)
         self.load()
 
     def load(self):
-        items = []
+        items = {}
         if os.path.isfile(paths.duration_tracker):
             with open(paths.duration_tracker, 'r') as rfile:
                 for line in rfile:
                     line = line.strip()
                     if line:
                         args = line.split(',')
-                        items.append((args[0], args[1]))
-        self.items = items
+                        items[args[0]] = float(args[1])
 
-    def update(self, rh, t):
+        self._items = items
+
+        # load frequencies
+        freq = {}
+        if os.path.isfile(paths.duration_tracker_frequencies):
+            with open(paths.duration_tracker_frequencies, 'r') as rfile:
+                for line in rfile:
+                    if line:
+                        h, total, truncated = line.split(',')
+
+                    freq[h] = float(total) / float(truncated)
+        self._frequencies = freq
+
+    def update(self, run, t):
+        rh = run.spec.script_hash_truncated
+        self.debug('update duration runid={}, duration={}, md5={}'.format(run.spec.runid, t, rh[:8]))
+
         p = paths.duration_tracker
 
         out = []
@@ -76,18 +97,57 @@ class AutomatedRunDurationTracker(Loggable):
                         out.append(args)
 
         if not exists:
+            self.debug('adding {} {} to durations'.format(run.spec.runid, rh[:8]))
             out.append((rh, t))
 
-        with open(p, 'w') as wfile:
-            for line in out:
-                wfile.write('{}\n'.format(','.join(map(str, line))))
+        write_txt_file(p, out)
+
+        # update frequencies
+        rh = run.spec.script_hash
+        out = []
+        exists = False
+        p = paths.duration_tracker_frequencies
+
+        ist = run.spec.is_truncated()
+        if os.path.isfile(p):
+            with open(p, 'r') as rfile:
+                for line in rfile:
+                    line = line.strip()
+                    if line:
+                        h, total, truncated = line.split(',')
+                        if h == rh:
+                            exists = True
+                            total = int(total)+1
+                            if ist:
+                                truncated = int(truncated)+1
+
+                        out.append((h, total, truncated))
+
+        if not exists:
+            self.debug('adding {} {} to frequencies'.format(run.spec.runid, rh[:8]))
+            out.append((rh, 1, 1 if ist else 0))
+
+        write_txt_file(p, out)
         self.load()
 
-    def __contains__(self, v):
-        return next((True for h, d in self.items if h == v), False)
+    def probability_model(self, h, ht):
+        self.debug('using probability model')
+        prob = self._frequencies.get(h, 0)
 
-    def __getitem__(self, item):
-        return next((float(d.split(',')[0]) for h, d in self.items if h == item), 0)
+        self.debug('probability: {}'.format(prob))
+        # probability run is truncated
+        if random() < prob:
+            h = ht
+            self.debug('use truncated duration')
+
+        dur = self._items[h]
+        return dur
+
+    def __contains__(self, v):
+        return v in self._items
+
+    def __getitem__(self, k):
+        return self._items[k]
 
 
 class ExperimentStats(Loggable):
@@ -124,14 +184,9 @@ class ExperimentStats(Loggable):
     # experiment_queue = Any
 
     def calculate_duration(self, runs=None):
-        #        if runs is None:
-        #            runs = self.experiment_queue.cleaned_automated_runs
         self.duration_tracker.load()
         dur = self._calculate_duration(runs)
-        # add an empirical fudge factor
-        #         ff = polyval(FUDGE_COEFFS, len(runs))
-
-        self._total_time = dur  # + ff
+        self._total_time = dur
         return self._total_time
 
     def format_duration(self, dur, post=None):
@@ -176,9 +231,8 @@ class ExperimentStats(Loggable):
         self._run_start = 0
 
     def update_run_duration(self, run, t):
-        if not run.truncated:
-            a = self.duration_tracker
-            a.update(run.spec.script_hash, t)
+        a = self.duration_tracker
+        a.update(run, t)
 
     def start_run(self, run):
         self._run_start = time.time()
@@ -241,12 +295,15 @@ class ExperimentStats(Loggable):
             run_dur = 0
             for a in runs:
                 sh = a.script_hash
+
                 if sh in self.duration_tracker:
-                    run_dur += self.duration_tracker[sh]
+                    t = a.make_truncated_script_hash()
+                    if a.has_conditionals() and t in self.duration_tracker:
+                        run_dur += self.duration_tracker.probability_model(sh, t)
+                    else:
+                        run_dur += self.duration_tracker[sh]
                 else:
                     run_dur += a.get_estimated_duration(script_ctx, warned, True)
-
-            # run_dur = sum([a.get_estimated_duration(script_ctx, warned, True) for a in runs])
 
             btw = self.delay_between_analyses * (ni - 1)
             dur = run_dur + btw + self.delay_before_analyses
@@ -266,7 +323,7 @@ class ExperimentStats(Loggable):
         return str(dur)
 
     def _get_remaining(self):
-        dur = timedelta(seconds=round(self._total_time-self._elapsed))
+        dur = timedelta(seconds=round(self._total_time - self._elapsed))
         return str(dur)
 
 
@@ -327,7 +384,7 @@ class StatsGroup(ExperimentStats):
                 si = ei.cleaned_automated_runs.index(sel)
 
                 st += ei.stats.calculate_duration(
-                        ei.executed_runs + ei.cleaned_automated_runs[:si]) + ei.delay_between_analyses
+                    ei.executed_runs + ei.cleaned_automated_runs[:si]) + ei.delay_between_analyses
                 # et += ei.stats.calculate_duration(ei.executed_runs+ei.cleaned_automated_runs[:si + 1])
 
                 rd = self.get_run_duration(sel)
