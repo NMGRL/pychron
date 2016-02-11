@@ -63,7 +63,7 @@ class AutomatedRunDurationTracker(Loggable):
                     if line:
                         h, total, truncated = line.split(',')
 
-                    freq[h] = float(total) / float(truncated)
+                    freq[h] = float(truncated) / float(total)
         self._frequencies = freq
 
     def update(self, run, t):
