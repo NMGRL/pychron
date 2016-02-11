@@ -46,7 +46,7 @@ setup(name='pychron',
                 'pychron.stage.maps',
                 'pychron.canvas.canvas2D.scene.primitives',
                 # test packages
-                'pychron.canvas2D.tests',
+                'pychron.canvas.canvas2D.tests',
                 'pychron.stage.tests',
                 'pychron.core.tests',
                 'pychron.core.stats.tests',
