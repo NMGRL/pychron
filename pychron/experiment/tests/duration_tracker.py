@@ -1,7 +1,7 @@
 import os
 import unittest
 
-from pychron.experiment.stats import AutomatedRunDurationTracker
+from pychron.experiment.duration_tracker import AutomatedRunDurationTracker
 from pychron.paths import paths
 
 

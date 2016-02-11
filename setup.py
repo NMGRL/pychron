@@ -30,6 +30,7 @@ setup(name='pychron',
                   'pychron.experiment.utilities.position_regex',
                   'pychron.experiment.utilities.frequency_generator',
                   'pychron.experiment.utilities.aliquot_numbering',
+                  'pychron.experiment.duration_tracker',
                   'pychron.entry.loaders.analysis_loader',
                   'pychron.core.geometry.affine'
                   ],
