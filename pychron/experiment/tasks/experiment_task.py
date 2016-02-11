@@ -36,7 +36,7 @@ from pychron.experiment.experimentor import Experimentor
 from pychron.experiment.queue.base_queue import extract_meta
 from pychron.experiment.tasks.experiment_editor import ExperimentEditor, UVExperimentEditor
 from pychron.experiment.tasks.experiment_panes import LoggerPane, ExplanationPane
-from pychron.experiment.utilities.identifier import convert_extract_device, is_special
+from pychron.experiment.utilities.identifier import convert_extract_device
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.paths import paths
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor

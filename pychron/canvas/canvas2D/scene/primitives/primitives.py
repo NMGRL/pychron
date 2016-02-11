@@ -31,7 +31,6 @@ import math
 from numpy import array
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.scene.primitives.base import QPrimitive, Primitive
-from pychron.core.geometry.convex_hull import convex_hull
 
 
 def calc_rotation(x1, y1, x2, y2):
@@ -449,14 +448,23 @@ class CalibrationObject(HasTraits):
         self.cy = y
 
     def calculate_rotation(self, x, y, sense='east'):
+        def rotation(a, b):
+            return calc_rotation(self.cx, self.cy, a, b)
 
-        rot = calc_rotation(self.cx, self.cy, x, y)
         if sense == 'west':
-            rot += 180
+            if y > self.cy:
+                rot = calc_rotation(self.cx, self.cy, y, x)
+            else:
+                rot = calc_rotation(self.cx, self.cy, -x, -y)
         elif sense == 'north':
-            rot -= 90
+            if x > self.cx:
+                rot = rotation(x, -y)
+            else:
+                rot = rotation(y, -x)
         elif sense == 'south':
-            rot += 90
+            rot = rotation(-y, x)
+        else:
+            rot = rotation(x, y)
 
         return rot
 
@@ -753,6 +761,7 @@ class Polygon(QPrimitive):
 
             else:
                 if len(pts) > 2 and self.use_convex_hull:
+                    from pychron.core.geometry.convex_hull import convex_hull
                     pts = convex_hull(pts)
 
                 if pts is not None and len(pts) > 2:

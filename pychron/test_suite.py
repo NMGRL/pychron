@@ -18,6 +18,7 @@ def suite():
         from pychron.core.helpers.logger_setup import logging_setup
         logging_setup('unittests')
 
+    from pychron.canvas.canvas2D.tests.calibration_item import CalibrationObjectTestCase
     from pychron.experiment.tests.duration_tracker import DurationTrackerTestCase
     from pychron.core.tests.spell_correct import SpellCorrectTestCase
     from pychron.entry.tests.irradiation_loader import SimilarTestCase
@@ -54,7 +55,8 @@ def suite():
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
 
-    tests = (DurationTrackerTestCase,
+    tests = (CalibrationObjectTestCase,
+             DurationTrackerTestCase,
              SpellCorrectTestCase,
              SimilarTestCase,
              FilteringTestCase,
