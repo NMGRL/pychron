@@ -1315,7 +1315,7 @@ anaylsis_type={}
 
         self.debug('**************** Experiment Type: {}, {}'.format(self.experiment_type, AR_AR))
         if self.experiment_type == AR_AR:
-            if not self.experiment_executor.datahub.load_arar_analysis_backend(ln, self.isotope_group):
+            if not self.experiment_executor.datahub.load_analysis_backend(ln, self.isotope_group):
                 self.debug('failed load analysis backend')
                 return
 
@@ -1626,7 +1626,7 @@ anaylsis_type={}
 
         for d in self._active_detectors:
             self.isotope_group.set_isotope(d.isotope, (0, 0),
-                                           detector=d.name,
+                                           d.name,
                                            correct_for_blank=cb)
 
         self.isotope_group.clear_baselines()

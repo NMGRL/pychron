@@ -226,7 +226,7 @@ class IsotopeGroup(Loggable):
         if name in self.isotopes:
             iso = self.isotopes[name]
         else:
-            iso = Isotope(name=name)
+            iso = Isotope(name, det)
             self.isotopes[name] = iso
 
         iso.detector = det
@@ -263,28 +263,30 @@ class IsotopeGroup(Loggable):
             return next((iso for iso in self.isotopes.itervalues()
                          if getattr(iso, attr) == value), None)
 
-    def set_isotope(self, iso, v, **kw):
+    def set_isotope(self, iso, v, det, **kw):
         # print 'set isotope', iso, v
-        if not self.isotopes.has_key(iso):
-            niso = Isotope(name=iso)
+        if iso not in self.isotopes:
+            niso = Isotope(iso, det)
             self.isotopes[iso] = niso
         else:
             niso = self.isotopes[iso]
 
         niso.set_uvalue(v)
-        niso.trait_set(**kw)
+        for k,v in kw.iteritems():
+            setattr(niso, k, v)
+        # niso.trait_set(**kw)
 
         return niso
 
     def set_baseline(self, iso, v):
-        if not self.isotopes.has_key(iso):
+        if iso not in self.isotopes:
             niso = Isotope(name=iso)
             self.isotopes[iso] = niso
 
         self.isotopes[iso].baseline.set_uvalue(v)
 
     def set_blank(self, iso, v):
-        if not self.isotopes.has_key(iso):
+        if iso not in self.isotopes:
             niso = Isotope(name=iso)
             self.isotopes[iso] = niso
 

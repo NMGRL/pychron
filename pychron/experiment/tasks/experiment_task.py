@@ -735,15 +735,16 @@ class ExperimentEditorTask(EditorTask):
         plugin = ip.get_plugin('Experiment', category='general')
         mode = ip.get_parameter(plugin, 'mode')
 
-        experimentor = Experimentor(application=self.application, mode=mode)
-
         proto = 'pychron.database.isotope_database_manager.IsotopeDatabaseManager'
         iso_db_man = self.application.get_service(proto)
-        experimentor.iso_db_man = iso_db_man
+        # experimentor.iso_db_man = iso_db_man
 
         proto = 'pychron.dvc.dvc.DVC'
         dvc = self.application.get_service(proto)
-        experimentor.dvc = dvc
+        # experimentor.dvc = dvc
+
+        experimentor = Experimentor(application=self.application,
+                                    mode=mode, dvc=dvc, iso_db_man=iso_db_man)
 
         experimentor.executor.set_managers()
         experimentor.executor.bind_preferences()

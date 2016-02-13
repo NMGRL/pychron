@@ -144,7 +144,7 @@ class LabnumberEntry(DVCIrradiationable):
                                                                         self.level))
         from pychron.entry.j_transfer import JTransferer
 
-        ms = self.application.get_service('pychron.database.adapters.massspec_database_adapter.MassSpecDatabaseAdapter')
+        ms = self.application.get_service('pychron.mass_spec.database.massspec_database_adapter.MassSpecDatabaseAdapter')
         if ms:
             ms.bind_preferences()
             if ms.connect():

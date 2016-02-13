@@ -40,7 +40,7 @@ class MainView(HasTraits):
     analysis_id = Str
     analysis_type = Str
 
-    isotopes = Dict
+    isotopes = List
     refresh_needed = Event
 
     computed_values = List
@@ -68,8 +68,8 @@ class MainView(HasTraits):
             self.refresh_needed = True
 
     def _load(self, an):
-        self.isotopes = an.isotopes
-        # self.isotopes = [an.isotopes[k] for k in an.isotope_keys]
+        # self.isotopes = an.isotopes
+        self.isotopes = [an.isotopes[k] for k in an.isotope_keys]
         self.load_computed(an)
         self.load_extraction(an)
         self.load_measurement(an, an)
@@ -83,7 +83,7 @@ class MainView(HasTraits):
     def load_measurement(self, an, ar):
 
         # j = self._get_j(an)
-        j = an.j
+        j = ar.j
         jf = 'NaN'
         if j is not None:
             jj = floatfmt(nominal_value(j), n=7, s=5)
@@ -250,21 +250,26 @@ class MainView(HasTraits):
         return ufloat(0, 1e-20), 1
 
     def _update_ratios(self):
+        def get_iso(kk):
+            return next((v for v in self.isotopes if v.name == kk), None)
+
         for ci in self.computed_values:
             if not isinstance(ci, DetectorRatio):
                 continue
 
             nd = ci.detectors
             n, d = nd.split('/')
-            niso, diso = self.isotopes.get(n), self.isotopes.get(d)
-            noncorrected = self._get_non_corrected_ratio(niso, diso)
-            corrected, ic = self._get_corrected_ratio(niso, diso)
 
-            ci.trait_set(value=floatfmt(nominal_value(corrected)),
-                         error=floatfmt(std_dev(corrected)),
-                         noncorrected_value=nominal_value(noncorrected),
-                         noncorrected_error=std_dev(noncorrected),
-                         ic_factor=nominal_value(ic))
+            niso, diso = get_iso(n), get_iso(d)
+            if niso and diso:
+                noncorrected = self._get_non_corrected_ratio(niso, diso)
+                corrected, ic = self._get_corrected_ratio(niso, diso)
+
+                ci.trait_set(value=floatfmt(nominal_value(corrected)),
+                             error=floatfmt(std_dev(corrected)),
+                             noncorrected_value=nominal_value(noncorrected),
+                             noncorrected_error=std_dev(noncorrected),
+                             ic_factor=nominal_value(ic))
 
     def _load_air_computed(self, new_list):
         if new_list:

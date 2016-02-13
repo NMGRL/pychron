@@ -127,6 +127,8 @@ class AutomatedRunSpec(HasTraits):
     material = Str
     data_reduction_tag = Str
 
+    branch = 'master'
+
     _estimated_duration = 0
     _changed = False
 
@@ -339,7 +341,7 @@ post_equilibration_script, extraction_script, script_options, position, duration
             self._changed = True
 
     def _state_changed(self, old, new):
-        self.debug('state changed from {} to {}'.format(old, new))
+        logger.debug('state changed from {} to {}'.format(old, new))
 
     # ===============================================================================
     # property get/set

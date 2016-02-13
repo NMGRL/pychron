@@ -130,9 +130,9 @@ class Datahub(Loggable):
                                                                                        spec.step,
                                                                                        spec.increment))
 
-    def load_analysis_backend(self, ln, arar_age):
+    def load_analysis_backend(self, ln, isotope_group):
         dvc = self.mainstore
-        return dvc.load_analysis_backend(ln, arar_age)
+        return dvc.load_analysis_backend(ln, isotope_group)
 
     def add_experiment(self, exp):
         db = self.mainstore.db
