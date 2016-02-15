@@ -93,5 +93,6 @@ class SceneCanvas(BaseDataCanvas):
                                 'layout_needed', remove=True)
 
     def _scene_default(self):
-        return self.scene_klass()
+        if self.scene_klass:
+            return self.scene_klass()
 # ============= EOF =============================================
