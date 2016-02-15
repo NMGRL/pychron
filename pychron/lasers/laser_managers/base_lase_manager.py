@@ -120,6 +120,9 @@ class BaseLaserManager(Manager):
     def enable_laser(self, **kw):
         pass
 
+    def set_laser_power(self, *args, **kw):
+        pass
+
     def disable_laser(self):
         pass
 
@@ -140,7 +143,7 @@ class BaseLaserManager(Manager):
 #         if pm.load_pattern():
 #             self.open_view(pm)
 
-    def execute_pattern(self, name=None, block=False):
+    def execute_pattern(self, name=None, block=False, lase=False):
         if not self.stage_manager.temp_hole:
             self.information_dialog('Need to specify a hole')
             return
@@ -148,7 +151,14 @@ class BaseLaserManager(Manager):
         pm = self.pattern_executor
         if pm.load_pattern(name):
             pm.set_stage_values(self.stage_manager)
-            pm.execute(block)
+
+            if lase:
+                pm.pattern.disable_at_end = True
+                if not self.enable_laser():
+                    return
+                self.set_laser_power(self.pulse.power, verbose=True)
+
+            pm.execute(block, disable_at_end=True)
 
     def get_brightness(self):
         return 0

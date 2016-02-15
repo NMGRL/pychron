@@ -67,6 +67,15 @@ class ExecutePatternAction(LocalLaserAction):
             manager.execute_pattern()
 
 
+class ExecuteAndLasePatternAction(LocalLaserAction):
+    name = 'Execute Pattern and Lase'
+
+    def perform(self, event):
+        manager = self._get_manager(event)
+        if manager is not None:
+            manager.execute_pattern(lase=True)
+
+
 class OpenScannerAction(LocalLaserAction):
     name = 'Open Scanner...'
     accelerator = 'Ctrl+T'

@@ -13,120 +13,53 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-import math
-
-import matplotlib
-
-matplotlib.use('Qt4Agg')
-
-from moviepy.video.io.bindings import mplfig_to_npimage
-import moviepy.editor as mpy
-from numpy import zeros, ogrid, random, copy, polyfit, arange
-# from scipy.misc import imshow
-# from skimage.io import imshow, show
-import time
+# ============= enthought library imports =======================
 from traits.api import List, Float, Int
 from traitsui.api import View, Item
-
+# ============= standard library imports ========================
+import math
+import time
+from numpy import random, copy, polyfit, arange
+# ============= local library imports  ==========================
 from pychron.lasers.pattern.patterns import Pattern
 from pychron.mv.lumen_detector import LumenDetector
 
 
-class FrameGenerator:
-    def __init__(self):
-        self.width = 300
-        self.height = 300
-        self.ox = 150
-        self.oy = 150
-        self.radius = 75
-        self.laser_x = 0
-        self.laser_y = 0
-        self.random_walk = False
-        self._cnt = 0
-        self.time_constant = 0
-        self.cradius = 0
+def triangulator(pts, base, scalar=1):
+    st = sorted(pts, reverse=True)
+    pt1 = st[0]
+    pt2 = st[1]
+    pt3 = st[2]
 
-    def __iter__(self):
-        self._cnt = 0
-        return self
+    x1, y1 = pt1[1], pt1[2]
+    x2, y2 = pt2[1], pt2[2]
+    ox, oy = pt3[1], pt3[2]
 
-    def set_pos(self, x, y):
-        self.laser_x = x
-        self.laser_y = y
-        self.ox = x
-        self.oy = y
+    mx = (x1 + x2) / 2.
+    my = (y1 + y2) / 2.
 
-    def _calculate_radius(self):
-        f = ((self.laser_x - self.width / 2.) ** 2 + (self.laser_y - self.height / 2.) ** 2) ** 0.5
-        # g = 50*math.sin(0.1*self._cnt)
-        # g = 1+math.sin(0.1*self._cnt)
-        # print self._cnt, g
+    v1 = mx - ox
+    v2 = my - oy
+    # print v1,v2
+    l = (v1 ** 2 + v2 ** 2) ** 0.5
+    try:
+        ux, uy = v1 / l, v2 / l
+    except ZeroDivisionError:
+        ux, uy = 0, 0
 
-        g = min(1, (1 - (50 - self._cnt) / 50.))
-
-        h = 0 + 15 * math.sin(0.1 * self._cnt) if self._cnt > 50 else 0
-        self.time_constant = h
-        rr = self.radius * g + h
-        self._cnt += 1
-        r = int(max(1, rr * (150 - f) / 150.))  # +random.randint(0,10)
-        self.cradius = r
-        return r
-        # return self.radius * max(0.001, (1-f/self.radius))
-        # try:
-        #     ff = 5/float(f)
-        # except ZeroDivisionError:
-        #     ff = 1
-        # print f, 1/f
-        # ff = f/self.
-        # return int(self.radius*ff)
-
-    def next(self):
-        radius = self._calculate_radius()
-        offset = 3
-        src = zeros((self.width, self.height))
-
-        d = (0, 0)
-        if self.random_walk:
-            d = random.uniform(-offset, offset, 2)
-
-        cx = self.ox + d[0]
-        cy = self.oy + d[1]
-
-        # if ((cx - 100) ** 2 + (cy - 100) ** 2) ** 0.5 > 50:
-        #     dx = offset if cx < 0 else -offset
-        #     dy = offset if cy < 0 else -offset
-        #     cx += dx
-        #     cy += dy
-        # rain_drops['position'][current_index] += dx,dy
-
-        # self.ox = cx
-        # self.oy = cy
-        y, x = ogrid[-radius:radius, -radius:radius]
-        index = x ** 2 + y ** 2 <= radius ** 2
-
-        # src[cy - radius:cy + radius, cx - radius:cx + radius][index] = 255*random.uniform(size=index.shape)
-        src[cy - radius:cy + radius, cx - radius:cx + radius][index] = 255
-        # xx, yy = mgrid[:200, :200]
-        # circles contains the squared distance to the (100, 100) point
-        # we are just using the circle equation learnt at school
-        # circle = (xx - 100) ** 2 + (yy - 100) ** 2
-        # print circle.shape
-        # print circle
-        # raise  StopIteration
-        return src
+    nx = mx + base * scalar * ux
+    ny = my + base * scalar * uy
+    return nx, ny
 
 
 class SeekPattern(Pattern):
     duration = Float(0.1)
-    # _cnt = 0
-    _points = List
     base = Float(0.5)
     perimeter_radius = Float(5)
     limit = Int(10)
-    # _current_points = None
-    # _cpcnt = 0
-    _previous_pt = None
 
+    _previous_pt = None
+    _points = List
     _data = List
 
     def point_generator(self):
@@ -160,24 +93,11 @@ class SeekPattern(Pattern):
 
                 px.append((x, y))
                 px = px[-3:]
-                # if len(px) == 4:
-                #     px.pop(0)
-                # print px[0] == px[2]
-                # if px[0] == px[2]:
-                #     scalar *= 0.5
-                #     yield x,y
-                #     continue
 
-                # scalar =1.0
-                # scalar = max(0.1, scalar)
-                # print scalar
-                # if scalar < 1.0:
-                # check if off peak
                 m = 1
                 if len(self._data) == self.limit:
                     m, b = polyfit(arange(len(self._data)), self._data, 1)
 
-                # print m, (len(px)==3 and px[0] == px[2])
                 repeat_point = (len(px) == 3 and px[0] == px[2])
 
                 if m < 0:
@@ -187,50 +107,19 @@ class SeekPattern(Pattern):
                     scalar *= 0.5
                     x, y = rotate(x, y, px)
 
+                if not self._validate(x, y):
+                    x, y = self.cx, self.cy
+
                 yield x, y
 
         return gen()
 
-    # def next_point(self):
-    #     if len(self._points) < 3:
-    #         x, y = 0, 0
-    #         if self._cnt == 1:
-    #             x, y = self.base, 0
-    #         elif self._cnt == 2:
-    #             x, y = self.base / 2., self.base
-    #         self._cnt += 1
-    #     else:
-    #         x, y = triangulator(self._points)
-    #
-    #         st = sorted(pts, reverse=True)
-    #         st.pop(-1)
-    #         self._points = st
-    #
-    #     if not self._validate(x, y):
-    #         if len(self._points) < 3:
-    #             x, y = 0, 0
-    #         else:
-    #             p1, p2, p3 = self._points
-    #             x, y = calculate_centroid(array([(p1[1], p1[2]),
-    #                                              (p2[1], p2[2]),
-    #                                              (p3[1], p3[2])]))
-    #
-    #             # if next point is outside the perimeter go to triangle center point
-    #             # st = sorted(pts, reverse=True)
-    #             # pt1 = st[0]
-    #             # nx, ny = pt1[1], pt1[2]
-    #     return x, y
-    #     # nx, ny = self.cx + x, self.cy + y
-    #     # return nx, ny
-
     def _validate(self, x, y):
-        # print 'validate', x, y, (x ** 2 + y ** 2) ** 0.5, self.perimeter_radius
-        return (x ** 2 + y ** 2) ** 0.5 <= self.perimeter_radius
+        return ((x ** 2 - self.cy) + (y - self.cy) ** 2) ** 0.5 <= self.perimeter_radius
 
     def set_point(self, z, x, y):
         self._data.append(z)
         self._data = self._data[-self.limit:]
-
         self._points.append((z, x, y))
 
     def maker_view(self):
@@ -256,34 +145,100 @@ class SeekPattern(Pattern):
         pass
 
 
-def triangulator(pts, base, scalar=1):
-    st = sorted(pts, reverse=True)
-    pt1 = st[0]
-    pt2 = st[1]
-    pt3 = st[2]
-
-    x1, y1 = pt1[1], pt1[2]
-    x2, y2 = pt2[1], pt2[2]
-    ox, oy = pt3[1], pt3[2]
-
-    mx = (x1 + x2) / 2.
-    my = (y1 + y2) / 2.
-
-    v1 = mx - ox
-    v2 = my - oy
-    # print v1,v2
-    l = (v1 ** 2 + v2 ** 2) ** 0.5
-    try:
-        ux, uy = v1 / l, v2 / l
-    except ZeroDivisionError:
-        ux, uy = 0, 0
-
-    nx = mx + base * scalar * ux
-    ny = my + base * scalar * uy
-    return nx, ny
-
-
 if __name__ == '__main__':
+    from numpy import zeros, ogrid
+    import matplotlib
+
+    matplotlib.use('Qt4Agg')
+
+    from moviepy.video.io.bindings import mplfig_to_npimage
+    import moviepy.editor as mpy
+
+
+    class FrameGenerator:
+        def __init__(self):
+            self.width = 300
+            self.height = 300
+            self.ox = 150
+            self.oy = 150
+            self.radius = 75
+            self.laser_x = 0
+            self.laser_y = 0
+            self.random_walk = False
+            self._cnt = 0
+            self.time_constant = 0
+            self.cradius = 0
+
+        def __iter__(self):
+            self._cnt = 0
+            return self
+
+        def set_pos(self, x, y):
+            self.laser_x = x
+            self.laser_y = y
+            self.ox = x
+            self.oy = y
+
+        def _calculate_radius(self):
+            f = ((self.laser_x - self.width / 2.) ** 2 + (self.laser_y - self.height / 2.) ** 2) ** 0.5
+            # g = 50*math.sin(0.1*self._cnt)
+            # g = 1+math.sin(0.1*self._cnt)
+            # print self._cnt, g
+
+            g = min(1, (1 - (50 - self._cnt) / 50.))
+
+            h = 0 + 15 * math.sin(0.1 * self._cnt) if self._cnt > 50 else 0
+            self.time_constant = h
+            rr = self.radius * g + h
+            self._cnt += 1
+            r = int(max(1, rr * (150 - f) / 150.))  # +random.randint(0,10)
+            self.cradius = r
+            return r
+            # return self.radius * max(0.001, (1-f/self.radius))
+            # try:
+            #     ff = 5/float(f)
+            # except ZeroDivisionError:
+            #     ff = 1
+            # print f, 1/f
+            # ff = f/self.
+            # return int(self.radius*ff)
+
+        def next(self):
+            radius = self._calculate_radius()
+            offset = 3
+            src = zeros((self.width, self.height))
+
+            d = (0, 0)
+            if self.random_walk:
+                d = random.uniform(-offset, offset, 2)
+
+            cx = self.ox + d[0]
+            cy = self.oy + d[1]
+
+            # if ((cx - 100) ** 2 + (cy - 100) ** 2) ** 0.5 > 50:
+            #     dx = offset if cx < 0 else -offset
+            #     dy = offset if cy < 0 else -offset
+            #     cx += dx
+            #     cy += dy
+            # rain_drops['position'][current_index] += dx,dy
+
+            # self.ox = cx
+            # self.oy = cy
+            y, x = ogrid[-radius:radius, -radius:radius]
+            index = x ** 2 + y ** 2 <= radius ** 2
+
+            # src[cy - radius:cy + radius, cx - radius:cx + radius][index] = 255*random.uniform(size=index.shape)
+            src[cy - radius:cy + radius, cx - radius:cx + radius][index] = 255
+            # xx, yy = mgrid[:200, :200]
+            # circles contains the squared distance to the (100, 100) point
+            # we are just using the circle equation learnt at school
+            # circle = (xx - 100) ** 2 + (yy - 100) ** 2
+            # print circle.shape
+            # print circle
+            # raise  StopIteration
+            return src
+
+
     # crop_width = 2
     # crop_height = 2
     ld = LumenDetector()
@@ -303,6 +258,7 @@ if __name__ == '__main__':
 
 
     import matplotlib.pyplot as plt
+
     # pts = [(20, 0, 0), (20, 10, 0), (10, 5, 10)]
     # nx, ny = triangulator(pts)
     # print nx, ny
@@ -328,29 +284,36 @@ if __name__ == '__main__':
     f = FrameGenerator()
     pattern = SeekPattern(base=15, perimeter_radius=100)
     o = f.next()
+
+    ax.set_title('Current Frame')
     img = ax.imshow(o)
 
     gen = pattern.point_generator()
 
+    ax2.set_title('Observed Brightness')
     img2 = ax2.imshow(o)
 
+    ax3.set_title('Position')
     line = ax3.plot([0], [0])[0]
     ax3.set_xlim(0, 300)
     ax3.set_ylim(0, 300)
     scatter = ax3.plot([150], [150], '+')
 
-    xx, yy = 75, 175
+    xx, yy = 100, 150
     scatter2 = ax3.plot([xx], [yy], 'o')[0]
 
+    ax4.set_title('Intensity')
     tvint = ax4.plot([1], [1])[0]
     # tvint = ax4.semilogy([1],[1])[0]
     ax4.set_xlim(0, 50)
     ax4.set_ylim(0, 1.1)
 
+    ax5.set_title('Time Constant')
     tc = ax5.plot([0], [0])[0]
     ax5.set_ylim(-20, 20)
     ax5.set_xlim(0, 50)
 
+    ax5.set_title('Radius')
     rs = ax6.plot([0], [0])[0]
     ax6.set_ylim(0, 100)
     ax6.set_xlim(0, 50)
@@ -363,6 +326,7 @@ if __name__ == '__main__':
     rcs = []
     f.set_pos(xx, yy)
     st = time.time()
+
 
     def update(frame_number):
         # print frame_number
@@ -384,7 +348,7 @@ if __name__ == '__main__':
         ts.append(time.time() - st)
         # print z
         z /= 3716625.0
-        z += 0.1 * random.random()
+        # z += 0.1 * random.random()
 
         pattern.set_point(z, x, y)
         zs.append(z)
@@ -398,6 +362,7 @@ if __name__ == '__main__':
         rs.set_data(ts, rcs)
         return mplfig_to_npimage(fig)
         # raw_input()
+
 
     # animation = FuncAnimation(fig, update, interval=50)
     # plt.show()

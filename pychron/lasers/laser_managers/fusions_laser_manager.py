@@ -123,8 +123,8 @@ class FusionsLaserManager(LaserManager):
             # ===============================================================================
 
     def extract(self, power, **kw):
-        self.enable_laser()
-        self.set_laser_power(power, **kw)
+        if self.enable_laser():
+            self.set_laser_power(power, **kw)
 
     def end_extract(self):
         self.disable_laser()
