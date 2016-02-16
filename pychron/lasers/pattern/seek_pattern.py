@@ -19,7 +19,7 @@ from traitsui.api import View, Item
 # ============= standard library imports ========================
 import math
 import time
-from numpy import random, copy
+from numpy import random, copy, average, polyfit, arange, linspace, hstack
 # ============= local library imports  ==========================
 from pychron.lasers.pattern.patterns import Pattern
 from pychron.mv.lumen_detector import LumenDetector
@@ -38,7 +38,7 @@ def calculate_center(ps):
     pts = sorted(ps, key=lambda p: p[1])
     (x1, y1), (x2, y2) = pts[:2]
     dy, dx = (y2 - y1), (x2 - x1)
-    theta = math.atan(dy / dx)
+    theta = math.atan2(dy, dx)
     base = (dy ** 2 + dx ** 2) ** 0.5
 
     spts = [rotate(*p, theta=-theta) for p in pts]
@@ -49,11 +49,18 @@ def calculate_center(ps):
     bx = x1 + b2
     by = y1 + 1 / 3. * height
 
-    cx, cy = rotate(bx, by, theta)
+    cx, cy = rotate(bx, by, theta=theta)
     return cx, cy
 
 
-def triangulator(pts, base, scalar=1):
+def triangulator(pts, side):
+    """
+    pts should be reverse sorted by score
+
+    :param pts: 3-tuple (score, x,y)
+    :param side:
+    :return:
+    """
     pt1, pt2, pt3 = pts
 
     x1, y1 = pt1[1], pt1[2]
@@ -65,15 +72,14 @@ def triangulator(pts, base, scalar=1):
 
     v1 = mx - ox
     v2 = my - oy
-    # print v1,v2
     l = (v1 ** 2 + v2 ** 2) ** 0.5
     try:
         ux, uy = v1 / l, v2 / l
     except ZeroDivisionError:
         ux, uy = 0, 0
 
-    nx = mx + base * scalar * ux
-    ny = my + base * scalar * uy
+    nx = mx + side * ux
+    ny = my + side * uy
     return nx, ny
 
 
@@ -91,28 +97,56 @@ class SeekPattern(Pattern):
 
     def point_generator(self):
         def gen():
+            def weighted_centroid(ps):
+                weights, xps, yps = zip(*ps)
+                cx = average(xps, weights=weights)
+                cy = average(yps, weights=weights)
+
+                return cx, cy
+
             yield 0, 0
             yield self.base, 0
             yield self.base / 2., self.base
 
             px = []
+            base = self.base
+            h = (3 ** 0.5) / 2. * base
             scalar = 1.0
             while 1:
-                pts = sorted(self._points, reverse=True)
-                x, y = triangulator(pts, self.base, scalar=scalar)
 
-                pts.pop(-1)
-                self._points = pts
+                if scalar < 1:
+                    n = len(self._data)
+                    m, b = polyfit(arange(n), self._data, 1)
+                    if m < 0:
+                        scalar = 1
+                pts = sorted(self._points, reverse=True)
+                x, y = triangulator(pts, h * scalar)
 
                 px.append((x, y))
                 px = px[-3:]
 
-                repeat_point = (len(px) == 3 and px[0] == px[2])
-
+                n = len(px)
+                repeat_point = n == 3 and n != len(set(px))
                 if repeat_point:
-                    # calculate center of triangle
-                    cx, cy = calculate_center(px)
-                    x, y = rotate(x, y, center=(cx, cy), theta=math.radians(45))
+                    scalar = 0.5
+                    # construct a new triangle centered at weighted centroid of current points
+                    # weighted by score
+                    cx, cy = weighted_centroid(self._points)
+                    self._points = []
+
+                    x1 = cx - 1 / 2. * base
+                    y1 = cy - 1 / 3. * base
+
+                    x2 = cx + 1 / 2. * base
+                    y2 = y1
+
+                    x3 = cx
+                    y3 = cy + 2 / 3. * h
+
+                    yield x1, y1
+                    yield x2, y2
+                    yield x3, y3
+                    continue
 
                 if not self._validate(x, y):
                     self._points = []
@@ -120,6 +154,9 @@ class SeekPattern(Pattern):
                     yield self.base, 0
                     yield self.base / 2., self.base
                     continue
+
+                pts.pop(-1)
+                self._points = pts
 
                 yield x, y
 
@@ -156,15 +193,14 @@ class SeekPattern(Pattern):
         pass
 
 
-if __name__ == '__main__':
+def test1():
     from numpy import zeros, ogrid
     import matplotlib
 
     matplotlib.use('Qt4Agg')
 
-    from moviepy.video.io.bindings import mplfig_to_npimage
-    import moviepy.editor as mpy
-
+    from matplotlib.animation import FuncAnimation
+    import matplotlib.pyplot as plt
 
     class FrameGenerator:
         def __init__(self):
@@ -249,49 +285,10 @@ if __name__ == '__main__':
             # raise  StopIteration
             return src
 
-
-    # crop_width = 2
-    # crop_height = 2
     ld = LumenDetector()
 
-    # def get_brightness(src):
-    #     # ld = self._lumen_detector
-    #     # cw, ch = 2 * crop_width * self.pxpermm, 2 * self.crop_height * self.pxpermm
-    #     # src = self.video.get_frame()
-    #     # src = crop_image(src, 200,200)
-    #     # if src:
-    #     # else:
-    #     #     src = random.random((ch, cw)) * 255
-    #     #     src = src.astype('uint8')
-    #     #         return random.random()
-    #     src, v = ld.get_value(src)
-    #     return v
-
-
-    import matplotlib.pyplot as plt
-
-    # pts = [(20, 0, 0), (20, 10, 0), (10, 5, 10)]
-    # nx, ny = triangulator(pts)
-    # print nx, ny
-    # import matplotlib.pyplot as plt
-    #
-    # pts = [(0, 0), (10, 0), (5, 10)]
-    # xs = [0, 10, 5, 0]
-    # ys = [0, 0, 10, 0]
-    # plt.plot(xs, ys)
-    # plt.plot([nx], [ny], 'o')
-    # plt.xlim(-25, 25)
-    # plt.ylim(-25, 25)
-    # plt.show()
-    # show()
-    # fig = plt.figure(figsize=(7, 7))
-    # fig, ((ax, ax2, ax3),(ax4, ax5, ax6)) = plt.subplots(6, 2, figsize=(7, 7))
     fig, ((ax, ax2,), (ax3, ax4), (ax5, ax6)) = plt.subplots(3, 2, figsize=(7, 7))
-    # ax = plt.subplot(411)
-    # ax = fig.add_axes([0, 0, 1, 1], frameon=False)
-    # ax2 = fig.add_axes([0, 0, 1, 1], frameon=False)
-    # ax.set_xlim(-1,1), ax.set_xticks([])
-    # ax.set_ylim(-1,1), ax.set_yticks([])
+
     f = FrameGenerator()
     pattern = SeekPattern(base=15, perimeter_radius=100)
     o = f.next()
@@ -306,8 +303,20 @@ if __name__ == '__main__':
 
     ax3.set_title('Position')
     line = ax3.plot([0], [0])[0]
-    ax3.set_xlim(0, 300)
-    ax3.set_ylim(0, 300)
+
+    r = pattern.perimeter_radius
+    xs = linspace(-r, r)
+    xs2 = xs[::-1]
+    ys = (r ** 2 - xs ** 2) ** 0.5
+    ys2 = -(r ** 2 - xs2 ** 2) ** 0.5
+    xxx, yyy = hstack((xs, xs2)) + 150, hstack((ys, ys2)) + 150
+    # print xxx,yyy
+    # print xs+150, ys+150
+    # ax3.plot(xs+150,ys+150)
+    ax3.plot(xxx, yyy)
+
+    ax3.set_xlim(50, 250)
+    ax3.set_ylim(50, 250)
     scatter = ax3.plot([150], [150], '+')
 
     xx, yy = 100, 150
@@ -317,7 +326,7 @@ if __name__ == '__main__':
     tvint = ax4.plot([1], [1])[0]
     # tvint = ax4.semilogy([1],[1])[0]
     ax4.set_xlim(0, 50)
-    ax4.set_ylim(0, 1.1)
+    # ax4.set_ylim(0, 1.1)
 
     ax5.set_title('Time Constant')
     tc = ax5.plot([0], [0])[0]
@@ -338,7 +347,6 @@ if __name__ == '__main__':
     f.set_pos(xx, yy)
     st = time.time()
 
-
     def update(frame_number):
         # print frame_number
         x, y = gen.next()
@@ -358,26 +366,53 @@ if __name__ == '__main__':
 
         ts.append(time.time() - st)
         # print z
-        z /= 3716625.0
+        # z /= 3716625.0
         # z += 0.1 * random.random()
 
         pattern.set_point(z, x, y)
         zs.append(z)
+        # print ts
         # print zs
         tvint.set_data(ts, zs)
+        ax4.set_ylim(min(zs) * 0.9, max(zs) * 1.1)
 
         tcs.append(f.time_constant)
         rcs.append(f.cradius)
         tc.set_data(ts, tcs)
 
         rs.set_data(ts, rcs)
-        return mplfig_to_npimage(fig)
+        # return mplfig_to_npimage(fig)
         # raw_input()
 
+    animation = FuncAnimation(fig, update, interval=200)
+    plt.show()
 
-    # animation = FuncAnimation(fig, update, interval=50)
-    # plt.show()
+    # duration = 30
+    # animation = mpy.VideoClip(update, duration=duration)
+    # animation.write_gif("/Users/ross/Desktop/seek2.gif", fps=5)
 
-    duration = 30
-    animation = mpy.VideoClip(update, duration=duration)
-    animation.write_gif("/Users/ross/Desktop/seek2.gif", fps=5)
+
+def test_trianglator():
+    import matplotlib
+
+    matplotlib.use('Qt4Agg')
+
+    h = 3 ** 0.5 / 2.
+    print 'height', h
+    pts = [(0, 0, 0), (10, 1, 0), (20, 0.5, h)]
+    pts = sorted(pts, reverse=True)
+    import matplotlib.pyplot as plt
+    x, y = triangulator(pts, h)
+    zs, xs, ys = zip(*pts)
+    plt.xlim(-1, 3)
+    plt.ylim(-1, 3)
+
+    plt.plot(xs, ys)
+    print x, y
+    plt.plot([x], [y], 'o')
+    plt.show()
+
+
+if __name__ == '__main__':
+    # test_trianglator()
+    test1()

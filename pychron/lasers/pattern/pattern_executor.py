@@ -331,13 +331,11 @@ class PatternExecutor(Patternable):
 
         r = pattern.perimeter_radius
         xs = linspace(-r, r)
+        xs2 = xs[::-1]
         ys = (r ** 2 - xs ** 2) ** 0.5
-        ys2 = -(r ** 2 - xs ** 2) ** 0.5
+        ys2 = -(r ** 2 - xs2 ** 2) ** 0.5
 
-        xs = hstack((xs, xs))
-        ys = hstack((ys, ys2))
-
-        g.new_series(x=xs, y=ys, type='line')
+        g.new_series(x=hstack((xs, xs2)), y=hstack((ys, ys2)), type='line')
 
         g.set_x_title('X (mm)', plotid=0)
         g.set_y_title('Y (mm)', plotid=0)
