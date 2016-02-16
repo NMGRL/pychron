@@ -18,27 +18,46 @@
 # ============= standard library imports ========================
 from numpy import invert, zeros_like
 from skimage.draw import circle
+
+
 # ============= local library imports  ==========================
 
 
 class LumenDetector(object):
-    threshold = 100
+    threshold = 25
     mask_radius = 70
 
     def get_value(self, src):
+        """
+        return the intensity density
+        intensity densitry is sum of all pixels in masked area / area of all pixels > tol
+
+        @param src:
+        @return:
+        """
+
         mask = self._mask(src)
         self._preprocess(src)
 
         lum = src[mask]
-#         # use mean of the 90th percentile as lumen
-#         # measure. this is adhoc and should/could be modified
+        #         # use mean of the 90th percentile as lumen
+        #         # measure. this is adhoc and should/could be modified
         #         lumen = percentile(lum.flatten(), 90).mean()
+
         lumen = lum.sum()
-        return src, lumen
+
+        area = src[src > self.threshold].size
+        try:
+            int_density = lumen / float(area)
+        except ZeroDivisionError:
+            int_density = 0
+
+        # print 'lumen={}, area={}'.format(lumen, area)
+        return src, int_density
 
     def _mask(self, src):
         radius = self.mask_radius
-        h, w = src.shape
+        h, w, d = src.shape
         c = circle(h / 2., w / 2., radius)
         mask = zeros_like(src, dtype=bool)
         mask[c] = True

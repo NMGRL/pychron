@@ -26,10 +26,7 @@ from pychron.mv.lumen_detector import LumenDetector
 
 
 def triangulator(pts, base, scalar=1):
-    st = sorted(pts, reverse=True)
-    pt1 = st[0]
-    pt2 = st[1]
-    pt3 = st[2]
+    pt1, pt2, pt3 = pts
 
     x1, y1 = pt1[1], pt1[2]
     x2, y2 = pt2[1], pt2[2]
@@ -53,26 +50,38 @@ def triangulator(pts, base, scalar=1):
 
 
 class SeekPattern(Pattern):
+    total_duration = 30
     duration = Float(0.1)
     base = Float(0.5)
-    perimeter_radius = Float(5)
+    perimeter_radius = Float(2.5)
     limit = Int(10)
+    pre_seek_delay = Float(0.25)
 
     _previous_pt = None
     _points = List
     _data = List
 
     def point_generator(self):
-        def rotate(x, y, px):
-            # offpeak_cnt += 1
-            theta = math.radians(15)  # random.randint(-180, 180))
-            if len(px) == 3:
-                ox, oy = px[1][0], px[1][1]
-            else:
-                ox, oy = 0, 0
-            nx = math.cos(theta) * (x - ox) - math.sin(theta) * (y - oy) + ox
-            ny = math.sin(theta) * (x - ox) + math.cos(theta) * (y - oy) + oy
-            # print x, nx, ox, y, ny, oy
+        theta = math.radians(45)
+
+        def rotate(x, y, ox, oy, t=None):
+            if t is None:
+                t = theta
+
+            # if len(px) == 3:
+            #     ox, oy = px[1][0], px[1][1]
+            # else:
+            #     ox, oy = 0, 0
+
+            ctheta = math.cos(t)
+            stheta = math.sin(t)
+
+            dx = x - ox
+            dy = y - oy
+
+            nx = ctheta * dx - stheta * dy + ox
+            ny = stheta * dx + ctheta * dy + oy
+
             return nx, ny
 
         def gen():
@@ -80,42 +89,72 @@ class SeekPattern(Pattern):
             yield self.base, 0
             yield self.base / 2., self.base
 
-            px = []
+            # px = []
             scalar = 1.0
-            offpeak_cnt = 0
             while 1:
+                pts = sorted(self._points, reverse=True)
+                x, y = triangulator(pts, self.base, scalar=scalar)
 
-                x, y = triangulator(self._points, self.base, scalar=scalar)
+                pts.pop(-1)
+                self._points = pts
 
-                st = sorted(self._points, reverse=True)
-                st.pop(-1)
-                self._points = st
-
-                px.append((x, y))
-                px = px[-3:]
-
-                m = 1
-                if len(self._data) == self.limit:
-                    m, b = polyfit(arange(len(self._data)), self._data, 1)
-
-                repeat_point = (len(px) == 3 and px[0] == px[2])
-
-                if m < 0:
-                    scalar = 1.0
-                    x, y = rotate(x, y, px)
-                elif repeat_point:
-                    scalar *= 0.5
-                    x, y = rotate(x, y, px)
+                # px.append((x, y))
+                # px = px[-3:]
+                #
+                # # m = 1
+                # # if len(self._data) == self.limit:
+                # #     m, b = polyfit(arange(len(self._data)), self._data, 1)
+                #
+                # repeat_point = (len(px) == 3 and px[0] == px[2])
+                #
+                # # if m < 0:
+                # #     scalar = 1.0
+                # #     x, y = rotate(x, y, px)
+                # if repeat_point:
+                #
+                #     # calculate center of triangle
+                #     spx = sorted(px, key=lambda p: p[1])
+                #     p1, p2 = spx[:2]
+                #
+                #     if p1[0] > p2[0]:
+                #         p1, p2 = p2, p1
+                #
+                #     (x1, y1), (x2, y2) = p1, p2
+                #     if x1 == x2:
+                #         t = math.radians(90)
+                #     else:
+                #         t = math.atan((y2 - y1) / (x2 - x1))
+                #
+                #     base = self.base/2.0
+                #     bx = x1 + base * math.cos(t)
+                #     by = y1 + base * math.sin(t)
+                #
+                #     h = base * math.tan(math.radians(30))
+                #     cx = bx - h * math.sin(math.radians(60))
+                #     cy = by + h * math.cos(math.radians(60))
+                #     # ox, oy = rotate(cx, cy, x1, x2, t)
+                #     # (x1,y1), (x2,y2), (x3, y3) = px
+                #
+                #     x, y = rotate(x, y, cx, cy)
+                #
+                # # scalar = 0.5
+                # # scalar *= 0.5
+                # # else:
+                # # scalar = 1.0
 
                 if not self._validate(x, y):
-                    x, y = self.cx, self.cy
+                    self._points = []
+                    yield 0, 0
+                    yield self.base, 0
+                    yield self.base / 2., self.base
+                    continue
 
                 yield x, y
 
         return gen()
 
     def _validate(self, x, y):
-        return ((x ** 2 - self.cy) + (y - self.cy) ** 2) ** 0.5 <= self.perimeter_radius
+        return (x ** 2 + y ** 2) ** 0.5 <= self.perimeter_radius
 
     def set_point(self, z, x, y):
         self._data.append(z)

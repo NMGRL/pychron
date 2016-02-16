@@ -158,7 +158,7 @@ class BaseLaserManager(Manager):
                     return
                 self.set_laser_power(self.pulse.power, verbose=True)
 
-            pm.execute(block, disable_at_end=True)
+            pm.execute(block)
 
     def get_brightness(self):
         return 0

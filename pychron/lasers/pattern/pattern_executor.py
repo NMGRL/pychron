@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.scatterplot import render_markers
+from numpy import polyfit
 from traits.api import Any, Bool, Tuple
 # ============= standard library imports ========================
 import os
@@ -39,17 +40,17 @@ class PeriodCTX:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if exc_type is None:
-            et = time.time() - self.st
+            et = time.time() - self._st
             time.sleep(max(0, self._duration - et))
 
 
 class CurrentPointOverlay(AbstractOverlay):
-    point = Tuple((0, 0))
+    point = Tuple((0.0, 0.0))
 
     def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
         with gc:
             pts = self.component.map_screen([self.point])
-            render_markers(gc, pts, 'circle', 3, 'green', 1, 'green')
+            render_markers(gc, pts, 'circle', 3, (0, 1, 0), 1, (0, 1, 0))
 
 
 class PatternExecutor(Patternable):
@@ -163,6 +164,8 @@ class PatternExecutor(Patternable):
         """
         self.start(show=self.show_patterning)
 
+        self._pre_execute()
+
         t = Thread(target=self._execute)
         t.start()
 
@@ -170,6 +173,17 @@ class PatternExecutor(Patternable):
             t.join()
 
             self.finish()
+
+    def _pre_execute(self):
+        pattern = self.pattern
+
+        kind = pattern.kind
+        if kind == 'SeekPattern':
+            from pychron.graph.graph import Graph
+
+            g = Graph(window_x=1000, window_y=100, window_height=700)
+            self._info = open_view(g)
+            self._seek_graph = g
 
     def _execute(self):
         pat = self.pattern
@@ -191,6 +205,7 @@ class PatternExecutor(Patternable):
                 self.controller.linear_move(pat.cx, pat.cy, block=True)
                 if pat.disable_at_end:
                     self.laser_manager.disable_device()
+
                 self.finish()
                 self.info('finished pattern: transit time={:0.1f}s'.format(time.time() - st))
 
@@ -306,81 +321,133 @@ class PatternExecutor(Patternable):
 
     def _execute_seek(self, controller, pattern):
         from pychron.core.ui.gui import invoke_in_main_thread
-        from pychron.graph.graph import Graph
-
+        # from pychron.graph.graph import Graph
+        g = self._seek_graph
         duration = pattern.duration
-        g = Graph()
-        g.edit_traits()
-        g.new_plot()
-        s, p = g.new_series()
+        total_duration = pattern.total_duration
 
-        g.new_plot()
+        g.new_plot(padding_top=10)
+        s, p = g.new_series()
+        g.set_x_title('X (mm)', plotid=0)
+        g.set_y_title('Y (mm)', plotid=0)
+
+        g.new_plot(padding_top=10, padding_bottom=20)
         g.new_series(type='line')
+        g.new_series()
+        g.set_y_title('Intensity Density', plotid=1)
+        g.set_x_title('Time (s)', plotid=1)
+
+        g.new_plot(padding_bottom=10)
+        g.new_series()
+        g.set_y_title('Score', plotid=2)
+        g.set_x_title('Time (s)', plotid=2)
 
         cp = CurrentPointOverlay(component=s)
         s.overlays.append(cp)
-        w = 2
+        w = pattern.perimeter_radius
         g.set_x_limits(-w, w)
         g.set_y_limits(-w, w)
-        om = 60
-        g.set_x_limits(max_=om, plotid=1)
+        g.set_x_limits(max_=total_duration * 1.1, plotid=1)
+        g.set_x_limits(max_=total_duration * 1.1, plotid=2)
 
         lm = self.laser_manager
         sm = lm.stage_manager
 
+        osdp = sm.canvas.show_desired_position
+        sm.canvas.show_desired_position = False
         st = time.time()
 
-        def update_graph(zs, zz, xx, yy):
+        def update_graph(tts, zzs, zz, xx, yy, score):
             cp.point = (xx, yy)
+
             g.add_datum((xx, yy), plotid=0)
             t = time.time() - st
-            g.add_datum((t, zz),
-                        update_y_limits=True,
-                        plotid=1)
+            g.add_datum((t, zz), plotid=1)
 
-            g.add_datum((t,) * len(zs), zs,
-                        update_y_limits=True,
-                        plotid=1, series=1)
-            g.set_x_limits(max_=max(om, t + 10), plotid=1)
-            g.redraw()
+            g.add_bulk_data(tts, zzs,
+                            update_y_limits=True,
+                            plotid=1, series=1)
+
+            g.add_datum((t, score), update_y_limits=True, plotid=2)
+
+        cx, cy = pattern.cx, pattern.cy
+        lines = []
+        gen = pattern.point_generator()
+
+        linear_move = controller.linear_move
+        get_brightness = sm.get_brightness
+        moving = sm.moving
+        update_axes = sm.update_axes
+
+        self.debug('Pre seek delay {}'.format(pattern.pre_seek_delay))
+        time.sleep(pattern.pre_seek_delay)
+
+        self.debug('starting seek')
+        self.debug('total duration {}'.format(total_duration))
+        self.debug('dwell duration {}'.format(duration))
+        for i, (x, y) in enumerate(gen):
+            if not self._alive:
+                break
+
+            if time.time() - st > total_duration:
+                break
+
+            # with PeriodCTX(pattern.duration):
+            # x, y = gen.next()
+            # x, y = pattern.next_point
+
+            try:
+                linear_move(cx + x, cy + y, block=False, velocity=pattern.velocity,
+                            update=False,
+                            immediate=True)
+            except PositionError:
+                break
+
+            zs = []
+            ts = []
+
+            def measure_brightness():
+                _, _, v = get_brightness()
+                zs.append(v)
+                ts.append(time.time() - st)
+                time.sleep(0.1)
+
+            while moving(force_query=True):
+                measure_brightness()
+
+            mt = time.time()
+            while time.time() - mt < duration:
+                measure_brightness()
+
+            if zs:
+                n = len(zs)
+                z = sum(zs) / float(n)
+
+                score = z
+                m, b = polyfit(ts, zs, 1)
+                if m > 1:
+                    score *= m
+
+                pattern.set_point(score, x, y)
+                lines.append('{:0.5f},{:0.3f},{:0.3f},{}\n'.format(z, x, y, n, score))
+                self.debug('i:{} XY:({:0.5f},{:0.5f}) Z:{:0.2f} N:{} Slope:{} Score:{:0.2f}'.format(i, x, y, z, n,
+                                                                                                    m, score))
+                update_graph(ts, zs, z, x, y, score)
+
+            update_axes()
+
+            # invoke_in_main_thread(g.redraw, force=False)
+            # invoke_in_main_thread(update_graph, ts, zs, z, x, y)
 
         pp = os.path.join(paths.data_dir, 'seek_pattern.txt')
         with open(pp, 'w') as wfile:
-            cx, cy = pattern.cx, pattern.cy
             wfile.write('{},{}\n'.format(cx, cy))
-            wfile.write('#z,     x,     y,     n\n')
-            gen = pattern.point_generator()
-            for x, y in gen:
-                if not self._alive:
-                    break
+            wfile.write('#z,     x,     y,     n,    score\n')
+            wfile.writelines(lines)
 
-                with PeriodCTX(1):
-                    # x, y = gen.next()
-                    # x, y = pattern.next_point
-                    controller.linear_move(cx + x, cy + y, block=False, velocity=pattern.velocity)
-
-                    mt = time.time()
-                    zs = []
-                    while sm.moving():
-                        _, _, v = sm.get_brightness()
-                        zs.append(v)
-
-                    while 1:
-                        if time.time() - mt > duration:
-                            break
-                        _, _, v = sm.get_brightness()
-                        zs.append(v)
-
-                    if zs:
-                        n = len(zs)
-                        z = sum(zs) / float(n)
-                        self.debug('XY:({},{}) Z:{}, N:{}'.format(x, y, z, n))
-                        pattern.set_point(z, x, y)
-
-                        wfile.write('{:0.5f},{:0.3f},{:0.3f},{}\n'.format(z, x, y, n))
-
-                        invoke_in_main_thread(update_graph, zs, z, x, y)
-        g.close_ui()
+        sm.canvas.show_desired_position = osdp
+        invoke_in_main_thread(self._info.dispose)
+        # g.close_ui()
         # if len(triangle) < 3:
         #     z = lm.get_brightness()
         #     triangle.append((z, x, y))

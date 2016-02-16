@@ -172,6 +172,8 @@ class NewportMotionController(MotionController):
         # else:
         x = self.get_current_position('x')
         y = self.get_current_position('y')
+        if x is None or y is None:
+            return
 
         return x, y
 
@@ -280,8 +282,10 @@ class NewportMotionController(MotionController):
 
         d = math.sqrt(math.pow(dx, 2) + math.pow(dy, 2))
         self.debug('dx={}, dy={}, d={}'.format(dx, dy, d))
-        if d < 0.033 and raise_zero_displacement:
-            raise ZeroDisplacementException()
+        if d < 0.0001:
+            if raise_zero_displacement:
+                raise ZeroDisplacementException()
+            return
 
         tol = 0.033
 
@@ -303,22 +307,22 @@ class NewportMotionController(MotionController):
 
         errx = self._validate(x, 'x', cur=self._x_position)
         erry = self._validate(y, 'y', cur=self._y_position)
-        if errx is None and erry is None:
+        if errx is None or erry is None:
             return 'invalid position {},{}'.format(x, y)
 
-        tol = 0.033  # should be set to the motion controllers resolution
-        if d > tol:
-            kw['displacement'] = d
-            self.parent.canvas.set_desired_position(x, y)
-            self._x_position = x
-            self._y_position = y
+        # tol = 0.0001  # should be set to the motion controllers resolution
+        # if d > tol:
+        kw['displacement'] = d
+        self.parent.canvas.set_desired_position(x, y)
+        self._x_position = x
+        self._y_position = y
 
-            self.debug('doing linear move')
-            # self.timer = self.timer_factory()
-            self._linear_move(dict(x=x, y=y), **kw)
-        else:
-            self.info('displacement of move too small {} < {}'.format(d, tol))
-            raise ZeroDisplacementException()
+        self.debug('doing linear move')
+        # self.timer = self.timer_factory()
+        self._linear_move(dict(x=x, y=y), **kw)
+        # else:
+        #     self.info('displacement of move too small {} < {}'.format(d, tol))
+        #     raise ZeroDisplacementException()
 
     def single_axis_move(self, key, value, block=False, mode='absolute',
                          velocity=None,
@@ -782,7 +786,7 @@ class NewportMotionController(MotionController):
                 return a
 
     def _linear_move(self, kwargs, block=False, grouped_move=True,
-                     sign_correct=True, **kw):
+                     sign_correct=True, start_timer=False, **kw):
         """
         """
 
@@ -811,8 +815,11 @@ class NewportMotionController(MotionController):
             self.multiple_axis_move([(self.axes['y'].id, kwargs['y']),
                                      (self.axes['x'].id, kwargs['x'])])
 
-        self.start_timer()
+        if block or start_timer:
+            self.start_timer()
+
         if block:
+
             self.info('moving to {x:0.5f},{y:0.5f}'.format(**kwargs))
             self._block()
             self.info('move to {x:0.5f},{y:0.5f} complete'.format(**kwargs))
@@ -830,7 +837,6 @@ class NewportMotionController(MotionController):
     def _axis_move(self, com, block=False, update=None, verbose=True, **kw):
         """
         """
-
         if self.group_commands:
             self.tell(com, verbose=verbose)
         else:
@@ -840,6 +846,7 @@ class NewportMotionController(MotionController):
         if update:
             func, update = update
             if update:
+
                 self.timer = self.timer_factory(func=func, period=update)
 
         if block:

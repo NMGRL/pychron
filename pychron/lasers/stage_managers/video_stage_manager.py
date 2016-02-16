@@ -17,14 +17,13 @@
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import Instance, String, Property, Button, \
-    Bool, Event, on_trait_change, Str, Int
+    Bool, Event, on_trait_change, Str, Int, Float
 
 # ============= standard library imports ========================
 import time
 import os
 from numpy import asarray, copy
 from threading import Thread, Timer
-
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import unique_path, unique_path2
 from pychron.image.cv_wrapper import get_size, crop
@@ -95,6 +94,8 @@ class VideoStageManager(StageManager):
 
     _auto_correcting = False
     stop_timer = Event
+
+    pxpermm = Float(23)
 
     def bind_preferences(self, pref_id):
         self.debug('binding preferences')
@@ -281,8 +282,9 @@ class VideoStageManager(StageManager):
     def get_brightness(self):
         ld = self.lumen_detector
 
-        src = self.video.get_frame()
-        src = self._crop_image(src)
+        src = self.video.get_cached_frame()
+        # src = self.video.get_frame()
+        # src = self._crop_image(src)
         # if src:
         # else:
         #     src = random.random((ch, cw)) * 255
@@ -307,20 +309,23 @@ class VideoStageManager(StageManager):
             self.close_open_images()
 
     # private
-    def _crop_image(self, src):
-        ccx, ccy = 0, 0
-        cw_px, ch_px = self.get_frame_size()
-        # cw_px = int(cw)# * self.pxpermm)
-        # ch_px = int(ch)# * self.pxpermm)
-        w, h = get_size(src)
+    def _stage_map_changed_hook(self):
+        self.lumen_detector.mask_radius = self.pxpermm*self.stage_map.g_dimension
 
-        x = int((w - cw_px) / 2 + ccx)
-        y = int((h - ch_px) / 2 + ccy)
-
-        r = 4 - cw_px % 4
-        cw_px += r
-
-        return asarray(crop(src, x, y, cw_px, cw_px))
+    # def _crop_image(self, src):
+    #     ccx, ccy = 0, 0
+    #     cw_px, ch_px = self.get_frame_size()
+    #     # cw_px = int(cw)# * self.pxpermm)
+    #     # ch_px = int(ch)# * self.pxpermm)
+    #     w, h = get_size(src)
+    #
+    #     x = int((w - cw_px) / 2 + ccx)
+    #     y = int((h - ch_px) / 2 + ccy)
+    #
+    #     r = 4 - cw_px % 4
+    #     cw_px += r
+    #
+    #     return asarray(crop(src, x, y, cw_px, cw_px))
 
     # def get_video_database(self):
     # from pychron.database.adapters.video_adapter import VideoAdapter
@@ -515,6 +520,7 @@ class VideoStageManager(StageManager):
     def _pxpermm_changed(self, new):
         if self.autocenter_manager:
             self.autocenter_manager.pxpermm = new
+            self.lumen_detector.mask_radius = new*self.stage_map.g_dimension
 
     def _autocenter_button_fired(self):
         self.autocenter()

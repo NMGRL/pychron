@@ -401,6 +401,7 @@ class LaserTrayCanvas(StageCanvas):
 
         if pos:
             self.stage_manager.linear_move(*pos,
+                                           start_timer=True,
                                            check_moving=True,
                                            use_calibration=False)
             event.handled = True

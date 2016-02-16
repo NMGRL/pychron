@@ -116,7 +116,9 @@ class LabspyClient(Loggable):
             if devs:
                 t = Thread(target=self._connection_status,
                            name='ConnectionStatus')
+                t.setDaemon(True)
                 t.start()
+
             else:
                 self.debug('No devices to check for connection status')
 
