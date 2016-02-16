@@ -326,8 +326,9 @@ class PatternExecutor(Patternable):
         duration = pattern.duration
         total_duration = pattern.total_duration
 
-        g.new_plot(padding_top=10)
+        g.new_plot(padding_top=20)
         s, p = g.new_series()
+        p.aspect_ratio = 1.0
 
         r = pattern.perimeter_radius
         xs = linspace(-r, r)
@@ -340,13 +341,13 @@ class PatternExecutor(Patternable):
         g.set_x_title('X (mm)', plotid=0)
         g.set_y_title('Y (mm)', plotid=0)
 
-        g.new_plot(padding_top=10, padding_bottom=20)
+        g.new_plot(padding_top=10, padding_bottom=20, padding_right=20, padding_left=60)
         g.new_series(type='line')
         g.new_series()
-        g.set_y_title('Intensity Density', plotid=1)
+        g.set_y_title('Brightness', plotid=1)
         g.set_x_title('Time (s)', plotid=1)
 
-        g.new_plot(padding_bottom=10)
+        g.new_plot(padding_bottom=20, padding_right=20, padding_left=60)
         g.new_series()
         g.set_y_title('Score', plotid=2)
         g.set_x_title('Time (s)', plotid=2)
@@ -356,8 +357,12 @@ class PatternExecutor(Patternable):
 
         g.set_x_limits(-r, r)
         g.set_y_limits(-r, r)
+
+        g.set_y_limits(min_=-0.1, max_=1.1, plotid=1)
         g.set_x_limits(max_=total_duration * 1.1, plotid=1)
+
         g.set_x_limits(max_=total_duration * 1.1, plotid=2)
+        g.set_y_limits(min_=-0.1, max_=1.1, plotid=2)
 
         lm = self.laser_manager
         sm = lm.stage_manager
@@ -374,10 +379,13 @@ class PatternExecutor(Patternable):
             g.add_datum((t, zz), plotid=1)
 
             g.add_bulk_data(tts, zzs,
-                            update_y_limits=True,
+                            # update_y_limits=True,
                             plotid=1, series=1)
 
-            g.add_datum((t, score), update_y_limits=True, plotid=2)
+            g.add_datum((t, score),
+                        ypadding='0.1',
+                        ymin_anchor=-0.1,
+                        update_y_limits=True, plotid=2)
 
         cx, cy = pattern.cx, pattern.cy
         lines = []
@@ -416,7 +424,7 @@ class PatternExecutor(Patternable):
             ts = []
 
             def measure_brightness():
-                _, _, v = get_brightness()
+                _, _, v = get_brightness(scaled=True)
                 zs.append(v)
                 ts.append(time.time() - st)
                 time.sleep(0.1)
@@ -434,11 +442,11 @@ class PatternExecutor(Patternable):
 
                 score = z
                 m, b = polyfit(ts, zs, 1)
-                if m > 1:
-                    score *= m
+                if m > 0:
+                    score *= (1+m)
 
                 pattern.set_point(score, x, y)
-                lines.append('{:0.5f},{:0.3f},{:0.3f},{}\n'.format(z, x, y, n, score))
+                lines.append('{:0.5f}   {:0.3f}   {:0.3f}   {}    {}\n'.format(z, x, y, n, score))
                 self.debug('i:{} XY:({:0.5f},{:0.5f}) Z:{:0.2f} N:{} Slope:{} Score:{:0.2f}'.format(i, x, y, z, n,
                                                                                                     m, score))
                 update_graph(ts, zs, z, x, y, score)
@@ -450,8 +458,9 @@ class PatternExecutor(Patternable):
 
         pp = os.path.join(paths.data_dir, 'seek_pattern.txt')
         with open(pp, 'w') as wfile:
+            wfile.write('#cx, cy')
             wfile.write('{},{}\n'.format(cx, cy))
-            wfile.write('#z,     x,     y,     n,    score\n')
+            wfile.write('#z x   y   n   score\n')
             wfile.writelines(lines)
 
         sm.canvas.show_desired_position = osdp

@@ -279,19 +279,13 @@ class VideoStageManager(StageManager):
     crop_width = 2
     crop_height = 2
 
-    def get_brightness(self):
+    def get_brightness(self, **kw):
         ld = self.lumen_detector
 
         src = self.video.get_cached_frame()
-        # src = self.video.get_frame()
-        # src = self._crop_image(src)
-        # if src:
-        # else:
-        #     src = random.random((ch, cw)) * 255
-        #     src = src.astype('uint8')
-        #         return random.random()
+
         csrc = copy(src)
-        src, v = ld.get_value(csrc)
+        src, v = ld.get_value(csrc, **kw)
         return csrc, src, v
 
     def get_frame_size(self):

@@ -171,19 +171,23 @@ class SeekPattern(Pattern):
         self._points.append((z, x, y))
 
     def maker_view(self):
-        v = View(Item('duration',
-                      label='Duration (s)',
+        v = View(Item('total_duration', label='Total Duration (s)',
+                      tooltip='Total duration of search (in seconds)'),
+                 Item('duration',
+                      label='Dwell Duration (s)',
                       tooltip='Amount of time (in seconds) to wait at each point. '
                               'The brightness value is average of all measurements taken '
                               'while moving AND waiting at the vertex'),
+                 Item('pre_seek_delay', label='Pre Search Delay (s)',
+                      tooltip='Turn laser on and wait N seconds before starting search'),
                  Item('velocity',
                       label='Velocity (mm/s)'),
                  Item('perimeter_radius',
                       label='Perimeter Radius (mm)',
                       tooltip='Limit the search to a circular area with this radius (in mm)'),
                  Item('base',
-                      label='Base (mm)',
-                      tooltip="Length (in mm) of the search triangle's base"))
+                      label='Side (mm)',
+                      tooltip="Length (in mm) of the search triangle's side"))
         return v
 
     def replot(self):

@@ -27,12 +27,18 @@ class LumenDetector(object):
     threshold = 25
     mask_radius = 70
 
-    def get_value(self, src, density=False):
+    def get_value(self, src, density=False, scaled=True):
         """
+        if density is True
         return the intensity density
-        intensity densitry is sum of all pixels in masked area / area of all pixels > tol
+        intensity density is sum of all pixels in masked area / area of all pixels > tol
+
+        if scaled is True
+        return sum of all pixels in masked area / (masked area *255)
 
         @param src:
+        @param density:
+        @param scaled:
         @return:
         """
 
@@ -40,9 +46,6 @@ class LumenDetector(object):
         self._preprocess(src)
 
         lum = src[mask]
-        #         # use mean of the 90th percentile as lumen
-        #         # measure. this is adhoc and should/could be modified
-        #         lumen = percentile(lum.flatten(), 90).mean()
 
         v = lum.sum()
         if density:
@@ -54,6 +57,8 @@ class LumenDetector(object):
                 v = 0
 
             print 'lumen={}, area={}, intensity={}'.format(v, area, v)
+        elif scaled:
+            v /= (mask.sum() * 255.)
 
         return src, v
 

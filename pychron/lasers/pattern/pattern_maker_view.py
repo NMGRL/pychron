@@ -14,24 +14,22 @@
 # limitations under the License.
 # ===============================================================================
 
-# from traits.etsconfig.etsconfig import ETSConfig
-# ETSConfig.toolkit = 'qt4'
-
-from pychron.core.ui import set_qt
-
-set_qt()
-
-import os
 # ============= enthought library imports =======================
 from traits.api import Property, Enum, Str, on_trait_change
-from traitsui.api import View, Item, InstanceEditor
-import cPickle as pickle
-# import apptools.sweet_pickle as pickle
+from traitsui.api import View, Item, InstanceEditor, Handler
 # ============= standard library imports ========================
+from pychron.core.helpers.filetools import add_extension
+import cPickle as pickle
+import os
 # ============= local library imports  ==========================
 from pychron.lasers.pattern.patternable import Patternable
 from pychron.saveable import Saveable, SaveableButtons
 from pychron.paths import paths
+
+
+class PatternMakerHandler(Handler):
+    def object_pattern_name_changed(self, info):
+        info.ui.title = 'Pattern Editor - {}'.format(info.object.pattern_name)
 
 
 class PatternMakerView(Saveable, Patternable):
@@ -78,27 +76,23 @@ class PatternMakerView(Saveable, Patternable):
             self._save(path)
 
     def _save(self, path):
-        if not path.endswith('.lp'):
-            path += '.lp'
+        path = add_extension(path, '.lp')
         self.pattern.path = path
         with open(path, 'wb') as f:
             pickle.dump(self.pattern, f)
         self.info('pattern saved as {}'.format(path))
 
     def traits_view(self):
-        v = View(
-            Item('pattern_name',
-                 style='readonly', show_label=False),
-            Item('kind', show_label=False),
-            Item('pattern',
-                 style='custom',
-                 editor=InstanceEditor(view='maker_view'),
-                 show_label=False),
-            handler=self.handler_klass,
-            buttons=SaveableButtons,
-            height=425,
-            title='Pattern Editor',
-            resizable=True)
+        v = View(Item('kind', show_label=False),
+                 Item('pattern',
+                      style='custom',
+                      editor=InstanceEditor(view='maker_view'),
+                      show_label=False),
+                 handler=PatternMakerHandler(),
+                 buttons=SaveableButtons,
+                 height=425,
+                 title='Pattern Editor',
+                 resizable=True)
         return v
 
     # ===============================================================================
@@ -142,10 +136,10 @@ class PatternMakerView(Saveable, Patternable):
             pattern.replot()
             pattern.calculate_transit_time()
             return pattern
-            # ===============================================================================
-            # defaults
-            # ===============================================================================
 
+    # ===============================================================================
+    # defaults
+    # ===============================================================================
     def _pattern_default(self):
         p = self.pattern_factory(self.kind)
         return p

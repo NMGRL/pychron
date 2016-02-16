@@ -282,7 +282,7 @@ class StageManager(BaseStageManager):
 
         return moving
 
-    def get_brightness(self):
+    def get_brightness(self, **kw):
         return 0
 
     def define_home(self, **kw):

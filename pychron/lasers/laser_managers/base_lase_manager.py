@@ -160,7 +160,7 @@ class BaseLaserManager(Manager):
 
             pm.execute(block)
 
-    def get_brightness(self):
+    def get_brightness(self, **kw):
         return 0
 
     def stop_pattern(self):
