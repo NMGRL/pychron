@@ -19,10 +19,38 @@ from traitsui.api import View, Item
 # ============= standard library imports ========================
 import math
 import time
-from numpy import random, copy, polyfit, arange
+from numpy import random, copy
 # ============= local library imports  ==========================
 from pychron.lasers.pattern.patterns import Pattern
 from pychron.mv.lumen_detector import LumenDetector
+
+
+def rotate(x, y, center=(0, 0), theta=0):
+    dx = x - center[0]
+    dy = y - center[1]
+
+    nx = dx * math.cos(theta) - dy * math.sin(theta)
+    ny = dy * math.cos(theta) + dx * math.sin(theta)
+    return nx, ny
+
+
+def calculate_center(ps):
+    pts = sorted(ps, key=lambda p: p[1])
+    (x1, y1), (x2, y2) = pts[:2]
+    dy, dx = (y2 - y1), (x2 - x1)
+    theta = math.atan(dy / dx)
+    base = (dy ** 2 + dx ** 2) ** 0.5
+
+    spts = [rotate(*p, theta=-theta) for p in pts]
+
+    x1, y1 = spts[0]
+    b2 = base / 2.
+    height = 3 ** 0.5 / 2 * base
+    bx = x1 + b2
+    by = y1 + 1 / 3. * height
+
+    cx, cy = rotate(bx, by, theta)
+    return cx, cy
 
 
 def triangulator(pts, base, scalar=1):
@@ -62,34 +90,12 @@ class SeekPattern(Pattern):
     _data = List
 
     def point_generator(self):
-        theta = math.radians(45)
-
-        def rotate(x, y, ox, oy, t=None):
-            if t is None:
-                t = theta
-
-            # if len(px) == 3:
-            #     ox, oy = px[1][0], px[1][1]
-            # else:
-            #     ox, oy = 0, 0
-
-            ctheta = math.cos(t)
-            stheta = math.sin(t)
-
-            dx = x - ox
-            dy = y - oy
-
-            nx = ctheta * dx - stheta * dy + ox
-            ny = stheta * dx + ctheta * dy + oy
-
-            return nx, ny
-
         def gen():
             yield 0, 0
             yield self.base, 0
             yield self.base / 2., self.base
 
-            # px = []
+            px = []
             scalar = 1.0
             while 1:
                 pts = sorted(self._points, reverse=True)
@@ -98,49 +104,15 @@ class SeekPattern(Pattern):
                 pts.pop(-1)
                 self._points = pts
 
-                # px.append((x, y))
-                # px = px[-3:]
-                #
-                # # m = 1
-                # # if len(self._data) == self.limit:
-                # #     m, b = polyfit(arange(len(self._data)), self._data, 1)
-                #
-                # repeat_point = (len(px) == 3 and px[0] == px[2])
-                #
-                # # if m < 0:
-                # #     scalar = 1.0
-                # #     x, y = rotate(x, y, px)
-                # if repeat_point:
-                #
-                #     # calculate center of triangle
-                #     spx = sorted(px, key=lambda p: p[1])
-                #     p1, p2 = spx[:2]
-                #
-                #     if p1[0] > p2[0]:
-                #         p1, p2 = p2, p1
-                #
-                #     (x1, y1), (x2, y2) = p1, p2
-                #     if x1 == x2:
-                #         t = math.radians(90)
-                #     else:
-                #         t = math.atan((y2 - y1) / (x2 - x1))
-                #
-                #     base = self.base/2.0
-                #     bx = x1 + base * math.cos(t)
-                #     by = y1 + base * math.sin(t)
-                #
-                #     h = base * math.tan(math.radians(30))
-                #     cx = bx - h * math.sin(math.radians(60))
-                #     cy = by + h * math.cos(math.radians(60))
-                #     # ox, oy = rotate(cx, cy, x1, x2, t)
-                #     # (x1,y1), (x2,y2), (x3, y3) = px
-                #
-                #     x, y = rotate(x, y, cx, cy)
-                #
-                # # scalar = 0.5
-                # # scalar *= 0.5
-                # # else:
-                # # scalar = 1.0
+                px.append((x, y))
+                px = px[-3:]
+
+                repeat_point = (len(px) == 3 and px[0] == px[2])
+
+                if repeat_point:
+                    # calculate center of triangle
+                    cx, cy = calculate_center(px)
+                    x, y = rotate(x, y, center=(cx, cy), theta=math.radians(45))
 
                 if not self._validate(x, y):
                     self._points = []

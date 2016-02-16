@@ -17,12 +17,12 @@
 # ============= enthought library imports =======================
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.scatterplot import render_markers
-from numpy import polyfit
 from traits.api import Any, Bool, Tuple
 # ============= standard library imports ========================
 import os
 import cStringIO
 import time
+from numpy import polyfit, linspace, hstack
 from threading import Thread
 # ============= local library imports  ==========================
 from pychron.envisage.view_util import open_view
@@ -328,6 +328,17 @@ class PatternExecutor(Patternable):
 
         g.new_plot(padding_top=10)
         s, p = g.new_series()
+
+        r = pattern.perimeter_radius
+        xs = linspace(-r, r)
+        ys = (r ** 2 - xs ** 2) ** 0.5
+        ys2 = -(r ** 2 - xs ** 2) ** 0.5
+
+        xs = hstack((xs, xs))
+        ys = hstack((ys, ys2))
+
+        g.new_series(x=xs, y=ys, type='line')
+
         g.set_x_title('X (mm)', plotid=0)
         g.set_y_title('Y (mm)', plotid=0)
 
@@ -344,9 +355,9 @@ class PatternExecutor(Patternable):
 
         cp = CurrentPointOverlay(component=s)
         s.overlays.append(cp)
-        w = pattern.perimeter_radius
-        g.set_x_limits(-w, w)
-        g.set_y_limits(-w, w)
+
+        g.set_x_limits(-r, r)
+        g.set_y_limits(-r, r)
         g.set_x_limits(max_=total_duration * 1.1, plotid=1)
         g.set_x_limits(max_=total_duration * 1.1, plotid=2)
 

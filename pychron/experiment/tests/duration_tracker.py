@@ -65,7 +65,7 @@ class DurationTrackerTestCase(unittest.TestCase):
         ds = [self.dt.probability_model('a', 'b') for i in xrange(int(n))]
         nt = ds.count(1)
 
-        self.assertAlmostEqual(nt / float(n), 0.75, 2)
+        self.assertAlmostEqual(nt / float(n), 0.75, 1)
 
 
 if __name__ == '__main__':
