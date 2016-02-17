@@ -15,50 +15,42 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import time
-from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change
-from traitsui.api import View, UItem, Item, HGroup, VGroup
 # ============= standard library imports ========================
+import time
+import u3
 # ============= local library imports  ==========================
 from pychron.hardware.core.core_device import CoreDevice
-import u3
 
 
 class U3LV(CoreDevice):
+    _device = None
+    _dio_mapping = None
+
     def load(self, *args, **kw):
         self._device = u3.U3()
-        return True
+        config = self.get_configuration()
+        if config:
+            return self.load_additional_args(config)
 
     def open(self, *args, **kw):
         return True
 
+    def load_additional_args(self, config):
+        mapping = {}
+        section = 'DIOMapping'
+        if config.has_section(section):
+            for option in config.options(section):
+                u3channel = config.get(section, option)
+                mapping[option] = getattr(u3, u3channel)
+        self._dio_mapping = mapping
+
+        return True
+
     def initialize(self, *args, **kw):
-        eio = [0, 1, 2, 3, 4, 5, 6, 7]
-        fio = []
 
-        args = [getattr(u3, '{}IO{}'.format(k, i))
-                for k, pins in (('F', fio), ('E', eio))
-                for i in pins]
+        chs = [v for v in self._dio_mapping.itervalues() if v not in (u3.CIO0, u3.CIO1, u3.CIO2, u3.CIO3)]
+        self._device.configDigital(*chs)
 
-        self._device.configDigital(*args)
-
-        self.channel_mapping = {'1': u3.CIO0,
-                                '2': u3.CIO1,
-                                '3': u3.CIO2,
-                                '4': u3.CIO3,
-                                '5': u3.EIO1,
-                                '6': u3.EIO0,
-                                '7': u3.EIO3,
-                                '8': u3.EIO2,
-                                '9': u3.EIO5,
-                                '10': u3.EIO4,
-                                '11': u3.EIO7,
-                                '12': u3.EIO6,
-                                '13': u3.FIO2,
-                                '14': u3.FIO0,
-                                '15': u3.FIO3,
-                                '16': u3.FIO1,
-                                }
         return True
 
     def set_channel_state(self, ch, state):
@@ -92,7 +84,7 @@ class U3LV(CoreDevice):
     # private
     def _get_pin(self, ch):
         try:
-            return self.channel_mapping[str(ch)]
+            return self._dio_mapping[str(ch)]
         except KeyError:
             self.warning('Invalid channel {}'.format(ch))
 
@@ -107,7 +99,7 @@ if __name__ == '__main__':
 
     # paths.build('_dev')
 
-    a = U3LV(name='U3LV')
+    a = U3LV(name='u3lv', configuration_dir_name='furnace')
     a.bootstrap()
     # print a.read_dac_channel(1)
     # print a.read_temperature()
@@ -116,7 +108,7 @@ if __name__ == '__main__':
     #     a.set_channel_state(0, i % 3)
     #     time.sleep(1)
 
-    for i in range(1,17):
+    for i in range(1, 17):
         a.set_channel_state(str(i), 1)
         time.sleep(0.5)
         a.set_channel_state(str(i), 0)
@@ -131,9 +123,5 @@ if __name__ == '__main__':
     #     a.set_channel_state(ch, int(state))
 
     a.close()
-    # a = MultiBankADCExpansion(name='proxr_adc')
-    # a.bootstrap()
-    # a.load_communicator('serial', port='usbserial-A5018URQ', baudrate=115200)
-    # a.open()
 
 # ============= EOF =============================================
