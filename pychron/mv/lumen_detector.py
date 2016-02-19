@@ -16,28 +16,33 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-from numpy import invert, zeros_like
+from numpy import invert, zeros_like, asarray
 from skimage.draw import circle
 
 
 # ============= local library imports  ==========================
 
+def area(a):
+    b = asarray(a, dtype=bool)
+    return b.sum()
+
 
 class LumenDetector(object):
     threshold = 25
-    mask_radius = 70
+    pxpermm = 23
 
-    def get_value(self, src, density=False, scaled=True):
+    mask_kind = 'Hole'
+    beam_radius = 0
+    custom_mask_radius = 0
+    hole_radius = 0
+
+    def get_value(self, src, scaled=True):
         """
-        if density is True
-        return the intensity density
-        intensity density is sum of all pixels in masked area / area of all pixels > tol
 
         if scaled is True
         return sum of all pixels in masked area / (masked area *255)
 
         @param src:
-        @param density:
         @param scaled:
         @return:
         """
@@ -48,19 +53,27 @@ class LumenDetector(object):
         lum = src[mask]
 
         v = lum.sum()
-        if density:
-            area = src[src > self.threshold].size
 
-            try:
-                v /= float(area)
-            except ZeroDivisionError:
-                v = 0
-
-            print 'lumen={}, area={}, intensity={}'.format(v, area, v)
-        elif scaled:
+        if scaled:
             v /= (mask.sum() * 255.)
 
         return src, v
+
+    def get_scores(self, src):
+        mask = self._mask(src)
+        self._preprocess(src)
+
+        lum = src[mask]
+
+        v = lum.sum()
+        try:
+            score_density = v / area(lum)
+        except ZeroDivisionError:
+            score_density = 0
+
+        score_saturation = v / (mask.sum() * 255.)
+
+        return score_density, score_saturation
 
     def _mask(self, src):
         radius = self.mask_radius
@@ -75,5 +88,16 @@ class LumenDetector(object):
     def _preprocess(self, src):
         threshold = self.threshold
         src[src < threshold] = 0
+
+    @property
+    def mask_radius(self):
+        if self.mask_kind == 'Hole':
+            d = self.hole_radius
+        elif self.mask_kind == 'Beam':
+            d = max(0.1, self.beam_radius * 1.1)
+        else:
+            d = self.custom_mask_radius
+
+        return d * self.pxpermm
 
 # ============= EOF =============================================

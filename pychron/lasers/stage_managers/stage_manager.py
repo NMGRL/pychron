@@ -285,6 +285,9 @@ class StageManager(BaseStageManager):
     def get_brightness(self, **kw):
         return 0
 
+    def get_scores(self, **kw):
+        return 0, 0
+
     def define_home(self, **kw):
         self.stage_controller.define_home(**kw)
 

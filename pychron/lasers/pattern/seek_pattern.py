@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
-from traits.api import List, Float, Int
+from traits.api import List, Float, Int, Enum
 from traitsui.api import View, Item
 # ============= standard library imports ========================
 import math
@@ -90,6 +90,10 @@ class SeekPattern(Pattern):
     perimeter_radius = Float(2.5)
     limit = Int(10)
     pre_seek_delay = Float(0.25)
+    saturation_threshold = Float(0.75)
+
+    mask_kind = Enum('Hole', 'Beam', 'Custom')
+    custom_mask_radius = Float
 
     _previous_pt = None
     _points = List
@@ -165,6 +169,10 @@ class SeekPattern(Pattern):
     def _validate(self, x, y):
         return (x ** 2 + y ** 2) ** 0.5 <= self.perimeter_radius
 
+    def update_point(self, z, x, y):
+        self._data[-1] = z
+        self._points[-1] = (z, x, y)
+
     def set_point(self, z, x, y):
         self._data.append(z)
         self._data = self._data[-self.limit:]
@@ -187,7 +195,14 @@ class SeekPattern(Pattern):
                       tooltip='Limit the search to a circular area with this radius (in mm)'),
                  Item('base',
                       label='Side (mm)',
-                      tooltip="Length (in mm) of the search triangle's side"))
+                      tooltip="Length (in mm) of the search triangle's side"),
+                 Item('saturation_threshold', label='Saturation Threshold',
+                      tooltip='If the saturation score is greater than X then do not move'),
+                 Item('mask_kind', label='Mask', tooltip="Define the lumen detector's mask as Hole, Beam, Custom."
+                                                         "Beam= Beam radius + 10%\n"
+                                                         "Hole= Hole radius"),
+                 Item('custom_mask_radius', label='Mask Radius (mm)',
+                      visible_when='mask_kind=="Custom"'))
         return v
 
     def replot(self):

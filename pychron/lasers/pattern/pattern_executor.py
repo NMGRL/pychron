@@ -344,7 +344,7 @@ class PatternExecutor(Patternable):
         g.new_plot(padding_top=10, padding_bottom=20, padding_right=20, padding_left=60)
         g.new_series(type='line')
         g.new_series()
-        g.set_y_title('Brightness', plotid=1)
+        g.set_y_title('Density', plotid=1)
         g.set_x_title('Time (s)', plotid=1)
 
         g.new_plot(padding_bottom=20, padding_right=20, padding_left=60)
@@ -366,6 +366,10 @@ class PatternExecutor(Patternable):
 
         lm = self.laser_manager
         sm = lm.stage_manager
+        ld = sm.lumen_detector
+
+        ld.mask_kind = pattern.mask_kind
+        ld.custom_mask = pattern.custom_mask_radius
 
         osdp = sm.canvas.show_desired_position
         sm.canvas.show_desired_position = False
@@ -392,9 +396,11 @@ class PatternExecutor(Patternable):
         gen = pattern.point_generator()
 
         linear_move = controller.linear_move
-        get_brightness = sm.get_brightness
+        get_scores = sm.get_scores
         moving = sm.moving
         update_axes = sm.update_axes
+
+        sat_threshold = pattern.saturation_threshold
 
         self.debug('Pre seek delay {}'.format(pattern.pre_seek_delay))
         time.sleep(pattern.pre_seek_delay)
@@ -409,47 +415,59 @@ class PatternExecutor(Patternable):
             if time.time() - st > total_duration:
                 break
 
-            # with PeriodCTX(pattern.duration):
-            # x, y = gen.next()
-            # x, y = pattern.next_point
+            use_update_point = True
+            if avg_sat_score < sat_threshold:
+                use_update_point = True
+                try:
+                    linear_move(cx + x, cy + y, block=False, velocity=pattern.velocity,
+                                update=False,
+                                immediate=True)
+                except PositionError:
+                    break
+            else:
+                self.debug('Saturation target reached. not moving')
 
-            try:
-                linear_move(cx + x, cy + y, block=False, velocity=pattern.velocity,
-                            update=False,
-                            immediate=True)
-            except PositionError:
-                break
-
-            zs = []
+            density_scores = []
             ts = []
+            saturation_scores = []
 
-            def measure_brightness():
-                _, _, v = get_brightness(scaled=True)
-                zs.append(v)
+            def measure_scores():
+                score_density, score_saturation = get_scores()
+                density_scores.append(score_density)
+                saturation_scores.append(score_saturation)
+
                 ts.append(time.time() - st)
                 time.sleep(0.1)
 
             while moving(force_query=True):
-                measure_brightness()
+                measure_scores()
 
             mt = time.time()
             while time.time() - mt < duration:
-                measure_brightness()
+                measure_scores()
 
-            if zs:
-                n = len(zs)
-                z = sum(zs) / float(n)
+            if density_scores:
+                n = len(density_scores)
+                avg_score = sum(density_scores) / float(n)
+                avg_sat_score = sum(density_scores) / float(n)
 
-                score = z
-                m, b = polyfit(ts, zs, 1)
+                score = avg_score
+                m, b = polyfit(ts, density_scores, 1)
                 if m > 0:
-                    score *= (1+m)
+                    score *= (1 + m)
 
-                pattern.set_point(score, x, y)
-                lines.append('{:0.5f}   {:0.3f}   {:0.3f}   {}    {}\n'.format(z, x, y, n, score))
-                self.debug('i:{} XY:({:0.5f},{:0.5f}) Z:{:0.2f} N:{} Slope:{} Score:{:0.2f}'.format(i, x, y, z, n,
-                                                                                                    m, score))
-                update_graph(ts, zs, z, x, y, score)
+                if use_update_point:
+                    pattern.update_point(score, x, y)
+                else:
+                    pattern.set_point(score, x, y)
+
+                lines.append('{:0.5f}   {:0.3f}   {:0.3f}   {}    {}\n'.format(avg_score, x, y, n, score))
+                self.debug('i:{} XY:({:0.5f},{:0.5f})'.format(i, x, y))
+                self.debug('Density. AVG:{:0.2f} N:{} Slope:{:0.3f}'.format(avg_score, n, m))
+                self.debug('Modified Density Score: {}'.format(score))
+                self.debug('Saturation. AVG:{:0.2f}'.format(avg_sat_score))
+
+                update_graph(ts, density_scores, avg_score, x, y, score)
 
             update_axes()
 
