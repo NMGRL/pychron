@@ -56,6 +56,8 @@ class ExtractionPyScript(ValvePyScript):
     The ExtractionPyScript is used to program the extraction and gettering of
     sample gas.
     """
+    automated_run = None
+
     _resource_flag = None
     info_color = EXTRACTION_COLOR
     snapshots = List
@@ -627,6 +629,11 @@ class ExtractionPyScript(ValvePyScript):
     def prepare(self):
         return self._extraction_action([('prepare', (), {})])
 
+    @verbose_skip
+    @command_register
+    def set_intensity_scalar(self, v):
+        return self._automated_run_call('py_set_intensity_scalar', v)
+
     # ==========================================================================
     # properties
     # ==========================================================================
@@ -781,4 +788,12 @@ class ExtractionPyScript(ValvePyScript):
     def _stop_pattern(self, protocol=None):
         self._extraction_action([('stop_pattern', (), {})], protocol=protocol)
 
+    def _automated_run_call(self, func, *args, **kw):
+        if self.automated_run is None:
+            return
+
+        if isinstance(func, str):
+            func = getattr(self.automated_run, func)
+
+        return func(*args, **kw)
 # ============= EOF ====================================

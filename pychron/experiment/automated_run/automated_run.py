@@ -187,6 +187,8 @@ class AutomatedRun(Loggable):
 
     experiment_type = Str(AR_AR)
 
+    intensity_scalar = Float
+
     def set_preferences(self, preferences):
         self.debug('set preferences')
 
@@ -204,6 +206,10 @@ class AutomatedRun(Loggable):
     # ===============================================================================
     # pyscript interface
     # ===============================================================================
+    def py_set_intensity_scalar(self, v):
+        self.intensity_scalar = v
+        return True
+
     def py_set_isotope_group(self, name):
         if self.plot_panel:
             self.plot_panel.add_isotope_graph(name)
@@ -727,11 +733,12 @@ class AutomatedRun(Loggable):
             self.measurement_script = None
 
         if self.extraction_script:
+            self.extraction_script.automated_run = None
+            self.extraction_script.runner = None
             self.extraction_script = None
-        if self.post_equilibration_script:
-            self.post_equilibration_script = None
-        if self.post_measurement_script:
-            self.post_measurement_script = None
+
+        self.post_equilibration_script = None
+        self.post_measurement_script = None
 
         if self.experiment_executor:
             self.experiment_executor.automated_run = None
@@ -1063,7 +1070,8 @@ class AutomatedRun(Loggable):
                                     runscript_name=script_name,
                                     runscript_blob=script_blob,
                                     signal_fods=sfods,
-                                    baseline_fods=bsfods)
+                                    baseline_fods=bsfods,
+                                    intensity_scalar=self.intensity_scalar)
 
     # ===============================================================================
     # doers
@@ -1864,7 +1872,8 @@ anaylsis_type={}
                 else:
                     # reset the counter
                     cnt = 0
-
+                    if self.intensity_scalar:
+                        s = [si * self.intensity_scalar for si in s]
                     yield k, s
 
         return gen()
@@ -1978,7 +1987,6 @@ anaylsis_type={}
 
         m.trait_set(
             console_display=self.experiment_executor.console_display,
-            automated_run=self,
             measurement_script=script,
             detectors=self._active_detectors,
             collection_kind=grpname,
@@ -2193,13 +2201,16 @@ anaylsis_type={}
 
         ms = MeasurementPyScript(root=root,
                                  name=sname,
+                                 automated_run=self,
                                  runner=self.runner)
         return ms
 
     def _extraction_script_factory(self, klass=None):
         root = paths.extraction_dir
-        return self._ext_factory(root, self.script_info.extraction_script_name,
-                                 klass=klass)
+        ext = self._ext_factory(root, self.script_info.extraction_script_name,
+                                klass=klass)
+        ext.automated_run = self
+        return ext
 
     def _post_measurement_script_factory(self):
         root = paths.post_measurement_dir

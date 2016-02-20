@@ -329,6 +329,7 @@ class DVCPersister(BasePersister):
         obj['detectors'] = dets
         obj['isotopes'] = isos
         obj['spec_sha'] = self._get_spectrometer_sha()
+        obj['intensity_scalar'] = self.per_spec.intensity_scalar
 
         # save the conditionals
         obj['conditionals'] = [c.to_dict() for c in self.per_spec.conditionals]

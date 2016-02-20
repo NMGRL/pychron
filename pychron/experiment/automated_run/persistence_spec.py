@@ -70,4 +70,5 @@ class PersistenceSpec(HasTraits):
     use_repository_association = False
     tag = 'ok'
     peak_center = None
+    intensity_scalar = 1.0
 # ============= EOF =============================================
