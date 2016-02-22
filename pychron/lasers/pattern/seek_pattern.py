@@ -256,9 +256,22 @@ class SeekPattern(Pattern):
     def _validate(self, x, y):
         return (x ** 2 + y ** 2) ** 0.5 <= self.perimeter_radius
 
-    def update_point(self, z, x, y, idx=-1):
-        self._data[idx] = z
-        self._tri.set_point(z, x, y, idx)
+    def update_point(self, score, x, y, idx=-1):
+        """
+        average score with the current score for this point.
+        weight values by time. the more negative idx the less weight
+        """
+        w1, w2 = 1, 1
+        if idx == -1:
+            w1, w2 = 0.75, 1.25
+        elif idx == -2:
+            w1, w2 = 0.50, 1.5
+        elif idx == -3:
+            w1, w2 = 0.25, 1.75
+
+        v = (w1 * self._data[idx] + w2 * score) / 2.
+        self._data[idx] = v
+        self._tri.set_point(v, x, y, idx)
 
     def set_point(self, z, x, y):
         self._data.append(z)
