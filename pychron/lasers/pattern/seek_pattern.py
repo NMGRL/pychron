@@ -14,11 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
+from matplotlib import cm
 from traits.api import List, Float, Int, Enum
 from traitsui.api import View, Item
 # ============= standard library imports ========================
 import math
 import time
+from collections import defaultdict
 from numpy import random, copy, average, polyfit, arange, linspace, hstack
 # ============= local library imports  ==========================
 from pychron.lasers.pattern.patterns import Pattern
@@ -62,7 +64,6 @@ def triangulator(pts, side):
     :return:
     """
     pt1, pt2, pt3 = pts
-
     x1, y1 = pt1[1], pt1[2]
     x2, y2 = pt2[1], pt2[2]
     ox, oy = pt3[1], pt3[2]
@@ -73,6 +74,7 @@ def triangulator(pts, side):
     v1 = mx - ox
     v2 = my - oy
     l = (v1 ** 2 + v2 ** 2) ** 0.5
+
     try:
         ux, uy = v1 / l, v2 / l
     except ZeroDivisionError:
@@ -80,7 +82,109 @@ def triangulator(pts, side):
 
     nx = mx + side * ux
     ny = my + side * uy
-    return nx, ny
+    return nx, ny, ox, oy
+
+
+def height(b):
+    return (3 ** 0.5) / 2. * b
+
+
+class Point:
+    def __init__(self, x, y, score=0):
+        self.x, self.y = x, y
+        self.score = score
+
+    def totuple(self):
+        return self.score, self.x, self.y
+
+
+class Triangle:
+    scalar = 1.0
+    _point_cnts = None
+
+    def __init__(self, base):
+        self._base = base
+        h = height(base)
+        self._height = h
+
+        self._points = [Point(0, 0), Point(base, 0), Point(base / 2., h)]
+
+        self.clear_point_cnts()
+
+    def set_point(self, score, x, y, idx=None):
+        if idx is None:
+            pt = self.get_point(x, y)
+            if pt:
+                pt.score = score
+            else:
+                self._points.append(Point(x, y, score))
+        else:
+            self._points[idx] = Point(x, y, score)
+
+    def get_point(self, x, y):
+        return next((p for p in self._points if abs(p.x - x) < 1e-6 and abs(p.y - y) < 1e-6), None)
+
+    def point_xy(self, idx=None):
+        if idx is None:
+
+            pts = sorted([p.totuple() for p in self._points], reverse=True)
+            x, y, rx, ry = triangulator(pts, self._height)
+
+            pt = self.get_point(rx, ry)
+            self._points.remove(pt)
+
+        else:
+            pt = self._points[idx]
+            x, y = pt.x, pt.y
+
+        self._point_cnts[(x, y)] += 1
+        return x, y
+
+    def point_cnt(self, pt):
+        return self._point_cnts[pt]
+
+    def clear_point_cnts(self):
+        self._point_cnts = defaultdict(int)
+
+    def weighted_centroid(self):
+        weights, xps, yps = zip(*[(p.score, p.x, p.y) for p in self._points])
+        cx = average(xps, weights=weights)
+        cy = average(yps, weights=weights)
+        return self.centered(cx, cy)
+
+    def centered(self, cx, cy):
+        base = self.base
+        h = self._height
+        x1 = cx - (1 / 2.) * base
+        x2 = cx + (1 / 2.) * base
+        x3 = cx
+
+        y1 = cy - (1 / 3.) * h
+        y2 = y1
+        y3 = cy + (2 / 3.) * h
+
+        self._points = [Point(x1, y1), Point(x2, y2), Point(x3, y3)]
+        return (x1, y1), (x2, y2), (x3, y3)
+
+    def set_scalar(self, s):
+        self.scalar = s
+        self._height = height(self.base)
+
+    @property
+    def base(self):
+        return self.scalar * self._base
+
+    def xys(self):
+        return [(p.x, p.y, p.score) for p in self._points]
+
+    def is_equilateral(self):
+
+        p1, p2, p3 = self._points
+        d1 = ((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2) ** 0.5
+        d2 = ((p1.x - p3.x) ** 2 + (p1.y - p3.y) ** 2) ** 0.5
+        d3 = ((p2.x - p3.x) ** 2 + (p2.y - p3.y) ** 2) ** 0.5
+        # print d1, d2, d3, abs(d1 - d2) < 1e-4 and abs(d1 - d3) < 1e-4
+        return abs(d1 - d2) < 1e-4 and abs(d1 - d3) < 1e-4
 
 
 class SeekPattern(Pattern):
@@ -95,72 +199,55 @@ class SeekPattern(Pattern):
     mask_kind = Enum('Hole', 'Beam', 'Custom')
     custom_mask_radius = Float
 
-    _previous_pt = None
     _points = List
     _data = List
 
     def point_generator(self):
         def gen():
-            def weighted_centroid(ps):
-                weights, xps, yps = zip(*ps)
-                cx = average(xps, weights=weights)
-                cy = average(yps, weights=weights)
 
-                return cx, cy
+            self._tri = tri = Triangle(self.base)
 
-            yield 0, 0
-            yield self.base, 0
-            yield self.base / 2., self.base
+            yield tri.point_xy(0)
+            yield tri.point_xy(1)
+            yield tri.point_xy(2)
 
-            px = []
-            base = self.base
-            h = (3 ** 0.5) / 2. * base
-            scalar = 1.0
             while 1:
-
-                if scalar < 1:
+                if tri.scalar < 1:
                     n = len(self._data)
-                    m, b = polyfit(arange(n), self._data, 1)
-                    if m < 0:
-                        scalar = 1
-                pts = sorted(self._points, reverse=True)
-                x, y = triangulator(pts, h * scalar)
+                    if n > 5:
+                        m, b = polyfit(arange(n), self._data, 1)
+                        if m < 0:
+                            tri.clear_point_cnts()
+                            tri.set_scalar(1)
+                            # construct a new triangle centered at weighted centroid of current points
+                            # weighted by score
+                            p1, p2, p3 = tri.weighted_centroid()
+                            yield p1
+                            yield p2
+                            yield p3
 
-                px.append((x, y))
-                px = px[-3:]
+                            continue
 
-                n = len(px)
-                repeat_point = n == 3 and n != len(set(px))
-                if repeat_point:
-                    scalar = 0.5
+                x, y = tri.point_xy()
+                if tri.point_cnt((x, y)) > 5:
+                    self._data = []
+                    tri.clear_point_cnts()
+                    tri.set_scalar(0.5)
                     # construct a new triangle centered at weighted centroid of current points
                     # weighted by score
-                    cx, cy = weighted_centroid(self._points)
-                    self._points = []
+                    p1, p2, p3 = tri.centered(x, y)
+                    yield p1
+                    yield p2
+                    yield p3
 
-                    x1 = cx - 1 / 2. * base
-                    y1 = cy - 1 / 3. * base
-
-                    x2 = cx + 1 / 2. * base
-                    y2 = y1
-
-                    x3 = cx
-                    y3 = cy + 2 / 3. * h
-
-                    yield x1, y1
-                    yield x2, y2
-                    yield x3, y3
                     continue
 
                 if not self._validate(x, y):
-                    self._points = []
-                    yield 0, 0
-                    yield self.base, 0
-                    yield self.base / 2., self.base
+                    tri = Triangle(self.base)
+                    yield tri.point_xy(0)
+                    yield tri.point_xy(1)
+                    yield tri.point_xy(2)
                     continue
-
-                pts.pop(-1)
-                self._points = pts
 
                 yield x, y
 
@@ -169,14 +256,15 @@ class SeekPattern(Pattern):
     def _validate(self, x, y):
         return (x ** 2 + y ** 2) ** 0.5 <= self.perimeter_radius
 
-    def update_point(self, z, x, y):
-        self._data[-1] = z
-        self._points[-1] = (z, x, y)
+    def update_point(self, z, x, y, idx=-1):
+        self._data[idx] = z
+        self._tri.set_point(z, x, y, idx)
 
     def set_point(self, z, x, y):
         self._data.append(z)
         self._data = self._data[-self.limit:]
-        self._points.append((z, x, y))
+
+        self._tri.set_point(z, x, y)
 
     def maker_view(self):
         v = View(Item('total_duration', label='Total Duration (s)',
@@ -305,8 +393,9 @@ def test1():
             return src
 
     ld = LumenDetector()
-
-    fig, ((ax, ax2,), (ax3, ax4), (ax5, ax6)) = plt.subplots(3, 2, figsize=(7, 7))
+    ld.hole_radius = 2
+    fig, ((ax, ax2,), (ax3, ax4), (ax5, ax6),
+          (ax7, ax8)) = plt.subplots(4, 2, figsize=(7, 7))
 
     f = FrameGenerator()
     pattern = SeekPattern(base=15, perimeter_radius=100)
@@ -340,6 +429,11 @@ def test1():
 
     xx, yy = 100, 150
     scatter2 = ax3.plot([xx], [yy], 'o')[0]
+
+    cp = ax7.scatter([0], [0], c=[0])
+    cp.autoscale()
+    ax7.set_xlim(-100, 100)
+    ax7.set_ylim(-100, 100)
 
     ax4.set_title('Intensity')
     tvint = ax4.plot([1], [1])[0]
@@ -387,7 +481,7 @@ def test1():
         # print z
         # z /= 3716625.0
         # z += 0.1 * random.random()
-
+        # print x, y, z
         pattern.set_point(z, x, y)
         zs.append(z)
         # print ts
@@ -400,10 +494,28 @@ def test1():
         tc.set_data(ts, tcs)
 
         rs.set_data(ts, rcs)
-        # return mplfig_to_npimage(fig)
-        # raw_input()
 
-    animation = FuncAnimation(fig, update, interval=200)
+        # >>>>>>>>>>>>>>>>>>>>>>>
+        # add a plot that is the current points of the triangle
+        # >>>>>>>>>>>>>>>>>>>>>>>
+        xy = pattern._tri.xys()
+        x, y, z = zip(*xy)
+        # print x, y
+        # cp.set_data(x, y)
+        cp.set_offsets(zip(x, y))
+
+        maz, miz = max(z), min(z)
+        z = [(zi - miz) / (maz - miz) for zi in z]
+        print z
+        cp.set_facecolors([cm.hot(zi) for zi in z])
+        # cp.set_edgecolors(z)
+        if not pattern._tri.is_equilateral():
+            print 'not eq'
+
+            # return mplfig_to_npimage(fig)
+            # raw_input()
+
+    animation = FuncAnimation(fig, update, interval=1000)
     plt.show()
 
     # duration = 30

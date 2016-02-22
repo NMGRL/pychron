@@ -36,6 +36,7 @@ class LumenDetector(object):
     custom_mask_radius = 0
     hole_radius = 0
 
+
     def get_value(self, src, scaled=True):
         """
 
@@ -56,7 +57,7 @@ class LumenDetector(object):
 
         if scaled:
             v /= (mask.sum() * 255.)
-
+        # print lum.sum(), v
         return src, v
 
     def get_scores(self, src):
@@ -73,7 +74,7 @@ class LumenDetector(object):
 
         score_saturation = v / (mask.sum() * 255.)
 
-        return score_density, score_saturation
+        return score_density, score_saturation, lum
 
     def _mask(self, src):
         radius = self.mask_radius
