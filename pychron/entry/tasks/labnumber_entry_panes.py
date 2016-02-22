@@ -32,6 +32,7 @@ from pychron.envisage.stylesheets import load_stylesheet
 from pychron.envisage.tasks.pane_helpers import spacer
 from pychron.entry.irradiated_position import IrradiatedPositionAdapter
 from pychron.envisage.browser.adapters import ProjectAdapter, SampleAdapter
+from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
 
 class LevelInfoPane(TraitsDockPane):
@@ -121,7 +122,7 @@ class IrradiationEditorPane(TraitsDockPane):
                                           column_clicked='column_clicked',
                                           stretch_last_section=False),
                                   width=75))
-        jgrp = HGroup(UItem('j'), Label(PLUSMINUS_SIGMA), UItem('j_err'),
+        jgrp = HGroup(UItem('j'), Label(PLUSMINUS_ONE_SIGMA), UItem('j_err'),
                       icon_button_editor('estimate_j_button', 'cog'),
                       show_border=True, label='J')
         ngrp = HGroup(UItem('note'),
@@ -175,7 +176,9 @@ class IrradiationPane(TraitsDockPane):
                                    enabled_when='edit_irradiation_enabled',
                                    tooltip='Edit irradiation'),
                 icon_button_editor('add_irradiation_button', 'database_add',
-                                   tooltip='Add irradiation'))
+                                   tooltip='Add irradiation'),
+            icon_button_editor('import_irradiation_button', 'database_go',
+                               tooltip='Import irradiation'))
 
         level = HGroup(
                 spacer(),

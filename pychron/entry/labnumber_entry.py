@@ -67,6 +67,7 @@ class LabnumberEntry(DVCIrradiationable):
     irradiation_tray = Str
     trays = Property
 
+    import_irradiation_button = Button
     edit_irradiation_button = Button('Edit')
     edit_level_enabled = Property(depends_on='level')
     edit_irradiation_enabled = Property(depends_on='irradiation')
@@ -123,6 +124,17 @@ class LabnumberEntry(DVCIrradiationable):
 
     def activated(self):
         pass
+
+    def import_irradiation(self):
+        self.debug('import irradiation')
+        from pychron.entry.tasks.importer import ImporterModel
+        from pychron.entry.tasks.importer_view import ImporterView
+
+        mod = ImporterModel(db=self.db)
+        ev = ImporterView(model=mod)
+        info = ev.edit_traits()
+        if info.result:
+            self.updated = True
 
     def get_igsns(self, igsn_repo):
         items = self.selected
@@ -554,6 +566,9 @@ THIS CHANGE CANNOT BE UNDONE')
             self.irradiation = new_irrad
             self.updated = True
 
+    def _import_irradiation_button_fired(self):
+        self.import_irradiation()
+
     def _edit_irradiation_button_fired(self):
         irrad = self._get_irradiation_editor(name=self.irradiation)
 
@@ -609,7 +624,7 @@ THIS CHANGE CANNOT BE UNDONE')
             db = self.db
             with db.session_ctx():
                 def f(table):
-                    return (table.name.startswith(self.irradiation_prefix),)
+                    return table.name.startswith(self.irradiation_prefix),
 
                 dbirrad = db.get_irradiations(names=f,
                                               order_func='desc',

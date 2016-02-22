@@ -15,27 +15,22 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter, Tabbed
 from traits.api import on_trait_change, Button, Float, Str, Int, Bool
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.entry.entry_views.material_entry import MaterialEntry
 from pychron.core.helpers.filetools import add_extension
 
 from pychron.entry.graphic_generator import GraphicModel, GraphicGeneratorController
-from pychron.entry.tasks.importer_view import ImporterView
 from pychron.envisage.browser.record_views import SampleRecordView
-from pychron.entry.tasks.importer import ImporterModel
 from pychron.envisage.browser.base_browser_model import BaseBrowserModel
 from pychron.entry.entry_views.project_entry import ProjectEntry
 from pychron.entry.entry_views.sample_entry import SampleEntry
 from pychron.entry.labnumber_entry import LabnumberEntry
 from pychron.entry.tasks.actions import SavePDFAction, DatabaseSaveAction, PreviewGenerateIdentifiersAction, \
     GenerateIdentifiersAction
-# from pychron.entry.tasks.importer_panes import ImporterPane
 from pychron.entry.tasks.labnumber_entry_panes import LabnumbersPane, \
     IrradiationPane, IrradiationEditorPane, IrradiationCanvasPane, LevelInfoPane, ChronologyPane
 from pychron.envisage.tasks.base_task import BaseManagerTask
@@ -45,7 +40,6 @@ from pychron.globals import globalv
 class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     name = 'Labnumber'
     id = 'pychron.entry.irradiation.task'
-    # importer = Instance(ImportManager)
 
     add_sample_button = Button
     add_material_button = Button
@@ -100,9 +94,7 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
         self.manager.transfer_j()
 
     def import_irradiation(self):
-        mod = ImporterModel(db=self.manager.db)
-        ev = ImporterView(model=mod)
-        ev.edit_traits()
+        self.manager.import_irradiation()
 
     def generate_tray(self):
         # p='/Users/ross/Sandbox/entry_tray'
