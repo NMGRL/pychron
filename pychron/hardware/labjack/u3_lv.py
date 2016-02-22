@@ -108,11 +108,11 @@ if __name__ == '__main__':
     #     a.set_channel_state(0, i % 3)
     #     time.sleep(1)
 
-    for i in range(1, 17):
-        a.set_channel_state(str(i), 1)
-        time.sleep(0.5)
-        a.set_channel_state(str(i), 0)
-        time.sleep(0.5)
+    # for i in range(1, 17):
+    #     a.set_channel_state(str(i), 1)
+    #     time.sleep(0.5)
+    #     a.set_channel_state(str(i), 0)
+    #     time.sleep(0.5)
 
     # while 1:
     #     cmd = raw_input('set pin to ... >> ')
@@ -122,6 +122,9 @@ if __name__ == '__main__':
     #     ch, state = map(str.strip, cmd.split(' '))
     #     a.set_channel_state(ch, int(state))
 
+    for i in range(30):
+        print i, a.get_channel_state('13')
+        time.sleep(1)
     a.close()
 
 # ============= EOF =============================================

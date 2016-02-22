@@ -125,6 +125,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
             self.warning('raising funnel not enabled')
 
     def set_setpoint(self, v):
+        self.debug('set setpoint={}'.format(v))
         if self.controller:
             # print self.controller, self.controller._cdevice
             self.controller.set_setpoint(v)
