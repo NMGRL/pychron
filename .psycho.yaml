@@ -36,7 +36,7 @@ path=/tmp/psycho_dvc.sqlite3"
 database:
   path: /tmp/psycho_dvc.sqlite3
   sql:
-    - '''BEGIN TRANSACTION;
+    - 'BEGIN TRANSACTION;
 CREATE TABLE "alembic_version" (
   "version_num" varchar(32) NOT NULL
 );
@@ -268,7 +268,7 @@ CREATE INDEX "AnalysisTbl_analysistbl_ibfk_3" ON "AnalysisTbl" ("extract_device"
 CREATE INDEX "AnalysisChangeTbl_userID" ON "AnalysisChangeTbl" ("user");
 CREATE INDEX "AnalysisChangeTbl_tag" ON "AnalysisChangeTbl" ("tag");
 CREATE INDEX "AnalysisChangeTbl_analysisID" ON "AnalysisChangeTbl" ("analysisID");
-COMMIT;'''
+COMMIT;'
     - "insert into irradiationtbl (id, name) values (1, 'NoIrradiation')"
     - "insert into irradiationtbl (id, name) values (2, 'NM-PSYCHODRAMA')"
     - "insert into productiontbl (id, name) values (1, 'TRIGA')"
