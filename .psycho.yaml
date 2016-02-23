@@ -275,7 +275,7 @@ CREATE INDEX "AnalysisChangeTbl_analysisID" ON "AnalysisChangeTbl" ("analysisID"
     - "insert into leveltbl (id, name, irradiationID, productionID) values (2, 'A', 2, 1)"
     - "insert into leveltbl (id, name, irradiationID, productionID) values (3, 'B', 2, 1)"
     - "insert into materialtbl (id, name) values (1, 'sanidine')"
-    - "insert into principalinvestigatortbl (id, name) values (1, 'psychodrama_pi')"
+    - "insert into principalinvestigatortbl (name, ) values ('psychodrama_pi',)"
     - "insert into projecttbl (id, name, principal_investigator)
        values (1,'psychodrama', 'psychodrama_pi')"
     - "insert into sampletbl (id, name, projectID, materialID) values (1, 'PD1', 1, 1)"
