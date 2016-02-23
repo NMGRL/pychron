@@ -267,8 +267,7 @@ CREATE INDEX "AnalysisTbl_irradiation_positionID" ON "AnalysisTbl" ("irradiation
 CREATE INDEX "AnalysisTbl_analysistbl_ibfk_3" ON "AnalysisTbl" ("extract_device");
 CREATE INDEX "AnalysisChangeTbl_userID" ON "AnalysisChangeTbl" ("user");
 CREATE INDEX "AnalysisChangeTbl_tag" ON "AnalysisChangeTbl" ("tag");
-CREATE INDEX "AnalysisChangeTbl_analysisID" ON "AnalysisChangeTbl" ("analysisID");
-COMMIT;'
+CREATE INDEX "AnalysisChangeTbl_analysisID" ON "AnalysisChangeTbl" ("analysisID");'
     - "insert into irradiationtbl (id, name) values (1, 'NoIrradiation')"
     - "insert into irradiationtbl (id, name) values (2, 'NM-PSYCHODRAMA')"
     - "insert into productiontbl (id, name) values (1, 'TRIGA')"
