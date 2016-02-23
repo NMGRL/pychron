@@ -225,7 +225,7 @@ class AutomatedRunPersister(BasePersister):
     data_manager = Instance('pychron.managers.data_managers.h5_data_manager.H5DataManager', ())
 
     secondary_database_fail = False
-    use_secondary_database = True
+    use_massspec_database = True
     use_analysis_grouping = Bool(False)
     grouping_threshold = Float
     grouping_suffix = Str
@@ -571,13 +571,14 @@ class AutomatedRunPersister(BasePersister):
         # don't save detector_ic runs to mass spec
         # measurement of an isotope on multiple detectors likely possible with mass spec but at this point
         # not worth trying.
-        if self.use_secondary_database:
-            from pychron.experiment.datahub import check_secondary_database_save
+        # if self.use_secondary_database:
+        if self.use_massspec_database:
+            from pychron.experiment.datahub import check_massspec_database_save
 
-            if check_secondary_database_save(ln):
-                if not self.datahub.secondary_connect():
+            if check_massspec_database_save(ln):
+                if not self.datahub.store_connect('massspec'):
                     # if not self.massspec_importer or not self.massspec_importer.db.connected:
-                    self.debug('Secondary database is not available')
+                    self.debug('Mass Spec database is not available')
                 else:
                     self.debug('saving post measurement to secondary database')
                     # save to massspec
@@ -931,7 +932,8 @@ class AutomatedRunPersister(BasePersister):
 
     def _save_to_massspec(self, p):
         # dm = self.data_manager
-        ms = self.datahub.secondarystore
+        # ms = self.datahub.secondarystore
+        ms = self.datahub.stores['massspec']
         h = ms.db.host
         dn = ms.db.name
         self.info('saving to massspec database {}/{}'.format(h, dn))

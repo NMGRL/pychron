@@ -191,7 +191,7 @@ class ExperimentQueueFactory(DVCAble, PersistenceLoggable):
             if not db.connect():
                 return []
             ms = db.get_mass_spectrometer_names()
-            names = [mi.name.capitalize() for mi in ms]
+            names = [mi.capitalize() for mi in ms]
         elif os.path.isfile(cp):
             names = self._get_names_from_config(cp, 'Mass Spectrometers')
         else:

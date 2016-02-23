@@ -138,7 +138,7 @@ class WaitControl(Loggable):
         if self.timer and self.timer.isActive():
             self.current_time -= 1
             ct -= 1
-            self.debug('Current Time={}/{}'.format(ct, self.duration))
+            # self.debug('Current Time={}/{}'.format(ct, self.duration))
             if ct <= 0:
                 self._end()
                 self._canceled = False

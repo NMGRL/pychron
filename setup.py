@@ -30,6 +30,7 @@ setup(name='pychron',
                   'pychron.experiment.utilities.position_regex',
                   'pychron.experiment.utilities.frequency_generator',
                   'pychron.experiment.utilities.aliquot_numbering',
+                  'pychron.experiment.duration_tracker',
                   'pychron.entry.loaders.analysis_loader',
                   'pychron.core.geometry.affine'
                   ],
@@ -44,8 +45,9 @@ setup(name='pychron',
                 'pychron.experiment.conditional',
                 'pychron.pyscripts',
                 'pychron.stage.maps',
-
+                'pychron.canvas.canvas2D.scene.primitives',
                 # test packages
+                'pychron.canvas.canvas2D.tests',
                 'pychron.stage.tests',
                 'pychron.core.tests',
                 'pychron.core.stats.tests',

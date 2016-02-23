@@ -70,6 +70,10 @@ PRESSURE_REGEX = re.compile(r'\w+\.\w+\.pressure')
 DEVICE_REGEX = re.compile(r'device\.\w+')
 
 INTERPOLATE_REGEX = re.compile(r'\$\w+')
+
+
+EXTRACTION_STR_PERCENT_REGEX = re.compile(r'\d+%(,\d+%)*$')
+EXTRACTION_STR_ABS_REGEX = re.compile(r'\d+(\.\d+)*(,\d+(\.\d+)*)*$')
 # ============= EOF =============================================
 
 

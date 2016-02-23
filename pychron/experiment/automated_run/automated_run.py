@@ -36,7 +36,8 @@ from pychron.core.ui.preference_binding import set_preference
 from pychron.experiment.automated_run.hop_util import parse_hops
 from pychron.experiment.automated_run.persistence_spec import PersistenceSpec
 from pychron.experiment.conditional.conditional import TruncationConditional, \
-    ActionConditional, TerminationConditional, conditional_from_dict, CancelationConditional, conditionals_from_file
+    ActionConditional, TerminationConditional, conditional_from_dict, CancelationConditional, conditionals_from_file, \
+    QueueModificationConditional
 from pychron.experiment.utilities.conditionals import test_queue_conditionals_name
 from pychron.experiment.utilities.identifier import convert_identifier
 from pychron.experiment.utilities.script import assemble_script_blob
@@ -157,6 +158,8 @@ class AutomatedRun(Loggable):
     truncation_conditionals = List
     action_conditionals = List
     cancelation_conditionals = List
+    modification_conditionals = List
+
     tripped_conditional = Instance('pychron.experiment.conditional.conditional.BaseConditional')
 
     peak_center = None
@@ -184,6 +187,8 @@ class AutomatedRun(Loggable):
 
     experiment_type = Str(AR_AR)
 
+    intensity_scalar = Float
+
     def set_preferences(self, preferences):
         self.debug('set preferences')
 
@@ -201,6 +206,10 @@ class AutomatedRun(Loggable):
     # ===============================================================================
     # pyscript interface
     # ===============================================================================
+    def py_set_intensity_scalar(self, v):
+        self.intensity_scalar = v
+        return True
+
     def py_set_isotope_group(self, name):
         if self.plot_panel:
             self.plot_panel.add_isotope_graph(name)
@@ -617,6 +626,9 @@ class AutomatedRun(Loggable):
     def py_clear_actions(self):
         self.action_conditionals = []
 
+    def py_clear_modifications(self):
+        self.modification_conditionals = []
+
     # ===============================================================================
     # run termination
     # ===============================================================================
@@ -721,11 +733,12 @@ class AutomatedRun(Loggable):
             self.measurement_script = None
 
         if self.extraction_script:
+            self.extraction_script.automated_run = None
+            self.extraction_script.runner = None
             self.extraction_script = None
-        if self.post_equilibration_script:
-            self.post_equilibration_script = None
-        if self.post_measurement_script:
-            self.post_measurement_script = None
+
+        self.post_equilibration_script = None
+        self.post_measurement_script = None
 
         if self.experiment_executor:
             self.experiment_executor.automated_run = None
@@ -939,7 +952,7 @@ class AutomatedRun(Loggable):
     def post_measurement_save(self):
         if self._measured:
             conds = (self.termination_conditionals, self.truncation_conditionals,
-                     self.action_conditionals, self.cancelation_conditionals)
+                     self.action_conditionals, self.cancelation_conditionals, self.modification_conditionals)
 
             self._update_persister_spec(active_detectors=self._active_detectors,
                                         conditionals=conds,
@@ -1057,7 +1070,8 @@ class AutomatedRun(Loggable):
                                     runscript_name=script_name,
                                     runscript_blob=script_blob,
                                     signal_fods=sfods,
-                                    baseline_fods=bsfods)
+                                    baseline_fods=bsfods,
+                                    intensity_scalar=self.intensity_scalar)
 
     # ===============================================================================
     # doers
@@ -1309,7 +1323,7 @@ anaylsis_type={}
 
         self.debug('**************** Experiment Type: {}, {}'.format(self.experiment_type, AR_AR))
         if self.experiment_type == AR_AR:
-            if not self.experiment_executor.datahub.load_arar_analysis_backend(ln, self.isotope_group):
+            if not self.experiment_executor.datahub.load_analysis_backend(ln, self.isotope_group):
                 self.debug('failed load analysis backend')
                 return
 
@@ -1620,7 +1634,7 @@ anaylsis_type={}
 
         for d in self._active_detectors:
             self.isotope_group.set_isotope(d.isotope, (0, 0),
-                                           detector=d.name,
+                                           d.name,
                                            correct_for_blank=cb)
 
         self.isotope_group.clear_baselines()
@@ -1633,7 +1647,8 @@ anaylsis_type={}
 
     def _add_conditionals(self):
         klass_dict = {'actions': ActionConditional, 'truncations': TruncationConditional,
-                      'terminations': TerminationConditional, 'cancelations': CancelationConditional}
+                      'terminations': TerminationConditional, 'cancelations': CancelationConditional,
+                      'modifications': QueueModificationConditional}
 
         t = self.spec.conditionals
         self.debug('adding conditionals {}'.format(t))
@@ -1646,30 +1661,19 @@ anaylsis_type={}
                     for kind, items in yd.iteritems():
                         try:
                             klass = klass_dict[kind]
-                            for i in items:
-                                try:
-                                    # trim off s
-                                    if kind.endswith('s'):
-                                        kind = kind[:-1]
-
-                                    self._conditional_appender(kind, i, klass, p)
-                                except BaseException, e:
-                                    self.debug('Failed adding {}. excp="{}", cd={}'.format(kind, e, i))
-
                         except KeyError:
                             self.debug('Invalid conditional kind="{}"'.format(kind))
-                            #
-                            # for c in doc:
-                            # try:
-                            # attr = c['attr']
-                            # comp = c['check']
-                            # start = c['start']
-                            # freq = c.get('frequency', 1)
-                            # acr = c.get('abbreviated_count_ratio', 1)
-                            #             self.py_add_truncation(attr, comp, int(start), freq, acr)
-                            #         except BaseException:
-                            #             self.warning('Failed adding truncation. {}'.format(c))
+                            continue
 
+                        for cd in items:
+                            try:
+                                # trim off s
+                                if kind.endswith('s'):
+                                    kind = kind[:-1]
+
+                                self._conditional_appender(kind, cd, klass, p)
+                            except BaseException, e:
+                                self.debug('Failed adding {}. excp="{}", cd={}'.format(kind, e, cd))
             else:
                 try:
                     c, start = t.split(',')
@@ -1868,7 +1872,8 @@ anaylsis_type={}
                 else:
                     # reset the counter
                     cnt = 0
-
+                    if self.intensity_scalar:
+                        s = [si * self.intensity_scalar for si in s]
                     yield k, s
 
         return gen()
@@ -1982,7 +1987,6 @@ anaylsis_type={}
 
         m.trait_set(
             console_display=self.experiment_executor.console_display,
-            automated_run=self,
             measurement_script=script,
             detectors=self._active_detectors,
             collection_kind=grpname,
@@ -2197,13 +2201,16 @@ anaylsis_type={}
 
         ms = MeasurementPyScript(root=root,
                                  name=sname,
+                                 automated_run=self,
                                  runner=self.runner)
         return ms
 
     def _extraction_script_factory(self, klass=None):
         root = paths.extraction_dir
-        return self._ext_factory(root, self.script_info.extraction_script_name,
-                                 klass=klass)
+        ext = self._ext_factory(root, self.script_info.extraction_script_name,
+                                klass=klass)
+        ext.automated_run = self
+        return ext
 
     def _post_measurement_script_factory(self):
         root = paths.post_measurement_dir

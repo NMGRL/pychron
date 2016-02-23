@@ -39,7 +39,7 @@ class DVCPlugin(BaseTaskPlugin):
         dvc = self.application.get_service(DVC)
         if not self._fetched:
             dvc.initialize()
-            dvc.meta_pull()
+
 
     # def stop(self):
     #     dvc = self.application.get_service(DVC)

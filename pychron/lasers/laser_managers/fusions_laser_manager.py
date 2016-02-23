@@ -123,8 +123,8 @@ class FusionsLaserManager(LaserManager):
             # ===============================================================================
 
     def extract(self, power, **kw):
-        self.enable_laser()
-        self.set_laser_power(power, **kw)
+        if self.enable_laser():
+            self.set_laser_power(power, **kw)
 
     def end_extract(self):
         self.disable_laser()
@@ -274,11 +274,11 @@ class FusionsLaserManager(LaserManager):
             else:
                 func()
 
-    def get_brightness(self):
+    def get_brightness(self, **kw):
         if self.use_video:
-            return self.stage_manager.get_brightness()
+            return self.stage_manager.get_brightness(**kw)
         else:
-            return super(FusionsLaserManager, self).get_brightness()
+            return super(FusionsLaserManager, self).get_brightness(**kw)
 
     def is_degassing(self):
         if self._degas_thread:

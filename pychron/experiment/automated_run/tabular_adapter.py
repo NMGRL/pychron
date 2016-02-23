@@ -125,7 +125,7 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
     def get_tooltip(self, obj, trait, row, column):
         name = self.column_map[column]
         item = getattr(obj, trait)[row]
-        return '{}= {}'.format(name, getattr(item, name))
+        return '{}= {}\nstate= {}'.format(name, getattr(item, name), item.state)
 
     def get_row_label(self, section, obj=None):
         return section + 1

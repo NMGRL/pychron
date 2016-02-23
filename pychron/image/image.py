@@ -43,6 +43,8 @@ class Image(HasTraits):
     vflip = Bool(False)
     panel_size = Int(300)
 
+    _cached_frame = None
+
     @classmethod
     def new_frame(cls, img, swap_rb=False):
         if isinstance(img, (str, unicode)):
@@ -83,7 +85,14 @@ class Image(HasTraits):
     def get_frame(self, **kw):
         frame = self._get_frame(**kw)
         frame = self.modify_frame(frame, **kw)
+        self._cached_frame = frame
         return frame
+
+    def get_cached_frame(self):
+        if self._cached_frame is None:
+            self.get_frame()
+
+        return self._cached_frame
 
     def get_image(self, **kw):
         frame = self.get_frame(**kw)
@@ -147,6 +156,14 @@ class Image(HasTraits):
                     cv_flip(frame, 1)
 
         return frame
+
+    def crop(self, src, ox, oy, cw, ch):
+        h, w = src.shape[:2]
+
+        x = int((w - cw) / 2. + ox)
+        y = int((h - ch) / 2. + oy)
+
+        return src[y:y + ch, x:x + cw]
 
     def render(self):
         return self.frames[0]

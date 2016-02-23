@@ -470,7 +470,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if self.labspy_enabled:
             self.labspy_client.add_experiment(exp)
 
-        self.datahub.add_experiment(exp)
+        # self.datahub.add_experiment(exp)
+
         # reset conditionals result file
         reset_conditional_results()
 
@@ -739,7 +740,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.info('Automated run {} {} duration: {:0.3f} s'.format(run.runid, run.spec.state, t))
 
         run.finish()
-        self._retroactive_repository_identifiers(run.spec)
+        if run.spec.state not in ('canceled', 'failed'):
+            self._retroactive_repository_identifiers(run.spec)
 
         if self.use_autoplot:
             self.autoplot_event = run
@@ -1408,7 +1410,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 invoke_in_main_thread(self.warning_dialog, msg)
                 return True
 
-    def _check_managers(self, prog, inform=True):
+    def _check_managers(self, inform=True):
         self.debug('checking for managers')
         if globalv.experiment_debug:
             self.debug('********************** NOT DOING  managers check')
@@ -1731,7 +1733,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if self._check_memory(prog):
             return
 
-        if not self._check_managers(prog, inform=inform):
+        if not self._check_managers(inform=inform):
             return
 
         if self.use_automated_run_monitor:

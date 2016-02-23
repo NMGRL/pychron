@@ -145,7 +145,8 @@ class Experimentor(DVCIrradiationable):
                 if ln not in exclude)
 
     def _get_analysis_info(self, li):
-        return self.db.get_analysis_info(li)
+        db = self.get_database()
+        return db.get_analysis_info(li)
 
     def _set_analysis_metadata(self):
         cache = dict()
@@ -323,7 +324,7 @@ class Experimentor(DVCIrradiationable):
                               # dvc=self.dvc,
                               # db=self.dvc.db,
                               default_mass_spectrometer=dms)
-
+        print 'asdfasdf', e.dvc
         # if self.iso_db_manager:
         #     e.db = self.iso_db_manager.db
         return e

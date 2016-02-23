@@ -35,8 +35,8 @@ from pychron.experiment.experiment_launch_history import update_launch_history
 from pychron.experiment.experimentor import Experimentor
 from pychron.experiment.queue.base_queue import extract_meta
 from pychron.experiment.tasks.experiment_editor import ExperimentEditor, UVExperimentEditor
-from pychron.experiment.tasks.experiment_panes import LoggerPane
-from pychron.experiment.utilities.identifier import convert_extract_device, is_special
+from pychron.experiment.tasks.experiment_panes import LoggerPane, ExplanationPane
+from pychron.experiment.utilities.identifier import convert_extract_device
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.paths import paths
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
@@ -233,6 +233,9 @@ class ExperimentEditorTask(EditorTask):
         self.experiment_factory_pane = ExperimentFactoryPane(model=self.manager.experiment_factory)
         wait_pane = WaitPane(model=self.manager.executor.wait_group)
 
+        explanation_pane = ExplanationPane()
+        explanation_pane.set_colors(self._assemble_state_colors())
+
         ex = self.manager.executor
         panes = [StatsPane(model=self.manager.stats),
                  ControlsPane(model=ex),
@@ -242,6 +245,7 @@ class ExperimentEditorTask(EditorTask):
                  ConnectionStatusPane(model=ex),
                  self.experiment_factory_pane,
                  self.isotope_evolution_pane,
+                 explanation_pane,
                  wait_pane]
 
         if self.loading_manager:
@@ -731,15 +735,16 @@ class ExperimentEditorTask(EditorTask):
         plugin = ip.get_plugin('Experiment', category='general')
         mode = ip.get_parameter(plugin, 'mode')
 
-        experimentor = Experimentor(application=self.application, mode=mode)
-
         proto = 'pychron.database.isotope_database_manager.IsotopeDatabaseManager'
         iso_db_man = self.application.get_service(proto)
-        experimentor.iso_db_man = iso_db_man
+        # experimentor.iso_db_man = iso_db_man
 
         proto = 'pychron.dvc.dvc.DVC'
         dvc = self.application.get_service(proto)
-        experimentor.dvc = dvc
+        # experimentor.dvc = dvc
+
+        experimentor = Experimentor(application=self.application,
+                                    mode=mode, dvc=dvc, iso_db_man=iso_db_man)
 
         experimentor.executor.set_managers()
         experimentor.executor.bind_preferences()

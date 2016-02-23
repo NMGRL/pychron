@@ -43,7 +43,6 @@ class DVCIrradiationable(DVCAble):
     updated = Event
     _suppress_auto_select_irradiation = False
 
-
     def verify_database_connection(self, inform=True):
         # return self.dvc.initialize(inform)
         self.debug('Verify database connection')

@@ -216,6 +216,7 @@ class Paths(object):
     edit_ui_defaults = None
 
     duration_tracker = None
+    duration_tracker_frequencies = None
     experiment_launch_history = None
     notification_triggers = None
 
@@ -437,6 +438,7 @@ class Paths(object):
         self.edit_ui_defaults = join(self.hidden_dir, 'edit_ui.yaml')
 
         self.duration_tracker = join(self.hidden_dir, 'duration_tracker.txt')
+        self.duration_tracker_frequencies = join(self.hidden_dir, 'duration_tracker_frequencies.txt')
         self.experiment_launch_history = join(self.hidden_dir, 'experiment_launch_history.txt')
         self.notification_triggers = join(self.setup_dir, 'notification_triggers.yaml')
 

@@ -196,6 +196,11 @@ class DVC(Loggable):
 
     def initialize(self, inform=False):
         self.debug('Initialize DVC')
+
+        if not self.meta_repo_name:
+            self.warning_dialog('Need to specify Meta Repository name in Preferences')
+            return
+
         self.open_meta_repo()
 
         # update meta repo.
@@ -227,28 +232,28 @@ class DVC(Loggable):
         else:
             self.meta_repo.push()
 
-    def load_analysis_backend(self, ln, arar_age):
+    def load_analysis_backend(self, ln, isotope_group):
         db = self.db
         with db.session_ctx():
             ip = db.get_identifier(ln)
             dblevel = ip.level
             irrad = dblevel.irradiation.name
             level = dblevel.name
-            prodname = dblevel.production.name
             pos = ip.position
 
-        j = self.meta_repo.get_flux(irrad, level, pos)
-        prod = self.meta_repo.get_production(prodname)
+        j, lambda_k = self.meta_repo.get_flux(irrad, level, pos)
+        prodname, prod = self.meta_repo.get_production(irrad, level)
         cs = self.meta_repo.get_chronology(irrad)
 
         x = datetime.now()
         now = time.mktime(x.timetuple())
-        arar_age.trait_set(j=j,
-                           production_ratios=prod.to_dict(RATIO_KEYS),
-                           interference_corrections=prod.to_dict(INTERFERENCE_KEYS),
-                           chron_segments=cs.get_chron_segments(x),
-                           irradiation_time=cs.irradiation_time,
-                           timestamp=now)
+        isotope_group.trait_set(j=j,
+                                lambda_k=lambda_k,
+                                production_ratios=prod.to_dict(RATIO_KEYS),
+                                interference_corrections=prod.to_dict(INTERFERENCE_KEYS),
+                                chron_segments=cs.get_chron_segments(x),
+                                irradiation_time=cs.irradiation_time,
+                                timestamp=now)
         return True
 
     # database

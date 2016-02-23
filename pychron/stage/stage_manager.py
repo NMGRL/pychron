@@ -151,6 +151,9 @@ class BaseStageManager(Manager):
     def _canvas_factory(self):
         raise NotImplementedError
 
+    def _stage_map_changed_hook(self):
+        pass
+
     # handlers
     def _calibrated_position_entry_changed(self, new):
         self.debug('User entered calibrated position {}'.format(new))
@@ -168,6 +171,8 @@ class BaseStageManager(Manager):
             self.canvas.request_redraw()
 
             self.stage_map = sm
+
+            self._stage_map_changed_hook()
 
     # defaults
     def _tray_calibration_manager_default(self):

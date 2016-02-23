@@ -32,7 +32,7 @@ class MassSpecConnectionPreferences(BasePreferencesHelper, ConnectionMixin):
     username = Str
     password = Password
     host = Str
-    _adapter_klass = 'pychron.database.adapters.massspec_database_adapter.MassSpecDatabaseAdapter'
+    _adapter_klass = 'pychron.mass_spec.database.massspec_database_adapter.MassSpecDatabaseAdapter'
     enabled = Bool
 
     def _anytrait_changed(self, name, old, new):

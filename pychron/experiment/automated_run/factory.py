@@ -182,8 +182,8 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     _labnumber = String
     labnumbers = Property(depends_on='project, selected_level')
 
-    project = Any
-    projects = Property(depends_on='db, db_refresh_needed')
+    # project = Any
+    # projects = Property(depends_on='db, db_refresh_needed')
 
     repository_identifier = Str
     repository_identifiers = Property(depends_on='repository_identifier_dirty, db_refresh_needed')

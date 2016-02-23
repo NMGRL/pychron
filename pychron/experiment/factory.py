@@ -227,10 +227,10 @@ class ExperimentFactory(DVCAble, ConsumerMixin):
     def _queue_changed(self, new):
         self.undoer.queue = new
 
-    @on_trait_change('''queue_factory:[mass_spectrometer,
-extract_device, delay_+, tray, username, load_name,
-email, use_email, use_group_email,
-queue_conditionals_name, repository_identifier]''')
+#     @on_trait_change('''queue_factory:[mass_spectrometer,
+# extract_device, delay_+, tray, username, load_name,
+# email, use_email, use_group_email,
+# queue_conditionals_name, repository_identifier]''')
     def _update_queue(self, name, new):
         self.debug('update queue {}={}'.format(name, new))
         if self.queue:
@@ -443,9 +443,9 @@ queue_conditionals_name, repository_identifier]''')
         rf.labnumber = ''
         rf.sample = ''
 
-    # def _dvc_changed(self):
-    #     self.queue_factory.dvc = self.dvc
-    #     self.run_factory.dvc = self.dvc
+    def _dvc_changed(self):
+        self.queue_factory.dvc = self.dvc
+        self.run_factory.dvc = self.dvc
     #
     # def _application_changed(self):
     #     self.run_factory.application = self.application
@@ -476,6 +476,11 @@ queue_conditionals_name, repository_identifier]''')
         eq = ExperimentQueueFactory(dvc=self.dvc,
                                     iso_db_man=self.iso_db_man,
                                     application=self.application)
+
+        eq.on_trait_change(self._update_queue, '''mass_spectrometer,
+extract_device, delay_+, tray, username, load_name,
+email, use_email, use_group_email,
+queue_conditionals_name, repository_identifier''')
         # eq.activate()
         return eq
 

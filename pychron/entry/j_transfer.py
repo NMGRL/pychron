@@ -52,7 +52,7 @@ class TransferConfigView(Controller):
 
 class JTransferer(Loggable):
     pychrondb = Instance('pychron.database.adapters.isotope_adapter.IsotopeAdapter')
-    massspecdb = Instance('pychron.database.adapters.massspec_database_adapter.MassSpecDatabaseAdapter')
+    massspecdb = Instance('pychron.mass_spec.database.massspec_database_adapter.MassSpecDatabaseAdapter')
 
     src = Instance('pychron.database.adapters.database_adapter.DatabaseAdapter')
 
