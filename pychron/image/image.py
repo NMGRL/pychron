@@ -157,6 +157,14 @@ class Image(HasTraits):
 
         return frame
 
+    def crop(self, src, ox, oy, cw, ch):
+        h, w = src.shape[:2]
+
+        x = int((w - cw) / 2. + ox)
+        y = int((h - ch) / 2. + oy)
+
+        return src[y:y + ch, x:x + cw]
+
     def render(self):
         return self.frames[0]
         w = self.width

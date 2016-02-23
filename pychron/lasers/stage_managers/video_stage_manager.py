@@ -432,6 +432,31 @@ class VideoStageManager(StageManager):
             self._autocenter(holenum=holenum, ntries=ntries, save=True)
             self._auto_correcting = False
 
+    def find_center(self):
+        ox, oy = self.canvas.get_screen_offset()
+        rpos, src = self.autocenter_manager.calculate_new_center(
+            self.stage_controller.x,
+            self.stage_controller.y,
+            ox, oy,
+            dim=self.stage_map.g_dimension, open_image=False)
+
+        return rpos, src
+
+    def find_target(self):
+        if self.video:
+            ox, oy = self.canvas.get_screen_offset()
+            src = self.video.get_cached_frame()
+
+            ch = cw = self.pxpermm * self.stage_map.g_dimension * 2.5
+            src = self.video.crop(src, ox, oy, cw, ch)
+            return self.lumen_detector.find_target(src)
+
+    def find_best_target(self):
+        if self.video:
+            src = self.video.get_cached_frame()
+            src = self.autocenter_manager.crop(src)
+            return self.lumen_detector.find_best_target(src)
+
     def _autocenter(self, holenum=None, ntries=3, save=False,
                     use_interpolation=False, inform=False,
                     alpha_enabled=True,
@@ -446,7 +471,7 @@ class VideoStageManager(StageManager):
             ox, oy = self.canvas.get_screen_offset()
             for ti in range(max(1, ntries)):
                 # use machine vision to calculate positioning error
-                rpos = self.autocenter_manager.calculate_new_center(
+                args = self.autocenter_manager.calculate_new_center(
                     self.stage_controller.x,
                     self.stage_controller.y,
                     ox, oy,
@@ -454,10 +479,8 @@ class VideoStageManager(StageManager):
                     alpha_enabled=alpha_enabled,
                     auto_close_image=auto_close_image)
 
-                if rpos is not None:
-                    if abs(rpos[0]) < 1e-5 and abs(rpos[1]) < 1e-5:
-                        break
-
+                if args is not None:
+                    rpos, _ = args
                     self.linear_move(*rpos, block=True,
                                      use_calibration=False,
                                      update_hole=False,
