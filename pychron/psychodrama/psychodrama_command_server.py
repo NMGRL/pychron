@@ -30,31 +30,33 @@ from pychron.loggable import Loggable
 
 class PsychoDramaCommandServer(Loggable):
     path = Str
-    _listen = False
+    _alive = False
     _status_msg = 'No Status'
 
     def start(self):
         prefix = 'pychron.psychodrama'
         bind_preference(self, 'path', '{}.path'.format(prefix))
 
-        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         try:
             os.unlink(self.path)
         except OSError:
             pass
 
-        sock.bind(self.path)
+        self._alive = True
 
-        self._listen = True
-
-        t = Thread(target=self._listen, args=(sock,))
+        t = Thread(target=self._listen)
         t.setDaemon(True)
         t.start()
 
-    def _listen(self, sock):
+    def _listen(self):
+        self._status_msg = 'READY'
+        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.debug('listening to {}'.format(self.path))
+        sock.bind(self.path)
+        sock.listen(2)
 
         _input = [sock]
-        while self._listen:
+        while self._alive:
             try:
                 self._stream_listener(_input, sock)
             except Exception, err:
@@ -67,7 +69,6 @@ class PsychoDramaCommandServer(Loggable):
     def _stream_listener(self, isock, sock):
         try:
             ins, _, _ = select.select(isock, [], [], 5)
-
             for s in ins:
                 if s == sock:
                     client, _addr = sock.accept()
@@ -91,8 +92,9 @@ class PsychoDramaCommandServer(Loggable):
                 data += sock.recv(4096)
 
             try:
-                return json.loads(data)
+                return json.loads(data[l:])
             except BaseException, e:
+                print 'data={}'.format(data[1:])
                 return 'Error loading json: {}'.format(e)
 
     def _process(self, sock, data):
@@ -128,6 +130,7 @@ class PsychoDramaCommandServer(Loggable):
         try:
             func = lambda x: sock.sendto(x, self.path)
 
+            data = str(data)
             mlen = len(data)
             totalsent = 0
             while totalsent < mlen:
@@ -141,7 +144,7 @@ class PsychoDramaCommandServer(Loggable):
             self.debug('End Request Exception: {}'.format(err))
 
     def _authenticate(self, data):
-        return True
+        return
 
     # commands
     def _status(self, data):
@@ -168,6 +171,3 @@ class PsychoDramaCommandServer(Loggable):
         return 'Experiment Started'
 
 # ============= EOF =============================================
-
-
-

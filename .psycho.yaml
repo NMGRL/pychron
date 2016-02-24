@@ -1,4 +1,4 @@
-endpoint: pychron/psycho.sock
+endpoint: /tmp/psycho.sock
 
 support:
   - root: Pychron_psychodrama
@@ -11,6 +11,7 @@ support:
       <plugin enabled='true'>ArArConstants</plugin>\n
       <plugin enabled='true'>DVC</plugin>\n
       <plugin enabled='true'>Pipeline</plugin>\n
+      <plugin enabled='true'>PsychoDrama</plugin>\n
     </general>\n
     <hardware>\n
     </hardware>\n
@@ -22,12 +23,37 @@ support:
     </social>\n
   </plugins>\n
 </root>\n"
-  - path: .enthought/pychron.experiment.application.psycho/preferences.ini
-    text: "[pychron.dvc]\n
-organization=NMGRL\n
-meta_repo_name=PsychoDramaMeta\n
-[pychron.dvc.db]\n
-path=/tmp/psycho_dvc.sqlite3"
+  - path: .enthought/pychron.experiment.application.root/preferences.ini
+    text: "[pychron.general]
+
+    use_advanced_ui = False
+
+    show_random_tip = False
+
+    use_login = False
+
+    root_dir = /Users/argonserver/Pychron_psychodrama
+
+    remote = NMGRL/Laboratory
+
+    organization = NMGRL
+
+    [pychron.dvc]
+
+    organization=NMGRLData
+
+    meta_repo_name=PsychoDramaMeta
+
+    [pychron.dvc.db]
+
+    kind=sqlite
+
+    path=/tmp/psycho_dvc.sqlite3
+
+    [pychron.psychodrama]
+
+    path=/tmp/psycho.sock
+    "
   - path: Pychron_psychodrama/experiments/psychrodrama.txt
     text: '''
 '''
@@ -296,10 +322,27 @@ environment:
     - envisage
     - qt
     - pyside
+    - chaco
+    - pyface
+    - pyyaml
+    - lxml
+    - requests
+    - reportlab
+    - sqlalchemy
+    - xlwt
+    - matplotlib
+    - scikit-learn
+    - statsmodels
+    - pymysql
+
+  pip:
+    - pint
+    - uncertainties
+    - gitpython
 
 pre_run:
   - start_sim:pychron
-#  - start_app:launchers/pychron_dev.py
+  - start_app:launchers/pychron_dev.py
 
 run:
   - test_simulator:Valve, 8000
@@ -307,7 +350,7 @@ run:
   - test_simulator:Spectrometer, 8002
 #  - move_laser
 #  - fire_laser
-  - execute_experiment:psychrodrama.txt
+#  - execute_experiment:psychrodrama.txt
 
 post_run:
   - stop_sim
