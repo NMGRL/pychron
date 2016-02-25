@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2015 Jake Ross
+# Copyright 2016 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,12 +16,39 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+import json
 # ============= local library imports  ==========================
-from pychron.loggable import Loggable
+from pychron.hardware.core.core_device import CoreDevice
 
 
-class ClientNMGRLFurnaceManager(Loggable):
-    def load_sample(self, s):
-        self.ask('LoadSample {}'.format(s))
+class NMGRLFurnaceDrive(CoreDevice):
+    def load_additional_args(self, config):
+        self.set_attribute(config, 'drive_name', 'General', 'drive_name')
+        return True
+
+    def move_relative(self, turns, convert_turns=False):
+        d = {'turns': turns, 'convert_turns': convert_turns}
+        d = json.dumps(d)
+        self.ask('MoveRelative {}'.format(d))
+
+    def stop_drive(self):
+        pass
+
+    def slew(self, modifier):
+        pass
+
+    def set_position(self, pos):
+        d = {'position': pos, 'drive': self.drive_name}
+        d = json.dumps(d)
+        self.ask('SetPosition {}'.format(d))
+
+    def moving(self):
+        d = {'drive': self.drive_name}
+        d = json.dumps(d)
+        return self.ask('Moving {}'.format(d))
+
 
 # ============= EOF =============================================
+
+
+

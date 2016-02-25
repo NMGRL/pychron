@@ -19,6 +19,8 @@
 import time
 import u3
 # ============= local library imports  ==========================
+from LabJackPython import NullHandleException
+
 from pychron.hardware.core.core_device import CoreDevice
 
 
@@ -27,7 +29,11 @@ class U3LV(CoreDevice):
     _dio_mapping = None
 
     def load(self, *args, **kw):
-        self._device = u3.U3()
+        try:
+            self._device = u3.U3()
+        except NullHandleException:
+            return
+
         config = self.get_configuration()
         if config:
             return self.load_additional_args(config)

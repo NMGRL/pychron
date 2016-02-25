@@ -15,14 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-
-from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change
-from traitsui.api import View, UItem, Item, HGroup, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.furnace.firmware.manager import FirmwareManager
-from pychron.furnace.firmware.server import FirmwareServer
+
+from pychron.core.helpers.logger_setup import logging_setup
 from pychron.loggable import Loggable
+from pychron.paths import paths
 
 
 class Firmware(Loggable):
@@ -30,15 +28,20 @@ class Firmware(Loggable):
     server = None
 
     def bootstrap(self, **kw):
+        from pychron.furnace.firmware.manager import FirmwareManager
+        from pychron.furnace.firmware.server import FirmwareServer
         self.manager = FirmwareManager()
         self.manager.bootstrap(**kw)
         self.server = FirmwareServer(manager=self.manager)
         self.server.bootstrap(**kw)
 
 
-if __name__ == '__main__':
+def run():
     import argparse
 
+    paths.build('_dev')
+
+    logging_setup('furnace_firmware')
     parser = argparse.ArgumentParser(description='Run NMGRL Furnace Firmware')
 
     # parser.add_argument('--host',
@@ -57,7 +60,9 @@ if __name__ == '__main__':
     #                     help='run in debug mode')
 
     fm = Firmware()
-    fm.bootstrap(**parser.parse_args())
+    fm.bootstrap(**vars(parser.parse_args()))
 
+if __name__ == '__main__':
+    run()
 
 # ============= EOF =============================================

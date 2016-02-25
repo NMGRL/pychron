@@ -54,6 +54,7 @@ class FirmwareManager(Loggable):
     def _load_funnel(self, f):
         self._funnel_down = f['down']
         self._funnel_up = f['up']
+        self._funnel_tolerance = f['tolerance']
 
     def _load_switch_mapping(self, m):
         self._switch_mapping = m
@@ -71,19 +72,36 @@ class FirmwareManager(Loggable):
         setattr(self, devname, dev)
 
     # getters
-    def get_temperature(self):
+    def get_temperature(self, data):
         return
 
-    def get_setpoint(self):
+    def get_setpoint(self, data):
         return
 
-    def get_magnets_state(self):
+    def get_magnets_state(self, data):
         return
 
     def get_position(self, data):
         drive = self._get_drive(data)
         if drive:
             return drive.read_position()
+
+    def moving(self, data):
+        drive = self._get_drive(data)
+        if drive:
+            return drive.moving()
+
+    def is_funnel_down(self, data):
+        funnel = self.funnel
+        if funnel:
+            pos = funnel.read_position()
+            return abs(pos - self._funnel_down) < self._funnel_tolerance
+
+    def is_funnel_up(self, data):
+        funnel = self.funnel
+        if funnel:
+            pos = funnel.read_position()
+            return abs(pos - self._funnel_up) < self._funnel_tolerance
 
     # setters
     def set_setpoint(self, data):
@@ -103,15 +121,15 @@ class FirmwareManager(Loggable):
                 self.switch_controller.set_channel_state(ch, False)
                 return 'OK'
 
-    def raise_funnel(self):
+    def raise_funnel(self, data):
         if self.funnel:
             return self.funnel.move_absolute(self._funnel_up)
 
-    def lower_funnel(self):
+    def lower_funnel(self, data):
         if self.funnel:
             return self.funnel.move_absolute(self._funnel_down)
 
-    def energize_magnets(self):
+    def energize_magnets(self, data):
         if self.switch_controller:
             def func():
                 for m in self._magnet_channels:
@@ -122,7 +140,7 @@ class FirmwareManager(Loggable):
             t.start()
             return True
 
-    def denergize_magnets(self):
+    def denergize_magnets(self, data):
         if self.switch_controller:
             for m in self._magnet_channels:
                 self.switch_controller.set_channel_state(m, False)

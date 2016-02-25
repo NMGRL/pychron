@@ -15,17 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from threading import Thread
-
-import yaml
+from traits.api import Instance
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from twisted.internet import reactor
 from twisted.internet.endpoints import TCP4ServerEndpoint
 from twisted.internet.protocol import Factory
-
 from pychron.loggable import Loggable
-from pychron.paths import paths
 from pychron.tx.protocols.service import ServiceProtocol
 
 
@@ -35,70 +31,27 @@ class FurnaceFirmwareProtocol(ServiceProtocol):
         self._addr = addr
         ServiceProtocol.__init__(self)
 
-        get_services = (('GetTemperature', '_get_temperature'),
-                        ('GetSetpoint', '_get_setpoint'),
-                        ('GetPosition', '_get_position'),
-                        ('GetMagnetsState', '_get_magnets_state'))
+        get_services = (('GetTemperature', self._manager.get_temperature),
+                        ('GetSetpoint', self._manager.get_setpoint),
+                        ('GetPosition', self._manager.get_position),
+                        ('GetMagnetsState', self._manager.get_magnets_state),
+                        ('Moving', self._manager.moving),
+                        ('IsFunnelUp',self._manager.is_funnel_up),
+                        ('IsFunnelDown', self._manager.is_funnel_down))
 
-        set_services = (('SetSetpoint', '_set_setpoint'),
-                        ('SetPosition', '_set_position'),
-                        ('Open', '_open_switch'),
-                        ('Close', '_close_switch'),
-                        ('LowerFunnel', '_lower_funnel'),
-                        ('RaiseFunnel', '_raise_funnel'),
-                        ('EnergizeMagnets', '_energize_magnets'),
-                        ('DenergizeMagnets', '_denergize_magnets'),
-                        ('MoveAbsolute', '_move_absolute'),
-                        ('MoveRelative', '_move_relative'),
-                        )
+        set_services = (('SetSetpoint', self._manager.set_setpoint),
+                        ('SetPosition', self._manager.set_position),
+                        ('Open', self._manager.open_switch),
+                        ('Close', self._manager.close_switch),
+                        ('LowerFunnel', self._manager.lower_funnel),
+                        ('RaiseFunnel', self._manager.raise_funnel),
+                        ('EnergizeMagnets', self._manager.energize_magnets),
+                        ('DenergizeMagnets', self._manager.denergize_magnets),
+                        ('MoveAbsolute', self._manager.move_absolute),
+                        ('MoveRelative', self._manager.move_relative))
 
         self._register_services(get_services)
         self._register_services(set_services)
-
-    # service handlers
-    # getters
-    def _get_temperature(self, data):
-        return self._manager.get_temperature()
-
-    def _get_setpoint(self, data):
-        return self._manager.get_temperature()
-
-    def _get_position(self, data):
-        return self._manager.get_position(data)
-
-    def _get_dump_state(self):
-        return self._manager.get_dump_state()
-
-    # setters
-    def _set_setpoint(self, data):
-        return self._manager.set_setpoint(data)
-
-    def _set_position(self, data):
-        return self._manager.set_position(data)
-
-    def _open_switch(self, data):
-        return self._manager.open_switch(data)
-
-    def _close_switch(self, data):
-        return self._manager.close_switch(data)
-
-    def _lower_funnel(self, data):
-        return self._manager.lower_funnel()
-
-    def _raise_funnel(self, data):
-        return self._manager.raise_funnel()
-
-    def _energize_magnets(self, data):
-        return self._manager.energize_magnets()
-
-    def _denergize_magnets(self, data):
-        return self._manager.denergize_magnets()
-
-    def _move_relative(self, data):
-        return self._manager.move_relative(data)
-
-    def _move_absolute(self, data):
-        return self._manager.move_absolute(data)
 
 
 class FirmwareFactory(Factory):
@@ -113,25 +66,16 @@ class FirmwareFactory(Factory):
 
 
 class FirmwareServer(Loggable):
+    manager = Instance('pychron.furnace.firmware.manager.FirmwareManager')
+
     def bootstrap(self, port=None, **kw):
         self._load_config(port)
-        self._serve()
+        reactor.run()
 
     def _load_config(self, port):
         if port is None:
             port = 8000
-        self.add_endpoint(port, FirmwareFactory)
-
-        with open(paths.furnace_firmware, 'r') as rfile:
-            yd = yaml.load(rfile)
-            # for endpoint in yd:
-            #     factory = FACTORIES.get(endpoint['factory'])
-            #     self.add_endpoint(endpoint['port'], factory)
-
-    def _serve(self):
-        t = Thread(target=reactor.run, args=(False,))
-        t.setDaemon(True)
-        t.start()
+        self.add_endpoint(port, FirmwareFactory(self.manager))
 
     def add_endpoint(self, port, factory):
         endpoint = TCP4ServerEndpoint(reactor, port)

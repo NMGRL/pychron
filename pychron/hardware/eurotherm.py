@@ -74,12 +74,15 @@ class Eurotherm(CoreDevice):
         self.set_attribute(config, 'protocol', 'Communications', 'protocol', optional=True)
 
         if self.protocol == 'ei_bisynch':
-            self.communicator.write_terminator = None
-
             self.set_attribute(config, 'GID', 'Communications', 'GID', cast='int', optional=True)
 
             self.set_attribute(config, 'UID', 'Communications', 'UID', cast='int', optional=True)
 
+        return True
+
+    def initialize(self, *args, **kw):
+        if self.communicator:
+            self.communicator.write_terminator = None
         return True
 
     def set_pid_parameters(self, v):
