@@ -23,7 +23,7 @@ from pychron.core.helpers.logger_setup import new_logger
 
 
 class HeadlessLoggable(HasTraits):
-    def __init__(self, *arg, **kw):
+    def __init__(self, *args, **kw):
         super(HeadlessLoggable, self).__init__(*args, **kw)
 
         if self.logger_name:

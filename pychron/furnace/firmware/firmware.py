@@ -18,7 +18,7 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
-# from pychron.core.helpers.logger_setup import logging_setup
+from pychron.core.helpers.logger_setup import logging_setup
 from pychron.headless_loggable import HeadlessLoggable
 from pychron.paths import paths
 
@@ -45,7 +45,7 @@ def run():
 
     paths.build('_dev')
 
-    # logging_setup('furnace_firmware', use_archiver=False)
+    logging_setup('furnace_firmware', use_archiver=False)
     parser = argparse.ArgumentParser(description='Run NMGRL Furnace Firmware')
 
     # parser.add_argument('--host',
