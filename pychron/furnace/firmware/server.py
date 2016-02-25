@@ -61,9 +61,6 @@ class FirmwareFactory(Factory):
         self._manager = manager
 
     def buildProtocol(self, addr):
-        if self.protocol_klass is None:
-            raise NotImplementedError
-
         return FurnaceFirmwareProtocol(self._manager, addr)
 
 
