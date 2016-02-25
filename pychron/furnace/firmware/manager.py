@@ -73,15 +73,19 @@ class FirmwareManager(HeadlessLoggable):
 
     # getters
     def get_temperature(self, data):
-        return
+        self.debug('get temperature')
+        return 0.1
 
     def get_setpoint(self, data):
-        return
+        self.debug('get setpoint')
+        return 0
 
     def get_magnets_state(self, data):
-        return
+        self.debug('get magnets state')
+        return 0
 
     def get_position(self, data):
+        self.debug('get position')
         drive = self._get_drive(data)
         if drive:
             return drive.read_position()

@@ -25,7 +25,7 @@ from pychron.hardware.core.communicators.ethernet_communicator import EthernetCo
 
 
 class FirmwareClient(HasTraits):
-    command = Str(enter_set=True, auto_set=True)
+    command = Str(enter_set=True, auto_set=False)
     responses = Str
 
     send_button = Button('Send')
@@ -42,6 +42,8 @@ class FirmwareClient(HasTraits):
     def test_connection(self):
         if not self._comm.open():
             warning(None, 'Could not connect to {}:{}'.format(self.host, self.port))
+        else:
+            return True
 
     def _send(self):
         cmd = self.command
@@ -66,7 +68,7 @@ class FirmwareClient(HasTraits):
 
 
 if __name__ == '__main__':
-    c = FirmwareClient(host='192.168.0.141', port=8000)
+    c = FirmwareClient(host='192.168.0.141', port=4567)
     if c.test_connection():
         c.configure_traits()
 # ============= EOF =============================================

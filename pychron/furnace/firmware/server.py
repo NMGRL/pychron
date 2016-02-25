@@ -73,6 +73,8 @@ class FirmwareServer(HeadlessLoggable):
     def bootstrap(self, port=None, **kw):
         self.debug('bootstrap')
         self._load_config(port)
+
+        self.debug('starting reactor')
         reactor.run()
 
     def _load_config(self, port):

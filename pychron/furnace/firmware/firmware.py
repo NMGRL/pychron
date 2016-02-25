@@ -29,7 +29,7 @@ class Firmware(HeadlessLoggable):
 
     def bootstrap(self, **kw):
         self.info('---------------------------------------------')
-        self.info('----------- Bootstraping Firmware -----------')
+        self.info('----------- Bootstrapping Firmware -----------')
         self.info('---------------------------------------------')
 
         from pychron.furnace.firmware.manager import FirmwareManager
