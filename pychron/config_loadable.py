@@ -98,7 +98,9 @@ class ConfigMixin(Loggable):
                 path = os.path.join(base, '{}.cfg'.format(name))
 
         if path is not None and os.path.isfile(path):
+
             config = self.configparser_factory()
+            self.debug('loading configuration from {}'.format(path))
             config.read(path)
             if set_path:
                 self.config_path = path

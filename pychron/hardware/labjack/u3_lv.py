@@ -93,6 +93,7 @@ class U3LV(CoreDevice):
             return self._dio_mapping[str(ch)]
         except KeyError:
             self.warning('Invalid channel {}'.format(ch))
+            self.warning('DIOMapping {}'.format(self._dio_mapping))
 
 
 if __name__ == '__main__':
