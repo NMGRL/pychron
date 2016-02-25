@@ -19,12 +19,6 @@ from traits.api import Float, Property
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.hardware.core.abstract_device import AbstractDevice
-from pychron.hardware.core.core_device import CoreDevice
-
-
-class NMGRLFurnaceDrive(CoreDevice):
-    def set_position(self, v):
-        self.ask('Setposition {}'.format(v))
 
 
 class LinearAxis(AbstractDevice):
@@ -49,7 +43,7 @@ class LinearAxis(AbstractDevice):
 
     def stop(self):
         if self._cdevice:
-            self._cdevice.stop()
+            self._cdevice.stop_drive()
 
     def _get_min_limit(self):
         return abs(self._position - self.min_value) < 1e-5

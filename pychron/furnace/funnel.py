@@ -15,14 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import json
+
 from traits.api import Int
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.hardware.core.abstract_device import AbstractDevice
+from pychron.hardware.core.core_device import CoreDevice
 
 
-class NMGRLFunnel(AbstractDevice):
+class NMGRLFunnel(CoreDevice):
     down_position = Int
     up_position = Int
     tolerance = Int
@@ -36,19 +38,26 @@ class NMGRLFunnel(AbstractDevice):
         super(NMGRLFunnel, self).load_additional_args(config)
 
     def in_up_position(self):
-        if self._cdevice:
-            if not self.simulation:
-                pos = self._cdevice.read_position()
-                return abs(pos - self.up_position) <= self.tolerance
-            else:
-                return self._simulation_funnel_up
+        if not self.simulation:
+            pos = self.read_position()
+            return abs(pos - self.up_position) <= self.tolerance
+        else:
+            return self._simulation_funnel_up
 
     def in_down_position(self):
-        if self._cdevice:
-            if not self.simulation:
-                pos = self._cdevice.read_position()
-                return abs(pos - self.down_position) <= self.tolerance
-            else:
-                return not self._simulation_funnel_up
+        if not self.simulation:
+            pos = self.read_position()
+            return abs(pos - self.down_position) <= self.tolerance
+        else:
+            return not self._simulation_funnel_up
+
+    def read_position(self):
+        d = {'drive': 'funnel'}
+        d = json.dumps(d)
+        pos = self.ask('GetPosition {}'.format(d))
+        try:
+            return float(pos)
+        except (TypeError, ValueError):
+            pass
 
 # ============= EOF =============================================

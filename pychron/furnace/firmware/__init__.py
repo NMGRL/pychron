@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2015 Jake Ross
+# Copyright 2016 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,40 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change
+from traitsui.api import View, UItem, Item, HGroup, VGroup
 # ============= standard library imports ========================
-from twisted.internet import reactor
-from twisted.internet.endpoints import TCP4ServerEndpoint
-
-
 # ============= local library imports  ==========================
 
 
-class TxServer:
-    factory = None
-
-    def bootstrap(self):
-        self.start()
-
-    def add_endpoint(self, port, factory):
-        endpoint = TCP4ServerEndpoint(reactor, port)
-        endpoint.listen(factory)
-
-    def start(self):
-        from threading import Thread
-        t = Thread(target=reactor.run, args=(False,))
-        t.setDaemon(True)
-        t.start()
-
-    def stop(self):
-        reactor.stop()
-
-    kill = stop
-
-
-if __name__ == '__main__':
-    from pychron.tx.factories import ValveFactory
-
-    endpoint = TCP4ServerEndpoint(reactor, 8007)
-    endpoint.listen(ValveFactory())
-    reactor.run()
 # ============= EOF =============================================
+
+
+

@@ -15,14 +15,39 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import json
+
 from traits.api import Instance
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.furnace_canvas import FurnaceCanvas
+from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.linear_axis import LinearAxis
 from pychron.paths import paths
 from pychron.stage.maps.furnace_map import FurnaceStageMap
 from pychron.stage.stage_manager import BaseStageManager
+
+
+class NMGRLDrive(CoreDevice):
+    def load_additional_args(self, config):
+        self.set_attribute(config, 'drive_name', 'General', 'drive_name')
+        return True
+
+    def move_relative(self, turns, convert_turns=False):
+        d = {'turns': turns, 'convert_turns': convert_turns}
+        d = json.dumps(d)
+        self.ask('MoveRelative {}'.format(d))
+
+    def stop_drive(self):
+        pass
+
+    def slew(self, modifier):
+        pass
+
+    def set_position(self, pos):
+        d = {'position': pos, 'drive': self.drive_name}
+        d = json.dumps(d)
+        self.ask('SetPosition {}'.format(d))
 
 
 class SampleLinearHolder(LinearAxis):

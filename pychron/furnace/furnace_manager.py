@@ -93,12 +93,12 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     def actuate_magnets(self):
         self.debug('actuate magnets')
         if self.loader_logic.check('AM'):
-            self.magnets.open()
+            self.magnets.energize()
 
             # jitter linear drive
             self.stage_manager.jitter()
 
-            self.magnets.close()
+            self.magnets.denergize()
         else:
             self.warning('actuate magnets not enabled')
 

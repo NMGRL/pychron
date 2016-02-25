@@ -1,0 +1,159 @@
+# ===============================================================================
+# Copyright 2016 Jake Ross
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ===============================================================================
+
+# ============= enthought library imports =======================
+from threading import Thread
+import time
+import yaml
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
+from pychron.hardware.eurotherm import Eurotherm
+from pychron.hardware.labjack.u3_lv import U3LV
+from pychron.hardware.mdrive import MDriveMotor
+from pychron.loggable import Loggable
+from pychron.paths import paths
+
+DEVICES = {'controller': Eurotherm,
+           'switch_controller': U3LV,
+           'funnel': MDriveMotor,
+           'feeder': MDriveMotor}
+
+
+class FirmwareManager(Loggable):
+    controller = None
+    switch_controller = None
+    funnel = None
+    feeder = None
+
+    def bootstrap(self, **kw):
+        p = paths.furnace_firmware
+        with open(p, 'r') as rfile:
+            yd = yaml.load(rfile)
+
+        self._load_devices(yd['devices'])
+        self._load_switch_mapping(yd['switch_mapping'])
+        self._load_funnel(yd['funnel'])
+        self._load_magnets(yd['magnets'])
+
+    def _load_magnets(self, m):
+        self._magnet_channels = m
+
+    def _load_funnel(self, f):
+        self._funnel_down = f['down']
+        self._funnel_up = f['up']
+
+    def _load_switch_mapping(self, m):
+        self._switch_mapping = m
+
+    def _load_devices(self, devices):
+        for dev in devices:
+            self._load_device(dev)
+
+    def _load_device(self, devname):
+        self.debug('load device name={}'.format(devname))
+        klass = DEVICES[devname]
+        dev = klass(name=devname, configuration_dir_name='furnace')
+        dev.bootstrap()
+
+        setattr(self, devname, dev)
+
+    # getters
+    def get_temperature(self):
+        return
+
+    def get_setpoint(self):
+        return
+
+    def get_magnets_state(self):
+        return
+
+    def get_position(self, data):
+        drive = self._get_drive(data)
+        if drive:
+            return drive.read_position()
+
+    # setters
+    def set_setpoint(self, data):
+        return
+
+    def open_switch(self, data):
+        if self.switch_controller:
+            ch = self._get_switch_channel(data)
+            if ch:
+                self.switch_controller.set_channel_state(ch, True)
+                return 'OK'
+
+    def close_switch(self, data):
+        if self.switch_controller:
+            ch = self._get_switch_channel(data)
+            if ch:
+                self.switch_controller.set_channel_state(ch, False)
+                return 'OK'
+
+    def raise_funnel(self):
+        if self.funnel:
+            return self.funnel.move_absolute(self._funnel_up)
+
+    def lower_funnel(self):
+        if self.funnel:
+            return self.funnel.move_absolute(self._funnel_down)
+
+    def energize_magnets(self):
+        if self.switch_controller:
+            def func():
+                for m in self._magnet_channels:
+                    self.switch_controller.set_channel_state(m, True)
+                    time.sleep(1)
+
+            t = Thread(target=func)
+            t.start()
+            return True
+
+    def denergize_magnets(self):
+        if self.switch_controller:
+            for m in self._magnet_channels:
+                self.switch_controller.set_channel_state(m, False)
+            return True
+
+    def move_absolute(self, data):
+        drive = self._get_drive(data)
+        if drive:
+            drive.move_absolute(data['position'])
+
+    def move_relative(self, data):
+        drive = self._get_drive(data)
+        if drive:
+            convert_turns = data.get('convert_turns', False)
+            drive.move_absolute(data['position'], convert_turns=convert_turns)
+
+    # private
+    def _get_drive(self, data):
+        drive = data.get('drive')
+        if drive:
+            try:
+                return getattr(self, drive)
+            except AttributeError:
+                pass
+
+    def _get_switch_channel(self, data):
+        if isinstance(data, dict):
+            name = data['name']
+        else:
+            name = data
+
+        return self._switch_mapping.get(name)
+
+# ============= EOF =============================================
