@@ -18,9 +18,7 @@
 # =============standard library imports ========================
 # =============local library imports  ==========================
 from pychron.hardware.core.base_core_device import BaseCoreDevice
-
-
-# @provides(ICoreDevice)
+print 'import base coredevice'
 from pychron.headless_loggable import HeadlessLoggable
 
 

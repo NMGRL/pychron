@@ -21,6 +21,7 @@ import yaml
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.hardware.eurotherm.headless import HeadlessEurotherm
+print 'imported headless eurotherm'
 # from pychron.hardware.labjack.u3_lv import U3LV
 # from pychron.hardware.mdrive import MDriveMotor
 from pychron.headless_loggable import HeadlessLoggable

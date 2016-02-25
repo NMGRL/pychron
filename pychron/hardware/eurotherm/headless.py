@@ -18,7 +18,9 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.hardware.core.headless.core_device import HeadlessCoreDevice
+print 'imported headless core device'
 from pychron.hardware.eurotherm.base import BaseEurotherm
+print 'imported headless base eurotherm'
 
 
 class HeadlessEurotherm(BaseEurotherm, HeadlessCoreDevice):
