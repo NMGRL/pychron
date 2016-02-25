@@ -21,7 +21,8 @@ from traits.api import Instance
 from twisted.internet import reactor
 from twisted.internet.endpoints import TCP4ServerEndpoint
 from twisted.internet.protocol import Factory
-from pychron.loggable import Loggable
+
+from pychron.headless_loggable import HeadlessLoggable
 from pychron.tx.protocols.service import ServiceProtocol
 
 
@@ -66,19 +67,22 @@ class FirmwareFactory(Factory):
         return FurnaceFirmwareProtocol(self._manager, addr)
 
 
-class FirmwareServer(Loggable):
+class FirmwareServer(HeadlessLoggable):
     manager = Instance('pychron.furnace.firmware.manager.FirmwareManager')
 
     def bootstrap(self, port=None, **kw):
+        self.debug('bootstrap')
         self._load_config(port)
         reactor.run()
 
     def _load_config(self, port):
+        self.debug('load config')
         if port is None:
             port = 8000
         self.add_endpoint(port, FirmwareFactory(self.manager))
 
     def add_endpoint(self, port, factory):
+        self.debug('add endbpoint port={} factory={}'.format(port, factory.__class__.__name__))
         endpoint = TCP4ServerEndpoint(reactor, port)
         endpoint.listen(factory)
 

@@ -213,8 +213,8 @@ class Loggable(HasTraits):
             name = self.__class__.__name__
 
         if self.logger is None:
-            __gloggers__[name] = self.logger
             self.logger = new_logger(name)
+            __gloggers__[name] = self.logger
 
         c = color_name_gen.next()
         if c in ['gray', 'silver', 'greenyellow']:

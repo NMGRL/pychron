@@ -19,15 +19,19 @@
 # ============= local library imports  ==========================
 
 from pychron.core.helpers.logger_setup import logging_setup
-from pychron.loggable import Loggable
+from pychron.headless_loggable import HeadlessLoggable
 from pychron.paths import paths
 
 
-class Firmware(Loggable):
+class Firmware(HeadlessLoggable):
     manager = None
     server = None
 
     def bootstrap(self, **kw):
+        self.info('---------------------------------------------')
+        self.info('----------- Bootstraping Firmware -----------')
+        self.info('---------------------------------------------')
+
         from pychron.furnace.firmware.manager import FirmwareManager
         from pychron.furnace.firmware.server import FirmwareServer
         self.manager = FirmwareManager()
@@ -41,7 +45,7 @@ def run():
 
     paths.build('_dev')
 
-    logging_setup('furnace_firmware')
+    logging_setup('furnace_firmware', use_archiver=False)
     parser = argparse.ArgumentParser(description='Run NMGRL Furnace Firmware')
 
     # parser.add_argument('--host',

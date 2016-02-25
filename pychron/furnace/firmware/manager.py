@@ -20,19 +20,19 @@ import time
 import yaml
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.hardware.eurotherm import Eurotherm
-from pychron.hardware.labjack.u3_lv import U3LV
-from pychron.hardware.mdrive import MDriveMotor
-from pychron.loggable import Loggable
+# from pychron.hardware.eurotherm import Eurotherm
+# from pychron.hardware.labjack.u3_lv import U3LV
+# from pychron.hardware.mdrive import MDriveMotor
+from pychron.headless_loggable import HeadlessLoggable
 from pychron.paths import paths
 
-DEVICES = {'controller': Eurotherm,
-           'switch_controller': U3LV,
-           'funnel': MDriveMotor,
-           'feeder': MDriveMotor}
+# DEVICES = {'controller': Eurotherm,
+#            'switch_controller': U3LV,
+#            'funnel': MDriveMotor,
+#            'feeder': MDriveMotor}
 
 
-class FirmwareManager(Loggable):
+class FirmwareManager(HeadlessLoggable):
     controller = None
     switch_controller = None
     funnel = None
@@ -65,11 +65,11 @@ class FirmwareManager(Loggable):
 
     def _load_device(self, devname):
         self.debug('load device name={}'.format(devname))
-        klass = DEVICES[devname]
-        dev = klass(name=devname, configuration_dir_name='furnace')
-        dev.bootstrap()
-
-        setattr(self, devname, dev)
+        # klass = DEVICES[devname]
+        # dev = klass(name=devname, configuration_dir_name='furnace')
+        # dev.bootstrap()
+        #
+        # setattr(self, devname, dev)
 
     # getters
     def get_temperature(self, data):
