@@ -19,7 +19,7 @@ from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait
 # ============= standard library imports ========================
 import os
 # ============= local library imports  ==========================
-from pychron.furnace.furnace_controller import IFurnaceController
+from pychron.furnace.ifurnace_controller import IFurnaceController
 from pychron.hardware.eurotherm import STX, ETX, EOT, ACK, ENQ
 from pychron.paths import paths
 
