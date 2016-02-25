@@ -41,22 +41,23 @@
 
 
 def run():
-    import argparse
+    print 'run'
+    # import argparse
 
     # paths.build('_dev')
 
     # logging_setup('furnace_firmware', use_archiver=False)
-    parser = argparse.ArgumentParser(description='Run NMGRL Furnace Firmware')
+    # parser = argparse.ArgumentParser(description='Run NMGRL Furnace Firmware')
 
     # parser.add_argument('--host',
     #                     type=str,
     #                     default='127.0.0.1',
     #                     help='host')
 
-    parser.add_argument('--port',
-                        type=int,
-                        default=4567,
-                        help='TCP port to listen')
+    # parser.add_argument('--port',
+    #                     type=int,
+    #                     default=4567,
+    #                     help='TCP port to listen')
 
     # parser.add_argument('--debug',
     #                     action='store_true',
