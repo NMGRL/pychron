@@ -21,13 +21,12 @@ import yaml
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.hardware.eurotherm.headless import HeadlessEurotherm
-from pychron.hardware.labjack.u3_lv import U3LV
-# from pychron.hardware.mdrive import MDriveMotor
+from pychron.hardware.labjack.headless_u3_lv import HeadlessU3LV
 from pychron.headless_loggable import HeadlessLoggable
 from pychron.paths import paths
 
 DEVICES = {'controller': HeadlessEurotherm,
-           'switch_controller': U3LV}
+           'switch_controller': HeadlessU3LV}
            # 'funnel': MDriveMotor,
            # 'feeder': MDriveMotor}
 
