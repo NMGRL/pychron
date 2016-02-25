@@ -20,16 +20,16 @@ import time
 import yaml
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-# from pychron.hardware.eurotherm import Eurotherm
-# from pychron.hardware.labjack.u3_lv import U3LV
-# from pychron.hardware.mdrive import MDriveMotor
+from pychron.hardware.eurotherm import Eurotherm
+from pychron.hardware.labjack.u3_lv import U3LV
+from pychron.hardware.mdrive import MDriveMotor
 from pychron.headless_loggable import HeadlessLoggable
 from pychron.paths import paths
 
-# DEVICES = {'controller': Eurotherm,
-#            'switch_controller': U3LV,
-#            'funnel': MDriveMotor,
-#            'feeder': MDriveMotor}
+DEVICES = {'controller': Eurotherm,
+           'switch_controller': U3LV,
+           'funnel': MDriveMotor,
+           'feeder': MDriveMotor}
 
 
 class FirmwareManager(HeadlessLoggable):
@@ -65,58 +65,65 @@ class FirmwareManager(HeadlessLoggable):
 
     def _load_device(self, devname):
         self.debug('load device name={}'.format(devname))
-        # klass = DEVICES[devname]
-        # dev = klass(name=devname, configuration_dir_name='furnace')
-        # dev.bootstrap()
-        #
-        # setattr(self, devname, dev)
+        klass = DEVICES[devname]
+        dev = klass(name=devname, configuration_dir_name='furnace')
+        dev.bootstrap()
+
+        setattr(self, devname, dev)
 
     # getters
     def get_temperature(self, data):
-        self.debug('get temperature')
+        self.debug('----- get temperature')
         return 0.1
 
     def get_setpoint(self, data):
-        self.debug('get setpoint')
+        self.debug('----- get setpoint')
         return 0
 
     def get_magnets_state(self, data):
-        self.debug('get magnets state')
+        self.debug('----- get magnets state')
         return 0
 
     def get_position(self, data):
-        self.debug('get position')
+        self.debug('----- get position')
         drive = self._get_drive(data)
         if drive:
             return drive.read_position()
 
     def moving(self, data):
+        self.debug('----- moving')
         drive = self._get_drive(data)
         if drive:
             return drive.moving()
 
     def is_funnel_down(self, data):
+        self.debug('----- is_funnel_down')
         funnel = self.funnel
         if funnel:
             pos = funnel.read_position()
             return abs(pos - self._funnel_down) < self._funnel_tolerance
 
     def is_funnel_up(self, data):
+        self.debug('----- is_funnel_up')
         funnel = self.funnel
         if funnel:
             pos = funnel.read_position()
             return abs(pos - self._funnel_up) < self._funnel_tolerance
 
     def get_channel_state(self, data):
+        self.debug('----- channel state data={}'.format(data))
         if self.switch_controller:
             ch = self._get_switch_channel(data)
+
             return self.switch_controller.get_channel_state(ch)
 
     # setters
     def set_setpoint(self, data):
+        self.debug('----- set setpoint data={}'.format(data))
         return
 
     def open_switch(self, data):
+        self.debug('----- open switch data={}'.format(data))
         if self.switch_controller:
             ch = self._get_switch_channel(data)
             if ch:
@@ -124,6 +131,7 @@ class FirmwareManager(HeadlessLoggable):
                 return 'OK'
 
     def close_switch(self, data):
+        self.debug('----- close switch data={}'.format(data))
         if self.switch_controller:
             ch = self._get_switch_channel(data)
             if ch:
@@ -131,14 +139,17 @@ class FirmwareManager(HeadlessLoggable):
                 return 'OK'
 
     def raise_funnel(self, data):
+        self.debug('----- raise funnel')
         if self.funnel:
             return self.funnel.move_absolute(self._funnel_up)
 
     def lower_funnel(self, data):
+        self.debug('----- lower funnel')
         if self.funnel:
             return self.funnel.move_absolute(self._funnel_down)
 
     def energize_magnets(self, data):
+        self.debug('----- energize magnets')
         if self.switch_controller:
             def func():
                 for m in self._magnet_channels:
@@ -150,17 +161,20 @@ class FirmwareManager(HeadlessLoggable):
             return True
 
     def denergize_magnets(self, data):
+        self.debug('----- denergize magnets')
         if self.switch_controller:
             for m in self._magnet_channels:
                 self.switch_controller.set_channel_state(m, False)
             return True
 
     def move_absolute(self, data):
+        self.debug('----- move absolute data={}'.format(data))
         drive = self._get_drive(data)
         if drive:
             drive.move_absolute(data['position'])
 
     def move_relative(self, data):
+        self.debug('----- move relative data={}'.format(data))
         drive = self._get_drive(data)
         if drive:
             convert_turns = data.get('convert_turns', False)
@@ -181,6 +195,8 @@ class FirmwareManager(HeadlessLoggable):
         else:
             name = data
 
-        return self._switch_mapping.get(name)
+        ch = self._switch_mapping.get(name)
+        self.debug('get switch channel {} {}'.format(name, ch))
+        return ch
 
 # ============= EOF =============================================
