@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change
+from traits.api import HasTraits, Str
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -23,6 +23,9 @@ from pychron.core.helpers.logger_setup import new_logger
 
 
 class HeadlessLoggable(HasTraits):
+    name = Str
+    logger_name = Str
+
     def __init__(self, *args, **kw):
         super(HeadlessLoggable, self).__init__(*args, **kw)
 
