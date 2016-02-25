@@ -28,7 +28,7 @@ from pychron.stage.maps.furnace_map import FurnaceStageMap
 from pychron.stage.stage_manager import BaseStageManager
 
 
-class SampleLinearHolder(LinearAxis):
+class Feeder(LinearAxis):
     def jitter(self, turns=0.125, n=20, freq=10):
         """
         :param turns: fractional turns
@@ -53,10 +53,10 @@ class BaseFurnaceStageManager(BaseStageManager):
 
 
 class NMGRLFurnaceStageManager(BaseFurnaceStageManager):
-    sample_linear_holder = Instance(SampleLinearHolder)
+    feeder = Instance(Feeder)
 
     def jitter(self):
-        self.sample_linear_holder.jitter()
+        self.feeder.jitter()
 
     def set_sample_dumped(self):
         hole = self.stage_map.get_hole(self.calibrated_position_entry)
@@ -65,21 +65,21 @@ class NMGRLFurnaceStageManager(BaseFurnaceStageManager):
             self.canvas.request_redraw()
 
     def get_current_position(self):
-        if self.sample_linear_holder:
-            x = self.sample_linear_holder.position
+        if self.feeder:
+            x = self.feeder.position
             return x, 0
 
     def goto_position(self, v):
         self.move_to_hole(v)
 
     def in_motion(self):
-        return self.sample_linear_holder.moving()
+        return self.feeder.moving()
 
     def relative_move(self, ax_key, direction, distance):
-        self.sample_linear_holder.slew(direction * distance)
+        self.feeder.slew(direction * distance)
 
     def key_released(self):
-        self.sample_linear_holder.stop()
+        self.feeder.stop()
 
     # private
     def _move_to_hole(self, key, correct_position=True):
@@ -92,8 +92,8 @@ class NMGRLFurnaceStageManager(BaseFurnaceStageManager):
             x, y = self.get_calibrated_position(pos, key=key)
             self.info('hole={}, position={}, calibrated_position={}'.format(key, pos, (x, y)))
 
-            self.sample_linear_holder.position = x
-            self.sample_linear_holder.move_absolute(x)
+            self.feeder.position = x
+            self.feeder.move_absolute(x)
 
             self.info('Move complete')
             self.update_axes()  # update_hole=False)
@@ -106,11 +106,11 @@ class NMGRLFurnaceStageManager(BaseFurnaceStageManager):
         # v = self.sample_linear_holder.update_current_position()
 
     def _canvas_factory(self):
-        c = FurnaceCanvas(sample_linear_holder=self.sample_linear_holder)
+        c = FurnaceCanvas(feeder=self.feeder)
         return c
 
-    def _sample_linear_holder_default(self):
-        d = SampleLinearHolder(name='sample_linear_holder', configuration_dir_name='furnace')
+    def _feeder_default(self):
+        d = Feeder(name='feeder', configuration_dir_name='furnace')
         return d
 
 # ============= EOF =============================================

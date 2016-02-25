@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2015 Jake Ross
+# Copyright 2016 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,27 +15,31 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Interface, provides
 # ============= standard library imports ========================
+import json
 # ============= local library imports  ==========================
-from pychron.hardware.core.abstract_device import AbstractDevice
+from traits.has_traits import provides
 
-
-class IFurnaceController(Interface):
-    def read_setpoint(self):
-        pass
-
-    def set_setpoint(self, v):
-        pass
+from pychron.furnace.furnace_controller import IFurnaceController
+from pychron.hardware.core.core_device import CoreDevice
 
 
 @provides(IFurnaceController)
-class FurnaceController(AbstractDevice):
-    def read_setpoint(self, **kw):
-        if self._cdevice:
-            return self._cdevice.read_setpoint(**kw)
-
+class NMGRLFurnaceEurotherm(CoreDevice):
     def set_setpoint(self, v, **kw):
-        if self._cdevice:
-            return self._cdevice.set_setpoint(v, **kw)
+        d = {'setpoint': v}
+        d = json.dumps(d)
+        self.ask('SetSetpoint {}'.format(d))
+
+    def get_setpoint(self, **kw):
+        resp = self.ask('GetSetpoint')
+        try:
+            return float(resp)
+        except (TypeError, ValueError):
+            pass
+
+    read_setpoint = get_setpoint
 # ============= EOF =============================================
+
+
+

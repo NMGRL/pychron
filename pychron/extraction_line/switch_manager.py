@@ -104,7 +104,10 @@ class SwitchManager(Manager):
     def create_device(self, name, *args, **kw):
         """
         """
+
         dev = super(SwitchManager, self).create_device(name, *args, **kw)
+        dev.configuration_dir_name = self.configuration_dir_name
+
         if 'actuator' in name or 'controller' in name:
             if dev is not None:
                 self.actuators.append(dev)

@@ -37,7 +37,8 @@ class FurnaceFirmwareProtocol(ServiceProtocol):
                         ('GetMagnetsState', self._manager.get_magnets_state),
                         ('Moving', self._manager.moving),
                         ('IsFunnelUp',self._manager.is_funnel_up),
-                        ('IsFunnelDown', self._manager.is_funnel_down))
+                        ('IsFunnelDown', self._manager.is_funnel_down),
+                        ('GetChannelState', self._manager.get_channel_state))
 
         set_services = (('SetSetpoint', self._manager.set_setpoint),
                         ('SetPosition', self._manager.set_position),

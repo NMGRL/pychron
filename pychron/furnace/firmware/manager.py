@@ -103,6 +103,11 @@ class FirmwareManager(Loggable):
             pos = funnel.read_position()
             return abs(pos - self._funnel_up) < self._funnel_tolerance
 
+    def get_channel_state(self, data):
+        if self.switch_controller:
+            ch = self._get_switch_channel(data)
+            return self.switch_controller.get_channel_state(ch)
+
     # setters
     def set_setpoint(self, data):
         return

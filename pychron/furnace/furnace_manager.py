@@ -49,6 +49,10 @@ class BaseFurnaceManager(Manager):
                               configuration_dir_name='furnace')
         return c
 
+    def _switch_manager_default(self):
+        sm = SwitchManager(configuration_dir_name='furnace')
+        return sm
+
 
 @provides(IFurnaceManager)
 class NMGRLFurnaceManager(BaseFurnaceManager):
@@ -243,9 +247,10 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
 
     def _update_readback(self):
         v = self.read_setpoint(update=True)
-        self.graph.record(v, track_y=False)
-        if self._alive:
-            do_after(self.update_period * 1000, self._update_readback)
+        if v is not None:
+            self.graph.record(v, track_y=False)
+            if self._alive:
+                do_after(self.update_period * 1000, self._update_readback)
 
     def _dump_sample(self):
         """
@@ -301,10 +306,6 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
 
     def _stage_manager_default(self):
         sm = NMGRLFurnaceStageManager(stage_manager_id='nmgrl.furnace.stage_map')
-        return sm
-
-    def _switch_manager_default(self):
-        sm = SwitchManager()
         return sm
 
     def _dumper_canvas_default(self):

@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2015 Jake Ross
+# Copyright 2016 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,27 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Interface, provides
+from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change
+from traitsui.api import View, UItem, Item, HGroup, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.hardware.core.abstract_device import AbstractDevice
 
 
-class IFurnaceController(Interface):
-    def read_setpoint(self):
-        pass
-
-    def set_setpoint(self, v):
-        pass
-
-
-@provides(IFurnaceController)
-class FurnaceController(AbstractDevice):
-    def read_setpoint(self, **kw):
-        if self._cdevice:
-            return self._cdevice.read_setpoint(**kw)
-
-    def set_setpoint(self, v, **kw):
-        if self._cdevice:
-            return self._cdevice.set_setpoint(v, **kw)
 # ============= EOF =============================================
+
+
+

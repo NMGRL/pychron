@@ -125,8 +125,8 @@ class MDriveMotor(CoreDevice, BaseLinearDrive):
             ('Motion', 'initial_velocity'),
             ('Motion', 'acceleration'),
             ('Motion', 'deceleration'),
-            ('Motion', 'run_current')
-            ('Motion', 'use_encoder')
+            ('Motion', 'run_current'),
+            ('Motion', 'use_encoder'),
 
             ('Homing', 'home_delay'),
             ('Homing', 'home_velocity'),
@@ -145,7 +145,7 @@ class MDriveMotor(CoreDevice, BaseLinearDrive):
         return True
 
     def initialize(self, *args, **kw):
-        self.set_encoder_mode(self.use_encoder)
+        self.set_use_encoder(self.use_encoder)
         if self.use_encoder:
             self.steps_per_turn = 2048
         else:
@@ -180,7 +180,7 @@ class MDriveMotor(CoreDevice, BaseLinearDrive):
             self.set_slew(v)
             self._slewing = True
 
-    def stop(self):
+    def stop_drive(self):
         self._slewing = False
         self.set_slew(0)
 

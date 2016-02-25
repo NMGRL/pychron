@@ -25,7 +25,8 @@ from pychron.hardware.core.scanable_device import ScanableDevice
 
 PACKAGES = dict(ProXRADC='pychron.hardware.ncd.adc',
                 Eurotherm='pychron.hardware.eurotherm',
-                NMGRLFurnaceDrive='pychron.hardware.nmgrl_furnace_drive',
+                NMGRLFurnaceFeeder='pychron.hardware.furnace.nmgrl.feeder',
+                NMGRLFurnaceEurotherm='pychron.hardware.furnace.nmgrl.eurotherm',
                 MDriveMotor='pychron.hardware.mdrive',
                 RPiGPIO='pychron.hardware.rpi_gpio')
 

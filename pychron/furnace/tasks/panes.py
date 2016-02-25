@@ -98,10 +98,10 @@ class ControlPane(TraitsDockPane):
                        VGroup(UItem('setpoint_readback', editor=LCDEditor())),
                        label='Controller', show_border=True)
         d_grp = VGroup(Item('stage_manager.calibrated_position_entry', label='Hole'),
-                       Item('stage_manager.sample_linear_holder.position',
+                       Item('stage_manager.feeder.position',
                             editor=RangeEditor(mode='slider',
-                                               low_name='stage_manager.sample_linear_holder.min_value',
-                                               high_name='stage_manager.sample_linear_holder.max_value', )),
+                                               low_name='stage_manager.feeder.min_value',
+                                               high_name='stage_manager.feeder.max_value', )),
 
                        HGroup(UItem('pane.dump_sample_button',
                                     tooltip='Complete sample dumping procedure'),
