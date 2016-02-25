@@ -30,6 +30,7 @@ from i_core_device import ICoreDevice
 # from pychron.core.helpers.timer import Timer
 # from pychron.managers.data_managers.csv_data_manager import CSVDataManager
 # from pychron.core.helpers.datetime_tools import generate_datetimestamp
+from pychron.config_mixin import ConfigMixin
 from pychron.globals import globalv
 from pychron.hardware.core.exceptions import TimeoutError, CRCError
 from pychron.has_communicator import HasCommunicator
@@ -49,7 +50,7 @@ def crc_caller(func):
 
 
 @provides(ICoreDevice)
-class BaseCoreDevice(HasCommunicator, ConsumerMixin):
+class BaseCoreDevice(ConfigMixin, HasCommunicator, ConsumerMixin):
     """
     """
 

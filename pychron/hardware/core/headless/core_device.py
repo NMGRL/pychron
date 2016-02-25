@@ -17,14 +17,55 @@
 # =============enthought library imports=======================
 # =============standard library imports ========================
 # =============local library imports  ==========================
-from pychron.config_loadable import ConfigLoadable
 from pychron.hardware.core.base_core_device import BaseCoreDevice
 
 
 # @provides(ICoreDevice)
-class HeadlessCoreDevice(BaseCoreDevice, ConfigLoadable):
+from pychron.headless_loggable import HeadlessLoggable
+
+
+class HeadlessCoreDevice(BaseCoreDevice, HeadlessLoggable):
     """
     """
-    pass
+    def bootstrap(self, *args, **kw):
+        """
+        """
+
+        self.info('load')
+        if self.load(*args, **kw):
+            self.info('open')
+            if self.open(*args, **kw):
+                self.info('initialize')
+                self.initialize(*args, **kw)
+                return True
+            else:
+                self.initialize(*args, **kw)
+                self.warning('failed opening')
+        else:
+            self.warning('failed loading')
+
+    def open(self, *args, **kw):
+        """
+        """
+
+        return True
+
+    def load(self, *args, **kw):
+        """
+        """
+        return True
+
+    def load_additional_args(self, *args, **kw):
+        return True
+
+    def _load_hook(self, config):
+        pass
+
+    def initialize(self, *args, **kw):
+        """
+        """
+
+        return True
+
 
 # ========================= EOF ============================================
