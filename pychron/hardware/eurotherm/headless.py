@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2011 Jake Ross
+# Copyright 2016 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,13 +14,17 @@
 # limitations under the License.
 # ===============================================================================
 
-# =============enthought library imports=======================
-# =============standard library imports ========================
-# =============local library imports  ==========================
-from pychron.hardware.core.base_core_device import BaseCoreDevice
-from pychron.hardware.core.scanable_device import ScanableDevice
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
+from pychron.hardware.core.headless.core_device import HeadlessCoreDevice
+from pychron.hardware.eurotherm.base import BaseEurotherm
 
 
-class CoreDevice(BaseCoreDevice, ScanableDevice):
+class HeadlessEurotherm(BaseEurotherm, HeadlessCoreDevice):
     pass
-# ========================= EOF ============================================
+
+# ============= EOF =============================================
+
+
+

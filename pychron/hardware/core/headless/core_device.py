@@ -17,10 +17,14 @@
 # =============enthought library imports=======================
 # =============standard library imports ========================
 # =============local library imports  ==========================
+from pychron.config_loadable import ConfigLoadable
 from pychron.hardware.core.base_core_device import BaseCoreDevice
-from pychron.hardware.core.scanable_device import ScanableDevice
 
 
-class CoreDevice(BaseCoreDevice, ScanableDevice):
+# @provides(ICoreDevice)
+class HeadlessCoreDevice(BaseCoreDevice, ConfigLoadable):
+    """
+    """
     pass
+
 # ========================= EOF ============================================
