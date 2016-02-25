@@ -16,7 +16,7 @@
 
 # =============enthought library imports=======================
 
-from traits.api import provides
+from traits.api import provides, HasTraits
 
 # from pyface.timer.api import Timer
 # =============standard library imports ========================
@@ -50,7 +50,7 @@ def crc_caller(func):
 
 
 @provides(ICoreDevice)
-class BaseCoreDevice(ConfigMixin, HasCommunicator, ConsumerMixin):
+class BaseCoreDevice(HasTraits, ConfigMixin, HasCommunicator, ConsumerMixin):
     """
     """
 
