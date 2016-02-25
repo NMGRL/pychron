@@ -19,25 +19,25 @@
 # ============= local library imports  ==========================
 
 from pychron.core.helpers.logger_setup import logging_setup
-from pychron.headless_loggable import HeadlessLoggable
 from pychron.paths import paths
-
-
-class Firmware(HeadlessLoggable):
-    manager = None
-    server = None
-
-    def bootstrap(self, **kw):
-        self.info('---------------------------------------------')
-        self.info('----------- Bootstrapping Firmware -----------')
-        self.info('---------------------------------------------')
-
-        from pychron.furnace.firmware.manager import FirmwareManager
-        from pychron.furnace.firmware.server import FirmwareServer
-        self.manager = FirmwareManager()
-        self.manager.bootstrap(**kw)
-        self.server = FirmwareServer(manager=self.manager)
-        self.server.bootstrap(**kw)
+# from pychron.headless_loggable import HeadlessLoggable
+#
+#
+# class Firmware(HeadlessLoggable):
+#     manager = None
+#     server = None
+#
+#     def bootstrap(self, **kw):
+#         self.info('---------------------------------------------')
+#         self.info('----------- Bootstrapping Firmware -----------')
+#         self.info('---------------------------------------------')
+#
+#         from pychron.furnace.firmware.manager import FirmwareManager
+#         from pychron.furnace.firmware.server import FirmwareServer
+#         self.manager = FirmwareManager()
+#         self.manager.bootstrap(**kw)
+#         self.server = FirmwareServer(manager=self.manager)
+#         self.server.bootstrap(**kw)
 
 
 def run():
@@ -63,8 +63,8 @@ def run():
     #                     default=False,
     #                     help='run in debug mode')
 
-    fm = Firmware()
-    fm.bootstrap(**vars(parser.parse_args()))
+    # fm = Firmware()
+    # fm.bootstrap(**vars(parser.parse_args()))
 
 if __name__ == '__main__':
     run()
