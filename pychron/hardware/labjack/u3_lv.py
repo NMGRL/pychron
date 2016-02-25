@@ -20,11 +20,10 @@ import time
 import u3
 # ============= local library imports  ==========================
 from LabJackPython import NullHandleException
+from pychron.hardware.core.headless.core_device import HeadlessCoreDevice
 
-from pychron.hardware.core.core_device import CoreDevice
 
-
-class U3LV(CoreDevice):
+class U3LV(HeadlessCoreDevice):
     _device = None
     _dio_mapping = None
 
