@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import time
 from pyface.message_dialog import warning
 from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change, Button
 from traitsui.api import View, UItem, Item, HGroup, VGroup, TextEditor
@@ -25,7 +26,7 @@ from pychron.hardware.core.communicators.ethernet_communicator import EthernetCo
 
 
 class FirmwareClient(HasTraits):
-    command = Str(enter_set=True, auto_set=False)
+    command = Str#(enter_set=True, auto_set=False)
     responses = Str
 
     send_button = Button('Send')
@@ -33,10 +34,14 @@ class FirmwareClient(HasTraits):
     host = Str
     port = Int
 
+    test_button = Button('Test')
+
     def __init__(self, *args, **kw):
         super(FirmwareClient, self).__init__(*args, **kw)
 
-        c = EthernetCommunicator(host=self.host, port=self.port)
+        c = EthernetCommunicator(host=self.host, port=self.port,
+                                 use_end=True,
+                                 kind='TCP')
         self._comm = c
 
     def test_connection(self):
@@ -45,21 +50,28 @@ class FirmwareClient(HasTraits):
         else:
             return True
 
-    def _send(self):
-        cmd = self.command
+    def _send(self, cmd):
         resp = self._comm.ask(cmd)
         resp = '{} ==> {}'.format(cmd, resp)
         self.responses = '{}\n{}'.format(self.responses, resp)
-
+        
     # handlers
-    def _send_button_fired(self):
-        self._send()
+    def _test_button_fired(self):
+        for i in range(5):
+            if i % 2 == 0:
+                self._send('Open A')
+            else:
+                self._send('Close A')
+            time.sleep(1)
 
-    def _command_changed(self):
-        self._send()
+    def _send_button_fired(self):
+        self._send(self.command)
+
+    # def _command_changed(self):
+    #     self._send(self.command)
 
     def traits_view(self):
-        v = View(VGroup(HGroup(Item('command'), UItem('send_button')),
+        v = View(VGroup(HGroup(Item('command'), UItem('send_button'), UItem('test_button')),
                         UItem('responses', style='custom',
                               editor=TextEditor(read_only=True))),
                  title='Furnace Firmware Client',
