@@ -42,7 +42,6 @@ class FurnaceFirmwareProtocol(ServiceProtocol):
                         ('GetChannelState', self._manager.get_channel_state))
 
         set_services = (('SetSetpoint', self._manager.set_setpoint),
-                        ('SetPosition', self._manager.set_position),
                         ('Open', self._manager.open_switch),
                         ('Close', self._manager.close_switch),
                         ('LowerFunnel', self._manager.lower_funnel),
