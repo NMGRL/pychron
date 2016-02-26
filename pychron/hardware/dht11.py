@@ -45,17 +45,21 @@ class DHT11(HeadlessConfigLoadable):
         self.set_attribute(config, 'pin', 'General', 'pin', cast='int')
         self.set_attribute(config, 'units', 'General', 'units')
         self.debug('pin={}'.format(self.pin))
+        return True
 
     def initialize(self, *args, **kw):
         self._sensor = DHT11
 
     def update(self):
-        self._humidity, temp = read_retry(self._sensor, self.pin)
-        if self.units == 'F':
-            temp = temp * 9 / 5. + 32
-        self._temperature = temp
-        self.debug('update temp={}, hum={}'.format(temp, self._humidity))
 
+        if self._sensor:
+            self._humidity, temp = read_retry(self._sensor, self.pin)
+            if self.units == 'F':
+                temp = temp * 9 / 5. + 32
+            self._temperature = temp
+            self.debug('update temp={}, hum={}'.format(temp, self._humidity))
+        else:
+            self.critical('no sensor')
     @property
     def humidity(self):
         return self._humidity
