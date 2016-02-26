@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2015 Jake Ross
+# Copyright 2016 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ from traits.api import Int, Bool
 import time
 # ============= local library imports  ==========================
 from pychron.hardware.base_linear_drive import BaseLinearDrive
-from pychron.hardware.core.core_device import CoreDevice
 
 ERROR_MAP = {'6': 'An I/O is already set to this type. Applies to non-General Purpose I/O.',
              '8': 'Tried to set an I/O to an incorrect I/O type.',
@@ -104,7 +103,7 @@ ERROR_MAP = {'6': 'An I/O is already set to this type. Applies to non-General Pu
              '94': 'Clear Locked Rotor Fault not allowed while in Motion. MDrive Hybrid products(MAI) only.'}
 
 
-class MDriveMotor(CoreDevice, BaseLinearDrive):
+class BaseMDrive(BaseLinearDrive):
     initial_velocity = Int
     deceleration = Int
     run_current = Int
@@ -283,11 +282,7 @@ class MDriveMotor(CoreDevice, BaseLinearDrive):
         return pos
 
 
-if __name__ == '__main__':
-    from pychron.paths import paths
-
-    paths.build('_dev')
-    m = MDriveMotor(name='mdrive')
-    m.bootstrap()
-
 # ============= EOF =============================================
+
+
+

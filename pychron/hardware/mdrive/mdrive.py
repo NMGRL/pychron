@@ -1,11 +1,11 @@
 # ===============================================================================
-# Copyright 2013 Jake Ross
+# Copyright 2015 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,31 +15,20 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Int, Float
-
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.hardware.core.core_device import CoreDevice
+from pychron.hardware.mdrive.base import BaseMDrive
 
-class LinearMapper(HasTraits):
-    low_step = Int(0)
-    high_step = Int(1)
 
-    low_data = Float(0)
-    high_data = Float(1)
-    _scale = 1
+class MDriveMotor(CoreDevice, BaseMDrive):
+    pass
 
-    def map_data(self, steps):
-        self._compute_scale()
-        return (steps - self.low_step) / self._scale + self.low_data
+if __name__ == '__main__':
+    from pychron.paths import paths
 
-    def map_steps(self, data):
-        self._compute_scale()
-        return (data - self.low_data) * self._scale + self.low_step
-
-    def _compute_scale(self):
-        data_range = self.high_data - self.low_data
-        step_range = self.high_step - self.low_step
-        self._scale = step_range / data_range
+    paths.build('_dev')
+    m = MDriveMotor(name='mdrive')
+    m.bootstrap()
 
 # ============= EOF =============================================

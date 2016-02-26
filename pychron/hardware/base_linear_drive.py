@@ -25,11 +25,10 @@ import time
 from pychron.consumer_mixin import ConsumerMixin
 from pychron.hardware.linear_mapper import LinearMapper
 from pychron.core.helpers.timer import Timer
-from pychron.loggable import Loggable
 from pychron.paths import paths
 
 
-class BaseLinearDrive(Loggable, ConsumerMixin):
+class BaseLinearDrive(ConsumerMixin):
     velocity = Property
     _velocity = Float
     acceleration = Float
