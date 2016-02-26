@@ -18,6 +18,8 @@
 from traits.api import Property, DelegatesTo, Instance, provides, CStr
 # =============standard library imports ========================
 # =============local library imports  ==========================
+from pychron.config_loadable import ConfigLoadable
+from pychron.config_mixin import ConfigMixin
 from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.has_communicator import HasCommunicator
 from pychron.hardware.core.core_device import CoreDevice
@@ -32,7 +34,7 @@ PACKAGES = dict(ProXRADC='pychron.hardware.ncd.adc',
 
 
 @provides(ICoreDevice)
-class AbstractDevice(ScanableDevice, HasCommunicator):
+class AbstractDevice(ScanableDevice, ConfigLoadable, HasCommunicator):
     _cdevice = Instance(CoreDevice)
     communicator = DelegatesTo('_cdevice')
 

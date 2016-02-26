@@ -1,3 +1,4 @@
+#!/usr/bin/python
 # ===============================================================================
 # Copyright 2011 Jake Ross
 #
@@ -5,7 +6,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-# http://www.apache.org/licenses/LICENSE-2.0
+#   http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,16 +15,17 @@
 # limitations under the License.
 # ===============================================================================
 
-# =============enthought library imports=======================
-# =============standard library imports ========================
-# =============local library imports  ==========================
-from pychron.hardware.core.base_core_device import BaseCoreDevice
-from pychron.headless_config_loadable import HeadlessConfigLoadable
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
+from pychron.base_config_loadable import BaseConfigLoadable
 from pychron.headless_loggable import HeadlessLoggable
 
 
-class HeadlessCoreDevice(BaseCoreDevice, HeadlessConfigLoadable):
+class HeadlessConfigLoadable(BaseConfigLoadable, HeadlessLoggable):
     """
     """
 
-# ========================= EOF ============================================
+
+# ============= EOF =============================================
+

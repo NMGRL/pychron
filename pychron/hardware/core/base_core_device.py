@@ -50,7 +50,7 @@ def crc_caller(func):
 
 
 @provides(ICoreDevice)
-class BaseCoreDevice(HasTraits, ConfigMixin, HasCommunicator, ConsumerMixin):
+class BaseCoreDevice(HasTraits, HasCommunicator, ConsumerMixin):
     """
     """
 
@@ -304,4 +304,6 @@ class BaseCoreDevice(HasTraits, ConfigMixin, HasCommunicator, ConsumerMixin):
         self.last_command = cmd
         self.last_response = r if r else ''
 
+    def _load_hook(self, config):
+        pass
 # ========================= EOF ============================================

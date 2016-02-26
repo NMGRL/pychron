@@ -25,7 +25,7 @@ from Queue import Queue, Empty
 import time
 
 
-class ConsumerMixin(object):
+class ConsumerMixin:
     _consumer_queue = None
     _should_consume = False
     _consume_func = None
@@ -36,6 +36,8 @@ class ConsumerMixin(object):
     _delay = 0
 
     def __init__(self, func=None, buftime=None, auto_start=True, main=False, timeout=None, delay=1):
+        super(ConsumerMixin, self).__init__()
+
         self.setup_consumer(func, buftime, auto_start, main, timeout, delay)
 
     def setup_consumer(self, func=None, buftime=None, auto_start=True, main=False, timeout=None, delay=1):
