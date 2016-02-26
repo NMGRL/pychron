@@ -33,7 +33,7 @@ class Paths(object):
     dissertation = '/Users/ross/Programming/git/dissertation'
     # enthought = path.join(path.expanduser('~'), '.enthought')
     # users_file = path.join(enthought, 'users')
-    base = path.expanduser('~')
+    # base = path.expanduser('~')
 
     # version = None
     root = None

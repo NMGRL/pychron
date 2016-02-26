@@ -35,7 +35,7 @@ DEVICES = {'controller': HeadlessEurotherm,
 def debug(func):
     def wrapper(obj, data):
         obj.debug('------ {}, data={}'.format(func.__name__, data))
-        r = wrapper(obj, data)
+        r = func(obj, data)
         obj.debug('------ result={}'.format(r))
         return r
     return wrapper

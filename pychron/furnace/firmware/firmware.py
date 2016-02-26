@@ -42,8 +42,9 @@ class Firmware(HeadlessLoggable):
 
 def run():
     import argparse
+    import os
 
-    paths.build('_dev')
+    paths.build(os.getenv('PYCHRON_ROOT'))
 
     logging_setup('furnace_firmware', use_archiver=False)
     parser = argparse.ArgumentParser(description='Run NMGRL Furnace Firmware')

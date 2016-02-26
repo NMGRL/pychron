@@ -17,11 +17,6 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-import os
-import sys
-
-sys.path.append(os.getcwd())
-
 from pychron.furnace.firmware.firmware import run
 run()
 
