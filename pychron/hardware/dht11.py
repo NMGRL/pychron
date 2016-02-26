@@ -21,10 +21,9 @@ from traits.api import Str, Int
 from pychron.headless_config_loadable import HeadlessConfigLoadable
 
 try:
-    from Adafruit_DHT import read_retry, DHT11
+    from Adafruit_DHT import read_retry, DHT11 as Sensor
 except ImportError:
-    DHT11 = None
-
+    Sensor = None
 
     def read_retry(sensor, pin):
         return None, None
@@ -48,10 +47,11 @@ class DHT11(HeadlessConfigLoadable):
         return True
 
     def initialize(self, *args, **kw):
-        self._sensor = DHT11
+        self._sensor = Sensor
+        return True
 
     def update(self):
-
+        print self._sensor
         if self._sensor:
             self._humidity, temp = read_retry(self._sensor, self.pin)
             if self.units == 'F':
