@@ -43,7 +43,7 @@ class DHT11(HeadlessConfigLoadable):
     def load_additional_args(self, config):
         self.set_attribute(config, 'pin', 'General', 'pin', cast='int')
         self.set_attribute(config, 'units', 'General', 'units')
-        self.debug('pin={}'.format(self.pin))
+        self.debug('pin={}, units={}'.format(self.pin, self.units))
         return True
 
     def initialize(self, *args, **kw):
@@ -51,7 +51,6 @@ class DHT11(HeadlessConfigLoadable):
         return True
 
     def update(self):
-        print self._sensor
         if self._sensor:
             self._humidity, temp = read_retry(self._sensor, self.pin)
             if self.units == 'F':
@@ -60,6 +59,7 @@ class DHT11(HeadlessConfigLoadable):
             self.debug('update temp={}, hum={}'.format(temp, self._humidity))
         else:
             self.critical('no sensor')
+
     @property
     def humidity(self):
         return self._humidity
