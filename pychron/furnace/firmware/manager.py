@@ -91,7 +91,7 @@ class FirmwareManager(HeadlessLoggable):
     def get_lab_humidity(self, data):
         if self.temp_hum:
             self.temp_hum.update()
-            return self.temp_hum.humditiy
+            return self.temp_hum.humdity
 
     @debug
     def get_lab_temperature(self, data):

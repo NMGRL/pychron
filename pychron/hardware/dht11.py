@@ -41,6 +41,7 @@ class DHT11(HeadlessConfigLoadable):
     def load_additional_args(self, config):
         self.set_attribute(config, 'pin', 'General', 'pin', cast='int')
         self.set_attribute(config, 'units', 'General', 'units')
+        self.debug('pin={}'.format(self.pin))
 
     def initialize(self, *args, **kw):
         self._sensor = DHT11
