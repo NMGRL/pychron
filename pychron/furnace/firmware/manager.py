@@ -48,6 +48,7 @@ class FirmwareManager(HeadlessLoggable):
     switch_controller = None
     funnel = None
     feeder = None
+    temp_hum = None
 
     def bootstrap(self, **kw):
         p = paths.furnace_firmware

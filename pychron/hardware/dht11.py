@@ -50,6 +50,7 @@ class DHT11(HeadlessConfigLoadable):
         if self.units == 'F':
             temp = temp * 9 / 5. + 32
         self._temperature = temp
+        self.debug('update temp={}, hum={}'.format(temp, self._humidity))
 
     @property
     def humidity(self):
