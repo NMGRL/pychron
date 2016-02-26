@@ -20,6 +20,7 @@ import time
 import yaml
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.hardware.dht11 import DHT11
 from pychron.hardware.eurotherm.headless import HeadlessEurotherm
 from pychron.hardware.labjack.headless_u3_lv import HeadlessU3LV
 from pychron.hardware.mdrive.headless import HeadlessMDrive
@@ -29,7 +30,8 @@ from pychron.paths import paths
 DEVICES = {'controller': HeadlessEurotherm,
            'switch_controller': HeadlessU3LV,
            'funnel': HeadlessMDrive,
-           'feeder': HeadlessMDrive}
+           'feeder': HeadlessMDrive,
+           'temp_hum': DHT11}
 
 
 def debug(func):
@@ -84,6 +86,18 @@ class FirmwareManager(HeadlessLoggable):
             self.warning('Invalid device {}'.format(devname))
 
     # getters
+    @debug
+    def get_lab_humidity(self, data):
+        if self.temp_hum:
+            self.temp_hum.update()
+            return self.temp_hum.humditiy
+
+    @debug
+    def get_lab_temperature(self, data):
+        if self.temp_hum:
+            self.temp_hum.update()
+            return self.temp_hum.temperature
+
     @debug
     def get_temperature(self, data):
         return 0.1

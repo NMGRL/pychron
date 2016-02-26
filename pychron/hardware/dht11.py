@@ -18,7 +18,7 @@
 from traits.api import Str, Int
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.config_loadable import ConfigLoadable
+from pychron.headless_config_loadable import HeadlessConfigLoadable
 
 try:
     from Adafruit_DHT import read_retry, DHT11
@@ -30,7 +30,7 @@ except ImportError:
         return None, None
 
 
-class DHT11(ConfigLoadable):
+class DHT11(HeadlessConfigLoadable):
     pin = Int
     units = Str
 
