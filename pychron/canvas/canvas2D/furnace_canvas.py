@@ -33,7 +33,7 @@ class FurnaceCanvas(StageCanvas):
     render_map = True
     bgcolor = 'mediumturquoise'
 
-    sample_linear_holder = Any
+    feeder = Any
     use_zoom = False
 
     aspect_ratio = 3.
@@ -82,7 +82,7 @@ class FurnaceCanvas(StageCanvas):
         if self.valid_position(x, y):
             x, y = self.map_data((x, y))
             self.set_desired_position(x, y)
-            self.sample_linear_holder.position = x
+            self.feeder.position = x
             # self.sample_linear_holder.linear_move(x, check_moving=True, use_calibration=False)
             event.handled = True
 
@@ -92,14 +92,14 @@ class FurnaceCanvas(StageCanvas):
             ax_key, direction = DIRECTIONS[c]
             # direction = self._calc_relative_move_direction(c, direction)
             distance = 5 if event.shift_down else 1
-            self.sample_linear_holder.relative_move(direction * distance)
+            self.feeder.relative_move(direction * distance)
             event.handled = True
 
     def key_released(self, char):
         """
             called from outside by StageCompnentEditor
         """
-        self.sample_linear_holder.update_position()
+        self.feeder.update_position()
 
         # ===============================================================================
         # private

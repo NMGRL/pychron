@@ -15,21 +15,20 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Interface
+from traits.api import Interface, provides
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.furnace.ifurnace_controller import IFurnaceController
 from pychron.hardware.core.abstract_device import AbstractDevice
 
 
-class IFurnaceController(Interface):
-    def read_setpoint(self):
-        pass
-
-    def set_setpoint(self, v):
-        pass
-
-
+@provides(IFurnaceController)
 class FurnaceController(AbstractDevice):
-    pass
+    def read_setpoint(self, **kw):
+        if self._cdevice:
+            return self._cdevice.read_setpoint(**kw)
 
+    def set_setpoint(self, v, **kw):
+        if self._cdevice:
+            return self._cdevice.set_setpoint(v, **kw)
 # ============= EOF =============================================

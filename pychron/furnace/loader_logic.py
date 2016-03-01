@@ -31,6 +31,14 @@ class LoaderLogic(Loggable):
     switches = Dict
     manager = Any
 
+    def get_check_message(self):
+        # rt = ''.join(['<td>{}</td>'.format(r) for r in self._rules])
+        # bt = ''.join(['<td>{}</td>'.format('X' if not b else '') for b in self._bits])
+        rs = zip(self._rules, self._bits)
+        rs = [ri for ri in rs if not ri[1]]
+        checks = ', '.join([ri[0] for ri in rs])
+        return '{} checks are not OK'.format(checks)
+
     def check(self, name):
         rule = self.rules[name]
         return self._check_rule(name, rule)
@@ -76,13 +84,16 @@ class LoaderLogic(Loggable):
                 b = self.manager.get_flag_state(flag)
             bits.append(b)
 
-        rs = ['{:>10}'.format(f) for f in rule]
-        rs = '|'.join(rs)
+        self._rules = rule
+        self._bits = bits
 
+        rs = ['{:>10}'.format(f) for f in rule]
         bs = ['{:>10}'.format(bi) for bi in bits]
+        rs = '|'.join(rs)
         bs = '|'.join(bs)
         self.debug(rs)
         self.debug(bs)
+
 
         return all(bits)
 

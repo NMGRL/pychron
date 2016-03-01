@@ -19,38 +19,7 @@ import time
 
 # ========== local library imports =============
 from gp_actuator import GPActuator
-from pychron.core.helpers.strtools import to_bool
-
-
-def get_valve_name(obj):
-    if isinstance(obj, (str, int)):
-        addr = obj
-    else:
-        addr = obj.name.split('-')[1]
-    return addr
-
-
-def trim(func):
-    def wrapper(*args, **kw):
-        r = func(*args, **kw)
-        if r:
-            r = r.strip()
-            # r = r[4:-4]
-        return r
-
-    return wrapper
-
-
-def trim_bool(func):
-    def wrapper(*args, **kw):
-        r = func(*args, **kw)
-        if r:
-            r = r.strip()
-            r = to_bool(r)
-            # r = to_bool(r[4:-4])
-        return r
-
-    return wrapper
+from pychron.hardware.actuators import trim, trim_bool, get_valve_name
 
 
 class PychronGPActuator(GPActuator):

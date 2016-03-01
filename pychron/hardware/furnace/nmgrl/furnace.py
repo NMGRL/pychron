@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2015 Jake Ross
+# Copyright 2016 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,13 +15,21 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change
+from traitsui.api import View, UItem, Item, HGroup, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.loggable import Loggable
+from pychron.hardware import get_float
+from pychron.hardware.core.core_device import CoreDevice
 
 
-class ClientNMGRLFurnaceManager(Loggable):
-    def load_sample(self, s):
-        self.ask('LoadSample {}'.format(s))
+class NMGRLFurnace(CoreDevice):
+    @get_float(default=0)
+    def get_temperature(self):
+        return self.ask('GetLabTemperature')
+
+    @get_float(default=0)
+    def get_humidity(self):
+        return self.ask('GetLabHumidity')
 
 # ============= EOF =============================================

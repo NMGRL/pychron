@@ -1,11 +1,11 @@
 # ===============================================================================
-# Copyright 2011 Jake Ross
+# Copyright 2016 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,37 +14,21 @@
 # limitations under the License.
 # ===============================================================================
 
-
-
-"""
-Eurotherm 2000 series device abstraction
-
-see 2000 Series Communications Manual - Issue 2
-http://eurotherm.com/document-library/?ignoreeveryonegroup=0&assetdetesctl1390419=1833&search=2000+series&searchcontent=0
-
-"""
-
 # ============= enthought library imports =======================
-from traits.api import Float, Property, provides
+from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change, provides
 # ============= standard library imports ========================
 import os
+import re
 # ============= local library imports  ==========================
-from pychron.furnace.furnace_controller import IFurnaceController
-from pychron.hardware.core.core_device import CoreDevice
+from pychron.furnace.ifurnace_controller import IFurnaceController
+from pychron.hardware.eurotherm import STX, ETX, EOT, ACK, ENQ
 from pychron.paths import paths
 
-EOT = chr(4)
-ENQ = chr(5)
-STX = chr(2)
-ETX = chr(3)
-ACK = chr(6)
-NAK = chr(15)
 
+PID_REGEX = re.compile(r'[A-Z]{2},\d+(;[A-Z]{2},\d+)*')
 
 @provides(IFurnaceController)
-class Eurotherm(CoreDevice):
-    """
-    """
+class BaseEurotherm(HasTraits):
     scan_func = 'get_process_value'
     GID = 0
     UID = 1
@@ -74,35 +58,41 @@ class Eurotherm(CoreDevice):
         self.set_attribute(config, 'protocol', 'Communications', 'protocol', optional=True)
 
         if self.protocol == 'ei_bisynch':
-            self.communicator.write_terminator = None
-
             self.set_attribute(config, 'GID', 'Communications', 'GID', cast='int', optional=True)
 
             self.set_attribute(config, 'UID', 'Communications', 'UID', cast='int', optional=True)
 
         return True
 
-    def set_pid_parameters(self, v):
-        """
-        """
+    def initialize(self, *args, **kw):
+        if self.communicator:
+            self.communicator.write_terminator = None
+        return True
 
-        params = self.get_pid_parameters(v)
-
-        if params:
+    def set_pid_str(self, s):
+        if PID_REGEX.match(s):
             builder = getattr(self, '_{}_build_command'.format(self.protocol))
-            # parser = getattr(self, '%s_parse_command_response' % self.protocol)
 
-            for pa in params[1].split(';'):
+            for pa in s.split(';'):
                 self.debug('set pid parameters {}'.format(pa))
                 cmd, value = pa.split(',')
                 cmd = builder(cmd, value)
                 self.ask(cmd, verbose=True)
+        else:
+            self.warning('invalid pid string "{}"'.format(s))
+
+    def set_pid_parameters(self, v):
+        """
+        """
+        params = self.get_pid_parameters(v)
+
+        if params:
+            self.set_pid_str(params[1])
 
     def get_pid_parameters(self, v):
         """
         """
-
-        p = os.path.join(paths.device_dir, 'Eurotherm_control_parameters.txt')
+        p = os.path.join(paths.device_dir, 'furnace', 'eurotherm_control_parameters.txt')
         with open(p) as f:
             params = [l.split('\t') for l in f]
 
@@ -239,35 +229,4 @@ class Eurotherm(CoreDevice):
         if self.setpoint_min <= v < self.setpoint_max:
             return v
 
-            # def traits_view(self):
-            #     """
-            #     """
-            #     return View(Item('process_setpoint'),
-            #                 Item('process_value', style='readonly')
-            #                 )
-
-# ============= EOF ====================================
-# def __init__(self, *args, **kw):
-#        super(Eurotherm, self).__init__(*args, **kw)
-#
-#        if self.setpoint_recording:
-#            self._setup_setpoint_recording()
-#
-#    def _setup_setpoint_recording(self):
-#        root = os.path.join(paths.data_dir, 'streams')
-#        base = 'history'
-#
-#
-#        self.setpoint_history_path = p = unique_path(root, base)
-#        f = open(p, 'w')
-#        f.write('timestamp    setpoint\n')
-#        f.close()
-#
-#    def record_setpoint_history(self, v):
-#        f = open(self.setpoint_history_path, 'a')
-#        ti = time.time()
-#        millisecs = math.modf(ti)[0] * 1000
-#        tstamp = '%s +%0.5f' % (time.strftime("%Y-%m-%d %H:%M:%S"), millisecs)
-#        line = '%s %s\n' % (tstamp, v)
-#        f.write(line)
-#        f.close()
+# ============= EOF =============================================

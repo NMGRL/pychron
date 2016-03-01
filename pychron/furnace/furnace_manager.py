@@ -49,6 +49,11 @@ class BaseFurnaceManager(Manager):
                               configuration_dir_name='furnace')
         return c
 
+    def _switch_manager_default(self):
+        sm = SwitchManager(configuration_dir_name='furnace',
+                           setup_name='furnace_valves')
+        return sm
+
 
 @provides(IFurnaceManager)
 class NMGRLFurnaceManager(BaseFurnaceManager):
@@ -65,11 +70,13 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     _alive = False
     _guide_overlay = None
     _dumper_thread = None
+    _magnets_thread = None
     mode = 'normal'
 
     def activate(self):
         # pref_id = 'pychron.furnace'
-        # bind_preference(self, 'update_period', '{}.update_period'.format(pref_id))
+        # bind_preference(self, 'update_period',
+        # '{}.update_period'.format(pref_id))
 
         self._start_update()
 
@@ -82,7 +89,15 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
 
         if self._dumper_thread is None:
             self._dumper_thread = Thread(name='DumpSample', target=self._dump_sample)
+            self._magnets_thread.setDaemon(True)
             self._dumper_thread.start()
+
+    def fire_magnets(self):
+        self.debug('fire magnets')
+        if self._magnets_thread is None:
+            self._magnets_thread = Thread(name='Magnets', target=self.actuate_magnets)
+            self._magnets_thread.setDaemon(True)
+            self._magnets_thread.start()
 
     def is_dump_complete(self):
         ret = self._dumper_thread is None
@@ -91,28 +106,34 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     def actuate_magnets(self):
         self.debug('actuate magnets')
         if self.loader_logic.check('AM'):
-            self.magnet.open()
-            # wait for actuate magnets
-            pass
+            self.magnets.energize()
+
+            # jitter linear drive
+            self.stage_manager.jitter()
+
+            self.magnets.denergize()
         else:
             self.warning('actuate magnets not enabled')
+
+        self._magnets_thread = None
 
     def lower_funnel(self):
         self.debug('lower funnel')
         if self.loader_logic.check('FD'):
-            self.funnel.set_value(self.funnel.down_position)
-
+            # self.funnel.set_value(self.funnel.down_position)
+            self.funnel.lower()
             # todo: update canvas state
 
             return True
         else:
-            self.warning('lowering funnel not enabled')
+            cm = self.loader_logic.get_check_message()
+            self.warning_dialog('Lowering funnel not enabled\n\n{}'.format(cm))
 
     def raise_funnel(self):
         self.debug('raise funnel')
         if self.loader_logic.check('FU'):
-            self.funnel.set_value(self.funnel.up_position)
-
+            # self.funnel.set_value(self.funnel.up_position)
+            self.funnel.raise_()
             # todo: update canvas state
 
             return True
@@ -120,6 +141,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
             self.warning('raising funnel not enabled')
 
     def set_setpoint(self, v):
+        self.debug('set setpoint={}'.format(v))
         if self.controller:
             # print self.controller, self.controller._cdevice
             self.controller.set_setpoint(v)
@@ -135,10 +157,10 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
 
             self.graph.redraw()
 
-    def read_setpoint(self, update=False):
+    def read_setpoint(self, force=False):
         v = 0
         if self.controller:
-            force = update and not self.controller.is_scanning()
+            # force = update and not self.controller.is_scanning()
             v = self.controller.read_setpoint(force=force)
 
         try:
@@ -224,6 +246,12 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         self._alive = False
 
     def _start_update(self):
+        if not self.update_period:
+            self.information_dialog('Please set an update period in Preferences/Furnace')
+            return
+
+        self.debug('starting update. period= {}s'.format(self.update_period))
+
         self._alive = True
 
         self.graph = g = StreamGraph()
@@ -236,10 +264,14 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         self._update_readback()
 
     def _update_readback(self):
-        v = self.read_setpoint(update=True)
-        self.graph.record(v, track_y=False)
+        v = self.read_setpoint(force=True)
+        scalar = 100
+        if v is not None:
+            self.graph.record(v, track_y=False)
+            scalar = 1
+
         if self._alive:
-            do_after(self.update_period * 1000, self._update_readback)
+            do_after(scalar * self.update_period * 1000, self._update_readback)
 
     def _dump_sample(self):
         """
@@ -257,8 +289,8 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
             self.debug(line)
             self._execute_script_line(line)
 
-            self.stage_manager.set_sample_dumped()
-            self._dumper_thread = None
+        self.stage_manager.set_sample_dumped()
+        self._dumper_thread = None
 
     def _load_dump_script(self):
         p = os.path.join(paths.device_dir, 'furnace', 'dump_sequence.txt')
@@ -295,10 +327,6 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
 
     def _stage_manager_default(self):
         sm = NMGRLFurnaceStageManager(stage_manager_id='nmgrl.furnace.stage_map')
-        return sm
-
-    def _switch_manager_default(self):
-        sm = SwitchManager()
         return sm
 
     def _dumper_canvas_default(self):

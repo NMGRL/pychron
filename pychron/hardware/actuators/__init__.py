@@ -13,12 +13,43 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from pychron.core.helpers.strtools import to_bool
 
 
+def get_valve_name(obj):
+    if isinstance(obj, (str, int)):
+        addr = obj
+    else:
+        addr = obj.name.split('-')[1]
+    return addr
 
-'''
-Actuators Package contains
 
-G{packagetree }
+def trim(func):
+    def wrapper(*args, **kw):
+        r = func(*args, **kw)
+        if r:
+            r = r.strip()
+        return r
 
-'''
+    return wrapper
+
+
+def trim_bool(func):
+    return _itrim_bool(func)
+
+
+def invert_trim_bool(func):
+    return _itrim_bool(func, True)
+
+
+def _itrim_bool(func, invert=False):
+    def wrapper(*args, **kw):
+        r = func(*args, **kw)
+        if r:
+            r = r.strip()
+            r = to_bool(r)
+            if invert:
+                r = not r
+        return r
+
+    return wrapper

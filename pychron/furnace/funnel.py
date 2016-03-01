@@ -15,40 +15,49 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import json
+
 from traits.api import Int
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.hardware.core.abstract_device import AbstractDevice
+from pychron.hardware.core.core_device import CoreDevice
 
 
-class NMGRLFunnel(AbstractDevice):
-    down_position = Int
-    up_position = Int
-    tolerance = Int
-
+class NMGRLFunnel(CoreDevice):
     _simulation_funnel_up = True
 
-    def load_additional_args(self, config):
-        self.set_attribute(config, 'down_position', 'Positioning', 'down_position', cast='int')
-        self.set_attribute(config, 'up_position', 'Positioning', 'up_position', cast='int')
-        self.set_attribute(config, 'tolerance', 'Positioning', 'tolerance', cast='int')
-        super(NMGRLFunnel, self).load_additional_args(config)
-
     def in_up_position(self):
-        if self._cdevice:
-            if not self.simulation:
-                pos = self._cdevice.read_position()
-                return abs(pos - self.up_position) <= self.tolerance
-            else:
-                return self._simulation_funnel_up
+        if not self.simulation:
+            return self.ask('InUpPosition') == 'True'
+        else:
+            return self._simulation_funnel_up
 
     def in_down_position(self):
-        if self._cdevice:
-            if not self.simulation:
-                pos = self._cdevice.read_position()
-                return abs(pos - self.down_position) <= self.tolerance
-            else:
-                return not self._simulation_funnel_up
+        if not self.simulation:
+            return self.ask('InDownPosition') == 'False'
+        else:
+            return not self._simulation_funnel_up
+
+    def read_position(self):
+        d = {'drive': 'funnel'}
+        d = json.dumps(d)
+        pos = self.ask('GetPosition {}'.format(d))
+        try:
+            return float(pos)
+        except (TypeError, ValueError):
+            pass
+
+    def set_value(self, pos):
+        d = {'drive': 'funnel', 'position': pos}
+        d = json.dumps(d)
+        self.ask('SetPosition {}'.format(d))
+
+    def lower(self):
+        self.ask('LowerFunnel')
+
+    def raise_(self):
+        self.ask('RaiseFunnel')
+
 
 # ============= EOF =============================================
