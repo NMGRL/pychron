@@ -15,23 +15,31 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+# ============= standard library imports ========================
+import json
 from threading import Thread
+
+from cStringIO import StringIO
+
+from PIL import Image
+from numpy import save
 import time
 import yaml
-# ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.hardware.dht11 import DHT11
 from pychron.hardware.eurotherm.headless import HeadlessEurotherm
 from pychron.hardware.labjack.headless_u3_lv import HeadlessU3LV
 from pychron.hardware.mdrive.headless import HeadlessMDrive
 from pychron.headless_loggable import HeadlessLoggable
+from pychron.image.rpi_camera import RPiCamera
 from pychron.paths import paths
 
 DEVICES = {'controller': HeadlessEurotherm,
            'switch_controller': HeadlessU3LV,
            'funnel': HeadlessMDrive,
            'feeder': HeadlessMDrive,
-           'temp_hum': DHT11}
+           'temp_hum': DHT11,
+           'camera': RPiCamera}
 
 
 def debug(func):
@@ -40,6 +48,7 @@ def debug(func):
         r = func(obj, data)
         obj.debug('------ result={}'.format(r))
         return r
+
     return wrapper
 
 
@@ -94,6 +103,27 @@ class FirmwareManager(HeadlessLoggable):
             self.warning('Invalid device {}'.format(devname))
 
     # getters
+    @debug
+    def get_jpeg(self, data):
+        quality = 100
+        if isinstance(data, dict):
+            quality = data['quality']
+
+        memfile = StringIO()
+        self.camera.capture(memfile, name=None, quality=quality)
+        memfile.seek(0)
+        return json.dumps(memfile.read())
+
+    @debug
+    def get_image_array(self, data):
+        if self.camera:
+            im = self.camera.get_image_array()
+
+            memfile = StringIO()
+            save(memfile, im)
+            memfile.seek(0)
+            return json.dumps(memfile.read())
+
     @debug
     def get_lab_humidity(self, data):
         if self.temp_hum:
@@ -159,6 +189,7 @@ class FirmwareManager(HeadlessLoggable):
             ch = self._get_switch_indicator(data)
 
             return self.switch_controller.get_channel_state(ch)
+
     # setters
     @debug
     def set_setpoint(self, data):
@@ -259,4 +290,5 @@ class FirmwareManager(HeadlessLoggable):
         ch = self._switch_indicator_mapping.get(name)
         self.debug('get switch indicator channel {} {}'.format(name, ch))
         return ch
+
 # ============= EOF =============================================
