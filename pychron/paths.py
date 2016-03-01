@@ -23,7 +23,6 @@ make sure directory exists and build if not
 import os
 from os import path, mkdir
 
-from pyface.message_dialog import warning
 
 from pychron.file_defaults import TASK_EXTENSION_DEFAULT, SIMPLE_UI_DEFAULT, \
     EDIT_UI_DEFAULT, IDENTIFIERS_DEFAULT
@@ -468,6 +467,7 @@ class Paths(object):
             self._write_default_files()
 
     def reset_plot_factory_defaults(self):
+        from pyface.message_dialog import warning
         warning(None, 'Reset plot factor defaults not enabled')
         # self.write_file_defaults(self.plot_factory_defaults, force=True)
 
