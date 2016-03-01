@@ -188,7 +188,12 @@ class FirmwareManager(HeadlessLoggable):
         if self.switch_controller:
             ch = self._get_switch_indicator(data)
             if ch is None:
-                return self.get_channel_state(data)
+                if isinstance(data, dict):
+                    ch = data['name']
+                else:
+                    ch, _ = data
+
+                return self.get_channel_state(ch)
             else:
                 return self.switch_controller.get_channel_state(ch)
 
