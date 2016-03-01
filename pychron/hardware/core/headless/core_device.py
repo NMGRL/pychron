@@ -19,7 +19,6 @@
 # =============local library imports  ==========================
 from pychron.hardware.core.base_core_device import BaseCoreDevice
 from pychron.headless_config_loadable import HeadlessConfigLoadable
-from pychron.headless_loggable import HeadlessLoggable
 
 
 class HeadlessCoreDevice(BaseCoreDevice, HeadlessConfigLoadable):
