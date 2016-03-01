@@ -42,7 +42,7 @@ class BaseEurotherm(HasTraits):
     use_pid_table = False
 
     # ifurnacecontroller
-    def read_setpoint(self, force=False):
+    def get_response(self, force=False):
         if force or not self.process_value:
             self.get_process_value()
         return self.process_value
