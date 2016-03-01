@@ -30,8 +30,12 @@ from pychron.globals import globalv
 
 
 def get_ports():
-    keyspan = glob.glob('/dev/tty.U*')
     usb = glob.glob('/dev/tty.usb*')
+    if sys.platform == 'darwin':
+        keyspan = glob.glob('/dev/tty.U*')
+    else:
+        keyspan = glob.glob('/dev/ttyU*')
+
     return keyspan + usb
 
 
