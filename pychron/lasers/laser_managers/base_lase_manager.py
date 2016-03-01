@@ -129,16 +129,16 @@ class BaseLaserManager(Manager):
         patterns = list_directory(p, extension)
         return ['', ] + patterns
 
-#     def new_pattern_maker(self):
-#         pm = PatternMakerView()
-#         self.open_view(pm)
-#
-#     def open_pattern_maker(self):
-#         pm = PatternMakerView(
-#                               executor=self.pattern_executor
-#                               )
-#         if pm.load_pattern():
-#             self.open_view(pm)
+    #     def new_pattern_maker(self):
+    #         pm = PatternMakerView()
+    #         self.open_view(pm)
+    #
+    #     def open_pattern_maker(self):
+    #         pm = PatternMakerView(
+    #                               executor=self.pattern_executor
+    #                               )
+    #         if pm.load_pattern():
+    #             self.open_view(pm)
 
     def execute_pattern(self, name=None, block=False):
         if not self.stage_manager.temp_hole:
@@ -180,6 +180,21 @@ class BaseLaserManager(Manager):
         pass
 
     def get_achieved_output(self):
+        pass
+
+    def get_response_blob(self):
+        pass
+
+    def get_output_blob(self):
+        pass
+
+    def set_response_recorder_period(self, v):
+        pass
+
+    def start_response_recorder(self):
+        pass
+
+    def stop_response_recorder(self):
         pass
 
     def calculate_calibrated_power(self, request, calibration='watts', verbose=True):
@@ -319,7 +334,7 @@ class BaseLaserManager(Manager):
             sm.stage_controller.parent = sm
             if self.plugin_id:
                 sm.bind_preferences(self.plugin_id)
-#             sm.visualizer = self.stage_manager.visualizer
+            #             sm.visualizer = self.stage_manager.visualizer
 
             sm.load()
 
@@ -356,4 +371,5 @@ class BaseLaserManager(Manager):
                              controller=controller,
                              laser_manager=self)
         return pm
+
 # ============= EOF =============================================

@@ -31,7 +31,7 @@ from pychron.hardware.temperature_monitor import DPi32TemperatureMonitor
 from pychron.hardware.pyrometer_temperature_monitor import PyrometerTemperatureMonitor
 
 from pychron.lasers.laser_managers.vue_metrix_manager import VueMetrixManager
-from pychron.lasers.response_recorder import ResponseRecorder
+from pychron.response_recorder import ResponseRecorder
 from pychron.monitors.fusions_diode_laser_monitor import FusionsDiodeLaserMonitor
 
 from fusions_laser_manager import FusionsLaserManager
@@ -132,6 +132,17 @@ class FusionsDiodeManager(FusionsLaserManager):
     def get_output_blob(self):
         return self.response_recorder.get_output_blob() if self.response_recorder else ''
 
+    def set_response_recorder_period(self, p):
+        if self.response_recorder:
+            self.response_recorder.period = p
+
+    def start_response_recorder(self):
+        if self.response_recorder:
+            self.response_recorder.start()
+
+    def stop_response_recorder(self):
+        if self.response_recorder:
+            self.response_recorder.stop()
     # ===============================================================================
     # private
     # ===============================================================================
@@ -156,7 +167,7 @@ class FusionsDiodeManager(FusionsLaserManager):
                 # disable the temperature_controller unit a value is set
                 self.temperature_controller.disable()
 
-            self.response_recorder.start()
+            self.response_recorder.start('diode_response_tc_control')
             if self.pyrometer:
                 self.pyrometer.start_scan()
             return self.control_module_manager.enable()
