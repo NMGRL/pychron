@@ -296,7 +296,8 @@ class FirmwareManager(HeadlessLoggable):
         if ',' in str(ch):
             o, c = map(str.strip, ch.split(','))
             ch = o if action.lower() == 'open' else c
-
+            if not ch:
+                ch = None
         return ch
 
 # ============= EOF =============================================
