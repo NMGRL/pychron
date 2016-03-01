@@ -187,8 +187,10 @@ class FirmwareManager(HeadlessLoggable):
     def get_indicator_state(self, data):
         if self.switch_controller:
             ch = self._get_switch_indicator(data)
-
-            return self.switch_controller.get_channel_state(ch)
+            if ch is None:
+                return self.get_channel_state(data)
+            else:
+                return self.switch_controller.get_channel_state(ch)
 
     # setters
     @debug
@@ -284,11 +286,17 @@ class FirmwareManager(HeadlessLoggable):
     def _get_switch_indicator(self, data):
         if isinstance(data, dict):
             name = data['name']
+            action = data['action']
         else:
-            name = data
+            name, action = data.split(',')
 
         ch = self._switch_indicator_mapping.get(name)
         self.debug('get switch indicator channel {} {}'.format(name, ch))
+
+        if ',' in str(ch):
+            o, c = map(str.strip, ch.split(','))
+            ch = o if action.lower() == 'open' else c
+
         return ch
 
 # ============= EOF =============================================

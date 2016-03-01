@@ -26,7 +26,7 @@ from pychron.hardware.core.communicators.ethernet_communicator import EthernetCo
 
 
 class FirmwareClient(HasTraits):
-    command = Str#(enter_set=True, auto_set=False)
+    command = Str  # (enter_set=True, auto_set=False)
     responses = Str
 
     send_button = Button('Send')
@@ -35,7 +35,7 @@ class FirmwareClient(HasTraits):
     port = Int
 
     test_button = Button('Test')
-
+    _cnt = 0
     def __init__(self, *args, **kw):
         super(FirmwareClient, self).__init__(*args, **kw)
 
@@ -54,15 +54,22 @@ class FirmwareClient(HasTraits):
         resp = self._comm.ask(cmd)
         resp = '{} ==> {}'.format(cmd, resp)
         self.responses = '{}\n{}'.format(self.responses, resp)
-        
+
     # handlers
     def _test_button_fired(self):
-        for i in range(5):
-            if i % 2 == 0:
-                self._send('Open A')
-            else:
-                self._send('Close A')
-            time.sleep(1)
+        if self._cnt % 2 == 0:
+            self._send('Open FC')
+        else:
+            self._send('Close FC')
+
+        self._send('GetIndicatorState FC')
+        self._cnt +=1
+        # for i in range(5):
+        #     if i % 2 == 0:
+        #         self._send('Open A')
+        #     else:
+        #         self._send('Close A')
+        #     time.sleep(1)
 
     def _send_button_fired(self):
         self._send(self.command)
