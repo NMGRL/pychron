@@ -59,9 +59,6 @@ class RPiCamera(HeadlessConfigLoadable):
     def load_additional_args(self, *args, **kw):
         config = self.get_configuration()
 
-        self.set_attribute(config, 'hflip', 'General', 'hflip', cast='boolean')
-        self.set_attribute(config, 'vflip', 'General', 'vflip', cast='boolean')
-
         self.set_attribute(config, 'sharpness', 'Settings', 'sharpness', cast='int')
         self.set_attribute(config, 'contrast', 'Settings', 'contrast', cast='int')
         self.set_attribute(config, 'brightness', 'Settings', 'brightness', cast='int')

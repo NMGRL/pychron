@@ -84,7 +84,7 @@ class FirmwareManager(HeadlessLoggable):
     def _load_switch_mapping(self, m):
         self._switch_mapping = m
 
-    def _load__switch_indicator_mapping(self, m):
+    def _load_switch_indicator_mapping(self, m):
         self._switch_indicator_mapping = m
 
     def _load_devices(self, devices):
