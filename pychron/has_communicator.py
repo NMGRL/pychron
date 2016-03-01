@@ -70,4 +70,11 @@ class HasCommunicator(object):
             self.communicator = communicator
             return True
 
+    @property
+    def simulation(self):
+        sim = True
+        if self.communicator:
+            sim = self.communicator.simulation
+        return sim
+
 # ============= EOF =============================================
