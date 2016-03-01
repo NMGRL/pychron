@@ -288,7 +288,7 @@ class FirmwareManager(HeadlessLoggable):
             name = data['name']
             action = data['action']
         else:
-            name, action = data.split(',')
+            name, action = data
 
         ch = self._switch_indicator_mapping.get(name)
         self.debug('get switch indicator channel {} {}'.format(name, ch))
