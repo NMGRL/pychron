@@ -50,7 +50,8 @@ class BaseFurnaceManager(Manager):
         return c
 
     def _switch_manager_default(self):
-        sm = SwitchManager(configuration_dir_name='furnace')
+        sm = SwitchManager(configuration_dir_name='furnace',
+                           setup_name='furnace_valves')
         return sm
 
 

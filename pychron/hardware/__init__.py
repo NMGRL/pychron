@@ -53,3 +53,17 @@ HW_PACKAGE_MAP = {
     'NMGRLMagnetDumper': 'pychron.furnace.magnet_dumper'
     # 'ControlModule': 'pychron.hardware.fusions.vue_diode_control_module'
 }
+
+
+def get_float(default=None):
+    def dec(func):
+        def wrapper(*args, **kw):
+            t = func(*args, **kw)
+            try:
+                return float(t)
+            except (TypeError, ValueError):
+                return default
+
+        return wrapper
+
+    return dec

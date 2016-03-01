@@ -106,14 +106,14 @@ class Switch(BaseSwitch):
         if self.actuator:
             return self.actuator.get_lock_state(self)
 
-    def set_open(self, mode='normal'):
-        return self._actuate_state(self._open, mode, not self.state, True)
+    def set_open(self, mode='normal', force=False):
+        return self._actuate_state(self._open, mode, not self.state, True, force)
 
-    def set_closed(self, mode='normal'):
-        return self._actuate_state(self._close, mode, self.state, False)
+    def set_closed(self, mode='normal', force=False):
+        return self._actuate_state(self._close, mode, self.state, False, force)
 
     # private
-    def _actuate_state(self, func, mode, cur, set_value):
+    def _actuate_state(self, func, mode, cur, set_value, force):
         """
             func: self._close, self._open
             mode: normal, client
@@ -126,7 +126,7 @@ class Switch(BaseSwitch):
         if self.software_lock:
             self._software_locked()
         else:
-            success = func(mode)
+            success = func(mode, force)
 
             if success:
                 if cur:
@@ -135,15 +135,15 @@ class Switch(BaseSwitch):
 
         return success, state_change
 
-    def _open(self, mode='normal'):
+    def _open(self, mode='normal', force=False):
         """
         """
-        return self._act(mode, 'open_channel', not self.state)
+        return self._act(mode, 'open_channel', not self.state or force)
 
-    def _close(self, mode='normal'):
+    def _close(self, mode='normal', force=False):
         """
         """
-        return self._act(mode, 'close_channel', self.state)
+        return self._act(mode, 'close_channel', self.state or force)
 
     def _act(self, mode, func, do_actuation):
         """
@@ -153,6 +153,7 @@ class Switch(BaseSwitch):
         :param do_actuation:
         :return:
         """
+        self.debug('doing actuation {} {} {}'.format(mode, func, do_actuation))
         r = True
         actuator = self.actuator
         if mode == 'debug':

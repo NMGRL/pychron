@@ -80,7 +80,7 @@ class FirmwareClient(HasTraits):
 
 
 if __name__ == '__main__':
-    c = FirmwareClient(host='192.168.0.141', port=4567)
+    c = FirmwareClient(host='192.168.2.2', port=4567)
     if c.test_connection():
         c.configure_traits()
 # ============= EOF =============================================

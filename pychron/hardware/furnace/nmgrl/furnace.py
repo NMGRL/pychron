@@ -1,11 +1,11 @@
 # ===============================================================================
-# Copyright 2011 Jake Ross
+# Copyright 2016 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,32 +14,25 @@
 # limitations under the License.
 # ===============================================================================
 
-
 # ============= enthought library imports =======================
-
+from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change
+from traitsui.api import View, UItem, Item, HGroup, VGroup
 # ============= standard library imports ========================
-
 # ============= local library imports  ==========================
-from actuator import Actuator
+from pychron.hardware import get_float
+from pychron.hardware.core.core_device import CoreDevice
 
 
-class SwitchController(Actuator):
-    def get_open_indicator_state(self, *args, **kw):
-        """
-        """
-        if self._cdevice is not None:
-            return self._cdevice.get_open_indicator_state(*args, **kw)
+class NMGRLFurnace(CoreDevice):
+    @get_float(default=0)
+    def get_temperature(self):
+        return self.ask('GetLabTemperatue')
 
-    def get_closed_indicator_state(self, *args, **kw):
-        """
-        """
-        if self._cdevice is not None:
-            return self._cdevice.get_close_indicator_state(*args, **kw)
+    @get_float(default=0)
+    def get_humidity(self):
+        return self.ask('GetLabHumidity')
 
-#
-#    def get_hard_lock_indicator_state(self, *args, **kw):
-#        '''
-#        '''
-#        if self._cdevice is not None:
-#            return self._cdevice.get_hard_lock_indicator_state(*args, **kw)
-# ============= EOF ====================================
+# ============= EOF =============================================
+
+
+

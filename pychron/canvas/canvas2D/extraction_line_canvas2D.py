@@ -68,6 +68,8 @@ class ExtractionLineCanvas2D(SceneCanvas):
     volume_key = Str
     confirm_open = Bool(True)
 
+    force_actuate_enabled = True
+
     def __init__(self, *args, **kw):
         super(ExtractionLineCanvas2D, self).__init__(*args, **kw)
 
@@ -252,6 +254,25 @@ class ExtractionLineCanvas2D(SceneCanvas):
             self.manager.set_software_lock(item.name, lock)
             self.request_redraw()
 
+    def on_force_close(self):
+        self._force_actuate(self.manager.close_valve, False)
+
+    def on_force_open(self):
+        self._force_actuate(self.manager.open_valve, True)
+
+    def _force_actuate(self, func, state):
+        item = self._active_item
+        if item:
+            ok, change = func(item.name, mode='normal', force=True)
+            if ok:
+                item.state = state
+
+            if change and ok:
+                self._select_hook(item)
+
+            if change:
+                self.invalidate_and_redraw()
+
     def iter_valves(self):
         return (i for i in self.scene.valves.itervalues())
 
@@ -286,14 +307,23 @@ class ExtractionLineCanvas2D(SceneCanvas):
 
     def _show_menu(self, event, obj):
         actions = []
-        if self.manager.mode != 'client' or not globalv.client_only_locking:
-            if isinstance(self.active_item, BaseValve):
-                t = 'Lock'
-                if obj.soft_lock:
-                    t = 'Unlock'
 
-                action = self._action_factory(t, 'on_lock')
-                actions.append(action)
+        if self.manager.mode != 'client' or not globalv.client_only_locking:
+            if isinstance(self.active_item, Switch):
+                if isinstance(self.active_item, BaseValve):
+                    t = 'Lock'
+                    if obj.soft_lock:
+                        t = 'Unlock'
+
+                    action = self._action_factory(t, 'on_lock')
+                    actions.append(action)
+
+                if self.force_actuate_enabled:
+                    action = self._action_factory('Force Close', 'on_force_close')
+                    actions.append(action)
+
+                    action = self._action_factory('Force Open', 'on_force_open')
+                    actions.append(action)
 
         if actions:
             menu_manager = MenuManager(*actions)

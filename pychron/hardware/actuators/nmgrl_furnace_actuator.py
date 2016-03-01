@@ -40,7 +40,7 @@ import time
 
 # ========== local library imports =============
 from gp_actuator import GPActuator
-from pychron.hardware.actuators.pychron_gp_actuator import trim, trim_bool, get_valve_name
+from pychron.hardware.actuators import invert_trim_bool, get_valve_name, trim_bool
 
 
 class NMGRLFurnaceActuator(GPActuator):
@@ -74,7 +74,7 @@ class NMGRLFurnaceActuator(GPActuator):
     #     cmd = 'GetValveLockStates'
     #     return self.ask(cmd, verbose=verbose)
 
-    @trim_bool
+    @invert_trim_bool
     def get_channel_state(self, obj, verbose=True):
         """
             Query the hardware for the channel state
@@ -119,6 +119,7 @@ class NMGRLFurnaceActuator(GPActuator):
 
     def _check_actuate(self, obj, action):
         state = action == 'Open'
+        # chk = '1' if action == 'Close' else '0'
         return self.get_channel_state(obj) == state
 
 # ============= EOF =====================================
