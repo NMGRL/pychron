@@ -18,11 +18,14 @@
 from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change, provides
 # ============= standard library imports ========================
 import os
+import re
 # ============= local library imports  ==========================
 from pychron.furnace.ifurnace_controller import IFurnaceController
 from pychron.hardware.eurotherm import STX, ETX, EOT, ACK, ENQ
 from pychron.paths import paths
 
+
+PID_REGEX = re.compile(r'[A-Z]{2},\d+(;[A-Z]{2},\d+)*')
 
 @provides(IFurnaceController)
 class BaseEurotherm(HasTraits):
@@ -66,27 +69,30 @@ class BaseEurotherm(HasTraits):
             self.communicator.write_terminator = None
         return True
 
-    def set_pid_parameters(self, v):
-        """
-        """
-
-        params = self.get_pid_parameters(v)
-
-        if params:
+    def set_pid_str(self, s):
+        if PID_REGEX.match(s):
             builder = getattr(self, '_{}_build_command'.format(self.protocol))
-            # parser = getattr(self, '%s_parse_command_response' % self.protocol)
 
-            for pa in params[1].split(';'):
+            for pa in s.split(';'):
                 self.debug('set pid parameters {}'.format(pa))
                 cmd, value = pa.split(',')
                 cmd = builder(cmd, value)
                 self.ask(cmd, verbose=True)
+        else:
+            self.warning('invalid pid string "{}"'.format(s))
+
+    def set_pid_parameters(self, v):
+        """
+        """
+        params = self.get_pid_parameters(v)
+
+        if params:
+            self.set_pid_str(params[1])
 
     def get_pid_parameters(self, v):
         """
         """
-
-        p = os.path.join(paths.device_dir, 'Eurotherm_control_parameters.txt')
+        p = os.path.join(paths.device_dir, 'furnace', 'eurotherm_control_parameters.txt')
         with open(p) as f:
             params = [l.split('\t') for l in f]
 
@@ -222,12 +228,5 @@ class BaseEurotherm(HasTraits):
 
         if self.setpoint_min <= v < self.setpoint_max:
             return v
-
-            # def traits_view(self):
-            #     """
-            #     """
-            #     return View(Item('process_setpoint'),
-            #                 Item('process_value', style='readonly')
-            #                 )
 
 # ============= EOF =============================================

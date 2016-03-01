@@ -50,6 +50,9 @@ class FirmwareManager(HeadlessLoggable):
     feeder = None
     temp_hum = None
 
+    _switch_mapping = None
+    _switch_indicator_mapping = None
+
     def bootstrap(self, **kw):
         p = paths.furnace_firmware
         with open(p, 'r') as rfile:
@@ -57,6 +60,7 @@ class FirmwareManager(HeadlessLoggable):
 
         self._load_devices(yd['devices'])
         self._load_switch_mapping(yd['switch_mapping'])
+        self._load_switch_indicator_mapping(yd['switch_indicator_mapping'])
         self._load_funnel(yd['funnel'])
         self._load_magnets(yd['magnets'])
 
@@ -70,6 +74,9 @@ class FirmwareManager(HeadlessLoggable):
 
     def _load_switch_mapping(self, m):
         self._switch_mapping = m
+
+    def _load__switch_indicator_mapping(self, m):
+        self._switch_indicator_mapping = m
 
     def _load_devices(self, devices):
         for dev in devices:
@@ -101,11 +108,13 @@ class FirmwareManager(HeadlessLoggable):
 
     @debug
     def get_temperature(self, data):
-        return 0.1
+        if self.controller:
+            return self.controller.get_process_value()
 
     @debug
     def get_setpoint(self, data):
-        return 0
+        if self.controller:
+            return self.controller.process_setpoint
 
     @debug
     def get_magnets_state(self, data):
@@ -144,10 +153,18 @@ class FirmwareManager(HeadlessLoggable):
 
             return self.switch_controller.get_channel_state(ch)
 
+    @debug
+    def get_indicator_state(self, data):
+        if self.switch_controller:
+            ch = self._get_switch_indicator(data)
+
+            return self.switch_controller.get_channel_state(ch)
     # setters
     @debug
     def set_setpoint(self, data):
-        return
+        if self.controller:
+            self.controller.process_setpoint = data
+            return 'OK'
 
     @debug
     def open_switch(self, data):
@@ -198,14 +215,21 @@ class FirmwareManager(HeadlessLoggable):
     def move_absolute(self, data):
         drive = self._get_drive(data)
         if drive:
-            drive.move_absolute(data['position'])
+            convert_turns = data.get('convert_turns', False)
+            drive.move_absolute(data['position'], block=False, convert_turns=convert_turns)
 
     @debug
     def move_relative(self, data):
         drive = self._get_drive(data)
         if drive:
             convert_turns = data.get('convert_turns', False)
-            drive.move_absolute(data['position'], convert_turns=convert_turns)
+            drive.move_relative(data['position'], block=False, convert_turns=convert_turns)
+
+    @debug
+    def set_pid(self, data):
+        controller = self.controller
+        if controller:
+            controller.set_pid_str(data)
 
     # private
     def _get_drive(self, data):
@@ -226,4 +250,13 @@ class FirmwareManager(HeadlessLoggable):
         self.debug('get switch channel {} {}'.format(name, ch))
         return ch
 
+    def _get_switch_indicator(self, data):
+        if isinstance(data, dict):
+            name = data['name']
+        else:
+            name = data
+
+        ch = self._switch_indicator_mapping.get(name)
+        self.debug('get switch indicator channel {} {}'.format(name, ch))
+        return ch
 # ============= EOF =============================================

@@ -74,12 +74,17 @@ class NMGRLFurnaceActuator(GPActuator):
     #     cmd = 'GetValveLockStates'
     #     return self.ask(cmd, verbose=verbose)
 
-    @invert_trim_bool
+    @trim_bool
     def get_channel_state(self, obj, verbose=True):
         """
             Query the hardware for the channel state
         """
         cmd = 'GetChannelState {}'.format(get_valve_name(obj))
+        return self.ask(cmd, verbose=verbose)
+
+    @trim_bool
+    def get_indicator_state(self, obj, verbose=True):
+        cmd = 'GetIndicatorState {}'.format(get_valve_name(obj))
         return self.ask(cmd, verbose=verbose)
 
     def close_channel(self, obj, excl=False):
@@ -102,7 +107,7 @@ class NMGRLFurnaceActuator(GPActuator):
 
     def actuate(self, obj, action):
         if self._actuate(obj, action):
-            time.sleep(0.05)
+            time.sleep(1)
             return self._check_actuate(obj, action)
 
     @trim_bool
@@ -120,7 +125,7 @@ class NMGRLFurnaceActuator(GPActuator):
     def _check_actuate(self, obj, action):
         state = action == 'Open'
         # chk = '1' if action == 'Close' else '0'
-        return self.get_channel_state(obj) == state
+        return self.get_indicator_state(obj) == state
 
 # ============= EOF =====================================
 

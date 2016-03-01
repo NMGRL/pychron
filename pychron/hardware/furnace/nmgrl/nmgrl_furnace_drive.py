@@ -26,8 +26,13 @@ class NMGRLFurnaceDrive(CoreDevice):
         self.set_attribute(config, 'drive_name', 'General', 'drive_name')
         return True
 
+    def move_absolute(self, turns, convert_turns=False):
+        d = {'position': turns, 'convert_turns': convert_turns}
+        d = json.dumps(d)
+        self.ask('MoveAbsolute {}'.format(d))
+
     def move_relative(self, turns, convert_turns=False):
-        d = {'turns': turns, 'convert_turns': convert_turns}
+        d = {'position': turns, 'convert_turns': convert_turns}
         d = json.dumps(d)
         self.ask('MoveRelative {}'.format(d))
 

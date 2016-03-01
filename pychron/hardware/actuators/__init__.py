@@ -29,31 +29,27 @@ def trim(func):
         r = func(*args, **kw)
         if r:
             r = r.strip()
-            # r = r[4:-4]
         return r
 
     return wrapper
 
 
 def trim_bool(func):
-    def wrapper(*args, **kw):
-        r = func(*args, **kw)
-        if r:
-            r = r.strip()
-            r = to_bool(r)
-            # r = to_bool(r[4:-4])
-        return r
-
-    return wrapper
+    return _itrim_bool(func)
 
 
 def invert_trim_bool(func):
+    return _itrim_bool(func, True)
+
+
+def _itrim_bool(func, invert=False):
     def wrapper(*args, **kw):
         r = func(*args, **kw)
         if r:
             r = r.strip()
             r = to_bool(r)
-            # r = to_bool(r[4:-4])
-        return not r
+            if invert:
+                r = not r
+        return r
 
     return wrapper

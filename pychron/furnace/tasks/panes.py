@@ -33,6 +33,8 @@ class ControlPane(TraitsDockPane):
     id = 'pychron.nmgrlfurnace.controls'
 
     dump_sample_button = Button('Dump')
+    fire_magnets_button = Button('Magnets')
+
     funnel_up_button = Button
     funnel_down_button = Button
     funnel_down_enabled = Bool(True)
@@ -62,6 +64,9 @@ class ControlPane(TraitsDockPane):
 
     def _dump_sample_button_fired(self):
         self.model.dump_sample()
+
+    def _fire_magnets_button_fired(self):
+        self.model.fire_magnets()
 
     def trait_context(self):
         return {'object': self.model,
@@ -105,6 +110,8 @@ class ControlPane(TraitsDockPane):
 
                        HGroup(UItem('pane.dump_sample_button',
                                     tooltip='Complete sample dumping procedure'),
+                              UItem('pane.fire_magnets_button',
+                                    tooltip='Execute the magnet sequence'),
                               icon_button_editor('pane.funnel_up_button', 'arrow_up',
                                                  enabled_when='pane.funnel_up_enabled',
                                                  editor_kw={'label': 'Funnel Up'}),

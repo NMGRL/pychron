@@ -26,13 +26,10 @@ from pychron.hardware.core.core_device import CoreDevice
 class NMGRLFurnace(CoreDevice):
     @get_float(default=0)
     def get_temperature(self):
-        return self.ask('GetLabTemperatue')
+        return self.ask('GetLabTemperature')
 
     @get_float(default=0)
     def get_humidity(self):
         return self.ask('GetLabHumidity')
 
 # ============= EOF =============================================
-
-
-

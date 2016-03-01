@@ -70,6 +70,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     _alive = False
     _guide_overlay = None
     _dumper_thread = None
+    _magnets_thread = None
     mode = 'normal'
 
     def activate(self):
@@ -87,9 +88,16 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         self.debug('dump sample')
 
         if self._dumper_thread is None:
-            self._dumper_thread = Thread(name='DumpSample',
-                                         target=self._dump_sample)
+            self._dumper_thread = Thread(name='DumpSample', target=self._dump_sample)
+            self._magnets_thread.setDaemon(True)
             self._dumper_thread.start()
+
+    def fire_magnets(self):
+        self.debug('fire magnets')
+        if self._magnets_thread is None:
+            self._magnets_thread = Thread(name='Magnets', target=self.actuate_magnets)
+            self._magnets_thread.setDaemon(True)
+            self._magnets_thread.start()
 
     def is_dump_complete(self):
         ret = self._dumper_thread is None
@@ -107,6 +115,8 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         else:
             self.warning('actuate magnets not enabled')
 
+        self._magnets_thread = None
+
     def lower_funnel(self):
         self.debug('lower funnel')
         if self.loader_logic.check('FD'):
@@ -116,7 +126,8 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
 
             return True
         else:
-            self.warning('lowering funnel not enabled')
+            cm = self.loader_logic.get_check_message()
+            self.warning_dialog('Lowering funnel not enabled\n\n{}'.format(cm))
 
     def raise_funnel(self):
         self.debug('raise funnel')
@@ -146,10 +157,10 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
 
             self.graph.redraw()
 
-    def read_setpoint(self, update=False):
+    def read_setpoint(self, force=False):
         v = 0
         if self.controller:
-            force = update and not self.controller.is_scanning()
+            # force = update and not self.controller.is_scanning()
             v = self.controller.read_setpoint(force=force)
 
         try:
@@ -235,6 +246,12 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         self._alive = False
 
     def _start_update(self):
+        if not self.update_period:
+            self.information_dialog('Please set an update period in Preferences/Furnace')
+            return
+
+        self.debug('starting update. period= {}s'.format(self.update_period))
+
         self._alive = True
 
         self.graph = g = StreamGraph()
@@ -247,11 +264,14 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         self._update_readback()
 
     def _update_readback(self):
-        v = self.read_setpoint(update=True)
+        v = self.read_setpoint(force=True)
+        scalar = 100
         if v is not None:
             self.graph.record(v, track_y=False)
-            if self._alive:
-                do_after(self.update_period * 1000, self._update_readback)
+            scalar = 1
+
+        if self._alive:
+            do_after(scalar * self.update_period * 1000, self._update_readback)
 
     def _dump_sample(self):
         """
@@ -269,8 +289,8 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
             self.debug(line)
             self._execute_script_line(line)
 
-            self.stage_manager.set_sample_dumped()
-            self._dumper_thread = None
+        self.stage_manager.set_sample_dumped()
+        self._dumper_thread = None
 
     def _load_dump_script(self):
         p = os.path.join(paths.device_dir, 'furnace', 'dump_sequence.txt')
