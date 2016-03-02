@@ -21,7 +21,7 @@ from pychron.hardware.core.headless.core_device import HeadlessCoreDevice
 from pychron.hardware.mdrive.base import BaseMDrive
 
 
-class HeadlessMDrive(HeadlessCoreDevice, BaseMDrive):
+class HeadlessMDrive(BaseMDrive, HeadlessCoreDevice):
     pass
 # ============= EOF =============================================
 

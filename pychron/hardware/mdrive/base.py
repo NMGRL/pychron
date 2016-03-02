@@ -146,17 +146,19 @@ class BaseMDrive(BaseLinearDrive):
         return True
 
     def initialize(self, *args, **kw):
-        self.set_use_encoder(self.use_encoder)
-        if self.use_encoder:
-            self.steps_per_turn = 2048
-        else:
-            self.steps_per_turn = 51200
+        if super(BaseMDrive, self).initialize(*args, **kw):
+            self.set_use_encoder(self.use_encoder)
+            if self.use_encoder:
+                self.steps_per_turn = 2048
+            else:
+                self.steps_per_turn = 51200
 
-        for attr in ('initial_velocity', 'velocity', 'acceleration', 'deceleration', 'run_current'):
-            v = getattr(self, attr)
-            if v:
-                func = getattr(self, 'set_{}'.format(attr))
-                func(v)
+            for attr in ('initial_velocity', 'velocity', 'acceleration', 'deceleration', 'run_current'):
+                v = getattr(self, attr)
+                if v:
+                    func = getattr(self, 'set_{}'.format(attr))
+                    func(v)
+            return True
 
     def is_simulation(self):
         return self.simulation
@@ -166,7 +168,9 @@ class BaseMDrive(BaseLinearDrive):
         self._move(pos, False, block)
 
     def move_relative(self, pos, block=True, units='steps'):
+        self.debug('move relative pos={}, block={}, units={}'.format(pos, block, units))
         pos = self._get_steps(pos, units)
+        self.debug('converted steps={}'.format(pos))
         self._move(pos, True, block)
 
     def get_position(self, units='steps'):
