@@ -259,9 +259,12 @@ class BaseMDrive(BaseLinearDrive):
 
     def _get_var(self, c, as_int=True):
         resp = self.ask('PR {}'.format(c))
-
         if as_int and resp is not None:
-            resp = int(resp)
+            try:
+                resp = int(resp)
+            except (TypeError, ValueError), e:
+                self.debug('invalid var={} response="{}", error={}'.format(c, resp, e))
+                resp = None
 
         self.info('Variable {}={}'.format(c, resp))
         return resp
