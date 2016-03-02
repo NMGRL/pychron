@@ -168,12 +168,14 @@ class BaseMDrive(BaseLinearDrive):
     def move_absolute(self, pos, velocity=None, block=True, units='steps'):
         pos = self._get_steps(pos, units)
         self._move(pos, velocity, False, block)
+        return True
 
     def move_relative(self, pos, velocity=None, block=True, units='steps'):
         self.debug('move relative pos={}, block={}, units={}'.format(pos, block, units))
         pos = self._get_steps(pos, units)
         self.debug('converted steps={}'.format(pos))
         self._move(pos, velocity, True, block)
+        return True
 
     def get_position(self, units='steps'):
         steps = self.read_position()
@@ -187,10 +189,12 @@ class BaseMDrive(BaseLinearDrive):
             v = self.slew_velocity * scalar
             self.set_slew(v)
             self._slewing = True
+            return True
 
     def stop_drive(self):
         self._slewing = False
         self.set_slew(0)
+        return True
 
     def set_initial_velocity(self, v):
         self._set_var('VI', v)

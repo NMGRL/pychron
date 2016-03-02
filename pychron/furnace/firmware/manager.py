@@ -255,33 +255,33 @@ class FirmwareManager(HeadlessLoggable):
         if drive:
             units = data.get('units', 'steps')
             velocity = data.get('velocity')
-            drive.move_absolute(data['position'], velocity=velocity, block=False, units=units)
+            return drive.move_absolute(data['position'], velocity=velocity, block=False, units=units)
 
     @debug
     def move_relative(self, data):
         drive = self._get_drive(data)
         if drive:
             units = data.get('units', 'steps')
-            drive.move_relative(data['position'], block=False, units=units)
+            return drive.move_relative(data['position'], block=False, units=units)
 
     @debug
     def stop_drive(self, data):
         drive = self._get_drive(data)
         if drive:
-            drive.stop_drive()
+            return drive.stop_drive()
 
     @debug
     def slew(self, data):
         drive = self._get_drive(data)
         if drive:
             scalar = data.get('scalar', 1.0)
-            drive.slew(scalar)
+            return drive.slew(scalar)
 
     @debug
     def set_pid(self, data):
         controller = self.controller
         if controller:
-            controller.set_pid_str(data)
+            return controller.set_pid_str(data)
 
     # private
     def _get_drive(self, data):

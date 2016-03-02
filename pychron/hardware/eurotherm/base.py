@@ -78,6 +78,7 @@ class BaseEurotherm(HasTraits):
                 cmd, value = pa.split(',')
                 cmd = builder(cmd, value)
                 self.ask(cmd, verbose=True)
+                return True
         else:
             self.warning('invalid pid string "{}"'.format(s))
 
