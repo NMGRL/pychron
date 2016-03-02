@@ -120,7 +120,7 @@ class BaseMDrive(BaseLinearDrive):
             ('Motion', 'steps', 'int'),
             ('Motion', 'min_steps', 'int'),
             ('Motion', 'sign'),
-            ('Motion', 'velocity'),
+            ('Motion', 'velocity', 'int'),
             ('Motion', 'slew_velocity'),
             ('Motion', 'initial_velocity'),
             ('Motion', 'acceleration'),

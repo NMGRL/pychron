@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import json
 import time
 from pyface.message_dialog import warning
 from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change, Button
@@ -58,16 +59,19 @@ class FirmwareClient(HasTraits):
 
     # handlers
     def _test_button_fired(self):
-        if self._cnt % 2 == 0:
-            self._send('Open FF')
-            action = 'open'
-        else:
-            self._send('Close FF')
-            action = 'close'
-
-        time.sleep(0.5)
-        self._send('GetIndicatorState FF,{}'.format(action))
-        self._cnt += 1
+        # if self._cnt % 2 == 0:
+        #     self._send('Open FF')
+        #     action = 'open'
+        # else:
+        #     self._send('Close FF')
+        #     action = 'close'
+        #
+        # time.sleep(0.5)
+        # self._send('GetIndicatorState FF,{}'.format(action))
+        # self._cnt += 1
+        # d = json.dumps({'command': 'GetPosition', 'drive': 'feeder', 'position': 1, 'units': 'turns'})
+        d = json.dumps({'command': 'MoveRelative', 'drive': 'feeder', 'position': 1, 'units': 'turns'})
+        self._send(d)
         # for i in range(5):
         #     if i % 2 == 0:
         #         self._send('Open A')
