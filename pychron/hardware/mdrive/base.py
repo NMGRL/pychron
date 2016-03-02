@@ -212,10 +212,11 @@ class BaseMDrive(BaseLinearDrive):
 
     # private
     def _convert_steps(self, v, units):
-        if units == 'turns':
-            v /= float(self.steps_per_turn)
-        elif units == 'mm':
-            v /= float(self.turns_per_mm * self.steps_per_turn)
+        if v is not None:
+            if units == 'turns':
+                v /= float(self.steps_per_turn)
+            elif units == 'mm':
+                v /= float(self.turns_per_mm * self.steps_per_turn)
         return v
 
     def _get_steps(self, v, units):
