@@ -45,6 +45,7 @@ class FurnaceFirmwareProtocol(ServiceProtocol):
                          ('DenergizeMagnets', self._manager.denergize_magnets),
                          ('MoveAbsolute', self._manager.move_absolute),
                          ('MoveRelative', self._manager.move_relative),
+                         ('GetPosition', self._manager.get_position),
                          ('Slew', self._manager.slew),
                          ('StopDrive', self._manager.stop_drive),
                          ('Moving', self._manager.moving))

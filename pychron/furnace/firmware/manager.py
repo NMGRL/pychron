@@ -260,7 +260,7 @@ class FirmwareManager(HeadlessLoggable):
     def move_relative(self, data):
         drive = self._get_drive(data)
         if drive:
-            units = data.get('units', False)
+            units = data.get('units', 'steps')
             drive.move_relative(data['position'], block=False, units=units)
 
     @debug
