@@ -32,7 +32,9 @@ class NMGRLFurnaceDrive(CoreDevice):
     def move_absolute(self, pos, units='steps'):
         self.ask(self._build_command('MoveAbsolute', position=pos, units=units))
 
-    set_position = move_absolute
+    def set_position(self, *args, **kw):
+        kw['units'] = 'turns'
+        self.move_absolute(*args, **kw)
 
     def move_relative(self, pos, units='steps'):
         self.ask(self._build_command('MoveRelative', position=pos, units=units))

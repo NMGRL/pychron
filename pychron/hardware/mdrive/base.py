@@ -128,7 +128,7 @@ class BaseMDrive(BaseLinearDrive):
             ('Motion', 'acceleration'),
             ('Motion', 'deceleration'),
             ('Motion', 'run_current'),
-            ('Motion', 'use_encoder'),
+            ('Motion', 'use_encoder', 'boolean'),
             ('Motion', 'turns_per_mm'),
 
             ('Homing', 'home_delay'),
