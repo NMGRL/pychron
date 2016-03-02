@@ -15,17 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-
+from traits.has_traits import HasTraits
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-
-# from pychron.core.ui.thread import Thread
 from threading import Thread
 from Queue import Queue, Empty
 import time
 
 
-class ConsumerMixin:
+class ConsumerMixin(HasTraits):
     _consumer_queue = None
     _should_consume = False
     _consume_func = None

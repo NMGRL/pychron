@@ -49,7 +49,7 @@ def crc_caller(func):
 
 
 @provides(ICoreDevice)
-class BaseCoreDevice(HasTraits, HasCommunicator, ConsumerMixin):
+class BaseCoreDevice(HasCommunicator, ConsumerMixin):
     """
     """
 
