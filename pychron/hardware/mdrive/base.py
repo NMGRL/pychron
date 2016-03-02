@@ -171,7 +171,10 @@ class BaseMDrive(BaseLinearDrive):
 
     def get_position(self, units='steps'):
         steps = self.read_position()
-        return self._convert_steps(steps, units)
+        self.debug('read position steps={}'.format(steps))
+        pos = self._convert_steps(steps, units)
+        self.debug('converted position= {} ({})'.format(pos, units))
+        return pos
 
     def slew(self, scalar):
         if not self._slewing:
