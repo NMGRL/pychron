@@ -36,6 +36,7 @@ class FirmwareClient(HasTraits):
 
     test_button = Button('Test')
     _cnt = 0
+
     def __init__(self, *args, **kw):
         super(FirmwareClient, self).__init__(*args, **kw)
 
@@ -58,12 +59,15 @@ class FirmwareClient(HasTraits):
     # handlers
     def _test_button_fired(self):
         if self._cnt % 2 == 0:
-            self._send('Open FC')
+            self._send('Open FF')
+            action = 'open'
         else:
-            self._send('Close FC')
+            self._send('Close FF')
+            action = 'close'
 
-        self._send('GetIndicatorState FC')
-        self._cnt +=1
+        time.sleep(0.5)
+        self._send('GetIndicatorState FF,{}'.format(action))
+        self._cnt += 1
         # for i in range(5):
         #     if i % 2 == 0:
         #         self._send('Open A')

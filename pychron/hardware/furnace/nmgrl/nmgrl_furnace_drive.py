@@ -22,36 +22,42 @@ from pychron.hardware.core.core_device import CoreDevice
 
 
 class NMGRLFurnaceDrive(CoreDevice):
+
     def load_additional_args(self, config):
         self.set_attribute(config, 'drive_name', 'General', 'drive_name')
         return True
 
-    def move_absolute(self, turns, convert_turns=False):
-        d = {'position': turns, 'convert_turns': convert_turns}
+    def move_absolute(self, pos, units='steps'):
+        d = {'position': pos, 'units': units, 'drive': self.drive_name}
         d = json.dumps(d)
         self.ask('MoveAbsolute {}'.format(d))
 
-    def move_relative(self, turns, convert_turns=False):
-        d = {'position': turns, 'convert_turns': convert_turns}
+    set_position = move_absolute
+
+    def move_relative(self, turns, units='steps'):
+        d = {'position': turns, 'units': units, 'drive': self.drive_name}
         d = json.dumps(d)
         self.ask('MoveRelative {}'.format(d))
 
     def stop_drive(self):
-        pass
-
-    def slew(self, modifier):
-        pass
-
-    def set_position(self, pos):
-        d = {'position': pos, 'drive': self.drive_name}
+        d = {'drive': self.drive_name}
         d = json.dumps(d)
-        self.ask('SetPosition {}'.format(d))
+        self.ask('StopDrive {}'.format(d))
+
+    def slew(self, scalar):
+        d = {'scalar': scalar, 'drive': self.drive_name}
+        d = json.dumps(d)
+        self.ask('Slew {}'.format(d))
 
     def moving(self):
         d = {'drive': self.drive_name}
         d = json.dumps(d)
         return self.ask('Moving {}'.format(d))
 
+    def get_position(self, units='steps'):
+        d = {'drive': self.drive_name, 'units':units}
+        d = json.dumps(d)
+        return self.ask('GetPosition {}'.format(d))
 
 # ============= EOF =============================================
 

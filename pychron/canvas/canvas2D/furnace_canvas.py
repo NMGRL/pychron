@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+from pyface.timer.do_later import do_after
 from traits.api import Any
 # from traitsui.api import View, Item, VGroup, HGroup, ColorEditor
 # =============standard library imports ========================
@@ -45,6 +46,8 @@ class FurnaceCanvas(StageCanvas):
         self._add_crosshairs(klass=SimpleCrosshairsOverlay)
         self.crosshairs_overlay.radius = 0.5
         self.crosshairs_overlay.constrain = 'y'
+        # self.show_laser_position = False
+        # self.show_current_position = False
 
         self.view_y_range = (-5, 5)
         self.view_x_range = (0, 10)
@@ -82,35 +85,44 @@ class FurnaceCanvas(StageCanvas):
         if self.valid_position(x, y):
             x, y = self.map_data((x, y))
             self.set_desired_position(x, y)
-            self.feeder.position = x
-            # self.sample_linear_holder.linear_move(x, check_moving=True, use_calibration=False)
+
+            self.feeder.set_position(x, units='mm')
+            do_after(50, self._update_position)
             event.handled = True
 
     def normal_key_pressed(self, event):
         c = event.character
         if c in ('Left', 'Right'):
             ax_key, direction = DIRECTIONS[c]
-            # direction = self._calc_relative_move_direction(c, direction)
             distance = 5 if event.shift_down else 1
-            self.feeder.relative_move(direction * distance)
+            self.feeder.slew(direction * distance)
             event.handled = True
 
     def key_released(self, char):
         """
             called from outside by StageCompnentEditor
         """
-        self.feeder.update_position()
+        self.feeder.stop()
+        self._update_stage_position()
 
     # ===============================================================================
     # private
     # ===============================================================================
+    def _update_stage_position(self):
+        pos = self.feeder.get_position(units='mm')
+        self.set_stage_position(pos, 0)
 
-    # ===============================================================================
-    # handlers
-    # ===============================================================================
+    def _update_position(self):
+        self._update_stage_position()
+        if self.feeder.moving():
+            do_after(250, self._update_position)
 
-    # ===============================================================================
+        # ===============================================================================
+        # handlers
+        # ===============================================================================
+
+        # ===============================================================================
         # defaults
-    # ===============================================================================
+        # ===============================================================================
 
 # ========================EOF====================================================

@@ -341,14 +341,14 @@ class SerialCommunicator(Communicator):
             msg = '{} is not a valid port address'.format(port)
             self.warning(msg)
             if not valid:
-                wmsg = 'No valid ports'
-                self.warning(wmsg)
+                self.warning('No valid ports')
             else:
+                self.warning('======== Valid Ports ========')
                 for v in valid:
                     self.warning(v)
+                self.warning('=============================')
 
-                wmsg = '\n'.join(valid)
-
+                # wmsg = '\n'.join(valid)
             # if not globalv.ignore_connection_warnings:
             #
             #     if self.confirmation_dialog('{}\n{}\n\nQuit Pychron?'.format(msg, wmsg),
@@ -459,7 +459,6 @@ class SerialCommunicator(Communicator):
                         terminated = True
                         break
         except BaseException, e:
-            print 'fasfasdf', e
             self.warning(e)
         return r, terminated
 

@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Int, Bool
+from traits.api import Int, Bool, Float
 # ============= standard library imports ========================
 import time
 # ============= local library imports  ==========================
@@ -109,6 +109,7 @@ class BaseMDrive(BaseLinearDrive):
     run_current = Int
     use_encoder = Bool
     steps_per_turn = Int
+    turns_per_mm = Float
 
     slew_velocity = Int
 
@@ -126,6 +127,7 @@ class BaseMDrive(BaseLinearDrive):
             ('Motion', 'deceleration'),
             ('Motion', 'run_current'),
             ('Motion', 'use_encoder'),
+            ('Motion', 'turns_per_mm')
 
             ('Homing', 'home_delay'),
             ('Homing', 'home_velocity'),
@@ -159,23 +161,21 @@ class BaseMDrive(BaseLinearDrive):
     def is_simulation(self):
         return self.simulation
 
-    def convert_to_steps(self, pos):
-        return int(pos * self.steps_per_turn)
-
-    def move_absolute(self, pos, block=True, convert_turns=False):
-        if convert_turns:
-            pos = int(pos * self.steps_per_turn)
+    def move_absolute(self, pos, block=True, units='steps'):
+        pos = self._get_steps(pos, units)
         self._move(pos, False, block)
 
-    def move_relative(self, pos, block=True, convert_turns=False):
-        if convert_turns:
-            pos = int(pos * self.steps_per_turn)
-
+    def move_relative(self, pos, block=True, units='steps'):
+        pos = self._get_steps(pos, units)
         self._move(pos, True, block)
 
-    def slew(self, modifier):
+    def get_position(self, units='steps'):
+        steps = self.read_position()
+        return self._convert_steps(steps, units)
+
+    def slew(self, scalar):
         if not self._slewing:
-            v = self.slew_velocity * modifier
+            v = self.slew_velocity * scalar
             self.set_slew(v)
             self._slewing = True
 
@@ -211,6 +211,20 @@ class BaseMDrive(BaseLinearDrive):
         self._block()
 
     # private
+    def _convert_steps(self, v, units):
+        if units == 'turns':
+            v /= float(self.steps_per_turn)
+        elif units == 'mm':
+            v /= float(self.turns_per_mm * self.steps_per_turn)
+        return v
+
+    def _get_steps(self, v, units):
+        if units == 'turns':
+            v = int(v * self.steps_per_turn)
+        elif units == 'mm':
+            v = int(v * self.turns_per_mm * self.steps_per_turn)
+        return v
+
     def _set_motor(self, value):
         self._data_position = value
 
@@ -261,7 +275,7 @@ class BaseMDrive(BaseLinearDrive):
     def _moving(self, motion_flag='MV'):
         """
         0= Not Moving
-        1= Moviing
+        1= Moving
 
 
         motion flags
@@ -281,8 +295,4 @@ class BaseMDrive(BaseLinearDrive):
         pos = self._get_var('P')
         return pos
 
-
 # ============= EOF =============================================
-
-
-
