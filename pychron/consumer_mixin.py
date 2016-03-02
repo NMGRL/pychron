@@ -35,8 +35,8 @@ class ConsumerMixin:
     _timeout = 0
     _delay = 0
 
-    def __init__(self, func=None, buftime=None, auto_start=True, main=False, timeout=None, delay=1):
-        super(ConsumerMixin, self).__init__()
+    def __init__(self, func=None, buftime=None, auto_start=True, main=False, timeout=None, delay=1, *args, **kw):
+        super(ConsumerMixin, self).__init__(*args, **kw)
 
         self.setup_consumer(func, buftime, auto_start, main, timeout, delay)
 
