@@ -201,6 +201,9 @@ class BaseMDrive(BaseLinearDrive):
     def set_acceleration(self, a):
         self._set_var('A', a)
 
+    def set_deceleration(self, a):
+        self._set_var('D', a)
+
     def set_slew(self, v):
         self._set_var('SL', v)
 
