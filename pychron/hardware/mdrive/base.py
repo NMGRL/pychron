@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Int, Bool, Float
+from traits.api import Int, Bool, Float, CInt
 # ============= standard library imports ========================
 import time
 # ============= local library imports  ==========================
@@ -104,14 +104,14 @@ ERROR_MAP = {'6': 'An I/O is already set to this type. Applies to non-General Pu
 
 
 class BaseMDrive(BaseLinearDrive):
-    initial_velocity = Int
-    deceleration = Int
-    run_current = Int
+    initial_velocity = CInt
+    deceleration = CInt
+    run_current = CInt
     use_encoder = Bool
-    steps_per_turn = Int
+    steps_per_turn = CInt
     turns_per_mm = Float
 
-    slew_velocity = Int
+    slew_velocity = CInt
 
     _slewing = False
 
