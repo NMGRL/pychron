@@ -34,11 +34,16 @@ class FurnaceFirmwareProtocol(ServiceProtocol):
 
         misc_services = (('GetLabTemperature', self._manager.get_lab_temperature),
                          ('GetLabHumidity', self._manager.get_lab_humidity))
+
         controller_services = (('GetTemperature', self._manager.get_temperature),
                                ('GetSetpoint', self._manager.get_setpoint),
                                ('SetSetpoint', self._manager.set_setpoint))
+
         valve_services = (('Open', self._manager.open_switch),
-                          ('Close', self._manager.close_switch))
+                          ('Close', self._manager.close_switch),
+                          ('GetIndicatorState', self._manager.get_indicator_state),
+                          ('GetChannelState', self._manager.get_channel_state))
+
         dump_services = (('LowerFunnel', self._manager.lower_funnel),
                          ('RaiseFunnel', self._manager.raise_funnel),
                          ('EnergizeMagnets', self._manager.energize_magnets),
