@@ -233,10 +233,18 @@ class FirmwareManager(HeadlessLoggable):
     @debug
     def energize_magnets(self, data):
         if self.switch_controller:
+            period = 3
+            if data:
+                if isinstance(data, dict):
+
+                    period = data.get('period', 3)
+                else:
+                    period = data
+
             def func():
                 for m in self._magnet_channels:
                     self.switch_controller.set_channel_state(m, True)
-                    time.sleep(1)
+                    time.sleep(period)
 
             t = Thread(target=func)
             t.start()
