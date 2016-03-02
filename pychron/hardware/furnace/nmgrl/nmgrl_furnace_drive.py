@@ -30,8 +30,8 @@ class NMGRLFurnaceDrive(CoreDevice):
         self.set_attribute(config, 'drive_name', 'General', 'drive_name')
         return True
 
-    def move_absolute(self, pos, units='steps'):
-        self.ask(self._build_command('MoveAbsolute', position=pos, units=units))
+    def move_absolute(self, pos, units='steps', velocity=None):
+        self.ask(self._build_command('MoveAbsolute', position=pos, units=units, velocity=velocity))
 
     def set_position(self, *args, **kw):
         kw['units'] = 'turns'

@@ -282,10 +282,10 @@ class BaseMDrive(BaseLinearDrive):
         return resp
 
     def _move(self, pos, velocity, relative, block):
-        if velocity is not None:
-            velocity = self.velocity
+        if velocity is None:
+            velocity = self.initial_velocity
 
-        self.set_velocity(velocity)
+        self.set_initial_velocity(velocity)
 
         cmd = 'MR' if relative else 'MA'
         self.tell('{} {}'.format(cmd, pos))
