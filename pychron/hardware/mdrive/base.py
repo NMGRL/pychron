@@ -155,7 +155,7 @@ class BaseMDrive(BaseLinearDrive):
             else:
                 self.steps_per_turn = 51200
 
-            for attr in ('initial_velocity', 'velocity', 'acceleration', 'deceleration', 'run_current'):
+            for attr in ('velocity', 'initial_velocity', 'acceleration', 'deceleration', 'run_current'):
                 v = getattr(self, attr)
                 if v:
                     func = getattr(self, 'set_{}'.format(attr))
@@ -165,15 +165,15 @@ class BaseMDrive(BaseLinearDrive):
     def is_simulation(self):
         return self.simulation
 
-    def move_absolute(self, pos, block=True, units='steps'):
+    def move_absolute(self, pos, velocity=None, block=True, units='steps'):
         pos = self._get_steps(pos, units)
-        self._move(pos, False, block)
+        self._move(pos, velocity, False, block)
 
-    def move_relative(self, pos, block=True, units='steps'):
+    def move_relative(self, pos, velocity=None, block=True, units='steps'):
         self.debug('move relative pos={}, block={}, units={}'.format(pos, block, units))
         pos = self._get_steps(pos, units)
         self.debug('converted steps={}'.format(pos))
-        self._move(pos, True, block)
+        self._move(pos, velocity, True, block)
 
     def get_position(self, units='steps'):
         steps = self.read_position()
@@ -281,7 +281,12 @@ class BaseMDrive(BaseLinearDrive):
         self.info('Variable {}={}'.format(c, resp))
         return resp
 
-    def _move(self, pos, relative, block):
+    def _move(self, pos, velocity, relative, block):
+        if velocity is not None:
+            velocity = self.velocity
+
+        self.set_velocity(velocity)
+
         cmd = 'MR' if relative else 'MA'
         self.tell('{} {}'.format(cmd, pos))
         if block:

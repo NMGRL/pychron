@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Str
+from traits.api import Str, Int
 # ============= standard library imports ========================
 import json
 # ============= local library imports  ==========================
@@ -24,6 +24,7 @@ from pychron.hardware.core.core_device import CoreDevice
 
 class NMGRLFurnaceDrive(CoreDevice):
     drive_name = Str
+    velocity = Int(10000)
 
     def load_additional_args(self, config):
         self.set_attribute(config, 'drive_name', 'General', 'drive_name')
@@ -34,6 +35,7 @@ class NMGRLFurnaceDrive(CoreDevice):
 
     def set_position(self, *args, **kw):
         kw['units'] = 'turns'
+        kw['velocity'] = self.velocity
         self.move_absolute(*args, **kw)
 
     def move_relative(self, pos, units='steps'):
