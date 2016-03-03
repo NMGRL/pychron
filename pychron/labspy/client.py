@@ -16,10 +16,9 @@
 
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
-from datetime import datetime
 from traits.api import Instance, Bool, Int
-
 # ============= standard library imports ========================
+from datetime import datetime
 from threading import Thread, Lock
 import os
 import hashlib
