@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change, provides
+from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change, provides, TraitError
 # ============= standard library imports ========================
 import os
 import re
@@ -78,6 +78,7 @@ class BaseEurotherm(HasTraits):
                 cmd, value = pa.split(',')
                 cmd = builder(cmd, value)
                 self.ask(cmd, verbose=True)
+                return True
         else:
             self.warning('invalid pid string "{}"'.format(s))
 
@@ -132,10 +133,10 @@ class BaseEurotherm(HasTraits):
         """
         """
         resp = self._query('PV', **kw)
-        if resp is None or resp == 'simulation':
-            resp = self.get_random_value(0, 10) + self.process_setpoint
-
-        self.process_value = resp
+        try:
+            self.process_value = resp
+        except TraitError:
+            pass
 
         return resp
 
@@ -186,6 +187,10 @@ class BaseEurotherm(HasTraits):
         """
         """
         if resp is not None:
+            resp = resp.strip()
+            if not resp:
+                return
+
             # remove frame chrs
             resp = resp[1:-2]
 

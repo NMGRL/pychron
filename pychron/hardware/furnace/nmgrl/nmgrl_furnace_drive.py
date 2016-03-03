@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from traits.api import Str, Int
 # ============= standard library imports ========================
 import json
 # ============= local library imports  ==========================
@@ -22,37 +23,40 @@ from pychron.hardware.core.core_device import CoreDevice
 
 
 class NMGRLFurnaceDrive(CoreDevice):
+    drive_name = Str
+    velocity = Int(10000)
+
     def load_additional_args(self, config):
         self.set_attribute(config, 'drive_name', 'General', 'drive_name')
         return True
 
-    def move_absolute(self, turns, convert_turns=False):
-        d = {'position': turns, 'convert_turns': convert_turns}
-        d = json.dumps(d)
-        self.ask('MoveAbsolute {}'.format(d))
+    def move_absolute(self, pos, units='steps', velocity=None):
+        self.ask(self._build_command('MoveAbsolute', position=pos, units=units, velocity=velocity))
 
-    def move_relative(self, turns, convert_turns=False):
-        d = {'position': turns, 'convert_turns': convert_turns}
-        d = json.dumps(d)
-        self.ask('MoveRelative {}'.format(d))
+    def set_position(self, *args, **kw):
+        kw['units'] = 'turns'
+        kw['velocity'] = self.velocity
+        self.move_absolute(*args, **kw)
+
+    def move_relative(self, pos, units='steps'):
+        self.ask(self._build_command('MoveRelative', position=pos, units=units))
 
     def stop_drive(self):
-        pass
+        self.ask(self._build_command('StopDrive'))
 
-    def slew(self, modifier):
-        pass
-
-    def set_position(self, pos):
-        d = {'position': pos, 'drive': self.drive_name}
-        d = json.dumps(d)
-        self.ask('SetPosition {}'.format(d))
+    def slew(self, scalar):
+        self.ask(self._build_command('Slew', scalar=scalar))
 
     def moving(self):
-        d = {'drive': self.drive_name}
-        d = json.dumps(d)
-        return self.ask('Moving {}'.format(d))
+        return self.ask(self._build_command('Moving'))
 
+    def get_position(self, units='steps'):
+        return self.ask(self._build_command('GetPosition', units=units))
 
+    def _build_command(self,cmd, **kw):
+        kw['drive'] = self.drive_name
+        kw['command'] = cmd
+        return json.dumps(kw)
 # ============= EOF =============================================
 
 

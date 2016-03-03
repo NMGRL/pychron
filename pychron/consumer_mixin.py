@@ -15,17 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-
+from traits.has_traits import HasTraits
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-
-# from pychron.core.ui.thread import Thread
 import time
 from Queue import Queue, Empty
 from threading import Thread
 
 
-class ConsumerMixin:
+class ConsumerMixin(HasTraits):
     _consumer_queue = None
     _should_consume = False
     _consume_func = None
@@ -35,8 +33,8 @@ class ConsumerMixin:
     _timeout = 0
     _delay = 0
 
-    def __init__(self, func=None, buftime=None, auto_start=True, main=False, timeout=None, delay=1):
-        super(ConsumerMixin, self).__init__()
+    def __init__(self, func=None, buftime=None, auto_start=True, main=False, timeout=None, delay=1, *args, **kw):
+        super(ConsumerMixin, self).__init__(*args, **kw)
 
         self.setup_consumer(func, buftime, auto_start, main, timeout, delay)
 

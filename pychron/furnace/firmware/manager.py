@@ -15,23 +15,31 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+# ============= standard library imports ========================
+import json
 from threading import Thread
+
+from cStringIO import StringIO
+
+from PIL import Image
+from numpy import save
 import time
 import yaml
-# ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.hardware.dht11 import DHT11
 from pychron.hardware.eurotherm.headless import HeadlessEurotherm
 from pychron.hardware.labjack.headless_u3_lv import HeadlessU3LV
 from pychron.hardware.mdrive.headless import HeadlessMDrive
 from pychron.headless_loggable import HeadlessLoggable
+from pychron.image.rpi_camera import RPiCamera
 from pychron.paths import paths
 
 DEVICES = {'controller': HeadlessEurotherm,
            'switch_controller': HeadlessU3LV,
            'funnel': HeadlessMDrive,
            'feeder': HeadlessMDrive,
-           'temp_hum': DHT11}
+           'temp_hum': DHT11,
+           'camera': RPiCamera}
 
 
 def debug(func):
@@ -40,6 +48,7 @@ def debug(func):
         r = func(obj, data)
         obj.debug('------ result={}'.format(r))
         return r
+
     return wrapper
 
 
@@ -75,7 +84,7 @@ class FirmwareManager(HeadlessLoggable):
     def _load_switch_mapping(self, m):
         self._switch_mapping = m
 
-    def _load__switch_indicator_mapping(self, m):
+    def _load_switch_indicator_mapping(self, m):
         self._switch_indicator_mapping = m
 
     def _load_devices(self, devices):
@@ -94,6 +103,27 @@ class FirmwareManager(HeadlessLoggable):
             self.warning('Invalid device {}'.format(devname))
 
     # getters
+    @debug
+    def get_jpeg(self, data):
+        quality = 100
+        if isinstance(data, dict):
+            quality = data['quality']
+
+        memfile = StringIO()
+        self.camera.capture(memfile, name=None, quality=quality)
+        memfile.seek(0)
+        return json.dumps(memfile.read())
+
+    @debug
+    def get_image_array(self, data):
+        if self.camera:
+            im = self.camera.get_image_array()
+
+            memfile = StringIO()
+            save(memfile, im)
+            memfile.seek(0)
+            return json.dumps(memfile.read())
+
     @debug
     def get_lab_humidity(self, data):
         if self.temp_hum:
@@ -124,7 +154,7 @@ class FirmwareManager(HeadlessLoggable):
     def get_position(self, data):
         drive = self._get_drive(data)
         if drive:
-            return drive.read_position()
+            return drive.get_position()
 
     @debug
     def moving(self, data):
@@ -157,8 +187,16 @@ class FirmwareManager(HeadlessLoggable):
     def get_indicator_state(self, data):
         if self.switch_controller:
             ch = self._get_switch_indicator(data)
+            if ch is None:
+                if isinstance(data, dict):
+                    ch = data['name']
+                else:
+                    ch, _ = data
 
-            return self.switch_controller.get_channel_state(ch)
+                return self.get_channel_state(ch)
+            else:
+                return self.switch_controller.get_channel_state(ch)
+
     # setters
     @debug
     def set_setpoint(self, data):
@@ -195,10 +233,24 @@ class FirmwareManager(HeadlessLoggable):
     @debug
     def energize_magnets(self, data):
         if self.switch_controller:
+            period = 3
+            if data:
+                if isinstance(data, dict):
+
+                    period = data.get('period', 3)
+                else:
+                    period = data
+
             def func():
+                prev = None
                 for m in self._magnet_channels:
                     self.switch_controller.set_channel_state(m, True)
-                    time.sleep(1)
+                    if prev:
+                        self.switch_controller.set_channel_state(prev, False)
+
+                    prev = m
+                    time.sleep(period)
+                self.switch_controller.set_channel_state(prev, False)
 
             t = Thread(target=func)
             t.start()
@@ -215,21 +267,35 @@ class FirmwareManager(HeadlessLoggable):
     def move_absolute(self, data):
         drive = self._get_drive(data)
         if drive:
-            convert_turns = data.get('convert_turns', False)
-            drive.move_absolute(data['position'], block=False, convert_turns=convert_turns)
+            units = data.get('units', 'steps')
+            velocity = data.get('velocity')
+            return drive.move_absolute(data['position'], velocity=velocity, block=False, units=units)
 
     @debug
     def move_relative(self, data):
         drive = self._get_drive(data)
         if drive:
-            convert_turns = data.get('convert_turns', False)
-            drive.move_relative(data['position'], block=False, convert_turns=convert_turns)
+            units = data.get('units', 'steps')
+            return drive.move_relative(data['position'], block=False, units=units)
+
+    @debug
+    def stop_drive(self, data):
+        drive = self._get_drive(data)
+        if drive:
+            return drive.stop_drive()
+
+    @debug
+    def slew(self, data):
+        drive = self._get_drive(data)
+        if drive:
+            scalar = data.get('scalar', 1.0)
+            return drive.slew(scalar)
 
     @debug
     def set_pid(self, data):
         controller = self.controller
         if controller:
-            controller.set_pid_str(data)
+            return controller.set_pid_str(data)
 
     # private
     def _get_drive(self, data):
@@ -253,10 +319,18 @@ class FirmwareManager(HeadlessLoggable):
     def _get_switch_indicator(self, data):
         if isinstance(data, dict):
             name = data['name']
+            action = data['action']
         else:
-            name = data
+            name, action = data
 
         ch = self._switch_indicator_mapping.get(name)
         self.debug('get switch indicator channel {} {}'.format(name, ch))
+
+        if ',' in str(ch):
+            o, c = map(str.strip, ch.split(','))
+            ch = o if action.lower() == 'open' else c
+            if not ch:
+                ch = None
         return ch
+
 # ============= EOF =============================================

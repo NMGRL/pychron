@@ -39,7 +39,7 @@ class Feeder(LinearAxis):
         p = 1 / float(freq)
         for i in xrange(n):
             turns *= -1
-            self._cdevice.move_relative(turns, convert_turns=True)
+            self._cdevice.move_relative(turns, units='turns')
             time.sleep(p)
 
 
@@ -93,7 +93,7 @@ class NMGRLFurnaceStageManager(BaseFurnaceStageManager):
             self.info('hole={}, position={}, calibrated_position={}'.format(key, pos, (x, y)))
 
             self.feeder.position = x
-            self.feeder.move_absolute(x)
+            self.feeder.move_absolute(x, units='turns')
 
             self.info('Move complete')
             self.update_axes()  # update_hole=False)

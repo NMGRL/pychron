@@ -236,4 +236,11 @@ class BaseLinearDrive(ConsumerMixin):
 
     def _set_data_position(self, pos):
         self.add_consumable((self._set_motor, pos))
+
+    def _get_velocity(self):
+        return self._velocity
+
+    def _set_velocity(self, v):
+        self._velocity = v
+
 # ============= EOF =============================================

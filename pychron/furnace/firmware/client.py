@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import json
 import time
 from pyface.message_dialog import warning
 from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change, Button
@@ -26,7 +27,7 @@ from pychron.hardware.core.communicators.ethernet_communicator import EthernetCo
 
 
 class FirmwareClient(HasTraits):
-    command = Str#(enter_set=True, auto_set=False)
+    command = Str  # (enter_set=True, auto_set=False)
     responses = Str
 
     send_button = Button('Send')
@@ -35,6 +36,7 @@ class FirmwareClient(HasTraits):
     port = Int
 
     test_button = Button('Test')
+    _cnt = 0
 
     def __init__(self, *args, **kw):
         super(FirmwareClient, self).__init__(*args, **kw)
@@ -54,15 +56,28 @@ class FirmwareClient(HasTraits):
         resp = self._comm.ask(cmd)
         resp = '{} ==> {}'.format(cmd, resp)
         self.responses = '{}\n{}'.format(self.responses, resp)
-        
+
     # handlers
     def _test_button_fired(self):
-        for i in range(5):
-            if i % 2 == 0:
-                self._send('Open A')
-            else:
-                self._send('Close A')
-            time.sleep(1)
+        # if self._cnt % 2 == 0:
+        #     self._send('Open FF')
+        #     action = 'open'
+        # else:
+        #     self._send('Close FF')
+        #     action = 'close'
+        #
+        # time.sleep(0.5)
+        # self._send('GetIndicatorState FF,{}'.format(action))
+        # self._cnt += 1
+        # d = json.dumps({'command': 'GetPosition', 'drive': 'feeder', 'position': 1, 'units': 'turns'})
+        d = json.dumps({'command': 'MoveRelative', 'drive': 'feeder', 'position': 1, 'units': 'turns'})
+        self._send(d)
+        # for i in range(5):
+        #     if i % 2 == 0:
+        #         self._send('Open A')
+        #     else:
+        #         self._send('Close A')
+        #     time.sleep(1)
 
     def _send_button_fired(self):
         self._send(self.command)

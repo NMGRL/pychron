@@ -28,8 +28,12 @@ from pychron.globals import globalv
 
 
 def get_ports():
-    keyspan = glob.glob('/dev/tty.U*')
     usb = glob.glob('/dev/tty.usb*')
+    if sys.platform == 'darwin':
+        keyspan = glob.glob('/dev/tty.U*')
+    else:
+        keyspan = glob.glob('/dev/ttyU*')
+
     return keyspan + usb
 
 
@@ -61,6 +65,7 @@ class SerialCommunicator(Communicator):
 
     read_delay = None
     read_terminator = None
+    read_terminator_position = None
     clear_output = False
 
     _config = None
@@ -131,6 +136,12 @@ class SerialCommunicator(Communicator):
 
         self.set_attribute(config, 'read_terminator', 'Communications', 'terminator',
                            optional=True, default=None)
+
+        self.set_attribute(config, 'read_terminator_position', 'Communications', 'terminator_position',
+                           optional=True, default=None, cast='int')
+
+        if self.read_terminator == 'ETX':
+            self.read_terminator = chr(3)
 
     def set_parity(self, parity):
         if parity is not None:
@@ -328,18 +339,19 @@ class SerialCommunicator(Communicator):
             msg = '{} is not a valid port address'.format(port)
             self.warning(msg)
             if not valid:
-                wmsg = 'No valid ports'
-                self.warning(wmsg)
+                self.warning('No valid ports')
             else:
+                self.warning('======== Valid Ports ========')
                 for v in valid:
                     self.warning(v)
+                self.warning('=============================')
 
-                wmsg = '\n'.join(valid)
-
-            if not globalv.ignore_connection_warnings:
-                if self.confirmation_dialog('{}\n{}\n\nQuit Pychron?'.format(msg, wmsg),
-                                            title='Quit Pychron'):
-                    os._exit(0)
+                # wmsg = '\n'.join(valid)
+            # if not globalv.ignore_connection_warnings:
+            #
+            #     if self.confirmation_dialog('{}\n{}\n\nQuit Pychron?'.format(msg, wmsg),
+            #                                 title='Quit Pychron'):
+            #         os._exit(0)
 
     def _write(self, cmd, is_hex=False):
         """
@@ -390,7 +402,11 @@ class SerialCommunicator(Communicator):
         if terminator is None:
             terminator = self.read_terminator
 
-        func = lambda r: self._get_isterminated(r, terminator)
+        pos = self.read_terminator_position
+
+        def func(r):
+            return self._get_isterminated(r, terminator, pos)
+
         return self._read_loop(func, delay, timeout)
 
     def _get_nbytes(self, nchars, r):
@@ -419,7 +435,7 @@ class SerialCommunicator(Communicator):
             return ack == r[0], r[1:]
         return False, None
 
-    def _get_isterminated(self, r, terminator=None):
+    def _get_isterminated(self, r, terminator=None, pos=None):
         terminated = False
         try:
             inw = self.handle.inWaiting()
@@ -427,16 +443,20 @@ class SerialCommunicator(Communicator):
             #            print 'inw', inw, r, terminator
             if terminator is None:
                 terminator = ('\n', '\r', '\r\x00')
-
             if not isinstance(terminator, (list, tuple)):
                 terminator = (terminator,)
 
             if r and r.strip():
                 for ti in terminator:
-                    if r.endswith(ti):
+                    if pos:
+                        t = r[pos] == ti
+                    else:
+                        t = r.endswith(ti)
+
+                    if t:
                         terminated = True
                         break
-        except (OSError, IOError), e:
+        except BaseException, e:
             self.warning(e)
         return r, terminated
 

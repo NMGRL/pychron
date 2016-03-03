@@ -32,31 +32,33 @@ class FurnaceFirmwareProtocol(ServiceProtocol):
         self._addr = addr
         ServiceProtocol.__init__(self)
 
-        get_services = (('GetTemperature', self._manager.get_temperature),
-                        ('GetLabTemperature', self._manager.get_lab_temperature),
-                        ('GetLabHumidity', self._manager.get_lab_humidity),
-                        ('GetSetpoint', self._manager.get_setpoint),
-                        ('GetPosition', self._manager.get_position),
-                        ('GetMagnetsState', self._manager.get_magnets_state),
-                        ('Moving', self._manager.moving),
-                        ('IsFunnelUp',self._manager.is_funnel_up),
-                        ('IsFunnelDown', self._manager.is_funnel_down),
-                        ('GetChannelState', self._manager.get_channel_state),
-                        ('GetIndicatorState', self._manager.get_indicator_state),
-                        )
+        misc_services = (('GetLabTemperature', self._manager.get_lab_temperature),
+                         ('GetLabHumidity', self._manager.get_lab_humidity))
 
-        set_services = (('SetSetpoint', self._manager.set_setpoint),
-                        ('Open', self._manager.open_switch),
-                        ('Close', self._manager.close_switch),
-                        ('LowerFunnel', self._manager.lower_funnel),
-                        ('RaiseFunnel', self._manager.raise_funnel),
-                        ('EnergizeMagnets', self._manager.energize_magnets),
-                        ('DenergizeMagnets', self._manager.denergize_magnets),
-                        ('MoveAbsolute', self._manager.move_absolute),
-                        ('MoveRelative', self._manager.move_relative))
+        controller_services = (('GetTemperature', self._manager.get_temperature),
+                               ('GetSetpoint', self._manager.get_setpoint),
+                               ('SetSetpoint', self._manager.set_setpoint))
 
-        self._register_services(get_services)
-        self._register_services(set_services)
+        valve_services = (('Open', self._manager.open_switch),
+                          ('Close', self._manager.close_switch),
+                          ('GetIndicatorState', self._manager.get_indicator_state),
+                          ('GetChannelState', self._manager.get_channel_state))
+
+        dump_services = (('LowerFunnel', self._manager.lower_funnel),
+                         ('RaiseFunnel', self._manager.raise_funnel),
+                         ('EnergizeMagnets', self._manager.energize_magnets),
+                         ('DenergizeMagnets', self._manager.denergize_magnets),
+                         ('MoveAbsolute', self._manager.move_absolute),
+                         ('MoveRelative', self._manager.move_relative),
+                         ('GetPosition', self._manager.get_position),
+                         ('Slew', self._manager.slew),
+                         ('StopDrive', self._manager.stop_drive),
+                         ('Moving', self._manager.moving))
+
+        self._register_services(misc_services)
+        self._register_services(controller_services)
+        self._register_services(valve_services)
+        self._register_services(dump_services)
 
 
 class FirmwareFactory(Factory):

@@ -19,7 +19,7 @@
 import time
 from threading import Lock
 # ============= local library imports  ==========================
-from pychron.config_loadable import ConfigLoadable
+from pychron.headless_config_loadable import HeadlessConfigLoadable
 
 
 def prep_str(s):
@@ -56,7 +56,7 @@ def process_response(re, replace=None, remove_eol=True):
     return re
 
 
-class Communicator(ConfigLoadable):
+class Communicator(HeadlessConfigLoadable):
     """
     Base class for all communicators, e.g. SerialCommunicator, EthernetCommunicator
     """

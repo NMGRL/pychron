@@ -24,6 +24,17 @@ from pychron.hardware.eurotherm.base import BaseEurotherm
 class HeadlessEurotherm(BaseEurotherm, HeadlessCoreDevice):
     pass
 
+
+if __name__ == '__main__':
+    from pychron.core.helpers.logger_setup import logging_setup
+    from pychron.paths import paths
+    paths.build('_dev')
+    logging_setup('euro', use_archiver=False, use_file=False)
+    h = HeadlessEurotherm(name='test_eurotherm', configuration_dir_name='furnace')
+    h.bootstrap()
+
+    print h.communicator.handle
+    print h.get_process_value()
 # ============= EOF =============================================
 
 

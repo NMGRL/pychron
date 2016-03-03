@@ -99,15 +99,18 @@ class ControlPane(TraitsDockPane):
         #                                         high_name='setpoint_readback_max')),
         #
         #                label='Controller', show_border=True)
-        c_grp = VGroup(Item('setpoint'),
+        c_grp = VGroup(HGroup(Item('setpoint'),spring),
                        VGroup(UItem('setpoint_readback', editor=LCDEditor())),
                        label='Controller', show_border=True)
-        d_grp = VGroup(Item('stage_manager.calibrated_position_entry', label='Hole'),
-                       Item('stage_manager.feeder.position',
+
+        feeder_grp = HGroup(Item('stage_manager.feeder.position',
                             editor=RangeEditor(mode='slider',
                                                low_name='stage_manager.feeder.min_value',
                                                high_name='stage_manager.feeder.max_value', )),
+                            Item('stage_manager.feeder.velocity'))
 
+        d_grp = VGroup(Item('stage_manager.calibrated_position_entry', label='Hole'),
+                       feeder_grp,
                        HGroup(UItem('pane.dump_sample_button',
                                     tooltip='Complete sample dumping procedure'),
                               UItem('pane.fire_magnets_button',
