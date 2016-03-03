@@ -39,7 +39,11 @@ def split_graph(n):
         e1, e2 = n.edges
 
         n1, n2 = e1.get_nodes(n), e2.get_nodes(n)
-        n1, n2 = n1[0], n2[0]
+        try:
+            n1, n2 = n1[0], n2[0]
+        except IndexError:
+            return []
+
         # ensure first node is a Valve node otherwise states not set correctly
         #see issue #335
         if not isinstance(n1, ValveNode):
