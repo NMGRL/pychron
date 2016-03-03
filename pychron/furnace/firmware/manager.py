@@ -242,9 +242,15 @@ class FirmwareManager(HeadlessLoggable):
                     period = data
 
             def func():
+                prev = None
                 for m in self._magnet_channels:
                     self.switch_controller.set_channel_state(m, True)
+                    if prev:
+                        self.switch_controller.set_channel_state(prev, False)
+
+                    prev = m
                     time.sleep(period)
+                self.switch_controller.set_channel_state(prev, False)
 
             t = Thread(target=func)
             t.start()
