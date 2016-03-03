@@ -269,7 +269,7 @@ class BaseMDrive(BaseLinearDrive):
     def _check_error(self):
         eflag = self._get_var('EF')
         if eflag == 1:
-            ecode = self._get_var('ER', as_int=False)
+            ecode = str(self._get_var('ER', as_int=False))
             estr = ERROR_MAP.get(ecode, 'See MCode Programming Manual')
             return ecode, estr
 
