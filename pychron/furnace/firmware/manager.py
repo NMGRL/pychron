@@ -292,6 +292,15 @@ class FirmwareManager(HeadlessLoggable):
             return drive.slew(scalar)
 
     @debug
+    def jitter(self, data):
+        drive = self._get_drive(data)
+        if drive:
+            turns = data.get('turns', 10)
+            n = data.get('n', 10)
+            freq = data.get('freq', 10)
+            return drive.jitter(turns, n, freq, block=False)
+
+    @debug
     def set_pid(self, data):
         controller = self.controller
         if controller:

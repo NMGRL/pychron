@@ -34,6 +34,7 @@ class ControlPane(TraitsDockPane):
 
     dump_sample_button = Button('Dump')
     fire_magnets_button = Button('Magnets')
+    jitter_button = Button('Jitter')
 
     funnel_up_button = Button
     funnel_down_button = Button
@@ -68,6 +69,9 @@ class ControlPane(TraitsDockPane):
     def _fire_magnets_button_fired(self):
         self.model.fire_magnets()
 
+    def _jitter_button_fired(self):
+        self.model.jitter_feeder()
+
     def trait_context(self):
         return {'object': self.model,
                 'pane': self,
@@ -99,20 +103,21 @@ class ControlPane(TraitsDockPane):
         #                                         high_name='setpoint_readback_max')),
         #
         #                label='Controller', show_border=True)
-        c_grp = VGroup(HGroup(Item('setpoint'),spring),
+        c_grp = VGroup(HGroup(Item('setpoint'), spring),
                        VGroup(UItem('setpoint_readback', editor=LCDEditor())),
                        label='Controller', show_border=True)
 
         feeder_grp = HGroup(Item('stage_manager.feeder.position',
-                            editor=RangeEditor(mode='slider',
-                                               low_name='stage_manager.feeder.min_value',
-                                               high_name='stage_manager.feeder.max_value', )),
+                                 editor=RangeEditor(mode='slider',
+                                                    low_name='stage_manager.feeder.min_value',
+                                                    high_name='stage_manager.feeder.max_value', )),
                             Item('stage_manager.feeder.velocity'))
 
         d_grp = VGroup(Item('stage_manager.calibrated_position_entry', label='Hole'),
                        feeder_grp,
                        HGroup(UItem('pane.dump_sample_button',
                                     tooltip='Complete sample dumping procedure'),
+                              UItem('pane.jitter_button'),
                               UItem('pane.fire_magnets_button',
                                     tooltip='Execute the magnet sequence'),
                               icon_button_editor('pane.funnel_up_button', 'arrow_up',
@@ -141,9 +146,9 @@ class FurnacePane(TraitsTaskPane):
 
     def traits_view(self):
         canvas_grp = VGroup(
-                HGroup(UItem('stage_manager.stage_map_name', editor=EnumEditor(name='stage_manager.stage_map_names')),
-                       spring),
-                UItem('stage_manager.canvas', style='custom', editor=ComponentEditor()))
+            HGroup(UItem('stage_manager.stage_map_name', editor=EnumEditor(name='stage_manager.stage_map_names')),
+                   spring),
+            UItem('stage_manager.canvas', style='custom', editor=ComponentEditor()))
 
         v = View(VGroup(UItem('graph', style='custom'), canvas_grp))
         return v

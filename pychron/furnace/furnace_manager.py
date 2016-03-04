@@ -20,10 +20,10 @@ from traits.api import TraitError, Instance, Float, provides, Int
 # ============= standard library imports ========================
 import os
 import time
+from threading import Thread
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.dumper_canvas import DumperCanvas
 from pychron.core.helpers.filetools import pathtolist
-from pychron.core.ui.thread import Thread
 from pychron.extraction_line.switch_manager import SwitchManager
 from pychron.furnace.funnel import NMGRLFunnel
 from pychron.furnace.furnace_controller import FurnaceController
@@ -121,10 +121,12 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         self.debug('disable')
         self.response_recorder.stop()
         self.setpoint = 0
+
     def start_response_recorder(self):
-        pass
+        self.response_recorder.start()
+
     def stop_response_recorder(self):
-        pass
+        self.response_recorder.stop()
 
     def move_to_position(self, pos, *args, **kw):
         self.debug('move to position {}'.format(pos))
@@ -145,17 +147,25 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     def fire_magnets(self):
         self.debug('fire magnets')
         if self._magnets_thread is None:
-            self._magnets_thread = Thread(name='Magnets', target=self.actuate_magnets)
+            self._magnets_thread = Thread(name='Magnets', target=self.actuate_magnets, kwargs={'check_logic':False})
             self._magnets_thread.setDaemon(True)
             self._magnets_thread.start()
+
+    def jitter_feeder(self):
+        self.debug('jitter feeder')
+        self.stage_manager.jitter(turns=0.25, n=20, freq=4)
 
     def is_dump_complete(self):
         ret = self._dumper_thread is None
         return ret
 
-    def actuate_magnets(self):
-        self.debug('actuate magnets')
-        if self.loader_logic.check('AM'):
+    def actuate_magnets(self, check_logic=True):
+        self.debug('actuate magnets check_logic={}'.format(check_logic))
+        check = True
+        if check_logic:
+            check = self.loader_logic.check('AM')
+
+        if check:
             self.magnets.energize()
 
             # jitter linear drive
@@ -413,6 +423,5 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     def _magnets_default(self):
         m = NMGRLMagnetDumper(name='magnets', configuration_dir_name='furnace')
         return m
-
 
 # ============= EOF =============================================

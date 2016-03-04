@@ -53,7 +53,8 @@ class FurnaceFirmwareProtocol(ServiceProtocol):
                          ('GetPosition', self._manager.get_position),
                          ('Slew', self._manager.slew),
                          ('StopDrive', self._manager.stop_drive),
-                         ('Moving', self._manager.moving))
+                         ('Moving', self._manager.moving),
+                         ('Jitter', self._manager.jitter))
 
         self._register_services(misc_services)
         self._register_services(controller_services)

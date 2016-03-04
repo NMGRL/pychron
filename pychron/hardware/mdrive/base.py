@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from threading import Thread
+
 from traits.api import Int, Bool, Float, CInt
 # ============= standard library imports ========================
 import time
@@ -194,6 +196,23 @@ class BaseMDrive(BaseLinearDrive):
     def stop_drive(self):
         self._slewing = False
         self.set_slew(0)
+        return True
+
+    def jitter(self, turns, n, freq, block=True):
+        def _jitter():
+            ti = turns
+            p = 1 / float(freq)
+            for i in xrange(n):
+                ti *= -1
+                self.move_relative(ti, units='turns')
+                time.sleep(p)
+
+        if block:
+            _jitter()
+        else:
+            t = Thread(target=_jitter)
+            t.setDaemon(True)
+            t.start()
         return True
 
     def set_initial_velocity(self, v):

@@ -36,11 +36,12 @@ class Feeder(LinearAxis):
         :param freq: frequency of jitter. i.e changes of direction per second
         :return:
         """
-        p = 1 / float(freq)
-        for i in xrange(n):
-            turns *= -1
-            self._cdevice.move_relative(turns, units='turns')
-            time.sleep(p)
+        self._cdevice.jitter(turns, n, freq)
+        # p = 1 / float(freq)
+        # for i in xrange(n):
+        #     turns *= -1
+        #     self._cdevice.move_relative(turns, units='turns')
+        #     time.sleep(p)
 
 
 class BaseFurnaceStageManager(BaseStageManager):
@@ -55,8 +56,8 @@ class BaseFurnaceStageManager(BaseStageManager):
 class NMGRLFurnaceStageManager(BaseFurnaceStageManager):
     feeder = Instance(Feeder)
 
-    def jitter(self):
-        self.feeder.jitter()
+    def jitter(self, *args, **kw):
+        self.feeder.jitter(*args, **kw)
 
     def set_sample_dumped(self):
         hole = self.stage_map.get_hole(self.calibrated_position_entry)

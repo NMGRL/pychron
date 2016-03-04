@@ -53,6 +53,9 @@ class NMGRLFurnaceDrive(CoreDevice):
     def get_position(self, units='steps'):
         return self.ask(self._build_command('GetPosition', units=units))
 
+    def jitter(self, turns, n, freq):
+        return self.ask(self._build_command('Jitter', turns=turns, n=n, freq=freq))
+
     def _build_command(self,cmd, **kw):
         kw['drive'] = self.drive_name
         kw['command'] = cmd
