@@ -15,9 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Int, Bool, Float, CInt, Event
+from traits.api import Int, Bool, Float, CInt
 # ============= standard library imports ========================
-from threading import Thread
+from threading import Thread, Event
 import time
 # ============= local library imports  ==========================
 from pychron.hardware.base_linear_drive import BaseLinearDrive
@@ -215,6 +215,7 @@ class BaseMDrive(BaseLinearDrive):
     def stop_jitter(self):
         if self._jitter_evt:
             self._jitter_evt.set()
+        return True
 
     def set_initial_velocity(self, v):
         self._set_var('VI', v)
