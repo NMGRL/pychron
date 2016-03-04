@@ -172,11 +172,11 @@ class BaseMDrive(BaseLinearDrive):
         self._move(pos, velocity, False, block)
         return True
 
-    def move_relative(self, pos, velocity=None, block=True, units='steps'):
+    def move_relative(self, pos, velocity=None, acceleration=None, deceleration=None, block=True, units='steps'):
         self.debug('move relative pos={}, block={}, units={}'.format(pos, block, units))
         pos = self._get_steps(pos, units)
         self.debug('converted steps={}'.format(pos))
-        self._move(pos, velocity, True, block)
+        self._move(pos, velocity, acceleration, deceleration, True, block)
         return True
 
     def get_position(self, units='steps'):
@@ -198,12 +198,13 @@ class BaseMDrive(BaseLinearDrive):
         self.set_slew(0)
         return True
 
-    def start_jitter(self, turns, p1, p2, velocity=None):
+    def start_jitter(self, turns, p1, p2, velocity=None, acceleration=None, deceleration=None):
         def _jitter():
+            kw = dict(velocity=velocity, acceleration=acceleration, deceleration=deceleration, units='turns')
             while not self._jitter_evt.is_set():
-                self.move_relative(turns, velocity=velocity, units='turns')
+                self.move_relative(turns, **kw)
                 time.sleep(p1)
-                self.move_relative(-turns, velocity=velocity, units='turns')
+                self.move_relative(-turns, **kw)
                 time.sleep(p2)
 
         self._jitter_evt = Event()
@@ -306,11 +307,18 @@ class BaseMDrive(BaseLinearDrive):
         self.info('Variable {}={}'.format(c, resp))
         return resp
 
-    def _move(self, pos, velocity, relative, block):
+    def _move(self, pos, velocity, acceleration, deceleration, relative, block):
         if velocity is None:
             velocity = self.initial_velocity
 
+        if acceleration is None:
+            acceleration = self.acceleration
+        if deceleration is None:
+            deceleration = self.deceleration
+
         self.set_initial_velocity(velocity)
+        self.set_acceleration(acceleration)
+        self.set_deceleration(deceleration)
 
         cmd = 'MR' if relative else 'MA'
         self.tell('{} {}'.format(cmd, pos))

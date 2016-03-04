@@ -71,10 +71,12 @@ class FirmwareClient(HasTraits):
         # self._cnt += 1
         # d = json.dumps({'command': 'GetPosition', 'drive': 'feeder', 'position': 1, 'units': 'turns'})
         # d = json.dumps({'command': 'MoveRelative', 'drive': 'feeder', 'position': 1, 'units': 'turns'})
-        d = {'command': 'StartJitter', 'drive': 'feeder', 'turns': 0.5, 'p1': 0.1, 'p2': 0.25}
+        v, a, d = self.command.split(',')
+        d = {'command': 'StartJitter', 'drive': 'feeder', 'turns': 0.5, 'p1': 0.1, 'p2': 0.25,
+             'velocity': int(v), 'acceleration': int(a), 'deceleration': int(d)}
         d = json.dumps(d)
         self._send(d)
-        time.sleep(10)
+        time.sleep(5)
 
         d = {'command': 'StopJitter', 'drive': 'feeder'}
         d = json.dumps(d)

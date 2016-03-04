@@ -307,7 +307,9 @@ class FirmwareManager(HeadlessLoggable):
             p1 = data.get('p1', 0.1)
             p2 = data.get('p2', 0.1)
             velocity=data.get('velocity', None)
-            return drive.start_jitter(turns, p1, p2, velocity)
+            acceleration=data.get('acceleration', None)
+            deceleration=data.get('deceleration', None)
+            return drive.start_jitter(turns, p1, p2, velocity, acceleration, deceleration)
 
     @debug
     def stop_jitter(self, data):
