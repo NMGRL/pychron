@@ -117,6 +117,7 @@ class BaseMDrive(BaseLinearDrive):
     slew_velocity = CInt
 
     _slewing = False
+    _jitter_evt = None
 
     def load_additional_args(self, config):
         args = [
@@ -197,7 +198,7 @@ class BaseMDrive(BaseLinearDrive):
         self.set_slew(0)
         return True
 
-    def start_jitter(self, turns, p1, p2, block=True):
+    def start_jitter(self, turns, p1, p2):
         def _jitter():
             while not self._jitter_evt.is_set():
                 self.move_relative(turns, units='turns')
@@ -206,12 +207,9 @@ class BaseMDrive(BaseLinearDrive):
                 time.sleep(p2)
 
         self._jitter_evt = Event()
-        if block:
-            _jitter()
-        else:
-            t = Thread(target=_jitter)
-            t.setDaemon(True)
-            t.start()
+        t = Thread(target=_jitter)
+        t.setDaemon(True)
+        t.start()
         return True
 
     def stop_jitter(self):

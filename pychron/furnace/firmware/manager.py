@@ -300,13 +300,19 @@ class FirmwareManager(HeadlessLoggable):
             return drive.slew(scalar)
 
     @debug
-    def jitter(self, data):
+    def start_jitter(self, data):
         drive = self._get_drive(data)
         if drive:
             turns = data.get('turns', 10)
             p1 = data.get('p1', 0.1)
             p2 = data.get('p2', 0.1)
-            return drive.jitter(turns, p1, p2, block=False)
+            return drive.start_jitter(turns, p1, p2)
+
+    @debug
+    def stop_jitter(self, data):
+        drive = self._get_drive(data)
+        if drive:
+            return drive.stop_jitter()
 
     @debug
     def set_pid(self, data):
