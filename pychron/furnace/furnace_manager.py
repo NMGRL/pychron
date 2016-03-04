@@ -171,7 +171,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
 
         if check:
 
-            self.stage_manager.start_jitter()
+            self.stage_manager.start_jitter(turns=0.5, p1=0.1, p2=0.25, velocity=15000)
             self.magnets.energize()
 
             time.sleep(0.05)

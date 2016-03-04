@@ -70,8 +70,16 @@ class FirmwareClient(HasTraits):
         # self._send('GetIndicatorState FF,{}'.format(action))
         # self._cnt += 1
         # d = json.dumps({'command': 'GetPosition', 'drive': 'feeder', 'position': 1, 'units': 'turns'})
-        d = json.dumps({'command': 'MoveRelative', 'drive': 'feeder', 'position': 1, 'units': 'turns'})
+        # d = json.dumps({'command': 'MoveRelative', 'drive': 'feeder', 'position': 1, 'units': 'turns'})
+        d = {'command': 'StartJitter', 'drive': 'feeder', 'turns': 0.5, 'p1': 0.1, 'p2': 0.25}
+        d = json.dumps(d)
         self._send(d)
+        time.sleep(10)
+
+        d = {'command': 'StopJitter', 'drive': 'feeder'}
+        d = json.dumps(d)
+        self._send(d)
+
         # for i in range(5):
         #     if i % 2 == 0:
         #         self._send('Open A')

@@ -198,12 +198,12 @@ class BaseMDrive(BaseLinearDrive):
         self.set_slew(0)
         return True
 
-    def start_jitter(self, turns, p1, p2):
+    def start_jitter(self, turns, p1, p2, velocity=None):
         def _jitter():
             while not self._jitter_evt.is_set():
-                self.move_relative(turns, units='turns')
+                self.move_relative(turns, velocity=velocity, units='turns')
                 time.sleep(p1)
-                self.move_relative(-turns, units='turns')
+                self.move_relative(-turns, velocity=velocity, units='turns')
                 time.sleep(p2)
 
         self._jitter_evt = Event()
