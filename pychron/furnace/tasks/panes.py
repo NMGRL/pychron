@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from enable.component_editor import ComponentEditor
 from pyface.tasks.traits_dock_pane import TraitsDockPane
-from traits.api import Button, Bool
+from traits.api import Button, Bool, Str
 from traitsui.api import View, Item, Readonly, UItem, VGroup, HGroup, EnumEditor, spring, \
     InstanceEditor, ButtonEditor, RangeEditor, Tabbed
 # ============= standard library imports ========================
@@ -34,7 +34,9 @@ class ControlPane(TraitsDockPane):
 
     dump_sample_button = Button('Dump')
     fire_magnets_button = Button('Magnets')
-    jitter_button = Button('Jitter')
+    jitter_button = Button
+    jitter_label = Str('Start Jitter')
+    jittering = Bool
 
     funnel_up_button = Button
     funnel_down_button = Button
@@ -70,7 +72,13 @@ class ControlPane(TraitsDockPane):
         self.model.fire_magnets()
 
     def _jitter_button_fired(self):
-        self.model.jitter_feeder()
+        if not self.jittering:
+            self.model.start_jitter_feeder()
+            self.jitter_label = 'Stop Jitter'
+        else:
+            self.model.stop_jitter_feeder()
+            self.jitter_label = 'Start Jitter'
+        self.jittering = not self.jittering
 
     def trait_context(self):
         return {'object': self.model,
@@ -117,7 +125,8 @@ class ControlPane(TraitsDockPane):
                        feeder_grp,
                        HGroup(UItem('pane.dump_sample_button',
                                     tooltip='Complete sample dumping procedure'),
-                              UItem('pane.jitter_button'),
+                              UItem('pane.jitter_button', editor=ButtonEditor(label_value='pane.jitter_label')),
+                              # UItem('pane.jitter_button'),
                               UItem('pane.fire_magnets_button',
                                     tooltip='Execute the magnet sequence'),
                               icon_button_editor('pane.funnel_up_button', 'arrow_up',

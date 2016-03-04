@@ -15,10 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from threading import Thread
-
-from traits.api import Int, Bool, Float, CInt
+from traits.api import Int, Bool, Float, CInt, Event
 # ============= standard library imports ========================
+from threading import Thread
 import time
 # ============= local library imports  ==========================
 from pychron.hardware.base_linear_drive import BaseLinearDrive
@@ -198,15 +197,15 @@ class BaseMDrive(BaseLinearDrive):
         self.set_slew(0)
         return True
 
-    def jitter(self, turns, n, freq, block=True):
+    def start_jitter(self, turns, p1, p2, block=True):
         def _jitter():
-            ti = turns
-            p = 1 / float(freq)
-            for i in xrange(n):
-                ti *= -1
-                self.move_relative(ti, units='turns')
-                time.sleep(p)
+            while not self._jitter_evt.is_set():
+                self.move_relative(turns, units='turns')
+                time.sleep(p1)
+                self.move_relative(-turns, units='turns')
+                time.sleep(p2)
 
+        self._jitter_evt = Event()
         if block:
             _jitter()
         else:
@@ -214,6 +213,10 @@ class BaseMDrive(BaseLinearDrive):
             t.setDaemon(True)
             t.start()
         return True
+
+    def stop_jitter(self):
+        if self._jitter_evt:
+            self._jitter_evt.set()
 
     def set_initial_velocity(self, v):
         self._set_var('VI', v)

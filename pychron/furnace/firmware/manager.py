@@ -61,6 +61,7 @@ class FirmwareManager(HeadlessLoggable):
 
     _switch_mapping = None
     _switch_indicator_mapping = None
+    _is_energized=False
 
     def bootstrap(self, **kw):
         p = paths.furnace_firmware
@@ -242,6 +243,7 @@ class FirmwareManager(HeadlessLoggable):
                     period = data
 
             def func():
+                self._is_energized=True
                 prev = None
                 for m in self._magnet_channels:
                     self.switch_controller.set_channel_state(m, True)
@@ -251,13 +253,19 @@ class FirmwareManager(HeadlessLoggable):
                     prev = m
                     time.sleep(period)
                 self.switch_controller.set_channel_state(prev, False)
+                self._is_energized=False
 
             t = Thread(target=func)
             t.start()
             return True
 
     @debug
+    def is_energized(self):
+        return self._is_energized
+
+    @debug
     def denergize_magnets(self, data):
+        self._is_energized = False
         if self.switch_controller:
             for m in self._magnet_channels:
                 self.switch_controller.set_channel_state(m, False)
@@ -296,9 +304,9 @@ class FirmwareManager(HeadlessLoggable):
         drive = self._get_drive(data)
         if drive:
             turns = data.get('turns', 10)
-            n = data.get('n', 10)
-            freq = data.get('freq', 10)
-            return drive.jitter(turns, n, freq, block=False)
+            p1 = data.get('p1', 0.1)
+            p2 = data.get('p2', 0.1)
+            return drive.jitter(turns, p1, p2, block=False)
 
     @debug
     def set_pid(self, data):

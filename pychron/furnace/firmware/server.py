@@ -47,6 +47,7 @@ class FurnaceFirmwareProtocol(ServiceProtocol):
         dump_services = (('LowerFunnel', self._manager.lower_funnel),
                          ('RaiseFunnel', self._manager.raise_funnel),
                          ('EnergizeMagnets', self._manager.energize_magnets),
+                         ('IsEnergized', self._manager.is_energized),
                          ('DenergizeMagnets', self._manager.denergize_magnets),
                          ('MoveAbsolute', self._manager.move_absolute),
                          ('MoveRelative', self._manager.move_relative),
@@ -54,7 +55,8 @@ class FurnaceFirmwareProtocol(ServiceProtocol):
                          ('Slew', self._manager.slew),
                          ('StopDrive', self._manager.stop_drive),
                          ('Moving', self._manager.moving),
-                         ('Jitter', self._manager.jitter))
+                         ('StartJitter', self._manager.start_jitter),
+                         ('StopJitter', self._manager.stop_jitter))
 
         self._register_services(misc_services)
         self._register_services(controller_services)

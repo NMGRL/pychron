@@ -33,6 +33,11 @@ class NMGRLMagnetDumper(CoreDevice):
         self._dump_in_progress = False
         self.ask('DenergizeMagnets')
 
+    def is_energized(self):
+        ret = self.ask('IsEnergized', verbose=True) == 'OK'
+        self._dump_in_progress = ret
+        return ret
+
     # channel_address = Str
     # in_progress_address = Str
     # _dump_in_progress = False

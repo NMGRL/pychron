@@ -151,9 +151,13 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
             self._magnets_thread.setDaemon(True)
             self._magnets_thread.start()
 
-    def jitter_feeder(self):
+    def start_jitter_feeder(self):
         self.debug('jitter feeder')
-        self.stage_manager.jitter(turns=0.25, n=20, freq=4)
+        self.stage_manager.start_jitter(turns=0.5, p1=0.1, p2=0.25)
+
+    def stop_jitter_feeder(self):
+        self.debug('stop jitter')
+        self.stage_manager.stop_jitter()
 
     def is_dump_complete(self):
         ret = self._dumper_thread is None
@@ -166,13 +170,19 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
             check = self.loader_logic.check('AM')
 
         if check:
+
+            self.stage_manager.start_jitter()
             self.magnets.energize()
 
-            # jitter linear drive
-            self.stage_manager.jitter()
-            self.stage_manager.set_sample_dumped()
+            time.sleep(0.05)
+            while 1:
+                if not self.magnets.is_energized():
+                    break
+                time.sleep(0.25)
 
+            self.stage_manager.set_sample_dumped()
             self.magnets.denergize()
+            self.stage_manager.stop_jitter()
         else:
             cm = self.loader_logic.get_check_message()
             self.warning_dialog('Actuating magnets not enabled\n\n{}'.format(cm))
