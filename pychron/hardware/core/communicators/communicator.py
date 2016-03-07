@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 import time
-from threading import Lock
+from threading import Lock, RLock
 # ============= local library imports  ==========================
 from pychron.headless_config_loadable import HeadlessConfigLoadable
 
@@ -72,7 +72,7 @@ class Communicator(HeadlessConfigLoadable):
         """
         """
         super(Communicator, self).__init__(*args, **kw)
-        self._lock = Lock()
+        self._lock = RLock()
 
     def load(self, config, path):
         self.set_attribute(config, 'verbose', 'Communications', 'verbose', default=False, optional=True)
