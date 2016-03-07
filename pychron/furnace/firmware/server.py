@@ -20,7 +20,7 @@ from traits.api import Instance
 # ============= local library imports  ==========================
 from twisted.internet import reactor
 from twisted.internet.endpoints import TCP4ServerEndpoint
-from twisted.internet.protocol import Factory
+from twisted.internet.protocol import Factory, Protocol
 
 from pychron.headless_loggable import HeadlessLoggable
 from pychron.tx.protocols.service import ServiceProtocol
@@ -65,12 +65,65 @@ class FurnaceFirmwareProtocol(ServiceProtocol):
         self._register_services(dump_services)
 
 
+class Producer:
+    def __init__(self, proto, manager):
+        self._proto = proto
+        self._manager = manager
+        self._paused = False
+
+    def pauseProducing(self):
+        self._paused = True
+
+    def resumeProducing(self):
+        self._paused = False
+        self._alive = True
+        img = self._manager.get_image_array()
+        imstr = img.dumps()
+        n = len(imstr)
+        imstr = '{:08X}{}'.format(len(imstr), imstr)
+
+        rem = n % 4096
+        for ci in xrange(0, n, 4096):
+            try:
+                self._proto.transport.write(imstr[ci:ci + 4096])
+            except IndexError:
+                pass
+            if not self._alive:
+                return
+
+        self._proto.transport.write(imstr[ci:ci + rem])
+        self._proto.transport.unregisterProducer()
+        self._proto.transport.loseConnection()
+
+    def stopProducing(self):
+        self._alive = False
+
+
+class FirmwareCameraProtocol(Protocol):
+    def __init__(self, manager, addr):
+        self._manager = manager
+        self._addr = addr
+
+    def dataReceived(self, data):
+        producer = Producer(self, self._manager)
+        self.transport.registerProducer(producer, True)
+        producer.resumeProducing()
+
+
 class FirmwareFactory(Factory):
     def __init__(self, manager):
         self._manager = manager
 
     def buildProtocol(self, addr):
         return FurnaceFirmwareProtocol(self._manager, addr)
+
+
+class FirmwareCameraFactory(Factory):
+    def __init__(self, manager):
+        self._manager = manager
+
+    def buildProtocol(self, addr):
+        return FirmwareCameraProtocol(self._manager, addr)
 
 
 class FirmwareServer(HeadlessLoggable):
@@ -88,6 +141,7 @@ class FirmwareServer(HeadlessLoggable):
         if port is None:
             port = 8000
         self.add_endpoint(port, FirmwareFactory(self.manager))
+        self.add_endpoint(port + 1, FirmwareCameraFactory(self.manager))
 
     def add_endpoint(self, port, factory):
         self.debug('add endbpoint port={} factory={}'.format(port, factory.__class__.__name__))
