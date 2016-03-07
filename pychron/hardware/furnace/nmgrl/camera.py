@@ -15,8 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change
-from traitsui.api import View, UItem, Item, HGroup, VGroup
+from numpy import fromstring
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.config_loadable import ConfigLoadable
@@ -44,9 +43,24 @@ class NMGRLCamera(ConfigLoadable, HasCommunicator):
         return HasCommunicator.open(self, *args, **kw)
 
     def get_image_data(self, size=None):
-        img = self.ask('GetImageArray')
-        print img
-        return img
+        imgstr = None
+        with self.communicator.lock:
+            self.communicator.tell('GetImageArray')
+            resp = self.communicator.read()
+            n, resp = resp[:2], resp[2:]
+            while 1:
+                resp += self.communicator.read()
+                if len(resp) >=n:
+                    imgstr = resp
+
+        if imgstr:
+            return fromstring(imgstr)
+
+        # img = self.ask('GetImageArray')
+        # if img is not None:
+        #     img = fromstring(img)
+        #     print img.shape
+        #     return img
 
 # ============= EOF =============================================
 

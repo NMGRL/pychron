@@ -20,9 +20,6 @@ import json
 from threading import Thread
 
 from cStringIO import StringIO
-
-from PIL import Image
-from numpy import save
 import time
 import yaml
 # ============= local library imports  ==========================
@@ -61,7 +58,7 @@ class FirmwareManager(HeadlessLoggable):
 
     _switch_mapping = None
     _switch_indicator_mapping = None
-    _is_energized=False
+    _is_energized = False
 
     def bootstrap(self, **kw):
         p = paths.furnace_firmware
@@ -115,20 +112,12 @@ class FirmwareManager(HeadlessLoggable):
         memfile.seek(0)
         return json.dumps(memfile.read())
 
-    @debug
     def get_image_array(self, data):
         if self.camera:
             im = self.camera.get_image_array()
-            if im:
-                self.debug('image: size={}'.format(im.shape))
-            else:
-                self.debug('no image')
-
-            memfile = StringIO()
-            save(memfile, im)
-            memfile.seek(0)
-            return memfile.read()
-
+            if im is not None:
+                imstr = im.dumps()
+                return '{:02X}{}'.format(len(imstr), imstr)
     @debug
     def get_lab_humidity(self, data):
         if self.temp_hum:
@@ -247,7 +236,7 @@ class FirmwareManager(HeadlessLoggable):
                     period = data
 
             def func():
-                self._is_energized=True
+                self._is_energized = True
                 prev = None
                 for m in self._magnet_channels:
                     self.switch_controller.set_channel_state(m, True)
@@ -257,7 +246,7 @@ class FirmwareManager(HeadlessLoggable):
                     prev = m
                     time.sleep(period)
                 self.switch_controller.set_channel_state(prev, False)
-                self._is_energized=False
+                self._is_energized = False
 
             t = Thread(target=func)
             t.start()
@@ -310,9 +299,9 @@ class FirmwareManager(HeadlessLoggable):
             turns = data.get('turns', 10)
             p1 = data.get('p1', 0.1)
             p2 = data.get('p2', 0.1)
-            velocity=data.get('velocity', None)
-            acceleration=data.get('acceleration', None)
-            deceleration=data.get('deceleration', None)
+            velocity = data.get('velocity', None)
+            acceleration = data.get('acceleration', None)
+            deceleration = data.get('deceleration', None)
             return drive.start_jitter(turns, p1, p2, velocity, acceleration, deceleration)
 
     @debug

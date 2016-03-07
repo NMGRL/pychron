@@ -136,4 +136,7 @@ class Communicator(HeadlessConfigLoadable):
 
         self.info(msg)
 
+    @property
+    def lock(self):
+        return self._lock
 # ============= EOF ====================================
