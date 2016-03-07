@@ -117,7 +117,7 @@ class FirmwareManager(HeadlessLoggable):
             im = self.camera.get_image_array()
             if im is not None:
                 imstr = im.dumps()
-                return '{:02X}{}'.format(len(imstr), imstr)
+                return '{:08X}{}'.format(len(imstr), imstr)
     @debug
     def get_lab_humidity(self, data):
         if self.temp_hum:
