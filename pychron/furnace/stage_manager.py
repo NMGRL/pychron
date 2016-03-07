@@ -15,10 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import json
-
-import time
 from traits.api import Instance
+from traitsui.api import View, Item, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.furnace_canvas import FurnaceCanvas
@@ -38,6 +36,20 @@ class Feeder(LinearAxis):
 
     def stop_jitter(self):
         self._cdevice.stop_jitter()
+
+    def configure(self):
+        g = VGroup(Item('jvelocity', label='Velocity'),
+                   Item('jacceleration', label='Acceleration'),
+                   Item('jdeceleration', label='Deceleration'),
+                   Item('jperiod1', label='Period1'),
+                   Item('jperiod2', label='Period2'),
+                   Item('jturns', label='Turns'))
+
+        v = View(g, title='Configure Jitter', kind='livemodal',
+                 buttons=['OK', 'Cancel'])
+        info = self._cdevice.edit_traits(view=v)
+        if info.result:
+            self._cdevice.write_jitter_config()
 
 
 class BaseFurnaceStageManager(BaseStageManager):

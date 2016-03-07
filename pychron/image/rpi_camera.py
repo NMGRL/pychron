@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 import picamera
+import picamera.array
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import unique_path2

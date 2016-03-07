@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Str, Int
+from traits.api import Str, Int, Float
 # ============= standard library imports ========================
 import json
 # ============= local library imports  ==========================
@@ -24,10 +24,26 @@ from pychron.hardware.core.core_device import CoreDevice
 
 class NMGRLFurnaceDrive(CoreDevice):
     drive_name = Str
-    velocity = Int(10000)
+    velocity = Int(1000)
+
+    jvelocity = Int
+    jacceleration = Int
+    jdeceleration = Int
+    jperiod1 = Float
+    jperiod2 = Float
+    jturns = Float
 
     def load_additional_args(self, config):
         self.set_attribute(config, 'drive_name', 'General', 'drive_name')
+        self.set_attribute(config, 'velocity', 'Motion', 'velocity', cast='int')
+
+        self.set_attribute(config, 'jvelocity', 'Jitter', 'velocity', cast='int')
+        self.set_attribute(config, 'jacceleration', 'Jitter', 'acceleration', cast='int')
+        self.set_attribute(config, 'jdeceleration', 'Jitter', 'deceleration', cast='int')
+        self.set_attribute(config, 'jperiod1', 'Jitter', 'period1', cast='float')
+        self.set_attribute(config, 'jperiod2', 'Jitter', 'period2', cast='float')
+        self.set_attribute(config, 'jturns', 'Jitter', 'turns', cast='float')
+
         return True
 
     def move_absolute(self, pos, units='steps', velocity=None):
@@ -53,17 +69,39 @@ class NMGRLFurnaceDrive(CoreDevice):
     def get_position(self, units='steps'):
         return self.ask(self._build_command('GetPosition', units=units))
 
-    def start_jitter(self, turns, p1, p2, **kw):
+    def start_jitter(self, turns=None, p1=None, p2=None, **kw):
+
+        if 'acceleration' not in kw:
+            kw['acceleration'] = self.jacceleration
+        if 'deceleration' not in kw:
+            kw['deceleration'] = self.jdeceleration
+        if 'velocity' not in kw:
+            kw['velocity'] = self.jvelocity
+
+        if turns is None:
+            turns = self.jturns
+        if p1 is None:
+            p1 = self.jperiod1
+        if p2 is None:
+            p2 = self.jperiod2
+
         return self.ask(self._build_command('StartJitter', turns=turns, p1=p1, p2=p2, **kw))
 
     def stop_jitter(self):
         return self.ask(self._build_command('StopJitter'))
 
-    def _build_command(self,cmd, **kw):
+    def _build_command(self, cmd, **kw):
         kw['drive'] = self.drive_name
         kw['command'] = cmd
         return json.dumps(kw)
+
+    def write_jitter_config(self):
+        config = self.get_configuration()
+        section = 'Jitter'
+        for opt in ('jvelocity', 'jacceleration', 'jdeceleration', 'jperiod1', 'jperiod2', 'jturns'):
+            config.set(section, opt[1:], getattr(self, opt))
+        self.write_configuration(config)
+
+
+
 # ============= EOF =============================================
-
-
-

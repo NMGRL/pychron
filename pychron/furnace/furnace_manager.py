@@ -23,6 +23,7 @@ import time
 from threading import Thread
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.dumper_canvas import DumperCanvas
+from pychron.canvas.canvas2D.video_canvas import VideoCanvas
 from pychron.core.helpers.filetools import pathtolist
 from pychron.extraction_line.switch_manager import SwitchManager
 from pychron.furnace.funnel import NMGRLFunnel
@@ -32,6 +33,7 @@ from pychron.furnace.loader_logic import LoaderLogic
 from pychron.furnace.magnet_dumper import NMGRLMagnetDumper
 from pychron.furnace.stage_manager import NMGRLFurnaceStageManager, BaseFurnaceStageManager
 from pychron.graph.stream_graph import StreamGraph
+from pychron.hardware.furnace.nmgrl.camera import NMGRLCamera
 from pychron.managers.manager import Manager
 from pychron.paths import paths
 from pychron.response_recorder import ResponseRecorder
@@ -80,6 +82,9 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     _dumper_thread = None
     _magnets_thread = None
     mode = 'normal'
+
+    video_canvas = Instance(VideoCanvas)
+    camera = Instance(NMGRLCamera)
 
     def activate(self):
         # pref_id = 'pychron.furnace'
@@ -147,7 +152,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     def fire_magnets(self):
         self.debug('fire magnets')
         if self._magnets_thread is None:
-            self._magnets_thread = Thread(name='Magnets', target=self.actuate_magnets, kwargs={'check_logic':False})
+            self._magnets_thread = Thread(name='Magnets', target=self.actuate_magnets, kwargs={'check_logic': False})
             self._magnets_thread.setDaemon(True)
             self._magnets_thread.start()
 
@@ -158,6 +163,10 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     def stop_jitter_feeder(self):
         self.debug('stop jitter')
         self.stage_manager.stop_jitter()
+
+    def configure_jitter_feeder(self):
+        self.debug('configure jitter')
+        self.stage_manager.feeder.configure()
 
     def is_dump_complete(self):
         ret = self._dumper_thread is None
@@ -419,6 +428,15 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         valvepath = os.path.join(paths.extraction_line_dir, 'valves.xml')
         dc.load_canvas_file(pathname, configpath, valvepath, dc)
         return dc
+
+    def _camera_default(self):
+        c = NMGRLCamera(name='camera', configuration_dir_name='furnace')
+        return c
+
+    def _video_canvas_default(self):
+        vc = VideoCanvas(video=self.camera)
+        vc.fps = 2
+        return vc
 
     def _funnel_default(self):
         f = NMGRLFunnel(name='funnel', configuration_dir_name='furnace')

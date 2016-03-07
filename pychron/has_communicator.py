@@ -77,4 +77,7 @@ class HasCommunicator(object):
             sim = self.communicator.simulation
         return sim
 
+    def ask(self, *args, **kw):
+        if self.communicator:
+            return self.communicator.ask(*args, **kw)
 # ============= EOF =============================================

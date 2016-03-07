@@ -119,11 +119,15 @@ class FirmwareManager(HeadlessLoggable):
     def get_image_array(self, data):
         if self.camera:
             im = self.camera.get_image_array()
+            if im:
+                self.debug('image: size={}'.format(im.shape))
+            else:
+                self.debug('no image')
 
             memfile = StringIO()
             save(memfile, im)
             memfile.seek(0)
-            return json.dumps(memfile.read())
+            return memfile.read()
 
     @debug
     def get_lab_humidity(self, data):
