@@ -214,8 +214,12 @@ class LabspyClient(Loggable):
                                                                             tag,
                                                                             val,
                                                                             unit))
-        self.db.add_measurement(dev, tag, val, unit)
-        self._check_notifications(dev, tag, val, unit)
+        try:
+            self.db.add_measurement(dev, tag, val, unit)
+            self._check_notifications(dev, tag, val, unit)
+        except BaseException, e:
+            self.debug('failed adding measurement. {}'.format(e))
+
 
     def connect(self):
         self.warning('not connected to db {}'.format(self.db.url))
