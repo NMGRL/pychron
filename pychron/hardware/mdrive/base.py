@@ -248,6 +248,9 @@ class BaseMDrive(BaseLinearDrive):
     def block(self, n=3, tolerance=1, progress=None, homing=False):
         self._block()
 
+    def tosteps(self, v, units='turns'):
+        return self._get_steps(v, units)
+
     # private
     def _convert_steps(self, v, units):
         if v is not None:

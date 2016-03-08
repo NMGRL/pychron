@@ -87,9 +87,11 @@ class FirmwareManager(HeadlessLoggable):
         self._magnet_channels = m
 
     def _load_funnel(self, f):
-        self._funnel_down = f['down']
-        self._funnel_up = f['up']
-        self._funnel_tolerance = f['tolerance']
+        if self.funnel:
+
+            self._funnel_down = self.funnel.tosteps(f['down'])
+            self._funnel_up = self.funnel.tosteps(f['up'])
+            self._funnel_tolerance = f['tolerance']
 
     def _load_switch_mapping(self, m):
         self._switch_mapping = m
