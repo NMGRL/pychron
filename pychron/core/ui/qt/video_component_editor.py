@@ -62,8 +62,7 @@ class _VideoComponentEditor(_LaserComponentEditor):
 
     def update(self):
         if self.control:
-            # invoke_in_main_thread(self.value.request_redraw)
-            self.value.request_redraw()
+            self.value.invalidate_and_redraw()
 
     def _stop_timer_fired(self):
         print 'VideoComponentEditor stopping playTimer'

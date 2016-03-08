@@ -48,6 +48,8 @@ class ExtractionLineInfoTool(InfoInspector):
 
     def normal_key_pressed(self, event):
         ok = event.character == self.volume_key and not self.active
+        if not self.manager:
+            return
 
         if self.manager.use_network and ok:
             x, y = event.x, event.y

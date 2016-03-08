@@ -15,10 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import json
-
-import time
 from traits.api import Instance
+from traitsui.api import View, Item, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.furnace_canvas import FurnaceCanvas
@@ -29,18 +27,29 @@ from pychron.stage.stage_manager import BaseStageManager
 
 
 class Feeder(LinearAxis):
-    def jitter(self, turns=0.125, n=20, freq=10):
+    def start_jitter(self, turns=0.125, p1=0.1, p2=0.1, velocity=None):
         """
         :param turns: fractional turns
-        :param n: number of times to move
-        :param freq: frequency of jitter. i.e changes of direction per second
         :return:
         """
-        p = 1 / float(freq)
-        for i in xrange(n):
-            turns *= -1
-            self._cdevice.move_relative(turns, units='turns')
-            time.sleep(p)
+        self._cdevice.start_jitter(turns, p1, p2, velocity)
+
+    def stop_jitter(self):
+        self._cdevice.stop_jitter()
+
+    def configure(self):
+        g = VGroup(Item('jvelocity', label='Velocity'),
+                   Item('jacceleration', label='Acceleration'),
+                   Item('jdeceleration', label='Deceleration'),
+                   Item('jperiod1', label='Period1'),
+                   Item('jperiod2', label='Period2'),
+                   Item('jturns', label='Turns'))
+
+        v = View(g, title='Configure Jitter', kind='livemodal',
+                 buttons=['OK', 'Cancel'])
+        info = self._cdevice.edit_traits(view=v)
+        if info.result:
+            self._cdevice.write_jitter_config()
 
 
 class BaseFurnaceStageManager(BaseStageManager):
@@ -55,8 +64,8 @@ class BaseFurnaceStageManager(BaseStageManager):
 class NMGRLFurnaceStageManager(BaseFurnaceStageManager):
     feeder = Instance(Feeder)
 
-    def jitter(self):
-        self.feeder.jitter()
+    def jitter(self, *args, **kw):
+        self.feeder.jitter(*args, **kw)
 
     def set_sample_dumped(self):
         hole = self.stage_map.get_hole(self.calibrated_position_entry)

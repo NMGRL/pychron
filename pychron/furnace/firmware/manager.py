@@ -20,9 +20,6 @@ import json
 from threading import Thread
 
 from cStringIO import StringIO
-
-from PIL import Image
-from numpy import save
 import time
 import yaml
 # ============= local library imports  ==========================
@@ -58,9 +55,11 @@ class FirmwareManager(HeadlessLoggable):
     funnel = None
     feeder = None
     temp_hum = None
+    camera = None
 
     _switch_mapping = None
     _switch_indicator_mapping = None
+    _is_energized = False
 
     def bootstrap(self, **kw):
         p = paths.furnace_firmware
@@ -103,27 +102,23 @@ class FirmwareManager(HeadlessLoggable):
             self.warning('Invalid device {}'.format(devname))
 
     # getters
-    @debug
-    def get_jpeg(self, data):
-        quality = 100
-        if isinstance(data, dict):
-            quality = data['quality']
-
-        memfile = StringIO()
-        self.camera.capture(memfile, name=None, quality=quality)
-        memfile.seek(0)
-        return json.dumps(memfile.read())
-
-    @debug
-    def get_image_array(self, data):
-        if self.camera:
-            im = self.camera.get_image_array()
-
-            memfile = StringIO()
-            save(memfile, im)
-            memfile.seek(0)
-            return json.dumps(memfile.read())
-
+    # @debug
+    # def get_jpeg(self, data):
+    #     quality = 100
+    #     if isinstance(data, dict):
+    #         quality = data['quality']
+    #
+    #     memfile = StringIO()
+    #     self.camera.capture(memfile, name=None, quality=quality)
+    #     memfile.seek(0)
+    #     return json.dumps(memfile.read())
+    #
+    # def get_image_array(self, data):
+    #     if self.camera:
+    #         im = self.camera.get_image_array()
+    #         if im is not None:
+    #             imstr = im.dumps()
+    #             return '{:08X}{}'.format(len(imstr), imstr)
     @debug
     def get_lab_humidity(self, data):
         if self.temp_hum:
@@ -199,6 +194,11 @@ class FirmwareManager(HeadlessLoggable):
 
     # setters
     @debug
+    def set_frame_rate(self, data):
+        if self.camera:
+            self.camera.frame_rate = int(data)
+
+    @debug
     def set_setpoint(self, data):
         if self.controller:
             self.controller.process_setpoint = data
@@ -242,6 +242,7 @@ class FirmwareManager(HeadlessLoggable):
                     period = data
 
             def func():
+                self._is_energized = True
                 prev = None
                 for m in self._magnet_channels:
                     self.switch_controller.set_channel_state(m, True)
@@ -251,13 +252,19 @@ class FirmwareManager(HeadlessLoggable):
                     prev = m
                     time.sleep(period)
                 self.switch_controller.set_channel_state(prev, False)
+                self._is_energized = False
 
             t = Thread(target=func)
             t.start()
             return True
 
     @debug
+    def is_energized(self):
+        return self._is_energized
+
+    @debug
     def denergize_magnets(self, data):
+        self._is_energized = False
         if self.switch_controller:
             for m in self._magnet_channels:
                 self.switch_controller.set_channel_state(m, False)
@@ -290,6 +297,24 @@ class FirmwareManager(HeadlessLoggable):
         if drive:
             scalar = data.get('scalar', 1.0)
             return drive.slew(scalar)
+
+    @debug
+    def start_jitter(self, data):
+        drive = self._get_drive(data)
+        if drive:
+            turns = data.get('turns', 10)
+            p1 = data.get('p1', 0.1)
+            p2 = data.get('p2', 0.1)
+            velocity = data.get('velocity', None)
+            acceleration = data.get('acceleration', None)
+            deceleration = data.get('deceleration', None)
+            return drive.start_jitter(turns, p1, p2, velocity, acceleration, deceleration)
+
+    @debug
+    def stop_jitter(self, data):
+        drive = self._get_drive(data)
+        if drive:
+            return drive.stop_jitter()
 
     @debug
     def set_pid(self, data):

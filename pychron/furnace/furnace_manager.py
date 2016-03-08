@@ -20,10 +20,11 @@ from traits.api import TraitError, Instance, Float, provides, Int
 # ============= standard library imports ========================
 import os
 import time
+from threading import Thread
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.dumper_canvas import DumperCanvas
+from pychron.canvas.canvas2D.video_canvas import VideoCanvas
 from pychron.core.helpers.filetools import pathtolist
-from pychron.core.ui.thread import Thread
 from pychron.extraction_line.switch_manager import SwitchManager
 from pychron.furnace.funnel import NMGRLFunnel
 from pychron.furnace.furnace_controller import FurnaceController
@@ -32,6 +33,7 @@ from pychron.furnace.loader_logic import LoaderLogic
 from pychron.furnace.magnet_dumper import NMGRLMagnetDumper
 from pychron.furnace.stage_manager import NMGRLFurnaceStageManager, BaseFurnaceStageManager
 from pychron.graph.stream_graph import StreamGraph
+from pychron.hardware.furnace.nmgrl.camera import NMGRLCamera
 from pychron.managers.manager import Manager
 from pychron.paths import paths
 from pychron.response_recorder import ResponseRecorder
@@ -81,12 +83,18 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     _magnets_thread = None
     mode = 'normal'
 
+    video_canvas = Instance(VideoCanvas)
+    camera = Instance(NMGRLCamera)
+
     def activate(self):
         # pref_id = 'pychron.furnace'
         # bind_preference(self, 'update_period',
         # '{}.update_period'.format(pref_id))
 
         self._start_update()
+
+        # start camera
+        self.camera.start_video_service()
 
     def prepare_destroy(self):
         self.debug('prepare destroy')
@@ -121,10 +129,12 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         self.debug('disable')
         self.response_recorder.stop()
         self.setpoint = 0
+
     def start_response_recorder(self):
-        pass
+        self.response_recorder.start()
+
     def stop_response_recorder(self):
-        pass
+        self.response_recorder.stop()
 
     def move_to_position(self, pos, *args, **kw):
         self.debug('move to position {}'.format(pos))
@@ -145,24 +155,46 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     def fire_magnets(self):
         self.debug('fire magnets')
         if self._magnets_thread is None:
-            self._magnets_thread = Thread(name='Magnets', target=self.actuate_magnets)
+            self._magnets_thread = Thread(name='Magnets', target=self.actuate_magnets, kwargs={'check_logic': False})
             self._magnets_thread.setDaemon(True)
             self._magnets_thread.start()
+
+    def start_jitter_feeder(self):
+        self.debug('jitter feeder')
+        self.stage_manager.start_jitter(turns=0.5, p1=0.1, p2=0.25)
+
+    def stop_jitter_feeder(self):
+        self.debug('stop jitter')
+        self.stage_manager.stop_jitter()
+
+    def configure_jitter_feeder(self):
+        self.debug('configure jitter')
+        self.stage_manager.feeder.configure()
 
     def is_dump_complete(self):
         ret = self._dumper_thread is None
         return ret
 
-    def actuate_magnets(self):
-        self.debug('actuate magnets')
-        if self.loader_logic.check('AM'):
+    def actuate_magnets(self, check_logic=True):
+        self.debug('actuate magnets check_logic={}'.format(check_logic))
+        check = True
+        if check_logic:
+            check = self.loader_logic.check('AM')
+
+        if check:
+
+            self.stage_manager.start_jitter(turns=0.5, p1=0.1, p2=0.25, velocity=15000)
             self.magnets.energize()
 
-            # jitter linear drive
-            self.stage_manager.jitter()
-            self.stage_manager.set_sample_dumped()
+            time.sleep(0.05)
+            while 1:
+                if not self.magnets.is_energized():
+                    break
+                time.sleep(0.25)
 
+            self.stage_manager.set_sample_dumped()
             self.magnets.denergize()
+            self.stage_manager.stop_jitter()
         else:
             cm = self.loader_logic.get_check_message()
             self.warning_dialog('Actuating magnets not enabled\n\n{}'.format(cm))
@@ -400,6 +432,17 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         dc.load_canvas_file(pathname, configpath, valvepath, dc)
         return dc
 
+    def _camera_default(self):
+        c = NMGRLCamera(name='camera', configuration_dir_name='furnace')
+        return c
+
+    def _video_canvas_default(self):
+        vc = VideoCanvas(video=self.camera, show_axes=False, show_grids=False)
+        vc.border_visible = False
+        vc.padding = 5
+        vc.fps = 10
+        return vc
+
     def _funnel_default(self):
         f = NMGRLFunnel(name='funnel', configuration_dir_name='furnace')
         return f
@@ -413,6 +456,5 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     def _magnets_default(self):
         m = NMGRLMagnetDumper(name='magnets', configuration_dir_name='furnace')
         return m
-
 
 # ============= EOF =============================================

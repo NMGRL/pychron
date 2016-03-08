@@ -20,7 +20,7 @@ from traits.api import Instance
 # ============= local library imports  ==========================
 from twisted.internet import reactor
 from twisted.internet.endpoints import TCP4ServerEndpoint
-from twisted.internet.protocol import Factory
+from twisted.internet.protocol import Factory, Protocol
 
 from pychron.headless_loggable import HeadlessLoggable
 from pychron.tx.protocols.service import ServiceProtocol
@@ -33,7 +33,8 @@ class FurnaceFirmwareProtocol(ServiceProtocol):
         ServiceProtocol.__init__(self)
 
         misc_services = (('GetLabTemperature', self._manager.get_lab_temperature),
-                         ('GetLabHumidity', self._manager.get_lab_humidity))
+                         ('GetLabHumidity', self._manager.get_lab_humidity),
+                         ('SetFrameRate', self._manager.set_frame_rate))
 
         controller_services = (('GetTemperature', self._manager.get_temperature),
                                ('GetSetpoint', self._manager.get_setpoint),
@@ -47,13 +48,16 @@ class FurnaceFirmwareProtocol(ServiceProtocol):
         dump_services = (('LowerFunnel', self._manager.lower_funnel),
                          ('RaiseFunnel', self._manager.raise_funnel),
                          ('EnergizeMagnets', self._manager.energize_magnets),
+                         ('IsEnergized', self._manager.is_energized),
                          ('DenergizeMagnets', self._manager.denergize_magnets),
                          ('MoveAbsolute', self._manager.move_absolute),
                          ('MoveRelative', self._manager.move_relative),
                          ('GetPosition', self._manager.get_position),
                          ('Slew', self._manager.slew),
                          ('StopDrive', self._manager.stop_drive),
-                         ('Moving', self._manager.moving))
+                         ('Moving', self._manager.moving),
+                         ('StartJitter', self._manager.start_jitter),
+                         ('StopJitter', self._manager.stop_jitter))
 
         self._register_services(misc_services)
         self._register_services(controller_services)

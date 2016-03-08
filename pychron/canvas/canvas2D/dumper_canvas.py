@@ -22,6 +22,13 @@ from pychron.canvas.canvas2D.scene.dumper_scene import DumperScene
 
 
 class DumperCanvas(ExtractionLineCanvas2D):
+
+    def __init__(self, *args, **kw):
+        super(DumperCanvas, self).__init__(*args, **kw)
+
+        self.view_y_range = (-10, 20)
+        self.view_x_range = (-25, 10)
+
     def load_canvas_file(self, pathname, configpath, valvepath, canvas):
         self.scene.load(pathname, configpath, valvepath, canvas)
 

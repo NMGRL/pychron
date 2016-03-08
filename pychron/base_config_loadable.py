@@ -75,6 +75,9 @@ class BaseConfigLoadable(ConfigMixin):
 
         return True
 
+    def post_initialize(self, *args, **kw):
+        return True
+
     def convert_config_name(self, name):
         """
         """

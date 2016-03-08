@@ -667,6 +667,8 @@ class SwitchManager(Manager):
         interlocks = [i.text.strip() for i in v_elem.findall('interlock')]
         if description is not None:
             description = description.text.strip()
+        else:
+            description = ''
 
         actname = act_elem.text.strip() if act_elem is not None else 'switch_controller'
         actuator = self.get_actuator_by_name(actname)
