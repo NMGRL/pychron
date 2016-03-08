@@ -309,10 +309,6 @@ class BaseMDrive(BaseLinearDrive):
         return resp
 
     def _move(self, pos, velocity, acceleration, deceleration, relative, block, units):
-
-        pos = self._get_steps(pos, units)
-        self.debug('converted steps={}'.format(pos))
-
         if velocity is None:
             velocity = self.initial_velocity
 
@@ -321,15 +317,28 @@ class BaseMDrive(BaseLinearDrive):
         if deceleration is None:
             deceleration = self.deceleration
 
-        self.set_initial_velocity(velocity)
-        self.set_acceleration(acceleration)
-        self.set_deceleration(deceleration)
+        pos = self._get_steps(pos, units)
+        self.debug('converted steps={}'.format(pos))
 
-        cmd = 'MR' if relative else 'MA'
-        self.tell('{} {}'.format(cmd, pos))
+        def func():
+            self.set_initial_velocity(velocity)
+            self.set_acceleration(acceleration)
+            self.set_deceleration(deceleration)
+
+            cmd = 'MR' if relative else 'MA'
+            self.tell('{} {}'.format(cmd, pos))
+
         if block:
-            self._block()
-            self.info('move complete')
+            func()
+            return True
+        else:
+            t = Thread(target=func)
+            t.setDaemon(True)
+            t.start()
+            return True
+        # if block:
+        #     self._block()
+        #     self.info('move complete')
 
     def _moving(self, motion_flag='MV'):
         """
