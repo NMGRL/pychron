@@ -236,12 +236,12 @@ class FirmwareManager(HeadlessLoggable):
     @debug
     def raise_funnel(self, data):
         if self.funnel:
-            return self.funnel.move_absolute(self._funnel_up)
+            return self.funnel.move_absolute(self._funnel_up, block=False)
 
     @debug
     def lower_funnel(self, data):
         if self.funnel:
-            return self.funnel.move_absolute(self._funnel_down)
+            return self.funnel.move_absolute(self._funnel_down, block=False)
 
     @debug
     def energize_magnets(self, data):
