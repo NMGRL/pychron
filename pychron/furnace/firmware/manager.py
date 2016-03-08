@@ -72,6 +72,10 @@ class FirmwareManager(HeadlessLoggable):
         self._load_funnel(yd['funnel'])
         self._load_magnets(yd['magnets'])
 
+        # start camera
+        if self.camera:
+            self.camera.start_video_service()
+
     def _load_magnets(self, m):
         self._magnet_channels = m
 

@@ -91,7 +91,7 @@ class RPiCamera(HeadlessConfigLoadable):
 
     def start_video_service(self):
         def func():
-            root = '/www/firm_cam'
+            root = '/var/www/firm_cam'
             if not os.path.isdir(root):
                 os.mkdir(root)
             path = os.path.join(root, 'image.jpg')

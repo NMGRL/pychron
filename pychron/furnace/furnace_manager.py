@@ -93,9 +93,6 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
 
         self._start_update()
 
-        # start camera
-        self.camera.start_video_service()
-
     def prepare_destroy(self):
         self.debug('prepare destroy')
         self._stop_update()
