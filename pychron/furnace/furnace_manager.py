@@ -26,7 +26,6 @@ from pychron.canvas.canvas2D.dumper_canvas import DumperCanvas
 from pychron.canvas.canvas2D.video_canvas import VideoCanvas
 from pychron.core.helpers.filetools import pathtolist
 from pychron.extraction_line.switch_manager import SwitchManager
-from pychron.furnace.funnel import NMGRLFunnel
 from pychron.furnace.furnace_controller import FurnaceController
 from pychron.furnace.ifurnace_manager import IFurnaceManager
 from pychron.furnace.loader_logic import LoaderLogic
@@ -34,6 +33,8 @@ from pychron.furnace.magnet_dumper import NMGRLMagnetDumper
 from pychron.furnace.stage_manager import NMGRLFurnaceStageManager, BaseFurnaceStageManager
 from pychron.graph.stream_graph import StreamGraph
 from pychron.hardware.furnace.nmgrl.camera import NMGRLCamera
+from pychron.hardware.furnace.nmgrl.funnel import NMGRLFurnaceFunnel
+from pychron.hardware.linear_axis import LinearAxis
 from pychron.managers.manager import Manager
 from pychron.paths import paths
 from pychron.response_recorder import ResponseRecorder
@@ -65,9 +66,13 @@ class BaseFurnaceManager(Manager):
         return r
 
 
+class Funnel(LinearAxis):
+    pass
+
+
 @provides(IFurnaceManager)
 class NMGRLFurnaceManager(BaseFurnaceManager):
-    funnel = Instance(NMGRLFunnel)
+    funnel = Instance(Funnel)
     loader_logic = Instance(LoaderLogic)
     magnets = Instance(NMGRLMagnetDumper)
     setpoint_readback_min = Float(0)
@@ -92,9 +97,6 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         # '{}.update_period'.format(pref_id))
 
         self._start_update()
-
-        # start camera
-        self.camera.start_video_service()
 
     def prepare_destroy(self):
         self.debug('prepare destroy')
@@ -203,27 +205,34 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
 
     def lower_funnel(self):
         self.debug('lower funnel')
-        if self.loader_logic.check('FD'):
-            # self.funnel.set_value(self.funnel.down_position)
-            self.funnel.lower()
-            # todo: update canvas state
+        self.funnel.lower()
+        return True
 
-            return True
-        else:
-            cm = self.loader_logic.get_check_message()
-            self.warning_dialog('Lowering funnel not enabled\n\n{}'.format(cm))
+        # if self.loader_logic.check('FD'):
+        #     # self.funnel.set_value(self.funnel.down_position)
+        #     self.funnel.lower()
+        #     # todo: update canvas state
+        #
+        #     return True
+        # else:
+        #     cm = self.loader_logic.get_check_message()
+        #     self.warning_dialog('Lowering funnel not enabled\n\n{}'.format(cm))
 
     def raise_funnel(self):
         self.debug('raise funnel')
-        if self.loader_logic.check('FU'):
-            # self.funnel.set_value(self.funnel.up_position)
-            self.funnel.raise_()
-            # todo: update canvas state
+        self.funnel.raise_()
+        return True
 
-            return True
-        else:
-            cm = self.loader_logic.get_check_message()
-            self.warning_dialog('Raising funnel not enabled\n\n{}'.format(cm))
+
+        # if self.loader_logic.check('FU'):
+        #     # self.funnel.set_value(self.funnel.up_position)
+        #     self.funnel.raise_()
+        #     # todo: update canvas state
+        #
+        #     return True
+        # else:
+        #     cm = self.loader_logic.get_check_message()
+        #     self.warning_dialog('Raising funnel not enabled\n\n{}'.format(cm))
 
     def set_setpoint(self, v):
         self.debug('set setpoint={}'.format(v))
@@ -444,7 +453,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         return vc
 
     def _funnel_default(self):
-        f = NMGRLFunnel(name='funnel', configuration_dir_name='furnace')
+        f = Funnel(name='funnel', configuration_dir_name='furnace')
         return f
 
     def _loader_logic_default(self):

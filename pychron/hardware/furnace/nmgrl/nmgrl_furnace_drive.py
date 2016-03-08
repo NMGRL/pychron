@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 from traits.api import Str, Int, Float
 # ============= standard library imports ========================
+import time
 import json
 # ============= local library imports  ==========================
 from pychron.hardware.core.core_device import CoreDevice
@@ -64,7 +65,7 @@ class NMGRLFurnaceDrive(CoreDevice):
         self.ask(self._build_command('Slew', scalar=scalar))
 
     def moving(self):
-        return self.ask(self._build_command('Moving'))
+        return self.ask(self._build_command('Moving')) == 'OK'
 
     def get_position(self, units='steps'):
         return self.ask(self._build_command('GetPosition', units=units))
@@ -90,11 +91,6 @@ class NMGRLFurnaceDrive(CoreDevice):
     def stop_jitter(self):
         return self.ask(self._build_command('StopJitter'))
 
-    def _build_command(self, cmd, **kw):
-        kw['drive'] = self.drive_name
-        kw['command'] = cmd
-        return json.dumps(kw)
-
     def write_jitter_config(self):
         config = self.get_configuration()
         section = 'Jitter'
@@ -102,6 +98,47 @@ class NMGRLFurnaceDrive(CoreDevice):
             config.set(section, opt[1:], getattr(self, opt))
         self.write_configuration(config)
 
+    # private
+    def _build_command(self, cmd, **kw):
+        kw['drive'] = self.drive_name
+        kw['command'] = cmd
+        return json.dumps(kw)
 
+    def _block(self, delay=None, timeout=100, period=1):
+        st = time.time()
+        if delay > 1:
+            time.sleep(0.5)
+            for i in range(3):
+                mb = self.moving()
+                if mb:
+                    break
+                time.sleep(0.1)
+            else:
+                return
+
+        if delay:
+            delay -= (time.time() - st)
+            if delay > 0:
+                time.sleep(delay)
+
+        st = time.time()
+        cnt = 0
+        while time.time() - st < timeout:
+            mb = self.moving()
+            if not mb:
+                cnt += 1
+            else:
+                cnt = 0
+
+            pp = period
+            if cnt:
+                pp /= float(1 + cnt)
+
+            if cnt > 2:
+                break
+
+            time.sleep(max(0.05, pp))
+        else:
+            self.debug('move timed out after {}s'.format(timeout))
 
 # ============= EOF =============================================

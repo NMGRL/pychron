@@ -61,24 +61,37 @@ class FirmwareManager(HeadlessLoggable):
     _switch_indicator_mapping = None
     _is_energized = False
 
+    _use_video_service = False
+
     def bootstrap(self, **kw):
         p = paths.furnace_firmware
         with open(p, 'r') as rfile:
             yd = yaml.load(rfile)
 
+        self._load_config(yd['config'])
         self._load_devices(yd['devices'])
         self._load_switch_mapping(yd['switch_mapping'])
         self._load_switch_indicator_mapping(yd['switch_indicator_mapping'])
         self._load_funnel(yd['funnel'])
         self._load_magnets(yd['magnets'])
 
+        if self._use_video_service:
+            # start camera
+            if self.camera:
+                self.camera.start_video_service()
+
+    def _load_config(self, cd):
+        self._use_video_service = cd.get('use_video_service', False)
+
     def _load_magnets(self, m):
         self._magnet_channels = m
 
     def _load_funnel(self, f):
-        self._funnel_down = f['down']
-        self._funnel_up = f['up']
-        self._funnel_tolerance = f['tolerance']
+        if self.funnel:
+
+            self._funnel_down = self.funnel.tosteps(f['down'])
+            self._funnel_up = self.funnel.tosteps(f['up'])
+            self._funnel_tolerance = f['tolerance']
 
     def _load_switch_mapping(self, m):
         self._switch_mapping = m
@@ -223,12 +236,12 @@ class FirmwareManager(HeadlessLoggable):
     @debug
     def raise_funnel(self, data):
         if self.funnel:
-            return self.funnel.move_absolute(self._funnel_up)
+            return self.funnel.move_absolute(self._funnel_up, block=False)
 
     @debug
     def lower_funnel(self, data):
         if self.funnel:
-            return self.funnel.move_absolute(self._funnel_down)
+            return self.funnel.move_absolute(self._funnel_down, block=False)
 
     @debug
     def energize_magnets(self, data):

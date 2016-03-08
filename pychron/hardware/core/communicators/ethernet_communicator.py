@@ -103,7 +103,6 @@ class Handler(object):
                 break
 
         data = ''.join(ss)
-        print msg_len, len(data), len(data.strip())
         data = data.strip()
         if frame.message_len:
             # trim off header
@@ -274,7 +273,7 @@ class EthernetCommunicator(Communicator):
             if self.error_mode:
                 retries = 2
 
-            re = 'ERROR: Connection refused: {}'.format(self.address)
+            re = 'ERROR: Connection refused: {}, timeout={}'.format(self.address, timeout)
             for _ in xrange(retries):
                 r = self._ask(cmd, timeout=timeout, message_frame=message_frame, delay=delay)
                 if r is not None:

@@ -15,14 +15,19 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from threading import Thread
+
 from enable.component_editor import ComponentEditor
 from pyface.tasks.traits_dock_pane import TraitsDockPane
+from pyface.timer.do_later import do_after
 from traits.api import Button, Bool, Str
 from traitsui.api import View, Item, Readonly, UItem, VGroup, HGroup, EnumEditor, spring, \
     InstanceEditor, ButtonEditor, Tabbed
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pyface.tasks.traits_task_pane import TraitsTaskPane
+from traitsui.editors import RangeEditor
+
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.core.ui.lcd_editor import LCDEditor
 from pychron.core.ui.stage_component_editor import VideoComponentEditor
@@ -63,14 +68,22 @@ class ControlPane(TraitsDockPane):
     #     self.model.stage_manager.lower_funnel()
 
     def _funnel_up_button_fired(self):
-        if self.model.raise_funnel():
+        def func():
             self.funnel_up_enabled = False
-            self.funnel_down_enabled = True
+            if self.model.raise_funnel():
+                self.funnel_down_enabled = True
+
+        t = Thread(target=func)
+        t.start()
 
     def _funnel_down_button_fired(self):
-        if self.model.lower_funnel():
-            self.funnel_up_enabled = True
+        def func():
             self.funnel_down_enabled = False
+            if self.model.lower_funnel():
+                self.funnel_up_enabled = True
+
+        t = Thread(target=func)
+        t.start()
 
     def _dump_sample_button_fired(self):
         self.model.dump_sample()
@@ -135,10 +148,10 @@ class ControlPane(TraitsDockPane):
                                    visible_when='pane._advanced_view_state'),
                             show_border=True, label='Position')
 
-        funnel_grp = HGroup(icon_button_editor('pane.funnel_up_button', 'arrow_up',
-                                               enabled_when='pane.funnel_up_enabled', tooltip='Raise Funnel'),
-                            icon_button_editor('pane.funnel_down_button', 'arrow_down', tooltip='Lower Funnel',
-                                               enabled_when='pane.funnel_down_enabled'),
+        funnel_grp = VGroup(HGroup(icon_button_editor('pane.funnel_up_button', 'arrow_up',
+                                                      enabled_when='pane.funnel_up_enabled', tooltip='Raise Funnel'),
+                                   icon_button_editor('pane.funnel_down_button', 'arrow_down', tooltip='Lower Funnel',
+                                                      enabled_when='pane.funnel_down_enabled')),
                             show_border=True, label='Funnel')
         jitter_grp = HGroup(UItem('pane.jitter_button', editor=ButtonEditor(label_value='pane.jitter_label')),
                             icon_button_editor('pane.configure_jitter_button', 'cog', tooltip='Configure Jitter'),

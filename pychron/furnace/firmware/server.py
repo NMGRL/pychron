@@ -47,6 +47,8 @@ class FurnaceFirmwareProtocol(ServiceProtocol):
 
         dump_services = (('LowerFunnel', self._manager.lower_funnel),
                          ('RaiseFunnel', self._manager.raise_funnel),
+                         ('InUpPosition', self._manager.is_funnel_up),
+                         ('InDownPosition', self._manager.is_funnel_down),
                          ('EnergizeMagnets', self._manager.energize_magnets),
                          ('IsEnergized', self._manager.is_energized),
                          ('DenergizeMagnets', self._manager.denergize_magnets),

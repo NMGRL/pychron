@@ -91,14 +91,17 @@ class RPiCamera(HeadlessConfigLoadable):
 
     def start_video_service(self):
         def func():
-            root = '/www/firm_cam'
+            root = '/var/www/firm_cam'
             if not os.path.isdir(root):
                 os.mkdir(root)
             path = os.path.join(root, 'image.jpg')
-            self.capture(path, setup=False)
-            while 1:
-                self.capture(path, setup=False)
-                time.sleep(1/float(self.frame_rate))
+            with picamera.PiCamera() as camera:
+                self._setup_camera(camera)
+
+                camera.capture(path)
+                while 1:
+                    camera.capture(path)
+                    time.sleep(1/float(self.frame_rate))
 
         t = Thread(target=func)
         t.setDaemon(True)
