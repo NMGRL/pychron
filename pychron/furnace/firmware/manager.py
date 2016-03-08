@@ -55,6 +55,7 @@ class FirmwareManager(HeadlessLoggable):
     funnel = None
     feeder = None
     temp_hum = None
+    camera = None
 
     _switch_mapping = None
     _switch_indicator_mapping = None
@@ -101,23 +102,23 @@ class FirmwareManager(HeadlessLoggable):
             self.warning('Invalid device {}'.format(devname))
 
     # getters
-    @debug
-    def get_jpeg(self, data):
-        quality = 100
-        if isinstance(data, dict):
-            quality = data['quality']
-
-        memfile = StringIO()
-        self.camera.capture(memfile, name=None, quality=quality)
-        memfile.seek(0)
-        return json.dumps(memfile.read())
-
-    def get_image_array(self, data):
-        if self.camera:
-            im = self.camera.get_image_array()
-            if im is not None:
-                imstr = im.dumps()
-                return '{:08X}{}'.format(len(imstr), imstr)
+    # @debug
+    # def get_jpeg(self, data):
+    #     quality = 100
+    #     if isinstance(data, dict):
+    #         quality = data['quality']
+    #
+    #     memfile = StringIO()
+    #     self.camera.capture(memfile, name=None, quality=quality)
+    #     memfile.seek(0)
+    #     return json.dumps(memfile.read())
+    #
+    # def get_image_array(self, data):
+    #     if self.camera:
+    #         im = self.camera.get_image_array()
+    #         if im is not None:
+    #             imstr = im.dumps()
+    #             return '{:08X}{}'.format(len(imstr), imstr)
     @debug
     def get_lab_humidity(self, data):
         if self.temp_hum:
@@ -192,6 +193,11 @@ class FirmwareManager(HeadlessLoggable):
                 return self.switch_controller.get_channel_state(ch)
 
     # setters
+    @debug
+    def set_frame_rate(self, data):
+        if self.camera:
+            self.camera.frame_rate = int(data)
+
     @debug
     def set_setpoint(self, data):
         if self.controller:

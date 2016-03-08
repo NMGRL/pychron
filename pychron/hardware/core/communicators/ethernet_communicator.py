@@ -89,7 +89,6 @@ class Handler(object):
             msg_len = 0
             nm = frame.nmessage_len
 
-        print nm
         while 1:
             s = recv(self.datasize)  # self._sock.recv(2048)
             if not s:

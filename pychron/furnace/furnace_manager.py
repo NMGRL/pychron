@@ -93,6 +93,9 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
 
         self._start_update()
 
+        # start camera
+        self.camera.start_video_service()
+
     def prepare_destroy(self):
         self.debug('prepare destroy')
         self._stop_update()
@@ -434,8 +437,10 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         return c
 
     def _video_canvas_default(self):
-        vc = VideoCanvas(video=self.camera)
-        vc.fps = 2
+        vc = VideoCanvas(video=self.camera, show_axes=False, show_grids=False)
+        vc.border_visible = False
+        vc.padding = 5
+        vc.fps = 10
         return vc
 
     def _funnel_default(self):

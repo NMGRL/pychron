@@ -15,10 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
+from threading import Thread
+
 import picamera
 import picamera.array
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+import time
+
 from pychron.core.helpers.filetools import unique_path2
 from pychron.headless_config_loadable import HeadlessConfigLoadable
 from pychron.paths import paths
@@ -57,6 +62,8 @@ class RPiCamera(HeadlessConfigLoadable):
     vflip = False
     crop = (0.0, 0.0, 1.0, 1.0)
 
+    frame_rate = 10
+
     def load_additional_args(self, *args, **kw):
         config = self.get_configuration()
 
@@ -81,6 +88,21 @@ class RPiCamera(HeadlessConfigLoadable):
             self.crop = tuple(map(float, crop.split(',')))
 
         return True
+
+    def start_video_service(self):
+        def func():
+            root = '/www/firm_cam'
+            if not os.path.isdir(root):
+                os.mkdir(root)
+            path = os.path.join(root, 'image.jpg')
+            self.capture(path, setup=False)
+            while 1:
+                self.capture(path, setup=False)
+                time.sleep(1/float(self.frame_rate))
+
+        t = Thread(target=func)
+        t.setDaemon(True)
+        t.start()
 
     def get_image_array(self):
         with picamera.PiCamera() as camera:
@@ -108,5 +130,6 @@ class RPiCamera(HeadlessConfigLoadable):
                  'rotation', 'hflip', 'vflip', 'crop')
         for attr in attrs:
             setattr(camera, attr, getattr(self, attr))
+
 
 # ============= EOF =============================================

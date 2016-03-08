@@ -23,7 +23,8 @@ from traitsui.api import View, UItem, Item, HGroup, VGroup, TextEditor
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.hardware.core.communicators.ethernet_communicator import EthernetCommunicator
+from pychron.hardware.core.communicators.ethernet_communicator import EthernetCommunicator, MessageFrame
+from pychron.hardware.furnace.nmgrl.camera import NMGRLCamera
 
 
 class FirmwareClient(HasTraits):
@@ -71,16 +72,28 @@ class FirmwareClient(HasTraits):
         # self._cnt += 1
         # d = json.dumps({'command': 'GetPosition', 'drive': 'feeder', 'position': 1, 'units': 'turns'})
         # d = json.dumps({'command': 'MoveRelative', 'drive': 'feeder', 'position': 1, 'units': 'turns'})
-        v, a, d = self.command.split(',')
-        d = {'command': 'StartJitter', 'drive': 'feeder', 'turns': 0.5, 'p1': 0.1, 'p2': 0.25,
-             'velocity': int(v), 'acceleration': int(a), 'deceleration': int(d)}
-        d = json.dumps(d)
-        self._send(d)
-        time.sleep(5)
+        # v, a, d = self.command.split(',')
+        # d = {'command': 'StartJitter', 'drive': 'feeder', 'turns': 0.125, 'p1': 0.1, 'p2': 0.25,
+        #      'velocity': int(v), 'acceleration': int(a), 'deceleration': int(d)}
+        # d = json.dumps(d)
+        # self._send(d)
+        # time.sleep(5)
+        #
+        # d = {'command': 'StopJitter', 'drive': 'feeder'}
+        # d = json.dumps(d)
+        # self._send(d)
 
-        d = {'command': 'StopJitter', 'drive': 'feeder'}
-        d = json.dumps(d)
-        self._send(d)
+        # mf = MessageFrame()
+        # mf.nmessage_len = 8
+        # mf.message_len = True
+        # imgstr = self._comm.ask('GetImageArray', message_frame=mf, timeout=5)
+        # print len(imgstr)
+        c = NMGRLCamera()
+        print c.get_image_data()
+
+        # resp = self._comm.ask('GetImageArray')
+        # print resp
+        # print self._send('GetImageArray')
 
         # for i in range(5):
         #     if i % 2 == 0:
@@ -105,7 +118,7 @@ class FirmwareClient(HasTraits):
 
 
 if __name__ == '__main__':
-    c = FirmwareClient(host='192.168.2.2', port=4567)
-    if c.test_connection():
-        c.configure_traits()
+    c = FirmwareClient(host='192.168.2.2', port=4568)
+    # if c.test_connection():
+    c.configure_traits()
 # ============= EOF =============================================

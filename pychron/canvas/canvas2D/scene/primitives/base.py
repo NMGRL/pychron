@@ -265,6 +265,9 @@ class Primitive(HasTraits):
         if self.canvas:
             self.canvas.request_redraw()
 
+    def _get_klass_name(self):
+        return self.__class__.__name__
+
 
 class QPrimitive(Primitive):
     def _convert_color(self, c):
