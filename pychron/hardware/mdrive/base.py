@@ -167,16 +167,14 @@ class BaseMDrive(BaseLinearDrive):
     def is_simulation(self):
         return self.simulation
 
-    def move_absolute(self, pos, velocity=None, block=True, units='steps'):
-        pos = self._get_steps(pos, units)
-        self._move(pos, velocity, False, block)
+    def move_absolute(self, pos, velocity=None, acceleration=None, deceleration=None, block=True, units='steps'):
+        self.debug('move absolute pos={}, block={}, units={}'.format(pos, block, units))
+        self._move(pos, velocity, acceleration, deceleration, False, block, units)
         return True
 
     def move_relative(self, pos, velocity=None, acceleration=None, deceleration=None, block=True, units='steps'):
         self.debug('move relative pos={}, block={}, units={}'.format(pos, block, units))
-        pos = self._get_steps(pos, units)
-        self.debug('converted steps={}'.format(pos))
-        self._move(pos, velocity, acceleration, deceleration, True, block)
+        self._move(pos, velocity, acceleration, deceleration, True, block, units)
         return True
 
     def get_position(self, units='steps'):
@@ -310,7 +308,11 @@ class BaseMDrive(BaseLinearDrive):
         self.info('Variable {}={}'.format(c, resp))
         return resp
 
-    def _move(self, pos, velocity, acceleration, deceleration, relative, block):
+    def _move(self, pos, velocity, acceleration, deceleration, relative, block, units):
+
+        pos = self._get_steps(pos, units)
+        self.debug('converted steps={}'.format(pos))
+
         if velocity is None:
             velocity = self.initial_velocity
 

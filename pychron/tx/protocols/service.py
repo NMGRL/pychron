@@ -31,6 +31,7 @@ from pychron.tx.exceptions import ServiceNameError, ResponseError
 
 
 def default_err(failure):
+    print failure.getTraceback()
     failure.trap(BaseException)
     return failure
 
