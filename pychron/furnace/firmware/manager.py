@@ -61,20 +61,27 @@ class FirmwareManager(HeadlessLoggable):
     _switch_indicator_mapping = None
     _is_energized = False
 
+    _use_video_service = False
+
     def bootstrap(self, **kw):
         p = paths.furnace_firmware
         with open(p, 'r') as rfile:
             yd = yaml.load(rfile)
 
+        self._load_config(yd['config'])
         self._load_devices(yd['devices'])
         self._load_switch_mapping(yd['switch_mapping'])
         self._load_switch_indicator_mapping(yd['switch_indicator_mapping'])
         self._load_funnel(yd['funnel'])
         self._load_magnets(yd['magnets'])
 
-        # start camera
-        if self.camera:
-            self.camera.start_video_service()
+        if self._use_video_service:
+            # start camera
+            if self.camera:
+                self.camera.start_video_service()
+
+    def _load_config(self, cd):
+        self._use_video_service = cd.get('use_video_service', False)
 
     def _load_magnets(self, m):
         self._magnet_channels = m
