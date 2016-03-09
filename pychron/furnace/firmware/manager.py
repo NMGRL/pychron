@@ -206,7 +206,11 @@ class FirmwareManager(HeadlessLoggable):
 
                 return self.get_channel_state(ch)
             else:
-                return self.switch_controller.get_channel_state(ch)
+                result = self.switch_controller.get_channel_state(ch)
+                ch, inverted = self._get_switch_channel(data)
+                if inverted:
+                    result = not result
+                return result
 
     # setters
     @debug
