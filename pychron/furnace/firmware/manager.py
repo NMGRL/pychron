@@ -23,6 +23,7 @@ from cStringIO import StringIO
 import time
 import yaml
 # ============= local library imports  ==========================
+from pychron.core.helpers.strtools import to_bool
 from pychron.hardware.dht11 import DHT11
 from pychron.hardware.eurotherm.headless import HeadlessEurotherm
 from pychron.hardware.labjack.headless_u3_lv import HeadlessU3LV
@@ -187,9 +188,11 @@ class FirmwareManager(HeadlessLoggable):
     @debug
     def get_channel_state(self, data):
         if self.switch_controller:
-            ch = self._get_switch_channel(data)
-
-            return self.switch_controller.get_channel_state(ch)
+            ch, inverted = self._get_switch_channel(data)
+            result = self.switch_controller.get_channel_state(ch)
+            if inverted:
+                result = not result
+            return result
 
     @debug
     def get_indicator_state(self, data):
@@ -220,17 +223,17 @@ class FirmwareManager(HeadlessLoggable):
     @debug
     def open_switch(self, data):
         if self.switch_controller:
-            ch = self._get_switch_channel(data)
+            ch, inverted = self._get_switch_channel(data)
             if ch:
-                self.switch_controller.set_channel_state(ch, True)
+                self.switch_controller.set_channel_state(ch, False if inverted else True)
                 return 'OK'
 
     @debug
     def close_switch(self, data):
         if self.switch_controller:
-            ch = self._get_switch_channel(data)
+            ch, inverted = self._get_switch_channel(data)
             if ch:
-                self.switch_controller.set_channel_state(ch, False)
+                self.switch_controller.set_channel_state(ch, True if inverted else False)
                 return 'OK'
 
     @debug
@@ -350,9 +353,14 @@ class FirmwareManager(HeadlessLoggable):
         else:
             name = data
 
-        ch = self._switch_mapping.get(name)
+        ch = self._switch_mapping.get(name, '')
+        inverted = False
+        if ',' in ch:
+            ch, inverted = ch.split(',')
+            inverted = to_bool(inverted)
+
         self.debug('get switch channel {} {}'.format(name, ch))
-        return ch
+        return ch, inverted
 
     def _get_switch_indicator(self, data):
         if isinstance(data, dict):

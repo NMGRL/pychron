@@ -26,6 +26,8 @@ class BaseU3LV:
     _dio_mapping = None
 
     def load(self, *args, **kw):
+        self._dio_mapping = {}
+
         try:
             self._device = u3.U3()
         except NullHandleException:
