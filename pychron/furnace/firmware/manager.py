@@ -197,6 +197,7 @@ class FirmwareManager(HeadlessLoggable):
     @debug
     def get_indicator_state(self, data):
         if self.switch_controller:
+            _, inverted = self._get_switch_channel(data)
             ch = self._get_switch_indicator(data)
             if ch is None:
                 if isinstance(data, dict):
@@ -204,13 +205,13 @@ class FirmwareManager(HeadlessLoggable):
                 else:
                     ch, _ = data
 
-                return self.get_channel_state(ch)
+                result = self.get_channel_state(ch)
             else:
                 result = self.switch_controller.get_channel_state(ch)
-                ch, inverted = self._get_switch_channel(data)
-                if inverted:
-                    result = not result
-                return result
+
+            if inverted:
+                result =not result
+            return result
 
     # setters
     @debug
