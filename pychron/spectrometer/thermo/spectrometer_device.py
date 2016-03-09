@@ -15,16 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Any, Property
+from traits.api import HasTraits, Any, Property
 # from traitsui.api import View, Item, Group, HGroup, VGroup
 
 # ============= standard library imports ========================
 
 # ============= local library imports  ==========================
-from pychron.config_loadable import ConfigMixin
+from pychron.config_loadable import ConfigLoadable
 
 
-class SpectrometerDevice(ConfigMixin):
+class SpectrometerDevice(ConfigLoadable):
     microcontroller = Any
     spectrometer = Any
     simulation = Property

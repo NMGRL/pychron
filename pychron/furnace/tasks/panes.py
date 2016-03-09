@@ -47,40 +47,29 @@ class ControlPane(TraitsDockPane):
     jittering = Bool
     configure_jitter_button = Button
 
+    refresh_states_button = Button('Refresh')
+
     funnel_up_button = Button
     funnel_down_button = Button
-    funnel_down_enabled = Bool(True)
-    funnel_up_enabled = Bool(False)
 
     toggle_advanced_view_button = Button
     _advanced_view_state = Bool(False)
 
-    # lower_funnel_button = Button('Lower Funnel')
-    # raise_funnel_button = Button('Raise Funnel')
+    disable_button = Button
 
-    # def _dump_sample_button_fired(self):
-    #     self.model.stage_manager.dump_sample()
-    #
-    # def _raise_funnel_button_fired(self):
-    #     self.model.stage_manager.raise_funnel()
-    #
-    # def _lower_funnel_button_fired(self):
-    #     self.model.stage_manager.lower_funnel()
+    def _disable_button_fired(self):
+        self.model.setpoint = 0
 
     def _funnel_up_button_fired(self):
         def func():
-            self.funnel_up_enabled = False
-            if self.model.raise_funnel():
-                self.funnel_down_enabled = True
+            self.model.raise_funnel()
 
         t = Thread(target=func)
         t.start()
 
     def _funnel_down_button_fired(self):
         def func():
-            self.funnel_down_enabled = False
-            if self.model.lower_funnel():
-                self.funnel_up_enabled = True
+            self.model.lower_funnel()
 
         t = Thread(target=func)
         t.start()
@@ -105,6 +94,9 @@ class ControlPane(TraitsDockPane):
 
     def _toggle_advanced_view_button_fired(self):
         self._advanced_view_state = not self._advanced_view_state
+
+    def _refresh_states_button_fired(self):
+        self.model.refresh_states()
 
     def trait_context(self):
         return {'object': self.model,
@@ -137,8 +129,8 @@ class ControlPane(TraitsDockPane):
         #                                         high_name='setpoint_readback_max')),
         #
         #                label='Controller', show_border=True)
-        c_grp = VGroup(HGroup(Item('setpoint'), spring),
-                       VGroup(UItem('setpoint_readback', editor=LCDEditor())),
+        c_grp = VGroup(HGroup(Item('setpoint'), spring, icon_button_editor('pane.disable_button', 'cancel')),
+                       VGroup(UItem('temperature_readback', editor=LCDEditor())),
                        label='Controller', show_border=True)
 
         feeder_grp = VGroup(HGroup(Item('stage_manager.calibrated_position_entry', label='Hole'),
@@ -149,9 +141,9 @@ class ControlPane(TraitsDockPane):
                             show_border=True, label='Position')
 
         funnel_grp = VGroup(HGroup(icon_button_editor('pane.funnel_up_button', 'arrow_up',
-                                                      enabled_when='pane.funnel_up_enabled', tooltip='Raise Funnel'),
+                                                      enabled_when='funnel_up_enabled', tooltip='Raise Funnel'),
                                    icon_button_editor('pane.funnel_down_button', 'arrow_down', tooltip='Lower Funnel',
-                                                      enabled_when='pane.funnel_down_enabled')),
+                                                      enabled_when='funnel_down_enabled')),
                             show_border=True, label='Funnel')
         jitter_grp = HGroup(UItem('pane.jitter_button', editor=ButtonEditor(label_value='pane.jitter_label')),
                             icon_button_editor('pane.configure_jitter_button', 'cog', tooltip='Configure Jitter'),
@@ -163,7 +155,9 @@ class ControlPane(TraitsDockPane):
                           show_border=True, label='Dump')
 
         d1 = VGroup(feeder_grp, funnel_grp, jitter_grp, dump_grp)
-        d2 = VGroup(UItem('dumper_canvas', editor=ComponentEditor()))
+        d2 = VGroup(
+                    #UItem('pane.refresh_states_button'),
+                    UItem('dumper_canvas', editor=ComponentEditor()))
         d_grp = HGroup(d1, d2, label='Dumper', show_border=True)
 
         v_grp = VGroup(UItem('video_canvas', editor=VideoComponentEditor()), label='Camera')

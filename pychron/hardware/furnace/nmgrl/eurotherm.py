@@ -27,9 +27,8 @@ from pychron.hardware.core.core_device import CoreDevice
 @provides(IFurnaceController)
 class NMGRLFurnaceEurotherm(CoreDevice):
     def set_setpoint(self, v, **kw):
-        d = {'setpoint': v}
-        d = json.dumps(d)
-        self.ask('SetSetpoint {}'.format(d))
+        d = json.dumps({'command': 'SetSetpoint', 'setpoint': v})
+        self.ask(d)
 
     def get_setpoint(self, **kw):
         resp = self.ask('GetSetpoint')
@@ -39,7 +38,14 @@ class NMGRLFurnaceEurotherm(CoreDevice):
             pass
 
     read_setpoint = get_setpoint
+
+    def get_temperature(self, **kw):
+        resp = self.ask('GetTemperature', **kw)
+        try:
+            return float(resp)
+        except (TypeError, ValueError):
+            pass
+
+    read_temperature = get_temperature
+
 # ============= EOF =============================================
-
-
-

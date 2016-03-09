@@ -72,7 +72,7 @@ class LoaderLogic(Loggable):
                 key, state = flag.split('_')
                 name = self._convert_switch_name(key)
                 if name in self.switches:
-                    s = self.manager.get_switch_state(name)
+                    s = self.manager.get_switch_indicator_state(name)
                     b = False
                     if (s and state == 'O') or (not s and state == 'C'):
                         b = True

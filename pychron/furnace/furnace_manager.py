@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from pyface.timer.do_later import do_after
-from traits.api import TraitError, Instance, Float, provides, Int
+from traits.api import TraitError, Instance, Float, provides, Int, Bool
 # ============= standard library imports ========================
 import os
 import time
@@ -43,7 +43,7 @@ from pychron.response_recorder import ResponseRecorder
 class BaseFurnaceManager(Manager):
     controller = Instance(FurnaceController)
     setpoint = Float(auto_set=False, enter_set=True)
-    setpoint_readback = Float
+    temperature_readback = Float
     stage_manager = Instance(BaseFurnaceStageManager)
     switch_manager = Instance(SwitchManager)
     response_recorder = Instance(ResponseRecorder)
@@ -58,6 +58,7 @@ class BaseFurnaceManager(Manager):
     def _switch_manager_default(self):
         sm = SwitchManager(configuration_dir_name='furnace',
                            setup_name='furnace_valves')
+        sm.on_trait_change(self._handle_state, 'refresh_state')
         return sm
 
     def _response_recorder_default(self):
@@ -65,6 +66,8 @@ class BaseFurnaceManager(Manager):
                              output_device=self.controller)
         return r
 
+    def _handle_state(self, new):
+        pass
 
 class Funnel(LinearAxis):
     pass
@@ -75,8 +78,8 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     funnel = Instance(Funnel)
     loader_logic = Instance(LoaderLogic)
     magnets = Instance(NMGRLMagnetDumper)
-    setpoint_readback_min = Float(0)
-    setpoint_readback_max = Float(1600.0)
+    temperature_readback_min = Float(0)
+    temperature_readback_max = Float(1600.0)
 
     graph = Instance(StreamGraph)
     update_period = Int(2)
@@ -91,12 +94,27 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     video_canvas = Instance(VideoCanvas)
     camera = Instance(NMGRLCamera)
 
+    funnel_down_enabled = Bool(True)
+    funnel_up_enabled = Bool(False)
+
     def activate(self):
         # pref_id = 'pychron.furnace'
         # bind_preference(self, 'update_period',
         # '{}.update_period'.format(pref_id))
-
+        self.refresh_states()
         self._start_update()
+
+    def refresh_states(self):
+        self.switch_manager.load_indicator_states()
+
+        self.funnel_down_enabled = True
+        self.funnel_up_enabled = False
+        if self.funnel_down():
+            self.dumper_canvas.set_item_state('Funnel', True)
+            self.funnel_down_enabled = False
+            self.funnel_up_enabled = True
+
+        self.dumper_canvas.invalidate_and_redraw()
 
     def prepare_destroy(self):
         self.debug('prepare destroy')
@@ -205,34 +223,27 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
 
     def lower_funnel(self):
         self.debug('lower funnel')
-        self.funnel.lower()
-        return True
-
-        # if self.loader_logic.check('FD'):
-        #     # self.funnel.set_value(self.funnel.down_position)
-        #     self.funnel.lower()
-        #     # todo: update canvas state
-        #
-        #     return True
-        # else:
-        #     cm = self.loader_logic.get_check_message()
-        #     self.warning_dialog('Lowering funnel not enabled\n\n{}'.format(cm))
+        if self.loader_logic.check('FD'):
+            self.funnel_down_enabled = False
+            self.funnel.lower()
+            self.funnel_up_enabled = True
+            self.dumper_canvas.set_item_state('Funnel', True)
+            return True
+        else:
+            cm = self.loader_logic.get_check_message()
+            self.warning_dialog('Lowering funnel not enabled\n\n{}'.format(cm))
 
     def raise_funnel(self):
         self.debug('raise funnel')
-        self.funnel.raise_()
-        return True
-
-
-        # if self.loader_logic.check('FU'):
-        #     # self.funnel.set_value(self.funnel.up_position)
-        #     self.funnel.raise_()
-        #     # todo: update canvas state
-        #
-        #     return True
-        # else:
-        #     cm = self.loader_logic.get_check_message()
-        #     self.warning_dialog('Raising funnel not enabled\n\n{}'.format(cm))
+        if self.loader_logic.check('FU'):
+            self.funnel_up_enabled = False
+            self.funnel.raise_()
+            self.funnel_down_enabled = True
+            self.dumper_canvas.set_item_state('Funnel', False)
+            return True
+        else:
+            cm = self.loader_logic.get_check_message()
+            self.warning_dialog('Raising funnel not enabled\n\n{}'.format(cm))
 
     def set_setpoint(self, v):
         self.debug('set setpoint={}'.format(v))
@@ -251,14 +262,14 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
 
             self.graph.redraw()
 
-    def read_setpoint(self, force=False):
+    def read_temperature(self, force=False):
         v = 0
         if self.controller:
             # force = update and not self.controller.is_scanning()
-            v = self.controller.read_setpoint(force=force)
+            v = self.controller.read_temperature(force=force, verbose=False)
 
         try:
-            self.setpoint_readback = v
+            self.temperature_readback = v
             return v
         except TraitError:
             pass
@@ -291,9 +302,9 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         pass
 
     # logic
-    def get_switch_state(self, name):
+    def get_switch_indicator_state(self, name):
         if self.switch_manager:
-            return self.switch_manager.get_state_by_name(name, force=True)
+            return self.switch_manager.get_indicator_state_by_name(name, force=True)
 
     def get_flag_state(self, flag):
         self.debug('get_flag_state {}'.format(flag))
@@ -319,6 +330,9 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         return v
 
     # private
+    def _handle_state(self, new):
+        self.dumper_canvas.update_switch_state(*new)
+
     def _open_logic(self, name):
         """
         check the logic rules to see if its ok to open "name"
@@ -359,7 +373,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         self._update_readback()
 
     def _update_readback(self):
-        v = self.read_setpoint(force=True)
+        v = self.read_temperature(force=True)
         scalar = 100
         if v is not None:
             self.graph.record(v, track_y=False)
