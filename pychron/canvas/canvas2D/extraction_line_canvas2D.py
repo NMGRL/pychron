@@ -95,7 +95,6 @@ class ExtractionLineCanvas2D(SceneCanvas):
         """
         """
         switch = self._get_switch_by_name(name)
-        # print 'update state {} {}'.format(name, switch)
         if switch is not None:
             switch.state = nstate
         self.draw_valid = False

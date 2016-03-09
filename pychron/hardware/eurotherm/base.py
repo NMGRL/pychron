@@ -86,7 +86,7 @@ class BaseEurotherm(HasTraits):
         """
         """
         params = self.get_pid_parameters(v)
-
+        self.debug('set pid parameters temp={}, params={}'.format(v, params))
         if params:
             self.set_pid_str(params[1])
 
@@ -120,7 +120,7 @@ class BaseEurotherm(HasTraits):
             self.set_pid_parameters(v)
 
         cmd = 'SL'
-        resp = self._command(cmd, v)
+        resp = self._command(cmd, v, verbose=True)
         if not self.simulation:
             if resp is None:
                 self.warning('Failed setting setpoint to {:0.2f}'.format(v))
@@ -143,7 +143,7 @@ class BaseEurotherm(HasTraits):
     # private
     def _command(self, cmd, v, **kw):
         builder = getattr(self, '_{}_build_command'.format(self.protocol))
-        resp = self.ask(builder(cmd, v), **kw)
+        resp = self.ask(builder(cmd, v), read_terminator=ACK, terminator_position=0, **kw)
         parser = getattr(self, '_{}_parse_command_response'.format(self.protocol))
 
         if not self.simulation:

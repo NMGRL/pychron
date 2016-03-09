@@ -23,6 +23,7 @@ from cStringIO import StringIO
 import time
 import yaml
 # ============= local library imports  ==========================
+from pychron.core.helpers.strtools import to_bool
 from pychron.hardware.dht11 import DHT11
 from pychron.hardware.eurotherm.headless import HeadlessEurotherm
 from pychron.hardware.labjack.headless_u3_lv import HeadlessU3LV
@@ -88,7 +89,6 @@ class FirmwareManager(HeadlessLoggable):
 
     def _load_funnel(self, f):
         if self.funnel:
-
             self._funnel_down = self.funnel.tosteps(f['down'])
             self._funnel_up = self.funnel.tosteps(f['up'])
             self._funnel_tolerance = f['tolerance']
@@ -187,23 +187,30 @@ class FirmwareManager(HeadlessLoggable):
     @debug
     def get_channel_state(self, data):
         if self.switch_controller:
-            ch = self._get_switch_channel(data)
-
-            return self.switch_controller.get_channel_state(ch)
+            ch, inverted = self._get_switch_channel(data)
+            result = self.switch_controller.get_channel_state(ch)
+            if inverted:
+                result = not result
+            return result
 
     @debug
     def get_indicator_state(self, data):
         if self.switch_controller:
+            if isinstance(data, dict):
+                alt_name = data['name']
+            else:
+                alt_name, _ = data
+            alt_ch, inverted = self._get_switch_channel(alt_name)
             ch = self._get_switch_indicator(data)
             if ch is None:
-                if isinstance(data, dict):
-                    ch = data['name']
-                else:
-                    ch, _ = data
-
-                return self.get_channel_state(ch)
+                result = self.get_channel_state(alt_ch)
             else:
-                return self.switch_controller.get_channel_state(ch)
+                result = self.switch_controller.get_channel_state(ch)
+
+            self.debug('indicator state {}, invert={}'.format(result, inverted))
+            if inverted:
+                result = not result
+            return result
 
     # setters
     @debug
@@ -214,23 +221,28 @@ class FirmwareManager(HeadlessLoggable):
     @debug
     def set_setpoint(self, data):
         if self.controller:
-            self.controller.process_setpoint = data
+            if isinstance(data, dict):
+                sp = data.get('setpoint', 0)
+            else:
+                sp = float(data)
+
+            self.controller.process_setpoint = sp
             return 'OK'
 
     @debug
     def open_switch(self, data):
         if self.switch_controller:
-            ch = self._get_switch_channel(data)
+            ch, inverted = self._get_switch_channel(data)
             if ch:
-                self.switch_controller.set_channel_state(ch, True)
+                self.switch_controller.set_channel_state(ch, False if inverted else True)
                 return 'OK'
 
     @debug
     def close_switch(self, data):
         if self.switch_controller:
-            ch = self._get_switch_channel(data)
+            ch, inverted = self._get_switch_channel(data)
             if ch:
-                self.switch_controller.set_channel_state(ch, False)
+                self.switch_controller.set_channel_state(ch, True if inverted else False)
                 return 'OK'
 
     @debug
@@ -350,9 +362,14 @@ class FirmwareManager(HeadlessLoggable):
         else:
             name = data
 
-        ch = self._switch_mapping.get(name)
+        ch = self._switch_mapping.get(name, '')
+        inverted = False
+        if ',' in str(ch):
+            ch, inverted = ch.split(',')
+            inverted = to_bool(inverted)
+
         self.debug('get switch channel {} {}'.format(name, ch))
-        return ch
+        return ch, inverted
 
     def _get_switch_indicator(self, data):
         if isinstance(data, dict):
@@ -367,8 +384,9 @@ class FirmwareManager(HeadlessLoggable):
         if ',' in str(ch):
             o, c = map(str.strip, ch.split(','))
             ch = o if action.lower() == 'open' else c
-            if not ch:
+            if not ch or ch == '-':
                 ch = None
+
         return ch
 
 # ============= EOF =============================================

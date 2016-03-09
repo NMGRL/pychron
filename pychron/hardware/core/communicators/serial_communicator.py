@@ -185,6 +185,7 @@ class SerialCommunicator(Communicator):
             handshake_only=False,
             handshake=None,
             read_terminator=None,
+            terminator_position=None,
             nchars=None):
         """
         """
@@ -213,7 +214,8 @@ class SerialCommunicator(Communicator):
                 re = self._read_nchars(nchars)
             else:
                 re = self._read_terminator(delay=delay,
-                                           terminator=read_terminator)
+                                           terminator=read_terminator,
+                                           terminator_position=terminator_position)
         if remove_eol:
             re = remove_eol_func(re)
 
@@ -397,15 +399,15 @@ class SerialCommunicator(Communicator):
         return self._read_loop(hfunc, delay, timeout)
 
     def _read_terminator(self, timeout=1, delay=None,
-                         terminator=None):
+                         terminator=None, terminator_position=None):
 
         if terminator is None:
             terminator = self.read_terminator
-
-        pos = self.read_terminator_position
+        if terminator_position is None:
+            terminator_position = self.read_terminator_position
 
         def func(r):
-            return self._get_isterminated(r, terminator, pos)
+            return self._get_isterminated(r, terminator, terminator_position)
 
         return self._read_loop(func, delay, timeout)
 

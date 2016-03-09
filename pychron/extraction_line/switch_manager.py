@@ -274,6 +274,14 @@ class SwitchManager(Manager):
         """
         return next((item for item in self.explanable_items if item.name == n), None)
 
+    def get_indicator_state_by_name(self, n, force=False):
+        v = self.get_switch_by_name(n)
+        state = None
+        if v is not None:
+            state = self._get_indicator_state_by(v, force=force)
+
+        return state
+
     def get_state_by_name(self, n, force=False):
         """
         """
@@ -407,6 +415,9 @@ class SwitchManager(Manager):
                         self.debug('interlocked {}'.format(interlock))
                         return v
 
+    def _get_indicator_state_by(self, v, force=False):
+        return v.get_hardware_indicator_state()
+
     def _get_state_by(self, v, force=False):
         """
         """
@@ -476,6 +487,13 @@ class SwitchManager(Manager):
                 s = v.get_hardware_state(verbose=False)
                 if v.state != s:
                     self.refresh_state = (k, s, False)
+
+        self.refresh_canvas_needed = True
+
+    def load_indicator_states(self):
+        for k, v in self.switches.iteritems():
+            s = v.get_hardware_indicator_state()
+            self.refresh_state = (k, s, False)
 
         self.refresh_canvas_needed = True
 
