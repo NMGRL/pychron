@@ -89,7 +89,6 @@ class FirmwareManager(HeadlessLoggable):
 
     def _load_funnel(self, f):
         if self.funnel:
-
             self._funnel_down = self.funnel.tosteps(f['down'])
             self._funnel_up = self.funnel.tosteps(f['up'])
             self._funnel_tolerance = f['tolerance']
@@ -197,15 +196,14 @@ class FirmwareManager(HeadlessLoggable):
     @debug
     def get_indicator_state(self, data):
         if self.switch_controller:
-            _, inverted = self._get_switch_channel(data)
+            if isinstance(data, dict):
+                alt_name = data['name']
+            else:
+                alt_name, _ = data
+            alt_ch, inverted = self._get_switch_channel(alt_name)
             ch = self._get_switch_indicator(data)
             if ch is None:
-                if isinstance(data, dict):
-                    ch = data['name']
-                else:
-                    ch, _ = data
-
-                result = self.get_channel_state(ch)
+                result = self.get_channel_state(alt_ch)
             else:
                 result = self.switch_controller.get_channel_state(ch)
 
