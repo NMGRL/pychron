@@ -359,7 +359,7 @@ class FirmwareManager(HeadlessLoggable):
 
         ch = self._switch_mapping.get(name, '')
         inverted = False
-        if ',' in ch:
+        if ',' in str(ch):
             ch, inverted = ch.split(',')
             inverted = to_bool(inverted)
 
