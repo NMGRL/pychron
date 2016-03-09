@@ -221,7 +221,12 @@ class FirmwareManager(HeadlessLoggable):
     @debug
     def set_setpoint(self, data):
         if self.controller:
-            self.controller.process_setpoint = data
+            if isinstance(data, dict):
+                sp = data.get('setpoint', 0)
+            else:
+                sp = float(data)
+
+            self.controller.process_setpoint = sp
             return 'OK'
 
     @debug
