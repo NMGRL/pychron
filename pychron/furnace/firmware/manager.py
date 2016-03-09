@@ -209,8 +209,9 @@ class FirmwareManager(HeadlessLoggable):
             else:
                 result = self.switch_controller.get_channel_state(ch)
 
+            self.debug('indicator state {}, invert={}'.format(result, inverted))
             if inverted:
-                result =not result
+                result = not result
             return result
 
     # setters
