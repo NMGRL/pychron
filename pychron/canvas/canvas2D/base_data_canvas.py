@@ -158,7 +158,6 @@ class BaseDataCanvas(DataView):
 
     @on_trait_change('show_grids')
     def change_grid_visibility(self):
-        print 'change visiblity', self.show_grids
         try:
 
             self.x_grid.visible = self.show_grids
