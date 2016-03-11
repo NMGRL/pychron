@@ -26,7 +26,8 @@ class FurnaceProtocol(BaseValveProtocol):
 
     def _init_hook(self):
         services = ('DumpSample', '_dump_sample',
-                    'DumpComplete', '_dump_complete')
+                    'DumpComplete', '_dump_complete',
+                    'SetSetpoint', '_set_setpoint')
         self._register_services(services)
 
     # command handlers
@@ -41,4 +42,10 @@ class FurnaceProtocol(BaseValveProtocol):
         result = self._manager.is_dump_complete()
         return result
 
+    def _set_setpoint(self, data):
+        if isinstance(data, dict):
+            data = data['value']
+
+        result = self._manager.set_setpoint(data)
+        return result
 # ============= EOF =============================================

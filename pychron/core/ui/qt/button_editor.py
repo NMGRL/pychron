@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from PySide.QtGui import QSizePolicy
-from traits.api import Property, Enum, Range, Str, Trait
+from traits.api import Property, Enum, Range, Str, Trait, Bool
 from traitsui.api import View
 from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.button_editor import CustomEditor
@@ -31,6 +31,8 @@ class _ButtonEditor(CustomEditor):
 
         self.control.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
         self.control.setFixedHeight(32)
+
+        self.control.setFlat(self.factory.flat)
 
 
 class ButtonEditor(BasicEditorFactory):
@@ -81,6 +83,7 @@ class ButtonEditor(BasicEditorFactory):
 
     traits_view = View(['label', 'value', '|[]'])
 
+    flat = Bool(False)
     # ---------------------------------------------------------------------------
     #  Implementation of the 'value' property:
     # ---------------------------------------------------------------------------

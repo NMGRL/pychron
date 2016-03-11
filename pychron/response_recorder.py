@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Array, Any, Instance
+from traits.api import HasTraits, Array, Any, Instance, Float
 
 # ============= standard library imports ========================
 import struct
@@ -28,7 +28,7 @@ from pychron.managers.data_managers.csv_data_manager import CSVDataManager
 
 
 class ResponseRecorder(HasTraits):
-    period = 2
+    period = Float(2)
     response_data = Array
     output_data = Array
 
@@ -40,18 +40,26 @@ class ResponseRecorder(HasTraits):
     data_manager = Instance(CSVDataManager)
 
     _start_time = 0
+    _write_data = False
 
-    def start(self):
+    def start(self, base_frame_name=None):
+        if self._alive:
+            return
+
         t = time.time()
         self._start_time = t
         self.response_data = array([(t, 0)])
         self.output_data = array([(t, 0)])
+        self._write_data = False
 
-        self.data_manager = CSVDataManager()
-        self.data_manager.new_frame(base_frame_name='diode_response_tc_control')
-        self.data_manager.write_to_frame(('#time', self.output_device.name,
-                                          self.response_device.name,
-                                          self.response_device_secondary.name))
+        if base_frame_name:
+            self._write_data = True
+            self.data_manager = CSVDataManager()
+            self.data_manager.new_frame(base_frame_name=base_frame_name)
+            self.data_manager.write_to_frame(('#time', self.output_device.name,
+                                              self.response_device.name,
+                                              self.response_device_secondary.name))
+
         t = Thread(target=self.run)
         t.start()
 
@@ -64,8 +72,12 @@ class ResponseRecorder(HasTraits):
         od = self.output_device
         dm = self.data_manager
 
+        wd = self._write_data
+
         odata = self.output_data
         rdata = self.response_data
+
+        r2 = None
         while self._alive:
             to = time.time()
             t = to - st
@@ -75,11 +87,19 @@ class ResponseRecorder(HasTraits):
             r = rd.get_response(force=True)
             rdata = vstack((rdata, (t, r)))
 
-            r2 = rds.get_response(force=True)
+            if rds:
+                r2 = rds.get_response(force=True)
 
-            datum = (t, out, r, r2)
-            datum = map(lambda x: floatfmt(x, n=3), datum)
-            dm.write_to_frame(datum)
+            if wd:
+                if r2:
+                    datum = (t, out, r, r2)
+                else:
+                    datum = (t, out, r)
+
+                datum = map(lambda x: floatfmt(x, n=3), datum)
+
+                dm.write_to_frame(datum)
+
             et = time.time() - to
             slt = p - et - 0.001
             if slt > 0:
@@ -100,5 +120,10 @@ class ResponseRecorder(HasTraits):
     def get_output_blob(self):
         if len(self.output_data):
             return ''.join([struct.pack('<ff', x, y) for x, y in self.output_data])
+
+    @property
+    def max_response(self):
+        if len(self.response_data):
+            return self.response_data.max()
 
 # ============= EOF =============================================

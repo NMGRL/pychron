@@ -179,11 +179,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     db_refresh_needed = Event
     auto_save_needed = Event
 
-    _labnumber = String
     labnumbers = Property(depends_on='project, selected_level')
-
-    # project = Any
-    # projects = Property(depends_on='db, db_refresh_needed')
 
     repository_identifier = Str
     repository_identifiers = Property(depends_on='repository_identifier_dirty, db_refresh_needed')
@@ -342,6 +338,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     _set_defaults = True
     _no_clear_labnumber = False
     _meta_cache = Dict
+    _suppress_special_labnumber_change = False
 
     def __init__(self, *args, **kw):
         bind_preference(self, 'use_name_prefix', 'pychron.pyscript.use_name_prefix')
@@ -1426,11 +1423,14 @@ post_equilibration_script:name''')
             except ValueError:
                 special = True
 
+            if not special:
+                self._suppress_special_labnumber_change = True
+                self.special_labnumber = 'Special Labnumber'
+                self._suppress_special_labnumber_change = False
+
             if self._load_labnumber_meta(new):
                 if self._set_defaults:
                     self._load_labnumber_defaults(old, new, special)
-                    # if not special:
-                    #     self.special_labnumber = 'Special Labnumber'
         else:
             self.sample = ''
 
@@ -1444,21 +1444,19 @@ post_equilibration_script:name''')
         self._clear_labnumber()
 
     def _special_labnumber_changed(self):
+        if self._suppress_special_labnumber_change:
+            return
+
         if self.special_labnumber not in ('Special Labnumber', LINE_STR, ''):
             ln = convert_special_name(self.special_labnumber)
             self.debug('special ln changed {}, {}'.format(self.special_labnumber, ln))
             if ln:
-                if ln in ('dg', 'pa'):
-                    pass
-                else:
-                    # ms,ed = self._mass_spectrometers, self._extract_devices
+                if ln not in ('dg', 'pa'):
                     msname = self.mass_spectrometer[0].capitalize()
-                    # edname = self.extract_device[0].capitalize()
 
                     if ln in SPECIAL_KEYS and not ln.startswith('bu'):
                         ln = make_standard_identifier(ln, '##', msname)
                     else:
-                        # msname = ms.name[0].capitalize()
                         edname = ''
                         ed = self.extract_device
                         if ed not in ('Extract Device', LINE_STR):

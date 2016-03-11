@@ -16,6 +16,8 @@
 
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Int, Float
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -26,6 +28,7 @@ class LinearMapper(HasTraits):
     low_data = Float(0)
     high_data = Float(1)
     _scale = 1
+
     def map_data(self, steps):
         self._compute_scale()
         return (steps - self.low_step) / self._scale + self.low_data
@@ -38,4 +41,5 @@ class LinearMapper(HasTraits):
         data_range = self.high_data - self.low_data
         step_range = self.high_step - self.low_step
         self._scale = step_range / data_range
+
 # ============= EOF =============================================

@@ -226,7 +226,7 @@ class BaseExperimentQueue(RunBlock):
 
     def _add_runs(self, runspecs):
         aruns = self.automated_runs
-        if self.selected:
+        if self.selected and self.selected in aruns:
             idx = aruns.index(self.selected[-1])
             for ri in reversed(runspecs):
                 if not ri.repository_identifier:

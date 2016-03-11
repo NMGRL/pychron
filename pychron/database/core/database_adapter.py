@@ -74,17 +74,19 @@ class SessionCTX(object):
 
         return self._sess
 
-    def __exit__(self, *args, **kw):
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type:
+            self._parent.warning('=========== Database exception =============')
+            self._parent.warning(exc_val)
+            self._parent.warning(exc_tb.format_tb())
+
         if self._parent:
             self._parent.sess_stack -= 1
             if not self._parent.sess_stack:
                 self._parent.sess = None
 
-        # print 'exit',self._commit, self._close_at_exit#, self._parent._sess_stack
-        # self._sess.flush()
         if self._close_at_exit:
             try:
-                # self._parent.debug('$%$%$%$%$%$%$%$ commit {}'.format(self._commit))
                 if self._commit:
                     self._sess.commit()
                     self._parent.post_commit()
@@ -93,7 +95,6 @@ class SessionCTX(object):
                         self._sess.rollback()
 
             except Exception, e:
-                # print 'exception commiting session: {}'.format(e)
                 traceback.print_exc()
 
                 if self._parent:

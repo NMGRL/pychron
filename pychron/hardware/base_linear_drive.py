@@ -23,14 +23,12 @@ from traits.api import Str, Int, Bool, Float, Property, Instance, CInt
 import time
 # ============= local library imports  ==========================
 from pychron.consumer_mixin import ConsumerMixin
-from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.hardware.linear_mapper import LinearMapper
 from pychron.core.helpers.timer import Timer
-from pychron.loggable import Loggable
 from pychron.paths import paths
 
 
-class BaseLinearDrive(Loggable, ConsumerMixin):
+class BaseLinearDrive(ConsumerMixin):
     velocity = Property
     _velocity = Float
     acceleration = Float
@@ -118,7 +116,8 @@ class BaseLinearDrive(Loggable, ConsumerMixin):
                 continue
 
             if homing:
-                invoke_in_main_thread(self.trait_set, homing_position=steps)
+                self.homing_position = steps
+                # invoke_in_main_thread(self.trait_set, homing_position=steps)
 
             if progress is not None:
                 progress.change_message('{} position = {}'.format(self.name, steps),
@@ -237,4 +236,11 @@ class BaseLinearDrive(Loggable, ConsumerMixin):
 
     def _set_data_position(self, pos):
         self.add_consumable((self._set_motor, pos))
+
+    def _get_velocity(self):
+        return self._velocity
+
+    def _set_velocity(self, v):
+        self._velocity = v
+
 # ============= EOF =============================================

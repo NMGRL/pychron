@@ -19,7 +19,6 @@ import os
 
 from traits.api import HasTraits, Instance
 
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.designer_extraction_line_canvas2D import DesignerExtractionLineCanvas2D
@@ -50,7 +49,9 @@ class Designer(HasTraits):
     def _save_xml(self, p):
         cp = CanvasParser(p)
 
-        for tag in ('laser', 'stage', 'spectrometer'):
+        for tag in ('laser', 'stage', 'turbo', 'getter',
+                    'ionpump','gauge',
+                    'spectrometer', 'tank', 'pipette'):
             for ei in cp.get_elements(tag):
                 self._set_element_color(ei)
                 self._set_element_translation(ei)
@@ -111,8 +112,8 @@ class Designer(HasTraits):
                 print 'fffff', elem.type_tag, elem
 
     def open_xml(self, p):
-        #cp=CanvasParser(p)
-        #print cp
+        # cp=CanvasParser(p)
+        # print cp
 
         scene = ExtractionLineScene()
         self.canvas.scene = scene

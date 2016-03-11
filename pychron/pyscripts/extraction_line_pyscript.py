@@ -129,6 +129,15 @@ class ExtractionPyScript(ValvePyScript):
         return ('Requested Output= {:0.3f}'.format(request),
                 'Achieved Output=  {:0.3f}'.format(ach))
 
+    def set_response_recorder_period(self, p):
+        self._extraction_action([('set_response_recorder_period', (p,), {})])
+
+    def start_response_recorder(self):
+        self._extraction_action([('start_response_recorder', (), {})])
+
+    def stop_response_recorder(self):
+        self._extraction_action([('stop_response_recorder', (), {})])
+
     def get_command_register(self):
         cm = super(ExtractionPyScript, self).get_command_register()
         return command_register.commands.items() + cm
@@ -353,10 +362,22 @@ class ExtractionPyScript(ValvePyScript):
                 self.info('{} move to position failed'.format(ed))
                 self.cancel()
             else:
-                self.console_info('move to position suceeded')
+                self.console_info('move to position succeeded')
                 return True
         else:
             self.console_info('move not required. position is None')
+            return True
+
+    @verbose_skip
+    @command_register
+    def dump_sample(self):
+        success = self._extraction_action([('dump_sample', (), {'block': True})])
+
+        if not success:
+            self.info('{} dump sample failed'.format(self.extract_device))
+            self.cancel()
+        else:
+            self.console_info('dump sample succeeded')
             return True
 
     @verbose_skip

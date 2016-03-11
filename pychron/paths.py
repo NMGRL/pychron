@@ -23,7 +23,6 @@ make sure directory exists and build if not
 import os
 from os import path, mkdir
 
-from pyface.message_dialog import warning
 
 from pychron.file_defaults import TASK_EXTENSION_DEFAULT, SIMPLE_UI_DEFAULT, \
     EDIT_UI_DEFAULT, IDENTIFIERS_DEFAULT
@@ -219,6 +218,7 @@ class Paths(object):
     duration_tracker_frequencies = None
     experiment_launch_history = None
     notification_triggers = None
+    furnace_firmware = None
 
     # plot_factory_defaults = (('ideogram_defaults', 'IDEOGRAM_DEFAULTS', True),
     #                          ('spectrum_defaults', 'SPECTRUM_DEFAULTS', True))
@@ -442,6 +442,8 @@ class Paths(object):
         self.experiment_launch_history = join(self.hidden_dir, 'experiment_launch_history.txt')
         self.notification_triggers = join(self.setup_dir, 'notification_triggers.yaml')
 
+        self.furnace_firmware = join(self.setup_dir, 'furnace_firmware.yaml')
+
         # =======================================================================
         # pipeline templates
         # =======================================================================
@@ -465,6 +467,7 @@ class Paths(object):
             self._write_default_files()
 
     def reset_plot_factory_defaults(self):
+        from pyface.message_dialog import warning
         warning(None, 'Reset plot factor defaults not enabled')
         # self.write_file_defaults(self.plot_factory_defaults, force=True)
 

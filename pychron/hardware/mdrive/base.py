@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2015 Jake Ross
+# Copyright 2016 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,12 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Int, Bool
+from traits.api import Int, Bool, Float, CInt
 # ============= standard library imports ========================
+from threading import Thread, Event
 import time
 # ============= local library imports  ==========================
 from pychron.hardware.base_linear_drive import BaseLinearDrive
-from pychron.hardware.core.core_device import CoreDevice
 
 ERROR_MAP = {'6': 'An I/O is already set to this type. Applies to non-General Purpose I/O.',
              '8': 'Tried to set an I/O to an incorrect I/O type.',
@@ -104,29 +104,34 @@ ERROR_MAP = {'6': 'An I/O is already set to this type. Applies to non-General Pu
              '94': 'Clear Locked Rotor Fault not allowed while in Motion. MDrive Hybrid products(MAI) only.'}
 
 
-class MDriveMotor(CoreDevice, BaseLinearDrive):
-    initial_velocity = Int
-    deceleration = Int
-    run_current = Int
-    use_encoder = Bool
-    steps_per_turn = Int
+class BaseMDrive(BaseLinearDrive):
+    initial_velocity = CInt
+    acceleration = CInt
+    deceleration = CInt
+    _velocity = Int
 
-    slew_velocity = Int
+    run_current = CInt
+    use_encoder = Bool
+    steps_per_turn = CInt
+    turns_per_mm = Float
+    slew_velocity = CInt
 
     _slewing = False
+    _jitter_evt = None
 
     def load_additional_args(self, config):
         args = [
             ('Motion', 'steps', 'int'),
             ('Motion', 'min_steps', 'int'),
             ('Motion', 'sign'),
-            ('Motion', 'velocity'),
+            ('Motion', 'velocity', 'int'),
             ('Motion', 'slew_velocity'),
             ('Motion', 'initial_velocity'),
             ('Motion', 'acceleration'),
             ('Motion', 'deceleration'),
-            ('Motion', 'run_current')
-            ('Motion', 'use_encoder')
+            ('Motion', 'run_current'),
+            ('Motion', 'use_encoder', 'boolean'),
+            ('Motion', 'turns_per_mm'),
 
             ('Homing', 'home_delay'),
             ('Homing', 'home_velocity'),
@@ -145,44 +150,71 @@ class MDriveMotor(CoreDevice, BaseLinearDrive):
         return True
 
     def initialize(self, *args, **kw):
-        self.set_encoder_mode(self.use_encoder)
-        if self.use_encoder:
-            self.steps_per_turn = 2048
-        else:
-            self.steps_per_turn = 51200
+        if super(BaseMDrive, self).initialize(*args, **kw):
+            self.set_use_encoder(self.use_encoder)
+            if self.use_encoder:
+                self.steps_per_turn = 2048
+            else:
+                self.steps_per_turn = 51200
 
-        for attr in ('initial_velocity', 'velocity', 'acceleration', 'deceleration', 'run_current'):
-            v = getattr(self, attr)
-            if v:
-                func = getattr(self, 'set_{}'.format(attr))
-                func(v)
+            for attr in ('velocity', 'initial_velocity', 'acceleration', 'deceleration', 'run_current'):
+                v = getattr(self, attr)
+                if v:
+                    func = getattr(self, 'set_{}'.format(attr))
+                    func(v)
+            return True
 
     def is_simulation(self):
         return self.simulation
 
-    def convert_to_steps(self, pos):
-        return int(pos * self.steps_per_turn)
+    def move_absolute(self, pos, velocity=None, acceleration=None, deceleration=None, block=True, units='steps'):
+        self.debug('move absolute pos={}, block={}, units={}'.format(pos, block, units))
+        self._move(pos, velocity, acceleration, deceleration, False, block, units)
+        return True
 
-    def move_absolute(self, pos, block=True, convert_turns=False):
-        if convert_turns:
-            pos = int(pos * self.steps_per_turn)
-        self._move(pos, False, block)
+    def move_relative(self, pos, velocity=None, acceleration=None, deceleration=None, block=True, units='steps'):
+        self.debug('move relative pos={}, block={}, units={}'.format(pos, block, units))
+        self._move(pos, velocity, acceleration, deceleration, True, block, units)
+        return True
 
-    def move_relative(self, pos, block=True, convert_turns=False):
-        if convert_turns:
-            pos = int(pos * self.steps_per_turn)
+    def get_position(self, units='steps'):
+        steps = self.read_position()
+        self.debug('read position steps={}'.format(steps))
+        pos = self._convert_steps(steps, units)
+        self.debug('converted position= {} ({})'.format(pos, units))
+        return pos
 
-        self._move(pos, True, block)
-
-    def slew(self, modifier):
+    def slew(self, scalar):
         if not self._slewing:
-            v = self.slew_velocity * modifier
+            v = self.slew_velocity * scalar
             self.set_slew(v)
             self._slewing = True
+            return True
 
-    def stop(self):
+    def stop_drive(self):
         self._slewing = False
         self.set_slew(0)
+        return True
+
+    def start_jitter(self, turns, p1, p2, velocity=None, acceleration=None, deceleration=None):
+        def _jitter():
+            kw = dict(velocity=velocity, acceleration=acceleration, deceleration=deceleration, units='turns')
+            while not self._jitter_evt.is_set():
+                self.move_relative(turns, **kw)
+                time.sleep(p1)
+                self.move_relative(-turns, **kw)
+                time.sleep(p2)
+
+        self._jitter_evt = Event()
+        t = Thread(target=_jitter)
+        t.setDaemon(True)
+        t.start()
+        return True
+
+    def stop_jitter(self):
+        if self._jitter_evt:
+            self._jitter_evt.set()
+        return True
 
     def set_initial_velocity(self, v):
         self._set_var('VI', v)
@@ -192,6 +224,9 @@ class MDriveMotor(CoreDevice, BaseLinearDrive):
 
     def set_acceleration(self, a):
         self._set_var('A', a)
+
+    def set_deceleration(self, a):
+        self._set_var('D', a)
 
     def set_slew(self, v):
         self._set_var('SL', v)
@@ -211,7 +246,25 @@ class MDriveMotor(CoreDevice, BaseLinearDrive):
     def block(self, n=3, tolerance=1, progress=None, homing=False):
         self._block()
 
+    def tosteps(self, v, units='turns'):
+        return self._get_steps(v, units)
+
     # private
+    def _convert_steps(self, v, units):
+        if v is not None:
+            if units == 'turns':
+                v /= float(self.steps_per_turn)
+            elif units == 'mm':
+                v /= float(self.turns_per_mm * self.steps_per_turn)
+        return v
+
+    def _get_steps(self, v, units):
+        if units == 'turns':
+            v = int(v * self.steps_per_turn)
+        elif units == 'mm':
+            v = int(v * self.turns_per_mm * self.steps_per_turn)
+        return v
+
     def _set_motor(self, value):
         self._data_position = value
 
@@ -239,30 +292,58 @@ class MDriveMotor(CoreDevice, BaseLinearDrive):
     def _check_error(self):
         eflag = self._get_var('EF')
         if eflag == 1:
-            ecode = self._get_var('ER', as_int=False)
+            ecode = str(self._get_var('ER', as_int=False)).strip()
             estr = ERROR_MAP.get(ecode, 'See MCode Programming Manual')
             return ecode, estr
 
     def _get_var(self, c, as_int=True):
         resp = self.ask('PR {}'.format(c))
-
         if as_int and resp is not None:
-            resp = int(resp)
+            try:
+                resp = int(resp)
+            except (TypeError, ValueError), e:
+                self.debug('invalid var={} response="{}", error={}'.format(c, resp, e))
+                resp = None
 
         self.info('Variable {}={}'.format(c, resp))
         return resp
 
-    def _move(self, pos, relative, block):
-        cmd = 'MR' if relative else 'MA'
-        self.tell('{} {}'.format(cmd, pos))
+    def _move(self, pos, velocity, acceleration, deceleration, relative, block, units):
+        if velocity is None:
+            velocity = self.initial_velocity
+
+        if acceleration is None:
+            acceleration = self.acceleration
+        if deceleration is None:
+            deceleration = self.deceleration
+
+        pos = self._get_steps(pos, units)
+        self.debug('converted steps={}'.format(pos))
+
+        def func():
+            self.set_initial_velocity(velocity)
+            self.set_acceleration(acceleration)
+            self.set_deceleration(deceleration)
+
+            cmd = 'MR' if relative else 'MA'
+            self.tell('{} {}'.format(cmd, pos))
+
         if block:
-            self._block()
-            self.info('move complete')
+            func()
+            return True
+        else:
+            t = Thread(target=func)
+            t.setDaemon(True)
+            t.start()
+            return True
+        # if block:
+        #     self._block()
+        #     self.info('move complete')
 
     def _moving(self, motion_flag='MV'):
         """
         0= Not Moving
-        1= Moviing
+        1= Moving
 
 
         motion flags
@@ -281,13 +362,5 @@ class MDriveMotor(CoreDevice, BaseLinearDrive):
     def _read_motor_position(self, *args, **kw):
         pos = self._get_var('P')
         return pos
-
-
-if __name__ == '__main__':
-    from pychron.paths import paths
-
-    paths.build('_dev')
-    m = MDriveMotor(name='mdrive')
-    m.bootstrap()
 
 # ============= EOF =============================================

@@ -173,8 +173,8 @@ def elbow(gc, sx, sy, ex, ey, corner='ul'):
         x2 = ex
         y2 = sy
     elif corner == 'll':
-        x2 = ex
-        y2 = sy
+        x2 = sx
+        y2 = ey
     else:
         x2 = sx
         y2 = ey
