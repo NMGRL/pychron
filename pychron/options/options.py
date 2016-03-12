@@ -22,8 +22,8 @@ from traits.api import HasTraits, Str, Int, Bool, Float, Property, Enum, List, R
     Color, Button
 from traitsui.api import View, Item, HGroup, VGroup, EnumEditor, Spring, Group, \
     spring, UItem, ListEditor, InstanceEditor
-from traitsui.handler import Controller
 from traitsui.extras.checkbox_column import CheckboxColumn
+from traitsui.handler import Controller
 from traitsui.table_column import ObjectColumn
 # ============= standard library imports ========================
 import os
@@ -97,8 +97,9 @@ class AppearanceSubOptions(SubOptions):
                              Item('padding_right', label='Right')),
                       HGroup(Spring(springy=False, width=100), Item('padding_bottom', label='Bottom'),
                              spring),
+                      Item('plot_spacing', label='Spacing', tooltip='Space between plots in pixels'),
                       enabled_when='not formatting_options',
-                      label='Padding', show_border=True)
+                      label='Padding/Spacing', show_border=True)
 
     def _get_bg_group(self):
         grp = Group(Item('bgcolor', label='Figure'),
