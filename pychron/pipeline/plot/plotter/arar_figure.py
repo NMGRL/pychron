@@ -28,6 +28,7 @@ from uncertainties import std_dev, nominal_value, ufloat
 from pychron.core.filtering import filter_ufloats, sigma_filter
 from pychron.graph.error_bar_overlay import ErrorBarOverlay
 from pychron.graph.ml_label import MPlotAxis
+from pychron.graph.tools.axis_tool import AxisTool
 from pychron.pipeline.plot.flow_label import FlowDataLabel
 from pychron.graph.ticks import SparseLogTicks
 from pychron.graph.ticks import SparseTicks
@@ -525,10 +526,10 @@ class BaseArArFigure(HasTraits, SelectionFigure):
                 plot.tools.remove(t)
                 break
 
-    # def _add_axis_tool(self, plot, axis):
-    #     t = AxisTool(component=axis)
-    #     plot.tools.append(t)
-    #
+    def _add_axis_tool(self, plot, axis):
+        t = AxisTool(component=axis)
+        plot.tools.append(t)
+
     # def _add_limit_tool(self, plot, orientation):
     #     t = LimitsTool(component=plot,
     #                    orientation=orientation)
