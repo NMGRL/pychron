@@ -28,6 +28,7 @@ import os
 # ============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.core.ui.qt.tabular_editor import MoveToRow
+from pychron.envisage.view_util import open_view
 from pychron.experiment.queue.base_queue import BaseExperimentQueue
 from pychron.experiment.queue.select_attr_view import SelectAttrView
 from pychron.experiment.utilities.identifier import make_runid
@@ -204,6 +205,14 @@ class ExperimentQueue(BaseExperimentQueue):
     def select_run_idx(self, idx):
         if self.automated_runs:
             self.selected = self.automated_runs[idx:idx + 1]
+
+    def show_summary(self):
+        """
+        show a summary view for ``spec`` using its ``result``
+        :return:
+        """
+        if self.selected:
+            open_view(self.selected[0].result)
 
     def reset(self):
         """

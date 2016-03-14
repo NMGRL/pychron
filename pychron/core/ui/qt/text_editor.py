@@ -40,9 +40,6 @@ class _TextEditor(Editor):
         if not self.factory.wrap:
             ctrl.setLineWrapMode(QtGui.QPlainTextEdit.NoWrap)
 
-        if self.factory.tab_width:
-            ctrl.setTabStopWidth(self.factory.tab_width * 6.0)
-
         if not self.factory.editable:
             ctrl.setReadOnly(True)
 
@@ -55,7 +52,15 @@ class _TextEditor(Editor):
         if self.factory.fontsize:
             f = ctrl.font()
             f.setPointSize(self.factory.fontsize)
+            f.setFamily(self.factory.fontname)
+
             ctrl.setFont(f)
+
+        if self.factory.tab_width:
+            f = ctrl.font()
+            metrics = QtGui.QFontMetrics(f)
+            ctrl.setTabStopWidth(self.factory.tab_width * metrics.width(' '))
+
         self.sync_value(self.factory.fontsize_name, 'fontsize', mode='from')
 
     #---------------------------------------------------------------------------
@@ -89,5 +94,6 @@ class myTextEditor(BasicEditorFactory):
     bgcolor = Color
     fontsize = Int
     fontsize_name = Str
+    fontname = 'courier'
 
 # ============= EOF =============================================

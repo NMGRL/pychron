@@ -958,6 +958,9 @@ class AutomatedRun(Loggable):
                                         conditionals=conds,
                                         tripped_conditional=self.tripped_conditional)
 
+            # add a result to the run spec.
+            self.spec.new_result(self)
+
             # save to database
             self._persister_save_action('post_measurement_save')
 

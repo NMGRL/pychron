@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from traits.api import Str, Int, Bool, Float, Property, \
-    Enum, on_trait_change, CStr, Long, HasTraits
+    Enum, on_trait_change, CStr, Long, HasTraits, Instance
 # ============= standard library imports ========================
 import hashlib
 from datetime import datetime
@@ -24,11 +24,11 @@ import uuid
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import remove_extension
 from pychron.core.helpers.logger_setup import new_logger
+from pychron.experiment.automated_run.result import AutomatedRunResult, AirResult, UnknownResult, BlankResult
 from pychron.experiment.utilities.identifier import get_analysis_type, make_rid, make_runid, is_special, \
     convert_extract_device
 from pychron.experiment.utilities.position_regex import XY_REGEX
 from pychron.pychron_constants import SCRIPT_KEYS, SCRIPT_NAMES, ALPHAS
-
 
 logger = new_logger('AutomatedRunSpec')
 
@@ -39,7 +39,7 @@ class AutomatedRunSpec(HasTraits):
         an AutomatedRun. the AutomatedRun does the actual work. ie extraction and measurement
     """
     run_klass = 'pychron.experiment.automated_run.automated_run.AutomatedRun'
-
+    result = Instance(AutomatedRunResult, ())
     state = Enum('not run', 'extraction',
                  'measurement', 'success',
                  'failed', 'truncated', 'canceled',
@@ -133,6 +133,21 @@ class AutomatedRunSpec(HasTraits):
     _changed = False
 
     _step_heat = False
+
+    def new_result(self, arun):
+        klass = AutomatedRunResult
+        if self.analysis_type == 'air':
+            klass = AirResult
+        elif self.analysis_type == 'unknown':
+            klass = UnknownResult
+        elif self.analysis_type == 'blank':
+            klass = BlankResult
+
+        result = klass()
+        result.runid = self.runid
+        result.isotope_group = arun.isotope_group
+
+        self.result = result
 
     def is_detector_ic(self):
         return self.analysis_type == 'detector_ic'
@@ -497,6 +512,5 @@ post_equilibration_script, extraction_script, script_options, position, duration
             md5.update(str(k))
             md5.update(str(v))
         return md5
-
 
 # ============= EOF =============================================
