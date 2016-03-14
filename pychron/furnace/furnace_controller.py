@@ -44,5 +44,10 @@ class FurnaceController(AbstractDevice):
             o = 0
         return o
 
+    def test_connection(self):
+        if self._cdevice:
+            return self._cdevice.test_connection()
+        else:
+            return False
 
 # ============= EOF =============================================

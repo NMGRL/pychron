@@ -86,6 +86,14 @@ class NMGRLFurnacePlugin(BaseFurnacePlugin):
 
     klass = ('pychron.furnace.furnace_manager', 'NMGRLFurnaceManager')
 
+    def test_furnace_api(self):
+        man = self._get_manager()
+        return man.test_furnace_api()
+
+    def test_furnace_cam(self):
+        man = self._get_manager()
+        return man.test_furnace_cam()
+
     def _preferences_panes_default(self):
         return [NMGRLFurnacePreferencesPane]
 

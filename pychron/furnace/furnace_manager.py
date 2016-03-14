@@ -106,6 +106,14 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         self.reset_scan_timer()
         # self._start_update()
 
+    def test_furnace_cam(self):
+        if self.camera:
+            return self.camera.test_connection()
+
+    def test_furnace_api(self):
+        if self.controller:
+            return self.controller.test_connection()
+
     def refresh_states(self):
         self.switch_manager.load_indicator_states()
 
