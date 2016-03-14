@@ -19,7 +19,7 @@ from pyface.timer.do_later import do_later
 from traits.api import Any, on_trait_change, Int, List, Bool, \
     Instance, Property, Str, HasTraits, Event, Long
 from traits.trait_types import Date
-from traitsui.api import View, Item
+from traitsui.api import View, Item, UItem
 
 # ============= standard library imports ========================
 import time
@@ -212,7 +212,13 @@ class ExperimentQueue(BaseExperimentQueue):
         :return:
         """
         if self.selected:
-            open_view(self.selected[0].result)
+            from pychron.core.ui.text_editor import myTextEditor
+            v = View(UItem('summary', style='custom', editor=myTextEditor(editable=False,
+                                                                          fontsize=14)),
+                     title='Summary',
+                     width=700,
+                     resizable=True)
+            open_view(self.selected[0].result, view=v)
 
     def reset(self):
         """

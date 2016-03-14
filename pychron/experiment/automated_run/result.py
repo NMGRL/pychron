@@ -16,12 +16,8 @@
 
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Property, Instance
-from traitsui.api import View, UItem
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.core.ui.text_editor import myTextEditor
-from pychron.processing.isotope import Isotope
 from pychron.processing.isotope_group import IsotopeGroup
 
 
@@ -70,14 +66,6 @@ class AutomatedRunResult(HasTraits):
     def _make_header(self, h):
         return '============================={}{}'.format(h, '=' * (30 - len(h)))
 
-    def traits_view(self):
-        v = View(UItem('summary', style='custom', editor=myTextEditor(editable=False,
-                                                                      fontsize=14)),
-                 title='Summary',
-                 width=700,
-                 resizable=True)
-        return v
-
 
 class AirResult(AutomatedRunResult):
     def _make_summary(self):
@@ -97,20 +85,19 @@ class BlankResult(AutomatedRunResult):
         s = self._air_ratio()
         return s
 
-
-if __name__ == '__main__':
-    ig = IsotopeGroup()
-    a40 = Isotope('Ar40', 'H1')
-    a40.set_uvalue((50000.12345, 0.4123412341))
-    a36 = Isotope('Ar36', 'CDD')
-    a36.set_uvalue((51230.12345 / 295.5, 0.132142341))
-
-    a38 = Isotope('Ar38', 'L1')
-    a38.set_uvalue((51230.12345 / 1590.5, 0.132142341))
-
-    ig.isotopes = dict(Ar40=a40, Ar36=a36, Ar38=a38)
-    ig.age = 1.143
-    a = AirResult(runid='1234123-01A',
-                  isotope_group=ig)
-    a.configure_traits()
+# if __name__ == '__main__':
+#     ig = IsotopeGroup()
+#     a40 = Isotope('Ar40', 'H1')
+#     a40.set_uvalue((50000.12345, 0.4123412341))
+#     a36 = Isotope('Ar36', 'CDD')
+#     a36.set_uvalue((51230.12345 / 295.5, 0.132142341))
+#
+#     a38 = Isotope('Ar38', 'L1')
+#     a38.set_uvalue((51230.12345 / 1590.5, 0.132142341))
+#
+#     ig.isotopes = dict(Ar40=a40, Ar36=a36, Ar38=a38)
+#     ig.age = 1.143
+#     a = AirResult(runid='1234123-01A',
+#                   isotope_group=ig)
+#     a.configure_traits()
 # ============= EOF =============================================
