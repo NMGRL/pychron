@@ -144,6 +144,7 @@ class Paths(object):
     default_workspace_dir = None
     workspace_root_dir = None
     spectrometer_scans_dir = None
+    furnace_scans_dir = None
     processed_dir = None
     image_cache_dir = None
     default_cache = None
@@ -365,6 +366,7 @@ class Paths(object):
         # ==============================================================================
         self.data_dir = data_dir = join(root, 'data')
         self.spectrometer_scans_dir = join(data_dir, 'spectrometer_scans')
+        self.furnace_scans_dir = join(data_dir, 'furnace_scans')
         self.modeling_data_dir = join(data_dir, 'modeling')
         self.argus_data_dir = join(data_dir, 'argusVI')
         self.positioning_error_dir = join(data_dir, 'positioning_error')

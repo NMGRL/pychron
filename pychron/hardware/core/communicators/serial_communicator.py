@@ -24,17 +24,18 @@ import time
 import serial
 # =============local library imports  ==========================
 from communicator import Communicator, process_response, prep_str, remove_eol_func
-from pychron.globals import globalv
 
 
 def get_ports():
     usb = glob.glob('/dev/tty.usb*')
+    furpi = glob.glob('/dev/furpi.*')
+    pychron = glob.glob('/dev/pychron.*')
     if sys.platform == 'darwin':
         keyspan = glob.glob('/dev/tty.U*')
     else:
         keyspan = glob.glob('/dev/ttyU*')
 
-    return keyspan + usb
+    return keyspan + usb + furpi + pychron
 
 
 class SerialCommunicator(Communicator):

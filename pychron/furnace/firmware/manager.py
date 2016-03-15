@@ -212,6 +212,11 @@ class FirmwareManager(HeadlessLoggable):
                 result = not result
             return result
 
+    @debug
+    def get_version(self, data):
+        from pychron.furnace.firmware import __version__
+        return __version__
+
     # setters
     @debug
     def set_frame_rate(self, data):

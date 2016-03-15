@@ -156,14 +156,35 @@ class ControlPane(TraitsDockPane):
 
         d1 = VGroup(feeder_grp, funnel_grp, jitter_grp, dump_grp)
         d2 = VGroup(
-                    #UItem('pane.refresh_states_button'),
-                    UItem('dumper_canvas', editor=ComponentEditor()))
+            # UItem('pane.refresh_states_button'),
+            UItem('dumper_canvas', editor=ComponentEditor()))
         d_grp = HGroup(d1, d2, label='Dumper', show_border=True)
 
         v_grp = VGroup(UItem('video_canvas', editor=VideoComponentEditor()), label='Camera')
 
+        g_grp = VGroup(Item('graph_scan_width', label='Scan Width (mins)'),
+                       Item('graph_scale', label='Scale'),
+                       Item('graph_y_auto', label='Autoscale Y'),
+                       Item('graph_ymax', label='Max', format_str='%0.3f'),
+                       Item('graph_ymin', label='Min', format_str='%0.3f'),
+                       HGroup(icon_button_editor('clear_button', 'clear',
+                                                 tooltip='Clear and reset graph'), spring),
+                       HGroup(icon_button_editor('start_record_button', 'media-record',
+                                                 tooltip='Start recording',
+                                                 enabled_when='not _recording'),
+                              icon_button_editor('stop_record_button',
+                                                 'media-playback-stop',
+                                                 tooltip='Stop recording',
+                                                 enabled_when='_recording'),
+                              icon_button_editor('add_marker_button', 'flag',
+                                                 enabled_when='_recording'),
+                              show_border=True,
+                              label='Record Scan'),
+                       HGroup(icon_button_editor('snapshot_button', 'camera'),
+                              show_border=True, label='Snapshot', ),
+                       label='Graph')
         v = View(VGroup(c_grp,
-                        HGroup(Tabbed(d_grp, cali_grp, v_grp))))
+                        HGroup(Tabbed(d_grp, cali_grp, v_grp, g_grp))))
         return v
 
 
