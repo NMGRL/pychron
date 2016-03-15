@@ -16,12 +16,11 @@
 
 # ============= enthought library imports =======================
 from pyface.timer.do_later import do_later
-from traits.api import Instance, Enum, Any, DelegatesTo, List, Property, \
+from traits.api import Instance, Any, DelegatesTo, List, Property, \
     Bool, Button, String, cached_property, \
-    Float, Event, Str
+    Str
 # ============= standard library imports ========================
 import os
-import pickle
 import time
 from numpy import Inf
 from threading import Thread
@@ -29,14 +28,8 @@ from Queue import Queue
 import yaml
 # ============= local library imports  ==========================
 from pychron.core.ui.preference_binding import bind_preference
-from pychron.managers.manager import Manager
-from pychron.graph.time_series_graph import TimeSeriesStreamGraph
 from pychron.managers.stream_graph_manager import StreamGraphManager
 from pychron.spectrometer.graph.spectrometer_scan_graph import SpectrometerScanGraph
-from pychron.spectrometer.jobs.scanner import Scanner
-from pychron.spectrometer.thermo.detector import Detector
-from pychron.spectrometer.graph.spectrometer_scan_graph import \
-    SpectrometerScanGraph
 from pychron.spectrometer.jobs.mass_scanner import MassScanner
 from pychron.spectrometer.jobs.dac_scanner import DACScanner
 from pychron.spectrometer.base_detector import BaseDetector

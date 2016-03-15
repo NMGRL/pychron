@@ -266,10 +266,10 @@ class DVCDatabase(DatabaseAdapter):
             a = AnalysisChangeTbl(**kw)
             return self._add_item(a)
 
-    def add_repository_association(self, repo, analysis):
+    def add_repository_association(self, reponame, analysis):
         with self.session_ctx():
-            self.debug('add association {}'.format(repo))
-            repo = self.get_repository(repo)
+            self.debug('add association {}'.format(reponame))
+            repo = self.get_repository(reponame)
             e = RepositoryAssociationTbl()
             e.repository = repo.name
             e.analysis = analysis

@@ -290,7 +290,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                                                 'Required for sending email notifications. '
                                                 'Are you sure you want to continue?'):
                     return
-        prog = open_progress(30)
+        prog = open_progress(30, position=(100, 100))
 
         if self._pre_execute_check(prog):
             self.info('pre execute check successful')
@@ -1664,10 +1664,11 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 return
 
         if self.use_db_persistence:
-            if not self.datahub.secondary_connect():
-                if not self.confirmation_dialog(
-                        'Not connected to a Mass Spec database. Do you want to continue with pychron only?'):
-                    return
+            if self.datahub.massspec_enabled:
+                if not self.datahub.store_connect('massspec'):
+                    if not self.confirmation_dialog(
+                            'Not connected to a Mass Spec database. Do you want to continue with pychron only?'):
+                        return
 
         if prog:
             prog.change_message('Checking queue length')
@@ -1686,10 +1687,11 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                                                 'Are you sure you want to continue?'):
                     return
 
-        if not self.datahub.secondary_connect():
-            if not self.confirmation_dialog(
-                    'Not connected to a Mass Spec database. Do you want to continue with pychron only?'):
-                return
+        if self.datahub.massspec_enabled:
+            if not self.datahub.store_connect('massspec'):
+                if not self.confirmation_dialog(
+                        'Not connected to a Mass Spec database. Do you want to continue with pychron only?'):
+                    return
 
         if prog:
             prog.change_message('Setting aliquot for first analysis')
@@ -1702,14 +1704,19 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             return
 
         if self.use_dvc_persistence:
-            no_exp = False
+            no_exp = []
             for i, ai in enumerate(runs):
                 if not ai.repository_identifier:
                     self.warning('No repository identifier for i={}, {}'.format(i + 1, ai.runid))
-                    no_exp = True
+                    no_exp.append(ai)
 
-                if no_exp:
-                    self.warning_dialog('No Experiment Identifiers')
+            if no_exp:
+                if self.confirmation_dialog('No Repository Identifiers.\n\nUse "laboratory" for all analyses without '
+                                            'a repository identifier'):
+                    for aa in no_exp:
+                        aa.repository_identifier = 'laboratory'
+
+                else:
                     return
 
         if globalv.experiment_debug:

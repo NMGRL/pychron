@@ -134,7 +134,8 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
         name = self.column_map[column]
         item = getattr(obj, trait)[row]
         if name == 'result':
-            return item.result.summary
+            if item.state in ('success', 'truncated'):
+                return item.result.summary
         else:
             return '{}= {}\nstate= {}'.format(name, getattr(item, name), item.state)
 

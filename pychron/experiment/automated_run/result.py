@@ -18,6 +18,8 @@
 from traits.api import HasTraits, Str, Property, Instance
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.helpers.formatting import uformat_percent_error
+from pychron.experiment.conditional.conditional import AutomatedRunConditional
 from pychron.processing.isotope_group import IsotopeGroup
 
 
@@ -26,13 +28,15 @@ class AutomatedRunResult(HasTraits):
 
     isotope_group = Instance(IsotopeGroup)
     summary = Property
+    tripped_conditional = Instance(AutomatedRunConditional)
 
     def _get_summary(self):
         return '''RUNID= {}
 {}
-
+{}
 {}'''.format(self.runid,
              self._intensities(),
+             self._tripped_conditional(),
              self._make_summary())
 
     def _make_summary(self):
@@ -42,29 +46,52 @@ class AutomatedRunResult(HasTraits):
         def fformat(s, n=5):
             return '{{:0.{}f}}'.format(n).format(s)
 
-        names = 'Iso.', 'Det.', 'Intensity', 'Intercept', 'Baseline', 'Blank'
+        names = 'Iso.', 'Det.', 'Intensity (fA)', '%Err', 'Intercept (fA)', '%Err', 'Baseline (fA)', '%Err', \
+                'Blank (fA)', '%Err'
 
+        colwidths = 6, 8, 25, 6, 25, 6, 25, 6, 25, 6
+        cols = map('{{:<{}s}}'.format, colwidths)
+        colstr = ''.join(cols)
+
+        divider = ''.join(map(lambda x: '{} '.format('-' * (x - 1)), colwidths))
+        table_header = colstr.format(*names)
         lines = [self._make_header('Isotopes'),
-                 '{:<6s}{:<8s}{:<25s}{:<25s}{:<25s}{:<25s}'.format(*names)]
+                 table_header,
+                 divider
+                 ]
         for k in self.isotope_group.isotope_keys:
             iso = self.isotope_group.isotopes[k]
-            line = '{:<6s}{:<8s}{:<25s}{:<25s}{:<25s}{:<25s}'.format(k, iso.detector,
-                                                                     fformat(iso.get_intensity()),
-                                                                     fformat(iso.uvalue),
-                                                                     fformat(iso.baseline.uvalue),
-                                                                     fformat(iso.blank.uvalue))
+            intensity = iso.get_intensity()
+            line = colstr.format(k, iso.detector,
+                                 fformat(intensity), uformat_percent_error(intensity),
+                                 fformat(iso.uvalue), uformat_percent_error(iso.uvalue),
+                                 fformat(iso.baseline.uvalue), uformat_percent_error(iso.baseline.uvalue),
+                                 fformat(iso.blank.uvalue), uformat_percent_error(iso.blank.uvalue), )
             lines.append(line)
-        return '\n'.join(lines)
+        return self._make_lines(lines)
 
     def _air_ratio(self):
         lines = [self._make_header('Ratios'),
                  'Ar40/Ar36= {:0.5f}'.format(self.isotope_group.get_ratio('Ar40/Ar36', non_ic_corr=True)),
                  'Ar40/Ar38= {:0.5f}'.format(self.isotope_group.get_ratio('Ar40/Ar38', non_ic_corr=True))]
 
-        return '\n'.join(lines)
+        return self._make_lines(lines)
+
+    def _tripped_conditional(self):
+        ret = ''
+        if self.tripped_conditional:
+            lines = [self._make_header('Conditional'),
+
+                     'TEST= {}'.format(self.tripped_conditional.teststr),
+                     'CTX= {}'.format(self.tripped_conditional.value_context)]
+            ret = self._make_lines(lines)
+        return ret
 
     def _make_header(self, h):
-        return '============================={}{}'.format(h, '=' * (30 - len(h)))
+        return '============================= {} {}'.format(h, '=' * (30 - len(h)))
+
+    def _make_lines(self, lines):
+        return '{}\n'.format('\n'.join(lines))
 
 
 class AirResult(AutomatedRunResult):
@@ -75,8 +102,8 @@ class AirResult(AutomatedRunResult):
 
 class UnknownResult(AutomatedRunResult):
     def _make_summary(self):
-        lines = ['===========================Summary===============================',
-                 'AGE= {:0.4f}'.format(self.isotope_group.age)]
+        lines = [self._make_header('Summary'),
+                 'AGE= {}'.format(self.isotope_group.age)]
         return '\n'.join(lines)
 
 
@@ -85,19 +112,31 @@ class BlankResult(AutomatedRunResult):
         s = self._air_ratio()
         return s
 
-# if __name__ == '__main__':
-#     ig = IsotopeGroup()
-#     a40 = Isotope('Ar40', 'H1')
-#     a40.set_uvalue((50000.12345, 0.4123412341))
-#     a36 = Isotope('Ar36', 'CDD')
-#     a36.set_uvalue((51230.12345 / 295.5, 0.132142341))
-#
-#     a38 = Isotope('Ar38', 'L1')
-#     a38.set_uvalue((51230.12345 / 1590.5, 0.132142341))
-#
-#     ig.isotopes = dict(Ar40=a40, Ar36=a36, Ar38=a38)
-#     ig.age = 1.143
-#     a = AirResult(runid='1234123-01A',
-#                   isotope_group=ig)
-#     a.configure_traits()
+
+if __name__ == '__main__':
+    from pychron.core.ui.text_editor import myTextEditor
+    from pychron.processing.isotope import Isotope
+    from traitsui.api import View, UItem
+
+    ig = IsotopeGroup()
+    a40 = Isotope('Ar40', 'H1')
+    a40.set_uvalue((50000.12345, 0.4123412341))
+    a36 = Isotope('Ar36', 'CDD')
+    a36.set_uvalue((51230.12345 / 295.5, 0.132142341))
+
+    a38 = Isotope('Ar38', 'L1')
+    a38.set_uvalue((51230.12345 / 1590.5, 0.132142341))
+
+    ig.isotopes = dict(Ar40=a40, Ar36=a36, Ar38=a38)
+    ig.age = 1.143
+    a = AirResult(runid='1234123-01A',
+                  isotope_group=ig)
+
+    a.tripped_conditional = AutomatedRunConditional('age>10')
+    v = View(UItem('summary', style='custom', editor=myTextEditor(editable=False,
+                                                                  fontsize=14)),
+             title='Summary',
+             width=1000,
+             resizable=True)
+    a.configure_traits(view=v)
 # ============= EOF =============================================

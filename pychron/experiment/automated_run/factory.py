@@ -931,7 +931,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             with db.session_ctx():
                 # convert labnumber (a, bg, or 10034 etc)
                 self.debug('load meta')
-                ln = db.get_labnumber(labnumber)
+                ln = db.get_identifier(labnumber)
                 if ln:
                     # set sample and irrad info
                     try:
@@ -969,8 +969,8 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                     self._meta_cache[labnumber] = d
                     return True
                 else:
-                    self.warning_dialog(
-                            '{} does not exist. Add using "Labnumber Entry" or "Utilities>>Import"'.format(labnumber))
+                    self.warning_dialog('{} does not exist. '
+                                        'Add using "Labnumber Entry" or "Utilities>>Import"'.format(labnumber))
 
     def _load_labnumber_defaults(self, old, labnumber, special):
         self.debug('load labnumber defaults {} {}'.format(labnumber, special))

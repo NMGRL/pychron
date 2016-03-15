@@ -78,7 +78,7 @@ class SessionCTX(object):
         if exc_type:
             self._parent.warning('=========== Database exception =============')
             self._parent.warning(exc_val)
-            self._parent.warning(exc_tb.format_tb())
+            self._parent.warning(traceback.format_tb(exc_tb))
 
         if self._parent:
             self._parent.sess_stack -= 1

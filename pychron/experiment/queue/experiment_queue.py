@@ -211,14 +211,15 @@ class ExperimentQueue(BaseExperimentQueue):
         show a summary view for ``spec`` using its ``result``
         :return:
         """
-        if self.selected:
+        if self.executed_selected:
             from pychron.core.ui.text_editor import myTextEditor
             v = View(UItem('summary', style='custom', editor=myTextEditor(editable=False,
                                                                           fontsize=14)),
                      title='Summary',
                      width=700,
+                     livemodal=True,
                      resizable=True)
-            open_view(self.selected[0].result, view=v)
+            open_view(self.executed_selected[0].result, view=v)
 
     def reset(self):
         """

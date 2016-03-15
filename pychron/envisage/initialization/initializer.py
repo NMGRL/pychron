@@ -327,10 +327,10 @@ class Initializer(Loggable):
             return a myProgressDialog object
         """
         pd = myProgressDialog(max=n, message='Welcome',
+                              position=(100, 100),
                               size=(500, 50))
         self.pd = pd
         self.pd.open()
-        self.pd.position = 100, 100
         return pd
 
     def _check_required(self, subtree):

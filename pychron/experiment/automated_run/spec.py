@@ -146,6 +146,7 @@ class AutomatedRunSpec(HasTraits):
         result = klass()
         result.runid = self.runid
         result.isotope_group = arun.isotope_group
+        result.tripped_conditional = arun.tripped_conditional
 
         self.result = result
 
