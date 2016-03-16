@@ -293,11 +293,12 @@ class ThermoSpectrometer(SpectrometerDevice):
                 self.debug('cannot update detector "{}"'.format(detector))
             else:
                 det.isotope = isotope
-                index = self.detectors.index(det)
-
+                # index = self.detectors.index(det)
+                # index = self.detectors[det].index
+                index = det.index
                 nmass = int(isotope[2:])
-                for i, di in enumerate(self.detectors):
-                    mass = nmass - (i - index)
+                for di in self.detectors:
+                    mass = nmass - (di.index - index)
                     di.isotope = 'Ar{}'.format(mass)
 
     def get_deflection_word(self, keys):
@@ -459,7 +460,8 @@ class ThermoSpectrometer(SpectrometerDevice):
         """
         config = self.get_configuration(
                 path=os.path.join(paths.spectrometer_dir, 'detectors.cfg'))
-        for name in config.sections():
+
+        for i, name in enumerate(config.sections()):
             # relative_position = self.config_get(config, name, 'relative_position', cast='float')
             deflection_corrrection_sign = self.config_get(config, name,
                                                           'deflection_correction_sign',
@@ -474,7 +476,12 @@ class ThermoSpectrometer(SpectrometerDevice):
             pt = self.config_get(config, name, 'protection_threshold',
                                  default=None, optional=True, cast='float')
 
+            index = self.config_get(config, name, 'index', cast='int')
+            if index is None:
+                index = i
+
             self._add_detector(name=name,
+                               index=index,
                                # relative_position=relative_position,
                                protection_threshold=pt,
                                deflection_corrrection_sign=deflection_corrrection_sign,

@@ -23,7 +23,7 @@ from traits.api import Instance, Enum, Any, DelegatesTo, List, Property, \
 import os
 import pickle
 import time
-from numpy import Inf
+from numpy import Inf, array
 from threading import Thread
 from Queue import Queue
 import yaml
@@ -338,7 +338,7 @@ class ScanManager(Manager):
             return True
 
         if self._prev_signals is not None:
-
+            signals = array(signals)
             if (signals == self._prev_signals).all():
                 self._no_intensity_change_cnt += 1
             else:
