@@ -573,6 +573,7 @@ class AutomatedRun(Loggable):
                                        plot_panel=self.plot_panel,
                                        isotope=isotope,
                                        directions=directions,
+                                       use_config=True,
                                        **kw)
             self.peak_center = pc
             self.debug('do peak center. {}'.format(pc))

@@ -21,7 +21,7 @@ from pychron.spectrometer.thermo.source.base import ThermoSource
 
 
 class HelixSource(ThermoSource):
-    nominal_hv = 7000
+    nominal_hv = 9900
 
 # ============= EOF =============================================
 

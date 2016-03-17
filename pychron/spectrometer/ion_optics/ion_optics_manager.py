@@ -212,18 +212,18 @@ class IonOpticsManager(Manager):
                           directions='Increase',
                           center_dac=None, plot_panel=None, new=False,
                           standalone_graph=True, name='', show_label=False,
-                          window=0.015, step_width=0.0005, min_peak_height=1.0, percent=80):
+                          window=0.015, step_width=0.0005, min_peak_height=1.0, percent=80, use_config=False):
 
         spec = self.spectrometer
 
         spec.save_integration()
         self.debug('setup peak center. detector={}, isotope={}'.format(detector, isotope))
+
+        pcc = self.peak_center_config
+        pcc.dac = spec.magnet.dac
+
         if detector is None or isotope is None:
             self.debug('ask user for peak center configuration')
-
-            pcc = self.peak_center_config
-            pcc.dac = spec.magnet.dac
-
             info = pcc.edit_traits()
             if not info.result:
                 return
@@ -232,14 +232,23 @@ class IonOpticsManager(Manager):
                 isotope = pcc.isotope
                 directions = pcc.directions
                 integration_time = pcc.integration_time
-
                 window = pcc.window
                 min_peak_height = pcc.min_peak_height
                 step_width = pcc.step_width
                 percent = pcc.percent
-
-                # if not pcc.use_current_dac:
                 center_dac = pcc.dac
+
+        elif use_config:
+            if detector is None:
+                detector = pcc.detector
+            if isotope is None:
+                isotope = pcc.isotope
+
+            integration_time = pcc.integration_time
+            window = pcc.window
+            min_peak_height = pcc.min_peak_height
+            step_width = pcc.step_width
+            percent = pcc.percent
 
         spec.set_integration_time(integration_time)
         period = int(integration_time * 1000 * 0.9)
