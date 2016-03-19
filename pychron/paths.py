@@ -23,7 +23,6 @@ make sure directory exists and build if not
 import os
 from os import path, mkdir
 
-
 from pychron.file_defaults import TASK_EXTENSION_DEFAULT, SIMPLE_UI_DEFAULT, \
     EDIT_UI_DEFAULT, IDENTIFIERS_DEFAULT
 
@@ -95,6 +94,7 @@ class Paths(object):
     custom_queries_dir = None
     template_dir = None
     log_dir = None
+    peak_center_config_dir = None
     # ===========================================================================
     # scripts
     # ===========================================================================
@@ -338,6 +338,7 @@ class Paths(object):
         self.plotter_options_dir = join(self.hidden_dir, 'plotter_options')
         self.comment_templates_dir = join(self.hidden_dir, 'comment_templates')
         self.build_repo = join(self.hidden_dir, 'updates', 'pychron')
+        self.peak_center_config_dir = join(self.hidden_dir, 'peak_center_config_dir')
         # ==============================================================================
         # setup
         # ==============================================================================

@@ -521,7 +521,7 @@ class AutomatedRun(Loggable):
         return ret
 
     def py_peak_center(self, detector=None, save=True, isotope=None, check_intensity=True,
-                       directions='Increase', **kw):
+                       directions='Increase', config_name='default', **kw):
         if not self._alive:
             return
 
@@ -554,6 +554,7 @@ class AutomatedRun(Loggable):
                                        plot_panel=self.plot_panel,
                                        isotope=isotope,
                                        directions=directions,
+                                       config_name=config_name,
                                        **kw)
             self.peak_center = pc
             self.debug('do peak center. {}'.format(pc))
