@@ -226,6 +226,18 @@ class IonOpticsManager(Manager):
             if center_dac is None:
                 center_dac = pcc.dac
 
+        elif use_config:
+            if detector is None:
+                detector = pcc.detector
+            if isotope is None:
+                isotope = pcc.isotope
+
+            integration_time = pcc.integration_time
+            window = pcc.window
+            min_peak_height = pcc.min_peak_height
+            step_width = pcc.step_width
+            percent = pcc.percent
+
         spec.set_integration_time(integration_time)
         period = int(integration_time * 1000 * 0.9)
 

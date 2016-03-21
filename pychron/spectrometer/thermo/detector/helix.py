@@ -21,6 +21,6 @@ from pychron.spectrometer.thermo.detector.base import ThermoDetector
 
 
 class HelixDetector(ThermoDetector):
-    pass
+    use_deflection = False
 
 # ============= EOF =============================================

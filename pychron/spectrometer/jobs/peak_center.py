@@ -60,19 +60,15 @@ class BasePeakCenter(MagnetSweep):
         self.canceled = False
 
         center_dac = self.center_dac
-        self.info('starting peak center. center dac= {}'.format(center_dac))
+        self.info('starting peak center. center dac= {} step_width={}'.format(center_dac, self.step_width))
 
         # self.graph = self._graph_factory()
 
         width = self.step_width
-        try:
-            if self.simulation:
-                width = 0.001
-        except AttributeError:
-            width = 0.001
-
         smart_shift = False
         center = None
+
+        self.debug('width = {}'.format(width))
         for i in range(ntries):
             if not self.isAlive():
                 break
@@ -142,36 +138,36 @@ class BasePeakCenter(MagnetSweep):
         center, smart_shift, success = None, False, False
         # cdd has been tripping during the previous move on obama when moving H1 from 34.5 to 39.7
         # check if cdd is still active
-        if not spec.get_detector_active('CDD'):
-            self.warning('CDD has tripped!')
-            self.cancel()
-        else:
+        # if not spec.get_detector_active('CDD'):
+        #     self.warning('CDD has tripped!')
+        #     self.cancel()
+        # else:
 
-            ok = self._do_sweep(start, end, width, directions=self.directions, map_mass=False)
-            self.debug('result of _do_sweep={}'.format(ok))
+        ok = self._do_sweep(start, end, width, directions=self.directions, map_mass=False)
+        self.debug('result of _do_sweep={}'.format(ok))
 
-            # wait for graph to fully update
-            time.sleep(0.1)
+        # wait for graph to fully update
+        time.sleep(0.1)
 
-            if ok and self.directions != 'Oscillate':
-                if not self.canceled:
-                    dac_values = graph.get_data()
-                    intensities = graph.get_data(axis=1)
+        if ok and self.directions != 'Oscillate':
+            if not self.canceled:
+                dac_values = graph.get_data()
+                intensities = graph.get_data(axis=1)
 
-                    result = self._calculate_peak_center(dac_values, intensities)
-                    self.debug('result of _calculate_peak_center={}'.format(result))
-                    self.result = result
-                    if result is not None:
-                        xs, ys, mx, my = result
+                result = self._calculate_peak_center(dac_values, intensities)
+                self.debug('result of _calculate_peak_center={}'.format(result))
+                self.result = result
+                if result is not None:
+                    xs, ys, mx, my = result
 
-                        center, success = xs[1], True
-                        invoke_in_main_thread(self._plot_center, xs, ys, mx, my, center)
-                    else:
-                        if max(intensities) > self.min_peak_height * 5:
-                            smart_shift = True
+                    center, success = xs[1], True
+                    invoke_in_main_thread(self._plot_center, xs, ys, mx, my, center)
+                else:
+                    if max(intensities) > self.min_peak_height * 5:
+                        smart_shift = True
 
-                        idx = argmax(intensities)
-                        center, success = dac_values[idx], False
+                    idx = argmax(intensities)
+                    center, success = dac_values[idx], False
 
         return center, smart_shift, success
 
