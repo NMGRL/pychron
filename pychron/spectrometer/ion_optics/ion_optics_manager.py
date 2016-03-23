@@ -193,7 +193,6 @@ class IonOpticsManager(Manager):
         spec.save_integration()
         self.debug('setup peak center. detector={}, isotope={}'.format(detector, isotope))
 
-        detectors = None
         pcc = None
         if detector is None or isotope is None:
             self.debug('ask user for peak center configuration')
@@ -214,9 +213,12 @@ class IonOpticsManager(Manager):
             pcc = self.peak_center_config.active_item
 
         if pcc:
-            detector = pcc.detector
-            detectors = pcc.active_detectors
-            isotope = pcc.isotope
+            if not detector:
+                detector = pcc.active_detectors
+
+            if not isotope:
+                isotope = pcc.isotope
+
             directions = pcc.directions
             integration_time = pcc.integration_time
 
@@ -236,21 +238,18 @@ class IonOpticsManager(Manager):
         spec.set_integration_time(integration_time)
         period = int(integration_time * 1000 * 0.9)
 
-        if isinstance(detector, (tuple, list)):
-            detectors = detector
+        if not isinstance(detector, (tuple, list)):
+            detector = (detector,)
 
-        if not detectors:
-            detectors = (detector,)
-
-        ref = detectors[0]
-        if center_dac is None:
-            center_dac = self.get_center_dac(ref, isotope)
-
+        ref = detector[0]
         self.reference_detector = ref
         self.reference_isotope = isotope
 
-        if len(detectors) > 1:
-            ad = detectors[1:]
+        if center_dac is None:
+            center_dac = self.get_center_dac(ref, isotope)
+
+        if len(detector) > 1:
+            ad = detector[1:]
         else:
             ad = []
 

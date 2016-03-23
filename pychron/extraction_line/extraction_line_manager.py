@@ -87,6 +87,9 @@ class ExtractionLineManager(Manager, Consoleable):
     wait_group = Instance(WaitGroup, ())
     console_bgcolor = 'black'
 
+    def set_extract_state(self, *args, **kw):
+        pass
+    
     def activate(self):
 
         self._active = True

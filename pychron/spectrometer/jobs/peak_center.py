@@ -15,12 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from scipy.optimize import leastsq
-from scipy.stats import norm
 from traits.api import Float, Str, Int
 # ============= standard library imports ========================
 import time
 from numpy import max, argmax, vstack, linspace
+from scipy import interpolate
+from scipy.optimize import leastsq
+from scipy.stats import norm
 # ============= local library imports  ==========================
 from magnet_sweep import MagnetSweep
 from pychron.graph.graph import Graph
@@ -223,35 +224,36 @@ class BasePeakCenter(MagnetSweep):
     def _calculate_peak_center(self, x, y):
         if self.use_interpolation:
             f = interpolate.interp1d(x, y)
-            x = linspace(x[0], x[-1], 500)
+            x = linspace(x[0], x[-1], 1000)
             y = f(x)
 
             self.graph.new_series(x, y, line_style='dash')
 
         if self.n_peaks > 1:
-            def res(p, y, x):
-                yfit = None
-                n = p.shape[0] / 3
-                for h, m, s in p.reshape(n, 3):
-                    yi = h * norm.pdf(x, m, s)
-                    if yfit is None:
-                        yfit = yi
-                    else:
-                        yfit += yi
-                err = y - yfit
-                return err
-
-            mm = x[y.argmax()]
-            counter = range(self.n_peaks)
-            p = [(1, mm, 1) for _ in counter]
-            plsq = leastsq(res, p, args=(y, x))
-
-            centers = plsq[0]
-            for i in counter:
-                c = centers[1 + 3 * i]
-                self.graph.add_vertical_rule(c, color='blue')
-
-            return c[1 + 3 * (self.select_peak - 1)]
+            self.warning('peak deconvolution disabled')
+            # def res(p, y, x):
+            #     yfit = None
+            #     n = p.shape[0] / 3
+            #     for h, m, s in p.reshape(n, 3):
+            #         yi = h * norm.pdf(x, m, s)
+            #         if yfit is None:
+            #             yfit = yi
+            #         else:
+            #             yfit += yi
+            #     err = y - yfit
+            #     return err
+            #
+            # mm = x[y.argmax()]
+            # counter = range(self.n_peaks)
+            # p = [(1, mm, 1) for _ in counter]
+            # plsq = leastsq(res, p, args=(y, x))
+            #
+            # centers = plsq[0]
+            # for i in counter:
+            #     c = centers[1 + 3 * i]
+            #     self.graph.add_vertical_rule(c, color='blue')
+            #
+            # return c[1 + 3 * (self.select_peak - 1)]
 
         try:
             result = calculate_peak_center(x, y,

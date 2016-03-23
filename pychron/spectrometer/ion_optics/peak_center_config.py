@@ -23,6 +23,7 @@ import os
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import add_extension, list_directory2
 from pychron.envisage.icon_button_editor import icon_button_editor
+from pychron.paths import paths
 from pychron.pychron_constants import QTEGRA_INTEGRATION_TIMES
 from pychron.spectrometer.base_detector import BaseDetector
 
@@ -211,14 +212,13 @@ class PeakCenterConfigurer(ItemConfigurer):
     item_klass = PeakCenterConfig
     title = 'Peak Center Configuration'
 
-
-if __name__ == '__main__':
-    from pychron.paths import paths
-
-    paths.build('_dev')
-
-    p = PeakCenterConfigurer()
-    p.load()
-    p.configure_traits()
+# if __name__ == '__main__':
+#     from pychron.paths import paths
+#
+#     paths.build('_dev')
+#
+#     p = PeakCenterConfigurer()
+#     p.load()
+#     p.configure_traits()
 
 # ============= EOF =============================================
