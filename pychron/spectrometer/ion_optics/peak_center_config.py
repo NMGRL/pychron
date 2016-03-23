@@ -61,6 +61,9 @@ class PeakCenterConfig(HasTraits):
     select_n_peak = Int
     select_n_peaks = List
 
+    use_dac_offset = Bool
+    dac_offset = Float
+
     def _integration_time_default(self):
         return QTEGRA_INTEGRATION_TIMES[4]  # 1.048576
 
@@ -96,6 +99,8 @@ class PeakCenterConfig(HasTraits):
                         Item('select_n_peak',
                              editor=EnumEditor(name='select_n_peaks'),
                              enabled_when='n_peaks>1', label='Select Peak'),
+                        HGroup(Item('use_dac_offset', label='DAC Offset'),
+                               UItem('dac_offset', enabled_when='use_dac_offset')),
                         show_border=True, label='Post Process')
 
         v = View(VGroup(HGroup(Item('detector', editor=EnumEditor(name='detectors')),

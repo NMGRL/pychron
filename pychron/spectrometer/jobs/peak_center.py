@@ -39,6 +39,8 @@ class BasePeakCenter(MagnetSweep):
     use_interpolation = False
     n_peaks = 1
     select_peak = 1
+    use_dac_offset = False
+    dac_offset = 0
 
     canceled = False
     show_label = False
@@ -169,6 +171,8 @@ class BasePeakCenter(MagnetSweep):
                     idx = argmax(intensities)
                     center, success = dac_values[idx], False
 
+        if self.use_dac_offset:
+            center += self.dac_offset
         return center, smart_shift, success
 
     def _get_scan_parameters(self, i, center_dac, smart_shift):
@@ -209,6 +213,11 @@ class BasePeakCenter(MagnetSweep):
         graph.set_data([my], series=self._markup_idx + 1, axis=1)
 
         graph.add_vertical_rule(center)
+
+        if self.use_dac_offset:
+            l = graph.add_vertical_rule(center + self.dac_offset, color='blue', add_move_tool=True)
+            self._offset_rule = l
+
         graph.redraw()
 
     def _calculate_peak_center(self, x, y):

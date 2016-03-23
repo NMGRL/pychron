@@ -179,16 +179,21 @@ class IonOpticsManager(Manager):
                           window=0.015, step_width=0.0005, min_peak_height=1.0, percent=80,
                           deconvolve=None,
                           use_interpolation=False,
+                          dac_offset=None,
                           config_name=None):
 
         if deconvolve is None:
             n_peaks, select_peak = 1, 1
+
+        if dac_offset is not None:
+            use_dac_offset = True
 
         spec = self.spectrometer
 
         spec.save_integration()
         self.debug('setup peak center. detector={}, isotope={}'.format(detector, isotope))
 
+        detectors = None
         pcc = None
         if detector is None or isotope is None:
             self.debug('ask user for peak center configuration')
@@ -222,36 +227,25 @@ class IonOpticsManager(Manager):
             use_interpolation = pcc.use_interpolation
             n_peaks = pcc.n_peaks
             select_peak = pcc.select_n_peak
+            use_dac_offset = pcc.use_dac_offset
+            dac_offset = pcc.dac_offset
 
             if center_dac is None:
                 center_dac = pcc.dac
-
-        elif use_config:
-            if detector is None:
-                detector = pcc.detector
-            if isotope is None:
-                isotope = pcc.isotope
-
-            integration_time = pcc.integration_time
-            window = pcc.window
-            min_peak_height = pcc.min_peak_height
-            step_width = pcc.step_width
-            percent = pcc.percent
 
         spec.set_integration_time(integration_time)
         period = int(integration_time * 1000 * 0.9)
 
         if isinstance(detector, (tuple, list)):
-            ref = detector[0]
             detectors = detector
-        else:
-            ref = detector
-            detectors = (ref,)
 
+        if not detectors:
+            detectors = (detector,)
+
+        ref = detectors[0]
         if center_dac is None:
             center_dac = self.get_center_dac(ref, isotope)
 
-        ref = detectors[0]
         self.reference_detector = ref
         self.reference_isotope = isotope
 
@@ -278,7 +272,9 @@ class IonOpticsManager(Manager):
                      show_label=show_label,
                      use_interpolation=use_interpolation,
                      n_peaks=n_peaks,
-                     select_peak=select_peak)
+                     select_peak=select_peak,
+                     use_dac_offset=use_dac_offset,
+                     dac_offset=dac_offset)
 
         self.peak_center = pc
         graph = pc.graph
@@ -351,10 +347,10 @@ class IonOpticsManager(Manager):
             dac_a = spec.uncorrect_dac(det, dac_d)
             self.info('dac uncorrected for HV and deflection {}'.format(dac_a))
             if save:
-                save = True
                 if confirm_save:
                     msg = 'Update Magnet Field Table with new peak center- {} ({}) @ RefDetUnits= {}'.format(*args)
                     save = self.confirmation_dialog(msg)
+
                 if save:
                     spec.magnet.update_field_table(det, isotope, dac_a, message)
                     spec.magnet.set_dac(dac_d)

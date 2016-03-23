@@ -561,9 +561,8 @@ class AutomatedRun(Loggable):
 
             ion.do_peak_center(new_thread=False, save=save, message='automated run peakcenter', timeout=300)
             self._update_persister_spec(peak_center=pc)
-            # if pc.result:
-            #     self._persister_action('save_peak_center_to_file', pc)
-            # self.persister.save_peak_center_to_file(pc)
+            if pc.result:
+                self.persister.save_peak_center_to_file(pc)
 
     def py_coincidence_scan(self):
         pass
