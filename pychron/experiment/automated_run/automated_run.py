@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # # ============= enthought library imports =======================
-from apptools.preferences.preference_binding import bind_preference
 from traits.api import Any, Str, List, Property, \
     Event, Instance, Bool, HasTraits, Float, Int, Long
 # ============= standard library imports ========================
@@ -540,7 +539,7 @@ class AutomatedRun(Loggable):
         return ret
 
     def py_peak_center(self, detector=None, save=True, isotope=None, check_intensity=True,
-                       directions='Increase', **kw):
+                       directions='Increase', config_name='default', **kw):
         if not self._alive:
             return
 
@@ -573,7 +572,7 @@ class AutomatedRun(Loggable):
                                        plot_panel=self.plot_panel,
                                        isotope=isotope,
                                        directions=directions,
-                                       use_config=True,
+                                       config_name=config_name,
                                        **kw)
             self.peak_center = pc
             self.debug('do peak center. {}'.format(pc))
@@ -581,7 +580,6 @@ class AutomatedRun(Loggable):
             ion.do_peak_center(new_thread=False, save=save, message='automated run peakcenter', timeout=300)
             self._update_persister_spec(peak_center=pc)
             if pc.result:
-                # self._persister_action('save_peak_center_to_file', pc)
                 self.persister.save_peak_center_to_file(pc)
 
     def py_coincidence_scan(self):
@@ -1740,7 +1738,6 @@ anaylsis_type={}
     #     return ln not in ('dg', 'pa')
 
     def _new_plot_panel(self, plot_panel, stack_order='bottom_to_top'):
-        from pychron.processing.analyses.view.automated_run_view import ArArAutomatedRunAnalysisView
 
         title = self.runid
         sample, irradiation = self.spec.sample, self.spec.display_irradiation
