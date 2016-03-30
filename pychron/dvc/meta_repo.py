@@ -209,7 +209,7 @@ class Production(MetaObject):
         attrs = []
         for k, v in obj.iteritems():
             setattr(self, k, float(v[0]))
-            setattr(self, '{}_err'.format(k), float(v[0]))
+            setattr(self, '{}_err'.format(k), float(v[1]))
             attrs.append(k)
 
         self.attrs = attrs

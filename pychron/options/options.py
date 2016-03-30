@@ -97,8 +97,9 @@ class AppearanceSubOptions(SubOptions):
                              Item('padding_right', label='Right')),
                       HGroup(Spring(springy=False, width=100), Item('padding_bottom', label='Bottom'),
                              spring),
+                      Item('plot_spacing', label='Spacing', tooltip='Space between plots in pixels'),
                       enabled_when='not formatting_options',
-                      label='Padding', show_border=True)
+                      label='Padding/Spacing', show_border=True)
 
     def _get_bg_group(self):
         grp = Group(Item('bgcolor', label='Figure'),
