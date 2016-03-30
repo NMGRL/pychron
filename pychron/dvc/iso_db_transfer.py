@@ -32,7 +32,7 @@ from pychron.dvc import dvc_dump
 from pychron.dvc.dvc import DVC
 from pychron.dvc.dvc_persister import DVCPersister, format_repository_identifier
 from pychron.dvc.pychrondata_transfer_helpers import get_irradiation_timestamps, get_project_timestamps, \
-    set_spectrometer_files, fix_import_commit
+    set_spectrometer_files, import_j
 from pychron.experiment.automated_run.persistence_spec import PersistenceSpec
 from pychron.experiment.automated_run.spec import AutomatedRunSpec
 from pychron.experiment.utilities.identifier import make_runid, IDENTIFIER_REGEX, SPECIAL_IDENTIFIER_REGEX
@@ -96,7 +96,7 @@ class IsoDBTransfer(Loggable):
 
         proc = IsotopeDatabaseManager(bind=False, connect=False)
 
-        use_local_src = True
+        use_local_src = False
         if use_local_src:
             conn = dict(host='localhost',
                         username=os.environ.get('LOCALHOST_DB_USER'),
@@ -381,10 +381,10 @@ class IsoDBTransfer(Loggable):
         return repo
 
     def _transfer_meta(self, dest, dban, monitor_mapping):
-        self.debug('transfer meta')
+        self.debug('transfer meta {}'.format(monitor_mapping))
 
         dblab = dban.labnumber
-        if monitor_mapping:
+        if monitor_mapping is None:
             dbsam = dblab.sample
             project = dbsam.project.name
             project_name = project.replace('/', '_').replace('\\', '_')
@@ -701,9 +701,9 @@ if __name__ == '__main__':
     paths.build('_dev')
     logging_setup('de', root=os.path.join(os.path.expanduser('~'), 'Desktop', 'logs'))
 
-    # e = IsoDBTransfer()
-    # e.quiet = True
-    # e.init()
+    e = IsoDBTransfer()
+    e.quiet = True
+    e.init()
 
     # runs, expid, creator = load_path()
     # runs, expid, creator = load_import_request()
@@ -714,38 +714,40 @@ if __name__ == '__main__':
     #     commit_initial_import(project, paths.repository_dataset_dir)
     # e.bulk_import_irradiation('NM-278', 'NMGRL', dry=False)
 
-    # e.bulk_import_project('Toba', 'CChesner', dry=False)
-    # fix_a_steps(e.dvc.db, 'ZuniBandera', paths.repository_dataset_dir)
-    # create_repo_for_existing_local('Toba', paths.repository_dataset_dir)
-    # commit_initial_import('Toba', paths.repository_dataset_dir)
+    # e.bulk_import_project('Cascades', 'Templeton', dry=False)
+    # fix_a_steps(e.dvc.db, 'Toba', paths.repository_dataset_dir)
+    # fix_a_steps(e.dvc.db, 'Lucero', paths.repository_dataset_dir)
+    # create_repo_for_existing_local('Cascades', paths.repository_dataset_dir)
+    # commit_initial_import('Cascades', paths.repository_dataset_dir)
 
-    ps = ('Valles',
-          'RatonClayton',
-          'ZuniBandera',
-          'ValleyOfFire',
-          'Potrillo',
-          'RedHillQuemado',
-          'ZeroAge',
-          'Animas',
-          'BrazosCones',
-          'Jornada',
-          'Lucero',
-          'CatHills',
-          'SanFrancisco',
-          'AlbuquerqueVolcanoes',
-          'Irradiation-NM-264',
-          'Irradiation-NM-266',
-          'Irradiation-NM-267',
-          'Irradiation-NM-269',
-          'Irradiation-NM-270',
-          'Irradiation-NM-271',
-          'Irradiation-NM-272',
-          'Irradiation-NM-273',
-          'Irradiation-NM-274',
-          'Irradiation-NM-278',
-          'Irradiation-NM-281')
-    for p in ps:
-        fix_import_commit(p, paths.repository_dataset_dir)
+    import_j(e.processor.db, e.dvc.db, e.dvc.meta_repo, 'Toba')
+    # ps = ('Valles',
+    #       'RatonClayton',
+    #       'ZuniBandera',
+    #       'ValleyOfFire',
+    #       'Potrillo',
+    #       'RedHillQuemado',
+    #       'ZeroAge',
+    #       'Animas',
+    #       'BrazosCones',
+    #       'Jornada',
+    #       'Lucero',
+    #       'CatHills',
+    #       'SanFrancisco',
+    #       'AlbuquerqueVolcanoes',
+    #       'Irradiation-NM-264',
+    #       'Irradiation-NM-266',
+    #       'Irradiation-NM-267',
+    #       'Irradiation-NM-269',
+    #       'Irradiation-NM-270',
+    #       'Irradiation-NM-271',
+    #       'Irradiation-NM-272',
+    #       'Irradiation-NM-273',
+    #       'Irradiation-NM-274',
+    #       'Irradiation-NM-278',
+    #       'Irradiation-NM-281')
+    # for p in ps:
+    #     fix_import_commit(p, paths.repository_dataset_dir)
 
         #
         # e.find_project_overlaps(ps)

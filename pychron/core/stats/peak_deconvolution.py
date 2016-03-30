@@ -27,9 +27,10 @@ n = 500
 xs = linspace(0, 10, n)
 ys = 2 * norm.pdf(xs, 5, 0.5)  # +0.01*random(n)
 ys2 = norm.pdf(xs, 6.1, 0.5)  # +0.01*random(n)
+ys3 = norm.pdf(xs, 4.5, 0.5)  # +0.01*random(n)
 
-ys3 = ys + ys2
-sys3 = ys3
+sys3 = ys + ys2 + ys3
+
 # sys3 = smooth(ys3)
 plt.plot(xs, ys)
 plt.plot(xs, ys2)
@@ -37,21 +38,40 @@ plt.plot(xs, ys3)
 plt.plot(xs, sys3)
 
 
+# def res(p, y, x):
+#     h1, h2, m1, m2, sd1, sd2 = p
+#     # m, dm, sd1, sd2 = p
+#     # m1 = m
+#     # m2 = m1 + dm
+#     y_fit = h1 * norm.pdf(x, m1, sd1) + h2 * norm.pdf(x, m2, sd2)
+#     err = y - y_fit
+#     return err
+#
+#
+# p = [1, 1, 5, 10, 1, 1]
+# plsq = leastsq(res, p, args=(sys3, xs))
+
 def res(p, y, x):
-    h1, h2, m1, m2, sd1, sd2 = p
-    # m, dm, sd1, sd2 = p
-    # m1 = m
-    # m2 = m1 + dm
-    y_fit = h1 * norm.pdf(x, m1, sd1) + h2 * norm.pdf(x, m2, sd2)
-    err = y - y_fit
+    yfit = None
+    n = p.shape[0] / 3
+    for h, m, s in p.reshape(n, 3):
+        yi = h * norm.pdf(x, m, s)
+        if yfit is None:
+            yfit = yi
+        else:
+            yfit += yi
+    err = y - yfit
     return err
 
 
-p = [1, 1, 5, 10, 1, 1]
+mm = sys3.argmax()
+mm = xs[mm]
+p = [(1, mm, 1), (1, mm, 1), (1, mm, 1)]
 plsq = leastsq(res, p, args=(sys3, xs))
 print plsq
-plt.vlines(plsq[0][2], 0, 1.8)
-plt.vlines(plsq[0][3], 0, 1.8)
+plt.vlines(plsq[0][1], 0, 1.8)
+plt.vlines(plsq[0][4], 0, 1.8)
+plt.vlines(plsq[0][7], 0, 1.8)
 # ye1=norm.pdf(xs, plsq[0][0], plsq[0][2])
 # ye2=norm.pdf(xs, plsq[0][0] + plsq[0][1], plsq[0][3])
 # plt.plot(xs, ye1)

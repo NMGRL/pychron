@@ -61,6 +61,45 @@ gen_sampletable.name like "NMGS-%") as t1)
 """
 
 
+def import_j(src, dest, meta, repo_identifier):
+    # idns = {ra.analysis.irradiation_position.identifier
+    #             for ra in repo.repository_associations}
+
+    idns = []
+    with dest.session_ctx():
+        repo = dest.get_repository(repo_identifier)
+        decay = {'lambda_k_total': 5.543e-10,
+                 'lambda_k_total_error': 9.436630754670864e-13}
+
+        with src.session_ctx():
+
+            for ra in repo.repository_associations:
+                ip = ra.analysis.irradiation_position
+                idn = ip.identifier
+                if idn not in idns:
+                    idns.append(idn)
+                    irradname = ip.level.irradiation.name
+                    levelname = ip.level.name
+                    pos = ip.position
+                    # print idn, irradname, levelname, pos
+
+                    sip = src.get_irradiation_position(irradname, levelname, pos)
+                    if sip is not None:
+                        fhs = sip.flux_histories
+                        if fhs:
+                            fh = fhs[-1]
+                            flux = fh.flux
+                            j, e = flux.j, flux.j_err
+                            meta.update_flux(irradname, levelname, pos, idn, j, e, decay, [], add=False)
+                    else:
+                        print 'no irradiation position {} {} {} {}'.format(idn, irradname, levelname, pos)
+
+
+
+
+
+
+
 def fix_import_commit(repo_identifier, root):
     from pychron.git_archive.repo_manager import GitRepoManager
     rm = GitRepoManager()
