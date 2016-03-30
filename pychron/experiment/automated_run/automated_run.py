@@ -1290,10 +1290,11 @@ anaylsis_type={}
            signal_string, age_string)
 
     def get_baseline_corrected_signals(self):
-        d = dict()
-        for k, iso in self.isotope_group.isotopes.iteritems():
-            d[k] = iso.get_baseline_corrected_value()
-        return d
+        if self.isotope_group:
+            d = dict()
+            for k, iso in self.isotope_group.isotopes.iteritems():
+                d[k] = iso.get_baseline_corrected_value()
+            return d
 
     def setup_context(self, *args, **kw):
         self._setup_context(*args, **kw)
