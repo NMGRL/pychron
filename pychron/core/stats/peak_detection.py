@@ -169,7 +169,7 @@ def calculate_peak_center(x, y, test_peak_flat=True, min_peak_height=1.0, percen
     x = array(x)
     y = array(y)
 
-    xy = vstack((x,y)).T
+    xy = vstack((x, y)).T
     x, y = xy[argsort(xy[:, 0])].T
 
     ma = max(y)

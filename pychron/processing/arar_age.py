@@ -20,21 +20,16 @@
 from traits.has_traits import HasTraits
 # ============= standard library imports ========================
 from uncertainties import ufloat, std_dev, nominal_value
-import os
-import random
-from numpy import hstack
-from ConfigParser import ConfigParser
 from copy import copy
 # ============= local library imports  ==========================
 from pychron.processing.isotope_group import IsotopeGroup
 from pychron.processing.argon_calculations import calculate_F, abundance_sensitivity_correction, age_equation, \
     calculate_decay_factor, calculate_flux
 from pychron.processing.arar_constants import ArArConstants
-from pychron.processing.isotope import Isotope, Blank
+from pychron.processing.isotope import Blank
 
 from pychron.core.helpers.isotope_utils import sort_isotopes, sort_detectors
 from pychron.core.helpers.logger_setup import new_logger
-from pychron.paths import paths
 from pychron.pychron_constants import ARGON_KEYS
 
 logger = new_logger('ArArAge')
@@ -315,10 +310,10 @@ class ArArAge(IsotopeGroup):
             if iso in self.isotopes:
                 r = self.isotopes[iso].baseline.uvalue
         elif '/' in attr:
-            non_ic_cor = attr.startswith('u')
-            if non_ic_cor:
+            non_ic_corr = attr.startswith('u')
+            if non_ic_corr:
                 attr = attr[1:]
-            r = self.get_ratio(attr, non_ic_cor)
+            r = self.get_ratio(attr, non_ic_corr)
         elif attr == 'icf_40_36':
             r = self.get_corrected_ratio('Ar40', 'Ar36')
         elif attr.endswith('ic'):

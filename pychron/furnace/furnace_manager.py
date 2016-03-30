@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from numpy.random import random
 from pyface.timer.do_later import do_after
 from traits.api import TraitError, Instance, Float, provides, Int, Bool
 # ============= standard library imports ========================
@@ -32,15 +33,15 @@ from pychron.furnace.loader_logic import LoaderLogic
 from pychron.furnace.magnet_dumper import NMGRLMagnetDumper
 from pychron.furnace.stage_manager import NMGRLFurnaceStageManager, BaseFurnaceStageManager
 from pychron.graph.stream_graph import StreamGraph
+from pychron.graph.time_series_graph import TimeSeriesStreamGraph
 from pychron.hardware.furnace.nmgrl.camera import NMGRLCamera
-from pychron.hardware.furnace.nmgrl.funnel import NMGRLFurnaceFunnel
 from pychron.hardware.linear_axis import LinearAxis
-from pychron.managers.manager import Manager
+from pychron.managers.stream_graph_manager import StreamGraphManager
 from pychron.paths import paths
 from pychron.response_recorder import ResponseRecorder
 
 
-class BaseFurnaceManager(Manager):
+class BaseFurnaceManager(StreamGraphManager):
     controller = Instance(FurnaceController)
     setpoint = Float(auto_set=False, enter_set=True)
     temperature_readback = Float
@@ -69,6 +70,7 @@ class BaseFurnaceManager(Manager):
     def _handle_state(self, new):
         pass
 
+
 class Funnel(LinearAxis):
     pass
 
@@ -80,9 +82,6 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     magnets = Instance(NMGRLMagnetDumper)
     temperature_readback_min = Float(0)
     temperature_readback_max = Float(1600.0)
-
-    graph = Instance(StreamGraph)
-    update_period = Int(2)
 
     dumper_canvas = Instance(DumperCanvas)
     _alive = False
@@ -96,13 +95,24 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
 
     funnel_down_enabled = Bool(True)
     funnel_up_enabled = Bool(False)
+    settings_name = 'furnace_settings'
 
     def activate(self):
         # pref_id = 'pychron.furnace'
         # bind_preference(self, 'update_period',
         # '{}.update_period'.format(pref_id))
         self.refresh_states()
-        self._start_update()
+        self.load_settings()
+        self.reset_scan_timer()
+        # self._start_update()
+
+    def test_furnace_cam(self):
+        if self.camera:
+            return self.camera.test_connection()
+
+    def test_furnace_api(self):
+        if self.controller:
+            return self.controller.test_connection()
 
     def refresh_states(self):
         self.switch_manager.load_indicator_states()
@@ -354,33 +364,33 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         self.debug('stop update')
         self._alive = False
 
-    def _start_update(self):
-        if not self.update_period:
-            self.information_dialog('Please set an update period in Preferences/Furnace')
-            return
+    def _update_scan_graph(self):
+        v = self.read_temperature()
+        v = random()
+        if v is not None:
+            x = self.graph.record(v)
 
-        self.debug('starting update. period= {}s'.format(self.update_period))
+            if self._recording:
+                self.record_data_manager.write_to_frame((x, v))
 
-        self._alive = True
+    def _start_recording(self):
+        self._recording = True
+        self.record_data_manager = dm = self._record_data_manager_factory()
+        dm.new_frame(directory=paths.furnace_scans_dir)
+        dm.write_to_frame(('time','temperature'))
+        self._start_time = time.time()
 
-        self.graph = g = StreamGraph()
+    def _stop_recording(self):
+        self._recording = False
+
+    def _graph_factory(self, *args, **kw):
+        g = TimeSeriesStreamGraph()
         # g.plotcontainer.padding_top = 5
         # g.plotcontainer.padding_right = 5
         g.new_plot(xtitle='Time (s)', ytitle='Temp. (C)', padding_top=5, padding_right=5)
         g.set_scan_width(600)
         g.new_series()
-
-        self._update_readback()
-
-    def _update_readback(self):
-        v = self.read_temperature(force=True)
-        scalar = 100
-        if v is not None:
-            self.graph.record(v, track_y=False)
-            scalar = 1
-
-        if self._alive:
-            do_after(scalar * self.update_period * 1000, self._update_readback)
+        return g
 
     def _dump_sample(self):
         """

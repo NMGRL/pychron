@@ -18,14 +18,25 @@
 # ============= standard library imports ========================
 import json
 # ============= local library imports  ==========================
+import re
 from traits.has_traits import provides
 
 from pychron.furnace.furnace_controller import IFurnaceController
 from pychron.hardware.core.core_device import CoreDevice
 
+VER_REGEX = re.compile(r'\d+.\d+(.\d+){0,1}')
+
 
 @provides(IFurnaceController)
 class NMGRLFurnaceEurotherm(CoreDevice):
+    def test_connection(self):
+        d = json.dumps({'command': 'GetVersion'})
+        resp = self.ask(d)
+        if resp:
+            return VER_REGEX.match(resp)
+        else:
+            return False
+
     def set_setpoint(self, v, **kw):
         d = json.dumps({'command': 'SetSetpoint', 'setpoint': v})
         self.ask(d)

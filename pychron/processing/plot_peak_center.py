@@ -132,40 +132,43 @@ def write_analyses_to_csv(p, ms):
     with db.session_ctx():
         h = datetime.now()
         l = h - timedelta(days=60)
-        ans = db.get_analyses_by_date_range(l, h, mass_spectrometers=ms)
+        ans = db.get_analyses_date_range(l, h, mass_spectrometers=ms)
 
         with open(p, 'w') as wfile:
             writer = csv.writer(wfile)
             n = len(ans)
             for i, ai in enumerate(ans):
-                if not (i + 1) % 10:
-                    print '{}/{}'.format(i + 1, n)
+                # if not (i + 1) % 10:
+                #     print '{}/{}'.format(i + 1, n)
                 try:
                     t = ai.timestamp
+                    # print ai.id
                     pc = ai.peak_center.center
-                    # print ai.analysis_timestamp, t, pc
+
+                    print ai.analysis_timestamp, ai.record_id, t, pc
                     writer.writerow([t, pc])
-                except AttributeError:
-                    pass
+                except AttributeError, e:
+                    print e
 
 
 def main():
-    ms = 'obama'
-    ms2 = 'jan'
+    ms = 'felix'
+    # ms = 'jan'
+    # ms2 = 'jan'
     # ms = 'jan'
 
     p = '/Users/ross/Sandbox/peak_centers_{}.csv'.format(ms)
-    p2 = '/Users/ross/Sandbox/peak_centers_{}.csv'.format(ms2)
+    # p2 = '/Users/ross/Sandbox/peak_centers_{}.csv'.format(ms2)
 
-    # o = '/Users/ross/Sandbox/peak_centers_{}.png'.format(ms)
-    o = '/Users/ross/Sandbox/peak_centers_both.png'
+    o = '/Users/ross/Sandbox/peak_centers_{}.png'.format(ms)
+    # o = '/Users/ross/Sandbox/peak_centers_both.png'
 
-    # write_analyses_to_csv(p, ms)
+    write_analyses_to_csv(p, ms)
 
-    x, y = extract_data_csv(p)
-    x2, y2 = extract_data_csv(p2)
+    # x, y = extract_data_csv(p)
+    # x2, y2 = extract_data_csv(p2)
     # plot(x, y, o, ms)
-    plot2(x[-30:], y[-30:], x2[-30:], y2[-30:], o, ms, ms2)
+    # plot2(x[-30:], y[-30:], x2[-30:], y2[-30:], o, ms, ms2)
 
 
 if __name__ == '__main__':

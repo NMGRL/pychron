@@ -29,7 +29,7 @@ from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.pyscripts.pyscript import verbose_skip, makeRegistry
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.pyscripts.valve_pyscript import ValvePyScript
-from pychron.pychron_constants import EXTRACTION_COLOR, LINE_STR
+from pychron.pychron_constants import EXTRACTION_COLOR, LINE_STR, NULL_STR
 
 COMPRE = re.compile(r'[A-Za-z]*')
 
@@ -72,8 +72,7 @@ class ExtractionPyScript(ValvePyScript):
         Returns a list of x,y,z tuples
         each tuple represents where the extraction occurred
 
-        if clear is True (default) ``self._extraction_positions``
-        set to an empty list
+        if clear is True (default) ``self._extraction_positions`` set to an empty list
 
         :return: list of x,y,z tuples
         :rtype: list of tuples
@@ -89,11 +88,10 @@ class ExtractionPyScript(ValvePyScript):
         """
         Get the extraction device's response blob
 
-        :return: response blob. binary string representing time vs measured
-        output
+        :return: response blob. binary string representing time v measured output
         :rtype: str
         """
-        return self._extraction_action([('get_response_blob', (), {})])
+        return self._extraction_action([('get_response_blob', (), {})]) or ''
 
     def get_output_blob(self):
         """
@@ -102,7 +100,7 @@ class ExtractionPyScript(ValvePyScript):
         :return: output blob: binary string representing time v requested output
         :rtype: str
         """
-        return self._extraction_action([('get_output_blob', (), {})])
+        return self._extraction_action([('get_output_blob', (), {})]) or ''
 
     def output_achieved(self):
         """
@@ -183,8 +181,7 @@ class ExtractionPyScript(ValvePyScript):
           10<x<20
 
         callable can of form ``func() or func(ti) or func(ti, i)``
-        where ``ti`` is the current relative time
-        (relative to start of waitfor) and ``i`` is a counter
+        where ``ti`` is the current relative time (relative to start of waitfor) and ``i`` is a counter
 
         :param func_or_tuple: wait for function to return True
         :type func_or_tuple: callable, tuple
@@ -249,8 +246,7 @@ class ExtractionPyScript(ValvePyScript):
     @verbose_skip
     @command_register
     def degas(self, lumens=0, duration=0):
-        self._extraction_action([('do_machine_vision_degas',
-                                  (lumens, duration), {})])
+        self._extraction_action([('do_machine_vision_degas', (lumens, duration), {})])
 
     @verbose_skip
     @command_register
@@ -264,8 +260,7 @@ class ExtractionPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def snapshot(self, name='', prefix='', view_snapshot=False,
-                 pic_format='.jpg'):
+    def snapshot(self, name='', prefix='', view_snapshot=False, pic_format='.jpg'):
         """
             if name not specified use RID_Position e.g 12345-01A_3
         """
@@ -388,8 +383,7 @@ class ExtractionPyScript(ValvePyScript):
 
         st = time.time()
         # set block=True to wait for pattern completion
-        self._extraction_action([('execute_pattern', (pattern,),
-                                  {'block': block})])
+        self._extraction_action([('execute_pattern', (pattern,), {'block': block})])
 
         return time.time() - st
 
@@ -410,7 +404,7 @@ class ExtractionPyScript(ValvePyScript):
             this is a non blocking command. it simply sends a command to apis to
             start one of its runscripts.
 
-            it is the ExtractionPyScripts responsibility to handle the waiting.
+            it is the ExtractionPyScripts responsiblity to handle the waiting.
             use the waitfor command to wait for signals from apis.
         """
         from pychron.external_pipette.apis_manager import InvalidPipetteError
@@ -436,8 +430,8 @@ class ExtractionPyScript(ValvePyScript):
     @command_register
     def extract_pipette(self, identifier='', timeout=300):
         """
-            this is an atomic command. use the apis_controller config file to
-            define the isolation procedures.
+            this is an atomic command. use the apis_controller config file to define
+            the isolation procedures.
         """
         from pychron.external_pipette.apis_manager import InvalidPipetteError
         if identifier == '':
@@ -724,10 +718,9 @@ class ExtractionPyScript(ValvePyScript):
     def run_identifier(self):
         return self._get_property('run_identifier')
 
-    # ==========================================================================
+    # ===============================================================================
     # private
-    # ==========================================================================
-
+    # ===============================================================================
     def _abort_hook(self):
         self.disable()
 
@@ -754,24 +747,18 @@ class ExtractionPyScript(ValvePyScript):
 
                 return func
             else:
-                self.warning(
-                        'invalid comparison. valid e.g.=x<10 comp={}'.format(
-                                comp))
+                self.warning('invalid comparison. valid e.g.=x<10 comp={}'.format(comp))
         else:
             self.warning('no device available named "{}"'.format(name))
 
     def _extraction_action(self, *args, **kw):
         if 'name' not in kw:
             kw['name'] = self.extract_device
+        if 'protocol' not in kw:
+            kw['protocol'] = ILaserManager
 
-        kw['name'] = kw.get('name', self.extract_device) or self.extract_device
-        if kw['name'] in ('Extract Device', LINE_STR):
+        if kw['name'] in ('Extract Device', 'ExtractDevice', 'extract device', 'extractdevice', NULL_STR, LINE_STR):
             return
-
-        # if not 'protocol' in kw:
-        #     kw['protocol'] = ILaserManager
-        kw['protocol'] = kw.get('protocol', ILaserManager) or ILaserManager
-
         return self._manager_action(*args, **kw)
 
     def _disable(self, protocol=None):
@@ -779,19 +766,16 @@ class ExtractionPyScript(ValvePyScript):
         if self.manager:
             self.manager.set_extract_state(False)
 
-        return self._extraction_action([('disable_device', (), {})],
-                                       protocol=protocol)
+        return self._extraction_action([('disable_device', (), {})], protocol=protocol)
 
     def _set_axis(self, name, value, velocity):
         kw = dict(block=True)
         if velocity:
             kw['velocity'] = value
 
-        success = self._extraction_action(
-                [('set_{}'.format(name), (value,), kw)])
+        success = self._extraction_action([('set_{}'.format(name), (value,), kw)])
         if not success:
-            self.console_info(
-                    '{} move to position failed'.format(self.extract_device))
+            self.console_info('{} move to position failed'.format(self.extract_device))
         else:
             self.console_info('move to position suceeded')
         return True

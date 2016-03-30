@@ -71,7 +71,12 @@ class FirmwareClient(HasTraits):
         # self._send('GetIndicatorState FF,{}'.format(action))
         # self._cnt += 1
         # d = json.dumps({'command': 'GetPosition', 'drive': 'feeder', 'position': 1, 'units': 'turns'})
-        # d = json.dumps({'command': 'MoveRelative', 'drive': 'feeder', 'position': 1, 'units': 'turns'})
+        # pos = self.command if self._cnt % 2 == 0 else 0
+        pos = float(self.command)
+        d = json.dumps({'command': 'MoveAbsolute', 'drive': 'funnel', 'position': pos, 'units': 'turns'})
+        self._send(d)
+        self._cnt +=1
+
         # v, a, d = self.command.split(',')
         # d = {'command': 'StartJitter', 'drive': 'feeder', 'turns': 0.125, 'p1': 0.1, 'p2': 0.25,
         #      'velocity': int(v), 'acceleration': int(a), 'deceleration': int(d)}
@@ -88,8 +93,8 @@ class FirmwareClient(HasTraits):
         # mf.message_len = True
         # imgstr = self._comm.ask('GetImageArray', message_frame=mf, timeout=5)
         # print len(imgstr)
-        c = NMGRLCamera()
-        print c.get_image_data()
+        # c = NMGRLCamera()
+        # print c.get_image_data()
 
         # resp = self._comm.ask('GetImageArray')
         # print resp
@@ -118,7 +123,7 @@ class FirmwareClient(HasTraits):
 
 
 if __name__ == '__main__':
-    c = FirmwareClient(host='192.168.2.2', port=4568)
-    # if c.test_connection():
-    c.configure_traits()
+    c = FirmwareClient(host='192.168.2.2', port=4567)
+    if c.test_connection():
+        c.configure_traits()
 # ============= EOF =============================================

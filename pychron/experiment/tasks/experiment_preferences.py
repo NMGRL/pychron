@@ -180,21 +180,19 @@ class ExperimentPreferencesPane(PreferencesPane):
             Item('even_bg_color', label='Even Row'),
             label='Editor')
 
-        color_group = Group(Item('sniff_color', label='Equilibration'),
-                            Item('baseline_color', label='Baseline'),
-                            Item('signal_color', label='Signal'),
-                            label='Measurement Colors')
-
-        state_color_grp = VGroup(Item('success_color', label='Success'),
-                                 Item('extraction_color', label='Extraction'),
-                                 Item('measurement_color', label='Measurement'),
-                                 Item('canceled_color', label='Canceled'),
-                                 Item('truncated_color', label='Truncated'),
-                                 Item('failed_color', label='Failed'),
-                                 Item('end_after_color', label='End After'),
-                                 Item('invalid_color', label='Invalid'),
-
-                                 label='State Colors')
+        color_group = VGroup(VGroup(Item('sniff_color', label='Equilibration'),
+                                    Item('baseline_color', label='Baseline'),
+                                    Item('signal_color', label='Signal'),
+                                    label='Measurement Colors'),
+                             VGroup(Item('success_color', label='Success'),
+                                    Item('extraction_color', label='Extraction'),
+                                    Item('measurement_color', label='Measurement'),
+                                    Item('canceled_color', label='Canceled'),
+                                    Item('truncated_color', label='Truncated'),
+                                    Item('failed_color', label='Failed'),
+                                    Item('end_after_color', label='End After'),
+                                    Item('invalid_color', label='Invalid'),
+                                    label='State Colors'))
         analysis_grouping_grp = Group(Item('use_analysis_grouping',
                                            label='Auto group analyses',
                                            tooltip=''),
@@ -256,7 +254,6 @@ class ExperimentPreferencesPane(PreferencesPane):
 
         return View(color_group,
                     automated_grp,
-                    state_color_grp,
                     notification_grp,
                     editor_grp,
                     analysis_grouping_grp, memory_grp, system_health_grp)

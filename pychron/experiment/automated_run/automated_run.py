@@ -521,7 +521,7 @@ class AutomatedRun(Loggable):
         return ret
 
     def py_peak_center(self, detector=None, save=True, isotope=None, check_intensity=True,
-                       directions='Increase', **kw):
+                       directions='Increase', config_name='default', **kw):
         if not self._alive:
             return
 
@@ -554,15 +554,15 @@ class AutomatedRun(Loggable):
                                        plot_panel=self.plot_panel,
                                        isotope=isotope,
                                        directions=directions,
+                                       config_name=config_name,
                                        **kw)
             self.peak_center = pc
             self.debug('do peak center. {}'.format(pc))
 
             ion.do_peak_center(new_thread=False, save=save, message='automated run peakcenter', timeout=300)
             self._update_persister_spec(peak_center=pc)
-            # if pc.result:
-            #     self._persister_action('save_peak_center_to_file', pc)
-            # self.persister.save_peak_center_to_file(pc)
+            if pc.result:
+                self.persister.save_peak_center_to_file(pc)
 
     def py_coincidence_scan(self):
         pass
@@ -950,13 +950,17 @@ class AutomatedRun(Loggable):
             i += 1
 
     def post_measurement_save(self):
+        self.debug('post measurement save measured={}'.format(self._measured))
         if self._measured:
             conds = (self.termination_conditionals, self.truncation_conditionals,
                      self.action_conditionals, self.cancelation_conditionals, self.modification_conditionals)
 
             self._update_persister_spec(active_detectors=self._active_detectors,
-                                        conditionals=conds,
+                                        conditionals=[c for cond in conds for c in cond],
                                         tripped_conditional=self.tripped_conditional)
+
+            # add a result to the run spec.
+            self.spec.new_result(self)
 
             # save to database
             self._persister_save_action('post_measurement_save')
@@ -965,9 +969,9 @@ class AutomatedRun(Loggable):
                 self.plot_panel.analysis_view.refresh_needed = True
 
             # save analysis. don't cancel immediately
-            ret = None
-            if self.system_health:
-                ret = self.system_health.add_analysis(self)
+            # ret = None
+            # if self.system_health:
+            #     ret = self.system_health.add_analysis(self)
 
             if self.persister.secondary_database_fail:
                 self.experiment_executor.cancel(cancel_run=True,
@@ -1198,8 +1202,8 @@ class AutomatedRun(Loggable):
             self.info_color = None
 
             self._measured = True
-            # return self.post_measurement_save()
-            return True
+            return self.post_measurement_save()
+            # return True
         else:
             if use_post_on_fail:
                 self.do_post_equilibration()
@@ -1394,11 +1398,15 @@ anaylsis_type={}
         self.persistence_spec.trait_set(**kw)
 
     def _persister_save_action(self, func, *args, **kw):
+        self.debug('persistence save...')
         if self.use_db_persistence:
+            self.debug('persistence save - db')
             getattr(self.persister, func)(*args, **kw)
         if self.use_dvc_persistence:
+            self.debug('persistence save - dvc')
             getattr(self.dvc_persister, func)(*args, **kw)
         if self.use_xls_persistence:
+            self.debug('persistence save - xls')
             getattr(self.xls_persister, func)(*args, **kw)
 
     def _persister_action(self, func, *args, **kw):

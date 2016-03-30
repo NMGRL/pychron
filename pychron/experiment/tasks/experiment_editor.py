@@ -55,6 +55,9 @@ class ExperimentEditorHandler(TabularEditorHandler):
     def toggle_skip(self, info, obj):
         obj.toggle_skip()
 
+    def show_summary(self, info, obj):
+        obj.show_summary()
+
 
 class ExperimentEditor(BaseTraitsEditor):
     queue = Instance(ExperimentQueue, ())  # Any

@@ -29,7 +29,7 @@ from pychron.paths import paths
 
 
 class ThermoDetector(BaseDetector, SpectrometerDevice):
-
+    use_deflection = True
     protection_threshold = None
     deflection = Property(Float(enter_set=True, auto_set=False),
                           depends_on='_deflection')
@@ -42,48 +42,55 @@ class ThermoDetector(BaseDetector, SpectrometerDevice):
         self.read_deflection()
 
     def load_deflection_coefficients(self):
-        # load deflection correction table
-        p = os.path.join(paths.spectrometer_dir,
-                         'deflections', self.name)
-        if os.path.isfile(p):
-            x, y = loadtxt(p, delimiter=',', unpack=True)
-            y -= y[0]
-            coeffs = polyfit(x, y, 1)
-            self._deflection_correction_factors = coeffs
-        else:
-            self.warning('no deflection data for {}'.format(self.name))
+        if self.use_deflection:
+            # load deflection correction table
+            p = os.path.join(paths.spectrometer_dir,
+                             'deflections', self.name)
+            if os.path.isfile(p):
+                x, y = loadtxt(p, delimiter=',', unpack=True)
+                y -= y[0]
+                coeffs = polyfit(x, y, 1)
+                self._deflection_correction_factors = coeffs
+            else:
+                self.warning('no deflection data for {}'.format(self.name))
 
     def read_deflection(self):
-        r = self.ask('GetDeflection {}'.format(self.name))
-        try:
-            if r is None:
-                self.warning('Failed reading {} deflection. Error=No response. '
-                             'Using previous value {}'.format(self.name,
-                                                              self._deflection))
-            else:
-                self._deflection = float(r)
+        if self.use_deflection:
+            r = self.ask('GetDeflection {}'.format(self.name))
+            try:
+                if r is None:
+                    self.warning('Failed reading {} deflection. Error=No response. '
+                                 'Using previous value {}'.format(self.name,
+                                                                  self._deflection))
+                else:
+                    self._deflection = float(r)
 
-        except (ValueError, TypeError), e:
-            self.warning('Failed reading {} deflection. Error={}. '
-                         'Using previous value {}'.format(self.name, e,
-                                                          self._deflection))
+            except (ValueError, TypeError), e:
+                self.warning('Failed reading {} deflection. Error={}. '
+                             'Using previous value {}'.format(self.name, e,
+                                                              self._deflection))
         return self._deflection
 
     def get_deflection_correction(self, current=False):
-        if current:
-            self.read_deflection()
+        corr = 0
+        if self.use_deflection:
+            if current:
+                self.read_deflection()
 
-        dev = 0
-        if self._deflection_correction_factors is not None:
-            de = self._deflection
-            dev = polyval(self._deflection_correction_factors, [de])[0]
+            if self._deflection_correction_factors is not None:
+                corr = polyval(self._deflection_correction_factors, [self._deflection])[0]
 
-        return self.deflection_correction_sign * dev
+            corr *= self.deflection_correction_sign
+
+        return corr
 
     def map_dac_to_deflection(self, dac):
-        c = self._deflection_correction_factors[:]
-        c[-1] -= dac
-        return optimize.newton(poly1d(c), 1)
+        defl = 0
+        if self.use_deflection:
+            c = self._deflection_correction_factors[:]
+            c[-1] -= dac
+            defl = optimize.newton(poly1d(c), 1)
+        return defl
 
     # private
     def _set_gain(self):
@@ -93,11 +100,12 @@ class ThermoDetector(BaseDetector, SpectrometerDevice):
         v = self.ask('GetGain {}'.format(self.name))
 
     def _set_deflection(self, v):
-        if self._deflection != v:
-            self.spectrometer.update_config(Deflections=[(self.name, v)])
+        if self.use_deflection:
+            if self._deflection != v:
+                self.spectrometer.update_config(Deflections=[(self.name, v)])
 
-        self._deflection = v
-        self.ask('SetDeflection {},{}'.format(self.name, v))
+            self._deflection = v
+            self.ask('SetDeflection {},{}'.format(self.name, v))
 
     def _get_deflection(self):
         return self._deflection
@@ -132,7 +140,7 @@ class ThermoDetector(BaseDetector, SpectrometerDevice):
                         Item('color', width=25, editor=ColorSquareEditor()),
                         Item('name', style='readonly'),
                         spring,
-                        Item('deflection'),
+                        Item('deflection', visible_when='use_deflection'),
                         show_labels=False))
         return v
 

@@ -30,7 +30,7 @@ from pychron.experiment.automated_run.persistence import BasePersister
 from pychron.experiment.classifier.isotope_classifier import IsotopeClassifier
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths
-from pychron.pychron_constants import DVC_PROTOCOL
+from pychron.pychron_constants import DVC_PROTOCOL, LINE_STR, NULL_STR
 
 
 def format_repository_identifier(project):
@@ -206,10 +206,12 @@ class DVCPersister(BasePersister):
     def _save_analysis_db(self, timestamp):
         rs = self.per_spec.run_spec
         d = {k: getattr(rs, k) for k in ('uuid', 'analysis_type', 'aliquot',
-                                         'increment', 'mass_spectrometer',
-                                         'extract_device', 'weight', 'comment',
+                                         'increment', 'mass_spectrometer', 'weight', 'comment',
                                          'cleanup', 'duration', 'extract_value', 'extract_units')}
 
+        ed = self.per_spec.run_spec.extract_device
+        if ed in (None, '', NULL_STR, LINE_STR, 'Extract Device'):
+            d['extract_device'] = 'No Extract Device'
         d['timestamp'] = timestamp
 
         # save script names
@@ -333,7 +335,8 @@ class DVCPersister(BasePersister):
 
         # save the conditionals
         obj['conditionals'] = [c.to_dict() for c in self.per_spec.conditionals]
-        obj['tripped_conditional'] = self.per_spec.tripped_conditional.result_dict()
+        obj['tripped_conditional'] = self.per_spec.tripped_conditional.result_dict() if \
+            self.per_spec.tripped_conditional else None
 
         # save the scripts
         ms = self.per_spec.run_spec.mass_spectrometer

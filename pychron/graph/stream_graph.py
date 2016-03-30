@@ -203,6 +203,7 @@ class StreamGraph(Graph):
 
         self.cur_max[plotid] = max(self.cur_max[plotid], max(new_yd))
         self.cur_min[plotid] = min(self.cur_min[plotid], min(new_yd))
+        return nx
 
     def record_multiple(self, ys, plotid=0, track_y=True):
         tg = self.global_time_generator

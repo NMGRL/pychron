@@ -212,7 +212,7 @@ class AutomatedRunConditional(BaseConditional):
 
     _teststr = None
     _ctx = None
-
+    value_context = None
     # def __init__(self, attr, teststr,
     # start_count=0,
     # frequency=1,

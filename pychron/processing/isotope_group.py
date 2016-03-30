@@ -67,11 +67,11 @@ class IsotopeGroup(Loggable):
                 return
         return iso.ys[-1]
 
-    def get_ratio(self, r, non_ic_cor=False):
+    def get_ratio(self, r, non_ic_corr=False):
         n, d = r.split('/')
         isos = self.isotopes
 
-        if non_ic_cor:
+        if non_ic_corr:
             func = self.get_non_ic_corrected
         else:
             func = self.get_intensity

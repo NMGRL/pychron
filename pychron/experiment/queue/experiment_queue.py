@@ -19,7 +19,7 @@ from pyface.timer.do_later import do_later
 from traits.api import Any, on_trait_change, Int, List, Bool, \
     Instance, Property, Str, HasTraits, Event, Long
 from traits.trait_types import Date
-from traitsui.api import View, Item
+from traitsui.api import View, Item, UItem
 
 # ============= standard library imports ========================
 import time
@@ -28,6 +28,7 @@ import os
 # ============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.core.ui.qt.tabular_editor import MoveToRow
+from pychron.envisage.view_util import open_view
 from pychron.experiment.queue.base_queue import BaseExperimentQueue
 from pychron.experiment.queue.select_attr_view import SelectAttrView
 from pychron.experiment.utilities.identifier import make_runid
@@ -204,6 +205,21 @@ class ExperimentQueue(BaseExperimentQueue):
     def select_run_idx(self, idx):
         if self.automated_runs:
             self.selected = self.automated_runs[idx:idx + 1]
+
+    def show_summary(self):
+        """
+        show a summary view for ``spec`` using its ``result``
+        :return:
+        """
+        if self.executed_selected:
+            from pychron.core.ui.text_editor import myTextEditor
+            v = View(UItem('summary', style='custom', editor=myTextEditor(editable=False,
+                                                                          fontsize=14)),
+                     title='Summary',
+                     width=700,
+                     livemodal=True,
+                     resizable=True)
+            open_view(self.executed_selected[0].result, view=v)
 
     def reset(self):
         """

@@ -42,6 +42,8 @@ class BaseDetector(HasTraits):
 
     isotopes = Property
 
+    index = Int
+
     def set_intensity(self, v):
         if v is not None:
             n = self.nstd

@@ -70,7 +70,7 @@ class Datahub(Loggable):
             bind_preference(store.db, 'host', '{}.host'.format(prefid))
             bind_preference(store.db, 'username', '{}.username'.format(prefid))
             bind_preference(store.db, 'password', '{}.password'.format(prefid))
-        self.stores['massspec'] = store
+            self.stores['massspec'] = store
 
         # isotopedb
         prefid = 'pychron.pychron.database'
@@ -83,7 +83,9 @@ class Datahub(Loggable):
             bind_preference(store.db, 'username', '{}.username'.format(prefid))
             bind_preference(store.db, 'password', '{}.password'.format(prefid))
 
-        self.stores['isotopedb'] = store
+            self.stores['isotopedb'] = store
+
+        self.stores['dvc'] = self.mainstore
 
     def store_connect(self, key):
 
@@ -198,6 +200,7 @@ class Datahub(Loggable):
             main = self.mainstore
             return (main.precedence,), (main.db.name,), (main.get_greatest_aliquot(identifier),)
         else:
+
             return zip(*[(store.precedence, store.db.name,
                           store.get_greatest_aliquot(identifier) or 0 if store.is_connected() else 0)
                          for store in self.sorted_stores])
