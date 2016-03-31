@@ -533,9 +533,8 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                                           excludes=['position']))
         return arvs
 
-    def _make_irrad_level(self, ln):
+    def _make_irrad_level(self, ipos):
         il = ''
-        ipos = ln.irradiation_position
         if ipos is not None:
             level = ipos.level
             irrad = level.irradiation

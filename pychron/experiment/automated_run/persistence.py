@@ -398,7 +398,7 @@ class AutomatedRunPersister(BasePersister):
             return
         self.info('post extraction save')
 
-        db = self.datahub.mainstore.db
+        db = self.datahub.get_db('isotopedb')
         if db:
             with db.session_ctx() as sess:
                 loadtable = db.get_loadtable(self.per_spec.load_name)
@@ -445,8 +445,8 @@ class AutomatedRunPersister(BasePersister):
         #. save detector_ic to csv if applicable
         #. save to secondary database
         """
-        self.debug('AutomatedRunPersister post_measurement_save deprecated')
-        return
+        # self.debug('AutomatedRunPersister post_measurement_save deprecated')
+        # return
 
         if DEBUG:
             self.debug('Not measurement saving to database')
@@ -460,10 +460,11 @@ class AutomatedRunPersister(BasePersister):
         # check for conflicts immediately before saving
         # automatically update if there is an issue
         run_spec = self.per_spec.run_spec
-        conflict = self.datahub.is_conflict(run_spec)
-        if conflict:
-            self.debug('post measurement datastore conflict found. Automatically updating the aliquot and step')
-            self.datahub.update_spec(run_spec)
+
+        # conflict = self.datahub.is_conflict(run_spec)
+        # if conflict:
+        #     self.debug('post measurement datastore conflict found. Automatically updating the aliquot and step')
+        #     self.datahub.update_spec(run_spec)
 
         cp = self._current_data_frame
 
@@ -475,9 +476,9 @@ class AutomatedRunPersister(BasePersister):
             self._local_db_save()
 
         # save to a database
-        db = self.datahub.mainstore.db
+        db = self.datahub.get_db('isotopedb')
         if not db or not db.connected:
-            self.warning('No database instanc. Not saving post measurement to primary database')
+            self.warning('No database instance. Not saving post measurement to isotopedb database')
         else:
             with db.session_ctx() as sess:
                 pt = time.time()

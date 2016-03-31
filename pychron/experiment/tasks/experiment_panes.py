@@ -196,12 +196,10 @@ class ExperimentFactoryPane(TraitsDockPane):
                            run_factory_item('aliquot',
                                             width=50),
                            spring),
-                    # HGroup(run_factory_item('experiment_identifier',
-                    #                         label='Experiment ID',
-                    #
-                    #                         editor=ComboboxEditor(name=run_factory_name('experiment_identifiers'))),
-                    #        icon_button_editor(run_factory_name('add_experiment_identifier'), 'add'),
-                    #        enabled_when='0'),
+                    HGroup(run_factory_item('repository_identifier',
+                                            label='Repository ID',
+                                            editor=ComboboxEditor(name=run_factory_name('repository_identifiers'))),
+                           icon_button_editor(run_factory_name('add_repository_identifier'), 'add')),
                     HGroup(run_factory_item('weight',
                                             label='Weight (mg)',
                                             tooltip='(Optional) Enter the weight of the sample in mg. '

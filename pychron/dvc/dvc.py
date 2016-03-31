@@ -398,6 +398,13 @@ class DVC(Loggable):
 
         return progress_loader(ias, func, step=25)
 
+    def get_analysis(self, uuid):
+        with self.db.session_ctx():
+            an = self.db.get_analysis_uuid(uuid)
+            if an:
+                # [rii for ri in refs for rii in ri.record_views]
+                return self.make_analyses(an.record_views)
+
     def make_analyses(self, records, calculate_f_only=False):
         if not records:
             return

@@ -321,12 +321,7 @@ class Experimentor(DVCIrradiationable):
         e = ExperimentFactory(application=self.application,
                               dvc=self.dvc,
                               iso_db_man=self.iso_db_man,
-                              # dvc=self.dvc,
-                              # db=self.dvc.db,
                               default_mass_spectrometer=dms)
-        print 'asdfasdf', e.dvc
-        # if self.iso_db_manager:
-        #     e.db = self.iso_db_manager.db
         return e
 
 # ============= EOF =============================================

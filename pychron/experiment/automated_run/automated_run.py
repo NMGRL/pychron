@@ -748,6 +748,7 @@ class AutomatedRun(Loggable):
             self.collector.data_generator = None
             self.collector.data_writer = None
             self.collector.measurement_script = None
+            self.collector.console_display = None
 
         if self.plot_panel:
             self.plot_panel.info_func = None
@@ -1605,6 +1606,7 @@ anaylsis_type={}
             if plot panel detectors != active detectors  "create"
 
         """
+        self.debug('activate detectors')
 
         if self.plot_panel is None:
             create = True
@@ -1626,6 +1628,8 @@ anaylsis_type={}
 
         p.show_isotope_graph()
 
+        self.debug('clear isotope group')
+
         # for iso in self.arar_age.isotopes:
         self.isotope_group.clear_isotopes()
         self.isotope_group.clear_error_components()
@@ -1637,11 +1641,12 @@ anaylsis_type={}
 
             cb = True
             pid, blanks = self.get_previous_blanks()
-
+            self.debug('setting previous blanks')
             for iso, v in blanks.iteritems():
                 self.isotope_group.set_blank(iso, v)
 
         for d in self._active_detectors:
+            self.debug('setting isotope det={}, iso={}'.format(d.name, d.isotope))
             self.isotope_group.set_isotope(d.isotope, (0, 0),
                                            d.name,
                                            correct_for_blank=cb)
@@ -1652,6 +1657,7 @@ anaylsis_type={}
         for iso, v in baselines.iteritems():
             self.isotope_group.set_baseline(iso, v)
 
+        self.debug('load analysis view')
         p.analysis_view.load(self)
 
     def _add_conditionals(self):
@@ -1995,6 +2001,7 @@ anaylsis_type={}
         m = self.collector
 
         m.trait_set(
+            automated_run=self,
             console_display=self.experiment_executor.console_display,
             measurement_script=script,
             detectors=self._active_detectors,
@@ -2013,7 +2020,6 @@ anaylsis_type={}
             self.plot_panel._ncounts = ncounts
             self.plot_panel.total_counts += ncounts
             from pychron.core.ui.gui import invoke_in_main_thread
-
             invoke_in_main_thread(self._setup_isotope_graph, starttime_offset, color, grpname)
             if grpname == 'sniff':
                 invoke_in_main_thread(self._setup_sniff_graph, starttime_offset, color)

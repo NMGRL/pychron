@@ -140,7 +140,7 @@ class AutomatedRunSpec(HasTraits):
             klass = AirResult
         elif self.analysis_type == 'unknown':
             klass = UnknownResult
-        elif self.analysis_type == 'blank':
+        elif 'blank' in self.analysis_type:
             klass = BlankResult
 
         result = klass()

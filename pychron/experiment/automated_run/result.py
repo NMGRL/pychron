@@ -31,16 +31,20 @@ class AutomatedRunResult(HasTraits):
     tripped_conditional = Instance(AutomatedRunConditional)
 
     def _get_summary(self):
+
+        summary = self._make_header('Summary')
         return '''RUNID= {}
+{}
 {}
 {}
 {}'''.format(self.runid,
              self._intensities(),
              self._tripped_conditional(),
+             summary,
              self._make_summary())
 
     def _make_summary(self):
-        pass
+        return 'No Summary Available'
 
     def _intensities(self):
         def fformat(s, n=5):
@@ -49,7 +53,7 @@ class AutomatedRunResult(HasTraits):
         names = 'Iso.', 'Det.', 'Intensity (fA)', '%Err', 'Intercept (fA)', '%Err', 'Baseline (fA)', '%Err', \
                 'Blank (fA)', '%Err'
 
-        colwidths = 6, 8, 25, 6, 25, 6, 25, 6, 25, 6
+        colwidths = 6, 8, 25, 8, 25, 8, 25, 8, 25, 8
         cols = map('{{:<{}s}}'.format, colwidths)
         colstr = ''.join(cols)
 
@@ -102,8 +106,7 @@ class AirResult(AutomatedRunResult):
 
 class UnknownResult(AutomatedRunResult):
     def _make_summary(self):
-        lines = [self._make_header('Summary'),
-                 'AGE= {}'.format(self.isotope_group.age)]
+        lines = ['AGE= {}'.format(self.isotope_group.age)]
         return '\n'.join(lines)
 
 

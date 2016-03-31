@@ -189,7 +189,7 @@ class MainView(HasTraits):
                 self._load_corrected_values(an, new_list)
 
         elif self.analysis_type in ('air', 'blank_air', 'blank_unknown', 'blank_cocktail'):
-            self._load_air_computed(new_list)
+            self._load_air_computed(an, new_list)
         elif self.analysis_type == 'cocktail':
             self._load_cocktail_computed(new_list)
 
@@ -271,7 +271,7 @@ class MainView(HasTraits):
                              noncorrected_error=std_dev(noncorrected),
                              ic_factor=nominal_value(ic))
 
-    def _load_air_computed(self, new_list):
+    def _load_air_computed(self, an, new_list):
         if new_list:
             c = an.arar_constants
             ratios = [('40Ar/36Ar', 'Ar40/Ar36', nominal_value(c.atm4036)),
@@ -281,9 +281,12 @@ class MainView(HasTraits):
 
         self._update_ratios()
 
-    def _load_cocktail_computed(self, new_list):
+    def _load_cocktail_computed(self, an, new_list):
         if new_list:
-            ratios = [('40Ar/36Ar', 'Ar40/Ar36', 295.5), ('40Ar/39Ar', 'Ar40/Ar39', 1)]
+            c = an.arar_constants
+            ratios = [('40Ar/36Ar', 'Ar40/Ar36', nominal_value(c.atm4036)),
+                      ('40Ar/38Ar', 'Ar40/Ar38', nominal_value(c.atm4038)),
+                      ('40Ar/39Ar', 'Ar40/Ar39', 1)]
             cv = self._make_ratios(ratios)
             self.computed_values = cv
         else:
