@@ -401,8 +401,11 @@ class IsotopicMeasurement(BaseMeasurement):
         if not is_mean:
             reg.set_degree(fit_to_degree(self.fit), refresh=False)
         reg.filter_outliers_dict = self.filter_outliers_dict
-        self._regressor = reg
+
+        reg.trait_set(xs=self.offset_xs, ys=self.ys)
         reg.calculate()
+
+        self._regressor = reg
         return reg
 
     # @cached_property

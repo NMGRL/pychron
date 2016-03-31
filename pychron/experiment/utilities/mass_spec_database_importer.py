@@ -228,11 +228,10 @@ class MassSpecDatabaseImporter(Loggable):
                     sess.commit()
                     return ret
                 except Exception, e:
-                    self.debug('Mass Spec save exception. {}'.format(e))
+                    import traceback
+                    tb = traceback.format_exc()
+                    self.debug('Mass Spec save exception. {}\n'.format(e, tb))
                     if i == 2:
-                        import traceback
-
-                        tb = traceback.format_exc()
                         self.message('Could not save spec.runid={} rid={} '
                                      'to Mass Spec database.\n {}'.format(spec.runid, rid, tb))
                     else:

@@ -136,8 +136,8 @@ class IrradiationEditorPane(TraitsDockPane):
                                HGroup(sgrp, jgrp),
                                ngrp,
                                project_grp),
-                        sample_grp),
-                 style_sheet=load_stylesheet('labnumber_entry'))
+                        sample_grp,
+                        style_sheet=load_stylesheet('labnumber_entry')))
         return v
 
 

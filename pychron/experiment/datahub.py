@@ -87,6 +87,13 @@ class Datahub(Loggable):
 
         self.stores['dvc'] = self.mainstore
 
+    def get_db(self,key):
+        try:
+            store = self.stores[key]
+            return store.db
+        except KeyError:
+            pass
+
     def store_connect(self, key):
 
         enabled = getattr(self, '{}_enabled'.format(key))

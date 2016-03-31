@@ -176,8 +176,9 @@ class UnknownNode(DataNode):
         db = self.dvc.db
         with db.session_ctx():
             ans = db.get_last_nhours_analyses(n)
-            records = [ri for ai in ans for ri in ai.record_views]
-            self.unknowns = self.dvc.make_analyses(records)
+            if ans:
+                records = [ri for ai in ans for ri in ai.record_views]
+                self.unknowns = self.dvc.make_analyses(records)
 
     def run(self, state):
         if not self.unknowns and not state.unknowns:

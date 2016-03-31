@@ -79,7 +79,8 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
     # ===========================================================================
     # widths
     # ===========================================================================
-
+    result_width = Int(25)
+    repository_identifier_width = Int(90)
     labnumber_width = Int(80)
     aliquot_width = Int(60)
     sample_width = Int(50)
@@ -178,7 +179,8 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
     def get_menu(self, obj, trait, row, column):
         item = getattr(obj, trait)[row]
         if item.state in ('success', 'truncated'):
-            success = MenuManager(Action(name='Summary', action='show_summary'))
+            success = MenuManager(Action(name='Summary', action='show_summary'),
+                                  Action(name='Evolutions', action='show_evolutions'))
             return success
 
     # ============ non cell editable ============

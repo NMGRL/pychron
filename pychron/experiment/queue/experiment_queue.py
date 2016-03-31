@@ -37,6 +37,7 @@ from pychron.experiment.utilities.human_error_checker import HumanErrorChecker
 from pychron.experiment.utilities.uv_human_error_checker import UVHumanErrorChecker
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.paths import paths
+from pychron.processing.analyses.analysis import show_evolutions_factory, CloseHandler
 
 
 class RepeatRunBlockView(HasTraits):
@@ -206,6 +207,27 @@ class ExperimentQueue(BaseExperimentQueue):
         if self.automated_runs:
             self.selected = self.automated_runs[idx:idx + 1]
 
+    def show_evolutions(self):
+        if self.executed_selected:
+            # from pychron.core.ui.text_editor import myTextEditor
+            # v = View(UItem('summary', style='custom', editor=myTextEditor(editable=False,
+            #                                                               fontsize=14)),
+            #          title='Summary',
+            #          width=900,
+            #          kind='livemodal',
+            #          resizable=True)
+            spec = self.executed_selected[0]
+
+            dvc = self.application.get_service('pychron.dvc.dvc.DVC')
+            if dvc:
+                analysis = dvc.get_analysis(spec.uuid)
+                if analysis:
+                    for ai in analysis:
+                        ai.load_raw_data()
+                        g = show_evolutions_factory(ai.record_id, ai.isotopes)
+                        if g:
+                            open_view(g, handler=CloseHandler())
+
     def show_summary(self):
         """
         show a summary view for ``spec`` using its ``result``
@@ -216,8 +238,8 @@ class ExperimentQueue(BaseExperimentQueue):
             v = View(UItem('summary', style='custom', editor=myTextEditor(editable=False,
                                                                           fontsize=14)),
                      title='Summary',
-                     width=700,
-                     livemodal=True,
+                     width=900,
+                     kind='livemodal',
                      resizable=True)
             open_view(self.executed_selected[0].result, view=v)
 

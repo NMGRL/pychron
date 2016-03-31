@@ -218,11 +218,12 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         return self._retrieve_item(AnalysesTable, rid, key='RID')
 
     def get_analysis(self, value, aliquot=None, step=None, **kw):
-        if value.startswith('a'):
-            value = -2
-        elif value.startswith('ba'):
-            value = -1
-        #        key = 'RID'
+        if isinstance(value, str):
+            if value.startswith('a'):
+                value = -2
+            elif value.startswith('ba'):
+                value = -1
+
         key = 'IrradPosition'
         if aliquot:
             if step:

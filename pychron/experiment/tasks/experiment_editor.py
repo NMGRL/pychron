@@ -58,6 +58,9 @@ class ExperimentEditorHandler(TabularEditorHandler):
     def show_summary(self, info, obj):
         obj.show_summary()
 
+    def show_evolutions(self, info, obj):
+        obj.show_evolutions()
+
 
 class ExperimentEditor(BaseTraitsEditor):
     queue = Instance(ExperimentQueue, ())  # Any
