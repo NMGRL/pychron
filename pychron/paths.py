@@ -233,6 +233,7 @@ class Paths(object):
     blanks_template = None
     iso_evo_template = None
     ideogram_template = None
+    flux_template = None
     vertical_flux_template = None
     csv_ideogram_template = None
     spectrum_template = None
@@ -459,6 +460,7 @@ class Paths(object):
         self.isochron_template = join(self.pipeline_template_dir, 'isochron.yaml')
         self.inverse_isochron_template = join(self.pipeline_template_dir, 'inverse_isochron.yaml')
         self.vertical_flux_template = join(self.pipeline_template_dir, 'vertical_flux.yaml')
+        self.flux_template = join(self.pipeline_template_dir, 'flux.yaml')
         self.analysis_table_template = join(self.pipeline_template_dir, 'analysis_table.yaml')
         self.interpreted_age_table_template = join(self.pipeline_template_dir, 'interpreted_age_table.yaml')
         self.auto_ideogram_template = join(self.pipeline_template_dir, 'auto_ideogram.yaml')

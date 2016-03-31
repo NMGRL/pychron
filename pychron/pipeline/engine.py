@@ -548,12 +548,14 @@ class PipelineEngine(Loggable):
     # private
     def _set_template(self, name):
         self.reset_event = True
-        name = name.replace(' ', '_').lower()
-
-        path = os.path.join(paths.pipeline_template_dir, add_extension(name, '.yaml'))
+        pname = name.replace(' ', '_').lower()
+        pname = add_extension(pname, '.yaml')
+        path = os.path.join(paths.pipeline_template_dir, pname)
         if not os.path.isfile(path):
-            self.warning('Invalid template name. {} does not exist'.format(path))
-            return
+            path = os.path.join(paths.user_pipeline_template_dir, pname)
+            if not os.path.isfile(path):
+                self.warning('Invalid template name "{}". {} does not exist'.format(name, path))
+                return
 
         pt = PipelineTemplate(name, path)
         pt.render(self.application, self.pipeline,

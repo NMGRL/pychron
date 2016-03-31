@@ -386,13 +386,16 @@ ICFACTOR = """
       denominator: CDD
       standard_ratio: 295.5
       analysis_type: Air
+- klass: ReviewNode
 - klass: ICFactorPersistNode
 """
 
 ISOEVO = """
 - klass: UnknownNode
 - klass: FitIsotopeEvolutionNode
+- klass: ReviewNode
 - klass: IsotopeEvolutionPersistNode
+  use_editor: False
 """
 
 BLANKS = """
@@ -402,6 +405,7 @@ BLANKS = """
   analysis_type: Blank Unknown
 - klass: ReferenceNode
 - klass: FitBlanksNode
+- klass: ReviewNode
 - klass: BlanksPersistNode
 """
 
@@ -447,6 +451,21 @@ AUTO_IDEOGRAM = """- klass: ListenUnknownNode
 
 SERIES = """- klass: UnknownNode
 - klass: SeriesNode
+"""
+
+FLUX = """
+- klass: FindFluxMonitorsNode
+#  irradiation: NM-274
+#  level: E
+- klass: FluxMonitorsNode
+#- klass: GroupingNode
+#  key: Identifier
+#- klass: IdeogramNode
+#- klass: TableNode
+#- klass: ReviewNode
+- klass: FitFluxNode
+- klass: ReviewNode
+- klass: FluxPersistNode
 """
 # SYSTEM_HEALTH = '''
 # values:
