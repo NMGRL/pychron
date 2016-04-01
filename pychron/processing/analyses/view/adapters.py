@@ -349,7 +349,7 @@ class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
                                   action='show_isotope_evolution_with_baseline'),
                            Action(name='Show Baseline',
                                   action='show_baseline'),
-                           Action(name='Show Sniff',
+                           Action(name='Show Equilibration',
                                   action='show_sniff'),
                            Action(name='Show All',
                                   action='show_all'))

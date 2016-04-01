@@ -68,7 +68,7 @@ class CloseHandler(Handler):
         info.ui.control.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
 
 
-def show_evolutions_factory(record_id, isotopes, show_evo=True, show_sniff=False, show_baseline=False):
+def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibration=False, show_baseline=False):
     if WINDOW_CNT > 20:
         information(None, 'You have too many Isotope Evolution windows open. Close some before proceeding')
         return
@@ -99,7 +99,7 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_sniff=False
         g.add_axis_tool(p, p.y_axis)
 
         p.y_axis.title_spacing = 50
-        if show_sniff:
+        if show_equilibration:
             sniff = iso.sniff
             g.new_series(sniff.xs, sniff.ys,
                          type='scatter',

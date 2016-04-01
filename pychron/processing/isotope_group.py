@@ -33,6 +33,9 @@ class IsotopeGroup(Loggable):
     isotope_keys = Property
     conditional_modifier = None
 
+    def iter_isotopes(self):
+        return (self.isotopes[k] for k in self.isotope_keys)
+
     def clear_isotopes(self):
         for iso in self.isotopes:
             self.isotopes[iso] = Isotope(name=iso)

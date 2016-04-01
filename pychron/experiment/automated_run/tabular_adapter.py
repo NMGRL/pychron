@@ -179,8 +179,24 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
     def get_menu(self, obj, trait, row, column):
         item = getattr(obj, trait)[row]
         if item.state in ('success', 'truncated'):
+
+            evo_actions = [Action(name='Show All', action='show_evolutions'),
+                           Action(name='Show All w/Equilibration', action='show_evolutions_w_eq'),
+                           Action(name='Show All w/Equilibration+Baseline', action='show_evolutions_w_eq_bs'),
+                           Action(name='Show All w/Baseline', action='show_evolutions_w_bs')]
+            for iso in item.result.isotope_group.iter_isotopes():
+
+                actions = [Action(name='Signal', action='show_evolution_{}'.format(iso.name)),
+                           Action(name='Equilibration/Signal', action='show_evolution_eq_{}'.format(iso.name)),
+                           Action(name='Equilibration/Signal/Baseline', action='show_evolution_eq_bs_{}'.format(iso.name)),
+                           Action(name='Signal/Baseline', action='show_evolution_bs_{}'.format(iso.name))]
+                m = MenuManager(*actions, name=iso.name)
+                evo_actions.append(m)
+
+            evo = MenuManager(*evo_actions, name='Evolutions')
+
             success = MenuManager(Action(name='Summary', action='show_summary'),
-                                  Action(name='Evolutions', action='show_evolutions'))
+                                  evo)
             return success
 
     # ============ non cell editable ============

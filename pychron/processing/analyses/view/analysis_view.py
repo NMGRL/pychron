@@ -38,7 +38,7 @@ class AnalysisViewHandler(Handler):
         obj.show_iso_evolutions()
 
     def show_isotope_evolution_with_sniff(self, uiinfo, obj):
-        obj.show_iso_evolutions(show_sniff=True)
+        obj.show_iso_evolutions(show_equilibration=True)
 
     def show_isotope_evolution_with_baseline(self, uiinfo, obj):
         obj.show_iso_evolutions(show_baseline=True)
@@ -47,10 +47,10 @@ class AnalysisViewHandler(Handler):
         obj.show_iso_evolutions(show_evo=False, show_baseline=True)
 
     def show_sniff(self, uiinfo, obj):
-        obj.show_iso_evolutions(show_evo=False, show_sniff=True)
+        obj.show_iso_evolutions(show_evo=False, show_equilibration=True)
 
     def show_all(self, uiinfo, obj):
-        obj.show_iso_evolutions(show_evo=True, show_sniff=True, show_baseline=True)
+        obj.show_iso_evolutions(show_evo=True, show_equilibration=True, show_baseline=True)
 
 
 class AnalysisView(HasTraits):
@@ -81,11 +81,11 @@ class AnalysisView(HasTraits):
     intermediate_adapter = Instance(IntermediateTabularAdapter, ())
     show_intermediate = Bool(True)
 
-    def show_iso_evolutions(self, show_evo=True, show_sniff=False, show_baseline=False):
+    def show_iso_evolutions(self, show_evo=True, show_equilibration=False, show_baseline=False):
         isotopes = self.selected
 
         self.model.show_isotope_evolutions(isotopes, show_evo=show_evo,
-                                           show_sniff=show_sniff, show_baseline=show_baseline)
+                                           show_equilibration=show_equilibration, show_baseline=show_baseline)
 
     def update_fontsize(self, view, size):
         if 'main' in view:

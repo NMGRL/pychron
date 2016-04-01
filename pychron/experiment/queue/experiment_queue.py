@@ -83,6 +83,7 @@ class ExperimentQueue(BaseExperimentQueue):
 
     refresh_blocks_needed = Event
     _auto_save_time = 0
+    _temp_analysis = None
 
     def auto_save(self):
         if self._auto_save_time and time.time() - self._auto_save_time < 0.25:
@@ -207,23 +208,24 @@ class ExperimentQueue(BaseExperimentQueue):
         if self.automated_runs:
             self.selected = self.automated_runs[idx:idx + 1]
 
-    def show_evolutions(self):
+    def show_evolutions(self, isotopes=None, **kw):
         if self.executed_selected:
-            # from pychron.core.ui.text_editor import myTextEditor
-            # v = View(UItem('summary', style='custom', editor=myTextEditor(editable=False,
-            #                                                               fontsize=14)),
-            #          title='Summary',
-            #          width=900,
-            #          kind='livemodal',
-            #          resizable=True)
-            spec = self.executed_selected[0]
-
             dvc = self.application.get_service('pychron.dvc.dvc.DVC')
             if dvc:
-                analysis = dvc.get_analysis(spec.uuid)
+                spec = self.executed_selected[0]
+
+                analysis = None
+                if self._temp_analysis and spec.uuid == self._temp_analysis[0].uuid:
+                    analysis = self._temp_analysis
+
+                if analysis is None:
+                    analysis = dvc.get_analysis(spec.uuid)
+
                 if analysis:
                     for ai in analysis:
-                        ai.show_isotope_evolutions()
+                        ai.show_isotope_evolutions(isotopes=isotopes, **kw)
+
+                self._temp_analysis = analysis
 
     def show_summary(self):
         """
