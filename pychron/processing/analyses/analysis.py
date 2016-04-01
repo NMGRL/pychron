@@ -274,9 +274,11 @@ class Analysis(ArArAge):
         #
         # self.temp_status = 1 if omit else 0
 
-    def show_isotope_evolutions(self, isotopes, **kw):
+    def show_isotope_evolutions(self, isotopes=None, **kw):
         if isotopes and isinstance(isotopes[0], (str, unicode)):
             isotopes = [self.isotopes[i] for i in isotopes]
+        else:
+            isotopes = self.isotopes.values()
 
         keys = [k.name for k in isotopes]
 

@@ -223,10 +223,7 @@ class ExperimentQueue(BaseExperimentQueue):
                 analysis = dvc.get_analysis(spec.uuid)
                 if analysis:
                     for ai in analysis:
-                        ai.load_raw_data()
-                        g = show_evolutions_factory(ai.record_id, ai.isotopes)
-                        if g:
-                            open_view(g, handler=CloseHandler())
+                        ai.show_isotope_evolutions()
 
     def show_summary(self):
         """
