@@ -47,31 +47,30 @@ class AutomatedRunResult(HasTraits):
         return 'No Summary Available'
 
     def _intensities(self):
-        def fformat(s, n=5):
-            return '{{:0.{}f}}'.format(n).format(s)
+        lines = []
+        if self.isotope_group:
+            def fformat(s, n=5):
+                return '{{:0.{}f}}'.format(n).format(s)
 
-        names = 'Iso.', 'Det.', 'Intensity (fA)', '%Err', 'Intercept (fA)', '%Err', 'Baseline (fA)', '%Err', \
-                'Blank (fA)', '%Err'
+            names = 'Iso.', 'Det.', 'Intensity (fA)', '%Err', 'Intercept (fA)', '%Err', 'Baseline (fA)', '%Err', \
+                    'Blank (fA)', '%Err'
 
-        colwidths = 6, 8, 25, 8, 25, 8, 25, 8, 25, 8
-        cols = map('{{:<{}s}}'.format, colwidths)
-        colstr = ''.join(cols)
+            colwidths = 6, 8, 25, 8, 25, 8, 25, 8, 25, 8
+            cols = map('{{:<{}s}}'.format, colwidths)
+            colstr = ''.join(cols)
 
-        divider = ''.join(map(lambda x: '{} '.format('-' * (x - 1)), colwidths))
-        table_header = colstr.format(*names)
-        lines = [self._make_header('Isotopes'),
-                 table_header,
-                 divider
-                 ]
-        for k in self.isotope_group.isotope_keys:
-            iso = self.isotope_group.isotopes[k]
-            intensity = iso.get_intensity()
-            line = colstr.format(k, iso.detector,
-                                 fformat(intensity), uformat_percent_error(intensity),
-                                 fformat(iso.uvalue), uformat_percent_error(iso.uvalue),
-                                 fformat(iso.baseline.uvalue), uformat_percent_error(iso.baseline.uvalue),
-                                 fformat(iso.blank.uvalue), uformat_percent_error(iso.blank.uvalue), )
-            lines.append(line)
+            divider = ''.join(map(lambda x: '{} '.format('-' * (x - 1)), colwidths))
+            table_header = colstr.format(*names)
+            lines = [self._make_header('Isotopes'), table_header, divider]
+            for k in self.isotope_group.isotope_keys:
+                iso = self.isotope_group.isotopes[k]
+                intensity = iso.get_intensity()
+                line = colstr.format(k, iso.detector,
+                                     fformat(intensity), uformat_percent_error(intensity),
+                                     fformat(iso.uvalue), uformat_percent_error(iso.uvalue),
+                                     fformat(iso.baseline.uvalue), uformat_percent_error(iso.baseline.uvalue),
+                                     fformat(iso.blank.uvalue), uformat_percent_error(iso.blank.uvalue), )
+                lines.append(line)
         return self._make_lines(lines)
 
     def _air_ratio(self):

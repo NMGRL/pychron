@@ -116,7 +116,8 @@ class ExperimentEditor(BaseTraitsEditor):
             self.queue = queue
 
     def queue_factory(self, **kw):
-        return ExperimentQueue(**kw)
+        print 'application', self.application
+        return ExperimentQueue(application=self.application, **kw)
 
     def save(self, path, queues=None):
         if queues is None:

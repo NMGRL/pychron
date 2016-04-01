@@ -126,7 +126,7 @@ class ExperimentEditorTask(EditorTask):
 
             dnames = None
             spec = self.application.get_service(
-                    'pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager')
+                'pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager')
             if spec:
                 dnames = spec.spectrometer.detector_names
 
@@ -163,7 +163,7 @@ class ExperimentEditorTask(EditorTask):
             if manager.load():
                 self.manager.experiment_factory.activate(load_persistence=True)
 
-                editor = ExperimentEditor()
+                editor = ExperimentEditor(application=self.application)
                 editor.setup_tabular_adapters(self.bgcolor, self.even_bgcolor, self._assemble_state_colors())
                 editor.new_queue()
 
@@ -332,12 +332,14 @@ class ExperimentEditorTask(EditorTask):
 
             klass = UVExperimentEditor if is_uv else ExperimentEditor
             editor = klass(path=path,
+                           application=self.application,
                            automated_runs_editable=self.automated_runs_editable)
             editor.setup_tabular_adapters(self.bgcolor, self.even_bgcolor, self._assemble_state_colors())
             editor.new_queue(txt)
             self._open_editor(editor)
         else:
             self.debug('{} already open. using existing editor'.format(name))
+            editor.application = self.application
             self.activate_editor(editor)
 
         # loading queue editor set dirty
@@ -769,21 +771,21 @@ class ExperimentEditorTask(EditorTask):
 
     def _default_layout_default(self):
         return TaskLayout(
-                left=Splitter(
-                        PaneItem('pychron.wait', height=100),
-                        Tabbed(
-                                PaneItem('pychron.experiment.factory'),
-                                PaneItem('pychron.experiment.isotope_evolution')),
-                        orientation='vertical'),
-                right=Splitter(
-                        Tabbed(
-                                PaneItem('pychron.experiment.stats'),
-                                PaneItem('pychron.console', height=425),
-                                PaneItem('pychron.experiment.explanation', height=425),
-                                PaneItem('pychron.experiment.connection_status')),
-                        PaneItem('pychron.extraction_line.canvas_dock'),
-                        orientation='vertical'),
-                top=PaneItem('pychron.experiment.controls'))
+            left=Splitter(
+                PaneItem('pychron.wait', height=100),
+                Tabbed(
+                    PaneItem('pychron.experiment.factory'),
+                    PaneItem('pychron.experiment.isotope_evolution')),
+                orientation='vertical'),
+            right=Splitter(
+                Tabbed(
+                    PaneItem('pychron.experiment.stats'),
+                    PaneItem('pychron.console', height=425),
+                    PaneItem('pychron.experiment.explanation', height=425),
+                    PaneItem('pychron.experiment.connection_status')),
+                PaneItem('pychron.extraction_line.canvas_dock'),
+                orientation='vertical'),
+            top=PaneItem('pychron.experiment.controls'))
 
         # ============= EOF =============================================
         # def _use_syslogger_changed(self):

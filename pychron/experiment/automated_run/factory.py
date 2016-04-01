@@ -537,19 +537,23 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         il = ''
         if ipos is not None:
             level = ipos.level
-            irrad = level.irradiation
-            hole = ipos.position
+            if level:
+                irrad = level.irradiation
+                hole = ipos.position
+                irradname = irrad.name
+                self.irrad_hole = str(hole)
+                self.irrad_level = irrad_level = str(level.name)
 
-            self.irrad_hole = str(hole)
-            self.irrad_level = str(level.name)
+                il = '{} {}:{}'.format(irrad.name, level.name, hole)
+            else:
+                irradname = ''
+                irrad_level = ''
 
             self._no_clear_labnumber = True
-            self.selected_irradiation = irrad.name
-            self.selected_level = self.irrad_level
+            self.selected_irradiation = irradname
+            self.selected_level = irrad_level
             self._no_clear_labnumber = False
 
-            # self.trait_setq(selected_level=self.irrad_level, selected_irradiation=irrad.name)
-            il = '{} {}:{}'.format(irrad.name, level.name, hole)
         return il
 
     def _new_run(self, excludes=None, **kw):
@@ -1202,7 +1206,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                 db = self.get_database()
                 j = db.get_flux_value(identifier, attr)
 
-        return j
+        return j or 0
 
     def _set_flux(self, a):
         if self.labnumber and a is not None:

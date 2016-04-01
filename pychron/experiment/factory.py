@@ -33,7 +33,7 @@ from pychron.consumer_mixin import ConsumerMixin
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 
 
-class ExperimentFactory(DVCAble, ConsumerMixin):
+class ExperimentFactory(DVCAble): #, ConsumerMixin):
     run_factory = Instance(AutomatedRunFactory)
     queue_factory = Instance(ExperimentQueueFactory)
 
@@ -73,8 +73,9 @@ class ExperimentFactory(DVCAble, ConsumerMixin):
     # can_edit_scripts = Bool(True)
 
     def __init__(self, *args, **kw):
-        super(ExperimentFactory, self).__init__(*args, **kw)
-        self.setup_consumer(self._add_run, main=True)
+        super(ExperimentFactory, self).__init__(auto_setup=False, *args, **kw)
+        # self.setup_consumer(self._add_run, main=True)
+        pass
 
     def undo(self):
         self.info('undo')
@@ -116,13 +117,13 @@ class ExperimentFactory(DVCAble, ConsumerMixin):
                 setattr(eq, a, v)
 
     def activate(self, load_persistence=True):
-        self.start_consuming()
+        # self.start_consuming()
         self._load_persistence_flag = load_persistence
         self.queue_factory.activate(load_persistence)
         self.run_factory.activate(load_persistence)
 
     def destroy(self):
-        self.stop_consuming()
+        # self.stop_consuming()
         self.run_factory.deactivate()
         self.queue_factory.deactivate()
 
@@ -208,7 +209,8 @@ class ExperimentFactory(DVCAble, ConsumerMixin):
             use consumermixin.add_consumable instead of frequency limiting
         """
         self.debug('add run fired')
-        self.add_consumable(5)
+        # self.add_consumable(5)
+        do_later(self._add_run)
 
     def _edit_mode_button_fired(self):
         self.run_factory.edit_mode = not self.run_factory.edit_mode
