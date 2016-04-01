@@ -541,10 +541,10 @@ class MetaRepo(GitRepoManager):
 
             pos = next((p for p in positions if p['position'] == position), None)
             if pos:
-                j, e = pos['j'], pos['j_err']
+                j, e = pos.get('j', 0), pos.get('j_err', 0)
                 dc = pos.get('decay_constants')
                 if dc:
-                    lambda_k = ufloat(dc['lambda_k_total'], dc['lambda_k_total_error'])
+                    lambda_k = ufloat(dc.get('lambda_k_total', 0), dc.get('lambda_k_total_error', 0))
 
         return ufloat(j, e), lambda_k
 

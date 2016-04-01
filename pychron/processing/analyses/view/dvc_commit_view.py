@@ -113,6 +113,16 @@ class DiffView(HasTraits):
     def _handle_filter_values(self):
         self._filter_values()
 
+    def _diff_value_factory(self, aj, bj, t, k, name):
+        a = aj[name]
+        b = bj[name]
+        if isinstance(a, dict):
+            a = a[k]
+            b = b[k]
+
+        dv = DiffValue(t, a, b)
+        return dv
+
     def _filter_values(self):
         if self.only_show_diff:
             self.values = [v for v in self.ovalues if not v.match or v.name in ('ID', 'Date')]
@@ -143,9 +153,7 @@ class BlanksDiffView(DiffView):
     base_title = 'Blanks'
 
     def _load_values(self, lh, rh, ld, rd, aj, bj):
-        # print aj
-        # print bj
-        blanks = [DiffValue(t, aj[name][k], bj[name][k])
+        blanks = [self._diff_value_factory(aj, bj, t, k, name)
                   for name in aj.keys()
                   for t, k in ((name, 'value'), (PLUSMINUS_ONE_SIGMA, 'error'), ('Fit', 'fit'))]
 

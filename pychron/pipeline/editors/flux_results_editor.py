@@ -475,7 +475,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
     def _update_graph_metadata(self, obj, name, old, new):
         # print obj, name, old, new
         # print obj.metadata
-        sel = self._filter_metadata_changes(obj, self._recalculate_means, self.analyses)
+        sel = self._filter_metadata_changes(obj, self.analyses, self._recalculate_means)
 
     def _recalculate_means(self, sel):
         identifier = None

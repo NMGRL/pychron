@@ -1396,7 +1396,7 @@ class Graph(ContextMenuMixin):
                     data = plot.data
                     for di in data.list_data():
                         if 'y' in di:
-                            ya = sorted(data.get_data[di])
+                            ya = sorted(data.get_data(di))
 
                             i = 0
                             try:
