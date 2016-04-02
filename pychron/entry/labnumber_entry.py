@@ -602,7 +602,7 @@ THIS CHANGE CANNOT BE UNDONE')
         ie = self._level_editor
         if ie is None:
             self._level_editor = ie = LevelEditor(db=self.dvc.db,
-                                                  repo=self.dvc.meta_repo,
+                                                  meta_repo=self.dvc.meta_repo,
                                                   trays=self.trays)
 
         ie.trait_set(**kw)

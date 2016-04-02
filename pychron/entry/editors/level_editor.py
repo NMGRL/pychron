@@ -30,6 +30,7 @@ from pychron.canvas.canvas2D.irradiation_canvas import IrradiationCanvas
 from pychron.canvas.utils import load_holder_canvas, iter_geom
 from pychron.core.helpers.logger_setup import logging_setup
 from pychron.database.defaults import load_irradiation_map, parse_irradiation_tray_map
+from pychron.dvc.meta_repo import MetaRepo
 from pychron.entry.editors.base_editor import ModelView
 from pychron.entry.editors.production import IrradiationProduction
 from pychron.envisage.icon_button_editor import icon_button_editor
@@ -130,6 +131,8 @@ class LevelEditor(Loggable):
     add_production_button = Button
     edit_production_button = Button
     add_tray_button = Button
+
+    meta_repo = Instance(MetaRepo)
 
     def edit(self):
         self._load_local_productions()
@@ -336,9 +339,9 @@ class LevelEditor(Loggable):
 
     def _selected_tray_changed(self):
         with self.db.session_ctx():
-            holder = self.db.get_irradiation_holder(self.selected_tray)
-            if holder:
-                load_holder_canvas(self.canvas, holder.geometry)
+            holes = self.meta_repo.get_irradiation_holder_holes(self.selected_tray)
+            if holes:
+                load_holder_canvas(self.canvas, holes)
 
     def _add_tray_button_fired(self):
         dlg = FileDialog(action='open', default_directory=paths.irradiation_tray_maps_dir)
@@ -359,7 +362,7 @@ if __name__ == '__main__':
 
     db = DVCDatabase(kind='sqlite', path='/Users/ross/Programming/test3.sqlite')
     db.connect()
-    from pychron.dvc.meta_repo import MetaRepo
+    # from pychron.dvc.meta_repo import MetaRepo
 
     mr = MetaRepo()
     mr.open_repo(paths.meta_root)

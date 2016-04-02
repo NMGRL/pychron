@@ -260,7 +260,7 @@ class BaseOptions(HasTraits):
 class FigureOptions(BaseOptions):
     bgcolor = Color
     plot_bgcolor = Color
-    plot_spacing = Range(0, 100)
+    plot_spacing = Range(0, 50)
     padding_left = Int(100)
     padding_right = Int(100)
     padding_top = Int(100)

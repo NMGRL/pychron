@@ -29,7 +29,7 @@ class SeriesPanel(FigurePanel):
     _figure_klass = Series
     _graph_klass = AnalysisStackedRegressionGraph
     equi_stack = True
-    plot_spacing = 5
+    # plot_spacing = 5
     use_previous_limits = False
 
     def _make_graph_hook(self, g):

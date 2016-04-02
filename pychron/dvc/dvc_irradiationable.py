@@ -77,7 +77,7 @@ class DVCIrradiationable(DVCAble):
             with db.session_ctx():
                 irrad = db.get_irradiation(self.irradiation)
                 if irrad:
-                    names = [li.name for li in irrad.levels]
+                    names = sorted([li.name for li in irrad.levels])
                     if names:
                         self.level = names[0]
                     return names
