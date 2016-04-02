@@ -35,6 +35,7 @@ from pychron.core.progress import open_progress
 from pychron.envisage.view_util import open_view
 from pychron.git_archive.diff_view import DiffView, DiffModel
 from pychron.git_archive.merge_view import MergeModel, MergeView
+from pychron.git_archive.utils import get_head_commit
 from pychron.git_archive.views import NewBranchView
 from pychron.loggable import Loggable
 from pychron.git_archive.commit import Commit
@@ -328,6 +329,9 @@ class GitRepoManager(Loggable):
         #
         # return index, patches
         #
+
+    def get_head_object(self):
+        return get_head_commit(self._repo)
 
     def get_head(self, commit=True, hexsha=True):
         head = self._repo

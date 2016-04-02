@@ -190,7 +190,7 @@ class DVCPersister(BasePersister):
                 self.active_repository.smart_pull(accept_their=True)
 
                 # commit files
-                self.active_repository.commit('added analysis {}'.format(self.per_spec.run_spec.runid))
+                self.active_repository.commit('<COLLECTION>')
                 self.active_repository.push()
                 # update meta
                 self.dvc.meta_pull(accept_our=True)
