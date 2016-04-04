@@ -154,5 +154,5 @@ def load_irradiation_map(db, p, name, overwrite_geometry=False):
             if overwrite_geometry or not h.geometry:
                 h.geometry = blob
         except Exception, e:
-            print p, name, e
+            print 'load irradiation map', p, name, e
             db.sess.rollback()

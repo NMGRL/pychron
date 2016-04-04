@@ -243,7 +243,7 @@ class Video(Image):
         cap = self.cap
         if globalv.video_test:
             p = globalv.video_test_path
-            self.load(p, swap_rb=False)
+            self.load(p, swap_rb=True)
 
             f = self.source_frame
             return f

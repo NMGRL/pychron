@@ -15,9 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.tasks.api import IEditor, IEditorAreaPane
 from pyface.tasks.task_layout import PaneItem, Splitter
 from traits.api import Property, Instance
-from pyface.tasks.api import IEditor, IEditorAreaPane
+
 # ============= standard library imports ========================
 import os
 # ============= local library imports  ==========================
@@ -97,8 +98,9 @@ class BaseEditorTask(BaseManagerTask):
             do a save as
         """
         if self.active_editor:
-            if self.active_editor.path:
-                path = self.active_editor.path
+            if not path:
+                if self.active_editor.path:
+                    path = self.active_editor.path
 
             if not path:
                 path = self.save_file_dialog()
@@ -112,12 +114,20 @@ class BaseEditorTask(BaseManagerTask):
         pass
 
     def save_as(self):
-        path = self.save_file_dialog()
+        kw = {}
+        df = self._generate_default_filename()
+        if df:
+            kw['default_filename'] = df
+        path = self.save_file_dialog(**kw)
         if path:
             if self._save_file(path):
                 self.active_editor.path = path
                 self.active_editor.dirty = False
                 return True
+
+    # private
+    def _generate_default_filename(self):
+        return
 
     def _save_file(self, path):
         pass
@@ -137,26 +147,15 @@ class BaseEditorTask(BaseManagerTask):
             if activate:
                 self.editor_area.activate_editor(editor)
 
-            # ===============================================================================
-            # property get/set
-            # ===============================================================================
-
     def _get_active_editor(self):
         if self.editor_area is not None:
             return self.editor_area.active_editor
 
         return None
 
-    #     def _confirmation(self, message=''):
-    #         dialog = ConfirmationDialog(parent=self.window.control,
-    #                                     message=message, cancel=True,
-    #                                     default=CANCEL, title='Save Changes?')
-    #         return dialog.open()
-
     def _prompt_for_save(self):
         if self.editor_area is None:
             return True
-            #return self._handle_prompt_for_save()
 
         dirty_editors = dict([(editor.name, editor)
                               for editor in self.editor_area.editors
@@ -171,8 +170,6 @@ class BaseEditorTask(BaseManagerTask):
                 editor.save(editor.path)
 
         return ret
-
-        #### Trait change handlers ################################################
 
 
 class EditorTask(BaseExtractionLineTask, BaseEditorTask):

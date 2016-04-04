@@ -58,8 +58,12 @@ class LabspyPreferencesPane(PreferencesPane):
                                        label='Status',
                                        weight='bold',
                                        color_name='_connected_color'))
-        csgrp = VGroup(Item('use_connection_status'),
-                       Item('connection_status_period', enabled_when='use_connection_status'))
+        csgrp = VGroup(Item('use_connection_status', label='Use Connection Status',
+                            tooltip='Enable connection status checking'),
+                       Item('connection_status_period',
+                            label='Connection Status Period (s)',
+                            tooltip='Check connection status every X seconds',
+                            enabled_when='use_connection_status'))
 
         v = View(VGroup(Item('name'),
                         Item('host'),

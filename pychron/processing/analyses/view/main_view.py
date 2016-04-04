@@ -263,7 +263,9 @@ class MainView(HasTraits):
 
     def _load_air_computed(self, an, new_list):
         if new_list:
-            ratios = [('40Ar/36Ar', 'Ar40/Ar36', 295.5), ('40Ar/38Ar', 'Ar40/Ar38', 1)]
+            c = an.arar_constants
+            ratios = [('40Ar/36Ar', 'Ar40/Ar36', nominal_value(c.atm4036)),
+                      ('40Ar/38Ar', 'Ar40/Ar38', nominal_value(c.atm4038))]
             cv = self._make_ratios(ratios)
             self.computed_values = cv
 

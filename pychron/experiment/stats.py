@@ -97,6 +97,8 @@ class ExperimentStats(Loggable):
     run_elapsed = Property(depends_on='_run_elapsed')
     _run_elapsed = Float
 
+    remaining = Property(depends_on='_elapsed, _total_time')
+
     nruns = Int
     nruns_finished = Int
     etf = String
@@ -118,6 +120,7 @@ class ExperimentStats(Loggable):
     clock = Instance(PieClockModel, ())
     duration_tracker = Instance(AutomatedRunDurationTracker, ())
     _run_start = 0
+
     # experiment_queue = Any
 
     def calculate_duration(self, runs=None):
@@ -131,20 +134,102 @@ class ExperimentStats(Loggable):
         self._total_time = dur  # + ff
         return self._total_time
 
-    #    def calculate_etf(self):
-    #        runs = self.experiment_queue.cleaned_automated_runs
-    #        dur = self._calculate_duration(runs)
-    #        self._total_time = dur
-    #        self.etf = self.format_duration(dur)
-
-    def format_duration(self, dur):
-        post = self._post
-        if not post:
-            post = datetime.now()
+    def format_duration(self, dur, post=None):
+        if post is None:
+            post = self._post
+            if not post:
+                post = datetime.now()
 
         dt = post + timedelta(seconds=int(dur))
-        return dt.strftime('%I:%M:%S %p %a %m/%d')
+        return dt.strftime('%H:%M:%S %a %m/%d')
 
+    def start_timer(self):
+        st = time.time()
+        self._post = datetime.now()
+
+        def update_time():
+            e = round(time.time() - st)
+            d = {'_elapsed': e}
+            if self._run_start:
+                re = round(time.time() - self._run_start)
+                d['_run_elapsed'] = re
+            self.trait_set(**d)
+
+        self._timer = Timer(1000, update_time)
+        self._timer.start()
+
+    def stop_timer(self):
+        self.debug('Stop timer. self._timer: {}'.format(self._timer))
+        if self._timer:
+            tt = self._total_time
+            et = self._elapsed
+            dt = tt - et
+            self.info('Estimated total time= {:0.1f}, elapsed time= {:0.1f}, deviation= {:0.1f}'.format(tt, et, dt))
+            self._timer.stop()
+
+    def reset(self):
+        # self._start_time = None
+        self._post = None
+        self.nruns_finished = 0
+        self._elapsed = 0
+        self._run_elapsed = 0
+        self._run_start = 0
+
+    def update_run_duration(self, run, t):
+        if not run.truncated:
+            a = self.duration_tracker
+            a.update(run.spec.script_hash, t)
+
+    def start_run(self, run):
+        self._run_start = time.time()
+        self.setup_run_clock(run)
+
+        self.current_run_duration = self.get_run_duration(run.spec, as_str=True)
+
+    def get_run_duration(self, run, as_str=False):
+        sh = run.script_hash
+        if sh in self.duration_tracker:
+            self.debug('using duration tracker value')
+            rd = self.duration_tracker[sh]
+        else:
+            rd = run.get_estimated_duration(force=True)
+        rd = round(rd)
+        if as_str:
+            rd = str(timedelta(seconds=rd))
+
+        self.debug('run duration: {}'.format(rd))
+        return rd
+
+    def finish_run(self):
+        self._run_start = 0
+        self.nruns_finished += 1
+        self.debug('finish run. runs completed={}'.format(self.nruns_finished))
+        if self.clock:
+            self.clock.stop()
+
+    def continue_run(self):
+        if self.clock:
+            self.clock.finish_slice()
+
+    def setup_run_clock(self, run):
+        if self.use_clock:
+            ctx = run.spec.make_script_context()
+            extraction_slice = run.extraction_script.calculate_estimated_duration(ctx)
+            measurement_slice = run.measurement_script.calculate_estimated_duration(ctx)
+
+            def convert_hexcolor_to_int(c):
+                c = c[1:]
+                func = lambda i: int(c[i:i + 2], 16)
+                return map(func, (0, 2, 4))
+
+            ec, mc = map(convert_hexcolor_to_int,
+                         (EXTRACTION_COLOR, MEASUREMENT_COLOR))
+
+            self.clock.set_slices([extraction_slice, measurement_slice],
+                                  [ec, mc])
+            self.clock.start()
+
+    # private
     def _calculate_duration(self, runs):
 
         dur = 0
@@ -180,103 +265,9 @@ class ExperimentStats(Loggable):
         dur = timedelta(seconds=round(self._total_time))
         return str(dur)
 
-    # def traits_view(self):
-    #     v = View(VGroup(Readonly('nruns', label='Total Runs'),
-    #                     Readonly('nruns_finished', label='Completed'),
-    #                     Readonly('total_time'),
-    #                     Readonly('start_at'),
-    #                     Readonly('end_at'),
-    #                     Readonly('run_duration'),
-    #                     Readonly('current_run_duration', ),
-    #                     Readonly('etf', label='Est. finish'),
-    #                     Readonly('elapsed'),
-    #                     Readonly('run_elapsed'),
-    #                     show_border=True))
-    #     return v
-
-    def start_timer(self):
-        st = time.time()
-        self._post = datetime.now()
-
-        def update_time():
-            e = round(time.time() - st)
-            d = {'_elapsed': e}
-            if self._run_start:
-                re = round(time.time() - self._run_start)
-                d['_run_elapsed'] = re
-            self.trait_set(**d)
-
-        self._timer = Timer(1000, update_time)
-        self._timer.start()
-
-    def stop_timer(self):
-        self.debug('Stop timer. self._timer: {}'.format(self._timer))
-        if self._timer:
-            tt = self._total_time
-            et = self._elapsed
-            dt = tt - et
-            self.info('Estimated total time= {:0.1f}, elapsed time= {:0.1f}, deviation= {:0.1f}'.format(tt, et, dt))
-            self._timer.stop()
-
-    def reset(self):
-        # self._start_time = None
-        self._post = None
-        self.nruns_finished = 0
-        self._elapsed = 0
-        self._run_elapsed = 0
-        self._run_start = 0
-
-    def update_run_duration(self, run, t):
-        a = self.duration_tracker
-        a.update(run.spec.script_hash, t)
-
-    def start_run(self, run):
-        self._run_start = time.time()
-        self.setup_run_clock(run)
-
-        self.current_run_duration = self.get_run_duration(run.spec, as_str=True)
-
-    def get_run_duration(self, run, as_str=False):
-        sh = run.script_hash
-        if sh in self.duration_tracker:
-            self.debug('using duration tracker value')
-            rd = self.duration_tracker[sh]
-        else:
-            rd = run.get_estimated_duration(force=True)
-        rd = round(rd)
-        if as_str:
-            rd = str(timedelta(seconds=rd))
-
-        self.debug('run duration: {}'.format(rd))
-        return rd
-
-    def finish_run(self):
-        self._run_start = 0
-        self.nruns_finished += 1
-        if self.clock:
-            self.clock.stop()
-
-    def continue_run(self):
-        if self.clock:
-            self.clock.finish_slice()
-
-    def setup_run_clock(self, run):
-        if self.use_clock:
-            ctx = run.spec.make_script_context()
-            extraction_slice = run.extraction_script.calculate_estimated_duration(ctx)
-            measurement_slice = run.measurement_script.calculate_estimated_duration(ctx)
-
-            def convert_hexcolor_to_int(c):
-                c = c[1:]
-                func = lambda i: int(c[i:i + 2], 16)
-                return map(func, (0, 2, 4))
-
-            ec, mc = map(convert_hexcolor_to_int,
-                         (EXTRACTION_COLOR, MEASUREMENT_COLOR))
-
-            self.clock.set_slices([extraction_slice, measurement_slice],
-                                  [ec, mc])
-            self.clock.start()
+    def _get_remaining(self):
+        dur = timedelta(seconds=round(self._total_time-self._elapsed))
+        return str(dur)
 
 
 class StatsGroup(ExperimentStats):
@@ -314,6 +305,13 @@ class StatsGroup(ExperimentStats):
             # self.etf = self.format_duration(tt - offset)
             self.etf = self.format_duration(tt)
 
+    def recalculate_etf(self):
+        tt = sum([ei.stats.calculate_duration(ei.cleaned_automated_runs)
+                  for ei in self.experiment_queues])
+
+        self._total_time = tt + self._elapsed
+        self.etf = self.format_duration(tt, post=datetime.now())
+
     def calculate_at(self, sel, at_times=True):
         """
             calculate the time at which a selected run will execute
@@ -327,7 +325,7 @@ class StatsGroup(ExperimentStats):
                 si = ei.cleaned_automated_runs.index(sel)
 
                 st += ei.stats.calculate_duration(
-                    ei.executed_runs + ei.cleaned_automated_runs[:si]) + ei.delay_between_analyses
+                        ei.executed_runs + ei.cleaned_automated_runs[:si]) + ei.delay_between_analyses
                 # et += ei.stats.calculate_duration(ei.executed_runs+ei.cleaned_automated_runs[:si + 1])
 
                 rd = self.get_run_duration(sel)

@@ -14,7 +14,6 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
-
 from envisage.core_plugin import CorePlugin
 from envisage.api import Plugin
 from pyface.message_dialog import warning
@@ -54,8 +53,12 @@ PACKAGE_DICT = dict(
     MediaServerPlugin='pychron.media_server.tasks.media_server_plugin',
     ProcessingPlugin='pychron.processing.tasks.processing_plugin',
     PyScriptPlugin='pychron.pyscripts.tasks.pyscript_plugin',
-    ArgusSpectrometerPlugin='pychron.spectrometer.tasks.argus_spectrometer_plugin',
+
+    # spectrometers
+    ArgusSpectrometerPlugin='pychron.spectrometer.tasks.thermo.argus',
+    HelixSpectrometerPlugin='pychron.spectrometer.tasks.thermo.helix',
     MapSpectrometerPlugin='pychron.spectrometer.tasks.map_spectrometer_plugin',
+
     EmailPlugin='pychron.social.email.tasks.plugin',
     DVCPlugin='pychron.dvc.tasks.dvc_plugin',
     WorkspacePlugin='pychron.workspace.tasks.workspace_plugin',
@@ -116,9 +119,6 @@ def get_plugin(pname):
     if pname in PACKAGE_DICT:
         package = PACKAGE_DICT[pname]
         klass = get_klass(package, pname)
-    # elif pname == 'Update':
-    #     klass = UpdatePlugin
-
     else:
         logger.warning('****** {} not a valid plugin name******'.format(pname),
                        extra={'threadName_': 'Launcher'})

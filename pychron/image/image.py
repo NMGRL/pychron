@@ -50,9 +50,8 @@ class Image(HasTraits):
 
         elif isinstance(img, ndarray):
             img = asMat(asarray(img, dtype='uint8'))
-
-        if swap_rb:
-            cv_swap_rb(img)
+            if swap_rb:
+                img = cv_swap_rb(img)
 
         return img
 

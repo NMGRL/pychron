@@ -29,7 +29,7 @@ from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.pyscripts.pyscript import verbose_skip, makeRegistry
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.pyscripts.valve_pyscript import ValvePyScript
-from pychron.pychron_constants import EXTRACTION_COLOR, LINE_STR
+from pychron.pychron_constants import EXTRACTION_COLOR, LINE_STR, NULL_STR
 
 # ELPROTOCOL = 'pychron.extraction_line.extraction_line_manager.ExtractionLineManager'
 
@@ -91,7 +91,7 @@ class ExtractionPyScript(ValvePyScript):
         :return: response blob. binary string representing time v measured output
         :rtype: str
         """
-        return self._extraction_action([('get_response_blob', (), {})])
+        return self._extraction_action([('get_response_blob', (), {})]) or ''
 
     def get_output_blob(self):
         """
@@ -100,7 +100,7 @@ class ExtractionPyScript(ValvePyScript):
         :return: output blob: binary string representing time v requested output
         :rtype: str
         """
-        return self._extraction_action([('get_output_blob', (), {})])
+        return self._extraction_action([('get_output_blob', (), {})]) or ''
 
     def output_achieved(self):
         """
@@ -261,7 +261,7 @@ class ExtractionPyScript(ValvePyScript):
 
         name = '{}{}'.format(prefix, name)
         ps = self._extraction_action([('take_snapshot', (name, pic_format),
-                                       {'view_snapshot':view_snapshot})])
+                                       {'view_snapshot': view_snapshot})])
         if ps:
             self.snapshots.append(ps)
 
@@ -327,7 +327,7 @@ class ExtractionPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def move_to_position(self, position='', autocenter=False):
+    def move_to_position(self, position='', autocenter=True):
         if position == '':
             position = self.position
 
@@ -340,7 +340,7 @@ class ExtractionPyScript(ValvePyScript):
 
         if position_ok:
             self.console_info('{} move to position {}'.format(self.extract_device,
-                                                      position))
+                                                              position))
             success = self._extraction_action([('move_to_position',
                                                 (position, autocenter), {})])
 
@@ -389,10 +389,10 @@ class ExtractionPyScript(ValvePyScript):
         from pychron.external_pipette.apis_manager import InvalidPipetteError
         cmd = 'load_blank_non_blocking' if self.analysis_type == 'blank' else 'load_pipette_non_blocking'
         try:
-            #bug _manager_action only with except tuple of len 1 for args
+            # bug _manager_action only with except tuple of len 1 for args
             rets = self._extraction_action([(cmd, (identifier,),
                                              # {'timeout': timeout, 'script': self})],
-                                             {'timeout': timeout, })],
+                                             {'timeout': timeout,})],
                                            name='externalpipette',
                                            protocol=IPipetteManager)
 
@@ -416,7 +416,7 @@ class ExtractionPyScript(ValvePyScript):
 
         cmd = 'load_blank' if self.analysis_type == 'blank' else 'load_pipette'
         try:
-            #bug _manager_action only with except tuple of len 1 for args
+            # bug _manager_action only with except tuple of len 1 for args
             rets = self._extraction_action([(cmd, (identifier,),
                                              {'timeout': timeout, 'script': self})],
                                            name='externalpipette',
@@ -615,6 +615,7 @@ class ExtractionPyScript(ValvePyScript):
     @command_register
     def prepare(self):
         return self._extraction_action([('prepare', (), {})])
+
     # ===============================================================================
     # properties
     # ===============================================================================
@@ -679,9 +680,11 @@ class ExtractionPyScript(ValvePyScript):
     def beam_diameter(self):
         return self._get_property('beam_diameter')
         # return self.get_context()['beam_diameter']
+
     @property
     def run_identifier(self):
         return self._get_property('run_identifier')
+
     # ===============================================================================
     # private
     # ===============================================================================
@@ -717,17 +720,15 @@ class ExtractionPyScript(ValvePyScript):
             self.warning('no device available named "{}"'.format(name))
 
     def _extraction_action(self, *args, **kw):
-        if not 'name' in kw:
+        if 'name' not in kw:
             kw['name'] = self.extract_device
+        if 'protocol' not in kw:
+            kw['protocol'] = ILaserManager
 
-        kw['name'] = kw.get('name', self.extract_device) or self.extract_device
-        if kw['name'] in ('Extract Device', LINE_STR):
+        # kw['protocol'] = kw.get('protocol', ILaserManager) or ILaserManager
+        # kw['name'] = kw.get('name', self.extract_device) or self.extract_device
+        if kw['name'] in ('Extract Device', 'ExtractDevice', 'extract device', 'extractdevice', NULL_STR, LINE_STR):
             return
-
-        # if not 'protocol' in kw:
-        #     kw['protocol'] = ILaserManager
-        kw['protocol']=kw.get('protocol', ILaserManager) or ILaserManager
-
         return self._manager_action(*args, **kw)
 
     def _disable(self, protocol=None):
@@ -762,4 +763,4 @@ class ExtractionPyScript(ValvePyScript):
     def _stop_pattern(self, protocol=None):
         self._extraction_action([('stop_pattern', (), {})], protocol=protocol)
 
-# ============= EOF ====================================
+        # ============= EOF ====================================

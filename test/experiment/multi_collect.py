@@ -15,7 +15,7 @@ from pychron.core.helpers.logger_setup import logging_setup
 from threading import Thread
 from pychron.processing.arar_age import ArArAge
 from pychron.spectrometer.ion_optics.ion_optics_manager import IonOpticsManager
-from pychron.spectrometer.thermo.spectrometer_manager import ArgusSpectrometerManager
+from pychron.spectrometer.thermo.manager.argus import ArgusSpectrometerManager
 from pychron.experiment.automated_run.automated_run import AutomatedRun
 from pychron.experiment.automated_run.spec import AutomatedRunSpec
 

@@ -86,6 +86,9 @@ class ExtractionLineManager(Manager, Consoleable):
     wait_group = Instance(WaitGroup, ())
     console_bgcolor = 'black'
 
+    def set_extract_state(self, *args, **kw):
+        pass
+    
     def activate(self):
 
         self._active = True
@@ -599,7 +602,7 @@ class ExtractionLineManager(Manager, Consoleable):
             scene = c.canvas2D.scene
             obj = scene.get_item('vlabel_{}Pipette'.format(name))
             if obj is not None:
-                obj.value = value
+                obj.value = int(value)
                 c.refresh()
 
     def _sample_changer_factory(self):

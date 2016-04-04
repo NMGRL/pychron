@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2015 Jake Ross
+# Copyright 2016 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,14 +17,10 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from fabric.api import lcd, local
+from pychron.spectrometer.thermo.detector.base import ThermoDetector
 
 
-def deploy():
-    ver = '2.1.1'
-    with lcd('~/Programming/git/pychron_valve'):
-        local('git pull origin release/v2.1.1')
-        local('python app_utils/app_maker -Avalve -v{}'.format(ver))
-        local('mv launchers/pyvalve_{}.app /Applications'.format(ver))
+class HelixDetector(ThermoDetector):
+    use_deflection = False
 
 # ============= EOF =============================================

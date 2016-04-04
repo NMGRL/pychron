@@ -23,9 +23,6 @@ from pyface.tasks.task_window_layout import TaskWindowLayout
 from pychron.core.helpers.filetools import get_path
 from pychron.envisage.tasks.actions import PAction as Action, PTaskAction as TaskAction
 
-
-
-
 # ============= standard library imports ========================
 import os
 # ============= local library imports  ==========================
@@ -174,7 +171,7 @@ class SystemConditionalsAction(Action):
             warning(None, 'No system conditionals file at {}'.format(p))
 
 
-def open_experiment(event, path):
+def open_experiment(event, path=None):
     app = event.task.window.application
     task = event.task
     if task.id == EXP_ID:
@@ -264,9 +261,28 @@ class OpenExperimentQueueAction(ExperimentAction):
     id = 'pychron.open_experiment'
 
     def perform(self, event):
-        path = '/Users/ross/Pychron_dev/experiments/Current Experiment.txt'
-        # path = '/Users/ross/Pychrondata_dev/experiments/test.txt'
+        open_experiment(event)
+
+
+class OpenCurrentExperimentQueueAction(ExperimentAction):
+    description = 'Open Current Experiment'
+    name = 'Open Current Experiment...'
+    dname = 'Open Current Experiment'
+    image = icon('project-open')
+    id = 'pychron.open_current_experiment'
+
+    def perform(self, event):
+        path = os.path.join(paths.experiment_dir, 'Current Experiment.txt')
         open_experiment(event, path)
+
+
+class SaveAsCurrentExperimentAction(TaskAction):
+    description = 'Save As Current Experiment'
+    name = 'Save As Current Experiment...'
+    dname = 'Save As Current Experiment'
+    image = icon('document-save-as')
+    id = 'pychron.experiment.save_as_current_experiment'
+    method = 'save_as_current_experiment'
 
 
 # ===============================================================================

@@ -16,10 +16,11 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-from ConfigParser import ConfigParser
 import ast
-import time
 import os
+import time
+from ConfigParser import ConfigParser
+
 import yaml
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import fileiter
@@ -314,9 +315,9 @@ class MeasurementPyScript(ValvePyScript):
 
     @count_verbose_skip
     @command_register
-    def peak_center(self, detector='AX', isotope='Ar40',
+    def peak_center(self, detector=None, isotope=None,
                     integration_time=1.04, save=True, calc_time=False,
-                    directions='Increase'):
+                    directions='Increase', config_name='default'):
         """
         Calculate the peak center for ``isotope`` on ``detector``.
 
@@ -334,7 +335,7 @@ class MeasurementPyScript(ValvePyScript):
         self._automated_run_call('py_peak_center', detector=detector,
                                  isotope=isotope, integration_time=integration_time,
                                  directions=directions,
-                                 save=save)
+                                 save=save, config_name=config_name)
 
     @verbose_skip
     @command_register
@@ -768,7 +769,7 @@ class MeasurementPyScript(ValvePyScript):
 
         :return: bool
         """
-        return self._automated_run_call(lambda: self.automated_run.truncated)
+        return self._automated_run_call(lambda: self.automated_run.truncated) or self.is_truncated()
 
     @property
     def eqtime(self):

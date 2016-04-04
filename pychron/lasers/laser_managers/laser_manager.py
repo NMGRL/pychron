@@ -266,8 +266,8 @@ class LaserManager(BaseLaserManager):
             lm = self.monitor_klass(manager=self,
                                     #                            configuration_dir_name=paths.monitors_dir,
                                     name=self.monitor_name)
-        if hasattr(lm, 'update_imb'):
-            self.on_trait_change(lm.update_imb, 'laser_controller:internal_meter_response')
+        # if hasattr(lm, 'update_imb'):
+        #     self.on_trait_change(lm.update_imb, 'laser_controller:internal_meter_response')
         return lm
 
     # ===============================================================================

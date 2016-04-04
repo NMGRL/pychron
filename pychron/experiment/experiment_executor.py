@@ -16,20 +16,21 @@
 
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
-from traits.api import Event, Button, String, Bool, Enum, Property, Instance, Int, List, Any, Color, Dict, \
-    on_trait_change, Long, Float, Str
 from pyface.constant import CANCEL, YES, NO
 from pyface.timer.do_later import do_after
+from traits.api import Event, Button, String, Bool, Enum, Property, Instance, Int, List, Any, Color, Dict, \
+    on_trait_change, Long, Float, Str
 from traits.trait_errors import TraitError
+
 # ============= standard library imports ========================
 from datetime import datetime
-from threading import Thread, Event as Flag, Lock, currentThread, Timer
+from threading import Thread, Event as Flag, Lock, currentThread
 import time
 import os
 import yaml
 # ============= local library imports  ==========================
 from pychron.consumer_mixin import consumable
-from pychron.core.codetools.memory_usage import mem_available, mem_log
+from pychron.core.codetools.memory_usage import mem_available
 from pychron.core.helpers.filetools import add_extension, get_path
 from pychron.core.notification_manager import NotificationManager
 from pychron.core.ui.gui import invoke_in_main_thread
@@ -38,7 +39,7 @@ from pychron.database.selectors.isotope_selector import IsotopeAnalysisSelector
 from pychron.envisage.consoleable import Consoleable
 from pychron.envisage.preference_mixin import PreferenceMixin
 from pychron.envisage.view_util import open_view
-from pychron.experiment.automated_run.persistence import ExcelPersister, AutomatedRunPersister
+from pychron.experiment.automated_run.persistence import ExcelPersister
 from pychron.experiment.conditional.conditional import conditionals_from_file
 from pychron.experiment.datahub import Datahub
 from pychron.experiment.health.series import SystemHealthSeries
@@ -90,7 +91,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     '''
         immediate 0= measure_iteration stopped at current step, script continues
         quick     1= measure_iteration stopped at current step, script continues using 0.25*counts
-        
+
         old-style
             immediate 0= is the standard truncation, measure_iteration stopped at current step and measurement_script truncated
             quick     1= the current measure_iteration is truncated and a quick baseline is collected, peak center?
@@ -708,7 +709,20 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.stats.finish_run()
             if run.state == 'success':
                 self.stats.update_run_duration(run, t)
-                self.stats.calculate()
+                self.stats.recalculate_etf()
+
+        # write rem and ex queues
+        self._write_rem_ex_experiment_queues()
+
+    def _write_rem_ex_experiment_queues(self):
+        self.debug('write rem/ex queues')
+        q = self.experiment_queue
+        for runs, tag in ((q.automated_runs, 'rem'),
+                          (q.executed_runs, 'ex')):
+            path = os.path.join(paths.experiment_rem_dir, '{}.{}.txt'.format(q.name, tag))
+            self.debug(path)
+            with open(path, 'w') as wfile:
+                q.dump(wfile, runs=runs)
 
     def _overlapped_run(self, v):
         self._overlapping = True

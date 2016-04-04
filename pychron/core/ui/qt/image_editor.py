@@ -15,39 +15,32 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-from Image import Image
-from traits.api import Any, Bool, Event, Str
-from traitsui.qt4.editor import Editor
-from traitsui.basic_editor_factory import BasicEditorFactory
 from PySide.QtGui import QLabel, QImage, QPixmap, QScrollArea
 from pyface.image_resource import ImageResource
+from qimage2ndarray import array2qimage
+from traits.api import Any, Bool, Event, Str
+from traitsui.basic_editor_factory import BasicEditorFactory
+from traitsui.qt4.editor import Editor
 from traitsui.ui_traits import convert_bitmap as traitsui_convert_bitmap
 
+# =============standard library imports ========================
+from Image import Image
+
+# =============local library imports  ==========================
 from pychron.core.ui.gui import invoke_in_main_thread
 
-# =============standard library imports ========================
-
-# import math
-# =============local library imports  ==========================
-# from ctypes_opencv import  cvCreateImage, CvSize, cvAddS, CvScalar, \
-# CvRect, cvSetImageROI, cvResize, cvResetImageROI
-# from ctypes_opencv.cxcore import cvZero
 
 def convert_bitmap(image, width=None, height=None):
-    pix = None
     if isinstance(image, ImageResource):
         pix = traitsui_convert_bitmap(image)
     elif isinstance(image, Image):
-        # image = image.convert('RGBA')
         data = image.tostring('raw', 'RGBA')
         im = QImage(data, image.size[0], image.size[1], QImage.Format_ARGB32)
         pix = QPixmap.fromImage(QImage.rgbSwapped(im))
     else:
         s = image.shape
         if len(s) >= 2:
-            # im = QImage(image.tostring(),s[1], s[0], QImage.Format_RGB888)
-            im = QImage(image, s[1], s[0], QImage.Format_RGB888)
-            pix = QPixmap.fromImage(QImage.rgbSwapped(im))
+            pix = QPixmap.fromImage(array2qimage(image))
         else:
             pix = QPixmap()
     if pix:
@@ -96,9 +89,9 @@ class _ImageEditor(Editor):
 
         self.set_tooltip()
         self.sync_value(self.factory.refresh, 'refresh', 'from')
+        self.update_editor()
 
     def _refresh_fired(self):
-        print 'reasfasd'
         self.update_editor()
 
     def update_editor(self):

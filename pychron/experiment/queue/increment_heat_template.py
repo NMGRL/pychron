@@ -31,6 +31,7 @@ import os
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import list_directory
 from pychron.core.ui.tabular_editor import myTabularEditor
+from pychron.paths import paths
 from pychron.viewable import Viewable
 from pychron.pychron_constants import alphas
 
@@ -331,13 +332,11 @@ class IncrementalHeatTemplate(Viewable):
             width=600,
             resizable=True,
             title=self.title,
-            handler=self.handler_klass
-        )
+            handler=self.handler_klass)
         return v
 
 
 if __name__ == '__main__':
-    from pychron.paths import paths
 
     paths.build('_dev')
     im = IncrementalHeatTemplate()

@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # # ============= enthought library imports =======================
-from apptools.preferences.preference_binding import bind_preference
 from traits.api import Any, Str, List, Property, \
     Event, Instance, Bool, HasTraits, Float, Int, Long
 # ============= standard library imports ========================
@@ -192,6 +191,7 @@ class AutomatedRun(Loggable):
                            ('peak_center_threshold1', int),
                            ('peak_center_threshold2', int),
                            ('peak_center_threshold_window', int)):
+
             set_preference(preferences, self, attr, 'pychron.experiment.{}'.format(attr), cast)
 
         self.persister.set_preferences(preferences)
@@ -539,7 +539,7 @@ class AutomatedRun(Loggable):
         return ret
 
     def py_peak_center(self, detector=None, save=True, isotope=None, check_intensity=True,
-                       directions='Increase', **kw):
+                       directions='Increase', config_name='default', **kw):
         if not self._alive:
             return
 
@@ -572,15 +572,15 @@ class AutomatedRun(Loggable):
                                        plot_panel=self.plot_panel,
                                        isotope=isotope,
                                        directions=directions,
+                                       config_name=config_name,
                                        **kw)
             self.peak_center = pc
             self.debug('do peak center. {}'.format(pc))
 
             ion.do_peak_center(new_thread=False, save=save, message='automated run peakcenter', timeout=300)
             self._update_persister_spec(peak_center=pc)
-            # if pc.result:
-            #     self._persister_action('save_peak_center_to_file', pc)
-            # self.persister.save_peak_center_to_file(pc)
+            if pc.result:
+                self.persister.save_peak_center_to_file(pc)
 
     def py_coincidence_scan(self):
         pass
@@ -1506,18 +1506,28 @@ anaylsis_type={}
         if attr == 'age' and self.spec.analysis_type not in ('unknown', 'cocktail'):
             self.debug('not adding because analysis_type not unknown or cocktail')
 
-        if not self.isotope_group.has_attr(attr):
-            self.warning('invalid {} attribute "{}"'.format(name, attr))
-        else:
-            obj = getattr(self, '{}_conditionals'.format(name))
-            con = conditional_from_dict(cd, klass)
-            if con:
-                self.info(
-                    'adding {} attr="{}" test="{}" start="{}"'.format(name, con.attr, con.teststr, con.start_count))
-                obj.append(con)
-            else:
-                self.warning('Failed adding {}, {}'.format(name, cd))
+        # if not self.isotope_group.has_attr(attr):
+        #     self.warning('invalid {} attribute "{}"'.format(name, attr))
+        # else:
+        #     obj = getattr(self, '{}_conditionals'.format(name))
+        #     con = conditional_from_dict(cd, klass)
+        #     if con:
+        #         self.info(
+        #             'adding {} attr="{}" test="{}" start="{}"'.format(name, con.attr, con.teststr, con.start_count))
+        #         obj.append(con)
+        #     else:
+        #         self.warning('Failed adding {}, {}'.format(name, cd))
 
+        # don't check if isotope_group has the attribute. it may be added to isotope group later
+        obj = getattr(self, '{}_conditionals'.format(name))
+        con = conditional_from_dict(cd, klass)
+        if con:
+            self.info(
+                'adding {} attr="{}" test="{}" start="{}"'.format(name, con.attr, con.teststr, con.start_count))
+            obj.append(con)
+        else:
+            self.warning('Failed adding {}, {}'.format(name, cd))
+            
     def _refresh_scripts(self):
         for name in SCRIPT_KEYS:
             setattr(self, '{}_script'.format(name), self._load_script(name))
@@ -1728,7 +1738,6 @@ anaylsis_type={}
     #     return ln not in ('dg', 'pa')
 
     def _new_plot_panel(self, plot_panel, stack_order='bottom_to_top'):
-        from pychron.processing.analyses.view.automated_run_view import ArArAutomatedRunAnalysisView
 
         title = self.runid
         sample, irradiation = self.spec.sample, self.spec.display_irradiation

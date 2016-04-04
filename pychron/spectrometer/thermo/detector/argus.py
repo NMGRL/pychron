@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2014 Jake Ross
+# Copyright 2016 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,39 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-import os
+from pychron.spectrometer.thermo.detector.base import ThermoDetector
 
 
-def locate_deprecated(root):
-    i=1
-    cnt=0
-    dcnt=0
-    for r, ds, fs in os.walk(root):
-        dcnt+=1
-        for fi in fs:
-            if not fi.endswith('.py') or fi == '__init__.py':
-                continue
-
-            cnt+=1
-            p = os.path.join(r, fi)
-            with open(p, 'r') as rfile:
-                for li in rfile:
-                    li = li.strip()
-                    if li and not li.startswith('#'):
-                        break
-                else:
-                    print '{:03d} is deprecated {}'.format(i, p)
-                    i+=1
-
-    print 'examined {} files from {} directories'.format(cnt, dcnt)
-
-locate_deprecated('/Users/ross/Programming/git/pychron_dev/pychron')
-
+class ArgusDetector(ThermoDetector):
+    pass
 
 # ============= EOF =============================================
-
-
-

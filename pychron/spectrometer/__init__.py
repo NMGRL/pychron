@@ -27,8 +27,12 @@ def set_mftable_name(name):
 
 
 def get_mftable_name():
-    with open(os.path.join(paths.hidden_dir, 'mftable_name')) as rfile:
-        return rfile.read().strip()
+    p = os.path.join(paths.hidden_dir, 'mftable_name')
+    if os.path.isfile(p):
+        with open(p) as rfile:
+            return rfile.read().strip()
+    else:
+        return 'mftable.csv'
 
 
 def set_spectrometer_config_name(name):
@@ -37,9 +41,14 @@ def set_spectrometer_config_name(name):
     with open(ppath, 'w') as wfile:
         wfile.write(name)
 
+
 def get_spectrometer_config_name():
-    with open(os.path.join(paths.hidden_dir, 'spectrometer_config_name')) as rfile:
-        return rfile.read().strip()
+    p = os.path.join(paths.hidden_dir, 'spectrometer_config_name')
+    if os.path.isfile(p):
+        with open(p) as rfile:
+            return rfile.read().strip()
+    else:
+        return 'config.cfg'
 
 
 def get_spectrometer_config_path(name=None):

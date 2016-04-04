@@ -72,12 +72,13 @@ class UsersTask(BaseTask):
 
     def _sync(self, users):
         path = os.path.join(paths.setup_dir, 'users.yaml')
-        with open(path, 'r') as rfile:
-            yl = yaml.load(rfile)
-            for yi in yl:
-                uu = next((i for i in users if i.name == yi.get('name')), None)
-                if uu:
-                    uu.enabled = yi.get('enabled')
+        if os.path.isfile(path):
+            with open(path, 'r') as rfile:
+                yl = yaml.load(rfile)
+                for yi in yl:
+                    uu = next((i for i in users if i.name == yi.get('name')), None)
+                    if uu:
+                        uu.enabled = yi.get('enabled')
 
     def _generate_hash(self, users):
         md5 = hashlib.md5()

@@ -152,8 +152,8 @@ class BaseTask(Task, Loggable, PreferenceMixin):
         if isinstance(p, str):
             if '.' in p:
                 for k in self.trait_names():
-                    v = getattr(self, k)
                     try:
+                        v = getattr(self, k)
                         if v.id == p:
                             p = v
                             break
