@@ -162,7 +162,7 @@ class BaseSweep(SpectrometerTask):
 
     def _step_intensity(self):
         spec = self.spectrometer
-        ds = [str(self.reference_detector)] + self.additional_detectors
+        ds = [str(self.reference_detector.name)] + self.additional_detectors
         intensity = spec.get_intensity(ds)
 
         return intensity

@@ -57,7 +57,7 @@ class Paths(object):
     splash_search_path = None
     about_search_path = None
     resources = None
-
+    peak_center_config_dir = None
     # ==============================================================================
     # root
     # ==============================================================================
@@ -293,6 +293,7 @@ class Paths(object):
         self.plotter_options_dir = join(self.hidden_dir, 'plotter_options')
         self.comment_templates_dir = join(self.hidden_dir, 'comment_templates')
         self.build_repo = join(self.hidden_dir, 'updates', 'pychron')
+        self.peak_center_config_dir = join(self.hidden_dir, 'peak_center_configs')
         # ==============================================================================
         # setup
         # ==============================================================================

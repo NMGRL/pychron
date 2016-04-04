@@ -39,8 +39,8 @@ class PeakCenterConfig(HasTraits):
     name = Str
 
     detectors = List(transient=True)
-    detector = Instance(BaseDetector, transient=True)
-    detector_name = Str
+    detector = Str
+    # detector_name = Str
 
     additional_detectors = List
     available_detectors = List
@@ -76,6 +76,7 @@ class PeakCenterConfig(HasTraits):
             self.select_n_peak = new
 
     def _detector_changed(self, new):
+        print new, self.detectors
         if new:
             self.available_detectors = [d for d in self.detectors if d != new]
 
@@ -212,6 +213,16 @@ class PeakCenterConfigurer(ItemConfigurer):
     item_klass = PeakCenterConfig
     title = 'Peak Center Configuration'
 
+    detectors = List
+    isotopes = List
+    available_detectors = List
+
+    def load(self, **kw):
+        kw['detectors'] = self.detectors
+        kw['isotopes'] = self.isotopes
+        kw['available_detectors'] = self.detectors
+
+        super(PeakCenterConfigurer, self).load(**kw)
 # if __name__ == '__main__':
 #     from pychron.paths import paths
 #
