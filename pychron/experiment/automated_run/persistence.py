@@ -134,8 +134,8 @@ class ExcelPersister(BasePersister):
             sh.write(i, 0, tag)
             sh.write(i, 1, getattr(rs, attr))
 
-        sh.write(i+1, 0, 'Load')
-        sh.write(i+1, 1, self.load_name)
+        sh.write(i + 1, 0, 'Load')
+        sh.write(i + 1, 1, self.load_name)
 
     # def pre_measurement_save(self):
     #     """
@@ -159,27 +159,27 @@ class ExcelPersister(BasePersister):
         for i, (k, iso) in enumerate(self.per_spec.isotope_group.isotopes.items()):
 
             sh.write(0, i, '{} time'.format(k))
-            sh.write(0, i+1, '{} intensity'.format(k))
+            sh.write(0, i + 1, '{} intensity'.format(k))
 
-            sh.write(0, i+2, '{} sniff time'.format(k))
-            sh.write(0, i+3, '{} sniff intensity'.format(k))
-            sh.write(0, i+4, '{} baseline time'.format(k))
-            sh.write(0, i+5, '{} baseline intensity'.format(k))
+            sh.write(0, i + 2, '{} sniff time'.format(k))
+            sh.write(0, i + 3, '{} sniff intensity'.format(k))
+            sh.write(0, i + 4, '{} baseline time'.format(k))
+            sh.write(0, i + 5, '{} baseline intensity'.format(k))
 
-            for j,x in enumerate(iso.xs):
-                sh.write(j+1,i, x)
-            for j,y in enumerate(iso.ys):
-                sh.write(j+1,i+1, y)
+            for j, x in enumerate(iso.xs):
+                sh.write(j + 1, i, x)
+            for j, y in enumerate(iso.ys):
+                sh.write(j + 1, i + 1, y)
 
-            for j,x in enumerate(iso.sniff.xs):
-                sh.write(j+1,i+2, x)
-            for j,y in enumerate(iso.sniff.ys):
-                sh.write(j+1,i+3, y)
+            for j, x in enumerate(iso.sniff.xs):
+                sh.write(j + 1, i + 2, x)
+            for j, y in enumerate(iso.sniff.ys):
+                sh.write(j + 1, i + 3, y)
 
-            for j,x in enumerate(iso.baseline.xs):
-                sh.write(j+1,i+4, x)
-            for j,y in enumerate(iso.baseline.ys):
-                sh.write(j+1,i+5, y)
+            for j, x in enumerate(iso.baseline.xs):
+                sh.write(j + 1, i + 4, x)
+            for j, y in enumerate(iso.baseline.ys):
+                sh.write(j + 1, i + 5, y)
 
     def _save_peak_center(self, pc):
         wb = self._workbook
@@ -265,25 +265,21 @@ class AutomatedRunPersister(BasePersister):
         """
         dm = self.data_manager
         with dm.open_file(self._current_data_frame):
-            tab = dm.new_table('/', 'peak_center')
-            xs, ys = pc.graph.get_data(), pc.graph.get_data(axis=1)
 
-            for xi, yi in zip(xs, ys):
-                nrow = tab.row
-                nrow['time'] = xi
-                nrow['value'] = yi
-                nrow.append()
+            dm.new_group('/', 'peak_centers')
+            for result in pc.get_results():
+                tab = dm.new_table('/peak_centers', result.detector)
+                for x, y in result.points:
+                    nrow = tab.row
+                    nrow['time'] = x
+                    nrow['value'] = y
+                    nrow.append()
 
-            xs, ys, _mx, _my = pc.result
-            attrs = tab.attrs
-            attrs.low_dac = xs[0]
-            attrs.center_dac = xs[1]
-            attrs.high_dac = xs[2]
+                attrs = tab.attrs
+                for a in result.attrs:
+                    setattr(attrs, a, getattr(result, a))
 
-            attrs.low_signal = ys[0]
-            attrs.center_signal = ys[1]
-            attrs.high_signal = ys[2]
-            tab.flush()
+                tab.flush()
 
     def get_data_writer(self, grpname):
         """
@@ -738,7 +734,7 @@ class AutomatedRunPersister(BasePersister):
     def _save_sensitivity(self, extraction, measurement):
         self.info('saving sensitivity')
 
-        # get the lastest sensitivity entry for this spectrometr
+        # get the latest sensitivity entry for this spectrometer
         spec = measurement.mass_spectrometer
         if spec:
             sens = spec.sensitivities
@@ -749,16 +745,16 @@ class AutomatedRunPersister(BasePersister):
         self.info('saving peakcenter')
 
         dm = self.data_manager
-        with dm.open_table(cp, 'peak_center') as tab:
-            if tab is not None:
-                packed_xy = [struct.pack('<ff', r['time'], r['value']) for r in tab.iterrows()]
-                points = ''.join(packed_xy)
-                center = tab.attrs.center_dac
-                pc = db.add_peak_center(
-                    analysis,
-                    center=float(center),
-                    points=points)
-                return pc
+        with dm.open_file(cp) as f:
+            if hasattr(f.root, 'peak_centers'):
+                for tab in f.walk_nodes(where='/peak_centers'):
+                    packed_xy = [struct.pack('<ff', r['time'], r['value']) for r in tab.iterrows()]
+                    points = ''.join(packed_xy)
+                    center = tab.attrs.center_dac
+                    db.add_peak_center(analysis,
+                                       detector=tab.attrs.detector,
+                                       center=float(center) or 0,
+                                       points=points)
 
     def _save_measurement(self, db, analysis):
         self.info('saving measurement')
@@ -1033,4 +1029,3 @@ class AutomatedRunPersister(BasePersister):
         # std_dev=self.fo_std_dev)
 
 # ============= EOF =============================================
-

@@ -20,13 +20,33 @@ from traits.api import Float, Str, Int
 import time
 from numpy import max, argmax, vstack, linspace
 from scipy import interpolate
-from scipy.optimize import leastsq
-from scipy.stats import norm
 # ============= local library imports  ==========================
 from magnet_sweep import MagnetSweep
 from pychron.graph.graph import Graph
 from pychron.core.stats.peak_detection import calculate_peak_center, PeakCenterError, interpolate
 from pychron.core.ui.gui import invoke_in_main_thread
+
+
+class PeakCenterResult:
+    low_dac = None
+    center_dac = None
+    high_dac = None
+
+    low_signal = None
+    center_signal = None
+    high_signal = None
+
+    detector = None
+    points = None
+
+    def __init__(self, det, pts):
+        self.detector = det
+        self.points = pts
+
+    @property
+    def attrs(self):
+        return ('low_dac', 'center_dac', 'high_dac',
+                'low_signal', 'center_signal', 'high_signal')
 
 
 class BasePeakCenter(MagnetSweep):
@@ -89,6 +109,32 @@ class BasePeakCenter(MagnetSweep):
             if success:
                 invoke_in_main_thread(self._post_execute)
                 return center
+
+    def get_results(self):
+        g = self.graph
+
+        results = []
+        for i, det in enumerate(self.active_detectors):
+            xs = g.get_data(series=i)
+            ys = g.get_data(series=i, axis=1)
+
+            pts = vstack((xs, ys)).T
+            result = PeakCenterResult(det, pts)
+
+            p = self._calculate_peak_center(xs, ys)
+            if p:
+                [lx, cx, hx], [ly, cy, hy], mx, my = p
+                result.low_dac = lx
+                result.center_dac = cx
+                result.high_dac = hx
+
+                result.low_signal = ly
+                result.center_signal = cy
+                result.high_signal = hy
+
+            results.append(result)
+
+        return results
 
     def get_data(self):
         g = self.graph
