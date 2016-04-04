@@ -124,6 +124,9 @@ class LabnumberEntry(DVCIrradiationable):
 
     def import_irradiation(self):
         self.debug('import irradiation')
+        self.warning_dialog('Import irradiation currently not available')
+        return
+
         from pychron.entry.tasks.importer import ImporterModel
         from pychron.entry.tasks.importer_view import ImporterView
 

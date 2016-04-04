@@ -934,36 +934,35 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             with db.session_ctx():
                 # convert labnumber (a, bg, or 10034 etc)
                 self.debug('load meta')
-                ln = db.get_identifier(labnumber)
-                if ln:
+                ip = db.get_identifier(labnumber)
+                if ip:
                     # set sample and irrad info
                     try:
-                        self.sample = ln.sample.name
+                        self.sample = ip.sample.name
                         d['sample'] = self.sample
 
-                        # project = ln.sample.project
-                        # print 'fff', project.name
-                        # if project.name == 'J-Curve':
-                        #     irrad = ln.irradiation_position.level.irradiation.name
-                        #     self.repository_identifier = 'Irradiation-{}'.format(irrad)
-                        # elif project.name != 'REFERENCES':
-                        #     project_name = project.name
-                        #     project_name = project_name.replace(' ', '_').replace('/', '_')
-                        #     try:
-                        #         pi_name = project.principal_investigators[0].name
-                        #         pi_name = pi_name.replace(' ', '_').replace('/', '_')
-                        #     except IndexError:
-                        #         self.debug('No principal investigator '
-                        #                    'specified for this project "{}". Using NMGRL'.format(project_name))
-                        #         pi_name = 'NMGRL'
-                        #
-                        #     self.repository_identifier = '{}_{}'.format(pi_name, project_name)
+                        project = ip.sample.project
+                        project_name = project.name
+                        if project_name == 'J-Curve':
+                            irrad = ip.level.irradiation.name
+                            self.repository_identifier = 'Irradiation-{}'.format(irrad)
+                        elif project_name != 'REFERENCES':
+                            project_name = project_name.replace(' ', '_').replace('/', '_')
+                            try:
+                                pi_name = project.principal_investigators[0].name
+                                pi_name = pi_name.replace(' ', '_').replace('/', '_')
+                            except IndexError:
+                                self.debug('No principal investigator '
+                                           'specified for this project "{}". Using NMGRL'.format(project_name))
+                                pi_name = 'NMGRL'
+
+                            self.repository_identifier = '{}_{}'.format(pi_name, project_name)
 
                     except AttributeError:
                         pass
 
                     d['repository_identifier'] = self.repository_identifier
-                    self.irradiation = self._make_irrad_level(ln)
+                    self.irradiation = self._make_irrad_level(ip)
                     d['irradiation'] = self.irradiation
 
                     if self.auto_fill_comment:
