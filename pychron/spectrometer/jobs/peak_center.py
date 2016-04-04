@@ -124,7 +124,7 @@ class BasePeakCenter(MagnetSweep):
         st = time.time()
         while 1:
             keys, signals = spec.get_intensities()
-            idx = keys.index(self.reference_detector)
+            idx = keys.index(self.reference_detector.name)
             signal = signals[idx]
             if signal < tol:
                 self.info('Peak center baseline intensity achieved')
@@ -289,7 +289,7 @@ class BasePeakCenter(MagnetSweep):
 
         self._series_factory(graph)
 
-        graph.set_series_label('*{}'.format(self.reference_detector))
+        graph.set_series_label('*{}'.format(self.reference_detector.name))
         self._markup_idx = 1
         spec = self.spectrometer
         for di in self.additional_detectors:

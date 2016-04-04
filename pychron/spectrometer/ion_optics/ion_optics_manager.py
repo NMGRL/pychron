@@ -193,6 +193,8 @@ class IonOpticsManager(Manager):
         spec.save_integration()
         self.debug('setup peak center. detector={}, isotope={}'.format(detector, isotope))
 
+        self._setup_config()
+
         pcc = None
         if detector is None or isotope is None:
             self.debug('ask user for peak center configuration')
@@ -242,6 +244,7 @@ class IonOpticsManager(Manager):
             detector = (detector,)
 
         ref = detector[0]
+        ref = self.spectrometer.get_detector(ref)
         self.reference_detector = ref
         self.reference_isotope = isotope
 
@@ -274,7 +277,7 @@ class IonOpticsManager(Manager):
                      select_peak=select_peak,
                      use_dac_offset=use_dac_offset,
                      dac_offset=dac_offset)
-
+        print pc.reference_detector, pc.reference_isotope
         self.peak_center = pc
         graph = pc.graph
         graph.name = name
@@ -292,6 +295,12 @@ class IonOpticsManager(Manager):
         return self.peak_center
 
     # private
+    def _setup_config(self):
+        config = self.peak_center_config
+        config.detectors = self.spectrometer.detector_names
+        keys = self.spectrometer.molecular_weights.keys()
+        config.isotopes = sort_isotopes(keys)
+
     def _get_peak_center_config(self, config_name):
         if config_name is None:
             config_name = 'default'
@@ -446,6 +455,10 @@ class IonOpticsManager(Manager):
         keys = self.spectrometer.molecular_weights.keys()
         config.isotopes = sort_isotopes(keys)
 
+        return config
+
+    def _peak_center_config_default(self):
+        config = PeakCenterConfigurer()
         return config
 
         # def _peak_center_config_default(self):
