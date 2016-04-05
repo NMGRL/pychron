@@ -933,7 +933,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             db = self.get_database()
             with db.session_ctx():
                 # convert labnumber (a, bg, or 10034 etc)
-                self.debug('load meta')
+                self.debug('load meta for {}'.format(labnumber))
                 ip = db.get_identifier(labnumber)
                 if ip:
                     # set sample and irrad info
@@ -947,19 +947,25 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                             irrad = ip.level.irradiation.name
                             self.repository_identifier = 'Irradiation-{}'.format(irrad)
                         elif project_name != 'REFERENCES':
-                            project_name = project_name.replace(' ', '_').replace('/', '_')
-                            try:
-                                pi_name = project.principal_investigators[0].name
-                                pi_name = pi_name.replace(' ', '_').replace('/', '_')
-                            except IndexError:
-                                self.debug('No principal investigator '
-                                           'specified for this project "{}". Using NMGRL'.format(project_name))
-                                pi_name = 'NMGRL'
+                            self.repository_identifier = project_name.replace(' ', '_').replace('/', '_')
 
-                            self.repository_identifier = '{}_{}'.format(pi_name, project_name)
+                            # if project_name.startswith('Irradiation-'):
+                            #     self.repository_identifier = project_name
+                            # else:
+                            #     project_name = project_name.replace(' ', '_').replace('/', '_')
+                            #     try:
+                            #         pi_name = project.principal_investigator.name
+                            #         pi_name = pi_name.replace(' ', '_').replace('/', '_')
+                            #     except AttributeError:
+                            #         self.debug('No principal investigator '
+                            #                    'specified for this project "{}". Using NMGRL'.format(project_name))
+                            #         pi_name = 'NMGRL'
+                            #
+                            #     self.repository_identifier = '{}_{}'.format(pi_name, project_name)
 
-                    except AttributeError:
-                        pass
+
+                    except AttributeError, e:
+                        print e
 
                     d['repository_identifier'] = self.repository_identifier
                     self.irradiation = self._make_irrad_level(ip)
