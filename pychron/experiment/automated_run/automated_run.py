@@ -180,6 +180,9 @@ class AutomatedRun(Loggable):
 
     persistence_spec = Instance(PersistenceSpec)
 
+    intensity_scalar = Float
+    _intensities = None
+
     def bind_preferences(self):
         prefid = 'pychron.experiment'
         bind_preference(self, 'use_peak_center_threshold', '{}.use_peak_center_threshold'.format(prefid))
@@ -190,6 +193,15 @@ class AutomatedRun(Loggable):
     # ===============================================================================
     # pyscript interface
     # ===============================================================================
+    def py_get_intensity(self, detector):
+        if self._intensities:
+            try:
+                idx = self._intensities['tags'].index(detector)
+            except ValueError:
+                return
+
+            return self._intensities['signals'][idx]
+
     def py_generate_ic_mftable(self, detectors, refiso):
         return self._generate_ic_mftable(detectors, refiso)
 
@@ -1762,6 +1774,7 @@ anaylsis_type={}
             cnt = 0
             fcnt = 3
             spec = self.spectrometer_manager.spectrometer
+            self._intensities = {}
             while 1:
                 k, s = spec.get_intensities(tagged=True)
                 if not k:
@@ -1778,6 +1791,11 @@ anaylsis_type={}
                 else:
                     # reset the counter
                     cnt = 0
+                    if self.intensity_scalar:
+                        s = [si * self.intensity_scalar for si in s]
+
+                    self._intensities['tags'] = k
+                    self._intensities['signals'] = s
 
                     yield k, s
 
