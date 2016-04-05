@@ -17,9 +17,12 @@
 # ============= enthought library imports =======================
 from pyface.tasks.traits_editor import TraitsEditor
 from traits.api import Button, Instance
-from traitsui.api import View, UItem, InstanceEditor, VGroup, HGroup
+from traitsui.api import View, UItem, InstanceEditor, VGroup, HGroup, TabularEditor, VSplit
+from traitsui.tabular_adapter import TabularAdapter
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+
 from pychron.envisage.icon_button_editor import icon_button_editor
 
 
@@ -35,8 +38,19 @@ class ScanEditor(TraitsEditor):
         return v
 
 
+class PeakCenterResultsAdapter(TabularAdapter):
+    columns = [('Detector', 'detector'), ('Center DAC (V)', 'center_dac')]
+
+
 class PeakCenterEditor(ScanEditor):
     model = Instance('pychron.spectrometer.jobs.peak_center.PeakCenter')
+
+    def traits_view(self):
+        v = View(VSplit(UItem('graph', style='custom', editor=InstanceEditor(),
+                              height=875),
+                        UItem('results',
+                              editor=TabularEditor(adapter=PeakCenterResultsAdapter()))))
+        return v
 
 
 class ScannerEditor(ScanEditor):

@@ -59,7 +59,8 @@ class MagnetSweep(BaseSweep):
         self._peak_generator = pseudo_peak(values[len(values) / 2] + 0.001, values[0], values[-1], len(values))
 
     def _step(self, v):
-        self.spectrometer.magnet.set_dac(v, verbose=self.verbose, settling_time=self.integration_time*2)
+        self.spectrometer.magnet.set_dac(v, verbose=self.verbose,
+                                         settling_time=self.integration_time*2, use_dac_changed=False)
 
     def _execute(self):
         sm = self.start_mass

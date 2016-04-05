@@ -181,7 +181,7 @@ def calculate_peak_center(x, y, test_peak_flat=True, min_peak_height=1.0, percen
     my = ma
 
     # look backward for point that is peak_percent% of max
-    for i in xrange(max_i, max_i - 50, -1):
+    for i in xrange(max_i, 0, -1):
         # this prevent looping around to the end of the list
         if i < 1:
             raise PeakCenterError('PeakCenterError: could not find a low pos', low_pos_error=True)
@@ -197,7 +197,7 @@ def calculate_peak_center(x, y, test_peak_flat=True, min_peak_height=1.0, percen
     ly = y[i] - (y[i] - y[i - 1]) / 2.
 
     # look forward for point that is 80% of max
-    for i in xrange(max_i, max_i + 50, 1):
+    for i in xrange(max_i, x.shape[0], 1):
         try:
             if y[i] < (ma * (1 - percent / 100.)):
                 break

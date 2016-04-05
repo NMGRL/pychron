@@ -179,7 +179,7 @@ class IonOpticsManager(Manager):
                           window=0.015, step_width=0.0005, min_peak_height=1.0, percent=80,
                           deconvolve=None,
                           use_interpolation=False,
-                          dac_offset=None,
+                          dac_offset=None, calculate_all_peaks=False,
                           config_name=None):
 
         if deconvolve is None:
@@ -228,12 +228,13 @@ class IonOpticsManager(Manager):
             min_peak_height = pcc.min_peak_height
             step_width = pcc.step_width
             percent = pcc.percent
+
             use_interpolation = pcc.use_interpolation
             n_peaks = pcc.n_peaks
             select_peak = pcc.select_n_peak
             use_dac_offset = pcc.use_dac_offset
             dac_offset = pcc.dac_offset
-
+            calculate_all_peaks = pcc.calculate_all_peaks
             if center_dac is None:
                 center_dac = pcc.dac
 
@@ -276,8 +277,9 @@ class IonOpticsManager(Manager):
                      n_peaks=n_peaks,
                      select_peak=select_peak,
                      use_dac_offset=use_dac_offset,
-                     dac_offset=dac_offset)
-        print pc.reference_detector, pc.reference_isotope
+                     dac_offset=dac_offset,
+                     calculate_all_peaks=calculate_all_peaks)
+
         self.peak_center = pc
         graph = pc.graph
         graph.name = name
