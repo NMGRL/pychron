@@ -122,8 +122,6 @@ class BaseMagnet(HasTraits):
             return mass
 
         except ValueError, e:
-            import traceback
-            traceback.print_exc()
             self.debug('DAC does not map to an isotope. DAC={}, Detector={}'.format(dac, detname))
 
     def map_mass_to_dac(self, mass, detname):

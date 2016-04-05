@@ -76,7 +76,6 @@ class PeakCenterConfig(HasTraits):
             self.select_n_peak = new
 
     def _detector_changed(self, new):
-        print new, self.detectors
         if new:
             self.available_detectors = [d for d in self.detectors if d != new]
 
@@ -223,6 +222,15 @@ class PeakCenterConfigurer(ItemConfigurer):
         kw['available_detectors'] = self.detectors
 
         super(PeakCenterConfigurer, self).load(**kw)
+
+    def get(self, *args, **kw):
+        item = super(PeakCenterConfigurer, self).get(*args, **kw)
+        item.trait_set(detectors=self.detectors,
+                       isotopes=self.isotopes,
+                       available_detectors=self.detectors)
+
+        return item
+
 # if __name__ == '__main__':
 #     from pychron.paths import paths
 #
