@@ -188,6 +188,7 @@ class AutomatedRun(Loggable):
     experiment_type = Str(AR_AR)
 
     intensity_scalar = Float
+    _intensities = None
 
     def set_preferences(self, preferences):
         self.debug('set preferences')
@@ -206,6 +207,15 @@ class AutomatedRun(Loggable):
     # ===============================================================================
     # pyscript interface
     # ===============================================================================
+    def py_get_intensity(self, detector):
+        if self._intensities:
+            try:
+                idx = self._intensities['tags'].index(detector)
+            except ValueError:
+                return
+
+            return self._intensities['signals'][idx]
+
     def py_set_intensity_scalar(self, v):
         self.intensity_scalar = v
         return True
@@ -1871,6 +1881,7 @@ anaylsis_type={}
             cnt = 0
             fcnt = 3
             spec = self.spectrometer_manager.spectrometer
+            self._intensities = {}
             while 1:
                 k, s = spec.get_intensities(tagged=True)
                 if not k:
@@ -1889,6 +1900,10 @@ anaylsis_type={}
                     cnt = 0
                     if self.intensity_scalar:
                         s = [si * self.intensity_scalar for si in s]
+
+                    self._intensities['tags'] = k
+                    self._intensities['signals'] = s
+
                     yield k, s
 
         return gen()
