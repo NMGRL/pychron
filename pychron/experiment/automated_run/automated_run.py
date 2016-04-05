@@ -176,9 +176,30 @@ class AutomatedRun(Loggable):
     peak_center_threshold2 = Int(1.25)
     peak_center_threshold_window = Int(10)
 
+    # persistence_spec = Instance(PersistenceSpec)
+
+    intensity_scalar = Float
+    _intensities = None
+
+    # def bind_preferences(self):
+    #     prefid = 'pychron.experiment'
+    #     bind_preference(self, 'use_peak_center_threshold', '{}.use_peak_center_threshold'.format(prefid))
+    #     bind_preference(self, 'peak_center_threshold1', '{}.peak_center_threshold1'.format(prefid))
+    #     bind_preference(self, 'peak_center_threshold2', '{}.peak_center_threshold2'.format(prefid))
+    #     bind_preference(self, 'peak_center_threshold_window', '{}.peak_center_threshold_window'.format(prefid))
+
     # ===============================================================================
     # pyscript interface
     # ===============================================================================
+    def py_get_intensity(self, detector):
+        if self._intensities:
+            try:
+                idx = self._intensities['tags'].index(detector)
+            except ValueError:
+                return
+
+            return self._intensities['signals'][idx]
+
     def py_generate_ic_mftable(self, detectors, refiso):
         return self._generate_ic_mftable(detectors, refiso)
 
@@ -188,7 +209,7 @@ class AutomatedRun(Loggable):
     def py_reset_data(self):
         # self.persister.pre_measurement_save()
         self._persister_action('pre_measurement_save')
-        
+
     def _persister_action(self, func, *args, **kw):
         getattr(self.persister, func)(*args, **kw)
         for p in (self.xls_persister,):
@@ -1706,6 +1727,7 @@ anaylsis_type={}
             cnt = 0
             fcnt = 3
             spec = self.spectrometer_manager.spectrometer
+            self._intensities = {}
             while 1:
                 k, s = spec.get_intensities(tagged=True)
                 if not k:
@@ -1721,6 +1743,11 @@ anaylsis_type={}
                 else:
                     # reset the counter
                     cnt = 0
+                    if self.intensity_scalar:
+                        s = [si * self.intensity_scalar for si in s]
+
+                    self._intensities['tags'] = k
+                    self._intensities['signals'] = s
 
                     yield k, s
 

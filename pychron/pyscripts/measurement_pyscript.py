@@ -336,11 +336,10 @@ class MeasurementPyScript(ValvePyScript):
     @verbose_skip
     @command_register
     def get_intensity(self, name):
-        if self._detectors:
-            try:
-                return self._detectors[name]
-            except KeyError:
-                pass
+        v = self._automated_run_call('py_get_intensity', detector=name)
+
+        # ensure the script always gets a number
+        return 0 or v
 
     @verbose_skip
     @command_register
