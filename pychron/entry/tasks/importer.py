@@ -33,7 +33,8 @@ records = namedtuple('Record', 'name')
 
 
 class ImporterModel(Loggable):
-    db = Instance('pychron.database.adapters.isotope_adapter.IsotopeAdapter')
+    dest = Any
+
     data_source = Enum('MassSpec', 'File')
     extractor = Instance(Extractor)
     import_kind = Enum('---', 'irradiation', 'rid_list')
@@ -70,12 +71,12 @@ class ImporterModel(Loggable):
         # func = getattr(self.extractor, 'import_{}'.format(self.import_kind))
 
         st = time.time()
-        db = self.db
-        with db.session_ctx(commit=not self.dry_run):
+        dest = self.dest
+        with dest.session_ctx(commit=not self.dry_run):
             for irrad, levels in selected:
                 # pd.max = len(levels) + 2
                 self._progress_message(pd, 'Importing {} {}'.format(irrad, levels))
-                r = self.extractor.import_irradiation(db,
+                r = self.extractor.import_irradiation(dest,
                                                       irrad,
                                                       pd,
                                                       include_analyses=self.include_analyses,
@@ -159,14 +160,14 @@ class ImporterModel(Loggable):
                     #                if self._import_thread and self._import_thread.isRunning():
                 #                    return
 
-                if self.db.connect():
+                if self.dest.connect():
                     # clear imported
                     self.imported_names = []
                     #                    self.db.reset()
 
                     # self.db.save_username = 'jake({})'.format(self.db.username)
                     self.info('====== Import Started  ======')
-                    self.info('user name= {}'.format(self.db.save_username))
+                    self.info('user name= {}'.format(self.dest.save_username))
                     # get import func from extractor
 
                     n = len(selected) * 2

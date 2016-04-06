@@ -481,7 +481,12 @@ class MetaRepo(GitRepoManager):
         obj['z'] = z
         dvc_dump(obj, p)
 
-    def update_flux(self, irradiation, level, pos, identifier, j, e, decay, analyses, add=True):
+    def update_flux(self, irradiation, level, pos, identifier, j, e, decay=None, analyses=None, add=True):
+        if decay is None:
+            decay = {}
+        if analyses is None:
+            analyses = []
+            
         p = self.get_level_path(irradiation, level)
         jd = dvc_load(p)
 

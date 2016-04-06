@@ -530,6 +530,9 @@ class DVC(Loggable):
         return self.db.connect(*args, **kw)
 
     # meta repo
+    def update_flux(self, *args, **kw):
+        self.meta_repo.update_flux(*args, **kw)
+
     def set_identifier(self, *args):
         self.meta_repo.set_identifier(*args)
 
@@ -639,13 +642,17 @@ class DVC(Loggable):
         with self.db.session_ctx():
             self.db.add_material(name)
 
+    def add_project(self, name, pi=None):
+        with self.db.session_ctx():
+            self.db.add_project(name, pi)
+
     def add_sample(self, name, project, material):
         with self.db.session_ctx():
             self.db.add_sample(name, project, material)
 
-    def add_irradiation_position(self, irrad, level, pos, identifier=None):
+    def add_irradiation_position(self, irrad, level, pos, identifier=None, **kw):
         with self.db.session_ctx():
-            dbip = self.db.add_irradiation_position(irrad, level, pos, identifier)
+            dbip = self.db.add_irradiation_position(irrad, level, pos, identifier, **kw)
             # self.db.commit()
 
             self.meta_repo.add_position(irrad, level, pos)
@@ -713,6 +720,8 @@ class DVC(Loggable):
 
         if add_repo and principal_investigator:
             self.add_repository('Irradiation-{}'.format(name), principal_investigator)
+
+        return True
 
     def add_load_holder(self, name, path_or_txt):
         with self.db.session_ctx():

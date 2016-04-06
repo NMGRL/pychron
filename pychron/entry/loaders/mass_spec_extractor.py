@@ -23,6 +23,7 @@ from datetime import timedelta
 from sqlalchemy.sql.expression import and_, not_
 from sqlalchemy.orm.exc import NoResultFound
 # ============= local library imports  ==========================
+from pychron.database.adapters.isotope_adapter import IsotopeAdapter
 from pychron.mass_spec.database.massspec_orm import AnalysesTable, MachineTable, \
     LoginSessionTable, RunScriptTable
 from pychron.core.helpers.filetools import unique_path
@@ -55,21 +56,8 @@ class MassSpecExtractor(Extractor):
     db = Instance(MassSpecDatabaseAdapter, ())
     mapper = Any
 
-    # def _dbconn_spec_default(self):
-    # #        return DBConnectionSpec(database='massspecdata_minnabluff',
-    # #                                username='root',
-    # #                                password='',
-    # #                                host='localhost'
-    # #                                )
-    #     return DBConnectionSpec(database='massspecdata',
-    #                             username='root',
-    #                             password='',
-    #                             host=os.environ.get('HOST'))
-    #
-    #     return DBConnectionSpec(database='massspecdata_minnabluff',
-    #                             username='root',
-    #                             password='',
-    #                             host='localhost')
+    _import_err_file = None
+
     def __init__(self, *args, **kw):
         super(MassSpecExtractor, self).__init__(*args, **kw)
 
@@ -89,23 +77,44 @@ class MassSpecExtractor(Extractor):
         self.db.host = self.dbconn_spec.host
         self.db.connect()
 
-    def import_irradiation(self, dest, name,
-                           progress,
-                           include_analyses=False,
-                           include_blanks=False,
-                           include_airs=False,
-                           include_cocktails=False,
-                           include_list=None,
-                           dry_run=True):
+    def import_irradiation(self, dest, name, progress, dry_run=True, **kw):
 
         self.connect()
         p, c = unique_path(paths.data_dir, 'import')
-        self.import_err_file = open(p, 'w')
+        self._import_err_file = open(p, 'w')
 
-        #         with dest.session_ctx(commit=not dry_run) as sess:
-        self.dbimport = dest.add_import(
-            source=self.db.name,
-            source_host=self.db.host)
+        if isinstance(dest, IsotopeAdapter):
+            added_to_db = self._do_isotope_db_import(dest, name, progress, dry_run=dry_run, **kw)
+        else:
+            added_to_db = self._do_dvc_import(dest, name, progress, dry_run=dry_run)
+
+        self.debug('irradiation import dry_run={}'.format(dry_run))
+
+        self._import_err_file.close()
+        return ImportName(name=name, skipped=not added_to_db)
+
+    def _do_dvc_import(self, dest, name, progress, dry_run=False):
+        # is irrad already in dest
+        dbirrad = dest.get_irradiation(name)
+        added_to_db = False
+        if dbirrad is None:
+            db = self.db
+            chrons = db.get_chronology_by_irradname(name)
+            doses = [(1.0, ci.StartTime, ci.EndTime) for ci in chrons]
+            if dest.add_irradiation(name, doses):
+                added_to_db = self._add_levels_dvc(dest, name, progress)
+        return added_to_db
+
+    def _do_isotope_db_import(self, dest, name,
+                              progress,
+                              include_analyses=False,
+                              include_blanks=False,
+                              include_airs=False,
+                              include_cocktails=False,
+                              include_list=None,
+                              dry_run=True):
+
+        self.dbimport = dest.add_import(source=self.db.name, source_host=self.db.host)
 
         # is irrad already in dest
         dbirrad = dest.get_irradiation(name)
@@ -133,13 +142,56 @@ class MassSpecExtractor(Extractor):
                                            dry_run=dry_run)
         else:
             self.warning('no irradiation found or created for {}. not adding levels'.format(name))
-        self.debug('irradiation import dry_run={}'.format(dry_run))
+        return added_to_db
 
-        # if not dry_run:
-        #    dest.sess.commit()
+    def _add_levels_dvc(self, dest, progress, name):
+        db = self.db
 
-        self.import_err_file.close()
-        return ImportName(name=name, skipped=not added_to_db)
+        with db.session_ctx() as sess:
+            levels = db.get_irradiation_levels(name)
+
+            progress.increase_max(len(levels))
+
+            for mli in levels:
+                if progress.canceled:
+                    sess.rollback()
+                    return
+                elif progress.accepted:
+                    return True
+
+                progress.change_message('importing level {} {}'.format(name, mli.Level))
+
+                self._add_level_dvc(dest, progress, name, mli)
+        return True
+
+    def _add_level_dvc(self, dest, progress, name, mli):
+        # is level already in dest
+        dbl = dest.get_irradiation_level(name, mli.Level)
+        if dbl is None:
+            hname = mli.SampleHolder
+            prname = mli.production.Label
+            lname = mli.Level
+
+            dest.add_irradiation_level(lname, name, hname, prname)
+            # add all irradiation positions for this level
+            positions = self.db.get_irradiation_positions(name, mli.Level)
+            for ip in positions:
+                if progress.canceled:
+                    break
+                elif progress.accepted:
+                    break
+
+                # is labnumber already in dest
+                sample = self._add_sample_project(dest, ip)
+
+                ipos = dest.get_identifier(ip.IrradPosition)
+                if not ipos:
+                    self.debug('{} not in dest'.format(ip.IrradPosition))
+                    dest.add_irradiation_position(name, mli.Level, ip.HoleNumber,
+                                                  identifier=ip.IrradPosition,
+                                                  sample=sample)
+                    dest.update_flux(name, mli.Level, ip.HoleNumber, ip.IrradPosition,
+                                     ip.J, ip.JEr)
 
     def _add_levels(self, dest, progress, dbirrad, dbpr,
                     include_analyses=False,
@@ -553,7 +605,7 @@ class MassSpecExtractor(Extractor):
         # =======================================================================
         fit_hist = None
         if len(dbanalysis.isotopes) < 4 or len(dbanalysis.isotopes) > 7:
-            self.import_err_file.write('{}\n'.format(identifier))
+            self._import_err_file.write('{}\n'.format(identifier))
 
         ic_hist = None
         for iso in dbanalysis.isotopes:
@@ -569,7 +621,7 @@ class MassSpecExtractor(Extractor):
                 noncor_y = [struct.unpack('{}f'.format(endianness),
                                           blob[i:i + 4])[0] for i in xrange(0, len(blob), 4)]
             except Exception, e:
-                self.import_err_file.write('{}-{}\n'.format(identifier, e))
+                self._import_err_file.write('{}-{}\n'.format(identifier, e))
                 continue
 
             det = None
@@ -652,13 +704,8 @@ class MassSpecExtractor(Extractor):
             project = self.mapper.map_project(project)
 
         project = dest.add_project(project)
-        # print sample, sample.Sample
-        # sam=convert_sample(dbpos, sample.Sample)
 
-        return dest.add_sample(
-            sample.Sample,
-            material=material,
-            project=project)
+        return dest.add_sample(sample.Sample, material=material, project=project)
 
     def _add_chronology(self, dest, name):
         db = self.db

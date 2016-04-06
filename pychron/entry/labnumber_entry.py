@@ -130,7 +130,7 @@ class LabnumberEntry(DVCIrradiationable):
         from pychron.entry.tasks.importer import ImporterModel
         from pychron.entry.tasks.importer_view import ImporterView
 
-        mod = ImporterModel(db=self.dvc.db)
+        mod = ImporterModel(dest=self.dvc)
         ev = ImporterView(model=mod)
         info = ev.edit_traits()
         if info.result:

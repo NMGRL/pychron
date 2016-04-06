@@ -292,8 +292,6 @@ class DVCDatabase(DatabaseAdapter):
                 a.project = self.get_project(project)
                 a.material = self.get_material(material)
                 a = self._add_item(a)
-            # else:
-            # self.debug('SAMPLE {},{} ALREADY EXISTS'.format(name,project))
             return a
 
     def add_extraction_device(self, name):
