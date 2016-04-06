@@ -1929,6 +1929,7 @@ anaylsis_type={}
             from pychron.core.ui.gui import invoke_in_main_thread
 
             invoke_in_main_thread(self._setup_isotope_graph, starttime_offset, color, grpname)
+            time.sleep(0.5)
 
         with self.persister.writer_ctx():
             m.measure()
