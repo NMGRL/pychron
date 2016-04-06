@@ -331,6 +331,8 @@ class MetaRepo(GitRepoManager):
         self._update_text(os.path.join('experiments', rootname), name, path_or_blob)
 
     def update_level_production(self, irrad, name, prname):
+        prname = prname.replace(' ', '_')
+
         src = os.path.join(paths.meta_root, 'productions', '{}.json'.format(prname))
         if os.path.isfile(src):
             dest = os.path.join(paths.meta_root, irrad, 'productions', '{}.json'.format(prname))

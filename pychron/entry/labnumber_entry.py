@@ -124,8 +124,8 @@ class LabnumberEntry(DVCIrradiationable):
 
     def import_irradiation(self):
         self.debug('import irradiation')
-        self.warning_dialog('Import irradiation currently not available')
-        return
+        # self.warning_dialog('Import irradiation currently not available')
+        # return
 
         from pychron.entry.tasks.importer import ImporterModel
         from pychron.entry.tasks.importer_view import ImporterView
@@ -562,6 +562,8 @@ THIS CHANGE CANNOT BE UNDONE')
                     with dirty_ctx(self):
                         self._make_positions(n, positions)
             except BaseException, e:
+                import traceback
+                traceback.print_exc()
                 print 'excep', e
                 self.warning_dialog('Failed loading Irradiation level="{}"'.format(name))
                 sess.rollback()

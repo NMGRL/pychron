@@ -121,6 +121,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
 
     def get_irradiation_levels(self, name, levels=None):
         with self.session_ctx() as sess:
+            print 'asdfasdf', name, levels
             q = sess.query(IrradiationLevelTable)
             q = q.filter(IrradiationLevelTable.IrradBaseID == name)
             if levels:
@@ -150,7 +151,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
             q = sess.query(distinct(IrradiationLevelTable.IrradBaseID))
             vs = q.all()
             if vs:
-                vs = [vi[0] for vi in vs]
+                vs = sorted([vi[0] for vi in vs], reverse=True)
             return vs
 
     def get_analyses(self, **kw):

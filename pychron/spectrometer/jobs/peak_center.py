@@ -287,7 +287,8 @@ class BasePeakCenter(MagnetSweep):
             f = interpolate.interp1d(x, y, kind='cubic')
             x = linspace(x.min(), x.max(), 500)
             y = f(x)
-            self.graph.new_series(x, y, line_style='dash', line_width=1)
+            self.graph.new_series(x, y, line_width=1)
+            self.graph.redraw()
 
         if self.n_peaks > 1:
             self.warning('peak deconvolution disabled')

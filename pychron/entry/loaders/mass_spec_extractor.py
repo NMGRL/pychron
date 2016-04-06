@@ -86,6 +86,7 @@ class MassSpecExtractor(Extractor):
         if isinstance(dest, IsotopeAdapter):
             added_to_db = self._do_isotope_db_import(dest, name, progress, dry_run=dry_run, **kw)
         else:
+            print name
             added_to_db = self._do_dvc_import(dest, name, progress, dry_run=dry_run)
 
         self.debug('irradiation import dry_run={}'.format(dry_run))
@@ -99,10 +100,11 @@ class MassSpecExtractor(Extractor):
         added_to_db = False
         if dbirrad is None:
             db = self.db
-            chrons = db.get_chronology_by_irradname(name)
-            doses = [(1.0, ci.StartTime, ci.EndTime) for ci in chrons]
-            if dest.add_irradiation(name, doses):
-                added_to_db = self._add_levels_dvc(dest, name, progress)
+            with db.session_ctx():
+                chrons = db.get_chronology_by_irradname(name)
+                doses = [(1.0, ci.StartTime, ci.EndTime) for ci in chrons]
+                if dest.add_irradiation(name, doses):
+                    added_to_db = self._add_levels_dvc(dest, name, progress)
         return added_to_db
 
     def _do_isotope_db_import(self, dest, name,
@@ -144,7 +146,7 @@ class MassSpecExtractor(Extractor):
             self.warning('no irradiation found or created for {}. not adding levels'.format(name))
         return added_to_db
 
-    def _add_levels_dvc(self, dest, progress, name):
+    def _add_levels_dvc(self, dest, name, progress):
         db = self.db
 
         with db.session_ctx() as sess:

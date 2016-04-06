@@ -266,7 +266,7 @@ class AutomatedRunPersister(BasePersister):
         dm = self.data_manager
         with dm.open_file(self._current_data_frame):
 
-            dm.new_group('/', 'peak_centers')
+            dm.new_group('peak_centers')
             for result in pc.get_results():
                 tab = dm.new_table('/peak_centers', result.detector)
                 for x, y in result.points:

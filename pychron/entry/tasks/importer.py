@@ -62,7 +62,7 @@ class ImporterModel(Loggable):
     #    include_cocktails = Bool(True)
     include_list = List
     update_irradiations_needed = Event
-    dry_run = Bool(True)
+    dry_run = Bool(False)
 
     def _progress_message(self, pd, m):
         invoke_in_main_thread(pd.change_message, m)
