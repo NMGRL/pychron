@@ -63,6 +63,9 @@ class StatusMonitor(Loggable):
             self.debug('Alive clients {}'.format(self._clients))
 
     def _iter(self, i, vm):
+        if self._stop_evt.is_set():
+            return
+
         if vm is None:
             self.debug('No valve manager')
             return
@@ -82,7 +85,7 @@ class StatusMonitor(Loggable):
 
         if i > 100:
             i = 0
-        if not self._stop_evt.isSet():
+        if not self._stop_evt.is_set():
             do_after(self.update_period * 1000, self._iter, i + 1, vm)
 
 # ============= EOF =============================================

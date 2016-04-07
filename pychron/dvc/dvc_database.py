@@ -34,7 +34,7 @@ from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, \
     MeasuredPositionTbl, ProductionTbl, VersionTbl, RepositoryAssociationTbl, \
     RepositoryTbl, AnalysisChangeTbl, \
     InterpretedAgeTbl, InterpretedAgeSetTbl, PrincipalInvestigatorTbl
-from pychron.pychron_constants import ALPHAS, alpha_to_int
+from pychron.pychron_constants import ALPHAS, alpha_to_int, NULL_STR
 
 
 class NewMassSpectrometerView(HasTraits):
@@ -187,6 +187,24 @@ class DVCDatabase(DatabaseAdapter):
                 # print ti, low, high, rs, refs
             # print 'refs', refs
             return [rii for ri in refs for rii in ri.record_views]
+
+    def retrieve_blank(self,kind, ms, ed, last):
+        with self.session_ctx() as sess:
+            q = sess.query(AnalysisTbl)
+
+            if last:
+                q = q.filter(AnalysisTbl.analysis_type == 'blank_{}'.format(kind))
+            else:
+                q = q.filter(AnalysisTbl.analysis_type.startswith('blank'))
+
+            if ms:
+                q = q.filter(func.lower(AnalysisTbl.mass_spectrometer) == ms.lower())
+
+            if ed and not ed in ('Extract Device', NULL_STR) and kind == 'unknown':
+                q = q.filter(func.lower(AnalysisTbl.extract_device) == ed.lower())
+
+            q = q.order_by(AnalysisTbl.timestamp.desc())
+            return self._query_one(q)
 
     # def get_analyses_data_range(self, low, high, atypes, exclude=None, exclude_uuids=None):
     #     with self.session_ctx() as sess:

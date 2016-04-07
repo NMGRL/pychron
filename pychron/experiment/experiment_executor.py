@@ -740,7 +740,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.info('Automated run {} {} duration: {:0.3f} s'.format(run.runid, run.spec.state, t))
 
         run.finish()
-        if run.spec.state not in ('canceled', 'failed'):
+        if run.spec.state not in ('canceled', 'failed', 'aborted'):
             self._retroactive_repository_identifiers(run.spec)
 
         if self.use_autoplot:
@@ -800,6 +800,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         do_after(1000, run.teardown)
 
     def _abort_run(self):
+        self.debug('Abort Run')
         self.set_extract_state(False)
         self.wait_group.stop()
 
@@ -809,6 +810,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 arun.abort_run()
 
     def _cancel(self, style='queue', cancel_run=False, msg=None, confirm=True, err=None):
+        self.debug('_cancel')
         aruns = (self.measuring_run, self.extracting_run)
 
         if style == 'queue':
@@ -1086,6 +1088,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             return True
 
     def _failed_execution_step(self, msg):
+        self.debug('failed execution step {}'.format(msg))
         if not self._canceled:
             self._err_message = msg
             self.alive = False
@@ -2073,7 +2076,7 @@ Use Last "blank_{}"= {}
             for crun, kind in ((self.measuring_run, 'measuring'),
                                (self.extracting_run, 'extracting')):
                 if crun:
-                    self.debug('cancel {} run {}'.format(kind, crun.runid))
+                    self.debug('abort {} run {}'.format(kind, crun.runid))
                     self._abort_run()
                     # do_after(50, self._cancel_run)
                     # t = Thread(target=self._cancel_run)

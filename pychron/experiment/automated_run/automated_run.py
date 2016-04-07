@@ -170,6 +170,7 @@ class AutomatedRun(Loggable):
     _peak_center_detectors = List
     _loaded = False
     _measured = False
+    _aborted  = False
     _alive = Bool(False)
     _truncate_signal = Bool
     _equilibration_done = False
@@ -643,9 +644,10 @@ class AutomatedRun(Loggable):
     # run termination
     # ===============================================================================
     def abort_run(self, do_post_equilibration=True):
+        self._aborted = True
         self.debug('Abort run do_post_equilibration={}'.format(do_post_equilibration))
         # self.multi_collector.canceled = True
-        self.collector.canceled = True
+        # self.collector.canceled = True
 
         # self.aliquot='##'
         self._persister_action('trait_set', save_enabled=False)
@@ -820,6 +822,7 @@ class AutomatedRun(Loggable):
 
     def start(self):
         self.debug('----------------- start -----------------')
+        self._aborted = False
         self.persistence_spec = PersistenceSpec()
         for p in (self.persister, self.xls_persister, self.dvc_persister):
             if p is not None:
@@ -961,8 +964,8 @@ class AutomatedRun(Loggable):
             i += 1
 
     def post_measurement_save(self):
-        self.debug('post measurement save measured={}'.format(self._measured))
-        if self._measured:
+        self.debug('post measurement save measured={} aborted={}'.format(self._measured, self._aborted))
+        if self._measured and not self._aborted:
             conds = (self.termination_conditionals, self.truncation_conditionals,
                      self.action_conditionals, self.cancelation_conditionals, self.modification_conditionals)
 
@@ -1221,10 +1224,10 @@ class AutomatedRun(Loggable):
                 self.do_post_measurement()
             self.finish()
 
-            self.heading('Measurement Finished unsuccessfully', color='red')
+            self.heading('Measurement Finished unsuccessfully. Aborted={}'.format(self._aborted), color='red')
             self.measuring = False
             self.info_color = None
-            return False
+            return self._aborted
 
     def do_post_measurement(self, script=None):
         if script is None:

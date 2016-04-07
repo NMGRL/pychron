@@ -755,6 +755,11 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         self.debug('clear labnumber')
         if not self._no_clear_labnumber:
             self.labnumber = ''
+            self.irradiation = ''
+            self.sample = ''
+            self._suppress_special_labnumber_change=True
+            self.special_labnumber = 'Special Labnumber'
+            self._suppress_special_labnumber_change=False
 
     def _template_closed(self, obj, name, new):
         self.template = obj.name
@@ -840,37 +845,40 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             this preserves the users changes
         """
         # if new is special e.g bu-01-01
+        tag = new
         if '-' in new:
-            new = new.split('-')[0]
-        if '-' in old:
-            old = old.split('-')[0]
+            tag = new.split('-')[0]
+        # if '-' in old:
+        #     old = old.split('-')[0]
 
-        if new in ANALYSIS_MAPPING or old in ANALYSIS_MAPPING or not old and new:
+        if tag in ANALYSIS_MAPPING:  # or old in ANALYSIS_MAPPING or not old and new:
             # set default scripts
-            self._load_default_scripts(new)
+            self._load_default_scripts(tag, new)
 
-    def _load_default_scripts(self, labnumber):
+    def _load_default_scripts(self, labnumber_tag, labnumber):
 
         # if labnumber is int use key='U'
         try:
-            _ = int(labnumber)
-            labnumber = 'u'
+            _ = int(labnumber_tag)
+            labnumber_tag = 'u'
         except ValueError:
             pass
 
-        labnumber = str(labnumber).lower()
+        labnumber_tag = str(labnumber_tag).lower()
         if self._current_loaded_default_scripts_key == labnumber:
+            self.debug('Scripts for {} already loaded'.format(labnumber))
             return
 
-        self.debug('load default scripts for {}'.format(labnumber))
-        self._current_loaded_default_scripts_key = labnumber
+        self.debug('load default scripts for {}'.format(labnumber_tag))
 
+        self._current_loaded_default_scripts_key = None
         defaults = self._load_default_file()
         if defaults:
-            if labnumber in defaults:
-                default_scripts = defaults[labnumber]
+            if labnumber_tag in defaults:
+                self._current_loaded_default_scripts_key = labnumber
+                default_scripts = defaults[labnumber_tag]
                 keys = SCRIPT_KEYS
-                if labnumber == 'dg':
+                if labnumber_tag == 'dg':
                     keys = ['extraction']
 
                 # set options
@@ -880,7 +888,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                     new_script_name = default_scripts.get(skey) or ''
 
                     new_script_name = remove_file_extension(new_script_name)
-                    if labnumber in ('u', 'bu') and self.extract_device not in (NULL_STR, 'ExternalPipette'):
+                    if labnumber_tag in ('u', 'bu') and self.extract_device not in (NULL_STR, 'ExternalPipette'):
 
                         # the default value trumps pychron's
                         if self.extract_device:
@@ -891,7 +899,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                                 elif skey == 'post_equilibration':
                                     new_script_name = default_scripts.get(skey, 'pump_{}'.format(e))
 
-                    elif labnumber == 'dg':
+                    elif labnumber_tag == 'dg':
                         e = self.extract_device.split(' ')[1].lower()
                         new_script_name = '{}_{}'.format(e, new_script_name)
 
@@ -1433,9 +1441,14 @@ post_equilibration_script:name''')
                 special = True
 
             if not special:
-                self._suppress_special_labnumber_change = True
-                self.special_labnumber = 'Special Labnumber'
-                self._suppress_special_labnumber_change = False
+                sname = 'Special Labnumber'
+            else:
+                tag = new.split('-')[0]
+                sname = ANALYSIS_MAPPING.get(tag, 'Special Labnumber')
+
+            self._suppress_special_labnumber_change = True
+            self.special_labnumber = sname
+            self._suppress_special_labnumber_change = False
 
             if self._load_labnumber_meta(new):
                 if self._set_defaults:
@@ -1448,6 +1461,7 @@ post_equilibration_script:name''')
 
     def _selected_irradiation_changed(self):
         self._clear_labnumber()
+        self.selected_level = 'Level'
 
     def _selected_level_changed(self):
         self._clear_labnumber()
