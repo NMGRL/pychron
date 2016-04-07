@@ -1266,6 +1266,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         if self.dvc:
             a = RepositoryIdentifierEntry(dvc=self.dvc)
             a.available = self.dvc.get_repository_identifiers()
+            a.principal_investigators = self.dvc.get_principal_investigator_names()
             if a.do():
                 self.repository_identifier_dirty = True
                 self.repository_identifier = a.name

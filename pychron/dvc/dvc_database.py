@@ -1061,6 +1061,11 @@ class DVCDatabase(DatabaseAdapter):
             return items[0]
 
     # multi getters
+    def get_principal_investigator_names(self, *args, **kw):
+        with self.session_ctx():
+            items = self.get_principal_investigators(*args, **kw)
+            return [i.name for i in items]
+
     def get_principal_investigators(self, order=None, **kw):
         if order:
             order = getattr(PrincipalInvestigatorTbl.name, order)()
