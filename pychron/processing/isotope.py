@@ -24,7 +24,7 @@ from binascii import hexlify
 from itertools import izip
 
 from numpy import array, Inf, polyfit
-from uncertainties import ufloat
+from uncertainties import ufloat, nominal_value, std_dev
 
 # ============= local library imports  ==========================
 from pychron.core.helpers.fits import natural_name_fit, fit_to_degree
@@ -310,6 +310,8 @@ class IsotopicMeasurement(BaseMeasurement):
     def set_uvalue(self, v):
         if isinstance(v, tuple):
             self._value, self._error = v
+        else:
+            self._value , self._error = nominal_value(v), std_dev(v)
 
     def _revert_user_defined(self):
         self.user_defined_error = False

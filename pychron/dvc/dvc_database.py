@@ -188,9 +188,24 @@ class DVCDatabase(DatabaseAdapter):
             # print 'refs', refs
             return [rii for ri in refs for rii in ri.record_views]
 
-    def retrieve_blank(self,kind, ms, ed, last):
+    def get_blanks(self, ms=None, limit=100):
         with self.session_ctx() as sess:
             q = sess.query(AnalysisTbl)
+            q = q.filter(AnalysisTbl.analysis_type.like('blank%'))
+
+            if ms:
+                q = q.filter(func.lower(AnalysisTbl.mass_spectrometer) == ms.lower())
+
+            return self._retrieve_items(AnalysisTbl, order=AnalysisTbl.timestamp.desc(),
+                                        limit=limit)
+
+    def retrieve_blank(self, kind, ms, ed, last, repository):
+        with self.session_ctx() as sess:
+            q = sess.query(AnalysisTbl)
+
+            if repository:
+                q = q.join(RepositoryAssociationTbl)
+                q = q.join(RepositoryTbl)
 
             if last:
                 q = q.filter(AnalysisTbl.analysis_type == 'blank_{}'.format(kind))
@@ -200,8 +215,11 @@ class DVCDatabase(DatabaseAdapter):
             if ms:
                 q = q.filter(func.lower(AnalysisTbl.mass_spectrometer) == ms.lower())
 
-            if ed and not ed in ('Extract Device', NULL_STR) and kind == 'unknown':
+            if ed and ed not in ('Extract Device', NULL_STR) and kind == 'unknown':
                 q = q.filter(func.lower(AnalysisTbl.extract_device) == ed.lower())
+
+            if repository:
+                q = q.filter(RepositoryTbl.name == repository)
 
             q = q.order_by(AnalysisTbl.timestamp.desc())
             return self._query_one(q)
@@ -387,6 +405,10 @@ class DVCDatabase(DatabaseAdapter):
 
     def add_repository(self, name, principal_investigator, **kw):
         with self.session_ctx():
+            repo = self.get_repository(name)
+            if repo:
+                return repo
+
             principal_investigator = self.get_principal_investigator(principal_investigator)
             if not principal_investigator:
                 principal_investigator = self.add_principal_investigator(principal_investigator)

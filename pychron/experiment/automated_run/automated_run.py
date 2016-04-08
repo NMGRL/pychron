@@ -170,7 +170,7 @@ class AutomatedRun(Loggable):
     _peak_center_detectors = List
     _loaded = False
     _measured = False
-    _aborted  = False
+    _aborted = False
     _alive = Bool(False)
     _truncate_signal = Bool
     _equilibration_done = False
@@ -1002,11 +1002,11 @@ class AutomatedRun(Loggable):
             pid, blanks, runid = self.experiment_executor.get_prev_blanks()
 
         if not blanks:
-            blanks = dict(Ar40=ufloat(0, 0),
-                          Ar39=ufloat(0, 0),
-                          Ar38=ufloat(0, 0),
-                          Ar37=ufloat(0, 0),
-                          Ar36=ufloat(0, 0))
+            blanks = dict(Ar40=('', ufloat(0, 0)),
+                          Ar39=('', ufloat(0, 0)),
+                          Ar38=('', ufloat(0, 0)),
+                          Ar37=('', ufloat(0, 0)),
+                          Ar36=('', ufloat(0, 0)), )
 
         return pid, blanks
 
@@ -1020,11 +1020,11 @@ class AutomatedRun(Loggable):
             baselines = self.experiment_executor.get_prev_baselines()
 
         if not baselines:
-            baselines = dict(Ar40=ufloat(0, 0),
-                             Ar39=ufloat(0, 0),
-                             Ar38=ufloat(0, 0),
-                             Ar37=ufloat(0, 0),
-                             Ar36=ufloat(0, 0))
+            baselines = dict(Ar40=('', ufloat(0, 0)),
+                             Ar39=('', ufloat(0, 0)),
+                             Ar38=('', ufloat(0, 0)),
+                             Ar37=('', ufloat(0, 0)),
+                             Ar36=('', ufloat(0, 0)), )
 
         return baselines
 
@@ -1307,7 +1307,7 @@ anaylsis_type={}
         if self.isotope_group:
             d = dict()
             for k, iso in self.isotope_group.isotopes.iteritems():
-                d[k] = iso.get_baseline_corrected_value()
+                d[k] = (iso.detector, iso.get_baseline_corrected_value())
             return d
 
     def setup_context(self, *args, **kw):
@@ -1651,12 +1651,7 @@ anaylsis_type={}
         cb = False
         if (not self.spec.analysis_type.startswith('blank')
             and not self.spec.analysis_type.startswith('background')):
-
             cb = True
-            pid, blanks = self.get_previous_blanks()
-            self.debug('setting previous blanks')
-            for iso, v in blanks.iteritems():
-                self.isotope_group.set_blank(iso, v)
 
         for d in self._active_detectors:
             self.debug('setting isotope det={}, iso={}'.format(d.name, d.isotope))
@@ -1664,11 +1659,18 @@ anaylsis_type={}
                                            d.name,
                                            correct_for_blank=cb)
 
+        if (not self.spec.analysis_type.startswith('blank')
+            and not self.spec.analysis_type.startswith('background')):
+            pid, blanks = self.get_previous_blanks()
+            self.debug('setting previous blanks')
+            for iso, v in blanks.iteritems():
+                self.isotope_group.set_blank(iso, v[0], v[1])
+
         self.isotope_group.clear_baselines()
 
         baselines = self.get_previous_baselines()
         for iso, v in baselines.iteritems():
-            self.isotope_group.set_baseline(iso, v)
+            self.isotope_group.set_baseline(iso, v[0], v[1])
 
         self.debug('load analysis view')
         p.analysis_view.load(self)
@@ -2042,6 +2044,7 @@ anaylsis_type={}
             if grpname == 'sniff':
                 invoke_in_main_thread(self._setup_sniff_graph, starttime_offset, color)
 
+        time.sleep(0.5)
         with self.persister.writer_ctx():
             m.measure()
 
@@ -2115,7 +2118,6 @@ anaylsis_type={}
         regressing = False
         for k, iso in self.isotope_group.isotopes.iteritems():
             idx = graph.get_plotid_by_ytitle(k)
-            # print 'ff', k, iso.name, idx
             if idx is not None:
                 try:
                     graph.series[idx][series]

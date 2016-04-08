@@ -223,6 +223,13 @@ class Analysis(ArArAge):
     #     self.gains = {}
     #     self.blank_changes = []
     #     self.fit_changes = []
+    def get_baseline_corrected_signal_dict(self):
+        get = lambda iso: iso.get_baseline_corrected_value()
+        return self._get_isotope_dict(get)
+
+    def get_baseline_dict(self):
+        get = lambda iso: iso.baseline.uvalue
+        return self._get_isotope_dict(get)
 
     def get_ic_factor(self, det):
         iso = next((i for i in self.isotopes.itervalues() if i.detector == det), None)
@@ -439,6 +446,13 @@ class Analysis(ArArAge):
     @property
     def temp_selected(self):
         return self.temp_status in ('omit', 'outlier', 'invalid')
+
+    def _get_isotope_dict(self, get):
+        d = dict()
+        for ki, v in self.isotopes.iteritems():
+            d[ki] = (v.detector, get(v))
+
+        return d
 
     def __str__(self):
         return '{}<{}>'.format(self.record_id, self.__class__.__name__)

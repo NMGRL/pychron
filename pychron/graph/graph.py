@@ -278,18 +278,16 @@ class Graph(ContextMenuMixin):
             return None or Plot with y_axis.title equal to iso
             if startswith is True title only has to start with iso
         """
+
+        txt = str(txt)
         if startswith:
             is_equal = lambda x: x.startswith(txt)
         else:
             is_equal = lambda x: x.__eq__(txt)
 
-        plot = None
         for po in self.plots:
             if is_equal(po.y_axis.title):
-                plot = po
-                break
-
-        return plot
+                return po
 
     def get_num_plots(self):
         """

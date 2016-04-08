@@ -23,7 +23,7 @@ from math import isnan
 from datetime import datetime
 from uncertainties import nominal_value
 from uncertainties import std_dev
-from git import Repo
+from git import Repo, GitCommandError
 from itertools import groupby
 import shutil
 import time
@@ -405,6 +405,11 @@ class DVC(Loggable):
                 # [rii for ri in refs for rii in ri.record_views]
                 return self.make_analyses(an.record_views)
 
+    def make_analysis(self, record, *args, **kw):
+        a = self.make_analyses((record,), *args, **kw)
+        if a:
+            return a[0]
+
     def make_analyses(self, records, calculate_f_only=False):
         if not records:
             return
@@ -492,7 +497,9 @@ class DVC(Loggable):
             repo.pull()
         else:
             url = self.make_url(name)
-            GitRepoManager.clone_from(url, root)
+            org = self._organization_factory()
+            if name in org.repo_names:
+                GitRepoManager.clone_from(url, root)
 
         return True
 
@@ -676,16 +683,25 @@ class DVC(Loggable):
         else:
             self.debug('{} already exists'.format(identifier))
 
-    def add_repository(self, identifier, principal_investigator):
+    def add_repository(self, identifier, principal_investigator, inform=True):
         self.debug('trying to add repository identifier={}, pi={}'.format(identifier, principal_investigator))
         org = self._organization_factory()
+        for r in org.repo_names:
+            print r, identifier, r==identifier
         if identifier in org.repo_names:
-            self.warning_dialog('Repository "{}" already exists'.format(identifier))
+            # make sure also in the database
+            self.db.add_repository(identifier, principal_investigator)
+
+            if inform:
+                self.warning_dialog('Repository "{}" already exists'.format(identifier))
+
         else:
             root = os.path.join(paths.repository_dataset_dir, identifier)
 
             if os.path.isdir(root):
-                self.warning_dialog('{} already exists.'.format(root))
+                self.db.add_repository(identifier, principal_investigator)
+                if inform:
+                    self.warning_dialog('{} already exists.'.format(root))
             else:
                 self.info('Creating repository. {}'.format(identifier))
                 # with open('/Users/ross/Programming/githubauth.txt') as rfile:
@@ -793,7 +809,7 @@ class DVC(Loggable):
             # get repository branch
             a.branch = get_repository_branch(os.path.join(paths.repository_dataset_dir, expid))
 
-            a.set_tag(record.tag)
+            # a.set_tag(record.tag)
 
             # load irradiation
             if a.irradiation and a.irradiation not in ('NoIrradiation',):

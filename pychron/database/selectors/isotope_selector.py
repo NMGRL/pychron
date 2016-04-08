@@ -31,7 +31,7 @@ from pychron.database.orms.isotope.meas import meas_AnalysisTable, meas_Measurem
 
 from pychron.database.core.base_results_adapter import BaseResultsAdapter
 # from pychron.database.records.isotope_record import IsotopeRecord, IsotopeRecordView
-from pychron.database.records.isotope_record import IsotopeRecordView
+from pychron.database.records.isotope_record import IsotopeRecordView, DVCIsotopeRecordView
 from pychron.database.core.query import IsotopeQuery
 from pychron.experiment.utilities.identifier import make_aliquot_step
 from pychron.pychron_constants import LINE_STR
@@ -67,7 +67,7 @@ class IsotopeAnalysisSelector(DatabaseSelector):
     title = 'Recall Analyses'
 
     query_table = meas_AnalysisTable
-    record_view_klass = IsotopeRecordView
+    record_view_klass = DVCIsotopeRecordView
 
     query_klass = IsotopeQuery
     tabular_adapter_klass = IsotopeResultsAdapter

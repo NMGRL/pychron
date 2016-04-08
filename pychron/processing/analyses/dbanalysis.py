@@ -115,13 +115,7 @@ class DBAnalysis(Analysis):
     source_parameters = List
     deflections = List
 
-    def get_baseline_corrected_signal_dict(self):
-        get = lambda iso: iso.get_baseline_corrected_value()
-        return self._get_isotope_dict(get)
 
-    def get_baseline_dict(self):
-        get = lambda iso: iso.baseline.uvalue
-        return self._get_isotope_dict(get)
 
     def get_db_fit(self, meas_analysis, name, kind, selected_histories):
         try:
@@ -501,13 +495,6 @@ class DBAnalysis(Analysis):
         #                          kwargs=dict(unpack=unpack))
 
         self._make_isotopes(meas_analysis, isos, unpack, selected_histories)
-
-    def _get_isotope_dict(self, get):
-        d = dict()
-        for ki, v in self.isotopes.iteritems():
-            d[ki] = get(v)
-
-        return d
 
     def _get_ic_factors(self, meas_analysis):
         icfs = dict()

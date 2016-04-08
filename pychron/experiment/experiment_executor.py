@@ -1157,8 +1157,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 dvcp.load_name = exp.load_name
                 arun.dvc_persister = dvcp
 
-                expid = spec.repository_identifier
-                arun.dvc_persister.initialize(expid)
+                repid = spec.repository_identifier
+                self.datahub.mainstore.add_repository(repid, 'NMGRL', inform=False)
+
+                arun.dvc_persister.initialize(repid)
 
         mon = self.monitor
         if mon is not None:
@@ -1497,8 +1499,11 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         """
             do pre_run_terminations
         """
+
         if not self.alive:
             return
+
+        self.debug('============================= Pre Extraction Check =============================')
 
         conditionals = self._load_queue_conditionals('pre_run_terminations')
         default_conditionals = self._load_system_conditionals('pre_run_terminations')
@@ -1528,7 +1533,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     return True
 
             self.heading('Pre Extraction Check Passed')
-
+        self.debug('=================================================================================')
     def _pre_queue_check(self, exp):
         """
             return True to stop execution loop
@@ -1962,7 +1967,10 @@ Use Last "blank_{}"= {}
             if anidx == 0 or nopreceding:
                 pdbr, selected = self._get_blank(an.analysis_type, exp.mass_spectrometer,
                                                  exp.extract_device,
-                                                 last=True)
+                                                 last=True,
+                                                 repository=an.repository_identifier,
+                                                 )
+
                 if pdbr:
                     if selected:
                         self.debug('use user selected blank {}'.format(pdbr.record_id))
@@ -1995,21 +2003,21 @@ Use Last "blank_{}"= {}
 
         return True
 
-    def _get_blank(self, kind, ms, ed, last=False):
+    def _get_blank(self, kind, ms, ed, last=False, repository=None):
         mainstore = self.datahub.mainstore
         db = mainstore.db
         selected = False
         dbr = None
         with db.session_ctx():
             if last:
-                dbr = db.retrieve_blank(kind, ms, ed, last)
+                dbr = db.retrieve_blank(kind, ms, ed, last, repository)
 
             if dbr is None:
                 dbr = self._select_blank(db, ms)
                 selected = True
 
             if dbr:
-                dbr = mainstore.make_analysis(dbr, calculate_age=False)
+                dbr = mainstore.make_analysis(dbr)
 
             return dbr, selected
 
@@ -2027,10 +2035,10 @@ Use Last "blank_{}"= {}
             dbs = db.get_blanks(ms)
 
             sel.load_records(dbs[::-1])
-            sel.selected = sel.records[-1]
+            sel.selected = sel.records[-1:]
             info = sel.edit_traits(kind='livemodal')
             if info.result:
-                return sel.selected
+                return sel.selected[-1]
 
     def _set_message(self, msg, color='black'):
         self.heading(msg)
