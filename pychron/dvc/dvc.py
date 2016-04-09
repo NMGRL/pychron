@@ -23,7 +23,7 @@ from math import isnan
 from datetime import datetime
 from uncertainties import nominal_value
 from uncertainties import std_dev
-from git import Repo, GitCommandError
+from git import Repo
 from itertools import groupby
 import shutil
 import time
@@ -565,6 +565,9 @@ class DVC(Loggable):
             self.meta_repo.clear_cache = True
         else:
             self.debug('no changes to meta repo')
+
+    def add_production(self, irrad, name, prod):
+        self.meta_repo.add_production_to_irradiation(irrad, name, prod)
 
     # get
     def get_local_repositories(self):

@@ -35,6 +35,7 @@ from pychron.mass_spec.database.massspec_orm import IsotopeResultsTable, \
     IrradiationChronologyTable, IrradiationLevelTable, IrradiationProductionTable, ProjectTable, MaterialTable
 from pychron.database.core.database_adapter import DatabaseAdapter
 from pychron.database.core.functions import delete_one
+from pychron.pychron_constants import INTERFERENCE_KEYS
 
 
 class MissingAliquotPychronException(BaseException):
@@ -77,6 +78,71 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
     #     from pychron.database.selectors.massspec_selector import MassSpecSelector
     #
     #     return MassSpecSelector
+    def get_import_spec(self, name):
+        from pychron.entry.import_spec import ImportSpec, Irradiation, Level, \
+            Sample, Project, Position, Production
+        spec = ImportSpec()
+
+        i = Irradiation()
+        i.name = name
+
+        spec.irradiation = i
+
+        with self.session_ctx():
+            chrons = self.get_chronology_by_irradname(name)
+            i.doses = [(1.0, ci.StartTime, ci.EndTime) for ci in chrons]
+
+            levels = self.get_irradiation_levels(name)
+            nlevels = []
+            for dbl in levels:
+                level = Level()
+                level.name = dbl.Level
+
+                prod = Production()
+                dbprod = dbl.production
+                prod.name = dbprod.Label.replace(' ', '_')
+
+                for attr in INTERFERENCE_KEYS:
+                    try:
+                        setattr(prod, attr, (getattr(dbprod, attr),
+                                             getattr(dbprod, '{}Er'.format(attr))))
+                    except AttributeError:
+                        pass
+
+                prod.Ca_K = (dbprod.CaOverKMultiplier, dbprod.CaOverKMultiplierEr)
+                prod.Cl_K = (dbprod.ClOverKMultiplier, dbprod.ClOverKMultiplierEr)
+                prod.Cl3638 = (dbprod.P36Cl38Cl, dbprod.P36Cl38ClEr)
+
+                level.production = prod
+                level.holder = dbl.SampleHolder
+
+                pos = []
+                for ip in self.get_irradiation_positions(name, level.name):
+                    dbsam = ip.sample
+                    s = Sample()
+                    s.name = dbsam.Sample
+                    s.material = ip.Material
+
+                    pp = Project()
+                    pp.name = ip.sample.project.Project
+                    pp.principal_investigator = ip.sample.project.PrincipalInvestigator
+                    s.project = pp
+
+                    p = Position()
+                    p.sample = s
+                    p.position = ip.HoleNumber
+                    p.identifier = ip.IrradPosition
+                    p.j = ip.J
+                    p.j_err = ip.JEr
+                    p.note = ip.Note
+                    p.weight = ip.Weight
+
+                    pos.append(p)
+                level.positions = pos
+                nlevels.append(level)
+
+            i.levels = nlevels
+        return spec
 
     # ===============================================================================
     # getters
@@ -121,7 +187,6 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
 
     def get_irradiation_levels(self, name, levels=None):
         with self.session_ctx() as sess:
-            print 'asdfasdf', name, levels
             q = sess.query(IrradiationLevelTable)
             q = q.filter(IrradiationLevelTable.IrradBaseID == name)
             if levels:
@@ -671,6 +736,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
     def _add_analysis_position(self, analysis, pi, po):
         a = AnalysisPositionTable(Hole=pi, PositionOrder=po)
         analysis.positions.append(a)
+
 
 if __name__ == '__main__':
     from pychron.core.helpers.logger_setup import logging_setup

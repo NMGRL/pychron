@@ -311,22 +311,22 @@ class DVCDatabase(DatabaseAdapter):
             e.analysis = analysis
             return self._add_item(e)
 
-    def add_material(self, name):
+    def add_material(self, name, grainsize=None):
         with self.session_ctx():
             a = self.get_material(name)
             if a is None:
-                a = MaterialTbl(name=name)
+                a = MaterialTbl(name=name, grainsize=grainsize)
                 a = self._add_item(a)
             return a
 
-    def add_sample(self, name, project, material):
+    def add_sample(self, name, project, material, grainsize=None):
         with self.session_ctx():
-            a = self.get_sample(name, project, material)
+            a = self.get_sample(name, project, material, grainsize)
             if a is None:
-                self.debug('ADDING SAMPLE {},{},{}'.format(name, project, material))
+                self.debug('Adding sample {},{},{}'.format(name, project, material))
                 a = SampleTbl(name=name)
                 a.project = self.get_project(project)
-                a.material = self.get_material(material)
+                a.material = self.get_material(material, grainsize)
                 a = self._add_item(a)
             return a
 
@@ -376,11 +376,12 @@ class DVCDatabase(DatabaseAdapter):
         with self.session_ctx():
             a = self.get_project(name, pi)
             if a is None:
+                self.debug('Adding project {} {}'.format(name, pi))
                 a = ProjectTbl(name=name)
                 if pi:
                     dbpi = self.get_principal_investigator(pi)
                     if dbpi:
-                        a.principal_investigator = dbpi
+                        a.principal_investigator = pi
 
                 a = self._add_item(a)
             return a
@@ -389,12 +390,16 @@ class DVCDatabase(DatabaseAdapter):
         with self.session_ctx():
             dbpos = self.get_irradiation_position(irrad, level, pos)
             if dbpos is None:
+                self.debug('Adding irradiation position {}{} {}'.format(irrad, level, pos))
                 a = IrradiationPositionTbl(position=pos, **kw)
                 if identifier:
                     a.identifier = str(identifier)
 
                 a.level = self.get_irradiation_level(irrad, level)
                 dbpos = self._add_item(a)
+            else:
+                self.debug('Irradiation position exists {}{} {}'.format(irrad, level, pos))
+
             return dbpos
 
     def add_load_position(self, ln, position, weight=0, note=''):
@@ -1031,16 +1036,20 @@ class DVCDatabase(DatabaseAdapter):
     def get_irradiation(self, name):
         return self._retrieve_item(IrradiationTbl, name)
 
-    def get_material(self, name):
-        return self._retrieve_item(MaterialTbl, name)
+    def get_material(self, name, grainsize=None):
+        with self.session_ctx() as sess:
+            q = sess.query(MaterialTbl)
+            q = q.filter(MaterialTbl.name == name)
+            q = q.filter(MaterialTbl.grainsize == grainsize)
+            return self._query_one(q)
 
-    def get_sample(self, name, project, material):
+    def get_sample(self, name, project, material, grainsize=None):
         with self.session_ctx() as sess:
             q = sess.query(SampleTbl)
             q = q.join(ProjectTbl)
 
             project = self.get_project(project)
-            material = self.get_material(material)
+            material = self.get_material(material, grainsize)
 
             q = q.filter(SampleTbl.project == project)
             q = q.filter(SampleTbl.material == material)

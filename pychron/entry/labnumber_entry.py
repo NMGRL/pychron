@@ -124,17 +124,14 @@ class LabnumberEntry(DVCIrradiationable):
 
     def import_irradiation(self):
         self.debug('import irradiation')
-        # self.warning_dialog('Import irradiation currently not available')
-        # return
+        from pychron.entry.dvc_import import do_import
 
-        from pychron.entry.tasks.importer import ImporterModel
-        from pychron.entry.tasks.importer_view import ImporterView
+        mdb = 'pychron.mass_spec.database.massspec_database_adapter.MassSpecDatabaseAdapter'
+        mssource = self.application.get_service(mdb)
+        mssource.bind_preferences()
 
-        mod = ImporterModel(dest=self.dvc)
-        ev = ImporterView(model=mod)
-        info = ev.edit_traits()
-        if info.result:
-            self.updated = True
+        do_import(dvc=self.dvc, sources={mssource: 'Mass Spec'})
+        self.updated = True
 
     def get_igsns(self, igsn_repo):
         items = self.selected
