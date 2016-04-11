@@ -455,6 +455,11 @@ class ExtractionPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
+    def set_pid_parameters(self, v):
+        self._extraction_action([('set_pid_parameters', (v,), {})])
+
+    @verbose_skip
+    @command_register
     def extract(self, power='', units=''):
         if power == '':
             power = self.extract_value

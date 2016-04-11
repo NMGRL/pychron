@@ -16,11 +16,9 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-import json
+import time
 from threading import Thread
 
-from cStringIO import StringIO
-import time
 import yaml
 # ============= local library imports  ==========================
 from pychron.core.helpers.strtools import to_bool
@@ -350,7 +348,7 @@ class FirmwareManager(HeadlessLoggable):
     def set_pid(self, data):
         controller = self.controller
         if controller:
-            return controller.set_pid_str(data)
+            return controller.set_pid_str(data.get('pid', ''))
 
     # private
     def _get_drive(self, data):

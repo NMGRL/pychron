@@ -16,8 +16,7 @@
 
 # ============= enthought library imports =======================
 from numpy.random import random
-from pyface.timer.do_later import do_after
-from traits.api import TraitError, Instance, Float, provides, Int, Bool
+from traits.api import TraitError, Instance, Float, provides, Bool
 # ============= standard library imports ========================
 import os
 import time
@@ -32,7 +31,6 @@ from pychron.furnace.ifurnace_manager import IFurnaceManager
 from pychron.furnace.loader_logic import LoaderLogic
 from pychron.furnace.magnet_dumper import NMGRLMagnetDumper
 from pychron.furnace.stage_manager import NMGRLFurnaceStageManager, BaseFurnaceStageManager
-from pychron.graph.stream_graph import StreamGraph
 from pychron.graph.time_series_graph import TimeSeriesStreamGraph
 from pychron.hardware.furnace.nmgrl.camera import NMGRLCamera
 from pychron.hardware.linear_axis import LinearAxis
@@ -254,6 +252,12 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         else:
             cm = self.loader_logic.get_check_message()
             self.warning_dialog('Raising funnel not enabled\n\n{}'.format(cm))
+
+    def set_pid_parameters(self, v):
+        self.debug('setting pid parameters for {}'.format(v))
+        from pychron.hardware.eurotherm.base import get_pid_parameters
+        param_str = get_pid_parameters(v)
+        self.controller.set_pid(param_str)
 
     def set_setpoint(self, v):
         self.debug('set setpoint={}'.format(v))
