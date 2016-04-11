@@ -18,9 +18,10 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.database.core.database_selector import DatabaseSelector
-from pychron.database.orms.hardware_orm import ScanTable
 from pychron.database.core.query import compile_query, DeviceScanQuery
+from pychron.database.orms.hardware_orm import ScanTable
 from pychron.database.records.device_scan_record import DeviceScanRecord
+
 
 class DeviceScanSelector(DatabaseSelector):
     record_klass = DeviceScanRecord

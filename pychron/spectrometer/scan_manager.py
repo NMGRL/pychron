@@ -16,25 +16,23 @@
 
 # ============= enthought library imports =======================
 from pyface.timer.do_later import do_later
-from traits.api import Instance, Enum, Any, DelegatesTo, List, Property, \
+from traits.api import Instance, Any, DelegatesTo, List, Property, \
     Bool, Button, String, cached_property, \
-    Float, Event, Str
+    Str
 # ============= standard library imports ========================
 import os
-import pickle
 import time
-from numpy import Inf
+from numpy import Inf, array
 from threading import Thread
 from Queue import Queue
 import yaml
 # ============= local library imports  ==========================
 from pychron.core.ui.preference_binding import bind_preference
-from pychron.managers.manager import Manager
-from pychron.graph.time_series_graph import TimeSeriesStreamGraph
 from pychron.managers.stream_graph_manager import StreamGraphManager
 from pychron.spectrometer.graph.spectrometer_scan_graph import SpectrometerScanGraph
-from pychron.spectrometer.jobs.scanner import Scanner
-from pychron.spectrometer.thermo.detector import Detector
+from pychron.spectrometer.jobs.mass_scanner import MassScanner
+from pychron.spectrometer.jobs.dac_scanner import DACScanner
+from pychron.spectrometer.base_detector import BaseDetector
 from pychron.spectrometer.jobs.rise_rate import RiseRate
 from pychron.paths import paths
 from pychron.managers.data_managers.csv_data_manager import CSVDataManager
@@ -46,7 +44,8 @@ from pychron.graph.tools.data_tool import DataTool, DataToolOverlay
 
 class ScanManager(StreamGraphManager):
     spectrometer = Any
-    ion_optics_manager = Instance('pychron.spectrometer.ion_optics.ion_optics_manager.IonOpticsManager')
+    ion_optics_manager = Instance(
+            'pychron.spectrometer.ion_optics.ion_optics_manager.IonOpticsManager')
 
     readout_view = Instance(ReadoutView)
 
@@ -56,10 +55,15 @@ class ScanManager(StreamGraphManager):
     set_spectrometer_configuration = Button
 
     detectors = DelegatesTo('spectrometer')
-    detector = Instance(Detector)
+    detector_names = DelegatesTo('spectrometer')
+
+    detector = Property(Instance(BaseDetector), depends_on='_detector')
+    _detector = Str
+
     magnet = DelegatesTo('spectrometer')
     source = DelegatesTo('spectrometer')
-    scanner = Instance(Scanner)
+    dac_scanner = Instance(DACScanner)
+    mass_scanner = Instance(MassScanner)
     rise_rate = Instance(RiseRate)
     isotope = String
     isotopes = Property
@@ -85,8 +89,10 @@ class ScanManager(StreamGraphManager):
     settings_name = 'scan_settings'
 
     def _bind_listeners(self, remove=False):
-        self.on_trait_change(self._update_magnet, 'magnet:dac_changed', remove=remove)
-        self.on_trait_change(self._toggle_detector, 'detectors:active', remove=remove)
+        self.on_trait_change(self._update_magnet, 'magnet:dac_changed',
+                             remove=remove)
+        self.on_trait_change(self._toggle_detector, 'detectors:active',
+                             remove=remove)
 
     def prepare_destroy(self):
         self.stop_scan()
@@ -97,6 +103,9 @@ class ScanManager(StreamGraphManager):
         plot.value_range.on_trait_change(self._update_graph_limits,
                                          '_low_value, _high_value', remove=True)
         self.readout_view.stop()
+
+        self.mass_scanner.dump()
+        self.dac_scanner.dump()
 
     def stop(self):
         self.prepare_destroy()
@@ -137,9 +146,12 @@ class ScanManager(StreamGraphManager):
 
     def bind_preferences(self):
         pref_id = 'pychron.spectrometer'
-        bind_preference(self, 'use_detector_safety', '{}.use_detector_safety'.format(pref_id))
-        bind_preference(self, 'use_log_events', '{}.use_log_events'.format(pref_id))
-        bind_preference(self, 'use_vertical_markers', '{}.use_vertical_markers'.format(pref_id))
+        bind_preference(self, 'use_detector_safety',
+                        '{}.use_detector_safety'.format(pref_id))
+        bind_preference(self, 'use_log_events',
+                        '{}.use_log_events'.format(pref_id))
+        bind_preference(self, 'use_vertical_markers',
+                        '{}.use_vertical_markers'.format(pref_id))
 
         bind_preference(self, 'use_default_scan_settings', '{}.use_default_scan_settings'.format(pref_id))
         bind_preference(self, 'default_detector', '{}.default_detector'.format(pref_id))
@@ -211,20 +223,26 @@ class ScanManager(StreamGraphManager):
 
     def _update_magnet(self, obj, name, old, new):
         if new and self.magnet.detector:
-            # covnert dac into a mass
+            # convert dac into a mass
             # convert mass to isotope
             #            d = self.magnet.dac
-            iso = self.magnet.map_dac_to_isotope(current=False)
+            if not self._suppress_isotope_change:
+                iso = self.magnet.map_dac_to_isotope(current=False)
+            else:
+                iso = self.isotope
 
             if iso is None or iso not in self.isotopes:
                 iso = NULL_STR
 
             if self.use_log_events:
                 if iso == NULL_STR:
-                    self.add_spec_event_marker('DAC={:0.5f}'.format(self.magnet.dac), bgcolor='red')
+                    self.add_spec_event_marker(
+                            'DAC={:0.5f}'.format(self.magnet.dac),
+                            bgcolor='red')
                 else:
-                    self.add_spec_event_marker('{}:{} ({:0.5f})'.format(self.detector,
-                                                                        iso, self.magnet.dac))
+                    self.add_spec_event_marker(
+                            '{}:{} ({:0.5f})'.format(self.detector,
+                                                     iso, self.magnet.dac))
 
             self.debug('setting isotope: {}'.format(iso))
             self._suppress_isotope_change = True
@@ -246,7 +264,7 @@ class ScanManager(StreamGraphManager):
             return True
 
         if self._prev_signals is not None:
-
+            signals = array(signals)
             if (signals == self._prev_signals).all():
                 self._no_intensity_change_cnt += 1
             else:
@@ -332,12 +350,16 @@ class ScanManager(StreamGraphManager):
                     # check that the intensity is less than threshold
                     abort = det.intensity > threshold
                     if abort:
-                        if not self.confirmation_dialog('Are you sure you want to make this move.\n'
-                                                        'This will place {} fA on {}'.format(det.intensity,
-                                                                                             self.detector)):
+                        if not self.confirmation_dialog(
+                                'Are you sure you want to make this move.\n'
+                                'This will place {} fA on {}'.format(
+                                        det.intensity,
+                                        self.detector)):
 
-                            self.debug('aborting magnet move {} intensity {} > {}'.format(det, det.intensity,
-                                                                                          threshold))
+                            self.debug(
+                                    'aborting magnet move {} intensity {} > {}'.format(
+                                            det, det.intensity,
+                                            threshold))
                             if is_detector:
                                 do_later(self.trait_set, detector=prev)
                             else:
@@ -369,21 +391,28 @@ class ScanManager(StreamGraphManager):
         self.rise_rate.graph = self.graph
 
         plot = self.graph.plots[0]
-        plot.value_range.on_trait_change(self._update_graph_limits, '_low_value, _high_value')
+        plot.value_range.on_trait_change(self._update_graph_limits,
+                                         '_low_value, _high_value')
 
     def _isotope_changed(self, old, new):
         if self._suppress_isotope_change:
             return
 
         self.debug('isotope changed {}'.format(self.isotope))
-        if self.isotope != NULL_STR and not self._check_detector_protection(old, False):
-            t = Thread(target=self._set_position)
+        if self.isotope != NULL_STR and not self._check_detector_protection(old,
+                                                                            False):
+            def func():
+                self._suppress_isotope_change = True
+                self._set_position()
+                self._suppress_isotope_change = False
+
+            t = Thread(target=func)
             t.start()
 
     def _detector_changed(self, old, new):
         self.debug('detector changed {}'.format(self.detector))
         if self.detector and not self._check_detector_protection(old, True):
-            self.scanner.detector = self.detector
+            # self.scanner.detector = self.detector
             self.rise_rate.detector = self.detector
             self.magnet.detector = self.detector
             nominal_width = 1
@@ -404,9 +433,16 @@ class ScanManager(StreamGraphManager):
 
                 self.info('set position {} on {}'.format(mass, self.detector))
 
+                def func():
+                    self._suppress_isotope_change = True
+                    self.ion_optics_manager.position(mass, self.detector)
+                    self._suppress_isotope_change = False
+
                 # thread not super necessary
                 # simple allows gui to update while the magnet is delaying for settling_time
-                t = Thread(target=self.ion_optics_manager.position, args=(mass, self.detector))
+                # t = Thread(target=self.ion_optics_manager.position,
+                #            args=(mass, self.detector))
+                t = Thread(target=func)
                 t.start()
 
     def _integration_time_changed(self):
@@ -474,8 +510,8 @@ class ScanManager(StreamGraphManager):
                           normalize_time=True,
                           use_date_str=False)
             dto = DataToolOverlay(
-                component=plot,
-                tool=dt)
+                    component=plot,
+                    tool=dt)
             plot.tools.append(dt)
             plot.overlays.append(dto)
 
@@ -489,6 +525,14 @@ class ScanManager(StreamGraphManager):
     # ===============================================================================
     # property get/set
     # ===============================================================================
+    def _get_detector(self):
+        return self.spectrometer.get_detector(self._detector)
+
+    def _set_detector(self, v):
+        if isinstance(v, BaseDetector):
+            v = v.name
+        self._detector = v
+
     @cached_property
     def _get_isotopes(self):
         return [NULL_STR] + self.spectrometer.isotopes
@@ -501,12 +545,17 @@ class ScanManager(StreamGraphManager):
                      graph=self.graph)
         return r
 
-    def _scanner_default(self):
-        s = Scanner(spectrometer=self.spectrometer)
+    def _dac_scanner_default(self):
+        s = DACScanner(spectrometer=self.spectrometer)
+        s.load()
         return s
 
     def _readout_view_default(self):
         rd = ReadoutView(spectrometer=self.spectrometer)
         return rd
 
-# ============= EOF =============================================
+    def _mass_scanner_default(self):
+        ms = MassScanner(spectrometer=self.spectrometer)
+        ms.load()
+        return ms
+# ============= EOF =====================================

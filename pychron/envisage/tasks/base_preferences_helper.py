@@ -15,10 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from apptools.preferences.api import PreferencesHelper
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import List, Button, Any, Int, Str, Enum, Color, String, Property
 from traitsui.api import View, VGroup, UItem, HGroup, Item
-from apptools.preferences.api import PreferencesHelper
+
 # ============= standard library imports ========================
 import re
 # ============= local library imports  ==========================

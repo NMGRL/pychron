@@ -15,12 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from git.exc import GitCommandError
-from gitdb.util import hex_to_bin
 from traits.api import HasTraits, Str, Bool, Date
 # ============= standard library imports ========================
 from datetime import datetime
 import os
+from gitdb.util import hex_to_bin
 from git import Repo, Blob, Diff
 
 
@@ -58,27 +57,52 @@ def from_gitlog(obj, path, tag):
     return g
 
 
+def gitlog(repo, branch=None, args=None, path=None):
+    cmd = []
+    if branch:
+        cmd.append(branch)
+
+    fmt = '%H|%cn|%ce|%ct|%s'
+    cmd.append('--pretty={}'.format(fmt))
+
+    if args:
+        cmd.extend(args)
+
+    if path:
+        cmd.extend(['--', path])
+
+    return repo.git.log(*cmd)
+
+
+def get_head_commit(repo):
+    txt = gitlog(repo, args=('-n', '1', 'HEAD'))
+    return from_gitlog(txt.strip(), '', '')
+
+
 def get_commits(repo, branch, path, tag, *args):
     if isinstance(repo, (str, unicode)):
         if not os.path.isdir(repo):
             return
         repo = Repo(repo)
 
-    fmt = 'format:%H|%cn|%ce|%ct|%s'
+    txt = gitlog(repo, branch, path, args)
 
-    cmd = ['git', 'log', branch, '--pretty={}'.format(fmt)]
-    cmd.extend(args)
-    if path:
-        cmd.extend(['--', path])
+    return [from_gitlog(l.strip(), path, tag) for l in txt.split('\n')] if txt else []
 
-    proc = repo.git.execute(cmd, as_process=True)
-    try:
-        proc.wait()
-    except GitCommandError:
-        return []
-
-    if not proc.returncode:
-        return [from_gitlog(l.strip(), path, tag) for l in proc.stdout]
+    # print ' '.join(cmd)
+    # print repo.git.execute(' '.join(cmd))
+    # return []
+    # proc = repo.git.execute(cmd, as_process=True)
+    # try:
+    #     proc.wait()
+    # except GitCommandError, e:
+    #     print 'eee', e
+    #     return []
+    # print 'ret', proc.returncode
+    # if not proc.returncode:
+    #     for l in proc.stdout:
+    #         print l.strip()
+    #     return [from_gitlog(l.strip(), path, tag) for l in proc.stdout]
 
 
 def get_diff(repo, a, b, path, change_type='M'):

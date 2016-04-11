@@ -55,6 +55,39 @@ class ExperimentEditorHandler(TabularEditorHandler):
     def toggle_skip(self, info, obj):
         obj.toggle_skip()
 
+    def show_summary(self, info, obj):
+        obj.show_summary()
+
+    def show_evolutions(self, info, obj):
+        obj.show_evolutions()
+
+    def show_evolutions_w_bs(self, info, obj):
+        obj.show_evolutions(show_baseline=True)
+
+    def show_evolutions_w_eq_bs(self, info, obj):
+        obj.show_evolutions(show_baseline=True, show_equilibration=True)
+
+    def show_evolutions_w_eq(self, info, obj):
+        obj.show_evolutions(show_equilibration=True)
+
+    def __getattr__(self, item):
+        if item.startswith('show_evolution_'):
+            key = item.split('_')[-1]
+
+            def closure(info, obj):
+                kw = {}
+                if item.startswith('show_evolution_eq_bs'):
+                    kw['show_equilibration'] = True
+                    kw['show_baseline'] = True
+                elif item.startswith('show_evolution_eq'):
+                    kw['show_equilibration'] = True
+                elif item.startswith('show_evolution_bs'):
+                    kw['show_baseline'] = True
+
+                obj.show_evolutions((key,), **kw)
+
+            return closure
+
 
 class ExperimentEditor(BaseTraitsEditor):
     queue = Instance(ExperimentQueue, ())  # Any
@@ -110,7 +143,8 @@ class ExperimentEditor(BaseTraitsEditor):
             self.queue = queue
 
     def queue_factory(self, **kw):
-        return ExperimentQueue(**kw)
+        print 'application', self.application
+        return ExperimentQueue(application=self.application, **kw)
 
     def save(self, path, queues=None):
         if queues is None:

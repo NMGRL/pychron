@@ -16,8 +16,8 @@
 
 # ============= enthought library imports =======================
 from contextlib import contextmanager
-from traits.api import HasTraits, Button, Str, Int, Bool, Instance
-from traitsui.api import View, Item, UItem, HGroup, VGroup
+
+from traits.api import Instance
 # ============= standard library imports ========================
 import shutil
 import os

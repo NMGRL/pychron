@@ -69,7 +69,6 @@
 #        db = MassSpecDatabaseAdapter(name='massspecdata_local',
 #                                  #host='129.138.12.131',
 # #                                  user='massspec',
-# #                                  password='DBArgon'
 #                                  )
 #        db.connect()
 #        m = MassSpecSelector(_db=db,

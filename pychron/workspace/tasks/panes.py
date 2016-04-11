@@ -16,10 +16,11 @@
 
 # ============= enthought library imports =======================
 from pyface.action.menu_manager import MenuManager
-from traits.api import Int
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
+from traits.api import Int
 from traitsui.api import View, Item, UItem, HGroup, VGroup, EnumEditor, TabularEditor, HSplit, Handler
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.menu import Action

@@ -37,7 +37,7 @@ def sort_isotopes(keys, reverse=True, key=None):
         rf = lambda x: rank_func(key(x))
     else:
         rf = rank_func
-    keys = list(keys)
+    # keys = list(keys)
     return sorted(keys, key=rf,
                   reverse=reverse)
 

@@ -15,16 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
-
-
-from threading import Event
-
 from pyface.timer.do_later import do_after
 from traits.api import Int
-
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
+from threading import Event
 from pychron.loggable import Loggable
 
 
@@ -68,30 +63,29 @@ class StatusMonitor(Loggable):
             self.debug('Alive clients {}'.format(self._clients))
 
     def _iter(self, i, vm):
+        if self._stop_evt.is_set():
+            return
+
         if vm is None:
             self.debug('No valve manager')
             return
 
-        if not i % self.state_freq:
+        if self.state_freq and not i % self.state_freq:
             vm.load_valve_states()
 
-        if not i % self.lock_freq:
+        if self.lock_freq and not i % self.lock_freq:
             vm.load_valve_lock_states()
 
-        if not i % self.owner_freq:
+        if self.owner_freq and not i % self.owner_freq:
             vm.load_valve_owners()
 
-        if not i % self.checksum_freq:
+        if self.checksum_freq and not i % self.checksum_freq:
             if not vm.state_checksum:
                 self.debug('State checksum failed')
 
-        #         vm.load_valve_states()
-        #         vm.load_valve_lock_states()
-        #         vm.load_valve_owners()
-
         if i > 100:
             i = 0
-        if not self._stop_evt.isSet():
+        if not self._stop_evt.is_set():
             do_after(self.update_period * 1000, self._iter, i + 1, vm)
 
-            # ============= EOF =============================================
+# ============= EOF =============================================

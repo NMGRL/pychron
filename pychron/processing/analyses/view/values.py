@@ -19,6 +19,8 @@ from traits.api import HasTraits, Str, Either, Float, Int, Property, Bool
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+
+
 class NamedValue(HasTraits):
     name = Str
     value = Either(Str, Float, Int, None)
@@ -27,8 +29,9 @@ class NamedValue(HasTraits):
 class ComputedValue(NamedValue):
     error = Either(Str, Float, Int)
     tag = Str
-    display_value=Bool(True)
+    display_value = Bool(True)
     sig_figs = Int(5)
+    value_tag = Str
 
 
 class DetectorRatio(ComputedValue):

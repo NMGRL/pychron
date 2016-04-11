@@ -15,15 +15,38 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Float, Str, Int
+from traits.api import Float, Str, Int, List
 # ============= standard library imports ========================
 import time
-from numpy import max, argmax, vstack
+from numpy import max, argmax, vstack, linspace
+from scipy import interpolate
 # ============= local library imports  ==========================
 from magnet_sweep import MagnetSweep
 from pychron.graph.graph import Graph
 from pychron.core.stats.peak_detection import calculate_peak_center, PeakCenterError
 from pychron.core.ui.gui import invoke_in_main_thread
+
+
+class PeakCenterResult:
+    low_dac = None
+    center_dac = None
+    high_dac = None
+
+    low_signal = None
+    center_signal = None
+    high_signal = None
+
+    detector = None
+    points = None
+
+    def __init__(self, det, pts):
+        self.detector = det
+        self.points = pts
+
+    @property
+    def attrs(self):
+        return ('low_dac', 'center_dac', 'high_dac',
+                'low_signal', 'center_signal', 'high_signal')
 
 
 class BasePeakCenter(MagnetSweep):
@@ -34,12 +57,21 @@ class BasePeakCenter(MagnetSweep):
     step_width = Float  # (0.0005)
     min_peak_height = Float(5.0)
     percent = Int
+    use_interpolation = False
+    n_peaks = 1
+    select_peak = 1
+    use_dac_offset = False
+    dac_offset = 0
+    calculate_all_peaks = False
+
     canceled = False
     show_label = False
     result = None
     directions = None
 
     _markup_idx = 1
+
+    results = List
 
     def close_graph(self):
         self.graph.close_ui()
@@ -54,19 +86,15 @@ class BasePeakCenter(MagnetSweep):
         self.canceled = False
 
         center_dac = self.center_dac
-        self.info('starting peak center. center dac= {}'.format(center_dac))
+        self.info('starting peak center. center dac= {} step_width={}'.format(center_dac, self.step_width))
 
         # self.graph = self._graph_factory()
 
         width = self.step_width
-        try:
-            if self.simulation:
-                width = 0.001
-        except AttributeError:
-            width = 0.001
-
         smart_shift = False
         center = None
+
+        self.debug('width = {}'.format(width))
         for i in range(ntries):
             if not self.isAlive():
                 break
@@ -85,14 +113,46 @@ class BasePeakCenter(MagnetSweep):
                 invoke_in_main_thread(self._post_execute)
                 return center
 
+    def get_results(self):
+        g = self.graph
+
+        results = []
+        for i, det in enumerate(self.active_detectors):
+            if not isinstance(det, str):
+                det = det.name
+
+            xs = g.get_data(series=i)
+            ys = g.get_data(series=i, axis=1)
+
+            pts = vstack((xs, ys)).T
+            result = PeakCenterResult(det, pts)
+
+            p = self._calculate_peak_center(xs, ys)
+            if p:
+                [lx, cx, hx], [ly, cy, hy], mx, my = p
+                result.low_dac = lx
+                result.center_dac = cx
+                result.high_dac = hx
+
+                result.low_signal = ly
+                result.center_signal = cy
+                result.high_signal = hy
+
+            results.append(result)
+
+        return results
+
     def get_data(self):
         g = self.graph
         data = []
         for i, det in enumerate(self.active_detectors):
+            if not isinstance(det, str):
+                det = det.name
+
             xs = g.get_data(series=i)
             ys = g.get_data(series=i, axis=1)
 
-            pts = vstack((xs,ys)).T
+            pts = vstack((xs, ys)).T
             data.append((det, pts))
         return data
 
@@ -119,7 +179,7 @@ class BasePeakCenter(MagnetSweep):
         st = time.time()
         while 1:
             keys, signals = spec.get_intensities()
-            idx = keys.index(self.reference_detector)
+            idx = keys.index(self.reference_detector.name)
             signal = signals[idx]
             if signal < tol:
                 self.info('Peak center baseline intensity achieved')
@@ -136,37 +196,43 @@ class BasePeakCenter(MagnetSweep):
         center, smart_shift, success = None, False, False
         # cdd has been tripping during the previous move on obama when moving H1 from 34.5 to 39.7
         # check if cdd is still active
-        if not spec.get_detector_active('CDD'):
-            self.warning('CDD has tripped!')
-            self.cancel()
-        else:
+        # if not spec.get_detector_active('CDD'):
+        #     self.warning('CDD has tripped!')
+        #     self.cancel()
+        # else:
 
-            ok = self._do_sweep(start, end, width, directions=self.directions, map_mass=False)
-            self.debug('result of _do_sweep={}'.format(ok))
+        ok = self._do_sweep(start, end, width, directions=self.directions, map_mass=False)
+        self.debug('result of _do_sweep={}'.format(ok))
 
-            # wait for graph to fully update
-            time.sleep(0.1)
+        # wait for graph to fully update
+        time.sleep(0.1)
 
-            if ok and self.directions != 'Oscillate':
-                if not self.canceled:
-                    dac_values = graph.get_data()
-                    intensities = graph.get_data(axis=1)
+        if ok and self.directions != 'Oscillate':
+            if not self.canceled:
+                dac_values = graph.get_data()
+                intensities = graph.get_data(axis=1)
 
-                    result = self._calculate_peak_center(dac_values, intensities)
-                    self.debug('result of _calculate_peak_center={}'.format(result))
-                    self.result = result
-                    if result is not None:
-                        xs, ys, mx, my = result
+                result = self._calculate_peak_center(dac_values, intensities)
+                self.debug('result of _calculate_peak_center={}'.format(result))
+                self.result = result
+                if result is not None:
+                    xs, ys, mx, my = result
 
-                        center, success = xs[1], True
-                        invoke_in_main_thread(self._plot_center, xs, ys, mx, my, center)
-                    else:
-                        if max(intensities) > self.min_peak_height * 5:
-                            smart_shift = True
+                    center, success = xs[1], True
+                    invoke_in_main_thread(self._plot_center, xs, ys, mx, my, center)
 
-                        idx = argmax(intensities)
-                        center, success = dac_values[idx], False
+                    if self.calculate_all_peaks:
+                        self.results = self.get_results()
 
+                else:
+                    if max(intensities) > self.min_peak_height * 5:
+                        smart_shift = True
+
+                    idx = argmax(intensities)
+                    center, success = dac_values[idx], False
+
+        if self.use_dac_offset:
+            center += self.dac_offset
         return center, smart_shift, success
 
     def _get_scan_parameters(self, i, center_dac, smart_shift):
@@ -193,29 +259,62 @@ class BasePeakCenter(MagnetSweep):
     def _plot_center(self, xs, ys, mx, my, center):
         graph = self.graph
 
-        graph.new_series(type='scatter', marker='circle',
-                         marker_size=4,
-                         color='green')
+        s1 = len(graph.series[0])
         graph.new_series(type='scatter', marker='circle',
                          marker_size=4,
                          color='green')
 
-        graph.set_data(xs, series=self._markup_idx)
-        graph.set_data(ys, series=self._markup_idx, axis=1)
+        graph.new_series(type='scatter', marker='circle',
+                         marker_size=4,
+                         color='orange')
 
-        graph.set_data([mx], series=self._markup_idx + 1)
-        graph.set_data([my], series=self._markup_idx + 1, axis=1)
+        graph.set_data(xs, series=s1)
+        graph.set_data(ys, series=s1, axis=1)
+
+        graph.set_data([mx], series=s1 + 1)
+        graph.set_data([my], series=s1 + 1, axis=1)
 
         graph.add_vertical_rule(center)
+
+        if self.use_dac_offset:
+            l = graph.add_vertical_rule(center + self.dac_offset, color='blue', add_move_tool=True)
+            self._offset_rule = l
+
         graph.redraw()
 
     def _calculate_peak_center(self, x, y):
-        # from pychron.core.time_series.time_series import smooth
-        # graph = self.graph
-        # self._series_factory(graph)
-        # smooth_y = smooth(y)
-        # graph.set_data(x, series=self._markup_idx-1)
-        # graph.set_data(smooth_y, series=self._markup_idx-1, axis=1)
+        if self.use_interpolation:
+            f = interpolate.interp1d(x, y, kind='cubic')
+            x = linspace(x.min(), x.max(), 500)
+            y = f(x)
+            self.graph.new_series(x, y, line_width=1)
+            self.graph.redraw()
+
+        if self.n_peaks > 1:
+            self.warning('peak deconvolution disabled')
+            # def res(p, y, x):
+            #     yfit = None
+            #     n = p.shape[0] / 3
+            #     for h, m, s in p.reshape(n, 3):
+            #         yi = h * norm.pdf(x, m, s)
+            #         if yfit is None:
+            #             yfit = yi
+            #         else:
+            #             yfit += yi
+            #     err = y - yfit
+            #     return err
+            #
+            # mm = x[y.argmax()]
+            # counter = range(self.n_peaks)
+            # p = [(1, mm, 1) for _ in counter]
+            # plsq = leastsq(res, p, args=(y, x))
+            #
+            # centers = plsq[0]
+            # for i in counter:
+            #     c = centers[1 + 3 * i]
+            #     self.graph.add_vertical_rule(c, color='blue')
+            #
+            # return c[1 + 3 * (self.select_peak - 1)]
 
         try:
             result = calculate_peak_center(x, y,
@@ -249,15 +348,19 @@ class BasePeakCenter(MagnetSweep):
                 font='modern 8',
                 line_spacing=1))
 
-        self._series_factory(graph)
+        kind = 'line'
+        if self.use_interpolation:
+            kind = 'scatter'
 
-        graph.set_series_label('*{}'.format(self.reference_detector))
+        self._series_factory(graph, kind=kind)
+
+        graph.set_series_label('*{}'.format(self.reference_detector.name))
         self._markup_idx = 1
         spec = self.spectrometer
         for di in self.additional_detectors:
             det = spec.get_detector(di)
             c = det.color
-            self._series_factory(graph, line_color=c)
+            self._series_factory(graph, line_color=c, kind='scatter')
             graph.set_series_label(di)
 
         if self.show_label:

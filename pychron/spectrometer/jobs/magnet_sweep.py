@@ -15,14 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Any, Float, DelegatesTo, List, Bool, Property
+from traits.api import Float
 from traitsui.api import View, Item, EnumEditor, Group, HGroup, spring, ButtonEditor
-from pyface.timer.do_later import do_after
 # ============= standard library imports ========================
-from numpy import linspace, hstack, array, Inf
+from numpy import linspace
 from numpy.core.umath import exp
 import random
-import time
 # ============= local library imports  ==========================
 from pychron.spectrometer.jobs.sweep import BaseSweep
 
@@ -61,7 +59,8 @@ class MagnetSweep(BaseSweep):
         self._peak_generator = pseudo_peak(values[len(values) / 2] + 0.001, values[0], values[-1], len(values))
 
     def _step(self, v):
-        self.spectrometer.magnet.set_dac(v, verbose=self.verbose, settling_time=self.integration_time*2)
+        self.spectrometer.magnet.set_dac(v, verbose=self.verbose,
+                                         settling_time=self.integration_time*2, use_dac_changed=False)
 
     def _execute(self):
         sm = self.start_mass

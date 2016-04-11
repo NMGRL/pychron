@@ -15,8 +15,9 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-from traits.api import Any, Str
 from chaco.api import AbstractOverlay, BaseTool
+from traits.api import Any, Str
+
 # =============standard library imports ========================
 from numpy import vstack
 # =============local library imports  ==========================
@@ -47,6 +48,7 @@ class RectSelectionTool(BaseTool):
     hover_metadata_name = Str('hover')
     persistent_hover = False
     selection_metadata_name = Str('selections')
+    # mask_metadata_name = Str('selections_mask')
     #    active = True
     _start_pos = None
     _end_pos = None
@@ -55,6 +57,12 @@ class RectSelectionTool(BaseTool):
     def select_key_pressed(self, event):
         if event.character=='Esc':
             self._end_select(event)
+
+    def normal_mouse_enter(self, event):
+        event.window.set_pointer('arrow')
+
+    def normal_mouse_leave(self, event):
+        event.window.set_pointer('arrow')
 
     def normal_mouse_move(self, event):
         if event.handled:
@@ -65,15 +73,22 @@ class RectSelectionTool(BaseTool):
 
         if index is not None:
             #            plot.index.metadata['mouse_xy'] = mxy
-
+            plot.index.suppress_hover_update = True
             plot.index.metadata[self.hover_metadata_name] = [index]
             if hasattr(plot, "value"):
+                plot.value.suppress_hover_update = True
                 plot.value.metadata[self.hover_metadata_name] = [index]
+                plot.value.suppress_hover_update = False
+            plot.index.suppress_hover_update = False
 
         elif not self.persistent_hover:
+            plot.index.suppress_hover_update = True
             plot.index.metadata.pop(self.hover_metadata_name, None)
             if hasattr(plot, "value"):
+                plot.value.suppress_hover_update = True
                 plot.value.metadata.pop(self.hover_metadata_name, None)
+                plot.value.suppress_hover_update = False
+            plot.index.suppress_hover_update = False
 
         return
 

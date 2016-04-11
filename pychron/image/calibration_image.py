@@ -28,9 +28,11 @@
 #    crop
 
 
-from image import Image
 from pychron.image.image_helper import grayspace, erode, dilate, \
     threshold, colorspace, contour, clone, get_polygons, draw_polygons, lines
+
+from image import Image
+
 
 class CalibrationImage(Image):
     '''

@@ -21,7 +21,7 @@ from traits.api import Int
 from numpy import Inf
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.scene.scene import Scene
-from pychron.canvas.canvas2D.scene.primitives.primitives import LoadIndicator, Span
+from pychron.canvas.canvas2D.scene.primitives.primitives import LoadIndicator
 
 
 class LoadingScene(Scene):

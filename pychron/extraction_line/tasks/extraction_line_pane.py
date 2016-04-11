@@ -15,10 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.tasks.traits_dock_pane import TraitsDockPane
+from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traits.api import Any
 from traitsui.api import View, UItem, InstanceEditor
-from pyface.tasks.traits_task_pane import TraitsTaskPane
-from pyface.tasks.traits_dock_pane import TraitsDockPane
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 

@@ -15,14 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from datetime import datetime, timedelta
 import os
-import urllib2
-from apptools.preferences.preference_binding import bind_preference
 import sys
+import urllib2
+
+from apptools.preferences.preference_binding import bind_preference
+from datetime import datetime, timedelta
 from git import GitCommandError
-from traits.api import HasTraits, Button, Bool, Str, Property, List
-from traitsui.api import View, Item
+from traits.api import Button, Bool, Str, Property, List
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.datetime_tools import get_datetime

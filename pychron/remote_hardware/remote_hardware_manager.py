@@ -15,11 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Dict, Bool, on_trait_change, List
 from apptools.preferences.preference_binding import bind_preference
+from traits.api import Dict, Bool, List
 from traitsui.api import View, Item, Group, HGroup, VGroup, \
     ListEditor, TableEditor
 from traitsui.table_column import ObjectColumn
+
 # ============= standard library imports ========================
 import os
 # ============= local library imports  ==========================

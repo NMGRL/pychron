@@ -20,9 +20,11 @@
 
 # ============= local library imports  ==========================
 from pychron.database.core.database_adapter import PathDatabaseAdapter
-from pychron.database.selectors.device_scan_selector import DeviceScanSelector
 from pychron.database.orms.hardware_orm import ScanTable, DeviceTable, \
     ScanPathTable
+from pychron.database.selectors.device_scan_selector import DeviceScanSelector
+
+
 # from pychron.database.core.functions import delete_one
 
 class DeviceScanAdapter(PathDatabaseAdapter):

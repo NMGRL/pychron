@@ -16,15 +16,17 @@
 
 
 # ============= enthought library imports =======================
-from traits.api import Property
 from pyface.action.api import Action
-from pyface.timer.do_later import do_later
 from pyface.tasks.action.task_action import TaskAction
+from pyface.timer.do_later import do_later
+from traits.api import Property
+
 # ============= standard library imports ========================
 
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.envisage.tasks.actions import myTaskAction
+from pychron.envisage.view_util import open_view
 from pychron.paths import paths
 
 from pychron.pychron_constants import SPECTROMETER_PROTOCOL, EL_PROTOCOL, ION_OPTICS_PROTOCOL
@@ -97,7 +99,7 @@ class ViewReadoutAction(Action):
 
         rv = app.get_service('pychron.spectrometer.readout_view.ReadoutView')
         v = new_readout_view(rv)
-        app.open_view(rv, view=v)
+        open_view(rv, view=v)
 
 
 class SendConfigAction(myTaskAction):

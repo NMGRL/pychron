@@ -22,25 +22,29 @@ from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.database.core.database_selector import DatabaseSelector
 from pychron.database.core.base_db_result import RIDDBResult
-from pychron.database.orms.massspec_orm import SampleTable
+from pychron.mass_spec.database.massspec_orm import SampleTable
+
 
 class MassSpecDBResult(RIDDBResult):
     rid = Str
     sample = Str
+
     def _set_metadata(self, dbr):
-#        self.rid = dbr.RID
+        #        self.rid = dbr.RID
         self.sample = dbr.Sample
+
 
 class MassSpecDBResultsAdapter(TabularAdapter):
     columns = [
-#               ('RunID', 'rid'),
-               ('Sample', 'sample'),
-               # ('ID', '_id'),
-               # ('Date', 'RunDateTime'),
-               # ('Time', 'runtime')
-               ]
+        #               ('RunID', 'rid'),
+        ('Sample', 'sample'),
+        # ('ID', '_id'),
+        # ('Date', 'RunDateTime'),
+        # ('Time', 'runtime')
+    ]
 
-#    def get_bg_color(self, obj, trait, row, col):
+
+# def get_bg_color(self, obj, trait, row, col):
 #        print obj, trait, row, col
 #        o = getattr(obj, trait)[row]
 
@@ -61,13 +65,14 @@ class MassSpecDBResultsAdapter(TabularAdapter):
 class MassSpecSelector(DatabaseSelector):
     date_str = 'RunDateTime'
     tabular_adapter = MassSpecDBResultsAdapter
-#    query_table = AnalysesTable
+    #    query_table = AnalysesTable
     query_table = SampleTable
 
     record_klass = MassSpecDBResult
     add_selection_changed = Event
     orm_path = 'pychron.database.orms.massspec_orm'
     open_button_label = 'Add'
+
     def _get_selector_records(self, **kw):
         return self._db.get_samples(**kw)
 
@@ -76,12 +81,13 @@ class MassSpecSelector(DatabaseSelector):
 
     def load_recent(self):
         self._execute_query(
-                            param='SampleTable.Sample',
-#                            param='AnalysesTable.RID',
-                            comp='=',
-                            criteria='J045'
-                            )
-#    def _get__parameters(self):
+            param='SampleTable.Sample',
+            #                            param='AnalysesTable.RID',
+            comp='=',
+            criteria='J045'
+        )
+
+# def _get__parameters(self):
 #        return ['AnalysesTable.RID',
 #                'AnalysesTable.RunDateTime',
 #                ]

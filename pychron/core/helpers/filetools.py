@@ -17,9 +17,9 @@
 # ========== standard library imports ==========
 import glob
 import os
-import subprocess
-import shutil
 import re
+import shutil
+import subprocess
 
 from datetime import datetime
 
@@ -117,6 +117,10 @@ def ilist_directory2(root, extension=None, filtername=None, remove_extension=Fal
             yield yi
 
 
+def list_subdirectories(root):
+    return [di for di in os.listdir(root) if os.path.isdir(os.path.join(root, di)) and not di.startswith('.')]
+
+
 def list_directory2(root, extension=None, filtername=None, remove_extension=False):
     return list(ilist_directory2(root, extension, filtername, remove_extension))
 
@@ -206,15 +210,9 @@ def unique_path2(root, base, delimiter='-', extension='.txt', width=3):
 
         unique_path2 solves this by finding the max path then incrementing by 1
     """
-    # find the max path in the root directory
-    # basename = '{}-*{}'.format(base, extension)
-    # cnt = 0
-    # for p in glob.iglob(os.path.join(root, basename)):
-    #     p = os.path.basename(p)
-    #     head, tail = os.path.splitext(p)
-    #     cnt = max(int(head.split('-')[1]), cnt)
-    #
-    # cnt += 1
+    if not extension.startswith('.'):
+        extension = '.{}'.format(extension)
+
     cnt = max_path_cnt(root, '{}-'.format(base), delimiter=delimiter, extension=extension)
     p = os.path.join(root, '{{}}-{{:0{}d}}{{}}'.format(width).format(base, cnt, extension))
     return p, cnt

@@ -15,20 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import os
 
+from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.task_factory import TaskFactory
 from pyface.tasks.action.schema import SGroup
 from pyface.tasks.action.schema_addition import SchemaAddition
-from envisage.ui.tasks.task_extension import TaskExtension
-from traits.api import Instance
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.entry.entry_views.sensitivity_entry import SensitivitySelector
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 # from pychron.experiment.experiment_executor import ExperimentExecutor
-from pychron.experiment.experimentor import Experimentor
 from pychron.experiment.signal_calculator import SignalCalculator
 from pychron.experiment.image_browser import ImageBrowser
 from pychron.experiment.tasks.experiment_task import ExperimentEditorTask
@@ -39,22 +35,21 @@ from pychron.experiment.tasks.experiment_actions import NewExperimentQueueAction
     DeselectAction, SendTestNotificationAction, \
     NewPatternAction, OpenPatternAction, ResetQueuesAction, OpenLastExperimentQueueAction, UndoAction, \
     QueueConditionalsAction, ConfigureEditorTableAction, SystemConditionalsAction, ResetSystemHealthAction, \
-    OpenExperimentHistoryAction, LastAnalysisRecoveryAction
-from pychron.paths import paths
+    OpenExperimentHistoryAction, LastAnalysisRecoveryAction, OpenCurrentExperimentQueueAction, \
+    SaveAsCurrentExperimentAction
 
 
 class ExperimentPlugin(BaseTaskPlugin):
     id = 'pychron.experiment.plugin'
-    experimentor = Instance(Experimentor)
 
-    def start(self):
-        super(ExperimentPlugin, self).start()
-        manager = self.application.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
-        dvc = self.application.get_service('pychron.dvc.dvc.DVC')
-        self.experimentor.dvc = dvc
-        self.experimentor.iso_db_manager = manager
-        self.experimentor.executor.set_managers()
-        self.experimentor.executor.bind_preferences()
+    # def start(self):
+    #     super(ExperimentPlugin, self).start()
+    #     # manager = self.application.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
+    #     dvc = self.application.get_service('pychron.dvc.dvc.DVC')
+    #     self.experimentor.dvc = dvc
+    #     # self.experimentor.iso_db_manager = manager
+    #     self.experimentor.executor.set_managers()
+    #     self.experimentor.executor.bind_preferences()
 
     def _signal_calculator_factory(self, *args, **kw):
         return SignalCalculator()
@@ -73,10 +68,11 @@ class ExperimentPlugin(BaseTaskPlugin):
                             task_group='experiment')]
 
     def _task_factory(self):
-        return ExperimentEditorTask(manager=self.experimentor)
+        # return ExperimentEditorTask(manager=self.experimentor)
+        return ExperimentEditorTask()
 
     def _preferences_default(self):
-        return ['file://{}'.format(os.path.join(paths.preferences_dir, 'experiment.ini'))]
+        return self._preferences_factory('experiment')
 
     def _preferences_panes_default(self):
         return [ExperimentPreferencesPane,
@@ -128,6 +124,9 @@ class ExperimentPlugin(BaseTaskPlugin):
                                  path='MenuBar/Edit'),
                   SchemaAddition(id='pychron.experiment.open_experiment', factory=OpenExperimentQueueAction,
                                  path='MenuBar/file.menu/Open'),
+                  SchemaAddition(id='pychron.experiment.open_current_experiment',
+                                 factory=OpenCurrentExperimentQueueAction,
+                                 path='MenuBar/file.menu/Open'),
                   SchemaAddition(id='pychron.experiment.open_last_experiment', factory=OpenLastExperimentQueueAction,
                                  path='MenuBar/file.menu/Open'),
                   SchemaAddition(id='pychron.experiment.launch_history', factory=OpenExperimentHistoryAction,
@@ -152,7 +151,11 @@ class ExperimentPlugin(BaseTaskPlugin):
                   SchemaAddition(id='pychron.experiment.edit.undo', factory=UndoAction,
                                  path='MenuBar/Edit/experiment.group'),
                   SchemaAddition(id='pychron.experiment.edit.configure', factory=ConfigureEditorTableAction,
-                                 path='MenuBar/Edit/experiment.group')])]
+                                 path='MenuBar/Edit/experiment.group'),
+                  SchemaAddition(id='pychron.experiment.save_as_current_experiment',
+                                 factory=SaveAsCurrentExperimentAction,
+                                 path='MenuBar/file.menu/Save')
+                  ])]
 
     def _service_offers_default(self):
         so_signal_calculator = self.service_offer_factory(
@@ -171,25 +174,25 @@ class ExperimentPlugin(BaseTaskPlugin):
                 so_image_browser,
                 so_sens_selector]
 
-    def _experimentor_default(self):
-        return self._experimentor_factory()
-
-    def _experimentor_factory(self):
-        # from pychron.experiment.experimentor import Experimentor
-        # from pychron.initialization_parser import InitializationParser
-        from pychron.envisage.initialization.initialization_parser import InitializationParser
-
-        ip = InitializationParser()
-        plugin = ip.get_plugin('Experiment', category='general')
-        mode = ip.get_parameter(plugin, 'mode')
-# from pychron.database.isotope_database_manager import IsotopeDatabaseManager
-
-        # manager = self.application.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
-        
-        exp = Experimentor(application=self.application,
-                           mode=mode)
-
-        return exp
+        #     def _experimentor_default(self):
+        #         return self._experimentor_factory()
+        #
+        #     def _experimentor_factory(self):
+        #         # from pychron.experiment.experimentor import Experimentor
+        #         # from pychron.initialization_parser import InitializationParser
+        #         from pychron.envisage.initialization.initialization_parser import InitializationParser
+        #
+        #         ip = InitializationParser()
+        #         plugin = ip.get_plugin('Experiment', category='general')
+        #         mode = ip.get_parameter(plugin, 'mode')
+        # # from pychron.database.isotope_database_manager import IsotopeDatabaseManager
+        #
+        #         # manager = self.application.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
+        #
+        #         exp = Experimentor(application=self.application,
+        #                            mode=mode)
+        #
+        #         return exp
 
 # ============= EOF =============================================
 # factory = lambda: Group(DeselectAction(),

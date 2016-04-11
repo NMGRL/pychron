@@ -15,12 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+# ============= standard library imports ========================
 import base64
 import json
 import urllib2
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+
 import requests
+from datetime import datetime
+
+
+# ============= local library imports  ==========================
 
 
 def get_branches(new):
@@ -70,6 +74,10 @@ class GithubObject(object):
         pass
 
 
+class RepositoryRecord:
+    pass
+
+
 class Organization(GithubObject):
     def __init__(self, name, *args, **kw):
         self._name = name
@@ -77,26 +85,48 @@ class Organization(GithubObject):
 
     @property
     def base_cmd(self):
-        return '/orgs/{}/repos'.format(self._name)
+        return '/orgs/{}'.format(self._name)
 
     @property
-    def repos(self):
+    def repo_names(self):
+        return [repo['name'] for repo in self.get_repos()]
 
+    @property
+    def info(self):
         cmd = make_request(self.base_cmd)
         doc = requests.get(cmd)
-        return [repo['name'] for repo in json.loads(doc.text)]
+        return json.loads(doc.text)
+
+    def repos(self, attributes):
+        return [self._repo_factory(ri, attributes) for ri in self.get_repos()]
+
+    def get_repos(self):
+        cmd = make_request('{}/repos'.format(self.base_cmd))
+        doc = requests.get(cmd)
+        return json.loads(doc.text)
 
     def has_repo(self, name):
-        return name in self.repos
+        return name in self.repo_names
 
     def create_repo(self, name, usr, pwd, **payload):
-        create_organization_repository(self._name, name, usr, pwd)
+        create_organization_repository(self._name, name, usr, pwd, **payload)
         # cmd = make_request(self.base_cmd)
         # payload['name'] = name
         #
         # headers = self._make_headers(auth=True)
         # r = requests.post(cmd, data=json.dumps(payload), headers=headers)
         # self._process_post(r)
+
+    def _repo_factory(self, ri, attributes):
+        repo = RepositoryRecord()
+        date_attrs = ('pushed_at', 'created_at')
+        for ai in attributes:
+            v = ri[ai]
+            if ai in date_attrs:
+                date = datetime.strptime(v, '%Y-%m-%dT%H:%M:%SZ')
+                v = date.strftime('%m-%d-%Y %H:%M')
+            setattr(repo, ai, v)
+        return repo
 
 
 if __name__ == '__main__':
@@ -105,7 +135,7 @@ if __name__ == '__main__':
         pwd = rfile.readline().strip()
     # print get_organization_repositiories('NMGRL')
     org = Organization('NMGRLData', usr, pwd)
-    print org.repos, len(org.repos)
+    print org.repo_names, len(org.repo_names)
     # print org.create_repo('test2', auto_init=True)
     # print org.repos, len(org.repos)
 # ============= EOF =============================================

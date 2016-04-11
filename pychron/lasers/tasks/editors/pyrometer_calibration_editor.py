@@ -22,7 +22,6 @@ from enable.component_editor import ComponentEditor
 from traits.api import Instance
 from traitsui.api import View, UItem
 
-
 # ============= standard library imports ========================
 from numpy import array
 # ============= local library imports  ==========================

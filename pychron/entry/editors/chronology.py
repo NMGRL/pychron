@@ -51,14 +51,14 @@ class IrradiationDosage(HasTraits):
         return '{} {}'.format(self.start_date, self.start_time)
 
     def end(self):
-        return '{} {}'.format(self.start_date, self.start_time)
+        return '{} {}'.format(self.end_date, self.end_time)
 
     def make_blob(self):
         return '{}|{} {}%{} {}'.format(self.power, self.start_date, self.start_time,
                                        self.end_date, self.end_time)
 
     def to_tuple(self):
-        print 'tooo'
+        print 'tooo', str(self.power), self.start(), self.end()
         return str(self.power), self.start(), self.end()
 
         # def validate_dosage(self, prev_dose):

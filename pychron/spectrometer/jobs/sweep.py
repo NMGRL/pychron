@@ -15,10 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import time
 from numpy import hstack, array, Inf
-from traits.api import DelegatesTo, List, HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change
-from traitsui.api import View, UItem, Item, HGroup, VGroup
+from traits.api import DelegatesTo, List, Bool, Any
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.ui.gui import invoke_in_main_thread
@@ -79,13 +77,13 @@ class BaseSweep(SpectrometerTask):
         if 'line_width' not in kw:
             kw['line_width'] = 2
 
-        if kind=='scatter':
+        if kind == 'scatter':
             kw['type'] = 'scatter'
             kw['marker'] = 'circle'
-            kw['marker_size'] = 1
+            kw['marker_size'] = 1.5
 
         graph.new_series(**kw)
-        self._markup_idx+=1
+        self._markup_idx += 1
 
     def _test_sweep(self, s, e, step):
         forward = self._calc_step_values(s, e, step)
@@ -162,7 +160,7 @@ class BaseSweep(SpectrometerTask):
 
     def _step_intensity(self):
         spec = self.spectrometer
-        ds = [str(self.reference_detector)] + self.additional_detectors
+        ds = [str(self.reference_detector.name)] + self.additional_detectors
         intensity = spec.get_intensity(ds)
 
         return intensity

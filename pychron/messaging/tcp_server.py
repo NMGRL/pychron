@@ -19,10 +19,11 @@
 # ============= enthought library imports =======================
 
 # ============= standard library imports ========================
-from SocketServer import ThreadingTCPServer
-import socket
-from threading import Thread
 import select
+import socket
+from SocketServer import ThreadingTCPServer
+from threading import Thread
+
 # ============= local library imports  ==========================
 from messaging_server import MessagingServer
 from pychron.messaging.handlers.tcp_handler import TCPHandler

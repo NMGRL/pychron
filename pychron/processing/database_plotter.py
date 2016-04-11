@@ -20,6 +20,7 @@ from traitsui.api import View, Item, EnumEditor, HGroup, VGroup, Group
 
 from pychron.graph.graph import Graph
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 

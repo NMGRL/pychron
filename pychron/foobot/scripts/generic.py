@@ -1,4 +1,5 @@
 import random
+
 from pychron.foobot.scripts.script import FScript
 
 

@@ -15,12 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from datetime import datetime
-
 from apptools.preferences.preference_binding import bind_preference
-from traits.api import List, Str, Bool
+from datetime import datetime
 from pyface.api import SplashScreen
 from pyface.image_resource import ImageResource
+from traits.api import List, Str, Bool
 
 
 # ============= standard library imports ========================
@@ -97,6 +96,11 @@ class PychronApplication(BaseTasksApplication):
             self.dump_user_file()
 
         super(BaseTasksApplication, self).stop()
+        import threading
+        self.debug('------------------- Alive Threads -------------------')
+        for t in threading.enumerate():
+            self.debug(str(t))
+        self.debug('-----------------------------------------------------')
 
     def dump_user_file(self):
         self.debug('dumping user file')

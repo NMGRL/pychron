@@ -22,10 +22,14 @@ import json
 __version__ = '0.1'
 
 
-def jdump(obj, path):
+def dvc_dump(obj, path):
     with open(path, 'w') as wfile:
         json.dump(obj, wfile, indent=4, sort_keys=True)
 
+
+def dvc_load(path):
+    with open(path, 'r') as rfile:
+        return json.load(rfile)
 
 # ============= EOF =============================================
 

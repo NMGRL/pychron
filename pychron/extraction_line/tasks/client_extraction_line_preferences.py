@@ -15,26 +15,23 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-
 from traits.api import Bool, Int
 from traitsui.api import Item, VGroup
-
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.extraction_line.tasks.extraction_line_preferences import ExtractionLinePreferences, \
-    ExtractionLinePreferencesPane
+from pychron.extraction_line.tasks.extraction_line_preferences import ExtractionLinePreferencesPane, \
+    BaseExtractionLinePreferences
 
 
-class ClientExtractionLinePreferences(ExtractionLinePreferences):
+class ClientExtractionLinePreferences(BaseExtractionLinePreferences):
     name = 'ClientExtractionLine'
 
     use_status_monitor = Bool
-    valve_state_frequency = Int
-    valve_lock_frequency = Int
-    valve_owner_frequency = Int
-    update_period = Int
-    checksum_frequency = Int
+    valve_state_frequency = Int(3)
+    valve_lock_frequency = Int(5)
+    valve_owner_frequency = Int(5)
+    update_period = Int(1)
+    checksum_frequency = Int(3)
 
 
 class ClientExtractionLinePreferencesPane(ExtractionLinePreferencesPane):
@@ -58,6 +55,13 @@ class ClientExtractionLinePreferencesPane(ExtractionLinePreferencesPane):
                        label='Status Monitor')
 
         return s_grp
+
+    def _get_valve_group(self):
+        v_grp = VGroup(self._network_group(),
+                       show_border=True,
+                       label='Valves')
+
+        return v_grp
 
     def _get_tabs(self):
         return super(ClientExtractionLinePreferencesPane, self)._get_tabs() + (self._get_status_group(),)

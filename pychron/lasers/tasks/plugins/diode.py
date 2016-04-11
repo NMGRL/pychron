@@ -16,15 +16,13 @@
 
 # ============= enthought library imports =======================
 from envisage.ui.tasks.task_extension import TaskExtension
+from pyface.action.group import Group
 from pyface.tasks.action.schema_addition import SchemaAddition
 
-from pyface.action.group import Group
-
-from pychron.lasers.tasks.plugins.laser_plugin import FusionsPlugin
 from pychron.lasers.tasks.laser_actions import PowerMapAction, PowerCalibrationAction, PyrometerCalibrationAction, \
     PIDTuningAction, ExecutePatternAction
 from pychron.lasers.tasks.laser_preferences import FusionsDiodePreferencesPane
-
+from pychron.lasers.tasks.plugins.laser_plugin import FusionsPlugin
 
 
 # ============= standard library imports ========================

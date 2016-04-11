@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-from traits.api import HasTraits, Property, Float, Enum, Str, Bool
+from traits.api import HasTraits, Property, Float, Enum, Str, Bool, Any
 from uncertainties import ufloat, nominal_value, std_dev
 
 from pychron.pychron_constants import AGE_SCALARS
@@ -54,6 +54,7 @@ class ArArConstants(HasTraits):
     lambda_e_e = Float(1.6e-13)
 
     lambda_k = Property
+    _lambda_k = Any
     lambda_Cl36 = Property(depends_on='lambda_Cl36_v, lambda_Cl36_e')
     lambda_Cl36_v = Float(6.308e-9)
     lambda_Cl36_e = Float(0)
@@ -188,8 +189,13 @@ class ArArConstants(HasTraits):
         return self._get_ufloat('lambda_e')
 
     def _get_lambda_k(self):
-        return self.lambda_b + self.lambda_e
+        k = self._lambda_k
+        if not k:
+            k = self.lambda_b + self.lambda_e
+        return k
 
+    def _set_lambda_k(self, k):
+        self._lambda_k = k
         # return ufloat(k.nominal_value, k.std_dev)
 
     def _get_age_scalar(self):

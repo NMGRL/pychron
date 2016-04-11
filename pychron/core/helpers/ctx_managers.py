@@ -34,6 +34,7 @@ class no_update(object):
         if self._model:
             self._model._no_update = False
             if self._fire_update_needed:
-                self._model.update_needed = True
+                if hasattr(self._model, 'update_needed'):
+                    self._model.update_needed = True
 
 # ============= EOF =============================================

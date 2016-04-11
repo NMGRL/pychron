@@ -15,16 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.task_factory import TaskFactory
-from pyface.tasks.action.schema_addition import SchemaAddition
-from pyface.action.group import Group
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.lasers.tasks.plugins.laser_plugin import BaseLaserPlugin
-from pychron.lasers.tasks.laser_preferences import FusionsCO2PreferencesPane
-
 
 
 class ChromiumCO2Plugin(BaseLaserPlugin):

@@ -52,15 +52,15 @@ class KerrMicrocontroller(KerrDevice):
 #        self._execute_hex_commands(commands)
 
 #        addr = self.address
-#         cmd = '0E'
-#         for addr in ('01', '02'):
-#             c = self._build_command(addr, cmd)
-# #            print addr, c
-#             status_byte = self.ask(c, is_hex=True,
-#                                     delay=100,
-#                                     nbytes=2,
-#                                     info='get defined status',
-#                                     verbose=True)
-#             # print addr, cmd, status_byte
+        #         cmd = '0E'
+        #         for addr in ('01', '02'):
+        #             c = self._build_command(addr, cmd)
+        # #            print addr, c
+        #             status_byte = self.ask(c, is_hex=True,
+        #                                     delay=100,
+        #                                     nbytes=2,
+        #                                     info='get defined status',
+        #                                     verbose=True)
+        #             # print addr, cmd, status_byte
 
         return True

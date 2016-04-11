@@ -17,9 +17,7 @@
 # ============= enthought library imports =======================
 from PySide.QtCore import QTimer
 from PySide.QtGui import QLabel, QImage, QPixmap, QSizePolicy
-from pyface.qt import QtCore
-from traits.api import HasTraits, Button, Int, Instance, Str, Event
-from traitsui.api import View, Item
+from traits.api import Int, Instance
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.basic_editor_factory import BasicEditorFactory

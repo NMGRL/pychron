@@ -17,9 +17,11 @@
 # ============= enthought library imports =======================
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+
 from apptools.preferences.preference_binding import bind_preference
-from traits.api import HasTraits, Str, List, Enum, Bool, Int
+from traits.api import HasTraits, Str, Enum, Bool, Int
 from traitsui.api import View
+
 # ============= standard library imports ========================
 import smtplib
 # ============= local library imports  ==========================

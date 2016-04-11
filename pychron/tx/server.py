@@ -18,18 +18,21 @@
 # ============= standard library imports ========================
 from twisted.internet import reactor
 from twisted.internet.endpoints import TCP4ServerEndpoint
-
-
+from twisted.internet.error import ReactorNotRunning
 # ============= local library imports  ==========================
 
 
 class TxServer:
     factory = None
+    _has_endpoints = False
 
     def bootstrap(self):
-        self.start()
+        if self._has_endpoints:
+            self.start()
 
     def add_endpoint(self, port, factory):
+        self._has_endpoints = True
+
         endpoint = TCP4ServerEndpoint(reactor, port)
         endpoint.listen(factory)
 
@@ -40,7 +43,10 @@ class TxServer:
         t.start()
 
     def stop(self):
-        reactor.stop()
+        try:
+            reactor.stop()
+        except ReactorNotRunning:
+            pass
 
     kill = stop
 

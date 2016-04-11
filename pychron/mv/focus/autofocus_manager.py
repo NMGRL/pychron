@@ -52,13 +52,13 @@ class ConfigureHandler(Handler):
 
 
 class AutoFocusManager(Manager):
-    '''
+    """
         currently uses passive focus techniques
         see
 
         http://en.wikipedia.org/wiki/Autofocus
 
-    '''
+    """
 
     video = Any
     laser_manager = Any

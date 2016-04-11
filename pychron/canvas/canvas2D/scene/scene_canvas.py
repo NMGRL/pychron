@@ -19,7 +19,7 @@ try:
     from kiva import JOIN_ROUND
 except ImportError:
     JOIN_ROUND = 0
-from traits.api import Instance
+from traits.api import Instance, Any
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.base_data_canvas import BaseDataCanvas
@@ -28,6 +28,7 @@ from pychron.canvas.canvas2D.scene.scene import Scene
 
 class SceneCanvas(BaseDataCanvas):
     scene = Instance(Scene)
+    scene_klass = Any
 
     def __init__(self, *args, **kw):
         super(SceneCanvas, self).__init__(*args, **kw)
@@ -88,5 +89,10 @@ class SceneCanvas(BaseDataCanvas):
         if new:
             new.on_trait_change(self.request_redraw, 'layout_needed')
         if old:
-            old.on_trait_change(self.request_redraw, 'layout_needed', remove=True)
+            old.on_trait_change(self.request_redraw,
+                                'layout_needed', remove=True)
+
+    def _scene_default(self):
+        if self.scene_klass:
+            return self.scene_klass()
 # ============= EOF =============================================

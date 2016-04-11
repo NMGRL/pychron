@@ -26,9 +26,7 @@ import inspect
 import traceback
 import yaml
 import sys
-import weakref
 # ============= local library imports  ==========================
-from pychron.core.codetools.inspection import caller
 from pychron.paths import paths
 from pychron.loggable import Loggable
 from pychron.globals import globalv
@@ -801,6 +799,7 @@ class PyScript(Loggable):
 
                 man = app.get_service(*app_args)
 
+        self.debug('manager action {}'.format(man))
         if man is not None:
             if not isinstance(func, list):
                 func = [(func, args, kw)]

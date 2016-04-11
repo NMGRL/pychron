@@ -17,10 +17,10 @@
 # ============= enthought library imports =======================
 from Queue import Empty
 
-from traits.api import Color, Str, Event, Int
-from traitsui.qt4.editor import Editor
-from traitsui.basic_editor_factory import BasicEditorFactory
 from pyface.qt.QtGui import QPlainTextEdit, QTextCursor, QPalette, QColor, QFont
+from traits.api import Color, Str, Event, Int
+from traitsui.basic_editor_factory import BasicEditorFactory
+from traitsui.qt4.editor import Editor
 
 
 # ============= standard library imports ========================

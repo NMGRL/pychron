@@ -19,9 +19,8 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 import inspect
-import traceback
-
 import logging
+import traceback
 
 logger=logging.getLogger('Inspection')
 

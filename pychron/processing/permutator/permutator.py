@@ -29,7 +29,7 @@ from pychron.core.progress import progress_loader
 from pychron.loggable import Loggable
 from pychron.processing.analyses.file_analysis import FileAnalysis
 from pychron.processing.permutator.view import PermutatorResultsView
-from pychron.processing.tasks.figures.editors.ideogram_editor import IdeogramEditor
+from pychron.pipeline.plot.editors.ideogram_editor import IdeogramEditor
 from pychron.pychron_constants import ARGON_KEYS
 
 
@@ -48,7 +48,7 @@ from pychron.pychron_constants import ARGON_KEYS
 
 
 class PermutationRecord(object):
-    __slots__ = ('age', 'info_str','identifier')
+    __slots__ = ('age', 'info_str', 'identifier')
 
 
 class FitPermutator(Loggable):
@@ -144,7 +144,6 @@ class ICPermutator(Loggable):
 class Permutator(Loggable):
     configuration_dict = Property
 
-
     @cached_property
     def _get_configuration_dict(self):
         try:
@@ -192,7 +191,7 @@ class Permutator(Loggable):
     def _setup_ideo_editor(self):
         editor = IdeogramEditor()
         po = editor.plotter_options_manager.plotter_options
-        po.set_aux_plot_height('Analysis Number Stacked', 300)
+        po.set_aux_plot_height('Analysis Number Nonsorted', 300)
         editor.disable_aux_plots()
         return editor
 
@@ -240,7 +239,7 @@ if __name__ == '__main__':
 
     ans = man.make_analyses([Record('65c1c4a9-e317-452b-9654-3f06efcbe664'),
                              # Record('39b6e623-e178-4dc4-bf5c-14c81485bd54')
-                            ],
+                             ],
                             use_cache=False, unpack=True)
     # a.j = ufloat(1e-4, 1e-7)
 

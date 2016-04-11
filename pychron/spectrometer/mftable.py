@@ -16,7 +16,6 @@
 
 # ============= enthought library imports =======================
 from traits.api import HasTraits, List, Str, Dict, Float, Bool, Property, cached_property
-from traitsui.api import View, Controller, TableEditor, UItem
 # from traitsui.table_column import ObjectColumn
 # ============= standard library imports ========================
 import shutil

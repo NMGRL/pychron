@@ -17,13 +17,12 @@
 # ============= enthought library imports =======================
 import threading
 
+import traits.trait_notifiers
+from pyface.message_dialog import warning
 from traits.api import HasTraits, Str, List
 from traitsui.api import View, UItem, Item, HGroup, VGroup, CheckListEditor, Controller, TextEditor
 from traitsui.menu import Action
-import traits.trait_notifiers
-from pyface.message_dialog import warning
 # ============= standard library imports ========================
-import keyring
 import base64
 import json
 import requests
@@ -91,7 +90,6 @@ def report_issues():
         with open(p, 'r') as rfile:
             issues = pickle.load(rfile)
 
-            warn_no_password = False
             for issue in issues:
                 result = create_issue(issue)
 
@@ -110,9 +108,7 @@ def create_issue(issue):
     cmd = '{}/repos/{}/pychron/issues'.format(GITHUB_API_URL, org)
 
     usr = os.environ.get('GITHUB_USER')
-    pwd = keyring.get_password('github', usr)
-    if pwd is None:
-        pwd = os.environ.get('GITHUB_PASSWORD')
+    pwd = os.environ.get('GITHUB_PASSWORD')
 
     if not pwd:
         warning(None, 'No password set for "{}". Contact Developer.\n'
@@ -123,7 +119,11 @@ def create_issue(issue):
     headers = {"Authorization": "Basic {}".format(auth)}
 
     r = requests.post(cmd, data=json.dumps(issue), headers=headers)
-    return r.status_code == 201
+
+    if r.status_code == 401:
+        warning(None, 'Failed to submit issue. Username/Password incorrect.')
+
+    return r.status_code in (201, 422)
 
 
 class ExceptionModel(HasTraits):
@@ -178,10 +178,10 @@ class ExceptionHandler(Controller):
                 UItem('helpstr',
                       style='readonly'),
                 Item('title'),
-                HGroup(
-                        VGroup(UItem('labels', style='custom', editor=CheckListEditor(values=LABELS)),
+                HGroup(VGroup(UItem('labels', style='custom', editor=CheckListEditor(values=LABELS)),
                                show_border=True, label='Labels (optional)'),
-                        VGroup(UItem('description', style='custom'), show_border=True, label='Description (optional)')),
+                        VGroup(UItem('description', style='custom'), show_border=True,
+                               label='Description (optional)')),
                 UItem('exctext',
                       style='custom',
                       editor=TextEditor(read_only=True))),

@@ -17,9 +17,9 @@
 # ============= enthought library imports =======================
 import os
 
+from envisage.service_offer import ServiceOffer
 from envisage.ui.tasks.task_extension import TaskExtension
 from traits.api import List
-from envisage.service_offer import ServiceOffer
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -48,55 +48,63 @@ class BaseTaskPlugin(BasePlugin):
 
     _tests = None
 
+    def _preferences_factory(self, *names):
+        ps = []
+        for ni in names:
+            pp = self._make_preferences_path(ni)
+            if pp:
+                ps.append(pp)
+
+        return ps
+
     def _make_preferences_path(self, name):
-        return 'file://{}'.format(os.path.join(paths.preferences_dir, add_extension(name, '.ini')))
+        p = os.path.join(paths.preferences_dir, add_extension(name, '.ini'))
+        if os.path.isfile(p):
+            return 'file://{}'.format(p)
 
     def service_offer_factory(self, **kw):
         return ServiceOffer(**kw)
-
-    def check(self):
-        return True
 
     def startup_test(self):
         if globalv.use_startup_tests:
             self.debug('doing start up tests')
             self.application.startup_tester.test_plugin(self)
 
-    def set_preference_defaults(self):
-        """
-            children should override and use self._set_preference_defaults(defaults, prefid)
-            to set preferences
-        :return:
-        """
-        pass
+    # def set_preference_defaults(self):
+    #     """
+    #         children should override and use self._set_preference_defaults(defaults, prefid)
+    #         to set preferences
+    #     :return:
+    #     """
+    #     pass
 
     def start(self):
         self.startup_test()
-        try:
-            self.set_preference_defaults()
-        except AttributeError, e:
-            print 'exception', e
+        # try:
+        #     self.set_preference_defaults()
+        # except AttributeError, e:
+        #     print 'exception', e
 
-    def _set_preference_defaults(self, defaults, prefid):
-        """
-
-        :param defaults: list(tuple) [(str, object),]
-        :param prefid: str preference_path e.g pychron.update
-        :return:
-        """
-        change = False
-        prefs = self.application.preferences
-        self.debug('setting default preferences for {} {}'.format(self.name, self.id))
-        for k, d in defaults:
-            if k not in prefs.keys(prefid):
-                self.debug('Setting default preference {}={}'.format(k, d))
-                prefs.set('{}.{}'.format(prefid, k), d)
-                change = True
-
-        if change:
-            prefs.flush()
-        else:
-            self.debug('defaults already set')
+    # def _set_preference_defaults(self, defaults, prefid):
+    #     """
+    #
+    #     :param defaults: list(tuple) [(str, object),]
+    #     :param prefid: str preference_path e.g pychron.update
+    #     :return:
+    #     """
+    #     change = False
+    #     prefs = self.application.preferences
+    #     self.debug('setting default preferences for {} {}'.format(self.name, self.id))
+    #     for k, d in defaults:
+    #         if k not in prefs.keys(prefid):
+    #             self.debug('Setting default preference {}={}'.format(k, d))
+    #             prefs.set('{}.{}'.format(prefid, k), d)
+    #             change = True
+    #
+    #     if change:
+    #         prefs.flush()
+    #     else:
+    #         self.debug('defaults already set')
 
     # # defaults
     # def _preferences_panes_default(self):
@@ -115,10 +123,16 @@ class BaseTaskPlugin(BasePlugin):
         xx = []
         sadditions = []
         # print self.id, self.name
-        for tid, action in self.application.get_task_extensions(self.id):
-
+        for tid, action_id in self.application.get_task_extensions(self.id):
+            # print 'a', tid, action
+            # for _, _, _, actions in self.available_task_extensions:
+            #     for av in actions:
+            #         print 'b', tid, action, av.id
             action = next((av for _, _, _, actions in self.available_task_extensions
-                           for av in actions if av.id == action))
+                           for av in actions if av.id == action_id), None)
+            if action is None:
+                self.debug('no action found for {}'.format(action_id))
+                continue
 
             if ctid is None:
                 ctid = tid

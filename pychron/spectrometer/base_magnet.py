@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Property, Float, Event, Any, Instance
+from traits.api import HasTraits, Property, Float, Event, Instance
 from traitsui.api import View, Item, VGroup, HGroup, Spring, RangeEditor
 # ============= standard library imports ========================
 from scipy import optimize
@@ -47,7 +47,7 @@ class BaseMagnet(HasTraits):
     _massmax = Float(200.0)
 
     settling_time = 0.5
-    detector = Any
+    detector = Instance('pychron.spectrometer.base_detector.BaseDetector')
 
     dac_changed = Event
 
@@ -121,7 +121,7 @@ class BaseMagnet(HasTraits):
             mass = optimize.brentq(func, 0, 200)
             return mass
 
-        except ValueError:
+        except ValueError, e:
             self.debug('DAC does not map to an isotope. DAC={}, Detector={}'.format(dac, detname))
 
     def map_mass_to_dac(self, mass, detname):

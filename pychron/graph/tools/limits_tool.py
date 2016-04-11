@@ -15,15 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Float, Instance, Str, Tuple
 from chaco.abstract_overlay import AbstractOverlay
 from enable.base_tool import BaseTool
 from enable.colors import ColorTrait
+from traits.api import Float, Instance, Str, Tuple, Event
+
 # ============= standard library imports ========================
 import string
 # ============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
-from pychron.processing.plotters.ideogram.mean_indicator_overlay import XYPlotLabel
+from pychron.pipeline.plot.overlays.mean_indicator_overlay import XYPlotLabel
 
 
 class LimitsTool(BaseTool):
@@ -33,6 +34,7 @@ class LimitsTool(BaseTool):
     active = False
 
     entered_value = Str
+    limits_updated = Event
 
     def _set_entered_value(self, c):
         if c == '.' or c in string.digits:
@@ -52,12 +54,12 @@ class LimitsTool(BaseTool):
     def manual_set_key_pressed(self, event):
         c = event.character
         if c == 'Enter':
-            self._finish(event)
             try:
                 self._set_data_value(float(self.entered_value))
             except ValueError:
                 pass
 
+            self._finish(event)
             self.entered_value = ''
         else:
             self._set_entered_value(c)
@@ -67,11 +69,9 @@ class LimitsTool(BaseTool):
     def is_draggable(self, event):
         tol = 5
         if self.orientation == 'x':
-            return abs(event.x - self.component.x) < tol or \
-                   abs(event.x - self.component.x2) < tol
+            return abs(event.x - self.component.x) < tol or abs(event.x - self.component.x2) < tol
         else:
-            return abs(event.y - self.component.y) < tol or \
-                   abs(event.y - self.component.y2) < tol
+            return abs(event.y - self.component.y) < tol or abs(event.y - self.component.y2) < tol
 
     def normal_left_down(self, event):
         if self.is_draggable(event):
@@ -93,8 +93,8 @@ class LimitsTool(BaseTool):
                 self._dsign = 'high'
 
             self._set_ruler_pos(event)
-            self.component.request_redraw()
             event.handled = True
+            self.component.request_redraw()
 
     def _set_ruler_pos(self, v):
         self.ruler_pos = (v.x, v.y)
@@ -113,6 +113,7 @@ class LimitsTool(BaseTool):
         event.window.set_pointer(self.pointer)
 
         self.ruler_pos = tuple()
+        self.limits_updated = True
 
     def drag_mouse_move(self, event):
         self._set_ruler_pos(event)
@@ -168,9 +169,9 @@ class LimitOverlay(AbstractOverlay):
     def _label_default(self):
         return XYPlotLabel(component=self.component,
                            bgcolor=self.label_bgcolor,
-                           #border_width = LabelDelegate
+                           # border_width = LabelDelegate
                            border_color='black',
-                           #border_visible = LabelDelegate
+                           # border_visible = LabelDelegate
                            border_visible=True)
 
     def overlay(self, other_component, gc, view_bounds=None, mode="normal"):

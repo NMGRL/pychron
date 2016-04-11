@@ -133,7 +133,7 @@ class ThermoRack(CoreDevice):
         """
         cmd = self._get_read_command_str(COOLANT_BITS)
 
-        resp = self.ask(cmd, nbytes=2,verbose=verbose, **kw)
+        resp = self.ask(cmd, nbytes=2, verbose=verbose, **kw)
         if not self.simulation and resp is not None:
             temp = self._parse_response(resp, scale=0.1)
         else:

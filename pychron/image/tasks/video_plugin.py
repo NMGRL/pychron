@@ -15,12 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import List
-from envisage.ui.tasks.task_factory import TaskFactory
 from envisage.extension_point import ExtensionPoint
+from envisage.ui.tasks.task_factory import TaskFactory
+from traits.api import List
 
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.image.tasks.video_task import VideoTask
+
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================

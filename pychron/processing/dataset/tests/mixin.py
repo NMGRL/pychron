@@ -3,7 +3,6 @@ import os
 
 from pychron.core.ui import set_toolkit
 
-
 set_toolkit('qt4')
 
 from pychron.processing.autoupdate_parser import AutoupdateParser

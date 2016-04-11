@@ -15,20 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import time
 from traits.api import List, HasTraits, Str, Bool, Float, Property
 from traitsui.api import View, UItem, TableEditor
 # ============= standard library imports ========================
 from random import random
 from ConfigParser import ConfigParser
-import os
 import time
 # ============= local library imports  ==========================
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
 from pychron.core.stats.peak_detection import PeakCenterError
 from pychron.spectrometer.jobs.peak_center import calculate_peak_center, BasePeakCenter
-from pychron.paths import paths
 from pychron.spectrometer import get_spectrometer_config_path
 
 

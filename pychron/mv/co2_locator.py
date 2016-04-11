@@ -15,9 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from pychron.mv.locator import Locator
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.mv.locator import Locator
+
 
 class CO2Locator(Locator):
     pass

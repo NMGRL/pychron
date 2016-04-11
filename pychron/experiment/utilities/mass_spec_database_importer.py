@@ -31,7 +31,7 @@ from pychron.core.i_datastore import IDatastore
 from pychron.core.helpers.isotope_utils import sort_isotopes
 from pychron.experiment.utilities.identifier import make_runid
 from pychron.loggable import Loggable
-from pychron.database.adapters.massspec_database_adapter import MassSpecDatabaseAdapter
+from pychron.mass_spec.database.massspec_database_adapter import MassSpecDatabaseAdapter
 from pychron.experiment.utilities.info_blob import encode_infoblob
 from pychron.pychron_constants import ALPHAS
 
@@ -228,11 +228,10 @@ class MassSpecDatabaseImporter(Loggable):
                     sess.commit()
                     return ret
                 except Exception, e:
-                    self.debug('Mass Spec save exception. {}'.format(e))
+                    import traceback
+                    tb = traceback.format_exc()
+                    self.debug('Mass Spec save exception. {}\n'.format(e, tb))
                     if i == 2:
-                        import traceback
-
-                        tb = traceback.format_exc()
                         self.message('Could not save spec.runid={} rid={} '
                                      'to Mass Spec database.\n {}'.format(spec.runid, rid, tb))
                     else:
@@ -641,8 +640,8 @@ if __name__ == '__main__':
     #            # isotopes
     #            # ===================================================================
     #
-    ##            db_iso = timethis(db.add_isotope, args=(analysis, det, isok),
-    ##                              msg='add_isotope', log=self.debug, decorate='^')
+    #            #db_iso = timethis(db.add_isotope, args=(analysis, det, isok),
+    #            #                  msg='add_isotope', log=self.debug, decorate='^')
     #
     #            # add detector
     #            if det == analysis.ReferenceDetectorLabel:

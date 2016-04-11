@@ -57,7 +57,7 @@ class StartupTester(Loggable):
             try:
                 func = getattr(plugin, ti)
             except AttributeError:
-                self.warning('Invalid test "{}" for plugin "{}"'.format(pname, ti))
+                self.warning('Invalid test "{}" for plugin "{}"'.format(ti, pname))
                 self.add_test_result(plugin=pname, name=ti, result='Invalid')
                 continue
 
@@ -105,7 +105,12 @@ class StartupTester(Loggable):
 
     def _get_tests(self, name):
         if self._tests:
-            return next((ti['tests'] for ti in self._tests if ti['plugin'].lower() == name.lower()), None)
+            ts = next((ti['tests'] for ti in self._tests if ti['plugin'].lower() == name.lower()), None)
+            if ts is None:
+                self.debug('------------ Plugin "{}" not in startup_tests.yaml'.format(name))
+                self.debug(','.join((ti['plugin'] for ti in self._tests)))
+                self.debug('---------------------------------------------------------------')
+            return ts
 
     def _load(self):
         if os.path.isfile(paths.startup_tests):

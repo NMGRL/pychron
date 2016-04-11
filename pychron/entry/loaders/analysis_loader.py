@@ -18,12 +18,12 @@
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from functools import partial
-from datetime import datetime
 import uuid
+from functools import partial
 
 import xlrd
 import yaml
+from datetime import datetime
 
 from pychron.core.xls.xls_parser import XLSParser
 from pychron.experiment.utilities.identifier import make_runid

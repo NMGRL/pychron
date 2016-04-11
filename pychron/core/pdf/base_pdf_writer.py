@@ -82,7 +82,6 @@ class BasePDFWriter(Loggable):
             topMargin = opt.top_margin * inch
             bottomMargin = opt.bottom_margin * inch
 
-        print leftMargin, rightMargin, topMargin, bottomMargin
         doc = BaseDocTemplate(path,
                               leftMargin=leftMargin,
                               rightMargin=rightMargin,

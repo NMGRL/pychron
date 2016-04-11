@@ -1,5 +1,3 @@
-import os
-
 from pylab import *
 def plot_mem(p, use_histogram=True):
     with open(p, 'r') as rfile:

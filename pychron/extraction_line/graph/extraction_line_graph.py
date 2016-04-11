@@ -42,6 +42,7 @@ def split_graph(n):
         try:
             n1, n2 = n1[0], n2[0]
         except IndexError:
+            # occurs when edge is not connected to a node
             return []
 
         # ensure first node is a Valve node otherwise states not set correctly

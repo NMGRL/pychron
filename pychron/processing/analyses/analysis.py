@@ -15,22 +15,28 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from numpy import Inf
+from pyface.message_dialog import information
+from pyface.qt import QtCore
 
-from traits.api import Instance, Int, Str, Bool, \
-    Event, Property, Float, Date, List, Tuple, CStr
+from traits.api import Event, Dict, List
 
 # ============= standard library imports ========================
 from collections import namedtuple
 # ============= local library imports  ==========================
+from traitsui.handler import Handler
+from uncertainties import ufloat
 from pychron.core.helpers.formatting import format_percent_error, floatfmt
+from pychron.core.helpers.isotope_utils import sort_isotopes
 from pychron.core.helpers.logger_setup import new_logger
+from pychron.envisage.view_util import open_view
 from pychron.processing.arar_age import ArArAge
 # from pychron.processing.analyses.analysis_view import AnalysisView
 # from pychron.processing.analyses.summary import AnalysisSummary
 # from pychron.processing.analyses.db_summary import DBAnalysisSummary
-from pychron.experiment.utilities.identifier import make_aliquot_step, make_runid
+from pychron.experiment.utilities.identifier import make_runid, make_aliquot_step
 from pychron.processing.isotope import Isotope
-from pychron.pychron_constants import PLUSMINUS
+from pychron.pychron_constants import PLUSMINUS, NULL_STR
 
 Fit = namedtuple('Fit', 'fit '
                         'filter_outliers filter_outlier_iterations filter_outlier_std_devs '
@@ -39,65 +45,164 @@ Fit = namedtuple('Fit', 'fit '
 logger = new_logger('Analysis')
 
 
+def min_max(a, b, vs):
+    return min(a, vs.min()), max(b, vs.max())
+
+
+OX = 50
+OY = 50
+XOFFSET = 25
+YOFFSET = 25
+WINDOW_CNT = 0
+
+
+class CloseHandler(Handler):
+    def closed(self, info, is_ok):
+        global WINDOW_CNT
+        WINDOW_CNT -= 1
+        WINDOW_CNT = max(0, WINDOW_CNT)
+
+    def init(self, info):
+        global WINDOW_CNT
+        WINDOW_CNT += 1
+        info.ui.control.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+
+
+def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibration=False, show_baseline=False):
+    if WINDOW_CNT > 20:
+        information(None, 'You have too many Isotope Evolution windows open. Close some before proceeding')
+        return
+
+    from pychron.graph.stacked_regression_graph import StackedRegressionGraph
+
+    if not show_evo:
+        xmi = Inf
+        xma = -Inf
+    else:
+        xmi, xma = 0, -Inf
+
+    g = StackedRegressionGraph(resizable=True)
+    g.plotcontainer.spacing = 10
+    g.window_height = min(275 * len(isotopes), 800)
+    g.window_x = OX + XOFFSET * WINDOW_CNT
+    g.window_y = OY + YOFFSET * WINDOW_CNT
+
+    isotopes = sort_isotopes(isotopes, reverse=False, key=lambda x: x.name)
+
+    for i, iso in enumerate(isotopes):
+        ymi, yma = Inf, -Inf
+
+        p = g.new_plot(padding=[80, 10, 10, 40])
+        g.add_limit_tool(p, 'x')
+        g.add_limit_tool(p, 'y')
+        g.add_axis_tool(p, p.x_axis)
+        g.add_axis_tool(p, p.y_axis)
+
+        p.y_axis.title_spacing = 50
+        if show_equilibration:
+            sniff = iso.sniff
+            g.new_series(sniff.xs, sniff.ys,
+                         type='scatter',
+                         fit=None,
+                         color='red')
+            ymi, yma = min_max(ymi, yma, sniff.ys)
+            xmi, xma = min_max(xmi, xma, sniff.xs)
+
+        if show_evo:
+            g.new_series(iso.xs, iso.ys,
+                         fit=iso.fit,
+                         filter_outliers_dict=iso.filter_outliers_dict,
+                         color='black')
+            ymi, yma = min_max(ymi, yma, iso.ys)
+            xmi, xma = min_max(xmi, xma, iso.xs)
+
+        if show_baseline:
+            baseline = iso.baseline
+            g.new_series(baseline.xs, baseline.ys,
+                         type='scatter', fit=baseline.fit,
+                         filter_outliers_dict=baseline.filter_outliers_dict,
+                         color='blue')
+            ymi, yma = min_max(ymi, yma, baseline.ys)
+            xmi, xma = min_max(xmi, xma, baseline.xs)
+
+        g.set_x_limits(min_=xmi, max_=xma, pad='0.025,0.05')
+        g.set_y_limits(min_=ymi, max_=yma, pad='0.05', plotid=i)
+        g.set_x_title('Time (s)', plotid=i)
+        g.set_y_title('{} (fA)'.format(iso.name), plotid=i)
+
+    g.refresh()
+    g.window_title = '{} {}'.format(record_id, ','.join([i.name for i in reversed(isotopes)]))
+
+    return g
+
+
 class Analysis(ArArAge):
-    analysis_view_klass = ('pychron.processing.analyses.analysis_view', 'AnalysisView')
-    analysis_view = Instance('pychron.processing.analyses.analysis_view.AnalysisView')
+    analysis_view_klass = ('pychron.processing.analyses.view.analysis_view', 'AnalysisView')
+    _analysis_view = None  # Instance('pychron.processing.analyses.analysis_view.AnalysisView')
 
     # ids
-    record_id = Property(depends_on='labnumber,aliquot, step')
-    _record_id = Str
-    group_id = Int
-    graph_id = Int
+    # record_id = Property(depends_on='labnumber,aliquot, step')
+    _record_id = None
+    group_id = 0  # Int
+    graph_id = 0  # Int
 
     # collection
-    uuid = Str
-    labnumber = CStr
-    aliquot = Int
-    step = Str
-    aliquot_step_str = Str
-    sample = Str
-    material = Str
-    project = Str
-    comment = Str
-    mass_spectrometer = Str
-    analysis_type = Str
-    extract_value = Float
-    extract_units = Str
-    cleanup_duration = Float
-    extract_duration = Float
-    extract_device = Str
-    position = CStr
-    rundate = Date
-    experiment_txt = Str
-    extraction_script_blob = Str
-    measurement_script_blob = Str
+    uuid = None  # Str
+    labnumber = ''
+    aliquot = 0
+    step = ''
+    increment = None
+    aliquot_step_str = ''
+    sample = ''
+    material = ''
+    project = ''
+    comment = ''
+    mass_spectrometer = ''
+    analysis_type = ''
+    extract_value = 0
+    extract_units = ''
+    cleanup_duration = 0
+    extract_duration = 0
+    extract_device = ''
+    position = ''
+    rundate = None
+    experiment_txt = ''
+    extraction_script_blob = ''
+    measurement_script_blob = ''
     snapshots = List
-    extraction_script_name = Str
-    measurement_script_name = Str
-    xyz_position = Str
-    collection_time_zero_offset = Float
-    beam_diameter = Float
-    pattern = Str
-    ramp_duration = Float
-    ramp_rate = Float
-    peak_center_data = Tuple
-    collection_version = Str
+    extraction_script_name = ''
+    measurement_script_name = ''
+    xyz_position = ''
+    collection_time_zero_offset = 0
+    beam_diameter = 0
+    pattern = ''
+    ramp_duration = 0
+    ramp_rate = 0
+    peak_center_data = None
+    collection_version = ''
+    source_parameters = Dict
+    deflections = Dict
+    gains = Dict
+    repository_identifier = ''
 
     # processing
     is_plateau_step = False
-    temp_status = Int
-    value_filter_omit = Bool
-    table_filter_omit = Bool
-    tag = Str
-    data_reduction_tag = Str
+    # temp_status = Int(0)
+    temp_status = 'ok'
+    otemp_status = None
+    # value_filter_omit = False
+    # table_filter_omit = False
+    tag = ''
+    data_reduction_tag = ''
+    branch = NULL_STR
 
-    status_text = Property
-    age_string = Property
+    # status_text = Property
+    # age_string = Property
 
-    omit_ideo = False
-    omit_spec = False
-    omit_iso = False
-    omit_series = False
+    # omit_ideo = False
+    # omit_spec = False
+    # omit_iso = False
+    # omit_series = False
 
     blank_changes = List
     fit_changes = List
@@ -110,8 +215,92 @@ class Analysis(ArArAge):
     tag_event = Event
     invalid_event = Event
 
-    def trigger_recall(self):
-        self.recall_event = self
+    # def __init__(self, *args, **kw):
+    #     super(Analysis, self).__init__(*args, **kw)
+    #     self.snapshots = []
+    #     self.source_parameters = {}
+    #     self.deflections = {}
+    #     self.gains = {}
+    #     self.blank_changes = []
+    #     self.fit_changes = []
+    def get_baseline_corrected_signal_dict(self):
+        get = lambda iso: iso.get_baseline_corrected_value()
+        return self._get_isotope_dict(get)
+
+    def get_baseline_dict(self):
+        get = lambda iso: iso.baseline.uvalue
+        return self._get_isotope_dict(get)
+
+    def get_ic_factor(self, det):
+        iso = next((i for i in self.isotopes.itervalues() if i.detector == det), None)
+        if iso:
+            r = iso.ic_factor
+        else:
+            r = ufloat(1, 0)
+
+        # if det in self.ic_factors:
+        # r = self.ic_factors[det]
+        # else:
+        # r = ufloat(1, 1e-20)
+
+        return r
+
+    def set_temp_status(self, tag):
+        tag = tag.lower()
+        if tag != 'ok':
+            self.otemp_status = tag
+        else:
+            self.otemp_status = 'omit'
+
+        self.temp_status = tag
+
+    def set_tag(self, tag):
+        self.tag = tag
+        # if isinstance(tag, str):
+        #     self.tag = tag
+        #     omit = tag == 'invalid'
+        # else:
+        #     if not hasattr(tag, '__getitem__'):
+        #         tag = tag.to_dict()
+        #
+        #     name = tag['name']
+        #     self.tag = name
+        #
+        #     if 'omit_dict' in tag:
+        #         omit_dict = tag['omit_dict']
+        #     else:
+        #         omit_dict = tag
+        #
+        #     omit = name == 'omit'
+        #     for a in OMIT_KEYS:
+        #         v = omit_dict[a]
+        #         # v = getattr(tag, a)
+        #         setattr(self, a, v)
+        #         if v:
+        #             omit = True
+        #
+        # self.temp_status = 1 if omit else 0
+
+    def show_isotope_evolutions(self, isotopes=None, **kw):
+        if isotopes and isinstance(isotopes[0], (str, unicode)):
+            isotopes = [self.isotopes[i] for i in isotopes]
+        else:
+            isotopes = self.isotopes.values()
+
+        keys = [k.name for k in isotopes]
+
+        self.load_raw_data(keys)
+        g = show_evolutions_factory(self.record_id, isotopes, **kw)
+        if g:
+            open_view(g, handler=CloseHandler())
+
+            return g
+
+    def trigger_recall(self, analyses=None):
+        if analyses is None:
+            analyses = [self, ]
+
+        self.recall_event = analyses
 
     def trigger_tag(self, analyses=None):
         if analyses is None:
@@ -124,32 +313,37 @@ class Analysis(ArArAge):
             analyses = [self, ]
         self.invalid_event = analyses
 
-    def is_temp_omitted(self, include_value_filtered=True):
-        return self.temp_status or self.table_filter_omit or self.value_filter_omit if include_value_filtered else False
+    # def is_temp_omitted(self, include_value_filtered=True):
+    #     return self.temp_status or self.table_filter_omit or self.value_filter_omit if include_value_filtered else False
+    #
+    # def is_tag_omitted(self, omit_key):
+    #     if omit_key:
+    #         return getattr(self, omit_key)
+    #
+    # def is_omitted(self, omit_key=None, include_value_filtered=True):
+    #     omit = False
+    #     if omit_key:
+    #         omit = getattr(self, omit_key)
+    #
+    #     return self.is_temp_omitted(include_value_filtered) or omit
+    def is_omitted(self):
+        return self.is_omitted_by_tag() or self.temp_selected
 
-    def is_tag_omitted(self, omit_key):
-        if omit_key:
-            return getattr(self, omit_key)
+    def is_omitted_by_tag(self, tags=None):
+        if tags is None:
+            tags = ('omit', 'invalid', 'outlier')
+        return self.tag in tags
 
-    def is_omitted(self, omit_key=None, include_value_filtered=True):
-        omit = False
-        if omit_key:
-            omit = getattr(self, omit_key)
-            # print ai.aliquot, r, omit, ai.filter_omit
-        # return r or ai.filter_omit #or ai.tag == 'omit'
-        #omit=False
-        return self.is_temp_omitted(include_value_filtered) or omit
-
-    def flush(self, *args, **kw):
-        """
-        """
-        return
-
-    def commit(self, *args, **kw):
-        """
-        """
-        return
-
+    # def flush(self, *args, **kw):
+    #     """
+    #     """
+    #     return
+    #
+    # def commit(self, *args, **kw):
+    #     """
+    #     """
+    #     return
+    #
     def sync(self, obj, **kw):
         self._sync(obj, **kw)
         self.aliquot_step_str = make_aliquot_step(self.aliquot, self.step)
@@ -162,14 +356,24 @@ class Analysis(ArArAge):
     # def _analysis_summary_default(self):
     # return self.analysis_summary_klass(model=self)
 
-    def _analysis_view_default(self):
+    # def _analysis_view_default(self):
+    def refresh_view(self):
+        if self._analysis_view:
+            self._sync_view(self._analysis_view)
 
-        mod, klass = self.analysis_view_klass
-        mod = __import__(mod, fromlist=[klass, ])
-        klass = getattr(mod, klass)
-        # v = self.analysis_view_klass()
-        v = klass()
+    @property
+    def analysis_view(self):
+        print 'call analyis va'
+        v = self._analysis_view
+        if v is None:
+            mod, klass = self.analysis_view_klass
+            mod = __import__(mod, fromlist=[klass, ])
+            klass = getattr(mod, klass)
+            # v = self.analysis_view_klass()
+            v = klass()
+            self._analysis_view = v
         self._sync_view(v)
+
         return v
 
     def sync_view(self, **kw):
@@ -186,21 +390,14 @@ class Analysis(ArArAge):
             traceback.print_exc()
             print 'sync view {}'.format(e)
 
-    def _set_record_id(self, v):
-        self._record_id = v
-
-    def _get_record_id(self):
-        record_id = self._record_id
-        if not record_id:
-            record_id = make_runid(self.labnumber, self.aliquot, self.step)
-        return record_id
-
-    def _get_age_string(self):
-        a = self.age
-        e = self.age_err
-        pe = format_percent_error(a, e)
-
-        return u'{} +/-{} ({}%)'.format(floatfmt(a), floatfmt(e), pe)
+    # def _set_record_id(self, v):
+    #     self._record_id = v
+    #
+    # def _get_record_id(self):
+    #     record_id = self._record_id
+    #     if not record_id:
+    #         record_id = make_runid(self.labnumber, self.aliquot, self.step)
+    #     return record_id
 
     def value_string(self, t):
         if t == 'uF':
@@ -215,136 +412,47 @@ class Analysis(ArArAge):
         pe = format_percent_error(a, e)
         return u'{} {}{} ({}%)'.format(floatfmt(a), PLUSMINUS, floatfmt(e), pe)
 
-    def _get_status_text(self):
-        r = 'OK'
+    @property
+    def age_string(self):
+        a = self.age
+        e = self.age_err
+        pe = format_percent_error(a, e)
 
-        if self.is_omitted():
-            # if self.temp_status != 0 or self.filter_omit:
-            r = 'Omitted'
+        return u'{} {}{} ({}%)'.format(floatfmt(a), PLUSMINUS, floatfmt(e), pe)
 
-        return r
+    @property
+    def status_text(self):
+        return self.temp_status.lower()
 
-    #mirror labnumber
     @property
     def identifier(self):
         return self.labnumber
 
+    @identifier.setter
+    def identifier(self, v):
+        self.labnumber = v
 
-if __name__ == '__main__':
-    pass
-    # ============= EOF =============================================
-    # def _sync_irradiation(self, meas_analysis):
-    #    ln = meas_analysis.labnumber
-    #    self.irradiation_info = self._get_irradiation_info(ln)
-    #
-    #    dbpos = ln.irradiation_position
-    #    if dbpos:
-    #        pos = dbpos.position
-    #        irrad = dbpos.level.irradiation.name
-    #        level = dbpos.level.name
-    #        self.irradiation_str = '{} {}{}'.format(irrad, level, pos)
-    #
-    #    self.j = self._get_j(ln)
-    #    self.production_ratios = self._get_production_ratios(ln)
+    @property
+    def record_id(self):
+        v = self._record_id
+        if v is None:
+            v = make_runid(self.labnumber, self.aliquot, self.step)
+        return v
 
-    #    def _load_timestamp(self, ln):
-    #        ts = self.timestamp
-    #        if not ts:
-    #            ts = ArArAge._load_timestamp(self, ln)
-    #        return ts
-    #
-    #
-    #    def _get_j(self, ln):
-    #        s, e = 1, 0
-    #        if ln.selected_flux_history:
-    #            f = ln.selected_flux_history.flux
-    #            s = f.j
-    #            e = f.j_err
-    #        return ufloat(s, e)
-    #
-    #    def _get_production_ratios(self, ln):
-    #        lev = self._get_irradiation_level(ln)
-    #        cak = 1
-    #        clk = 1
-    #        if lev:
-    #            ir = lev.irradiation
-    #            pr = ir.production
-    #            cak, clk = pr.Ca_K, pr.Cl_K
-    #
-    #        return dict(Ca_K=cak, Cl_K=clk)
-    #
-    #    def _get_irradiation_level(self, ln):
-    #        if ln:
-    #            pos = ln.irradiation_position
-    #            if pos:
-    #                self.irradiation_pos = str(pos.position)
-    #                return pos.level
-    #
-    #
-    #    def _get_irradiation_info(self, ln):
-    #        '''
-    #            return k4039, k3839,k3739, ca3937, ca3837, ca3637, cl3638, chronsegments, decay_time
-    #        '''
-    #        prs = (1, 0), (1, 0), (1, 0), (1, 0), (1, 0), (1, 0), (1, 0), [], 1
-    #        irradiation_level = self._get_irradiation_level(ln)
-    #        if irradiation_level:
-    #            irradiation = irradiation_level.irradiation
-    #            if irradiation:
-    #                self.irradiation = irradiation.name
-    #                self.irradiation_level = irradiation_level.name
-    #
-    #                pr = irradiation.production
-    #                if pr:
-    #                    prs = []
-    #                    for pi in ['K4039', 'K3839', 'K3739', 'Ca3937', 'Ca3837', 'Ca3637', 'Cl3638']:
-    #                        v, e = getattr(pr, pi), getattr(pr, '{}_err'.format(pi))
-    #                        prs.append((v if v is not None else 1, e if e is not None else 0))
-    #
-    #                        #                    prs = [(getattr(pr, pi), getattr(pr, '{}_err'.format(pi)))
-    #                        #                           for pi in ['K4039', 'K3839', 'K3739', 'Ca3937', 'Ca3837', 'Ca3637', 'Cl3638']]
-    #
-    #                chron = irradiation.chronology
-    #                #                def convert_datetime(x):
-    #                #                    try:
-    #                #                        return datetime.datetime.strptime(x, '%Y-%m-%d %H:%M:%S')
-    #                #                    except ValueError:
-    #                #                        pass
-    #                #                convert_datetime = lambda x:datetime.datetime.strptime(x, '%Y-%m-%d %H:%M:%S')
-    #
-    #                convert_days = lambda x: x.total_seconds() / (60. * 60 * 24)
-    #                if chron:
-    #                    doses = chron.get_doses()
-    #                    #                    chronblob = chron.chronology
-    #                    #
-    #                    #                    doses = chronblob.split('$')
-    #                    #                    doses = [di.strip().split('%') for di in doses]
-    #                    #
-    #                    #                    doses = [map(convert_datetime, d) for d in doses if d]
-    #
-    #                    analts = self.timestamp
-    #                    #                     print analts
-    #                    if isinstance(analts, float):
-    #                        analts = datetime.fromtimestamp(analts)
-    #
-    #                    segments = []
-    #                    for st, en in doses:
-    #                        if st is not None and en is not None:
-    #                            dur = en - st
-    #                            dt = analts - st
-    #                            #                             dt = 45
-    #                            segments.append((1, convert_days(dur), convert_days(dt)))
-    #                            #                             segments.append((1, convert_days(dur), dt))
-    #
-    #                    decay_time = 0
-    #                    d_o = doses[0][0]
-    #                    if d_o is not None:
-    #                        decay_time = convert_days(analts - d_o)
-    #
-    #                    #                    segments = [(1, convert_days(ti)) for ti in durs]
-    #                    prs.append(segments)
-    #                    prs.append(decay_time)
-    #                    #                     prs.append(45)
-    #
-    #                    #         print 'aasfaf', ln, prs
-    #
-    #        return prs
+    @record_id.setter
+    def record_id(self, v):
+        self._record_id = v
+
+    @property
+    def temp_selected(self):
+        return self.temp_status in ('omit', 'outlier', 'invalid')
+
+    def _get_isotope_dict(self, get):
+        d = dict()
+        for ki, v in self.isotopes.iteritems():
+            d[ki] = (v.detector, get(v))
+
+        return d
+
+    def __str__(self):
+        return '{}<{}>'.format(self.record_id, self.__class__.__name__)

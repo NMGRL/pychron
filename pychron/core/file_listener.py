@@ -16,9 +16,11 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-from threading import Thread
-import time
 import os
+import time
+from threading import Thread
+
+
 # ============= local library imports  ==========================
 
 class FileListener(object):

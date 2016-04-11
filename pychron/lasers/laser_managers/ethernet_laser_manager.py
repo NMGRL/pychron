@@ -1,4 +1,5 @@
 from traits.api import Float, Property, Bool, Button, String, Enum
+
 from pychron.core.ui.thread import Thread
 from pychron.globals import globalv
 from pychron.hardware.pychron_device import EthernetDeviceMixin

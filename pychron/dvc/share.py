@@ -22,8 +22,6 @@ import subprocess
 from traits.api import HasTraits, Str, Bool, List
 from traitsui.api import View, UItem, VGroup, TableEditor
 
-
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.extras.checkbox_column import CheckboxColumn
@@ -56,7 +54,7 @@ class PushExperimentsModel(HasTraits):
 
         ss = []
         if root is None:
-            root = paths.experiment_dataset_dir
+            root = paths.repository_dataset_dir
 
         for exp in ilist_gits(root):
             cfg = os.path.join(root, exp, '.git', 'config')

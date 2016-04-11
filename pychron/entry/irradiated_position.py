@@ -24,7 +24,7 @@ from pychron.pychron_constants import PLUSMINUS
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 class BaseIrradiatedPosition(HasTraits):
-    labnumber = Str
+    identifier = Str
     material = Str
     sample = Str
     hole = Int
@@ -80,7 +80,7 @@ class BaseIrradiatedPositionAdapter(TabularAdapter):
 class IrradiatedPositionAdapter(TabularAdapter):
     columns = [
         ('Hole', 'hole'),
-        ('Identifier', 'labnumber'),
+        ('Identifier', 'identifier'),
         ('Sample', 'sample'),
         ('Project', 'project'),
         ('Material', 'material'),
@@ -90,7 +90,7 @@ class IrradiatedPositionAdapter(TabularAdapter):
         (u'{}J'.format(PLUSMINUS), 'j_err'),
         ('Note', 'note')]
 
-    labnumber_width = Int(80)
+    identifier_width = Int(80)
     hole_width = Int(50)
     sample_width = Int(100)
     project_width = Int(75)

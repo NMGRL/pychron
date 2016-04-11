@@ -19,8 +19,10 @@
 # ============= local library imports  ==========================
 from envisage.ui.tasks.task_factory import TaskFactory
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
-from pychron.database.tasks.connection_preferences import ConnectionPreferencesPane, MassSpecConnectionPane
+from pychron.database.tasks.connection_preferences import ConnectionPreferencesPane
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
+from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
+from pychron.mass_spec.tasks.preferences import MassSpecConnectionPane
 
 
 class DatabasePlugin(BaseTaskPlugin):
@@ -85,7 +87,7 @@ class DatabasePlugin(BaseTaskPlugin):
 
     def test_massspec(self):
         ret = 'Skipped'
-        db = self.application.get_service('pychron.database.adapters.massspec_database_adapter.MassSpecDatabaseAdapter')
+        db = self.application.get_service('pychron.mass_spec.database.massspec_database_adapter.MassSpecDatabaseAdapter')
         if db:
             db.bind_preferences()
             connected = db.connect(warn=False)
@@ -120,7 +122,7 @@ class DatabasePlugin(BaseTaskPlugin):
             factory=IsotopeDatabaseManager)]
 
         if self._get_pref('enabled'):
-            from pychron.database.adapters.massspec_database_adapter import MassSpecDatabaseAdapter
+            from pychron.mass_spec.database.massspec_database_adapter import MassSpecDatabaseAdapter
 
             sos.append(self.service_offer_factory(
                 protocol=MassSpecDatabaseAdapter,
@@ -137,8 +139,4 @@ class DatabasePlugin(BaseTaskPlugin):
 
         return sos
 
-        # ============= EOF =============================================
-        # def _task_extensions_default(self):
-        #    return [TaskExtension(actions=[SchemaAddition(id='update_database',
-        #                                                  factory=UpdateDatabaseAction,
-        #                                                  path='MenuBar/Tools')])]
+# ============= EOF =============================================

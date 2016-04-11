@@ -15,8 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Button, Interface
-from traitsui.api import View, Item
+from traits.api import Interface
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 

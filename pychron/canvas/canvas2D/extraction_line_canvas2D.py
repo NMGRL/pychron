@@ -44,6 +44,8 @@ class ExtractionLineAction(Action):
 class ExtractionLineCanvas2D(SceneCanvas):
     """
     """
+    scene_klass = ExtractionLineScene
+
     use_backbuffer = True
     border_visible = False
     active_item = Any
@@ -98,14 +100,14 @@ class ExtractionLineCanvas2D(SceneCanvas):
         self.draw_valid = False
 
         if refresh:
-            self.request_redraw()
+            self.invalidate_and_redraw()
 
     def update_switch_owned_state(self, name, owned):
         switch = self._get_switch_by_name(name)
         if switch is not None:
             switch.owned = owned
         self.draw_valid = False
-        self.request_redraw()
+        self.invalidate_and_redraw()
 
     def update_switch_lock_state(self, name, lockstate):
         switch = self._get_switch_by_name(name)
@@ -113,7 +115,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
             switch.soft_lock = lockstate
             # self.request_redraw()
         self.draw_valid = False
-        self.request_redraw()
+        self.invalidate_and_redraw()
 
     def load_canvas_file(self, canvas_path=None, canvas_config_path=None, valves_path=None):
         if canvas_path is None:
@@ -330,9 +332,5 @@ class ExtractionLineCanvas2D(SceneCanvas):
             self._active_item = self.active_item
             menu = menu_manager.create_menu(event.window.control, None)
             menu.show()
-
-    def _scene_default(self):
-        s = ExtractionLineScene()
-        return s
 
 # ============= EOF ====================================

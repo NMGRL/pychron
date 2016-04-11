@@ -17,9 +17,11 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 import os
-from numpy import vstack, hstack
+
+from numpy import vstack, hstack, array
 from sklearn.externals import joblib
 from sklearn.neighbors import KNeighborsClassifier
+
 # ============= local library imports  ==========================
 from pychron.paths import paths
 
@@ -37,9 +39,13 @@ class BaseClassifier(object):
         self.load()
         if not self._clf:
             self._clf = self.classifier_factory()
-
-        x = self._clf._fit_X
-        y = self._clf._y
+            x = array(samples[:1])
+            y = array(klasses[:1])
+            samples = samples[1:]
+            klasses = klasses[1:]
+        else:
+            x = self._clf._fit_X
+            y = self._clf._y
 
         for sample, klass in zip(samples, klasses):
             x = vstack((x, sample))

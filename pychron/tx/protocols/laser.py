@@ -19,9 +19,9 @@
 # ============= local library imports  ==========================
 from pychron.core.helpers.strtools import to_bool
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
-from pychron.tx.errors import LogicBoardCommErrorCode, InvalidMotorErrorCode, InvalidSampleHolderErrorCode
 from pychron.tx.errors import EnableErrorCode
 from pychron.tx.errors import InvalidArgumentsErrorCode
+from pychron.tx.errors import LogicBoardCommErrorCode, InvalidMotorErrorCode, InvalidSampleHolderErrorCode
 from pychron.tx.protocols.service import ServiceProtocol
 
 

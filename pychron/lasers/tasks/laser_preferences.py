@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from traits.api import Bool, Str, Enum, File, Int, Directory, \
-    Color, Range
+    Color, Range, Float
 from traitsui.api import View, Item, VGroup, HGroup, Group
 # from apptools.preferences.api import PreferencesHelper
 from envisage.ui.tasks.preferences_pane import PreferencesPane
@@ -74,8 +74,8 @@ class FusionsLaserPreferences(LaserPreferences):
 
     use_autocenter = Bool(False)
     render_with_markup = Bool(False)
-    crosshairs_offsetx = Int(0)
-    crosshairs_offsety = Int(0)
+    crosshairs_offsetx = Float(0)
+    crosshairs_offsety = Float(0)
     crosshairs_offset_color = Color('blue')
 
     show_patterning = Bool(True)

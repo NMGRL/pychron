@@ -15,32 +15,24 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-import sys
-from threading import Lock
-from datetime import datetime, timedelta
+import traceback
 
 from traits.api import Password, Bool, Str, on_trait_change, Any, Property, cached_property
-
-
-
-
-
-
-
-
 # =============standard library imports ========================
 from sqlalchemy import create_engine, distinct, MetaData
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError, InvalidRequestError, StatementError, \
     DBAPIError, OperationalError
 from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
+from threading import Lock
+from datetime import datetime, timedelta
+import sys
 import os
 # =============local library imports  ==========================
 from pychron.database.core.query import compile_query
 from pychron.loggable import Loggable
 from pychron.database.core.base_orm import AlembicVersionTable
 from pychron import version
-
 
 ATTR_KEYS = ['kind', 'username', 'host', 'name', 'password']
 
@@ -58,7 +50,7 @@ class SessionCTX(object):
     _commit = True
     _parent = None
 
-    def __init__(self, sess=None, commit=True, parent=None):
+    def __init__(self, sess=None, commit=True, rollback=True, parent=None):
         """
         :param sess: existing Session object
         :param commit: commit Session at exit
@@ -67,6 +59,7 @@ class SessionCTX(object):
         """
         self._sess = sess
         self._commit = commit
+        self._rollback = rollback
         self._parent = parent
         if sess:
             self._close_at_exit = False
@@ -81,24 +74,29 @@ class SessionCTX(object):
 
         return self._sess
 
-    def __exit__(self, *args, **kw):
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type:
+            self._parent.warning('=========== Database exception =============')
+            self._parent.warning(exc_val)
+            self._parent.warning(traceback.format_tb(exc_tb))
+
         if self._parent:
             self._parent.sess_stack -= 1
             if not self._parent.sess_stack:
                 self._parent.sess = None
 
-        # print 'exit',self._commit, self._close_at_exit#, self._parent._sess_stack
-        # self._sess.flush()
         if self._close_at_exit:
             try:
-                # self._parent.debug('$%$%$%$%$%$%$%$ commit {}'.format(self._commit))
                 if self._commit:
                     self._sess.commit()
+                    self._parent.post_commit()
                 else:
-                    self._sess.rollback()
+                    if self._rollback:
+                        self._sess.rollback()
 
             except Exception, e:
-                # print 'exception commiting session: {}'.format(e)
+                traceback.print_exc()
+
                 if self._parent:
                     self._parent.debug('$%$%$%$%$%$%$%$ commiting changes error:\n{}'.format(str(e)))
                 self._sess.rollback()
@@ -156,6 +154,9 @@ class DatabaseAdapter(Loggable):
     verbose = True
     connection_error = Str
     _session_lock = None
+
+    modified = False
+    _trying_to_add = False
     # def __init__(self, *args, **kw):
     #     super(DatabaseAdapter, self).__init__(*args, **kw)
 
@@ -169,7 +170,7 @@ class DatabaseAdapter(Loggable):
         with self.session_ctx() as sess:
             metadata.create_all(sess.bind)
 
-    def session_ctx(self, sess=None, commit=True):
+    def session_ctx(self, sess=None, commit=True, rollback=True):
         """
         Make a new session context.
 
@@ -178,7 +179,7 @@ class DatabaseAdapter(Loggable):
         with self._session_lock:
             if sess is None:
                 sess = self.sess
-            return SessionCTX(sess, parent=self, commit=commit)
+            return SessionCTX(sess, parent=self, commit=commit, rollback=rollback)
 
     @property
     def enabled(self):
@@ -220,7 +221,7 @@ class DatabaseAdapter(Loggable):
         if self.connection_parameters_changed:
             force = True
 
-        #        print not self.isConnected() or force, self.connection_parameters_changed
+        # print not self.isConnected() or force, self.connection_parameters_changed
 
         if not self.connected or force:
             self.connected = True if self.kind == 'sqlite' else False
@@ -286,6 +287,10 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
             except:
                 self.sess.rollback()
 
+    def post_commit(self):
+        if self._trying_to_add:
+            self.modified = True
+
     def get_session(self):
         """
         return the current session or make a new one
@@ -294,6 +299,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
         """
         sess = self.sess
         if sess is None:
+            self.debug('$$$$$$$$$$$$$$$$ session is None')
             sess = self.session_factory()
 
         return sess
@@ -317,6 +323,15 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
         else:
             url = '{}:{}'.format(self.host, self.name)
         return url
+
+    @property
+    def public_url(self):
+        kind = self.kind
+        user = self.username
+        host = self.host
+        name = self.name
+
+        return '{}://{}@{}/{}'.format(kind, user, host, name)
 
     @cached_property
     def _get_url(self):
@@ -365,13 +380,8 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
         return driver
 
     def _test_db_connection(self, version_warn):
-        with self.session_ctx():
+        with self.session_ctx(commit=False, rollback=False):
             try:
-                # connected = False
-                # if self.test_func is not None:
-                # self.sess = None
-                #                 self.get_session()
-                #                sess = self.session_factory()
                 self.info('testing database connection {}'.format(self.test_func))
                 ver = getattr(self, self.test_func)(reraise=True)
                 if version_warn:
@@ -434,9 +444,11 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
         if sess:
             sess.add(obj)
             try:
-
                 if self.autoflush:
                     sess.flush()
+                    self.modified = True
+
+                self._trying_to_add = True
                 return obj
             except SQLAlchemyError, e:
                 import traceback
@@ -462,7 +474,6 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
                     #         sess = self.get_session()
                     #         if sess is not None:
                     #             sess.add(obj)
-
 
     def _add_unique(self, item, attr, name):
         nitem = getattr(self, 'get_{}'.format(attr))(name)
@@ -503,8 +514,8 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
             else:
                 item = value
 
-            self.debug('deleting value={},name={},item={}'.format(value, name, item))
             if item:
+                self.debug('deleting value={},name={},item={}'.format(value, name, item))
                 sess.delete(item)
 
     def _retrieve_items(self, table,
@@ -555,12 +566,12 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
 
             if order is not None:
                 if not isinstance(order, tuple):
-                    order = (order, )
+                    order = (order,)
                 q = q.order_by(*order)
 
             if group_by is not None:
                 if not isinstance(order, tuple):
-                    group_by = (group_by, )
+                    group_by = (group_by,)
                 q = q.group_by(*group_by)
 
             if limit is not None:
@@ -723,14 +734,13 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
         with self.session_ctx() as sess:
             return __retrieve(sess)
 
-
     # @deprecated
     def _get_items(self, table, gtables,
                    join_table=None, filter_str=None,
                    limit=None,
                    order=None,
                    key=None
-    ):
+                   ):
 
         if isinstance(join_table, str):
             join_table = gtables[join_table]
@@ -755,19 +765,19 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
             return [getattr(ri, key) for ri in res]
         return res
 
-    # def selector_factory(self, **kw):
-    #     sel = self._selector_factory(**kw)
-    #     self.selector = weakref.ref(sel)()
-    #     return self.selector
-    #
-    # def _selector_default(self):
-    #     return self._selector_factory()
-    #
-    # def _selector_factory(self, **kw):
-    #     if self.selector_klass:
-    #         s = self.selector_klass(db=self, **kw)
-    #         #            s.load_recent()
-    #         return s
+        # def selector_factory(self, **kw):
+        #     sel = self._selector_factory(**kw)
+        #     self.selector = weakref.ref(sel)()
+        #     return self.selector
+        #
+        # def _selector_default(self):
+        #     return self._selector_factory()
+        #
+        # def _selector_factory(self, **kw):
+        #     if self.selector_klass:
+        #         s = self.selector_klass(db=self, **kw)
+        #         #            s.load_recent()
+        #         return s
 
 
 class PathDatabaseAdapter(DatabaseAdapter):
@@ -795,4 +805,4 @@ class SQLiteDatabaseAdapter(DatabaseAdapter):
     def _build_database(self, sess, meta):
         raise NotImplementedError
 
-# ============= EOF =============================================
+        # ============= EOF =============================================

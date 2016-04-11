@@ -14,10 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-import time
 import math
+import time
 
 from datetime import datetime
+from numpy import ediff1d, asarray
+from numpy import where
 
 ISO_FORMAT_STR = "%Y-%m-%d %H:%M:%S"
 
@@ -78,6 +80,7 @@ def convert_timestamp(timestamp, fmt=None):
     t = get_datetime(timestamp)
     return datetime.strftime(t, fmt)
 
+
 #    return time.mktime(t.timetuple()) + 1e-6 * t.microsecond
 # def convert_float(timestamp):
 
@@ -92,3 +95,12 @@ def diff_timestamp(end, start=0):
     s = (t.seconds % 3600) % 60
 
     return t, h, m, s
+
+
+def bin_timestamps(ts, tol_hrs=1):
+    ts = asarray(ts)
+    tol = 60 * 60 * tol_hrs
+    dts = ediff1d(ts)
+    # print dts
+    idxs = where(dts > tol)[0]
+    return idxs

@@ -21,7 +21,6 @@ from traitsui.menu import Action, Menu as MenuManager
 from pychron.pychron_constants import PLUSMINUS
 
 
-
 # from pyface.action.group import Group
 # from pyface.action.api import Group, MenuManager
 

@@ -15,10 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.timer.do_later import do_after
 from traits.api import HasTraits, Str, List, Any, Event, Button, Int, Bool, Float
 from traitsui.api import View, Item, HGroup, spring
 from traitsui.handler import Handler
-from pyface.timer.do_later import do_after
+
 # ============= standard library imports ========================
 import ConfigParser
 import os
@@ -173,10 +174,11 @@ class ReadoutView(Loggable):
                     self.readouts.append(rr)
 
                 for rd in yd:
-                    rr = DeflectionReadout(spectrometer=self.spectrometer,
-                                           name=rd['name'],
-                                           compare=rd.get('compare', True))
-                    self.deflections.append(rr)
+                    if rd.get('enabled', False):
+                        rr = DeflectionReadout(spectrometer=self.spectrometer,
+                                               name=rd['name'],
+                                               compare=rd.get('compare', True))
+                        self.deflections.append(rr)
 
             except yaml.YAMLError:
                 return
@@ -212,10 +214,11 @@ class ReadoutView(Loggable):
             for d, r in zip(ds, self.readouts):
                 r.set_value(d)
 
-            keys = [r.name for r in self.deflections]
-            ds = self.spectrometer.get_deflection_word(keys)
-            for d, r in zip(ds, self.deflections):
-                r.set_value(d)
+            keys = [r.name for r in self.deflections if r.use_deflection]
+            if keys:
+                ds = self.spectrometer.get_deflection_word(keys)
+                for d, r in zip(ds, self.deflections):
+                    r.set_value(d)
 
         else:
             for rd in self.readouts:
@@ -290,8 +293,6 @@ def new_readout_view(rv):
     c = VGroup(UItem('deflections', editor=TableEditor(columns=dcols,
                                                        sortable=False,
                                                        editable=False)), label='Deflections')
-    from pychron.spectrometer.readout_view import ReadoutHandler
-
     v = View(VGroup(a, Tabbed(b, c)),
              handler=ReadoutHandler(),
              title='Spectrometer Readout',

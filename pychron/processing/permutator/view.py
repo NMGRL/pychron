@@ -24,7 +24,7 @@ from uncertainties import nominal_value
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.core.helpers.formatting import floatfmt
 
-from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
+from pychron.pipeline.plot.editors.graph_editor import GraphEditor
 
 
 class ResultsAdapter(TabularAdapter):
@@ -50,6 +50,7 @@ class ResultsAdapter(TabularAdapter):
 
     def _get_std_text(self):
         return floatfmt(self.item.std)
+
 
 class ResultRecord(object):
     ma = 0
@@ -84,6 +85,3 @@ class PermutatorResultsView(HasTraits):
         return v
 
 # ============= EOF =============================================
-
-
-

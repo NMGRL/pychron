@@ -16,10 +16,11 @@
 # =============enthought library imports=======================
 
 # =============standard library imports ========================
-import time
 import glob
 import os
 import sys
+import time
+
 import serial
 # =============local library imports  ==========================
 from communicator import Communicator, process_response, prep_str, remove_eol_func

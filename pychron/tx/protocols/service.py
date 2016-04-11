@@ -165,4 +165,3 @@ class ServiceProtocol(Protocol):
 # d = defer.Deferred()
 #     reactor.callLater(secs, d.callback, None)
 #     return d
-

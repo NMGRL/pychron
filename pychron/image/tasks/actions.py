@@ -16,8 +16,6 @@
 
 # ============= enthought library imports =======================
 from pyface.tasks.action.task_action import TaskAction
-from traits.api import HasTraits, Button
-from traitsui.api import View, Item
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.resources import icon

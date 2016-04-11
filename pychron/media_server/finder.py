@@ -17,8 +17,9 @@
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Instance, Any
 from traitsui.api import View, Item
-from traitsui.tree_node import TreeNode
 from traitsui.editors.tree_editor import TreeEditor
+from traitsui.tree_node import TreeNode
+
 # from xml.etree.ElementTree import XMLParser
 # ============= standard library imports ========================
 # ============= local library imports  ==========================

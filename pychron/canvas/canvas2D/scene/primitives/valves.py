@@ -40,7 +40,7 @@ class Switch(Connectable, Circle):
         self.primitives.append(lb)
         return lb
 
-    def _render_(self, gc):
+    def _render(self, gc):
         x, y = self.get_xy()
         # print 'asaaaa', self.radius
         r = self.radius
@@ -97,9 +97,9 @@ class ManualSwitch(BaseValve, RoundedRectangle):
     corner_radius = 4
     use_border_gaps = False
 
-    def _render_(self, gc):
+    def _render(self, gc):
         # self._rotate(gc, 45)
-        super(ManualSwitch, self)._render_(gc)
+        super(ManualSwitch, self)._render(gc)
 
     def _rotate(self, gc, angle):
         x, y = self.get_xy()
@@ -131,10 +131,10 @@ class Valve(BaseValve, RoundedRectangle):
     corner_radius = 4
     use_border_gaps = False
 
-    def _render_(self, gc):
+    def _render(self, gc):
         x, y = self.get_xy(clear_layout_needed=False)
         w, h = self.get_wh()
-        super(Valve, self)._render_(gc)
+        super(Valve, self)._render(gc)
 
         self._draw_soft_lock(gc)
 
@@ -210,7 +210,7 @@ class RoughValve(BaseValve, Bordered):
     height = 2
     border_width = 3
 
-    def _render_(self, gc):
+    def _render(self, gc):
         cx, cy = self.get_xy(clear_layout_needed=False)
         #         cx, cy = 200, 50
         width, height = self.get_wh()

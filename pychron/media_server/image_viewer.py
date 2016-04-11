@@ -15,8 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Instance, Any
 from chaco.api import HPlotContainer, ArrayPlotData, Plot
+from traits.api import HasTraits, Instance, Any
+
 # ============= standard library imports ========================
 import os
 # ============= local library imports  ==========================

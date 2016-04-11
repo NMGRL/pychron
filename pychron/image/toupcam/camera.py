@@ -15,11 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from cStringIO import StringIO
 import os
+from cStringIO import StringIO
 
 from traits.api import provides
-
 # ============= standard library imports ========================
 import ctypes
 from numpy import zeros, uint8, uint32

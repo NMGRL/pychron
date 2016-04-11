@@ -15,10 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import BaseStr
+from traits.api import BaseStr, Int
 # ============= standard library imports ========================
 import re
 # ============= local library imports  ==========================
+from pychron.core.filtering import validate_filter_predicate
 
 IPREGEX = re.compile(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$')
 
@@ -29,5 +30,24 @@ class IPAddress(BaseStr):
             return value
         else:
             self.error(obj, name, value)
+
+
+class PositiveInteger(Int):
+    def validate(self, object, name, value):
+        if value >= 0:
+            return value
+
+        self.error(object, name, value)
+
+
+class FilterPredicate(BaseStr):
+    def validate(self, obj, name, value):
+        if not value or self._validate(value):
+            return value
+        else:
+            self.error(obj, name, value)
+
+    def _validate(self, value):
+        return validate_filter_predicate(value)
 
 # ============= EOF =============================================

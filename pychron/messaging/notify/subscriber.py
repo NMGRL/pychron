@@ -15,14 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from threading import Thread, Event
 import time
+from threading import Thread, Event
 
-from traits.api import Str, Int, List, Float
 import zmq
+from traits.api import Str, Int, List, Float
 
 from pychron.loggable import Loggable
-
 
 
 # ============= standard library imports ========================

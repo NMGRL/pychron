@@ -16,10 +16,12 @@
 
 # =============enthought library imports=======================
 # ============= standard library imports ========================
-from threading import Event
 import time
+from threading import Event
 
 from PySide.QtCore import QThread
+
+
 # ============= local library imports  ==========================
 
 

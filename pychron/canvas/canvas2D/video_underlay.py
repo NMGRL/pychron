@@ -15,8 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Any
 from chaco.api import AbstractOverlay
+from traits.api import Any
+
+
 # ============= standard library imports ========================
 
 # ============= local library imports  ==========================

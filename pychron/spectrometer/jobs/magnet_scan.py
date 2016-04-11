@@ -15,9 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.timer.do_later import do_after
 from traits.api import Any, Float, DelegatesTo, List, Bool, Property
 from traitsui.api import View, Item, EnumEditor, Group, HGroup, spring, ButtonEditor
-from pyface.timer.do_later import do_after
+
 # ============= standard library imports ========================
 from numpy import linspace, hstack, array, Inf
 from numpy.core.umath import exp

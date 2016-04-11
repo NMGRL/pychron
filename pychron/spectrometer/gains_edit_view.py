@@ -15,14 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Button, Str, Int, Bool, Float, List, Any, Date
-from traitsui.api import View, Item, UItem, HGroup, VGroup, HSplit, InstanceEditor, \
-    TabularEditor
 from pyface.message_dialog import information
+from traits.api import HasTraits, Button, Str, Int, Float, List, Any, Date
+from traitsui.api import View, UItem, HGroup, VGroup, HSplit, InstanceEditor, \
+    TabularEditor
 from traitsui.editors import ListEditor
-from traitsui.item import Readonly, UReadonly
-from traitsui.tabular_adapter import TabularAdapter
 from traitsui.handler import Controller
+from traitsui.item import UReadonly
+from traitsui.tabular_adapter import TabularAdapter
+
 # ============= standard library imports ========================
 from datetime import datetime
 # ============= local library imports  ==========================
@@ -50,15 +51,15 @@ class GainsModel(HasTraits):
             db = self.db
             with db.session_ctx():
                 hashkey = db.make_gains_hash(gains)
-                hist=db.get_gain_history(hashkey)
+                hist = db.get_gain_history(hashkey)
                 if not hist:
                     hist = db.add_gain_history(hashkey, save_type='manual')
-                    for d, v in gains:
+                    for d, v in gains.items():
                         db.add_gain(d, v, hist)
 
-                hist.applied_date=datetime.now()
+                hist.applied_date = datetime.now()
 
-            gainstr = '\n'.join(['{} {}'.format(*g) for g in gains])
+            gainstr = '\n'.join(['{} {}'.format(*g) for g in gains.items()])
             information(None, 'Gains set\n\n{}'.format(gainstr))
 
     def _apply_history_button_fired(self):
@@ -148,7 +149,6 @@ if __name__ == '__main__':
         name = Str
         gain = Float
 
-
     class Spectrometer(HasTraits):
         detectors = List
 
@@ -169,6 +169,3 @@ if __name__ == '__main__':
     gev = GainsEditView(model=gv)
     gev.configure_traits()
 # ============= EOF =============================================
-
-
-

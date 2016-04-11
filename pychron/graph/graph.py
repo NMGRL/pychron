@@ -15,40 +15,27 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-from chaco.scales.time_scale import CalendarScaleSystem
-from chaco.scales_tick_generator import ScalesTickGenerator
-from traits.api import Instance, Bool, \
-    List, Str, Property, Dict, Callable, Event
-from traitsui.api import View, Item
-from enable.component_editor import ComponentEditor
 from chaco.api import OverlayPlotContainer, \
     VPlotContainer, HPlotContainer, GridPlotContainer, \
-    BasePlotContainer, Plot, ArrayPlotData, PlotLabel
-from chaco.tools.api import ZoomTool, LineInspector, RangeSelection, \
-    RangeSelectionOverlay
+    BasePlotContainer, Plot, ArrayPlotData
+from chaco.array_data_source import ArrayDataSource
 from chaco.axis import PlotAxis
-from pyface.api import FileDialog, OK
+from enable.component_editor import ComponentEditor
 from pyface.timer.api import do_after as do_after_timer
+from traits.api import Instance, List, Str, Property, Dict, Event, Bool
+from traitsui.api import View, Item, UItem
+
 # =============standard library imports ========================
 import os
-from numpy import array, hstack, Inf
+from numpy import array, hstack, Inf, savetxt, column_stack
 import csv
 import math
 # =============local library imports  ==========================
 from pychron.core.helpers.color_generators import colorname_generator as color_generator
 from pychron.core.helpers.filetools import add_extension
-from pychron.graph.minor_tick_overlay import MinorTicksOverlay
-from guide_overlay import GuideOverlay
 from pychron.graph.offset_plot_label import OffsetPlotLabel
 from tools.contextual_menu_tool import ContextualMenuTool
-from tools.pan_tool import MyPanTool as PanTool
-from chaco.data_label import DataLabel
 from pychron.graph.context_menu_mixin import ContextMenuMixin
-from chaco.plot_graphics_context import PlotGraphicsContext
-from pychron.viewable import Viewable
-from pychron.graph.tools.point_inspector import PointInspector, \
-    PointInspectorOverlay
-from chaco.array_data_source import ArrayDataSource
 
 VALID_FONTS = [
     # 'Helvetica',
@@ -75,7 +62,133 @@ def fmt(data):
     return ['%0.8f' % d for d in data]
 
 
-class Graph(Viewable, ContextMenuMixin):
+# class Graph(Viewable, ContextMenuMixin):
+# class GraphHandler(Handler):
+# def init(self, info):
+# info.object.ui = info.ui
+#
+#    def closed(self, info, isok):
+#        info.object.closed()
+
+
+# class Graph(Viewable, ContextMenuMixin):
+def get_file_path(action='save as', **kw):
+    from pyface.api import FileDialog, OK
+
+    dlg = FileDialog(action=action, **kw)
+    if dlg.open() == OK:
+        return dlg.path
+
+
+def add_aux_axis(po, p, title='', color='black'):
+    """
+    """
+    #        from chaco.axis import PlotAxis
+    from chaco.axis import PlotAxis
+
+    axis = PlotAxis(p, orientation='right',
+                    title=title,
+                    axis_line_visible=False,
+                    tick_color=color,
+                    tick_label_color=color,
+                    title_color=color)
+
+    p.underlays.append(axis)
+    po.add(p)
+    #        po.plots['aux'] = [p]
+
+    po.x_grid.visible = False
+    po.y_grid.visible = False
+
+
+def plot_axis_factory(p, key, normal, **kw):
+    if key == 'x':
+        m = p.index_mapper
+        if normal:
+            o = 'bottom'
+        else:
+            o = 'top'
+            kw['tick_label_formatter'] = lambda x: ''
+    else:
+        if normal:
+            o = 'left'
+        else:
+            o = 'right'
+            kw['tick_label_formatter'] = lambda x: ''
+        m = p.value_mapper
+    from chaco.axis import PlotAxis
+
+    ax = PlotAxis(component=p,
+                  mapper=m,
+                  orientation=o,
+                  axis_line_visible=False,
+                  **kw)
+    return ax
+
+
+def plot_factory(legend_kw=None, **kw):
+    """
+    """
+    p = Plot(data=ArrayPlotData(),
+             # use_backbuffer=True,
+             **kw)
+
+    vis = kw['show_legend'] if 'show_legend' in kw else False
+
+    if not isinstance(vis, bool):
+        align = vis
+        vis = True
+    else:
+        align = 'lr'
+
+    p.legend.visible = vis
+    p.legend.align = align
+    if legend_kw:
+        p.legend.trait_set(**legend_kw)
+
+    return p
+
+
+CONTAINERS = {'v': VPlotContainer, 'h': HPlotContainer, 'g': GridPlotContainer, 'o': OverlayPlotContainer}
+
+
+def container_factory(**kw):
+    """
+    """
+    if 'kind' in kw:
+        kind = kw['kind']
+    else:
+        kind = 'v'
+
+    # kinds = ['v', 'h', 'g', 'o']
+    # containers = [VPlotContainer, HPlotContainer, GridPlotContainer, OverlayPlotContainer]
+
+    # c = containers[kinds.index(kind)]
+    c = CONTAINERS.get(kind, VPlotContainer)
+
+    options = dict(
+        bgcolor='white',
+        padding=5,
+        fill_padding=True)
+
+    for k in options:
+        if k not in kw.keys():
+            kw[k] = options[k]
+
+    container = c(**kw)
+
+    # add some tools
+    #        cm=ContextualMenuTool(parent=container,
+    #                              component=container
+    #                              )
+    #        container.tools.append(cm)
+    #
+    # gt = TraitsTool(component = container)
+    # container.tools.append(gt)
+    return container
+
+
+class Graph(ContextMenuMixin):
     """
     """
     name = Str
@@ -97,18 +210,37 @@ class Graph(Viewable, ContextMenuMixin):
 
     line_inspectors_write_metadata = False
 
-    _title = Str
-    _title_font = None
-    _title_size = None
+    # plot_editor = Any
+    # plot_editor_klass = PlotEditor
+    # graph_editor = Any
+    autoupdate = Bool(False)
+
+    # _title = Str
+    # _title_font = None
+    # _title_size = None
 
     _convert_index = None
 
+    # _control = None
+
     status_text = Str
+    # groups = None
 
-    view_identifier = None
+    # current_pos = None
 
-    close_func = Callable
+    # view_identifier = None
+
+    #    ui = Any
+    # close_func = Callable
     x_limits_changed = Event
+
+    xdataname_generators = List
+    ydataname_generators = List
+    yerdataname_generators = List
+    color_generators = List
+    series = List
+    data_len = List
+    data_limits = List
 
     def __init__(self, *args, **kw):
         """
@@ -127,21 +259,9 @@ class Graph(Viewable, ContextMenuMixin):
         if plotid is None:
             plotid = len(self.plots) - 1
 
-        p = self.plots[plotid]
-        p.x_axis.tick_generator = ScalesTickGenerator(scale=CalendarScaleSystem())
-
-    def add_point_inspector(self, scatter, convert_index=None):
-        point_inspector = PointInspector(scatter,
-                                         convert_index=convert_index)
-        pinspector_overlay = PointInspectorOverlay(component=scatter,
-                                                   tool=point_inspector)
-        #
-        scatter.overlays.append(pinspector_overlay)
-        scatter.tools.append(point_inspector)
-
-    def closed(self, *args):
-        if self.close_func:
-            self.close_func()
+    # def closed(self, *args):
+    #     if self.close_func:
+    #         self.close_func()
 
     def update_group_attribute(self, plot, attr, value, dataid=0):
         pass
@@ -158,18 +278,16 @@ class Graph(Viewable, ContextMenuMixin):
             return None or Plot with y_axis.title equal to iso
             if startswith is True title only has to start with iso
         """
+
+        txt = str(txt)
         if startswith:
             is_equal = lambda x: x.startswith(txt)
         else:
             is_equal = lambda x: x.__eq__(txt)
 
-        plot = None
         for po in self.plots:
             if is_equal(po.y_axis.title):
-                plot = po
-                break
-
-        return plot
+                return po
 
     def get_num_plots(self):
         """
@@ -201,17 +319,19 @@ class Graph(Viewable, ContextMenuMixin):
     def save_png(self, path=None):
         """
         """
-        self._save_(type_='pic', path=path)
+        self._save(type_='pic', path=path)
 
     def save_pdf(self, path=None):
         """
         """
-        self._save_(type_='pdf', path=path)
+        from pychron.core.pdf.save_pdf_dialog import save_pdf
+        save_pdf(self.plotcontainer)
+        # self._save(type_='pdf', path=path)
 
     def save(self, path=None):
         """
         """
-        self._save_(path=path)
+        self._save(path=path)
 
     # def export_raw_data(self, path=None, header=None, plotid=0):
     #     """
@@ -225,7 +345,7 @@ class Graph(Viewable, ContextMenuMixin):
         """
         """
         if path is None:
-            path = self._path_factory()
+            path = get_file_path()
 
         if path is not None:
             path = add_extension(path, '.csv')
@@ -259,6 +379,8 @@ class Graph(Viewable, ContextMenuMixin):
     #        self.ui = None
 
     def remove_rulers(self, plotid=0):
+        from pychron.graph.guide_overlay import GuideOverlay
+
         plot = self.plots[plotid]
         for o in plot.overlays:
             if isinstance(o, GuideOverlay):
@@ -267,9 +389,9 @@ class Graph(Viewable, ContextMenuMixin):
     def clear_plots(self):
         x = range(len(self.plots))
 
-        self.xdataname_generators = [self._name_generator_factory('x') for _ in x]
-        self.ydataname_generators = [self._name_generator_factory('y') for _ in x]
-        self.yerdataname_generators = [self._name_generator_factory('yer') for _ in x]
+        self.xdataname_generators = [name_generator('x') for _ in x]
+        self.ydataname_generators = [name_generator('y') for _ in x]
+        self.yerdataname_generators = [name_generator('yer') for _ in x]
 
         self.color_generators = [color_generator() for _ in x]
         #         for po in x:
@@ -301,9 +423,9 @@ class Graph(Viewable, ContextMenuMixin):
 
         self.plots = []
 
-        self.xdataname_generators = [self._name_generator_factory('x')]
-        self.ydataname_generators = [self._name_generator_factory('y')]
-        self.yerdataname_generators = [self._name_generator_factory('yer')]
+        self.xdataname_generators = [name_generator('x')]
+        self.ydataname_generators = [name_generator('y')]
+        self.yerdataname_generators = [name_generator('yer')]
 
         self.color_generators = [color_generator()]
 
@@ -504,7 +626,6 @@ class Graph(Viewable, ContextMenuMixin):
     def set_x_limits(self, min_=None, max_=None, pad=0, plotid=0, **kw):
         """
         """
-
         if self._set_limits(min_, max_, 'index', plotid, pad, **kw):
             self.x_limits_changed = True
 
@@ -546,18 +667,18 @@ class Graph(Viewable, ContextMenuMixin):
         if pc.overlays:
             pc.overlays.pop()
 
-        if not font in VALID_FONTS:
+        if font not in VALID_FONTS:
             font = 'modern'
 
         if size is None:
             size = 12
-        self._title_font = font
-        self._title_size = size
+        # self._title_font = font
+        # self._title_size = size
         font = '{} {}'.format(font, size)
 
-        pl = PlotLabel(t, component=pc,
-                       font=font)
+        from chaco.plot_label import PlotLabel
 
+        pl = PlotLabel(t, component=pc, font=font)
         pc.overlays.append(pl)
         self.redraw()
 
@@ -581,6 +702,25 @@ class Graph(Viewable, ContextMenuMixin):
         """
         self._set_title('y_axis', title, plotid, **font)
 
+    def add_axis_tool(self, plot, axis):
+        from pychron.graph.tools.axis_tool import AxisTool
+        t = AxisTool(component=axis)
+        plot.tools.append(t)
+
+    def add_limit_tool(self, plot, orientation, handler=None):
+        from pychron.graph.tools.limits_tool import LimitsTool
+        from pychron.graph.tools.limits_tool import LimitOverlay
+
+        t = LimitsTool(component=plot,
+                       orientation=orientation)
+
+        o = LimitOverlay(component=plot, tool=t)
+
+        plot.tools.insert(0, t)
+        plot.overlays.append(o)
+        if handler:
+            t.on_trait_change(handler, 'limits_updated')
+
     def add_plot_label(self, txt, plotid=0, overlay_position='inside top', hjustify='left', **kw):
         """
         """
@@ -597,8 +737,10 @@ class Graph(Viewable, ContextMenuMixin):
     def add_data_label(self, x, y, plotid=0):
         """
         """
-        # print self.plots, plotid
+        from chaco.data_label import DataLabel
+
         plot = self.plots[plotid]
+
         label = DataLabel(component=plot, data_point=(x, y),
                           label_position="top left", padding=40,
                           bgcolor="lightgray",
@@ -612,20 +754,10 @@ class Graph(Viewable, ContextMenuMixin):
             series = 'plot{}'.format(series)
         plot.delplot(series)
 
-    def add_guide(self, value, orientation='h', plotid=0, color=(0, 0, 0)):
-        """
-        """
-        plot = self.plots[plotid]
-
-        guide_overlay = GuideOverlay(component=plot,
-                                     value=value,
-                                     color=color)
-        plot.overlays.append(guide_overlay)
-
     def new_plot(self, add=True, **kw):
         """
         """
-        p = self._plot_factory(**kw)
+        p = plot_factory(**kw)
 
         self.plots.append(p)
         self.color_generators.append(color_generator())
@@ -642,23 +774,28 @@ class Graph(Viewable, ContextMenuMixin):
             else:
                 pc.add(p)
 
-        zoom = kw['zoom'] if 'zoom' in kw  else False
+        zoom = kw['zoom'] if 'zoom' in kw else False
         pan = kw['pan'] if 'pan' in kw else False
 
         tools = []
         if zoom:
             nkw = dict(tool_mode='box',
-                       always_on=False
-                       )
+                       always_on=False)
             if 'zoom_dict' in kw:
                 zoomargs = kw['zoom_dict']
                 for k in zoomargs:
                     nkw[k] = zoomargs[k]
+
+            from chaco.tools.api import ZoomTool
+
             zt = ZoomTool(component=p, **nkw)
+
             p.overlays.append(zt)
             tools.append(zt)
 
         if pan:
+            from tools.pan_tool import MyPanTool as PanTool
+
             kwargs = dict(always_on=False)
             if isinstance(pan, str):
                 kwargs['constrain'] = True
@@ -686,9 +823,9 @@ class Graph(Viewable, ContextMenuMixin):
     def new_series(self, x=None, y=None,
                    yer=None,
                    plotid=None,
-                   #                   aux_plot=False,
                    colors=None,
                    color_map_name='hot',
+                   marker_size=2,
                    **kw):
         """
         """
@@ -697,6 +834,7 @@ class Graph(Viewable, ContextMenuMixin):
             plotid = len(self.plots) - 1
 
         kw['plotid'] = plotid
+        kw['marker_size'] = marker_size
         plotobj, names, rd = self._series_factory(x, y, yer=yer, **kw)
 
         if 'type' in rd:
@@ -717,6 +855,10 @@ class Graph(Viewable, ContextMenuMixin):
 
             if ptype == 'cmap_scatter':
                 from chaco.default_colormaps import color_map_name_dict
+
+                rd['selection_color'] = rd['color']
+                rd['selection_outline_color'] = rd['color']
+
                 rd['color_mapper'] = color_map_name_dict[color_map_name]
                 c = self.series[plotid][-1][0].replace('x', 'c')
                 self.plots[plotid].data.set_data(c, array(colors))
@@ -740,8 +882,7 @@ class Graph(Viewable, ContextMenuMixin):
                         axis_line_visible=False,
                         tick_color=color,
                         tick_label_color=color,
-                        title_color=color
-                        )
+                        title_color=color)
 
         p.underlays.append(axis)
         po.add(p)
@@ -753,21 +894,21 @@ class Graph(Viewable, ContextMenuMixin):
         """
         """
 
-        def add():
-            plot = self.plots[plotid]
+        # def add():
+        plot = self.plots[plotid]
 
-            si = plot.plots['aux{:03d}'.format(series)][0]
+        si = plot.plots['aux{:03d}'.format(series)][0]
 
-            oi = si.index.get_data()
-            ov = si.value.get_data()
+        oi = si.index.get_data()
+        ov = si.value.get_data()
 
-            si.index.set_data(hstack((oi, [datum[0]])))
-            si.value.set_data(hstack((ov, [datum[1]])))
+        si.index.set_data(hstack((oi, [datum[0]])))
+        si.value.set_data(hstack((ov, [datum[1]])))
 
-        if do_after:
-            do_after_timer(do_after, add)
-        else:
-            add()
+        # if do_after:
+        #     do_after_timer(do_after, add)
+        # else:
+        #     add()
 
     def add_data(self, data, plotlist=None, **kw):
         """
@@ -829,6 +970,7 @@ class Graph(Viewable, ContextMenuMixin):
             names = self.series[plotid][series]
         except IndexError:
             print 'adding data', plotid, series, self.series[plotid]
+            return
 
         plot = self.plots[plotid]
 
@@ -836,6 +978,7 @@ class Graph(Viewable, ContextMenuMixin):
             datum = (datum,)
 
         data = plot.data
+        mi, ma = -Inf, Inf
         for i, (name, di) in enumerate(zip(names, datum)):
             d = data.get_data(name)
             nd = hstack((d, di))
@@ -864,33 +1007,65 @@ class Graph(Viewable, ContextMenuMixin):
             #         else:
             #             add(datum)
 
+    # def show_crosshairs(self, color='black'):
+    #     """
+    #     """
+    #     self.crosshairs_enabled = True
+    #     self._crosshairs_factory(color=color)
+    #     self.plotcontainer.request_redraw()
+    #
+    # def destroy_crosshairs(self):
+    #     """
+    #     """
+    #     self.crosshairs_enabled = False
+    #     plot = self.plots[0].plots['plot0'][0]
+    #     plot.overlays = [o for o in plot.overlays if not isinstance(o, LineInspector)]
+    #     self.plotcontainer.request_redraw()
+
     def add_range_selector(self, plotid=0, series=0):
-        #        plot = self.series[plotid][series]
+        from chaco.tools.range_selection import RangeSelection
+        from chaco.tools.range_selection_overlay import RangeSelectionOverlay
+
         plot = self.plots[plotid].plots['plot{}'.format(series)][0]
 
         plot.active_tool = RangeSelection(plot, left_button_selects=True)
+
         plot.overlays.append(RangeSelectionOverlay(component=plot))
 
-    def add_vertical_rule(self, v, plotid=0, **kw):
+    def add_guide(self, value, orientation='h', plotid=0, color=(0, 0, 0)):
         """
         """
+        plot = self.plots[plotid]
+
+        from pychron.graph.guide_overlay import GuideOverlay
+
+        guide_overlay = GuideOverlay(component=plot,
+                                     value=value,
+                                     color=color)
+        plot.overlays.append(guide_overlay)
+
+    def _add_rule(self, v, orientation, plotid=0, add_move_tool=False, **kw):
+
         if 'plot' in kw:
             plot = kw['plot']
         else:
             plot = self.plots[plotid]
 
-        l = GuideOverlay(plot, value=v, orientation='v', **kw)
+        from pychron.graph.guide_overlay import GuideOverlay, GuideOverlayMoveTool
 
+        l = GuideOverlay(plot, value=v, orientation=orientation, **kw)
         plot.underlays.append(l)
+
+        if add_move_tool:
+            plot.tools.append(GuideOverlayMoveTool(overlay=l))
+
         return l
 
-    def add_horizontal_rule(self, v, plotid=0, **kw):
-        """
-        """
-        plot = self.plots[plotid]
-        l = GuideOverlay(plot, value=v, **kw)
-        plot.underlays.append(l)
-        return l
+    def add_vertical_rule(self, v, **kw):
+        return self._add_rule(v, 'v', **kw)
+
+    def add_horizontal_rule(self, v, **kw):
+        return self._add_rule(v, 'h', **kw)
 
     def add_opposite_ticks(self, plotid=0, key=None):
         """
@@ -898,17 +1073,19 @@ class Graph(Viewable, ContextMenuMixin):
         p = self.plots[plotid]
         if key is None:
             for key in ['x', 'y']:
-                ax = self._plot_axis_factory(p, key, False)
+                ax = plot_axis_factory(p, key, False)
                 p.underlays.append(ax)
 
         else:
-            ax = self._plot_axis_factory(p, key, False)
+            ax = plot_axis_factory(p, key, False)
             p.underlays.append(ax)
 
     def add_minor_xticks(self, plotid=0, **kw):
         """
         """
         p = self.plots[plotid]
+        from pychron.graph.minor_tick_overlay import MinorTicksOverlay
+
         m = MinorTicksOverlay(component=p, orientation='v', **kw)
         p.underlays.append(m)
 
@@ -917,8 +1094,21 @@ class Graph(Viewable, ContextMenuMixin):
         """
         p = self.plots[plotid]
 
+        from pychron.graph.minor_tick_overlay import MinorTicksOverlay
+
         m = MinorTicksOverlay(component=p, orientation='h', **kw)
         p.underlays.append(m)
+
+    def set_time_xaxis(self, plotid=None):
+        from chaco.scales_tick_generator import ScalesTickGenerator
+        from chaco.scales.time_scale import CalendarScaleSystem
+
+        if plotid is None:
+            plotid = len(self.plots) - 1
+
+        p = self.plots[plotid]
+
+        p.x_axis.tick_generator = ScalesTickGenerator(scale=CalendarScaleSystem())
 
     def refresh(self):
         pass
@@ -951,109 +1141,28 @@ class Graph(Viewable, ContextMenuMixin):
     def container_factory(self):
         """
         """
-        return self._container_factory(**self.container_dict)
+        return container_factory(**self.container_dict)
 
-    # private
-    def _plot_axis_factory(self, p, key, normal, **kw):
-        if key == 'x':
-            m = p.index_mapper
-            if normal:
-                o = 'bottom'
-            else:
-                o = 'top'
-                kw['tick_label_formatter'] = lambda x: ''
-        else:
-            if normal:
-                o = 'left'
-            else:
-                o = 'right'
-                kw['tick_label_formatter'] = lambda x: ''
-            m = p.value_mapper
+    # def _add_line_inspector(self, plot, axis='x', color='red'):
+    #     """
+    #     """
+    #     from chaco.tools.line_inspector import LineInspector
+    #     plot.overlays.append(LineInspector(component=plot,
+    #                                        axis='index_%s' % axis,
+    #                                        write_metadata=self.line_inspectors_write_metadata,
+    #                                        inspect_mode='indexed',
+    #                                        is_listener=False,
+    #                                        color=color))
 
-        ax = PlotAxis(component=p,
-                      mapper=m,
-                      orientation=o,
-                      axis_line_visible=False,
-                      **kw)
-        return ax
-
-    def _path_factory(self):
-
-        dlg = FileDialog(action='save as')
-        if dlg.open() == OK:
-            return dlg.path
-
-    def _name_generator_factory(self, name):
-        return name_generator(name)
-
-    def _set_axis_color(self, name, color, **kw):
-        """
-        """
-        attr = kw['attr']
-        p = self.plots[kw['plotid']]
-        if 'axis' in kw:
-            ax = kw['axis']
-        else:
-            ax = getattr(p, '{}_axis'.format(name))
-        if isinstance(attr, str):
-            attr = [attr]
-        for a in attr:
-            setattr(ax, '{}_color'.format(a), color)
-
-    def _add_line_inspector(self, plot, axis='x', color='red'):
-        """
-        """
-        plot.overlays.append(LineInspector(component=plot,
-                                           axis='index_%s' % axis,
-                                           write_metadata=self.line_inspectors_write_metadata,
-                                           inspect_mode='indexed',
-                                           is_listener=False,
-                                           color=color))
-
-    def _container_factory(self, **kw):
-        """
-        """
-        if 'kind' in kw:
-            kind = kw['kind']
-        else:
-            kind = 'v'
-
-        kinds = ['v', 'h', 'g', 'o']
-        containers = [VPlotContainer, HPlotContainer, GridPlotContainer, OverlayPlotContainer]
-
-        c = containers[kinds.index(kind)]
-
-        options = dict(bgcolor='white', padding=5, fill_padding=True)
-
-        for k in options:
-            if k not in kw.keys():
-                kw[k] = options[k]
-
-        container = c(**kw)
-        return container
-
-    def _plot_factory(self, legend_kw=None, **kw):
-        """
-        """
-        p = Plot(data=ArrayPlotData(), **kw)
-
-        vis = kw.get('show_legend', False)
-
-        if not isinstance(vis, bool):
-            align = vis
-            vis = True
-        else:
-            align = 'lr'
-
-        p.legend.visible = vis
-        p.legend.align = align
-        if legend_kw:
-            p.legend.trait_set(**legend_kw)
-
-        return p
+    # def _crosshairs_factory(self, plot=None, color='black'):
+    #     """
+    #     """
+    #     if plot is None:
+    #         plot = self.plots[0].plots['plot0'][0]
+    #     self._add_line_inspector(plot, axis='x', color=color)
+    #     self._add_line_inspector(plot, axis='y', color=color)
 
     def _export_data(self, path, plotid):
-        writer = csv.writer(open(path, 'w'))
 
         if plotid is not None:
             plot = self.plots[plotid]
@@ -1064,25 +1173,13 @@ class Graph(Viewable, ContextMenuMixin):
             return
 
         data = plot.data
-        names = data.list_data()
-        xs = names[len(names) / 2:]
-        xs.sort()
-        ys = names[:len(names) / 2]
-        ys.sort()
-        cols = []
-        nnames = []
-        for xn, yn in zip(xs, ys):
-            yd = data.get_data(yn)
-            xd = data.get_data(xn)
+        names = sorted(data.list_data())
 
-            cols.append(fmt(xd))
-            cols.append(fmt(yd))
-            nnames.append(xn)
-            nnames.append(yn)
+        a = array(data.get_data(names[0]))
+        for ni in names[1:]:
+            a = column_stack((a, data.get_data(ni)))
 
-        writer.writerow(nnames)
-        rows = zip(*cols)
-        writer.writerows(rows)
+        savetxt(path, a, fmt='%.8f', delimiter=',', header=','.join(names))
 
     def _series_factory(self, x, y, yer=None, plotid=0, add=True, **kw):
         """
@@ -1097,6 +1194,7 @@ class Graph(Viewable, ContextMenuMixin):
             if not isinstance(kw['yerror'], ArrayDataSource):
                 kw['yerror'] = ArrayDataSource(kw['yerror'])
 
+        yername = None
         plot = self.plots[plotid]
         if add:
             if 'xname' in kw:
@@ -1113,18 +1211,18 @@ class Graph(Viewable, ContextMenuMixin):
             #             self.raw_x[plotid].append(x)
             #             self.raw_y[plotid].append(y)
             if yer is not None:
-                self.raw_yer[plotid].append(yer)
+                # self.raw_yer[plotid].append(yer)
                 yername = self.yerdataname_generators[plotid].next()
                 names += (yername,)
             self.series[plotid].append(names)
         else:
-            try:
-                xname = self.series[plotid][0][0]
-                yname = self.series[plotid][0][1]
-                if yer is not None:
-                    yername = self.series[plotid][0][2]
-            except IndexError:
-                pass
+            # try:
+            xname = self.series[plotid][0][0]
+            yname = self.series[plotid][0][1]
+            if yer is not None:
+                yername = self.series[plotid][0][2]
+                # except IndexError:
+                #     pass
 
         plot.data.set_data(xname, x)
         plot.data.set_data(yname, y)
@@ -1159,14 +1257,16 @@ class Graph(Viewable, ContextMenuMixin):
 
         return plot, (xname, yname), kw
 
-    def _save_(self, type_='pic', path=None):
+    def _save(self, type_='pic', path=None):
         """
         """
         if path is None:
-            dlg = FileDialog(action='save as', default_directory=os.path.expanduser('~'))
-            if dlg.open() == OK:
-                path = dlg.path
-                self.status_text = 'Image Saved: %s' % path
+            path = get_file_path(default_directory=os.path.expanduser('~'))
+            # from pyface.api import FileDialog, OK
+            # dlg = FileDialog(action='save as', default_directory=os.path.expanduser('~'))
+            # if dlg.open() == OK:
+            #     path = dlg.path
+            #     self.status_text = 'Image Saved: %s' % path
 
         if path is not None:
             if type_ == 'pdf' or path.endswith('.pdf'):
@@ -1177,43 +1277,48 @@ class Graph(Viewable, ContextMenuMixin):
                 # set default save type_ DEFAULT_IMAGE_EXT='.png'
 
                 # see http://infohost.nmt.edu/tcc/help/pubs/pil/formats.html
-                saved = False
                 for ei in IMAGE_EXTENSIONS:
                     if path.endswith(ei):
                         self._render_to_pic(path)
-                        saved = True
                         break
+                else:
+                    self._render_to_pic(os.path.join(path, DEFAULT_IMAGE_EXT))
 
-                if not saved:
-                    self._render_to_pic(add_extension(path, DEFAULT_IMAGE_EXT))
+                    #                base, ext = os.path.splitext(path)
+                    #
+                    #                if not ext in IMAGE_EXTENSIONS:
+                    #                    path = ''.join((base, DEFAULT_IMAGE_EXT))
 
     def _render_to_pdf(self, save=True, canvas=None, filename=None, dest_box=None):
         """
         """
-        from chaco.pdf_graphics_context import PdfPlotGraphicsContext
-
-        if filename:
-            # if not filename.endswith('.pdf'):
-            #     filename += '.pdf'
-            filename = add_extension(filename, ext='.pdf')
-
-        gc = PdfPlotGraphicsContext(filename=filename,
-                                    pdf_canvas=canvas,
-                                    dest_box=dest_box)
-        pc = self.plotcontainer
-
-        # pc.do_layout(force=True)
-        # pc.use_backbuffer=False
-        gc.render_component(pc, valign='center')
-        if save:
-            gc.save()
-            # pc.use_backbuffer=True
-
-        return gc
+        # save_pdf()
+        # from chaco.pdf_graphics_context import PdfPlotGraphicsContext
+        #
+        # if filename:
+        #     # if not filename.endswith('.pdf'):
+        #     #     filename += '.pdf'
+        #     filename = add_extension(filename, ext='.pdf')
+        #
+        # gc = PdfPlotGraphicsContext(filename=filename,
+        #                             pdf_canvas=canvas,
+        #                             dest_box=dest_box)
+        # pc = self.plotcontainer
+        #
+        # # pc.do_layout(force=True)
+        # # pc.use_backbuffer=False
+        # gc.render_component(pc, valign='center')
+        # if save:
+        #     gc.save()
+        #     # pc.use_backbuffer=True
+        #
+        # return gc
 
     def _render_to_pic(self, filename):
         """
         """
+        from chaco.plot_graphics_context import PlotGraphicsContext
+
         p = self.plotcontainer
         gc = PlotGraphicsContext((int(p.outer_width), int(p.outer_height)))
         # p.use_backbuffer = False
@@ -1254,7 +1359,7 @@ class Graph(Viewable, ContextMenuMixin):
         axis = getattr(self.plots[plotid], axis)
         params = dict(title=title)
         if font is not None or size is not None:
-            if not font in VALID_FONTS:
+            if font not in VALID_FONTS:
                 font = 'modern'
 
             tfont = '{} {}'.format(font, size + 2)
@@ -1264,6 +1369,8 @@ class Graph(Viewable, ContextMenuMixin):
         self.plotcontainer.request_redraw()
 
     def _get_limits(self, axis, plotid):
+        """
+        """
         plot = self.plots[plotid]
         try:
             ra = getattr(plot, '%s_range' % axis)
@@ -1283,12 +1390,11 @@ class Graph(Viewable, ContextMenuMixin):
         if scale == 'log':
             try:
                 if mi <= 0:
-
                     mi = Inf
                     data = plot.data
                     for di in data.list_data():
                         if 'y' in di:
-                            ya = sorted(data.get_data[di])
+                            ya = sorted(data.get_data(di))
 
                             i = 0
                             try:
@@ -1307,7 +1413,7 @@ class Graph(Viewable, ContextMenuMixin):
                 return
         else:
             if isinstance(pad, str):
-                # interpet pad as a percentage of the range
+                # interpret pad as a percentage of the range
                 # ie '0.1' => 0.1*(ma-mi)
                 if ma is None:
                     ma = ra.high
@@ -1320,25 +1426,33 @@ class Graph(Viewable, ContextMenuMixin):
                     ma = 100
 
                 if ma is not None and mi is not None:
-
                     dev = ma - mi
 
-                    pad = float(pad) * dev
-                    if abs(pad) < 1e-10:
-                        pad = 1
+                    def convert(p):
+                        p = float(p) * dev
+                        if abs(p) < 1e-10:
+                            p = 1
+                        return p
+
+                    if ',' in pad:
+                        pad = [convert(p) for p in pad.split(',')]
+                    else:
+                        pad = convert(pad)
 
             if not pad:
                 pad = 0
 
-            if isinstance(ma, (int, float)):
-                if ma is not None:
-                    if pad_style in ('symmetric', 'upper'):
-                        ma += pad
-
             if isinstance(mi, (int, float)):
-                if mi is not None:
-                    if pad_style in ('symmetric', 'lower'):
-                        mi -= pad
+                if isinstance(pad, list):
+                    mi -= pad[0]
+                elif pad_style in ('symmetric', 'lower'):
+                    mi -= pad
+
+            if isinstance(ma, (int, float)):
+                if isinstance(pad, list):
+                    ma += pad[1]
+                elif pad_style in ('symmetric', 'upper'):
+                    ma += pad
 
         change = False
         if mi is not None:
@@ -1381,25 +1495,48 @@ class Graph(Viewable, ContextMenuMixin):
         return v
 
     def traits_view(self):
-        plot = Item('plotcontainer',
-                    style='custom',
-                    show_label=False,
-                    editor=ComponentEditor(
-                        size=(self.width,
-                              self.height)))
-
-        v = View(plot,
-                 resizable=self.resizable,
+        v = View(UItem('plotcontainer',
+                       style='custom',
+                       editor=ComponentEditor()),
                  title=self.window_title,
                  width=self.window_width,
                  height=self.window_height,
                  x=self.window_x,
                  y=self.window_y,
-                 handler=self.handler_klass)
-
-        if self.view_identifier:
-            v.id = self.view_identifier
+                 resizable=self.resizable)
         return v
+        # def show(self):
+        #     do_after_timer(1, self.edit_traits)
+        #
+        # def panel_view(self):
+        #     plot = Item('plotcontainer',
+        #                 style='custom',
+        #                 show_label=False,
+        #                 editor=ComponentEditor())
+        #
+        #     v = View(plot)
+        #     return v
+        #
+        # def traits_view(self):
+        #     plot = Item('plotcontainer',
+        #                 style='custom',
+        #                 show_label=False,
+        #                 editor=ComponentEditor(
+        #                     size=(self.width,
+        #                           self.height)))
+        #
+        #     v = View(plot,
+        #              resizable=self.resizable,
+        #              title=self.window_title,
+        #              width=self.window_width,
+        #              height=self.window_height,
+        #              x=self.window_x,
+        #              y=self.window_y,
+        #              handler=self.handler_klass)
+        #
+        #     if self.view_identifier:
+        #         v.id = self.view_identifier
+        #     return v
 
         # ============= EOF ====================================
         #     def _export_raw_data(self, path, header, plotid):

@@ -49,8 +49,8 @@ class ExperimentRepoTask(BaseTask):
                           AddBranchAction(),
                           CheckoutBranchAction(),
                           PushAction(),
-                          PullAction()
-                          )]
+
+                          PullAction())]
 
     commits = List
     _repo = None
@@ -61,16 +61,16 @@ class ExperimentRepoTask(BaseTask):
     def activated(self):
         self._preference_binder('pychron.dvc', ('organization',))
         org = Organization(self.organization)
-        self.repository_names = org.repos
+        self.repository_names = org.repo_names
         self.refresh_local_names()
 
     def refresh_local_names(self):
         ns = []
-        for i in os.listdir(paths.experiment_dataset_dir):
+        for i in os.listdir(paths.repository_dataset_dir):
             if i.startswith('.'):
                 continue
 
-            root = os.path.join(paths.experiment_dataset_dir, i)
+            root = os.path.join(paths.repository_dataset_dir, i)
             if os.path.isdir(root):
                 ns.append(i)
 
@@ -97,7 +97,7 @@ class ExperimentRepoTask(BaseTask):
         if name == 'meta':
             root = paths.dvc_dir
         else:
-            root = paths.experiment_dataset_dir
+            root = paths.repository_dataset_dir
 
         path = os.path.join(root, name)
         if not os.path.isdir(path):
@@ -114,9 +114,8 @@ class ExperimentRepoTask(BaseTask):
         self.info('add branch')
         commit = self.selected_commit
 
-        self._repo.create_branch(commit=commit.hexsha if commit else 'HEAD')
-
-        self._refresh_branches()
+        if self._repo.create_branch(commit=commit.hexsha if commit else 'HEAD'):
+            self._refresh_branches()
 
     def checkout_branch(self):
         self.info('checkout branch {}'.format(self.branch))
@@ -139,7 +138,7 @@ class ExperimentRepoTask(BaseTask):
 
     def _selected_local_repository_name_changed(self, new):
         if new:
-            root = os.path.join(paths.experiment_dataset_dir, new)
+            root = os.path.join(paths.repository_dataset_dir, new)
             # print root, new, os.path.isdir(root)
             if os.path.isdir(root):
                 repo = GitRepoManager()

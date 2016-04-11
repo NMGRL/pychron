@@ -13,9 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from threading import Thread
 import socket
 from SimpleXMLRPCServer import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
+from threading import Thread
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================

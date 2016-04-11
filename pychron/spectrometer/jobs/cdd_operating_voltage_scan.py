@@ -21,13 +21,11 @@ from traitsui.api import View, Item
 import time
 import numpy as np
 from ConfigParser import ConfigParser
-import os
 # ============= local library imports  ==========================
 from pychron.spectrometer.jobs.spectrometer_task import SpectrometerTask
 from pychron.graph.graph import Graph
 from pychron.core.time_series.time_series import smooth
 from pychron.globals import globalv
-from pychron.paths import paths
 from pychron.spectrometer import get_spectrometer_config_path
 
 

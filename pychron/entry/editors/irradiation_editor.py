@@ -58,11 +58,12 @@ class IrradiationEditor(Loggable):
 
     """
     chronology = Instance(IrradiationChronology, ())
+    dvc = Instance('pychron.dvc.dvc.DVC')
 
     def add(self):
         v = AddView(model=self)
         info = v.edit_traits()
-        
+
         while 1:
             if info.result:
                 name = self.name
@@ -118,6 +119,9 @@ class IrradiationEditor(Loggable):
             # irrad.chronology.chronology = self.chronology.make_blob()
             # print self.chronology.get_doses()
             self.dvc.update_chronology(self.name, self.chronology.get_doses())
+            # self.dvc.meta_repo.clear_cache = True
+            # self.dvc.meta_commit('updated chronology')
+
         return self.name
 
     def _add_irradiation(self):
@@ -135,4 +139,3 @@ class IrradiationEditor(Loggable):
         #     self.repo.add_chronology(self.name, self.chronology)
 
 # ============= EOF =============================================
-

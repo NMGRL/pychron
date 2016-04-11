@@ -32,7 +32,6 @@ class Experimentor(DVCIrradiationable):
     executor = Instance(ExperimentExecutor)
     experiment_queues = List
     stats = Instance(StatsGroup, ())
-    dvc = Instance('pychron.dvc.dvc.DVC')
 
     mode = None
     # unique_executor_db = False
@@ -146,33 +145,13 @@ class Experimentor(DVCIrradiationable):
                 if ln not in exclude)
 
     def _get_analysis_info(self, li):
-        dbln = self.iso_db_manager.db.get_labnumber(li)
-        if not dbln:
-            return None
-        else:
-            project, sample, material, irradiation, level, pos = '', '', '', '', '', 0
-            sample = dbln.sample
-            if sample:
-                if sample.project:
-                    project = sample.project.name
-
-                if sample.material:
-                    material = sample.material.name
-                sample = sample.name
-
-            dbpos = dbln.irradiation_position
-            if dbpos:
-                level = dbpos.level
-
-                irradiation = level.irradiation.name
-                level = level.name
-                pos = dbpos.position
-
-        return project, sample, material, irradiation, level, pos
+        db = self.get_database()
+        return db.get_analysis_info(li)
 
     def _set_analysis_metadata(self):
         cache = dict()
-        db = self.iso_db_manager.db
+
+        db = self.get_database()
         aruns = self._get_all_automated_runs()
 
         with db.session_ctx():
@@ -196,7 +175,7 @@ class Experimentor(DVCIrradiationable):
                                          material=material or '',
                                          irradiation=irrad or '',
                                          irradiation_level=level or '',
-                                         irradiation_position=pos or 0,
+                                         irradiation_position=pos or '',
                                          identifier_error=False)
 
                 ai.trait_set(**cache[ln])
@@ -218,12 +197,12 @@ class Experimentor(DVCIrradiationable):
         return self.executor.execute()
 
     def verify_database_connection(self, inform=True):
-        db = self.iso_db_manager.db
+        db = self.get_database()
         if db is not None:
             if db.connect(force=True):
                 return True
         elif inform:
-            self.warning_dialog('Not Database available')
+            self.warning_dialog('No Database available')
 
     # ===============================================================================
     # handlers
@@ -341,11 +320,8 @@ class Experimentor(DVCIrradiationable):
 
         e = ExperimentFactory(application=self.application,
                               dvc=self.dvc,
-                              # dvc=self.iso_db_manager,
-                              # db=self.iso_db_manager.db,
+                              iso_db_man=self.iso_db_man,
                               default_mass_spectrometer=dms)
-        if self.iso_db_manager:
-            e.db = self.iso_db_manager.db
         return e
 
 # ============= EOF =============================================

@@ -1,8 +1,8 @@
 
 __author__ = 'ross'
 
-import unittest
 import os
+import unittest
 
 use_logger = False
 
@@ -18,6 +18,16 @@ def suite():
         from pychron.core.helpers.logger_setup import logging_setup
         logging_setup('unittests')
 
+    from pychron.canvas.canvas2D.tests.calibration_item import CalibrationObjectTestCase
+    from pychron.experiment.tests.duration_tracker import DurationTrackerTestCase
+    from pychron.core.tests.spell_correct import SpellCorrectTestCase
+    from pychron.entry.tests.irradiation_loader import SimilarTestCase
+    from pychron.core.tests.filtering_tests import FilteringTestCase
+    from pychron.core.stats.tests.peak_detection_test import MultiPeakDetectionTestCase
+    from pychron.experiment.tests.repository_identifier import ExperimentIdentifierTestCase
+
+    from pychron.stage.tests.stage_map import StageMapTestCase, \
+        TransformTestCase
     from pychron.entry.tests.sample_loader import SampleLoaderTestCase
     from pychron.core.helpers.tests.floatfmt import FloatfmtTestCase
     from pychron.processing.tests.analysis_modifier import AnalysisModifierTestCase
@@ -26,7 +36,7 @@ def suite():
     from pychron.entry.tests.analysis_loader import XLSAnalysisLoaderTestCase
     from pychron.entry.tests.irradiation_loader import XLSIrradiationLoaderParseTestCase, \
         XLSIrradiationLoaderLoadTestCase
-    from pychron.entry.tests.massspec_irrad_export import MassSpecIrradExportTestCase
+    # from pychron.entry.tests.massspec_irrad_export import MassSpecIrradExportTestCase
     from pychron.core.regression.tests.regression import OLSRegressionTest, MeanRegressionTest, \
         FilterOLSRegressionTest, OLSRegressionTest2
     from pychron.experiment.tests.frequency_test import FrequencyTestCase, FrequencyTemplateTestCase
@@ -45,14 +55,24 @@ def suite():
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
 
-    tests = (SampleLoaderTestCase,
+    tests = (CalibrationObjectTestCase,
+             DurationTrackerTestCase,
+             SpellCorrectTestCase,
+             SimilarTestCase,
+             FilteringTestCase,
+             MultiPeakDetectionTestCase,
+             ExperimentIdentifierTestCase,
+             StageMapTestCase,
+             TransformTestCase,
+             SampleLoaderTestCase,
              AnalysisModifierTestCase,
              BackupTestCase,
-             MassSpecIrradExportTestCase,
+             # MassSpecIrradExportTestCase,
              XMLParserTestCase,
              XLSIrradiationLoaderLoadTestCase,
              XLSIrradiationLoaderParseTestCase,
              XLSAnalysisLoaderTestCase,
+
              RatioTestCase,
              InterpolationTestCase,
              DocstrContextTestCase,

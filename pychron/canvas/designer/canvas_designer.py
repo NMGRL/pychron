@@ -17,9 +17,9 @@
 
 
 # ============= enthought library imports =======================
+from enable.component_editor import ComponentEditor
 from traits.api import Instance, DelegatesTo
 from traitsui.api import View, Item
-from enable.component_editor import ComponentEditor
 
 # ============= standard library imports ========================
 import os

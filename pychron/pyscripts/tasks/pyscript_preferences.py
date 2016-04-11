@@ -15,12 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import Bool, Str
 from traitsui.api import View, Item, VGroup
-from envisage.ui.tasks.preferences_pane import PreferencesPane
 
 from pychron.envisage.tasks.base_preferences_helper import GitRepoPreferencesHelper, \
     remote_status_item
+
 
 # from pychron.pychron_constants import PLUSMINUS
 # ============= standard library imports ========================

@@ -15,9 +15,10 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+from apptools.preferences.preference_binding import bind_preference
 from pyface.timer.do_later import do_after
 from traits.api import Instance, List, Any, Bool, on_trait_change, Str, Int, Dict, File, Float
-from apptools.preferences.preference_binding import bind_preference
+
 # =============standard library imports ========================
 import time
 from threading import Thread
@@ -86,6 +87,9 @@ class ExtractionLineManager(Manager, Consoleable):
     wait_group = Instance(WaitGroup, ())
     console_bgcolor = 'black'
 
+    def set_extract_state(self, *args, **kw):
+        pass
+    
     def activate(self):
 
         self._active = True
@@ -599,7 +603,7 @@ class ExtractionLineManager(Manager, Consoleable):
             scene = c.canvas2D.scene
             obj = scene.get_item('vlabel_{}Pipette'.format(name))
             if obj is not None:
-                obj.value = value
+                obj.value = int(value)
                 c.refresh()
 
     def _sample_changer_factory(self):

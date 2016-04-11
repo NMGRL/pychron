@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traits.api import HasTraits, Button, Bool, Str, Int
+from traits.api import Bool, Str, Int
 from traitsui.api import View, Item, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================

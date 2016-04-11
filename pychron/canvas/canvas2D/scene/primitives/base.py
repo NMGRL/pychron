@@ -102,7 +102,7 @@ class Primitive(HasTraits):
                 gc.set_font(self.gfont)
                 gc.set_line_width(self.line_width)
 
-                self._render_(gc)
+                self._render(gc)
 
     def set_stroke_color(self, gc):
         if self.state:
@@ -154,6 +154,10 @@ class Primitive(HasTraits):
         self._cached_xy = rx, ry
 
         return rx, ry
+
+    def request_layout(self):
+        self._cached_xy = None
+        self._cached_wh = None
 
     def get_wh(self):
         w, h = 0, 0
@@ -224,7 +228,7 @@ class Primitive(HasTraits):
         return x1 <= self.x <= x2 and y1 <= self.y <= y2
 
     # private
-    def _render_(self, gc):
+    def _render(self, gc):
         pass
 
     def _render_name(self, gc, x, y, w, h):

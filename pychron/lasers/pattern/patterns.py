@@ -15,10 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from chaco.api import AbstractOverlay
 from traits.api import Bool, Float, Button, Instance, Range, Str, Property
 from traits.has_traits import HasTraits
 from traitsui.api import View, Item, Group, HGroup, RangeEditor, spring
-from chaco.api import AbstractOverlay
+
 # ============= standard library imports ========================
 from numpy import array, transpose
 # ============= local library imports  ==========================

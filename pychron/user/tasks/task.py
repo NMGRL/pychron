@@ -15,13 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.tasks.task_layout import TaskLayout
+from traits.api import HasTraits, List, Str, Bool, Enum, on_trait_change
+from traits.api import Instance
+
+# ============= standard library imports ========================
 import hashlib
 import os
-from pyface.tasks.task_layout import TaskLayout, PaneItem
-from traits.api import HasTraits, Button, List, Str, Bool, Enum, Property, cached_property, on_trait_change
-from traitsui.api import View, Item
-# ============= standard library imports ========================
 import yaml
+# ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.base_task import BaseTask
 from pychron.paths import paths
@@ -47,21 +49,29 @@ class UsersTask(BaseTask):
     filter_attribute = Enum('name', 'email')
     filter_str = Str
 
-    db = Property
+    db = Instance('pychron.dvc.dvc_database.DVCDatabase')
     id = 'pychron.users'
     _hash = None
     auto_save = False
 
-    @cached_property
-    def _get_db(self):
+    def _db_default(self):
         app = self.application
-        man = app.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
-        if man:
-            return man.db
+        d = app.get_service('pychron.dvc.dvc.DVC')
+        return d.db
+
+    # @cached_property
+    # def _get_db(self):
+    #     app = self.application
+    #     man = app.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
+    #     if man:
+    #         return man.db
 
     def activated(self):
         db = self.db
-        if db and db.connected:
+        if db:
+            if not db.connect():
+                return
+
             with db.session_ctx():
                 users = [User(user) for user in db.get_users()]
                 self._sync(users)
@@ -72,12 +82,13 @@ class UsersTask(BaseTask):
 
     def _sync(self, users):
         path = os.path.join(paths.setup_dir, 'users.yaml')
-        with open(path, 'r') as rfile:
-            yl = yaml.load(rfile)
-            for yi in yl:
-                uu = next((i for i in users if i.name == yi.get('name')), None)
-                if uu:
-                    uu.enabled = yi.get('enabled')
+        if os.path.isfile(path):
+            with open(path, 'r') as rfile:
+                yl = yaml.load(rfile)
+                for yi in yl:
+                    uu = next((i for i in users if i.name == yi.get('name')), None)
+                    if uu:
+                        uu.enabled = yi.get('enabled')
 
     def _generate_hash(self, users):
         md5 = hashlib.md5()

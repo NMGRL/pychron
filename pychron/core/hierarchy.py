@@ -15,12 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from datetime import datetime
 import os
-import time
 import weakref
-from traits.api import HasTraits, Button, Str, Int, Bool, Any, List, Property, Event, cached_property
-from traitsui.api import View, Item, UItem, HGroup, VGroup
+
+from traits.api import HasTraits, Str, Any, List, Property
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter

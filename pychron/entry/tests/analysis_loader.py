@@ -1,5 +1,6 @@
-from datetime import datetime
 import os
+
+from datetime import datetime
 
 __author__ = 'ross'
 from pychron.core.ui import set_qt

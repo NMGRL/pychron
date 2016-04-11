@@ -17,9 +17,9 @@
 # =============enthought library imports=======================
 
 # =============standard library imports ========================
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, \
      ForeignKey, DateTime, func
+from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
 # =============local library imports  ==========================

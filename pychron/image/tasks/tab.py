@@ -16,8 +16,9 @@
 
 # ============= enthought library imports =======================
 from traits.api import Any, Long, Date, Str, on_trait_change
-from traitsui.api import View, UItem, VGroup
 from traits.api import HasTraits
+from traitsui.api import View, UItem, VGroup
+
 # ============= standard library imports ========================
 import Image
 import cStringIO
