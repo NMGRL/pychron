@@ -201,7 +201,7 @@ class FirmwareManager(HeadlessLoggable):
             alt_ch, inverted = self._get_switch_channel(alt_name)
             ch = self._get_switch_indicator(data)
             if ch is None:
-                result = self.get_channel_state(alt_ch)
+                result = self.switch_controller.get_channel_state(alt_ch)
             else:
                 result = self.switch_controller.get_channel_state(ch)
 
