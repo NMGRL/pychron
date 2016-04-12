@@ -100,26 +100,6 @@ class ExtractionLineManager(Manager, Consoleable):
 
         self._activate_hook()
 
-    def _activate_hook(self):
-        self.monitor = SystemMonitor(manager=self, name='system_monitor')
-        self.monitor.monitor()
-
-        if self.gauge_manager:
-            self.info('start gauge scans')
-            self.gauge_manager.start_scans()
-
-        if self.use_hardware_update and self.switch_manager:
-            do_after(self.hardware_update_period * 1000, self._update_states)
-
-    def _update_states(self):
-        self.switch_manager.load_hardware_states()
-        do_after(self.hardware_update_period * 1000, self._update_states)
-
-    def _refresh_canvas(self):
-        self.refresh_canvas()
-        if self._active:
-            do_after(200, self._refresh_canvas)
-
     def deactivate(self):
         if self.gauge_manager:
             self.gauge_manager.stop_scans()
@@ -128,9 +108,6 @@ class ExtractionLineManager(Manager, Consoleable):
             self.monitor.stop()
         self._active = False
         self._deactivate_hook()
-
-    def _deactivate_hook(self):
-        pass
 
     def bind_preferences(self):
 
@@ -156,16 +133,13 @@ class ExtractionLineManager(Manager, Consoleable):
         # bind_preference(self, 'use_network',
         # '{}.use_network'.format(prefid))
 
-        bind_preference(self.network, 'inherit_state',
-                        '{}.inherit_state'.format(prefid))
+        bind_preference(self.network, 'inherit_state', '{}.inherit_state'.format(prefid))
 
         self.console_bind_preferences('{}.console'.format(prefid))
 
         if self.gauge_manager:
-            bind_preference(self.gauge_manager, 'update_period',
-                            '{}.gauge_update_period'.format(prefid))
-            bind_preference(self.gauge_manager, 'use_update',
-                            '{}.use_gauge_update'.format(prefid))
+            bind_preference(self.gauge_manager, 'update_period', '{}.gauge_update_period'.format(prefid))
+            bind_preference(self.gauge_manager, 'use_update', '{}.use_gauge_update'.format(prefid))
 
         if self.canvas:
             bind_preference(self.canvas.canvas2D, 'display_volume', '{}.display_volume'.format(prefid))
@@ -464,6 +438,32 @@ class ExtractionLineManager(Manager, Consoleable):
     # ===============================================================================
     # private
     # ===============================================================================
+    def _activate_hook(self):
+        self.monitor = SystemMonitor(manager=self, name='system_monitor')
+        self.monitor.monitor()
+
+        if self.gauge_manager:
+            self.info('start gauge scans')
+            self.gauge_manager.start_scans()
+
+        self._trigger_update()
+
+    def _trigger_update(self):
+        if self.use_hardware_update and self.switch_manager:
+            do_after(self.hardware_update_period * 1000, self._update_states)
+
+    def _update_states(self):
+        self.switch_manager.load_hardware_states()
+        self._trigger_update()
+
+    def _refresh_canvas(self):
+        self.refresh_canvas()
+        if self._active:
+            do_after(200, self._refresh_canvas)
+
+    def _deactivate_hook(self):
+        pass
+
     def _reload_canvas_hook(self):
         pass
 
@@ -652,6 +652,11 @@ class ExtractionLineManager(Manager, Consoleable):
     # ===============================================================================
     # handlers
     # ===============================================================================
+    @on_trait_change('use_hardware_update')
+    def _update_use_hardware_update(self):
+        if self.use_hardware_update:
+            self._trigger_update()
+
     @on_trait_change('switch_manager:pipette_trackers:counts')
     def _update_pipette_counts(self, obj, name, old, new):
         self._set_pipette_counts(obj.name, new)
