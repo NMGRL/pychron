@@ -19,21 +19,17 @@ from threading import Thread
 
 from enable.component_editor import ComponentEditor
 from pyface.tasks.traits_dock_pane import TraitsDockPane
-from pyface.timer.do_later import do_after
 from traits.api import Button, Bool, Str
 from traitsui.api import View, Item, Readonly, UItem, VGroup, HGroup, EnumEditor, spring, \
     InstanceEditor, ButtonEditor, Tabbed
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pyface.tasks.traits_task_pane import TraitsTaskPane
-from traitsui.editors import RangeEditor
 
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.core.ui.lcd_editor import LCDEditor
 from pychron.core.ui.stage_component_editor import VideoComponentEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
-from pychron.core.ui.button_editor import ButtonEditor as mButtonEditor
-from pychron.envisage.resources import icon
 
 
 class ControlPane(TraitsDockPane):
@@ -163,10 +159,10 @@ class ControlPane(TraitsDockPane):
         v_grp = VGroup(UItem('video_canvas', editor=VideoComponentEditor()), label='Camera')
 
         g_grp = VGroup(Item('graph_scan_width', label='Scan Width (mins)'),
-                       Item('graph_scale', label='Scale'),
-                       Item('graph_y_auto', label='Autoscale Y'),
-                       Item('graph_ymax', label='Max', format_str='%0.3f'),
-                       Item('graph_ymin', label='Min', format_str='%0.3f'),
+                       HGroup(Item('graph_scale', label='Scale'),
+                              Item('graph_y_auto', label='Autoscale Y'),
+                              Item('graph_ymax', label='Max', format_str='%0.3f', enabled_when='not graph_y_auto'),
+                              Item('graph_ymin', label='Min', format_str='%0.3f', enabled_when='not graph_y_auto')),
                        HGroup(icon_button_editor('clear_button', 'clear',
                                                  tooltip='Clear and reset graph'), spring),
                        HGroup(icon_button_editor('start_record_button', 'media-record',

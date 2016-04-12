@@ -384,9 +384,6 @@ class ScanManager(StreamGraphManager):
         self.debug('user triggered send_configuration')
         self.spectrometer.send_configuration()
 
-    def _clear_button_fired(self):
-        self._reset_graph()
-
     def _graph_changed(self):
         self.rise_rate.graph = self.graph
 

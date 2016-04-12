@@ -18,7 +18,7 @@
 import os
 import pickle
 
-from traits.api import Bool, Float, Property, Instance, Event, cached_property, Button, Enum
+from traits.api import Bool, Float, Property, Instance, Event, Button, Enum
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.timer import Timer
@@ -26,7 +26,6 @@ from pychron.graph.time_series_graph import TimeSeriesStreamGraph
 from pychron.managers.data_managers.csv_data_manager import CSVDataManager
 from pychron.managers.manager import Manager
 from pychron.paths import paths
-from pychron.pychron_constants import NULL_STR
 
 
 class StreamGraphManager(Manager):
@@ -130,6 +129,9 @@ class StreamGraphManager(Manager):
             self._graph_ymin = min(new, self._graph_ymax)
 
     # handlers
+    def _clear_button_fired(self):
+        self._reset_graph()
+
     def _graph_y_auto_changed(self, new):
         p = self.graph.plots[0]
         if not new:

@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from numpy.random import random
 from traits.api import TraitError, Instance, Float, provides, Bool
 # ============= standard library imports ========================
 import os
@@ -370,9 +369,8 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
 
     def _update_scan_graph(self):
         v = self.read_temperature()
-        v = random()
         if v is not None:
-            x = self.graph.record(v)
+            x = self.graph.record(v, track_y=self.graph_y_auto)
 
             if self._recording:
                 self.record_data_manager.write_to_frame((x, v))
