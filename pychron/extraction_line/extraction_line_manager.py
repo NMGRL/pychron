@@ -44,7 +44,9 @@ class ExtractionLineManager(Manager, Consoleable):
 
     """
     canvas = Instance(ExtractionLineCanvas)
-    _canvases = List
+    canvases = List
+
+    plugin_canvases = List
 
     explanation = Instance(ExtractionLineExplanation, ())
     monitor = Instance(SystemMonitor)
@@ -89,8 +91,9 @@ class ExtractionLineManager(Manager, Consoleable):
 
     def set_extract_state(self, *args, **kw):
         pass
-    
+
     def activate(self):
+        self._load_additional_canvases()
 
         self._active = True
 
@@ -230,7 +233,7 @@ class ExtractionLineManager(Manager, Consoleable):
                 return bool(state)
 
     def refresh_canvas(self):
-        for ci in self._canvases:
+        for ci in self.canvases:
             ci.refresh()
 
     def finish_loading(self):
@@ -259,7 +262,7 @@ class ExtractionLineManager(Manager, Consoleable):
     def reload_scene_graph(self):
         self.info('reloading canvas scene')
 
-        for c in self._canvases:
+        for c in self.canvases:
             if c is not None:
                 c.load_canvas_file(self.canvas_path, self.canvas_config_path, self.valves_path)
                 # c.load_canvas_file(c.config_name)
@@ -274,18 +277,18 @@ class ExtractionLineManager(Manager, Consoleable):
     def update_switch_state(self, name, state, *args, **kw):
         if self.use_network:
             self.network.set_valve_state(name, state)
-            for c in self._canvases:
+            for c in self.canvases:
                 self.network.set_canvas_states(c, name)
 
-        for c in self._canvases:
+        for c in self.canvases:
             c.update_switch_state(name, state, *args, **kw)
 
     def update_switch_lock_state(self, *args, **kw):
-        for c in self._canvases:
+        for c in self.canvases:
             c.update_switch_lock_state(*args, **kw)
 
     def update_switch_owned_state(self, *args, **kw):
-        for c in self._canvases:
+        for c in self.canvases:
             c.update_switch_owned_state(*args, **kw)
 
     def set_valve_owner(self, name, owner):
@@ -422,8 +425,9 @@ class ExtractionLineManager(Manager, Consoleable):
             self.explanation.selected = selected
 
     def new_canvas(self):
-        c = ExtractionLineCanvas(manager=self)
-        self._canvases.append(c)
+        c = ExtractionLineCanvas(manager=self,
+                                 display_name='Extraction Line')
+        self.canvases.append(c)
         c.canvas2D.trait_set(display_volume=self.display_volume,
                              volume_key=self.volume_key)
 
@@ -438,6 +442,12 @@ class ExtractionLineManager(Manager, Consoleable):
     # ===============================================================================
     # private
     # ===============================================================================
+    def _load_additional_canvases(self):
+        for ci in self.plugin_canvases:
+            c = ExtractionLineCanvas(manager=self,
+                                     display_name=ci['display_name'], )
+            self.canvases.append(c)
+
     def _activate_hook(self):
         self.monitor = SystemMonitor(manager=self, name='system_monitor')
         self.monitor.monitor()
@@ -599,7 +609,7 @@ class ExtractionLineManager(Manager, Consoleable):
         return ret
 
     def _set_pipette_counts(self, name, value):
-        for c in self._canvases:
+        for c in self.canvases:
             scene = c.canvas2D.scene
             obj = scene.get_item('vlabel_{}Pipette'.format(name))
             if obj is not None:
@@ -666,7 +676,7 @@ class ExtractionLineManager(Manager, Consoleable):
         from pychron.canvas.canvas2D.scene.primitives.valves import Valve
 
         if not self.use_network:
-            for c in self._canvases:
+            for c in self.canvases:
                 scene = c.canvas2D.scene
                 for item in scene.get_items():
                     if not isinstance(item, Valve):
@@ -682,7 +692,7 @@ class ExtractionLineManager(Manager, Consoleable):
 
     @on_trait_change('display_volume,volume_key')
     def _update_canvas_inspector(self, name, new):
-        for c in self._canvases:
+        for c in self.canvases:
             c.canvas2D.trait_set(**{name: new})
 
     def _handle_state(self, new):

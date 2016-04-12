@@ -15,10 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from envisage.extension_point import ExtensionPoint
 from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.task_factory import TaskFactory
 from pyface.tasks.action.schema import SMenu
 from pyface.tasks.action.schema_addition import SchemaAddition
+from traits.api import List, Dict
 # ============= standard library imports ========================
 import os
 # ============= local library imports  ==========================
@@ -48,6 +50,8 @@ class ExtractionLinePlugin(BaseTaskPlugin):
     id = 'pychron.extraction_line'
     name = 'ExtractionLine'
     extraction_line_manager_klass = ExtractionLineManager
+    plugin_canvases = ExtensionPoint(List(Dict),
+                                     id='pychron.extraction_line.plugin_canvases')
 
     def _preferences_default(self):
         return self._preferences_factory('extractionline')
@@ -73,6 +77,7 @@ class ExtractionLinePlugin(BaseTaskPlugin):
     def _factory(self):
         elm = self.extraction_line_manager_klass(application=self.application)
         elm.bind_preferences()
+        elm.plugin_canvases = self.plugin_canvases
 
         return elm
 
