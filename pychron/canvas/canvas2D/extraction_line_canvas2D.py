@@ -170,7 +170,6 @@ class ExtractionLineCanvas2D(SceneCanvas):
 
     def select_right_down(self, event):
         item = self.active_item
-
         if item is not None:
             self._show_menu(event, item)
         event.handled = True
@@ -310,21 +309,22 @@ class ExtractionLineCanvas2D(SceneCanvas):
         actions = []
 
         if self.manager.mode != 'client' or not globalv.client_only_locking:
-            if isinstance(self.active_item, Switch):
-                if isinstance(self.active_item, BaseValve):
-                    t = 'Lock'
-                    if obj.soft_lock:
-                        t = 'Unlock'
+            # print self.active_item, isinstance(self.active_item, Switch)
+            # if isinstance(self.active_item, Switch):
+            if isinstance(self.active_item, BaseValve):
+                t = 'Lock'
+                if obj.soft_lock:
+                    t = 'Unlock'
 
-                    action = self._action_factory(t, 'on_lock')
-                    actions.append(action)
+                action = self._action_factory(t, 'on_lock')
+                actions.append(action)
 
-                if self.force_actuate_enabled:
-                    action = self._action_factory('Force Close', 'on_force_close')
-                    actions.append(action)
+            if self.force_actuate_enabled:
+                action = self._action_factory('Force Close', 'on_force_close')
+                actions.append(action)
 
-                    action = self._action_factory('Force Open', 'on_force_open')
-                    actions.append(action)
+                action = self._action_factory('Force Open', 'on_force_open')
+                actions.append(action)
 
         if actions:
             menu_manager = MenuManager(*actions)

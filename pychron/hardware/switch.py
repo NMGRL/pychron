@@ -29,6 +29,7 @@ class BaseSwitch(Loggable):
     state = Bool(False)
     software_lock = Bool(False)
     enabled = Bool(True)
+    owner = Str
 
     def __init__(self, name, *args, **kw):
         """
@@ -59,6 +60,9 @@ class BaseSwitch(Loggable):
 class ManualSwitch(BaseSwitch):
     prefix_name = 'MANUAL_SWITCH'
 
+    def state_str(self):
+        return '{}{}{}'.format(self.name, self.state)
+
     def set_open(self, *args, **kw):
         self.state = True
         return True, True
@@ -83,7 +87,7 @@ class Switch(BaseSwitch):
 
     settling_time = Float(0)
 
-    owner = Str
+
 
     def state_str(self):
         return '{}{}{}'.format(self.name, self.state, self.software_lock)
@@ -178,10 +182,11 @@ class Switch(BaseSwitch):
             if mode.startswith('client'):
                 r = func(self)
             else:
-                if do_actuation:
-                    r = func(self)
-                else:
-                    r = True
+                r = func(self)
+                # if do_actuation:
+                #     r = func(self)
+                # else:
+                #     r = True
 
         if self.settling_time:
             time.sleep(self.settling_time)

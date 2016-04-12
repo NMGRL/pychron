@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import json
+
 from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change
 from traitsui.api import View, UItem, Item, HGroup, VGroup
 # ============= standard library imports ========================
@@ -40,7 +42,7 @@ import time
 
 # ========== local library imports =============
 from gp_actuator import GPActuator
-from pychron.hardware.actuators import invert_trim_bool, get_valve_name, trim_bool
+from pychron.hardware.actuators import invert_trim_bool, get_valve_name, trim_bool, get_valve_address
 
 
 class NMGRLFurnaceActuator(GPActuator):
@@ -79,12 +81,16 @@ class NMGRLFurnaceActuator(GPActuator):
         """
             Query the hardware for the channel state
         """
-        cmd = 'GetChannelState {}'.format(get_valve_name(obj))
+        cmd = 'GetChannelState {}'.format(get_valve_address(obj))
         return self.ask(cmd, verbose=verbose)
 
     @trim_bool
     def get_indicator_state(self, obj, action, verbose=True):
-        cmd = 'GetIndicatorState {},{}'.format(get_valve_name(obj), action)
+        cmd = json.dumps({'command': 'GetIndicatorState',
+                          'name': get_valve_address(obj),
+                          'action': action})
+
+        # cmd = 'GetIndicatorState {},{}'.format(get_valve_address(obj), action)
         return self.ask(cmd, verbose=verbose)
 
     def close_channel(self, obj, excl=False):
@@ -119,7 +125,7 @@ class NMGRLFurnaceActuator(GPActuator):
         if self.simulation:
             return True
 
-        cmd = '{} {}'.format(action, get_valve_name(obj))
+        cmd = '{} {}'.format(action, get_valve_address(obj))
         return self.ask(cmd)
 
     def _check_actuate(self, obj, action):

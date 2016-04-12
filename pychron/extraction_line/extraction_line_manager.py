@@ -560,11 +560,11 @@ class ExtractionLineManager(Manager, Consoleable):
 
             return result
 
-    def _change_switch_state(self, name, mode, action, sender_address=None):
+    def _change_switch_state(self, name, mode, action, sender_address=None, **kw):
         result, change = False, False
         if self._check_ownership(name, sender_address):
             func = getattr(self.switch_manager, '{}_by_name'.format(action))
-            ret = func(name, mode=mode)
+            ret = func(name, mode=mode, **kw)
 
             if ret:
                 result, change = ret
