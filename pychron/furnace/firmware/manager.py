@@ -198,14 +198,16 @@ class FirmwareManager(HeadlessLoggable):
                 alt_name = data['name']
             else:
                 alt_name, _ = data
-            alt_ch, inverted = self._get_switch_channel(alt_name)
-            ch = self._get_switch_indicator(data)
+            alt_ch, _ = self._get_switch_channel(alt_name)
+            ch, inverted = self._get_switch_indicator(data)
             if ch is None:
+                dch = alt_ch
                 result = self.switch_controller.get_channel_state(alt_ch)
             else:
+                dch = ch
                 result = self.switch_controller.get_channel_state(ch)
 
-            self.debug('indicator state {}, invert={}'.format(result, inverted))
+            self.debug('indicator ch={} state {}, invert={}'.format(dch, result, inverted))
             if inverted:
                 result = not result
             return result
@@ -384,12 +386,16 @@ class FirmwareManager(HeadlessLoggable):
         ch = self._switch_indicator_mapping.get(name)
         self.debug('get switch indicator channel {} {}'.format(name, ch))
 
+        inverted = False
         if ',' in str(ch):
             o, c = map(str.strip, ch.split(','))
             ch = o if action.lower() == 'open' else c
             if not ch or ch == '-':
                 ch = None
+        elif ch == 'inverted':
+            ch = None
+            inverted = True
 
-        return ch
+        return ch, inverted
 
 # ============= EOF =============================================
