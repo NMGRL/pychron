@@ -395,6 +395,9 @@ class FirmwareManager(HeadlessLoggable):
         if ',' in str(ch):
             o, c = map(str.strip, ch.split(','))
             ch = o if action == 'open' else c
+            if ch.startswith('i'):
+                inverted = True
+
             if not ch or ch == '-':
                 ch = None
         elif ch == 'inverted':
