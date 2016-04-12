@@ -740,7 +740,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.info('Automated run {} {} duration: {:0.3f} s'.format(run.runid, run.spec.state, t))
 
         run.finish()
-        if run.spec.state not in ('canceled', 'failed'):
+        if run.spec.state not in ('canceled', 'failed', 'aborted'):
             self._retroactive_repository_identifiers(run.spec)
 
         if self.use_autoplot:
@@ -800,6 +800,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         do_after(1000, run.teardown)
 
     def _abort_run(self):
+        self.debug('Abort Run')
         self.set_extract_state(False)
         self.wait_group.stop()
 
@@ -809,6 +810,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 arun.abort_run()
 
     def _cancel(self, style='queue', cancel_run=False, msg=None, confirm=True, err=None):
+        self.debug('_cancel')
         aruns = (self.measuring_run, self.extracting_run)
 
         if style == 'queue':
@@ -1086,6 +1088,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             return True
 
     def _failed_execution_step(self, msg):
+        self.debug('failed execution step {}'.format(msg))
         if not self._canceled:
             self._err_message = msg
             self.alive = False
@@ -1154,8 +1157,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 dvcp.load_name = exp.load_name
                 arun.dvc_persister = dvcp
 
-                expid = spec.repository_identifier
-                arun.dvc_persister.initialize(expid)
+                repid = spec.repository_identifier
+                self.datahub.mainstore.add_repository(repid, 'NMGRL', inform=False)
+
+                arun.dvc_persister.initialize(repid)
 
         mon = self.monitor
         if mon is not None:
@@ -1494,8 +1499,11 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         """
             do pre_run_terminations
         """
+
         if not self.alive:
             return
+
+        self.debug('============================= Pre Extraction Check =============================')
 
         conditionals = self._load_queue_conditionals('pre_run_terminations')
         default_conditionals = self._load_system_conditionals('pre_run_terminations')
@@ -1525,7 +1533,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     return True
 
             self.heading('Pre Extraction Check Passed')
-
+        self.debug('=================================================================================')
     def _pre_queue_check(self, exp):
         """
             return True to stop execution loop
@@ -1959,7 +1967,10 @@ Use Last "blank_{}"= {}
             if anidx == 0 or nopreceding:
                 pdbr, selected = self._get_blank(an.analysis_type, exp.mass_spectrometer,
                                                  exp.extract_device,
-                                                 last=True)
+                                                 last=True,
+                                                 repository=an.repository_identifier,
+                                                 )
+
                 if pdbr:
                     if selected:
                         self.debug('use user selected blank {}'.format(pdbr.record_id))
@@ -1992,21 +2003,21 @@ Use Last "blank_{}"= {}
 
         return True
 
-    def _get_blank(self, kind, ms, ed, last=False):
+    def _get_blank(self, kind, ms, ed, last=False, repository=None):
         mainstore = self.datahub.mainstore
         db = mainstore.db
         selected = False
         dbr = None
         with db.session_ctx():
             if last:
-                dbr = db.retrieve_blank(kind, ms, ed, last)
+                dbr = db.retrieve_blank(kind, ms, ed, last, repository)
 
             if dbr is None:
                 dbr = self._select_blank(db, ms)
                 selected = True
 
             if dbr:
-                dbr = mainstore.make_analysis(dbr, calculate_age=False)
+                dbr = mainstore.make_analysis(dbr)
 
             return dbr, selected
 
@@ -2024,10 +2035,10 @@ Use Last "blank_{}"= {}
             dbs = db.get_blanks(ms)
 
             sel.load_records(dbs[::-1])
-            sel.selected = sel.records[-1]
+            sel.selected = sel.records[-1:]
             info = sel.edit_traits(kind='livemodal')
             if info.result:
-                return sel.selected
+                return sel.selected[-1]
 
     def _set_message(self, msg, color='black'):
         self.heading(msg)
@@ -2073,7 +2084,7 @@ Use Last "blank_{}"= {}
             for crun, kind in ((self.measuring_run, 'measuring'),
                                (self.extracting_run, 'extracting')):
                 if crun:
-                    self.debug('cancel {} run {}'.format(kind, crun.runid))
+                    self.debug('abort {} run {}'.format(kind, crun.runid))
                     self._abort_run()
                     # do_after(50, self._cancel_run)
                     # t = Thread(target=self._cancel_run)

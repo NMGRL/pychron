@@ -170,6 +170,7 @@ class AutomatedRun(Loggable):
     _peak_center_detectors = List
     _loaded = False
     _measured = False
+    _aborted = False
     _alive = Bool(False)
     _truncate_signal = Bool
     _equilibration_done = False
@@ -188,6 +189,7 @@ class AutomatedRun(Loggable):
     experiment_type = Str(AR_AR)
 
     intensity_scalar = Float
+    _intensities = None
 
     def set_preferences(self, preferences):
         self.debug('set preferences')
@@ -206,6 +208,15 @@ class AutomatedRun(Loggable):
     # ===============================================================================
     # pyscript interface
     # ===============================================================================
+    def py_get_intensity(self, detector):
+        if self._intensities:
+            try:
+                idx = self._intensities['tags'].index(detector)
+            except ValueError:
+                return
+
+            return self._intensities['signals'][idx]
+
     def py_set_intensity_scalar(self, v):
         self.intensity_scalar = v
         return True
@@ -633,9 +644,10 @@ class AutomatedRun(Loggable):
     # run termination
     # ===============================================================================
     def abort_run(self, do_post_equilibration=True):
+        self._aborted = True
         self.debug('Abort run do_post_equilibration={}'.format(do_post_equilibration))
         # self.multi_collector.canceled = True
-        self.collector.canceled = True
+        # self.collector.canceled = True
 
         # self.aliquot='##'
         self._persister_action('trait_set', save_enabled=False)
@@ -810,6 +822,7 @@ class AutomatedRun(Loggable):
 
     def start(self):
         self.debug('----------------- start -----------------')
+        self._aborted = False
         self.persistence_spec = PersistenceSpec()
         for p in (self.persister, self.xls_persister, self.dvc_persister):
             if p is not None:
@@ -951,8 +964,8 @@ class AutomatedRun(Loggable):
             i += 1
 
     def post_measurement_save(self):
-        self.debug('post measurement save measured={}'.format(self._measured))
-        if self._measured:
+        self.debug('post measurement save measured={} aborted={}'.format(self._measured, self._aborted))
+        if self._measured and not self._aborted:
             conds = (self.termination_conditionals, self.truncation_conditionals,
                      self.action_conditionals, self.cancelation_conditionals, self.modification_conditionals)
 
@@ -989,11 +1002,11 @@ class AutomatedRun(Loggable):
             pid, blanks, runid = self.experiment_executor.get_prev_blanks()
 
         if not blanks:
-            blanks = dict(Ar40=ufloat(0, 0),
-                          Ar39=ufloat(0, 0),
-                          Ar38=ufloat(0, 0),
-                          Ar37=ufloat(0, 0),
-                          Ar36=ufloat(0, 0))
+            blanks = dict(Ar40=('', ufloat(0, 0)),
+                          Ar39=('', ufloat(0, 0)),
+                          Ar38=('', ufloat(0, 0)),
+                          Ar37=('', ufloat(0, 0)),
+                          Ar36=('', ufloat(0, 0)), )
 
         return pid, blanks
 
@@ -1007,11 +1020,11 @@ class AutomatedRun(Loggable):
             baselines = self.experiment_executor.get_prev_baselines()
 
         if not baselines:
-            baselines = dict(Ar40=ufloat(0, 0),
-                             Ar39=ufloat(0, 0),
-                             Ar38=ufloat(0, 0),
-                             Ar37=ufloat(0, 0),
-                             Ar36=ufloat(0, 0))
+            baselines = dict(Ar40=('', ufloat(0, 0)),
+                             Ar39=('', ufloat(0, 0)),
+                             Ar38=('', ufloat(0, 0)),
+                             Ar37=('', ufloat(0, 0)),
+                             Ar36=('', ufloat(0, 0)), )
 
         return baselines
 
@@ -1211,10 +1224,10 @@ class AutomatedRun(Loggable):
                 self.do_post_measurement()
             self.finish()
 
-            self.heading('Measurement Finished unsuccessfully', color='red')
+            self.heading('Measurement Finished unsuccessfully. Aborted={}'.format(self._aborted), color='red')
             self.measuring = False
             self.info_color = None
-            return False
+            return self._aborted
 
     def do_post_measurement(self, script=None):
         if script is None:
@@ -1294,7 +1307,7 @@ anaylsis_type={}
         if self.isotope_group:
             d = dict()
             for k, iso in self.isotope_group.isotopes.iteritems():
-                d[k] = iso.get_baseline_corrected_value()
+                d[k] = (iso.detector, iso.get_baseline_corrected_value())
             return d
 
     def setup_context(self, *args, **kw):
@@ -1638,12 +1651,7 @@ anaylsis_type={}
         cb = False
         if (not self.spec.analysis_type.startswith('blank')
             and not self.spec.analysis_type.startswith('background')):
-
             cb = True
-            pid, blanks = self.get_previous_blanks()
-            self.debug('setting previous blanks')
-            for iso, v in blanks.iteritems():
-                self.isotope_group.set_blank(iso, v)
 
         for d in self._active_detectors:
             self.debug('setting isotope det={}, iso={}'.format(d.name, d.isotope))
@@ -1651,11 +1659,18 @@ anaylsis_type={}
                                            d.name,
                                            correct_for_blank=cb)
 
+        if (not self.spec.analysis_type.startswith('blank')
+            and not self.spec.analysis_type.startswith('background')):
+            pid, blanks = self.get_previous_blanks()
+            self.debug('setting previous blanks')
+            for iso, v in blanks.iteritems():
+                self.isotope_group.set_blank(iso, v[0], v[1])
+
         self.isotope_group.clear_baselines()
 
         baselines = self.get_previous_baselines()
         for iso, v in baselines.iteritems():
-            self.isotope_group.set_baseline(iso, v)
+            self.isotope_group.set_baseline(iso, v[0], v[1])
 
         self.debug('load analysis view')
         p.analysis_view.load(self)
@@ -1871,6 +1886,7 @@ anaylsis_type={}
             cnt = 0
             fcnt = 3
             spec = self.spectrometer_manager.spectrometer
+            self._intensities = {}
             while 1:
                 k, s = spec.get_intensities(tagged=True)
                 if not k:
@@ -1889,6 +1905,10 @@ anaylsis_type={}
                     cnt = 0
                     if self.intensity_scalar:
                         s = [si * self.intensity_scalar for si in s]
+
+                    self._intensities['tags'] = k
+                    self._intensities['signals'] = s
+
                     yield k, s
 
         return gen()
@@ -2024,6 +2044,7 @@ anaylsis_type={}
             if grpname == 'sniff':
                 invoke_in_main_thread(self._setup_sniff_graph, starttime_offset, color)
 
+        time.sleep(0.5)
         with self.persister.writer_ctx():
             m.measure()
 
@@ -2097,7 +2118,6 @@ anaylsis_type={}
         regressing = False
         for k, iso in self.isotope_group.isotopes.iteritems():
             idx = graph.get_plotid_by_ytitle(k)
-            # print 'ff', k, iso.name, idx
             if idx is not None:
                 try:
                     graph.series[idx][series]

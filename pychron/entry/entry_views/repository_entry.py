@@ -14,15 +14,31 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
+from traits.api import Str, List
+from traitsui.api import VGroup, UItem, Item
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.entry.entry_views.entry import BaseEntry
+from pychron.core.ui.combobox_editor import ComboboxEditor
+from pychron.entry.entry_views.entry import BaseEntry, OKButton, STYLESHEET
 
 
 class RepositoryIdentifierEntry(BaseEntry):
     tag = 'Repository Identifier'
+    principal_investigator = Str
+    principal_investigators = List
 
     def _add_item(self):
-        return self.dvc.add_repository(self.value)
+        return self.dvc.add_repository(self.value, self.principal_investigator)
 
+    def traits_view(self):
+        # style_sheet='QLabel {font-size: 10px} QLineEdit {font-size: 10px}'
+
+        a = VGroup(Item('value', label='Repository Name'),
+                   Item('principal_investigator', editor=ComboboxEditor(name='principal_investigators')),
+                   UItem('error_message', style='readonly', style_sheet=STYLESHEET))
+        buttons = [OKButton(), 'Cancel']
+        return self._new_view(a,
+                              width=400,
+                              title='Add {}'.format(self.tag),
+                              buttons=buttons)
 # ============= EOF =============================================

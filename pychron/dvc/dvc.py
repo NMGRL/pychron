@@ -405,6 +405,11 @@ class DVC(Loggable):
                 # [rii for ri in refs for rii in ri.record_views]
                 return self.make_analyses(an.record_views)
 
+    def make_analysis(self, record, *args, **kw):
+        a = self.make_analyses((record,), *args, **kw)
+        if a:
+            return a[0]
+
     def make_analyses(self, records, calculate_f_only=False):
         if not records:
             return
@@ -492,7 +497,9 @@ class DVC(Loggable):
             repo.pull()
         else:
             url = self.make_url(name)
-            GitRepoManager.clone_from(url, root)
+            org = self._organization_factory()
+            if name in org.repo_names:
+                GitRepoManager.clone_from(url, root)
 
         return True
 
@@ -530,6 +537,9 @@ class DVC(Loggable):
         return self.db.connect(*args, **kw)
 
     # meta repo
+    def update_flux(self, *args, **kw):
+        self.meta_repo.update_flux(*args, **kw)
+
     def set_identifier(self, *args):
         self.meta_repo.set_identifier(*args)
 
@@ -555,6 +565,9 @@ class DVC(Loggable):
             self.meta_repo.clear_cache = True
         else:
             self.debug('no changes to meta repo')
+
+    def add_production(self, irrad, name, prod):
+        self.meta_repo.add_production_to_irradiation(irrad, name, prod)
 
     # get
     def get_local_repositories(self):
@@ -636,29 +649,63 @@ class DVC(Loggable):
             self.db.add_measured_position(*args, **kw)
 
     def add_material(self, name):
-        with self.db.session_ctx():
-            self.db.add_material(name)
+        db = self.db
+        added = False
+        with db.session_ctx():
+            if not db.get_material(name):
+                added = True
+                db.add_material(name)
+
+        return added
+
+    def add_project(self, name, pi=None):
+        added = False
+        db = self.db
+        with db.session_ctx():
+            if not db.get_project(name, pi):
+                added = True
+                db.add_project(name, pi)
+        return added
 
     def add_sample(self, name, project, material):
-        with self.db.session_ctx():
-            self.db.add_sample(name, project, material)
+        added = False
+        db = self.db
+        with db.session_ctx():
+            if not db.get_sample(name, project, material):
+                added = True
+                db.add_sample(name, project, material)
+        return added
 
-    def add_irradiation_position(self, irrad, level, pos, identifier=None):
-        with self.db.session_ctx():
-            dbip = self.db.add_irradiation_position(irrad, level, pos, identifier)
-            # self.db.commit()
+    def add_principal_investigator(self, name):
+        added = False
+        db = self.db
+        with db.session_ctx():
+            if not db.get_principal_investigator(name):
+                db.add_principal_investigator(name)
+                added = True
+        return added
 
-            self.meta_repo.add_position(irrad, level, pos)
-            return dbip
+    def add_irradiation_position(self, irrad, level, pos, identifier=None, **kw):
+        db = self.db
+        added = False
+        with db.session_ctx():
+            if not db.get_irradiation_position(irrad, level, pos):
+                db.add_irradiation_position(irrad, level, pos, identifier, **kw)
+                self.meta_repo.add_position(irrad, level, pos)
+                added = True
+        return added
 
-    def add_irradiation_level(self, name, irradiation, holder, production_name):
+    def add_irradiation_level(self, name, irradiation, holder, production_name, **kw):
+        added = False
         with self.db.session_ctx():
-            self.db.add_irradiation_level(name, irradiation, holder, production_name)
-            # self.db.commit()
+            dblevel = self.get_irradiation_level(irradiation, name)
+            if dblevel is None:
+                added = True
+                self.db.add_irradiation_level(name, irradiation, holder, production_name, **kw)
 
         self.meta_repo.add_level(irradiation, name)
         self.meta_repo.update_level_production(irradiation, name, production_name)
-        return True
+        return added
 
     def clone_repository(self, identifier):
         root = os.path.join(paths.repository_dataset_dir, identifier)
@@ -669,16 +716,25 @@ class DVC(Loggable):
         else:
             self.debug('{} already exists'.format(identifier))
 
-    def add_repository(self, identifier, principal_investigator):
+    def add_repository(self, identifier, principal_investigator, inform=True):
         self.debug('trying to add repository identifier={}, pi={}'.format(identifier, principal_investigator))
         org = self._organization_factory()
+        for r in org.repo_names:
+            print r, identifier, r == identifier
         if identifier in org.repo_names:
-            self.warning_dialog('Repository "{}" already exists'.format(identifier))
+            # make sure also in the database
+            self.db.add_repository(identifier, principal_investigator)
+
+            if inform:
+                self.warning_dialog('Repository "{}" already exists'.format(identifier))
+
         else:
             root = os.path.join(paths.repository_dataset_dir, identifier)
 
             if os.path.isdir(root):
-                self.warning_dialog('{} already exists.'.format(root))
+                self.db.add_repository(identifier, principal_investigator)
+                if inform:
+                    self.warning_dialog('{} already exists.'.format(root))
             else:
                 self.info('Creating repository. {}'.format(identifier))
                 # with open('/Users/ross/Programming/githubauth.txt') as rfile:
@@ -713,6 +769,8 @@ class DVC(Loggable):
 
         if add_repo and principal_investigator:
             self.add_repository('Irradiation-{}'.format(name), principal_investigator)
+
+        return True
 
     def add_load_holder(self, name, path_or_txt):
         with self.db.session_ctx():
@@ -784,7 +842,7 @@ class DVC(Loggable):
             # get repository branch
             a.branch = get_repository_branch(os.path.join(paths.repository_dataset_dir, expid))
 
-            a.set_tag(record.tag)
+            # a.set_tag(record.tag)
 
             # load irradiation
             if a.irradiation and a.irradiation not in ('NoIrradiation',):

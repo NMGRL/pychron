@@ -27,18 +27,28 @@ from traitsui.qt4.editor import Editor
 
 class _TextEditor(Editor):
     fontsize = Int
+
     def init(self, parent):
         """ Finishes initializing the editor by creating the underlying toolkit
             widget.
         """
-        self.control = QtGui.QPlainTextEdit(self.str_value)
-        QtCore.QObject.connect(self.control,
-                               QtCore.SIGNAL('editingFinished()'), self.update_object)
-        self.set_tooltip()
+        if self.factory.multiline:
+            ctrl = QtGui.QPlainTextEdit(self.str_value)
+            if not self.factory.wrap:
+                ctrl.setLineWrapMode(QtGui.QPlainTextEdit.NoWrap)
+        else:
+            ctrl = QtGui.QLineEdit(self.str_value)
 
-        ctrl = self.control
-        if not self.factory.wrap:
-            ctrl.setLineWrapMode(QtGui.QPlainTextEdit.NoWrap)
+        if self.factory.auto_set:
+            if isinstance(ctrl, QtGui.QPlainTextEdit):
+                QtCore.QObject.connect(ctrl,
+                                       QtCore.SIGNAL('textChanged()'), self.update_object)
+            else:
+                QtCore.QObject.connect(ctrl,
+                                       QtCore.SIGNAL('textEdited(QString)'), self.update_object)
+        else:
+            QtCore.QObject.connect(ctrl,
+                               QtCore.SIGNAL('editingFinished()'), self.update_object)
 
         if not self.factory.editable:
             ctrl.setReadOnly(True)
@@ -61,11 +71,17 @@ class _TextEditor(Editor):
             metrics = QtGui.QFontMetrics(f)
             ctrl.setTabStopWidth(self.factory.tab_width * metrics.width(' '))
 
-        self.sync_value(self.factory.fontsize_name, 'fontsize', mode='from')
+        if self.factory.placeholder:
+            ctrl.setPlaceholderText(self.factory.placeholder)
 
-    #---------------------------------------------------------------------------
+        self.sync_value(self.factory.fontsize_name, 'fontsize', mode='from')
+        self.set_tooltip()
+
+        self.control = ctrl
+
+    # ---------------------------------------------------------------------------
     #  Handles the user changing the contents of the edit control:
-    #---------------------------------------------------------------------------
+    # ---------------------------------------------------------------------------
     def _fontsize_changed(self):
         ctrl = self.control
         f = ctrl.font()
@@ -78,22 +94,31 @@ class _TextEditor(Editor):
         try:
             self.value = unicode(self.control.text())
         except TraitError, excp:
-            pass
+            print 'mytexteditor {}'.format(excp)
 
     def update_editor(self):
         new_value = self.str_value
-        if self.control.toPlainText() != new_value:
-            self.control.setPlainText( new_value )
+        ctrl = self.control
+        if isinstance(ctrl, QtGui.QLineEdit):
+
+            self.control.setText(new_value)
+        else:
+            if self.control.toPlainText() != new_value:
+                self.control.setPlainText(new_value)
 
 
 class myTextEditor(BasicEditorFactory):
     klass = _TextEditor
     wrap = Bool
     tab_width = Int
-    editable = Bool
+    editable = Bool(True)
     bgcolor = Color
     fontsize = Int
     fontsize_name = Str
     fontname = 'courier'
+    placeholder = Str
+    multiline = Bool(True)
+    auto_set = Bool(True)
+
 
 # ============= EOF =============================================

@@ -15,18 +15,38 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Float, Str, Int
+from traits.api import Float, Str, Int, List
 # ============= standard library imports ========================
 import time
 from numpy import max, argmax, vstack, linspace
 from scipy import interpolate
-from scipy.optimize import leastsq
-from scipy.stats import norm
 # ============= local library imports  ==========================
 from magnet_sweep import MagnetSweep
 from pychron.graph.graph import Graph
-from pychron.core.stats.peak_detection import calculate_peak_center, PeakCenterError, interpolate
+from pychron.core.stats.peak_detection import calculate_peak_center, PeakCenterError
 from pychron.core.ui.gui import invoke_in_main_thread
+
+
+class PeakCenterResult:
+    low_dac = None
+    center_dac = None
+    high_dac = None
+
+    low_signal = None
+    center_signal = None
+    high_signal = None
+
+    detector = None
+    points = None
+
+    def __init__(self, det, pts):
+        self.detector = det
+        self.points = pts
+
+    @property
+    def attrs(self):
+        return ('low_dac', 'center_dac', 'high_dac',
+                'low_signal', 'center_signal', 'high_signal')
 
 
 class BasePeakCenter(MagnetSweep):
@@ -42,6 +62,7 @@ class BasePeakCenter(MagnetSweep):
     select_peak = 1
     use_dac_offset = False
     dac_offset = 0
+    calculate_all_peaks = False
 
     canceled = False
     show_label = False
@@ -49,6 +70,8 @@ class BasePeakCenter(MagnetSweep):
     directions = None
 
     _markup_idx = 1
+
+    results = List
 
     def close_graph(self):
         self.graph.close_ui()
@@ -90,10 +113,42 @@ class BasePeakCenter(MagnetSweep):
                 invoke_in_main_thread(self._post_execute)
                 return center
 
+    def get_results(self):
+        g = self.graph
+
+        results = []
+        for i, det in enumerate(self.active_detectors):
+            if not isinstance(det, str):
+                det = det.name
+
+            xs = g.get_data(series=i)
+            ys = g.get_data(series=i, axis=1)
+
+            pts = vstack((xs, ys)).T
+            result = PeakCenterResult(det, pts)
+
+            p = self._calculate_peak_center(xs, ys)
+            if p:
+                [lx, cx, hx], [ly, cy, hy], mx, my = p
+                result.low_dac = lx
+                result.center_dac = cx
+                result.high_dac = hx
+
+                result.low_signal = ly
+                result.center_signal = cy
+                result.high_signal = hy
+
+            results.append(result)
+
+        return results
+
     def get_data(self):
         g = self.graph
         data = []
         for i, det in enumerate(self.active_detectors):
+            if not isinstance(det, str):
+                det = det.name
+
             xs = g.get_data(series=i)
             ys = g.get_data(series=i, axis=1)
 
@@ -165,6 +220,10 @@ class BasePeakCenter(MagnetSweep):
 
                     center, success = xs[1], True
                     invoke_in_main_thread(self._plot_center, xs, ys, mx, my, center)
+
+                    if self.calculate_all_peaks:
+                        self.results = self.get_results()
+
                 else:
                     if max(intensities) > self.min_peak_height * 5:
                         smart_shift = True
@@ -200,18 +259,20 @@ class BasePeakCenter(MagnetSweep):
     def _plot_center(self, xs, ys, mx, my, center):
         graph = self.graph
 
-        graph.new_series(type='scatter', marker='circle',
-                         marker_size=4,
-                         color='green')
+        s1 = len(graph.series[0])
         graph.new_series(type='scatter', marker='circle',
                          marker_size=4,
                          color='green')
 
-        graph.set_data(xs, series=self._markup_idx)
-        graph.set_data(ys, series=self._markup_idx, axis=1)
+        graph.new_series(type='scatter', marker='circle',
+                         marker_size=4,
+                         color='orange')
 
-        graph.set_data([mx], series=self._markup_idx + 1)
-        graph.set_data([my], series=self._markup_idx + 1, axis=1)
+        graph.set_data(xs, series=s1)
+        graph.set_data(ys, series=s1, axis=1)
+
+        graph.set_data([mx], series=s1 + 1)
+        graph.set_data([my], series=s1 + 1, axis=1)
 
         graph.add_vertical_rule(center)
 
@@ -223,11 +284,11 @@ class BasePeakCenter(MagnetSweep):
 
     def _calculate_peak_center(self, x, y):
         if self.use_interpolation:
-            f = interpolate.interp1d(x, y)
-            x = linspace(x[0], x[-1], 1000)
+            f = interpolate.interp1d(x, y, kind='cubic')
+            x = linspace(x.min(), x.max(), 500)
             y = f(x)
-
-            self.graph.new_series(x, y, line_style='dash')
+            self.graph.new_series(x, y, line_width=1)
+            self.graph.redraw()
 
         if self.n_peaks > 1:
             self.warning('peak deconvolution disabled')
@@ -287,7 +348,11 @@ class BasePeakCenter(MagnetSweep):
                 font='modern 8',
                 line_spacing=1))
 
-        self._series_factory(graph)
+        kind = 'line'
+        if self.use_interpolation:
+            kind = 'scatter'
+
+        self._series_factory(graph, kind=kind)
 
         graph.set_series_label('*{}'.format(self.reference_detector.name))
         self._markup_idx = 1
@@ -295,7 +360,7 @@ class BasePeakCenter(MagnetSweep):
         for di in self.additional_detectors:
             det = spec.get_detector(di)
             c = det.color
-            self._series_factory(graph, line_color=c)
+            self._series_factory(graph, line_color=c, kind='scatter')
             graph.set_series_label(di)
 
         if self.show_label:

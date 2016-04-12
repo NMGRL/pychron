@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Interface, provides
+from traits.api import provides
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.furnace.ifurnace_controller import IFurnaceController
@@ -49,5 +49,9 @@ class FurnaceController(AbstractDevice):
             return self._cdevice.test_connection()
         else:
             return False
+
+    def set_pid(self, pstr):
+        if self._cdevice:
+            return self._cdevice.set_pid(pstr)
 
 # ============= EOF =============================================

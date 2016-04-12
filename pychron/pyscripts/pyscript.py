@@ -799,6 +799,7 @@ class PyScript(Loggable):
 
                 man = app.get_service(*app_args)
 
+        self.debug('manager action {}'.format(man))
         if man is not None:
             if not isinstance(func, list):
                 func = [(func, args, kw)]

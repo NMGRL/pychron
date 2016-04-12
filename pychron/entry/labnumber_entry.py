@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
+
 from apptools.preferences.preference_binding import bind_preference
 from pyface.constant import YES, CANCEL
 from traits.api import Property, Str, cached_property, \
@@ -29,7 +31,7 @@ from pychron.database.defaults import load_irradiation_map
 from pychron.dvc.dvc_irradiationable import DVCIrradiationable
 from pychron.entry.editors.irradiation_editor import IrradiationEditor
 from pychron.entry.editors.level_editor import LevelEditor, load_holder_canvas
-from pychron.entry.loaders.irradiation_loader import XLSIrradiationLoader
+# from pychron.entry.loaders.irradiation_loader import XLSIrradiationLoader
 from pychron.entry.irradiation_pdf_writer import IrradiationPDFWriter, LabbookPDFWriter
 from pychron.entry.irradiation_table_view import IrradiationTableView
 from pychron.entry.identifier_generator import IdentifierGenerator
@@ -124,17 +126,25 @@ class LabnumberEntry(DVCIrradiationable):
 
     def import_irradiation(self):
         self.debug('import irradiation')
-        self.warning_dialog('Import irradiation currently not available')
-        return
+        from pychron.entry.dvc_import import do_import
 
-        from pychron.entry.tasks.importer import ImporterModel
-        from pychron.entry.tasks.importer_view import ImporterView
+        mdb = 'pychron.mass_spec.database.massspec_database_adapter.MassSpecDatabaseAdapter'
+        mssource = self.application.get_service(mdb)
+        mssource.bind_preferences()
 
-        mod = ImporterModel(db=self.dvc.db)
-        ev = ImporterView(model=mod)
-        info = ev.edit_traits()
-        if info.result:
-            self.updated = True
+        do_import(dvc=self.dvc, sources={mssource: 'Mass Spec'}, default_source='Mass Spec')
+        self.updated = True
+
+    def import_irradiation_load_xls(self, p):
+        self.debug('import irradiation file: {}'.format(p))
+
+        from pychron.entry.dvc_import import do_import
+        from pychron.entry.xls_irradiation_source import XLSIrradiationSource
+
+        xlssource = XLSIrradiationSource(p)
+        name = os.path.basename(p)
+        do_import(dvc=self.dvc, sources={xlssource: name}, default_source=name)
+        self.updated = True
 
     def get_igsns(self, igsn_repo):
         items = self.selected
@@ -293,13 +303,20 @@ class LabnumberEntry(DVCIrradiationable):
             return True
 
     def make_irradiation_load_template(self, p):
-        loader = XLSIrradiationLoader()
-        loader.make_template(p)
+        from pychron.entry.loaders.irradiation_template import IrradiationTemplate
+        i = IrradiationTemplate()
+        i.make_template(p)
 
-    def import_irradiation_load_xls(self, p):
-        loader = XLSIrradiationLoader(db=self.dvc.db,
-                                      dvc=self.dvc)
-        loader.load_irradiation(p)
+        # loader = XLSIrradiationLoader()
+        # loader.make_template(p)
+
+    # def import_irradiation_load_xls(self, p):
+    #     self.warning_dialog('XLS Irradiation Import not currently available')
+    #     return
+    #
+    #     loader = XLSIrradiationLoader(db=self.dvc.db,
+    #                                   dvc=self.dvc)
+    #     loader.load_irradiation(p)
 
     def push_changes(self):
         if self.dvc.meta_repo.has_unpushed_commits():
@@ -562,6 +579,8 @@ THIS CHANGE CANNOT BE UNDONE')
                     with dirty_ctx(self):
                         self._make_positions(n, positions)
             except BaseException, e:
+                import traceback
+                traceback.print_exc()
                 print 'excep', e
                 self.warning_dialog('Failed loading Irradiation level="{}"'.format(name))
                 sess.rollback()

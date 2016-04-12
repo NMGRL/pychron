@@ -37,6 +37,10 @@ class NMGRLFurnaceEurotherm(CoreDevice):
         else:
             return False
 
+    def set_pid(self, pstr):
+        d = json.dumps({'command': 'SetPID', 'pid': pstr})
+        return self.ask(d)
+
     def set_setpoint(self, v, **kw):
         d = json.dumps({'command': 'SetSetpoint', 'setpoint': v})
         self.ask(d)

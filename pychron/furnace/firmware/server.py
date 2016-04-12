@@ -20,7 +20,7 @@ from traits.api import Instance
 # ============= local library imports  ==========================
 from twisted.internet import reactor
 from twisted.internet.endpoints import TCP4ServerEndpoint
-from twisted.internet.protocol import Factory, Protocol
+from twisted.internet.protocol import Factory
 
 from pychron.headless_loggable import HeadlessLoggable
 from pychron.tx.protocols.service import ServiceProtocol
@@ -39,7 +39,8 @@ class FurnaceFirmwareProtocol(ServiceProtocol):
 
         controller_services = (('GetTemperature', self._manager.get_temperature),
                                ('GetSetpoint', self._manager.get_setpoint),
-                               ('SetSetpoint', self._manager.set_setpoint))
+                               ('SetSetpoint', self._manager.set_setpoint),
+                               ('SetPID', self._manager.set_pid))
 
         valve_services = (('Open', self._manager.open_switch),
                           ('Close', self._manager.close_switch),

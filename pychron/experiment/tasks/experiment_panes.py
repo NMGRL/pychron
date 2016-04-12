@@ -192,6 +192,7 @@ class ExperimentFactoryPane(TraitsDockPane):
                     HGroup(run_factory_item('labnumber',
                                             tooltip='Enter a Labnumber',
                                             width=100,
+                                            enabled_when='object.run_factory.special_labnumber == "Special Labnumber"',
                                             editor=ComboboxEditor(name=run_factory_name('labnumbers'))),
                            run_factory_item('aliquot',
                                             width=50),

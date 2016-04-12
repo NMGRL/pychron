@@ -209,7 +209,11 @@ class GitRepoManager(Loggable):
         prog.change_message('Cloning repository {}'.format(url))
 
         def foo():
-            Repo.clone_from(url, path)
+            try:
+                Repo.clone_from(url, path)
+            except GitCommandError:
+                shutil.rmtree(path)
+
             evt.set()
 
         t = Thread(target=foo)

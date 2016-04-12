@@ -218,10 +218,21 @@ class Production(MetaObject):
         if self.attrs is None:
             self.attrs = []
 
-        for k, v in d.iteritems():
-            setattr(self, k, v)
-            if not k.endswith('_err') and k not in self.attrs:
-                self.attrs.append(k)
+        if isinstance(d, dict):
+            for k, v in d.iteritems():
+                setattr(self, k, v)
+                if not k.endswith('_err') and k not in self.attrs:
+                    self.attrs.append(k)
+        else:
+            attrs = []
+            for k in INTERFERENCE_KEYS + RATIO_KEYS:
+                attrs.append(k)
+                v = getattr(d, k)
+                if v is None:
+                    v = (0, 0)
+                setattr(self, k, v[0])
+                setattr(self, '{}_err'.format(k), v[1])
+            self.attrs = attrs
 
     def to_dict(self, keys):
         return {t: ufloat(getattr(self, t), getattr(self, '{}_err'.format(t))) for t in keys}
@@ -315,6 +326,8 @@ class MetaRepo(GitRepoManager):
     #         path = paths.meta_dir
     #
     #     paths.meta_dir = path
+    def add_unstaged(self, *args, **kw):
+        super(MetaRepo, self).add_unstaged(self.path, **kw)
 
     def save_gains(self, ms, gains_dict):
         p = self._gain_path(ms)
@@ -331,6 +344,8 @@ class MetaRepo(GitRepoManager):
         self._update_text(os.path.join('experiments', rootname), name, path_or_blob)
 
     def update_level_production(self, irrad, name, prname):
+        prname = prname.replace(' ', '_')
+
         src = os.path.join(paths.meta_root, 'productions', '{}.json'.format(prname))
         if os.path.isfile(src):
             dest = os.path.join(paths.meta_root, irrad, 'productions', '{}.json'.format(prname))
@@ -340,13 +355,14 @@ class MetaRepo(GitRepoManager):
         else:
             self.warning_dialog('Invalid production name'.format(prname))
 
-    def add_production_to_irradiation(self, irrad, name, params, add=True):
-        p = os.path.join(paths.meta_root, irrad, '{}.json'.format(name))
+    def add_production_to_irradiation(self, irrad, name, params, add=True, commit=False):
+        p = os.path.join(paths.meta_root, irrad, 'productions', '{}.json'.format(name))
         prod = Production(p)
+
         prod.update(params)
         prod.dump()
         if add:
-            self.add(p)
+            self.add(p, commit=commit)
 
     def add_production(self, irrad, name, obj, commit=False, add=True):
         p = self.get_production(irrad, name, force=True)
@@ -481,7 +497,12 @@ class MetaRepo(GitRepoManager):
         obj['z'] = z
         dvc_dump(obj, p)
 
-    def update_flux(self, irradiation, level, pos, identifier, j, e, decay, analyses, add=True):
+    def update_flux(self, irradiation, level, pos, identifier, j, e, decay=None, analyses=None, add=True):
+        if decay is None:
+            decay = {}
+        if analyses is None:
+            analyses = []
+
         p = self.get_level_path(irradiation, level)
         jd = dvc_load(p)
 

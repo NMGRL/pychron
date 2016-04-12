@@ -34,7 +34,7 @@ from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, \
     MeasuredPositionTbl, ProductionTbl, VersionTbl, RepositoryAssociationTbl, \
     RepositoryTbl, AnalysisChangeTbl, \
     InterpretedAgeTbl, InterpretedAgeSetTbl, PrincipalInvestigatorTbl
-from pychron.pychron_constants import ALPHAS, alpha_to_int
+from pychron.pychron_constants import ALPHAS, alpha_to_int, NULL_STR
 
 
 class NewMassSpectrometerView(HasTraits):
@@ -188,6 +188,42 @@ class DVCDatabase(DatabaseAdapter):
             # print 'refs', refs
             return [rii for ri in refs for rii in ri.record_views]
 
+    def get_blanks(self, ms=None, limit=100):
+        with self.session_ctx() as sess:
+            q = sess.query(AnalysisTbl)
+            q = q.filter(AnalysisTbl.analysis_type.like('blank%'))
+
+            if ms:
+                q = q.filter(func.lower(AnalysisTbl.mass_spectrometer) == ms.lower())
+
+            return self._retrieve_items(AnalysisTbl, order=AnalysisTbl.timestamp.desc(),
+                                        limit=limit)
+
+    def retrieve_blank(self, kind, ms, ed, last, repository):
+        with self.session_ctx() as sess:
+            q = sess.query(AnalysisTbl)
+
+            if repository:
+                q = q.join(RepositoryAssociationTbl)
+                q = q.join(RepositoryTbl)
+
+            if last:
+                q = q.filter(AnalysisTbl.analysis_type == 'blank_{}'.format(kind))
+            else:
+                q = q.filter(AnalysisTbl.analysis_type.startswith('blank'))
+
+            if ms:
+                q = q.filter(func.lower(AnalysisTbl.mass_spectrometer) == ms.lower())
+
+            if ed and ed not in ('Extract Device', NULL_STR) and kind == 'unknown':
+                q = q.filter(func.lower(AnalysisTbl.extract_device) == ed.lower())
+
+            if repository:
+                q = q.filter(RepositoryTbl.name == repository)
+
+            q = q.order_by(AnalysisTbl.timestamp.desc())
+            return self._query_one(q)
+
     # def get_analyses_data_range(self, low, high, atypes, exclude=None, exclude_uuids=None):
     #     with self.session_ctx() as sess:
     #         q = sess.query(AnalysisTbl)
@@ -275,25 +311,23 @@ class DVCDatabase(DatabaseAdapter):
             e.analysis = analysis
             return self._add_item(e)
 
-    def add_material(self, name):
+    def add_material(self, name, grainsize=None):
         with self.session_ctx():
             a = self.get_material(name)
             if a is None:
-                a = MaterialTbl(name=name)
+                a = MaterialTbl(name=name, grainsize=grainsize)
                 a = self._add_item(a)
             return a
 
-    def add_sample(self, name, project, material):
+    def add_sample(self, name, project, material, grainsize=None):
         with self.session_ctx():
-            a = self.get_sample(name, project, material)
+            a = self.get_sample(name, project, material, grainsize)
             if a is None:
-                self.debug('ADDING SAMPLE {},{},{}'.format(name, project, material))
+                self.debug('Adding sample {},{},{}'.format(name, project, material))
                 a = SampleTbl(name=name)
                 a.project = self.get_project(project)
-                a.material = self.get_material(material)
+                a.material = self.get_material(material, grainsize)
                 a = self._add_item(a)
-            # else:
-            # self.debug('SAMPLE {},{} ALREADY EXISTS'.format(name,project))
             return a
 
     def add_extraction_device(self, name):
@@ -342,11 +376,12 @@ class DVCDatabase(DatabaseAdapter):
         with self.session_ctx():
             a = self.get_project(name, pi)
             if a is None:
+                self.debug('Adding project {} {}'.format(name, pi))
                 a = ProjectTbl(name=name)
                 if pi:
                     dbpi = self.get_principal_investigator(pi)
                     if dbpi:
-                        a.principal_investigator = dbpi
+                        a.principal_investigator = pi
 
                 a = self._add_item(a)
             return a
@@ -355,12 +390,16 @@ class DVCDatabase(DatabaseAdapter):
         with self.session_ctx():
             dbpos = self.get_irradiation_position(irrad, level, pos)
             if dbpos is None:
+                self.debug('Adding irradiation position {}{} {}'.format(irrad, level, pos))
                 a = IrradiationPositionTbl(position=pos, **kw)
                 if identifier:
                     a.identifier = str(identifier)
 
                 a.level = self.get_irradiation_level(irrad, level)
                 dbpos = self._add_item(a)
+            else:
+                self.debug('Irradiation position exists {}{} {}'.format(irrad, level, pos))
+
             return dbpos
 
     def add_load_position(self, ln, position, weight=0, note=''):
@@ -371,6 +410,10 @@ class DVCDatabase(DatabaseAdapter):
 
     def add_repository(self, name, principal_investigator, **kw):
         with self.session_ctx():
+            repo = self.get_repository(name)
+            if repo:
+                return repo
+
             principal_investigator = self.get_principal_investigator(principal_investigator)
             if not principal_investigator:
                 principal_investigator = self.add_principal_investigator(principal_investigator)
@@ -993,16 +1036,20 @@ class DVCDatabase(DatabaseAdapter):
     def get_irradiation(self, name):
         return self._retrieve_item(IrradiationTbl, name)
 
-    def get_material(self, name):
-        return self._retrieve_item(MaterialTbl, name)
+    def get_material(self, name, grainsize=None):
+        with self.session_ctx() as sess:
+            q = sess.query(MaterialTbl)
+            q = q.filter(MaterialTbl.name == name)
+            q = q.filter(MaterialTbl.grainsize == grainsize)
+            return self._query_one(q)
 
-    def get_sample(self, name, project, material):
+    def get_sample(self, name, project, material, grainsize=None):
         with self.session_ctx() as sess:
             q = sess.query(SampleTbl)
             q = q.join(ProjectTbl)
 
             project = self.get_project(project)
-            material = self.get_material(material)
+            material = self.get_material(material, grainsize)
 
             q = q.filter(SampleTbl.project == project)
             q = q.filter(SampleTbl.material == material)
@@ -1063,6 +1110,11 @@ class DVCDatabase(DatabaseAdapter):
             return items[0]
 
     # multi getters
+    def get_principal_investigator_names(self, *args, **kw):
+        with self.session_ctx():
+            items = self.get_principal_investigators(*args, **kw)
+            return [i.name for i in items]
+
     def get_principal_investigators(self, order=None, **kw):
         if order:
             order = getattr(PrincipalInvestigatorTbl.name, order)()

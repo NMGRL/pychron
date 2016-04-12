@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change, provides, TraitError
+from traits.api import HasTraits, Float, Property, provides, TraitError
 # ============= standard library imports ========================
 import os
 import re
@@ -26,6 +26,31 @@ from pychron.paths import paths
 
 
 PID_REGEX = re.compile(r'[A-Z]{2},\d+(;[A-Z]{2},\d+)*')
+
+
+def get_pid_parameters(v):
+    """
+    """
+    p = os.path.join(paths.device_dir, 'furnace', 'eurotherm_control_parameters.txt')
+    with open(p) as f:
+        params = [l.split('\t') for l in f]
+
+    for i, pa in enumerate(params[:-1]):
+
+        low_t = int(pa[0])
+        if i == 0:
+            if v < low_t:
+                return pa
+            continue
+
+        try:
+            high_t = int(params[i + 1][0])
+        except ValueError:
+            return None
+
+        if low_t <= v < high_t:
+            return pa
+
 
 @provides(IFurnaceController)
 class BaseEurotherm(HasTraits):
@@ -85,33 +110,10 @@ class BaseEurotherm(HasTraits):
     def set_pid_parameters(self, v):
         """
         """
-        params = self.get_pid_parameters(v)
+        params = get_pid_parameters(v)
         self.debug('set pid parameters temp={}, params={}'.format(v, params))
         if params:
             self.set_pid_str(params[1])
-
-    def get_pid_parameters(self, v):
-        """
-        """
-        p = os.path.join(paths.device_dir, 'furnace', 'eurotherm_control_parameters.txt')
-        with open(p) as f:
-            params = [l.split('\t') for l in f]
-
-        for i, pa in enumerate(params[:-1]):
-
-            low_t = int(pa[0])
-            if i == 0:
-                if v < low_t:
-                    return pa
-                continue
-
-            try:
-                high_t = int(params[i + 1][0])
-            except ValueError:
-                return None
-
-            if low_t <= v < high_t:
-                return pa
 
     def set_process_setpoint(self, v):
         """

@@ -16,12 +16,20 @@
 from pychron.core.helpers.strtools import to_bool
 
 
-def get_valve_name(obj):
+def get_valve_address(obj):
     if isinstance(obj, (str, int)):
         addr = obj
     else:
-        addr = obj.name.split('-')[1]
+        addr = obj.address
     return addr
+
+
+def get_valve_name(obj):
+    if isinstance(obj, (str, int)):
+        name = obj
+    else:
+        name = obj.name.split('-')[1]
+    return name
 
 
 def trim(func):

@@ -16,11 +16,9 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-import json
+import time
 from threading import Thread
 
-from cStringIO import StringIO
-import time
 import yaml
 # ============= local library imports  ==========================
 from pychron.core.helpers.strtools import to_bool
@@ -200,14 +198,20 @@ class FirmwareManager(HeadlessLoggable):
                 alt_name = data['name']
             else:
                 alt_name, _ = data
-            alt_ch, inverted = self._get_switch_channel(alt_name)
-            ch = self._get_switch_indicator(data)
+            alt_ch, _ = self._get_switch_channel(alt_name)
+            ch, action, inverted = self._get_switch_indicator(data)
             if ch is None:
-                result = self.get_channel_state(alt_ch)
+                dch = alt_ch
+                result = self.switch_controller.get_channel_state(alt_ch)
+                if action == 'open':
+                    result = result == 0
+                else:
+                    result = result == 1
             else:
+                dch = ch
                 result = self.switch_controller.get_channel_state(ch)
 
-            self.debug('indicator state {}, invert={}'.format(result, inverted))
+            self.debug('indicator ch={} state {}, invert={}'.format(dch, result, inverted))
             if inverted:
                 result = not result
             return result
@@ -350,7 +354,7 @@ class FirmwareManager(HeadlessLoggable):
     def set_pid(self, data):
         controller = self.controller
         if controller:
-            return controller.set_pid_str(data)
+            return controller.set_pid_str(data.get('pid', ''))
 
     # private
     def _get_drive(self, data):
@@ -385,13 +389,22 @@ class FirmwareManager(HeadlessLoggable):
 
         ch = self._switch_indicator_mapping.get(name)
         self.debug('get switch indicator channel {} {}'.format(name, ch))
+        action = action.lower()
 
+        inverted = False
         if ',' in str(ch):
             o, c = map(str.strip, ch.split(','))
-            ch = o if action.lower() == 'open' else c
+            ch = o if action == 'open' else c
+            if ch.startswith('i'):
+                inverted = True
+                ch = ch[1:]
+
             if not ch or ch == '-':
                 ch = None
+        elif ch == 'inverted':
+            ch = None
+            inverted = True
 
-        return ch
+        return ch, action, inverted
 
 # ============= EOF =============================================

@@ -64,6 +64,7 @@ class PeakCenterConfig(HasTraits):
 
     use_dac_offset = Bool
     dac_offset = Float
+    calculate_all_peaks = Bool
 
     def _integration_time_default(self):
         return QTEGRA_INTEGRATION_TIMES[4]  # 1.048576
@@ -76,7 +77,6 @@ class PeakCenterConfig(HasTraits):
             self.select_n_peak = new
 
     def _detector_changed(self, new):
-        print new, self.detectors
         if new:
             self.available_detectors = [d for d in self.detectors if d != new]
 
@@ -103,6 +103,7 @@ class PeakCenterConfig(HasTraits):
                              enabled_when='n_peaks>1', label='Select Peak'),
                         HGroup(Item('use_dac_offset', label='DAC Offset'),
                                UItem('dac_offset', enabled_when='use_dac_offset')),
+                        Item('calculate_all_peaks'),
                         show_border=True, label='Post Process')
 
         v = View(VGroup(HGroup(Item('detector', editor=EnumEditor(name='detectors')),
@@ -223,6 +224,22 @@ class PeakCenterConfigurer(ItemConfigurer):
         kw['available_detectors'] = self.detectors
 
         super(PeakCenterConfigurer, self).load(**kw)
+
+        det = self.active_item.detector
+        self.active_item.detector = ''
+        self.active_item.detector = det
+
+    def get(self, *args, **kw):
+        item = super(PeakCenterConfigurer, self).get(*args, **kw)
+        item.trait_set(detectors=self.detectors,
+                       isotopes=self.isotopes,
+                       available_detectors=self.detectors)
+
+        det = item.detector
+        item.detector = ''
+        item.detector = det
+        return item
+
 # if __name__ == '__main__':
 #     from pychron.paths import paths
 #

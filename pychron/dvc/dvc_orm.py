@@ -244,6 +244,7 @@ class ProjectTbl(Base, NameMixin):
 class MaterialTbl(Base, NameMixin):
     id = Column(Integer, primary_key=True)
     samples = relationship('SampleTbl', backref='material')
+    grainsize = Column(String(80))
 
 
 class SampleTbl(Base, NameMixin):

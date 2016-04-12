@@ -455,6 +455,11 @@ class ExtractionPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
+    def set_pid_parameters(self, v):
+        self._extraction_action([('set_pid_parameters', (v,), {})])
+
+    @verbose_skip
+    @command_register
     def extract(self, power='', units=''):
         if power == '':
             power = self.extract_value
@@ -752,13 +757,15 @@ class ExtractionPyScript(ValvePyScript):
             self.warning('no device available named "{}"'.format(name))
 
     def _extraction_action(self, *args, **kw):
-        if 'name' not in kw:
+        if 'name' not in kw or kw['name'] is None:
             kw['name'] = self.extract_device
-        if 'protocol' not in kw:
+        if 'protocol' not in kw or kw['protocol'] is None:
             kw['protocol'] = ILaserManager
 
         if kw['name'] in ('Extract Device', 'ExtractDevice', 'extract device', 'extractdevice', NULL_STR, LINE_STR):
+            self.debug('no extraction action')
             return
+
         return self._manager_action(*args, **kw)
 
     def _disable(self, protocol=None):

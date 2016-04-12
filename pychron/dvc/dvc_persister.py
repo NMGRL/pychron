@@ -407,23 +407,37 @@ class DVCPersister(BasePersister):
 
         obj = {}
         if pc:
-            obj['reference_detector'] = pc.reference_detector
+            obj['reference_detector'] = pc.reference_detector.name
             obj['reference_isotope'] = pc.reference_isotope
-            if pc.result:
-                xs, ys, _mx, _my = pc.result
-                obj.update({'low_dac': xs[0],
-                            'center_dac': xs[1],
-                            'high_dac': xs[2],
-                            'low_signal': ys[0],
-                            'center_signal': ys[1],
-                            'high_signal': ys[2]})
+            fmt = '>ff'
+            obj['fmt'] = fmt
+            results = pc.get_results()
+            if results:
+                for result in results:
+                    obj[result.detector] = {'low_dac': result.low_dac,
+                                            'center_dac': result.center_dac,
+                                            'high_dac': result.high_dac,
+                                            'low_signal': result.low_signal,
+                                            'center_signal': result.center_signal,
+                                            'high_signal': result.high_signal,
+                                            'points': base64.b64encode(''.join([struct.pack(fmt, *di)
+                                                                                for di in result.points]))}
 
-            data = pc.get_data()
-            if data:
-                fmt = '>ff'
-                obj['fmt'] = fmt
-                for det, pts in data:
-                    obj[det] = base64.b64encode(''.join([struct.pack(fmt, *di) for di in pts]))
+            # if pc.result:
+            #     xs, ys, _mx, _my = pc.result
+            #     obj.update({'low_dac': xs[0],
+            #                 'center_dac': xs[1],
+            #                 'high_dac': xs[2],
+            #                 'low_signal': ys[0],
+            #                 'center_signal': ys[1],
+            #                 'high_signal': ys[2]})
+            #
+            # data = pc.get_data()
+            # if data:
+            #     fmt = '>ff'
+            #     obj['fmt'] = fmt
+            #     for det, pts in data:
+            #         obj[det] = base64.b64encode(''.join([struct.pack(fmt, *di) for di in pts]))
 
         dvc_dump(obj, p)
 

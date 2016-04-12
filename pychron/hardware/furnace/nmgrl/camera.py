@@ -46,25 +46,27 @@ def timeout(func):
 class NMGRLCamera(ConfigLoadable):
     is_scanable = False
     host = Str
+    _session = None
 
     def close(self):
         pass
 
+    def initialize(self, *args, **kw):
+        self._session = requests.Session()
+
+        return True
+
     @timeout
     def test_connection(self):
-        resp = requests.get('http://{}/html/cam_pic.php'.format(self.host), timeout=2)
+        resp = self._session.get('http://{}/html/cam_pic.php'.format(self.host), timeout=2)
         return resp.status_code == 200
 
     @timeout
     def get_image_data(self, size=None):
-        resp = requests.get('http://{}/html/cam_pic.php'.format(self.host), timeout=2)
+        resp = self._session.get('http://{}/html/cam_pic.php'.format(self.host), timeout=2)
         if resp.status_code == 200:
             buf = StringIO(resp.content)
-            buf.seek(0)
             im = Image.open(buf)
-            # basewidth = 640
-            # wpercent = (basewidth / float(im.size[0]))
-            # hsize = int((float(im.size[1]) * float(wpercent)))
             if size:
                 im = im.resize(size, Image.ANTIALIAS)
 

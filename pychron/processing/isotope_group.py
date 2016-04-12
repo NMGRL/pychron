@@ -205,11 +205,11 @@ class IsotopeGroup(Loggable):
 
     def clear_baselines(self):
         for k in self.isotopes:
-            self.set_baseline(k, (0, 0))
+            self.set_baseline(k, None, (0, 0))
 
     def clear_blanks(self):
         for k in self.isotopes:
-            self.set_blank(k, (0, 0))
+            self.set_blank(k, None, (0, 0))
 
     def clear_error_components(self):
         for iso in self.isotopes.itervalues():
@@ -281,16 +281,16 @@ class IsotopeGroup(Loggable):
 
         return niso
 
-    def set_baseline(self, iso, v):
+    def set_baseline(self, iso, det, v):
         if iso not in self.isotopes:
-            niso = Isotope(name=iso)
+            niso = Isotope(iso, det)
             self.isotopes[iso] = niso
 
         self.isotopes[iso].baseline.set_uvalue(v)
 
-    def set_blank(self, iso, v):
+    def set_blank(self, iso, detector, v):
         if iso not in self.isotopes:
-            niso = Isotope(name=iso)
+            niso = Isotope(iso, detector)
             self.isotopes[iso] = niso
 
         self.debug('setting {} blank {}'.format(iso, v))

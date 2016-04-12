@@ -400,6 +400,7 @@ class ProjectTable(Base):
     ProjectID = Column(Integer, primary_key=True)
     Project = Column(String(40))
     samples = relationship('SampleTable', backref='project')
+    PrincipalInvestigator = Column(String(80))
 
 
 class RunScriptTable(Base):
