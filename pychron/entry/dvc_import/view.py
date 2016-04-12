@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from traits.api import Property, Instance
-from traitsui.api import View, Item, Controller, VGroup, HGroup, UItem, EnumEditor, TabularEditor
+from traitsui.api import View, Item, Controller, VGroup, HGroup, UItem, EnumEditor, TabularEditor, HSplit
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 
@@ -32,7 +32,14 @@ class ImportNameAdapter(TabularAdapter):
 
 
 class ImportedNameAdapter(TabularAdapter):
-    columns = [('Name', 'name'), ('Skipped', 'skipped')]
+    columns = [('Name', 'name'),
+               ('Levels', 'nlevels'),
+               ('Positions', 'npositions'),
+               ('Samples', 'nsamples'),
+               ('Projects', 'nprojects'),
+               ('Materials', 'nmaterials'),
+               ('PIs', 'nprincipal_investigators')]
+
     skipped_text = Property
 
     def _get_skipped_text(self):
@@ -62,19 +69,21 @@ class DVCImporterView(Controller):
                                                                placeholder='Filter Irradiations')),
                        icon_button_editor('clear_filter_button', 'clear'))
 
-        a_grp = HGroup(Item('available_irradiations', show_label=False,
+        a_grp = HSplit(Item('available_irradiations', show_label=False,
+                            width=0.2,
                             editor=TabularEditor(adapter=ImportNameAdapter(),
                                                  editable=False,
                                                  selected='selected',
                                                  multi_select=True,
                                                  scroll_to_row='scroll_to_row')),
                        Item('imported_irradiations', show_label=False,
+                            width=0.8,
                             editor=TabularEditor(adapter=ImportedNameAdapter(),
                                                  editable=False)))
         v = View(VGroup(s_grp, a_grp),
                  kind='livemodal',
                  resizable=True,
-                 width=600,
+                 width=700,
                  buttons=[ImportButton(), 'OK', 'Cancel'],
                  title='Import Irradiations')
         # v = View(VGroup(

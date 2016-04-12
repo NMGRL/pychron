@@ -26,7 +26,16 @@ from pychron.loggable import Loggable
 
 class IrradiationItem(HasTraits):
     name = Str
+
+
+class ImportedIrradiation(IrradiationItem):
     skipped = Bool
+    nlevels = Int
+    npositions = Int
+    nsamples = Int
+    nprojects = Int
+    nmaterials = Int
+    nprincipal_investigators = Int
 
 
 class Mapper:
@@ -111,7 +120,6 @@ class DVCImporterModel(Loggable):
 
             self._import_irradiation(spec.irradiation)
 
-        self.imported_irradiations.extend(self.selected)
         prog.close()
 
     def _import_irradiation(self, irrad):
@@ -121,12 +129,13 @@ class DVCImporterModel(Loggable):
         dvc = self.dvc
 
         dvc.add_irradiation(name, irrad.doses)
-
+        self._active_import = ImportedIrradiation(name=name)
         for level in irrad.levels:
             self._import_level(name, level)
 
-        dvc.meta_repo.add_unstaged()
-        dvc.meta_repo.commit('Imported {}'.format(name))
+        # dvc.meta_repo.add_unstaged()
+        # dvc.meta_repo.commit('Imported {}'.format(name))
+        self.imported_irradiations.append(self._active_import)
 
     def _import_level(self, irradname, level):
         name = level.name
@@ -135,7 +144,8 @@ class DVCImporterModel(Loggable):
         dvc = self.dvc
 
         dvc.add_production(irradname, level.production.name, level.production)
-        dvc.add_irradiation_level(name, irradname, level.holder, level.production.name)
+        if dvc.add_irradiation_level(name, irradname, level.holder, level.production.name):
+            self._active_import.nlevels += 1
 
         for p in level.positions:
             self._import_position(irradname, level, p)
@@ -149,25 +159,36 @@ class DVCImporterModel(Loggable):
             sam = p.sample
 
             material = self.mapper.material(sam.material)
-            db.add_material(material)
+            added = dvc.add_material(material)
+            if added:
+                self._active_import.nmaterials += 1
             sess.commit()
 
             principal_investigator = self.mapper.principal_investigator(sam.project.principal_investigator)
-            db.add_principal_investigator(principal_investigator)
+            added = dvc.add_principal_investigator(principal_investigator)
+            if added:
+                self._active_import.nprincipal_investigators += 1
             sess.commit()
 
             project = self.mapper.project(sam.project.name)
-            db.add_project(project, principal_investigator)
+            added = dvc.add_project(project, principal_investigator)
+            if added:
+                self._active_import.nprojects += 1
             sess.commit()
 
-            dbsam = db.add_sample(sam.name, project, material)
+            added = dvc.add_sample(sam.name, project, material)
+            if added:
+                self._active_import.nsamples += 1
             sess.commit()
+            dbsam = db.get_sample(sam.name, project, material)
 
-            dvc.add_irradiation_position(irradname, level.name, p.position,
-                                         identifier=p.identifier,
-                                         sample=dbsam,
-                                         note=p.note,
-                                         weight=p.weight)
+            added = dvc.add_irradiation_position(irradname, level.name, p.position,
+                                                 identifier=p.identifier,
+                                                 sample=dbsam,
+                                                 note=p.note,
+                                                 weight=p.weight)
+            if added:
+                self._active_import.npositions += 1
             dvc.update_flux(irradname, level.name, p.position, p.identifier, p.j, p.j_err)
 
     def _open_progress(self, specs):

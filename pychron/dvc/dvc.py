@@ -649,33 +649,63 @@ class DVC(Loggable):
             self.db.add_measured_position(*args, **kw)
 
     def add_material(self, name):
-        with self.db.session_ctx():
-            self.db.add_material(name)
+        db = self.db
+        added = False
+        with db.session_ctx():
+            if not db.get_material(name):
+                added = True
+                db.add_material(name)
+
+        return added
 
     def add_project(self, name, pi=None):
-        with self.db.session_ctx():
-            self.db.add_project(name, pi)
+        added = False
+        db = self.db
+        with db.session_ctx():
+            if not db.get_project(name, pi):
+                added = True
+                db.add_project(name, pi)
+        return added
 
     def add_sample(self, name, project, material):
-        with self.db.session_ctx():
-            self.db.add_sample(name, project, material)
+        added = False
+        db = self.db
+        with db.session_ctx():
+            if not db.get_sample(name, project, material):
+                added = True
+                db.add_sample(name, project, material)
+        return added
+
+    def add_principal_investigator(self, name):
+        added = False
+        db = self.db
+        with db.session_ctx():
+            if not db.get_principal_investigator(name):
+                db.add_principal_investigator(name)
+                added = True
+        return added
 
     def add_irradiation_position(self, irrad, level, pos, identifier=None, **kw):
-        with self.db.session_ctx():
-            dbip = self.db.add_irradiation_position(irrad, level, pos, identifier, **kw)
-            # self.db.commit()
-
-            self.meta_repo.add_position(irrad, level, pos)
-            return dbip
+        db = self.db
+        added = False
+        with db.session_ctx():
+            if not db.get_irradiation_position(irrad, level, pos):
+                db.add_irradiation_position(irrad, level, pos, identifier, **kw)
+                self.meta_repo.add_position(irrad, level, pos)
+                added = True
+        return added
 
     def add_irradiation_level(self, name, irradiation, holder, production_name):
+        added = False
         with self.db.session_ctx():
-            self.db.add_irradiation_level(name, irradiation, holder, production_name)
-            # self.db.commit()
+            dblevel = self.get_irradiation_level(irradiation, name)
+            if dblevel is None:
+                added = True
+                self.db.add_irradiation_level(name, irradiation, holder, production_name)
 
         self.meta_repo.add_level(irradiation, name)
         self.meta_repo.update_level_production(irradiation, name, production_name)
-        return True
+        return added
 
     def clone_repository(self, identifier):
         root = os.path.join(paths.repository_dataset_dir, identifier)
@@ -690,7 +720,7 @@ class DVC(Loggable):
         self.debug('trying to add repository identifier={}, pi={}'.format(identifier, principal_investigator))
         org = self._organization_factory()
         for r in org.repo_names:
-            print r, identifier, r==identifier
+            print r, identifier, r == identifier
         if identifier in org.repo_names:
             # make sure also in the database
             self.db.add_repository(identifier, principal_investigator)

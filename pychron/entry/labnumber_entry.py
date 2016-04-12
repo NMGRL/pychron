@@ -294,6 +294,9 @@ class LabnumberEntry(DVCIrradiationable):
         loader.make_template(p)
 
     def import_irradiation_load_xls(self, p):
+        self.warning_dialog('XLS Irradiation Import not currently available')
+        return
+
         loader = XLSIrradiationLoader(db=self.dvc.db,
                                       dvc=self.dvc)
         loader.load_irradiation(p)
