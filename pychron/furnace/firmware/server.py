@@ -58,6 +58,7 @@ class FurnaceFirmwareProtocol(ServiceProtocol):
                          ('MoveRelative', self._manager.move_relative),
                          ('GetPosition', self._manager.get_position),
                          ('Slew', self._manager.slew),
+                         ('SetHome', self._manager.set_home),
                          ('StopDrive', self._manager.stop_drive),
                          ('Moving', self._manager.moving),
                          ('StartJitter', self._manager.start_jitter),

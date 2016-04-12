@@ -19,21 +19,17 @@ from threading import Thread
 
 from enable.component_editor import ComponentEditor
 from pyface.tasks.traits_dock_pane import TraitsDockPane
-from pyface.timer.do_later import do_after
 from traits.api import Button, Bool, Str
 from traitsui.api import View, Item, Readonly, UItem, VGroup, HGroup, EnumEditor, spring, \
     InstanceEditor, ButtonEditor, Tabbed
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pyface.tasks.traits_task_pane import TraitsTaskPane
-from traitsui.editors import RangeEditor
 
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.core.ui.lcd_editor import LCDEditor
 from pychron.core.ui.stage_component_editor import VideoComponentEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
-from pychron.core.ui.button_editor import ButtonEditor as mButtonEditor
-from pychron.envisage.resources import icon
 
 
 class ControlPane(TraitsDockPane):
@@ -51,11 +47,14 @@ class ControlPane(TraitsDockPane):
 
     funnel_up_button = Button
     funnel_down_button = Button
-
+    feeder_set_home_button = Button
     toggle_advanced_view_button = Button
     _advanced_view_state = Bool(False)
 
     disable_button = Button
+
+    def _feeder_set_home_button_fired(self):
+        self.model.stage_manager.feeder.set_home()
 
     def _disable_button_fired(self):
         self.model.setpoint = 0
@@ -137,6 +136,7 @@ class ControlPane(TraitsDockPane):
                                    icon_button_editor('pane.toggle_advanced_view_button', 'cog')),
                             VGroup(Item('stage_manager.feeder.position', label='Position (units)'),
                                    Item('stage_manager.feeder.velocity'),
+                                   Item('pane.feeder_set_home_button'),
                                    visible_when='pane._advanced_view_state'),
                             show_border=True, label='Position')
 

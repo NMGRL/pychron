@@ -240,6 +240,9 @@ class BaseMDrive(BaseLinearDrive):
     def set_run_current(self, rc):
         self._set_var('RC', rc)
 
+    def set_home(self):
+        self.set_encoder_position(0)
+
     def moving(self):
         return self._moving()
 

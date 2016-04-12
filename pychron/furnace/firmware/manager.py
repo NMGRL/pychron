@@ -183,6 +183,13 @@ class FirmwareManager(HeadlessLoggable):
             return abs(pos - self._funnel_up) < self._funnel_tolerance
 
     @debug
+    def set_home(self, data):
+        drive = self._get_drive(data)
+        if drive:
+            drive.set_home()
+        return True
+
+    @debug
     def get_channel_state(self, data):
         if self.switch_controller:
             ch, inverted = self._get_switch_channel(data)
