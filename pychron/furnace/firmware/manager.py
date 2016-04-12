@@ -397,6 +397,7 @@ class FirmwareManager(HeadlessLoggable):
             ch = o if action == 'open' else c
             if ch.startswith('i'):
                 inverted = True
+                ch = ch[1:]
 
             if not ch or ch == '-':
                 ch = None
