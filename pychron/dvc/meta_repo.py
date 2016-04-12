@@ -228,6 +228,8 @@ class Production(MetaObject):
             for k in INTERFERENCE_KEYS + RATIO_KEYS:
                 attrs.append(k)
                 v = getattr(d, k)
+                if v is None:
+                    v = (0, 0)
                 setattr(self, k, v[0])
                 setattr(self, '{}_err'.format(k), v[1])
             self.attrs = attrs
@@ -356,6 +358,7 @@ class MetaRepo(GitRepoManager):
     def add_production_to_irradiation(self, irrad, name, params, add=True, commit=False):
         p = os.path.join(paths.meta_root, irrad, 'productions', '{}.json'.format(name))
         prod = Production(p)
+
         prod.update(params)
         prod.dump()
         if add:
@@ -499,7 +502,7 @@ class MetaRepo(GitRepoManager):
             decay = {}
         if analyses is None:
             analyses = []
-            
+
         p = self.get_level_path(irradiation, level)
         jd = dvc_load(p)
 

@@ -22,10 +22,10 @@ from pychron.entry.dvc_import.view import DVCImporterView
 from pychron.envisage.view_util import open_view
 
 
-def do_import(dvc, sources):
+def do_import(dvc, sources, default_source=None):
     model = DVCImporterModel(dvc=dvc, sources=sources)
 
-    model.source = next((k for k, v in sources.iteritems() if v == 'Mass Spec'), None)
+    model.source = next((k for k, v in sources.iteritems() if v == default_source), None)
     view = DVCImporterView(model=model)
     info = open_view(view)
     return info.result

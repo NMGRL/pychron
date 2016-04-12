@@ -133,8 +133,9 @@ class DVCImporterModel(Loggable):
         for level in irrad.levels:
             self._import_level(name, level)
 
-        # dvc.meta_repo.add_unstaged()
-        # dvc.meta_repo.commit('Imported {}'.format(name))
+        dvc.meta_repo.add_unstaged()
+        dvc.meta_repo.commit('Imported {}'.format(name))
+
         self.imported_irradiations.append(self._active_import)
 
     def _import_level(self, irradname, level):
@@ -144,7 +145,9 @@ class DVCImporterModel(Loggable):
         dvc = self.dvc
 
         dvc.add_production(irradname, level.production.name, level.production)
-        if dvc.add_irradiation_level(name, irradname, level.holder, level.production.name):
+        if dvc.add_irradiation_level(name, irradname, level.holder, level.production.name,
+                                     z=level.z,
+                                     note=level.note):
             self._active_import.nlevels += 1
 
         for p in level.positions:

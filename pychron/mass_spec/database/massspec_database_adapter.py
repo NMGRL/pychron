@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-
+from traits.api import provides
 # =============standard library imports ========================
 import binascii
 import math
@@ -24,6 +24,7 @@ from sqlalchemy.sql.expression import func, distinct
 from uncertainties import std_dev, nominal_value
 
 # =============local library imports  ==========================
+from pychron.entry.iimport_source import IImportSource
 from pychron.mass_spec.database.massspec_orm import IsotopeResultsTable, \
     AnalysesChangeableItemsTable, BaselinesTable, DetectorTable, \
     IsotopeTable, AnalysesTable, \
@@ -53,6 +54,7 @@ PR_KEYS = ('Ca3637', 'Ca3637Er',
            'CaOverKMultiplier', 'CaOverKMultiplierEr')
 
 
+@provides(IImportSource)
 class MassSpecDatabaseAdapter(DatabaseAdapter):
     # selector_klass = MassSpecSelector
     test_func = 'get_database_version'

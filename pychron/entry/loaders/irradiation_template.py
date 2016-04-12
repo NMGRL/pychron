@@ -19,7 +19,7 @@
 import xlwt
 # ============= local library imports  ==========================
 
-IRRADIATION_COLUMNS = ('Name', 'Level', 'PR', 'Holder')
+IRRADIATION_COLUMNS = ('Name', 'Level', 'PR', 'Holder', 'Z', 'Note')
 CHRONOLOGY_COLUMNS = ('Name', 'Start', 'End', 'Power')
 POSITION_COLUMNS = ('Irradiation', 'Level', 'Position', 'Identifier',
                     'Sample', 'PrincipalInvestigator', 'Project', 'Material',

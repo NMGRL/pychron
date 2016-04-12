@@ -15,59 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from traits.api import Interface
 
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+class IImportSource(Interface):
+    def get_import_spec(self, name):
+        pass
 
-class Irradiation:
-    levels = None
-    doses = None
-
-
-class Level:
-    name = None
-    positions = None
-    production = None
-    holder = None
-    z = None
-    note = None
-
-
-class Production:
-    name = None
-    K4039 = None
-    K3839 = None
-    K3739 = None
-    Ca3937 = None
-    Ca3837 = None
-    Ca3637 = None
-    Cl3638 = None
-    Ca_K = None
-    Cl_K = None
-
-
-class Position:
-    position = None
-    sample = None
-    identifier = None
-    j = None
-    j_err = None
-    note = None
-    weight = None
-
-
-class Sample:
-    project = None
-    material = None
-
-
-class Project:
-    name = None
-    principal_investigator = None
-
-
-class ImportSpec:
-    irradiation = None
+    def get_irradiation_names(self):
+        pass
 
 # ============= EOF =============================================

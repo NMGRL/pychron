@@ -695,13 +695,13 @@ class DVC(Loggable):
                 added = True
         return added
 
-    def add_irradiation_level(self, name, irradiation, holder, production_name):
+    def add_irradiation_level(self, name, irradiation, holder, production_name, **kw):
         added = False
         with self.db.session_ctx():
             dblevel = self.get_irradiation_level(irradiation, name)
             if dblevel is None:
                 added = True
-                self.db.add_irradiation_level(name, irradiation, holder, production_name)
+                self.db.add_irradiation_level(name, irradiation, holder, production_name, **kw)
 
         self.meta_repo.add_level(irradiation, name)
         self.meta_repo.update_level_production(irradiation, name, production_name)
