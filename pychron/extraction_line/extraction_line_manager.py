@@ -262,17 +262,16 @@ class ExtractionLineManager(Manager, Consoleable):
     def reload_scene_graph(self):
         self.info('reloading canvas scene')
 
-        for c in self.canvases:
-            if c is not None:
-                c.load_canvas_file(self.canvas_path, self.canvas_config_path, self.valves_path)
-                # c.load_canvas_file(c.config_name)
+        c = self.canvas
+        c.load_canvas_file(self.canvas_path, self.canvas_config_path, self.valves_path)
+        # c.load_canvas_file(c.config_name)
 
-                if self.switch_manager:
-                    for k, v in self.switch_manager.switches.iteritems():
-                        vc = c.get_object(k)
-                        if vc:
-                            vc.soft_lock = v.software_lock
-                            vc.state = v.state
+        if self.switch_manager:
+            for k, v in self.switch_manager.switches.iteritems():
+                vc = c.get_object(k)
+                if vc:
+                    vc.soft_lock = v.software_lock
+                    vc.state = v.state
 
     def update_switch_state(self, name, state, *args, **kw):
         if self.use_network:
@@ -446,6 +445,7 @@ class ExtractionLineManager(Manager, Consoleable):
         for ci in self.plugin_canvases:
             c = ExtractionLineCanvas(manager=self,
                                      display_name=ci['display_name'], )
+            c.load_canvas_file(ci['canvas_path'], ci['config_path'], ci['valve_path'])
             self.canvases.append(c)
 
     def _activate_hook(self):
