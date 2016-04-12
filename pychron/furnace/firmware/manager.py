@@ -304,7 +304,7 @@ class FirmwareManager(HeadlessLoggable):
             return True
 
     @debug
-    def is_energized(self):
+    def is_energized(self, data):
         return self._is_energized
 
     @debug
