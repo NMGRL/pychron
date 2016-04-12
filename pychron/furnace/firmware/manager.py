@@ -281,7 +281,6 @@ class FirmwareManager(HeadlessLoggable):
             period = 3
             if data:
                 if isinstance(data, dict):
-
                     period = data.get('period', 3)
                 else:
                     period = data
@@ -289,13 +288,30 @@ class FirmwareManager(HeadlessLoggable):
             def func():
                 self._is_energized = True
                 prev = None
-                for m in self._magnet_channels:
-                    self.switch_controller.set_channel_state(m, True)
-                    if prev:
-                        self.switch_controller.set_channel_state(prev, False)
 
-                    prev = m
+                steps = [((0,), None),
+                         ((0, 1), None),
+                         ((1,), (0,)),
+                         ((1, 2), None),
+                         ((2,), (1,)),
+                         ((2,), None)]
+
+                for ons, offs in steps:
+
+                    if ons:
+                        for idx in ons:
+                            m = self._magnet_channels[idx]
+                            self.debug('Magnet {}({}) ON'.format(m, idx))
+                            self.switch_controller.set_channel_state(m, True)
+                    if offs:
+                        for idx in offs:
+                            m = self._magnet_channels[idx]
+                            self.debug('Magnet {}({}) OFF'.format(m, idx))
+                            self.switch_controller.set_channel_state(m, False)
+
+                    self.debug('--------------------------------')
                     time.sleep(period)
+
                 self.switch_controller.set_channel_state(prev, False)
                 self._is_energized = False
 
