@@ -423,9 +423,10 @@ class ExtractionLineManager(Manager, Consoleable):
 
             self.explanation.selected = selected
 
-    def new_canvas(self):
+    def new_canvas(self, config=None):
         c = ExtractionLineCanvas(manager=self,
                                  display_name='Extraction Line')
+        c.load_canvas_file(canvas_config_path=config)
         self.canvases.append(c)
         c.canvas2D.trait_set(display_volume=self.display_volume,
                              volume_key=self.volume_key)

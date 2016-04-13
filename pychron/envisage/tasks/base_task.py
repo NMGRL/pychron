@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
 from itertools import groupby
 
 from envisage.ui.tasks.action.task_window_launch_group import TaskWindowLaunchAction
@@ -43,6 +44,7 @@ from pychron.envisage.tasks.actions import GenericSaveAction, GenericSaveAsActio
     NoteAction, RestartAction, DocumentationAction, CopyPreferencesAction, SwitchUserAction, KeyBindingsAction, \
     ChangeLogAction, StartupTestsAction
 from pychron.loggable import Loggable
+from pychron.paths import paths
 
 
 class WindowGroup(Group):
@@ -451,8 +453,8 @@ class BaseExtractionLineTask(BaseManagerTask):
         man = app.get_service('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
         if man:
             from pychron.extraction_line.tasks.extraction_line_pane import CanvasDockPane
-
-            self.canvas_pane = CanvasDockPane(canvas=man.new_canvas())
+            config = os.path.join(paths.canvas2D_dir, 'alt_config.xml')
+            self.canvas_pane = CanvasDockPane(canvas=man.new_canvas(config=config))
             panes.append(self.canvas_pane)
 
         return panes
