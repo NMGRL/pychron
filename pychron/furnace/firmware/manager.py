@@ -236,6 +236,17 @@ class FirmwareManager(HeadlessLoggable):
             return result
 
     @debug
+    def get_di_state(self, data):
+        if self.switch_controller:
+            if isinstance(data, dict):
+                ch = data.get('channel')
+            else:
+                ch = data
+
+            result = self.switch_controller.get_channel_state(ch)
+            return result
+
+    @debug
     def get_version(self, data):
         from pychron.furnace.firmware import __version__
         return __version__

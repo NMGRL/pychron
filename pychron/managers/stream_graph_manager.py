@@ -62,9 +62,9 @@ class StreamGraphManager(Manager):
     timer = None
     update_period = 1
 
-    def reset_scan_timer(self):
+    def reset_scan_timer(self, func=None):
         self.info('reset scan timer')
-        self.timer = self._timer_factory()
+        self.timer = self._timer_factory(func=func)
 
     def load_settings(self):
         self.info('load scan settings')

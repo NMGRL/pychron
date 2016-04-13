@@ -35,7 +35,8 @@ class FurnaceFirmwareProtocol(ServiceProtocol):
         misc_services = (('GetLabTemperature', self._manager.get_lab_temperature),
                          ('GetLabHumidity', self._manager.get_lab_humidity),
                          ('SetFrameRate', self._manager.set_frame_rate),
-                         ('GetVersion', self._manager.get_version))
+                         ('GetVersion', self._manager.get_version),
+                         ('GetDIState', self._manager.get_di_state))
 
         controller_services = (('GetTemperature', self._manager.get_temperature),
                                ('GetSetpoint', self._manager.get_setpoint),

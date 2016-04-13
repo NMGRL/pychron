@@ -59,6 +59,7 @@ class NMGRLCamera(ConfigLoadable):
     @timeout
     def test_connection(self):
         resp = self._session.get('http://{}/html/cam_pic.php'.format(self.host), timeout=2)
+        self.debug('testing connection Status Code: {}'.format(resp.status_code))
         return resp.status_code == 200
 
     @timeout
@@ -66,7 +67,11 @@ class NMGRLCamera(ConfigLoadable):
         resp = self._session.get('http://{}/html/cam_pic.php'.format(self.host), timeout=2)
         if resp.status_code == 200:
             buf = StringIO(resp.content)
-            im = Image.open(buf)
+            try:
+                im = Image.open(buf)
+            except IOError:
+                return
+
             if size:
                 im = im.resize(size, Image.ANTIALIAS)
 

@@ -24,6 +24,10 @@ from pychron.hardware.core.abstract_device import AbstractDevice
 
 @provides(IFurnaceController)
 class FurnaceController(AbstractDevice):
+    def get_water_flow_state(self, **kw):
+        if self._cdevice:
+            return self._cdevice.get_water_flow_state(**kw)
+
     def set_setpoint(self, v, **kw):
         if self._cdevice:
             return self._cdevice.set_setpoint(v, **kw)

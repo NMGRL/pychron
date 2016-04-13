@@ -24,6 +24,7 @@ from threading import Thread
 from pychron.canvas.canvas2D.dumper_canvas import DumperCanvas
 from pychron.canvas.canvas2D.video_canvas import VideoCanvas
 from pychron.core.helpers.filetools import pathtolist
+from pychron.core.ui.led_editor import LED
 from pychron.extraction_line.switch_manager import SwitchManager
 from pychron.furnace.furnace_controller import FurnaceController
 from pychron.furnace.ifurnace_manager import IFurnaceManager
@@ -85,7 +86,11 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     _guide_overlay = None
     _dumper_thread = None
     _magnets_thread = None
+    magnets_firing = Bool
+
     mode = 'normal'
+
+    water_flow_led = Instance(LED, ())
 
     video_enabled = Bool
     video_canvas = Instance(VideoCanvas)
@@ -99,11 +104,11 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         # pref_id = 'pychron.furnace'
         # bind_preference(self, 'update_period',
         # '{}.update_period'.format(pref_id))
-        self.video_enabled = self.camera.test_connection()
+        self.video_enabled = self.camera.get_image_data() is not None
 
         self.refresh_states()
         self.load_settings()
-        self.reset_scan_timer()
+        self.reset_scan_timer(func=self._update_scan)
 
         self.stage_manager.refresh()
 
@@ -111,7 +116,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
 
     def test_furnace_cam(self):
         if self.camera:
-            return self.camera.test_connection()
+            return self.camera.get_image_data() is not None
 
     def test_furnace_api(self):
         if self.controller:
@@ -154,13 +159,13 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
 
     def extract(self, v):
         self.debug('extract')
-        self.response_recorder.start()
+        # self.response_recorder.start()
         self.debug('set setpoint to {}'.format(v))
         self.setpoint = v
 
     def disable(self):
         self.debug('disable')
-        self.response_recorder.stop()
+        # self.response_recorder.stop()
         self.setpoint = 0
 
     def start_response_recorder(self):
@@ -188,6 +193,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     def fire_magnets(self):
         self.debug('fire magnets')
         if self._magnets_thread is None:
+            self.magnets_firing = True
             self._magnets_thread = Thread(name='Magnets', target=self.actuate_magnets, kwargs={'check_logic': False})
             self._magnets_thread.setDaemon(True)
             self._magnets_thread.start()
@@ -235,6 +241,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
             self.warning_dialog('Actuating magnets not enabled\n\n{}'.format(cm))
 
         self._magnets_thread = None
+        self.magnets_firing = False
 
     def lower_funnel(self):
         self.debug('lower funnel')
@@ -374,13 +381,23 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         """
         return self.loader_logic.close(name)
 
+    def _update_scan(self):
+        state = self.controller.get_water_flow_state()
+        if isinstance(state, bool):
+            self.water_flow_led.state = 2 if state else 0
+        else:
+            self.water_flow_led.state = 1
+
+        self._update_scan_graph()
+
     def _stop_update(self):
         self.debug('stop update')
         self._alive = False
 
     def _update_scan_graph(self):
-        v = self.read_temperature()
+        # v = self.read_temperature()
         # v = random()
+        v = None
         if v is not None:
             x = self.graph.record(v, track_y=False)
             if self.graph_y_auto:

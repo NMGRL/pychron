@@ -134,6 +134,7 @@ class NMGRLFurnaceStageManager(BaseFurnaceStageManager):
             self.debug('invalid hole {}'.format(key))
 
     def _inprogress(self, timeout=120):
+        time.sleep(1)
         st = time.time()
         moving = self.feeder.moving
         update = self._update_axes
@@ -145,10 +146,10 @@ class NMGRLFurnaceStageManager(BaseFurnaceStageManager):
             update()
             if not moving():
                 break
-            time.sleep(1)
+            time.sleep(0.5)
 
     def _update_axes(self):
-        pos = self.feeder.get_position()
+        pos = self.feeder.get_position(units='mm')
         self.debug('update feeder position={}'.format(pos))
         if pos is not None:
             self.canvas.set_stage_position(pos, 0)

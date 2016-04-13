@@ -28,6 +28,7 @@ from pyface.tasks.traits_task_pane import TraitsTaskPane
 
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.core.ui.lcd_editor import LCDEditor
+from pychron.core.ui.led_editor import LEDEditor
 from pychron.core.ui.stage_component_editor import VideoComponentEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 
@@ -117,31 +118,23 @@ class ControlPane(TraitsDockPane):
                 'stage_manager': self.model.stage_manager}
 
     def traits_view(self):
-        cali_grp = VGroup(UItem('tray_manager.calibrate',
-                                enabled_when='stage_manager.stage_map_name',
-                                editor=ButtonEditor(label_value='tray_manager.calibration_step')),
-                          HGroup(Readonly('tray_manager.x', format_str='%0.3f'),
-                                 Readonly('tray_manager.y', format_str='%0.3f')),
-                          Readonly('tray_manager.rotation', format_str='%0.3f'),
-                          Readonly('tray_manager.scale', format_str='%0.4f'),
-                          Readonly('tray_manager.error', format_str='%0.2f'),
-                          UItem('tray_manager.calibrator', style='custom', editor=InstanceEditor()),
-                          CustomLabel('tray_manager.calibration_help',
-                                      color='green',
-                                      height=75, width=300),
-
-                          show_border=True, label='Calibration')
-
-        # c_grp = VGroup(HGroup(Item('setpoint'),
-        #                       UItem('setpoint_readback')),
-        #                UItem('setpoint_readback',
-        #                      enabled_when='0',
-        #                      editor=RangeEditor(mode='slider',
-        #                                         low_name='setpoint_readback_min',
-        #                                         high_name='setpoint_readback_max')),
+        # cali_grp = VGroup(UItem('tray_manager.calibrate',
+        #                         enabled_when='stage_manager.stage_map_name',
+        #                         editor=ButtonEditor(label_value='tray_manager.calibration_step')),
+        #                   HGroup(Readonly('tray_manager.x', format_str='%0.3f'),
+        #                          Readonly('tray_manager.y', format_str='%0.3f')),
+        #                   Readonly('tray_manager.rotation', format_str='%0.3f'),
+        #                   Readonly('tray_manager.scale', format_str='%0.4f'),
+        #                   Readonly('tray_manager.error', format_str='%0.2f'),
+        #                   UItem('tray_manager.calibrator', style='custom', editor=InstanceEditor()),
+        #                   CustomLabel('tray_manager.calibration_help',
+        #                               color='green',
+        #                               height=75, width=300),
         #
-        #                label='Controller', show_border=True)
-        c_grp = VGroup(HGroup(Item('setpoint'), spring, icon_button_editor('pane.disable_button', 'cancel')),
+        #                   show_border=True, label='Calibration')
+        c_grp = VGroup(HGroup(Item('setpoint'),
+                              UItem('water_flow_led', editor=LEDEditor()),
+                              spring, icon_button_editor('pane.disable_button', 'cancel')),
                        VGroup(UItem('temperature_readback', editor=LCDEditor())),
                        label='Controller', show_border=True)
 
@@ -167,7 +160,9 @@ class ControlPane(TraitsDockPane):
 
         dump_grp = HGroup(UItem('pane.dump_sample_button',
                                 tooltip='Complete sample dumping procedure'),
-                          UItem('pane.fire_magnets_button', tooltip='Execute the magnet sequence'),
+                          UItem('pane.fire_magnets_button',
+                                enabled_when='not magnets_firing',
+                                tooltip='Execute the magnet sequence'),
                           show_border=True, label='Dump')
 
         d1 = VGroup(feeder_grp, funnel_grp, jitter_grp, dump_grp)
@@ -177,7 +172,7 @@ class ControlPane(TraitsDockPane):
         d_grp = HGroup(d1, d2, label='Dumper', show_border=True)
 
         v_grp = VGroup(UItem('video_canvas', editor=VideoComponentEditor()),
-                       defined_when='video_enabled',
+                       visible_when='video_enabled',
                        label='Camera')
 
         g_grp = VGroup(Item('graph_scan_width', label='Scan Width (mins)'),
@@ -202,7 +197,7 @@ class ControlPane(TraitsDockPane):
                               show_border=True, label='Snapshot', ),
                        label='Graph')
         v = View(VGroup(c_grp,
-                        HGroup(Tabbed(d_grp, cali_grp, v_grp, g_grp))))
+                        HGroup(Tabbed(d_grp, v_grp, g_grp))))
         return v
 
 
