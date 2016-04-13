@@ -176,7 +176,9 @@ class ControlPane(TraitsDockPane):
             UItem('dumper_canvas', editor=ComponentEditor()))
         d_grp = HGroup(d1, d2, label='Dumper', show_border=True)
 
-        v_grp = VGroup(UItem('video_canvas', editor=VideoComponentEditor()), label='Camera')
+        v_grp = VGroup(UItem('video_canvas', editor=VideoComponentEditor()),
+                       defined_when='video_enabled',
+                       label='Camera')
 
         g_grp = VGroup(Item('graph_scan_width', label='Scan Width (mins)'),
                        Item('graph_scale', label='Scale'),

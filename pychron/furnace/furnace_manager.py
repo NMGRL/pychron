@@ -87,6 +87,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     _magnets_thread = None
     mode = 'normal'
 
+    video_enabled = Bool
     video_canvas = Instance(VideoCanvas)
     camera = Instance(NMGRLCamera)
 
@@ -98,6 +99,8 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         # pref_id = 'pychron.furnace'
         # bind_preference(self, 'update_period',
         # '{}.update_period'.format(pref_id))
+        self.video_enabled = self.camera.test_connection()
+
         self.refresh_states()
         self.load_settings()
         self.reset_scan_timer()
@@ -260,8 +263,10 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     def set_pid_parameters(self, v):
         self.debug('setting pid parameters for {}'.format(v))
         from pychron.hardware.eurotherm.base import get_pid_parameters
-        param_str = get_pid_parameters(v)
-        self.controller.set_pid(param_str)
+        params = get_pid_parameters(v)
+        if params:
+            _, param_str = params
+            self.controller.set_pid(param_str)
 
     def set_setpoint(self, v):
         self.debug('set setpoint={}'.format(v))
@@ -377,7 +382,14 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         v = self.read_temperature()
         # v = random()
         if v is not None:
-            x = self.graph.record(v)
+            x = self.graph.record(v, track_y=False)
+            if self.graph_y_auto:
+                mi, ma = self._get_graph_y_min_max()
+                if self._guide_overlay:
+                    gv = self._guide_overlay.value
+                    mi, ma = min(gv, mi), max(gv, ma)
+
+                self.graph.set_y_limits(min_=mi, max_=ma, pad='0.1')
 
             if self._recording:
                 self.record_data_manager.write_to_frame((x, v))
@@ -386,7 +398,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         self._recording = True
         self.record_data_manager = dm = self._record_data_manager_factory()
         dm.new_frame(directory=paths.furnace_scans_dir)
-        dm.write_to_frame(('time','temperature'))
+        dm.write_to_frame(('time', 'temperature'))
         self._start_time = time.time()
 
     def _stop_recording(self):

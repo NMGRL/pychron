@@ -283,13 +283,7 @@ class ScanManager(StreamGraphManager):
                                            track_y=False)
 
             if self.graph_y_auto:
-                mi, ma = Inf, -Inf
-                for k, plot in self.graph.plots[0].plots.iteritems():
-                    plot = plot[0]
-                    if plot.visible:
-                        ys = plot.value.get_data()
-                        ma = max(ma, max(ys))
-                        mi = min(mi, min(ys))
+                mi,ma = self._get_graph_y_min_max()
 
                 self.graph.set_y_limits(min_=mi, max_=ma, pad='0.1')
 

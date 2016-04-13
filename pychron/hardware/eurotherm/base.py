@@ -33,7 +33,7 @@ def get_pid_parameters(v):
     """
     p = os.path.join(paths.device_dir, 'furnace', 'eurotherm_control_parameters.txt')
     with open(p) as f:
-        params = [l.split('\t') for l in f]
+        params = [map(str.strip, l.split('\t')) for l in f]
 
     for i, pa in enumerate(params[:-1]):
 
