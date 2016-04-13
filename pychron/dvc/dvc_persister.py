@@ -96,11 +96,20 @@ class DVCPersister(BasePersister):
         p = self._make_path(modifier='extraction')
 
         if rblob:
-            rblob = base64.b64encode(rblob)
+            if isinstance(rblob, list):
+                rblob = rblob[0]
+            if rblob:
+                rblob = base64.b64encode(rblob)
         if oblob:
-            oblob = base64.b64encode(oblob)
+            if isinstance(oblob, list):
+                oblob = oblob[0]
+            if oblob:
+                oblob = base64.b64encode(oblob)
         if sblob:
-            sblob = base64.b64encode(sblob)
+            if isinstance(sblob, list):
+                sblob = sblob[0]
+            if sblob:
+                sblob = base64.b64encode(sblob)
 
         obj = {'request': rblob,
                'response': oblob,

@@ -423,7 +423,7 @@ class AutomatedRun(Loggable):
                                check_conditionals, sc)
 
         if self.plot_panel:
-            bs = dict([(iso.name, iso.baseline.uvalue) for iso in
+            bs = dict([(iso.name, (iso.detector, iso.baseline.uvalue)) for iso in
                        self.isotope_group.isotopes.values()])
             self.set_previous_baselines(bs)
             self.plot_panel.is_baseline = False
