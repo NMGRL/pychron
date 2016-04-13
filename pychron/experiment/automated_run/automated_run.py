@@ -1147,9 +1147,10 @@ class AutomatedRun(Loggable):
 
             rblob = self.extraction_script.get_response_blob()
             oblob = self.extraction_script.get_output_blob()
+            sblob = self.extraction_script.get_setpoint_blob()
             snapshots = self.extraction_script.snapshots
 
-            self._persister_save_action('post_extraction_save', rblob, oblob, snapshots)
+            self._persister_save_action('post_extraction_save', rblob, oblob, sblob, snapshots)
             # self.persister.post_extraction_save(rblob, oblob, snapshots)
             self.heading('Extraction Finished')
             self.info_color = None

@@ -63,4 +63,18 @@ class NMGRLFurnaceEurotherm(CoreDevice):
 
     read_temperature = get_temperature
 
+    def get_process_value(self, **kw):
+        resp = self.ask('GetProcessValue', **kw)
+        try:
+            return float(resp)
+        except (TypeError, ValueError):
+            pass
+
+    def get_output(self):
+        resp = self.ask('GetPercentOutput')
+        try:
+            return float(resp)
+        except (TypeError, ValueError):
+            pass
+
 # ============= EOF =============================================

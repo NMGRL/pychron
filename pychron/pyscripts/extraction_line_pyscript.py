@@ -97,10 +97,19 @@ class ExtractionPyScript(ValvePyScript):
         """
         Get the extraction device's output blob
 
-        :return: output blob: binary string representing time v requested output
+        :return: output blob: binary string representing time v percent output
         :rtype: str
         """
         return self._extraction_action([('get_output_blob', (), {})]) or ''
+
+    def get_setpoint_blob(self):
+        """
+        Get the extraction device's setpoint blob
+
+        :return: setpoint blob: binary string representing time v requested setpoint
+        :rtype: str
+        """
+        return self._extraction_action([('get_setpoint_blob', (), {})]) or ''
 
     def output_achieved(self):
         """

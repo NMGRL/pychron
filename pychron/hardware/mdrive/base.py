@@ -116,7 +116,6 @@ class BaseMDrive(BaseLinearDrive):
     turns_per_mm = Float
     slew_velocity = CInt
 
-    _slewing = False
     _jitter_evt = None
 
     def load_additional_args(self, config):
@@ -184,15 +183,17 @@ class BaseMDrive(BaseLinearDrive):
         self.debug('converted position= {} ({})'.format(pos, units))
         return pos
 
-    def slew(self, scalar):
-        if not self._slewing:
-            v = self.slew_velocity * scalar
-            self.set_slew(v)
-            self._slewing = True
+    def stalled(self):
+        if self._get_var('ST'):
+            self._set_var('ST', 0)
             return True
 
+    def slew(self, scalar):
+        v = self.slew_velocity * scalar
+        self.set_slew(v)
+        return True
+
     def stop_drive(self):
-        self._slewing = False
         self.set_slew(0)
         return True
 

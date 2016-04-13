@@ -54,10 +54,20 @@ def get_pid_parameters(v):
 
 @provides(IFurnaceController)
 class BaseEurotherm(HasTraits):
+    """
+
+    Series 2000 Communications Handbook
+    http://buphy.bu.edu/~stein/etherm/2000cmms.pdf
+    Part No HA026230
+
+    See Modbus & EI Bisynch Addresses, Chapter 5.
+    """
     scan_func = 'get_process_value'
     GID = 0
     UID = 1
     protocol = 'ei_bisynch'
+
+    output_value = Float
     process_value = Float
     process_setpoint = Property(Float(enter_set=True, auto_set=False),
                                 depends_on='_setpoint')
@@ -67,6 +77,15 @@ class BaseEurotherm(HasTraits):
     use_pid_table = False
 
     # ifurnacecontroller
+    def get_output(self, **kw):
+        resp = self._query('OP', **kw)
+        try:
+            self.output_value = resp
+        except TraitError:
+            pass
+
+        return resp
+
     def get_response(self, force=False):
         if force or not self.process_value:
             self.get_process_value()

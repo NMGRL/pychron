@@ -31,6 +31,7 @@ class ResponseRecorder(HasTraits):
     period = Float(2)
     response_data = Array
     output_data = Array
+    setpoint_data = Array
 
     _alive = False
 
@@ -76,13 +77,16 @@ class ResponseRecorder(HasTraits):
 
         odata = self.output_data
         rdata = self.response_data
-
+        sdata = self.setpoint_data
         r2 = None
         while self._alive:
             to = time.time()
             t = to - st
             out = od.get_output()
             odata = vstack((odata, (t, out)))
+
+            sp = od.get_setpoint()
+            sdata = vstack((sdata, (t, sp)))
 
             r = rd.get_response(force=True)
             rdata = vstack((rdata, (t, r)))
@@ -92,9 +96,9 @@ class ResponseRecorder(HasTraits):
 
             if wd:
                 if r2:
-                    datum = (t, out, r, r2)
+                    datum = (t, out, sp, r, r2)
                 else:
-                    datum = (t, out, r)
+                    datum = (t, out, sp, r)
 
                 datum = map(lambda x: floatfmt(x, n=3), datum)
 
@@ -107,6 +111,7 @@ class ResponseRecorder(HasTraits):
 
         self.output_data = odata
         self.response_data = rdata
+        self.setpoint_data = sdata
 
     def stop(self):
         self._alive = False
@@ -120,6 +125,10 @@ class ResponseRecorder(HasTraits):
     def get_output_blob(self):
         if len(self.output_data):
             return ''.join([struct.pack('<ff', x, y) for x, y in self.output_data])
+
+    def get_setpoint_blob(self):
+        if len(self.setpoint_data):
+            return ''.join([struct.pack('<ff', x, y) for x, y in self.setpoint_data])
 
     @property
     def max_response(self):

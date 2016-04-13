@@ -46,7 +46,7 @@ DEBUG = False
 
 
 class IPersister(Interface):
-    def post_extraction_save(self, rblob, oblob, snapshots):
+    def post_extraction_save(self, rblob, oblob, sblob, snapshots):
         pass
 
     def pre_measurement_save(self):
@@ -67,7 +67,7 @@ class BasePersister(Loggable):
     per_spec = Instance('pychron.experiment.automated_run.persistence_spec.PersistenceSpec', ())
     save_enabled = Bool(False)
 
-    def post_extraction_save(self, rblob, oblob, snapshots):
+    def post_extraction_save(self, rblob, oblob, sblob, snapshots):
         pass
 
     def pre_measurement_save(self):
@@ -111,7 +111,7 @@ def get_sheet(wb, name):
 class ExcelPersister(BasePersister):
     data_manager = Instance('pychron.managers.data_managers.xls_data_manager.XLSDataManager', ())
 
-    def post_extraction_save(self, rblob, oblob, snapshots):
+    def post_extraction_save(self, rblob, oblob, sblob, snapshots):
         """
         save extraction blobs, loadtable, and snapshots to the primary db
 
@@ -378,7 +378,7 @@ class AutomatedRunPersister(BasePersister):
     #     self.rundate = d.date()
     #     self.info('Analysis started at {}'.format(self.runtime))
 
-    def post_extraction_save(self, rblob, oblob, snapshots):
+    def post_extraction_save(self, rblob, oblob, sblob, snapshots):
         """
         save extraction blobs, loadtable, and snapshots to the primary db
 

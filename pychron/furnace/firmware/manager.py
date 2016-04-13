@@ -143,14 +143,21 @@ class FirmwareManager(HeadlessLoggable):
             return self.temp_hum.temperature
 
     @debug
-    def get_temperature(self, data):
+    def get_process_value(self, data):
         if self.controller:
             return self.controller.get_process_value()
+
+    get_temperature = get_process_value
 
     @debug
     def get_setpoint(self, data):
         if self.controller:
             return self.controller.process_setpoint
+
+    @debug
+    def get_percent_output(self, data):
+        if self.controller:
+            return self.controller.read_percent_output()
 
     @debug
     def get_magnets_state(self, data):
@@ -358,6 +365,12 @@ class FirmwareManager(HeadlessLoggable):
         if drive:
             scalar = data.get('scalar', 1.0)
             return drive.slew(scalar)
+
+    @debug
+    def stalled(self, data):
+        drive = self._get_drive(data)
+        if drive:
+            return drive.stalled()
 
     @debug
     def start_jitter(self, data):

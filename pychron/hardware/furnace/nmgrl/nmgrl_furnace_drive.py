@@ -20,6 +20,7 @@ from traits.api import Str, Int, Float
 import time
 import json
 # ============= local library imports  ==========================
+from pychron.hardware.actuators import trim_bool
 from pychron.hardware.core.core_device import CoreDevice
 
 
@@ -49,9 +50,11 @@ class NMGRLFurnaceDrive(CoreDevice):
 
         return True
 
-    def move_absolute(self, pos, units='steps', velocity=None):
+    def move_absolute(self, pos, units='steps', velocity=None, block=False):
         pos *= self.drive_sign
         self.ask(self._build_command('MoveAbsolute', position=pos, units=units, velocity=velocity))
+        if block:
+            self._block()
 
     def set_position(self, *args, **kw):
         kw['units'] = 'turns'
@@ -70,6 +73,10 @@ class NMGRLFurnaceDrive(CoreDevice):
 
     def slew(self, scalar):
         self.ask(self._build_command('Slew', scalar=scalar))
+
+    @trim_bool
+    def stalled(self):
+        return self.ask(self._build_command('Stalled'))
 
     def moving(self):
         return self.ask(self._build_command('Moving')) == 'OK'

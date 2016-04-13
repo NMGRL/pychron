@@ -92,16 +92,19 @@ class DVCPersister(BasePersister):
     def pre_extraction_save(self):
         pass
 
-    def post_extraction_save(self, rblob, oblob, snapshots):
+    def post_extraction_save(self, rblob, oblob, sblob, snapshots):
         p = self._make_path(modifier='extraction')
 
         if rblob:
-            rblob = base64.b64encode(rblob[0])
+            rblob = base64.b64encode(rblob)
         if oblob:
-            oblob = base64.b64encode(oblob[0])
+            oblob = base64.b64encode(oblob)
+        if sblob:
+            sblob = base64.b64encode(sblob)
 
         obj = {'request': rblob,
-               'response': oblob}
+               'response': oblob,
+               'sblob': sblob}
 
         for e in EXTRACTION_ATTRS:
             v = getattr(self.per_spec.run_spec, e)

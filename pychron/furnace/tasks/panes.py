@@ -58,13 +58,13 @@ class ControlPane(TraitsDockPane):
     feeder_stop_button = Button
 
     def _feeder_slew_positive_fired(self):
-        self.model.stage_manager.feeder.slew(1)
+        self.model.stage_manager.feeder_slew(1)
 
     def _feeder_slew_negative_fired(self):
-        self.model.stage_manager.feeder.slew(-1)
+        self.model.stage_manager.feeder_slew(-1)
 
     def _feeder_stop_button_fired(self):
-        self.model.stage_manager.feeder.stop()
+        self.model.stage_manager.feeder_stop()
 
     def _feeder_set_home_button_fired(self):
         self.model.stage_manager.feeder.set_home()

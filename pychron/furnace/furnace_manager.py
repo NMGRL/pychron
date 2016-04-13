@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from numpy.random import random
 from traits.api import TraitError, Instance, Float, provides, Bool
 # ============= standard library imports ========================
 import os
@@ -102,6 +101,9 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         self.refresh_states()
         self.load_settings()
         self.reset_scan_timer()
+
+        self.stage_manager.refresh()
+
         # self._start_update()
 
     def test_furnace_cam(self):
@@ -263,8 +265,9 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
 
     def set_setpoint(self, v):
         self.debug('set setpoint={}'.format(v))
+        self.set_pid_parameters(v)
+
         if self.controller:
-            # print self.controller, self.controller._cdevice
             self.controller.set_setpoint(v)
             if not self._guide_overlay:
                 self._guide_overlay = self.graph.add_horizontal_rule(v)

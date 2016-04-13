@@ -56,6 +56,15 @@ class FurnaceCanvas(StageCanvas):
         self.padding_top = 5
         self.padding_bottom = 5
         self.use_valid_holes = False
+        self.show_indicators = False
+
+    def set_map(self, mp):
+        super(FurnaceCanvas, self).set_map(mp)
+
+        xs = [h.x for h in mp.sample_holes]
+        xmi, xma = min(xs), max(xs)
+        pad = mp.g_dimension
+        self.view_x_range = (xmi - pad, xma + pad)
 
     def clear_all(self):
         self.scene.reset_layers()
