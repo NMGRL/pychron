@@ -293,11 +293,11 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
 
             self.graph.redraw()
 
-    def read_temperature(self, force=False):
+    def read_temperature(self, force=False, verbose=False):
         v = 0
         if self.controller:
             # force = update and not self.controller.is_scanning()
-            v = self.controller.read_temperature(force=force, verbose=False)
+            v = self.controller.read_temperature(force=force, verbose=verbose)
 
         try:
             self.temperature_readback = v
@@ -382,7 +382,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         return self.loader_logic.close(name)
 
     def _update_scan(self):
-        state = self.controller.get_water_flow_state()
+        state = self.controller.get_water_flow_state(verbose=False)
         if isinstance(state, bool):
             self.water_flow_led.state = 2 if state else 0
         else:
@@ -395,9 +395,9 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         self._alive = False
 
     def _update_scan_graph(self):
-        # v = self.read_temperature()
+        v = self.read_temperature(verbose=False)
         # v = random()
-        v = None
+        # v = None
         if v is not None:
             x = self.graph.record(v, track_y=False)
             if self.graph_y_auto:

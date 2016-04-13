@@ -133,7 +133,7 @@ class ControlPane(TraitsDockPane):
         #
         #                   show_border=True, label='Calibration')
         c_grp = VGroup(HGroup(Item('setpoint'),
-                              UItem('water_flow_led', editor=LEDEditor()),
+                              UItem('water_flow_led', editor=LEDEditor(label='H2O Flow')),
                               spring, icon_button_editor('pane.disable_button', 'cancel')),
                        VGroup(UItem('temperature_readback', editor=LCDEditor())),
                        label='Controller', show_border=True)
