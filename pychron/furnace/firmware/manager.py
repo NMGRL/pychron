@@ -167,7 +167,8 @@ class FirmwareManager(HeadlessLoggable):
     def get_position(self, data):
         drive = self._get_drive(data)
         if drive:
-            return drive.get_position()
+            units = data.get('units', 'steps')
+            return drive.get_position(units=units)
 
     @debug
     def moving(self, data):
