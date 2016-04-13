@@ -85,7 +85,7 @@ class NMGRLFurnaceActuator(GPActuator):
         return self.ask(cmd, verbose=verbose)
 
     @trim_bool
-    def get_indicator_state(self, obj, action, verbose=True):
+    def get_indicator_state(self, obj, action='open', verbose=True):
         cmd = json.dumps({'command': 'GetIndicatorState',
                           'name': get_valve_address(obj),
                           'action': action})

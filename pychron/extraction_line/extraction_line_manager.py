@@ -274,6 +274,7 @@ class ExtractionLineManager(Manager, Consoleable):
                     vc.state = v.state
 
     def update_switch_state(self, name, state, *args, **kw):
+        self.debug('update switch state {} {}'.format(name, state))
         if self.use_network:
             self.network.set_valve_state(name, state)
             for c in self.canvases:
@@ -576,12 +577,12 @@ class ExtractionLineManager(Manager, Consoleable):
         if self._check_ownership(name, sender_address):
             func = getattr(self.switch_manager, '{}_by_name'.format(action))
             ret = func(name, mode=mode, **kw)
-
+            self.debug('change switch state {}'.format(ret))
             if ret:
                 result, change = ret
                 if isinstance(result, bool):
-                    if change:
-                        self.update_switch_state(name, True if action == 'open' else False)
+                    # if change:
+                    self.update_switch_state(name, True if action == 'open' else False)
                         # self.refresh_canvas()
         return result, change
 

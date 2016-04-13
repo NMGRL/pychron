@@ -104,6 +104,8 @@ class ArduinoGPActuator(GPActuator):
         else:
             return err_msg
 
+    get_indicator_state = get_channel_state
+
     def _check_actuation(self, obj, request):
         if not obj.check_actuation_enabled:
             return True
