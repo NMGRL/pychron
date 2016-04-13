@@ -115,14 +115,11 @@ class BaseEurotherm(HasTraits):
 
     def set_pid_str(self, s):
         if PID_REGEX.match(s):
-            builder = getattr(self, '_{}_build_command'.format(self.protocol))
-
             for pa in s.split(';'):
                 self.debug('set pid parameters {}'.format(pa))
                 cmd, value = pa.split(',')
-                cmd = builder(cmd, value)
-                self.ask(cmd, verbose=True)
-                return True
+                self._command(cmd, value)
+            return True
         else:
             self.warning('invalid pid string "{}"'.format(s))
 
