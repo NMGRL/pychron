@@ -31,9 +31,14 @@ class LinearAxis(AbstractDevice):
     min_limit = Property(depends_on='_position')
     max_limit = Property(depends_on='_position')
 
+    def set_home(self):
+        if self._cdevice:
+            self._cdevice.set_home()
+
     def set_position(self, v, **kw):
         if self._cdevice:
-            self.add_consumable((self._cdevice.set_position, v, kw))
+            self._cdevice.set_position(v, **kw)
+            # self.add_consumable((self._cdevice.set_position, v, kw))
 
     # def relative_move(self, v):
     #     self.set_position(self._position + v)

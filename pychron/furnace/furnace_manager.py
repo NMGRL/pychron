@@ -211,18 +211,20 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
 
         if check:
 
-            self.stage_manager.start_jitter(turns=0.5, p1=0.1, p2=0.25, velocity=15000)
+            self.stage_manager.feeder.start_jitter()
             self.magnets.energize()
 
             time.sleep(0.05)
             while 1:
                 if not self.magnets.is_energized():
                     break
-                time.sleep(0.25)
+                time.sleep(1)
 
             self.stage_manager.set_sample_dumped()
             self.magnets.denergize()
-            self.stage_manager.stop_jitter()
+            time.sleep(5)
+
+            self.stage_manager.feeder.stop_jitter()
         else:
             cm = self.loader_logic.get_check_message()
             self.warning_dialog('Actuating magnets not enabled\n\n{}'.format(cm))
@@ -370,7 +372,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
 
     def _update_scan_graph(self):
         v = self.read_temperature()
-        v = random()
+        # v = random()
         if v is not None:
             x = self.graph.record(v)
 

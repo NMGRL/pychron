@@ -113,7 +113,6 @@ class NMGRLFurnaceActuator(GPActuator):
 
     def actuate(self, obj, action):
         if self._actuate(obj, action):
-            time.sleep(1)
             return self._check_actuate(obj, action)
 
     @trim_bool
@@ -129,6 +128,12 @@ class NMGRLFurnaceActuator(GPActuator):
         return self.ask(cmd)
 
     def _check_actuate(self, obj, action):
+        if not obj.check_actuation_enabled:
+            return True
+
+        if obj.check_actuation_delay:
+            time.sleep(obj.check_actuation_delay)
+
         # state = action == 'Open'
         # chk = '1' if action == 'Close' else '0'
         result = self.get_indicator_state(obj, action)

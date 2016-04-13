@@ -47,7 +47,6 @@ class CanvasDockPane(TraitsDockPane):
     name = 'Extraction Line Canvas'
     canvas = Any
 
-    @property
     def traits_view(self):
         v = View(UItem('canvas',
                        editor=InstanceEditor(),

@@ -33,10 +33,12 @@ class NMGRLFurnaceDrive(CoreDevice):
     jperiod1 = Float
     jperiod2 = Float
     jturns = Float
+    drive_sign = Int(1)
 
     def load_additional_args(self, config):
         self.set_attribute(config, 'drive_name', 'General', 'drive_name')
         self.set_attribute(config, 'velocity', 'Motion', 'velocity', cast='int')
+        self.set_attribute(config, 'drive_sign', 'Motion', 'drive_sign', cast='int', default=1)
 
         self.set_attribute(config, 'jvelocity', 'Jitter', 'velocity', cast='int')
         self.set_attribute(config, 'jacceleration', 'Jitter', 'acceleration', cast='int')
@@ -48,6 +50,7 @@ class NMGRLFurnaceDrive(CoreDevice):
         return True
 
     def move_absolute(self, pos, units='steps', velocity=None):
+        pos *= self.drive_sign
         self.ask(self._build_command('MoveAbsolute', position=pos, units=units, velocity=velocity))
 
     def set_position(self, *args, **kw):
@@ -56,7 +59,11 @@ class NMGRLFurnaceDrive(CoreDevice):
         self.move_absolute(*args, **kw)
 
     def move_relative(self, pos, units='steps'):
+        pos *= self.drive_sign
         self.ask(self._build_command('MoveRelative', position=pos, units=units))
+
+    def set_home(self):
+        self.ask(self._build_command('SetHome'))
 
     def stop_drive(self):
         self.ask(self._build_command('StopDrive'))
@@ -68,7 +75,11 @@ class NMGRLFurnaceDrive(CoreDevice):
         return self.ask(self._build_command('Moving')) == 'OK'
 
     def get_position(self, units='steps'):
-        return self.ask(self._build_command('GetPosition', units=units))
+        pos = self.ask(self._build_command('GetPosition', units=units))
+        if pos:
+            pos = float(pos)
+            pos *= self.drive_sign
+            return pos
 
     def start_jitter(self, turns=None, p1=None, p2=None, **kw):
 

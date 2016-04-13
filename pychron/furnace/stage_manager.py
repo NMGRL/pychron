@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Instance
+from traits.api import Instance, Float
 from traitsui.api import View, Item, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -27,12 +27,12 @@ from pychron.stage.stage_manager import BaseStageManager
 
 
 class Feeder(LinearAxis):
-    def start_jitter(self, turns=0.125, p1=0.1, p2=0.1, velocity=None):
+    def start_jitter(self):
         """
         :param turns: fractional turns
         :return:
         """
-        self._cdevice.start_jitter(turns, p1, p2, velocity)
+        self._cdevice.start_jitter()
 
     def stop_jitter(self):
         self._cdevice.stop_jitter()
@@ -63,6 +63,7 @@ class BaseFurnaceStageManager(BaseStageManager):
 
 class NMGRLFurnaceStageManager(BaseFurnaceStageManager):
     feeder = Instance(Feeder)
+
 
     def jitter(self, *args, **kw):
         self.feeder.jitter(*args, **kw)
@@ -101,8 +102,8 @@ class NMGRLFurnaceStageManager(BaseFurnaceStageManager):
             x, y = self.get_calibrated_position(pos, key=key)
             self.info('hole={}, position={}, calibrated_position={}'.format(key, pos, (x, y)))
 
-            self.feeder.position = x
-            self.feeder.move_absolute(x, units='turns')
+            self.feeder._position = x
+            self.feeder.move_absolute(x, units='mm')
 
             self.info('Move complete')
             self.update_axes()  # update_hole=False)

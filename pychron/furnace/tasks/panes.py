@@ -47,11 +47,24 @@ class ControlPane(TraitsDockPane):
 
     funnel_up_button = Button
     funnel_down_button = Button
-    feeder_set_home_button = Button
+    feeder_set_home_button = Button('Set Home')
     toggle_advanced_view_button = Button
     _advanced_view_state = Bool(False)
 
     disable_button = Button
+
+    feeder_slew_positive = Button
+    feeder_slew_negative = Button
+    feeder_stop_button = Button
+
+    def _feeder_slew_positive_fired(self):
+        self.model.stage_manager.feeder.slew(1)
+
+    def _feeder_slew_negative_fired(self):
+        self.model.stage_manager.feeder.slew(-1)
+
+    def _feeder_stop_button_fired(self):
+        self.model.stage_manager.feeder.stop()
 
     def _feeder_set_home_button_fired(self):
         self.model.stage_manager.feeder.set_home()
@@ -137,6 +150,9 @@ class ControlPane(TraitsDockPane):
                             VGroup(Item('stage_manager.feeder.position', label='Position (units)'),
                                    Item('stage_manager.feeder.velocity'),
                                    Item('pane.feeder_set_home_button'),
+                                   HGroup(icon_button_editor('pane.feeder_slew_positive', 'arrow_left'),
+                                          icon_button_editor('pane.feeder_slew_negative', 'arrow_right'),
+                                          icon_button_editor('pane.feeder_stop_button', 'cancel')),
                                    visible_when='pane._advanced_view_state'),
                             show_border=True, label='Position')
 
