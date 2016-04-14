@@ -1161,8 +1161,8 @@ class AutomatedRun(Loggable):
             sblob = self.extraction_script.get_setpoint_blob()
             snapshots = self.extraction_script.snapshots
 
-            pid = self.extraction_script.pid
-            self._update_persister_spec(pid=pid,
+            pid = self.extraction_script.get_active_pid_parameters()
+            self._update_persister_spec(pid=pid or '',
                                         response_blob=rblob,
                                         output_blob=oblob,
                                         setpoint_blob=sblob,
