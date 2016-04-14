@@ -62,7 +62,7 @@ class DVCPersister(BasePersister):
 
         self.pre_extraction_save()
         self.pre_measurement_save()
-        self.post_extraction_save('', '', None)
+        self.post_extraction_save()
         self.post_measurement_save(commit=commit, msg_prefix=msg_prefix)
 
     def initialize(self, repository, pull=True):
@@ -92,28 +92,27 @@ class DVCPersister(BasePersister):
     def pre_extraction_save(self):
         pass
 
-    def post_extraction_save(self, rblob, oblob, sblob, snapshots):
+    def post_extraction_save(self):
         p = self._make_path(modifier='extraction')
 
+        rblob = self.per_spec.response_blob
+        oblob = self.per_spec.output_blob
+        sblob = self.per_spec.setpoint_blob
+
         if rblob:
-            if isinstance(rblob, list):
-                rblob = rblob[0]
-            if rblob:
-                rblob = base64.b64encode(rblob)
+            rblob = base64.b64encode(rblob)
         if oblob:
-            if isinstance(oblob, list):
-                oblob = oblob[0]
-            if oblob:
-                oblob = base64.b64encode(oblob)
+            oblob = base64.b64encode(oblob)
         if sblob:
-            if isinstance(sblob, list):
-                sblob = sblob[0]
-            if sblob:
-                sblob = base64.b64encode(sblob)
+            sblob = base64.b64encode(sblob)
 
         obj = {'request': rblob,
                'response': oblob,
                'sblob': sblob}
+
+        pid = self.per_spec.pid
+        if pid:
+            obj['pid'] = pid
 
         for e in EXTRACTION_ATTRS:
             v = getattr(self.per_spec.run_spec, e)

@@ -46,7 +46,7 @@ DEBUG = False
 
 
 class IPersister(Interface):
-    def post_extraction_save(self, rblob, oblob, sblob, snapshots):
+    def post_extraction_save(self):
         pass
 
     def pre_measurement_save(self):
@@ -67,7 +67,7 @@ class BasePersister(Loggable):
     per_spec = Instance('pychron.experiment.automated_run.persistence_spec.PersistenceSpec', ())
     save_enabled = Bool(False)
 
-    def post_extraction_save(self, rblob, oblob, sblob, snapshots):
+    def post_extraction_save(self):
         pass
 
     def pre_measurement_save(self):
@@ -111,13 +111,10 @@ def get_sheet(wb, name):
 class ExcelPersister(BasePersister):
     data_manager = Instance('pychron.managers.data_managers.xls_data_manager.XLSDataManager', ())
 
-    def post_extraction_save(self, rblob, oblob, sblob, snapshots):
+    def post_extraction_save(self):
         """
         save extraction blobs, loadtable, and snapshots to the primary db
 
-        :param rblob: response blob. binary time, value. time versus measured output
-        :param oblob: output blob. binary time, value. time versus requested output
-        :param snapshots: list of snapshot paths
         """
         if DEBUG:
             self.debug('Not saving extraction to database')
@@ -378,13 +375,9 @@ class AutomatedRunPersister(BasePersister):
     #     self.rundate = d.date()
     #     self.info('Analysis started at {}'.format(self.runtime))
 
-    def post_extraction_save(self, rblob, oblob, sblob, snapshots):
+    def post_extraction_save(self):
         """
         save extraction blobs, loadtable, and snapshots to the primary db
-
-        :param rblob: response blob. binary time, value. time versus measured output
-        :param oblob: output blob. binary time, value. time versus requested output
-        :param snapshots: list of snapshot paths
         """
         self.debug('AutomatedRunPersister post_extraction_save deprecated')
         return
@@ -402,9 +395,9 @@ class AutomatedRunPersister(BasePersister):
                     loadtable = db.add_load(self.per_spec.load_name, 'None')
 
                 ext = self._save_extraction(db, loadtable=loadtable,
-                                            response_blob=rblob,
-                                            output_blob=oblob,
-                                            snapshots=snapshots)
+                                            response_blob=self.per_spec.response_blob,
+                                            output_blob=self.per_spec.output_blob,
+                                            snapshots=self.per_spec.snapshots)
                 sess.commit()
                 self._db_extraction_id = int(ext.id)
         else:

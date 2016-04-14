@@ -71,4 +71,10 @@ class PersistenceSpec(HasTraits):
     tag = 'ok'
     peak_center = None
     intensity_scalar = 1.0
+
+    pid = Str
+    response_blob = Str
+    output_blob = Str
+    setpoint_blob = Str
+    snapshots = None
 # ============= EOF =============================================

@@ -55,7 +55,7 @@ class AnalysisRecoverer(Loggable):
             per_spec = self._make_per_spec(lt)
             persister.per_spec = per_spec
 
-        persister.post_extraction_save('','',[])
+        persister.post_extraction_save()
         persister.post_measurement_save(save_local=False)
 
     def _make_per_spec(self, lt):

@@ -82,10 +82,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     temperature_readback_max = Float(1600.0)
 
     dumper_canvas = Instance(DumperCanvas)
-    _alive = False
-    _guide_overlay = None
-    _dumper_thread = None
-    _magnets_thread = None
+
     magnets_firing = Bool
 
     mode = 'normal'
@@ -99,6 +96,12 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     funnel_down_enabled = Bool(True)
     funnel_up_enabled = Bool(False)
     settings_name = 'furnace_settings'
+
+    _alive = False
+    _guide_overlay = None
+    _dumper_thread = None
+    _magnets_thread = None
+    _pid_str = None
 
     def activate(self):
         # pref_id = 'pychron.furnace'
@@ -267,12 +270,18 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
             cm = self.loader_logic.get_check_message()
             self.warning_dialog('Raising funnel not enabled\n\n{}'.format(cm))
 
+    def get_active_pid_parameters(self):
+        result = self._pid_str or ''
+        self.debug('active pid ={}'.format(result))
+        return result
+
     def set_pid_parameters(self, v):
         self.debug('setting pid parameters for {}'.format(v))
         from pychron.hardware.eurotherm.base import get_pid_parameters
         params = get_pid_parameters(v)
         if params:
             _, param_str = params
+            self._pid_str = param_str
             self.controller.set_pid(param_str)
 
     def set_setpoint(self, v):
