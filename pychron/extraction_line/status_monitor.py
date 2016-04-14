@@ -41,9 +41,10 @@ class StatusMonitor(Loggable):
 
     def start(self, oid, vm):
         if not self._clients:
+            p = self.update_period
             s, c, l, o = self.state_freq, self.checksum_freq, self.lock_freq, self.owner_freq
             self.debug('StatusMonitor period={}. '
-                       'Frequencies(state={}, checksum={}, lock={}, owner={})'.format(s, c, l, o))
+                       'Frequencies(state={}, checksum={}, lock={}, owner={})'.format(p, s, c, l, o))
             if self._stop_evt:
                 self._stop_evt.set()
                 self._stop_evt.wait(0.25)

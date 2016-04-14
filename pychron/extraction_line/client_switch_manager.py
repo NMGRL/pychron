@@ -59,7 +59,7 @@ class ClientSwitchManager(SwitchManager):
             self.refresh_canvas_needed = True
             # elm.refresh_canvas()
 
-    def load_valve_lock_states(self, refresh=True):
+    def load_valve_lock_states(self, refresh=True, force=False):
         # elm = self.extraction_line_manager
         word = self.get_lock_word()
         self.debug('valve lock word={}'.format(word))
@@ -69,7 +69,7 @@ class ClientSwitchManager(SwitchManager):
                 if k in word:
                     v = self.get_switch_by_name(k)
                     s = word[k]
-                    if v.software_lock != s:
+                    if v.software_lock != s or force:
                         changed = True
 
                         v.software_lock = s

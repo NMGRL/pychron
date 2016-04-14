@@ -431,6 +431,11 @@ class ExtractionLineManager(Manager, Consoleable):
         self.canvases.append(c)
         c.canvas2D.trait_set(display_volume=self.display_volume,
                              volume_key=self.volume_key)
+        if self.switch_manager:
+            self.switch_manager.load_valve_states()
+            self.switch_manager.load_valve_lock_states(force=True)
+            self.switch_manager.load_valve_owners()
+            c.refresh()
 
         return c
 
