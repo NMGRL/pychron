@@ -567,7 +567,7 @@ class MetaRepo(GitRepoManager):
                 if dc:
                     lambda_k = ufloat(dc.get('lambda_k_total', 0), dc.get('lambda_k_total_error', 0))
 
-        return ufloat(j, e), lambda_k
+        return ufloat(j or 0, e or 0), lambda_k
 
     def get_gains(self, name):
         g = self.get_gain_obj(name)

@@ -35,11 +35,14 @@ class FurnaceFirmwareProtocol(ServiceProtocol):
         misc_services = (('GetLabTemperature', self._manager.get_lab_temperature),
                          ('GetLabHumidity', self._manager.get_lab_humidity),
                          ('SetFrameRate', self._manager.set_frame_rate),
-                         ('GetVersion', self._manager.get_version))
+                         ('GetVersion', self._manager.get_version),
+                         ('GetDIState', self._manager.get_di_state))
 
         controller_services = (('GetTemperature', self._manager.get_temperature),
                                ('GetSetpoint', self._manager.get_setpoint),
                                ('SetSetpoint', self._manager.set_setpoint),
+                               ('GetProcessValue', self._manager.get_process_value),
+                               ('GetPercentOutput', self._manager.get_percent_output),
                                ('SetPID', self._manager.set_pid))
 
         valve_services = (('Open', self._manager.open_switch),
@@ -58,6 +61,8 @@ class FurnaceFirmwareProtocol(ServiceProtocol):
                          ('MoveRelative', self._manager.move_relative),
                          ('GetPosition', self._manager.get_position),
                          ('Slew', self._manager.slew),
+                         ('Stalled', self._manager.stalled),
+                         ('SetHome', self._manager.set_home),
                          ('StopDrive', self._manager.stop_drive),
                          ('Moving', self._manager.moving),
                          ('StartJitter', self._manager.start_jitter),

@@ -293,6 +293,10 @@ class PipelineTask(BaseBrowserTask):
             self.engine.save_pipeline_template(path)
 
     # action handlers
+    def set_flux_template(self):
+        self.engine.selected_plipeline_template = 'Flux'
+        self.run()
+
     def set_ideogram_template(self):
         self.engine.selected_pipeline_template = 'Ideogram'
         self.run()

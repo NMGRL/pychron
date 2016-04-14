@@ -31,18 +31,34 @@ class LinearAxis(AbstractDevice):
     min_limit = Property(depends_on='_position')
     max_limit = Property(depends_on='_position')
 
+    _slewing = False
+
+    def set_home(self):
+        if self._cdevice:
+            self._cdevice.set_home()
+
     def set_position(self, v, **kw):
         if self._cdevice:
-            self.add_consumable((self._cdevice.set_position, v, kw))
+            self._cdevice.set_position(v, **kw)
+            # self.add_consumable((self._cdevice.set_position, v, kw))
 
     # def relative_move(self, v):
     #     self.set_position(self._position + v)
+    def is_slewing(self):
+        return self._slewing
+
+    def is_stalled(self):
+        if self._cdevice:
+            return self._cdevice.stalled()
+
     def slew(self, modifier):
         if self._cdevice:
+            self._slewing = True
             self._cdevice.slew(modifier)
 
     def stop(self):
         if self._cdevice:
+            self._slewing = False
             self._cdevice.stop_drive()
 
     def _get_min_limit(self):

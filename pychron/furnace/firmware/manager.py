@@ -143,14 +143,21 @@ class FirmwareManager(HeadlessLoggable):
             return self.temp_hum.temperature
 
     @debug
-    def get_temperature(self, data):
+    def get_process_value(self, data):
         if self.controller:
             return self.controller.get_process_value()
+
+    get_temperature = get_process_value
 
     @debug
     def get_setpoint(self, data):
         if self.controller:
             return self.controller.process_setpoint
+
+    @debug
+    def get_percent_output(self, data):
+        if self.controller:
+            return self.controller.read_percent_output()
 
     @debug
     def get_magnets_state(self, data):
@@ -160,7 +167,8 @@ class FirmwareManager(HeadlessLoggable):
     def get_position(self, data):
         drive = self._get_drive(data)
         if drive:
-            return drive.get_position()
+            units = data.get('units', 'steps')
+            return drive.get_position(units=units)
 
     @debug
     def moving(self, data):
@@ -183,6 +191,13 @@ class FirmwareManager(HeadlessLoggable):
             return abs(pos - self._funnel_up) < self._funnel_tolerance
 
     @debug
+    def set_home(self, data):
+        drive = self._get_drive(data)
+        if drive:
+            drive.set_home()
+        return True
+
+    @debug
     def get_channel_state(self, data):
         if self.switch_controller:
             ch, inverted = self._get_switch_channel(data)
@@ -198,7 +213,7 @@ class FirmwareManager(HeadlessLoggable):
                 alt_name = data['name']
             else:
                 alt_name, _ = data
-            alt_ch, _ = self._get_switch_channel(alt_name)
+            alt_ch, alt_inverted = self._get_switch_channel(alt_name)
             ch, action, inverted = self._get_switch_indicator(data)
             if ch is None:
                 dch = alt_ch
@@ -207,6 +222,10 @@ class FirmwareManager(HeadlessLoggable):
                     result = result == 0
                 else:
                     result = result == 1
+
+                inverted = False
+                if alt_inverted:
+                    result = not result
             else:
                 dch = ch
                 result = self.switch_controller.get_channel_state(ch)
@@ -214,6 +233,17 @@ class FirmwareManager(HeadlessLoggable):
             self.debug('indicator ch={} state {}, invert={}'.format(dch, result, inverted))
             if inverted:
                 result = not result
+            return result
+
+    @debug
+    def get_di_state(self, data):
+        if self.switch_controller:
+            if isinstance(data, dict):
+                ch = data.get('channel')
+            else:
+                ch = data
+
+            result = self.switch_controller.get_channel_state(ch)
             return result
 
     @debug
@@ -270,7 +300,6 @@ class FirmwareManager(HeadlessLoggable):
             period = 3
             if data:
                 if isinstance(data, dict):
-
                     period = data.get('period', 3)
                 else:
                     period = data
@@ -278,13 +307,30 @@ class FirmwareManager(HeadlessLoggable):
             def func():
                 self._is_energized = True
                 prev = None
-                for m in self._magnet_channels:
-                    self.switch_controller.set_channel_state(m, True)
-                    if prev:
-                        self.switch_controller.set_channel_state(prev, False)
 
-                    prev = m
+                steps = [((0,), None),
+                         ((0, 1), None),
+                         ((1,), (0,)),
+                         ((1, 2), None),
+                         ((2,), (1,)),
+                         ((2,), None)]
+
+                for ons, offs in steps:
+
+                    if ons:
+                        for idx in ons:
+                            m = self._magnet_channels[idx]
+                            self.debug('Magnet {}({}) ON'.format(m, idx))
+                            self.switch_controller.set_channel_state(m, True)
+                    if offs:
+                        for idx in offs:
+                            m = self._magnet_channels[idx]
+                            self.debug('Magnet {}({}) OFF'.format(m, idx))
+                            self.switch_controller.set_channel_state(m, False)
+
+                    self.debug('--------------------------------')
                     time.sleep(period)
+
                 self.switch_controller.set_channel_state(prev, False)
                 self._is_energized = False
 
@@ -293,7 +339,7 @@ class FirmwareManager(HeadlessLoggable):
             return True
 
     @debug
-    def is_energized(self):
+    def is_energized(self, data):
         return self._is_energized
 
     @debug
@@ -331,6 +377,12 @@ class FirmwareManager(HeadlessLoggable):
         if drive:
             scalar = data.get('scalar', 1.0)
             return drive.slew(scalar)
+
+    @debug
+    def stalled(self, data):
+        drive = self._get_drive(data)
+        if drive:
+            return drive.stalled()
 
     @debug
     def start_jitter(self, data):

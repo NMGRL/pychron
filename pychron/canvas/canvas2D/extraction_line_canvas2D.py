@@ -113,6 +113,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
         switch = self._get_switch_by_name(name)
         if switch is not None:
             switch.soft_lock = lockstate
+            self.debug('setting software lock for {} to {}'.format(name, lockstate))
             # self.request_redraw()
         self.draw_valid = False
         self.invalidate_and_redraw()

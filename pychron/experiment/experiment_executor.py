@@ -1445,6 +1445,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                                       manager=self.extraction_line_manager)
         self.connectables = [elm_connectable]
 
+        print self.extraction_line_manager
+
         if self.extraction_line_manager is None:
             nonfound.append('extraction_line')
         else:

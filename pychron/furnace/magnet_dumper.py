@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import json
+
 from traits.api import Str
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -27,7 +29,8 @@ class NMGRLMagnetDumper(CoreDevice):
 
     def energize(self):
         self._dump_in_progress = True
-        self.ask('EnergizeMagnets')
+        d = json.dumps({'command': 'EnergizeMagnets', 'period': 3})
+        self.ask(d)
 
     def denergize(self):
         self._dump_in_progress = False

@@ -15,13 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from traits.api import provides, Int
 # ============= standard library imports ========================
 import json
-# ============= local library imports  ==========================
 import re
-from traits.has_traits import provides
-
+# ============= local library imports  ==========================
 from pychron.furnace.furnace_controller import IFurnaceController
+from pychron.hardware.actuators import trim_bool
 from pychron.hardware.core.core_device import CoreDevice
 
 VER_REGEX = re.compile(r'\d+.\d+(.\d+){0,1}')
@@ -29,13 +29,24 @@ VER_REGEX = re.compile(r'\d+.\d+(.\d+){0,1}')
 
 @provides(IFurnaceController)
 class NMGRLFurnaceEurotherm(CoreDevice):
+    water_flow_channel = Int
+
+    def load_additional_args(self, config):
+        self.set_attribute(config, 'water_flow_channel', 'DIO', 'water_flow_channel', cast='int')
+        return super(NMGRLFurnaceEurotherm, self).load_additional_args(config)
+
     def test_connection(self):
         d = json.dumps({'command': 'GetVersion'})
         resp = self.ask(d)
         if resp:
-            return VER_REGEX.match(resp)
+            return VER_REGEX.match(resp) is not None
         else:
             return False
+
+    @trim_bool
+    def get_water_flow_state(self, **kw):
+        d = json.dumps({'command': 'GetDIState', 'channel': self.water_flow_channel})
+        return self.ask(d, **kw)
 
     def set_pid(self, pstr):
         d = json.dumps({'command': 'SetPID', 'pid': pstr})
@@ -62,5 +73,19 @@ class NMGRLFurnaceEurotherm(CoreDevice):
             pass
 
     read_temperature = get_temperature
+
+    def get_process_value(self, **kw):
+        resp = self.ask('GetProcessValue', **kw)
+        try:
+            return float(resp)
+        except (TypeError, ValueError):
+            pass
+
+    def get_output(self):
+        resp = self.ask('GetPercentOutput')
+        try:
+            return float(resp)
+        except (TypeError, ValueError):
+            pass
 
 # ============= EOF =============================================

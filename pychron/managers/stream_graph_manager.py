@@ -20,6 +20,7 @@ import pickle
 
 from traits.api import Bool, Float, Property, Instance, Event, Button, Enum
 # ============= standard library imports ========================
+from numpy import Inf
 # ============= local library imports  ==========================
 from pychron.core.helpers.timer import Timer
 from pychron.graph.time_series_graph import TimeSeriesStreamGraph
@@ -60,9 +61,9 @@ class StreamGraphManager(Manager):
     timer = None
     update_period = 1
 
-    def reset_scan_timer(self):
+    def reset_scan_timer(self, func=None):
         self.info('reset scan timer')
-        self.timer = self._timer_factory()
+        self.timer = self._timer_factory(func=func)
 
     def load_settings(self):
         self.info('load scan settings')
@@ -95,6 +96,16 @@ class StreamGraphManager(Manager):
             self.warning('No scan settings file {}'.format(p))
 
     # private
+    def _get_graph_y_min_max(self):
+        mi, ma = Inf, -Inf
+        for k, plot in self.graph.plots[0].plots.iteritems():
+            plot = plot[0]
+            if plot.visible:
+                ys = plot.value.get_data()
+                ma = max(ma, max(ys))
+                mi = min(mi, min(ys))
+        return mi, ma
+
     def _update_scan_graph(self):
         pass
 

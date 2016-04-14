@@ -26,11 +26,11 @@ class ClientSwitchManager(SwitchManager):
         if self.actuators:
             actuator = self.actuators[0]
             word = actuator.get_state_checksum(vkeys)
-            # self.debug('Get Checksum: {}'.format(word))
+            self.debug('Get Checksum: {}'.format(word))
             try:
                 return int(word)
             except BaseException:
-                pass
+                self.warning('invalid checksum "{}"'.format(word))
 
     def load_valve_states(self, refresh=True, force_network_change=False):
         # self.debug('Load valve states')
@@ -62,7 +62,7 @@ class ClientSwitchManager(SwitchManager):
     def load_valve_lock_states(self, refresh=True):
         # elm = self.extraction_line_manager
         word = self.get_lock_word()
-
+        self.debug('valve lock word={}'.format(word))
         changed = False
         if word is not None:
             for k in self.switches:
@@ -129,6 +129,7 @@ class ClientSwitchManager(SwitchManager):
         if self.actuators:
             actuator = self.actuators[0]
             word = actuator.get_lock_word()
+            self.debug('Read Lock word={}'.format(word))
             if self._validate_checksum(word):
                 d = self._parse_word(word[:-4])
 

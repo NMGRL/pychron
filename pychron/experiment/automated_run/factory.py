@@ -1605,7 +1605,6 @@ post_equilibration_script:name''')
     def _datahub_default(self):
         dh = Datahub()
         dh.bind_preferences()
-        dh.secondary_connect()
         return dh
 
     @property

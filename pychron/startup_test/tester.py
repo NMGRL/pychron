@@ -69,6 +69,7 @@ class StartupTester(Loggable):
             self.info('Testing "{} - {}"'.format(pname, ti))
             st = time.time()
             result = func()
+            self.info('Test result={}'.format(result))
             if isinstance(result, bool):
                 result = 'Passed' if result else 'Failed'
             elif result is None:

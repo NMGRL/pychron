@@ -23,6 +23,9 @@ from traits.api import Property, Str, cached_property, \
     List, Event, Button, Instance, Bool, on_trait_change, Float, HasTraits, Any
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from uncertainties import nominal_value
+from uncertainties import std_dev
+
 from pychron.canvas.canvas2D.irradiation_canvas import IrradiationCanvas
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.core.helpers.formatting import floatfmt
@@ -386,16 +389,19 @@ class LabnumberEntry(DVCIrradiationable):
     def _save_to_db(self):
         db = self.dvc.db
 
+        if not self.dvc.meta_repo.smart_pull(quiet=False):
+            return
+
         with db.session_ctx():
             n = len(self.irradiated_positions)
             prog = open_progress(n)
 
-            for irs in self.irradiated_positions:
-                ln = irs.identifier
+            for ir in self.irradiated_positions:
+                ln = ir.identifier
 
-                dbpos = db.get_irradiation_position(self.irradiation, self.level, irs.hole)
+                dbpos = db.get_irradiation_position(self.irradiation, self.level, ir.hole)
                 if not dbpos:
-                    dbpos = db.add_irradiation_position(self.irradiation, self.level, irs.hole)
+                    dbpos = db.add_irradiation_position(self.irradiation, self.level, ir.hole)
 
                 if ln:
                     dbpos2 = db.get_identifier(ln)
@@ -408,14 +414,17 @@ class LabnumberEntry(DVCIrradiationable):
                     else:
                         dbpos.identifier = ln
 
-                dbpos.j = irs.j
-                dbpos.j_err = irs.j_err
-                dbpos.weight = float(irs.weight or 0)
-                dbpos.note = irs.note
+                # dbpos.j = irs.j
+                # dbpos.j_err = irs.j_err
+                self.dvc.meta_repo.update_flux(self.irradiation, self.level,
+                                               ir.hole, ir.identifier, ir.j, ir.j_err)
 
-                sam = irs.sample
-                proj = irs.project
-                mat = irs.material
+                dbpos.weight = float(ir.weight or 0)
+                dbpos.note = ir.note
+
+                sam = ir.sample
+                proj = ir.project
+                mat = ir.material
                 if proj:
                     proj = db.add_project(proj)
 
@@ -429,9 +438,12 @@ class LabnumberEntry(DVCIrradiationable):
                     dbpos.sample = sam
 
                 prog.change_message('Saving {}{}{} identifier={}'.format(self.irradiation, self.level,
-                                                                         irs.hole, ln))
+                                                                         ir.hole, ln))
         self.dirty = False
         self._level_changed(self.level)
+        if self.dvc.meta_repo.has_staged():
+            self.dvc.meta_commit('Labnumber Entry Save')
+            self.dvc.meta_push()
 
     def _increment(self, name):
         """
@@ -607,8 +619,12 @@ THIS CHANGE CANNOT BE UNDONE')
 
                 item = self.canvas.scene.get_item(str(ir.hole))
                 item.fill = bool(dbpos.identifier)
-                ir.j = dbpos.j or 0
-                ir.j_err = dbpos.j_err or 0
+
+                j, lambda_k = self.dvc.meta_repo.get_flux(self.irradiation, self.level, ir.hole)
+                if j:
+                    ir.j = nominal_value(j)
+                    ir.j_err = std_dev(j)
+
                 ir.note = dbpos.note or ''
                 ir.weight = dbpos.weight or 0
 

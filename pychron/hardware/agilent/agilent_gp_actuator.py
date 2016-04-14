@@ -59,6 +59,8 @@ class AgilentGPActuator(GPActuator):
         if s is not None:
             return s[:1] == '1'
 
+    get_indicator_state = get_channel_state
+
     def close_channel(self, obj, excl=False):
         """
             Close the channel

@@ -138,14 +138,18 @@ class PipelinePlugin(BaseTaskPlugin):
                             SchemaAddition(factory=SeriesAction,
                                            path=pg),
                             SchemaAddition(factory=VerticalFluxAction,
-                                           path=pg)]
+                                           path=pg),
+                            ]
 
         reduction_actions = [SchemaAddition(factory=reduction_group,
                                             path='MenuBar/data.menu'),
                              SchemaAddition(factory=BlanksAction,
                                             path=rg),
                              SchemaAddition(factory=ICFactorAction,
-                                            path=rg)]
+                                            path=rg),
+                             SchemaAddition(factory=FluxAction,
+                                            path=pg)]
+
         help_actions = [SchemaAddition(factory=ResetFactoryDefaultsAction,
                                        path='MenuBar/help.menu')]
         configure_recall = SchemaAddition(factory=ConfigureRecallAction,

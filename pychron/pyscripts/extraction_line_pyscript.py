@@ -91,16 +91,36 @@ class ExtractionPyScript(ValvePyScript):
         :return: response blob. binary string representing time v measured output
         :rtype: str
         """
-        return self._extraction_action([('get_response_blob', (), {})]) or ''
+        result = self._extraction_action([('get_response_blob', (), {})])
+        if result:
+            result = result[0]
+        return result or ''
 
     def get_output_blob(self):
         """
         Get the extraction device's output blob
 
-        :return: output blob: binary string representing time v requested output
+        :return: output blob: binary string representing time v percent output
         :rtype: str
         """
-        return self._extraction_action([('get_output_blob', (), {})]) or ''
+
+        result = self._extraction_action([('get_output_blob', (), {})])
+        if result:
+            result = result[0]
+        return result or ''
+
+    def get_setpoint_blob(self):
+        """
+        Get the extraction device's setpoint blob
+
+        :return: setpoint blob: binary string representing time v requested setpoint
+        :rtype: str
+        """
+
+        result = self._extraction_action([('get_setpoint_blob', (), {})])
+        if result:
+            result = result[0]
+        return result or ''
 
     def output_achieved(self):
         """
@@ -135,6 +155,11 @@ class ExtractionPyScript(ValvePyScript):
 
     def stop_response_recorder(self):
         self._extraction_action([('stop_response_recorder', (), {})])
+
+    def get_active_pid_parameters(self):
+        result = self._extraction_action([('get_active_pid_parameters', (), {})])
+        if result:
+            return result[0]
 
     def get_command_register(self):
         cm = super(ExtractionPyScript, self).get_command_register()

@@ -180,8 +180,8 @@ class AutomatedRun(Loggable):
     overlap_evt = None
 
     use_peak_center_threshold = Bool
-    peak_center_threshold1 = Int(10)
-    peak_center_threshold2 = Int(3)
+    # peak_center_threshold1 = Int(10)
+    peak_center_threshold = Int(3)
     peak_center_threshold_window = Int(10)
 
     persistence_spec = Instance(PersistenceSpec)
@@ -196,9 +196,9 @@ class AutomatedRun(Loggable):
 
         for attr, cast in (('experiment_type', str),
                            ('use_peak_center_threshold', to_bool),
-                           ('peak_center_threshold1', int),
-                           ('peak_center_threshold2', int),
-                           ('peak_center_threshold_window', int)):
+                           ('peak_center_threshold', int),
+                           ('peak_center_threshold_window', int)
+                           ):
             set_preference(preferences, self, attr, 'pychron.experiment.{}'.format(attr), cast)
 
         self.persister.set_preferences(preferences)
@@ -423,7 +423,7 @@ class AutomatedRun(Loggable):
                                check_conditionals, sc)
 
         if self.plot_panel:
-            bs = dict([(iso.name, iso.baseline.uvalue) for iso in
+            bs = dict([(iso.name, (iso.detector, iso.baseline.uvalue)) for iso in
                        self.isotope_group.isotopes.values()])
             self.set_previous_baselines(bs)
             self.plot_panel.is_baseline = False
@@ -531,26 +531,37 @@ class AutomatedRun(Loggable):
 
         return ret
 
-    def py_peak_center(self, detector=None, save=True, isotope=None, check_intensity=True,
-                       directions='Increase', config_name='default', **kw):
+    def py_peak_center(self, detector=None, save=True, isotope=None,
+                       directions='Increase', config_name='default',
+                       check_intensity=None,
+                       peak_center_threshold=None,
+                       peak_center_threshold_window=None,
+                       **kw):
         if not self._alive:
             return
+
+        if check_intensity is None:
+            check_intensity = self.use_peak_center_threshold
+        if peak_center_threshold is None:
+            peak_center_threshold = self.peak_center_threshold
+        if peak_center_threshold_window is None:
+            peak_center_threshold_window = self.peak_center_threshold_window
 
         ion = self.ion_optics_manager
 
         if ion is not None:
-            if self.isotope_group and check_intensity and self.use_peak_center_threshold:
+            if self.isotope_group and check_intensity:
                 iso = self.isotope_group.get_isotope(isotope)
-                v = iso.get_intensity()
-                if v < self.peak_center_threshold1:
-                    self.debug('peak center: {}={}<{}'.format(isotope, v, self.peak_center_threshold1))
-                    ys = iso.ys[-self.peak_center_threshold_window:]
-                    ym = ys.mean()
-                    self.debug('peak center: mean={} threshold={}'.format(ym, self.peak_center_threshold2))
-                    if ym < self.peak_center_threshold2:
-                        self.warning(
-                            'Skipping peak center. intensities to small. {}<{}'.format(ym, self.peak_center_threshold2))
-                        return
+                # v = iso.get_intensity()
+                # if v < self.peak_center_threshold1:
+                #     self.debug('peak center: {}={}<{}'.format(isotope, v, self.peak_center_threshold1))
+                ys = iso.ys[-peak_center_threshold_window:]
+                ym = ys.mean()
+                self.debug('peak center: mean={} threshold={}'.format(ym, self.peak_center_threshold))
+                if ym < peak_center_threshold:
+                    self.warning(
+                        'Skipping peak center. intensities to small. {}<{}'.format(ym, self.peak_center_threshold))
+                    return
 
             if not self.plot_panel:
                 p = self._new_plot_panel(self.plot_panel, stack_order='top_to_bottom')
@@ -1147,9 +1158,17 @@ class AutomatedRun(Loggable):
 
             rblob = self.extraction_script.get_response_blob()
             oblob = self.extraction_script.get_output_blob()
+            sblob = self.extraction_script.get_setpoint_blob()
             snapshots = self.extraction_script.snapshots
 
-            self._persister_save_action('post_extraction_save', rblob, oblob, snapshots)
+            pid = self.extraction_script.pid
+            self._update_persister_spec(pid=pid,
+                                        response_blob=rblob,
+                                        output_blob=oblob,
+                                        setpoint_blob=sblob,
+                                        snapshots=snapshots)
+
+            self._persister_save_action('post_extraction_save')
             # self.persister.post_extraction_save(rblob, oblob, snapshots)
             self.heading('Extraction Finished')
             self.info_color = None
