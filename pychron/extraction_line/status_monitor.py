@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from pyface.timer.do_later import do_after
-from traits.api import Int
+from traits.api import Int, List
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from threading import Event
@@ -26,7 +26,7 @@ from pychron.loggable import Loggable
 class StatusMonitor(Loggable):
     # valve_manager = None
     _stop_evt = None
-    _clients = 0
+    _clients = List
 
     state_freq = Int(3)
     checksum_freq = Int(3)
@@ -35,8 +35,15 @@ class StatusMonitor(Loggable):
     owner_freq = Int(5)
     update_period = Int(1)
 
-    def start(self, vm):
+    # def __init__(self, *args, **kw):
+    #     super(StatusMonitor, self).__init__(*args, **kw)
+    #     self._clients = []
+
+    def start(self, oid, vm):
         if not self._clients:
+            s, c, l, o = self.state_freq, self.checksum_freq, self.lock_freq, self.owner_freq
+            self.debug('StatusMonitor period={}. '
+                       'Frequencies(state={}, checksum={}, lock={}, owner={})'.format(s, c, l, o))
             if self._stop_evt:
                 self._stop_evt.set()
                 self._stop_evt.wait(0.25)
@@ -47,14 +54,19 @@ class StatusMonitor(Loggable):
         else:
             self.debug('Monitor already running')
 
-        self._clients += 1
+        if oid not in self._clients:
+            self._clients.append(oid)
 
     def isAlive(self):
         if self._stop_evt:
             return not self._stop_evt.isSet()
 
-    def stop(self):
-        self._clients -= 1
+    def stop(self, oid):
+        # self._clients -= 1
+        try:
+            self._clients.remove(oid)
+        except ValueError:
+            pass
 
         if not self._clients:
             self._stop_evt.set()

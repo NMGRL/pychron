@@ -145,6 +145,12 @@ class ICFactorAction(PipelineAction):
     dname = 'ICFactor'
 
 
+class FluxAction(PipelineAction):
+    name = 'Flux'
+    dname = 'Flux'
+    action = 'set_flux_template'
+
+
 # ============= Plotting Actions =============================================
 class ResetFactoryDefaultsAction(Action):
     name = 'Reset Factory Defaults'

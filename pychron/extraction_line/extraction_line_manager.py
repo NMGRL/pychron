@@ -701,12 +701,14 @@ class ExtractionLineManager(Manager, Consoleable):
         self.update_switch_state(*new)
 
     def _handle_lock_state(self, new):
+        self.debug('refresh_lock_state fired. {}'.format(new))
         self.update_switch_lock_state(*new)
 
     def _handle_owned_state(self, new):
         self.update_switch_owned_state(*new)
 
     def _handle_refresh_canvas(self, new):
+        self.debug('refresh_canvas_needed fired')
         self.refresh_canvas()
 
     def _handle_console_message(self, new):
@@ -742,7 +744,6 @@ class ExtractionLineManager(Manager, Consoleable):
 
     def _get_switch_manager_klass(self):
         from pychron.extraction_line.switch_manager import SwitchManager
-
         return SwitchManager
 
     def _explanation_default(self):

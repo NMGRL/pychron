@@ -593,6 +593,8 @@ class GitRepoManager(Loggable):
             if not quiet:
                 self.information_dialog('Up-to-date with {}'.format(remote))
 
+        return True
+
     def fetch(self, remote='origin'):
         return self._repo.git.fetch(remote)
 
