@@ -223,11 +223,11 @@ class FirmwareManager(HeadlessLoggable):
                     p = self._get_switch_channel(name)
                     return not self._get_di_state(*p)
                 else:
-                    openflag = False
+                    openflag = None
                     if o:
                         openflag = self._get_di_state(*o)
 
-                    closeflag = False
+                    closeflag = None
                     if c:
                         closeflag = self._get_di_state(*c)
 
@@ -472,7 +472,7 @@ class FirmwareManager(HeadlessLoggable):
 
         if ch:
             if ch == 'inverted':
-                return 'inverted'
+                return 'inverted', None
 
             op, cp = map(str.strip, ch.split(','))
             oinverted = False
