@@ -2020,6 +2020,8 @@ Use Last "blank_{}"= {}
             if dbr is None:
                 dbr = self._select_blank(db, ms)
                 selected = True
+            else:
+                dbr = dbr.make_record_view(repository)
 
             if dbr:
                 dbr = mainstore.make_analysis(dbr)

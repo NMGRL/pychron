@@ -833,15 +833,21 @@ class DVC(Loggable):
         if isinstance(record, DVCAnalysis):
             a = record
         else:
+            print 'asdfas', record.use_repository_suffix, record.record_id
+
             try:
-                a = DVCAnalysis(record.record_id, expid)
+                rid = record.record_id
+                if record.use_repository_suffix:
+                    rid = '-'.join(rid.split('-')[:-1])
+                print 'rrr', rid
+                a = DVCAnalysis(rid, expid)
             except AnalysisNotAnvailableError:
-                self.info('Analysis {} not available. Trying to clone repository "{}'.format(record.record_id, expid))
+                self.info('Analysis {} not available. Trying to clone repository "{}'.format(rid, expid))
                 self.sync_repo(expid)
                 try:
-                    a = DVCAnalysis(record.record_id, expid)
+                    a = DVCAnalysis(rid, expid)
                 except AnalysisNotAnvailableError:
-                    self.warning_dialog('Analysis {} not in repository {}'.format(record.record_id, expid))
+                    self.warning_dialog('Analysis {} not in repository {}'.format(rid, expid))
                     return
 
             # get repository branch

@@ -195,9 +195,9 @@ class DVCDatabase(DatabaseAdapter):
 
             if ms:
                 q = q.filter(func.lower(AnalysisTbl.mass_spectrometer) == ms.lower())
-
-            return self._retrieve_items(AnalysisTbl, order=AnalysisTbl.timestamp.desc(),
-                                        limit=limit)
+            q = q.order_by(AnalysisTbl.timestamp.desc())
+            q = q.limit(limit)
+            return self._query_all(q)
 
     def retrieve_blank(self, kind, ms, ed, last, repository):
         self.debug('retrieve blank. kind={}, ms={}, '
@@ -224,9 +224,8 @@ class DVCDatabase(DatabaseAdapter):
                 q = q.filter(RepositoryTbl.name == repository)
 
             q = q.order_by(AnalysisTbl.timestamp.desc())
-            record = self._query_one(q)
-            if record:
-                return record.make_record_view(repository)
+            return self._query_one(q)
+
 
     # def get_analyses_data_range(self, low, high, atypes, exclude=None, exclude_uuids=None):
     #     with self.session_ctx() as sess:

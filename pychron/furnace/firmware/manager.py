@@ -219,18 +219,22 @@ class FirmwareManager(HeadlessLoggable):
                 p = self._get_switch_channel(name)
                 return self._get_di_state(*p)
             else:
-                openflag = False
-                if o:
-                    openflag = self._get_di_state(*o)
-
-                closeflag = False
-                if c:
-                    closeflag = self._get_di_state(*c)
-
-                if closeflag == openflag:
-                    return 'Indicator State MisMatch Open={}, Close={}'.format(openflag, closeflag)
+                if o == 'inverted':
+                    p = self._get_switch_channel(name)
+                    return not self._get_di_state(*p)
                 else:
-                    return openflag
+                    openflag = False
+                    if o:
+                        openflag = self._get_di_state(*o)
+
+                    closeflag = False
+                    if c:
+                        closeflag = self._get_di_state(*c)
+
+                    if closeflag == openflag:
+                        return 'Indicator State MisMatch Open={}, Close={}'.format(openflag, closeflag)
+                    else:
+                        return openflag
 
     # @debug
     # def get_indicator_state(self, data):
@@ -465,6 +469,9 @@ class FirmwareManager(HeadlessLoggable):
         self.debug('get switch indicator channel {} {}'.format(name, ch))
 
         if ch:
+            if ch == 'inverted':
+                return 'inverted'
+
             op, cp = map(str.strip, ch.split(','))
             oinverted = False
             if op.startswith('i'):
@@ -475,11 +482,13 @@ class FirmwareManager(HeadlessLoggable):
                 cp = cp[1:]
                 cinverted = True
 
+            rop = (op, oinverted)
             if not op or op == '-':
-                op = None
+                rop = None
+            rcp = (cp, cinverted)
             if not cp or cp == '-':
-                cp = None
-            return (op, oinverted), (cp, cinverted)
+                rcp = None
+            return rop, rcp
         else:
             return None, None
 
