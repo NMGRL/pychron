@@ -626,23 +626,26 @@ class DVC(Loggable):
         db = self.db
         with db.session_ctx():
             dban = db.get_analysis_uuid(runspec.uuid)
-            for e in dban.repository_associations:
-                if e.repository == expid:
-                    break
+            if dban:
+                for e in dban.repository_associations:
+                    if e.repository == expid:
+                        break
+                else:
+                    db.add_repository_association(expid, dban)
+
+                src_expid = runspec.repository_identifier
+                if src_expid != expid:
+                    repo = self._get_repository(expid)
+
+                    for m in PATH_MODIFIERS:
+                        src = analysis_path(runspec.record_id, src_expid, modifier=m)
+                        dest = analysis_path(runspec.record_id, expid, modifier=m, mode='w')
+
+                        shutil.copyfile(src, dest)
+                        repo.add(dest, commit=False)
+                    repo.commit('added repository association')
             else:
-                db.add_repository_association(expid, dban)
-
-            src_expid = runspec.repository_identifier
-            if src_expid != expid:
-                repo = self._get_repository(expid)
-
-                for m in PATH_MODIFIERS:
-                    src = analysis_path(runspec.record_id, src_expid, modifier=m)
-                    dest = analysis_path(runspec.record_id, expid, modifier=m, mode='w')
-
-                    shutil.copyfile(src, dest)
-                    repo.add(dest, commit=False)
-                repo.commit('added repository association')
+                self.warning('{} not in the database {}'.format(runspec.runid, self.db.name))
 
     def add_measured_position(self, *args, **kw):
         with self.db.session_ctx():
@@ -741,8 +744,10 @@ class DVC(Loggable):
                 #     usr = rfile.readline().strip()
                 #     pwd = rfile.readline().strip()
 
-                org.create_repo(identifier, self.github_user, self.github_password,
+                resp = org.create_repo(identifier, self.github_user, self.github_password,
                                 auto_init=True)
+                if resp:
+                    self.debug('Create repo status code={}'.format(resp.status_code))
 
                 # url = '{}/{}/{}.git'.format(paths.git_base_origin, self.organization, identifier)
                 Repo.clone_from(self.make_url(identifier), root)

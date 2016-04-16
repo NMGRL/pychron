@@ -413,7 +413,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
             while not self.executable:
                 time.sleep(1)
-                if time.time() - st < delay:
+                if time.time() - st < delay and self.is_alive():
                     self.set_extract_state('Waiting for save. Autosave in {} s'.format(delay - cnt),
                                            flash=False)
                     cnt += 1
@@ -1461,14 +1461,15 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             ed_connectable = Connectable(name=extract_device)
             man = None
             if self.application:
-                protocol = 'pychron.lasers.laser_managers.ilaser_manager.ILaserManager'
                 self.debug('get service name={}'.format(extract_device))
-                man = self.application.get_service(protocol, 'name=="{}"'.format(extract_device))
+                for protocol in ('pychron.lasers.laser_managers.ilaser_manager.ILaserManager',
+                                 'pychron.furnace.ifurnace_manager.IFurnaceManager',
+                                 'pychron.external_pipette.protocol.IPipetteManager'):
 
-                if man is None:
-                    protocol = 'pychron.external_pipette.protocol.IPipetteManager'
                     man = self.application.get_service(protocol, 'name=="{}"'.format(extract_device))
-                ed_connectable.protocol = protocol
+                    if man:
+                        ed_connectable.protocol = protocol
+                        break
 
             self.connectables.append(ed_connectable)
             if not man:
@@ -1584,6 +1585,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.heading('Pre Run Check Passed')
 
     def _retroactive_repository_identifiers(self, spec):
+        self.warning('retroactive repository identifiers disabled')
+        return
+
         db = self.datahub.mainstore
         crun, expid = retroactive_repository_identifiers(spec, self._cached_runs, self._active_repository_identifier)
         self._cached_runs, self._active_repository_identifier = crun, expid

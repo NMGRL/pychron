@@ -233,6 +233,8 @@ class FirmwareManager(HeadlessLoggable):
             self.debug('indicator ch={} state {}, invert={}'.format(dch, result, inverted))
             if inverted:
                 result = not result
+
+
             return result
 
     @debug

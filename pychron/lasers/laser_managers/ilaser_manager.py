@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from pychron.lasers.laser_managers.extraction_device import IExtractionDevice
+from pychron.iextraction_device import IExtractionDevice
 
 
 # ============= standard library imports ========================

@@ -57,6 +57,7 @@ class BaseMeasurement(object):
     use_manual_error = False
 
     _n = None
+
     # time_zero_offset = Float
     # offset_xs = Property
 
@@ -311,7 +312,7 @@ class IsotopicMeasurement(BaseMeasurement):
         if isinstance(v, tuple):
             self._value, self._error = v
         else:
-            self._value , self._error = nominal_value(v), std_dev(v)
+            self._value, self._error = nominal_value(v), std_dev(v)
 
     def _revert_user_defined(self):
         self.user_defined_error = False
@@ -498,6 +499,7 @@ class Whiff(BaseMeasurement):
 
 class BaseIsotope(IsotopicMeasurement):
     baseline = None
+
     # baseline_fit_abbreviation = Property(depends_on='baseline:fit')
 
     @property
@@ -562,6 +564,7 @@ class Isotope(BaseIsotope):
         self.blank = Blank(name, detector)
         self.sniff = Sniff(name, detector)
         self.background = Background(name, detector)
+        self.baseline = Baseline(name, detector)
 
     def get_filtered_data(self):
         return self.regressor.calculate_filtered_data()
@@ -626,10 +629,12 @@ class Isotope(BaseIsotope):
         return v
 
     def set_blank(self, v, e):
-        self.blank = Blank(_value=v, _error=e)
+        self.blank = Blank(self.name, self.detector)
+        self.blank.set_uvalue((v, e))
 
     def set_baseline(self, v, e):
-        self.baseline = Baseline(_value=v, _error=e)
+        self.baseline = Baseline(self.name, self.detector)
+        self.baseline.set_uvalue((v, e))
 
     def _whiff_default(self):
         return Whiff()

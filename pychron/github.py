@@ -55,6 +55,8 @@ def create_organization_repository(org, name, usr, pwd, **kw):
     auth = base64.encodestring('{}:{}'.format(usr, pwd)).replace('\n', '')
     headers = {"Authorization": "Basic {}".format(auth)}
     r = requests.post(cmd, data=json.dumps(payload), headers=headers)
+    print cmd, payload, usr, pwd
+    print r
     return r
 
 
@@ -109,7 +111,7 @@ class Organization(GithubObject):
         return name in self.repo_names
 
     def create_repo(self, name, usr, pwd, **payload):
-        create_organization_repository(self._name, name, usr, pwd, **payload)
+        return create_organization_repository(self._name, name, usr, pwd, **payload)
         # cmd = make_request(self.base_cmd)
         # payload['name'] = name
         #

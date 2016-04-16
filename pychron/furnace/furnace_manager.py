@@ -125,6 +125,10 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         if self.controller:
             return self.controller.test_connection()
 
+    def test_connection(self):
+        self.debug('testing connection')
+        return self.test_furnace_api()
+
     def refresh_states(self):
         self.switch_manager.load_indicator_states()
 
@@ -141,7 +145,9 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         self.debug('prepare destroy')
         self._stop_update()
         self.loader_logic.manager = None
-
+        if self.timer:
+            self.timer.stop()
+            
     def get_response_blob(self):
         self.debug('get response blob')
         blob = self.response_recorder.get_response_blob()
@@ -160,7 +166,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         self.debug('set response recorder period={}'.format(p))
         self.response_recorder.period = p
 
-    def extract(self, v):
+    def extract(self, v, **kw):
         self.debug('extract')
         # self.response_recorder.start()
         self.debug('set setpoint to {}'.format(v))

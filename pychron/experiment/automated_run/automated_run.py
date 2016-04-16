@@ -181,7 +181,7 @@ class AutomatedRun(Loggable):
 
     use_peak_center_threshold = Bool
     # peak_center_threshold1 = Int(10)
-    peak_center_threshold = Int(3)
+    peak_center_threshold = Float(3)
     peak_center_threshold_window = Int(10)
 
     persistence_spec = Instance(PersistenceSpec)
@@ -196,7 +196,7 @@ class AutomatedRun(Loggable):
 
         for attr, cast in (('experiment_type', str),
                            ('use_peak_center_threshold', to_bool),
-                           ('peak_center_threshold', int),
+                           ('peak_center_threshold', float),
                            ('peak_center_threshold_window', int)
                            ):
             set_preference(preferences, self, attr, 'pychron.experiment.{}'.format(attr), cast)
@@ -473,10 +473,10 @@ class AutomatedRun(Loggable):
                     ii = a.isotope_factory(name=iso, detector=di)
                     if correct_for_blank:
                         if iso in pb:
-                            b = pb[iso]
+                            _,b = pb[iso]
                             ii.set_blank(nominal_value(b), std_dev(b))
                     if iso in pbs:
-                        b = pbs[iso]
+                        _,b = pbs[iso]
                         ii.set_baseline(nominal_value(b), std_dev(b))
 
                 plot = g.get_plot_by_ytitle(iso) or g.get_plot_by_ytitle('{}{}'.format(iso, di))
@@ -1617,8 +1617,9 @@ anaylsis_type={}
         return [spec.get_detector(n) for n in dets]
 
     def _define_detectors(self, isotope, det):
-        spec = self.spectrometer_manager.spectrometer
-        spec.update_isotopes(isotope, det)
+        if self.spectrometer_manager:
+            spec = self.spectrometer_manager.spectrometer
+            spec.update_isotopes(isotope, det)
 
     def _activate_detectors(self, dets):
         """
@@ -1674,8 +1675,7 @@ anaylsis_type={}
 
         for d in self._active_detectors:
             self.debug('setting isotope det={}, iso={}'.format(d.name, d.isotope))
-            self.isotope_group.set_isotope(d.isotope, (0, 0),
-                                           d.name,
+            self.isotope_group.set_isotope(d.isotope, d.name, (0, 0),
                                            correct_for_blank=cb)
 
         if (not self.spec.analysis_type.startswith('blank')
@@ -1837,7 +1837,11 @@ anaylsis_type={}
 
             fxs = linspace(xmi, xma)
             for i, p in enumerate(g.plots):
-                xs = g.get_data(i)
+                try:
+                    xs = g.get_data(i)
+                except IndexError:
+                    continue
+
                 ys = g.get_data(i, axis=1)
 
                 for ni, color, yoff in ((5, 'red', 30), (4, 'green', 10), (3, 'blue', -10), (2, 'orange', -30)):

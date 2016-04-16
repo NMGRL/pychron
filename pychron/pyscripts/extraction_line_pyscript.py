@@ -24,6 +24,7 @@ import re
 # ============= local library imports  ==========================
 from pychron.core.ramper import Ramper
 from pychron.external_pipette.protocol import IPipetteManager
+from pychron.furnace.ifurnace_manager import IFurnaceManager
 from pychron.hardware.core.exceptions import TimeoutError
 from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.pyscripts.pyscript import verbose_skip, makeRegistry
@@ -147,14 +148,6 @@ class ExtractionPyScript(ValvePyScript):
         return ('Requested Output= {:0.3f}'.format(request),
                 'Achieved Output=  {:0.3f}'.format(ach))
 
-    def set_response_recorder_period(self, p):
-        self._extraction_action([('set_response_recorder_period', (p,), {})])
-
-    def start_response_recorder(self):
-        self._extraction_action([('start_response_recorder', (), {})])
-
-    def stop_response_recorder(self):
-        self._extraction_action([('stop_response_recorder', (), {})])
 
     def get_active_pid_parameters(self):
         result = self._extraction_action([('get_active_pid_parameters', (), {})])
@@ -187,6 +180,21 @@ class ExtractionPyScript(ValvePyScript):
     # ==========================================================================
     # commands
     # ==========================================================================
+    @verbose_skip
+    @command_register
+    def set_response_recorder_period(self, p):
+        self._extraction_action([('set_response_recorder_period', (p,), {})])
+
+    @verbose_skip
+    @command_register
+    def start_response_recorder(self):
+        self._extraction_action([('start_response_recorder', (), {})])
+
+    @verbose_skip
+    @command_register
+    def stop_response_recorder(self):
+        self._extraction_action([('stop_response_recorder', (), {})])
+
     @verbose_skip
     @command_register
     def wake(self):
@@ -785,7 +793,7 @@ class ExtractionPyScript(ValvePyScript):
         if 'name' not in kw or kw['name'] is None:
             kw['name'] = self.extract_device
         if 'protocol' not in kw or kw['protocol'] is None:
-            kw['protocol'] = ILaserManager
+            kw['protocols'] = ILaserManager, IFurnaceManager
 
         if kw['name'] in ('Extract Device', 'ExtractDevice', 'extract device', 'extractdevice', NULL_STR, LINE_STR):
             self.debug('no extraction action')

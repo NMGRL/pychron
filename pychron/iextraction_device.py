@@ -19,6 +19,7 @@
 # ============= local library imports  ==========================
 from traits.api import Interface
 
+
 class IExtractionDevice(Interface):
     def extract(self, *args, **kw):
         pass

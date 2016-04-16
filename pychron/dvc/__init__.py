@@ -16,8 +16,10 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-# ============= local library imports  ==========================
 import json
+import os
+# ============= local library imports  ==========================
+
 
 __version__ = '0.1'
 
@@ -28,8 +30,11 @@ def dvc_dump(obj, path):
 
 
 def dvc_load(path):
-    with open(path, 'r') as rfile:
-        return json.load(rfile)
+    if os.path.isfile(path):
+        with open(path, 'r') as rfile:
+            return json.load(rfile)
+    else:
+        return {}
 
 # ============= EOF =============================================
 

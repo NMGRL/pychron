@@ -558,10 +558,10 @@ class DVCDatabase(DatabaseAdapter):
         """
         with self.session_ctx() as sess:
             if ln:
-                ln = self.get_identifier(ln)
-                if not ln:
+                dbln = self.get_identifier(ln)
+                if not dbln:
                     return
-                q = sess.query(AnalysisTbl.step)
+                q = sess.query(AnalysisTbl.increment)
                 q = q.join(IrradiationPositionTbl)
 
                 q = q.filter(IrradiationPositionTbl.identifier == ln)
@@ -570,8 +570,9 @@ class DVCDatabase(DatabaseAdapter):
                 q = q.order_by(AnalysisTbl.increment.desc())
                 result = self._query_one(q)
                 if result:
-                    step = result[0]
-                    return ALPHAS.index(step) if step else -1
+                    increment = result[0]
+                    return increment if increment is not None else -1
+                    #return ALPHAS.index(step) if step else -1
 
     def get_unique_analysis(self, ln, ai, step=None):
         #         sess = self.get_session()
