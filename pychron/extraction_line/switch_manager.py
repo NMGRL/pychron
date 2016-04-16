@@ -419,7 +419,18 @@ class SwitchManager(Manager):
                         return v
 
     def _get_indicator_state_by(self, v, force=False):
-        return v.get_hardware_indicator_state()
+        state = None
+        if (self.query_valve_state and v.query_state) or force:
+            state = v.get_hardware_indicator_state(verbose=False)
+            if v.actuator.simulation:
+                state = None
+
+        if state is None:
+            state = v.state
+        else:
+            v.state = state
+
+        return state
 
     def _get_state_by(self, v, force=False):
         """
