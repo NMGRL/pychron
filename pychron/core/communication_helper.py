@@ -1,11 +1,11 @@
 # ===============================================================================
-# Copyright 2011 Jake Ross
+# Copyright 2016 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,39 +15,40 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-
 # ============= standard library imports ========================
-
 # ============= local library imports  ==========================
-from pychron.hardware.core.core_device import CoreDevice
 
 
-class GPActuator(CoreDevice):
+# ============= EOF =============================================
+from pychron.core.helpers.strtools import to_bool
 
-    def get_owners_word(self):
-        pass
 
-    def get_state_word(self, *args, **kw):
-        pass
+def trim(func):
+    def wrapper(*args, **kw):
+        r = func(*args, **kw)
+        if r:
+            r = r.strip()
+        return r
 
-    def get_lock_word(self, *args, **kw):
-        pass
-    
-    def get_lock_state(self, *args, **kw):
-        pass
+    return wrapper
 
-    def get_channel_state(self, *args, **kw):
-        """
-        """
-        raise NotImplementedError
 
-    def open_channel(self, *args, **kw):
-        """
-        """
-        raise NotImplementedError
+def trim_bool(func):
+    return _itrim_bool(func)
 
-    def close_channel(self, *args, **kw):
-        """
-        """
-        raise NotImplementedError
-# ============= EOF ====================================
+
+def invert_trim_bool(func):
+    return _itrim_bool(func, True)
+
+
+def _itrim_bool(func, invert=False):
+    def wrapper(*args, **kw):
+        r = func(*args, **kw)
+        if r:
+            r = r.strip()
+            r = to_bool(r)
+            if invert:
+                r = not r
+        return r
+
+    return wrapper

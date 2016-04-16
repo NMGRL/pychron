@@ -21,7 +21,7 @@ import json
 import re
 # ============= local library imports  ==========================
 from pychron.furnace.furnace_controller import IFurnaceController
-from pychron.hardware.actuators import trim_bool
+from pychron.core.communication_helper import trim_bool
 from pychron.hardware.core.core_device import CoreDevice
 
 VER_REGEX = re.compile(r'\d+.\d+(.\d+){0,1}')

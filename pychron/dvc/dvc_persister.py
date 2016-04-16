@@ -223,6 +223,9 @@ class DVCPersister(BasePersister):
         ed = self.per_spec.run_spec.extract_device
         if ed in (None, '', NULL_STR, LINE_STR, 'Extract Device'):
             d['extract_device'] = 'No Extract Device'
+        else:
+            d['extract_device'] = ed
+
         d['timestamp'] = timestamp
 
         # save script names

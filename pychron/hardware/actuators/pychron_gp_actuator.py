@@ -19,7 +19,8 @@ import time
 
 # ========== local library imports =============
 from gp_actuator import GPActuator
-from pychron.hardware.actuators import trim, trim_bool, get_valve_name
+from pychron.hardware.actuators import trim_bool, get_valve_name
+from pychron.core.communication_helper import trim, trim_bool
 
 
 class PychronGPActuator(GPActuator):

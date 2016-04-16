@@ -200,6 +200,8 @@ class DVCDatabase(DatabaseAdapter):
                                         limit=limit)
 
     def retrieve_blank(self, kind, ms, ed, last, repository):
+        self.debug('retrieve blank. kind={}, ms={}, '
+                   'ed={}, last={}, repository={}'.format(kind, ms, ed, last, repository))
         with self.session_ctx() as sess:
             q = sess.query(AnalysisTbl)
 

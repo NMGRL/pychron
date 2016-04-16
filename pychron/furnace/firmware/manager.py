@@ -198,7 +198,7 @@ class FirmwareManager(HeadlessLoggable):
         return True
 
     @debug
-    def get_channel_state(self, data):
+    def get_channel_do_state(self, data):
         if self.switch_controller:
             ch, inverted = self._get_switch_channel(data)
             result = self.switch_controller.get_channel_state(ch)
@@ -207,35 +207,61 @@ class FirmwareManager(HeadlessLoggable):
             return result
 
     @debug
-    def get_indicator_state(self, data):
+    def get_channel_state(self, data):
         if self.switch_controller:
             if isinstance(data, dict):
-                alt_name = data['name']
+                name = data['name']
             else:
-                alt_name, _ = data
-            alt_ch, alt_inverted = self._get_switch_channel(alt_name)
-            ch, action, inverted = self._get_switch_indicator(data)
-            if ch is None:
-                dch = alt_ch
-                result = self.switch_controller.get_channel_state(alt_ch)
-                if action == 'open':
-                    result = result == 0
+                name = data
+
+            o, c = self._get_switch_indicators(name)
+            if not (o or c):
+                p = self._get_switch_channel(name)
+                return self._get_di_state(*p)
+            else:
+                openflag = False
+                if o:
+                    openflag = self._get_di_state(*o)
+
+                closeflag = False
+                if c:
+                    closeflag = self._get_di_state(*c)
+
+                if closeflag == openflag:
+                    return 'Indicator State MisMatch Open={}, Close={}'.format(openflag, closeflag)
                 else:
-                    result = result == 1
+                    return openflag
 
-                inverted = False
-                if alt_inverted:
-                    result = not result
-            else:
-                dch = ch
-                result = self.switch_controller.get_channel_state(ch)
-
-            self.debug('indicator ch={} state {}, invert={}'.format(dch, result, inverted))
-            if inverted:
-                result = not result
-
-
-            return result
+    # @debug
+    # def get_indicator_state(self, data):
+    #     if self.switch_controller:
+    #         if isinstance(data, dict):
+    #             alt_name = data['name']
+    #         else:
+    #             alt_name, _ = data
+    #         alt_ch, alt_inverted = self._get_switch_channel(alt_name)
+    #         ch, action, inverted = self._get_switch_indicator(data)
+    #         if ch is None:
+    #             dch = alt_ch
+    #             result = self.switch_controller.get_channel_state(alt_ch)
+    #             if action == 'open':
+    #                 result = result == 0
+    #             else:
+    #                 result = result == 1
+    #
+    #             inverted = False
+    #             if alt_inverted:
+    #                 result = not result
+    #         else:
+    #             dch = ch
+    #             result = self.switch_controller.get_channel_state(ch)
+    #
+    #         self.debug('indicator ch={} state {}, invert={}'.format(dch, result, inverted))
+    #         if inverted:
+    #             result = not result
+    #
+    #
+    #         return result
 
     @debug
     def get_di_state(self, data):
@@ -433,6 +459,35 @@ class FirmwareManager(HeadlessLoggable):
 
         self.debug('get switch channel {} {}'.format(name, ch))
         return ch, inverted
+
+    def _get_switch_indicators(self, name):
+        ch = self._switch_indicator_mapping.get(name)
+        self.debug('get switch indicator channel {} {}'.format(name, ch))
+
+        if ch:
+            op, cp = map(str.strip, ch.split(','))
+            oinverted = False
+            if op.startswith('i'):
+                op = op[1:]
+                oinverted = True
+            cinverted = False
+            if cp.startswith('i'):
+                cp = cp[1:]
+                cinverted = True
+
+            if not op or op == '-':
+                op = None
+            if not cp or cp == '-':
+                cp = None
+            return (op, oinverted), (cp, cinverted)
+        else:
+            return None, None
+
+    def _get_di_state(self, ch, invert):
+        result = self.switch_controller.get_channel_state(ch)
+        if invert:
+            result = not result
+        return result
 
     def _get_switch_indicator(self, data):
         if isinstance(data, dict):

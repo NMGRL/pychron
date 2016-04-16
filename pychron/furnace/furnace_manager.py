@@ -350,7 +350,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     # logic
     def get_switch_indicator_state(self, name):
         if self.switch_manager:
-            return self.switch_manager.get_indicator_state_by_name(name, force=True)
+            return self.switch_manager.get_state_by_name(name, force=True)
 
     def get_flag_state(self, flag):
         self.debug('get_flag_state {}'.format(flag))

@@ -226,7 +226,7 @@ class SwitchManager(Manager):
                 continue
 
             keys.append(k)
-            state = '{}{}'.format(k, int(self._get_indicator_state_by(v)))
+            state = '{}{}'.format(k, int(self._get_state_by(v)))
 
             states.append(state)
             if time.time() - st > timeout:
@@ -276,14 +276,6 @@ class SwitchManager(Manager):
         """
         """
         return next((item for item in self.explanable_items if item.name == n), None)
-
-    def get_indicator_state_by_name(self, n, force=False):
-        v = self.get_switch_by_name(n)
-        state = None
-        if v is not None:
-            state = self._get_indicator_state_by(v, force=force)
-
-        return state
 
     def get_state_by_name(self, n, force=False):
         """
@@ -417,20 +409,6 @@ class SwitchManager(Manager):
                     if v.state:
                         self.debug('interlocked {}'.format(interlock))
                         return v
-
-    def _get_indicator_state_by(self, v, force=False):
-        state = None
-        if (self.query_valve_state and v.query_state) or force:
-            state = v.get_hardware_indicator_state(verbose=False)
-            if v.actuator.simulation:
-                state = None
-
-        if state is None:
-            state = v.state
-        else:
-            v.state = state
-
-        return state
 
     def _get_state_by(self, v, force=False):
         """

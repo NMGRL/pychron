@@ -18,7 +18,7 @@
 import os
 import pickle
 
-from traits.api import Bool, Float, Property, Instance, Event, cached_property, Button, Enum
+from traits.api import Bool, Float, Property, Instance, Event, Button, Enum
 # ============= standard library imports ========================
 from numpy import Inf
 # ============= local library imports  ==========================
@@ -27,7 +27,6 @@ from pychron.graph.time_series_graph import TimeSeriesStreamGraph
 from pychron.managers.data_managers.csv_data_manager import CSVDataManager
 from pychron.managers.manager import Manager
 from pychron.paths import paths
-from pychron.pychron_constants import NULL_STR
 
 
 class StreamGraphManager(Manager):
@@ -73,6 +72,8 @@ class StreamGraphManager(Manager):
         if params:
             self._set_graph_attrs(params)
             self._load_settings(params)
+        else:
+            self.warning('no scan settings')
 
     def dump_settings(self):
         self.info('dump scan settings')
