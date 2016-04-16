@@ -494,7 +494,7 @@ class SwitchManager(Manager):
     def _load_states(self):
         self.debug('$$$$$$$$$$$$$$$$$$$$$ Load states')
         for k, v in self.switches.iteritems():
-            s = v.get_hardware_indicator_state()
+            s = v.get_hardware_state()
             self.debug('hardware state {},{},{}'.format(k,v,s))
             if v.state != s:
                 self.refresh_state = (k, s, False)
