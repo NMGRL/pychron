@@ -193,7 +193,7 @@ class StreamGraph(Graph):
                               min_=mi,
                               pad='0.1',
                               plotid=plotid)
-        lim = -dl
+        lim = int(-dl)
 
         new_xd = hstack((xd[lim:], [nx]))
         new_yd = hstack((yd[lim:], [float(y)]))

@@ -1604,6 +1604,7 @@ post_equilibration_script:name''')
 
     def _datahub_default(self):
         dh = Datahub()
+        dh.mainstore = self.application.get_service('pychron.dvc.dvc.DVC')
         dh.bind_preferences()
         return dh
 

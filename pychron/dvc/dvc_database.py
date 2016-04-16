@@ -224,7 +224,9 @@ class DVCDatabase(DatabaseAdapter):
                 q = q.filter(RepositoryTbl.name == repository)
 
             q = q.order_by(AnalysisTbl.timestamp.desc())
-            return self._query_one(q)
+            record = self._query_one(q)
+            if record:
+                return record.make_record_view(repository)
 
     # def get_analyses_data_range(self, low, high, atypes, exclude=None, exclude_uuids=None):
     #     with self.session_ctx() as sess:
