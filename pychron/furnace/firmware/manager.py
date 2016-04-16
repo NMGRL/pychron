@@ -236,8 +236,10 @@ class FirmwareManager(HeadlessLoggable):
                     else:
                         return openflag
 
-    # @debug
-    # def get_indicator_state(self, data):
+    @debug
+    def get_indicator_state(self, data):
+        return 'Not Implemented'
+
     #     if self.switch_controller:
     #         if isinstance(data, dict):
     #             alt_name = data['name']
