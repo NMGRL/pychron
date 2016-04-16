@@ -703,6 +703,7 @@ class ExtractionLineManager(Manager, Consoleable):
             c.canvas2D.trait_set(**{name: new})
 
     def _handle_state(self, new):
+        self.debug('handle state {}'.format(new))
         self.update_switch_state(*new)
 
     def _handle_lock_state(self, new):

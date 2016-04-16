@@ -45,7 +45,7 @@ class AgilentGPActuator(GPActuator):
             self.warning('\n'.join(errs))
         return True
 
-    def get_channel_state(self, obj, verbose=False):
+    def get_channel_state(self, obj, verbose=False, **Kw):
         """
             Query the hardware for the channel state
         """
@@ -58,8 +58,6 @@ class AgilentGPActuator(GPActuator):
 
         if s is not None:
             return s[:1] == '1'
-
-    get_indicator_state = get_channel_state
 
     def close_channel(self, obj, excl=False):
         """

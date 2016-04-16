@@ -41,6 +41,9 @@ class GPActuator(CoreDevice):
         """
         raise NotImplementedError
 
+    def get_indicator_state(self, obj, action, **kw):
+        return self.get_channel_state(obj, **kw)
+
     def open_channel(self, *args, **kw):
         """
         """
