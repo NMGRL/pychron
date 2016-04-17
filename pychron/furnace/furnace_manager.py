@@ -115,7 +115,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
 
         self.stage_manager.refresh()
 
-        # self._start_update()
+        self.loader_logic.manager = self
 
     def test_furnace_cam(self):
         if self.camera:
@@ -348,7 +348,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         pass
 
     # logic
-    def get_switch_indicator_state(self, name):
+    def get_switch_state(self, name):
         if self.switch_manager:
             return self.switch_manager.get_state_by_name(name, force=True)
 

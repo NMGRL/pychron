@@ -51,6 +51,7 @@ class ResponseRecorder(HasTraits):
         self._start_time = t
         self.response_data = array([(t, 0)])
         self.output_data = array([(t, 0)])
+        self.setpoint_data = array([(t,0)])
         self._write_data = False
 
         if base_frame_name:

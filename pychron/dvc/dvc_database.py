@@ -224,7 +224,7 @@ class DVCDatabase(DatabaseAdapter):
                 q = q.filter(RepositoryTbl.name == repository)
 
             q = q.order_by(AnalysisTbl.timestamp.desc())
-            return self._query_one(q)
+            return self._query_one(q, verbose_query=True)
 
 
     # def get_analyses_data_range(self, low, high, atypes, exclude=None, exclude_uuids=None):
