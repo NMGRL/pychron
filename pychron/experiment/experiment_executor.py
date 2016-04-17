@@ -1633,7 +1633,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                             es = repositories[identifier]
                             if ai.repository_identifier not in es:
                                 if ai.sample == self.monitor_name:
-                                    ai.repository_identifier = ai.irradiation
+                                    ai.repository_identifier = 'Irradiation-{}'.format(ai.irradiation)
 
                                 else:
 
