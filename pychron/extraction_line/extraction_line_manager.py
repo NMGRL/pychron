@@ -586,8 +586,8 @@ class ExtractionLineManager(Manager, Consoleable):
             if ret:
                 result, change = ret
                 if isinstance(result, bool):
-                    # if change:
-                    self.update_switch_state(name, True if action == 'open' else False)
+                    if change:
+                        self.update_switch_state(name, True if action == 'open' else False)
                         # self.refresh_canvas()
         return result, change
 

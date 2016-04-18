@@ -141,7 +141,7 @@ class Switch(BaseSwitch):
             cur: bool, not self.state if open, self.state if close
             set_value: open-True, close-False
         """
-        self.info('actuate state mode={}'.format(mode))
+        self.info('actuate state mode={}, software_lock={}'.format(mode, self.software_lock))
         state_change = False
         success = True
         if self.software_lock:

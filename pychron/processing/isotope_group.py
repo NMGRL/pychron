@@ -189,7 +189,7 @@ class IsotopeGroup(Loggable):
         isotopes = self.isotopes
         if kind == 'baseline':
             ret = False
-            #get the isotopes that match detector
+            # get the isotopes that match detector
             for i in isotopes.itervalues():
                 if i.detector == det:
                     _append(i)

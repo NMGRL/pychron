@@ -565,6 +565,7 @@ class Isotope(BaseIsotope):
         self.sniff = Sniff(name, detector)
         self.background = Background(name, detector)
         self.baseline = Baseline(name, detector)
+        self.whiff = Whiff(name, detector)
 
     def get_filtered_data(self):
         return self.regressor.calculate_filtered_data()
