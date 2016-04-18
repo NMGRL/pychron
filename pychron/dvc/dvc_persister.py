@@ -361,8 +361,9 @@ class DVCPersister(BasePersister):
             obj[si] = name
 
         # save experiment
-        self.dvc.update_experiment_queue(ms, self.per_spec.experiment_queue_name,
-                                         self.per_spec.experiment_queue_blob)
+        self.debug('---------------- Experiment Queue saving disabled')
+        # self.dvc.update_experiment_queue(ms, self.per_spec.experiment_queue_name,
+        #                                  self.per_spec.experiment_queue_blob)
 
         hexsha = str(self.dvc.get_meta_head())
         obj['commit'] = hexsha
