@@ -115,9 +115,9 @@ class ResponseRecorder(Loggable):
             if slt > 0:
                 time.sleep(slt)
 
-        self.output_data = odata
-        self.response_data = rdata
-        self.setpoint_data = sdata
+            self.output_data = odata
+            self.response_data = rdata
+            self.setpoint_data = sdata
 
     def check_reached_setpoint(self, v, n, tol, std=None):
         """
