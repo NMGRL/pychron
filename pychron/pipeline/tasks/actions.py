@@ -138,11 +138,13 @@ class ReductionAction(PipelineAction):
 class BlanksAction(PipelineAction):
     name = 'Blanks'
     dname = 'Blanks'
+    action = 'set_blanks_template'
 
 
 class ICFactorAction(PipelineAction):
     name = 'ICFactor'
     dname = 'ICFactor'
+    action = 'set_icfactor_template'
 
 
 class FluxAction(PipelineAction):
