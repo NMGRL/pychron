@@ -98,9 +98,9 @@ class StreamGraphManager(Manager):
             self.warning('No scan settings file {}'.format(p))
 
     # private
-    def _get_graph_y_min_max(self):
+    def _get_graph_y_min_max(self, plotid=0):
         mi, ma = Inf, -Inf
-        for k, plot in self.graph.plots[0].plots.iteritems():
+        for k, plot in self.graph.plots[plotid].plots.iteritems():
             plot = plot[0]
             if plot.visible:
                 ys = plot.value.get_data()

@@ -269,7 +269,7 @@ class ExtractionPyScript(ValvePyScript):
         self._interval_stack.put((t, f, name))
 
     def _set_extraction_state(self, msg, color='red'):
-        self._manager_action('set_extract_state', msg, color=color)
+        self._manager_action([('set_extract_state', (msg,), {'color': color})])
 
     @verbose_skip
     @command_register

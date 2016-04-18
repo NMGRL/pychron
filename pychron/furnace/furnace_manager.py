@@ -188,6 +188,8 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         # self.response_recorder.stop()
         self.setpoint = 0
 
+    disable_device = disable
+
     def check_reached_setpoint(self, v, n, tol, std):
         return self.response_recorder.check_reached_setpoint(v, n, tol, std)
 
@@ -430,11 +432,11 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         self._alive = False
 
     def _update_scan_graph(self):
-        # v = self.read_temperature(verbose=False)
-        # p = self.read_output_percent(verbose=False)
-        from random import random
-        v = random() + self.setpoint
-        p = random()
+        v = self.read_temperature(verbose=False)
+        p = self.read_output_percent(verbose=False)
+        # from random import random
+        # v = random() + self.setpoint
+        # p = random()
         s = self.setpoint
         # v = None
         if v is not None and p is not None:

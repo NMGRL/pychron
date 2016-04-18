@@ -181,7 +181,8 @@ class IonOpticsManager(Manager):
                           use_interpolation=False,
                           interpolation_kind='linear',
                           dac_offset=None, calculate_all_peaks=False,
-                          config_name=None):
+                          config_name=None,
+                          use_configuration_dac=True):
 
         if deconvolve is None:
             n_peaks, select_peak = 1, 1
@@ -237,7 +238,7 @@ class IonOpticsManager(Manager):
             use_dac_offset = pcc.use_dac_offset
             dac_offset = pcc.dac_offset
             calculate_all_peaks = pcc.calculate_all_peaks
-            if center_dac is None:
+            if center_dac is None and not use_configuration_dac:
                 center_dac = pcc.dac
 
         spec.set_integration_time(integration_time)

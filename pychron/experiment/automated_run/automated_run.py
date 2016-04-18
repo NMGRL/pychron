@@ -578,6 +578,7 @@ class AutomatedRun(Loggable):
                                        isotope=isotope,
                                        directions=directions,
                                        config_name=config_name,
+                                       use_configuration_dac=False,
                                        **kw)
             self.peak_center = pc
             self.debug('do peak center. {}'.format(pc))
