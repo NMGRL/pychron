@@ -51,6 +51,9 @@ class BaseFurnaceManager(StreamGraphManager):
 
     use_network = False
 
+    def check_heating(self):
+        pass
+
     def _controller_default(self):
         c = FurnaceController(name='controller',
                               configuration_dir_name='furnace')
@@ -171,6 +174,9 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         else:
             return True
 
+    def get_process_value(self):
+        return self.controller.get_process_value()
+
     def extract(self, v, **kw):
         self.debug('extract')
         # self.response_recorder.start()
@@ -182,8 +188,8 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         # self.response_recorder.stop()
         self.setpoint = 0
 
-    def check_response_recorder(self, v, n, tol, std):
-        return self.response_recorder.check_response(v, n, tol, std)
+    def check_reached_setpoint(self, v, n, tol, std):
+        return self.response_recorder.check_reached_setpoint(v, n, tol, std)
 
     def start_response_recorder(self):
         self.response_recorder.start()

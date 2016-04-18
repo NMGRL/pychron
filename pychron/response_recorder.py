@@ -119,7 +119,7 @@ class ResponseRecorder(Loggable):
         self.response_data = rdata
         self.setpoint_data = sdata
 
-    def check_response(self, v, n, tol, std=None):
+    def check_reached_setpoint(self, v, n, tol, std=None):
         """
         return True if response is OK, i.e. average of last n points is within tol of v.
         if std is not None then standard dev must be less than std
@@ -129,7 +129,7 @@ class ResponseRecorder(Loggable):
         :param std:
         :return:
         """
-        pts = self.response_data[-n:]
+        pts = self.response_data[-n:, 1]
 
         std_bit = True
         if std:
