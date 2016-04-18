@@ -24,6 +24,10 @@ from pychron.hardware.core.abstract_device import AbstractDevice
 
 @provides(IFurnaceController)
 class FurnaceController(AbstractDevice):
+    def read_output_percent(self, **kw):
+        if self._cdevice:
+            return self._cdevice.read_output_percent(**kw)
+
     def get_water_flow_state(self, **kw):
         if self._cdevice:
             return self._cdevice.get_water_flow_state(**kw)

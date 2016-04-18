@@ -23,14 +23,14 @@ from traits.api import Bool, Float, Property, Instance, Event, Button, Enum
 from numpy import Inf
 # ============= local library imports  ==========================
 from pychron.core.helpers.timer import Timer
-from pychron.graph.time_series_graph import TimeSeriesStreamGraph
+from pychron.graph.graph import Graph
 from pychron.managers.data_managers.csv_data_manager import CSVDataManager
 from pychron.managers.manager import Manager
 from pychron.paths import paths
 
 
 class StreamGraphManager(Manager):
-    graph = Instance(TimeSeriesStreamGraph)
+    graph = Instance(Graph)
     graph_scale = Enum('linear', 'log')
 
     graph_y_auto = Bool
@@ -157,10 +157,11 @@ class StreamGraphManager(Manager):
     def _graph_scan_width_changed(self):
         g = self.graph
         n = self.graph_scan_width
+        print 'asdasd', n
         n = max(n, 1 / 60.)
         mins = n * 60
-        g.data_limits[0] = 1.8 * mins
-        g.scan_widths[0] = mins
+        g.set_data_limits(1.8 * mins)
+        g.set_scan_widths(mins)
 
     def _clear_all_markers_button_fired(self):
         self.graph.clear_markers()

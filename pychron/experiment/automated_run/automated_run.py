@@ -33,6 +33,7 @@ from pychron.core.helpers.filetools import get_path
 from pychron.core.helpers.filetools import add_extension
 from pychron.core.helpers.strtools import to_bool
 from pychron.core.ui.preference_binding import set_preference
+from pychron.experiment import ExtractionException
 from pychron.experiment.automated_run.hop_util import parse_hops
 from pychron.experiment.automated_run.persistence_spec import PersistenceSpec
 from pychron.experiment.conditional.conditional import TruncationConditional, \
@@ -1147,7 +1148,14 @@ class AutomatedRun(Loggable):
         else:
             self.warning('Invalid script syntax for "{}"'.format(self.extraction_script.name))
             return
-        if self.extraction_script.execute():
+
+        try:
+            ex_result = self.extraction_script.execute()
+        except ExtractionException, e:
+            ex_result = False
+            self.debug('extraction exception={}'.format(e))
+
+        if ex_result:
             if syn_extractor:
                 syn_extractor.stop()
 

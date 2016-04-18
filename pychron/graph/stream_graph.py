@@ -29,6 +29,7 @@ from graph import Graph
 
 MAX_LIMIT = int(-1 * 60 * 60 * 24)
 
+
 def time_generator(start):
     """
     """
@@ -43,6 +44,7 @@ def time_generator(start):
 
         yield yt
         prev_time = current_time
+
 
 class StreamGraph(Graph):
     """
@@ -137,10 +139,17 @@ class StreamGraph(Graph):
 
     def set_data_limits(self, d, plotid=None):
         if plotid is None:
-            for i in range(len(self.scan_delays)):
+            for i in xrange(len(self.plots)):
                 self.data_limits[i] = d
         else:
             self.data_limits[plotid] = d
+
+    def set_scan_widths(self, d, plotid=None):
+        if plotid is None:
+            for i in xrange(len(self.plots)):
+                self.scan_widths[i] = d
+        else:
+            self.scan_widths[plotid] = d
 
     def _set_xlimits(self, ma, plotid):
         sw = self.scan_widths[plotid]
@@ -235,6 +244,8 @@ if __name__ == '__main__':
     from traits.trait_types import Button
     import random
     from traitsui.view import View
+
+
     class Demo(HasTraits):
         test = Button
 
@@ -251,7 +262,7 @@ if __name__ == '__main__':
 
         def _iter(self):
             st = time.time()
-            ys = [random.random(),random.random(),random.random()]
+            ys = [random.random(), random.random(), random.random()]
             self.g.record_multiple(ys)
             # self.g.record(random.random())
 
@@ -260,6 +271,7 @@ if __name__ == '__main__':
         def traits_view(self):
             v = View('test')
             return v
+
 
     d = Demo()
 

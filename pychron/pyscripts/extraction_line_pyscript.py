@@ -197,6 +197,11 @@ class ExtractionPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
+    def check_response(self):
+        self._extraction_action([('check_response_recorder', (), {})])
+
+    @verbose_skip
+    @command_register
     def wake(self):
         self._extraction_action('wake')
         self._manager_action('wake')

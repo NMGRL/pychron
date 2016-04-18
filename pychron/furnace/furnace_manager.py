@@ -25,13 +25,14 @@ from pychron.canvas.canvas2D.dumper_canvas import DumperCanvas
 from pychron.canvas.canvas2D.video_canvas import VideoCanvas
 from pychron.core.helpers.filetools import pathtolist
 from pychron.core.ui.led_editor import LED
+from pychron.experiment import ExtractionException
 from pychron.extraction_line.switch_manager import SwitchManager
 from pychron.furnace.furnace_controller import FurnaceController
 from pychron.furnace.ifurnace_manager import IFurnaceManager
 from pychron.furnace.loader_logic import LoaderLogic
 from pychron.furnace.magnet_dumper import NMGRLMagnetDumper
 from pychron.furnace.stage_manager import NMGRLFurnaceStageManager, BaseFurnaceStageManager
-from pychron.graph.time_series_graph import TimeSeriesStreamGraph
+from pychron.graph.time_series_graph import TimeSeriesStreamStackedGraph
 from pychron.hardware.furnace.nmgrl.camera import NMGRLCamera
 from pychron.hardware.linear_axis import LinearAxis
 from pychron.managers.stream_graph_manager import StreamGraphManager
@@ -43,6 +44,7 @@ class BaseFurnaceManager(StreamGraphManager):
     controller = Instance(FurnaceController)
     setpoint = Float(auto_set=False, enter_set=True)
     temperature_readback = Float
+    output_percent_readback = Float
     stage_manager = Instance(BaseFurnaceStageManager)
     switch_manager = Instance(SwitchManager)
     response_recorder = Instance(ResponseRecorder)
@@ -98,16 +100,12 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     settings_name = 'furnace_settings'
 
     _alive = False
-    _guide_overlay = None
     _dumper_thread = None
     _magnets_thread = None
     _pid_str = None
 
     def activate(self):
-        # pref_id = 'pychron.furnace'
-        # bind_preference(self, 'update_period',
-        # '{}.update_period'.format(pref_id))
-        self.video_enabled = self.camera.get_image_data() is not None
+        self.video_enabled = bool(self.camera.get_image_data())
 
         self.refresh_states()
         self.load_settings()
@@ -147,7 +145,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         self.loader_logic.manager = None
         if self.timer:
             self.timer.stop()
-            
+
     def get_response_blob(self):
         self.debug('get response blob')
         blob = self.response_recorder.get_response_blob()
@@ -166,6 +164,13 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         self.debug('set response recorder period={}'.format(p))
         self.response_recorder.period = p
 
+    def enable(self):
+        self.debug('enable')
+        if not self.controller.get_water_flow_state(verbose=False):
+            raise ExtractionException()
+        else:
+            return True
+
     def extract(self, v, **kw):
         self.debug('extract')
         # self.response_recorder.start()
@@ -176,6 +181,9 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         self.debug('disable')
         # self.response_recorder.stop()
         self.setpoint = 0
+
+    def check_response_recorder(self, v, n, tol, std):
+        return self.response_recorder.check_response(v, n, tol, std)
 
     def start_response_recorder(self):
         self.response_recorder.start()
@@ -293,20 +301,26 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     def set_setpoint(self, v):
         self.debug('set setpoint={}'.format(v))
         self.set_pid_parameters(v)
-
+        self.graph.record(v, series=1)
+        self.graph.record(v, series=1)
         if self.controller:
             self.controller.set_setpoint(v)
-            if not self._guide_overlay:
-                self._guide_overlay = self.graph.add_horizontal_rule(v)
-
-            self._guide_overlay.visible = bool(v)
-            self._guide_overlay.value = v
-
-            # ymi, yma = self.graph.get_y_limits()
             d = self.graph.get_data(axis=1)
             self.graph.set_y_limits(min_=0, max_=max(d.max(), v * 1.1))
 
             self.graph.redraw()
+
+    def read_output_percent(self, force=False, verbose=False):
+        v = 0
+        if self.controller:
+            # force = update and not self.controller.is_scanning()
+            v = self.controller.read_output_percent(force=force, verbose=verbose)
+
+        try:
+            self.output_percent_readback = v
+            return v
+        except TraitError:
+            pass
 
     def read_temperature(self, force=False, verbose=False):
         v = 0
@@ -410,21 +424,31 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         self._alive = False
 
     def _update_scan_graph(self):
-        v = self.read_temperature(verbose=False)
-        # v = random()
+        # v = self.read_temperature(verbose=False)
+        # p = self.read_output_percent(verbose=False)
+        from random import random
+        v = random() + self.setpoint
+        p = random()
+        s = self.setpoint
         # v = None
-        if v is not None:
+        if v is not None and p is not None:
             x = self.graph.record(v, track_y=False)
+            self.graph.record(p, x=x, series=0, plotid=1)
+
+            ss = self.graph.get_data(plotid=0, series=1, axis=1)
+            if len(ss) > 1:
+                xs = self.graph.get_data(plotid=0, series=1)
+                xs[-1] = x
+                self.graph.set_data(xs, plotid=0, series=1)
+            else:
+                self.graph.record(s, x=x, series=1, track_y=False)
+
             if self.graph_y_auto:
                 mi, ma = self._get_graph_y_min_max()
-                if self._guide_overlay:
-                    gv = self._guide_overlay.value
-                    mi, ma = min(gv, mi), max(gv, ma)
-
                 self.graph.set_y_limits(min_=mi, max_=ma, pad='0.1')
 
             if self._recording:
-                self.record_data_manager.write_to_frame((x, v))
+                self.record_data_manager.write_to_frame((x, v, p))
 
     def _start_recording(self):
         self._recording = True
@@ -437,12 +461,19 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         self._recording = False
 
     def _graph_factory(self, *args, **kw):
-        g = TimeSeriesStreamGraph()
+        g = TimeSeriesStreamStackedGraph()
         # g.plotcontainer.padding_top = 5
         # g.plotcontainer.padding_right = 5
-        g.new_plot(xtitle='Time (s)', ytitle='Temp. (C)', padding_top=5, padding_right=5)
-        g.set_scan_width(600)
-        g.new_series()
+        g.new_plot(xtitle='Time (s)', ytitle='Temp. (C)', padding_top=5, padding_left=75, padding_right=5)
+        g.set_scan_width(600, plotid=0)
+        g.new_series(plotid=0)
+        g.new_series(plotid=0, line_width=2,
+                     render_style='connectedhold')
+
+        g.new_plot(ytitle='Output (%)', padding_top=5, padding_left=75, padding_right=5)
+        g.set_scan_width(600, plotid=1)
+        g.new_series(plotid=1)
+
         return g
 
     def _dump_sample(self):
