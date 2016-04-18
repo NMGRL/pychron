@@ -583,7 +583,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                 'collection_time_zero_offset',
                 'pattern', 'beam_diameter',
                 'weight', 'comment',
-                'sample', 'irradiation',
+                'sample', 'selected_irradiation',
                 'ramp_duration',
                 'skip', 'mass_spectrometer', 'extract_device']
 
