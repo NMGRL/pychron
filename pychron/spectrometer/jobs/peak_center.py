@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Float, Str, Int, List
+from traits.api import Float, Str, Int, List, Enum
 # ============= standard library imports ========================
 import time
 from numpy import max, argmax, vstack, linspace
@@ -58,6 +58,7 @@ class BasePeakCenter(MagnetSweep):
     min_peak_height = Float(5.0)
     percent = Int
     use_interpolation = False
+    interpolation_kind = Enum('linear', 'nearest', 'zero', 'slinear', 'quadratic', 'cubic')
     n_peaks = 1
     select_peak = 1
     use_dac_offset = False
@@ -284,7 +285,7 @@ class BasePeakCenter(MagnetSweep):
 
     def _calculate_peak_center(self, x, y):
         if self.use_interpolation:
-            f = interpolate.interp1d(x, y, kind='cubic')
+            f = interpolate.interp1d(x, y, kind=self.interpolation_kind)
             x = linspace(x.min(), x.max(), 500)
             y = f(x)
             self.graph.new_series(x, y, line_width=1)

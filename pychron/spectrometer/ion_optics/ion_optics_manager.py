@@ -179,6 +179,7 @@ class IonOpticsManager(Manager):
                           window=0.015, step_width=0.0005, min_peak_height=1.0, percent=80,
                           deconvolve=None,
                           use_interpolation=False,
+                          interpolation_kind='linear',
                           dac_offset=None, calculate_all_peaks=False,
                           config_name=None):
 
@@ -230,6 +231,7 @@ class IonOpticsManager(Manager):
             percent = pcc.percent
 
             use_interpolation = pcc.use_interpolation
+            interpolation_kind = pcc.interpolation_kind
             n_peaks = pcc.n_peaks
             select_peak = pcc.select_n_peak
             use_dac_offset = pcc.use_dac_offset
@@ -274,6 +276,7 @@ class IonOpticsManager(Manager):
                      spectrometer=spec,
                      show_label=show_label,
                      use_interpolation=use_interpolation,
+                     interpolation_kind=interpolation_kind,
                      n_peaks=n_peaks,
                      select_peak=select_peak,
                      use_dac_offset=use_dac_offset,
