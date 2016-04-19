@@ -73,7 +73,7 @@ class WorkOffline(Loggable):
         """
         if self._load_preferences():
             if self._check_database_connection():
-                if self._check_github_connection():
+                if self._check_githost_connection():
 
                     repos = self.dvc.remote_repositories(attributes=('name',
                                                                      'created_at',
@@ -101,8 +101,8 @@ class WorkOffline(Loggable):
     def _check_database_connection(self):
         return self.dvc.connect()
 
-    def _check_github_connection(self):
-        return self.dvc.check_github_connection()
+    def _check_githost_connection(self):
+        return self.dvc.check_githost_connection()
 
     def _work_offline(self):
         self.debug('work offline')

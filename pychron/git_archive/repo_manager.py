@@ -27,7 +27,7 @@ import shutil
 from cStringIO import StringIO
 from datetime import datetime
 from git.exc import GitCommandError
-from git import Repo, Diff
+from git import Repo, Diff, RemoteProgress
 # ============= local library imports  ==========================
 from pychron.core.codetools.inspection import caller
 from pychron.core.helpers.filetools import fileiter
@@ -67,6 +67,26 @@ def isoformat_date(d):
 
 aregex = re.compile(r'\[ahead (?P<count>\d+)')
 bregex = re.compile(r'behind (?P<count>\d+)')
+
+
+class GitProgress(RemoteProgress):
+    message = None
+    _progress = None
+
+    def new_message_handler(self):
+        self._progress = open_progress(100)
+        return super(GitProgress, self).new_message_handler()
+
+    def update(self, op_code, cur_count, max_count=None, message=''):
+        if max_count:
+            self._progress.max = int(max_count) + 2
+            if message:
+                message = '{} -- {}'.format(self.message, message[2:])
+                self._progress.change_message(message, auto_increment=False)
+            self._progress.update(int(cur_count))
+
+        if op_code == 66:
+            self._progress.close()
 
 
 class GitRepoManager(Loggable):
@@ -201,35 +221,41 @@ class GitRepoManager(Loggable):
 
     @classmethod
     def clone_from(cls, url, path):
-        n = 150
-        prog = open_progress(n=n)
-        from threading import Event as TE, Thread
+        # n = 150
+        # from threading import Event as TE, Thread
+        # evt = TE()
+        # prog = open_progress(n=n)
+        # prog.change_message('Cloning repository {}'.format(url))
 
-        evt = TE()
-        prog.change_message('Cloning repository {}'.format(url))
+        rprogress = GitProgress()
+        rprogress.message = 'Cloning repository {}'.format(url)
+        # rprogress=None
+        try:
+            Repo.clone_from(url, path, progress=rprogress)
+        except GitCommandError, e:
+            print e
+            shutil.rmtree(path)
+            # def foo():
+            #     try:
+            #         Repo.clone_from(url, path, progress=rprogress)
+            #     except GitCommandError:
+            #         shutil.rmtree(path)
+            #
+            #     evt.set()
 
-        def foo():
-            try:
-                Repo.clone_from(url, path)
-            except GitCommandError:
-                shutil.rmtree(path)
-
-            evt.set()
-
-        t = Thread(target=foo)
-        t.start()
-        period = 0.1
-        while not evt.is_set():
-            st = time.time()
-            v = prog.get_value()
-            if v == n - 2:
-                prog.increase_max(50)
-                n += 50
-
-            prog.increment()
-            time.sleep(max(0, period - time.time() + st))
-
-        prog.close()
+            # t = Thread(target=foo)
+            # t.start()
+            # period = 0.1
+            # while not evt.is_set():
+            #     st = time.time()
+            #     # v = prog.get_value()
+            #     # if v == n - 2:
+            #     #     prog.increase_max(50)
+            #     #     n += 50
+            #     #
+            #     # prog.increment()
+            #     time.sleep(max(0, period - time.time() + st))
+            # prog.close()
 
     def clone(self, url, path):
         self._repo = Repo.clone_from(url, path)

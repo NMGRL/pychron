@@ -38,8 +38,8 @@ def get_file_text(d):
 
 
 class Paths(object):
-    git_base_origin = 'https://github.com'
-
+    github_url = 'https://github.com'
+    github_api_url = 'https://api.github.com'
     dissertation = '/Users/ross/Programming/git/dissertation'
     # enthought = path.join(path.expanduser('~'), '.enthought')
     # users_file = path.join(enthought, 'users')

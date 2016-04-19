@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2014 Jake Ross
+# Copyright 2016 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,27 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Any, DelegatesTo
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.managers.manager import Manager
+from pychron.git.hosts.github import GitHubService
+from pychron.git.tasks.base_git_plugin import BaseGitPlugin
+from pychron.git.tasks.githost_preferences import GitHubPreferencesPane
 
 
-class BaseSpectrometerManager(Manager):
-    spectrometer = Any
-    spectrometer_klass = None
-    simulation = DelegatesTo('spectrometer')
+class GitHubPlugin(BaseGitPlugin):
+    service_klass = GitHubService
 
-    def _spectrometer_default(self):
-        return self.spectrometer_klass(application=self.application)
+    def _preferences_panes_default(self):
+        return [GitHubPreferencesPane]
 
-    def send_configuration(self):
-        if self.spectrometer:
-            self.spectrometer.send_configuration()
-
-    def reload_mftable(self):
-        self.spectrometer.reload_mftable()
 # ============= EOF =============================================
-
-
-

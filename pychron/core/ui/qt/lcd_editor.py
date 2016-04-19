@@ -34,8 +34,8 @@ class _LCDEditor(Editor):
         lcd.setSmallDecimalPoint(self.factory.use_small_decimal_point)
         lcd.setSegmentStyle(QLCDNumber.Flat)
         lcd.setStyleSheet('background-color:rgb(0,0,0)')
-        lcd.setMinimumHeight(200)
-        lcd.setMinimumWidth(500)
+        lcd.setMinimumHeight(self.factory.height)
+        lcd.setMinimumWidth(self.factory.width)
         palette = lcd.palette()
         palette.setColor(palette.Foreground, QColor('green'))
         lcd.setPalette(palette)
@@ -58,5 +58,7 @@ class LCDEditor(BasicEditorFactory):
     klass = _LCDEditor
     ndigits = Int(5)
     use_small_decimal_point = Bool(True)
+    width = Int(500)
+    height = Int(200)
 
 # ============= EOF ====================================

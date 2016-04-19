@@ -29,7 +29,8 @@ from pychron.spectrometer.tasks.base_spectrometer_plugin import BaseSpectrometer
 from pychron.spectrometer.thermo.manager.argus import ArgusSpectrometerManager
 from pychron.spectrometer.tasks.spectrometer_actions import PeakCenterAction, \
     CoincidenceScanAction, SpectrometerParametersAction, MagnetFieldTableAction, MagnetFieldTableHistoryAction, \
-    ToggleSpectrometerTask, EditGainsAction, SendConfigAction, ViewReadoutAction, DefinePeakCenterAction
+    ToggleSpectrometerTask, EditGainsAction, SendConfigAction, ViewReadoutAction, DefinePeakCenterAction, \
+    ReloadMFTableAction
 from pychron.spectrometer.tasks.spectrometer_preferences import SpectrometerPreferencesPane
 
 
@@ -98,9 +99,11 @@ class ThermoSpectrometerPlugin(BaseSpectrometerPlugin):
                     SchemaAddition(id='view_readout',
                                    factory=ViewReadoutAction,
                                    path='MenuBar/spectrometer.menu'),
-
                     SchemaAddition(id='edit_gains',
                                    factory=EditGainsAction,
+                                   path='MenuBar/spectrometer.menu'),
+                    SchemaAddition(id='relood_table',
+                                   factory=ReloadMFTableAction,
                                    path='MenuBar/spectrometer.menu'),
                     SchemaAddition(id='mftable',
                                    factory=MagnetFieldTableAction,

@@ -35,14 +35,14 @@ from pychron.experiment.experiment_launch_history import update_launch_history
 from pychron.experiment.experimentor import Experimentor
 from pychron.experiment.queue.base_queue import extract_meta
 from pychron.experiment.tasks.experiment_editor import ExperimentEditor, UVExperimentEditor
-from pychron.experiment.tasks.experiment_panes import LoggerPane, ExplanationPane
 from pychron.experiment.utilities.identifier import convert_extract_device, is_special
+from pychron.furnace.ifurnace_manager import IFurnaceManager
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.paths import paths
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pychron_constants import SPECTROMETER_PROTOCOL
 from pychron.experiment.tasks.experiment_panes import ExperimentFactoryPane, StatsPane, \
-    ControlsPane, IsotopeEvolutionPane, ConnectionStatusPane
+    ControlsPane, IsotopeEvolutionPane, ConnectionStatusPane, LoggerPane, ExplanationPane
 from pychron.envisage.tasks.wait_pane import WaitPane
 
 
@@ -260,6 +260,11 @@ class ExperimentEditorTask(EditorTask):
 
         panes = self._add_canvas_pane(panes)
 
+        manager = self.application.get_service(IFurnaceManager)
+        if manager:
+            from pychron.experiment.tasks.experiment_panes import ExperimentFurnacePane
+            fpane = ExperimentFurnacePane(model=manager)
+            panes.append(fpane)
         # app = self.window.application
         # man = app.get_service('pychron.lasers.laser_managers.ilaser_manager.ILaserManager')
         # if man:

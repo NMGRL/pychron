@@ -27,6 +27,7 @@ from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.ui.combobox_editor import ComboboxEditor
+from pychron.core.ui.lcd_editor import LCDEditor
 from pychron.core.ui.led_editor import LEDEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.stylesheets import load_stylesheet
@@ -509,4 +510,18 @@ class LoggerPane(TraitsDockPane):
 
         return v
 
+
+class ExperimentFurnacePane(TraitsDockPane):
+    name = 'Furnace'
+    id = 'pychron.experiment.furnace'
+
+    def traits_view(self):
+        c_grp = VGroup(HGroup(Item('setpoint'),
+                              UItem('water_flow_led', editor=LEDEditor(label='H2O Flow')),
+                              spring, icon_button_editor('pane.disable_button', 'cancel')),
+                       VGroup(UItem('temperature_readback', editor=LCDEditor(width=100, height=50))),
+                       label='Controller', show_border=True)
+
+        v = View(c_grp)
+        return v
 # ============= EOF =============================================
