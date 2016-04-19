@@ -441,7 +441,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         # v = None
         if v is not None and p is not None:
             x = self.graph.record(v, track_y=False)
-            self.graph.record(p, x=x, series=0, plotid=1)
+            self.graph.record(p, x=x, series=0, plotid=1, track_y=False)
 
             ss = self.graph.get_data(plotid=0, series=1, axis=1)
             if len(ss) > 1:
@@ -452,8 +452,19 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
                 self.graph.record(s, x=x, series=1, track_y=False)
 
             if self.graph_y_auto:
-                mi, ma = self._get_graph_y_min_max()
-                self.graph.set_y_limits(min_=mi, max_=ma, pad='0.1')
+                temp = self.graph.plots[0].plots['plot0']
+                setpoint = self.graph.plots[0].plots['plot1']
+
+                temp = temp.value.get_data()
+                setpoint = setpoint.value.get_data()
+
+                ma = max(temp.max(), setpoint.max())
+                if self.setpoint == 0:
+                    mi = 0
+                else:
+                    mi = min(setpoint.min(), temp.min())
+
+                self.graph.set_y_limits(min_=mi, max_=ma, pad='0.1', plotid=0)
 
             if self._recording:
                 self.record_data_manager.write_to_frame((x, v, p))
@@ -474,13 +485,16 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         # g.plotcontainer.padding_right = 5
         g.new_plot(xtitle='Time (s)', ytitle='Temp. (C)', padding_top=5, padding_left=75, padding_right=5)
         g.set_scan_width(600, plotid=0)
+        g.set_data_limits(1.8 * 600, plotid=0)
         g.new_series(plotid=0)
         g.new_series(plotid=0, line_width=2,
                      render_style='connectedhold')
 
         g.new_plot(ytitle='Output (%)', padding_top=5, padding_left=75, padding_right=5)
         g.set_scan_width(600, plotid=1)
+        g.set_data_limits(1.8 * 600, plotid=1)
         g.new_series(plotid=1)
+        g.set_y_limits(min_=0, max_=105, plotid=1)
 
         return g
 
