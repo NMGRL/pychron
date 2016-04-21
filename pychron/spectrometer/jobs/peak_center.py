@@ -161,17 +161,27 @@ class BasePeakCenter(MagnetSweep):
         """
             returns center, success (float/None, bool)
         """
+
         graph = self.graph
+
         spec = self.spectrometer
 
         graph.set_x_limits(min_=min([start, end]),
                            max_=max([start, end]))
 
+        def get_reference_intensity():
+            keys, signals = spec.get_intensities()
+            idx = keys.index(self.reference_detector.name)
+            return signals[idx]
+
+        # get the reference detectors current intensity
+        cur_intensity = get_reference_intensity()
+
         # move to start position
         self.info('Moving to starting dac {}'.format(start))
         spec.magnet.set_dac(start)
 
-        tol = 50
+        tol = cur_intensity * (1 - self.percent/100.)
         timeout = 10
         self.info('Wait until signal near baseline. tol= {}. timeout= {}'.format(tol, timeout))
         # spec.save_integration()
@@ -179,9 +189,7 @@ class BasePeakCenter(MagnetSweep):
 
         st = time.time()
         while 1:
-            keys, signals = spec.get_intensities()
-            idx = keys.index(self.reference_detector.name)
-            signal = signals[idx]
+            signal = get_reference_intensity()
             if signal < tol:
                 self.info('Peak center baseline intensity achieved')
                 break
