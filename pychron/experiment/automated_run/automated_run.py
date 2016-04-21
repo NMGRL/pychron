@@ -39,7 +39,7 @@ from pychron.experiment.automated_run.persistence_spec import PersistenceSpec
 from pychron.experiment.conditional.conditional import TruncationConditional, \
     ActionConditional, TerminationConditional, conditional_from_dict, CancelationConditional, conditionals_from_file, \
     QueueModificationConditional
-from pychron.experiment.utilities.conditionals import test_queue_conditionals_name
+from pychron.experiment.utilities.conditionals import test_queue_conditionals_name, QUEUE, SYSTEM, RUN
 from pychron.experiment.utilities.identifier import convert_identifier
 from pychron.experiment.utilities.script import assemble_script_blob
 from pychron.globals import globalv
@@ -602,7 +602,8 @@ class AutomatedRun(Loggable):
         """
         cancel experiment if teststr evaluates to true
         """
-        self._conditional_appender('cancelation', kw, CancelationConditional)
+        self._conditional_appender('cancelation', kw, CancelationConditional, level=RUN,
+                                   location=self.measurement_script.name)
 
     def py_add_action(self, **kw):
         """
@@ -610,7 +611,8 @@ class AutomatedRun(Loggable):
 
         perform a specified action if teststr evaluates to true
         """
-        self._conditional_appender('action', kw, ActionConditional)
+        self._conditional_appender('action', kw, ActionConditional, level=RUN,
+                                   location=self.measurement_script.name)
 
     def py_add_termination(self, **kw):
         """
@@ -618,7 +620,8 @@ class AutomatedRun(Loggable):
 
         terminate run and continue experiment if teststr evaluates to true
         """
-        self._conditional_appender('termination', kw, TerminationConditional)
+        self._conditional_appender('termination', kw, TerminationConditional, level=RUN,
+                                   location=self.measurement_script.name)
 
     def py_add_truncation(self, **kw):
         """
@@ -629,7 +632,8 @@ class AutomatedRun(Loggable):
         attr='', comp='',start_count=50, frequency=5,
         abbreviated_count_ratio=1.0
         """
-        self._conditional_appender('truncation', kw, TruncationConditional)
+        self._conditional_appender('truncation', kw, TruncationConditional, level=RUN,
+                                   location=self.measurement_script.name)
 
     def py_clear_conditionals(self):
         self.debug('$$$$$ Clearing conditionals')
@@ -1503,7 +1507,7 @@ anaylsis_type={}
         p = get_path(paths.spectrometer_dir, '.*conditionals', ('.yaml', '.yml'))
         if p is not None:
             self.info('adding default conditionals from {}'.format(p))
-            self._add_conditionals_from_file(p)
+            self._add_conditionals_from_file(p, level=SYSTEM)
         else:
             self.warning('no Default Conditionals file. {}'.format(p))
 
@@ -1517,19 +1521,19 @@ anaylsis_type={}
             p = get_path(paths.queue_conditionals_dir, name, ('.yaml', '.yml'))
             if p is not None:
                 self.info('adding queue conditionals from {}'.format(p))
-                self._add_conditionals_from_file(p)
+                self._add_conditionals_from_file(p, level=QUEUE)
 
             else:
                 self.warning('Invalid Conditionals file. {}'.format(p))
 
-    def _add_conditionals_from_file(self, p):
-        d = conditionals_from_file(p)
+    def _add_conditionals_from_file(self, p, level=None):
+        d = conditionals_from_file(p, level)
         for k, v in d.items():
             if k in ('actions', 'truncations', 'terminations', 'cancelations'):
                 var = getattr(self, '{}_conditionals'.format(k[:-1]))
                 var.extend(v)
 
-    def _conditional_appender(self, name, cd, klass, location=None):
+    def _conditional_appender(self, name, cd, klass, level=None, location=None):
         if not self.isotope_group:
             self.warning('No ArArAge to use for conditional testing')
             return
@@ -1544,7 +1548,7 @@ anaylsis_type={}
 
         # don't check if isotope_group has the attribute. it may be added to isotope group later
         obj = getattr(self, '{}_conditionals'.format(name))
-        con = conditional_from_dict(cd, klass, location)
+        con = conditional_from_dict(cd, klass, level=level, location=location)
 
         if con:
             self.info(
