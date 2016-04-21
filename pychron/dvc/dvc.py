@@ -929,7 +929,7 @@ class DVC(Loggable):
 
     def _get_frozen_production(self, rid, repo):
         path = analysis_path(rid, repo, 'productions')
-        if os.path.isfile(path):
+        if path:
             return Production(path)
 
     def _get_repository(self, repository_identifier):

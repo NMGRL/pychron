@@ -52,6 +52,7 @@ class PipelinePlugin(BaseTaskPlugin):
                  ['csv_ideogram_template', 'CSV_IDEO', ov],
                  ['flux_template', 'FLUX', ov],
                  ['vertical_flux_template', 'VERTICAL_FLUX', ov],
+                 ['xy_scatter_template', 'XY_SCATTER', ov],
                  ['analysis_table_template', 'ANALYSIS_TABLE', ov],
                  ['interpreted_age_table_template', 'INTERPRETED_AGE_TABLE', ov],
                  ['auto_ideogram_template', 'AUTO_IDEOGRAM', ov]]
@@ -74,7 +75,8 @@ class PipelinePlugin(BaseTaskPlugin):
 
         with open(paths.template_manifest_file, 'w') as wfile:
             pickle.dump(manifest, wfile)
-
+        for f in files:
+            print f
         return files
 
     def _pipeline_factory(self):

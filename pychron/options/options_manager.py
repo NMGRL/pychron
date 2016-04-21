@@ -36,6 +36,7 @@ from pychron.options.options import BaseOptions, SubOptions
 from pychron.options.series import SeriesOptions
 from pychron.options.spectrum import SpectrumOptions
 from pychron.options.views import view
+from pychron.options.xy_scatter import XYScatterOptions
 from pychron.paths import paths
 
 
@@ -263,6 +264,11 @@ class FluxOptionsManager(FigureOptionsManager):
 class VerticalFluxOptionsManager(FigureOptionsManager):
     id = 'vertical_flux'
     options_klass = VerticalFluxOptions
+
+
+class XYScatterOptionsManager(FigureOptionsManager):
+    id = 'xy_scatter'
+    options_klass = XYScatterOptions
 
 
 class IdeogramOptionsManager(FigureOptionsManager):

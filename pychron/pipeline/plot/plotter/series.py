@@ -118,7 +118,6 @@ class Series(BaseSeries):
         omits = self._get_omitted_by_tag(self.sorted_analyses)
         for o in omits:
             self.sorted_analyses[o].set_temp_status('omit')
-        graph = self.graph
 
         if plots:
             self.xs = self._get_xs(plots, self.sorted_analyses)

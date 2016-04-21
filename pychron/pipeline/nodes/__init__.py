@@ -21,7 +21,8 @@
 from pychron.pipeline.nodes.data import UnknownNode, ReferenceNode, FluxMonitorsNode, ListenUnknownNode, CSVNode, \
     InterpretedAgeNode
 from pychron.pipeline.nodes.diff import DiffNode
-from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, SeriesNode, InverseIsochronNode, VerticalFluxNode
+from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, SeriesNode, InverseIsochronNode, \
+    VerticalFluxNode, XYScatterNode
 from pychron.pipeline.nodes.filter import FilterNode
 from pychron.pipeline.nodes.find import FindReferencesNode, FindFluxMonitorsNode, FindVerticalFluxNode
 from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode, FitICFactorNode, FitFluxNode

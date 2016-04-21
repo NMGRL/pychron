@@ -325,6 +325,9 @@ class PipelineTask(BaseBrowserTask):
     def set_vertical_flux_template(self):
         self._set_action_template('VerticalFlux')
 
+    def set_xy_scatter_template(self):
+        self._set_action_template('XYScatter')
+
     def set_last_n_analyses_template(self):
         self.engine.selected_pipeline_template = 'Series'
         # get n analyses from user
