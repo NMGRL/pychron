@@ -31,7 +31,7 @@ from pychron.pipeline.tasks.actions import ConfigureRecallAction, IdeogramAction
     SeriesAction, BlanksAction, ICFactorAction, ResetFactoryDefaultsAction, VerticalFluxAction, \
     LastNAnalysesSeriesAction, \
     LastNHoursSeriesAction, LastMonthSeriesAction, LastWeekSeriesAction, LastDaySeriesAction, TimeViewBrowserAction, \
-    FluxAction
+    FluxAction, FreezeProductionRatios
 from pychron.pipeline.tasks.browser_task import BrowserTask
 from pychron.pipeline.tasks.preferences import PipelinePreferencesPane
 from pychron.pipeline.tasks.task import PipelineTask
@@ -149,7 +149,9 @@ class PipelinePlugin(BaseTaskPlugin):
                              SchemaAddition(factory=ICFactorAction,
                                             path=rg),
                              SchemaAddition(factory=FluxAction,
-                                            path=pg)]
+                                            path=rg),
+                             SchemaAddition(factory=FreezeProductionRatios,
+                                            path=rg)]
 
         help_actions = [SchemaAddition(factory=ResetFactoryDefaultsAction,
                                        path='MenuBar/help.menu')]

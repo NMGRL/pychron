@@ -153,6 +153,12 @@ class FluxAction(PipelineAction):
     action = 'set_flux_template'
 
 
+class FreezeProductionRatios(PipelineAction):
+    name = 'Freeze Production Ratios'
+    dname = 'Freeze Production Ratios'
+    action = 'freeze_production_ratios'
+
+
 # ============= Plotting Actions =============================================
 class ResetFactoryDefaultsAction(Action):
     name = 'Reset Factory Defaults'

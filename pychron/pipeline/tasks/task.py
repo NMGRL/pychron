@@ -293,6 +293,14 @@ class PipelineTask(BaseBrowserTask):
             self.engine.save_pipeline_template(path)
 
     # action handlers
+    def freeze_production_ratios(self):
+        ed = self.active_editor
+        ans = ed.analyses
+        if ans:
+            self.dvc.freeze_production_ratios(ans)
+        else:
+            self._set_action_template('FreezeProductionRatios')
+
     def set_icfactor_template(self):
         self._set_action_template('ICFactor')
 

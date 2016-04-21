@@ -39,7 +39,7 @@ from pychron.dvc.defaults import TRIGA, HOLDER_24_SPOKES, LASER221, LASER65
 from pychron.dvc.dvc_analysis import DVCAnalysis, repository_path, analysis_path, PATH_MODIFIERS, \
     AnalysisNotAnvailableError
 from pychron.dvc.dvc_database import DVCDatabase
-from pychron.dvc.meta_repo import MetaRepo
+from pychron.dvc.meta_repo import MetaRepo, Production
 from pychron.envisage.browser.record_views import InterpretedAgeRecordView
 from pychron.git.hosts import IGitHost
 from pychron.git_archive.repo_manager import GitRepoManager, format_date, get_repository_branch
@@ -252,6 +252,41 @@ class DVC(Loggable):
                                 irradiation_time=cs.irradiation_time,
                                 timestamp=now)
         return True
+
+    def freeze_production_ratios(self, ans):
+        self.info('freeze production ratios')
+
+        def ai_gen():
+            key = lambda x: x.irradiation
+            lkey = lambda x: x.level
+            for irrad, ais in groupby(sorted(ans, key=key), key=key):
+                ais = sorted(ais, key=lkey)
+                for level, ais in groupby(ais, key=lkey):
+                    pr = self.meta_repo.get_production(irrad, level)
+                    for ai in ais:
+                        yield pr, ai
+
+        added = []
+
+        def func(x, prog, i, n):
+            pr, ai = x
+            if prog:
+                prog.change_message('Freezing Production {}'.format(ai.runid))
+
+            p = analysis_path(ai.runid, ai.repository_identifier, 'productions', mode='w')
+            pr.dump(path=p)
+            added.append((ai.repository_identifier, p))
+
+        progress_loader(ai_gen(), func, threshold=1)
+
+        key = lambda x: x[0]
+        rr = sorted(added, key=key)
+        for repo, ps in groupby(rr, key=key):
+            rm = GitRepoManager()
+            rm.open_repo(repo, paths.repository_dataset_dir)
+            rm.add_paths(ps)
+            rm.smart_pull()
+            rm.commit('<PR_FREEZE>')
 
     # database
     # analysis manual edit
@@ -873,7 +908,11 @@ class DVC(Loggable):
                 chronology = meta_repo.get_chronology(a.irradiation)
                 a.set_chronology(chronology)
 
-                pname, prod = meta_repo.get_production(a.irradiation, a.irradiation_level)
+                frozen_production = self._get_frozen_production(rid, a.repository_identifier)
+                if frozen_production:
+                    pname, prod = frozen_production.name, frozen_production
+                else:
+                    pname, prod = meta_repo.get_production(a.irradiation, a.irradiation_level)
                 a.set_production(pname, prod)
 
                 j, lambda_k = meta_repo.get_flux(record.irradiation, record.irradiation_level,
@@ -888,11 +927,10 @@ class DVC(Loggable):
                     a.calculate_age()
         return a
 
-    # def _organization_factory(self):
-    #     org = Organization(self.organization,
-    #                        usr=self.github_user,
-    #                        pwd=self.github_password)
-    #     return org
+    def _get_frozen_production(self, rid, repo):
+        path = analysis_path(rid, repo, 'productions')
+        if os.path.isfile(path):
+            return Production(path)
 
     def _get_repository(self, repository_identifier):
         repo = self.current_repository
