@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+import json
 import time
 from threading import Thread
 
@@ -158,6 +159,22 @@ class FirmwareManager(HeadlessLoggable):
     def get_percent_output(self, data):
         if self.controller:
             return self.controller.read_percent_output()
+
+    @debug
+    def get_furnace_summary(self, data):
+        if self.controller:
+            h2o_ch = None
+            if isinstance(data, dict):
+                h2o_ch = data.get('h2o_channel')
+
+            ctrl = self.controller
+            d = {'output': ctrl.read_percent_output(),
+                 'setpoint': ctrl.process_setpoint,
+                 'response': ctrl.get_process_value}
+            if h2o_ch:
+                d['h2o_state'] = self.switch_controller.get_channel_state(h2o_ch)
+
+            return json.dumps(d)
 
     @debug
     def get_magnets_state(self, data):

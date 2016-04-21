@@ -419,29 +419,24 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         return self.loader_logic.close(name)
 
     def _update_scan(self):
-        state = self.controller.get_water_flow_state(verbose=False)
-        if isinstance(state, bool):
-            self.water_flow_led.state = 2 if state else 0
-        else:
-            self.water_flow_led.state = 1
+        d = self.controller.get_summary()
+        if d:
+            state = d['h2o_state']
+            if isinstance(state, bool):
+                self.water_flow_led.state = 2 if state else 0
+            else:
+                self.water_flow_led.state = 1
 
-        self._update_scan_graph()
+            self._update_scan_graph(d['response'], d['output'], d['setpoint'])
 
     def _stop_update(self):
         self.debug('stop update')
         self._alive = False
 
-    def _update_scan_graph(self):
-        v = self.read_temperature(verbose=False)
-        p = self.read_output_percent(verbose=False)
-        # from random import random
-        # v = random() + self.setpoint
-        # p = random()
-        s = self.setpoint
-        # v = None
-        if v is not None and p is not None:
-            x = self.graph.record(v, track_y=False)
-            self.graph.record(p, x=x, series=0, plotid=1, track_y=False)
+    def _update_scan_graph(self, response, output, setpoint):
+        if response is not None and output is not None:
+            x = self.graph.record(response, track_y=False)
+            self.graph.record(output, x=x, series=0, plotid=1, track_y=False)
 
             ss = self.graph.get_data(plotid=0, series=1, axis=1)
             if len(ss) > 1:
@@ -449,25 +444,25 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
                 xs[-1] = x
                 self.graph.set_data(xs, plotid=0, series=1)
             else:
-                self.graph.record(s, x=x, series=1, track_y=False)
+                self.graph.record(setpoint, x=x, series=1, track_y=False)
 
             if self.graph_y_auto:
-                temp = self.graph.plots[0].plots['plot0']
-                setpoint = self.graph.plots[0].plots['plot1']
+                temp_plot = self.graph.plots[0].plots['plot0']
+                setpoint_plot = self.graph.plots[0].plots['plot1']
 
-                temp = temp.value.get_data()
-                setpoint = setpoint.value.get_data()
+                temp_data = temp_plot.value.get_data()
+                setpoint_data = setpoint_plot.value.get_data()
 
-                ma = max(temp.max(), setpoint.max())
+                ma = max(temp_data.max(), setpoint_data.max())
                 if self.setpoint == 0:
                     mi = 0
                 else:
-                    mi = min(setpoint.min(), temp.min())
+                    mi = min(setpoint_data.min(), temp_data.min())
 
                 self.graph.set_y_limits(min_=mi, max_=ma, pad='0.1', plotid=0)
 
             if self._recording:
-                self.record_data_manager.write_to_frame((x, v, p))
+                self.record_data_manager.write_to_frame((x, response, output))
 
     def _start_recording(self):
         self._recording = True

@@ -32,6 +32,10 @@ class FurnaceController(AbstractDevice):
         if self._cdevice:
             return self._cdevice.get_water_flow_state(**kw)
 
+    def get_summary(self, **kw):
+        if self._cdevice:
+            return self._cdevice.get_summary(**kw)
+
     def set_setpoint(self, v, **kw):
         if self._cdevice:
             return self._cdevice.set_setpoint(v, **kw)
