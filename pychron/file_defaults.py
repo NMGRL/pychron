@@ -39,6 +39,7 @@ PIPELINE_TEMPLATES = '''- Iso Evo
 - Auto Ideogram
 - Diff
 - Vertical Flux
+- Xy Scatter
 '''
 
 IDENTIFIERS_DEFAULT = """
@@ -427,6 +428,10 @@ SPEC = """- klass: UnknownNode
 
 VERTICAL_FLUX = """- klass: FindVerticalFluxNode
 - klass: VerticalFluxNode
+"""
+
+XY_SCATTER = """- klass: UnknownNode
+- klass: XYScatterNode
 """
 
 ANALYSIS_TABLE = """- klass: UnknownNode

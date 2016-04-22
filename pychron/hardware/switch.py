@@ -54,7 +54,10 @@ class BaseSwitch(Loggable):
         self.software_lock = False
 
     def get_hardware_state(self, **kw):
-        pass
+        return self.state
+
+    def get_hardware_indicator_state(self, **kw):
+        return self.state
 
 
 class ManualSwitch(BaseSwitch):
@@ -87,23 +90,23 @@ class Switch(BaseSwitch):
 
     settling_time = Float(0)
 
-
-
     def state_str(self):
         return '{}{}{}'.format(self.name, self.state, self.software_lock)
 
-    def get_hardware_indicator_state(self, verbose=True):
-        result = None
-        if self.actuator is not None:
-            result = self.actuator.get_indicator_state(self, 'open', verbose=verbose)
-            self.debug('Switch indicator state {}, {}'.format(result, 'Open' if result else 'Closed'))
-            if isinstance(result, bool):
-                self.set_state(result)
-            else:
-                self.debug('Get hardware indicator state err: {}'.format(result))
-                result = False
-
-        return result
+    # def get_hardware_indicator_state(self, verbose=True):
+    #     result = None
+    #     if self.actuator is not None:
+    #         action = 'open' if self.state else 'closed'
+    #
+    #         result = self.actuator.get_indicator_state(self, action, verbose=verbose)
+    #         self.debug('Switch indicator state {}, {}'.format(result, 'Open' if result else 'Closed'))
+    #         if isinstance(result, bool):
+    #             self.set_state(result)
+    #         else:
+    #             self.debug('Get hardware indicator state err: {}'.format(result))
+    #             result = False
+    #
+    #     return result
 
     def get_hardware_state(self, verbose=True):
         """
@@ -111,7 +114,7 @@ class Switch(BaseSwitch):
         result = None
         if self.actuator is not None:
             result = self.actuator.get_channel_state(self, verbose=verbose)
-            self.debug('Switch state {}, {}'.format(result, 'Open' if result else 'Closed'))
+            # self.debug('Switch state {}, {}'.format(result, 'Open' if result else 'Closed'))
             if isinstance(result, bool):
                 self.set_state(result)
             else:
@@ -138,7 +141,7 @@ class Switch(BaseSwitch):
             cur: bool, not self.state if open, self.state if close
             set_value: open-True, close-False
         """
-        self.info('actuate state mode={}'.format(mode))
+        self.info('actuate state mode={}, software_lock={}'.format(mode, self.software_lock))
         state_change = False
         success = True
         if self.software_lock:

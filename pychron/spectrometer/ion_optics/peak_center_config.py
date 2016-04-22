@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from apptools import sweet_pickle as pickle
-from traits.api import HasTraits, Str, Bool, Float, List, Instance, Enum, Int, Any, Button
+from traits.api import HasTraits, Str, Bool, Float, List, Enum, Int, Any, Button
 from traitsui.api import View, Item, HGroup, Handler, EnumEditor, UItem, VGroup, InstanceEditor, CheckListEditor
 # ============= standard library imports ========================
 import os
@@ -25,7 +25,6 @@ from pychron.core.helpers.filetools import add_extension, list_directory2
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.paths import paths
 from pychron.pychron_constants import QTEGRA_INTEGRATION_TIMES
-from pychron.spectrometer.base_detector import BaseDetector
 
 
 class PeakCenterConfigHandler(Handler):
@@ -58,6 +57,7 @@ class PeakCenterConfig(HasTraits):
     percent = Int(80)
 
     use_interpolation = Bool
+    interpolation_kind = Enum('linear', 'nearest', 'zero', 'slinear', 'quadratic', 'cubic')
     n_peaks = Enum(1, 2, 3, 4)
     select_n_peak = Int
     select_n_peaks = List
@@ -96,7 +96,8 @@ class PeakCenterConfig(HasTraits):
                        show_border=True, label='Measure')
         pp_grp = VGroup(Item('min_peak_height', label='Min Peak Height (fA)'),
                         Item('percent', label='% Peak Height'),
-                        Item('use_interpolation', label='Use Interpolation'),
+                        HGroup(Item('use_interpolation', label='Use Interpolation'),
+                               UItem('interpolation_kind', enabled_when='use_interpolation')),
                         Item('n_peaks', label='Deconvolve N. Peaks'),
                         Item('select_n_peak',
                              editor=EnumEditor(name='select_n_peaks'),

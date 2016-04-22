@@ -276,7 +276,7 @@ class MeasurementPyScript(ValvePyScript):
 
     @count_verbose_skip
     @command_register
-    def peak_hop(self, ncycles=5, hops=None, mftable='mftable', calc_time=False):
+    def peak_hop(self, ncycles=5, hops=None, mftable=None, calc_time=False):
         """
         Peak hop ion beams. Hops usually defined in a separate file.
         if mftable == 'ic_mftable' use the ic_mftable generated during detector intercalibration.

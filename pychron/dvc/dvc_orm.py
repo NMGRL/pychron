@@ -193,6 +193,13 @@ class AnalysisTbl(Base, BaseMixin):
         else:
             return [self._make_record_view(r.repository, use_suffix=True) for r in repos]
 
+    def make_record_view(self, repository, use_suffix=False):
+        for repo in self.repository_associations:
+            if repo.repository == repository:
+                return self._make_record_view(repo.repository, use_suffix=use_suffix)
+        else:
+            return self._make_record_view(self.repository_associations[0])
+
     def _make_record_view(self, repo, use_suffix=False):
         iv = DVCIsotopeRecordView()
         iv.extract_script_name = self.extractionName

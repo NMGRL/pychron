@@ -23,7 +23,7 @@ from pychron.envisage.tasks.base_editor import grouped_name
 from pychron.options.views import view
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.options.options_manager import IdeogramOptionsManager, OptionsController, SeriesOptionsManager, \
-    SpectrumOptionsManager, InverseIsochronOptionsManager, VerticalFluxOptionsManager
+    SpectrumOptionsManager, InverseIsochronOptionsManager, VerticalFluxOptionsManager, XYScatterOptionsManager
 
 
 class NoAnalysesError(BaseException):
@@ -137,6 +137,35 @@ class FigureNode(BaseNode):
 
     def _options_view_default(self):
         return view('{} Options'.format(self.name))
+
+
+class XYScatterNode(FigureNode):
+    name = 'XYScatter'
+    editor_klass = 'pychron.pipeline.plot.editors.xyscatter_editor,XYScatterEditor'
+    plotter_options_manager_klass = XYScatterOptionsManager
+
+    def _configure_hook(self):
+        pom = self.plotter_options_manager
+        if self.unknowns:
+            unk = self.unknowns[0]
+            # names = []
+            iso_keys = unk.isotope_keys
+            names = iso_keys
+            # if iso_keys:
+            #     names.extend(iso_keys)
+            #     names.extend(['{}bs'.format(ki) for ki in iso_keys])
+            #     names.extend(['{}ic'.format(ki) for ki in iso_keys])
+            #     if 'Ar40' in iso_keys:
+            #         if 'Ar39' in iso_keys:
+            #             names.append('Ar40/Ar39')
+            #             names.append('uAr40/Ar39')
+            #         if 'Ar36' in iso_keys:
+            #             names.append('Ar40/Ar36')
+            #             names.append('uAr40/Ar36')
+            #
+            # names.append('Peak Center')
+            # names.append('AnalysisType')
+        pom.set_names(names)
 
 
 class VerticalFluxNode(FigureNode):

@@ -6,6 +6,7 @@ Pychron
 [![Issue Stats](http://issuestats.com/github/nmgrl/pychron/badge/issue)](http://issuestats.com/github/nmgrl/pychron)
 ![Gratipay](http://img.shields.io/gratipay/jirhiker.svg)
 [![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.9884.png)](https://zenodo.org/record/9884#.U3Tp8V4rjfM)
+[![Stories in Ready](https://badge.waffle.io/NMGRL/pychron.png?label=ready&title=Ready)](http://waffle.io/NMGRL/pychron)
 
 [Changes](CHANGELOG.md)
 

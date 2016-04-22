@@ -92,8 +92,8 @@ class ExperimentPreferences(BasePreferencesHelper):
     invalid_color = Color
 
     use_peak_center_threshold = Bool
-    peak_center_threshold1 = Int(10)
-    peak_center_threshold2 = Int(3)
+    # peak_center_threshold1 = Int(10)
+    peak_center_threshold = Float(3)
     peak_center_threshold_window = Int(10)
 
     def _get_memory_threshold(self):
@@ -235,8 +235,7 @@ class ExperimentPreferencesPane(PreferencesPane):
         pc_grp = Group(
             Item('use_peak_center_threshold', label='Use Peak Center Threshold',
                  tooltip='Only peak center if intensity is greater than the peak center threshold'),
-            Item('peak_center_threshold1', label='Threshold 1', enabled_when='use_peak_center_threshold'),
-            Item('peak_center_threshold2', label='Threshold 2', enabled_when='use_peak_center_threshold'),
+            Item('peak_center_threshold', label='Threshold', enabled_when='use_peak_center_threshold'),
             Item('peak_center_threshold_window', label='Window', enabled_when='use_peak_center_threshold'),
             show_border=True,
             label='Peak Center')

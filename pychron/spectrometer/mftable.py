@@ -141,7 +141,7 @@ class MagnetFieldTable(Loggable):
             self.debug('Magnet update field table {}'.format(e))
 
     def set_path_name(self, name):
-        if self.path != self._name_to_path(name):
+        if name and self.path != name:
             self.path = name
             self.info('Using MFTable {}'.format(self.path))
             self.load_mftable()
@@ -322,10 +322,10 @@ class MagnetFieldTable(Loggable):
         name = get_mftable_name()
         return os.path.join(paths.mftable_dir, add_extension(name, '.csv'))
 
-    # def _name_to_path(self, name):
-    #     if name:
-    #         name = os.path.join(paths.mftable_dir, add_extension(name, '.csv'))
-    #     return name or ''
+    def _name_to_path(self, name):
+        if name:
+            name = os.path.join(paths.mftable_dir, add_extension(name, '.csv'))
+        return name or ''
     #
     # def _set_path(self, v):
     #     self._path = self._name_to_path(v)

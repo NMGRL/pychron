@@ -274,6 +274,7 @@ class ExtractionLineManager(Manager, Consoleable):
                     vc.state = v.state
 
     def update_switch_state(self, name, state, *args, **kw):
+        self.debug('update switch state {} {}'.format(name, state))
         if self.use_network:
             self.network.set_valve_state(name, state)
             for c in self.canvases:
@@ -423,12 +424,18 @@ class ExtractionLineManager(Manager, Consoleable):
 
             self.explanation.selected = selected
 
-    def new_canvas(self):
+    def new_canvas(self, config=None):
         c = ExtractionLineCanvas(manager=self,
                                  display_name='Extraction Line')
+        c.load_canvas_file(canvas_config_path=config)
         self.canvases.append(c)
         c.canvas2D.trait_set(display_volume=self.display_volume,
                              volume_key=self.volume_key)
+        if self.switch_manager:
+            self.switch_manager.load_valve_states()
+            self.switch_manager.load_valve_lock_states(force=True)
+            self.switch_manager.load_valve_owners()
+            c.refresh()
 
         return c
 
@@ -575,7 +582,7 @@ class ExtractionLineManager(Manager, Consoleable):
         if self._check_ownership(name, sender_address):
             func = getattr(self.switch_manager, '{}_by_name'.format(action))
             ret = func(name, mode=mode, **kw)
-
+            self.debug('change switch state {}'.format(ret))
             if ret:
                 result, change = ret
                 if isinstance(result, bool):
@@ -696,15 +703,18 @@ class ExtractionLineManager(Manager, Consoleable):
             c.canvas2D.trait_set(**{name: new})
 
     def _handle_state(self, new):
+        self.debug('handle state {}'.format(new))
         self.update_switch_state(*new)
 
     def _handle_lock_state(self, new):
+        self.debug('refresh_lock_state fired. {}'.format(new))
         self.update_switch_lock_state(*new)
 
     def _handle_owned_state(self, new):
         self.update_switch_owned_state(*new)
 
     def _handle_refresh_canvas(self, new):
+        self.debug('refresh_canvas_needed fired')
         self.refresh_canvas()
 
     def _handle_console_message(self, new):
@@ -740,7 +750,6 @@ class ExtractionLineManager(Manager, Consoleable):
 
     def _get_switch_manager_klass(self):
         from pychron.extraction_line.switch_manager import SwitchManager
-
         return SwitchManager
 
     def _explanation_default(self):

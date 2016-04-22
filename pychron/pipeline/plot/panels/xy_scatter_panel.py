@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2012 Jake Ross
+# Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,22 +16,22 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from pychron.pipeline.plot.panels.figure_panel import FigurePanel
+from pychron.pipeline.plot.plotter.xy_scatter import XYScatter
+from pychron.processing.analysis_graph import AnalysisStackedRegressionGraph
+
+
 # ============= local library imports  ==========================
-from traits.api import Interface
 
-class IExtractionDevice(Interface):
-    def extract(self, *args, **kw):
-        pass
 
-    def end_extract(self, *args, **kw):
-        pass
+class XYScatterPanel(FigurePanel):
+    _figure_klass = XYScatter
+    _graph_klass = AnalysisStackedRegressionGraph
+    equi_stack = True
+    # plot_spacing = 5
+    use_previous_limits = False
 
-    def move_to_position(self, pos, *args, **kw):
-        pass
+    def _make_graph_hook(self, g):
+        g.refresh()
 
-    def prepare(self, *args, **kw):
-        pass
-
-    def is_ready(self):
-        pass
 # ============= EOF =============================================

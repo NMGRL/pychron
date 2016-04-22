@@ -126,7 +126,9 @@ def conditional_from_dict(cd, klass, level=None, location=None, **kw):
     if level:
         cx.level = level
     if location:
-        location = os.path.relpath(location, paths.root_dir)
+        if os.path.isfile(location):
+            location = os.path.relpath(location, paths.root_dir)
+
         cx.location = location
 
     return cx

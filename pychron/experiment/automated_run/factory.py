@@ -297,7 +297,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     # readonly
     # ===========================================================================
     sample = Str
-    irradiation = Str
+    display_irradiation = Str
     irrad_level = Str
     irrad_hole = Str
 
@@ -554,7 +554,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             self.selected_level = irrad_level
             self._no_clear_labnumber = False
 
-        return il
+        self.display_irradiation = il
 
     def _new_run(self, excludes=None, **kw):
 
@@ -583,7 +583,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                 'collection_time_zero_offset',
                 'pattern', 'beam_diameter',
                 'weight', 'comment',
-                'sample', 'irradiation',
+                'sample', 'selected_irradiation',
                 'ramp_duration',
                 'skip', 'mass_spectrometer', 'extract_device']
 
@@ -755,7 +755,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         self.debug('clear labnumber')
         if not self._no_clear_labnumber:
             self.labnumber = ''
-            self.irradiation = ''
+            self.display_irradiation = ''
             self.sample = ''
             self._suppress_special_labnumber_change=True
             self.special_labnumber = 'Special Labnumber'
@@ -976,8 +976,9 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                         print e
 
                     d['repository_identifier'] = self.repository_identifier
-                    self.irradiation = self._make_irrad_level(ip)
-                    d['irradiation'] = self.irradiation
+
+                    self._make_irrad_level(ip)
+                    d['irradiation'] = self.selected_irradiation
 
                     if self.auto_fill_comment:
                         self._set_auto_comment()
@@ -1082,7 +1083,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         self._position = pos
 
     def _get_info_label(self):
-        return '{} {} {}'.format(self.labnumber, self.irradiation, self.sample)
+        return '{} {} {}'.format(self.labnumber, self.display_irradiation, self.sample)
 
     def _validate_position(self, pos):
         if not pos.strip():
@@ -1604,8 +1605,8 @@ post_equilibration_script:name''')
 
     def _datahub_default(self):
         dh = Datahub()
+        dh.mainstore = self.application.get_service('pychron.dvc.dvc.DVC')
         dh.bind_preferences()
-        dh.secondary_connect()
         return dh
 
     @property

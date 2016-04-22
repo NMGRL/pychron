@@ -24,7 +24,7 @@ from pyface.tasks.action.schema_addition import SchemaAddition
 from pychron.dvc.dvc import DVC
 from pychron.dvc.dvc_persister import DVCPersister
 from pychron.dvc.tasks.actions import WorkOfflineAction, UseOfflineDatabase
-from pychron.dvc.tasks.preferences import DVCPreferencesPane, \
+from pychron.dvc.tasks.dvc_preferences import DVCPreferencesPane, \
     DVCDBConnectionPreferencesPane
 from pychron.dvc.tasks.repo_task import ExperimentRepoTask
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
@@ -66,7 +66,7 @@ class DVCPlugin(BaseTaskPlugin):
         return [so, so2]
 
     def dvc_factory(self):
-        d = DVC()
+        d = DVC(application=self.application)
         # d.initialize()
 
         return d

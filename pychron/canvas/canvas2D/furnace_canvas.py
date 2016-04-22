@@ -35,7 +35,6 @@ class FurnaceCanvas(StageCanvas):
     bgcolor = 'mediumturquoise'
 
     feeder = Any
-    use_zoom = False
 
     aspect_ratio = 3.
 
@@ -43,6 +42,9 @@ class FurnaceCanvas(StageCanvas):
         super(FurnaceCanvas, self).__init__(*args, **kw)
         self.border_visible = False
         self.show_axes = True
+        self.use_zoom = False
+        self.use_pan = False
+
         self._add_crosshairs(klass=SimpleCrosshairsOverlay)
         self.crosshairs_overlay.radius = 0.5
         self.crosshairs_overlay.constrain = 'y'
@@ -50,9 +52,19 @@ class FurnaceCanvas(StageCanvas):
         # self.show_current_position = False
 
         self.view_y_range = (-5, 5)
-        self.view_x_range = (0, 10)
+        self.view_x_range = (0, 140)
         self.padding_top = 5
         self.padding_bottom = 5
+        self.use_valid_holes = False
+        self.show_indicators = False
+
+    def set_map(self, mp):
+        super(FurnaceCanvas, self).set_map(mp)
+
+        xs = [h.x for h in mp.sample_holes]
+        xmi, xma = min(xs), max(xs)
+        pad = mp.g_dimension
+        self.view_x_range = (xmi - pad, xma + pad)
 
     def clear_all(self):
         self.scene.reset_layers()
@@ -97,6 +109,7 @@ class FurnaceCanvas(StageCanvas):
             distance = 5 if event.shift_down else 1
             self.feeder.slew(direction * distance)
             event.handled = True
+            self.event_state = 'slew'
 
     def key_released(self, char):
         """
@@ -104,6 +117,7 @@ class FurnaceCanvas(StageCanvas):
         """
         self.feeder.stop()
         self._update_stage_position()
+        self.event_state = 'normal'
 
     # ===============================================================================
     # private
@@ -117,12 +131,12 @@ class FurnaceCanvas(StageCanvas):
         if self.feeder.moving():
             do_after(250, self._update_position)
 
-        # ===============================================================================
-        # handlers
-        # ===============================================================================
+            # ===============================================================================
+            # handlers
+            # ===============================================================================
 
-        # ===============================================================================
-        # defaults
-        # ===============================================================================
+            # ===============================================================================
+            # defaults
+            # ===============================================================================
 
 # ========================EOF====================================================

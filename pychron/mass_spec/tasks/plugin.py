@@ -25,7 +25,7 @@ from pychron.mass_spec.tasks.preferences import MassSpecConnectionPane
 
 class MassSpecPlugin(BaseTaskPlugin):
     id = 'pychron.mass_spec.plugin'
-    name = 'Mass Spec'
+    name = 'MassSpec'
 
     def test_database(self):
         ret = 'Skipped'

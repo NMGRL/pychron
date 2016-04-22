@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Array, Any, Instance, Float
+from traits.api import Array, Any, Instance, Float
 
 # ============= standard library imports ========================
 import struct
@@ -24,13 +24,15 @@ from threading import Thread
 from numpy import array, vstack
 # ============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
+from pychron.loggable import Loggable
 from pychron.managers.data_managers.csv_data_manager import CSVDataManager
 
 
-class ResponseRecorder(HasTraits):
+class ResponseRecorder(Loggable):
     period = Float(2)
     response_data = Array
     output_data = Array
+    setpoint_data = Array
 
     _alive = False
 
@@ -44,12 +46,14 @@ class ResponseRecorder(HasTraits):
 
     def start(self, base_frame_name=None):
         if self._alive:
+            self.debug('response recorder already alive')
             return
 
         t = time.time()
         self._start_time = t
         self.response_data = array([(t, 0)])
         self.output_data = array([(t, 0)])
+        self.setpoint_data = array([(t, 0)])
         self._write_data = False
 
         if base_frame_name:
@@ -61,9 +65,11 @@ class ResponseRecorder(HasTraits):
                                               self.response_device_secondary.name))
 
         t = Thread(target=self.run)
+        t.setDaemon(True)
         t.start()
 
     def run(self):
+        self.debug('start response recorder')
         self._alive = True
         st = self._start_time
         p = self.period
@@ -76,7 +82,7 @@ class ResponseRecorder(HasTraits):
 
         odata = self.output_data
         rdata = self.response_data
-
+        sdata = self.setpoint_data
         r2 = None
         while self._alive:
             to = time.time()
@@ -84,17 +90,21 @@ class ResponseRecorder(HasTraits):
             out = od.get_output()
             odata = vstack((odata, (t, out)))
 
+            sp = od.get_setpoint()
+            sdata = vstack((sdata, (t, sp)))
+
             r = rd.get_response(force=True)
             rdata = vstack((rdata, (t, r)))
 
+            self.debug('response t={}, out={}, setpoint={}, response={}'.format(t, out, sp, r))
             if rds:
                 r2 = rds.get_response(force=True)
 
             if wd:
                 if r2:
-                    datum = (t, out, r, r2)
+                    datum = (t, out, sp, r, r2)
                 else:
-                    datum = (t, out, r)
+                    datum = (t, out, sp, r)
 
                 datum = map(lambda x: floatfmt(x, n=3), datum)
 
@@ -105,10 +115,32 @@ class ResponseRecorder(HasTraits):
             if slt > 0:
                 time.sleep(slt)
 
-        self.output_data = odata
-        self.response_data = rdata
+            self.output_data = odata
+            self.response_data = rdata
+            self.setpoint_data = sdata
+
+    def check_reached_setpoint(self, v, n, tol, std=None):
+        """
+        return True if response is OK, i.e. average of last n points is within tol of v.
+        if std is not None then standard dev must be less than std
+        :param v:
+        :param n:
+        :param tol:
+        :param std:
+        :return:
+        """
+        pts = self.response_data[-n:, 1]
+
+        std_bit = True
+        if std:
+            std_bit = pts.std() < std
+
+        error_bit = abs(pts.mean() - v) < tol
+
+        return std_bit and error_bit
 
     def stop(self):
+        self.debug('stop response recorder')
         self._alive = False
         if self.data_manager:
             self.data_manager.close_file()
@@ -120,6 +152,10 @@ class ResponseRecorder(HasTraits):
     def get_output_blob(self):
         if len(self.output_data):
             return ''.join([struct.pack('<ff', x, y) for x, y in self.output_data])
+
+    def get_setpoint_blob(self):
+        if len(self.setpoint_data):
+            return ''.join([struct.pack('<ff', x, y) for x, y in self.setpoint_data])
 
     @property
     def max_response(self):

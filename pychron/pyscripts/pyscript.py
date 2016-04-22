@@ -788,7 +788,7 @@ class PyScript(Loggable):
                 app = self.manager.application
         return app
 
-    def _manager_action(self, func, name=None, protocol=None, *args, **kw):
+    def _manager_action(self, func, name=None, protocol=None, protocols=None, *args, **kw):
         man = self.manager
         if protocol:
             app = self._get_application()
@@ -798,8 +798,17 @@ class PyScript(Loggable):
                     app_args = (protocol, 'name=="{}"'.format(name))
 
                 man = app.get_service(*app_args)
+        elif protocols:
+            app = self._get_application()
+            for p in protocols:
+                if name:
+                    man = app.get_service(p, 'name=="{}"'.format(name))
+                else:
+                    man = app.get_service(p, 'name=="{}"'.format(name))
+                if man:
+                    break
 
-        self.debug('manager action {}'.format(man))
+        # self.debug('manager action {}'.format(man))
         if man is not None:
             if not isinstance(func, list):
                 func = [(func, args, kw)]

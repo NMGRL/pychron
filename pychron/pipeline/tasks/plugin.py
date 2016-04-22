@@ -30,7 +30,8 @@ from pychron.paths import paths, get_file_text
 from pychron.pipeline.tasks.actions import ConfigureRecallAction, IdeogramAction, IsochronAction, SpectrumAction, \
     SeriesAction, BlanksAction, ICFactorAction, ResetFactoryDefaultsAction, VerticalFluxAction, \
     LastNAnalysesSeriesAction, \
-    LastNHoursSeriesAction, LastMonthSeriesAction, LastWeekSeriesAction, LastDaySeriesAction, TimeViewBrowserAction
+    LastNHoursSeriesAction, LastMonthSeriesAction, LastWeekSeriesAction, LastDaySeriesAction, TimeViewBrowserAction, \
+    FluxAction, FreezeProductionRatios
 from pychron.pipeline.tasks.browser_task import BrowserTask
 from pychron.pipeline.tasks.preferences import PipelinePreferencesPane
 from pychron.pipeline.tasks.task import PipelineTask
@@ -51,6 +52,7 @@ class PipelinePlugin(BaseTaskPlugin):
                  ['csv_ideogram_template', 'CSV_IDEO', ov],
                  ['flux_template', 'FLUX', ov],
                  ['vertical_flux_template', 'VERTICAL_FLUX', ov],
+                 ['xy_scatter_template', 'XY_SCATTER', ov],
                  ['analysis_table_template', 'ANALYSIS_TABLE', ov],
                  ['interpreted_age_table_template', 'INTERPRETED_AGE_TABLE', ov],
                  ['auto_ideogram_template', 'AUTO_IDEOGRAM', ov]]
@@ -73,7 +75,8 @@ class PipelinePlugin(BaseTaskPlugin):
 
         with open(paths.template_manifest_file, 'w') as wfile:
             pickle.dump(manifest, wfile)
-
+        for f in files:
+            print f
         return files
 
     def _pipeline_factory(self):
@@ -138,14 +141,20 @@ class PipelinePlugin(BaseTaskPlugin):
                             SchemaAddition(factory=SeriesAction,
                                            path=pg),
                             SchemaAddition(factory=VerticalFluxAction,
-                                           path=pg)]
+                                           path=pg),
+                            ]
 
         reduction_actions = [SchemaAddition(factory=reduction_group,
                                             path='MenuBar/data.menu'),
                              SchemaAddition(factory=BlanksAction,
                                             path=rg),
                              SchemaAddition(factory=ICFactorAction,
+                                            path=rg),
+                             SchemaAddition(factory=FluxAction,
+                                            path=rg),
+                             SchemaAddition(factory=FreezeProductionRatios,
                                             path=rg)]
+
         help_actions = [SchemaAddition(factory=ResetFactoryDefaultsAction,
                                        path='MenuBar/help.menu')]
         configure_recall = SchemaAddition(factory=ConfigureRecallAction,

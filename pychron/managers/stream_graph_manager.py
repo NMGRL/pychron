@@ -20,16 +20,17 @@ import pickle
 
 from traits.api import Bool, Float, Property, Instance, Event, Button, Enum
 # ============= standard library imports ========================
+from numpy import Inf
 # ============= local library imports  ==========================
 from pychron.core.helpers.timer import Timer
-from pychron.graph.time_series_graph import TimeSeriesStreamGraph
+from pychron.graph.graph import Graph
 from pychron.managers.data_managers.csv_data_manager import CSVDataManager
 from pychron.managers.manager import Manager
 from pychron.paths import paths
 
 
 class StreamGraphManager(Manager):
-    graph = Instance(TimeSeriesStreamGraph)
+    graph = Instance(Graph)
     graph_scale = Enum('linear', 'log')
 
     graph_y_auto = Bool
@@ -60,9 +61,9 @@ class StreamGraphManager(Manager):
     timer = None
     update_period = 1
 
-    def reset_scan_timer(self):
+    def reset_scan_timer(self, func=None):
         self.info('reset scan timer')
-        self.timer = self._timer_factory()
+        self.timer = self._timer_factory(func=func)
 
     def load_settings(self):
         self.info('load scan settings')
@@ -71,6 +72,8 @@ class StreamGraphManager(Manager):
         if params:
             self._set_graph_attrs(params)
             self._load_settings(params)
+        else:
+            self.warning('no scan settings')
 
     def dump_settings(self):
         self.info('dump scan settings')
@@ -95,6 +98,16 @@ class StreamGraphManager(Manager):
             self.warning('No scan settings file {}'.format(p))
 
     # private
+    def _get_graph_y_min_max(self, plotid=0):
+        mi, ma = Inf, -Inf
+        for k, plot in self.graph.plots[plotid].plots.iteritems():
+            plot = plot[0]
+            if plot.visible:
+                ys = plot.value.get_data()
+                ma = max(ma, max(ys))
+                mi = min(mi, min(ys))
+        return mi, ma
+
     def _update_scan_graph(self):
         pass
 
@@ -147,10 +160,11 @@ class StreamGraphManager(Manager):
     def _graph_scan_width_changed(self):
         g = self.graph
         n = self.graph_scan_width
+        print 'asdasd', n
         n = max(n, 1 / 60.)
         mins = n * 60
-        g.data_limits[0] = 1.8 * mins
-        g.scan_widths[0] = mins
+        g.set_data_limits(1.8 * mins)
+        g.set_scan_widths(mins)
 
     def _clear_all_markers_button_fired(self):
         self.graph.clear_markers()

@@ -24,25 +24,40 @@ from pychron.hardware.core.abstract_device import AbstractDevice
 
 @provides(IFurnaceController)
 class FurnaceController(AbstractDevice):
-    def read_setpoint(self, **kw):
+    def read_output_percent(self, **kw):
         if self._cdevice:
-            return self._cdevice.read_setpoint(**kw)
+            return self._cdevice.read_output_percent(**kw)
+
+    def get_water_flow_state(self, **kw):
+        if self._cdevice:
+            return self._cdevice.get_water_flow_state(**kw)
+
+    def get_summary(self, **kw):
+        if self._cdevice:
+            return self._cdevice.get_summary(**kw)
 
     def set_setpoint(self, v, **kw):
         if self._cdevice:
             return self._cdevice.set_setpoint(v, **kw)
 
-    def get_output(self, **kw):
+    def get_output(self):
         r = 0
         if self._cdevice:
-            r = self._cdevice.process_setpoint
-        return r
+            r = self._cdevice.get_output()
+        return r or 0
+
+    def get_setpoint(self, **kw):
+        r = 0
+        if self._cdevice:
+            r = self._cdevice.get_setpoint()
+        return r or 0
 
     def get_response(self, **kw):
-        o = self.read_setpoint(**kw)
-        if o is None:
-            o = 0
-        return o
+        o = 0
+        if self._cdevice:
+            o = self._cdevice.get_process_value()
+
+        return o or 0
 
     def test_connection(self):
         if self._cdevice:

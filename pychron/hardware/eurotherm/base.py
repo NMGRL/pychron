@@ -33,7 +33,7 @@ def get_pid_parameters(v):
     """
     p = os.path.join(paths.device_dir, 'furnace', 'eurotherm_control_parameters.txt')
     with open(p) as f:
-        params = [l.split('\t') for l in f]
+        params = [map(str.strip, l.split('\t')) for l in f]
 
     for i, pa in enumerate(params[:-1]):
 
@@ -54,10 +54,20 @@ def get_pid_parameters(v):
 
 @provides(IFurnaceController)
 class BaseEurotherm(HasTraits):
+    """
+
+    Series 2000 Communications Handbook
+    http://buphy.bu.edu/~stein/etherm/2000cmms.pdf
+    Part No HA026230
+
+    See Modbus & EI Bisynch Addresses, Chapter 5.
+    """
     scan_func = 'get_process_value'
     GID = 0
     UID = 1
     protocol = 'ei_bisynch'
+
+    output_value = Float
     process_value = Float
     process_setpoint = Property(Float(enter_set=True, auto_set=False),
                                 depends_on='_setpoint')
@@ -67,6 +77,17 @@ class BaseEurotherm(HasTraits):
     use_pid_table = False
 
     # ifurnacecontroller
+    def get_output(self, **kw):
+        resp = self._query('OP', **kw)
+        try:
+            self.output_value = resp
+        except TraitError:
+            pass
+
+        return resp
+
+    read_percent_output = get_output
+
     def get_response(self, force=False):
         if force or not self.process_value:
             self.get_process_value()
@@ -96,14 +117,11 @@ class BaseEurotherm(HasTraits):
 
     def set_pid_str(self, s):
         if PID_REGEX.match(s):
-            builder = getattr(self, '_{}_build_command'.format(self.protocol))
-
             for pa in s.split(';'):
                 self.debug('set pid parameters {}'.format(pa))
                 cmd, value = pa.split(',')
-                cmd = builder(cmd, value)
-                self.ask(cmd, verbose=True)
-                return True
+                self._command(cmd, value)
+            return True
         else:
             self.warning('invalid pid string "{}"'.format(s))
 

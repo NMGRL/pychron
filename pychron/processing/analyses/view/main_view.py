@@ -191,7 +191,7 @@ class MainView(HasTraits):
         elif self.analysis_type in ('air', 'blank_air', 'blank_unknown', 'blank_cocktail'):
             self._load_air_computed(an, new_list)
         elif self.analysis_type == 'cocktail':
-            self._load_cocktail_computed(new_list)
+            self._load_cocktail_computed(an, new_list)
 
     # def _get_isotope(self, name):
     #     return next((iso for iso in self.isotopes if iso.name == name), None)
@@ -372,10 +372,10 @@ class MainView(HasTraits):
             for ci in self.computed_values:
                 attr = ci.tag
                 if attr == 'wo_j':
-                    ci.error = an.age_err_wo_j
+                    ci.error = an.age_err_wo_j or 0
                     ci.value = nominal_value(getattr(an, ci.value_tag))
                 elif attr == 'wo_irrad':
-                    ci.error = an.F_err_wo_irrad
+                    ci.error = an.F_err_wo_irrad or 0
                     ci.value = nominal_value(getattr(an, ci.value_tag))
                 else:
                     v = getattr(an, attr)

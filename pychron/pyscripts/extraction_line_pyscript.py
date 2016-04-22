@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from threading import Event
+from threading import Thread
 
 from traits.api import List
 # ============= standard library imports ========================
@@ -24,9 +26,10 @@ import re
 # ============= local library imports  ==========================
 from pychron.core.ramper import Ramper
 from pychron.external_pipette.protocol import IPipetteManager
+from pychron.furnace.ifurnace_manager import IFurnaceManager
 from pychron.hardware.core.exceptions import TimeoutError
 from pychron.hardware.core.i_core_device import ICoreDevice
-from pychron.pyscripts.pyscript import verbose_skip, makeRegistry
+from pychron.pyscripts.pyscript import verbose_skip, makeRegistry, calculate_duration
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.pyscripts.valve_pyscript import ValvePyScript
 from pychron.pychron_constants import EXTRACTION_COLOR, LINE_STR, NULL_STR
@@ -91,16 +94,36 @@ class ExtractionPyScript(ValvePyScript):
         :return: response blob. binary string representing time v measured output
         :rtype: str
         """
-        return self._extraction_action([('get_response_blob', (), {})]) or ''
+        result = self._extraction_action([('get_response_blob', (), {})])
+        if result:
+            result = result[0]
+        return result or ''
 
     def get_output_blob(self):
         """
         Get the extraction device's output blob
 
-        :return: output blob: binary string representing time v requested output
+        :return: output blob: binary string representing time v percent output
         :rtype: str
         """
-        return self._extraction_action([('get_output_blob', (), {})]) or ''
+
+        result = self._extraction_action([('get_output_blob', (), {})])
+        if result:
+            result = result[0]
+        return result or ''
+
+    def get_setpoint_blob(self):
+        """
+        Get the extraction device's setpoint blob
+
+        :return: setpoint blob: binary string representing time v requested setpoint
+        :rtype: str
+        """
+
+        result = self._extraction_action([('get_setpoint_blob', (), {})])
+        if result:
+            result = result[0]
+        return result or ''
 
     def output_achieved(self):
         """
@@ -127,14 +150,10 @@ class ExtractionPyScript(ValvePyScript):
         return ('Requested Output= {:0.3f}'.format(request),
                 'Achieved Output=  {:0.3f}'.format(ach))
 
-    def set_response_recorder_period(self, p):
-        self._extraction_action([('set_response_recorder_period', (p,), {})])
-
-    def start_response_recorder(self):
-        self._extraction_action([('start_response_recorder', (), {})])
-
-    def stop_response_recorder(self):
-        self._extraction_action([('stop_response_recorder', (), {})])
+    def get_active_pid_parameters(self):
+        result = self._extraction_action([('get_active_pid_parameters', (), {})])
+        if result:
+            return result[0]
 
     def get_command_register(self):
         cm = super(ExtractionPyScript, self).get_command_register()
@@ -162,6 +181,116 @@ class ExtractionPyScript(ValvePyScript):
     # ==========================================================================
     # commands
     # ==========================================================================
+    @calculate_duration
+    @command_register
+    def begin_heating_interval(self, duration, min_rise_rate=None,
+                               check_time=60,
+                               check_delay=60,
+                               check_period=1,
+                               temperature=None,
+                               timeout=300,
+                               tol=10,
+                               name=None,
+                               calc_time=False):
+        duration = float(duration)
+        if calc_time:
+            self._estimated_duration += duration
+
+        if self._cancel:
+            return
+
+        def wait(dur, flag, n):
+            if not min_rise_rate:
+                self._sleep(dur)
+            else:
+                st = time.time()
+                self._sleep(check_delay, 'Heating check delay')
+
+                t1 = time.time()
+                r1 = self._extraction_action([('get_process_value', (), {})])
+                if r1:
+                    r1 = r1[0]
+
+                self._sleep(check_time, 'Checking rise rate')
+                t2 = time.time()
+                r2 = self._extraction_action([('get_process_value', (), {})])
+                if r2:
+                    r2 = r2[0]
+
+                rr = (r2 - r1) / (t2 - t1)
+                if rr < min_rise_rate:
+                    self.warning('Failed to heat. Rise Rate={:0.1f}. Min Rise Rate={:0.1f}'.format(rr, min_rise_rate))
+                    self.cancel()
+                    flag.set()
+                else:
+                    if temperature:
+                        self._set_extraction_state('Waiting to reach temperature {}'.format(temperature))
+                        st = time.time()
+                        while 1:
+                            sti = time.time()
+                            if sti - st < timeout:
+                                self._set_extraction_state('Failed to reach temperature {}'.format(r2))
+                                self.warning('Failed to reach temperature {}'.format(r2))
+                                self.cancel()
+                                break
+
+                            r2 = self._extraction_action([('get_process_value', (), {})])
+                            if r2:
+                                r2 = r2[0]
+                                if abs(r2 - temperature) < tol:
+                                    self._set_extraction_state('Reached Temperature {}'.format(r2))
+                                    break
+                            else:
+                                self.warning('Failed to get response.')
+                                self.cancel()
+                                break
+                            time.sleep(max(0, check_period - (time.time() - sti)))
+                        self._sleep(dur, 'Time at Temperature')
+
+                    else:
+                        rem = dur - (time.time - st)
+                        self._sleep(rem, )
+
+            if not self._cancel:
+                self.console_info('{} finished'.format(n))
+                flag.set()
+
+        t, f = None, None
+        if name is None:
+            name = 'Interval {}'.format(self._interval_stack.qsize() + 1)
+
+        if not self.testing_syntax:
+            f = Event()
+            self.console_info('BEGIN HEATING INTERVAL {} waiting for {}'.format(name, duration))
+            t = Thread(name=name,
+                       target=wait, args=(duration, f, name))
+            t.start()
+
+        self._interval_stack.put((t, f, name))
+
+    def _set_extraction_state(self, msg, color='red'):
+        self._manager_action([('set_extract_state', (msg,), {'color': color})])
+
+    @verbose_skip
+    @command_register
+    def set_response_recorder_period(self, p):
+        self._extraction_action([('set_response_recorder_period', (p,), {})])
+
+    @verbose_skip
+    @command_register
+    def start_response_recorder(self):
+        self._extraction_action([('start_response_recorder', (), {})])
+
+    @verbose_skip
+    @command_register
+    def stop_response_recorder(self):
+        self._extraction_action([('stop_response_recorder', (), {})])
+
+    @verbose_skip
+    @command_register
+    def check_reached_setpoint(self):
+        self._extraction_action([('check_reached_setpoint', (), {})])
+
     @verbose_skip
     @command_register
     def wake(self):
@@ -474,10 +603,11 @@ class ExtractionPyScript(ValvePyScript):
         self._extraction_positions.append(pos)
 
         # set an experiment message
-        if self.manager:
-            msg = '{} ON! {}({})'.format(ed, power, units)
-            self.manager.set_extract_state(msg, color='red')
-
+        # if self.manager:
+        #     msg = '{} ON! {}({})'.format(ed, power, units)
+        #     self.manager.set_extract_state(msg, color='red')
+        msg = '{} ON! {}({})'.format(ed, power, units)
+        self._set_extraction_state(msg)
         self.console_info('extract sample to {} ({})'.format(power, units))
         self._extraction_action([('extract', (power,), {'units': units})])
 
@@ -533,10 +663,11 @@ class ExtractionPyScript(ValvePyScript):
             if r.isSet():
                 self.console_info('waiting for access')
 
-                if self.manager:
-                    msg = 'Waiting for Resource Access. "{}"'.format(name)
-                    self.manager.set_extract_state(msg, color='red')
-
+                # if self.manager:
+                #     msg = 'Waiting for Resource Access. "{}"'.format(name)
+                #     self.manager.set_extract_state(msg, color='red')
+                msg = 'Waiting for Resource Access. "{}"'.format(name)
+                self._set_extraction_state(msg)
                 while r.isSet():
                     if self._cancel:
                         break
@@ -551,8 +682,9 @@ class ExtractionPyScript(ValvePyScript):
             r.set()
             self.console_info('{} acquired'.format(name))
 
-        if self.manager:
-            self.manager.set_extract_state(False)
+        self._set_extraction_state(False)
+        # if self.manager:
+        #     self.manager.set_extract_state(False)
 
     @verbose_skip
     @command_register
@@ -633,7 +765,8 @@ class ExtractionPyScript(ValvePyScript):
     def enable(self):
         ed = self.extract_device
         ed = ed.replace('_', ' ')
-        self.manager.set_extract_state('{} Enabled'.format(ed))
+        self._set_extraction_state('{} Enabled'.format(ed))
+        # self.manager.set_extract_state('{} Enabled'.format(ed))
 
         return self._manager_action([('enable_device', (), {})],
                                     protocol=ILaserManager,
@@ -726,6 +859,9 @@ class ExtractionPyScript(ValvePyScript):
     # ===============================================================================
     # private
     # ===============================================================================
+    def _check_responding(self, rr, st):
+        self._extraction_action([('check_responding', (rr, st), {})])
+
     def _abort_hook(self):
         self.disable()
 
@@ -760,7 +896,7 @@ class ExtractionPyScript(ValvePyScript):
         if 'name' not in kw or kw['name'] is None:
             kw['name'] = self.extract_device
         if 'protocol' not in kw or kw['protocol'] is None:
-            kw['protocol'] = ILaserManager
+            kw['protocols'] = ILaserManager, IFurnaceManager
 
         if kw['name'] in ('Extract Device', 'ExtractDevice', 'extract device', 'extractdevice', NULL_STR, LINE_STR):
             self.debug('no extraction action')
@@ -770,8 +906,9 @@ class ExtractionPyScript(ValvePyScript):
 
     def _disable(self, protocol=None):
         self.debug('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% disable')
-        if self.manager:
-            self.manager.set_extract_state(False)
+        self._set_extraction_state(False)
+        # if self.manager:
+        #     self.manager.set_extract_state(False)
 
         return self._extraction_action([('disable_device', (), {})], protocol=protocol)
 
@@ -808,4 +945,5 @@ class ExtractionPyScript(ValvePyScript):
             func = getattr(self.automated_run, func)
 
         return func(*args, **kw)
+
 # ============= EOF ====================================

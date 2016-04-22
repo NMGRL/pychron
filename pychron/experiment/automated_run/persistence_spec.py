@@ -67,8 +67,14 @@ class PersistenceSpec(HasTraits):
 
     whiff_result = None
     timestamp = None
-    use_repository_association = False
+    use_repository_association = True
     tag = 'ok'
     peak_center = None
     intensity_scalar = 1.0
+
+    pid = Str
+    response_blob = Str
+    output_blob = Str
+    setpoint_blob = Str
+    snapshots = None
 # ============= EOF =============================================

@@ -107,6 +107,9 @@ class ThermoSpectrometer(SpectrometerDevice):
     _debug_values = None
     _saved_integration = None
 
+    def reload_mftable(self):
+        self.magnet.reload_mftable()
+
     def get_detector_active(self, dname):
         """
         return True if dname in the list of intensity keys

@@ -101,8 +101,11 @@ class BaseEditorTask(BaseManagerTask):
         """
         if self.active_editor:
             if not path:
-                if self.active_editor.path:
-                    path = self.active_editor.path
+                if hasattr(self.active_editor, 'path'):
+                    if self.active_editor.path:
+                        path = self.active_editor.path
+                else:
+                    return
 
             if not path:
                 path = self.save_file_dialog()

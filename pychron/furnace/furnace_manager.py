@@ -24,13 +24,15 @@ from threading import Thread
 from pychron.canvas.canvas2D.dumper_canvas import DumperCanvas
 from pychron.canvas.canvas2D.video_canvas import VideoCanvas
 from pychron.core.helpers.filetools import pathtolist
+from pychron.core.ui.led_editor import LED
+from pychron.experiment import ExtractionException
 from pychron.extraction_line.switch_manager import SwitchManager
 from pychron.furnace.furnace_controller import FurnaceController
 from pychron.furnace.ifurnace_manager import IFurnaceManager
 from pychron.furnace.loader_logic import LoaderLogic
 from pychron.furnace.magnet_dumper import NMGRLMagnetDumper
 from pychron.furnace.stage_manager import NMGRLFurnaceStageManager, BaseFurnaceStageManager
-from pychron.graph.time_series_graph import TimeSeriesStreamGraph
+from pychron.graph.time_series_graph import TimeSeriesStreamStackedGraph
 from pychron.hardware.furnace.nmgrl.camera import NMGRLCamera
 from pychron.hardware.linear_axis import LinearAxis
 from pychron.managers.stream_graph_manager import StreamGraphManager
@@ -42,11 +44,15 @@ class BaseFurnaceManager(StreamGraphManager):
     controller = Instance(FurnaceController)
     setpoint = Float(auto_set=False, enter_set=True)
     temperature_readback = Float
+    output_percent_readback = Float
     stage_manager = Instance(BaseFurnaceStageManager)
     switch_manager = Instance(SwitchManager)
     response_recorder = Instance(ResponseRecorder)
 
     use_network = False
+
+    def check_heating(self):
+        pass
 
     def _controller_default(self):
         c = FurnaceController(name='controller',
@@ -81,12 +87,14 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     temperature_readback_max = Float(1600.0)
 
     dumper_canvas = Instance(DumperCanvas)
-    _alive = False
-    _guide_overlay = None
-    _dumper_thread = None
-    _magnets_thread = None
+
+    magnets_firing = Bool
+
     mode = 'normal'
 
+    water_flow_led = Instance(LED, ())
+
+    video_enabled = Bool
     video_canvas = Instance(VideoCanvas)
     camera = Instance(NMGRLCamera)
 
@@ -94,22 +102,33 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     funnel_up_enabled = Bool(False)
     settings_name = 'furnace_settings'
 
+    _alive = False
+    _dumper_thread = None
+    _magnets_thread = None
+    _pid_str = None
+
     def activate(self):
-        # pref_id = 'pychron.furnace'
-        # bind_preference(self, 'update_period',
-        # '{}.update_period'.format(pref_id))
+        self.video_enabled = bool(self.camera.get_image_data())
+
         self.refresh_states()
         self.load_settings()
-        self.reset_scan_timer()
-        # self._start_update()
+        self.reset_scan_timer(func=self._update_scan)
+
+        self.stage_manager.refresh()
+
+        self.loader_logic.manager = self
 
     def test_furnace_cam(self):
         if self.camera:
-            return self.camera.test_connection()
+            return self.camera.get_image_data() is not None
 
     def test_furnace_api(self):
         if self.controller:
             return self.controller.test_connection()
+
+    def test_connection(self):
+        self.debug('testing connection')
+        return self.test_furnace_api()
 
     def refresh_states(self):
         self.switch_manager.load_indicator_states()
@@ -127,6 +146,8 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         self.debug('prepare destroy')
         self._stop_update()
         self.loader_logic.manager = None
+        if self.timer:
+            self.timer.stop()
 
     def get_response_blob(self):
         self.debug('get response blob')
@@ -146,16 +167,31 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         self.debug('set response recorder period={}'.format(p))
         self.response_recorder.period = p
 
-    def extract(self, v):
+    def enable(self):
+        self.debug('enable')
+        if not self.controller.get_water_flow_state(verbose=False):
+            raise ExtractionException()
+        else:
+            return True
+
+    def get_process_value(self):
+        return self.controller.get_process_value()
+
+    def extract(self, v, **kw):
         self.debug('extract')
-        self.response_recorder.start()
+        # self.response_recorder.start()
         self.debug('set setpoint to {}'.format(v))
         self.setpoint = v
 
     def disable(self):
         self.debug('disable')
-        self.response_recorder.stop()
+        # self.response_recorder.stop()
         self.setpoint = 0
+
+    disable_device = disable
+
+    def check_reached_setpoint(self, v, n, tol, std):
+        return self.response_recorder.check_reached_setpoint(v, n, tol, std)
 
     def start_response_recorder(self):
         self.response_recorder.start()
@@ -182,6 +218,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     def fire_magnets(self):
         self.debug('fire magnets')
         if self._magnets_thread is None:
+            self.magnets_firing = True
             self._magnets_thread = Thread(name='Magnets', target=self.actuate_magnets, kwargs={'check_logic': False})
             self._magnets_thread.setDaemon(True)
             self._magnets_thread.start()
@@ -210,23 +247,26 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
 
         if check:
 
-            self.stage_manager.start_jitter(turns=0.5, p1=0.1, p2=0.25, velocity=15000)
+            self.stage_manager.feeder.start_jitter()
             self.magnets.energize()
 
             time.sleep(0.05)
             while 1:
                 if not self.magnets.is_energized():
                     break
-                time.sleep(0.25)
+                time.sleep(1)
 
             self.stage_manager.set_sample_dumped()
             self.magnets.denergize()
-            self.stage_manager.stop_jitter()
+            time.sleep(5)
+
+            self.stage_manager.feeder.stop_jitter()
         else:
             cm = self.loader_logic.get_check_message()
             self.warning_dialog('Actuating magnets not enabled\n\n{}'.format(cm))
 
         self._magnets_thread = None
+        self.magnets_firing = False
 
     def lower_funnel(self):
         self.debug('lower funnel')
@@ -252,34 +292,49 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
             cm = self.loader_logic.get_check_message()
             self.warning_dialog('Raising funnel not enabled\n\n{}'.format(cm))
 
+    def get_active_pid_parameters(self):
+        result = self._pid_str or ''
+        self.debug('active pid ={}'.format(result))
+        return result
+
     def set_pid_parameters(self, v):
         self.debug('setting pid parameters for {}'.format(v))
         from pychron.hardware.eurotherm.base import get_pid_parameters
-        param_str = get_pid_parameters(v)
-        self.controller.set_pid(param_str)
+        params = get_pid_parameters(v)
+        if params:
+            _, param_str = params
+            self._pid_str = param_str
+            self.controller.set_pid(param_str)
 
     def set_setpoint(self, v):
         self.debug('set setpoint={}'.format(v))
+        self.set_pid_parameters(v)
+        self.graph.record(v, series=1)
+        self.graph.record(v, series=1)
         if self.controller:
-            # print self.controller, self.controller._cdevice
             self.controller.set_setpoint(v)
-            if not self._guide_overlay:
-                self._guide_overlay = self.graph.add_horizontal_rule(v)
-
-            self._guide_overlay.visible = bool(v)
-            self._guide_overlay.value = v
-
-            # ymi, yma = self.graph.get_y_limits()
             d = self.graph.get_data(axis=1)
             self.graph.set_y_limits(min_=0, max_=max(d.max(), v * 1.1))
 
             self.graph.redraw()
 
-    def read_temperature(self, force=False):
+    def read_output_percent(self, force=False, verbose=False):
         v = 0
         if self.controller:
             # force = update and not self.controller.is_scanning()
-            v = self.controller.read_temperature(force=force, verbose=False)
+            v = self.controller.read_output_percent(force=force, verbose=verbose)
+
+        try:
+            self.output_percent_readback = v
+            return v
+        except TraitError:
+            pass
+
+    def read_temperature(self, force=False, verbose=False):
+        v = 0
+        if self.controller:
+            # force = update and not self.controller.is_scanning()
+            v = self.controller.read_temperature(force=force, verbose=verbose)
 
         try:
             self.temperature_readback = v
@@ -315,9 +370,9 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         pass
 
     # logic
-    def get_switch_indicator_state(self, name):
+    def get_switch_state(self, name):
         if self.switch_manager:
-            return self.switch_manager.get_indicator_state_by_name(name, force=True)
+            return self.switch_manager.get_state_by_name(name, force=True)
 
     def get_flag_state(self, flag):
         self.debug('get_flag_state {}'.format(flag))
@@ -363,35 +418,79 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         """
         return self.loader_logic.close(name)
 
+    def _update_scan(self):
+        d = self.controller.get_summary()
+        if d:
+            state = d['h2o_state']
+            if isinstance(state, bool):
+                self.water_flow_led.state = 2 if state else 0
+            else:
+                self.water_flow_led.state = 1
+
+            self._update_scan_graph(d['response'], d['output'], d['setpoint'])
+
     def _stop_update(self):
         self.debug('stop update')
         self._alive = False
 
-    def _update_scan_graph(self):
-        v = self.read_temperature()
-        if v is not None:
-            x = self.graph.record(v, track_y=self.graph_y_auto)
+    def _update_scan_graph(self, response, output, setpoint):
+        if response is not None and output is not None:
+            x = self.graph.record(response, track_y=False)
+            self.graph.record(output, x=x, series=0, plotid=1, track_y=False)
+
+            ss = self.graph.get_data(plotid=0, series=1, axis=1)
+            if len(ss) > 1:
+                xs = self.graph.get_data(plotid=0, series=1)
+                xs[-1] = x
+                self.graph.set_data(xs, plotid=0, series=1)
+            else:
+                self.graph.record(setpoint, x=x, series=1, track_y=False)
+
+            if self.graph_y_auto:
+                temp_plot = self.graph.plots[0].plots['plot0']
+                setpoint_plot = self.graph.plots[0].plots['plot1']
+
+                temp_data = temp_plot.value.get_data()
+                setpoint_data = setpoint_plot.value.get_data()
+
+                ma = max(temp_data.max(), setpoint_data.max())
+                if self.setpoint == 0:
+                    mi = 0
+                else:
+                    mi = min(setpoint_data.min(), temp_data.min())
+
+                self.graph.set_y_limits(min_=mi, max_=ma, pad='0.1', plotid=0)
 
             if self._recording:
-                self.record_data_manager.write_to_frame((x, v))
+                self.record_data_manager.write_to_frame((x, response, output))
 
     def _start_recording(self):
         self._recording = True
         self.record_data_manager = dm = self._record_data_manager_factory()
         dm.new_frame(directory=paths.furnace_scans_dir)
-        dm.write_to_frame(('time','temperature'))
+        dm.write_to_frame(('time', 'temperature'))
         self._start_time = time.time()
 
     def _stop_recording(self):
         self._recording = False
 
     def _graph_factory(self, *args, **kw):
-        g = TimeSeriesStreamGraph()
+        g = TimeSeriesStreamStackedGraph()
         # g.plotcontainer.padding_top = 5
         # g.plotcontainer.padding_right = 5
-        g.new_plot(xtitle='Time (s)', ytitle='Temp. (C)', padding_top=5, padding_right=5)
-        g.set_scan_width(600)
-        g.new_series()
+        g.new_plot(xtitle='Time (s)', ytitle='Temp. (C)', padding_top=5, padding_left=75, padding_right=5)
+        g.set_scan_width(600, plotid=0)
+        g.set_data_limits(1.8 * 600, plotid=0)
+        g.new_series(plotid=0)
+        g.new_series(plotid=0, line_width=2,
+                     render_style='connectedhold')
+
+        g.new_plot(ytitle='Output (%)', padding_top=5, padding_left=75, padding_right=5)
+        g.set_scan_width(600, plotid=1)
+        g.set_data_limits(1.8 * 600, plotid=1)
+        g.new_series(plotid=1)
+        g.set_y_limits(min_=0, max_=105, plotid=1)
+
         return g
 
     def _dump_sample(self):

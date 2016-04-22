@@ -237,11 +237,14 @@ class Production(MetaObject):
     def to_dict(self, keys):
         return {t: ufloat(getattr(self, t), getattr(self, '{}_err'.format(t))) for t in keys}
 
-    def dump(self):
+    def dump(self, path=None):
+        if path is None:
+            path = self.path
+
         obj = {}
         for a in self.attrs:
             obj[a] = (getattr(self, a), getattr(self, '{}_err'.format(a)))
-        dvc_dump(obj, self.path)
+        dvc_dump(obj, path)
 
 
 class BaseHolder(MetaObject):
@@ -567,7 +570,7 @@ class MetaRepo(GitRepoManager):
                 if dc:
                     lambda_k = ufloat(dc.get('lambda_k_total', 0), dc.get('lambda_k_total_error', 0))
 
-        return ufloat(j, e), lambda_k
+        return ufloat(j or 0, e or 0), lambda_k
 
     def get_gains(self, name):
         g = self.get_gain_obj(name)

@@ -70,7 +70,6 @@ def gitlog(repo, branch=None, args=None, path=None):
 
     if path:
         cmd.extend(['--', path])
-
     return repo.git.log(*cmd)
 
 
@@ -85,7 +84,7 @@ def get_commits(repo, branch, path, tag, *args):
             return
         repo = Repo(repo)
 
-    txt = gitlog(repo, branch, path, args)
+    txt = gitlog(repo, branch=branch, args=args, path=path)
 
     return [from_gitlog(l.strip(), path, tag) for l in txt.split('\n')] if txt else []
 

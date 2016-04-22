@@ -15,6 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import time
+
+from pyface.timer.do_later import do_after
 from traits.api import Instance
 from traitsui.api import View, Item, VGroup
 # ============= standard library imports ========================
@@ -27,12 +30,12 @@ from pychron.stage.stage_manager import BaseStageManager
 
 
 class Feeder(LinearAxis):
-    def start_jitter(self, turns=0.125, p1=0.1, p2=0.1, velocity=None):
+    def start_jitter(self):
         """
         :param turns: fractional turns
         :return:
         """
-        self._cdevice.start_jitter(turns, p1, p2, velocity)
+        self._cdevice.start_jitter()
 
     def stop_jitter(self):
         self._cdevice.stop_jitter()
@@ -64,6 +67,23 @@ class BaseFurnaceStageManager(BaseStageManager):
 class NMGRLFurnaceStageManager(BaseFurnaceStageManager):
     feeder = Instance(Feeder)
 
+    slew_period = 1
+
+    def feeder_slew(self, scalar):
+        do_after(self.slew_period * 1000, self._slew_inprogress)
+        self.feeder.slew(scalar)
+
+    def feeder_stop(self):
+        self.feeder.stop()
+
+    def _slew_inprogress(self):
+        self._update_axes()
+        if self.feeder.is_slewing() and not self.feeder.is_stalled():
+            do_after(self.slew_period * 1000, self._slew_inprogress)
+
+    def refresh(self):
+        self._update_axes()
+
     def jitter(self, *args, **kw):
         self.feeder.jitter(*args, **kw)
 
@@ -94,6 +114,7 @@ class NMGRLFurnaceStageManager(BaseFurnaceStageManager):
     def _move_to_hole(self, key, correct_position=True):
         self.info('Move to hole {} type={}'.format(key, str(type(key))))
         pos = self.stage_map.get_hole_pos(key)
+
         if pos:
             self.temp_hole = key
             self.temp_position = pos
@@ -101,18 +122,37 @@ class NMGRLFurnaceStageManager(BaseFurnaceStageManager):
             x, y = self.get_calibrated_position(pos, key=key)
             self.info('hole={}, position={}, calibrated_position={}'.format(key, pos, (x, y)))
 
-            self.feeder.position = x
-            self.feeder.move_absolute(x, units='turns')
+            self.canvas.set_desired_position(x, 0)
+            self.feeder._position = x
+            self.feeder.move_absolute(x, units='mm')
+
+            self._inprogress()
 
             self.info('Move complete')
             self.update_axes()  # update_hole=False)
         else:
             self.debug('invalid hole {}'.format(key))
 
-    def _update_axes(self):
-        pass
+    def _inprogress(self, timeout=120):
+        time.sleep(1)
+        st = time.time()
+        moving = self.feeder.moving
+        update = self._update_axes
 
-        # v = self.sample_linear_holder.update_current_position()
+        while 1:
+            if time.time() - st > timeout:
+                break
+
+            update()
+            if not moving():
+                break
+            time.sleep(0.5)
+
+    def _update_axes(self):
+        pos = self.feeder.get_position(units='mm')
+        self.debug('update feeder position={}'.format(pos))
+        if pos is not None:
+            self.canvas.set_stage_position(pos, 0)
 
     def _canvas_factory(self):
         c = FurnaceCanvas(feeder=self.feeder)

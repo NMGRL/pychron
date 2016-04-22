@@ -286,7 +286,8 @@ class BaseIncrementalHeatTemplate(Viewable):
         attrs = ('step_id', 'duration', 'cleanup', 'value', 'beam_diameter')
         for s in steps:
             for a in attrs:
-                h.update(str(getattr(s, a)))
+                if hasattr(s, a):
+                    h.update(str(getattr(s, a)))
 
         d = h.hexdigest()
         return '{}Step{}-{}_{}.txt'.format(n, first.value, last.value, d[:8])
@@ -374,7 +375,7 @@ class BaseIncrementalHeatTemplate(Viewable):
                         HGroup(UItem('save_button', enabled_when='path'),
                                UItem('save_as_button'))),
                  height=500,
-                 width=600,
+                 width=900,
                  resizable=True,
                  title=self.title,
                  handler=self.handler_klass)

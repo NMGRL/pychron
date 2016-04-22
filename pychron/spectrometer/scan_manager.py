@@ -264,7 +264,8 @@ class ScanManager(StreamGraphManager):
             return True
 
         if self._prev_signals is not None:
-            signals = array(signals)
+            if signals is None:
+                self._no_intensity_change_cnt += 1
             if (signals == self._prev_signals).all():
                 self._no_intensity_change_cnt += 1
             else:
@@ -283,13 +284,7 @@ class ScanManager(StreamGraphManager):
                                            track_y=False)
 
             if self.graph_y_auto:
-                mi, ma = Inf, -Inf
-                for k, plot in self.graph.plots[0].plots.iteritems():
-                    plot = plot[0]
-                    if plot.visible:
-                        ys = plot.value.get_data()
-                        ma = max(ma, max(ys))
-                        mi = min(mi, min(ys))
+                mi,ma = self._get_graph_y_min_max()
 
                 self.graph.set_y_limits(min_=mi, max_=ma, pad='0.1')
 
@@ -408,6 +403,10 @@ class ScanManager(StreamGraphManager):
 
     def _detector_changed(self, old, new):
         self.debug('detector changed {}'.format(self.detector))
+        if self.isotope not in ('', NULL_STR, None):
+            self.debug('isotope not set isotope={}. Not setting magnet'.format(self.isotope))
+            return
+
         if self.detector and not self._check_detector_protection(old, True):
             # self.scanner.detector = self.detector
             self.rise_rate.detector = self.detector
