@@ -88,9 +88,12 @@ class GitHostService(Loggable):
         r = requests.post(cmd, data=json.dumps(payload), headers=headers)
         return r
 
+    def _get_oauth_token(self):
+        raise NotImplementedError
+
     def _get_authorization(self):
         if self.oauth_token:
-            auth = 'token {}'.format(self.oauth_token)
+            auth = self._get_oauth_token()
         else:
             auth = base64.encodestring('{}:{}'.format(self.username,
                                                       self.password)).replace('\n', '')

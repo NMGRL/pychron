@@ -47,4 +47,7 @@ class GitLabService(GitHostService):
         cmd = '{}/groups/{}'.format(self.host, organization)
         return self._get(cmd)
 
+    # private
+    def _get_oauth_token(self):
+        return 'Bearer {}'.format(self.oauth_token)
 # ============= EOF =============================================

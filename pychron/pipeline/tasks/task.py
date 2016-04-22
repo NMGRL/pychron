@@ -293,9 +293,15 @@ class PipelineTask(BaseBrowserTask):
             self.engine.save_pipeline_template(path)
 
     # action handlers
+    def freeze_flux(self):
+        ans = self._get_active_analyses()
+        if ans:
+            self.dvc.freeze_flux()
+        else:
+            self._set_action_template('FreezeFlux')
+
     def freeze_production_ratios(self):
-        ed = self.active_editor
-        ans = ed.analyses
+        ans = self._get_active_analyses()
         if ans:
             self.dvc.freeze_production_ratios(ans)
         else:
@@ -361,6 +367,10 @@ class PipelineTask(BaseBrowserTask):
         self._set_last_nhours(24 * 7 * 30.5)
 
     # private
+    def _get_active_analyses(self):
+        if self.active_editor:
+            return self.active_editor.analyses
+
     def _set_last_nhours(self, n):
         node = self.engine.get_unknowns_node()
         if node:

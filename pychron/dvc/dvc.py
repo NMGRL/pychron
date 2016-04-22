@@ -44,7 +44,7 @@ from pychron.envisage.browser.record_views import InterpretedAgeRecordView
 from pychron.git.hosts import IGitHost
 from pychron.git_archive.repo_manager import GitRepoManager, format_date, get_repository_branch
 from pychron.loggable import Loggable
-from pychron.paths import paths
+from pychron.paths import paths, r_mkdir
 from pychron.pychron_constants import RATIO_KEYS, INTERFERENCE_KEYS
 
 TESTSTR = {'blanks': 'auto update blanks', 'iso_evo': 'auto update iso_evo'}
@@ -253,6 +253,43 @@ class DVC(Loggable):
                                 timestamp=now)
         return True
 
+    def freeze_flux(self, ans):
+        self.info('freeze flux')
+
+        def ai_gen():
+            key = lambda x: x.irradiation
+            lkey = lambda x: x.level
+            rkey = lambda x: x.repository_identifier
+
+            for irrad, ais in groupby(sorted(ans, key=key), key=key):
+                for level, ais in groupby(sorted(ais, key=lkey), key=lkey):
+                    p = self.get_level_path(irrad, level)
+                    obj = dvc_load(p)
+                    for repo, ais in groupby(sorted(ais, key=rkey), key=rkey):
+                        yield repo, irrad, level, {ai.irradiation_position: obj[ai.irradiation_position] for ai in ais}
+
+        added = []
+
+        def func(x, prog, i, n):
+            repo, irrad, level, d = x
+            if prog:
+                prog.change_message('Freezing Flux {}{} Repository={}'.format(irrad, level, repo))
+
+            root = os.path.join(paths.repository_dataset_dir, repo, 'flux', irrad)
+            r_mkdir(root)
+
+            p = os.path.join(root, level)
+            if os.path.isfile(p):
+                dd = dvc_load(p)
+                dd.update(d)
+
+            dvc_dump(d, p)
+            added.append((repo, p))
+
+        progress_loader(ai_gen(), func, threshold=1)
+
+        self._commit_freeze(added, '<FLUX_FREEZE>')
+
     def freeze_production_ratios(self, ans):
         self.info('freeze production ratios')
 
@@ -260,8 +297,7 @@ class DVC(Loggable):
             key = lambda x: x.irradiation
             lkey = lambda x: x.level
             for irrad, ais in groupby(sorted(ans, key=key), key=key):
-                ais = sorted(ais, key=lkey)
-                for level, ais in groupby(ais, key=lkey):
+                for level, ais in groupby(sorted(ais, key=lkey), key=lkey):
                     pr = self.meta_repo.get_production(irrad, level)
                     for ai in ais:
                         yield pr, ai
@@ -278,7 +314,9 @@ class DVC(Loggable):
             added.append((ai.repository_identifier, p))
 
         progress_loader(ai_gen(), func, threshold=1)
+        self._commit_freeze(added, '<PR_FREEZE>')
 
+    def _commit_freeze(self, added, msg):
         key = lambda x: x[0]
         rr = sorted(added, key=key)
         for repo, ps in groupby(rr, key=key):
@@ -286,7 +324,7 @@ class DVC(Loggable):
             rm.open_repo(repo, paths.repository_dataset_dir)
             rm.add_paths(ps)
             rm.smart_pull()
-            rm.commit('<PR_FREEZE>')
+            rm.commit(msg)
 
     # database
     # analysis manual edit

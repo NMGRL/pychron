@@ -46,4 +46,7 @@ class GitHubService(GitHostService):
         cmd = '{}/{}'.format(paths.github_api_url, organization)
         return self._get(cmd)
 
+    # private
+    def _get_oauth_token(self):
+        return 'token {}'.format(self.oauth_token)
 # ============= EOF =============================================
