@@ -75,8 +75,7 @@ class PipelinePlugin(BaseTaskPlugin):
 
         with open(paths.template_manifest_file, 'w') as wfile:
             pickle.dump(manifest, wfile)
-        for f in files:
-            print f
+
         return files
 
     def _pipeline_factory(self):

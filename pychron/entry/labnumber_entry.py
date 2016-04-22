@@ -305,10 +305,10 @@ class LabnumberEntry(DVCIrradiationable):
                                 ' Set before trying to generate identifiers. e.g "FC-2"')
             return True
 
-    def make_irradiation_load_template(self, p):
-        from pychron.entry.loaders.irradiation_template import IrradiationTemplate
-        i = IrradiationTemplate()
-        i.make_template(p)
+            # def make_irradiation_load_template(self, p):
+            #     from pychron.entry.loaders.irradiation_template import IrradiationTemplate
+            #     i = IrradiationTemplate()
+            #     i.make_template(p)
 
         # loader = XLSIrradiationLoader()
         # loader.make_template(p)
