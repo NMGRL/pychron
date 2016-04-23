@@ -96,6 +96,10 @@ class ConditionalGroup(HasTraits):
         self._conditional_klass = klass
         super(ConditionalGroup, self).__init__(*args, **kw)
 
+    def set_attrs(self, **kw):
+        for ci in self.conditionals:
+            ci.trait_set(**kw)
+
     def dump(self):
         cs = []
         for ci in self.conditionals:

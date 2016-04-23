@@ -764,6 +764,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self._write_rem_ex_experiment_queues()
 
         # close conditionals view
+        self._close_cv()
+
+    def _close_cv(self):
         if self._cv_info:
             try:
                 self._cv_info.control.close()
@@ -947,35 +950,11 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
                     v.title = '{} ({}, {})'.format(v.title, runid, id2)
 
-            # run = self.selected_run
-            # if run and not show_measuring:
-            #     # in this case run is an instance of AutomatedRunSpec
-            #     p = get_path(paths.conditionals_dir, self.selected_run.conditionals, ['.yaml', '.yml'])
-            #     if p:
-            #         v.add_conditionals(conditionals_from_file(p, level=RUN))
-            #
-            #     if run.aliquot:
-            #         runid = run.runid
-            #     else:
-            #         runid = run.identifier
-            #
-            #     if run.position:
-            #         id2 = 'position={}'.format(run.position)
-            #     else:
-            #         idx = self.active_editor.queue.automated_runs.index(run) + 1
-            #         id2 = 'RowIdx={}'.format(idx)
-            #
-            #     v.title = '{} ({}, {})'.format(v.title, runid, id2)
-            # else:
-            #     run = self.measuring_run
-            #
-            #     if run:
-            #         v.add_conditionals({'{}s'.format(tag): getattr(run, '{}_conditionals'.format(tag))
-            #                             for tag in CONDITIONAL_GROUP_TAGS})
-            #         v.title = '{} ({})'.format(v.title, run.spec.runid)
-
             if tripped:
                 v.select_conditional(tripped, tripped=True)
+
+            if self._cv_info:
+                self._close_cv()
 
             self._cv_info = open_view(v, kind=kind)
 
