@@ -1527,7 +1527,7 @@ anaylsis_type={}
                 self.warning('Invalid Conditionals file. {}'.format(p))
 
     def _add_conditionals_from_file(self, p, level=None):
-        d = conditionals_from_file(p, level)
+        d = conditionals_from_file(p, level=level)
         for k, v in d.items():
             if k in ('actions', 'truncations', 'terminations', 'cancelations'):
                 var = getattr(self, '{}_conditionals'.format(k[:-1]))
@@ -1720,6 +1720,7 @@ anaylsis_type={}
                 self.debug('extract conditionals from file. {}'.format(p))
                 with open(p, 'r') as rfile:
                     yd = yaml.load(rfile)
+                    failure = False
                     for kind, items in yd.iteritems():
                         try:
                             klass = klass_dict[kind]
@@ -1733,9 +1734,14 @@ anaylsis_type={}
                                 if kind.endswith('s'):
                                     kind = kind[:-1]
 
-                                self._conditional_appender(kind, cd, klass, p)
+                                self._conditional_appender(kind, cd, klass, location=p)
                             except BaseException, e:
                                 self.debug('Failed adding {}. excp="{}", cd={}'.format(kind, e, cd))
+                                failure = True
+
+                    if failure:
+                        if not self.confirmation_dialog('Failed to add Conditionals. Would you like to continue?'):
+                            self.cancel_run(do_post_equilibration=False)
             else:
                 try:
                     c, start = t.split(',')

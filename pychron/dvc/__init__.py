@@ -26,7 +26,10 @@ __version__ = '0.1'
 
 def dvc_dump(obj, path):
     with open(path, 'w') as wfile:
-        json.dump(obj, wfile, indent=4, sort_keys=True)
+        try:
+            json.dump(obj, wfile, indent=4, sort_keys=True)
+        except TypeError:
+            print 'dvc dump exception {}'.format(obj)
 
 
 def dvc_load(path):

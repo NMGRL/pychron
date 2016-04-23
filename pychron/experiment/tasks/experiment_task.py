@@ -317,7 +317,7 @@ class ExperimentEditorTask(EditorTask):
             ps = name.split('.')
             nname = '{}.txt'.format('.'.join(ps[:-2]))
             msg = 'Rename {} as {}'.format(name, nname)
-            if self.confirmation_dialog(message=msg):
+            if self.confirmation_dialog(msg):
                 reopen_editor = True
                 npath = os.path.join(paths.experiment_dir, nname)
 

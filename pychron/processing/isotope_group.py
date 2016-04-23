@@ -38,7 +38,7 @@ class IsotopeGroup(Loggable):
 
     def clear_isotopes(self):
         for iso in self.isotopes:
-            self.isotopes[iso] = Isotope(name=iso)
+            self.isotopes[iso] = Isotope(iso.name, iso.detector)
 
     def get_baseline(self, attr):
         if attr.endswith('bs'):
