@@ -161,6 +161,12 @@ class DVCAnalysis(Analysis):
             if v is not None:
                 setattr(self, attr, v)
 
+        pd = jd.get('positions')
+        if pd:
+            ps = sorted(pd.itervalues(), key=lambda x: x['position'])
+            self.position = ','.join([pp['position'] for pp in ps])
+            self.xyz_position = ';'.join(','.join([(pp['x'], pp['y'], pp['z']) for pp in ps]))
+
         if not self.extract_units:
             self.extract_units = 'W'
 
