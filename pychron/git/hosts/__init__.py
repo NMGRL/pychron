@@ -64,6 +64,9 @@ class GitHostService(Loggable):
         bind_preference(self, 'password', '{}.password'.format(self.preference_path))
         bind_preference(self, 'oauth_token', '{}.oauth_token'.format(self.preference_path))
 
+    def test_api(self):
+        raise NotImplementedError
+
     def get_repository_names(self, organization):
         return [repo['name'] for repo in self.get_repos(organization)]
 

@@ -24,6 +24,10 @@ from pychron.git.hosts import IGitHost
 class BaseGitPlugin(BaseTaskPlugin):
     service_klass = None
 
+    def test_api(self):
+        service = self.application.get_service(IGitHost)
+        return service.test_api()
+
     def _service_offers_default(self):
         so = self.service_offer_factory(protocol=IGitHost,
                                         factory=self._factory)

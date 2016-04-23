@@ -68,17 +68,17 @@ class StartupTester(Loggable):
 
             self.info('Testing "{} - {}"'.format(pname, ti))
             st = time.time()
-            result = func()
+            result, error = func()
             self.info('Test result={}'.format(result))
             if isinstance(result, bool):
                 result = 'Passed' if result else 'Failed'
             elif result is None:
                 result = 'Invalid'
 
-            try:
-                error = getattr(plugin, '{}_error'.format(ti))
-            except AttributeError:
-                error = ''
+            # try:
+            #     error = getattr(plugin, '{}_error'.format(ti))
+            # except AttributeError:
+            #     error = ''
 
             self.add_test_result(name=ti, plugin=pname,
                                  description=description,

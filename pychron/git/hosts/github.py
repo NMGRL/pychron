@@ -25,6 +25,16 @@ from pychron.paths import paths
 class GitHubService(GitHostService):
     preference_path = 'pychron.github'
 
+    def test_api(self):
+        ret, err = True, ''
+        try:
+            self._get(paths.github_api_url)
+        except BaseException, e:
+            ret = False
+            err = e
+
+        return ret, err
+
     def clone_from(self, name, root, organization):
         url = self.make_url(name, organization)
         GitRepoManager.clone_from(url, root)

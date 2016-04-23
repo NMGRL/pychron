@@ -210,27 +210,32 @@ class ExtractionLineManager(Manager, Consoleable):
         return v
 
     def test_gauge_communication(self):
+        self.info('test gauge communication')
+        ret, err = True, ''
         if self.gauge_manager:
             if self.gauge_manager.simulation:
-                return globalv.communication_simulation
+                ret = globalv.communication_simulation
             else:
-                return self.gauge_manager.test_connection()
+                ret = self.gauge_manager.test_connection()
+        return ret, err
 
     def test_connection(self):
+        self.info('test connection')
         return self.test_valve_communication()
 
     def test_valve_communication(self):
-        # if self.simulation:
-        # return globalv.communication_simulation
-        # else:
+        self.info('test valve communication')
+
+        ret, err = True, ''
         if self.switch_manager:
             if self.switch_manager.simulation:
-                return globalv.communication_simulation
+                ret = globalv.communication_simulation
             else:
                 valves = self.switch_manager.switches
                 vkeys = sorted(valves.keys())
                 state = self.switch_manager.get_state_checksum(vkeys)
-                return bool(state)
+                ret = bool(state)
+        return ret, err
 
     def refresh_canvas(self):
         for ci in self.canvases:

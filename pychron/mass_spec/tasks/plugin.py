@@ -28,16 +28,16 @@ class MassSpecPlugin(BaseTaskPlugin):
     name = 'MassSpec'
 
     def test_database(self):
-        ret = 'Skipped'
+        ret, err = 'Skipped', ''
         db = self.application.get_service(MassSpecDatabaseAdapter)
         if db:
             db.bind_preferences()
             connected = db.connect(warn=False)
             ret = 'Passed'
             if not connected:
-                self.test_massspec_error = db.connection_error
+                err = db.connection_error
                 ret = 'Failed'
-        return ret
+        return ret, err
 
     def _preferences_panes_default(self):
         return [MassSpecConnectionPane]

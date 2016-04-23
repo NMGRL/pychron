@@ -119,15 +119,21 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         self.loader_logic.manager = self
 
     def test_furnace_cam(self):
+        self.info('testing furnace cam')
+        ret, err = False, ''
         if self.camera:
-            return self.camera.get_image_data() is not None
+            ret = self.camera.get_image_data() is not None
+        return ret, err
 
     def test_furnace_api(self):
+        self.info('testing furnace api')
+        ret, err = False, ''
         if self.controller:
-            return self.controller.test_connection()
+            ret = self.controller.test_connection()
+        return ret, err
 
     def test_connection(self):
-        self.debug('testing connection')
+        self.info('testing connection')
         return self.test_furnace_api()
 
     def refresh_states(self):

@@ -18,9 +18,9 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from envisage.ui.tasks.task_factory import TaskFactory
-from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
-from pychron.database.tasks.connection_preferences import ConnectionPreferencesPane
+
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
+from pychron.database.tasks.connection_preferences import ConnectionPreferencesPane
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.mass_spec.tasks.preferences import MassSpecConnectionPane
 
@@ -35,9 +35,9 @@ class DatabasePlugin(BaseTaskPlugin):
     test_massspec_description = 'Test the connection to the MassSpec Database'
     test_pychron_version_description = 'Test compatibility of Pychron with the current Database'
 
-    test_pychron_error = ''
-    test_massspec_error = ''
-    test_pychron_version_error = ''
+    # test_pychron_error = ''
+    # test_massspec_error = ''
+    # test_pychron_version_error = ''
 
     def stop(self):
         from pychron.globals import globalv
@@ -55,25 +55,43 @@ class DatabasePlugin(BaseTaskPlugin):
 
     def test_pychron_version(self):
         iso = self._get_database_manager()
+        result, err = False, ''
         try:
-            err = iso.db.test_version()
+            result = iso.db.test_version()
         except TypeError:
             err = 'Not connected'
 
-        if err:
-            self.test_pychron_version_error = err
-
-        return 'Passed' if not err else 'Failed'
+        return result, err
+        # if err:
+        #     self.test_pychron_version_error = err
+        #
+        # return 'Passed' if not err else 'Failed'
 
     def test_pychron(self):
         iso = self._get_database_manager()
-        self._connectable = c = iso.is_connected()
+        self._connectable = result = iso.is_connected()
 
-        if not c:
-            self.test_pychron_error = iso.db.connection_error
+        return result, iso.db.connection_error
+        # if not c:
+        #     self.test_pychron_error = iso.db.connection_error
 
-        return 'Passed' if c else 'Failed'
+        # return 'Passed' if c else 'Failed'
 
+    def test_massspec(self):
+        ret, err = 'Skipped', ''
+        db = self.application.get_service(
+            'pychron.mass_spec.database.massspec_database_adapter.MassSpecDatabaseAdapter')
+        if db:
+            db.bind_preferences()
+            connected = db.connect(warn=False)
+            ret = 'Passed'
+            if not connected:
+                err = db.connection_error
+                # self.test_massspec_error = db.connection_error
+                ret = 'Failed'
+        return ret, err
+
+    # private
     def _get_database_manager(self, connect=True):
         if not self._db:
             iso = IsotopeDatabaseManager(application=self.application,
@@ -84,18 +102,6 @@ class DatabasePlugin(BaseTaskPlugin):
             self._db = iso
 
         return self._db
-
-    def test_massspec(self):
-        ret = 'Skipped'
-        db = self.application.get_service('pychron.mass_spec.database.massspec_database_adapter.MassSpecDatabaseAdapter')
-        if db:
-            db.bind_preferences()
-            connected = db.connect(warn=False)
-            ret = 'Passed'
-            if not connected:
-                self.test_massspec_error = db.connection_error
-                ret = 'Failed'
-        return ret
 
     def _get_pref(self, name):
         prefs = self.application.preferences

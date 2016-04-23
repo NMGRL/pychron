@@ -17,13 +17,13 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.git.githosts.gitlab import GitLabService
-
+from pychron.git.hosts.gitlab import GitLabService
 from pychron.git.tasks.base_git_plugin import BaseGitPlugin
 from pychron.git.tasks.githost_preferences import GitLabPreferencesPane
 
 
 class GitLabPlugin(BaseGitPlugin):
+    name = 'GitLab'
     service_klass = GitLabService
 
     def _preferences_panes_default(self):

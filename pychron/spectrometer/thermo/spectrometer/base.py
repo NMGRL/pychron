@@ -131,13 +131,22 @@ class ThermoSpectrometer(SpectrometerDevice):
         all four measurements same then test fails
         :return:
         """
-        keys, prev = self.get_intensities()
+        ret, err = True, ''
+        keys, one = self.get_intensities()
         it = 0.1 if self.simulation else self.integration_time
-        for i in range(4):
+
+        time.sleep(it)
+        keys, two = self.get_intensities()
+
+        if all(one == two):
             time.sleep(it)
-            _, cur = self.get_intensities()
-            if all(prev == cur):
-                return True
+            keys, three = self.get_intensities()
+            if all(two == three):
+                time.sleep(it)
+                keys, four = self.get_intensities()
+                if all(three == four):
+                    ret = False
+        return ret, err
 
     def test_connection(self, force=True):
         """
@@ -148,7 +157,7 @@ class ThermoSpectrometer(SpectrometerDevice):
         :return: bool
         """
         self.info('testing connnection')
-        ret = False
+        ret, err = False, ''
         if not self.simulation:
             if force:
                 ret = self.ask('GetIntegrationTime', verbose=True) is not None
@@ -159,7 +168,7 @@ class ThermoSpectrometer(SpectrometerDevice):
 
         self._connection_status = ret
         self.microcontroller.set_simulation(not ret)
-        return ret
+        return ret, err
 
     def set_gains(self, history=None):
         """
@@ -174,7 +183,7 @@ class ThermoSpectrometer(SpectrometerDevice):
         for di in self.detectors:
             di.set_gain()
 
-        return {di.name:di.gain for di in self.detectors}
+        return {di.name: di.gain for di in self.detectors}
 
     def load_current_detector_gains(self):
         """
