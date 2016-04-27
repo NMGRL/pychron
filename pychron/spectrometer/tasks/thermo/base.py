@@ -61,15 +61,15 @@ class ThermoSpectrometerPlugin(BaseSpectrometerPlugin):
     # ===============================================================================
     def test_communication(self):
         manager = self.spectrometer_manager
-        t = manager.test_connection()
-        return 'Passed' if t else 'Failed'
+        return manager.test_connection()
 
     def test_intensity(self):
         manager = self.spectrometer_manager
-        t = manager.test_connection(force=False)
-        if t:
-            tt = manager.test_intensity()
-            return 'Passed' if tt else 'Failed'
+        ret = manager.test_connection(force=False)
+        if ret and ret[0]:
+            ret = manager.test_intensity()
+
+        return ret
 
     # ===============================================================================
     # defaults

@@ -62,7 +62,7 @@ class BaseLaserManager(Manager):
         if self.mode == 'client':
             return self._test_connection()
         else:
-            return True
+            return True, None
 
     def initialize_video(self):
         if self.use_video:

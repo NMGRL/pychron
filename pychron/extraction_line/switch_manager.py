@@ -256,9 +256,9 @@ class SwitchManager(Manager):
         """
         if n in self.switches:
             return self.switches[n]
-        else:
-            self.debug('Invalid switch name {}'.format(n))
-            self.debug(','.join(self.switches.keys()))
+        # else:
+        #     self.debug('Invalid switch name {}'.format(n))
+        #     self.debug(','.join(self.switches.keys()))
 
     def get_name_by_address(self, k):
         """

@@ -1295,8 +1295,9 @@ class AutomatedRun(Loggable):
             t.start()
 
     def do_post_termination(self, do_post_equilibration=True):
-        oex = self.experiment_executor.executable
-        self.experiment_executor.executable = False
+        if self.experiment_executor:
+            oex = self.experiment_executor.executable
+            self.experiment_executor.executable = False
         self.heading('Post Termination Started')
         if do_post_equilibration:
             self.do_post_equilibration()
@@ -1306,7 +1307,8 @@ class AutomatedRun(Loggable):
         self.stop()
 
         self.heading('Post Termination Finished')
-        self.experiment_executor.executable = oex
+        if self.experiment_executor:
+            self.experiment_executor.executable = oex
 
     # ===============================================================================
     # utilities

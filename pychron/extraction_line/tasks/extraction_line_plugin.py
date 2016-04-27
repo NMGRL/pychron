@@ -71,8 +71,7 @@ class ExtractionLinePlugin(BaseTaskPlugin):
     def _test(self, func):
 
         man = self.application.get_service(ExtractionLineManager)
-        c = getattr(man, func)()
-        return 'Passed' if c else 'Failed'
+        return getattr(man, func)()
 
     def _factory(self):
         elm = self.extraction_line_manager_klass(application=self.application)
