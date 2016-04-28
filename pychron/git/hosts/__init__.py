@@ -80,11 +80,26 @@ class GitHostService(Loggable):
         pass
 
     # private
-    def _get(self, cmd):
+    def _get(self, cmd, verbose=False):
+
+        s = requests.Session()
         headers = self._get_authorization()
-        doc = requests.get(cmd, headers=headers)
-        self.debug('GET {}'.format(doc.text))
-        return json.loads(doc.text)
+        # doc = requests.get(cmd, headers=headers)
+        # if verbose:
+        #     self.debug('GET {}'.format(doc.text))
+        result = []
+
+        def _rget(ci):
+            r = s.get(ci, headers=headers)
+            result.extend(json.loads(r.text))
+            if r.links:
+                try:
+                    _rget(r.links['next']['url'])
+                except KeyError:
+                    return
+
+        _rget(cmd)
+        return result
 
     def _post(self, cmd, **payload):
         headers = self._get_authorization()
