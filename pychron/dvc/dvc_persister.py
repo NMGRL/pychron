@@ -318,8 +318,8 @@ class DVCPersister(BasePersister):
                 dets[iso.detector] = {'deflection': self.per_spec.defl_dict.get(iso.detector),
                                       'gain': self.per_spec.gains.get(iso.detector)}
 
-                icfactors[iso.detector] = {'value': float(nominal_value(iso.ic_factor)),
-                                           'error': float(std_dev(iso.ic_factor)),
+                icfactors[iso.detector] = {'value': float(nominal_value(iso.ic_factor or 1)),
+                                           'error': float(std_dev(iso.ic_factor or 0)),
                                            'fit': 'default',
                                            'references': []}
                 cbaselines[iso.detector] = {'fit': iso.baseline.fit,
