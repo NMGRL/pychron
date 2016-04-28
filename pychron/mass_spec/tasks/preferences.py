@@ -16,8 +16,8 @@
 
 # ============= enthought library imports =======================
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traits.api import Str, Bool, Password
-from traitsui.api import View, Item, HGroup, VGroup, Spring, Label
+from traits.api import Str, Bool, Password, List
+from traitsui.api import View, Item, HGroup, VGroup, Spring, Label, EnumEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.ui.custom_label_editor import CustomLabel
@@ -50,9 +50,29 @@ class MassSpecConnectionPreferences(BasePreferencesHelper, ConnectionMixin):
                     kind='mysql')
 
 
+class MassSpecConfigPreferences(BasePreferencesHelper):
+    preferences_path = 'pychron.massspec.config'
+    reference_detector_name = Str
+    reference_isotope_name = Str
+    _reference_isotope_names = List(('Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36'))
+    _reference_detector_names = List(('H2', 'H1', 'AX', 'L1', 'L2', 'CDD'))
+
+
+class MassSpecConfigPane(PreferencesPane):
+    model_factory = MassSpecConfigPreferences
+    category = 'MassSpec'
+
+    def traits_view(self):
+        v = View(Item('reference_detector_name', label='Reference Detector',
+                      editor=EnumEditor(name='_reference_detector_names')),
+                 Item('reference_isotope_name', label='Reference Isotope',
+                      editor=EnumEditor(name='_reference_isotope_names')))
+        return v
+
+
 class MassSpecConnectionPane(PreferencesPane):
     model_factory = MassSpecConnectionPreferences
-    category = 'Database'
+    category = 'MassSpec'
 
     def traits_view(self):
         cgrp = HGroup(Spring(width=10, springy=False),

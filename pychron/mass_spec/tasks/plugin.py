@@ -20,7 +20,7 @@
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.mass_spec.database.massspec_database_adapter import MassSpecDatabaseAdapter
 from pychron.mass_spec.mass_spec_recaller import MassSpecRecaller
-from pychron.mass_spec.tasks.preferences import MassSpecConnectionPane
+from pychron.mass_spec.tasks.preferences import MassSpecConnectionPane, MassSpecConfigPane
 
 
 class MassSpecPlugin(BaseTaskPlugin):
@@ -40,7 +40,7 @@ class MassSpecPlugin(BaseTaskPlugin):
         return ret, err
 
     def _preferences_panes_default(self):
-        return [MassSpecConnectionPane]
+        return [MassSpecConnectionPane, MassSpecConfigPane]
 
     def _recaller_factory(self):
         db = self.application.get_service(MassSpecDatabaseAdapter)
