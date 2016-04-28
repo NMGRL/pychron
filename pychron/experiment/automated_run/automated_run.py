@@ -980,7 +980,7 @@ class AutomatedRun(Loggable):
                 i = 0
             i += 1
 
-    def post_measurement_save(self):
+    def save(self):
         self.debug('post measurement save measured={} aborted={}'.format(self._measured, self._aborted))
         if self._measured and not self._aborted:
             conds = (self.termination_conditionals, self.truncation_conditionals,
@@ -1248,7 +1248,7 @@ class AutomatedRun(Loggable):
             self.info_color = None
 
             self._measured = True
-            return self.post_measurement_save()
+            return True
             # return True
         else:
             if use_post_on_fail:

@@ -724,6 +724,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 run.spec.state = 'success'
 
         if run.spec.state in ('success', 'truncated'):
+            run.save()
             self.run_completed = run
 
         remove_backup(run.uuid)

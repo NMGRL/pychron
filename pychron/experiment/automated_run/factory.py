@@ -301,7 +301,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     irrad_level = Str
     irrad_hole = Str
 
-    info_label = Property(depends_on='labnumber')
+    info_label = Property(depends_on='labnumber, display_irradiation, sample')
     extractable = Property(depends_on='labnumber')
 
     update_info_needed = Event
