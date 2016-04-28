@@ -170,7 +170,7 @@ class FirmwareManager(HeadlessLoggable):
             ctrl = self.controller
             d = {'output': ctrl.read_percent_output(),
                  'setpoint': ctrl.process_setpoint,
-                 'response': ctrl.get_process_value}
+                 'response': ctrl.get_process_value()}
             if h2o_ch:
                 d['h2o_state'] = self.switch_controller.get_channel_state(h2o_ch)
 
