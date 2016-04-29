@@ -560,7 +560,10 @@ class GitRepoManager(Loggable):
     def has_remote(self, remote='origin'):
         return bool(self._get_remote(remote))
 
-    def push(self, branch='master', remote='origin'):
+    def push(self, branch='master', remote=None):
+        if remote is None:
+            remote = 'origin'
+
         repo = self._repo
         rr = self._get_remote(remote)
         if rr:

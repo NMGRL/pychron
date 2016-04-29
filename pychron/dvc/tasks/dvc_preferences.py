@@ -30,7 +30,7 @@ class DVCPreferences(BasePreferencesHelper):
     organization = Str
     # github_user = Str
     # github_password = Password
-    # default_team = Str
+    default_team = Str
     work_offline_user = Str
     work_offline_password = Password
     work_offline_host = Str
@@ -56,7 +56,7 @@ class DVCPreferencesPane(PreferencesPane):
         #               label='Credentials', show_border=True)
 
         org = VGroup(UItem('organization'),
-                     # Item('default_team', tooltip='Name of the GitHub Team to add to new repositories'),
+                     Item('default_team', tooltip='Name of the GitHub Team to add to new repositories'),
                      label='Organization', show_border=True)
         meta = VGroup(UItem('meta_repo_name'), label='Meta', show_border=True)
         # proj = VGroup(Item(''), label='Projects', show_border=True)

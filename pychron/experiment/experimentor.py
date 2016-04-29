@@ -204,6 +204,10 @@ class Experimentor(DVCIrradiationable):
         elif inform:
             self.warning_dialog('No Database available')
 
+    def get_analysis(self, **kw):
+        db = self.get_database()
+        return db.get_analysis_by_attr(**kw)
+
     # ===============================================================================
     # handlers
     # ===============================================================================

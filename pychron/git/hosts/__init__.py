@@ -23,6 +23,7 @@ from traits.api import Str, Interface, Password, provides
 import json
 import requests
 # ============= local library imports  ==========================
+from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.loggable import Loggable
 
 
@@ -30,25 +31,31 @@ class IGitHost(Interface):
     def bind_preferences(self):
         pass
 
+    def test_api(self):
+        pass
+
     def clone_from(self, name, root, organization):
+        pass
+
+    def set_team(self, team, organization, permission=None):
         pass
 
     def create_repo(self, name, **kw):
         pass
 
-    def make_url(self, name, organization=None):
+    def make_url(self, name, organization):
         pass
 
-    def get_repository_names(self, organization=None):
+    def get_repository_names(self, organization):
         pass
 
-    def test_connection(self, organization=None):
+    def test_connection(self, organization):
         pass
 
-    def get_repos(self, org):
+    def get_repos(self, organization):
         pass
 
-    def get_info(self, org):
+    def get_info(self, organization):
         pass
 
 
@@ -58,13 +65,18 @@ class GitHostService(Loggable):
     password = Password
     preference_path = ''
     oauth_token = Str
+    default_remote_name = Str
 
     def bind_preferences(self):
         bind_preference(self, 'username', '{}.username'.format(self.preference_path))
         bind_preference(self, 'password', '{}.password'.format(self.preference_path))
         bind_preference(self, 'oauth_token', '{}.oauth_token'.format(self.preference_path))
+        bind_preference(self, 'default_remote_name', '{}.default_remote_name'.format(self.preference_path))
 
     def test_api(self):
+        raise NotImplementedError
+
+    def make_url(self):
         raise NotImplementedError
 
     def get_repository_names(self, organization):
@@ -72,6 +84,10 @@ class GitHostService(Loggable):
 
     def test_connection(self, organization):
         return bool(self.get_info(organization))
+
+    def clone_from(self, name, root, organization):
+        url = self.make_url(name, organization)
+        GitRepoManager.clone_from(url, root)
 
     def get_repos(self, org):
         pass
@@ -81,29 +97,40 @@ class GitHostService(Loggable):
 
     # private
     def _get(self, cmd, verbose=False):
+        with requests.Session() as s:
+            s.headers.update(self._get_authorization())
 
-        s = requests.Session()
-        headers = self._get_authorization()
-        # doc = requests.get(cmd, headers=headers)
-        # if verbose:
-        #     self.debug('GET {}'.format(doc.text))
-        result = []
+            def _rget(ci):
+                r = s.get(ci)
+                d = json.loads(r.text)
 
-        def _rget(ci):
-            r = s.get(ci, headers=headers)
-            result.extend(json.loads(r.text))
-            if r.links:
+                result = []
+                if isinstance(d, list):
+                    result.extend(d)
+                else:
+                    result.append(d)
+
                 try:
-                    _rget(r.links['next']['url'])
+                    dd = _rget(r.links['next']['url'])
                 except KeyError:
-                    return
+                    return result
 
-        _rget(cmd)
-        return result
+                if isinstance(dd, list):
+                    result.extend(dd)
+                else:
+                    result.append(dd)
+                return result
+
+            return _rget(cmd)
 
     def _post(self, cmd, **payload):
         headers = self._get_authorization()
         r = requests.post(cmd, data=json.dumps(payload), headers=headers)
+        return r
+
+    def _put(self, cmd, **payload):
+        headers = self._get_authorization()
+        r = requests.put(cmd, data=json.dumps(payload), headers=headers)
         return r
 
     def _get_oauth_token(self):

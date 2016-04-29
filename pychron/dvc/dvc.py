@@ -65,12 +65,12 @@ def repository_has_staged(ps):
     return changed
 
 
-def push_repositories(ps):
+def push_repositories(ps, remote=None):
     repo = GitRepoManager()
     for p in ps:
         pp = os.path.join(paths.repository_dataset_dir, p)
         repo.open_repo(pp)
-        repo.push()
+        repo.push(remote)
 
 
 def get_review_status(record):
@@ -177,6 +177,7 @@ class DVC(Loggable):
 
     meta_repo_name = Str
     organization = Str
+    default_team = Str
 
     current_repository = Instance(GitRepoManager)
     auto_add = True
@@ -535,13 +536,15 @@ class DVC(Loggable):
         repo.commit(msg)
 
     def remote_repositories(self, attributes=None):
-        r = []
-        git_service = self.application.get_service(IGitHost)
-        if git_service:
-            r = git_service.get_repository_names(self.organization)
+        rs = []
+        gs = self.application.get_services(IGitHost)
+        if gs:
+            for gi in gs:
+                ri = gi.get_repository_names(self.organization)
+                rs.extend(ri)
         else:
             self.warning_dialog('GitLab or GitHub plugin is required')
-        return r
+        return rs
 
         # org = self._organization_factory()
         # if attributes:
@@ -611,6 +614,13 @@ class DVC(Loggable):
                                    head.message)
         self.information_dialog(msg)
 
+    def push_repository(self, repo):
+        for gi in self.application.get_services(IGitHost):
+            repo.push(remote=gi.default_remote_name)
+
+    def push_repositories(self, changes):
+        for gi in self.application.get_services(IGitHost):
+            push_repositories(changes, gi.default_remote_name)
     # IDatastore
     def get_greatest_aliquot(self, identifier):
         return self.db.get_greatest_aliquot(identifier)
@@ -825,20 +835,24 @@ class DVC(Loggable):
                 if inform:
                     self.warning_dialog('{} already exists.'.format(root))
             else:
-                git_service = self.application.get_service(IGitHost)
+                gs = self.application.get_services(IGitHost)
+                ret = False
+                for i, gi in enumerate(gs):
+                    self.info('Creating repository at {}. {}'.format(gi.name, identifier))
 
-                self.info('Creating repository. {}'.format(identifier))
+                    if gi.create_repo(identifier, organization=self.organization, auto_init=True):
+                        if self.default_team:
+                            gi.set_team(self.default_team, self.organization, identifier,
+                                        permission='push')
 
-                resp = git_service.create_repo(identifier,
-                                               organization=self.organization,
-                                               auto_init=True)
-                if resp:
-                    self.debug('Create repo status code={}'.format(resp.status_code))
+                        url = gi.make_url(identifier, self.organization)
+                        if i == 0:
+                            repo = Repo.clone_from(url, root)
+                            self.db.add_repository(identifier, principal_investigator)
+                        else:
+                            repo.create_remote(gi.default_remote_name or 'origin', url)
 
-                # url = '{}/{}/{}.git'.format(paths.git_base_origin, self.organization, identifier)
-                Repo.clone_from(self.make_url(identifier), root)
-                self.db.add_repository(identifier, principal_investigator)
-                return True
+                return ret
 
     def add_irradiation(self, name, doses=None, add_repo=False, principal_investigator=None):
         with self.db.session_ctx():
@@ -986,7 +1000,7 @@ class DVC(Loggable):
     def _bind_preferences(self):
 
         prefid = 'pychron.dvc'
-        for attr in ('meta_repo_name', 'organization'):
+        for attr in ('meta_repo_name', 'organization', 'default_team'):
             bind_preference(self, attr, '{}.{}'.format(prefid, attr))
 
         prefid = 'pychron.dvc.db'

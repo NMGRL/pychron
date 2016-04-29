@@ -27,11 +27,12 @@ from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 class GitHostPreferences(BasePreferencesHelper):
     username = Str
     password = Password
+    oauth_token = Str
+    default_remote_name = Str
 
 
 class GitHubPreferences(GitHostPreferences):
     preferences_path = 'pychron.github'
-    oauth_token = Str
 
 
 class GitLabPreferences(GitHostPreferences):

@@ -166,6 +166,7 @@ TASK_EXTENSION_DEFAULT = """
  actions:
   - pychron.experiment.edit.deselect, False
   - pychron.experiment.edit.reset, True
+  - pychron.experiment.edit.sync, True
   - pychron.experiment.edit.undo, False
   - pychron.experiment.edit.configure, False
 -

@@ -31,10 +31,16 @@ class GitLabService(GitHostService):
         super(GitLabService, self).bind_preferences()
         bind_preference(self, 'host', '{}.host'.format(self.preference_path))
 
+    def set_team(self, team, organization, repo, permission=None):
+        pass
+
     def create_repo(self, name, organization, **kw):
         cmd = '{}/orgs/{}/repos'.format(self.host,
                                         organization)
-        return self._post(cmd, name=name, **kw)
+        resp = self._post(cmd, name=name, **kw)
+        if resp:
+            self.debug('Create repo response {}'.format(resp.status_code))
+            return resp.status_code == 201
 
     def make_url(self, name, organization):
         return 'http://{}/{}/{}.git'.format(self.host, organization, name)

@@ -297,7 +297,6 @@ class SignalCalculatorAction(ExperimentAction):
 
     def perform(self, event):
         obj = self._get_service(event, 'pychron.experiment.signal_calculator.SignalCalculator')
-        app = event.task.window.application
         open_view(obj)
 
 
@@ -305,6 +304,12 @@ class ResetQueuesAction(TaskAction):
     method = 'reset_queues'
     name = 'Reset Queues'
     dname = 'Reset Queues'
+
+
+class SyncQueueAction(TaskAction):
+    method = 'sync_queue'
+    name = 'Sync Queue'
+    dname = 'Sync Queue'
 
 
 class LastAnalysisRecoveryAction(Action):

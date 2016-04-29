@@ -202,7 +202,9 @@ class DVCPersister(BasePersister):
 
                 # commit files
                 self.active_repository.commit('<COLLECTION>')
-                self.active_repository.push()
+                # self.active_repository.push()
+                self.dvc.push_repository(self.active_repository)
+
                 # update meta
                 self.dvc.meta_pull(accept_our=True)
 

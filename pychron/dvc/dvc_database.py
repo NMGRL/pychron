@@ -226,7 +226,6 @@ class DVCDatabase(DatabaseAdapter):
             q = q.order_by(AnalysisTbl.timestamp.desc())
             return self._query_one(q, verbose_query=True)
 
-
     # def get_analyses_data_range(self, low, high, atypes, exclude=None, exclude_uuids=None):
     #     with self.session_ctx() as sess:
     #         q = sess.query(AnalysisTbl)
@@ -575,7 +574,7 @@ class DVCDatabase(DatabaseAdapter):
                 if result:
                     increment = result[0]
                     return increment if increment is not None else -1
-                    #return ALPHAS.index(step) if step else -1
+                    # return ALPHAS.index(step) if step else -1
 
     def get_unique_analysis(self, ln, ai, step=None):
         #         sess = self.get_session()
@@ -663,6 +662,17 @@ class DVCDatabase(DatabaseAdapter):
 
             q = q.filter(IrradiationPositionTbl.identifier == idn)
             return self._query_one(q)
+
+    def get_analysis_by_attr(self, **kw):
+        with self.session_ctx() as sess:
+            q = sess.query(AnalysisTbl)
+            for k, v in kw.iteritems():
+                try:
+                    q = q.filter(getattr(AnalysisTbl, k) == v)
+                except AttributeError:
+                    self.debug('Invalid AnalysisTbl column {}'.format(k))
+            q = q.order_by(AnalysisTbl.analysis_timestamp.desc())
+            return self._query_first(q)
 
     def get_database_version(self, **kw):
         with self.session_ctx() as sess:

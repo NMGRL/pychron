@@ -74,6 +74,9 @@ class Datahub(Loggable):
             prefid = 'pychron.massspec.config'
             bind_preference(store, 'reference_detector_name', '{}.reference_detector_name'.format(prefid))
             bind_preference(store, 'reference_isotope_name', '{}.reference_isotope_name'.format(prefid))
+            bind_preference(store, 'use_reference_detector_by_isotope',
+                            '{}.use_reference_detector_by_isotope'.format(prefid))
+
             self.stores['massspec'] = store
 
         # isotopedb

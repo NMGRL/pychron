@@ -54,6 +54,8 @@ class MassSpecConfigPreferences(BasePreferencesHelper):
     preferences_path = 'pychron.massspec.config'
     reference_detector_name = Str
     reference_isotope_name = Str
+    use_reference_detector_by_isotope = Bool
+
     _reference_isotope_names = List(('Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36'))
     _reference_detector_names = List(('H2', 'H1', 'AX', 'L1', 'L2', 'CDD'))
 
@@ -63,10 +65,19 @@ class MassSpecConfigPane(PreferencesPane):
     category = 'MassSpec'
 
     def traits_view(self):
-        v = View(Item('reference_detector_name', label='Reference Detector',
-                      editor=EnumEditor(name='_reference_detector_names')),
-                 Item('reference_isotope_name', label='Reference Isotope',
-                      editor=EnumEditor(name='_reference_isotope_names')))
+        dgrp = VGroup(Item('use_reference_detector_by_isotope', label='Set By Isotope'),
+                      Item('reference_detector_name', label='Reference Detector',
+                           editor=EnumEditor(name='_reference_detector_names'),
+                           enabled_when='not use_reference_detector_by_isotope'),
+                      label='Detector',
+                      show_border=True)
+
+        iso_grp = VGroup(Item('reference_isotope_name', label='Reference Isotope',
+                              editor=EnumEditor(name='_reference_isotope_names')),
+                         show_border=True,
+                         label='Isotope')
+
+        v = View(VGroup(iso_grp, dgrp))
         return v
 
 

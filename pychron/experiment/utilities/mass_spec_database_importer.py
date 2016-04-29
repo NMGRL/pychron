@@ -15,12 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from datetime import datetime
-
-from traits.api import Instance, Button, Int, Str
-from traits.has_traits import provides
-
+from traits.api import Instance, Button, Int, Str, Bool, provides
 # ============= standard library imports ========================
+from datetime import datetime
 import struct
 from numpy import array
 import time
@@ -66,6 +63,7 @@ class MassSpecDatabaseImporter(Loggable):
 
     reference_detector_name = Str
     reference_isotope_name = Str
+    use_reference_detector_by_isotope = Bool
 
     _current_spec = None
     _analysis = None
@@ -280,16 +278,21 @@ class MassSpecDatabaseImporter(Loggable):
 
         self.create_import_session(spectrometer, tray)
 
-        if not self.reference_detector_name:
-            self.reference_detector_name = 'H1'
         if not self.reference_isotope_name:
             self.reference_isotope_name = 'Ar40'
 
+        if self.use_reference_detector_by_isotope:
+            rd = spec.get_detector_by_isotope(self.reference_isotope_name)
+        else:
+            if not self.reference_detector_name:
+                self.reference_detector_name = 'H1'
+            rd = self.reference_detector_name
+
         # add the reference detector
         if DBVERSION >= 16.3:
-            refdbdet = db.add_detector(self.reference_detector_name)
+            refdbdet = db.add_detector(rd)
         else:
-            refdbdet = db.add_detector(self.reference_detector_name, Label=self.reference_detector_name)
+            refdbdet = db.add_detector(rd, Label=rd)
 
         sess.flush()
 

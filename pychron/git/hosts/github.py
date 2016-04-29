@@ -18,7 +18,6 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.git.hosts import GitHostService
-from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths
 
 
@@ -35,14 +34,27 @@ class GitHubService(GitHostService):
 
         return ret, err
 
-    def clone_from(self, name, root, organization):
-        url = self.make_url(name, organization)
-        GitRepoManager.clone_from(url, root)
+    def set_team(self, team, organization, repo, permission=None):
+        if permission is None:
+            permission = 'pull'
+
+        team_id = self.get_team_id(team)
+        if team_id:
+            cmd = 'teams/{}/repos/{}/{}'.format(team_id, organization, repo)
+            self._put(cmd, permission=permission)
+
+    def get_team_id(self, name, organization):
+        for td in self._get('orgs/{}/teams'.format(organization)):
+            if td['name'] == name:
+                return td['id']
 
     def create_repo(self, name, organization, **kw):
         cmd = '{}/orgs/{}/repos'.format(paths.github_api_url,
                                         organization)
-        return self._post(cmd, name=name, **kw)
+        resp = self._post(cmd, name=name, **kw)
+        if resp:
+            self.debug('Create repo response {}'.format(resp.status_code))
+            return resp.status_code == 201
 
     def make_url(self, name, organization):
         return '{}/{}/{}.git'.format(paths.github_url,
@@ -59,4 +71,5 @@ class GitHubService(GitHostService):
     # private
     def _get_oauth_token(self):
         return 'token {}'.format(self.oauth_token)
+
 # ============= EOF =============================================
