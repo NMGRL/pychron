@@ -323,12 +323,14 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     def set_setpoint(self, v):
         self.debug('set setpoint={}'.format(v))
         self.set_pid_parameters(v)
-        self.graph.record(v, series=1)
-        self.graph.record(v, series=1)
+        self.graph.record(v)
+        self.graph.record(v)
         if self.controller:
             self.controller.set_setpoint(v)
             d = self.graph.get_data(axis=1)
-            self.graph.set_y_limits(min_=0, max_=max(d.max(), v * 1.1))
+
+            if not self.graph_y_auto:
+                self.graph.set_y_limits(min_=min(d.min(), v) * 0.9, max_=max(d.max(), v) * 1.1)
 
             self.graph.redraw()
 
@@ -449,16 +451,16 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
 
     def _update_scan_graph(self, response, output, setpoint):
         if response is not None and output is not None:
-            x = self.graph.record(response, track_y=False)
+            x = self.graph.record(response, series=1, track_y=False)
             self.graph.record(output, x=x, series=0, plotid=1, track_y=False)
 
-            ss = self.graph.get_data(plotid=0, series=1, axis=1)
+            ss = self.graph.get_data(plotid=0, axis=1)
             if len(ss) > 1:
-                xs = self.graph.get_data(plotid=0, series=1)
+                xs = self.graph.get_data(plotid=0)
                 xs[-1] = x
-                self.graph.set_data(xs, plotid=0, series=1)
+                self.graph.set_data(xs, plotid=0)
             else:
-                self.graph.record(setpoint, x=x, series=1, track_y=False)
+                self.graph.record(setpoint, x=x, track_y=False)
 
             if self.graph_y_auto:
                 temp_plot = self.graph.plots[0].plots['plot0']
@@ -495,9 +497,12 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         g.new_plot(xtitle='Time (s)', ytitle='Temp. (C)', padding_top=5, padding_left=75, padding_right=5)
         g.set_scan_width(600, plotid=0)
         g.set_data_limits(1.8 * 600, plotid=0)
-        g.new_series(plotid=0)
+
+        # setpoint
         g.new_series(plotid=0, line_width=2,
                      render_style='connectedhold')
+        # response
+        g.new_series(plotid=0)
 
         g.new_plot(ytitle='Output (%)', padding_top=5, padding_left=75, padding_right=5)
         g.set_scan_width(600, plotid=1)
