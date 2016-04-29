@@ -225,6 +225,14 @@ class ExperimentEditorTask(EditorTask):
         if self.use_notifications:
             self.notifier.close()
 
+        manager = self.application.get_service(IFurnaceManager)
+        if manager:
+            for window in self.application.windows:
+                if 'furnace' in window.task.id:
+                    break
+            else:
+                manager.stop_update()
+
             # del manager. fixes problem of multiple experiments being started
             # closed tasks were still receiving execute_event(s)
             # del self.manager
@@ -251,9 +259,13 @@ class ExperimentEditorTask(EditorTask):
         color_bind_preference(self, 'even_bgcolor', 'pychron.experiment.even_bg_color')
 
     def activated(self):
-
         self.bind_preferences()
         super(ExperimentEditorTask, self).activated()
+
+        manager = self.application.get_service(IFurnaceManager)
+        if manager:
+            manager.start_update()
+
 
     def create_dock_panes(self):
 

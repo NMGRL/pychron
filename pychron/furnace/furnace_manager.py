@@ -112,11 +112,19 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
 
         self.refresh_states()
         self.load_settings()
-        self.reset_scan_timer(func=self._update_scan)
+        self.start_update()
 
         self.stage_manager.refresh()
 
         self.loader_logic.manager = self
+
+    def start_update(self):
+        self.info('Start update')
+        self.reset_scan_timer(func=self._update_scan)
+
+    def stop_update(self):
+        self.info('Stop update')
+        self._stop_update()
 
     def test_furnace_cam(self):
         self.info('testing furnace cam')
