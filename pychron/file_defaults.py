@@ -39,6 +39,7 @@ PIPELINE_TEMPLATES = '''- Iso Evo
 - Auto Ideogram
 - Diff
 - Vertical Flux
+- Xy Scatter
 '''
 
 IDENTIFIERS_DEFAULT = """
@@ -165,6 +166,7 @@ TASK_EXTENSION_DEFAULT = """
  actions:
   - pychron.experiment.edit.deselect, False
   - pychron.experiment.edit.reset, True
+  - pychron.experiment.edit.sync, True
   - pychron.experiment.edit.undo, False
   - pychron.experiment.edit.configure, False
 -
@@ -427,6 +429,10 @@ SPEC = """- klass: UnknownNode
 
 VERTICAL_FLUX = """- klass: FindVerticalFluxNode
 - klass: VerticalFluxNode
+"""
+
+XY_SCATTER = """- klass: UnknownNode
+- klass: XYScatterNode
 """
 
 ANALYSIS_TABLE = """- klass: UnknownNode

@@ -161,6 +161,14 @@ class SpectrometerParametersAction(Action):
         man.open_parameters()
 
 
+class ReloadMFTableAction(Action):
+    name = 'Reload MFTable'
+
+    def perform(self, event):
+        man = get_manager(event, SPECTROMETER_PROTOCOL)
+        man.reload_mftable()
+
+
 class PeakCenterAction(TaskAction):
     description = 'Calculate peak center'
     name = 'Peak Center...'

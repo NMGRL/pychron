@@ -18,4 +18,8 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
+class HeaterException(BaseException):
+    def __init__(self):
+        pass
+
 # ============= EOF =============================================

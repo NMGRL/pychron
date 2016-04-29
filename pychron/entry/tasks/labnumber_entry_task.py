@@ -21,7 +21,6 @@ from traits.api import on_trait_change, Button, Float, Str, Int, Bool
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.entry.entry_views.material_entry import MaterialEntry
-from pychron.core.helpers.filetools import add_extension
 
 from pychron.entry.graphic_generator import GraphicModel, GraphicGeneratorController
 from pychron.envisage.browser.record_views import SampleRecordView
@@ -157,15 +156,15 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
         if path:
             self.manager.import_irradiation_load_xls(path)
 
-    def make_irradiation_load_template(self):
-        path = self.save_file_dialog()
-        if path:
-            #        p = '/Users/ross/Sandbox/irrad_load_template.xls'
-            path = add_extension(path, '.xls')
-            self.manager.make_irradiation_load_template(path)
-
-            self.information_dialog('Template saved to {}'.format(path))
-            # self.view_xls(path)
+    # def make_irradiation_load_template(self):
+    #     path = self.save_file_dialog()
+    #     if path:
+    #         #        p = '/Users/ross/Sandbox/irrad_load_template.xls'
+    #         path = add_extension(path, '.xls')
+    #         self.manager.make_irradiation_load_template(path)
+    #
+    #         self.information_dialog('Template saved to {}'.format(path))
+    #         # self.view_xls(path)
 
     def import_sample_from_file(self):
         # path = self.open_file_dialog(default_directory=paths.root_dir,

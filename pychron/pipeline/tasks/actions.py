@@ -138,11 +138,13 @@ class ReductionAction(PipelineAction):
 class BlanksAction(PipelineAction):
     name = 'Blanks'
     dname = 'Blanks'
+    action = 'set_blanks_template'
 
 
 class ICFactorAction(PipelineAction):
     name = 'ICFactor'
     dname = 'ICFactor'
+    action = 'set_icfactor_template'
 
 
 class FluxAction(PipelineAction):
@@ -150,6 +152,17 @@ class FluxAction(PipelineAction):
     dname = 'Flux'
     action = 'set_flux_template'
 
+
+class FreezeProductionRatios(PipelineAction):
+    name = 'Freeze Production Ratios'
+    dname = 'Freeze Production Ratios'
+    action = 'freeze_production_ratios'
+
+
+class FreezeFlux(PipelineAction):
+    name = 'Freeze Flux'
+    dname = 'Freeze Flux'
+    action = 'freeze_flux'
 
 # ============= Plotting Actions =============================================
 class ResetFactoryDefaultsAction(Action):

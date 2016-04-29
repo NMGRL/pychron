@@ -86,6 +86,8 @@ class BaseEurotherm(HasTraits):
 
         return resp
 
+    read_percent_output = get_output
+
     def get_response(self, force=False):
         if force or not self.process_value:
             self.get_process_value()

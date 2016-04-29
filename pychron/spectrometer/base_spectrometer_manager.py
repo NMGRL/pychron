@@ -33,6 +33,8 @@ class BaseSpectrometerManager(Manager):
         if self.spectrometer:
             self.spectrometer.send_configuration()
 
+    def reload_mftable(self):
+        self.spectrometer.reload_mftable()
 # ============= EOF =============================================
 
 

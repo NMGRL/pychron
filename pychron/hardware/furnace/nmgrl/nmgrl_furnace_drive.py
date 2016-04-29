@@ -20,7 +20,7 @@ from traits.api import Str, Int, Float
 import time
 import json
 # ============= local library imports  ==========================
-from pychron.hardware.actuators import trim_bool
+from pychron.core.communication_helper import trim_bool
 from pychron.hardware.core.core_device import CoreDevice
 
 

@@ -33,12 +33,13 @@ from pychron.core.helpers.filetools import get_path
 from pychron.core.helpers.filetools import add_extension
 from pychron.core.helpers.strtools import to_bool
 from pychron.core.ui.preference_binding import set_preference
+from pychron.experiment import ExtractionException
 from pychron.experiment.automated_run.hop_util import parse_hops
 from pychron.experiment.automated_run.persistence_spec import PersistenceSpec
 from pychron.experiment.conditional.conditional import TruncationConditional, \
     ActionConditional, TerminationConditional, conditional_from_dict, CancelationConditional, conditionals_from_file, \
     QueueModificationConditional
-from pychron.experiment.utilities.conditionals import test_queue_conditionals_name
+from pychron.experiment.utilities.conditionals import test_queue_conditionals_name, QUEUE, SYSTEM, RUN
 from pychron.experiment.utilities.identifier import convert_identifier
 from pychron.experiment.utilities.script import assemble_script_blob
 from pychron.globals import globalv
@@ -181,7 +182,7 @@ class AutomatedRun(Loggable):
 
     use_peak_center_threshold = Bool
     # peak_center_threshold1 = Int(10)
-    peak_center_threshold = Int(3)
+    peak_center_threshold = Float(3)
     peak_center_threshold_window = Int(10)
 
     persistence_spec = Instance(PersistenceSpec)
@@ -196,7 +197,7 @@ class AutomatedRun(Loggable):
 
         for attr, cast in (('experiment_type', str),
                            ('use_peak_center_threshold', to_bool),
-                           ('peak_center_threshold', int),
+                           ('peak_center_threshold', float),
                            ('peak_center_threshold_window', int)
                            ):
             set_preference(preferences, self, attr, 'pychron.experiment.{}'.format(attr), cast)
@@ -473,10 +474,10 @@ class AutomatedRun(Loggable):
                     ii = a.isotope_factory(name=iso, detector=di)
                     if correct_for_blank:
                         if iso in pb:
-                            b = pb[iso]
+                            _,b = pb[iso]
                             ii.set_blank(nominal_value(b), std_dev(b))
                     if iso in pbs:
-                        b = pbs[iso]
+                        _,b = pbs[iso]
                         ii.set_baseline(nominal_value(b), std_dev(b))
 
                 plot = g.get_plot_by_ytitle(iso) or g.get_plot_by_ytitle('{}{}'.format(iso, di))
@@ -577,6 +578,7 @@ class AutomatedRun(Loggable):
                                        isotope=isotope,
                                        directions=directions,
                                        config_name=config_name,
+                                       use_configuration_dac=False,
                                        **kw)
             self.peak_center = pc
             self.debug('do peak center. {}'.format(pc))
@@ -600,7 +602,8 @@ class AutomatedRun(Loggable):
         """
         cancel experiment if teststr evaluates to true
         """
-        self._conditional_appender('cancelation', kw, CancelationConditional)
+        self._conditional_appender('cancelation', kw, CancelationConditional, level=RUN,
+                                   location=self.measurement_script.name)
 
     def py_add_action(self, **kw):
         """
@@ -608,7 +611,8 @@ class AutomatedRun(Loggable):
 
         perform a specified action if teststr evaluates to true
         """
-        self._conditional_appender('action', kw, ActionConditional)
+        self._conditional_appender('action', kw, ActionConditional, level=RUN,
+                                   location=self.measurement_script.name)
 
     def py_add_termination(self, **kw):
         """
@@ -616,7 +620,8 @@ class AutomatedRun(Loggable):
 
         terminate run and continue experiment if teststr evaluates to true
         """
-        self._conditional_appender('termination', kw, TerminationConditional)
+        self._conditional_appender('termination', kw, TerminationConditional, level=RUN,
+                                   location=self.measurement_script.name)
 
     def py_add_truncation(self, **kw):
         """
@@ -627,7 +632,8 @@ class AutomatedRun(Loggable):
         attr='', comp='',start_count=50, frequency=5,
         abbreviated_count_ratio=1.0
         """
-        self._conditional_appender('truncation', kw, TruncationConditional)
+        self._conditional_appender('truncation', kw, TruncationConditional, level=RUN,
+                                   location=self.measurement_script.name)
 
     def py_clear_conditionals(self):
         self.debug('$$$$$ Clearing conditionals')
@@ -974,7 +980,7 @@ class AutomatedRun(Loggable):
                 i = 0
             i += 1
 
-    def post_measurement_save(self):
+    def save(self):
         self.debug('post measurement save measured={} aborted={}'.format(self._measured, self._aborted))
         if self._measured and not self._aborted:
             conds = (self.termination_conditionals, self.truncation_conditionals,
@@ -1147,7 +1153,14 @@ class AutomatedRun(Loggable):
         else:
             self.warning('Invalid script syntax for "{}"'.format(self.extraction_script.name))
             return
-        if self.extraction_script.execute():
+
+        try:
+            ex_result = self.extraction_script.execute()
+        except ExtractionException, e:
+            ex_result = False
+            self.debug('extraction exception={}'.format(e))
+
+        if ex_result:
             if syn_extractor:
                 syn_extractor.stop()
 
@@ -1235,7 +1248,7 @@ class AutomatedRun(Loggable):
             self.info_color = None
 
             self._measured = True
-            return self.post_measurement_save()
+            return True
             # return True
         else:
             if use_post_on_fail:
@@ -1282,8 +1295,9 @@ class AutomatedRun(Loggable):
             t.start()
 
     def do_post_termination(self, do_post_equilibration=True):
-        oex = self.experiment_executor.executable
-        self.experiment_executor.executable = False
+        if self.experiment_executor:
+            oex = self.experiment_executor.executable
+            self.experiment_executor.executable = False
         self.heading('Post Termination Started')
         if do_post_equilibration:
             self.do_post_equilibration()
@@ -1293,7 +1307,8 @@ class AutomatedRun(Loggable):
         self.stop()
 
         self.heading('Post Termination Finished')
-        self.experiment_executor.executable = oex
+        if self.experiment_executor:
+            self.experiment_executor.executable = oex
 
     # ===============================================================================
     # utilities
@@ -1494,7 +1509,7 @@ anaylsis_type={}
         p = get_path(paths.spectrometer_dir, '.*conditionals', ('.yaml', '.yml'))
         if p is not None:
             self.info('adding default conditionals from {}'.format(p))
-            self._add_conditionals_from_file(p)
+            self._add_conditionals_from_file(p, level=SYSTEM)
         else:
             self.warning('no Default Conditionals file. {}'.format(p))
 
@@ -1508,19 +1523,19 @@ anaylsis_type={}
             p = get_path(paths.queue_conditionals_dir, name, ('.yaml', '.yml'))
             if p is not None:
                 self.info('adding queue conditionals from {}'.format(p))
-                self._add_conditionals_from_file(p)
+                self._add_conditionals_from_file(p, level=QUEUE)
 
             else:
                 self.warning('Invalid Conditionals file. {}'.format(p))
 
-    def _add_conditionals_from_file(self, p):
-        d = conditionals_from_file(p)
+    def _add_conditionals_from_file(self, p, level=None):
+        d = conditionals_from_file(p, level=level)
         for k, v in d.items():
             if k in ('actions', 'truncations', 'terminations', 'cancelations'):
                 var = getattr(self, '{}_conditionals'.format(k[:-1]))
                 var.extend(v)
 
-    def _conditional_appender(self, name, cd, klass, location=None):
+    def _conditional_appender(self, name, cd, klass, level=None, location=None):
         if not self.isotope_group:
             self.warning('No ArArAge to use for conditional testing')
             return
@@ -1535,7 +1550,7 @@ anaylsis_type={}
 
         # don't check if isotope_group has the attribute. it may be added to isotope group later
         obj = getattr(self, '{}_conditionals'.format(name))
-        con = conditional_from_dict(cd, klass, location)
+        con = conditional_from_dict(cd, klass, level=level, location=location)
 
         if con:
             self.info(
@@ -1617,8 +1632,9 @@ anaylsis_type={}
         return [spec.get_detector(n) for n in dets]
 
     def _define_detectors(self, isotope, det):
-        spec = self.spectrometer_manager.spectrometer
-        spec.update_isotopes(isotope, det)
+        if self.spectrometer_manager:
+            spec = self.spectrometer_manager.spectrometer
+            spec.update_isotopes(isotope, det)
 
     def _activate_detectors(self, dets):
         """
@@ -1674,8 +1690,7 @@ anaylsis_type={}
 
         for d in self._active_detectors:
             self.debug('setting isotope det={}, iso={}'.format(d.name, d.isotope))
-            self.isotope_group.set_isotope(d.isotope, (0, 0),
-                                           d.name,
+            self.isotope_group.set_isotope(d.isotope, d.name, (0, 0),
                                            correct_for_blank=cb)
 
         if (not self.spec.analysis_type.startswith('blank')
@@ -1707,6 +1722,7 @@ anaylsis_type={}
                 self.debug('extract conditionals from file. {}'.format(p))
                 with open(p, 'r') as rfile:
                     yd = yaml.load(rfile)
+                    failure = False
                     for kind, items in yd.iteritems():
                         try:
                             klass = klass_dict[kind]
@@ -1720,9 +1736,14 @@ anaylsis_type={}
                                 if kind.endswith('s'):
                                     kind = kind[:-1]
 
-                                self._conditional_appender(kind, cd, klass, p)
+                                self._conditional_appender(kind, cd, klass, location=p)
                             except BaseException, e:
                                 self.debug('Failed adding {}. excp="{}", cd={}'.format(kind, e, cd))
+                                failure = True
+
+                    if failure:
+                        if not self.confirmation_dialog('Failed to add Conditionals. Would you like to continue?'):
+                            self.cancel_run(do_post_equilibration=False)
             else:
                 try:
                     c, start = t.split(',')
@@ -1837,7 +1858,11 @@ anaylsis_type={}
 
             fxs = linspace(xmi, xma)
             for i, p in enumerate(g.plots):
-                xs = g.get_data(i)
+                try:
+                    xs = g.get_data(i)
+                except IndexError:
+                    continue
+
                 ys = g.get_data(i, axis=1)
 
                 for ni, color, yoff in ((5, 'red', 30), (4, 'green', 10), (3, 'blue', -10), (2, 'orange', -30)):

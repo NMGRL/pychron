@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from pyface.message_dialog import warning
+from pyface.message_dialog import warning, information
 from pyface.tasks.task_window_layout import TaskWindowLayout
 
 # ============= standard library imports ========================
@@ -271,7 +271,11 @@ class OpenCurrentExperimentQueueAction(ExperimentAction):
     id = 'pychron.open_current_experiment'
 
     def perform(self, event):
-        path = os.path.join(paths.experiment_dir, 'Current Experiment.txt')
+        name = 'CurrentExperiment.txt'
+        path = os.path.join(paths.experiment_dir, name)
+
+        if not os.path.isfile(path):
+            information('No experiment called {}'.format(name))
         open_experiment(event, path)
 
 
@@ -293,7 +297,6 @@ class SignalCalculatorAction(ExperimentAction):
 
     def perform(self, event):
         obj = self._get_service(event, 'pychron.experiment.signal_calculator.SignalCalculator')
-        app = event.task.window.application
         open_view(obj)
 
 
@@ -301,6 +304,12 @@ class ResetQueuesAction(TaskAction):
     method = 'reset_queues'
     name = 'Reset Queues'
     dname = 'Reset Queues'
+
+
+class SyncQueueAction(TaskAction):
+    method = 'sync_queue'
+    name = 'Sync Queue'
+    dname = 'Sync Queue'
 
 
 class LastAnalysisRecoveryAction(Action):

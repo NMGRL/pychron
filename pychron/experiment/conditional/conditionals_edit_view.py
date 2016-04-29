@@ -85,8 +85,8 @@ class ConditionalsViewable(HasTraits):
         group = klass(items, conditional_klass,
                       name=name,
                       label=label or name,
-                      available_attrs=self.available_attrs,
-                      **kw)
+                      available_attrs=self.available_attrs)
+        group.set_attrs(**kw)
 
         self.groups.append(group)
         return group

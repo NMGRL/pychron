@@ -29,7 +29,8 @@ from pychron.spectrometer.tasks.base_spectrometer_plugin import BaseSpectrometer
 from pychron.spectrometer.thermo.manager.argus import ArgusSpectrometerManager
 from pychron.spectrometer.tasks.spectrometer_actions import PeakCenterAction, \
     CoincidenceScanAction, SpectrometerParametersAction, MagnetFieldTableAction, MagnetFieldTableHistoryAction, \
-    ToggleSpectrometerTask, EditGainsAction, SendConfigAction, ViewReadoutAction, DefinePeakCenterAction
+    ToggleSpectrometerTask, EditGainsAction, SendConfigAction, ViewReadoutAction, DefinePeakCenterAction, \
+    ReloadMFTableAction
 from pychron.spectrometer.tasks.spectrometer_preferences import SpectrometerPreferencesPane
 
 
@@ -60,15 +61,15 @@ class ThermoSpectrometerPlugin(BaseSpectrometerPlugin):
     # ===============================================================================
     def test_communication(self):
         manager = self.spectrometer_manager
-        t = manager.test_connection()
-        return 'Passed' if t else 'Failed'
+        return manager.test_connection()
 
     def test_intensity(self):
         manager = self.spectrometer_manager
-        t = manager.test_connection(force=False)
-        if t:
-            tt = manager.test_intensity()
-            return 'Passed' if tt else 'Failed'
+        ret = manager.test_connection(force=False)
+        if ret and ret[0]:
+            ret = manager.test_intensity()
+
+        return ret
 
     # ===============================================================================
     # defaults
@@ -98,9 +99,11 @@ class ThermoSpectrometerPlugin(BaseSpectrometerPlugin):
                     SchemaAddition(id='view_readout',
                                    factory=ViewReadoutAction,
                                    path='MenuBar/spectrometer.menu'),
-
                     SchemaAddition(id='edit_gains',
                                    factory=EditGainsAction,
+                                   path='MenuBar/spectrometer.menu'),
+                    SchemaAddition(id='relood_table',
+                                   factory=ReloadMFTableAction,
                                    path='MenuBar/spectrometer.menu'),
                     SchemaAddition(id='mftable',
                                    factory=MagnetFieldTableAction,

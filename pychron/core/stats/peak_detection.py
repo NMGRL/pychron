@@ -177,6 +177,9 @@ def calculate_peak_center(x, y, test_peak_flat=True, min_peak_height=1.0, percen
     if ma < min_peak_height:
         raise PeakCenterError('No peak greater than {}. max = {}'.format(min_peak_height, ma))
 
+    if max_i == 0:
+        max_i = len(x)/2
+
     mx = x[max_i]
     my = ma
 

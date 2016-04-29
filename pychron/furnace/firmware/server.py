@@ -43,10 +43,13 @@ class FurnaceFirmwareProtocol(ServiceProtocol):
                                ('SetSetpoint', self._manager.set_setpoint),
                                ('GetProcessValue', self._manager.get_process_value),
                                ('GetPercentOutput', self._manager.get_percent_output),
+                               ('GetFurnaceSummary', self._manager.get_furnace_summary),
                                ('SetPID', self._manager.set_pid))
 
         valve_services = (('Open', self._manager.open_switch),
                           ('Close', self._manager.close_switch),
+                          ('GetChannelState', self._manager.get_channel_state),
+                          ('GetChannelDOState', self._manager.get_channel_do_state),
                           ('GetIndicatorState', self._manager.get_indicator_state),
                           ('GetChannelState', self._manager.get_channel_state))
 

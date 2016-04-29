@@ -38,8 +38,8 @@ def get_file_text(d):
 
 
 class Paths(object):
-    git_base_origin = 'https://github.com'
-
+    github_url = 'https://github.com'
+    github_api_url = 'https://api.github.com'
     dissertation = '/Users/ross/Programming/git/dissertation'
     # enthought = path.join(path.expanduser('~'), '.enthought')
     # users_file = path.join(enthought, 'users')
@@ -235,6 +235,7 @@ class Paths(object):
     ideogram_template = None
     flux_template = None
     vertical_flux_template = None
+    xy_scatter_template = None
     csv_ideogram_template = None
     spectrum_template = None
     isochron_template = None
@@ -460,6 +461,7 @@ class Paths(object):
         self.isochron_template = join(self.pipeline_template_dir, 'isochron.yaml')
         self.inverse_isochron_template = join(self.pipeline_template_dir, 'inverse_isochron.yaml')
         self.vertical_flux_template = join(self.pipeline_template_dir, 'vertical_flux.yaml')
+        self.xy_scatter_template = join(self.pipeline_template_dir, 'xy_scatter.yaml')
         self.flux_template = join(self.pipeline_template_dir, 'flux.yaml')
         self.analysis_table_template = join(self.pipeline_template_dir, 'analysis_table.yaml')
         self.interpreted_age_table_template = join(self.pipeline_template_dir, 'interpreted_age_table.yaml')

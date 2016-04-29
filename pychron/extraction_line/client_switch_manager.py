@@ -112,13 +112,12 @@ class ClientSwitchManager(SwitchManager):
         if self.actuators:
             actuator = self.actuators[0]
             try:
-
                 word = actuator.get_state_word()
                 if self._validate_checksum(word):
                     d = self._parse_word(word[:-4])
 
-                    # self.debug('Get State Word: {}'.format(word.strip()))
-                    # self.debug('Parsed State Word: {}'.format(d))
+                    self.debug('Get State Word: {}'.format(word.strip()))
+                    self.debug('Parsed State Word: {}'.format(d))
             except BaseException:
                 pass
 
@@ -129,7 +128,7 @@ class ClientSwitchManager(SwitchManager):
         if self.actuators:
             actuator = self.actuators[0]
             word = actuator.get_lock_word()
-            self.debug('Read Lock word={}'.format(word))
+            # self.debug('Read Lock word={}'.format(word))
             if self._validate_checksum(word):
                 d = self._parse_word(word[:-4])
 

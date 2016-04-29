@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Float, Str, Int, List
+from traits.api import Float, Str, Int, List, Enum
 # ============= standard library imports ========================
 import time
 from numpy import max, argmax, vstack, linspace
@@ -58,6 +58,7 @@ class BasePeakCenter(MagnetSweep):
     min_peak_height = Float(5.0)
     percent = Int
     use_interpolation = False
+    interpolation_kind = Enum('linear', 'nearest', 'zero', 'slinear', 'quadratic', 'cubic')
     n_peaks = 1
     select_peak = 1
     use_dac_offset = False
@@ -160,17 +161,27 @@ class BasePeakCenter(MagnetSweep):
         """
             returns center, success (float/None, bool)
         """
+
         graph = self.graph
+
         spec = self.spectrometer
 
         graph.set_x_limits(min_=min([start, end]),
                            max_=max([start, end]))
 
+        def get_reference_intensity():
+            keys, signals = spec.get_intensities()
+            idx = keys.index(self.reference_detector.name)
+            return signals[idx]
+
+        # get the reference detectors current intensity
+        cur_intensity = get_reference_intensity()
+
         # move to start position
         self.info('Moving to starting dac {}'.format(start))
         spec.magnet.set_dac(start)
 
-        tol = 50
+        tol = cur_intensity * (1 - self.percent/100.)
         timeout = 10
         self.info('Wait until signal near baseline. tol= {}. timeout= {}'.format(tol, timeout))
         # spec.save_integration()
@@ -178,9 +189,7 @@ class BasePeakCenter(MagnetSweep):
 
         st = time.time()
         while 1:
-            keys, signals = spec.get_intensities()
-            idx = keys.index(self.reference_detector.name)
-            signal = signals[idx]
+            signal = get_reference_intensity()
             if signal < tol:
                 self.info('Peak center baseline intensity achieved')
                 break
@@ -284,7 +293,7 @@ class BasePeakCenter(MagnetSweep):
 
     def _calculate_peak_center(self, x, y):
         if self.use_interpolation:
-            f = interpolate.interp1d(x, y, kind='cubic')
+            f = interpolate.interp1d(x, y, kind=self.interpolation_kind)
             x = linspace(x.min(), x.max(), 500)
             y = f(x)
             self.graph.new_series(x, y, line_width=1)

@@ -210,27 +210,32 @@ class ExtractionLineManager(Manager, Consoleable):
         return v
 
     def test_gauge_communication(self):
+        self.info('test gauge communication')
+        ret, err = True, ''
         if self.gauge_manager:
             if self.gauge_manager.simulation:
-                return globalv.communication_simulation
+                ret = globalv.communication_simulation
             else:
-                return self.gauge_manager.test_connection()
+                ret = self.gauge_manager.test_connection()
+        return ret, err
 
     def test_connection(self):
+        self.info('test connection')
         return self.test_valve_communication()
 
     def test_valve_communication(self):
-        # if self.simulation:
-        # return globalv.communication_simulation
-        # else:
+        self.info('test valve communication')
+
+        ret, err = True, ''
         if self.switch_manager:
             if self.switch_manager.simulation:
-                return globalv.communication_simulation
+                ret = globalv.communication_simulation
             else:
                 valves = self.switch_manager.switches
                 vkeys = sorted(valves.keys())
                 state = self.switch_manager.get_state_checksum(vkeys)
-                return bool(state)
+                ret = bool(state)
+        return ret, err
 
     def refresh_canvas(self):
         for ci in self.canvases:
@@ -586,8 +591,8 @@ class ExtractionLineManager(Manager, Consoleable):
             if ret:
                 result, change = ret
                 if isinstance(result, bool):
-                    # if change:
-                    self.update_switch_state(name, True if action == 'open' else False)
+                    if change:
+                        self.update_switch_state(name, True if action == 'open' else False)
                         # self.refresh_canvas()
         return result, change
 
@@ -703,6 +708,7 @@ class ExtractionLineManager(Manager, Consoleable):
             c.canvas2D.trait_set(**{name: new})
 
     def _handle_state(self, new):
+        self.debug('handle state {}'.format(new))
         self.update_switch_state(*new)
 
     def _handle_lock_state(self, new):

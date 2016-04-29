@@ -15,12 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from datetime import datetime
-
-from traits.api import Instance, Button, Int
-from traits.has_traits import provides
-
+from traits.api import Instance, Button, Int, Str, Bool, provides
 # ============= standard library imports ========================
+from datetime import datetime
 import struct
 from numpy import array
 import time
@@ -45,9 +42,7 @@ following information is necessary
 
 RUN_TYPE_DICT = dict(Unknown=1, Air=2, Blank=5)
 # SAMPLE_DICT = dict(Air=2, Blank=1)
-ISO_LABELS = dict(H1='Ar40', AX='Ar39', L1='Ar38', L2='Ar37', CDD='Ar36')
-
-DEBUG = True
+# ISO_LABELS = dict(H1='Ar40', AX='Ar39', L1='Ar38', L2='Ar37', CDD='Ar36')
 
 PEAK_HOP_MAP = {'Ar41': 'H2', 'Ar40': 'H1',
                 'Ar39': 'AX', 'Ar38': 'L1',
@@ -65,6 +60,11 @@ class MassSpecDatabaseImporter(Loggable):
     sample_loading_id = None
     data_reduction_session_id = None
     login_session_id = None
+
+    reference_detector_name = Str
+    reference_isotope_name = Str
+    use_reference_detector_by_isotope = Bool
+
     _current_spec = None
     _analysis = None
     _database_version = 0
@@ -230,7 +230,7 @@ class MassSpecDatabaseImporter(Loggable):
                 except Exception, e:
                     import traceback
                     tb = traceback.format_exc()
-                    self.debug('Mass Spec save exception. {}\n'.format(e, tb))
+                    self.debug('Mass Spec save exception. {}\n {}'.format(e, tb))
                     if i == 2:
                         self.message('Could not save spec.runid={} rid={} '
                                      'to Mass Spec database.\n {}'.format(spec.runid, rid, tb))
@@ -278,11 +278,21 @@ class MassSpecDatabaseImporter(Loggable):
 
         self.create_import_session(spectrometer, tray)
 
+        if not self.reference_isotope_name:
+            self.reference_isotope_name = 'Ar40'
+
+        if self.use_reference_detector_by_isotope:
+            rd = spec.get_detector_by_isotope(self.reference_isotope_name)
+        else:
+            if not self.reference_detector_name:
+                self.reference_detector_name = 'H1'
+            rd = self.reference_detector_name
+
         # add the reference detector
         if DBVERSION >= 16.3:
-            refdbdet = db.add_detector('H1')
+            refdbdet = db.add_detector(rd)
         else:
-            refdbdet = db.add_detector('H1', Label='H1')
+            refdbdet = db.add_detector(rd, Label=rd)
 
         sess.flush()
 
@@ -304,7 +314,7 @@ class MassSpecDatabaseImporter(Loggable):
                       LoginSessionID=self.login_session_id,
                       RunScriptID=rs.RunScriptID)
         if DBVERSION >= 16.3:
-            params['SignalRefIsot'] = 'Ar40'
+            params['SignalRefIsot'] = self.reference_isotope_name
             params['RedundantUserID'] = 1
 
         else:

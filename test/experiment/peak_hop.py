@@ -122,7 +122,7 @@ class PeakHopTestCase(unittest.TestCase):
         msi.connect()
         arun = self.arun
         arun.massspec_importer = msi
-        ret = arun.post_measurement_save()
+        ret = arun.save()
         self.assertTrue(ret)
 
         #def test_peak_hop_baseline_save(self):

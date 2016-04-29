@@ -39,12 +39,12 @@ from pychron.dvc.defaults import TRIGA, HOLDER_24_SPOKES, LASER221, LASER65
 from pychron.dvc.dvc_analysis import DVCAnalysis, repository_path, analysis_path, PATH_MODIFIERS, \
     AnalysisNotAnvailableError
 from pychron.dvc.dvc_database import DVCDatabase
-from pychron.dvc.meta_repo import MetaRepo
+from pychron.dvc.meta_repo import MetaRepo, Production
 from pychron.envisage.browser.record_views import InterpretedAgeRecordView
+from pychron.git.hosts import IGitHost
 from pychron.git_archive.repo_manager import GitRepoManager, format_date, get_repository_branch
-from pychron.github import Organization
 from pychron.loggable import Loggable
-from pychron.paths import paths
+from pychron.paths import paths, r_mkdir
 from pychron.pychron_constants import RATIO_KEYS, INTERFERENCE_KEYS
 
 TESTSTR = {'blanks': 'auto update blanks', 'iso_evo': 'auto update iso_evo'}
@@ -65,12 +65,12 @@ def repository_has_staged(ps):
     return changed
 
 
-def push_repositories(ps):
+def push_repositories(ps, remote=None):
     repo = GitRepoManager()
     for p in ps:
         pp = os.path.join(paths.repository_dataset_dir, p)
         repo.open_repo(pp)
-        repo.push()
+        repo.push(remote)
 
 
 def get_review_status(record):
@@ -108,9 +108,9 @@ def find_interpreted_age_path(idn, repositories, prefixlen=3):
             return ps[0]
 
 
-def make_remote_url(org, name):
-    return '{}/{}/{}.git'.format(paths.git_base_origin, org, name)
-
+# def make_remote_url(org, name):
+#     return '{}/{}/{}.git'.format(paths.git_base_origin, org, name)
+#
 
 class DVCException(BaseException):
     def __init__(self, attr):
@@ -177,8 +177,6 @@ class DVC(Loggable):
 
     meta_repo_name = Str
     organization = Str
-    github_user = Str
-    github_password = Str
     default_team = Str
 
     current_repository = Instance(GitRepoManager)
@@ -255,6 +253,79 @@ class DVC(Loggable):
                                 irradiation_time=cs.irradiation_time,
                                 timestamp=now)
         return True
+
+    def freeze_flux(self, ans):
+        self.info('freeze flux')
+
+        def ai_gen():
+            key = lambda x: x.irradiation
+            lkey = lambda x: x.level
+            rkey = lambda x: x.repository_identifier
+
+            for irrad, ais in groupby(sorted(ans, key=key), key=key):
+                for level, ais in groupby(sorted(ais, key=lkey), key=lkey):
+                    p = self.get_level_path(irrad, level)
+                    obj = dvc_load(p)
+                    for repo, ais in groupby(sorted(ais, key=rkey), key=rkey):
+                        yield repo, irrad, level, {ai.irradiation_position: obj[ai.irradiation_position] for ai in ais}
+
+        added = []
+
+        def func(x, prog, i, n):
+            repo, irrad, level, d = x
+            if prog:
+                prog.change_message('Freezing Flux {}{} Repository={}'.format(irrad, level, repo))
+
+            root = os.path.join(paths.repository_dataset_dir, repo, 'flux', irrad)
+            r_mkdir(root)
+
+            p = os.path.join(root, level)
+            if os.path.isfile(p):
+                dd = dvc_load(p)
+                dd.update(d)
+
+            dvc_dump(d, p)
+            added.append((repo, p))
+
+        progress_loader(ai_gen(), func, threshold=1)
+
+        self._commit_freeze(added, '<FLUX_FREEZE>')
+
+    def freeze_production_ratios(self, ans):
+        self.info('freeze production ratios')
+
+        def ai_gen():
+            key = lambda x: x.irradiation
+            lkey = lambda x: x.level
+            for irrad, ais in groupby(sorted(ans, key=key), key=key):
+                for level, ais in groupby(sorted(ais, key=lkey), key=lkey):
+                    pr = self.meta_repo.get_production(irrad, level)
+                    for ai in ais:
+                        yield pr, ai
+
+        added = []
+
+        def func(x, prog, i, n):
+            pr, ai = x
+            if prog:
+                prog.change_message('Freezing Production {}'.format(ai.runid))
+
+            p = analysis_path(ai.runid, ai.repository_identifier, 'productions', mode='w')
+            pr.dump(path=p)
+            added.append((ai.repository_identifier, p))
+
+        progress_loader(ai_gen(), func, threshold=1)
+        self._commit_freeze(added, '<PR_FREEZE>')
+
+    def _commit_freeze(self, added, msg):
+        key = lambda x: x[0]
+        rr = sorted(added, key=key)
+        for repo, ps in groupby(rr, key=key):
+            rm = GitRepoManager()
+            rm.open_repo(repo, paths.repository_dataset_dir)
+            rm.add_paths(ps)
+            rm.smart_pull()
+            rm.commit(msg)
 
     # database
     # analysis manual edit
@@ -465,21 +536,35 @@ class DVC(Loggable):
         repo.commit(msg)
 
     def remote_repositories(self, attributes=None):
-        org = self._organization_factory()
-        if attributes:
-            return org.repos(attributes)
+        rs = []
+        gs = self.application.get_services(IGitHost)
+        if gs:
+            for gi in gs:
+                ri = gi.get_repository_names(self.organization)
+                rs.extend(ri)
         else:
-            return org.repo_names
+            self.warning_dialog('GitLab or GitHub plugin is required')
+        return rs
 
-    def check_github_connection(self):
-        org = self._organization_factory()
-        try:
-            return org.info is not None
-        except BaseException:
-            pass
+        # org = self._organization_factory()
+        # if attributes:
+        #     return org.repos(attributes)
+        # else:
+        #     return org.repo_names
+
+    def check_githost_connection(self):
+        git_service = self.application.get_service(IGitHost)
+        return git_service.test_connection(self.organization)
+        # org = self._organization_factory()
+        # try:
+        #     return org.info is not None
+        # except BaseException:
+        #     pass
 
     def make_url(self, name):
-        return make_remote_url(self.organization, name)
+        git_service = self.application.get_service(IGitHost)
+        return git_service.make_url(name, self.organization)
+        # return make_remote_url(self.organization, name)
 
     def git_session_ctx(self, repository_identifier, message):
         return GitSessionCTX(self, repository_identifier, message)
@@ -496,10 +581,16 @@ class DVC(Loggable):
             repo = self._get_repository(name)
             repo.pull()
         else:
-            url = self.make_url(name)
-            org = self._organization_factory()
-            if name in org.repo_names:
-                GitRepoManager.clone_from(url, root)
+            names = self.remote_repositories()
+            if name in names:
+                service = self.application.get_service(IGitHost)
+                service.clone_from(name, root, self.organization)
+                # GitRepoManager.clone_from(name, root)
+
+        # url = self.make_url(name)
+        # org = self._organization_factory()
+        # if name in org.repo_names:
+        #     GitRepoManager.clone_from(url, root)
 
         return True
 
@@ -523,6 +614,13 @@ class DVC(Loggable):
                                    head.message)
         self.information_dialog(msg)
 
+    def push_repository(self, repo):
+        for gi in self.application.get_services(IGitHost):
+            repo.push(remote=gi.default_remote_name)
+
+    def push_repositories(self, changes):
+        for gi in self.application.get_services(IGitHost):
+            push_repositories(changes, gi.default_remote_name)
     # IDatastore
     def get_greatest_aliquot(self, identifier):
         return self.db.get_greatest_aliquot(identifier)
@@ -626,23 +724,26 @@ class DVC(Loggable):
         db = self.db
         with db.session_ctx():
             dban = db.get_analysis_uuid(runspec.uuid)
-            for e in dban.repository_associations:
-                if e.repository == expid:
-                    break
+            if dban:
+                for e in dban.repository_associations:
+                    if e.repository == expid:
+                        break
+                else:
+                    db.add_repository_association(expid, dban)
+
+                src_expid = runspec.repository_identifier
+                if src_expid != expid:
+                    repo = self._get_repository(expid)
+
+                    for m in PATH_MODIFIERS:
+                        src = analysis_path(runspec.record_id, src_expid, modifier=m)
+                        dest = analysis_path(runspec.record_id, expid, modifier=m, mode='w')
+
+                        shutil.copyfile(src, dest)
+                        repo.add(dest, commit=False)
+                    repo.commit('added repository association')
             else:
-                db.add_repository_association(expid, dban)
-
-            src_expid = runspec.repository_identifier
-            if src_expid != expid:
-                repo = self._get_repository(expid)
-
-                for m in PATH_MODIFIERS:
-                    src = analysis_path(runspec.record_id, src_expid, modifier=m)
-                    dest = analysis_path(runspec.record_id, expid, modifier=m, mode='w')
-
-                    shutil.copyfile(src, dest)
-                    repo.add(dest, commit=False)
-                repo.commit('added repository association')
+                self.warning('{} not in the database {}'.format(runspec.runid, self.db.name))
 
     def add_measured_position(self, *args, **kw):
         with self.db.session_ctx():
@@ -718,10 +819,8 @@ class DVC(Loggable):
 
     def add_repository(self, identifier, principal_investigator, inform=True):
         self.debug('trying to add repository identifier={}, pi={}'.format(identifier, principal_investigator))
-        org = self._organization_factory()
-        for r in org.repo_names:
-            print r, identifier, r == identifier
-        if identifier in org.repo_names:
+        names = self.remote_repositories()
+        if identifier in names:
             # make sure also in the database
             self.db.add_repository(identifier, principal_investigator)
 
@@ -736,18 +835,24 @@ class DVC(Loggable):
                 if inform:
                     self.warning_dialog('{} already exists.'.format(root))
             else:
-                self.info('Creating repository. {}'.format(identifier))
-                # with open('/Users/ross/Programming/githubauth.txt') as rfile:
-                #     usr = rfile.readline().strip()
-                #     pwd = rfile.readline().strip()
+                gs = self.application.get_services(IGitHost)
+                ret = False
+                for i, gi in enumerate(gs):
+                    self.info('Creating repository at {}. {}'.format(gi.name, identifier))
 
-                org.create_repo(identifier, self.github_user, self.github_password,
-                                auto_init=True)
+                    if gi.create_repo(identifier, organization=self.organization, auto_init=True):
+                        if self.default_team:
+                            gi.set_team(self.default_team, self.organization, identifier,
+                                        permission='push')
 
-                # url = '{}/{}/{}.git'.format(paths.git_base_origin, self.organization, identifier)
-                Repo.clone_from(self.make_url(identifier), root)
-                self.db.add_repository(identifier, principal_investigator)
-                return True
+                        url = gi.make_url(identifier, self.organization)
+                        if i == 0:
+                            repo = Repo.clone_from(url, root)
+                            self.db.add_repository(identifier, principal_investigator)
+                        else:
+                            repo.create_remote(gi.default_remote_name or 'origin', url)
+
+                return ret
 
     def add_irradiation(self, name, doses=None, add_repo=False, principal_investigator=None):
         with self.db.session_ctx():
@@ -828,20 +933,26 @@ class DVC(Loggable):
         if isinstance(record, DVCAnalysis):
             a = record
         else:
+            print 'asdfas', record.use_repository_suffix, record.record_id
+
             try:
-                a = DVCAnalysis(record.record_id, expid)
+                rid = record.record_id
+                if record.use_repository_suffix:
+                    rid = '-'.join(rid.split('-')[:-1])
+                print 'rrr', rid
+                a = DVCAnalysis(rid, expid)
             except AnalysisNotAnvailableError:
-                self.info('Analysis {} not available. Trying to clone repository "{}'.format(record.record_id, expid))
+                self.info('Analysis {} not available. Trying to clone repository "{}"'.format(rid, expid))
                 self.sync_repo(expid)
+
                 try:
-                    a = DVCAnalysis(record.record_id, expid)
+                    a = DVCAnalysis(rid, expid)
                 except AnalysisNotAnvailableError:
-                    self.warning_dialog('Analysis {} not in repository {}'.format(record.record_id, expid))
+                    self.warning_dialog('Analysis {} not in repository {}'.format(rid, expid))
                     return
 
             # get repository branch
             a.branch = get_repository_branch(os.path.join(paths.repository_dataset_dir, expid))
-
             # a.set_tag(record.tag)
 
             # load irradiation
@@ -849,7 +960,11 @@ class DVC(Loggable):
                 chronology = meta_repo.get_chronology(a.irradiation)
                 a.set_chronology(chronology)
 
-                pname, prod = meta_repo.get_production(a.irradiation, a.irradiation_level)
+                frozen_production = self._get_frozen_production(rid, a.repository_identifier)
+                if frozen_production:
+                    pname, prod = frozen_production.name, frozen_production
+                else:
+                    pname, prod = meta_repo.get_production(a.irradiation, a.irradiation_level)
                 a.set_production(pname, prod)
 
                 j, lambda_k = meta_repo.get_flux(record.irradiation, record.irradiation_level,
@@ -864,11 +979,10 @@ class DVC(Loggable):
                     a.calculate_age()
         return a
 
-    def _organization_factory(self):
-        org = Organization(self.organization,
-                           usr=self.github_user,
-                           pwd=self.github_password)
-        return org
+    def _get_frozen_production(self, rid, repo):
+        path = analysis_path(rid, repo, 'productions')
+        if path:
+            return Production(path)
 
     def _get_repository(self, repository_identifier):
         repo = self.current_repository
@@ -886,7 +1000,7 @@ class DVC(Loggable):
     def _bind_preferences(self):
 
         prefid = 'pychron.dvc'
-        for attr in ('meta_repo_name', 'organization', 'github_user', 'github_password', 'default_team'):
+        for attr in ('meta_repo_name', 'organization', 'default_team'):
             bind_preference(self, attr, '{}.{}'.format(prefid, attr))
 
         prefid = 'pychron.dvc.db'

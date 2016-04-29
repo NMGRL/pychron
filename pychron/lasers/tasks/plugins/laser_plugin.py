@@ -162,8 +162,8 @@ class FusionsPlugin(BaseLaserPlugin):
 
     def test_communication(self):
         man = self._get_manager()
-        c = man.test_connection()
-        return 'Passed' if c else 'Failed'
+        return man.test_connection()
+
 
     def _tasks_default(self):
         return [TaskFactory(id=self.id,

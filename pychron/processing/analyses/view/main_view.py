@@ -372,10 +372,10 @@ class MainView(HasTraits):
             for ci in self.computed_values:
                 attr = ci.tag
                 if attr == 'wo_j':
-                    ci.error = an.age_err_wo_j
+                    ci.error = an.age_err_wo_j or 0
                     ci.value = nominal_value(getattr(an, ci.value_tag))
                 elif attr == 'wo_irrad':
-                    ci.error = an.F_err_wo_irrad
+                    ci.error = an.F_err_wo_irrad or 0
                     ci.value = nominal_value(getattr(an, ci.value_tag))
                 else:
                     v = getattr(an, attr)

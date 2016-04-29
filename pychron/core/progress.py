@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+
 from pychron.core.ui.progress_dialog import myProgressDialog
 
 

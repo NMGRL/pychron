@@ -31,7 +31,7 @@ from pychron.pipeline.tasks.actions import ConfigureRecallAction, IdeogramAction
     SeriesAction, BlanksAction, ICFactorAction, ResetFactoryDefaultsAction, VerticalFluxAction, \
     LastNAnalysesSeriesAction, \
     LastNHoursSeriesAction, LastMonthSeriesAction, LastWeekSeriesAction, LastDaySeriesAction, TimeViewBrowserAction, \
-    FluxAction
+    FluxAction, FreezeProductionRatios
 from pychron.pipeline.tasks.browser_task import BrowserTask
 from pychron.pipeline.tasks.preferences import PipelinePreferencesPane
 from pychron.pipeline.tasks.task import PipelineTask
@@ -52,6 +52,7 @@ class PipelinePlugin(BaseTaskPlugin):
                  ['csv_ideogram_template', 'CSV_IDEO', ov],
                  ['flux_template', 'FLUX', ov],
                  ['vertical_flux_template', 'VERTICAL_FLUX', ov],
+                 ['xy_scatter_template', 'XY_SCATTER', ov],
                  ['analysis_table_template', 'ANALYSIS_TABLE', ov],
                  ['interpreted_age_table_template', 'INTERPRETED_AGE_TABLE', ov],
                  ['auto_ideogram_template', 'AUTO_IDEOGRAM', ov]]
@@ -149,7 +150,9 @@ class PipelinePlugin(BaseTaskPlugin):
                              SchemaAddition(factory=ICFactorAction,
                                             path=rg),
                              SchemaAddition(factory=FluxAction,
-                                            path=pg)]
+                                            path=rg),
+                             SchemaAddition(factory=FreezeProductionRatios,
+                                            path=rg)]
 
         help_actions = [SchemaAddition(factory=ResetFactoryDefaultsAction,
                                        path='MenuBar/help.menu')]

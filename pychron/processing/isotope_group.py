@@ -37,8 +37,8 @@ class IsotopeGroup(Loggable):
         return (self.isotopes[k] for k in self.isotope_keys)
 
     def clear_isotopes(self):
-        for iso in self.isotopes:
-            self.isotopes[iso] = Isotope(name=iso)
+        for iso in self.iter_isotopes():
+            self.isotopes[iso.name] = Isotope(iso.name, iso.detector)
 
     def get_baseline(self, attr):
         if attr.endswith('bs'):
@@ -189,7 +189,7 @@ class IsotopeGroup(Loggable):
         isotopes = self.isotopes
         if kind == 'baseline':
             ret = False
-            #get the isotopes that match detector
+            # get the isotopes that match detector
             for i in isotopes.itervalues():
                 if i.detector == det:
                     _append(i)
@@ -266,7 +266,7 @@ class IsotopeGroup(Loggable):
             return next((iso for iso in self.isotopes.itervalues()
                          if getattr(iso, attr) == value), None)
 
-    def set_isotope(self, iso, v, det, **kw):
+    def set_isotope(self, iso, det,v, **kw):
         # print 'set isotope', iso, v
         if iso not in self.isotopes:
             niso = Isotope(iso, det)

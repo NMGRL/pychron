@@ -21,7 +21,8 @@ import json
 import re
 # ============= local library imports  ==========================
 from pychron.furnace.furnace_controller import IFurnaceController
-from pychron.hardware.actuators import trim_bool
+from pychron.core.communication_helper import trim_bool
+from pychron.hardware import get_float
 from pychron.hardware.core.core_device import CoreDevice
 
 VER_REGEX = re.compile(r'\d+.\d+(.\d+){0,1}')
@@ -43,6 +44,15 @@ class NMGRLFurnaceEurotherm(CoreDevice):
         else:
             return False
 
+    def get_summary(self, **kw):
+        d = json.dumps({'command': 'GetFurnaceSummary', 'h2o_channel': self.water_flow_channel})
+        return self.ask(d, **kw)
+
+    @get_float(default=0)
+    def read_output_percent(self, **kw):
+        d = json.dumps({'command': 'GetPercentOutput'})
+        return self.ask(d, **kw)
+
     @trim_bool
     def get_water_flow_state(self, **kw):
         d = json.dumps({'command': 'GetDIState', 'channel': self.water_flow_channel})
@@ -56,12 +66,9 @@ class NMGRLFurnaceEurotherm(CoreDevice):
         d = json.dumps({'command': 'SetSetpoint', 'setpoint': v})
         self.ask(d)
 
+    @get_float(default=0)
     def get_setpoint(self, **kw):
-        resp = self.ask('GetSetpoint')
-        try:
-            return float(resp)
-        except (TypeError, ValueError):
-            pass
+        return self.ask('GetSetpoint')
 
     read_setpoint = get_setpoint
 

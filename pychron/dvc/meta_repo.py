@@ -237,11 +237,14 @@ class Production(MetaObject):
     def to_dict(self, keys):
         return {t: ufloat(getattr(self, t), getattr(self, '{}_err'.format(t))) for t in keys}
 
-    def dump(self):
+    def dump(self, path=None):
+        if path is None:
+            path = self.path
+
         obj = {}
         for a in self.attrs:
             obj[a] = (getattr(self, a), getattr(self, '{}_err'.format(a)))
-        dvc_dump(obj, self.path)
+        dvc_dump(obj, path)
 
 
 class BaseHolder(MetaObject):

@@ -57,6 +57,9 @@ class BaseMagnet(HasTraits):
 
     _suppress_mass_update = False
 
+    def reload_mftable(self):
+        self.mftable.load_mftable()
+
     def set_dac(self, *args, **kw):
         raise NotImplementedError
 

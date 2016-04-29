@@ -17,8 +17,6 @@
 # ============= enthought library imports =======================
 import json
 
-from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change
-from traitsui.api import View, UItem, Item, HGroup, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 # ===============================================================================
@@ -42,7 +40,8 @@ import time
 
 # ========== local library imports =============
 from gp_actuator import GPActuator
-from pychron.hardware.actuators import invert_trim_bool, get_valve_name, trim_bool, get_valve_address
+from pychron.hardware.actuators import get_valve_address
+from pychron.core.communication_helper import trim_bool
 
 
 class NMGRLFurnaceActuator(GPActuator):
@@ -89,8 +88,6 @@ class NMGRLFurnaceActuator(GPActuator):
         cmd = json.dumps({'command': 'GetIndicatorState',
                           'name': get_valve_address(obj),
                           'action': action})
-
-        # cmd = 'GetIndicatorState {},{}'.format(get_valve_address(obj), action)
         return self.ask(cmd, verbose=verbose)
 
     def close_channel(self, obj, excl=False):
@@ -135,9 +132,11 @@ class NMGRLFurnaceActuator(GPActuator):
             time.sleep(obj.check_actuation_delay)
 
         # state = action == 'Open'
-        # chk = '1' if action == 'Close' else '0'
-        result = self.get_indicator_state(obj, action)
+        result = self.get_channel_state(obj, action)
         self.debug('check actuate action={}, result={}'.format(action, result))
+
+        if action == 'Close':
+            result = not result
 
         return result
 
@@ -145,6 +144,3 @@ class NMGRLFurnaceActuator(GPActuator):
 
 
 # ============= EOF =============================================
-
-
-

@@ -19,8 +19,8 @@ from traitsui.view import View
 # ============= local library imports  ==========================
 from pychron.experiment.conditional.conditional import ActionConditional, TruncationConditional, TerminationConditional, \
     CancelationConditional
-from pychron.experiment.conditional.conditionals_edit_view import ConditionalsViewable, ConditionalGroup, PostRunGroup, \
-    PreRunGroup
+from pychron.experiment.conditional.conditionals_edit_view import ConditionalsViewable, ConditionalGroup
+from pychron.experiment.conditional.groups import PostRunGroup, PreRunGroup
 
 
 class ConditionalsView(ConditionalsViewable):

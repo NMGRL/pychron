@@ -16,20 +16,28 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-# ============= local library imports  ==========================
 import json
+import os
+# ============= local library imports  ==========================
+
 
 __version__ = '0.1'
 
 
 def dvc_dump(obj, path):
     with open(path, 'w') as wfile:
-        json.dump(obj, wfile, indent=4, sort_keys=True)
+        try:
+            json.dump(obj, wfile, indent=4, sort_keys=True)
+        except TypeError:
+            print 'dvc dump exception {}'.format(obj)
 
 
 def dvc_load(path):
-    with open(path, 'r') as rfile:
-        return json.load(rfile)
+    if os.path.isfile(path):
+        with open(path, 'r') as rfile:
+            return json.load(rfile)
+    else:
+        return {}
 
 # ============= EOF =============================================
 

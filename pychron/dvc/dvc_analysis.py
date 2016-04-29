@@ -161,6 +161,13 @@ class DVCAnalysis(Analysis):
             if v is not None:
                 setattr(self, attr, v)
 
+        pd = jd.get('positions')
+        if pd:
+            ps = sorted(pd, key=lambda x: x['position'])
+            self.position = ','.join([pp['position'] for pp in ps])
+
+            self.xyz_position = ';'.join([','.join((pp['x'], pp['y'], pp['z'])) for pp in ps if pp['x'] is not None])
+
         if not self.extract_units:
             self.extract_units = 'W'
 
@@ -258,7 +265,7 @@ class DVCAnalysis(Analysis):
     def _load_icfactors(self, jd):
         for key, v in jd.iteritems():
             if isinstance(v, dict):
-                self.set_ic_factor(key, v['value'], v['error'])
+                self.set_ic_factor(key, v['value'] or 0, v['error'] or 0)
             elif key == 'reviewed':
                 self.icfactor_reviewed = v
 

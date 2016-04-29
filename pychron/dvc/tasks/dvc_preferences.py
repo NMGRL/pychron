@@ -28,8 +28,8 @@ class DVCPreferences(BasePreferencesHelper):
     preferences_path = 'pychron.dvc'
     meta_repo_name = Str
     organization = Str
-    github_user = Str
-    github_password = Password
+    # github_user = Str
+    # github_password = Password
     default_team = Str
     work_offline_user = Str
     work_offline_password = Password
@@ -51,9 +51,9 @@ class DVCPreferencesPane(PreferencesPane):
     category = 'DVC'
 
     def traits_view(self):
-        repo = VGroup(Item('github_user', label='Username'),
-                      Item('github_password', label='Password'),
-                      label='Credentials', show_border=True)
+        # repo = VGroup(Item('github_user', label='Username'),
+        #               Item('github_password', label='Password'),
+        #               label='Credentials', show_border=True)
 
         org = VGroup(UItem('organization'),
                      Item('default_team', tooltip='Name of the GitHub Team to add to new repositories'),
@@ -66,7 +66,7 @@ class DVCPreferencesPane(PreferencesPane):
                          label='Work Offline',
                          show_border=True)
 
-        v = View(VGroup(repo, VGroup(org, meta), label='Git',
+        v = View(VGroup(VGroup(org, meta), label='Git',
                         show_border=True),
                  offline)
         return v
@@ -147,6 +147,3 @@ class DVCPreferencesPane(PreferencesPane):
 #         return v
 
 # ============= EOF =============================================
-
-
-

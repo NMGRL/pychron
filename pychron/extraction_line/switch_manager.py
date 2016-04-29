@@ -153,7 +153,7 @@ class SwitchManager(Manager):
         return self.switches.keys()
 
     def refresh_network(self):
-
+        self.debug('refresh network')
         for k, v in self.switches.iteritems():
             self.refresh_state = (k, v.state)
 
@@ -227,6 +227,7 @@ class SwitchManager(Manager):
 
             keys.append(k)
             state = '{}{}'.format(k, int(self._get_state_by(v)))
+
             states.append(state)
             if time.time() - st > timeout:
                 self.debug('get states timeout')
@@ -237,7 +238,6 @@ class SwitchManager(Manager):
 
         if clear_prev_keys:
             keys = None
-
         self._prev_keys = keys
         return ','.join(states)
 
@@ -256,9 +256,9 @@ class SwitchManager(Manager):
         """
         if n in self.switches:
             return self.switches[n]
-        else:
-            self.debug('Invalid switch name {}'.format(n))
-            self.debug(','.join(self.switches.keys()))
+        # else:
+        #     self.debug('Invalid switch name {}'.format(n))
+        #     self.debug(','.join(self.switches.keys()))
 
     def get_name_by_address(self, k):
         """
@@ -276,14 +276,6 @@ class SwitchManager(Manager):
         """
         """
         return next((item for item in self.explanable_items if item.name == n), None)
-
-    def get_indicator_state_by_name(self, n, force=False):
-        v = self.get_switch_by_name(n)
-        state = None
-        if v is not None:
-            state = self._get_indicator_state_by(v, force=force)
-
-        return state
 
     def get_state_by_name(self, n, force=False):
         """
@@ -418,9 +410,6 @@ class SwitchManager(Manager):
                         self.debug('interlocked {}'.format(interlock))
                         return v
 
-    def _get_indicator_state_by(self, v, force=False):
-        return v.get_hardware_indicator_state()
-
     def _get_state_by(self, v, force=False):
         """
         """
@@ -485,15 +474,17 @@ class SwitchManager(Manager):
         return d
 
     def load_hardware_states(self):
+        self.debug('load hardware states')
         for k, v in self.switches.iteritems():
             if v.query_state:
-                s = v.get_hardware_state(verbose=False)
+                s = v.get_hardware_indicator_state(verbose=False)
                 if v.state != s:
                     self.refresh_state = (k, s, False)
 
         self.refresh_canvas_needed = True
 
     def load_indicator_states(self):
+        self.debug('load indicator states')
         for k, v in self.switches.iteritems():
             s = v.get_hardware_indicator_state()
             self.refresh_state = (k, s, False)
@@ -501,8 +492,10 @@ class SwitchManager(Manager):
         self.refresh_canvas_needed = True
 
     def _load_states(self):
+        self.debug('$$$$$$$$$$$$$$$$$$$$$ Load states')
         for k, v in self.switches.iteritems():
             s = v.get_hardware_state()
+            self.debug('hardware state {},{},{}'.format(k,v,s))
             if v.state != s:
                 self.refresh_state = (k, s, False)
 

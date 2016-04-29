@@ -195,11 +195,13 @@ class DVCDatabase(DatabaseAdapter):
 
             if ms:
                 q = q.filter(func.lower(AnalysisTbl.mass_spectrometer) == ms.lower())
-
-            return self._retrieve_items(AnalysisTbl, order=AnalysisTbl.timestamp.desc(),
-                                        limit=limit)
+            q = q.order_by(AnalysisTbl.timestamp.desc())
+            q = q.limit(limit)
+            return self._query_all(q)
 
     def retrieve_blank(self, kind, ms, ed, last, repository):
+        self.debug('retrieve blank. kind={}, ms={}, '
+                   'ed={}, last={}, repository={}'.format(kind, ms, ed, last, repository))
         with self.session_ctx() as sess:
             q = sess.query(AnalysisTbl)
 
@@ -222,7 +224,7 @@ class DVCDatabase(DatabaseAdapter):
                 q = q.filter(RepositoryTbl.name == repository)
 
             q = q.order_by(AnalysisTbl.timestamp.desc())
-            return self._query_one(q)
+            return self._query_one(q, verbose_query=True)
 
     # def get_analyses_data_range(self, low, high, atypes, exclude=None, exclude_uuids=None):
     #     with self.session_ctx() as sess:
@@ -558,10 +560,10 @@ class DVCDatabase(DatabaseAdapter):
         """
         with self.session_ctx() as sess:
             if ln:
-                ln = self.get_identifier(ln)
-                if not ln:
+                dbln = self.get_identifier(ln)
+                if not dbln:
                     return
-                q = sess.query(AnalysisTbl.step)
+                q = sess.query(AnalysisTbl.increment)
                 q = q.join(IrradiationPositionTbl)
 
                 q = q.filter(IrradiationPositionTbl.identifier == ln)
@@ -570,8 +572,9 @@ class DVCDatabase(DatabaseAdapter):
                 q = q.order_by(AnalysisTbl.increment.desc())
                 result = self._query_one(q)
                 if result:
-                    step = result[0]
-                    return ALPHAS.index(step) if step else -1
+                    increment = result[0]
+                    return increment if increment is not None else -1
+                    # return ALPHAS.index(step) if step else -1
 
     def get_unique_analysis(self, ln, ai, step=None):
         #         sess = self.get_session()
@@ -659,6 +662,17 @@ class DVCDatabase(DatabaseAdapter):
 
             q = q.filter(IrradiationPositionTbl.identifier == idn)
             return self._query_one(q)
+
+    def get_analysis_by_attr(self, **kw):
+        with self.session_ctx() as sess:
+            q = sess.query(AnalysisTbl)
+            for k, v in kw.iteritems():
+                try:
+                    q = q.filter(getattr(AnalysisTbl, k) == v)
+                except AttributeError:
+                    self.debug('Invalid AnalysisTbl column {}'.format(k))
+            q = q.order_by(AnalysisTbl.analysis_timestamp.desc())
+            return self._query_first(q)
 
     def get_database_version(self, **kw):
         with self.session_ctx() as sess:
@@ -1037,7 +1051,7 @@ class DVCDatabase(DatabaseAdapter):
         return self._retrieve_item(IrradiationTbl, name)
 
     def get_material(self, name, grainsize=None):
-        if not isinstance(name, str):
+        if not isinstance(name, str) and not isinstance(name, unicode):
             return name
 
         with self.session_ctx() as sess:

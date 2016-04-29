@@ -202,7 +202,9 @@ class DVCPersister(BasePersister):
 
                 # commit files
                 self.active_repository.commit('<COLLECTION>')
-                self.active_repository.push()
+                # self.active_repository.push()
+                self.dvc.push_repository(self.active_repository)
+
                 # update meta
                 self.dvc.meta_pull(accept_our=True)
 
@@ -223,6 +225,9 @@ class DVCPersister(BasePersister):
         ed = self.per_spec.run_spec.extract_device
         if ed in (None, '', NULL_STR, LINE_STR, 'Extract Device'):
             d['extract_device'] = 'No Extract Device'
+        else:
+            d['extract_device'] = ed
+
         d['timestamp'] = timestamp
 
         # save script names
@@ -315,8 +320,8 @@ class DVCPersister(BasePersister):
                 dets[iso.detector] = {'deflection': self.per_spec.defl_dict.get(iso.detector),
                                       'gain': self.per_spec.gains.get(iso.detector)}
 
-                icfactors[iso.detector] = {'value': float(nominal_value(iso.ic_factor)),
-                                           'error': float(std_dev(iso.ic_factor)),
+                icfactors[iso.detector] = {'value': float(nominal_value(iso.ic_factor or 1)),
+                                           'error': float(std_dev(iso.ic_factor or 0)),
                                            'fit': 'default',
                                            'references': []}
                 cbaselines[iso.detector] = {'fit': iso.baseline.fit,
@@ -358,8 +363,9 @@ class DVCPersister(BasePersister):
             obj[si] = name
 
         # save experiment
-        self.dvc.update_experiment_queue(ms, self.per_spec.experiment_queue_name,
-                                         self.per_spec.experiment_queue_blob)
+        self.debug('---------------- Experiment Queue saving disabled')
+        # self.dvc.update_experiment_queue(ms, self.per_spec.experiment_queue_name,
+        #                                  self.per_spec.experiment_queue_blob)
 
         hexsha = str(self.dvc.get_meta_head())
         obj['commit'] = hexsha

@@ -24,13 +24,14 @@ from pyface.tasks.action.schema_addition import SchemaAddition
 from pychron.dvc.dvc import DVC
 from pychron.dvc.dvc_persister import DVCPersister
 from pychron.dvc.tasks.actions import WorkOfflineAction, UseOfflineDatabase
-from pychron.dvc.tasks.preferences import DVCPreferencesPane, \
+from pychron.dvc.tasks.dvc_preferences import DVCPreferencesPane, \
     DVCDBConnectionPreferencesPane
 from pychron.dvc.tasks.repo_task import ExperimentRepoTask
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 
 
 class DVCPlugin(BaseTaskPlugin):
+    name = 'DVC'
     _fetched = False
 
     def start(self):
@@ -47,11 +48,24 @@ class DVCPlugin(BaseTaskPlugin):
     #     prog.change_message('Pushing changes to meta repository')
     #     dvc.meta_repo.cmd('push', '-u','origin','master')
 
-    def test_dvc_fetch_meta(self):
+    def test_database(self):
+        ret, err = True, ''
         dvc = self.application.get_service(DVC)
-        # dvc.fetch_meta()
+        db = dvc.db
+        connected = db.connect(warn=False)
+        if not connected:
+            ret = False
+            err = db.connection_error
+        return ret, err
+
+    def test_dvc_fetch_meta(self):
+        ret, err = False, ''
+        dvc = self.application.get_service(DVC)
+        dvc.open_meta_repo()
         dvc.meta_pull()
-        self._fetched = True
+        ret = self._fetched = True
+
+        return ret, err
 
     def _service_offers_default(self):
         # p = {'dvc': self.dvc_factory()}
@@ -66,7 +80,7 @@ class DVCPlugin(BaseTaskPlugin):
         return [so, so2]
 
     def dvc_factory(self):
-        d = DVC()
+        d = DVC(application=self.application)
         # d.initialize()
 
         return d

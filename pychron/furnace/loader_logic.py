@@ -72,13 +72,15 @@ class LoaderLogic(Loggable):
                 key, state = flag.split('_')
                 name = self._convert_switch_name(key)
                 if name in self.switches:
-                    s = self.manager.get_switch_indicator_state(name)
+                    s = self.manager.get_switch_state(name)
                     b = False
                     if (s and state == 'O') or (not s and state == 'C'):
                         b = True
 
                     self.debug('switch state: name={}, state={}, s={}, b={}'.format(name, state, s, b))
                 else:
+                    self.debug('name not in switches {}'.format(name))
+                    self.debug('switches={}'.format(self.switches.keys()))
                     b = self.manager.get_flag_state(flag)
             else:
                 b = self.manager.get_flag_state(flag)
@@ -93,7 +95,6 @@ class LoaderLogic(Loggable):
         bs = '|'.join(bs)
         self.debug(rs)
         self.debug(bs)
-
 
         return all(bits)
 

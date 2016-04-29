@@ -126,7 +126,9 @@ def conditional_from_dict(cd, klass, level=None, location=None, **kw):
     if level:
         cx.level = level
     if location:
-        location = os.path.relpath(location, paths.root_dir)
+        if os.path.isfile(location):
+            location = os.path.relpath(location, paths.root_dir)
+
         cx.location = location
 
     return cx
@@ -252,7 +254,7 @@ class AutomatedRunConditional(BaseConditional):
 
     def result_dict(self):
         hash_id = self._hash_id()
-        return {'teststr': self._teststr, 'context': self._ctx, 'hash_id': hash_id}
+        return {'teststr': self._teststr, 'context': self.value_context, 'hash_id': hash_id}
 
     def _should_check(self, run, data, cnt):
         if self.analysis_types:

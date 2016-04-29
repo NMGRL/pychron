@@ -26,7 +26,7 @@ class QtegraGPActuator(GPActuator):
 
     """
 
-    def get_channel_state(self, obj, verbose=False):
+    def get_channel_state(self, obj, verbose=False, **kw):
         """
         """
 
@@ -41,8 +41,6 @@ class QtegraGPActuator(GPActuator):
                 return False
         else:
             return False
-
-    get_indicator_state = get_channel_state
 
     def close_channel(self, obj):
         """

@@ -35,14 +35,14 @@ from pychron.experiment.experiment_launch_history import update_launch_history
 from pychron.experiment.experimentor import Experimentor
 from pychron.experiment.queue.base_queue import extract_meta
 from pychron.experiment.tasks.experiment_editor import ExperimentEditor, UVExperimentEditor
-from pychron.experiment.tasks.experiment_panes import LoggerPane, ExplanationPane
 from pychron.experiment.utilities.identifier import convert_extract_device, is_special
+from pychron.furnace.ifurnace_manager import IFurnaceManager
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.paths import paths
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pychron_constants import SPECTROMETER_PROTOCOL
 from pychron.experiment.tasks.experiment_panes import ExperimentFactoryPane, StatsPane, \
-    ControlsPane, IsotopeEvolutionPane, ConnectionStatusPane
+    ControlsPane, IsotopeEvolutionPane, ConnectionStatusPane, LoggerPane, ExplanationPane
 from pychron.envisage.tasks.wait_pane import WaitPane
 
 
@@ -146,6 +146,40 @@ class ExperimentEditorTask(EditorTask):
         ex.end_at_run_completion = False
         ex.set_extract_state('')
 
+    def sync_queue(self):
+        """
+        sync queue to database
+        """
+        if not self.has_active_editor():
+            return
+        queue = self.active_editor.queue
+        ms = queue.mass_spectrometer
+        ed = queue.extract_device
+        for i, ai in enumerate(queue.automated_runs):
+            if ai.skip or ai.is_special():
+                continue
+
+            kw = {'identifier': ai.identifier, 'position': ai.position,
+                  'mass_spectrometer': ms,
+                  'extract_device': ed}
+            if ai.is_step_heat():
+                kw['aliquot'] = ai.aliquot
+                kw['extract_value'] = ai.extract_value
+
+            self.debug('checking {}/{}. attr={}'.format(i, ai.runid, kw))
+            aa = self.manager.get_analysis(**kw)
+            if aa is None:
+                self.debug('----- not found')
+                break
+
+        if i:
+            if i == len(queue.automated_runs) - 1:
+                self.information_dialog('All Analyses from this experiment have been run')
+            else:
+                queue.automated_runs = queue.automated_runs[i:]
+        else:
+            self.information_dialog('No Analyses from this experiment have been run')
+
     def _assemble_state_colors(self):
         colors = {}
         for c in ('success', 'extraction', 'measurement', 'canceled', 'truncated',
@@ -191,6 +225,14 @@ class ExperimentEditorTask(EditorTask):
         if self.use_notifications:
             self.notifier.close()
 
+        manager = self.application.get_service(IFurnaceManager)
+        if manager:
+            for window in self.application.windows:
+                if 'furnace' in window.task.id:
+                    break
+            else:
+                manager.stop_update()
+
             # del manager. fixes problem of multiple experiments being started
             # closed tasks were still receiving execute_event(s)
             # del self.manager
@@ -217,9 +259,13 @@ class ExperimentEditorTask(EditorTask):
         color_bind_preference(self, 'even_bgcolor', 'pychron.experiment.even_bg_color')
 
     def activated(self):
-
         self.bind_preferences()
         super(ExperimentEditorTask, self).activated()
+
+        manager = self.application.get_service(IFurnaceManager)
+        if manager:
+            manager.start_update()
+
 
     def create_dock_panes(self):
 
@@ -260,6 +306,11 @@ class ExperimentEditorTask(EditorTask):
 
         panes = self._add_canvas_pane(panes)
 
+        manager = self.application.get_service(IFurnaceManager)
+        if manager:
+            from pychron.experiment.tasks.experiment_panes import ExperimentFurnacePane
+            fpane = ExperimentFurnacePane(model=manager)
+            panes.append(fpane)
         # app = self.window.application
         # man = app.get_service('pychron.lasers.laser_managers.ilaser_manager.ILaserManager')
         # if man:
@@ -312,7 +363,7 @@ class ExperimentEditorTask(EditorTask):
             ps = name.split('.')
             nname = '{}.txt'.format('.'.join(ps[:-2]))
             msg = 'Rename {} as {}'.format(name, nname)
-            if self.confirmation_dialog(message=msg):
+            if self.confirmation_dialog(msg):
                 reopen_editor = True
                 npath = os.path.join(paths.experiment_dir, nname)
 
