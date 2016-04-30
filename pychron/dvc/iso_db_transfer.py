@@ -49,7 +49,7 @@ def create_github_repo(name):
     org = Organization(ORG)
     if not org.has_repo(name):
         usr = os.environ.get('GITHUB_USER')
-        pwd = os.environ.get('GITHUB_PWD')
+        pwd = os.environ.get('GITHUB_PASSWORD')
         org.create_repo(name, usr, pwd)
 
 

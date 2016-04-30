@@ -5,7 +5,9 @@
 # conda is used to create a new environment
 # conda and pip are used to install the dependencies
 # a Pychron support directory is created and some boilerplate support files are written
-# the pychron source code is downloaded from the available releases stored at github (i.e the source is not a git clone just a static directory)
+# the pychron source code is downloaded from the available releases stored at github
+#    (i.e the source is not a git clone just a static directory)
+# if update_flag is set then clone the repository into .hidden/updates/
 # the source code is stored in the Pychron support directory
 # a launcher script is created and copied to the desktop
 
@@ -21,13 +23,15 @@ MINICONDA_PREFIX=$HOME/miniconda2
 MINICONDA_INSTALLER_SCRIPT=miniconda_installer.sh
 LAUNCHER_SCRIPT_PATH=pychron_launcher.sh
 ENTHOUGHT_DIR=$HOME/.enthought
+USE_UPDATE=1
+PYCHRON_GIT_SOURCE_URL=https://github.com/NMGRL/pychron.git
 
 CONDA_REQ="statsmodels
 scikit-learn
 PyYAML
 traits
 traitsui
-chaco>
+chaco
 enable
 pyface
 envisage
@@ -57,7 +61,9 @@ INITIALIZATION="<root>\n
     <general>\n
       <plugin enabled='true'>ArArConstants</plugin>\n
       <plugin enabled='true'>DVC</plugin>\n
+      <plugin enabled='true'>GitHub</plugin>\n
       <plugin enabled='true'>Pipeline</plugin>\n
+      <plugin enabled='true'>Update</plugin>\n
     </general>\n
     <hardware>\n
     </hardware>\n
@@ -131,6 +137,19 @@ else
     mkdir ${PYCHRONDATA_PREFIX}
     mkdir ${PYCHRONDATA_PREFIX}/setupfiles
     mkdir ${PYCHRONDATA_PREFIX}/preferences
+    if [[ ${USE_UPDATE} == "1" ]]
+    then
+        if [ -d ~/.pychron/ ]
+        then
+            if [ ! -d ~/.pychron/updates ]
+            then
+               mkdir ~/.pychron/updates
+            fi
+        else
+            mkdir ~/.pychron/
+            mkdir ~/.pychron/updates
+        fi
+    fi
 
     printf ${DVC_PREFS} > ${PYCHRONDATA_PREFIX}/preferences/dvc.ini
     printf ${INITIALIZATION} > ${PYCHRONDATA_PREFIX}/setupfiles/initialization
@@ -139,21 +158,26 @@ fi
 
 # =========== Git LFS ===============
 
-if type git lfs >/dev/null
-then
-    echo Git-LFS already installed
-else
-    echo Installing Git-LFS
-    curl -L ${GITLFS_URL} -o git-lfs.tar.gz
-    tar -xf ./git-lfs.tar.gz -C ./git-lfs --strip-components=1
-    ./git-lfs/install.sh
-fi
+#if type git lfs >/dev/null
+#then
+#    echo Git-LFS already installed
+#else
+#    echo Installing Git-LFS
+#    curl -L ${GITLFS_URL} -o git-lfs.tar.gz
+#    tar -xf ./git-lfs.tar.gz -C ./git-lfs --strip-components=1
+#    ./git-lfs/install.sh
+#fi
 
-# =========== Unpack Release ===============
-cd ${PYCHRONDATA_PREFIX}
-mkdir ./src
-curl -L ${DOWNLOAD_URL} -o pychron_src.tar.gz
-tar -xf ./pychron_src.tar.gz -C ./src --strip-components=1
+if [[ ${USE_UPDATE} == "1" ]]
+then
+    git clone ${PYCHRON_GIT_SOURCE_URL} ~/.pychron/updates
+else
+    # =========== Unpack Release ===============
+    cd ${PYCHRONDATA_PREFIX}
+    mkdir ./src
+    curl -L ${DOWNLOAD_URL} -o pychron_src.tar.gz
+    tar -xf ./pychron_src.tar.gz -C ./src --strip-components=1
+fi
 
 # ========== Launcher Script ===============
 touch "${LAUNCHER_SCRIPT_PATH}"
@@ -161,6 +185,28 @@ printf ROOT=${PYCHRONDATA_PREFIX}/src > "${LAUNCHER_SCRIPT_PATH}"
 
 printf ENTRY_POINT=\$ROOT/launchers/pyexperiment_debug.py >> "${LAUNCHER_SCRIPT_PATH}"
 printf export PYTHONPATH=\$ROOT >> "${LAUNCHER_SCRIPT_PATH}"
+
+default=NMGRL
+echo -n "Github organization [$default] >> "
+read go
+[ -z "$go" ] && go=$default
+
+
+default=nmgrluser
+echo -n "Github user name [$default] >> "
+read gu
+[ -z "$gu" ] && gu=$default
+
+echo -n "Github password for ${gu} >> "
+read gp
+
+
+default=16
+echo -n "MassSpec Database Version [$default] >> "
+read dbv
+[ -z "$dbv" ] && gu=$default
+
+printf MassSpecDBVersion=$dbv >> "${LAUNCHER_SCRIPT_PATH}"
 
 printf ${MINICONDA_PREFIX}/envs/${CONDA_ENV}/bin/python \$ENTRY_POINT >> "${LAUNCHER_SCRIPT_PATH}"
 chmod +x ${LAUNCHER_SCRIPT_PATH}

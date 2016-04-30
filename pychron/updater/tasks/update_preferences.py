@@ -26,25 +26,31 @@ from traitsui.api import View, Item, EnumEditor, VGroup
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.base_preferences_helper import remote_status_item, \
     GitRepoPreferencesHelper
+from pychron.pychron_constants import LINE_STR
 
 
 class UpdatePreferencesHelper(GitRepoPreferencesHelper):
     preferences_path = 'pychron.update'
     check_on_startup = Bool(False)
+
+    use_tag = Bool
+    version_tag = Str
+
     branch = Str
     _branches = List
+    _tags = List
 
     def __init__(self, *args, **kw):
         super(UpdatePreferencesHelper, self).__init__(*args, **kw)
         if self.remote:
             self._connection_hook()
 
-    def _get_branches(self, new):
+    def _get_branches_tags(self, new):
         try:
             # cmd = 'https://api.github.com/repos/{}/branches'.format(new)
             # doc = urllib2.urlopen(cmd)
             # bs = [branch['name'] for branch in json.load(doc)]
-            from pychron.github import get_branches
+            from pychron.github import get_branches, get_tags
 
             bs = get_branches(new)
             from git import Repo
@@ -57,15 +63,22 @@ class UpdatePreferencesHelper(GitRepoPreferencesHelper):
                 repo = Repo(paths.build_repo)
                 localbranches = [b.name for b in repo.branches if b.name not in remotes]
 
-            remotes.extend(localbranches)
-            return remotes
+            if localbranches:
+                remotes.append(LINE_STR)
+                remotes.extend(localbranches)
 
-        except BaseException:
-            return []
+            tags = [t for t in get_tags(new) if t.startswith('rc')]
+            print remotes, tags
+            return remotes, tags
+
+        except BaseException, e:
+            import traceback
+            traceback.print_exc()
+            return [], []
 
     def _connection_hook(self):
         # use github api to retrieve information
-        self._branches = self._get_branches(self.remote)
+        self._branches, self._tags = self._get_branches_tags(self.remote)
 
 
 class UpdatePreferencesPane(PreferencesPane):
@@ -76,7 +89,10 @@ class UpdatePreferencesPane(PreferencesPane):
         v = View(VGroup(Item('check_on_startup',
                              label='Check for updates at startup'),
                         VGroup(remote_status_item(),
+                               Item('use_tag', label='Use Production'),
+                               Item('version_tag', editor=EnumEditor(name='_tags')),
                                Item('branch', editor=EnumEditor(name='_branches'),
+                                    enabled_when='not use_tag',
                                     label='Branch'),
                                show_border=True,
                                label='Update Repo'),

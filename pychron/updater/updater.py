@@ -22,16 +22,15 @@ import urllib2
 from apptools.preferences.preference_binding import bind_preference
 from datetime import datetime, timedelta
 from git import GitCommandError
-from traits.api import Button, Bool, Str, Property, List
+from traits.api import Button, Bool, Str, List
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.datetime_tools import get_datetime
-from pychron.core.ui.progress_dialog import myProgressDialog
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.paths import r_mkdir
-from pychron.updater.branch_view import ManageBranchView
+from pychron.updater.branch_view import ManageBranchView, NewBranchView
 from pychron.updater.commit_view import CommitView, UpdateGitHistory, ManageCommitsView
 
 
@@ -44,11 +43,14 @@ class Updater(Loggable):
 
     all_branches = List
     branches = List
-    delete_enabled = Property(depends_on='edit_branch')
-    edit_branch = Str
-    delete_button = Button('Delete')
-    build_button = Button
+
+    new_branch_name = Str
+    # delete_enabled = Property(depends_on='edit_branch')
+    # edit_branch = Str
+    # delete_button = Button('Delete')
+    # build_button = Button
     checkout_branch_button = Button
+    pull_button = Button
 
     def bind_preferences(self):
         for a in ('check_on_startup', 'branch', 'remote'):
@@ -85,7 +87,7 @@ class Updater(Loggable):
         hexsha = self._get_selected_hexsha(commits, local_commit, remote_commit,
                                            view_klass=ManageCommitsView,
                                            auto_select=False,
-                                           tags=repo.tags,
+                                           tags=[t for t in repo.tags if t.name.startswith('rc')],
                                            # pass to model
                                            show_behind=False, )
         if hexsha:
@@ -123,24 +125,43 @@ class Updater(Loggable):
     # private
     # handlers
     def _checkout_branch_button_fired(self):
-        self._checkout(self.branch)
+        new_name = None
+        if self.branch.startswith('origin'):
+            name = '/'.join(self.branch.split('/')[1:])
+            self.new_branch_name = name
+            nbv = NewBranchView(model=self)
+            info = nbv.edit_traits()
+            if info.result:
+                new_name = self.new_branch_name
+            else:
+                return
+
+        self._checkout(self.branch, new_branch_name=new_name)
         self._refresh_branches()
 
-    def _build_button_fired(self):
-        b = self.branch
+    def _pull_button_fired(self):
         repo = self._get_working_repo()
-        branch = getattr(repo.branches, b)
-        branch.checkout()
-        self.debug('Build button branch name={}, commit={}'.format(b, branch.commit))
-        self._build(b, branch.commit)
+        origin = repo.remote('origin')
+        origin.pull(self.branch)
+        # branch = origin.refs[self.branch]
+        # branch.pull()
 
-    def _delete_button_fired(self):
-        repo = self._get_working_repo()
-        repo.delete_head(self.edit_branch)
-        self._refresh_branches()
+    # def _build_button_fired(self):
+    #     b = self.branch
+    #     repo = self._get_working_repo()
+    #     branch = getattr(repo.branches, b)
+    #     branch.checkout()
+    #     self.debug('Build button branch name={}, commit={}'.format(b, branch.commit))
+    #     self._build(b, branch.commit)
+
+    # def _delete_button_fired(self):
+    #     repo = self._get_working_repo()
+    #     repo.delete_head(self.edit_branch)
+    #     self._refresh_branches()
 
     def _refresh_branches(self):
         repo = self._get_working_repo()
+        self._fetch()
         rnames = [ri.name for ri in repo.remotes.origin.refs]
         rnames = filter(lambda x: x.startswith('origin/release'), rnames)
         branches = [bi.name for bi in repo.branches] + ['origin/master', 'origin/develop'] + rnames
@@ -149,7 +170,7 @@ class Updater(Loggable):
         branches = [bi for bi in branches if bi != self.branch]
         self.branches = branches
 
-    def _checkout(self, branch_name, hexsha=None):
+    def _checkout(self, branch_name, new_branch_name=None, hexsha=None):
         if hexsha is None:
             hexsha = 'HEAD'
         else:
@@ -159,7 +180,8 @@ class Updater(Loggable):
         try:
             branch = getattr(repo.branches, branch_name)
         except AttributeError:
-            branch = repo.create_head(branch_name, commit=hexsha)
+            branch = repo.create_head(new_branch_name, commit=hexsha)
+            branch_name = new_branch_name
 
         branch.checkout()
         self.branch = branch_name
@@ -177,52 +199,55 @@ class Updater(Loggable):
                 break
         return p
 
-    def _build(self, branch, commit):
+    # def _build(self, branch, commit):
+    #
+    #     # get the version number from version.py
+    #     version = self._extract_version()
+    #
+    #     pd = myProgressDialog(max=5200,
+    #                           title='Builing Application. '
+    #                                 'Version={} Branch={} ({})'.format(version, branch, commit.hexsha[:7]),
+    #                           can_cancel=False)
+    #     pd.open()
+    #     pd.change_message('Building application')
+    #
+    #     self.info('building application. version={}'.format(version))
+    #     self.debug('building egg from {}'.format(self._repo.working_dir))
+    #
+    #     dest = self._get_dest_root()
+    #     self.debug('moving egg to {}'.format(dest))
+    #
+    #     from pychron.updater.packager import make_egg, copy_resources
+    #
+    #     pd.change_message('Building Application')
+    #     with pd.stdout():
+    #         make_egg(self._repo.working_dir, dest, 'pychron', version)
+    #         # build egg and move into destination
+    #         if dest.endswith('Contents'):
+    #             make_egg(self._repo.working_dir, dest, 'pychron', version)
+    #
+    #             self.debug('------------- egg complete ----------------')
+    #
+    #         pd.change_message('Copying Resources')
+    #         if dest.endswith('Contents'):
+    #             copy_resources(self._repo.working_dir, dest, self.application.shortname)
+    #         self.debug('------------- copy resources complete -----------')
+    #
+    # def _extract_version(self):
+    #     import imp
+    #
+    #     p = os.path.join(self._repo.working_dir, 'pychron', 'version.py')
+    #     ver = imp.load_source('version', p)
+    #     return ver.__version__
 
-        # get the version number from version.py
-        version = self._extract_version()
-
-        pd = myProgressDialog(max=5200,
-                              title='Builing Application. '
-                                    'Version={} Branch={} ({})'.format(version, branch, commit.hexsha[:7]),
-                              can_cancel=False)
-        pd.open()
-        pd.change_message('Building application')
-
-        self.info('building application. version={}'.format(version))
-        self.debug('building egg from {}'.format(self._repo.working_dir))
-
-        dest = self._get_dest_root()
-        self.debug('moving egg to {}'.format(dest))
-
-        from pychron.updater.packager import make_egg, copy_resources
-
-        pd.change_message('Building Application')
-        with pd.stdout():
-            make_egg(self._repo.working_dir, dest, 'pychron', version)
-            # build egg and move into destination
-            if dest.endswith('Contents'):
-                make_egg(self._repo.working_dir, dest, 'pychron', version)
-
-                self.debug('------------- egg complete ----------------')
-
-            pd.change_message('Copying Resources')
-            if dest.endswith('Contents'):
-                copy_resources(self._repo.working_dir, dest, self.application.shortname)
-            self.debug('------------- copy resources complete -----------')
-
-    def _extract_version(self):
-        import imp
-
-        p = os.path.join(self._repo.working_dir, 'pychron', 'version.py')
-        ver = imp.load_source('version', p)
-        return ver.__version__
-
-    def _fetch(self, branch):
+    def _fetch(self, branch=None):
         repo = self._get_working_repo()
         origin = repo.remotes.origin
         try:
-            repo.git.fetch(origin, branch)
+            if branch:
+                repo.git.fetch(origin, branch)
+            else:
+                repo.git.fetch(origin)
         except GitCommandError, e:
             self.warning('Failed to fetch. {}'.format(e))
 
@@ -360,8 +385,8 @@ class Updater(Loggable):
             self._repo = repo
         return self._repo
 
-    def _get_delete_enabled(self):
-        return not (self.branch == self.edit_branch or self.edit_branch.startswith('origin'))
+        # def _get_delete_enabled(self):
+        #     return not (self.branch == self.edit_branch or self.edit_branch.startswith('origin'))
 
 # ============= EOF =============================================
 
