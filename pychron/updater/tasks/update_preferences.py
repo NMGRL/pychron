@@ -18,15 +18,52 @@
 import os
 
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traits.api import Str, Bool, List
-from traitsui.api import View, Item, EnumEditor, VGroup
-
+from git import Repo
+from traits.api import Str, Bool, List, Button, Instance
+from traitsui.api import View, Item, EnumEditor, VGroup, HGroup
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.base_preferences_helper import remote_status_item, \
     GitRepoPreferencesHelper
+from pychron.paths import paths
 from pychron.pychron_constants import LINE_STR
+
+
+class Updater:
+    _repo = None
+
+    def pull(self, branch):
+        repo = self._get_working_repo()
+        origin = repo.remote('origin')
+        origin.pull(branch)
+
+    def checkout_branch(self, name):
+        repo = self._get_working_repo()
+        try:
+            branch = getattr(repo.branches, name)
+        except AttributeError:
+            if name.startswith('origin'):
+                name = '/'.join(name.split('/')[1:])
+            branch = repo.create_head(name)
+
+        branch.checkout()
+
+    def checkout_tag(self, tag):
+
+        repo = self._get_working_repo()
+        try:
+            branch = getattr(repo.branches, tag)
+            branch.checkout()
+        except AttributeError:
+            repo.git.fetch()
+            repo.git.checkout('-b', tag, tag)
+
+    def _get_working_repo(self):
+        if not self._repo:
+            self._repo = Repo(paths.build_repo)
+        return self._repo
 
 
 class UpdatePreferencesHelper(GitRepoPreferencesHelper):
@@ -37,8 +74,14 @@ class UpdatePreferencesHelper(GitRepoPreferencesHelper):
     version_tag = Str
 
     branch = Str
+
+    checkout_branch_button = Button
+    pull_button = Button
+
     _branches = List
     _tags = List
+
+    _updater = Instance(Updater, ())
 
     def __init__(self, *args, **kw):
         super(UpdatePreferencesHelper, self).__init__(*args, **kw)
@@ -47,14 +90,9 @@ class UpdatePreferencesHelper(GitRepoPreferencesHelper):
 
     def _get_branches_tags(self, new):
         try:
-            # cmd = 'https://api.github.com/repos/{}/branches'.format(new)
-            # doc = urllib2.urlopen(cmd)
-            # bs = [branch['name'] for branch in json.load(doc)]
             from pychron.github import get_branches, get_tags
 
             bs = get_branches(new)
-            from git import Repo
-            from pychron.paths import paths
 
             remotes = [bi for bi in bs if bi.startswith('release') or bi in ('develop', 'master')]
 
@@ -68,7 +106,6 @@ class UpdatePreferencesHelper(GitRepoPreferencesHelper):
                 remotes.extend(localbranches)
 
             tags = [t for t in get_tags(new) if t.startswith('rc')]
-            print remotes, tags
             return remotes, tags
 
         except BaseException, e:
@@ -80,6 +117,23 @@ class UpdatePreferencesHelper(GitRepoPreferencesHelper):
         # use github api to retrieve information
         self._branches, self._tags = self._get_branches_tags(self.remote)
 
+    def _use_tag_changed(self):
+        if not self.use_tag:
+            if self.branch:
+                self._updater.checkout_branch(self.branch)
+        else:
+            self._version_tag_changed()
+
+    def _version_tag_changed(self):
+        if self.use_tag:
+            self._updater.checkout_tag(self.version_tag)
+
+    def _checkout_branch_button_fired(self):
+        self._updater.checkout_branch(self.branch)
+
+    def _pull_button_fired(self):
+        self._updater.pull(self.branch)
+
 
 class UpdatePreferencesPane(PreferencesPane):
     model_factory = UpdatePreferencesHelper
@@ -90,10 +144,16 @@ class UpdatePreferencesPane(PreferencesPane):
                              label='Check for updates at startup'),
                         VGroup(remote_status_item(),
                                Item('use_tag', label='Use Production'),
-                               Item('version_tag', editor=EnumEditor(name='_tags')),
+                               Item('version_tag', editor=EnumEditor(name='_tags'),
+                                    enabled_when='use_tag'),
                                Item('branch', editor=EnumEditor(name='_branches'),
                                     enabled_when='not use_tag',
                                     label='Branch'),
+                               HGroup(icon_button_editor('checkout_branch_button', 'bricks',
+                                                         tooltip='Checkout selected branch'),
+                                      icon_button_editor('pull_button', 'arrow_down',
+                                                         tooltip='Update Branch'),
+                                      enabled_when='not use_tag'),
                                show_border=True,
                                label='Update Repo'),
                         label='Update',
@@ -101,4 +161,3 @@ class UpdatePreferencesPane(PreferencesPane):
         return v
 
 # ============= EOF =============================================
-
