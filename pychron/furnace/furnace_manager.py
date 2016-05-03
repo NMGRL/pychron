@@ -435,15 +435,21 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         return self.loader_logic.close(name)
 
     def _update_scan(self):
-        d = self.controller.get_summary()
+        d = self.controller.get_summary(verbose=False)
         if d:
             state = d['h2o_state']
-            if isinstance(state, bool):
+            if state in (0, 1):
                 self.water_flow_led.state = 2 if state else 0
             else:
                 self.water_flow_led.state = 1
 
-            self._update_scan_graph(d['response'], d['output'], d['setpoint'])
+            response = d.get('response', 0) or 0
+            op = d.get('output', 0) or 0
+
+            self.temperature_readback = response
+            self.output_percent_readback = op
+
+            self._update_scan_graph(response, op, d['setpoint'])
 
     def _stop_update(self):
         self.debug('stop update')
@@ -463,8 +469,8 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
                 self.graph.record(setpoint, x=x, track_y=False)
 
             if self.graph_y_auto:
-                temp_plot = self.graph.plots[0].plots['plot0']
-                setpoint_plot = self.graph.plots[0].plots['plot1']
+                temp_plot = self.graph.plots[0].plots['plot0'][0]
+                setpoint_plot = self.graph.plots[0].plots['plot1'][0]
 
                 temp_data = temp_plot.value.get_data()
                 setpoint_data = setpoint_plot.value.get_data()
@@ -508,7 +514,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         g.set_scan_width(600, plotid=1)
         g.set_data_limits(1.8 * 600, plotid=1)
         g.new_series(plotid=1)
-        g.set_y_limits(min_=0, max_=105, plotid=1)
+        g.set_y_limits(min_=-2, max_=102, plotid=1)
 
         return g
 

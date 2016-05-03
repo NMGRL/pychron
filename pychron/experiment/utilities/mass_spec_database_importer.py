@@ -288,6 +288,9 @@ class MassSpecDatabaseImporter(Loggable):
                 self.reference_detector_name = 'H1'
             rd = self.reference_detector_name
 
+        self.debug('Reference Isotope={}'.format(self.reference_isotope_name))
+        self.debug('Reference Detector={}'.format(rd))
+
         # add the reference detector
         if DBVERSION >= 16.3:
             refdbdet = db.add_detector(rd)

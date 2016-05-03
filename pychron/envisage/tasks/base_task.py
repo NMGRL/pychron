@@ -15,9 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import os
-from itertools import groupby
-
 from envisage.ui.tasks.action.task_window_launch_group import TaskWindowLaunchAction
 from pyface.action.api import ActionItem, Group
 from pyface.confirmation_dialog import ConfirmationDialog
@@ -29,10 +26,9 @@ from pyface.tasks.task import Task
 from pyface.tasks.task_layout import TaskLayout
 from pyface.timer.do_later import do_later, do_after
 from traits.api import Any, on_trait_change, List, Unicode, DelegatesTo, Instance
-
-
-
 # ============= standard library imports ========================
+import os
+from itertools import groupby
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import add_extension, view_file
 from pychron.core.ui.gui import invoke_in_main_thread
@@ -442,6 +438,14 @@ class BaseExtractionLineTask(BaseManagerTask):
         app = self.application
         man = app.get_service('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
         return man
+
+    def activated(self):
+        super(BaseExtractionLineTask, self).activated()
+
+        app = self.window.application
+        man = app.get_service('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
+        if man:
+            man.start_status_monitor()
 
     def prepare_destroy(self):
         man = self._get_el_manager()

@@ -157,6 +157,7 @@ class DatabaseAdapter(Loggable):
 
     modified = False
     _trying_to_add = False
+    _test_connection_enabled = True
     # def __init__(self, *args, **kw):
     #     super(DatabaseAdapter, self).__init__(*args, **kw)
 
@@ -219,6 +220,7 @@ class DatabaseAdapter(Loggable):
         # self.session_factory = None
 
         if self.connection_parameters_changed:
+            self._test_connection_enabled = True
             force = True
 
         # print not self.isConnected() or force, self.connection_parameters_changed
@@ -244,10 +246,13 @@ class DatabaseAdapter(Loggable):
                     self.session_factory = sessionmaker(bind=engine, autoflush=self.autoflush)
                     # self.session_factory = scoped_session(sessionmaker(bind=engine, autoflush=self.autoflush))
                     if test:
-                        if self.test_func:
-                            self.connected = self._test_db_connection(version_warn)
+                        if not self._test_connection_enabled:
+                            warn = False
                         else:
-                            self.connected = True
+                            if self.test_func:
+                                self.connected = self._test_db_connection(version_warn)
+                            else:
+                                self.connected = True
                     else:
                         self.connected = True
 
@@ -398,9 +403,12 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
                             sys.exit()
 
                 connected = True
-            except Exception, e:
-                print 'exception', e
+            except OperationalError:
+                self.warning('Operational connection failed to {}'.format(self.url))
+                connected = False
+                self._test_connection_enabled = False
 
+            except Exception, e:
                 self.warning('connection failed to {}'.format(self.url))
                 connected = False
 

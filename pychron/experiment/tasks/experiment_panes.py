@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from pyface.tasks.traits_dock_pane import TraitsDockPane
-from traits.api import Color, Instance, DelegatesTo, List, Any, Property
+from traits.api import Color, Instance, DelegatesTo, List, Any, Property, Button
 from traitsui.api import View, Item, UItem, VGroup, HGroup, spring, \
     EnumEditor, Group, Spring, VFold, Label, InstanceEditor, \
     VSplit, TabularEditor, UReadonly, ListEditor, Readonly
@@ -517,6 +517,10 @@ class LoggerPane(TraitsDockPane):
 class ExperimentFurnacePane(TraitsDockPane):
     name = 'Furnace'
     id = 'pychron.experiment.furnace'
+    disable_button = Button
+
+    def _disable_button_fired(self):
+        self.model.setpoint = 0
 
     def traits_view(self):
         c_grp = VGroup(HGroup(Item('setpoint'),

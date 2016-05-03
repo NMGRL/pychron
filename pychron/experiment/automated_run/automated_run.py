@@ -985,10 +985,10 @@ class AutomatedRun(Loggable):
 
         def _get_filter_outlier_dict(iso, kind):
             if kind == 'baseline':
-                fods = self.per_spec.baseline_fods
+                fods = self.persistence_spec.baseline_fods
                 key = iso.detector
             else:
-                fods = self.per_spec.signal_fods
+                fods = self.persistence_spec.signal_fods
                 key = iso.name
 
             try:
@@ -998,8 +998,13 @@ class AutomatedRun(Loggable):
             return fod
 
         for i in self.isotope_group.isotopes.itervalues():
-            i.set_filtering(_get_filter_outlier_dict(i, 'signal'))
-            i.baseline.set_filtering(_get_filter_outlier_dict(i, 'baseline'))
+            fod = _get_filter_outlier_dict(i, 'signal')
+            self.debug('setting fod for {}= {}'.format(i.name, fod))
+            i.set_filtering(fod)
+
+            fod = _get_filter_outlier_dict(i, 'baseline')
+            i.baseline.set_filtering(fod)
+            self.debug('setting fod for {}= {}'.format(i.detector, fod))
 
     def save(self):
         self.debug('post measurement save measured={} aborted={}'.format(self._measured, self._aborted))

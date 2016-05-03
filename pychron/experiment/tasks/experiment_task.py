@@ -228,7 +228,7 @@ class ExperimentEditorTask(EditorTask):
         manager = self.application.get_service(IFurnaceManager)
         if manager:
             for window in self.application.windows:
-                if 'furnace' in window.task.id:
+                if 'furnace' in window.active_task.id:
                     break
             else:
                 manager.stop_update()

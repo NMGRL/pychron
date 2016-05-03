@@ -1591,7 +1591,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     def _check_repository_identifiers(self):
         db = self.datahub.mainstore.db
-        print 'main stored db', id(db)
 
         with db.session_ctx():
 
@@ -1627,7 +1626,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
                 if conflicts:
                     self.debug('Experiment association warning')
-                    cr.add_conflicts(ei, conflicts)
+                    cr.add_conflicts(ei.name, conflicts)
 
             if cr.conflicts:
                 cr.available_ids = db.get_repository_identifiers()
