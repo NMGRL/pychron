@@ -99,8 +99,9 @@ class DVCImporterModel(Loggable):
         super(DVCImporterModel, self).__init__(*args, **kw)
         self.mapper = Mapper()
 
-    def do_import(self):
+    def do_import_irradiation(self):
         self.debug('doing import')
+
         if not self.selected:
             self.information_dialog('Please select an Irradiation to import')
             return

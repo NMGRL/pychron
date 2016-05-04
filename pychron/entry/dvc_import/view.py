@@ -61,7 +61,7 @@ class DVCImporterView(Controller):
     model = Instance(DVCImporterModel)
 
     def do_import(self, info):
-        self.model.do_import()
+        self.model.do_import_irradiation()
 
     def traits_view(self):
         s_grp = HGroup(UItem('source', editor=EnumEditor(name='sources')),

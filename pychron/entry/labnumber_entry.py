@@ -129,24 +129,28 @@ class LabnumberEntry(DVCIrradiationable):
 
     def import_irradiation(self):
         self.debug('import irradiation')
-        from pychron.entry.dvc_import import do_import
+        from pychron.entry.dvc_import import do_import_irradiation
 
         mdb = 'pychron.mass_spec.database.massspec_database_adapter.MassSpecDatabaseAdapter'
         mssource = self.application.get_service(mdb)
         mssource.bind_preferences()
 
-        do_import(dvc=self.dvc, sources={mssource: 'Mass Spec'}, default_source='Mass Spec')
+        do_import_irradiation(dvc=self.dvc, sources={mssource: 'Mass Spec'}, default_source='Mass Spec')
         self.updated = True
+
+    def import_analyses(self):
+        self.debug('import analyses')
+        # from pychron.entry.dvc_import import do_analyses_import
 
     def import_irradiation_load_xls(self, p):
         self.debug('import irradiation file: {}'.format(p))
 
-        from pychron.entry.dvc_import import do_import
+        from pychron.entry.dvc_import import do_import_irradiation
         from pychron.entry.xls_irradiation_source import XLSIrradiationSource
 
         xlssource = XLSIrradiationSource(p)
         name = os.path.basename(p)
-        do_import(dvc=self.dvc, sources={xlssource: name}, default_source=name)
+        do_import_irradiation(dvc=self.dvc, sources={xlssource: name}, default_source=name)
         self.updated = True
 
     def get_igsns(self, igsn_repo):

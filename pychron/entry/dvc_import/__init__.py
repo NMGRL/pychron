@@ -22,7 +22,7 @@ from pychron.entry.dvc_import.view import DVCImporterView
 from pychron.envisage.view_util import open_view
 
 
-def do_import(dvc, sources, default_source=None):
+def do_import_irradiation(dvc, sources, default_source=None):
     model = DVCImporterModel(dvc=dvc, sources=sources)
 
     model.source = next((k for k, v in sources.iteritems() if v == default_source), None)

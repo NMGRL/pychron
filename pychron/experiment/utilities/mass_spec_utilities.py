@@ -24,10 +24,10 @@ from pychron.mass_spec.database.massspec_database_adapter import MassSpecDatabas
 from pychron.mass_spec.database.massspec_orm import AnalysesTable, IsotopeTable, DetectorTable
 
 db = MassSpecDatabaseAdapter(bind=False)
-db.host =
+db.host = '129.138.12.160'
 db.name = 'massspecdata'
-db.username =
-db.password =
+db.username = 'jross'
+db.password = 'Jross40*39'
 db.kind = 'mysql'
 db.connect(test=False)
 
