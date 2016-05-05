@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from pyface.tasks.traits_dock_pane import TraitsDockPane
-from traits.api import Color, Instance, DelegatesTo, List, Any, Property
+from traits.api import Color, Instance, DelegatesTo, List, Any, Property, Button
 from traitsui.api import View, Item, UItem, VGroup, HGroup, spring, \
     EnumEditor, Group, Spring, VFold, Label, InstanceEditor, \
     VSplit, TabularEditor, UReadonly, ListEditor, Readonly
@@ -70,7 +70,7 @@ class ExperimentFactoryPane(TraitsDockPane):
     info_label = Property(depends_on='model.run_factory.info_label')
 
     def _get_info_label(self):
-        return '<font size="12" color="green"><b>{}</b></font>'.format(self.model.run_factory.info_label)
+        return '<font color="green"><b>{}</b></font>'.format(self.model.run_factory.info_label)
 
     def traits_view(self):
         add_button = icon_button_editor('add_button', 'add',
@@ -106,21 +106,24 @@ class ExperimentFactoryPane(TraitsDockPane):
                           icon_button_editor(queue_factory_name('edit_user'), 'database_edit'),
                           show_border=True,
                           label='User')
+        lgrp = HGroup(queue_factory_item('load_name',
+                                         width=150,
+                                         label='Load',
+                                         editor=ComboboxEditor(name=queue_factory_name('load_names'))),
+                      icon_button_editor('generate_queue_button', 'brick-go',
+                                         tooltip='Generate a experiment queue from the selected load',
+                                         enabled_when='load_name'),
+                      icon_button_editor('edit_queue_config_button', 'cog',
+                                         tooltip='Configure experiment queue generation'))
+
         ms_ed_grp = VGroup(HGroup(queue_factory_item('mass_spectrometer',
                                                      show_label=False,
                                                      editor=EnumEditor(name=queue_factory_name('mass_spectrometers'))),
                                   queue_factory_item('extract_device',
                                                      show_label=False,
-                                                     editor=EnumEditor(name=queue_factory_name('extract_devices'))),
-                                  queue_factory_item('load_name',
-                                                     width=150,
-                                                     label='Load',
-                                                     editor=ComboboxEditor(name=queue_factory_name('load_names'))),
-                                  icon_button_editor('generate_queue_button', 'brick-go',
-                                                     tooltip='Generate a experiment queue from the selected load',
-                                                     enabled_when='load_name'),
-                                  icon_button_editor('edit_queue_config_button', 'cog',
-                                                     tooltip='Configure experiment queue generation')),
+                                                     editor=EnumEditor(name=queue_factory_name('extract_devices')))),
+                           lgrp,
+
                            HGroup(queue_factory_item('queue_conditionals_name',
                                                      label='Queue Conditionals',
                                                      editor=EnumEditor(
@@ -514,6 +517,10 @@ class LoggerPane(TraitsDockPane):
 class ExperimentFurnacePane(TraitsDockPane):
     name = 'Furnace'
     id = 'pychron.experiment.furnace'
+    disable_button = Button
+
+    def _disable_button_fired(self):
+        self.model.setpoint = 0
 
     def traits_view(self):
         c_grp = VGroup(HGroup(Item('setpoint'),
@@ -524,4 +531,5 @@ class ExperimentFurnacePane(TraitsDockPane):
 
         v = View(c_grp)
         return v
+
 # ============= EOF =============================================

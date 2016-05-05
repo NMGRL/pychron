@@ -1,20 +1,17 @@
 #!/bin/bash
 
-ROOT=~/Programming/pychron
-if [ ! -d $ROOT ]; then
-    ROOT=~/Programming/git/pychron
-    if [ ! -d $ROOT ]; then
-      ROOT=~/Programming/github/pychron/
-      if [ ! -d $ROOT ]; then
-        ROOT=~/Programming/github/pychron_dev
-      fi
-    fi
-fi
+ROOT=~/.pychron/updates/pychron
 
 echo Using $ROOT as "ROOT" directory
 
 ENTRY_POINT=$ROOT/launchers/pyexperiment_debug.py
 
 export PYTHONPATH=$ROOT
+
+GITHUB_USER=
+GITHUB_PASSWORD=
+GITHUB_ORGANIZATION=
+
+MassSpecDBVersion=16
 
 python $ENTRY_POINT

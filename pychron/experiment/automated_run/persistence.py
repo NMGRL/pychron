@@ -677,19 +677,19 @@ class AutomatedRunPersister(BasePersister):
             self._save_signal_data(db, dbhist, analysis, dbdet, iso, iso, 'signal')
             self._save_signal_data(db, dbhist, analysis, dbdet, iso, iso.baseline, 'baseline')
 
-    def _get_filter_outlier_dict(self, iso, kind):
-        if kind == 'baseline':
-            fods = self.per_spec.baseline_fods
-            key = iso.detector
-        else:
-            fods = self.per_spec.signal_fods
-            key = iso.name
-
-        try:
-            fod = fods[key]
-        except KeyError:
-            fod = {'filter_outliers': False, 'iterations': 1, 'std_devs': 2}
-        return fod
+    # def _get_filter_outlier_dict(self, iso, kind):
+    #     if kind == 'baseline':
+    #         fods = self.per_spec.baseline_fods
+    #         key = iso.detector
+    #     else:
+    #         fods = self.per_spec.signal_fods
+    #         key = iso.name
+    #
+    #     try:
+    #         fod = fods[key]
+    #     except KeyError:
+    #         fod = {'filter_outliers': False, 'iterations': 1, 'std_devs': 2}
+    #     return fod
 
     def _save_signal_data(self, db, dbhist, analysis, dbdet, iso, m, kind):
         if not (len(m.xs) and len(m.ys)):
@@ -704,8 +704,9 @@ class AutomatedRunPersister(BasePersister):
         add_result = kind in ('baseline', 'signal')
 
         if add_result:
-            fod = self._get_filter_outlier_dict(iso, kind)
-            m.set_filtering(fod)
+            # fod = self._get_filter_outlier_dict(iso, kind)
+            # m.set_filtering(fod)
+            fod = m.filter_outliers_dict
             if m.fit:
                 # add fit
                 db.add_fit(dbhist, dbiso,

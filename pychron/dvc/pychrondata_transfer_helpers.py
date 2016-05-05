@@ -185,7 +185,7 @@ def create_repo_for_existing_local(repo_identifier, root, organization='NMGRLDat
     org = Organization(organization)
     if not org.has_repo(repo_identifier):
         usr = os.environ.get('GITHUB_USER')
-        pwd = os.environ.get('GITHUB_PWD')
+        pwd = os.environ.get('GITHUB_PASSWORD')
         org.create_repo(repo_identifier, usr, pwd)
         url = 'https://github.com/{}/{}.git'.format(organization, repo_identifier)
         repo.create_remote(url)

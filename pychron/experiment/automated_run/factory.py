@@ -543,8 +543,10 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                 irradname = irrad.name
                 self.irrad_hole = str(hole)
                 self.irrad_level = irrad_level = str(level.name)
-
-                il = '{} {}:{}'.format(irrad.name, level.name, hole)
+                if irradname == 'NoIrradiation':
+                    il = NULL_STR
+                else:
+                    il = '{} {}:{}'.format(irradname, level.name, hole)
             else:
                 irradname = ''
                 irrad_level = ''
@@ -933,6 +935,8 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             d = self._meta_cache[labnumber]
             for attr in ('sample', 'irradiation', 'comment', 'repository_identifier'):
                 setattr(self, attr, d[attr])
+
+            self.display_irradiation = d['display_irradiation']
             return True
         else:
             # get a default repository_identifier
@@ -979,7 +983,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
                     self._make_irrad_level(ip)
                     d['irradiation'] = self.selected_irradiation
-
+                    d['display_irradiation'] = self.display_irradiation
                     if self.auto_fill_comment:
                         self._set_auto_comment()
                     d['comment'] = self.comment

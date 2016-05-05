@@ -980,9 +980,38 @@ class AutomatedRun(Loggable):
                 i = 0
             i += 1
 
+    def _set_filtering(self):
+        self.debug('Set filtering')
+
+        def _get_filter_outlier_dict(iso, kind):
+            if kind == 'baseline':
+                fods = self.persistence_spec.baseline_fods
+                key = iso.detector
+            else:
+                fods = self.persistence_spec.signal_fods
+                key = iso.name
+
+            try:
+                fod = fods[key]
+            except KeyError:
+                fod = {'filter_outliers': False, 'iterations': 1, 'std_devs': 2}
+            return fod
+
+        for i in self.isotope_group.isotopes.itervalues():
+            fod = _get_filter_outlier_dict(i, 'signal')
+            self.debug('setting fod for {}= {}'.format(i.name, fod))
+            i.set_filtering(fod)
+
+            fod = _get_filter_outlier_dict(i, 'baseline')
+            i.baseline.set_filtering(fod)
+            self.debug('setting fod for {}= {}'.format(i.detector, fod))
+
     def save(self):
         self.debug('post measurement save measured={} aborted={}'.format(self._measured, self._aborted))
         if self._measured and not self._aborted:
+            # set filtering
+            self._set_filtering()
+
             conds = (self.termination_conditionals, self.truncation_conditionals,
                      self.action_conditionals, self.cancelation_conditionals, self.modification_conditionals)
 

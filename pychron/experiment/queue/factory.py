@@ -67,16 +67,16 @@ class ExperimentQueueFactory(DVCAble, PersistenceLoggable):
     load_name = Str
     load_names = Property
 
-    repository_identifier = Str
-    repository_identifiers = Property(depends_on='repository_identifier_dirty, db_refresh_needed')
-    add_repository_identifier = Event
-    repository_identifier_dirty = Event
+    # repository_identifier = Str
+    # repository_identifiers = Property(depends_on='repository_identifier_dirty, db_refresh_needed')
+    # add_repository_identifier = Event
+    # repository_identifier_dirty = Event
 
     ok_make = Property(depends_on='mass_spectrometer, username')
 
     pattributes = ('mass_spectrometer',
                    'extract_device',
-                   'repository_identifier',
+                   # 'repository_identifier',
                    'use_group_email',
                    'delay_between_analyses',
                    'delay_before_analyses',
@@ -199,13 +199,13 @@ class ExperimentQueueFactory(DVCAble, PersistenceLoggable):
 
         return ['Spectrometer', LINE_STR] + names
 
-    @cached_property
-    def _get_repository_identifiers(self):
-        db = self.dvc
-        ids = []
-        if db and db.connect():
-            ids = db.get_repository_identifiers()
-        return ids
+    # @cached_property
+    # def _get_repository_identifiers(self):
+    #     db = self.dvc
+    #     ids = []
+    #     if db and db.connect():
+    #         ids = db.get_repository_identifiers()
+    #     return ids
 
     def _get_names_from_config(self, cp, section):
         config = ConfigParser()
@@ -214,15 +214,15 @@ class ExperimentQueueFactory(DVCAble, PersistenceLoggable):
             return [config.get(section, option) for option in config.options(section)]
 
     # handlers
-    def _add_repository_identifier_fired(self):
-        if self.dvc:
-            a = RepositoryIdentifierEntry(dvc=self.dvc)
-            a.available = self.dvc.get_repository_identifiers()
-            if a.do():
-                self.repository_identifier_dirty = True
-                self.repository_identifier = a.value
-        else:
-            self.warning_dialog('DVC Plugin not enabled')
+    # def _add_repository_identifier_fired(self):
+    #     if self.dvc:
+    #         a = RepositoryIdentifierEntry(dvc=self.dvc)
+    #         a.available = self.dvc.get_repository_identifiers()
+    #         if a.do():
+    #             self.repository_identifier_dirty = True
+    #             self.repository_identifier = a.value
+    #     else:
+    #         self.warning_dialog('DVC Plugin not enabled')
 
     def _edit_user_fired(self):
         a = UserEntry(dvc=self.dvc,

@@ -19,13 +19,14 @@ from traitsui.api import VGroup, UItem, Item
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.ui.combobox_editor import ComboboxEditor
-from pychron.entry.entry_views.entry import BaseEntry, OKButton, STYLESHEET
+from pychron.entry.entry_views.entry import BaseEntry, OKButton, STYLESHEET, SpacelessStr
 
 
 class RepositoryIdentifierEntry(BaseEntry):
     tag = 'Repository Identifier'
     principal_investigator = Str
     principal_investigators = List
+    value = SpacelessStr
 
     def _add_item(self):
         return self.dvc.add_repository(self.value, self.principal_investigator)

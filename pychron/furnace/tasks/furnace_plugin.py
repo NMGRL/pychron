@@ -76,6 +76,7 @@ class BaseFurnacePlugin(BaseTaskPlugin):
 
     def _tasks_default(self):
         return [TaskFactory(name='Furnace',
+                            task_group='hardware',
                             factory=self._task_factory,
                             protocol=FurnaceTask)]
 

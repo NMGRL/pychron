@@ -325,10 +325,12 @@ class DVCPersister(BasePersister):
                                            'fit': 'default',
                                            'references': []}
                 cbaselines[iso.detector] = {'fit': iso.baseline.fit,
+                                            'filter_outliers_dict': iso.baseline.filter_outliers_dict,
                                             'value': float(nominal_value(iso.baseline.uvalue)),
                                             'error': float(std_dev(iso.baseline.uvalue))}
 
             intercepts[iso.name] = {'fit': iso.fit,
+                                    'filter_outliers_dict': iso.filter_outliers_dict,
                                     'value': float(nominal_value(iso.uvalue)),
                                     'error': float(std_dev(iso.uvalue))}
             blanks[iso.name] = {'fit': 'previous',

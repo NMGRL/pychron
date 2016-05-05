@@ -124,22 +124,22 @@ class BasePeakCenter(MagnetSweep):
 
             xs = g.get_data(series=i)
             ys = g.get_data(series=i, axis=1)
+            if xs.shape == ys.shape:
+                pts = vstack((xs, ys)).T
+                result = PeakCenterResult(det, pts)
 
-            pts = vstack((xs, ys)).T
-            result = PeakCenterResult(det, pts)
+                p = self._calculate_peak_center(xs, ys)
+                if p:
+                    [lx, cx, hx], [ly, cy, hy], mx, my = p
+                    result.low_dac = lx
+                    result.center_dac = cx
+                    result.high_dac = hx
 
-            p = self._calculate_peak_center(xs, ys)
-            if p:
-                [lx, cx, hx], [ly, cy, hy], mx, my = p
-                result.low_dac = lx
-                result.center_dac = cx
-                result.high_dac = hx
+                    result.low_signal = ly
+                    result.center_signal = cy
+                    result.high_signal = hy
 
-                result.low_signal = ly
-                result.center_signal = cy
-                result.high_signal = hy
-
-            results.append(result)
+                results.append(result)
 
         return results
 

@@ -34,6 +34,7 @@ class GeneralPreferences(GitRepoPreferencesHelper):
     # use_advanced_ui = Bool
 
     organization = String(enter_set=True, auto_set=False)
+    default_principal_investigator = String
 
     def _organization_changed(self, new):
         if not self.remote and new:
@@ -59,6 +60,7 @@ class GeneralPreferencesPane(PreferencesPane):
                              tooltip='Ask user for confirmation when quitting application'),
                         Item('show_random_tip', label='Random Tip',
                              tooltip='Display a Random Tip whe the application starts'),
+                        Item('default_principal_investigator', label='Default PI'),
                         # Item('use_advanced_ui', label='Advanced UI',
                         #      tooltip='Display the advanced UI'),
                         root_grp,

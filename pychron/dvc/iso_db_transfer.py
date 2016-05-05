@@ -32,7 +32,7 @@ from pychron.dvc import dvc_dump
 from pychron.dvc.dvc import DVC
 from pychron.dvc.dvc_persister import DVCPersister, format_repository_identifier
 from pychron.dvc.pychrondata_transfer_helpers import get_irradiation_timestamps, get_project_timestamps, \
-    set_spectrometer_files, import_j
+    set_spectrometer_files
 from pychron.experiment.automated_run.persistence_spec import PersistenceSpec
 from pychron.experiment.automated_run.spec import AutomatedRunSpec
 from pychron.experiment.utilities.identifier import make_runid, IDENTIFIER_REGEX, SPECIAL_IDENTIFIER_REGEX
@@ -49,7 +49,7 @@ def create_github_repo(name):
     org = Organization(ORG)
     if not org.has_repo(name):
         usr = os.environ.get('GITHUB_USER')
-        pwd = os.environ.get('GITHUB_PWD')
+        pwd = os.environ.get('GITHUB_PASSWORD')
         org.create_repo(name, usr, pwd)
 
 
@@ -96,7 +96,7 @@ class IsoDBTransfer(Loggable):
 
         proc = IsotopeDatabaseManager(bind=False, connect=False)
 
-        use_local_src = False
+        use_local_src = True
         if use_local_src:
             conn = dict(host='localhost',
                         username=os.environ.get('LOCALHOST_DB_USER'),
@@ -156,6 +156,7 @@ class IsoDBTransfer(Loggable):
         self.debug('bulk import irradiation {}'.format(irradname))
         oruns = []
         ts, idxs = self._get_irradiation_timestamps(irradname, tol_hrs=tol_hrs)
+        print ts
         repository_identifier = 'Irradiation-{}'.format(irradname)
 
         # add project
@@ -712,7 +713,7 @@ if __name__ == '__main__':
     #     project = 'Irradiation-{}'.format(i)
     #     create_repo_for_existing_local(project, paths.repository_dataset_dir)
     #     commit_initial_import(project, paths.repository_dataset_dir)
-    # e.bulk_import_irradiation('NM-278', 'NMGRL', dry=False)
+    e.bulk_import_irradiation('NM-281', 'NMGRL', dry=False)
 
     # e.bulk_import_project('Cascades', 'Templeton', dry=False)
     # fix_a_steps(e.dvc.db, 'Toba', paths.repository_dataset_dir)
@@ -720,7 +721,7 @@ if __name__ == '__main__':
     # create_repo_for_existing_local('Cascades', paths.repository_dataset_dir)
     # commit_initial_import('Cascades', paths.repository_dataset_dir)
 
-    import_j(e.processor.db, e.dvc.db, e.dvc.meta_repo, 'Toba')
+    # import_j(e.processor.db, e.dvc.db, e.dvc.meta_repo, 'Toba')
     # ps = ('Valles',
     #       'RatonClayton',
     #       'ZuniBandera',

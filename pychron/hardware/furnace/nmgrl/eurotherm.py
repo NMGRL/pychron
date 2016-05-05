@@ -46,7 +46,9 @@ class NMGRLFurnaceEurotherm(CoreDevice):
 
     def get_summary(self, **kw):
         d = json.dumps({'command': 'GetFurnaceSummary', 'h2o_channel': self.water_flow_channel})
-        return self.ask(d, **kw)
+        r = self.ask(d, **kw)
+        if r:
+            return json.loads(r)
 
     @get_float(default=0)
     def read_output_percent(self, **kw):

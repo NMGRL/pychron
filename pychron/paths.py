@@ -85,6 +85,7 @@ class Paths(object):
     labspy_dir = None
     labspy_context_dir = None
     # users_file = None
+    global_hidden = None
     build_repo = None
     login_file = None
     preferences_dir = None
@@ -339,7 +340,8 @@ class Paths(object):
 
         self.plotter_options_dir = join(self.hidden_dir, 'plotter_options')
         self.comment_templates_dir = join(self.hidden_dir, 'comment_templates')
-        self.build_repo = join(self.hidden_dir, 'updates', 'pychron')
+        self.global_hidden = join(self.base, '.pychron')
+        self.build_repo = join(self.global_hidden, 'updates', 'pychron')
         self.peak_center_config_dir = join(self.hidden_dir, 'peak_center_configs')
         # ==============================================================================
         # setup
