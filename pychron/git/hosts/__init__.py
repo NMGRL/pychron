@@ -66,6 +66,7 @@ class GitHostService(Loggable):
     preference_path = ''
     oauth_token = Str
     default_remote_name = Str
+    remote_url = Str
 
     def bind_preferences(self):
         bind_preference(self, 'username', '{}.username'.format(self.preference_path))

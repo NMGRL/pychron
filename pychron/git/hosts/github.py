@@ -24,6 +24,10 @@ from pychron.paths import paths
 class GitHubService(GitHostService):
     preference_path = 'pychron.github'
 
+    @property
+    def remote_url(self):
+        return paths.github_url
+
     def test_api(self):
         ret, err = True, ''
         try:

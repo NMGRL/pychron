@@ -163,7 +163,7 @@ class SampleBrowserModel(BrowserModel):
         if not self.sample_view_active:
             self.time_view_model.load()
         else:
-            self.activate_sample_browser()
+            self.activate_browser()
 
         self.dump()
 

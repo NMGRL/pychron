@@ -275,7 +275,7 @@ class OpenCurrentExperimentQueueAction(ExperimentAction):
         path = os.path.join(paths.experiment_dir, name)
 
         if not os.path.isfile(path):
-            information('No experiment called {}'.format(name))
+            information(None, 'No experiment called {}'.format(name))
         open_experiment(event, path)
 
 

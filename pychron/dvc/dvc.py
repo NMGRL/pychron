@@ -615,12 +615,15 @@ class DVC(Loggable):
         self.information_dialog(msg)
 
     def push_repository(self, repo):
+        self.debug('push repository {}'.format(repo))
         for gi in self.application.get_services(IGitHost):
+            self.debug('pushing to remote={}, url={}'.format(gi.default_remote_name, gi.remote_url))
             repo.push(remote=gi.default_remote_name)
 
     def push_repositories(self, changes):
         for gi in self.application.get_services(IGitHost):
             push_repositories(changes, gi.default_remote_name)
+
     # IDatastore
     def get_greatest_aliquot(self, identifier):
         return self.db.get_greatest_aliquot(identifier)

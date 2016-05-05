@@ -51,7 +51,8 @@ class GitHostPreferencesPane(PreferencesPane):
         return g
 
     def traits_view(self):
-        v = View(self._cred_group())
+        v = View(self._cred_group(),
+                 Item('default_remote_name', label='Default Remote'))
         return v
 
 

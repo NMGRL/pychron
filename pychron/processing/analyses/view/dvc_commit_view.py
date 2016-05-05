@@ -31,7 +31,7 @@ from pychron.dvc.tasks.panes import CommitAdapter
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.view_util import open_view
 from pychron.git_archive.repo_manager import isoformat_date
-from pychron.git_archive.utils import get_commits, get_diff
+from pychron.git_archive.utils import get_commits, get_diff, get_head_commit
 from pychron.paths import paths
 from pychron.pychron_constants import LIGHT_RED, PLUSMINUS_ONE_SIGMA, LIGHT_YELLOW
 
@@ -301,7 +301,7 @@ class DVCCommitView(HasTraits):
         if new:
             if len(new) == 1:
                 self.selected_lhs = new[0]
-                self.selected_rhs = self.repo.get_head_object()
+                self.selected_rhs = get_head_commit(self.repo)
             elif len(new) == 2:
                 a, b = new
                 self.selected_rhs = a if b == self.selected_lhs else b

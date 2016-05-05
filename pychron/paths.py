@@ -341,7 +341,7 @@ class Paths(object):
         self.plotter_options_dir = join(self.hidden_dir, 'plotter_options')
         self.comment_templates_dir = join(self.hidden_dir, 'comment_templates')
         self.global_hidden = join(self.base, '.pychron')
-        self.build_repo = join(self.global_hidden, 'updates', 'pychron')
+        self.build_repo = join(self.global_hidden, 'updates')
         self.peak_center_config_dir = join(self.hidden_dir, 'peak_center_configs')
         # ==============================================================================
         # setup
