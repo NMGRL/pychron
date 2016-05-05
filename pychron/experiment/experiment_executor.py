@@ -173,6 +173,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     dvc_username = Str
     dvc_password = Str
     dvc_organization = Str
+    default_principal_investigator = Str
 
     baseline_color = Color
     sniff_color = Color
@@ -281,6 +282,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self._preference_binder('pychron.dashboard.client', ('use_dashboard_client',))
         if self.use_dashboard_client:
             self.dashboard_client = self.application.get_service('pychron.dashboard.client.DashboardClient')
+
+        # general
+        self._preference_binder('pychron.general', ('default_principal_investigator'))
 
     def execute(self):
 
@@ -1138,7 +1142,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 arun.dvc_persister = dvcp
 
                 repid = spec.repository_identifier
-                self.datahub.mainstore.add_repository(repid, 'NMGRL', inform=False)
+                self.datahub.mainstore.add_repository(repid, self.default_principal_investigator, inform=False)
 
                 arun.dvc_persister.initialize(repid)
 
@@ -1517,6 +1521,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
             self.heading('Pre Extraction Check Passed')
         self.debug('=================================================================================')
+
     def _pre_queue_check(self, exp):
         """
             return True to stop execution loop
@@ -1697,20 +1702,39 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             return
 
         if self.use_dvc_persistence:
-            no_exp = []
+            # create dated references repos
+            now = datetime.now()
+
+            suffix = 1 if now.month > 6 else 0
+            curtag = '{}{}'.format(now.strftime('%y'), suffix)
+
+            dvc = self.datahub.stores['dvc']
+            for tag in ('air', 'cocktail', 'blank'):
+                dvc.add_repository('{}{}'.format(tag, curtag), self.default_principal_investigator, inform=False)
+
+            no_repo = []
             for i, ai in enumerate(runs):
                 if not ai.repository_identifier:
                     self.warning('No repository identifier for i={}, {}'.format(i + 1, ai.runid))
-                    no_exp.append(ai)
+                    no_repo.append(ai)
 
-            if no_exp:
-                if self.confirmation_dialog('No Repository Identifiers.\n\nUse "laboratory" for all analyses without '
-                                            'a repository identifier'):
-                    for aa in no_exp:
-                        aa.repository_identifier = 'laboratory'
-
-                else:
+            if no_repo:
+                if not self.confirmation_dialog('Missing repository identifiers. Automatically populate?'):
                     return
+
+                for ai in no_repo:
+                    if not ai.repository_identifier:
+                        repo_id = 'laboratory'
+                        atype = ai.analysis_type
+                        if atype in ('air', 'blank_air'):
+                            repo_id = 'air{}'.format(curtag)
+                        elif atype in ('cocktail', 'blank_cocktail'):
+                            repo_id = 'cocktail{}'.format(curtag)
+                        elif atype in ('blank_unknown', 'blank_extractionline'):
+                            repo_id = 'blank{}'.format(curtag)
+
+                        self.debug('setting {} to repo={} type={}'.format(ai.runid, repo_id, atype))
+                        ai.repository_identifier = repo_id
 
         if globalv.experiment_debug:
             self.debug('********************** NOT DOING PRE EXECUTE CHECK ')
