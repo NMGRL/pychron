@@ -518,6 +518,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     self.debug('stop iteration')
                     break
 
+                if spec.skip:
+                    self.debug('caught a skipped run {}'.format(spec.runid))
+                    continue
+
                 if self._pre_run_check(spec):
                     self.warning('pre run check failed')
                     break
