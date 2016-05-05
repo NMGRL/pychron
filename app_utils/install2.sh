@@ -91,6 +91,9 @@ meta_repo_name=MetaData\n
 "
 
 PREFERENCES="[pychron.genera]\n
+[pychron.dvc]\n
+organization=NMGRLData\n
+meta_repo_name=MetaData\n
 "
 
 STARTUP_TESTS="- plugin: ArArConstantsPlugin\n
