@@ -67,6 +67,7 @@ class BrowserModel(BaseBrowserModel):
 
     filter_by_button = Button
     toggle_focus = Button
+    load_view_button = Button
 
     datasource_url = Str
     irradiation_enabled = Bool
@@ -197,6 +198,22 @@ class BrowserModel(BaseBrowserModel):
 
             # def _toggle_focus_fired(self):
             # self.filter_focus = not self.filter_focus
+
+    def _load_view_button_fired(self):
+        lm = self.application.get_service('pychron.loading.loading_manager.LoadingManager')
+        if lm:
+            selection = lm.get_selection()
+            if selection:
+                print 'load view', selection
+                # lm.trait_set(db=self.db,
+                #              show_group_positions=True)
+                #
+                # from pychron.envisage.view_util import open_view
+                # lvsm = LoadViewSelectionModel(manager=lm)
+                # lvc = LoadViewController(model=lvsm)
+                # info = open_view(lvc)
+                # if info.result:
+                #     print lvsm.selections
 
     def _selected_samples_changed(self, new):
         self._selected_samples_changed_hook(new)

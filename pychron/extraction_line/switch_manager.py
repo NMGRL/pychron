@@ -352,6 +352,8 @@ class SwitchManager(Manager):
             v.lock()
             if save:
                 self._save_soft_lock_states()
+        else:
+            self.debug('unable to lock {}'.format(name))
 
     def unlock(self, name, save=True):
         """
@@ -361,6 +363,8 @@ class SwitchManager(Manager):
             v.unlock()
             if save:
                 self._save_soft_lock_states()
+        else:
+            self.debug('unable to unlock {}'.format(name))
 
     def set_valve_owner(self, name, owner):
         v = self.get_switch_by_name(name)

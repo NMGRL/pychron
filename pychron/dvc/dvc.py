@@ -41,7 +41,7 @@ from pychron.dvc.dvc_analysis import DVCAnalysis, repository_path, analysis_path
 from pychron.dvc.dvc_database import DVCDatabase
 from pychron.dvc.meta_repo import MetaRepo, Production
 from pychron.envisage.browser.record_views import InterpretedAgeRecordView
-from pychron.git.hosts import IGitHost
+from pychron.git.hosts import IGitHost, CredentialException
 from pychron.git_archive.repo_manager import GitRepoManager, format_date, get_repository_branch
 from pychron.loggable import Loggable
 from pychron.paths import paths, r_mkdir
@@ -585,6 +585,7 @@ class DVC(Loggable):
             if name in names:
                 service = self.application.get_service(IGitHost)
                 service.clone_from(name, root, self.organization)
+
                 # GitRepoManager.clone_from(name, root)
 
         # url = self.make_url(name)
@@ -822,6 +823,12 @@ class DVC(Loggable):
 
     def add_repository(self, identifier, principal_investigator, inform=True):
         self.debug('trying to add repository identifier={}, pi={}'.format(identifier, principal_investigator))
+
+        root = os.path.join(paths.repository_dataset_dir, identifier)
+        if os.path.isdir(root):
+            self.debug('already a directory {}'.format(identifier))
+            return
+
         names = self.remote_repositories()
         if identifier in names:
             # make sure also in the database
@@ -831,8 +838,6 @@ class DVC(Loggable):
                 self.warning_dialog('Repository "{}" already exists'.format(identifier))
 
         else:
-            root = os.path.join(paths.repository_dataset_dir, identifier)
-
             if os.path.isdir(root):
                 self.db.add_repository(identifier, principal_investigator)
                 if inform:
@@ -946,7 +951,11 @@ class DVC(Loggable):
                 a = DVCAnalysis(rid, expid)
             except AnalysisNotAnvailableError:
                 self.info('Analysis {} not available. Trying to clone repository "{}"'.format(rid, expid))
-                self.sync_repo(expid)
+                try:
+                    self.sync_repo(expid)
+                except CredentialException:
+                    self.warning_dialog('Invalid credentials for GitHub/GitLab')
+                    return
 
                 try:
                     a = DVCAnalysis(rid, expid)
@@ -957,7 +966,7 @@ class DVC(Loggable):
             # get repository branch
             a.branch = get_repository_branch(os.path.join(paths.repository_dataset_dir, expid))
             # a.set_tag(record.tag)
-
+            self.debug('Irradiation {}'.format(a.irradiation))
             # load irradiation
             if a.irradiation and a.irradiation not in ('NoIrradiation',):
                 chronology = meta_repo.get_chronology(a.irradiation)

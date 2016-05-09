@@ -174,16 +174,18 @@ class DVCAnalysis(Analysis):
         jd = dvc_load(path)
         for attr in META_ATTRS:
             v = jd.get(attr)
+            self.debug('{}={}'.format(attr, v))
             if v is not None:
                 setattr(self, attr, v)
 
         if self.increment is not None:
             self.step = make_step(self.increment)
 
+        ts = jd['timestamp']
         try:
-            self.rundate = datetime.datetime.strptime(jd['timestamp'], '%Y-%m-%dT%H:%M:%S')
+            self.rundate = datetime.datetime.strptime(ts, '%Y-%m-%dT%H:%M:%S')
         except ValueError:
-            self.rundate = datetime.datetime.strptime(jd['timestamp'], '%Y-%m-%dT%H:%M:%S.%f')
+            self.rundate = datetime.datetime.strptime(ts, '%Y-%m-%dT%H:%M:%S.%f')
 
         self.collection_version = jd['collection_version']
         self._set_isotopes(jd)
@@ -314,6 +316,7 @@ class DVCAnalysis(Analysis):
         self.interference_corrections = r.to_dict(INTERFERENCE_KEYS)
 
     def set_chronology(self, chron):
+        self.debug('set chronology')
         analts = self.rundate
 
         convert_days = lambda x: x.total_seconds() / (60. * 60 * 24)

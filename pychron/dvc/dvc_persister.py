@@ -352,7 +352,8 @@ class DVCPersister(BasePersister):
         obj['intensity_scalar'] = self.per_spec.intensity_scalar
 
         # save the conditionals
-        obj['conditionals'] = [c.to_dict() for c in self.per_spec.conditionals]
+        obj['conditionals'] = [c.to_dict() for c in self.per_spec.conditionals] if \
+            self.per_spec.conditionals else None
         obj['tripped_conditional'] = self.per_spec.tripped_conditional.result_dict() if \
             self.per_spec.tripped_conditional else None
 

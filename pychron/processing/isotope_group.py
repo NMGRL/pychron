@@ -153,19 +153,6 @@ class IsotopeGroup(Loggable):
         r = ufloat(*ic)
         return r
 
-    def get_error_component(self, key):
-        # for var, error in self.uage.error_components().items():
-        #     print var.tag
-
-        v = next((error for (var, error) in self.uage.error_components().items()
-                  if var.tag == key), 0)
-
-        ae = self.uage.std_dev
-        if ae:
-            return v ** 2 / ae ** 2 * 100
-        else:
-            return 0
-
     def append_data(self, iso, det, x, signal, kind):
         """
             if kind is baseline then key used to match isotope is `detector` not an `isotope_name`

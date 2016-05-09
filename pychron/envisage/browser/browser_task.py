@@ -168,12 +168,17 @@ class BaseBrowserTask(BaseEditorTask):
 
             if open_copy is True, allow multiple instances of the same analysis
         """
-        self.debug('recalling records {}'.format(records))
-
         if not isinstance(records, (list, tuple)):
             records = [records]
         elif isinstance(records, tuple):
             records = list(records)
+
+        for ri in records:
+            try:
+                rid = ri.record_id
+            except AttributeError:
+                rid = ''
+            self.debug('recall {} {}'.format(rid, ri))
 
         if not open_copy:
             records = self._open_existing_recall_editors(records)

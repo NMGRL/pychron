@@ -907,6 +907,17 @@ class AutomatedRun(Loggable):
 
         return v
 
+    def get_ratio(self, r, non_ic_corr=True):
+        if self.isotope_group:
+            return self.isotope_group.get_ratio(r, non_ic_corr=non_ic_corr)
+
+    def get_reference_peakcenter_result(self):
+        if self.persistence_spec:
+            pc = self.persistence_spec.peak_center
+            if pc:
+                rn = pc.reference_detector.name
+                return pc.get_result(rn)
+
     def get_device_value(self, dev_name):
         return self.extraction_line_manager.get_device_value(dev_name)
 

@@ -234,7 +234,7 @@ class meas_MeasurementTable(Base, BaseMixin):
 
 
 class meas_PeakCenterTable(Base, BaseMixin):
-    detector = stringcolumn()
+    # detector = stringcolumn()
     center = Column(Float(32))
     points = Column(BLOB)
     analysis_id = foreignkey('meas_AnalysisTable')

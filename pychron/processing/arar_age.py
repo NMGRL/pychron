@@ -189,6 +189,21 @@ class ArArAge(IsotopeGroup):
         self.temporary_ic_factors = {}
         self.discrimination = ufloat(1, 0)
 
+    def get_error_component(self, key):
+        # for var, error in self.uage.error_components().items():
+        #     print var.tag
+        if not self.uage:
+            self.calculate_age()
+
+        v = next((error for (var, error) in self.uage.error_components().items()
+                  if var.tag == key), 0)
+
+        ae = self.uage.std_dev
+        if ae:
+            return v ** 2 / ae ** 2 * 100
+        else:
+            return 0
+
     def set_ic_factor(self, det, v, e):
         for iso in self.get_isotopes(det):
             iso.ic_factor = ufloat(v, e, tag='icfactor')
@@ -549,6 +564,7 @@ class ArArAge(IsotopeGroup):
                                            self.chron_segments)
             a39df = calculate_decay_factor(arc.lambda_Ar39.nominal_value,
                                            self.chron_segments)
+            print a37df, a39df, self.chron_segments, self.chron_dosages
             self.ar37decayfactor = a37df
             self.ar39decayfactor = a39df
 

@@ -59,6 +59,14 @@ class IGitHost(Interface):
         pass
 
 
+class CredentialException(BaseException):
+    def __init__(self, d):
+        self._auth = d['Authorization']
+
+    def __str__(self):
+        return 'Invalid user/password combination. {}'.format(self._auth)
+
+
 @provides(IGitHost)
 class GitHostService(Loggable):
     username = Str
@@ -103,6 +111,9 @@ class GitHostService(Loggable):
 
             def _rget(ci):
                 r = s.get(ci)
+                if r.status_code == 401:
+                    raise CredentialException(self._get_authorization())
+
                 d = json.loads(r.text)
 
                 result = []

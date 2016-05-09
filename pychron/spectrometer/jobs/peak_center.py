@@ -114,31 +114,22 @@ class BasePeakCenter(MagnetSweep):
                 invoke_in_main_thread(self._post_execute)
                 return center
 
-    def get_results(self):
-        g = self.graph
+    def get_result(self, detname):
+        for i, det in enumerate(self.active_detectors):
+            if not isinstance(det, str):
+                det = det.name
 
+            if det == detname:
+                return self._get_result(i, det)
+
+    def get_results(self):
         results = []
         for i, det in enumerate(self.active_detectors):
             if not isinstance(det, str):
                 det = det.name
 
-            xs = g.get_data(series=i)
-            ys = g.get_data(series=i, axis=1)
-            if xs.shape == ys.shape:
-                pts = vstack((xs, ys)).T
-                result = PeakCenterResult(det, pts)
-
-                p = self._calculate_peak_center(xs, ys)
-                if p:
-                    [lx, cx, hx], [ly, cy, hy], mx, my = p
-                    result.low_dac = lx
-                    result.center_dac = cx
-                    result.high_dac = hx
-
-                    result.low_signal = ly
-                    result.center_signal = cy
-                    result.high_signal = hy
-
+            result = self._get_result(i, det)
+            if result:
                 results.append(result)
 
         return results
@@ -221,7 +212,7 @@ class BasePeakCenter(MagnetSweep):
                 dac_values = graph.get_data()
                 intensities = graph.get_data(axis=1)
 
-                result = self._calculate_peak_center(dac_values, intensities)
+                result = self._calculate_peak_center(dac_values, intensities, update_plot=True)
                 self.debug('result of _calculate_peak_center={}'.format(result))
                 self.result = result
                 if result is not None:
@@ -243,6 +234,26 @@ class BasePeakCenter(MagnetSweep):
         if self.use_dac_offset:
             center += self.dac_offset
         return center, smart_shift, success
+
+    # private
+    def _get_result(self, i, det):
+        xs = self.graph.get_data(series=i)
+        ys = self.graph.get_data(series=i, axis=1)
+        if xs.shape == ys.shape:
+            pts = vstack((xs, ys)).T
+            result = PeakCenterResult(det, pts)
+
+            p = self._calculate_peak_center(xs, ys, False)
+            if p:
+                [lx, cx, hx], [ly, cy, hy], mx, my = p
+                result.low_dac = lx
+                result.center_dac = cx
+                result.high_dac = hx
+
+                result.low_signal = ly
+                result.center_signal = cy
+                result.high_signal = hy
+            return result
 
     def _get_scan_parameters(self, i, center_dac, smart_shift):
         wnd = self.window
@@ -291,13 +302,14 @@ class BasePeakCenter(MagnetSweep):
 
         graph.redraw()
 
-    def _calculate_peak_center(self, x, y):
+    def _calculate_peak_center(self, x, y, update_plot):
         if self.use_interpolation:
             f = interpolate.interp1d(x, y, kind=self.interpolation_kind)
             x = linspace(x.min(), x.max(), 500)
             y = f(x)
-            self.graph.new_series(x, y, line_width=1)
-            self.graph.redraw()
+            if update_plot:
+                self.graph.new_series(x, y, line_width=1)
+                self.graph.redraw()
 
         if self.n_peaks > 1:
             self.warning('peak deconvolution disabled')

@@ -284,7 +284,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.dashboard_client = self.application.get_service('pychron.dashboard.client.DashboardClient')
 
         # general
-        self._preference_binder('pychron.general', ('default_principal_investigator'))
+        self._preference_binder('pychron.general', ('default_principal_investigator',))
 
     def execute(self):
 
@@ -1713,8 +1713,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             curtag = '{}{}'.format(now.strftime('%y'), suffix)
 
             dvc = self.datahub.stores['dvc']
+            ms = self.active_editor.queue.mass_spectrometer
             for tag in ('air', 'cocktail', 'blank'):
-                dvc.add_repository('{}{}'.format(tag, curtag), self.default_principal_investigator, inform=False)
+                dvc.add_repository('{}_{}{}'.format(ms, tag, curtag), self.default_principal_investigator, inform=False)
 
             no_repo = []
             for i, ai in enumerate(runs):
@@ -1731,11 +1732,11 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                         repo_id = 'laboratory'
                         atype = ai.analysis_type
                         if atype in ('air', 'blank_air'):
-                            repo_id = 'air{}'.format(curtag)
+                            repo_id = '{}_air{}'.format(ms, curtag)
                         elif atype in ('cocktail', 'blank_cocktail'):
-                            repo_id = 'cocktail{}'.format(curtag)
+                            repo_id = '{}_cocktail{}'.format(ms, curtag)
                         elif atype in ('blank_unknown', 'blank_extractionline'):
-                            repo_id = 'blank{}'.format(curtag)
+                            repo_id = '{}_blank{}'.format(ms, curtag)
 
                         self.debug('setting {} to repo={} type={}'.format(ai.runid, repo_id, atype))
                         ai.repository_identifier = repo_id

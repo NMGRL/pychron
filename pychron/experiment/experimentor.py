@@ -166,6 +166,7 @@ class Experimentor(DVCIrradiationable):
                 # is run in cache
                 if ln not in cache:
                     info = self._get_analysis_info(ln)
+                    self.debug('Info for {}={}'.format(ln, info))
                     if not info:
                         cache[ln] = dict(identifier_error=True)
                     else:
