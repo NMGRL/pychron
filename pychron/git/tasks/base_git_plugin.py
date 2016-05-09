@@ -29,7 +29,7 @@ class BaseGitPlugin(BaseTaskPlugin):
         usr = p.get('pychron.github.user')
         pwd = p.get('pychron.github.password')
         tok = p.get('pychron.github.token')
-
+        self.debug('user={}, pwd={}, token={}'.format(usr, pwd, tok))
         if not tok and not (usr and pwd):
             self.information_dialog('Please set user name and password or token in preferences')
 
