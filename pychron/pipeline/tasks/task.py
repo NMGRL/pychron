@@ -325,6 +325,9 @@ class PipelineTask(BaseBrowserTask):
     def set_isochron_template(self):
         self._set_action_template('Isochron')
 
+    def set_inverse_isochron_template(self):
+        self._set_action_template('InverseIsochron')
+
     def set_series_template(self):
         self._set_action_template('Series')
 

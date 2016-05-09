@@ -24,6 +24,15 @@ from pychron.git.hosts import IGitHost
 class BaseGitPlugin(BaseTaskPlugin):
     service_klass = None
 
+    def start(self):
+        p = self.application.preferences
+        usr = p.get('pychron.github.user')
+        pwd = p.get('pychron.github.password')
+        tok = p.get('pychron.github.token')
+
+        if not tok and not (usr and pwd):
+            self.information_dialog('Please set user name and password or token in preferences')
+
     def test_api(self):
         service = self.application.get_service(IGitHost)
         return service.test_api()

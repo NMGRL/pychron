@@ -164,6 +164,7 @@ class FreezeFlux(PipelineAction):
     dname = 'Freeze Flux'
     action = 'freeze_flux'
 
+
 # ============= Plotting Actions =============================================
 class ResetFactoryDefaultsAction(Action):
     name = 'Reset Factory Defaults'
@@ -196,6 +197,11 @@ class IsochronAction(PlotAction):
     name = 'Isochron'
     action = 'set_isochron_template'
     # image = icon('histogram')
+
+
+class InverseIsochronAction(PlotAction):
+    name = 'InverseIsochron'
+    action = 'set_inverse_isochron_template'
 
 
 class SeriesAction(PlotAction):

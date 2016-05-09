@@ -419,8 +419,8 @@ IDEO = """- klass: UnknownNode
 - klass: IdeogramNode
 """
 
-ISOCHRON = """- klass: UnknownNode
-- klass: IsochronNode
+INVERSE_ISOCHRON = """- klass: UnknownNode
+- klass: InverseIsochronNode
 """
 
 SPEC = """- klass: UnknownNode

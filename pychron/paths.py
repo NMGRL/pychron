@@ -190,6 +190,7 @@ class Paths(object):
     # ===========================================================================
     # files
     # ===========================================================================
+    labspy_client_config = None
     template_manifest_file = None
     pipeline_template_file = None
     identifiers_file = None
@@ -418,6 +419,7 @@ class Paths(object):
         # =======================================================================
         # files
         # =======================================================================
+        labspy_client_config = join(self.setup_dir, 'labspy_client.yaml')
         self.template_manifest_file = join(self.pipeline_dir, 'pipeline_manifest.p')
         self.pipeline_template_file = join(self.pipeline_dir, 'template_order.yaml')
         self.identifiers_file = join(self.hidden_dir, 'identifiers.yaml')
