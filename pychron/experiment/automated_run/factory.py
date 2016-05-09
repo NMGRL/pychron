@@ -185,6 +185,8 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     repository_identifiers = Property(depends_on='repository_identifier_dirty, db_refresh_needed')
     add_repository_identifier = Event
     repository_identifier_dirty = Event
+    set_repository_identifier_button = Event
+
 
     selected_irradiation = Str('Irradiation')
     irradiations = Property(depends_on='db, db_refresh_needed')
@@ -203,7 +205,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     _end_after = Bool(False)
 
     weight = Float
-    comment = Str
+    comment = String(auto_set=False, enter_set=True)
     auto_fill_comment = Bool
     comment_template = Str
     comment_templates = List
@@ -297,6 +299,9 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     # readonly
     # ===========================================================================
     sample = Str
+    project = Str
+    material = Str
+
     display_irradiation = Str
     irrad_level = Str
     irrad_hole = Str
@@ -585,9 +590,9 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                 'collection_time_zero_offset',
                 'pattern', 'beam_diameter',
                 'weight', 'comment',
-                'sample', 'selected_irradiation',
+                'sample','project','material', 'username',
                 'ramp_duration',
-                'skip', 'mass_spectrometer', 'extract_device']
+                'skip', 'mass_spectrometer', 'extract_device', 'repository_identifier']
 
     def _set_run_values(self, arv, excludes=None):
         """
@@ -612,6 +617,10 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
             setattr(arv, sattr, v)
             setattr(arv, '_prev_{}'.format(sattr), v)
+
+        arv.irradiation = self.selected_irradiation
+        arv.irradiation_level = self.selected_level
+        arv.irradiation_position = int(self.irrad_hole)
 
         if self.aliquot:
             self.debug('setting user defined aliquot')
@@ -846,14 +855,20 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             dont load if was unknown and now unknown
             this preserves the users changes
         """
-        # if new is special e.g bu-01-01
         tag = new
         if '-' in new:
             tag = new.split('-')[0]
-        # if '-' in old:
-        #     old = old.split('-')[0]
 
-        if tag in ANALYSIS_MAPPING:  # or old in ANALYSIS_MAPPING or not old and new:
+        abit = tag in ANALYSIS_MAPPING
+        bbit = False
+        if not abit:
+            try:
+                int(tag)
+                bbit = True
+            except ValueError:
+                pass
+
+        if abit or bbit:  # or old in ANALYSIS_MAPPING or not old and new:
             # set default scripts
             self._load_default_scripts(tag, new)
 
@@ -933,8 +948,11 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         if labnumber in self._meta_cache:
             self.debug('using cached meta values for {}'.format(labnumber))
             d = self._meta_cache[labnumber]
-            for attr in ('sample', 'irradiation', 'comment', 'repository_identifier'):
+            for attr in ('sample', 'comment', 'repository_identifier'):
                 setattr(self, attr, d[attr])
+
+            self.selected_irradiation = d['irradiation']
+            self.selected_level = d['irradiation_level']
 
             self.display_irradiation = d['display_irradiation']
             return True
@@ -947,7 +965,9 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                 # convert labnumber (a, bg, or 10034 etc)
                 self.debug('load meta for {}'.format(labnumber))
                 ip = db.get_identifier(labnumber)
+                pos = 0
                 if ip:
+                    pos = ip.position
                     # set sample and irrad info
                     try:
                         self.sample = ip.sample.name
@@ -983,6 +1003,9 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
                     self._make_irrad_level(ip)
                     d['irradiation'] = self.selected_irradiation
+                    d['irradiation_position'] = pos
+                    d['irradiation_level'] = self.selected_level
+
                     d['display_irradiation'] = self.display_irradiation
                     if self.auto_fill_comment:
                         self._set_auto_comment()
@@ -1274,6 +1297,11 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         if new:
             if self.extract_units == NULL_STR:
                 self.extract_units = self._default_extract_units
+
+    def _set_repository_identifier_button(self):
+        if self._selected_runs:
+            for si in self._selected_runs:
+                si.repository_identifier = self.repository_identifier
 
     def _add_repository_identifier_fired(self):
         if self.dvc:

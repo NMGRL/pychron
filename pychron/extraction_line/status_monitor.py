@@ -51,7 +51,7 @@ class StatusMonitor(Loggable):
 
             self._stop_evt = Event()
             t = Thread(target=self._run, args=(vm,))
-            t.set_daemon(True)
+            t.setDaemon(True)
             t.start()
 
             # self._iter(1, vm)

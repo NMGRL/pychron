@@ -192,13 +192,13 @@ class ArArAge(IsotopeGroup):
     def get_error_component(self, key):
         # for var, error in self.uage.error_components().items():
         #     print var.tag
-        if not self.uage:
-            self.calculate_age()
+        ae = 0
+        if self.uage:
+            v = next((error for (var, error) in self.uage.error_components().items()
+                      if var.tag == key), 0)
 
-        v = next((error for (var, error) in self.uage.error_components().items()
-                  if var.tag == key), 0)
+            ae = self.uage.std_dev
 
-        ae = self.uage.std_dev
         if ae:
             return v ** 2 / ae ** 2 * 100
         else:
