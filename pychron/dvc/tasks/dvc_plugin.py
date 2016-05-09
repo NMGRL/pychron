@@ -28,6 +28,7 @@ from pychron.dvc.tasks.dvc_preferences import DVCPreferencesPane, \
     DVCDBConnectionPreferencesPane
 from pychron.dvc.tasks.repo_task import ExperimentRepoTask
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
+from pychron.git.hosts import IGitHost
 
 
 class DVCPlugin(BaseTaskPlugin):
@@ -41,6 +42,9 @@ class DVCPlugin(BaseTaskPlugin):
         if not self._fetched:
             dvc.initialize()
 
+        service = self.application.get_service(IGitHost)
+        if not service:
+            self.information_dialog('No GitHost Plugin enabled. (Enable GitHub or GitLab to share your changes)')
 
     # def stop(self):
     #     dvc = self.application.get_service(DVC)
