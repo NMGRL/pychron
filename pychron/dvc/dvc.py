@@ -569,7 +569,7 @@ class DVC(Loggable):
     def git_session_ctx(self, repository_identifier, message):
         return GitSessionCTX(self, repository_identifier, message)
 
-    def sync_repo(self, name):
+    def sync_repo(self, name, use_progress=True):
         """
         pull or clone an repo
 
@@ -579,7 +579,7 @@ class DVC(Loggable):
 
         if exists:
             repo = self._get_repository(name)
-            repo.pull()
+            repo.pull(use_progress=use_progress)
         else:
             names = self.remote_repositories()
             if name in names:

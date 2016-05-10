@@ -294,7 +294,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                                                 'Required for sending email notifications. '
                                                 'Are you sure you want to continue?'):
                     return
-        prog = open_progress(30, position=(100, 100))
+        prog = open_progress(100, position=(100, 100))
 
         if self._pre_execute_check(prog):
             self.info('pre execute check successful')
@@ -1653,7 +1653,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         for e in experiment_ids:
             if prog:
                 prog.change_message('Syncing {}'.format(e))
-                if not self.datahub.mainstore.sync_repo(e):
+                if not self.datahub.mainstore.sync_repo(e, use_progress=False):
                     break
         else:
             return True

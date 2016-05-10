@@ -534,7 +534,7 @@ class GitRepoManager(Loggable):
             if use_progress:
                 prog = open_progress(3,
                                      show_percent=False,
-                                     title='Pull Repository', close_at_end=False)
+                                     title='Pull Repository {}'.format(self.name), close_at_end=False)
                 prog.change_message('Fetching branch:"{}" from "{}"'.format(branch, remote))
             try:
                 self.fetch(remote)

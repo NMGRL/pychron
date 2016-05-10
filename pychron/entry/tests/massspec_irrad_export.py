@@ -5,7 +5,8 @@ import unittest
 from pychron.core.test_helpers import isotope_db_factory, massspec_db_factory, get_data_dir as mget_data_dir
 from pychron.entry.export.mass_spec_irradiation_exporter import MassSpecIrradiationExporter, \
     generate_production_ratios_id
-from pychron.entry.loaders.irradiation_loader import XLSIrradiationLoader
+
+# from pychron.entry.loaders.irradiation_loader import XLSIrradiationLoader
 from pychron.mass_spec.database.massspec_database_adapter import PR_KEYS
 
 DEBUGGING = True

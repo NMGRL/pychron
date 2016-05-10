@@ -118,6 +118,61 @@ def fix_import_commit(repo_identifier, root):
     #     repo.git.push('--force')
 
 
+def fix_meta(dest, repo_identifier, root):
+    d = os.path.join(root, repo_identifier)
+    changed = False
+    with dest.session_ctx():
+        repo = dest.get_repository(repo_identifier)
+        for ra in repo.repository_associations:
+            an = ra.analysis
+            p = analysis_path(an.record_id, repo_identifier)
+            obj = dvc_load(p)
+            if not obj:
+                print '********************** {} not found in repo'.format(an.record_id)
+                continue
+
+            print an.record_id, p
+            if not obj['irradiation']:
+                obj['irradiation'] = an.irradiation
+                lchanged = True
+                changed = True
+            if not obj['irradiation_position']:
+                obj['irradiation_position'] = an.irradiation_position_position
+                lchanged = True
+                changed = True
+            if not obj['irradiation_level']:
+                obj['irradiation_level'] = an.irradiation_level
+                lchanged = True
+                changed = True
+            if not obj['material']:
+                obj['material'] = an.irradiation_position.sample.material.name
+                lchanged = True
+                changed = True
+            if not obj['project']:
+                obj['project'] = an.irradiation_position.sample.project.name
+                lchanged = True
+                changed = True
+
+            if obj['repository_identifier'] != an.repository_identifier:
+                obj['repository_identifier'] = an.repository_identifier
+                lchanged = True
+                changed = True
+
+            if lchanged:
+                print '{} changed'.format(an.record_id)
+                dvc_dump(obj, p)
+
+    if changed:
+        from pychron.git_archive.repo_manager import GitRepoManager
+        rm = GitRepoManager()
+        rm.open_repo(d)
+
+        repo = rm._repo
+        repo.git.add('.')
+        repo.git.commit('-m', '<MANUAL> fixed metadata')
+        repo.git.push()
+
+
 def fix_a_steps(dest, repo_identifier, root):
     with dest.session_ctx():
         repo = dest.get_repository(repo_identifier)
