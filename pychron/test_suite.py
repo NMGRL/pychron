@@ -21,7 +21,6 @@ def suite():
     from pychron.canvas.canvas2D.tests.calibration_item import CalibrationObjectTestCase
     from pychron.experiment.tests.duration_tracker import DurationTrackerTestCase
     from pychron.core.tests.spell_correct import SpellCorrectTestCase
-    from pychron.entry.tests.irradiation_loader import SimilarTestCase
     from pychron.core.tests.filtering_tests import FilteringTestCase
     from pychron.core.stats.tests.peak_detection_test import MultiPeakDetectionTestCase
     from pychron.experiment.tests.repository_identifier import ExperimentIdentifierTestCase
@@ -55,7 +54,7 @@ def suite():
     tests = (CalibrationObjectTestCase,
              DurationTrackerTestCase,
              SpellCorrectTestCase,
-             SimilarTestCase,
+             # SimilarTestCase,
              FilteringTestCase,
              MultiPeakDetectionTestCase,
              ExperimentIdentifierTestCase,
