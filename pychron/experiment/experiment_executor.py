@@ -1982,7 +1982,7 @@ Use Last "blank_{}"= {}
                 pdbr, selected = self._get_blank(an.analysis_type, exp.mass_spectrometer,
                                                  exp.extract_device,
                                                  last=True,
-                                                 repository=an.repository_identifier, )
+                                                 repository=an.repository_identifier if an.is_special() else None)
 
                 if pdbr:
                     if selected:

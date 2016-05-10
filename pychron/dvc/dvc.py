@@ -947,7 +947,7 @@ class DVC(Loggable):
                 rid = record.record_id
                 if record.use_repository_suffix:
                     rid = '-'.join(rid.split('-')[:-1])
-                print 'rrr', rid
+                print 'rrr', rid, expid
                 a = DVCAnalysis(rid, expid)
             except AnalysisNotAnvailableError:
                 self.info('Analysis {} not available. Trying to clone repository "{}"'.format(rid, expid))

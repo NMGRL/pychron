@@ -198,7 +198,7 @@ class AnalysisTbl(Base, BaseMixin):
             if repo.repository == repository:
                 return self._make_record_view(repo.repository, use_suffix=use_suffix)
         else:
-            return self._make_record_view(self.repository_associations[0])
+            return self._make_record_view(self.repository_associations[0].repository)
 
     def _make_record_view(self, repo, use_suffix=False):
         iv = DVCIsotopeRecordView()
