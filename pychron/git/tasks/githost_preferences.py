@@ -15,13 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import requests
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traits.api import Str, Password
-from traitsui.api import View, Item, VGroup
+from traits.api import Str, Password, Button, Color
+from traitsui.api import View, Item, VGroup, HGroup
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
+from pychron.core.ui.custom_label_editor import CustomLabel
+from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper, test_connection_item
+from pychron.git.hosts import authentication
 
 
 class GitHostPreferences(BasePreferencesHelper):
@@ -30,14 +33,50 @@ class GitHostPreferences(BasePreferencesHelper):
     oauth_token = Str
     default_remote_name = Str
 
+    test_connection = Button
+    _remote_status = Str
+    _remote_status_color = Color
+
+    def _test_connection_fired(self):
+        self._remote_status_color = 'red'
+        self._remote_status = 'Invalid'
+        try:
+            header = authentication(self.username, self.password, self._token)
+
+            resp = requests.get(self._url,
+                                headers=header)
+            if resp.status_code == 200:
+                self._remote_status = 'Valid'
+                self._remote_status_color = 'green'
+        except BaseException, e:
+            print 'exception', e, self._url
+
 
 class GitHubPreferences(GitHostPreferences):
     preferences_path = 'pychron.github'
+
+    @property
+    def _url(self):
+        return 'https://api.github.com/'
+
+    @property
+    def _token(self):
+        if self.oauth_token:
+            return 'token {}'.format(self.oauth_token)
 
 
 class GitLabPreferences(GitHostPreferences):
     host = Str
     preferences_path = 'pychron.gitlab'
+
+    @property
+    def _url(self):
+        return 'http://{}'.format(self.host)
+
+    @property
+    def _token(self):
+        if self.oauth_token:
+            return 'Bearer {}'.format(self.oauth_token)
 
 
 class GitHostPreferencesPane(PreferencesPane):
@@ -47,6 +86,10 @@ class GitHostPreferencesPane(PreferencesPane):
                           show_border=True, label='Basic'),
                    VGroup(Item('oauth_token', label='Token'),
                           show_border=True, label='OAuth'),
+                   HGroup(test_connection_item(),
+                          CustomLabel('_remote_status',
+                                      width=50,
+                                      color_name='_remote_status_color')),
                    show_border=True, label='Credentials')
         return g
 

@@ -67,6 +67,16 @@ class CredentialException(BaseException):
         return 'Invalid user/password combination. {}'.format(self._auth)
 
 
+def authentication(username, password, oauth_token):
+    if oauth_token:
+        auth = oauth_token
+    else:
+        auth = base64.encodestring('{}:{}'.format(username, password)).replace('\n', '')
+        auth = 'Basic {}'.format(auth)
+
+    return {"Authorization": auth}
+
+
 @provides(IGitHost)
 class GitHostService(Loggable):
     username = Str
@@ -149,13 +159,17 @@ class GitHostService(Loggable):
         raise NotImplementedError
 
     def _get_authorization(self):
+        token = None
         if self.oauth_token:
-            auth = self._get_oauth_token()
-        else:
-            auth = base64.encodestring('{}:{}'.format(self.username,
-                                                      self.password)).replace('\n', '')
-            auth = 'Basic {}'.format(auth)
-
-        return {"Authorization": auth}
+            token = self._get_oauth_token()
+        return authentication(self.username, self.password, token)
+        # if self.oauth_token:
+        #     auth = self._get_oauth_token()
+        # else:
+        #     auth = base64.encodestring('{}:{}'.format(self.username,
+        #                                               self.password)).replace('\n', '')
+        #     auth = 'Basic {}'.format(auth)
+        #
+        # return {"Authorization": auth}
 
 # ============= EOF =============================================
