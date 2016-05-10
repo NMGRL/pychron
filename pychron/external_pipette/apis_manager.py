@@ -60,7 +60,7 @@ class SimpleApisManager(Manager):
     def test_connection(self):
         return self.controller.test_connection()
 
-    def set_extract_state(self, state):
+    def set_extract_state(self, state, *args, **kw):
         pass
 
     def finish_loading(self):
