@@ -254,6 +254,10 @@ class DVC(Loggable):
                                 timestamp=now)
         return True
 
+    def get_flux(self, irrad, level, pos):
+        j, lambda_k = self.meta_repo.get_flux(irrad, level, pos)
+        return j
+
     def freeze_flux(self, ans):
         self.info('freeze flux')
 

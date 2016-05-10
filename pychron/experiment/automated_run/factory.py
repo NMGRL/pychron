@@ -26,6 +26,9 @@ from traits.trait_errors import TraitError
 import yaml
 import os
 # ============= local library imports  ==========================
+from uncertainties import nominal_value
+from uncertainties import std_dev
+
 from pychron.core.helpers.iterfuncs import partition
 from pychron.dvc.dvc_irradiationable import DVCAble
 from pychron.entry.entry_views.repository_entry import RepositoryIdentifierEntry
@@ -1232,22 +1235,25 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
     @cached_property
     def _get_flux(self):
-        return self._get_flux_from_db()
+        return self._get_flux_from_datastore()
 
     @cached_property
     def _get_flux_error(self):
-        return self._get_flux_from_db(attr='j_err')
+        return self._get_flux_from_datastore(attr='err')
 
-    def _get_flux_from_db(self, attr='j'):
+    def _get_flux_from_datastore(self, attr='j'):
         j = 0
 
         identifier = self.labnumber
         if not (self.suppress_meta or '-##-' in identifier):
             if identifier:
-                db = self.get_database()
-                j = db.get_flux_value(identifier, attr)
+                j = self.dvc.get_flux(self.selected_irradiation, self.selected_level, int(self.irrad_hole)) or 0
+                if attr == 'err':
+                    j = std_dev(j)
+                else:
+                    j = nominal_value(j)
 
-        return j or 0
+        return j
 
     def _set_flux(self, a):
         if self.labnumber and a is not None:
@@ -1298,7 +1304,8 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             if self.extract_units == NULL_STR:
                 self.extract_units = self._default_extract_units
 
-    def _set_repository_identifier_button(self):
+    def _set_repository_identifier_button_fired(self):
+        self.debug('set repository identifier={}'.format(self.repository_identifier))
         if self._selected_runs:
             for si in self._selected_runs:
                 si.repository_identifier = self.repository_identifier
