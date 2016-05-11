@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from git.exc import GitCommandError
 from traits.api import Instance, Bool
 # ============= standard library imports ========================
 import base64
@@ -161,6 +162,8 @@ class DVCPersister(BasePersister):
         :return:
         """
         self.debug('================= post measurement started')
+        ret = True
+
         # save spectrometer
         spec_sha = self._get_spectrometer_sha()
         spec_path = os.path.join(self.active_repository.path, '{}.json'.format(spec_sha))
@@ -198,22 +201,30 @@ class DVCPersister(BasePersister):
                     self.debug('not at valid file {}'.format(p))
 
             if commit:
-                self.active_repository.smart_pull(accept_their=True)
+                try:
+                    self.active_repository.smart_pull(accept_their=True)
 
-                # commit files
-                self.active_repository.commit('<COLLECTION>')
-                # self.active_repository.push()
-                self.dvc.push_repository(self.active_repository)
+                    # commit files
+                    self.active_repository.commit('<COLLECTION>')
+                    # self.active_repository.push()
+                    self.dvc.push_repository(self.active_repository)
 
-                # update meta
-                self.dvc.meta_pull(accept_our=True)
+                    # update meta
+                    self.dvc.meta_pull(accept_our=True)
 
-                self.dvc.meta_commit('repo updated for analysis {}'.format(self.per_spec.run_spec.runid))
+                    self.dvc.meta_commit('repo updated for analysis {}'.format(self.per_spec.run_spec.runid))
 
-                # push commit
-                self.dvc.meta_push()
+                    # push commit
+                    self.dvc.meta_push()
+                except GitCommandError, e:
+                    self.warning(e)
+                    if not self.confirmation_dialog('DVC/Git Failed. Do you want to continue the experiment?',
+                                                    timeout_ret=True,
+                                                    timeout=30):
+                        ret = False
 
         self.debug('================= post measurement finished')
+        return ret
 
     # private
     def _save_analysis_db(self, timestamp):

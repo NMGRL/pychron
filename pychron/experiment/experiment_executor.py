@@ -1217,20 +1217,20 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             handle databases in conflict
         """
         dh = self.datahub
-        self._canceled = True
-        self._err_message = 'Databases are in conflict. {}'.format(conflict)
 
         ret = self.confirmation_dialog('Databases are in conflict. '
                                        'Do you want to modify the Run Identifier to {}'.format(dh.new_runid),
-                                       timeout_ret=0,
+                                       timeout_ret=True,
                                        timeout=30)
-        if ret or ret == 0:
+        if ret:
             dh.update_spec(spec, aoffset, soffset)
             ret = True
             self._canceled = False
             self._err_message = ''
         else:
             spec.conflicts_checked = False
+            self._canceled = True
+            self._err_message = 'Databases are in conflict. {}'.format(conflict)
             self.message(self._err_message)
             # self.info('No response from user. Canceling run')
             # do_later(self.information_dialog,
