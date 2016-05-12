@@ -37,7 +37,7 @@ from pychron.envisage.tasks.base_plugin import BasePlugin
 from pychron.paths import paths
 from pychron.envisage.resources import icon
 from pychron.envisage.tasks.actions import ToggleFullWindowAction, EditInitializationAction, EditTaskExtensionsAction
-from pychron.envisage.tasks.preferences import GeneralPreferencesPane
+from pychron.envisage.tasks.preferences import GeneralPreferencesPane, BrowserPreferencesPane
 from pychron.globals import globalv
 
 # logger = new_logger('PychronTasksPlugin')
@@ -86,7 +86,7 @@ class PychronTasksPlugin(BasePlugin):
                 '<b>2.</b> Set the flag <i>random_tip_enabled</i> to False in the initialization file']
 
     def _preferences_panes_default(self):
-        return [GeneralPreferencesPane]
+        return [GeneralPreferencesPane, BrowserPreferencesPane]
 
     def _task_extensions_default(self):
         actions = [SchemaAddition(factory=EditInitializationAction,

@@ -339,8 +339,9 @@ class Spectrum(BaseArArFigure):
         ag = self.analysis_group
         ag.dirty = True
 
-        text = self._build_integrated_age_label(ag.integrated_age, ag.nanalyses)
-        self.integrated_label.text = text
+        if self.integrated_label:
+            text = self._build_integrated_age_label(ag.integrated_age, ag.nanalyses)
+            self.integrated_label.text = text
 
         if ag.plateau_age and self.plateau_overlay:
             text = self._make_plateau_text()

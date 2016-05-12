@@ -16,12 +16,13 @@
 
 # ============= enthought library imports =======================
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traits.api import Directory, Bool, String
+from traits.api import Directory, Bool, String, Float
 from traitsui.api import View, Item, VGroup
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.envisage.tasks.base_preferences_helper import GitRepoPreferencesHelper, remote_status_item
+from pychron.envisage.tasks.base_preferences_helper import GitRepoPreferencesHelper, remote_status_item, \
+    BasePreferencesHelper
 
 
 class GeneralPreferences(GitRepoPreferencesHelper):
@@ -70,7 +71,20 @@ class GeneralPreferencesPane(PreferencesPane):
                         show_border=True))
         return v
 
+
+class BrowserPreferences(BasePreferencesHelper):
+    preferences_path = 'pychron.browser'
+    recent_hours = Float
+    reference_hours_padding = Float
+
+
+class BrowserPreferencesPane(PreferencesPane):
+    model_factory = BrowserPreferences
+    category = 'Browser'
+
+    def traits_view(self):
+        v = View(Item('recent_hours'),
+                 Item('reference_hours_padding'))
+        return v
+
 # ============= EOF =============================================
-
-
-
