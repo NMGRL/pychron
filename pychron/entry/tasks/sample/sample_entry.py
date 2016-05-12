@@ -180,9 +180,15 @@ class SampleEntry(DVCAble):
             self._samples = [SampleSpec.fromdump(p, pps, ms) for p in obj['samples']]
 
     def dump(self, p):
-        with open(p, 'w') as wfile:
-            obj = self._assemble()
-            yaml.dump(obj, wfile)
+        """
+        only dump if at least one value is not null
+        :param p:
+        :return:
+        """
+        obj = self._assemble()
+        if obj:
+            with open(p, 'w') as wfile:
+                yaml.dump(obj, wfile)
 
     # private
     def _backup(self):
@@ -194,11 +200,13 @@ class SampleEntry(DVCAble):
         ms = [p.todump() for p in self._materials]
         pps = [p.todump() for p in self._projects]
         ss = [p.todump() for p in self._samples]
-        obj = {'principal_investigators': ps,
-               'projects': pps,
-               'materials': ms,
-               'samples': ss}
-        return obj
+        if ps or ms or pps or ss:
+            obj = {'principal_investigators': ps,
+                   'projects': pps,
+                   'materials': ms,
+                   'samples': ss}
+
+            return obj
 
     def _save(self):
         self.debug('saving sample info')

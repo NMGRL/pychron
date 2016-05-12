@@ -59,7 +59,8 @@ paramiko"
 
 PIP_REQ="uncertainties
 pint
-GitPython"
+GitPython
+peakutils"
 
 # =========== Payload text ===============
 INITIALIZATION="<root>\n
@@ -226,9 +227,9 @@ echo -n "MassSpec Database Version [$default] >> "
 read dbv
 [ -z "$dbv" ] && dbv=$default
 
-echo GITHUB_ORGANIZATION=${go} >> ${LAUNCHER_SCRIPT_PATH}
-echo GITHUB_USER=${gu} >> ${LAUNCHER_SCRIPT_PATH}
-echo GITHUB_PASSWORD=${gp} >> ${LAUNCHER_SCRIPT_PATH}
+echo export GITHUB_ORGANIZATION=${go} >> ${LAUNCHER_SCRIPT_PATH}
+echo export GITHUB_USER=${gu} >> ${LAUNCHER_SCRIPT_PATH}
+echo export GITHUB_PASSWORD=${gp} >> ${LAUNCHER_SCRIPT_PATH}
 
 echo MassSpecDBVersion=$dbv >> ${LAUNCHER_SCRIPT_PATH}
 echo ${MINICONDA_PREFIX}/envs/${CONDA_ENV}/bin/python \$ENTRY_POINT >> ${LAUNCHER_SCRIPT_PATH}

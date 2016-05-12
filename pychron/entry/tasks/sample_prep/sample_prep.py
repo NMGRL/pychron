@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.constant import OK
+from pyface.file_dialog import FileDialog
 from traits.api import HasTraits, Str, Bool, Property, Button, on_trait_change, List, \
     cached_property, Instance, Event, Date, Enum
 from traitsui.api import View, UItem
@@ -73,6 +75,11 @@ class PrepStepRecord(HasTraits):
                  buttons=['OK', 'Cancel', 'Revert'])
 
         self.edit_traits(view=v)
+
+    def _upload_image_button_fired(self):
+        dlg = FileDialog(action='open files')
+        if dlg.open() == OK:
+            self.upload_paths = dlg.paths
 
 
 class SamplePrep(DVCAble):
@@ -220,6 +227,10 @@ class SamplePrep(DVCAble):
 
     def _session_changed(self):
         self._load_session_samples()
+
+    @on_trait_change('prep_step:upload_paths')
+    def _handle_(self):
+        pass
 
     @cached_property
     def _get_sessions(self):
