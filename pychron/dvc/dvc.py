@@ -254,6 +254,82 @@ class DVC(Loggable):
                                 timestamp=now)
         return True
 
+    def repository_db_sync(self, reponame):
+        repo = self._get_repository(reponame, as_current=False)
+        ps = []
+        with self.db.session_ctx():
+            ans = self.db.repository_analyses(reponame)
+            for ai in ans:
+                p = analysis_path(ai.record_id, reponame)
+                obj = dvc_load(p)
+
+                sample = None
+                project = None
+                material = None
+                changed = False
+                for attr, v in (('sample', sample),
+                                ('project', project),
+                                ('material', material)):
+                    if obj.get(attr) != v:
+                        obj[attr] = v
+                        changed = True
+
+                if changed:
+                    ps.append(p)
+                    dvc_dump(obj, p)
+
+            if ps:
+                repo.pull()
+                repo.add_paths(ps)
+                repo.commit('Synced repository with database {}'.format(self.db.datasource_url))
+                repo.push()
+
+    def repository_transfer(self, ans, dest):
+        def key(x):
+            return x.repository_identifier
+
+        destrepo = self._get_repository(dest, as_current=False)
+        for src, ais in groupby(sorted(ans, key=key), key=key):
+            with self.db.session_ctx():
+                repo = self._get_repository(src, as_current=False)
+                for ai in ais:
+                    ops, nps = self._transfer_analysis_to(dest, src, ai.runid)
+                    repo.add_paths(ops)
+                    destrepo.add_paths(nps)
+
+                    # update database
+                    dbai = self.db.get_analysis_uuid(ai.uuid)
+                    for ri in dbai.repository_associations:
+                        if ri.repository == src:
+                            ri.repository = dest
+
+            # commit src changes
+            repo.commit('Transferred analyses to {}'.format(dest))
+            dest.commit('Transferred analyses from {}'.format(src))
+
+    def _transfer_analysis_to(self, dest, src, rid):
+        p = analysis_path(rid, src)
+        np = analysis_path(rid, dest)
+
+        obj = dvc_load(p)
+        obj['repository_identifier'] = dest
+        dvc_dump(obj, p)
+
+        ops = [p]
+        nps = [np]
+
+        shutil.move(p, np)
+
+        for modifier in ('baselines', 'blanks', 'extraction',
+                         'intercepts', 'icfactors', 'peakcenter', '.data'):
+            p = analysis_path(rid, src, modifier=modifier)
+            np = analysis_path(rid, dest, modifier=modifier)
+            shutil.move(p, np)
+            ops.append(p)
+            nps.append(np)
+
+        return ops, nps
+
     def freeze_flux(self, ans):
         self.info('freeze flux')
 
@@ -753,13 +829,13 @@ class DVC(Loggable):
         with self.db.session_ctx():
             self.db.add_measured_position(*args, **kw)
 
-    def add_material(self, name):
+    def add_material(self, name, grainsize=None):
         db = self.db
         added = False
         with db.session_ctx():
-            if not db.get_material(name):
+            if not db.get_material(name, grainsize):
                 added = True
-                db.add_material(name)
+                db.add_material(name, grainsize)
 
         return added
 
@@ -772,13 +848,13 @@ class DVC(Loggable):
                 db.add_project(name, pi)
         return added
 
-    def add_sample(self, name, project, material):
+    def add_sample(self, name, project, material, grainsize=None):
         added = False
         db = self.db
         with db.session_ctx():
-            if not db.get_sample(name, project, material):
+            if not db.get_sample(name, project, material, grainsize):
                 added = True
-                db.add_sample(name, project, material)
+                db.add_sample(name, project, material, grainsize)
         return added
 
     def add_principal_investigator(self, name):
@@ -996,8 +1072,11 @@ class DVC(Loggable):
         if path:
             return Production(path)
 
-    def _get_repository(self, repository_identifier):
-        repo = self.current_repository
+    def _get_repository(self, repository_identifier, as_current=True):
+        repo = None
+        if as_current:
+            repo = self.current_repository
+
         path = repository_path(repository_identifier)
 
         if repo is None or repo.path != path:
@@ -1005,7 +1084,8 @@ class DVC(Loggable):
             repo = GitRepoManager()
             repo.path = path
             repo.open_repo(path)
-            self.current_repository = repo
+            if as_current:
+                self.current_repository = repo
 
         return repo
 

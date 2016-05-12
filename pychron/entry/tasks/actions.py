@@ -41,18 +41,6 @@ class AddFluxMonitorAction(Action):
         s.add_flux_monitor()
 
 
-class LabnumberEntryAction(Action):
-    name = 'Labnumber Entry'
-    dname = 'Labnumber Entry'
-    # accelerator = 'Ctrl+Shift+l'
-    id = 'pychron.labnumber_entry'
-
-    def perform(self, event):
-        pid = 'pychron.entry.irradiation.task'
-        app = event.task.window.application
-        app.get_task(pid)
-
-
 class SensitivityEntryAction(Action):
     name = 'Sensitivity'
     dname = 'Sensitivity'

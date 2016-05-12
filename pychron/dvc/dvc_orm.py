@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-from sqlalchemy import Column, Integer, String, TIMESTAMP, Float, BLOB, func, Boolean, ForeignKey
+from sqlalchemy import Column, Integer, String, TIMESTAMP, Float, BLOB, func, Boolean, ForeignKey, DATE
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.orm import relationship
 
@@ -377,5 +377,47 @@ class MeasuredPositionTbl(Base, BaseMixin):
 
 class VersionTbl(Base, BaseMixin):
     version = Column(String(40), primary_key=True)
+
+
+# ======================== Sample Prep ========================
+class SamplePrepWorkerTbl(Base, BaseMixin):
+    name = Column(String(32), primary_key=True)
+    fullname = Column(String(45))
+    email = Column(String(45))
+    phone = Column(String(45))
+    comment = Column(String(140))
+
+
+class SamplePrepSessionTbl(Base, BaseMixin):
+    id = Column(Integer, primary_key=True)
+    name = Column(String(32))
+    comment = Column(String(140))
+    worker_name = Column(String(32), ForeignKey('SamplePrepWorkerTbl.name'))
+    start_date = Column(DATE, default=func.now())
+    end_date = Column(DATE)
+
+
+class SamplePrepStepTbl(Base, BaseMixin):
+    id = Column(Integer, primary_key=True)
+    sampleID = Column(Integer, ForeignKey('SampleTbl.id'))
+    sessionID = Column(Integer, ForeignKey('SamplePrepSessionTbl.id'))
+    crush = Column(String(140))
+    wash = Column(String(140))
+    sieve = Column(String(140))
+    frantz = Column(String(140))
+    acid = Column(String(140))
+    heavy_liquid = Column(String(140))
+    pick = Column(String(140))
+    status = Column(String(32))
+    comment = Column(String(300))
+    timestamp = Column(TIMESTAMP, default=func.now())
+    added = Column(Boolean)
+
+
+class SamplePrepImageTbl(Base, BaseMixin):
+    id = Column(Integer, primary_key=True)
+    stepID = Column(Integer, ForeignKey('SamplePrepStepTbl.id'))
+    host = Column(String(45))
+    path = Column(String(45))
 
 # ============= EOF =============================================

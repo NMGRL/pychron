@@ -329,9 +329,6 @@ class MetaRepo(GitRepoManager):
     #         path = paths.meta_dir
     #
     #     paths.meta_dir = path
-    def add_unstaged(self, *args, **kw):
-        super(MetaRepo, self).add_unstaged(self.path, **kw)
-
     def save_gains(self, ms, gains_dict):
         p = self._gain_path(ms)
         # with open(p, 'w') as wfile:

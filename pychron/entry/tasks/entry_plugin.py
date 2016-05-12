@@ -23,14 +23,16 @@ from pyface.tasks.action.schema_addition import SchemaAddition
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.entry.editors.flux_monitor_editor import FluxMonitorEditor
+from pychron.entry.tasks.labnumber.actions import LabnumberEntryAction
 from pychron.entry.tasks.preferences import LabnumberEntryPreferencesPane
 from pychron.entry.tasks.actions import MakeIrradiationBookPDFAction, MakeIrradiationTemplateAction, \
-    LabnumberEntryAction, \
     SensitivityEntryAction, AddMolecularWeightAction, AddFluxMonitorAction, \
     GenerateTrayAction, \
     ImportIrradiationHolderAction, ExportIrradiationAction, ImportIrradiationAction, \
     TransferJAction, ImportSamplesAction, ImportIrradiationFileAction, GetIGSNAction, GenerateIrradiationTableAction
 from pychron.entry.editors.molecular_weight_editor import MolecularWeightEditor
+from pychron.entry.tasks.sample.actions import SampleEntryAction
+from pychron.entry.tasks.sample_prep.actions import SamplePrepAction
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 
 
@@ -102,6 +104,10 @@ class EntryPlugin(BaseTaskPlugin):
                 (self.id, '', 'Entry',
                  [SchemaAddition(id='pychron.entry1.labnumber_entry', factory=LabnumberEntryAction,
                                  path=gpath, absolute_position='first'),
+                  SchemaAddition(id='pychron.entry1.sample_entry', factory=SampleEntryAction,
+                                 path=gpath),
+                  SchemaAddition(id='pychron.entry1.sample_prep', factory=SamplePrepAction,
+                                 path=gpath),
                   SchemaAddition(id='pychron.entry2.make_template', factory=MakeIrradiationTemplateAction,
                                  path=g2path),
                   SchemaAddition(id='pychron.entry1.generate_irradiation_table', factory=GenerateIrradiationTableAction,
@@ -121,15 +127,31 @@ class EntryPlugin(BaseTaskPlugin):
                             include_view_menu=False),
                 TaskFactory(id='pychron.entry.sensitivity.task',
                             factory=self._sensitivity_entry_task_factory,
+                            include_view_menu=False),
+                TaskFactory(id='pychron.entry.sample.task',
+                            factory=self._sample_entry_task_factory,
+                            include_view_menu=False),
+                TaskFactory(id='pychron.entry.sample.prep.task',
+                            factory=self._sample_prep_task_factory,
                             include_view_menu=False)]
 
+    def _sample_prep_task_factory(self):
+        from pychron.entry.tasks.sample_prep.task import SamplePrepTask
+
+        return SamplePrepTask()
+
+    def _sample_entry_task_factory(self):
+        from pychron.entry.tasks.sample.task import SampleEntryTask
+
+        return SampleEntryTask()
+
     def _labnumber_entry_task_factory(self):
-        from pychron.entry.tasks.labnumber_entry_task import LabnumberEntryTask
+        from pychron.entry.tasks.labnumber.task import LabnumberEntryTask
 
         return LabnumberEntryTask()
 
     def _sensitivity_entry_task_factory(self):
-        from pychron.entry.tasks.sensitivity_entry_task import SensitivityEntryTask
+        from pychron.entry.tasks.sensitivity.task import SensitivityEntryTask
 
         return SensitivityEntryTask()
 

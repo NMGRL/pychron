@@ -168,6 +168,7 @@ class Paths(object):
     isotope_dir = None
 
     index_db = None
+    sample_dir = None
     # vcs_dir = None
     # initialization_dir = None
     # device_creator_dir = None
@@ -402,7 +403,7 @@ class Paths(object):
         self.dvc_dir = join(self.data_dir, '.dvc')
         self.repository_dataset_dir = join(self.dvc_dir, 'repositories')
         self.meta_root = join(self.dvc_dir, 'MetaData')
-
+        self.sample_dir = join(self.data_dir, 'sample_entry')
         # ==============================================================================
         # processing
         # ==============================================================================
