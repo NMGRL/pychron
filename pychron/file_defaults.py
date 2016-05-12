@@ -32,7 +32,7 @@ PIPELINE_TEMPLATES = '''- Iso Evo
 - Flux
 - Ideogram
 - Spectrum
-- InverseIsochron
+- Inverse Isochron
 - Series
 - Analysis Table
 - Interpreted Age Table
