@@ -33,6 +33,7 @@ import os
 import pickle
 # ============= local library imports  ==========================
 from pychron.github import GITHUB_API_URL
+from pychron.globals import globalv
 from pychron.paths import paths
 
 LABELS = ['Bug',
@@ -136,6 +137,16 @@ class ExceptionModel(HasTraits):
 Please consider submitting a bug report to the developer</b></font><br/>
 Enter a <b>Title</b>, select a few <b>Labels</b> and add a <b>Description</b> of the bug. Then click <b>Submit</b><br/></p>""")
 
+    @property
+    def active_analyses(self):
+        ret = ''
+        if globalv.active_analyses:
+            try:
+                ret = ','.join([ai.record_id for ai in globalv.active_analyses])
+            except AttributeError, e:
+                ret = '{}\n\n{}'.format(e, str(globalv.active_analyses))
+        return ret
+
 
 class ExceptionHandler(Controller):
     def submit(self, info):
@@ -171,7 +182,8 @@ class ExceptionHandler(Controller):
 
     def _make_body(self):
         m = self.model
-        return '{}\n\n```\n{}\n```'.format(m.description, m.exctext)
+        return 'active analyses={}\n\n{}\n\n```\n{}\n```'.format(m.active_analyses,
+                                                                 m.description, m.exctext)
 
     def traits_view(self):
         v = View(VGroup(

@@ -43,6 +43,7 @@ from pychron.dvc.meta_repo import MetaRepo, Production
 from pychron.envisage.browser.record_views import InterpretedAgeRecordView
 from pychron.git.hosts import IGitHost, CredentialException
 from pychron.git_archive.repo_manager import GitRepoManager, format_date, get_repository_branch
+from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.paths import paths, r_mkdir
 from pychron.pychron_constants import RATIO_KEYS, INTERFERENCE_KEYS
@@ -489,6 +490,7 @@ class DVC(Loggable):
         if not records:
             return
 
+        globalv.active_analyses = records
         # load repositories
         exps = {r.repository_identifier for r in records}
         if self.pulled_repositories:
