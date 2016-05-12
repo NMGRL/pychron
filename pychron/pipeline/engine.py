@@ -573,7 +573,6 @@ class PipelineEngine(Loggable):
 
         for temp in list_directory2(paths.pipeline_template_dir, extension='.yaml',
                                     remove_extension=True):
-            print temp
             templates.append(temp)
         self.debug('loaded {} pychron templates'.format(len(templates)))
 

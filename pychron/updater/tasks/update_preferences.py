@@ -19,6 +19,8 @@ import os
 
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from git import Repo
+from git.exc import InvalidGitRepositoryError
+from pyface.message_dialog import warning
 from traits.api import Str, Bool, List, Button, Instance
 from traitsui.api import View, Item, EnumEditor, VGroup, HGroup
 
@@ -34,13 +36,13 @@ from pychron.pychron_constants import LINE_STR
 class Updater:
     _repo = None
 
-    def pull(self, branch):
-        repo = self._get_working_repo()
+    def pull(self, branch, inform=False):
+        repo = self._get_working_repo(inform)
         origin = repo.remote('origin')
         origin.pull(branch)
 
-    def checkout_branch(self, name):
-        repo = self._get_working_repo()
+    def checkout_branch(self, name, inform=False):
+        repo = self._get_working_repo(inform)
         try:
             branch = getattr(repo.branches, name)
         except AttributeError:
@@ -50,19 +52,25 @@ class Updater:
 
         branch.checkout()
 
-    def checkout_tag(self, tag):
+    def checkout_tag(self, tag, inform=False):
+        repo = self._get_working_repo(inform)
+        if repo:
+            try:
+                branch = getattr(repo.branches, tag)
+                branch.checkout()
+            except AttributeError:
+                repo.git.fetch()
+                repo.git.checkout('-b', tag, tag)
 
-        repo = self._get_working_repo()
-        try:
-            branch = getattr(repo.branches, tag)
-            branch.checkout()
-        except AttributeError:
-            repo.git.fetch()
-            repo.git.checkout('-b', tag, tag)
-
-    def _get_working_repo(self):
+    def _get_working_repo(self, inform):
         if not self._repo:
-            self._repo = Repo(paths.build_repo)
+            try:
+                self._repo = Repo(paths.build_repo)
+            except InvalidGitRepositoryError:
+                if inform:
+                    warning(None, 'Invalid Build repository {}.\n'
+                                  'Pychron not properly configured for update. \n\n'
+                                  'Contact developer'.format(paths.build_repo))
         return self._repo
 
 
@@ -82,6 +90,7 @@ class UpdatePreferencesHelper(GitRepoPreferencesHelper):
     _tags = List
 
     _updater = Instance(Updater, ())
+    _initialized = False
 
     def __init__(self, *args, **kw):
         super(UpdatePreferencesHelper, self).__init__(*args, **kw)
@@ -117,22 +126,24 @@ class UpdatePreferencesHelper(GitRepoPreferencesHelper):
         # use github api to retrieve information
         self._branches, self._tags = self._get_branches_tags(self.remote)
 
-    def _use_tag_changed(self):
+    def _use_tag_changed(self, name, old, new):
         if not self.use_tag:
             if self.branch:
-                self._updater.checkout_branch(self.branch)
+                self._updater.checkout_branch(self.branch, inform=self._initialized)
+                self._initialized = True
         else:
             self._version_tag_changed()
 
     def _version_tag_changed(self):
-        if self.use_tag:
-            self._updater.checkout_tag(self.version_tag)
+        if self.use_tag and self.version_tag:
+            self._updater.checkout_tag(self.version_tag, inform=self._initialized)
+            self._initialized = True
 
     def _checkout_branch_button_fired(self):
-        self._updater.checkout_branch(self.branch)
+        self._updater.checkout_branch(self.branch, inform=self._initialized)
 
     def _pull_button_fired(self):
-        self._updater.pull(self.branch)
+        self._updater.pull(self.branch, inform=self._initialized)
 
 
 class UpdatePreferencesPane(PreferencesPane):

@@ -99,12 +99,11 @@ class AutomatedRunSpec(HasTraits):
     _min_ms_pumptime = Int
     conditionals = Str
     syn_extraction = Str
-
     collection_time_zero_offset = Float
+    repository_identifier = Str
 
     frequency_group = 0
     conflicts_checked = False
-    repository_identifier = Str
     identifier_error = Bool(False)
 
     executable = Property(depends_on='identifier_error, _executable')
@@ -344,6 +343,51 @@ class AutomatedRunSpec(HasTraits):
 
     def clear_step(self):
         self._step = -1
+
+    def tocopy(self):
+        traits = ['mass_spectrometer',
+                  'extract_device',
+                  'username',
+                  'tray',
+                  'queue_conditionals_name',
+                  'labnumber',
+                  'user_defined_aliquot',
+                  'measurement_script',
+                  'post_measurement_script',
+                  'post_equilibration_script',
+                  'extraction_script',
+                  'script_options', 'use_cdd_warming',
+                  'extract_value',
+                  'extract_units',
+                  'position',
+                  'xyz_position',
+                  'duration',
+                  'cleanup',
+                  'pattern',
+                  'beam_diameter',
+                  'ramp_duration',
+                  'ramp_rate',
+                  'disable_between_positions',
+                  '_overlap',
+                  '_min_ms_pumptime',
+                  'conditionals',
+                  'syn_extraction',
+                  'collection_time_zero_offset',
+                  'repository_identifier',
+                  'weight',
+                  'comment',
+                  'project',
+                  'sample',
+                  'irradiation',
+                  'irradiation_level',
+                  'irradiation_position',
+                  'material',
+                  'data_reduction_tag']
+
+        if self.is_step_heat():
+            traits.append('aliquot')
+
+        return self.clone_traits(traits)
 
     # ===============================================================================
     # handlers

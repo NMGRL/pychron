@@ -352,7 +352,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
                 if not self.search_criteria.recent_hours:
                     if not warned:
                         self.warning_dialog('Set "Recent Hours" in Preferences.\n'
-                                            '"Recent Hours" is located in the "Processing" category')
+                                            '"Recent Hours" is located in the "Browser" category')
 
             sams.extend(self._make_labnumbers())
             # rnames, onames = partition(names, lambda x: x.startswith('RECENT'))
