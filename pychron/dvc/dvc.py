@@ -14,15 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
-import glob
-
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import Instance, Str, Set, List, provides
 # ============= standard library imports ========================
 from math import isnan
 from datetime import datetime
-from uncertainties import nominal_value
-from uncertainties import std_dev
+from uncertainties import nominal_value, std_dev
 from git import Repo
 from itertools import groupby
 import shutil
@@ -39,6 +36,7 @@ from pychron.dvc.defaults import TRIGA, HOLDER_24_SPOKES, LASER221, LASER65
 from pychron.dvc.dvc_analysis import DVCAnalysis, repository_path, analysis_path, PATH_MODIFIERS, \
     AnalysisNotAnvailableError
 from pychron.dvc.dvc_database import DVCDatabase
+from pychron.dvc.func import find_interpreted_age_path, GitSessionCTX, push_repositories
 from pychron.dvc.meta_repo import MetaRepo, Production
 from pychron.envisage.browser.record_views import InterpretedAgeRecordView
 from pychron.git.hosts import IGitHost, CredentialException
@@ -50,68 +48,6 @@ from pychron.pychron_constants import RATIO_KEYS, INTERFERENCE_KEYS
 
 TESTSTR = {'blanks': 'auto update blanks', 'iso_evo': 'auto update iso_evo'}
 
-
-def repository_has_staged(ps):
-    if not hasattr(ps, '__iter__'):
-        ps = (ps,)
-
-    changed = []
-    repo = GitRepoManager()
-    for p in ps:
-        pp = os.path.join(paths.repository_dataset_dir, p)
-        repo.open_repo(pp)
-        if repo.has_unpushed_commits():
-            changed.append(p)
-
-    return changed
-
-
-def push_repositories(ps, remote=None):
-    repo = GitRepoManager()
-    for p in ps:
-        pp = os.path.join(paths.repository_dataset_dir, p)
-        repo.open_repo(pp)
-        repo.push(remote)
-
-
-def get_review_status(record):
-    ms = 0
-    for m in ('blanks', 'intercepts', 'icfactors'):
-        p = analysis_path(record.record_id, record.repository_identifier, modifier=m)
-        date = ''
-        with open(p, 'r') as rfile:
-            obj = json.load(rfile)
-            reviewed = obj.get('reviewed', False)
-            if reviewed:
-                dt = datetime.fromtimestamp(os.path.getmtime(p))
-                date = dt.strftime('%m/%d/%Y')
-                ms += 1
-
-        setattr(record, '{}_review_status'.format(m), (reviewed, date))
-
-    ret = 'Intermediate'  # intermediate
-    if not ms:
-        ret = 'Default'  # default
-    elif ms == 3:
-        ret = 'All'  # all
-
-    record.review_status = ret
-
-
-def find_interpreted_age_path(idn, repositories, prefixlen=3):
-    prefix = idn[:prefixlen]
-    suffix = '{}.ia.json'.format(idn[prefixlen:])
-
-    for e in repositories:
-        pathname = '{}/{}/{}/ia/{}'.format(paths.repository_dataset_dir, e, prefix, suffix)
-        ps = glob.glob(pathname)
-        if ps:
-            return ps[0]
-
-
-# def make_remote_url(org, name):
-#     return '{}/{}/{}.git'.format(paths.git_base_origin, org, name)
-#
 
 class DVCException(BaseException):
     def __init__(self, attr):
@@ -153,22 +89,6 @@ class DVCInterpretedAge(InterpretedAge):
         for a in ('age', 'age_err', 'kca', 'kca_err', 'age_kind', 'kca_kind', 'mswd',
                   'sample', 'material', 'identifier', 'nanalyses', 'irradiation'):
             setattr(self, a, obj[a])
-
-
-class GitSessionCTX(object):
-    def __init__(self, parent, repository_identifier, message):
-        self._parent = parent
-        self._repository_id = repository_identifier
-        self._message = message
-        self._parent.get_repository(repository_identifier)
-
-    def __enter__(self):
-        pass
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if exc_type is None:
-            if self._parent.is_dirty():
-                self._parent.repository_commit(self._repository_id, self._message)
 
 
 @provides(IDatastore)
@@ -592,21 +512,6 @@ class DVC(Loggable):
         self.debug('Make analysis time, total: {}, n: {}, average: {}'.format(et, n, et / float(n)))
         return ret
 
-    # adders db
-    # def add_analysis(self, **kw):
-    #     with self.db.session_ctx():
-    #         self.db.add_material(**kw)
-
-    # updaters
-    # def update_chronology(self, name, doses):
-    # self.meta_repo.update_chronology(name, doses)
-    #
-    # def update_scripts(self, name, path):
-    # self.meta_repo.update_scripts(name, path)
-    #
-    # def update_experiment_queue(self, name, path):
-    #     self.meta_repo.update_experiment_queue(name, path)
-
     # repositories
     def repository_add_paths(self, repository_identifier, paths):
         repo = self._get_repository(repository_identifier)
@@ -628,25 +533,13 @@ class DVC(Loggable):
             self.warning_dialog('GitLab or GitHub plugin is required')
         return rs
 
-        # org = self._organization_factory()
-        # if attributes:
-        #     return org.repos(attributes)
-        # else:
-        #     return org.repo_names
-
     def check_githost_connection(self):
         git_service = self.application.get_service(IGitHost)
         return git_service.test_connection(self.organization)
-        # org = self._organization_factory()
-        # try:
-        #     return org.info is not None
-        # except BaseException:
-        #     pass
 
     def make_url(self, name):
         git_service = self.application.get_service(IGitHost)
         return git_service.make_url(name, self.organization)
-        # return make_remote_url(self.organization, name)
 
     def git_session_ctx(self, repository_identifier, message):
         return GitSessionCTX(self, repository_identifier, message)
@@ -667,13 +560,6 @@ class DVC(Loggable):
             if name in names:
                 service = self.application.get_service(IGitHost)
                 service.clone_from(name, root, self.organization)
-
-                # GitRepoManager.clone_from(name, root)
-
-        # url = self.make_url(name)
-        # org = self._organization_factory()
-        # if name in org.repo_names:
-        #     GitRepoManager.clone_from(url, root)
 
         return True
 
@@ -994,12 +880,10 @@ class DVC(Loggable):
     def _load_repository(self, expid, prog, i, n):
         if prog:
             prog.change_message('Loading repository {}. {}/{}'.format(expid, i, n))
-            # repo = GitRepoManager()
-            # repo.open_repo(expid, root=paths.experiment_dataset_dir)
-
         self.sync_repo(expid)
 
-    def _make_record(self, record, prog, i, n, meta_repo=None, calculate_f=False, calculate_f_only=False):
+    def _make_record(self, record, prog, i, n, calculate_f_only=False):
+        meta_repo = self.meta_repo
         if prog:
             prog.change_message('Loading analysis {}. {}/{}'.format(record.record_id, i, n))
 
@@ -1023,13 +907,11 @@ class DVC(Loggable):
         if isinstance(record, DVCAnalysis):
             a = record
         else:
-            print 'asdfas', record.use_repository_suffix, record.record_id
-
+            self.debug('use_repo_suffix={} record_id={}'.format(record.use_repository_suffix, record.record_id))
             try:
                 rid = record.record_id
                 if record.use_repository_suffix:
                     rid = '-'.join(rid.split('-')[:-1])
-                print 'rrr', rid, expid
                 a = DVCAnalysis(rid, expid)
             except AnalysisNotAnvailableError:
                 self.info('Analysis {} not available. Trying to clone repository "{}"'.format(rid, expid))

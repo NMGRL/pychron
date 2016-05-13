@@ -11,29 +11,6 @@
 # the source code is stored in the Pychron support directory
 # a launcher script is created and copied to the desktop
 
-# =========== User Questions ==============
-default=NMGRL
-echo -n "Github organization [$default] >> "
-read go
-[ -z "$go" ] && go=$default
-
-default=nmgrluser
-echo -n "Github user name [$default] >> "
-read gu
-[ -z "$gu" ] && gu=$default
-
-echo -n "Github password for ${gu} >> "
-read gp
-
-default=16
-echo -n "MassSpec Database Version [$default] >> "
-read dbv
-[ -z "$dbv" ] && dbv=$default
-
-echo export GITHUB_ORGANIZATION=${go} >> ${LAUNCHER_SCRIPT_PATH}
-echo export GITHUB_USER=${gu} >> ${LAUNCHER_SCRIPT_PATH}
-echo export GITHUB_PASSWORD=${gp} >> ${LAUNCHER_SCRIPT_PATH}
-echo export MassSpecDBVersion=$dbv >> ${LAUNCHER_SCRIPT_PATH}
 
 # =========== Configuration ===============
 WORKING_DIR=~/pychron_install_wd
@@ -83,7 +60,8 @@ paramiko"
 PIP_REQ="uncertainties
 pint
 GitPython
-peakutils"
+peakutils
+qimage2ndarray"
 
 # =========== Payload text ===============
 INITIALIZATION="<root>\n
@@ -232,6 +210,29 @@ echo ROOT=${PYCHRON_PATH} > ${LAUNCHER_SCRIPT_PATH}
 echo ENTRY_POINT=\$ROOT/launchers/${APPLICATION}.py >> ${LAUNCHER_SCRIPT_PATH}
 echo export PYTHONPATH=\$ROOT >> ${LAUNCHER_SCRIPT_PATH}
 
+default=NMGRL
+echo -n "Github organization [$default] >> "
+read go
+[ -z "$go" ] && go=$default
+
+default=nmgrluser
+echo -n "Github user name [$default] >> "
+read gu
+[ -z "$gu" ] && gu=$default
+
+echo -n "Github password for ${gu} >> "
+read gp
+
+default=16
+echo -n "MassSpec Database Version [$default] >> "
+read dbv
+[ -z "$dbv" ] && dbv=$default
+
+echo GITHUB_ORGANIZATION=${go} >> ${LAUNCHER_SCRIPT_PATH}
+echo GITHUB_USER=${gu} >> ${LAUNCHER_SCRIPT_PATH}
+echo GITHUB_PASSWORD=${gp} >> ${LAUNCHER_SCRIPT_PATH}
+
+echo MassSpecDBVersion=$dbv >> ${LAUNCHER_SCRIPT_PATH}
 echo ${MINICONDA_PREFIX}/envs/${CONDA_ENV}/bin/python \$ENTRY_POINT >> ${LAUNCHER_SCRIPT_PATH}
 
 chmod +x ${LAUNCHER_SCRIPT_PATH}

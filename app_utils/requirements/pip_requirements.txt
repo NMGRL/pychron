@@ -1,5 +1,5 @@
 uncertainties
-PyMySQL
 pint
 GitPython
-pyserial
+peakutils
+qimage2ndarray

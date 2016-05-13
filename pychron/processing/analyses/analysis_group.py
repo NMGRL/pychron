@@ -172,7 +172,7 @@ class AnalysisGroup(HasTraits):
         v, e = self._calculate_weighted_mean(attr, self.weighted_age_error_kind)
         e = self._modify_error(v, e, self.weighted_age_error_kind)
         try:
-            return ufloat(v, e)
+            return ufloat(v, max(0, e))
         except AttributeError:
             return ufloat(0, 0)
 
