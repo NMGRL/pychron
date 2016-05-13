@@ -586,8 +586,6 @@ class MetaRepo(GitRepoManager):
     @cached('clear_cache')
     def get_chronology(self, name, **kw):
         return irradiation_chronology(name)
-        # p = self._chron_name(name)
-        # return Chronology(p)
 
     @cached('clear_cache')
     def get_irradiation_holder_holes(self, name, **kw):
@@ -613,7 +611,6 @@ class MetaRepo(GitRepoManager):
             r_mkdir(root)
 
         p = os.path.join(root, name)
-        # action = 'updated' if os.path.isfile(p) else 'added'
         if os.path.isfile(path_or_blob):
             shutil.copyfile(path_or_blob, p)
         else:
@@ -621,10 +618,5 @@ class MetaRepo(GitRepoManager):
                 wfile.write(path_or_blob)
 
         self.add(p, commit=False)
-        # if self.has_staged():
-        # self.commit('updated {} {}'.format(tag, action, name))
-
-        # hexsha = self.shell('hash-object', '--path', p)
-        # return hexsha
 
 # ============= EOF =============================================

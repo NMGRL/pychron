@@ -22,7 +22,6 @@ from datetime import datetime
 from uncertainties import nominal_value, std_dev
 from git import Repo
 from itertools import groupby
-import glob
 import shutil
 import time
 import os
@@ -37,6 +36,7 @@ from pychron.dvc.defaults import TRIGA, HOLDER_24_SPOKES, LASER221, LASER65
 from pychron.dvc.dvc_analysis import DVCAnalysis, repository_path, analysis_path, PATH_MODIFIERS, \
     AnalysisNotAnvailableError
 from pychron.dvc.dvc_database import DVCDatabase
+from pychron.dvc.func import find_interpreted_age_path, GitSessionCTX, push_repositories
 from pychron.dvc.meta_repo import MetaRepo, Production
 from pychron.envisage.browser.record_views import InterpretedAgeRecordView
 from pychron.git.hosts import IGitHost, CredentialException
@@ -48,68 +48,6 @@ from pychron.pychron_constants import RATIO_KEYS, INTERFERENCE_KEYS
 
 TESTSTR = {'blanks': 'auto update blanks', 'iso_evo': 'auto update iso_evo'}
 
-
-def repository_has_staged(ps):
-    if not hasattr(ps, '__iter__'):
-        ps = (ps,)
-
-    changed = []
-    repo = GitRepoManager()
-    for p in ps:
-        pp = os.path.join(paths.repository_dataset_dir, p)
-        repo.open_repo(pp)
-        if repo.has_unpushed_commits():
-            changed.append(p)
-
-    return changed
-
-
-def push_repositories(ps, remote=None):
-    repo = GitRepoManager()
-    for p in ps:
-        pp = os.path.join(paths.repository_dataset_dir, p)
-        repo.open_repo(pp)
-        repo.push(remote)
-
-
-def get_review_status(record):
-    ms = 0
-    for m in ('blanks', 'intercepts', 'icfactors'):
-        p = analysis_path(record.record_id, record.repository_identifier, modifier=m)
-        date = ''
-        with open(p, 'r') as rfile:
-            obj = json.load(rfile)
-            reviewed = obj.get('reviewed', False)
-            if reviewed:
-                dt = datetime.fromtimestamp(os.path.getmtime(p))
-                date = dt.strftime('%m/%d/%Y')
-                ms += 1
-
-        setattr(record, '{}_review_status'.format(m), (reviewed, date))
-
-    ret = 'Intermediate'  # intermediate
-    if not ms:
-        ret = 'Default'  # default
-    elif ms == 3:
-        ret = 'All'  # all
-
-    record.review_status = ret
-
-
-def find_interpreted_age_path(idn, repositories, prefixlen=3):
-    prefix = idn[:prefixlen]
-    suffix = '{}.ia.json'.format(idn[prefixlen:])
-
-    for e in repositories:
-        pathname = '{}/{}/{}/ia/{}'.format(paths.repository_dataset_dir, e, prefix, suffix)
-        ps = glob.glob(pathname)
-        if ps:
-            return ps[0]
-
-
-# def make_remote_url(org, name):
-#     return '{}/{}/{}.git'.format(paths.git_base_origin, org, name)
-#
 
 class DVCException(BaseException):
     def __init__(self, attr):
@@ -151,48 +89,6 @@ class DVCInterpretedAge(InterpretedAge):
         for a in ('age', 'age_err', 'kca', 'kca_err', 'age_kind', 'kca_kind', 'mswd',
                   'sample', 'material', 'identifier', 'nanalyses', 'irradiation'):
             setattr(self, a, obj[a])
-
-
-class GitSessionCTX(object):
-    def __init__(self, parent, repository_identifier, message):
-        self._parent = parent
-        self._repository_id = repository_identifier
-        self._message = message
-        self._parent.get_repository(repository_identifier)
-
-    def __enter__(self):
-        pass
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if exc_type is None:
-            if self._parent.is_dirty():
-                self._parent.repository_commit(self._repository_id, self._message)
-
-
-# --------- see Stenven's solution above -------------
-from copy_reg import pickle
-from types import MethodType
-
-
-def _pickle_method(method):
-    func_name = method.im_func.__name__
-    obj = method.im_self
-    cls = method.im_class
-    return _unpickle_method, (func_name, obj, cls)
-
-
-def _unpickle_method(func_name, obj, cls):
-    for cls in cls.mro():
-        try:
-            func = cls.__dict__[func_name]
-        except KeyError:
-            pass
-        else:
-            break
-    return func.__get__(obj, cls)
-
-
-pickle(MethodType, _pickle_method, _unpickle_method)
 
 
 @provides(IDatastore)
