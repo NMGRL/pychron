@@ -15,23 +15,45 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Property, Dict
+import logging
+
+from traits.api import Property, Dict, Str
 # ============= standard library imports ========================
 import os
 from ConfigParser import ConfigParser
+
+from traits.has_traits import HasTraits
 from uncertainties import ufloat
 from numpy import hstack
 # ============= local library imports  ==========================
 from pychron.core.helpers.isotope_utils import sort_isotopes
-from pychron.loggable import Loggable
+# from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.processing.isotope import Isotope, Baseline
 
+logger = logging.getLogger('ISO')
 
-class IsotopeGroup(Loggable):
+
+class IsotopeGroup(HasTraits):
     isotopes = Dict
     isotope_keys = Property
     conditional_modifier = None
+    name = Str
+
+    def debug(self, msg, *args, **kw):
+        self._log(logger.debug, msg)
+
+    def info(self, msg, *args, **kw):
+        self._log(logger.info, msg)
+
+    def warning(self, msg, *args, **kw):
+        self._log(logger.warning, msg)
+
+    def critical(self, msg, *args, **kw):
+        self._log(logger.critical, msg)
+
+    def _log(self, func, msg):
+        func('{} - {}'.format(self.name, msg))
 
     def iter_isotopes(self):
         return (self.isotopes[k] for k in self.isotope_keys)
@@ -253,7 +275,7 @@ class IsotopeGroup(Loggable):
             return next((iso for iso in self.isotopes.itervalues()
                          if getattr(iso, attr) == value), None)
 
-    def set_isotope(self, iso, det,v, **kw):
+    def set_isotope(self, iso, det, v, **kw):
         # print 'set isotope', iso, v
         if iso not in self.isotopes:
             niso = Isotope(iso, det)
@@ -262,7 +284,7 @@ class IsotopeGroup(Loggable):
             niso = self.isotopes[iso]
 
         niso.set_uvalue(v)
-        for k,v in kw.iteritems():
+        for k, v in kw.iteritems():
             setattr(niso, k, v)
         # niso.trait_set(**kw)
 
@@ -301,7 +323,5 @@ class IsotopeGroup(Loggable):
                 return ufloat(0, 1e-20)
         else:
             raise AttributeError(attr)
+
 # ============= EOF =============================================
-
-
-

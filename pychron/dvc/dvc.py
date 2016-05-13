@@ -14,17 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
-import glob
-
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import Instance, Str, Set, List, provides
 # ============= standard library imports ========================
 from math import isnan
 from datetime import datetime
-from uncertainties import nominal_value
-from uncertainties import std_dev
+from uncertainties import nominal_value, std_dev
 from git import Repo
 from itertools import groupby
+import glob
 import shutil
 import time
 import os
@@ -169,6 +167,32 @@ class GitSessionCTX(object):
         if exc_type is None:
             if self._parent.is_dirty():
                 self._parent.repository_commit(self._repository_id, self._message)
+
+
+# --------- see Stenven's solution above -------------
+from copy_reg import pickle
+from types import MethodType
+
+
+def _pickle_method(method):
+    func_name = method.im_func.__name__
+    obj = method.im_self
+    cls = method.im_class
+    return _unpickle_method, (func_name, obj, cls)
+
+
+def _unpickle_method(func_name, obj, cls):
+    for cls in cls.mro():
+        try:
+            func = cls.__dict__[func_name]
+        except KeyError:
+            pass
+        else:
+            break
+    return func.__get__(obj, cls)
+
+
+pickle(MethodType, _pickle_method, _unpickle_method)
 
 
 @provides(IDatastore)
@@ -516,21 +540,6 @@ class DVC(Loggable):
         self.debug('Make analysis time, total: {}, n: {}, average: {}'.format(et, n, et / float(n)))
         return ret
 
-    # adders db
-    # def add_analysis(self, **kw):
-    #     with self.db.session_ctx():
-    #         self.db.add_material(**kw)
-
-    # updaters
-    # def update_chronology(self, name, doses):
-    # self.meta_repo.update_chronology(name, doses)
-    #
-    # def update_scripts(self, name, path):
-    # self.meta_repo.update_scripts(name, path)
-    #
-    # def update_experiment_queue(self, name, path):
-    #     self.meta_repo.update_experiment_queue(name, path)
-
     # repositories
     def repository_add_paths(self, repository_identifier, paths):
         repo = self._get_repository(repository_identifier)
@@ -552,25 +561,13 @@ class DVC(Loggable):
             self.warning_dialog('GitLab or GitHub plugin is required')
         return rs
 
-        # org = self._organization_factory()
-        # if attributes:
-        #     return org.repos(attributes)
-        # else:
-        #     return org.repo_names
-
     def check_githost_connection(self):
         git_service = self.application.get_service(IGitHost)
         return git_service.test_connection(self.organization)
-        # org = self._organization_factory()
-        # try:
-        #     return org.info is not None
-        # except BaseException:
-        #     pass
 
     def make_url(self, name):
         git_service = self.application.get_service(IGitHost)
         return git_service.make_url(name, self.organization)
-        # return make_remote_url(self.organization, name)
 
     def git_session_ctx(self, repository_identifier, message):
         return GitSessionCTX(self, repository_identifier, message)
@@ -591,13 +588,6 @@ class DVC(Loggable):
             if name in names:
                 service = self.application.get_service(IGitHost)
                 service.clone_from(name, root, self.organization)
-
-                # GitRepoManager.clone_from(name, root)
-
-        # url = self.make_url(name)
-        # org = self._organization_factory()
-        # if name in org.repo_names:
-        #     GitRepoManager.clone_from(url, root)
 
         return True
 
@@ -918,12 +908,10 @@ class DVC(Loggable):
     def _load_repository(self, expid, prog, i, n):
         if prog:
             prog.change_message('Loading repository {}. {}/{}'.format(expid, i, n))
-            # repo = GitRepoManager()
-            # repo.open_repo(expid, root=paths.experiment_dataset_dir)
-
         self.sync_repo(expid)
 
-    def _make_record(self, record, prog, i, n, meta_repo=None, calculate_f=False, calculate_f_only=False):
+    def _make_record(self, record, prog, i, n, calculate_f_only=False):
+        meta_repo = self.meta_repo
         if prog:
             prog.change_message('Loading analysis {}. {}/{}'.format(record.record_id, i, n))
 
@@ -947,13 +935,11 @@ class DVC(Loggable):
         if isinstance(record, DVCAnalysis):
             a = record
         else:
-            print 'asdfas', record.use_repository_suffix, record.record_id
-
+            self.debug('use_repo_suffix={} record_id={}'.format(record.use_repository_suffix, record.record_id))
             try:
                 rid = record.record_id
                 if record.use_repository_suffix:
                     rid = '-'.join(rid.split('-')[:-1])
-                print 'rrr', rid, expid
                 a = DVCAnalysis(rid, expid)
             except AnalysisNotAnvailableError:
                 self.info('Analysis {} not available. Trying to clone repository "{}"'.format(rid, expid))

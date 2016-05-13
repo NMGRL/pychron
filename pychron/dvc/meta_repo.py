@@ -285,12 +285,10 @@ class Cached(object):
     def __call__(self, func):
         def wrapper(obj, name, *args, **kw):
             ret = None
-            # if kw.get('use_cache'):
-            if not hasattr(obj, '__cache__'):
+            if not hasattr(obj, '__cache__') or obj.__cache__ is None:
                 obj.__cache__ = {}
 
             cache = obj.__cache__[func] if func in obj.__cache__ else {}
-            clear = False
             if self.clear:
                 if getattr(obj, self.clear):
                     cache = {}
@@ -304,7 +302,6 @@ class Cached(object):
                 ret = func(obj, name, *args, **kw)
 
             cache[key] = ret
-            # obj.__cache__[key] = ret
             obj.__cache__[func] = cache
             return ret
 
@@ -317,24 +314,11 @@ cached = Cached
 class MetaRepo(GitRepoManager):
     clear_cache = Bool
 
-    # clear_gain_cache = Bool
-    # clear_production_cache = Bool
-    # clear_chronology_cache = Bool
-    # clear_irradiation_holder_cache = Bool
-    # clear_load_holder_cache = Bool
-
-    # def __init__(self, path=None, *args, **kw):
-    #     super(MetaRepo, self).__init__(*args, **kw)
-    #     if path is None:
-    #         path = paths.meta_dir
-    #
-    #     paths.meta_dir = path
     def add_unstaged(self, *args, **kw):
         super(MetaRepo, self).add_unstaged(self.path, **kw)
 
     def save_gains(self, ms, gains_dict):
         p = self._gain_path(ms)
-        # with open(p, 'w') as wfile:
         dvc_dump(gains_dict, p)
 
         if self.add_paths(p):
