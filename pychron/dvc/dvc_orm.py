@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-from sqlalchemy import Column, Integer, String, TIMESTAMP, Float, BLOB, func, Boolean, ForeignKey, DATE
+from sqlalchemy import Column, Integer, String, TIMESTAMP, Float, BLOB, func, Boolean, ForeignKey, DATE, DATETIME
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.orm import relationship
 
@@ -410,7 +410,7 @@ class SamplePrepStepTbl(Base, BaseMixin):
     pick = Column(String(140))
     status = Column(String(32))
     comment = Column(String(300))
-    timestamp = Column(TIMESTAMP, default=func.now())
+    timestamp = Column(DATETIME, default=func.now())
     added = Column(Boolean)
 
 
@@ -419,5 +419,6 @@ class SamplePrepImageTbl(Base, BaseMixin):
     stepID = Column(Integer, ForeignKey('SamplePrepStepTbl.id'))
     host = Column(String(45))
     path = Column(String(45))
+    timestamp = Column(DATETIME, default=func.now())
 
 # ============= EOF =============================================

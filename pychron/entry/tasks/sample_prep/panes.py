@@ -54,6 +54,7 @@ class PrepStepAdapter(TabularAdapter):
 class SamplePrepPane(TraitsTaskPane):
     def traits_view(self):
         hgrp = VGroup(UItem('object.active_sample.steps', editor=TabularEditor(adapter=PrepStepAdapter(),
+                                                                               selected='selected_step',
                                                                                editable=False)),
                       label='History')
 
@@ -86,6 +87,8 @@ class SamplePrepPane(TraitsTaskPane):
         agrp = VGroup(HGroup(icon_button_editor('add_step_button', 'add',
                                                 enabled_when='object.active_sample.name',
                                                 tooltip='Add a sample prep step'),
+                             icon_button_editor('upload_image_button', 'camera',
+                                                tooltip='Add image'),
                              spring,
                              UItem('object.active_sample.name', style='readonly'),
                              spring),

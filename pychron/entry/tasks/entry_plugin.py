@@ -24,7 +24,7 @@ from pyface.tasks.action.schema_addition import SchemaAddition
 # ============= local library imports  ==========================
 from pychron.entry.editors.flux_monitor_editor import FluxMonitorEditor
 from pychron.entry.tasks.labnumber.actions import LabnumberEntryAction
-from pychron.entry.tasks.preferences import LabnumberEntryPreferencesPane
+from pychron.entry.tasks.preferences import LabnumberEntryPreferencesPane, SamplePrepPreferencesPane
 from pychron.entry.tasks.actions import MakeIrradiationBookPDFAction, MakeIrradiationTemplateAction, \
     SensitivityEntryAction, AddMolecularWeightAction, AddFluxMonitorAction, \
     GenerateTrayAction, \
@@ -156,7 +156,8 @@ class EntryPlugin(BaseTaskPlugin):
         return SensitivityEntryTask()
 
     def _preferences_panes_default(self):
-        return [LabnumberEntryPreferencesPane]
+        return [LabnumberEntryPreferencesPane,
+                SamplePrepPreferencesPane]
 
 # ============= EOF =============================================
 # def _task_extensions_default(self):

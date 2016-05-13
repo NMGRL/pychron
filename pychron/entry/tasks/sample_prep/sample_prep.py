@@ -18,14 +18,28 @@
 from pyface.constant import OK
 from pyface.file_dialog import FileDialog
 from traits.api import HasTraits, Str, Bool, Property, Button, on_trait_change, List, \
-    cached_property, Instance, Event, Date, Enum
+    cached_property, Instance, Event, Date, Enum, Long
 from traitsui.api import View, UItem
-
 # ============= standard library imports ========================
+import os
+import socket
+import paramiko
 # ============= local library imports  ==========================
 from pychron.dvc.dvc_irradiationable import DVCAble
 
 DEBUG = True
+
+
+def get_sftp_client(host, user, password):
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    print host, user, password
+    try:
+        ssh.connect(host, username=user, password=password, timeout=2)
+    except (socket.timeout, paramiko.AuthenticationException):
+        return
+
+    return ssh.open_sftp()
 
 
 class SampleRecord(HasTraits):
@@ -39,6 +53,7 @@ class SampleRecord(HasTraits):
 
 
 class PrepStepRecord(HasTraits):
+    id = Long
     crush = Str
     sieve = Str
     wash = Str
@@ -76,11 +91,6 @@ class PrepStepRecord(HasTraits):
 
         self.edit_traits(view=v)
 
-    def _upload_image_button_fired(self):
-        dlg = FileDialog(action='open files')
-        if dlg.open() == OK:
-            self.upload_paths = dlg.paths
-
 
 class SamplePrep(DVCAble):
     session = Str
@@ -107,6 +117,9 @@ class SamplePrep(DVCAble):
     add_session_button = Button
     add_worker_button = Button
     add_step_button = Button
+
+    upload_image_button = Button
+    selected_step = Instance(PrepStepRecord)
 
     def activated(self):
 
@@ -159,7 +172,8 @@ class SamplePrep(DVCAble):
     def _load_steps_for_sample(self, asample):
         with self.dvc.session_ctx():
             def factory(s):
-                pstep = PrepStepRecord(crush=s.crush or '',
+                pstep = PrepStepRecord(id=s.id,
+                                       crush=s.crush or '',
                                        sieve=s.sieve or '',
                                        wash=s.wash or '',
                                        acid=s.acid or '',
@@ -180,6 +194,16 @@ class SamplePrep(DVCAble):
                  'heavy_liquid', 'pick', 'status', 'comment')
         d = {a: getattr(self.prep_step, a) for a in attrs}
         return d
+
+    # def _upload_images(self, client, ps):
+    #     root = self.application.preferences.get('pychron.entry.sample_prep.root')
+    #     ims = []
+    #     for p in ps:
+    #         pp = os.path.join(root, os.path.basename(p))
+    #         self.debug('putting {} {}'.format(p, pp))
+    #         client.put(p, pp)
+    #         ims.append(pp)
+    #     return ims
 
     # handlers
     def _active_sample_changed(self, new):
@@ -228,9 +252,43 @@ class SamplePrep(DVCAble):
     def _session_changed(self):
         self._load_session_samples()
 
-    @on_trait_change('prep_step:upload_paths')
-    def _handle_(self):
-        pass
+    def _selected_step_changed(self):
+        print 'asdfsafd', self.selected_step, self.selected_step.id
+
+    def _upload_image_button_fired(self):
+        step = self.selected_step
+        if step is None:
+            step = self.active_sample.steps[0]
+        if not step:
+            return
+
+        host = self.application.preferences.get('pychron.entry.sample_prep.host')
+        username = self.application.preferences.get('pychron.entry.sample_prep.username')
+        password = self.application.preferences.get('pychron.entry.sample_prep.password')
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        try:
+            ssh.connect(host, username=username, password=password, timeout=2)
+        except (socket.timeout, paramiko.AuthenticationException):
+            self.warning_dialog('Could not connect to Image Server')
+            return
+
+        client = ssh.open_sftp()
+
+        dlg = FileDialog(action='open files')
+        if dlg.open() == OK:
+            if not dlg.paths:
+                return
+
+            root = self.application.preferences.get('pychron.entry.sample_prep.root')
+            dvc = self.dvc
+            for p in dlg.paths:
+                pp = '{}/{}'.format(root, os.path.basename(p))
+                self.debug('putting {} {}'.format(p, pp))
+                client.put(p, pp)
+                dvc.add_sample_prep_image(step.id, host, '{}/{}'.format(username, pp))
+
+            client.close()
 
     @cached_property
     def _get_sessions(self):

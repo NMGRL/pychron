@@ -50,7 +50,8 @@ def upgrade():
                     sa.Column('id', sa.INT, primary_key=True),
                     sa.Column('stepID', sa.INT, sa.ForeignKey('SamplePrepStepTbl.id')),
                     sa.Column('host', sa.VARCHAR(45)),
-                    sa.Column('path', sa.VARCHAR(45)))
+                    sa.Column('path', sa.VARCHAR(45)),
+                    sa.Column('timestamp', sa.DATETIME))
 
 
 def downgrade():

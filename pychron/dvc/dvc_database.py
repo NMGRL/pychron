@@ -34,7 +34,7 @@ from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, \
     MeasuredPositionTbl, ProductionTbl, VersionTbl, RepositoryAssociationTbl, \
     RepositoryTbl, AnalysisChangeTbl, \
     InterpretedAgeTbl, InterpretedAgeSetTbl, PrincipalInvestigatorTbl, SamplePrepWorkerTbl, SamplePrepSessionTbl, \
-    SamplePrepStepTbl
+    SamplePrepStepTbl, SamplePrepImageTbl
 from pychron.pychron_constants import ALPHAS, alpha_to_int, NULL_STR
 
 
@@ -1456,6 +1456,13 @@ class DVCDatabase(DatabaseAdapter):
             obj.sessionID = session.id
             self._add_item(obj)
 
+    def add_sample_prep_image(self, stepid, host, path):
+        with self.session_ctx():
+            obj = SamplePrepImageTbl(host=host,
+                                     path=path,
+                                     stepID=stepid)
+            self._add_item(obj)
+
     def get_sample_prep_samples(self, worker, session):
         with self.session_ctx() as sess:
             q = sess.query(SampleTbl)
@@ -1464,6 +1471,9 @@ class DVCDatabase(DatabaseAdapter):
             q = q.filter(SamplePrepSessionTbl.name == session)
             q = q.filter(SamplePrepSessionTbl.worker_name == worker)
             return self._query_all(q)
+
+    def get_sample_prep_step_by_id(self, id):
+        return self._retrieve_item(SamplePrepStepTbl, id, 'id')
 
     def get_sample_prep_session(self, name, worker):
         return self._retrieve_item(SamplePrepSessionTbl, (name, worker), ('name', 'worker_name'))
