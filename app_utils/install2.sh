@@ -60,7 +60,8 @@ paramiko"
 PIP_REQ="uncertainties
 pint
 GitPython
-peakutils"
+peakutils
+qimage2ndarray"
 
 # =========== Payload text ===============
 INITIALIZATION="<root>\n

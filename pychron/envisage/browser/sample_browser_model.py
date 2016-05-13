@@ -22,7 +22,7 @@ import re
 # ============= local library imports  ==========================
 # from pychron.processing.tasks.browser.browser_task import NCHARS
 # from pychron.database.records.isotope_record import GraphicalRecordView
-from pychron.dvc.dvc import get_review_status
+from pychron.dvc.func import get_review_status
 from pychron.envisage.browser.browser_model import BrowserModel
 from pychron.envisage.browser.find_references_config import FindReferencesConfigModel, FindReferencesConfigView
 from pychron.envisage.browser.analysis_table import AnalysisTable

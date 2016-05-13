@@ -2,3 +2,4 @@ uncertainties
 pint
 GitPython
 peakutils
+qimage2ndarray
