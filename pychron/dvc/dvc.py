@@ -426,8 +426,7 @@ class DVC(Loggable):
         meta_repo = self.meta_repo
 
         def func(*args):
-            return make_record(meta_repo=meta_repo,
-                               calculate_f_only=calculate_f_only, *args)
+            return make_record(calculate_f_only=calculate_f_only, *args)
 
         ret = progress_loader(records, func, threshold=1, step=25)
         et = time.time() - st
