@@ -21,6 +21,7 @@ from pyface.tasks.action.schema_addition import SchemaAddition
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
+from pychron.globals import globalv
 from pychron.updater.tasks.actions import CheckForUpdatesAction
 from pychron.updater.tasks.update_preferences import UpdatePreferencesPane
 from pychron.updater.updater import Updater
@@ -72,6 +73,8 @@ class UpdatePlugin(BaseTaskPlugin):
         updater = self.application.get_service('pychron.updater.updater.Updater')
         if updater.check_on_startup:
             updater.check_for_updates()
+
+        globalv.active_branch = updater.get_active_branch()
 
     # BaseTaskPlugin interface
     def check(self):

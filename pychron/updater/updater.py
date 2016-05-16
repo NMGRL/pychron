@@ -53,6 +53,11 @@ class Updater(Loggable):
     #     checkout_branch_button = Button
     #     pull_button = Button
     #
+    @property
+    def active_branch(self):
+        repo = self._get_working_repo()
+        return repo.active_branch.name
+
     def bind_preferences(self):
         for a in ('check_on_startup', 'branch', 'remote', 'use_tag', 'version_tag'):
             bind_preference(self, a, 'pychron.update.{}'.format(a))
@@ -135,150 +140,150 @@ class Updater(Loggable):
                 else:
                     self.warning_dialog('{} not a valid Github Repository. Unable to check for updates'.format(remote))
 
-                #
-                #     # def build(self):
-                #     #     lc = self._get_local_commit()
-                #     #     self._build(self.branch, lc)
-                #
-                #     # private
-                #     # handlers
-                #     def _checkout_branch_button_fired(self):
-                #         new_name = None
-                #         if self.branch.startswith('origin'):
-                #             name = '/'.join(self.branch.split('/')[1:])
-                #             self.new_branch_name = name
-                #             nbv = NewBranchView(model=self)
-                #             info = nbv.edit_traits()
-                #             if info.result:
-                #                 new_name = self.new_branch_name
-                #             else:
-                #                 return
-                #
-                #         self._checkout_branch(self.branch, new_branch_name=new_name)
-                #         self._refresh_branches()
-                #
-                #     def _pull_button_fired(self):
-                #         repo = self._get_working_repo()
-                #         origin = repo.remote('origin')
-                #         origin.pull(self.branch)
-                #         # branch = origin.refs[self.branch]
-                #         # branch.pull()
-                #
-                #     def _use_tag_changed(self):
-                #         if not self.use_tag:
-                #             if self.branch:
-                #                 self._checkout_branch(self.branch)
-                #         else:
-                #             self._version_tag_changed()
-                #
-                #     def _version_tag_changed(self):
-                #         if self.use_tag:
-                #             repo = self._get_working_repo()
-                #             name = self.version_tag
-                #             try:
-                #                 branch = getattr(repo.branches, name)
-                #                 branch.checkout()
-                #             except AttributeError:
-                #                 repo.git.fetch()
-                #                 repo.git.checkout('-b', name, name)
-                #
-                #             self.branch = name
-                #
-                #     # def _build_button_fired(self):
-                #     #     b = self.branch
-                #     #     repo = self._get_working_repo()
-                #     #     branch = getattr(repo.branches, b)
-                #     #     branch.checkout()
-                #     #     self.debug('Build button branch name={}, commit={}'.format(b, branch.commit))
-                #     #     self._build(b, branch.commit)
-                #
-                #     # def _delete_button_fired(self):
-                #     #     repo = self._get_working_repo()
-                #     #     repo.delete_head(self.edit_branch)
-                #     #     self._refresh_branches()
-                #
-                #     def _refresh_branches(self):
-                #         repo = self._get_working_repo()
-                #         self._fetch()
-                #         rnames = [ri.name for ri in repo.remotes.origin.refs]
-                #         rnames = filter(lambda x: x.startswith('origin/release'), rnames)
-                #         branches = [bi.name for bi in repo.branches] + ['origin/master', 'origin/develop'] + rnames
-                #         self.all_branches = branches
-                #
-                #         branches = [bi for bi in branches if bi != self.branch]
-                #         self.branches = branches
-                #
-                #     def _checkout_branch(self, branch_name, new_branch_name=None, hexsha=None):
-                #         if hexsha is None:
-                #             hexsha = 'HEAD'
-                #
-                #         # else:
-                #         #     branch_name = '{}-{}'.format(branch_name, hexsha[:7])
-                #
-                #         repo = self._get_working_repo()
-                #         try:
-                #             branch = getattr(repo.branches, branch_name)
-                #         except AttributeError:
-                #             branch = repo.create_head(new_branch_name, commit=hexsha)
-                #             branch_name = new_branch_name
-                #
-                #         branch.checkout()
-                #         self.branch = branch_name
-                #
-                #     def _get_dest_root(self):
-                #         p = os.path.abspath(__file__)
-                #         self.debug(p)
-                #         while 1:
-                #             self.debug(p)
-                #             if os.path.basename(p) == 'Contents':
-                #                 break
-                #             else:
-                #                 p = os.path.dirname(p)
-                #             if len(p) == 1:
-                #                 break
-                #         return p
-                #
-                #     # def _build(self, branch, commit):
-                #     #
-                #     #     # get the version number from version.py
-                #     #     version = self._extract_version()
-                #     #
-                #     #     pd = myProgressDialog(max=5200,
-                #     #                           title='Builing Application. '
-                #     #                                 'Version={} Branch={} ({})'.format(version, branch, commit.hexsha[:7]),
-                #     #                           can_cancel=False)
-                #     #     pd.open()
-                #     #     pd.change_message('Building application')
-                #     #
-                #     #     self.info('building application. version={}'.format(version))
-                #     #     self.debug('building egg from {}'.format(self._repo.working_dir))
-                #     #
-                #     #     dest = self._get_dest_root()
-                #     #     self.debug('moving egg to {}'.format(dest))
-                #     #
-                #     #     from pychron.updater.packager import make_egg, copy_resources
-                #     #
-                #     #     pd.change_message('Building Application')
-                #     #     with pd.stdout():
-                #     #         make_egg(self._repo.working_dir, dest, 'pychron', version)
-                #     #         # build egg and move into destination
-                #     #         if dest.endswith('Contents'):
-                #     #             make_egg(self._repo.working_dir, dest, 'pychron', version)
-                #     #
-                #     #             self.debug('------------- egg complete ----------------')
-                #     #
-                #     #         pd.change_message('Copying Resources')
-                #     #         if dest.endswith('Contents'):
-                #     #             copy_resources(self._repo.working_dir, dest, self.application.shortname)
-                #     #         self.debug('------------- copy resources complete -----------')
-                #     #
-                #     # def _extract_version(self):
-                #     #     import imp
-                #     #
-                #     #     p = os.path.join(self._repo.working_dir, 'pychron', 'version.py')
-                #     #     ver = imp.load_source('version', p)
-                #     #     return ver.__version__
-                #
+                    #
+                    #     # def build(self):
+                    #     #     lc = self._get_local_commit()
+                    #     #     self._build(self.branch, lc)
+                    #
+                    #     # private
+                    #     # handlers
+                    #     def _checkout_branch_button_fired(self):
+                    #         new_name = None
+                    #         if self.branch.startswith('origin'):
+                    #             name = '/'.join(self.branch.split('/')[1:])
+                    #             self.new_branch_name = name
+                    #             nbv = NewBranchView(model=self)
+                    #             info = nbv.edit_traits()
+                    #             if info.result:
+                    #                 new_name = self.new_branch_name
+                    #             else:
+                    #                 return
+                    #
+                    #         self._checkout_branch(self.branch, new_branch_name=new_name)
+                    #         self._refresh_branches()
+                    #
+                    #     def _pull_button_fired(self):
+                    #         repo = self._get_working_repo()
+                    #         origin = repo.remote('origin')
+                    #         origin.pull(self.branch)
+                    #         # branch = origin.refs[self.branch]
+                    #         # branch.pull()
+                    #
+                    #     def _use_tag_changed(self):
+                    #         if not self.use_tag:
+                    #             if self.branch:
+                    #                 self._checkout_branch(self.branch)
+                    #         else:
+                    #             self._version_tag_changed()
+                    #
+                    #     def _version_tag_changed(self):
+                    #         if self.use_tag:
+                    #             repo = self._get_working_repo()
+                    #             name = self.version_tag
+                    #             try:
+                    #                 branch = getattr(repo.branches, name)
+                    #                 branch.checkout()
+                    #             except AttributeError:
+                    #                 repo.git.fetch()
+                    #                 repo.git.checkout('-b', name, name)
+                    #
+                    #             self.branch = name
+                    #
+                    #     # def _build_button_fired(self):
+                    #     #     b = self.branch
+                    #     #     repo = self._get_working_repo()
+                    #     #     branch = getattr(repo.branches, b)
+                    #     #     branch.checkout()
+                    #     #     self.debug('Build button branch name={}, commit={}'.format(b, branch.commit))
+                    #     #     self._build(b, branch.commit)
+                    #
+                    #     # def _delete_button_fired(self):
+                    #     #     repo = self._get_working_repo()
+                    #     #     repo.delete_head(self.edit_branch)
+                    #     #     self._refresh_branches()
+                    #
+                    #     def _refresh_branches(self):
+                    #         repo = self._get_working_repo()
+                    #         self._fetch()
+                    #         rnames = [ri.name for ri in repo.remotes.origin.refs]
+                    #         rnames = filter(lambda x: x.startswith('origin/release'), rnames)
+                    #         branches = [bi.name for bi in repo.branches] + ['origin/master', 'origin/develop'] + rnames
+                    #         self.all_branches = branches
+                    #
+                    #         branches = [bi for bi in branches if bi != self.branch]
+                    #         self.branches = branches
+                    #
+                    #     def _checkout_branch(self, branch_name, new_branch_name=None, hexsha=None):
+                    #         if hexsha is None:
+                    #             hexsha = 'HEAD'
+                    #
+                    #         # else:
+                    #         #     branch_name = '{}-{}'.format(branch_name, hexsha[:7])
+                    #
+                    #         repo = self._get_working_repo()
+                    #         try:
+                    #             branch = getattr(repo.branches, branch_name)
+                    #         except AttributeError:
+                    #             branch = repo.create_head(new_branch_name, commit=hexsha)
+                    #             branch_name = new_branch_name
+                    #
+                    #         branch.checkout()
+                    #         self.branch = branch_name
+                    #
+                    #     def _get_dest_root(self):
+                    #         p = os.path.abspath(__file__)
+                    #         self.debug(p)
+                    #         while 1:
+                    #             self.debug(p)
+                    #             if os.path.basename(p) == 'Contents':
+                    #                 break
+                    #             else:
+                    #                 p = os.path.dirname(p)
+                    #             if len(p) == 1:
+                    #                 break
+                    #         return p
+                    #
+                    #     # def _build(self, branch, commit):
+                    #     #
+                    #     #     # get the version number from version.py
+                    #     #     version = self._extract_version()
+                    #     #
+                    #     #     pd = myProgressDialog(max=5200,
+                    #     #                           title='Builing Application. '
+                    #     #                                 'Version={} Branch={} ({})'.format(version, branch, commit.hexsha[:7]),
+                    #     #                           can_cancel=False)
+                    #     #     pd.open()
+                    #     #     pd.change_message('Building application')
+                    #     #
+                    #     #     self.info('building application. version={}'.format(version))
+                    #     #     self.debug('building egg from {}'.format(self._repo.working_dir))
+                    #     #
+                    #     #     dest = self._get_dest_root()
+                    #     #     self.debug('moving egg to {}'.format(dest))
+                    #     #
+                    #     #     from pychron.updater.packager import make_egg, copy_resources
+                    #     #
+                    #     #     pd.change_message('Building Application')
+                    #     #     with pd.stdout():
+                    #     #         make_egg(self._repo.working_dir, dest, 'pychron', version)
+                    #     #         # build egg and move into destination
+                    #     #         if dest.endswith('Contents'):
+                    #     #             make_egg(self._repo.working_dir, dest, 'pychron', version)
+                    #     #
+                    #     #             self.debug('------------- egg complete ----------------')
+                    #     #
+                    #     #         pd.change_message('Copying Resources')
+                    #     #         if dest.endswith('Contents'):
+                    #     #             copy_resources(self._repo.working_dir, dest, self.application.shortname)
+                    #     #         self.debug('------------- copy resources complete -----------')
+                    #     #
+                    #     # def _extract_version(self):
+                    #     #     import imp
+                    #     #
+                    #     #     p = os.path.join(self._repo.working_dir, 'pychron', 'version.py')
+                    #     #     ver = imp.load_source('version', p)
+                    #     #     return ver.__version__
+                    #
 
     def _fetch(self, branch=None, prune=False):
         repo = self._get_working_repo()
