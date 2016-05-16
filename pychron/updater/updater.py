@@ -130,6 +130,19 @@ class Updater(Loggable):
 
                             self._repo.git.pull(origin, hexsha)
 
+                            # install dependencies
+                            import subprocess
+                            root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+                            bin = os.path.join(os.path.expanduser('~'), 'miniconda2', 'envs', 'pychron', 'bin')
+
+                            conda = os.path.join(bin, 'conda')
+                            cp = os.path.join(root, 'app_utils', 'requirements', 'conda_requirements.txt')
+                            subprocess.call([conda, 'update', '-y', '-n', 'pychron', '--file={}'.format(cp)])
+
+                            pip = os.path.join(bin, 'pip')
+                            pp = os.path.join(root, 'app_utils', 'requirements', 'pip_requirements.txt')
+                            subprocess.call([pip, 'install', '-r', pp])
+
                             if self.confirmation_dialog('Restart?'):
                                 os.execl(sys.executable, *([sys.executable] + sys.argv))
                         elif hexsha is None:

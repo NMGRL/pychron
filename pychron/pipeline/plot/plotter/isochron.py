@@ -110,10 +110,10 @@ class InverseIsochron(Isochron):
         # for si in self.sorted_analyses:
         # print si.record_id, si.group_id
 
-        omit = self._get_omitted(self.sorted_analyses)
-        # print 'iso omit', omit
-        if omit:
-            self._rebuild_iso(omit)
+            # omit = self._get_omitted(self.sorted_analyses)
+            # # print 'iso omit', omit
+            # if omit:
+            #     self._rebuild_iso(omit)
 
     # ===============================================================================
     # plotters
@@ -355,10 +355,12 @@ class InverseIsochron(Isochron):
         label.request_redraw()
 
     def replot(self):
+
         # self.suppress = True
 
-        om = self._get_omitted(self.sorted_analyses)
-        self._rebuild_iso(om)
+        # om = self._get_omitted(self.sorted_analyses)
+
+        self._rebuild_iso([])
         # self.suppress = False
 
     def _rebuild_iso(self, sel):

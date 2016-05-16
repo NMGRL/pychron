@@ -17,10 +17,10 @@
 
 # ============= enthought library imports =======================
 
-from traits.has_traits import HasTraits
 # ============= standard library imports ========================
-from uncertainties import ufloat, std_dev, nominal_value
 from copy import copy
+
+from uncertainties import ufloat, std_dev, nominal_value
 # ============= local library imports  ==========================
 from pychron.processing.isotope_group import IsotopeGroup
 from pychron.processing.argon_calculations import calculate_F, abundance_sensitivity_correction, age_equation, \
@@ -29,85 +29,14 @@ from pychron.processing.arar_constants import ArArConstants
 from pychron.processing.isotope import Blank
 
 from pychron.core.helpers.isotope_utils import sort_isotopes, sort_detectors
-from pychron.core.helpers.logger_setup import new_logger
 from pychron.pychron_constants import ARGON_KEYS
 
-logger = new_logger('ArArAge')
 
-
-class MLoggable(HasTraits):
-    def info(self, msg):
-        logger.info(msg)
-
-    def debug(self, msg):
-        logger.debug(msg)
-
-    def warning(self, msg):
-        logger.warning(msg)
-
-
-# class ArArAge(MLoggable):
 class ArArAge(IsotopeGroup):
     """
     High level representation of the ArAr attributes of an analysis.
     """
-    # j = Either(Variable, AffineScalarFunc)
-    # irradiation = Str
-    # irradiation_level = Str
-    # irradiation_pos = Str
-    # irradiation_time = Float
-    # production_name = Str
-    #
-    # irradiation_label = Property(depends_on='irradiation, irradiation_level,irradiation_pos')
-    #
-    # chron_segments = List
-    # chron_dosages = List
-    # interference_corrections = Dict
-    # production_ratios = Dict
-    #
-    # fixed_k3739 = None
-    #
-    # timestamp = Float
-    # decay_days = Property(depends_on='timestamp,irradiation_time')
-    #
-    # kca = Either(Variable, AffineScalarFunc)
-    # cak = Either(Variable, AffineScalarFunc)
-    # kcl = Either(Variable, AffineScalarFunc)
-    # clk = Either(Variable, AffineScalarFunc)
-    # rad40_percent = Either(Variable, AffineScalarFunc)
-    #
-    # isotopes = Dict
-    # isotope_keys = Property
-    # non_ar_isotopes = Dict
-    # computed = Dict
-    # corrected_intensities = Dict
-    #
-    # uF = Either(Variable, AffineScalarFunc)
-    # F = Float
-    # F_err = Float
-    # F_err_wo_irrad = Float
-    #
-    # uage = Either(Variable, AffineScalarFunc)
-    # # uage_wo_j_err = Either(Variable, AffineScalarFunc)
-    # uage_w_j_err = Either(Variable, AffineScalarFunc)
-    #
-    # age = Float
-    # age_err = Float
-    # age_err_wo_j = Float
-    # age_err_wo_irrad = Float
-    # age_err_wo_j_irrad = Float
-    #
-    # ar39decayfactor = Float
-    # ar37decayfactor = Float
-    #
-    # arar_constants = Instance(ArArConstants, ())
-    #
-    # Ar39_decay_corrected = Either(Variable, AffineScalarFunc)
-    # Ar37_decay_corrected = Either(Variable, AffineScalarFunc)
-    #
-    # moles_Ar40 = Property
-    # sensitivity = Float  # moles/pA
-    # temporary_ic_factors = Dict
+
     j = None
     irradiation = None
     irradiation_level = None
@@ -245,78 +174,6 @@ class ArArAge(IsotopeGroup):
             except ZeroDivisionError:
                 pass
 
-    # def get_ratio(self, r, non_ic_cor=False):
-    #     n, d = r.split('/')
-    #     isos = self.isotopes
-    #
-    #     if non_ic_cor:
-    #         func = self.get_non_ic_corrected
-    #     else:
-    #         func = self.get_intensity
-    #
-    #     if n in isos and d in isos:
-    #         try:
-    #             return func(n) / func(d)
-    #         except ZeroDivisionError:
-    #             return ufloat(random.random(), random.random())
-    #     else:
-    #         return ufloat(random.random(), random.random())
-    #
-    # def get_slope(self, attr, n=-1):
-    #     try:
-    #         r = self.isotopes[attr].get_slope(n)
-    #     except KeyError:
-    #         r = None
-    #     return r
-    #
-    # def get_baseline_value(self, attr):
-    #     try:
-    #         r = self.isotopes[attr].baseline.uvalue
-    #     except KeyError:
-    #         r = None
-    #     return r
-    #
-    # def get_current_intensity(self, attr):
-    #     try:
-    #         iso = self.isotopes[attr]
-    #     except KeyError:
-    #         return
-    #
-    #     if self.conditional_modifier:
-    #         try:
-    #             iso = getattr(iso, self.conditional_modifier)
-    #         except AttributeError:
-    #             return
-    #     # try:
-    #     #     r = self.isotopes[attr].ys[-1]
-    #     # except KeyError:
-    #     #     r = None
-    #     return iso.ys[-1]
-    #
-    # # def get_detector_active(self, attr):
-    # #     det = next((i for i in self.isotopes if i.detector == attr), None)
-    # #     if det:
-    # #         pass
-    #
-    # def get_values(self, attr, n):
-    #     """
-    #         return an array of floats
-    #
-    #         attr: isotope key
-    #         n: int, values from the end to slice off. e.g 10 means last 10 items in array
-    #         return all values if n==-1
-    #     """
-    #     try:
-    #         r = self.isotopes[attr].ys
-    #         if not n == -1:
-    #             r = r[-n:]
-    #     except KeyError:
-    #         r = None
-    #     return r
-    #
-    # def _get_iso_by_detector(self, det):
-    #     return next((i for i in self.isotopes if i.detector == det), None)
-
     def get_value(self, attr):
         # print 'get attr', attr, self.isotopes
         r = ufloat(0, 0, tag=attr)
@@ -359,174 +216,6 @@ class ArArAge(IsotopeGroup):
         else:
             return ufloat(0, 0, tag=iso)
 
-    # def get_ic_factor(self, det):
-    #     # storing ic_factor in preferences causing issues
-    #     # ic_factor stored in detectors.cfg
-    #
-    #     p = os.path.join(paths.spectrometer_dir, 'detectors.cfg')
-    #     # factors=None
-    #     ic = 1, 1e-20
-    #     if os.path.isfile(p):
-    #         c = ConfigParser()
-    #         c.read(p)
-    #         det = det.lower()
-    #         for si in c.sections():
-    #             if si.lower() == det:
-    #                 v, e = 1, 1e-20
-    #                 if c.has_option(si, 'ic_factor'):
-    #                     v = c.getfloat(si, 'ic_factor')
-    #                 if c.has_option(si, 'ic_factor_err'):
-    #                     e = c.getfloat(si, 'ic_factor_err')
-    #                 ic = v, e
-    #                 break
-    #     else:
-    #         self.debug('no detector file {}. cannot retrieve ic_factor'.format(p))
-    #
-    #     r = ufloat(*ic)
-    #     return r
-
-    # def get_error_component(self, key):
-    #     # for var, error in self.uage.error_components().items():
-    #     #     print var.tag
-    #     if self.uage is None:
-    #         self.calculate_age()
-    #
-    #     v = next((error for (var, error) in self.uage.error_components().items()
-    #               if var.tag == key), 0)
-    #
-    #     ae = self.uage.std_dev
-    #     if ae:
-    #         return v ** 2 / ae ** 2 * 100
-    #     else:
-    #         return 0
-    #
-    # def append_data(self, iso, det, x, signal, kind):
-    #     """
-    #         if kind is baseline then key used to match isotope is `detector` not an `isotope_name`
-    #     """
-    #
-    #     def _append(isotope):
-    #         if kind in ('sniff', 'baseline', 'whiff'):
-    #             if kind == 'sniff':
-    #                 isotope._value = signal
-    #                 isotope.dirty = True
-    #
-    #             isotope = getattr(isotope, kind)
-    #
-    #         if kind == 'sniff':
-    #             isotope._value = signal
-    #
-    #         isotope.xs = hstack((isotope.xs, (x,)))
-    #         isotope.ys = hstack((isotope.ys, (signal,)))
-    #         isotope.dirty = True
-    #
-    #     isotopes = self.isotopes
-    #     if kind == 'baseline':
-    #         ret = False
-    #         # get the isotopes that match detector
-    #         for i in isotopes.itervalues():
-    #             if i.detector == det:
-    #                 _append(i)
-    #                 ret = True
-    #         return ret
-    #
-    #     else:
-    #         for i in (iso, '{}{}'.format(iso, det)):
-    #             if i in isotopes:
-    #                 ii = isotopes[i]
-    #                 _append(ii)
-    #                 return True
-
-    # def clear_baselines(self):
-    #     for k in self.isotopes:
-    #         self.set_baseline(k, (0, 0))
-    #
-    # def clear_blanks(self):
-    #     for k in self.isotopes:
-    #         self.set_blank(k, (0, 0))
-    #
-    # def clear_error_components(self):
-    #     for iso in self.isotopes.itervalues():
-    #         iso.age_error_component = 0
-    #
-    # def isotope_factory(self, **kw):
-    #     return Isotope(**kw)
-    #
-    # def set_isotope_detector(self, det, iso=None):
-    #     name = None
-    #     if iso:
-    #         name = iso
-    #
-    #     if not isinstance(det, str):
-    #         name, det = det.isotope, det.name
-    #
-    #     if name in self.isotopes:
-    #         iso = self.isotopes[name]
-    #     else:
-    #         iso = Isotope(name, det)
-    #         self.isotopes[name] = iso
-    #
-    #     iso.detector = det
-    #     iso.ic_factor = self.get_ic_factor(det)
-    #
-    # def get_baseline_corrected_value(self, iso):
-    #     try:
-    #         return self.isotopes[iso].get_baseline_corrected_value()
-    #     except KeyError:
-    #         return ufloat(0, 0, tag=iso)
-    #
-    # def get_isotopes(self, det):
-    #     for iso in self.isotopes.itervalues():
-    #         if iso.detector == det:
-    #             yield iso
-    #
-    # def get_isotope(self, name=None, detector=None, kind=None):
-    #     if name is None and detector is None:
-    #         raise NotImplementedError('name or detector required')
-    #
-    #     if name:
-    #         try:
-    #             iso = self.isotopes[name]
-    #             if kind == 'sniff':
-    #                 iso = iso.sniff
-    #             elif kind == 'baseline':
-    #                 iso = iso.baseline
-    #             return iso
-    #         except KeyError:
-    #             pass
-    #     else:
-    #         attr = 'detector'
-    #         value = detector
-    #         return next((iso for iso in self.isotopes.itervalues()
-    #                      if getattr(iso, attr) == value), None)
-
-    # def set_isotope(self, iso, detector, **kw):
-    #     # print 'set isotope', iso, v
-    #     if iso not in self.isotopes:
-    #         niso = Isotope(iso, detector)
-    #         self.isotopes[iso] = niso
-    #     else:
-    #         niso = self.isotopes[iso]
-    #
-    #     niso.attr_set(**kw)
-    #
-    #     return niso
-
-    # def set_blank(self, iso, v):
-    #     if iso not in self.isotopes:
-    #         niso = Isotope(iso, None)
-    #         self.isotopes[iso] = niso
-    #
-    #     self.debug('setting {} blank {}'.format(iso, v))
-    #     self.isotopes[iso].blank.set_uvalue(v)
-    #
-    # def set_baseline(self, iso, v):
-    #     if iso not in self.isotopes:
-    #         niso = Isotope(iso, None)
-    #         self.isotopes[iso] = niso
-    #
-    #     self.isotopes[iso].baseline.set_uvalue(v)
-
     def calculate_F(self):
         self.calculate_decay_factors()
         self._calculate_F()
@@ -564,7 +253,7 @@ class ArArAge(IsotopeGroup):
                                            self.chron_segments)
             a39df = calculate_decay_factor(arc.lambda_Ar39.nominal_value,
                                            self.chron_segments)
-            print a37df, a39df, self.chron_segments, self.chron_dosages
+            # print a37df, a39df, self.chron_segments, self.chron_dosages
             self.ar37decayfactor = a37df
             self.ar39decayfactor = a39df
 
@@ -574,12 +263,7 @@ class ArArAge(IsotopeGroup):
     def get_computed_value(self, key):
         return self.computed.get(key, ufloat(0, 0))
 
-    # def warning(self, *args, **kw):
-    #     self.logger.warning(*args, **kw)
-    #
-    # def debug(self, *args, **kw):
-    #     self.logger.debug(*args, **kw)
-
+    # private
     def _calculate_kca(self):
         # self.debug('calculated kca')
 

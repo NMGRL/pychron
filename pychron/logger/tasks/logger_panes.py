@@ -18,8 +18,6 @@
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traits.api import List, Any
 from traitsui.api import View, UItem, ListEditor
-
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -32,10 +30,9 @@ class DisplayPane(TraitsTaskPane):
         v = View(UItem('loggers',
                        editor=ListEditor(use_notebook=True,
                                          page_name='.title',
-                                         selected='selected'
-                       ),
+                                         selected='selected'),
                        style='custom'))
 
         return v
 
-        # ============= EOF =============================================
+# ============= EOF =============================================

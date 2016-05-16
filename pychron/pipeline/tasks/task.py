@@ -26,7 +26,7 @@ import os
 from pychron.core.helpers.filetools import list_gits
 from pychron.core.pdf.save_pdf_dialog import save_pdf
 from pychron.dvc import dvc_dump
-from pychron.dvc.dvc import repository_has_staged
+from pychron.dvc.func import repository_has_staged
 from pychron.envisage.tasks.actions import ToggleFullWindowAction
 from pychron.globals import globalv
 from pychron.paths import paths
@@ -326,7 +326,7 @@ class PipelineTask(BaseBrowserTask):
         self._set_action_template('Isochron')
 
     def set_inverse_isochron_template(self):
-        self._set_action_template('InverseIsochron')
+        self._set_action_template('Inverse Isochron')
 
     def set_series_template(self):
         self._set_action_template('Series')

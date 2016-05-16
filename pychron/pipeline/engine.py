@@ -251,7 +251,7 @@ class PipelineEngine(Loggable):
         node = self.pipeline.nodes[0]
 
         self.browser_model.select_project('J-Curve')
-        self.browser_model.select_experiment('Irradiation-NM-272')
+        self.browser_model.select_repository('Irradiation-NM-272')
         self.browser_model.select_sample(idx=0)
         records = self.browser_model.get_analysis_records()
         if records:
