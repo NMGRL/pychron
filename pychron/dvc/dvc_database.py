@@ -34,7 +34,7 @@ from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, \
     MeasuredPositionTbl, ProductionTbl, VersionTbl, RepositoryAssociationTbl, \
     RepositoryTbl, AnalysisChangeTbl, \
     InterpretedAgeTbl, InterpretedAgeSetTbl, PrincipalInvestigatorTbl, SamplePrepWorkerTbl, SamplePrepSessionTbl, \
-    SamplePrepStepTbl, SamplePrepImageTbl
+    SamplePrepStepTbl, SamplePrepImageTbl, RestrictedNameTbl
 from pychron.pychron_constants import ALPHAS, alpha_to_int, NULL_STR
 
 
@@ -324,10 +324,14 @@ class DVCDatabase(DatabaseAdapter):
         with self.session_ctx():
             self.debug('add association {}'.format(reponame))
             repo = self.get_repository(reponame)
-            e = RepositoryAssociationTbl()
-            e.repository = repo.name
-            e.analysis = analysis
-            return self._add_item(e)
+            if repo is not None:
+                e = RepositoryAssociationTbl()
+                e.repository = repo.name
+                e.analysis = analysis
+                return self._add_item(e)
+            else:
+                self.warning('No repository named ="{}"'.format(reponame))
+                self.debug('adding to repo={} instead')
 
     def add_material(self, name, grainsize=None):
         with self.session_ctx():

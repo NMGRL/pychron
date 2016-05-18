@@ -101,6 +101,8 @@ class Globals(object):
     entry_irradiation_import_from_file_debug = False
 
     active_analyses = None
+    active_branch = None
+
     def build(self, ip):
 
         for attr, func in [('use_ipc', to_bool),

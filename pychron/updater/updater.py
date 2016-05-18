@@ -53,6 +53,11 @@ class Updater(Loggable):
     #     checkout_branch_button = Button
     #     pull_button = Button
     #
+    @property
+    def active_branch(self):
+        repo = self._get_working_repo()
+        return repo.active_branch.name
+
     def bind_preferences(self):
         for a in ('check_on_startup', 'branch', 'remote', 'use_tag', 'version_tag'):
             bind_preference(self, a, 'pychron.update.{}'.format(a))

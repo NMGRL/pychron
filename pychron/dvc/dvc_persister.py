@@ -15,8 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from git.exc import GitCommandError
-from traits.api import Instance, Bool
+from traits.api import Instance, Bool, Str
 # ============= standard library imports ========================
 import base64
 import hashlib
@@ -24,6 +23,7 @@ import os
 import struct
 from datetime import datetime
 from uncertainties import std_dev, nominal_value
+from git.exc import GitCommandError
 # ============= local library imports  ==========================
 from pychron.dvc import dvc_dump
 from pychron.dvc.dvc_analysis import META_ATTRS, EXTRACTION_ATTRS, analysis_path, PATH_MODIFIERS
@@ -54,6 +54,7 @@ class DVCPersister(BasePersister):
     use_isotope_classifier = Bool(False)
     isotope_classifier = Instance(IsotopeClassifier, ())
     stage_files = Bool(True)
+    default_principal_investigator = Str
 
     def per_spec_save(self, pr, repository_identifier=None, commit=False, msg_prefix=None):
         self.per_spec = pr
@@ -180,6 +181,10 @@ class DVCPersister(BasePersister):
         else:
             timestamp = self.per_spec.timestamp
 
+        # check repository identifier before saving
+        # will modify repository to NoRepo if repository_identifier does not exist
+        self._check_repository_identifier()
+
         self._save_analysis(timestamp)
 
         self._save_analysis_db(timestamp)
@@ -227,6 +232,18 @@ class DVCPersister(BasePersister):
         return ret
 
     # private
+    def _check_repository_identifier(self):
+        repo_id = self.per_spec.run_spec.repository_identifier
+        db = self.dvc.db
+        with db.session_ctx():
+            repo = db.get_repository(repo_id)
+            if repo is None:
+                self.warning('No repository named ="{}" changing to NoRepo'.format(repo_id))
+                self.per_spec.run_spec.repository_identifier = 'NoRepo'
+                repo = db.get_repository('NoRepo')
+                if repo is None:
+                    db.add_repository('NoRepo', self.default_principal_investigator)
+
     def _save_analysis_db(self, timestamp):
         rs = self.per_spec.run_spec
         d = {k: getattr(rs, k) for k in ('uuid', 'analysis_type', 'aliquot',
