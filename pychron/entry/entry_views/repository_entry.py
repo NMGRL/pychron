@@ -29,6 +29,12 @@ class RepositoryIdentifierEntry(BaseEntry):
     value = SpacelessStr
 
     def _add_item(self):
+        if self.dvc.check_restricted_name(self.value, 'repository_identifier'):
+            self.error_message = '{} is a restricted!.'.format(self.value)
+            if not self.confirmation_dialog('{} is a restricted!.\n Are you certain you want to add this '
+                                            'Repository?'.format(self.value)):
+                return
+
         return self.dvc.add_repository(self.value, self.principal_investigator)
 
     def traits_view(self):
@@ -42,4 +48,5 @@ class RepositoryIdentifierEntry(BaseEntry):
                               width=400,
                               title='Add {}'.format(self.tag),
                               buttons=buttons)
+
 # ============= EOF =============================================
