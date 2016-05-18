@@ -146,7 +146,12 @@ class DVCDatabase(DatabaseAdapter):
             ret = bool(self._query_one(q))
             if check_principal_investigator:
                 q = sess.query(PrincipalInvestigatorTbl)
-                q = q.filter(func.lower(PrincipalInvestigatorTbl.name) == name.lower())
+                lname = func.lower(PrincipalInvestigatorTbl.name)
+                name = name.lower()
+
+                q = q.filter(func.substring(lname, 2) == name)
+                q = q.filter(or_(lname == name))
+
                 pret = bool(self._query_one(q))
                 ret = pret or ret
 
