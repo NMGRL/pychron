@@ -1016,8 +1016,10 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                     self._meta_cache[labnumber] = d
                     return True
                 else:
-                    self.warning_dialog('{} does not exist. '
-                                        'Add using "Labnumber Entry" or "Utilities>>Import"'.format(labnumber))
+                    self.warning_dialog('{} does not exist.\n\n'
+                                        'Add using "Entry>>Labnumber"\n'
+                                        'or "Utilities>>Import"\n'
+                                        'or manually'.format(labnumber))
 
     def _load_labnumber_defaults(self, old, labnumber, special):
         self.debug('load labnumber defaults {} {}'.format(labnumber, special))

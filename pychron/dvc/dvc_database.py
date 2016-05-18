@@ -316,6 +316,7 @@ class DVCDatabase(DatabaseAdapter):
                 return self._add_item(e)
             else:
                 self.warning('No repository named ="{}"'.format(reponame))
+                self.debug('adding to repo={} instead')
 
     def add_material(self, name, grainsize=None):
         with self.session_ctx():

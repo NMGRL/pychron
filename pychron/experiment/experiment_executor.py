@@ -1143,6 +1143,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             dvcp = self.application.get_service('pychron.dvc.dvc_persister.DVCPersister')
             if dvcp:
                 dvcp.load_name = exp.load_name
+                dvcp.default_principal_investigator = self.default_principal_investigator
                 arun.dvc_persister = dvcp
 
                 repid = spec.repository_identifier
