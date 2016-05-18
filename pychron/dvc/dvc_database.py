@@ -306,12 +306,16 @@ class DVCDatabase(DatabaseAdapter):
 
     def add_repository_association(self, reponame, analysis):
         with self.session_ctx():
-            self.debug('add association {}'.format(reponame))
+            self.debug('add association "{}"'.format(reponame))
+
             repo = self.get_repository(reponame)
-            e = RepositoryAssociationTbl()
-            e.repository = repo.name
-            e.analysis = analysis
-            return self._add_item(e)
+            if repo is not None:
+                e = RepositoryAssociationTbl()
+                e.repository = repo.name
+                e.analysis = analysis
+                return self._add_item(e)
+            else:
+                self.warning('No repository named ="{}"'.format(reponame))
 
     def add_material(self, name, grainsize=None):
         with self.session_ctx():
