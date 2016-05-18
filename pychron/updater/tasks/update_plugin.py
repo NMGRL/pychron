@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-
+from git.exc import InvalidGitRepositoryError
 from pyface.tasks.action.schema_addition import SchemaAddition
 
 # ============= standard library imports ========================
@@ -73,8 +73,10 @@ class UpdatePlugin(BaseTaskPlugin):
         updater = self.application.get_service('pychron.updater.updater.Updater')
         if updater.check_on_startup:
             updater.check_for_updates()
-
-        globalv.active_branch = updater.active_branch
+        try:
+            globalv.active_branch = updater.active_branch
+        except InvalidGitRepositoryError:
+            pass
 
     # BaseTaskPlugin interface
     def check(self):
