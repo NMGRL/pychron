@@ -128,7 +128,6 @@ class DVCPersister(BasePersister):
                     x, y = pp
                 elif len(pp) == 3:
                     x, y, z = pp
-
             else:
                 pos = pp
                 try:
@@ -141,6 +140,12 @@ class DVCPersister(BasePersister):
                     self.debug('no extraction position for {}'.format(pp))
             pd = {'x': x, 'y': y, 'z': z, 'position': pos, 'is_degas': self.per_spec.run_spec.identifier == 'dg'}
             ps.append(pd)
+
+        db = self.dvc.db
+        load_name = self.per_spec.load_name
+        with db.session_ctx():
+            for p in ps:
+                db.add_measured_position(load=load_name, **p)
 
         obj['positions'] = ps
         hexsha = self.dvc.get_meta_head()
@@ -267,14 +272,16 @@ class DVCPersister(BasePersister):
             an = db.add_analysis(**d)
 
             # all associations are handled by the ExperimentExecutor._retroactive_experiment_identifiers
+            # *** _retroactive_experiment_identifiers is currently disabled ***
 
-            # # special associations are handled by the ExperimentExecutor._retroactive_experiment_identifiers
-            # if not is_special(rs.runid):
             if self.per_spec.use_repository_association:
                 db.add_repository_association(rs.repository_identifier, an)
 
+            self.debug('get identifier "{}"'.format(rs.identifier))
             pos = db.get_identifier(rs.identifier)
+            self.debug('setting analysis irradiation position={}'.format(pos))
             an.irradiation_position = pos
+
             t = self.per_spec.tag
 
             db.flush()
@@ -284,33 +291,6 @@ class DVCPersister(BasePersister):
 
             change = db.add_analysis_change(tag=t)
             an.change = change
-            # an.change.tag_item = dbtag
-            # self._save_measured_positions()
-
-    def _save_measured_positions(self):
-        dvc = self.dvc
-
-        load_name = self.per_spec.load_name
-        for i, pp in enumerate(self.per_spec.positions):
-            if isinstance(pp, tuple):
-                if len(pp) > 1:
-                    if len(pp) == 3:
-                        dvc.add_measured_position('', load_name, x=pp[0], y=pp[1], z=pp[2])
-                    else:
-                        dvc.add_measured_position('', load_name, x=pp[0], y=pp[1])
-                else:
-                    dvc.add_measured_position(pp[0], load_name)
-
-            else:
-                dbpos = dvc.add_measured_position(pp, load_name)
-                try:
-                    ep = self.per_spec.extraction_positions[i]
-                    dbpos.x = ep[0]
-                    dbpos.y = ep[1]
-                    if len(ep) == 3:
-                        dbpos.z = ep[2]
-                except IndexError:
-                    self.debug('no extraction position for {}'.format(pp))
 
     def _save_analysis(self, timestamp):
 
@@ -523,3 +503,30 @@ class DVCPersister(BasePersister):
         return spectrometer_sha(self.per_spec.spec_dict, self.per_spec.defl_dict, self.per_spec.gains)
 
 # ============= EOF =============================================
+        #         self._save_measured_positions()
+        #
+        #
+        # def _save_measured_positions(self):
+        #     dvc = self.dvc
+        #
+        #     load_name = self.per_spec.load_name
+        #     for i, pp in enumerate(self.per_spec.positions):
+        #         if isinstance(pp, tuple):
+        #             if len(pp) > 1:
+        #                 if len(pp) == 3:
+        #                     dvc.add_measured_position('', load_name, x=pp[0], y=pp[1], z=pp[2])
+        #                 else:
+        #                     dvc.add_measured_position('', load_name, x=pp[0], y=pp[1])
+        #             else:
+        #                 dvc.add_measured_position(pp[0], load_name)
+        #
+        #         else:
+        #             dbpos = dvc.add_measured_position(pp, load_name)
+        #             try:
+        #                 ep = self.per_spec.extraction_positions[i]
+        #                 dbpos.x = ep[0]
+        #                 dbpos.y = ep[1]
+        #                 if len(ep) == 3:
+        #                     dbpos.z = ep[2]
+        #             except IndexError:
+        #                 self.debug('no extraction position for {}'.format(pp))
