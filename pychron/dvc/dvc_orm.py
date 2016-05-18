@@ -22,6 +22,7 @@ from sqlalchemy.orm import relationship
 
 # ============= local library imports  ==========================
 from pychron.core.helpers.datetime_tools import make_timef
+from pychron.database.orms import stringcolumn, primary_key
 from pychron.database.records.isotope_record import DVCIsotopeRecordView
 from pychron.experiment.utilities.identifier import make_runid
 from pychron.pychron_constants import OMIT_KEYS
@@ -36,7 +37,7 @@ class BaseMixin(object):
 
 
 class NameMixin(BaseMixin):
-    name = Column(String(80))
+    name = stringcolumn(80)
 
     def __repr__(self):
         return '{}<{}>'.format(self.__class__.__name__, self.name)
@@ -44,18 +45,18 @@ class NameMixin(BaseMixin):
 
 class InterpretedAgeTbl(Base, BaseMixin):
     idinterpretedagetbl = Column(Integer, primary_key=True)
-    age_kind = Column(String(32))
-    kca_kind = Column(String(32))
+    age_kind = stringcolumn(32)
+    kca_kind = stringcolumn(32)
 
     age = Column(Float)
     age_err = Column(Float)
-    display_age_units = Column(String(2))
+    display_age_units = stringcolumn(2)
 
     kca = Column(Float)
     kca_err = Column(Float)
     mswd = Column(Float)
 
-    age_error_kind = Column(String(80))
+    age_error_kind = stringcolumn(80)
     include_j_error_in_mean = Column(Boolean)
     include_j_error_in_plateau = Column(Boolean)
     include_j_error_in_individual_analyses = Column(Boolean)
@@ -69,7 +70,7 @@ class InterpretedAgeSetTbl(Base, BaseMixin):
     analysisID = Column(Integer, ForeignKey('AnalysisTbl.id'))
     forced_plateau_step = Column(Boolean)
     plateau_step = Column(Boolean)
-    tag = Column(String(80))
+    tag = stringcolumn(80)
 
     analysis = relationship('AnalysisTbl', uselist=False)
 
@@ -78,7 +79,7 @@ class RepositoryTbl(Base, BaseMixin):
     name = Column(String(80), primary_key=True)
     principal_investigator = Column(String(140), ForeignKey('PrincipalInvestigatorTbl.name'))
     # timestamp = Column(TIMESTAMP, default=func.now())
-    # creator = Column(String(80))
+    # creator = stringcolumn(80)
 
     repository_associations = relationship('RepositoryAssociationTbl', backref='repository_item')
 
@@ -102,37 +103,37 @@ class RepositoryAssociationTbl(Base, BaseMixin):
 class AnalysisChangeTbl(Base, BaseMixin):
     idanalysischangeTbl = Column(Integer, primary_key=True)
     # tag = Column(String(40), ForeignKey('TagTbl.name'))
-    tag = Column(String(40))
+    tag = stringcolumn(40)
     timestamp = Column(TIMESTAMP)
-    user = Column(String(40))
+    user = stringcolumn(40)
     analysisID = Column(Integer, ForeignKey('AnalysisTbl.id'))
 
 
 class AnalysisTbl(Base, BaseMixin):
-    id = Column(Integer, primary_key=True)
+    id = primary_key()
     timestamp = Column(TIMESTAMP)
-    # tag = Column(String(45))
-    uuid = Column(String(32))
-    analysis_type = Column(String(45))
+    # tag = stringcolumn(45)
+    uuid = stringcolumn(32)
+    analysis_type = stringcolumn(45)
     aliquot = Column(Integer)
     increment = Column(Integer)
 
     irradiation_positionID = Column(Integer, ForeignKey('IrradiationPositionTbl.id'))
 
-    measurementName = Column(String(45))
-    extractionName = Column(String(45))
-    postEqName = Column(String(45))
-    postMeasName = Column(String(45))
+    measurementName = stringcolumn(45)
+    extractionName = stringcolumn(45)
+    postEqName = stringcolumn(45)
+    postMeasName = stringcolumn(45)
 
     mass_spectrometer = Column(String(45), ForeignKey('MassSpectrometerTbl.name'))
-    extract_device = Column(String(45))
+    extract_device = stringcolumn(45)
     extract_value = Column(Float)
-    extract_units = Column(String(45))
+    extract_units = stringcolumn(45)
     cleanup = Column(Float)
     duration = Column(Float)
 
     weight = Column(Float)
-    comment = Column(String(80))
+    comment = stringcolumn(80)
     repository_associations = relationship('RepositoryAssociationTbl', backref='analysis')
     change = relationship('AnalysisChangeTbl', uselist=False, backref='analysis')
     measured_position = relationship('MeasuredPositionTbl', uselist=False, backref='analysis')
@@ -242,35 +243,35 @@ class AnalysisTbl(Base, BaseMixin):
 
 
 class ProjectTbl(Base, NameMixin):
-    id = Column(Integer, primary_key=True)
+    id = primary_key()
     principal_investigator = Column(String(140), ForeignKey('PrincipalInvestigatorTbl.name'))
 
     samples = relationship('SampleTbl', backref='project')
 
 
 class MaterialTbl(Base, NameMixin):
-    id = Column(Integer, primary_key=True)
+    id = primary_key()
     samples = relationship('SampleTbl', backref='material')
-    grainsize = Column(String(80))
+    grainsize = stringcolumn(80)
 
 
 class SampleTbl(Base, NameMixin):
-    id = Column(Integer, primary_key=True)
+    id = primary_key()
     materialID = Column(Integer, ForeignKey('MaterialTbl.id'))
     projectID = Column(Integer, ForeignKey('ProjectTbl.id'))
     positions = relationship('IrradiationPositionTbl', backref='sample')
 
 
 class ProductionTbl(Base, NameMixin):
-    id = Column(Integer, primary_key=True)
+    id = primary_key()
     levels = relationship('LevelTbl', backref='production')
 
 
 class LevelTbl(Base, NameMixin):
-    id = Column(Integer, primary_key=True)
+    id = primary_key()
     irradiationID = Column(Integer, ForeignKey('IrradiationTbl.id'))
     productionID = Column(Integer, ForeignKey('ProductionTbl.id'))
-    holder = Column(String(45))
+    holder = stringcolumn(45)
     z = Column(Float)
 
     positions = relationship('IrradiationPositionTbl', backref='level')
@@ -279,13 +280,13 @@ class LevelTbl(Base, NameMixin):
 
 
 class IrradiationTbl(Base, NameMixin):
-    id = Column(Integer, primary_key=True)
+    id = primary_key()
     levels = relationship('LevelTbl', backref='irradiation')
 
 
 class IrradiationPositionTbl(Base, BaseMixin):
-    id = Column(Integer, primary_key=True)
-    identifier = Column(String(80))
+    id = primary_key()
+    identifier = stringcolumn(80)
     sampleID = Column(Integer, ForeignKey('SampleTbl.id'))
     levelID = Column(Integer, ForeignKey('LevelTbl.id'))
     position = Column(Integer)
@@ -313,7 +314,7 @@ class IrradiationPositionTbl(Base, BaseMixin):
 
 class MassSpectrometerTbl(Base, BaseMixin):
     name = Column(String(45), primary_key=True)
-    kind = Column(String(45))
+    kind = stringcolumn(45)
 
 
 class ExtractDeviceTbl(Base, BaseMixin):
@@ -322,8 +323,8 @@ class ExtractDeviceTbl(Base, BaseMixin):
 
 class PrincipalInvestigatorTbl(Base, BaseMixin):
     name = Column(String(140), primary_key=True)
-    affiliation = Column(String(140))
-    email = Column(String(140))
+    affiliation = stringcolumn(140)
+    email = stringcolumn(140)
 
     @property
     def record_view(self):
@@ -334,9 +335,9 @@ class PrincipalInvestigatorTbl(Base, BaseMixin):
 
 class UserTbl(Base, BaseMixin):
     name = Column(String(45), primary_key=True)
-    affiliation = Column(String(80))
-    category = Column(String(80))
-    email = Column(String(80))
+    affiliation = stringcolumn(80)
+    category = stringcolumn(80)
+    email = stringcolumn(80)
 
 
 class LoadTbl(Base, BaseMixin):
@@ -355,7 +356,7 @@ class LoadHolderTbl(Base, BaseMixin):
 
 
 class LoadPositionTbl(Base, BaseMixin):
-    id = Column(Integer, primary_key=True)
+    id = primary_key()
     identifier = Column(String(80), ForeignKey('IrradiationPositionTbl.identifier'))
     position = Column(Integer)
     loadName = Column(String(45), ForeignKey('LoadTbl.name'))
@@ -364,7 +365,7 @@ class LoadPositionTbl(Base, BaseMixin):
 
 
 class MeasuredPositionTbl(Base, BaseMixin):
-    id = Column(Integer, primary_key=True)
+    id = primary_key()
     position = Column(Integer)
     x = Column(Float)
     y = Column(Float)
@@ -421,4 +422,9 @@ class SamplePrepImageTbl(Base, BaseMixin):
     path = Column(String(45))
     timestamp = Column(DATETIME, default=func.now())
 
+
+class RestrictedNameTbl(Base, BaseMixin):
+    id = primary_key()
+    name = stringcolumn()
+    category = stringcolumn()
 # ============= EOF =============================================

@@ -133,6 +133,16 @@ class DVCDatabase(DatabaseAdapter):
     #                      omit_iso=v,
     #                      omit_series=v)
     #         return self._add_item(tag)
+    def check_restricted_name(self, name, category):
+        """
+        return True is name is restricted
+
+        """
+        with self.session_ctx() as sess:
+            q = sess.query(RestrictedNameTbl)
+            q = q.filter(RestrictedNameTbl.name == name)
+            q = q.filter(RestrictedNameTbl.category == category)
+            return bool(self._query_one(q))
 
     def get_repository_analyses(self, repo):
         with self.session_ctx():
