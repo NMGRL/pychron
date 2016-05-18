@@ -172,8 +172,8 @@ class LabnumberEntry(DVCIrradiationable):
         self.info('Transferring Js for Irradiation={}, Level={}'.format(self.irradiation,
                                                                         self.level))
         from pychron.entry.j_transfer import JTransferer
-
-        ms = self.application.get_service('pychron.database.adapters.massspec_database_adapter.MassSpecDatabaseAdapter')
+        klass = 'pychron.mass_spec.database.massspec_database_adapter.MassSpecDatabaseAdapter'
+        ms = self.application.get_service(klass)
         if ms:
             ms.bind_preferences()
             if ms.connect():

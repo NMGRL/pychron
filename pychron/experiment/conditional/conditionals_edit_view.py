@@ -75,7 +75,7 @@ class ConditionalsViewable(HasTraits):
                                        selected='selected_group',
                                        page_name='.label'))
 
-    def _group_factory(self, items, klass, name=None, conditional_klass=None, label='', **kw):
+    def _group_factory(self, items, klass, name=None, conditional_klass=None, label='', editable=False, **kw):
         if conditional_klass is None:
             conditional_klass = TerminationConditional
 
@@ -85,6 +85,7 @@ class ConditionalsViewable(HasTraits):
         group = klass(items, conditional_klass,
                       name=name,
                       label=label or name,
+                      editable=editable,
                       available_attrs=self.available_attrs)
         group.set_attrs(**kw)
 

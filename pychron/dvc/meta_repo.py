@@ -492,14 +492,21 @@ class MetaRepo(GitRepoManager):
 
         p = self.get_level_path(irradiation, level)
         jd = dvc_load(p)
+        npos = {'position': pos, 'j': j, 'j_err': e,
+                'decay_constants': decay,
+                'identifier': identifier,
+                'analyses': [{'uuid': ai.uuid,
+                              'record_id': ai.record_id,
+                              'status': ai.is_omitted()}
+                             for ai in analyses]}
+        if jd:
+            added = any((ji['position'] == pos for ji in jd))
+            njd = [ji if ji['position'] != pos else npos for ji in jd]
+            if not added:
+                njd.append(npos)
 
-        njd = [ji if ji['position'] != pos else {'position': pos, 'j': j, 'j_err': e,
-                                                 'decay_constants': decay,
-                                                 'identifier': identifier,
-                                                 'analyses': [{'uuid': ai.uuid,
-                                                               'record_id': ai.record_id,
-                                                               'status': ai.is_omitted()}
-                                                              for ai in analyses]} for ji in jd]
+        else:
+            njd = [npos]
 
         dvc_dump(njd, p)
         if add:
