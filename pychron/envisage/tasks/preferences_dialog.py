@@ -36,6 +36,7 @@ ICON_MAP = {'Database': icon('database'),
             'Update': icon('update_misc'),
             'General': icon('go-home-5'),
             'Spectrometer': icon('spectrum_emission'),
+            'Browser': icon('application_form_magnify'),
             # 'Hardware': icon('speedometer'),
             'MassSpec': icon('mass_spec'),
             'DVC': icon('git_orange'),
@@ -55,6 +56,7 @@ ICON_MAP = {'Database': icon('database'),
             'Loading': icon('caterpillar'),
             'Scripts': icon('scripts_text'),
             'Dashboard': icon('dashboard'),
+            'NMGRL Furnace': icon('furnace')
             }
 
 
