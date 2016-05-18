@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from traits.api import List, Str, Bool, Any, Enum, Button, \
-    Int, Property, cached_property, DelegatesTo, Date, Instance, HasTraits, Event
+    Int, Property, cached_property, DelegatesTo, Date, Instance, HasTraits, Event, Float
 # import apptools.sweet_pickle as pickle
 # ============= standard library imports ========================
 from datetime import timedelta, datetime
@@ -71,8 +71,8 @@ def filter_func(new, attr=None, comp=None):
 
 
 class SearchCriteria(HasTraits):
-    recent_hours = Int
-    reference_hours_padding = Int
+    recent_hours = Float
+    reference_hours_padding = Float
     graphical_filtering_max_days = Int
 
 
