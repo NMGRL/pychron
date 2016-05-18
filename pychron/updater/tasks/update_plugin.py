@@ -74,7 +74,7 @@ class UpdatePlugin(BaseTaskPlugin):
         if updater.check_on_startup:
             updater.check_for_updates()
 
-        globalv.active_branch = updater.get_active_branch()
+        globalv.active_branch = updater.active_branch
 
     # BaseTaskPlugin interface
     def check(self):
