@@ -35,7 +35,13 @@ class RepositoryIdentifierEntry(BaseEntry):
                                             'Repository?'.format(self.value)):
                 return
 
-        return self.dvc.add_repository(self.value, self.principal_investigator)
+        ret = True
+        if not self.dvc.add_repository(self.value, self.principal_investigator):
+            ret = False
+            if not self.confirmation_dialog('Could not add "{}". Try a different name?'.format(self.value)):
+                ret = None
+
+        return ret
 
     def traits_view(self):
         # style_sheet='QLabel {font-size: 10px} QLineEdit {font-size: 10px}'

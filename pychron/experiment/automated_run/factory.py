@@ -1311,6 +1311,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         if self._selected_runs:
             for si in self._selected_runs:
                 si.repository_identifier = self.repository_identifier
+            self.refresh_table_needed = True
 
     def _add_repository_identifier_fired(self):
         if self.dvc:

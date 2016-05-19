@@ -803,6 +803,7 @@ class DVC(Loggable):
 
             if inform:
                 self.warning_dialog('Repository "{}" already exists'.format(identifier))
+            return True
 
         else:
             if os.path.isdir(root):
@@ -816,6 +817,7 @@ class DVC(Loggable):
                     self.info('Creating repository at {}. {}'.format(gi.name, identifier))
 
                     if gi.create_repo(identifier, organization=self.organization, auto_init=True):
+                        ret = True
                         if self.default_team:
                             gi.set_team(self.default_team, self.organization, identifier,
                                         permission='push')
