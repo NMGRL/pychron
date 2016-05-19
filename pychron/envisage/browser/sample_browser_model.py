@@ -171,7 +171,6 @@ class SampleBrowserModel(BrowserModel):
         self.analysis_table.selected = []
 
         ans = []
-        uuids = []
         if new:
             at = self.analysis_table
             lim = at.limit
