@@ -15,8 +15,8 @@ Root
 Login
 =====
 
-5. Use login
-6. Multi user
+5. Use Login
+6. Multi User
 
 Organization
 ============

@@ -91,7 +91,7 @@ class MassSpecConfigPane(PreferencesPane):
                          show_border=True,
                          label='Isotope')
 
-        v = View(VGroup(iso_grp, dgrp))
+        v = View(HGroup(iso_grp, dgrp))
         return v
 
 
@@ -111,15 +111,14 @@ class MassSpecConnectionPane(PreferencesPane):
                                   color_name='_connected_color'))
 
         massspec_grp = VGroup(Item('enabled', label='Use MassSpec'),
-                              VGroup(
-                                  cgrp,
-                                  Item('name', label='Database', editor=EnumEditor(name='_names')),
-                                  Item('host', label='Host'),
-                                  Item('username', label='Name'),
-                                  Item('password', label='Password'),
-                                  enabled_when='enabled',
-                                  show_border=True,
-                                  label='Authentication'),
+                              VGroup(Item('name', label='Database', editor=EnumEditor(name='_names')),
+                                     Item('host', label='Host'),
+                                     Item('username', label='Name'),
+                                     Item('password', label='Password'),
+                                     cgrp,
+                                     enabled_when='enabled',
+                                     show_border=True,
+                                     label='Connection'),
                               label='MassSpec DB',
                               show_border=True)
 

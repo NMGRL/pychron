@@ -107,7 +107,8 @@ class HardwarePlugin(BaseTaskPlugin):
         # create the hardware proxy server
         ehs = to_bool(self.application.preferences.get('pychron.hardware.enable_hardware_server'))
         if ehs:
-            use_tx = to_bool(self.application.preferences.get('pychron.hardware.use_twisted'))
+            # use_tx = to_bool(self.application.preferences.get('pychron.hardware.use_twisted', True))
+            use_tx = True
             if use_tx:
                 from pychron.tx.server import TxServer
                 rhm = TxServer()

@@ -37,7 +37,8 @@ class LabnumberEntryPreferencesPane(PreferencesPane):
     def traits_view(self):
         irradiation_grp = Group(Item('irradiation_prefix',
                                      label='Irradiation Prefix'),
-                                Item('monitor_name'),
+                                Item('monitor_name',
+                                     label='Monitor Name'),
                                 Item('j_multiplier', label='J Multiplier',
                                      tooltip='J units per hour'),
                                 show_border=True,

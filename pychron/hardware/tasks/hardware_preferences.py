@@ -93,50 +93,21 @@ class HardwarePreferencesPane(PreferencesPane):
 
         txgrp = VGroup(UItem('_protocols',
                              editor=TableEditor(columns=cols)),
-                       enabled_when='use_twisted')
+                       enabled_when='use_twisted and enable_hardware_server')
 
         ehs_grp = VGroup(Item('enable_hardware_server', label='Enabled'),
-                         VGroup(Item('use_twisted'),
-                                txgrp,
-                                # Item('enable_system_lock'),
-                                enabled_when='enable_hardware_server'),
+                         txgrp,
+                         # VGroup(Item('use_twisted'),
+                         #        txgrp,
+                         #        # Item('enable_system_lock'),
+                         #        enabled_when='enable_hardware_server'),
                          show_border=True, label='Pychron Proxy Server')
 
-        sgrp = VGroup(Item('auto_find_handle'),
-                      Item('auto_write_handle', enabled_when='auto_find_handle'),
-                      show_border=True, label='Serial')
-        v = View(VGroup(ehs_grp, sgrp))
+        # sgrp = VGroup(Item('auto_find_handle'),
+        #               Item('auto_write_handle', enabled_when='auto_find_handle'),
+        #               show_border=True, label='Serial')
+        # v = View(VGroup(ehs_grp, sgrp))
+        v = View(ehs_grp)
         return v
 
-        # ============= EOF =============================================
-        # v = View(
-        #     VGroup(
-        #         Group(
-        #             HGroup(Item('enable_hardware_server'),
-        #                    Item('enable_system_lock', enabled_when='enable_hardware_server')),
-        #             #                           Group(
-        #             #                             Item('system_lock_name', editor=EnumEditor(values=self.system_lock_names),
-        #             #                                      enabled_when='enable_system_lock'),
-        #             #                                 Item('system_lock_address', style='readonly', label='Host'),
-        #             #                                      enabled_when='enable_hardware_server'),
-        #             label='Remote Hardware Server',
-        #             show_border=True
-        #         ),
-        #         #                     Group(
-        #         #                           Item('enable_directory_server'),
-        #         #                           Item('directory_server_root', enabled_when='enable_directory_server'),
-        #         #                           Item('directory_server_host', enabled_when='enable_directory_server'),
-        #         #                           Item('directory_server_port', enabled_when='enable_directory_server'),
-        #         #                           show_border=True,
-        #         #                           label='Directory Server'
-        #         #                           ),
-        #         Group(
-        #             'auto_find_handle',
-        #             Item('auto_write_handle', enabled_when='auto_find_handle'),
-        #             label='Serial',
-        #             show_border=True
-        #         ),
-        #     ),
-        #     scrollable=True
-        # )
-        # return v
+# ============= EOF =============================================
