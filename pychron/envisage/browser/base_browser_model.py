@@ -668,9 +668,8 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
         elif self.use_low_post:
             lp = self._low_post
-
-        if not lp:
-            lp = tdy
+            if not lp:
+                lp = tdy
 
         self.debug('GET LPOST={}'.format(lp))
         return lp
