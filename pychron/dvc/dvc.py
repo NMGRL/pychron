@@ -132,11 +132,13 @@ class DVC(Loggable):
     def open_meta_repo(self):
         mrepo = self.meta_repo
         root = os.path.join(paths.dvc_dir, self.meta_repo_name)
+        self.debug('open meta repo {}'.format(root))
         if os.path.isdir(os.path.join(root, '.git')):
             self.debug('Opening Meta Repo')
             mrepo.open_repo(root)
         else:
             url = self.make_url(self.meta_repo_name)
+            self.debug('cloning meta repo url={}'.format(url))
             path = os.path.join(paths.dvc_dir, self.meta_repo_name)
             self.meta_repo.clone(url, path)
 
