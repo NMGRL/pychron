@@ -1,67 +1,59 @@
-<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>Pychron by jirhiker</title>
-    <link rel="stylesheet" href="stylesheets/styles.css">
-    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
-    <script src="javascripts/main.js"></script>
-    <!--[if lt IE 9]>
-      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+---
+layout: index
+title: Home
+permalink: /
+---
 
-  </head>
-  <body>
-
-      <header>
-        <h1>Pychron</h1>
-        <p>Data acquisition and processing framework for Ar-Ar geochronology and noble gas mass spectrometry</p>
-      </header>
-
-      <div id="banner">
-        <span id="logo"></span>
-
-        <a href="https://github.com/NMGRL/pychron" class="button fork"><strong>View On GitHub</strong></a>
-        <div class="downloads">
-          <span>Downloads:</span>
-          <ul>
-            <li><a href="https://github.com/NMGRL/pychron/zipball/master" class="button">ZIP Master</a></li>
-            <li><a href="https://github.com/NMGRL/pychron/tarball/master" class="button">TAR Master</a></li>
-            <li><a href="https://github.com/NMGRL/pychron/zipball/develop" class="button">ZIP Develop</a></li>
-            <li><a href="https://github.com/NMGRL/pychron/tarball/develop" class="button">TAR Develop</a></li>
-          </ul>
+<div id="service">
+    <div class="container">
+        <div class="row centered">
+            <div class="col-md-4">
+                <i class="fa fa-heart-o"></i>
+                <h4>Handsomely Crafted</h4>
+                <p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.</p>
+                <p><br/><a href="#" class="btn btn-theme">More Info</a></p>
+            </div>
+            <div class="col-md-4">
+                <i class="fa fa-flask"></i>
+                <h4>Retina Ready</h4>
+                <p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.</p>
+                <p><br/><a href="#" class="btn btn-theme">More Info</a></p>
+            </div>
+            <div class="col-md-4">
+                <i class="fa fa-trophy"></i>
+                <h4>Quality Theme</h4>
+                <p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.</p>
+                <p><br/><a href="#" class="btn btn-theme">More Info</a></p>
+            </div>		 				
         </div>
-      </div><!-- end banner -->
+    </div><! --/container -->
+</div><! --/service -->
 
-    <div class="wrapper">
-      <nav>
-        <ul></ul>
-      </nav>
-      <section>
-        <h3>
-<a name="welcome-to-github-pages" class="anchor" href="#welcome-to-github-pages"><span class="octicon octicon-link"></span></a>Welcome to GitHub Pages.</h3>
+{% include portfolio.html title="LATEST WORKS" limit=10 %}
 
-<h1>What is Pychron</h1>
-<p>Pychron is python package for data acquisition and processing of Ar-Ar analyses. The main Pychron code-base can be built into multiple application flavors to perform various tasks.
-For example, PyExperiment is the flavor used for data acquisition. PyCO2/PyDiode are flavors used for interacting with laser systems.
-</p>
+<div class="container mtb">
+    <div class="row">
+        <div class="col-lg-4 col-lg-offset-1">
+            <h4>More About Our Agency.</h4>
+            <p>{{ site.about }}</p>
+            <p><br/><a href="{{ "/about/" | prepend: site.baseurl }}" class="btn btn-theme">More Info</a></p>
+        </div>
 
-<h1>Links</h1>
-    <p><a href="links">links</a></p>
-<h1>Blog</h1>
-    <p><a href="blog">blog</a></p>
-<h1>Labspy</h1>
-    Labspy is used for providing real time updates.
-    <p><a href="http://129.138.12.131/~documentation/labspy/index.html">labspy</a><br/></p>
+        <div class="col-lg-3">
+            <h4>Frequently Asked</h4>
+            <div class="hline"></div>
+            {% for post in site.categories['question'] %} 
+                <p><a href="{{ post.url | prepend: site.baseurl }}">{{ post.title }}</a></p>
+            {% endfor %}
+        </div>
 
-<h1>Documentation</h1>
-<p>Documentation for Pychron is available at <a href="http://pychron.readthedocs.org/en/latest/">ReadTheDocs.org</a></p>
-    </section>
-   </div>
-   
-   
-  </body>
-</html>
+        <div class="col-lg-3">
+            <h4>Latest Posts</h4>
+            <div class="hline"></div>
+            {% for post in site.categories['blog'] limit:5 %} 
+                <p><a href="{{ post.url | prepend: site.baseurl }}">{{ post.title }}.</a></p>
+            {% endfor %} 
+        </div>
+
+    </div><! --/row -->
+</div><! --/container -->

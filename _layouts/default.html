@@ -1,60 +1,14 @@
+<!DOCTYPE html>
 <html>
-<head>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
-    <link rel="stylesheet" href="{{site.baseurl}}/stylesheets/blog.css">
-    <!--<link rel="stylesheet" href="{{site:url}}/stylesheets/syntax.css">-->
-    <link rel="stylesheet" href="{{site.baseurl}}/stylesheets/pygment_trac.css">
-    <link rel="stylesheet" href="{{site.baseurl}}/stylesheets/img.css">
-    <link rel="stylesheet" href="{{site.baseurl}}/stylesheets/directives.css">
 
-    <script src="{{site.baseurl}}/javascripts/ga.js"></script>
-    <link rel="alternate" type="application/atom+xml" href="{{site.baseurl}}/feed.xml" title="Atom feed">
-</head>
+    {% include head.html %}
 
-<body>
+    <body>
+        {% include nav.html %}
 
-<header>
-      <nav class="navbar navbar-inverse navbar-static-top" role="navigation">
-        <div class="container">
-          <div class="navbar-header">
-            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-              <span class="sr-only">Toggle navigation</span>
-              <span class="icon-bar"></span>
-              <span class="icon-bar"></span>
-              <span class="icon-bar"></span>
-            </button>
-            <a href="{{site.baseurl}}/">
-              <img src="{{site.baseurl}}/assets/images/RossLabs_logo.png"
-                   width="100px">
-                   <!--style="width:100px;float:left" class="visible-xs img-responsive" -->
-                   <!--alt="demisx avatar">-->
-              <span class="navbar-brand">{{site.name}}</span>
-              <!--<span class="navbar-brand">{{ site.name }}</span>-->
-            </a>
-          </div>
+            {{ content }}
 
-          <div class="navbar-collapse collapse">
-            <ul class="nav navbar-nav">
-              <li class="active"><a href="{{site.baseurl}}/">Home</a></li>
-              <li class="active"><a href="{{site.baseurl}}/contact">Contact</a></li>
-              <li class="active"><a href="{{site.baseurl}}/about">About</a></li>
-              <li class="active"><a href="{{site.baseurl}}/links">Links</a></li>
-
-            </ul>
-            <ul class="nav navbar-nav navbar-right">
-              <!--<li><a href="/feed.xml"><i class="fa fa-rss fa-lg"></i> RSS</a></li>-->
-                <li><a href="https://github.com/NMGRL" rel="me" target="_blank"><i class="fa fa-github fa-lg"></i> GitHub</a></li>
-                <li><script data-gratipay-username="jirhiker"
-                data-gratipay-widget="button"
-                src="//grtp.co/v1.js"></script>
-                </li>
-            </ul>
-          </div><!--/.navbar-collapse -->
-        </div>
-      </nav>
-    </header>
-
-{{content}}
-
-</body>
+        {% include footer.html %}
+        {% include js.html %}
+    </body>
 </html>
