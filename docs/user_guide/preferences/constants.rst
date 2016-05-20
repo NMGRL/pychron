@@ -6,8 +6,8 @@ Constants
 General
 *******
 
-1. Age Units
-2. Allow Negative Ca Correction
+1. Age Units. Age units to display e.g Ma, Ka, etc.
+2. Allow Negative Ca Correction. Allow the Ca37 correction to be negative. If not checked Ca37 = max(0, Ca37)
 
 Decay
 *****
