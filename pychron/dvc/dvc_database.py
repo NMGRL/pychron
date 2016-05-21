@@ -1106,7 +1106,7 @@ class DVCDatabase(DatabaseAdapter):
             q = q.filter(SampleTbl.material == material)
             q = q.filter(SampleTbl.name == name)
 
-            return self._query_one(q)
+            return self._query_one(q, verbose_query=True)
 
     def get_last_identifier(self, sample=None):
         with self.session_ctx() as sess:

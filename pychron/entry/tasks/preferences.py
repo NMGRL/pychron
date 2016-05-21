@@ -16,8 +16,8 @@
 
 # ============= enthought library imports =======================
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traits.api import Str, Float
-from traitsui.api import View, Item, Group
+from traits.api import Str, Float, Password
+from traitsui.api import View, Item, Group, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
@@ -46,7 +46,27 @@ class LabnumberEntryPreferencesPane(PreferencesPane):
         v = View(irradiation_grp)
         return v
 
+
+class SamplePrepPreferences(BasePreferencesHelper):
+    preferences_path = 'pychron.entry.sample_prep'
+    host = Str
+    username = Str
+    password = Password
+    root = Str
+
+
+class SamplePrepPreferencesPane(PreferencesPane):
+    model_factory = SamplePrepPreferences
+    category = 'Entry'
+
+    def traits_view(self):
+        imggrp = VGroup(Item('host'),
+                        Item('username'),
+                        Item('password'),
+                        Item('root', label='Image folder'),
+                        show_border=True,
+                        label='Image Server')
+        v = View(imggrp)
+        return v
+
 # ============= EOF =============================================
-
-
-

@@ -19,7 +19,7 @@ from pychron.envisage.tasks.base_task import BaseManagerTask
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
-from pychron.entry.tasks.sensitivity_entry_panes import SensitivityPane
+from pychron.entry.tasks.sensitivity.panes import SensitivityPane
 from pychron.entry.entry_views.sensitivity_entry import SensitivityEntry
 from pyface.tasks.action.schema import SToolBar
 from pychron.entry.tasks.actions import SaveSensitivityAction, \

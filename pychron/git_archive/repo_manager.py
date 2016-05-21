@@ -406,7 +406,9 @@ class GitRepoManager(Loggable):
         # return self._repo.git.log('--not', '--remotes', '--oneline')
         return self._repo.git.log('{}/{}..HEAD'.format(remote, branch), '--oneline')
 
-    def add_unstaged(self, root, add_all=False, extension=None, use_diff=False):
+    def add_unstaged(self, root=None, add_all=False, extension=None, use_diff=False):
+        if root is None:
+            root = self.path
 
         index = self.index
         def func(ps, extension):

@@ -20,17 +20,14 @@ from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter, Tabbed
 from traits.api import on_trait_change, Button, Float, Str, Int, Bool
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.entry.entry_views.material_entry import MaterialEntry
 
 from pychron.entry.graphic_generator import GraphicModel, GraphicGeneratorController
 from pychron.envisage.browser.record_views import SampleRecordView
 from pychron.envisage.browser.base_browser_model import BaseBrowserModel
-from pychron.entry.entry_views.project_entry import ProjectEntry
-from pychron.entry.entry_views.sample_entry import SampleEntry
 from pychron.entry.labnumber_entry import LabnumberEntry
 from pychron.entry.tasks.actions import SavePDFAction, DatabaseSaveAction, PreviewGenerateIdentifiersAction, \
     GenerateIdentifiersAction
-from pychron.entry.tasks.labnumber_entry_panes import LabnumbersPane, \
+from pychron.entry.tasks.labnumber.panes import LabnumbersPane, \
     IrradiationPane, IrradiationEditorPane, IrradiationCanvasPane, LevelInfoPane, ChronologyPane
 from pychron.envisage.tasks.base_task import BaseManagerTask
 from pychron.globals import globalv
@@ -307,32 +304,32 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     # def _preview_generate_identifiers_button_fired(self):
     #     self.preview_generate_identifiers()
 
-    def _add_project_button_fired(self):
-        dvc = self.manager.dvc
-        pr = ProjectEntry(dvc=self.manager.dvc)
-        pr.available = dvc.get_project_names()
-        if pr.do():
-            self.load_projects(include_recent=False)
-
-    def _add_sample_button_fired(self):
-        project = ''
-        if self.selected_projects:
-            project = self.selected_projects[0].name
-
-        mats = self.db.get_material_names()
-        sam = SampleEntry(dvc=self.manager.dvc,
-                          project=project,
-                          projects=[p.name for p in self.projects],
-                          materials=mats)
-        if sam.do():
-            self._load_associated_samples()
-
-    def _add_material_button_fired(self):
-        dvc = self.manager.dvc
-        mat = MaterialEntry(dvc=dvc)
-        mat.available = dvc.get_material_names()
-        mat.do()
-        # self._load_materials()
+    # # def _add_project_button_fired(self):
+    # #     dvc = self.manager.dvc
+    # #     pr = ProjectEntry(dvc=self.manager.dvc)
+    # #     pr.available = dvc.get_project_names()
+    # #     if pr.do():
+    # #         self.load_projects(include_recent=False)
+    # #
+    # # def _add_sample_button_fired(self):
+    # #     project = ''
+    # #     if self.selected_projects:
+    # #         project = self.selected_projects[0].name
+    # #
+    # #     mats = self.db.get_material_names()
+    # #     sam = SampleEntry(dvc=self.manager.dvc,
+    # #                       project=project,
+    # #                       projects=[p.name for p in self.projects],
+    # #                       materials=mats)
+    # #     if sam.do():
+    # #         self._load_associated_samples()
+    #
+    # def _add_material_button_fired(self):
+    #     dvc = self.manager.dvc
+    #     mat = MaterialEntry(dvc=dvc)
+    #     mat.available = dvc.get_material_names()
+    #     mat.do()
+    #     # self._load_materials()
 
     # def _edit_project_button_fired(self):
     #     pr = ProjectEntry(db=self.manager.db)
@@ -345,15 +342,15 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     #     se.edit_sample(sam.name,
     #                    self.selected_projects,
     #                    sam.material)
-
-    def _selected_projects_changed(self, old, new):
-        if new and self.project_enabled:
-            names = [ni.name for ni in new]
-            self.debug('selected projects={}'.format(names))
-
-            self._load_associated_samples(names)
-            self._selected_projects_change_hook(names)
-            # self.dump_browser_selection()
+    #
+    # def _selected_projects_changed(self, old, new):
+    #     if new and self.project_enabled:
+    #         names = [ni.name for ni in new]
+    #         self.debug('selected projects={}'.format(names))
+    #
+    #         self._load_associated_samples(names)
+    #         self._selected_projects_change_hook(names)
+    #         # self.dump_browser_selection()
 
     def _prompt_for_save(self):
         self.manager.push_changes()
