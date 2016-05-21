@@ -216,21 +216,20 @@ class LabspyClient(Loggable):
             else:
                 add = run.analysis_type in atypes
 
-            args = []
-            if value == 'peak_center':
-                value = 'get_reference_peakcenter_result'
-            elif '/' in value:
-                args = (value,)
-                value = 'get_ratio'
-
             if add:
+                args = []
+                if value == 'peak_center':
+                    value = 'get_reference_peakcenter_result'
+                elif '/' in value:
+                    args = (value,)
+                    value = 'get_ratio'
+
                 try:
                     v = getattr(run, value)(*args)
                 except AttributeError:
-                    return
-
-                if v:
-                    self.db.add_measurement('{}Monitor'.format(ms), '{}{}'.format(ms, name), v, units)
+                    continue
+                    
+                self.db.add_measurement('{}Monitor'.format(ms), '{}{}'.format(ms, name), v, units)
 
     @auto_connect
     def add_measurement(self, dev, tag, val, unit):
