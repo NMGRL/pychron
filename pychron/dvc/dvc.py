@@ -132,11 +132,13 @@ class DVC(Loggable):
     def open_meta_repo(self):
         mrepo = self.meta_repo
         root = os.path.join(paths.dvc_dir, self.meta_repo_name)
+        self.debug('open meta repo {}'.format(root))
         if os.path.isdir(os.path.join(root, '.git')):
             self.debug('Opening Meta Repo')
             mrepo.open_repo(root)
         else:
             url = self.make_url(self.meta_repo_name)
+            self.debug('cloning meta repo url={}'.format(url))
             path = os.path.join(paths.dvc_dir, self.meta_repo_name)
             self.meta_repo.clone(url, path)
 
@@ -803,6 +805,7 @@ class DVC(Loggable):
 
             if inform:
                 self.warning_dialog('Repository "{}" already exists'.format(identifier))
+            return True
 
         else:
             if os.path.isdir(root):
@@ -816,6 +819,7 @@ class DVC(Loggable):
                     self.info('Creating repository at {}. {}'.format(gi.name, identifier))
 
                     if gi.create_repo(identifier, organization=self.organization, auto_init=True):
+                        ret = True
                         if self.default_team:
                             gi.set_team(self.default_team, self.organization, identifier,
                                         permission='push')

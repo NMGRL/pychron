@@ -44,7 +44,7 @@ class SampleBrowserModel(BrowserModel):
 
     def __init__(self, *args, **kw):
         super(SampleBrowserModel, self).__init__(*args, **kw)
-        prefid = 'pychron.browsing'
+        prefid = 'pychron.browser'
         bind_preference(self.search_criteria, 'recent_hours',
                         '{}.recent_hours'.format(prefid))
         bind_preference(self.search_criteria, 'reference_hours_padding',
@@ -171,7 +171,6 @@ class SampleBrowserModel(BrowserModel):
         self.analysis_table.selected = []
 
         ans = []
-        uuids = []
         if new:
             at = self.analysis_table
             lim = at.limit

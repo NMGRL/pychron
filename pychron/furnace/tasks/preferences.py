@@ -52,10 +52,17 @@ class NMGRLFurnaceControlPreferencesPane(PreferencesPane):
     model_factory = NMGRLFurnaceControlPreferences
 
     def traits_view(self):
-        p_grp = VGroup(Item('canvas_path', editor=FileEditor(root_path=os.path.join(paths.canvas2D_dir, 'canvas.xml'))),
-                       Item('canvas_config_path', editor=FileEditor()),
-                       Item('valves_path', editor=FileEditor(root_path=os.path.join(paths.extraction_line_dir,
+        p_grp = VGroup(Item('canvas_path',
+                            label='Canvas Path',
+                            editor=FileEditor(root_path=os.path.join(paths.canvas2D_dir, 'canvas.xml'))),
+                       Item('canvas_config_path',
+                            label='Config Path',
+                            editor=FileEditor()),
+                       Item('valves_path',
+                            label='Valves Path',
+                            editor=FileEditor(root_path=os.path.join(paths.extraction_line_dir,
                                                                                     'valves.xml'))),
+                       show_border=True,
                        label='Paths')
         v = View(p_grp)
         return v

@@ -34,8 +34,9 @@ ICON_MAP = {'Database': icon('database'),
             'Console': icon('openterm'),
             'Processing': icon('tools-anvil'),
             'Update': icon('update_misc'),
-            'General': icon('go-home-5'),
+            'General': icon('home'),
             'Spectrometer': icon('spectrum_emission'),
+            'Browser': icon('application_form_magnify'),
             # 'Hardware': icon('speedometer'),
             'MassSpec': icon('mass_spec'),
             'DVC': icon('git_orange'),
@@ -55,6 +56,7 @@ ICON_MAP = {'Database': icon('database'),
             'Loading': icon('caterpillar'),
             'Scripts': icon('scripts_text'),
             'Dashboard': icon('dashboard'),
+            'NMGRL Furnace': icon('furnace')
             }
 
 

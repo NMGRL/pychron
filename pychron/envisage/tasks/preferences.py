@@ -49,7 +49,8 @@ class GeneralPreferencesPane(PreferencesPane):
     def traits_view(self):
         root_grp = VGroup(Item('root_dir', label='Pychron Directory'),
                           show_border=True, label='Root')
-        login_grp = VGroup(Item('use_login'), Item('multi_user'),
+        login_grp = VGroup(Item('use_login', label='Use Login'),
+                           Item('multi_user', label='Multi User'),
                            label='Login', show_border=True)
 
         o_grp = VGroup(Item('organization', label='Name'),
@@ -83,8 +84,12 @@ class BrowserPreferencesPane(PreferencesPane):
     category = 'Browser'
 
     def traits_view(self):
-        v = View(Item('recent_hours'),
-                 Item('reference_hours_padding'))
+        v = View(Item('recent_hours',
+                      label='RECENT (hrs)',
+                      tooltip='Number of hours to use for RECENT_... filtering'),
+                 Item('reference_hours_padding',
+                      label='References Padding (hrs)',
+                      tooltip='Padding in hours when finding associated references'))
         return v
 
 # ============= EOF =============================================

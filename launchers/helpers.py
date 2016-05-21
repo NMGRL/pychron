@@ -17,6 +17,9 @@ import warnings
 
 warnings.simplefilter("ignore")
 
+import sys
+print sys.path
+
 from ConfigParser import NoSectionError
 from pyface.constant import OK
 from traits.etsconfig.api import ETSConfig

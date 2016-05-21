@@ -21,7 +21,7 @@ from traitsui.api import View, Item, HGroup, VGroup, Spring, Label, EnumEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.ui.custom_label_editor import CustomLabel
-from pychron.database.tasks.connection_preferences import ConnectionMixin
+from pychron.database.tasks.connection_preferences import ConnectionMixin, show_databases
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
@@ -34,12 +34,26 @@ class MassSpecConnectionPreferences(BasePreferencesHelper, ConnectionMixin):
     host = Str
     _adapter_klass = 'pychron.mass_spec.database.massspec_database_adapter.MassSpecDatabaseAdapter'
     enabled = Bool
+    _schema_identifier = 'AnalysesTable'
+    _names = List
+
+    def __init__(self, *args, **kw):
+        super(MassSpecConnectionPreferences, self).__init__(*args, **kw)
+        self._load_names()
+
+    def _load_names(self):
+        if self.username and self.password and self.host:
+            if self.host:
+                self._names = show_databases(self.host, self.username, self.password, self._schema_identifier)
 
     def _anytrait_changed(self, name, old, new):
         if name not in ('_connected_label', '_connected_color',
                         '_connected_color_',
                         'test_connection'):
             self._reset_connection_label(False)
+            if name in ('username', 'host', 'password'):
+                self._load_names()
+
         super(MassSpecConnectionPreferences, self)._anytrait_changed(name, old, new)
 
     def _get_connection_dict(self):
@@ -77,7 +91,7 @@ class MassSpecConfigPane(PreferencesPane):
                          show_border=True,
                          label='Isotope')
 
-        v = View(VGroup(iso_grp, dgrp))
+        v = View(HGroup(iso_grp, dgrp))
         return v
 
 
@@ -97,15 +111,14 @@ class MassSpecConnectionPane(PreferencesPane):
                                   color_name='_connected_color'))
 
         massspec_grp = VGroup(Item('enabled', label='Use MassSpec'),
-                              VGroup(
-                                  cgrp,
-                                  Item('name', label='Database'),
-                                  Item('host', label='Host'),
-                                  Item('username', label='Name'),
-                                  Item('password', label='Password'),
-                                  enabled_when='enabled',
-                                  show_border=True,
-                                  label='Authentication'),
+                              VGroup(Item('name', label='Database', editor=EnumEditor(name='_names')),
+                                     Item('host', label='Host'),
+                                     Item('username', label='Name'),
+                                     Item('password', label='Password'),
+                                     cgrp,
+                                     enabled_when='enabled',
+                                     show_border=True,
+                                     label='Connection'),
                               label='MassSpec DB',
                               show_border=True)
 

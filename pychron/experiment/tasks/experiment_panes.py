@@ -203,7 +203,7 @@ class ExperimentFactoryPane(TraitsDockPane):
                            spring),
                     HGroup(run_factory_item('repository_identifier',
                                             label='Repository ID',
-                                            editor=ComboboxEditor(name=run_factory_name('repository_identifiers'))),
+                                            editor=EnumEditor(name=run_factory_name('repository_identifiers'))),
                            icon_button_editor(run_factory_name('add_repository_identifier'), 'add',
                                               tooltip='Add a new repository'),
                            icon_button_editor(run_factory_name('set_repository_identifier_button'), 'arrow_left',
