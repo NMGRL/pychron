@@ -85,8 +85,9 @@ class StageControlPane(TraitsDockPane):
                             editor=EnumEditor(
                                 name='stage_manager.home_options')))
         chgrp = VGroup(
-            HGroup(Item('canvas.show_laser_position', label='Show Current'),
+            HGroup(Item('canvas.show_laser_position', label='Display Current'),
                    UItem('canvas.crosshairs_color')),
+            Item('canvas.show_hole', label='Display Hole Label'),
             HGroup(
                 Item('canvas.show_desired_position',
                      label='Show Desired'),

@@ -50,6 +50,15 @@ from pychron.managers.motion_controller_managers.motion_controller_manager \
 from pychron.stage.stage_manager import BaseStageManager
 
 
+def distance_threshold(p1, p2, tol):
+    if p2 is None:
+        return True
+
+    x1, y1 = p1
+    x2, y2 = p2
+    return ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5 > tol
+
+
 class StageManager(BaseStageManager):
     """
     """
@@ -88,6 +97,8 @@ class StageManager(BaseStageManager):
     use_autocenter = Bool
 
     _default_z = 0
+    _cached_position = None
+    _cached_current_hole = None
 
     def __init__(self, *args, **kw):
         """
@@ -119,6 +130,16 @@ class StageManager(BaseStageManager):
             y = self.stage_controller.y
             return x, y
 
+    def get_current_hole(self):
+        pos = self.get_current_position()
+        if distance_threshold(pos, self._cached_position, self.stage_map.g_dimension / 4):
+            h = self.get_calibrated_hole(*pos, tol=self.stage_map.g_dimension / 2.)
+            if h is not None:
+                self._cached_current_hole = h
+                self._cached_position = pos
+
+        return self._cached_current_hole
+
     def is_auto_correcting(self):
         return False
 
@@ -139,10 +160,8 @@ class StageManager(BaseStageManager):
         bind_preference(self.canvas, 'crosshairs_radius', '{}.crosshairs_radius'.format(pref_id))
         bind_preference(self.canvas, 'crosshairs_offsetx', '{}.crosshairs_offsetx'.format(pref_id))
         bind_preference(self.canvas, 'crosshairs_offsety', '{}.crosshairs_offsety'.format(pref_id))
-        #
+        bind_preference(self.canvas, 'show_hole', '{}.show_hole'.format(pref_id))
         bind_preference(self.canvas, 'scaling', '{}.scaling'.format(pref_id))
-        #
-        #        bind_preference(self.tray_calibration_manager, 'style', '{}.calibration_style'.format(pref_id))
         bind_preference(self.canvas, 'show_bounds_rect',
                         '{}.show_bounds_rect'.format(pref_id))
 
@@ -311,28 +330,21 @@ class StageManager(BaseStageManager):
         return pos
 
     def get_calibrated_xy(self):
-        pos = (self.stage_controller._x_position, self.stage_controller._y_position)
+        pos = (self.stage_controller.x, self.stage_controller.y)
         if self.stage_controller.xy_swapped():
             pos = pos[1], pos[0]
 
         pos = self.canvas.map_offset_position(pos)
         return self.get_calibrated_position(pos)
 
-    def get_calibrated_hole(self, x, y):
+    def get_calibrated_hole(self, x, y, tol):
         ca = self.canvas.calibration_item
         if ca is not None:
             smap = self.stage_map
 
-            rot = ca.rotation
-            cpos = ca.center
-
-            def _filter(hole, x, y, tol=0.1):
-                cx, cy = smap.map_to_calibration((hole.x, hole.y), cpos, rot)
-                return abs(cx - x) < tol and abs(cy - y) < tol
-
-            return next((si for si in smap.sample_holes
-                         if _filter(si, x, y)
-                         ), None)
+            xx, yy = smap.map_to_uncalibration((x, y), ca.center, ca.rotation)
+            return next((hole for hole in smap.sample_holes
+                         if abs(hole.x - xx) < tol and abs(hole.y - yy) < tol), None)
 
     def get_hole_xy(self, key):
         pos = self.stage_map.get_hole_pos(key)
@@ -1000,6 +1012,7 @@ class StageManager(BaseStageManager):
         pp.on_trait_change(self.move_polygon, 'polygon')
         pp.on_trait_change(self.move_polyline, 'line')
         return pp
+
 
 # ===============================================================================
 # mass spec hacks
