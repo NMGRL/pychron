@@ -355,11 +355,19 @@ class BaseLaserManager(Manager):
     def _stage_manager_factory(self, args):
         self.stage_args = args
         if self.use_video:
-            from pychron.lasers.stage_managers.video_stage_manager import VideoStageManager
-            klass = VideoStageManager
+            if self.use_rotary_stage:
+                from pychron.lasers.stage_managers.rotary_stage_manager import RotaryVideoStageManager
+                klass = RotaryVideoStageManager
+            else:
+                from pychron.lasers.stage_managers.video_stage_manager import VideoStageManager
+                klass = VideoStageManager
         else:
-            from pychron.lasers.stage_managers.stage_manager import StageManager
-            klass = StageManager
+            if self.use_rotary_stage:
+                from pychron.lasers.stage_managers.rotary_stage_manager import RotaryStageManager
+                klass = RotaryStageManager
+            else:
+                from pychron.lasers.stage_managers.stage_manager import StageManager
+                klass = StageManager
 
         args['parent'] = self
         sm = klass(**args)
