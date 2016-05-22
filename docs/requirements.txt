@@ -7,3 +7,7 @@ scipy
 gitpython
 sqlalchemy
 requests
+traits
+traitsui
+pyside
+qt4
