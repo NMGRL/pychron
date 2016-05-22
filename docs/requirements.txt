@@ -8,5 +8,4 @@ gitpython
 sqlalchemy
 requests
 traits
-traitsui
-pyside
+mock
