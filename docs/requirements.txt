@@ -1,6 +1,9 @@
-mock
-traits
-traitsui
-apptools
+sphinx
+pyyaml
 pint
-sqlalchemy
+uncertainties
+recommonmark
+scipy
+gitpython
+sqlachemy
+requests
