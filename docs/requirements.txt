@@ -9,3 +9,6 @@ sqlalchemy
 requests
 traits
 mock
+apptools
+xlwt
+pyface
