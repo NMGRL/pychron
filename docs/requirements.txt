@@ -5,5 +5,5 @@ uncertainties
 recommonmark
 scipy
 gitpython
-sqlachemy
+sqlalchemy
 requests
