@@ -5,3 +5,4 @@ Configuration
 
   plugins
   el_canvas
+  startup_tests

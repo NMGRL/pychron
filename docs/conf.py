@@ -14,35 +14,36 @@
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-import os, sys
+import os
+import sys
 
 os.environ['RTD'] = 'True'
 
 sys.path.insert(0, os.path.abspath('../'))
 
-import sys
-
-# from mock import Mock
-try:
-    from unittest.mock import MagicMock
-except ImportError:
-    from mock import Mock as MagicMock
-
-
-class Mock(MagicMock):
-    @classmethod
-    def __getattr__(cls, name):
-        return Mock()
-
-MOCK_MODULES = ['numpy',
-                'uncertainties',
-                # 'traits.api',
-                # 'traitsui.api',
-                'apptools.preferences.preference_binding',
-                'scipy.optimize',
-                'scipy']
-
-sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
+# import sys
+#
+# # from mock import Mock
+# try:
+#     from unittest.mock import MagicMock
+# except ImportError:
+#     from mock import Mock as MagicMock
+#
+#
+# class Mock(MagicMock):
+#     @classmethod
+#     def __getattr__(cls, name):
+#         return Mock()
+#
+# MOCK_MODULES = ['numpy',
+#                 'uncertainties',
+#                 # 'traits.api',
+#                 # 'traitsui.api',
+#                 'apptools.preferences.preference_binding',
+#                 'scipy.optimize',
+#                 'scipy']
+#
+# sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 # -- General configuration -----------------------------------------------------
 
@@ -51,14 +52,21 @@ sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.todo', 'sphinx.ext.coverage', 'sphinx.ext.pngmath',
-              'sphinx.ext.mathjax', 'sphinx.ext.viewcode']
+extensions = ['sphinx.ext.autodoc',
+              'sphinx.ext.todo', 'sphinx.ext.coverage',
+              # 'sphinx.ext.pngmath',
+              # 'sphinx.ext.mathjax',
+              'sphinx.ext.viewcode']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
 # The suffix of source filenames.
-source_suffix = '.rst'
+source_suffix = ['.rst', '.md']
+from recommonmark.parser import CommonMarkParser
+source_parsers = {
+    '.md': CommonMarkParser
+}
 
 # The encoding of source files.
 #source_encoding = 'utf-8-sig'
@@ -118,7 +126,7 @@ pygments_style = 'sphinx'
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'default'
+html_theme = 'alabaster'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
