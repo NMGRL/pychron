@@ -42,9 +42,9 @@ def sigmaf(s):
 
 
 def handle_error(func):
-    def wrapper(*args, **kw):
+    def wrapper(self, *args, **kw):
         try:
-            return func(*args, **kw)
+            return func(self, *args, **kw)
         except ValueError:
             return ''
 
@@ -426,31 +426,31 @@ class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
             t = '#{}'.format(t)
         return t
 
-    def _get_base_value_text(self, *args, **kw):
+    def _get_base_value_text(self):
         return self._format('baseline', 'value', 'value')
 
-    def _get_base_error_text(self, *args, **kw):
+    def _get_base_error_text(self):
         return self._format('baseline', 'error', 'error')
 
     @handle_error
-    def _get_blank_value_text(self, *args, **kw):
+    def _get_blank_value_text(self):
         return self._format('blank', 'value', 'value')
 
     @handle_error
-    def _get_blank_error_text(self, *args, **kw):
+    def _get_blank_error_text(self):
         return self._format('blank', 'error', 'error')
 
     @handle_error
-    def _get_baseline_percent_error_text(self, *args):
+    def _get_baseline_percent_error_text(self):
         b = self.item.baseline
         return format_percent_error(b.value, b.error)
 
-    def _get_blank_percent_error_text(self, *args):
+    def _get_blank_percent_error_text(self):
         b = self.item.blank
         return format_percent_error(b.value, b.error)
 
     @handle_error
-    def _get_value_percent_error_text(self, *args):
+    def _get_value_percent_error_text(self):
         cv = self.item.get_non_detector_corrected_value()
         return format_percent_error(cv.nominal_value, cv.std_dev)
 
