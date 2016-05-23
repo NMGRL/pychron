@@ -5,7 +5,7 @@ Pychron Develop Guide
   :scale: 33%
   :width: 50%
 
-.. image:: ../images/RossLabs_logo.png
+.. image:: ../images/pychronlabslogo_v5.png
   :width: 33%
   :scale: 70%
 

@@ -291,6 +291,9 @@ class Paths(object):
         if root.startswith('_'):
             root = join(path.expanduser('~'), 'Pychron{}'.format(root))
 
+        if root.startswith('~'):
+            root = join(path.expanduser('~'), root[2:])
+
         if not path.isdir(root):
             mkdir(root)
 

@@ -14,8 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
+import sys
+
 from envisage.core_plugin import CorePlugin
 from pyface.message_dialog import warning
+
 # ============= standard library imports ========================
 import logging
 # ============= local library imports  ==========================
@@ -237,10 +240,7 @@ def launch(klass, user):
         gTraceDisplay.add_text(tb)
         gTraceDisplay.edit_traits(kind='livemodal')
 
-        # finally:
-
-        # os._exit(0)
-
-        # return
+    finally:
+        sys.exit(0)
 
 # ============= EOF ====================================

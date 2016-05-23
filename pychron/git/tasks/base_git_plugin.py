@@ -31,7 +31,7 @@ class BaseGitPlugin(BaseTaskPlugin):
         tok = p.get('pychron.github.oauth_token')
         self.debug('user={}, pwd={}, token={}'.format(usr, pwd, tok))
         if not tok and not (usr and pwd):
-            self.information_dialog('Please set user name and password or token in preferences')
+            self.information_dialog('Please set user name and password or token in {} preferences'.format(self.name))
 
     def test_api(self):
         service = self.application.get_service(IGitHost)
