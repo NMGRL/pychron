@@ -60,13 +60,13 @@ def progress_loader(xs, func, threshold=50, progress=None,
     if n is None:
         n = len(xs)
 
-    n = n / step
+    n /= step
 
     if not progress and use_progress:
         progress = open_progress(n, busy=busy)
 
     def gen():
-        if n > threshold or progress:
+        if use_progress and (n > threshold or progress):
 
             for i, x in enumerate(xs):
                 if progress.canceled:
