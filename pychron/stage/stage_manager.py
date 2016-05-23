@@ -47,7 +47,7 @@ class BaseStageManager(Manager):
     move_thread = None
     temp_position = None
     temp_hole = None
-
+    status_text = Str
     # use_modified = Bool(True)  # set true to use modified affine calculation
 
     def goto_position(self, pos):

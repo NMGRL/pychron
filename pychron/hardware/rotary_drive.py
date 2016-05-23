@@ -21,6 +21,9 @@ from pychron.hardware.core.abstract_device import AbstractDevice
 
 
 class RotaryDrive(AbstractDevice):
+    use_hysteresis_correction = True
+    hysteresis_correction = 5  # in degrees
+
     def set_angle(self, theta):
         """
 
@@ -29,17 +32,19 @@ class RotaryDrive(AbstractDevice):
         """
         self.debug('set angle {}'.format(theta))
         if self._cdevice:
-            steps = self._angle_to_steps(theta)
 
-            # sign = self._calculate_direction(steps)
-            # velocity = self._cdevice.velocity
-            # self._cdevice.move_absolute(steps, velocity=sign*velocity)
-
-            self._cdevice.move_absolute(steps)
-
-    def _calculate_direction(self, pos):
-        cpos = self._cdevice.get_position()
-        return 1 if cpos - pos < 0 else -1
+            if self.use_hysteresis_correction:
+                if theta > 180:
+                    hc = self._angle_to_steps(self.hysteresis_correction)
+                    steps = self._angle_to_steps(theta - 360)
+                    self._cdevice.move_relative(steps + hc)
+                    velocity = self._cdevice.velocity
+                    self._cdevice.move_relative(-hc, velocity=velocity * self.hysteresis_velocity_scalar)
+                else:
+                    self._cdevice.move_relative(self._angle_to_steps(theta))
+            else:
+                steps = self._angle_to_steps(theta)
+                self._cdevice.move_absolute(steps)
 
     def _angle_to_steps(self, theta):
         return self._cdevice.steps_per_turn * theta / 360.

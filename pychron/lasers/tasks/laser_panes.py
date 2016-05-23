@@ -183,7 +183,8 @@ class StageControlPane(TraitsDockPane):
 
             cgrp.content.append(tc_grp)
 
-        v = View(VGroup(hgrp, pgrp, cgrp))
+        v = View(VGroup(hgrp, pgrp, cgrp),
+                 statusbar='stage_manager.status_text')
 
         return v
 

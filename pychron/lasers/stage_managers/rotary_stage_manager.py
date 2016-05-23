@@ -61,6 +61,7 @@ class BaseRotaryStageManager:
                     autocentered_position = True
 
             rotation = self._calculate_rotation(*pos)
+            self.status_text = 'Position={:0.3f},{:0.3f} Rotation={}'.format(pos[0], pos[1], rotation)
             self.rotary_drive.set_angle(rotation)
 
             npos = self._calculate_xy_position(*pos)
