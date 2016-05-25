@@ -51,7 +51,8 @@ from pychron.experiment.stats import StatsGroup
 from pychron.experiment.utilities.conditionals import test_queue_conditionals_name, SYSTEM, QUEUE, RUN, \
     CONDITIONAL_GROUP_TAGS
 from pychron.experiment.utilities.conditionals_results import reset_conditional_results
-from pychron.experiment.utilities.repository_identifier import retroactive_repository_identifiers
+from pychron.experiment.utilities.repository_identifier import retroactive_repository_identifiers, \
+    populate_repository_identifiers, get_curtag
 from pychron.experiment.utilities.identifier import convert_extract_device, is_special
 from pychron.extraction_line.ipyscript_runner import IPyScriptRunner
 from pychron.globals import globalv
@@ -1708,10 +1709,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         if self.use_dvc_persistence:
             # create dated references repos
-            now = datetime.now()
 
-            suffix = 1 if now.month > 6 else 0
-            curtag = '{}{}'.format(now.strftime('%y'), suffix)
+            curtag = get_curtag()
 
             dvc = self.datahub.stores['dvc']
             ms = self.active_editor.queue.mass_spectrometer
@@ -1728,19 +1727,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 if not self.confirmation_dialog('Missing repository identifiers. Automatically populate?'):
                     return
 
-                for ai in no_repo:
-                    if not ai.repository_identifier:
-                        repo_id = 'laboratory'
-                        atype = ai.analysis_type
-                        if atype in ('air', 'blank_air'):
-                            repo_id = '{}_air{}'.format(ms, curtag)
-                        elif atype in ('cocktail', 'blank_cocktail'):
-                            repo_id = '{}_cocktail{}'.format(ms, curtag)
-                        elif atype in ('blank_unknown', 'blank_extractionline'):
-                            repo_id = '{}_blank{}'.format(ms, curtag)
-
-                        self.debug('setting {} to repo={} type={}'.format(ai.runid, repo_id, atype))
-                        ai.repository_identifier = repo_id
+                populate_repository_identifiers(no_repo, ms, curtag, debug=self.debug)
 
         if globalv.experiment_debug:
             self.debug('********************** NOT DOING PRE EXECUTE CHECK ')
