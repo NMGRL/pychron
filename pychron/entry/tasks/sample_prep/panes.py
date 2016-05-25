@@ -17,11 +17,12 @@
 # ============= enthought library imports =======================
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
+from traits.api import Int, Property
 from traitsui.api import View, UItem, Item, HGroup, VGroup, TabularEditor, EnumEditor, spring, Tabbed
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
 
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.envisage.icon_button_editor import icon_button_editor
 
 
@@ -31,12 +32,14 @@ class SamplesAdapter(TabularAdapter):
                ('Grainsize', 'grainsize'),
                # ('Crushed', 'crushed')
                ]
+    font = 'arial 10'
 
 
 class SimpleSampleAdapter(TabularAdapter):
     columns = [('Name', 'name'),
                ('Material', 'material'),
                ('Grainsize', 'grainsize')]
+    font = 'arial 10'
 
 
 class PrepStepAdapter(TabularAdapter):
@@ -47,9 +50,21 @@ class PrepStepAdapter(TabularAdapter):
                ('Frantz', 'frantz'),
                ('Acid', 'acid'),
                ('Heavy_liquid', 'heavy_liquid'),
-               ('Pick', 'pick'),
-               ]
+               ('Pick', 'pick')]
+    font = 'arial 10'
+    timestamp_width = Int(100)
+    crush_width = Int(75)
+    sieve_width = Int(75)
+    wash_width = Int(75)
+    frantz_width = Int(75)
+    acid_width = Int(75)
+    heavy_liquid_width = Int(75)
+    frantz_width = Int(125)
 
+    timestamp_text =Property
+    def _get_timestamp_text(self):
+        t = self.item.timestamp
+        return t.strftime('%Y-%d-%m %H:%M')
 
 class SamplePrepPane(TraitsTaskPane):
     def traits_view(self):

@@ -26,6 +26,8 @@ import socket
 import paramiko
 # ============= local library imports  ==========================
 from pychron.dvc.dvc_irradiationable import DVCAble
+from pychron.paths import paths
+from pychron.persistence_loggable import PersistenceMixin
 
 DEBUG = False
 
@@ -92,7 +94,7 @@ class PrepStepRecord(HasTraits):
         self.edit_traits(view=v)
 
 
-class SamplePrep(DVCAble):
+class SamplePrep(DVCAble, PersistenceMixin):
     session = Str
     worker = Str
     sessions = Property(depends_on='worker, refresh_sessions')
@@ -121,10 +123,18 @@ class SamplePrep(DVCAble):
     upload_image_button = Button
     selected_step = Instance(PrepStepRecord)
 
+    pattributes = ('worker', 'session', 'principal_investigator', 'project')
+
+    @property
+    def persistence_path(self):
+        return os.path.join(paths.hidden_dir, 'sample_prep')
+
     def activated(self):
 
         self._load_pis()
         self._load_workers()
+
+        self.load()
 
         if DEBUG:
             self.worker = self.workers[0]
@@ -135,7 +145,7 @@ class SamplePrep(DVCAble):
         self._load_session_samples()
 
     def prepare_destroy(self):
-        pass
+        self.dump()
 
     # private
     def _add_session(self, obj, worker):
