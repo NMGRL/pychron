@@ -1546,6 +1546,6 @@ class DVCDatabase(DatabaseAdapter):
             if use_distinct:
                 return [ni[0] for ni in names]
             else:
-                return [ni.name for ni in names]
+                return [ni.name for ni in names or []]
 
 # ============= EOF =============================================

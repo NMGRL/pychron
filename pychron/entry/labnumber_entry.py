@@ -393,7 +393,7 @@ class LabnumberEntry(DVCIrradiationable):
     def _save_to_db(self):
         db = self.dvc.db
 
-        if not self.dvc.meta_repo.smart_pull(quiet=False):
+        if not self.dvc.meta_repo.smart_pull():
             return
 
         with db.session_ctx():

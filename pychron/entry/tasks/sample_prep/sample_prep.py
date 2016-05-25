@@ -27,7 +27,7 @@ import paramiko
 # ============= local library imports  ==========================
 from pychron.dvc.dvc_irradiationable import DVCAble
 
-DEBUG = True
+DEBUG = False
 
 
 def get_sftp_client(host, user, password):
