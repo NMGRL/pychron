@@ -622,7 +622,7 @@ class DVC(Loggable):
         self.meta_commit('updated chronology for {}'.format(name))
 
     def meta_pull(self, **kw):
-        self.meta_repo.smart_pull(**kw)
+        return self.meta_repo.smart_pull(**kw)
 
     def meta_push(self):
         self.meta_repo.push()

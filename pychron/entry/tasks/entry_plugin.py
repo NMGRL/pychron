@@ -53,8 +53,13 @@ class EntryPlugin(BaseTaskPlugin):
                 ('pychron.sensitivity', 'Ctrl+Shift+\\', 'Open Sensistivity Window'), ]
 
     def _service_offers_default(self):
-        so1 = self.service_offer_factory(factory=MolecularWeightEditor,
-                                         protocol=MolecularWeightEditor)
+        def factory():
+            dvc = self.application.get_service('pychron.dvc.dvc.DVC')
+            e = MolecularWeightEditor(dvc=dvc)
+            return e
+
+        so1 = self.service_offer_factory(factory=factory,
+                                         protocol=MolecularWeightEditor,)
         so2 = self.service_offer_factory(factory=FluxMonitorEditor,
                                          protocol=FluxMonitorEditor)
         return [so1, so2]

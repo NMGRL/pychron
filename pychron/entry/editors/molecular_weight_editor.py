@@ -15,12 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Float, List, Dict
-from traitsui.api import View, Item, HGroup, EnumEditor
+from traits.api import HasTraits, Str, Float, List, Dict, Instance
+from traitsui.api import View, Item, HGroup
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.database.isotope_database_manager import IsotopeDatabaseManager
+from pychron.core.ui.combobox_editor import ComboboxEditor
 
 
 class MolecularWeight(HasTraits):
@@ -36,33 +36,30 @@ class MolecularWeight(HasTraits):
 
     def traits_view(self):
         v = View(HGroup(
-            Item('name', editor=EnumEditor(name='names')),
-            Item('name', show_label=False),
+            Item('name', editor=ComboboxEditor(name='names')),
             Item('mass')),
-                 width=500, title='Add New Molecular Weight',
-                 buttons=['OK', 'Cancel'],
-                 resizable=True)
+            width=500, title='Add New Molecular Weight',
+            buttons=['OK', 'Cancel'],
+            resizable=True)
         return v
 
 
-class MolecularWeightEditor(IsotopeDatabaseManager):
-    def add_molecular_weight(self):
-        db = self.db
-        with db.session_ctx():
-            wts = db.get_molecular_weights()
-            names = [wi.name for wi in wts]
-            weights = dict([(wi.name, wi.mass) for wi in wts])
+class MolecularWeightEditor(HasTraits):
+    dvc = Instance('pychron.dvc.dvc.DVC')
 
-        wt = MolecularWeight(names=names, weights=weights)
+    def add_molecular_weight(self):
+        dvc = self.dvc
+        if not dvc.meta_pull():
+            return
+
+        wts = dvc.get_molecular_weights()
+        names = wts.keys()
+
+        wt = MolecularWeight(names=names, weights=wts)
         info = wt.edit_traits(kind='livemodal')
         if info.result:
-            with db.session_ctx():
-                dbwt = db.get_molecular_weight(wt.name)
-                if dbwt is None:
-                    db.add_molecular_weight(wt.name, wt.mass)
-                else:
-                    dbwt.mass = wt.mass
-
+            wts[wt.name] = wt.mass
+            dvc.update_molecular_weights(wts, commit=True)
+            dvc.meta_push()
 
 # ============= EOF =============================================
-

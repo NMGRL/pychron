@@ -165,6 +165,7 @@ class IrradiationCanvasPane(TraitsDockPane):
 class IrradiationPane(TraitsDockPane):
     name = 'Irradiation'
     id = 'pychron.labnumber.irradiation'
+    closable = False
 
     def traits_view(self):
         irrad = HGroup(
