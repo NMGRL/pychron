@@ -15,18 +15,28 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.tasks.action.schema import SToolBar
+from pyface.tasks.action.task_action import TaskAction
 from pyface.tasks.task_layout import TaskLayout, PaneItem, VSplitter
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+
 from pychron.entry.tasks.sample_prep.panes import SamplePrepPane, SamplePrepFilterPane, SamplePrepSessionPane
 from pychron.entry.tasks.sample_prep.sample_prep import SamplePrep
 from pychron.envisage.tasks.base_task import BaseManagerTask
 
 
+class LocateSampleAction(TaskAction):
+    name = 'Locate Sample'
+    method = 'locate_sample'
+
+
 class SamplePrepTask(BaseManagerTask):
     name = 'Sample Prep'
     id = 'pychron.entry.sample.prep.task'
+
+    tool_bars = [SToolBar(LocateSampleAction())]
 
     def activated(self):
         self.manager.activated()
@@ -41,6 +51,10 @@ class SamplePrepTask(BaseManagerTask):
         panes = [SamplePrepFilterPane(model=self.manager),
                  SamplePrepSessionPane(model=self.manager)]
         return panes
+
+    def locate_sample(self):
+        self.debug('locate sample')
+        self.manager.locate_sample()
 
     def _manager_default(self):
         dvc = self.application.get_service('pychron.dvc.dvc.DVC')

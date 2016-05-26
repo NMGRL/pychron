@@ -1517,6 +1517,14 @@ class DVCDatabase(DatabaseAdapter):
             q = q.filter(SamplePrepSessionTbl.worker_name == worker)
             return [i[0] for i in self._query_all(q)]
 
+    def get_sample_prep_sessions(self, sample):
+        with self.session_ctx() as sess:
+            q = sess.query(SamplePrepSessionTbl)
+            q = q.join(SamplePrepStepTbl)
+            q = q.join(SampleTbl)
+            q = q.filter(SampleTbl.name == sample)
+            return self._query_all(q)
+
     def get_sample_prep_steps(self, worker, session, sample, project, material, grainsize):
         with self.session_ctx() as sess:
             q = sess.query(SamplePrepStepTbl)

@@ -26,6 +26,7 @@ import socket
 import paramiko
 # ============= local library imports  ==========================
 from pychron.dvc.dvc_irradiationable import DVCAble
+from pychron.entry.tasks.sample_prep.sample_locator import SampleLocator
 from pychron.paths import paths
 from pychron.persistence_loggable import PersistenceMixin
 
@@ -146,6 +147,14 @@ class SamplePrep(DVCAble, PersistenceMixin):
 
     def prepare_destroy(self):
         self.dump()
+
+    def locate_sample(self):
+        locator = SampleLocator(dvc=self.dvc)
+        info = locator.edit_traits()
+        if info.result:
+            if locator.session:
+                self.worker = locator.session.worker_name
+                self.session = locator.session.name
 
     # private
     def _add_session(self, obj, worker):
