@@ -460,7 +460,7 @@ class ExperimentEditorTask(EditorTask):
     def _generate_default_filename(self):
         name = self.active_editor.queue.load_name
         if name:
-            return 'Load {}.txt'.format(name)
+            return 'Load{}.txt'.format(name)
 
     def _publish_notification(self, run):
         if self.use_notifications:

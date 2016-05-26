@@ -29,9 +29,7 @@ from pychron.envisage.icon_button_editor import icon_button_editor
 class SamplesAdapter(TabularAdapter):
     columns = [('Name', 'name'),
                ('Material', 'material'),
-               ('Grainsize', 'grainsize'),
-               # ('Crushed', 'crushed')
-               ]
+               ('Grainsize', 'grainsize')]
     font = 'arial 10'
 
 
