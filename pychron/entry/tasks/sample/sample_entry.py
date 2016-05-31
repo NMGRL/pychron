@@ -27,6 +27,7 @@ from pychron.dvc.dvc_irradiationable import DVCAble
 from pychron.paths import paths
 
 PI_REGEX = re.compile(r'^[A-Z]{2}[a-z]+$')
+MATERIAL_REGEX = re.compile(r'^[A-Z]+[\w%/\+-_]+$')
 
 
 class PIStr(String):
@@ -38,7 +39,11 @@ class PIStr(String):
 
 
 class MaterialStr(String):
-    pass
+    def validate(self, obj, name, value):
+        if not MATERIAL_REGEX.match(value):
+            return self.error(obj, name, value)
+        else:
+            return value
 
 
 class ProjectStr(String):
@@ -239,29 +244,39 @@ class SampleEntry(DVCAble):
             return p
 
     def _get_project_spec(self):
-        pspec = self._get_principal_investigator_spec()
-        for p in self._projects:
-            if p.name == self.project and p.principal_investigator.name == pspec.name:
+        if self.project:
+            pspec = self._get_principal_investigator_spec()
+            for p in self._projects:
+                if p.name == self.project and p.principal_investigator.name == pspec.name:
+                    return p
+            else:
+                p = ProjectSpec(name=self.project, principal_investigator=pspec)
+                self._projects.append(p)
                 return p
-        else:
-            p = ProjectSpec(name=self.project, principal_investigator=pspec)
-            self._projects.append(p)
-            return p
 
     def _get_material_spec(self):
-        for p in self._materials:
-            if p.name == self.material:
-                return p
-        else:
-            m = MaterialSpec(name=self.material, grainsize=self.grainsize)
-            self._materials.append(m)
-            return m
+        if self.material:
+            for p in self._materials:
+                if p.name == self.material:
+                    return p
+            else:
+                m = MaterialSpec(name=self.material, grainsize=self.grainsize)
+                self._materials.append(m)
+                return m
 
     # handlers
     def _add_sample_button_fired(self):
         if self.sample:
+
             material_spec = self._get_material_spec()
+            if not material_spec:
+                self.information_dialog('Please enter a material for this sample')
+                return
+
             project_spec = self._get_project_spec()
+            if not project_spec:
+                self.information_dialog('Please enter a project for this sample')
+                return
 
             self._samples.append(SampleSpec(name=self.sample,
                                             project=project_spec,
@@ -281,6 +296,16 @@ class SampleEntry(DVCAble):
 
     def _add_material_button_fired(self):
         if self.material:
+            from pychron.entry.dvc_import.model import Mapper
+            mapper = Mapper()
+            nm = mapper.material(self.material)
+            if nm != self.material:
+                msg = 'Pychron suggests changing "{}" to "{}". \n\n' \
+                      'Would you like to continue?'.format(self.material, nm)
+                if not self.confirmation_dialog(msg):
+                    return
+                self.material = nm
+
             for m in self._materials:
                 if m.name == self.material and m.grainsize == self.grainsize:
                     break
