@@ -307,7 +307,12 @@ class _TableView(TableView):
         copy_object = [(ri, self._editor.value[ri].tocopy()) for ri in rows]
         # copy_object = [ri.row(), self._editor.value[ri.row()]) for ri in self.selectedIndexes()]
         mt = self._editor.factory.mime_type
-        pdata = dumps(copy_object)
+        try:
+            pdata = dumps(copy_object)
+        except BaseException, e:
+            print 'tabular editor copy failed'
+            self._editor.value[rows[0]].tocopy(verbose=True)
+            return
 
         qmd = PyMimeData()
         qmd.MIME_TYPE = mt
