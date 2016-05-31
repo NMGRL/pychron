@@ -19,7 +19,7 @@ from pyface.constant import OK
 from pyface.file_dialog import FileDialog
 from traits.api import HasTraits, Str, Bool, Property, Button, on_trait_change, List, \
     cached_property, Instance, Event, Date, Enum, Long
-from traitsui.api import View, UItem
+from traitsui.api import View, UItem, Item, EnumEditor
 # ============= standard library imports ========================
 import os
 import socket
@@ -120,11 +120,14 @@ class SamplePrep(DVCAble, PersistenceMixin):
     add_session_button = Button
     add_worker_button = Button
     add_step_button = Button
+    edit_session_button = Button
 
     upload_image_button = Button
     selected_step = Instance(PrepStepRecord)
 
     pattributes = ('worker', 'session', 'principal_investigator', 'project')
+    move_to_session_name = Str
+    move_to_sessions = List
 
     @property
     def persistence_path(self):
@@ -156,7 +159,31 @@ class SamplePrep(DVCAble, PersistenceMixin):
                 self.worker = locator.session.worker_name
                 self.session = locator.session.name
 
+    def move_to_session(self):
+        nsession = self._get_new_session()
+        if nsession:
+            s = self.active_sample
+            sd = {'name': s.name, 'material': s.material, 'project': s.project}
+
+            self.dvc.move_sample_to_session(self.session, sd, nsession, self.worker)
+            self.active_sample = SampleRecord()
+            self._load_session_samples()
+
     # private
+    def _get_new_session(self):
+
+        self.move_to_sessions = [s for s in self.sessions if s!=self.session]
+
+        v = View(Item('move_to_session_name',
+                      editor=EnumEditor(name='move_to_sessions')),
+                 title='Move to Session',
+                 buttons=['OK','Cancel'],
+                 resizable=True, kind='livemodal')
+
+        info = self.edit_traits(v)
+        if info.result:
+            return self.move_to_session_name
+
     def _add_session(self, obj, worker):
         self.dvc.add_sample_prep_session(obj.name, worker, obj.comment)
 
@@ -247,6 +274,25 @@ class SamplePrep(DVCAble, PersistenceMixin):
                 dvc.add_sample_prep_step(sa, self.worker, self.session, added=True)
 
             self._load_session_samples()
+
+    def _edit_session_button_fired(self):
+        oname = self.session
+        from pychron.entry.tasks.sample_prep.adder import AddSession
+        s = AddSession(title='Edit Selected Session')
+        with self.dvc.session_ctx():
+            obj = self.dvc.get_sample_prep_session(self.session, self.worker)
+            s.name = obj.name
+            s.comment = obj.comment
+
+        info = s.edit_traits()
+        if info.result:
+            kw = {'comment': s.comment}
+            if s.name != oname:
+                kw['name'] = s.name
+
+            self.dvc.update_sample_prep_session(oname, self.worker, **kw)
+            self.refresh_sessions = True
+            self.session = s.name
 
     def _add_session_button_fired(self):
         from pychron.entry.tasks.sample_prep.adder import AddSession

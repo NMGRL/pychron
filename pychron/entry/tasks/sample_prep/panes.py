@@ -15,10 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.action.menu_manager import MenuManager
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traits.api import Int, Property
-from traitsui.api import View, UItem, Item, HGroup, VGroup, TabularEditor, EnumEditor, spring, Tabbed
+from traitsui.api import View, UItem, Item, HGroup, VGroup, TabularEditor, EnumEditor, spring, Tabbed, Handler
+from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 
 # ============= standard library imports ========================
@@ -31,6 +33,12 @@ class SamplesAdapter(TabularAdapter):
                ('Material', 'material'),
                ('Grainsize', 'grainsize')]
     font = 'arial 10'
+
+    def get_menu(self, obj, trait, row, column):
+        # item = getattr(obj, trait)[row]
+        actions = [Action(name='Move', action='move_to_session')]
+        menu = MenuManager(*actions)
+        return menu
 
 
 class SimpleSampleAdapter(TabularAdapter):
@@ -59,10 +67,17 @@ class PrepStepAdapter(TabularAdapter):
     heavy_liquid_width = Int(75)
     frantz_width = Int(125)
 
-    timestamp_text =Property
+    timestamp_text = Property
+
     def _get_timestamp_text(self):
         t = self.item.timestamp
         return t.strftime('%Y-%d-%m %H:%M')
+
+
+class SamplePrepHandler(Handler):
+    def move_to_session(self, info, obj):
+        obj.move_to_session()
+
 
 class SamplePrepPane(TraitsTaskPane):
     def traits_view(self):
@@ -111,7 +126,8 @@ class SamplePrepPane(TraitsTaskPane):
         v = View(VGroup(UItem('session_samples', editor=TabularEditor(adapter=SamplesAdapter(),
                                                                       editable=False,
                                                                       selected='active_sample')),
-                        agrp))
+                        agrp),
+                 handler=SamplePrepHandler())
         return v
 
 
@@ -127,6 +143,9 @@ class SamplePrepSessionPane(TraitsDockPane):
         sgrp = HGroup(UItem('session', editor=EnumEditor(name='sessions')),
                       icon_button_editor('add_session_button', 'add',
                                          tooltip='Add a new session for this worker'),
+                      icon_button_editor('edit_session_button', 'edit',
+                                         enabled_when='session',
+                                         tooltip='Edit session'),
                       enabled_when='worker',
                       show_border=True, label='Session')
         v = View(VGroup(wgrp, sgrp))

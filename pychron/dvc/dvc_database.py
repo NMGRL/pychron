@@ -1465,6 +1465,35 @@ class DVCDatabase(DatabaseAdapter):
                 self._add_item(obj)
                 return True
 
+    def update_sample_prep_session(self, name, worker, **kw):
+        with self.session_ctx():
+            s = self.get_sample_prep_session(name, worker)
+            if s:
+                for k, v in kw.iteritems():
+                    setattr(s, k, v)
+
+    def move_sample_to_session(self, current, sample, session, worker):
+        with self.session_ctx() as sess:
+            session = self.get_sample_prep_session(session, worker)
+            q = sess.query(SamplePrepStepTbl)
+            q = q.join(SamplePrepSessionTbl)
+            q = q.join(SampleTbl)
+
+            q = q.filter(SamplePrepSessionTbl.name == current)
+            q = q.filter(SamplePrepSessionTbl.worker_name == worker)
+            q = q.filter(SampleTbl.name == sample['name'])
+            q = q.filter(MaterialTbl.name == sample['material'])
+            q = q.filter(ProjectTbl.name == sample['project'])
+            ss = self._query_all(q)
+            for si in ss:
+                si.sessionID = session.id
+
+
+
+                # for s in samples:
+                #     sample = self.get_sample()
+                #
+
     def add_sample_prep_session(self, name, worker, comment):
         with self.session_ctx():
             s = self.get_sample_prep_session(name, worker)
