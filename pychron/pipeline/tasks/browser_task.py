@@ -156,6 +156,10 @@ class BrowserTask(BaseBrowserTask):
         if recaller is None:
             return
 
+        if not recaller.connect():
+            self.warning_dialog('Could not connect to MassSpec database. {}'.format(recaller.db.datasource_url))
+            return
+
         active_editor = self.active_editor
         left = active_editor.analysis
 

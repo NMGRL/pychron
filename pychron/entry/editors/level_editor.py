@@ -304,6 +304,7 @@ class LevelEditor(Loggable):
 
     def _save_level(self):
         prname = self.new_production_name.replace(' ', '_')
+        db = self.db
         # add to database
         with db.session_ctx():
             db.add_irradiation_level(self.name, self.irradiation,
@@ -360,8 +361,8 @@ if __name__ == '__main__':
     logging_setup('le')
     from pychron.dvc.dvc_database import DVCDatabase
 
-    db = DVCDatabase(kind='sqlite', path='/Users/ross/Programming/test3.sqlite')
-    db.connect()
+    dbt = DVCDatabase(kind='sqlite', path='/Users/ross/Programming/test3.sqlite')
+    dbt.connect()
     # from pychron.dvc.meta_repo import MetaRepo
 
     mr = MetaRepo()
@@ -373,7 +374,7 @@ if __name__ == '__main__':
         traits_view = View('test')
 
         def _test_fired(self):
-            e = LevelEditor(db=db,
+            e = LevelEditor(db=dbt,
                             meta_repo=mr,
                             irradiation='NM-274',
                             name='H')

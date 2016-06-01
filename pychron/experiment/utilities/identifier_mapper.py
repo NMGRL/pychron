@@ -51,7 +51,7 @@ class IdentifierMapper(Loggable):
 
     def _get_mapping(self):
         p = paths.identifier_mapping_file
-        if not os.path.isifile(p):
+        if not os.path.isfile(p):
             self.warning('Using the default identifier mapping because {} does not exist'.format(p))
             return default_mapping()
         else:

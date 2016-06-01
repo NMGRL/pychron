@@ -742,7 +742,7 @@ THIS CHANGE CANNOT BE UNDONE')
         new_irrad = irrad.add()
         if new_irrad:
             self.irradiation = new_irrad
-            # self.updated = 'Irradiation'
+            self.updated = True
 
     def _edit_irradiation_button_fired(self):
         irrad = self._get_irradiation_editor(name=self.irradiation)
@@ -766,11 +766,10 @@ THIS CHANGE CANNOT BE UNDONE')
 
         new_level = editor.edit()
         if new_level:
+            self.updated = True
             self.level = new_level
 
         self._update_level()
-        # self.updated = 'Level'
-        # self._level_changed(self.level)
 
     def _add_level_button_fired(self):
         editor = self._get_level_editor(irradiation=self.irradiation)
