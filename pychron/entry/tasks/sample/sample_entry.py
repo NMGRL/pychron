@@ -258,7 +258,8 @@ class SampleEntry(DVCAble):
         if self.material:
             for p in self._materials:
                 if p.name == self.material:
-                    return p
+                    if not self.grainsize or self.grainsize == p.grainsize:
+                        return p
             else:
                 m = MaterialSpec(name=self.material, grainsize=self.grainsize)
                 self._materials.append(m)

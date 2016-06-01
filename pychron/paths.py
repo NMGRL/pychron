@@ -195,6 +195,7 @@ class Paths(object):
     template_manifest_file = None
     pipeline_template_file = None
     identifiers_file = None
+    identifier_mapping_file = None
     backup_recovery_file = None
     last_experiment = None
     mftable = None
@@ -427,6 +428,7 @@ class Paths(object):
         self.template_manifest_file = join(self.pipeline_dir, 'pipeline_manifest.p')
         self.pipeline_template_file = join(self.pipeline_dir, 'template_order.yaml')
         self.identifiers_file = join(self.hidden_dir, 'identifiers.yaml')
+        self.identifier_mapping_file = join(self.setup_dir, 'identifier_mapping.yaml')
         self.backup_recovery_file = join(self.hidden_dir, 'backup_recovery')
         self.last_experiment = join(self.hidden_dir, 'last_experiment')
         self.mftable = join(self.spectrometer_dir, 'mftable.csv')
