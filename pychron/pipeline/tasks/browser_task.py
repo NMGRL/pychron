@@ -148,12 +148,13 @@ class BrowserTask(BaseBrowserTask):
 
     # toolbar actions
     def diff_analysis(self):
-        self.debug('Edit analysis data')
+        self.debug('diff analysis')
         if not self.has_active_editor():
             return
 
         recaller = self.application.get_service('pychron.mass_spec.mass_spec_recaller.MassSpecRecaller')
         if recaller is None:
+            self.warning_dialog('Could not access MassSpec database')
             return
 
         if not recaller.connect():

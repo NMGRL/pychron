@@ -38,7 +38,7 @@ DBVERSION = float(os.environ.get('MassSpecDBVersion', 16.3))
 class AnalysesChangeableItemsTable(Base):
     __tablename__ = 'AnalysesChangeableItemsTable'
     ChangeableItemsID = Column(Integer, primary_key=True)
-    AnalysisID = Column(Integer, ForeignKey('AnalysesTable.AnalysisID'))
+    # AnalysisID = Column(Integer, ForeignKey('AnalysesTable.AnalysisID'))
     DataReductionSessionID = Column(Integer, ForeignKey('DataReductionSessionTable.DataReductionSessionID'))
     History = Column(String, default='')
     StatusReason = Column(Integer, default=0)
@@ -46,6 +46,7 @@ class AnalysesChangeableItemsTable(Base):
     SignalNormalizationFactor = Column(Float, default=1)
     PreferencesSetID = Column(Integer, ForeignKey('PreferencesTable.PreferencesSetID'))
     Comment = Column(String(255))
+    analyses = relationship('AnalysesTable', backref='changeable')
 
 
 class AnalysisPositionTable(Base):
@@ -92,7 +93,7 @@ class AnalysesTable(Base):
         RedundantUserID = Column(Integer, ForeignKey('UserTable.UserID'))
 
     SampleLoadingID = Column(Integer, ForeignKey('SampleLoadingTable.SampleLoadingID'))
-    ChangeableItemsID = Column(Integer, default=0)
+    ChangeableItemsID = Column(Integer, ForeignKey('AnalysesChangeableItemsTable.ChangeableItemsID'), default=0)
 
     LastSaved = Column(DateTime)
     RunDateTime = Column(DateTime)
@@ -111,9 +112,9 @@ class AnalysesTable(Base):
     isotopes = relation('IsotopeTable', backref='AnalysesTable')
     araranalyses = relation('ArArAnalysisTable')
     #    araranalyses = relation('ArArAnalysisTable', backref='AnalysesTable')
-    changeable = relationship('AnalysesChangeableItemsTable',
-                              backref='AnalysesTable',
-                              uselist=False)
+    # changeable = relationship('AnalysesChangeableItemsTable',
+    #                           backref='AnalysesTable',
+    #                           uselist=False)
     positions = relationship('AnalysisPositionTable')
     runscript = relationship('RunScriptTable', uselist=False)
 

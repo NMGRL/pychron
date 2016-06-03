@@ -42,7 +42,7 @@ class ValueTabularAdapter(TabularAdapter):
     diff_width = Int(100)
     rvalue_width = Int(100)
     # name_width = Int(100)
-    name_width = Int(60)
+    name_width = Int(120)
 
     # name_text = Property
     lvalue_text = Property
@@ -185,18 +185,18 @@ class DiffEditor(BaseTraitsEditor):
 
     def _set_values(self, left, right, isotopes):
         vs = []
-        pfunc = lambda x: lambda n: '{} {}'.format(x, n)
+        pfunc = lambda x: lambda n: u'{} {}'.format(x, n)
 
         vs.append(Value(name='J',
                         lvalue=nominal_value(left.j),
                         rvalue=nominal_value(right.j)))
-        vs.append(Value(name='J {}'.format(PLUSMINUS_ONE_SIGMA),
+        vs.append(Value(name=u'J {}'.format(PLUSMINUS_ONE_SIGMA),
                         lvalue=std_dev(left.j),
                         rvalue=std_dev(right.j)))
         vs.append(Value(name='Age',
                         lvalue=left.age,
                         rvalue=right.age))
-        vs.append(Value(name='Age {}'.format(PLUSMINUS_ONE_SIGMA),
+        vs.append(Value(name=u'Age {}'.format(PLUSMINUS_ONE_SIGMA),
                         lvalue=left.age_err,
                         rvalue=right.age_err))
         # vs.append(Value(name=u'\u00b1 w/o JEr',

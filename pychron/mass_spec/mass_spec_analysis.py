@@ -37,11 +37,11 @@ class MassSpecAnalysis(Analysis):
                 self.rad40_percent = ufloat(arar.PctRad, arar.PctRadEr)
 
         prefs = obj.changeable.preferences_set
-        fo, fi, fs = None, None, None
+        fo, fi, fs = 0, 0, 0
         if prefs:
-            fo = prefs.DelOutliersAfterFit
+            fo = prefs.DelOutliersAfterFit == 'true'
             fi = prefs.NFilterIter
-            fs = prefs.OutlierSigmaFator
+            fs = prefs.OutlierSigmaFactor
 
         for dbiso in obj.isotopes:
             r = dbiso.results[-1]
