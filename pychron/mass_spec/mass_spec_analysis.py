@@ -36,6 +36,11 @@ class MassSpecAnalysis(Analysis):
                 self.age_err_wo_j = arar.ErrAgeWOErInJ
                 self.rad40_percent = ufloat(arar.PctRad, arar.PctRadEr)
 
+        prefs = obj.changeable.preferences_set
+        fo = prefs.DelOutliersAfterFit
+        fi = prefs.NFilterIter
+        fs = prefs.OutlierSigmaFator
+
         for dbiso in obj.isotopes:
             r = dbiso.results[-1]
             uv = r.Iso
@@ -55,6 +60,7 @@ class MassSpecAnalysis(Analysis):
             iso.ic_factor = ufloat(det.ICFactor, det.ICFactorEr)
 
             iso.fit = r.fit.Label.lower() if r.fit else ''
+            iso.set_filter_outliers_dict(filter_outliers=fo, iterations=fi, std_devs=fs)
 
             iso.baseline = Baseline(key, det.Label)
             iso.baseline.fit = 'average'

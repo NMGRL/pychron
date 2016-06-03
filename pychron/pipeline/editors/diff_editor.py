@@ -190,13 +190,13 @@ class DiffEditor(BaseTraitsEditor):
         vs.append(Value(name='J',
                         lvalue=nominal_value(left.j),
                         rvalue=nominal_value(right.j)))
-        vs.append(Value(name=PLUSMINUS_ONE_SIGMA,
+        vs.append(Value(name='J {}'.format(PLUSMINUS_ONE_SIGMA),
                         lvalue=std_dev(left.j),
                         rvalue=std_dev(right.j)))
         vs.append(Value(name='Age',
                         lvalue=left.age,
                         rvalue=right.age))
-        vs.append(Value(name=PLUSMINUS_ONE_SIGMA,
+        vs.append(Value(name='Age {}'.format(PLUSMINUS_ONE_SIGMA),
                         lvalue=left.age_err,
                         rvalue=right.age_err))
         # vs.append(Value(name=u'\u00b1 w/o JEr',
@@ -214,9 +214,11 @@ class DiffEditor(BaseTraitsEditor):
             vs.append(Value(name=a,
                             lvalue=nominal_value(iso.get_intensity()),
                             rvalue=riso.value))
-            vs.append(Value(name=PLUSMINUS_ONE_SIGMA, lvalue=iso.error, rvalue=riso.error))
+            vs.append(Value(name=func(PLUSMINUS_ONE_SIGMA), lvalue=iso.error, rvalue=riso.error))
             vs.append(Value(name=func('N'), lvalue=iso.n, rvalue=riso.n))
-            vs.append(StrValue(name=func('Fit'), lvalue=iso.fit, rvalue=riso.fit))
+            vs.append(StrValue(name=func('Fit'), lvalue=iso.fit.lower(), rvalue=riso.fit.lower()))
+            vs.append(Value(name=func('Filter'), lvalue=iso.filter_outliers_dict.get('filter_outliers'),
+                            rvalue=riso.filter_outliers_dict.get('filter_outliers')))
             vs.append(Value(name=func('IC'), lvalue=nominal_value(iso.ic_factor),
                             rvalue=nominal_value(iso.ic_factor)))
 
@@ -225,7 +227,7 @@ class DiffEditor(BaseTraitsEditor):
             iso = left.isotopes[a]
             riso = right.isotopes[a]
             vs.append(Value(name=func('Bs'), lvalue=iso.baseline.value, rvalue=riso.baseline.value))
-            vs.append(Value(name=PLUSMINUS_ONE_SIGMA, lvalue=iso.baseline.error, rvalue=riso.baseline.error))
+            vs.append(Value(name=func(PLUSMINUS_ONE_SIGMA), lvalue=iso.baseline.error, rvalue=riso.baseline.error))
             vs.append(Value(name=func('Nbs'), lvalue=iso.baseline.n, rvalue=riso.baseline.n))
             self.right_baselines[a] = iso.baseline
 
@@ -234,7 +236,7 @@ class DiffEditor(BaseTraitsEditor):
             iso = left.isotopes[a]
             riso = right.isotopes[a]
             vs.append(Value(name=func('Bl'), lvalue=iso.blank.value, rvalue=riso.blank.value))
-            vs.append(Value(name=PLUSMINUS_ONE_SIGMA, lvalue=iso.blank.error, rvalue=riso.blank.error))
+            vs.append(Value(name=func(PLUSMINUS_ONE_SIGMA), lvalue=iso.blank.error, rvalue=riso.blank.error))
 
         rpr = right.production_ratios
         for k, v in left.production_ratios.iteritems():

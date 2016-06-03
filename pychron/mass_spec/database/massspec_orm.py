@@ -18,10 +18,11 @@
 # =============enthought library imports=======================
 
 # =============standard library imports ========================
+
 import os
 
 from sqlalchemy import Column, Integer, Float, String, \
-    ForeignKey, DateTime, Date, BLOB
+    ForeignKey, DateTime, Date, BLOB, Enum
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relation, relationship
 from sqlalchemy.sql.expression import func
@@ -392,7 +393,10 @@ class PeakTimeTable(Base):
 class PreferencesTable(Base):
     __tablename__ = 'PreferencesTable'
     PreferencesSetID = Column(Integer, primary_key=True)
-    changeable_items = relationship('AnalysesChangeableItemsTable')
+    DelOutliersAfterFit = Column(Enum)
+    NFilterIter = Column(Integer)
+    OutlierSigmaFactor = Column(Float)
+    changeable_items = relationship('AnalysesChangeableItemsTable', backref='preferences_set')
 
 
 class ProjectTable(Base):
