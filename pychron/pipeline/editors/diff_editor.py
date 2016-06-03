@@ -235,7 +235,7 @@ class DiffEditor(BaseTraitsEditor):
             func = pfunc(a)
             iso = left.isotopes[a]
             riso = right.isotopes[a]
-            vs.append(Value(name=func('Bl'), lvalue=iso.blank.value, rvalue=riso.blank.value))
+            vs.append(Value(name=func('Blank'), lvalue=iso.blank.value, rvalue=riso.blank.value))
             vs.append(Value(name=func(PLUSMINUS_ONE_SIGMA), lvalue=iso.blank.error, rvalue=riso.blank.error))
 
         rpr = right.production_ratios
