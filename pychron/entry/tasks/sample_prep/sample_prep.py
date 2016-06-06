@@ -54,6 +54,11 @@ class SampleRecord(HasTraits):
     grainsize = Str
     steps = List
 
+    def has_step(self, step):
+        for si in self.steps:
+            if getattr(si, step):
+                return True
+
 
 class PrepStepRecord(HasTraits):
     id = Long
@@ -129,6 +134,15 @@ class SamplePrep(DVCAble, PersistenceMixin):
     move_to_session_name = Str
     move_to_sessions = List
 
+    fcrush = Bool
+    fsieve = Bool
+    fwash = Bool
+    facid = Bool
+    ffrantz = Bool
+    fheavy_liquid = Bool
+    fpick = Bool
+    fstatus = Enum('', 'Good', 'Bad', 'Use For Irradiation')
+
     @property
     def persistence_path(self):
         return os.path.join(paths.hidden_dir, 'sample_prep')
@@ -172,12 +186,12 @@ class SamplePrep(DVCAble, PersistenceMixin):
     # private
     def _get_new_session(self):
 
-        self.move_to_sessions = [s for s in self.sessions if s!=self.session]
+        self.move_to_sessions = [s for s in self.sessions if s != self.session]
 
         v = View(Item('move_to_session_name',
                       editor=EnumEditor(name='move_to_sessions')),
                  title='Move to Session',
-                 buttons=['OK','Cancel'],
+                 buttons=['OK', 'Cancel'],
                  resizable=True, kind='livemodal')
 
         info = self.edit_traits(v)
@@ -199,6 +213,7 @@ class SamplePrep(DVCAble, PersistenceMixin):
             with self.dvc.session_ctx():
                 ss = self.dvc.get_sample_prep_samples(self.worker, self.session)
                 self.session_samples = [self._sample_record_factory(i) for i in ss]
+                self.osession_samples = self.session_samples
 
     def _load_workers(self):
         self.workers = self.dvc.get_sample_prep_worker_names()
@@ -252,6 +267,15 @@ class SamplePrep(DVCAble, PersistenceMixin):
     #     return ims
 
     # handlers
+    @on_trait_change('fcrush, fsieve, fwash, facid, ffrantz, fheavy_liquid, fpick, fstatus')
+    def _handle_filter(self):
+        def test(si):
+            r = [si.has_step(f) for f in ('crush', 'sieve', 'wash', 'acid', 'heavy_liquid', 'pick', 'status')
+                 if getattr(self, 'f{}'.format(f))]
+            return all(r)
+
+        self.session_samples = [s for s in self.osession_samples if test(s)]
+
     def _active_sample_changed(self, new):
         if new:
             self._load_steps_for_sample(new)

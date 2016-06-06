@@ -33,6 +33,7 @@ class SamplesAdapter(TabularAdapter):
                ('Material', 'material'),
                ('Grainsize', 'grainsize')]
     font = 'arial 10'
+    odd_bg_color = '#d6f5f5'
 
     def get_menu(self, obj, trait, row, column):
         # item = getattr(obj, trait)[row]
@@ -46,6 +47,7 @@ class SimpleSampleAdapter(TabularAdapter):
                ('Material', 'material'),
                ('Grainsize', 'grainsize')]
     font = 'arial 10'
+    odd_bg_color = '#d6f5f5'
 
 
 class PrepStepAdapter(TabularAdapter):
@@ -58,6 +60,7 @@ class PrepStepAdapter(TabularAdapter):
                ('Heavy_liquid', 'heavy_liquid'),
                ('Pick', 'pick')]
     font = 'arial 10'
+    odd_bg_color = '#f5f5d6'
     timestamp_width = Int(100)
     crush_width = Int(75)
     sieve_width = Int(75)
@@ -123,7 +126,22 @@ class SamplePrepPane(TraitsTaskPane):
                       Tabbed(hgrp, ngrp),
                       enabled_when='object.active_sample.name')
 
-        v = View(VGroup(UItem('session_samples', editor=TabularEditor(adapter=SamplesAdapter(),
+        fgrp = HGroup(Item('fcrush', label='Crush'),
+                      spring,
+                      Item('fsieve', label='Sieve'),
+                      spring,
+                      Item('fwash', label='Wash'),
+                      spring,
+                      Item('facid', label='Acid', ),
+                      spring,
+                      Item('fheavy_liquid', label='Heavy Liquid', ),
+                      spring,
+                      Item('fpick', label='Pick'),
+                      spring,
+                      Item('fstatus', label='Status'))
+
+        v = View(VGroup(fgrp,
+                        UItem('session_samples', editor=TabularEditor(adapter=SamplesAdapter(),
                                                                       editable=False,
                                                                       selected='active_sample')),
                         agrp),
@@ -143,7 +161,7 @@ class SamplePrepSessionPane(TraitsDockPane):
         sgrp = HGroup(UItem('session', editor=EnumEditor(name='sessions')),
                       icon_button_editor('add_session_button', 'add',
                                          tooltip='Add a new session for this worker'),
-                      icon_button_editor('edit_session_button', 'edit',
+                      icon_button_editor('edit_session_button', 'application-form-edit',
                                          enabled_when='session',
                                          tooltip='Edit session'),
                       enabled_when='worker',
