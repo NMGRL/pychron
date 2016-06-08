@@ -494,17 +494,19 @@ class DVC(Loggable):
         globalv.active_analyses = records
         # load repositories
         exps = {r.repository_identifier for r in records}
-        if self.pulled_repositories:
-            exps = exps - self.pulled_repositories
+        # if self.pulled_repositories:
+        #     exps = exps - self.pulled_repositories
+        #
+        #     self.pulled_repositories.union(exps)
+        # else:
+        #     self.pulled_repositories = exps
 
-            self.pulled_repositories.union(exps)
-        else:
-            self.pulled_repositories = exps
+        for ei in exps:
+            self.sync_repo(ei)
 
         st = time.time()
 
         make_record = self._make_record
-        meta_repo = self.meta_repo
 
         def func(*args):
             return make_record(calculate_f_only=calculate_f_only, *args)
@@ -555,11 +557,13 @@ class DVC(Loggable):
         """
         root = os.path.join(paths.repository_dataset_dir, name)
         exists = os.path.isdir(os.path.join(root, '.git'))
+        self.debug('sync repository {}. exists={}'.format(name, exists))
 
         if exists:
             repo = self._get_repository(name)
             repo.pull(use_progress=use_progress)
         else:
+            self.debug('getting repository from remote')
             names = self.remote_repositories()
             if name in names:
                 service = self.application.get_service(IGitHost)
@@ -918,6 +922,7 @@ class DVC(Loggable):
                 rid = record.record_id
                 if record.use_repository_suffix:
                     rid = '-'.join(rid.split('-')[:-1])
+
                 a = DVCAnalysis(rid, expid)
             except AnalysisNotAnvailableError:
                 self.info('Analysis {} not available. Trying to clone repository "{}"'.format(rid, expid))

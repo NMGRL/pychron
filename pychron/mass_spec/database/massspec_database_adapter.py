@@ -149,6 +149,9 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
     # ===============================================================================
     # getters
     # ===============================================================================
+    def get_baseline_changeable_item(self, bslnid):
+        return self._retrieve_item(BaselinesChangeableItemsTable, bslnid, 'BslnID')
+
     def get_material(self, name):
         return self._retrieve_item(MaterialTable, name, 'Material')
 

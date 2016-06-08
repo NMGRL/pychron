@@ -69,22 +69,31 @@ class DVCPersistNode(PersistNode):
     commit_message = Str
     commit_tag = Str
     modifier = Str
+
     # def __init__(self, *args, **kwargs):
     #     super(DVCPersistNode, self).__init__(*args, **kwargs)
 
     def _persist(self, state, msg):
-        modp = self.dvc.update_analyses(state.unknowns,
-                                        self.modifier,
-                                        '<{}> {}'.format(self.commit_tag, msg))
+        mods = self.modifier
+        if not isinstance(mods, tuple):
+            mods = (self.modifier,)
+
+        modp = []
+        for mi in mods:
+            modpi = self.dvc.update_analyses(state.unknowns,
+                                             mi, '<{}> {}'.format(self.commit_tag, msg))
+            modp.append(modpi)
+
         if modp:
             state.modified = True
-            state.modified_projects = state.modified_projects.union(modp)
+            for m in modp:
+                state.modified_projects = state.modified_projects.union(m)
 
 
 class IsotopeEvolutionPersistNode(DVCPersistNode):
     name = 'Save Iso Evo'
     commit_tag = 'ISOEVO'
-    modifier = 'intercepts'
+    modifier = ('intercepts', 'baselines')
 
     def run(self, state):
         if not state.saveable_keys:

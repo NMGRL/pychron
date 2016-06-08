@@ -36,8 +36,6 @@ class MassSpecRecaller(Loggable):
     def find_analysis(self, labnumber, aliquot, step):
         db = self.db
         with db.session_ctx():
-            # if 1:
-            #     labnumber, aliquot, step = '4375', 40, ''
 
             dbrec = db.get_analysis(labnumber, aliquot, step)
             if dbrec:
@@ -50,6 +48,10 @@ class MassSpecRecaller(Loggable):
                 dbirrad = db.get_irradiation_level(n, l)
 
                 rec.sync_irradiation(dbirrad)
+                for iso in dbrec.isotopes:
+                    det = iso.detector
+                    c = db.get_baseline_changeable_item(iso.baseline.BslnID)
+                    rec.sync_baseline(det.Label, c.InfoBlob)
 
                 return rec
 

@@ -17,12 +17,29 @@
 # ============= enthought library imports =======================
 
 # ============= standard library imports ========================
-# ============= local library imports  ==========================
+import StringIO
+import struct
+
 from uncertainties import ufloat
+# ============= local library imports  ==========================
 
 from pychron.processing.analyses.analysis import Analysis
 from pychron.processing.isotope import Isotope, Baseline
 from pychron.pychron_constants import IRRADIATION_KEYS
+
+
+class Blob:
+    def __init__(self, v):
+        self._buf = StringIO.StringIO(v)
+
+    def short(self):
+        return struct.unpack('>h', self._buf.read(2))[0]
+
+    def single(self):
+        return struct.unpack('>f', self._buf.read(4))[0]
+
+    def double(self):
+        return struct.unpack('>d', self._buf.read(8))[0]
 
 
 class MassSpecAnalysis(Analysis):
@@ -69,6 +86,10 @@ class MassSpecAnalysis(Analysis):
             iso.baseline.set_filter_outliers_dict()
             iso.baseline.n = dbiso.baseline.NumCnts
 
+            bsv = 0
+            bev = 0
+            iso.baseline.set_uvalue((bsv, bev))
+
             iso.blank.set_uvalue((bv, be))
             self.isotopes[key] = iso
 
@@ -81,5 +102,32 @@ class MassSpecAnalysis(Analysis):
 
         for k, _ in IRRADIATION_KEYS:
             self.interference_corrections[k] = getattr(production, k.capitalize())
+
+    def sync_baselines(self, key, infoblob):
+        v, e = self._extract_average_baseline(infoblob)
+        for iso in self.isotopes.itervalues():
+            if iso.detector == key:
+                iso.baseline.set_uvalue((v, e))
+
+    # private
+    def _extract_average_baseline(self, blob):
+        mb = Blob(blob)
+        n_r_pts = mb.short()
+        n_pos = mb.short()
+        ps = [mb.single() for i in xrange(n_pos)]
+
+        n_seg = mb.short()
+        seg_end = []
+        params = []
+        seg_err = []
+        for i in xrange(n_seg):
+            seg_end.append(mb.single())
+            params.append([mb.double() for i in xrange(4)])
+            seg_err.append(mb.single())
+
+        v = params[0][-1]
+        e = seg_err[0]
+
+        return v, e
 
 # ============= EOF =============================================
