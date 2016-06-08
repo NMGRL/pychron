@@ -182,6 +182,7 @@ class IsotopicMeasurement(BaseMeasurement):
     use_static = False
     user_defined_value = False
     user_defined_error = False
+    use_stored_value = False
 
     _oerror = None
     _ovalue = None
@@ -332,7 +333,7 @@ class IsotopicMeasurement(BaseMeasurement):
         # elif self.user_defined_value:
         #     return self._value
 
-        if not self.user_defined_value and self.xs.shape[0] > 1:
+        if not self.use_stored_value and not self.user_defined_value and self.xs.shape[0] > 1:
             v = self.regressor.predict(0)
             return v
         else:
@@ -345,7 +346,7 @@ class IsotopicMeasurement(BaseMeasurement):
         # elif self.user_defined_error:
         #     return self._error
 
-        if not self.user_defined_value and self.xs.shape[0] > 1:
+        if not self.use_stored_value and not self.user_defined_value and self.xs.shape[0] > 1:
             v = self.regressor.predict_error(0)
             return v
         else:

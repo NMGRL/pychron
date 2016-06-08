@@ -55,6 +55,20 @@ class IsotopeGroup(HasTraits):
     def _log(self, func, msg):
         func('{} - {}'.format(self.name, msg))
 
+    def set_stored_value_states(self):
+        self.save_stored_value_state()
+        for i in self.iter_isotopes():
+            i.use_stored_value = True
+
+    def revert_use_stored_values(self):
+        if self._sv:
+            for i,v in zip(self.iter_isotopes(), self._sv):
+                i.use_stored_value = v
+
+    _sv = None
+    def save_stored_value_state(self):
+        self._sv = [i.use_stored_value for i in self.iter_isotopes()]
+
     def iter_isotopes(self):
         return (self.isotopes[k] for k in self.isotope_keys)
 

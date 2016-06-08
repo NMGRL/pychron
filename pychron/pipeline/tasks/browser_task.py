@@ -166,10 +166,12 @@ class BrowserTask(BaseBrowserTask):
 
         from pychron.pipeline.editors.diff_editor import DiffEditor
         editor = DiffEditor(recaller=recaller)
+        left.set_stored_value_states(True, save=True)
         left.load_raw_data()
         if editor.setup(left):
             editor.set_diff(left)
             self._open_editor(editor)
+        left.revert_use_stored_value()
 
     def create_dock_panes(self):
         return [BrowserPane(model=self.browser_model)]
