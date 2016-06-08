@@ -171,7 +171,7 @@ class BrowserTask(BaseBrowserTask):
         if editor.setup(left):
             editor.set_diff(left)
             self._open_editor(editor)
-        left.revert_use_stored_value()
+        left.revert_use_stored_values()
 
     def create_dock_panes(self):
         return [BrowserPane(model=self.browser_model)]
