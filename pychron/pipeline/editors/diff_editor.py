@@ -211,7 +211,7 @@ class DiffEditor(BaseTraitsEditor):
             riso = right.isotopes[a]
             func = pfunc(a)
 
-            i = iso.get_intensity()
+            i = iso.uvalue
             vs.append(Value(name=a,
                             lvalue=nominal_value(i),
                             rvalue=riso.value))
