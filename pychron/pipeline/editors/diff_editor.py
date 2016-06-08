@@ -211,10 +211,12 @@ class DiffEditor(BaseTraitsEditor):
             riso = right.isotopes[a]
             func = pfunc(a)
 
+            i = iso.get_intensity()
             vs.append(Value(name=a,
-                            lvalue=nominal_value(iso.get_intensity()),
+                            lvalue=nominal_value(i),
                             rvalue=riso.value))
-            vs.append(Value(name=func(PLUSMINUS_ONE_SIGMA), lvalue=iso.error, rvalue=riso.error))
+            vs.append(Value(name=func(PLUSMINUS_ONE_SIGMA), lvalue=std_dev(i), rvalue=riso.error))
+
             vs.append(Value(name=func('N'), lvalue=iso.n, rvalue=riso.n))
             vs.append(StrValue(name=func('Fit'), lvalue=iso.fit.lower(), rvalue=riso.fit.lower()))
             vs.append(Value(name=func('Filter'), lvalue=iso.filter_outliers_dict.get('filter_outliers'),
