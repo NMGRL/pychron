@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Float, Any, Button, Bool, List
+from traits.api import HasTraits, Float, Any, Button, Bool, List, Color
 from traitsui.api import View, Item, spring, ButtonEditor, HGroup, \
     VGroup, UItem
 # ============= standard library imports ========================
@@ -55,6 +55,9 @@ class RiseRate(SpectrometerTask):
     clear_results_button = Button('Clear Results')
     calculated = Bool
 
+    end_color = Color('red')
+    start_color = Color('black')
+
     def _clear_results_button_fired(self):
         self.results = []
 
@@ -71,10 +74,7 @@ class RiseRate(SpectrometerTask):
         self._starttime = self.graph.get_data()[-1]
         self._start_intensity = self._get_intensity()
         #        print self._starttime
-        self.graph.add_vertical_rule(self._starttime,
-                                     #                                     color='black'
-                                     #                                     color=self.detector.color.Get()
-                                     )
+        self.graph.add_vertical_rule(self._starttime, color=self._start_color)
         self.graph.redraw()
 
     def _calculate_rise_rate(self):
@@ -87,7 +87,7 @@ class RiseRate(SpectrometerTask):
         result = Result(cnt=len(self.results) + 1)
         rrendpoints, rrfit, ti, run = result.calculate(xs, ys, rise, self._starttime)
 
-        self.graph.add_vertical_rule(ti)
+        self.graph.add_vertical_rule(ti, color=self._end_color)
         self.graph.redraw()
         self.calculated = True
         self.info(
