@@ -72,7 +72,7 @@ class MassSpecAnalysis(Analysis):
             n = dbiso.NumCnts
             # iso = Isotope(name=key, value=uv, error=ee, n=n)
             det = dbiso.detector
-            iso = Isotope(key, det.Label)
+            iso = Isotope(key, det.detector_type.Label)
             iso.set_uvalue((uv, ee))
             iso.n = n
 
@@ -81,7 +81,7 @@ class MassSpecAnalysis(Analysis):
             iso.fit = r.fit.Label.lower() if r.fit else ''
             iso.set_filter_outliers_dict(filter_outliers=fo, iterations=fi, std_devs=fs)
 
-            iso.baseline = Baseline(key, det.Label)
+            iso.baseline = Baseline(key, det.detector_type.Label)
             iso.baseline.fit = 'average'
             iso.baseline.set_filter_outliers_dict()
             iso.baseline.n = dbiso.baseline.NumCnts
@@ -104,8 +104,10 @@ class MassSpecAnalysis(Analysis):
             self.interference_corrections[k] = getattr(production, k.capitalize())
 
     def sync_baselines(self, key, infoblob):
+        print key
         v, e = self._extract_average_baseline(infoblob)
         for iso in self.isotopes.itervalues():
+            print iso.detector, key
             if iso.detector == key:
                 iso.baseline.set_uvalue((v, e))
 
@@ -125,7 +127,9 @@ class MassSpecAnalysis(Analysis):
             params.append([mb.double() for i in xrange(4)])
             seg_err.append(mb.single())
 
-        v = params[0][-1]
+        print params
+        print seg_err
+        v = params[0][0]
         e = seg_err[0]
 
         return v, e

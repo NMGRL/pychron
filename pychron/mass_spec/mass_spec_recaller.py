@@ -51,7 +51,7 @@ class MassSpecRecaller(Loggable):
                 for iso in dbrec.isotopes:
                     det = iso.detector
                     c = db.get_baseline_changeable_item(iso.baseline.BslnID)
-                    rec.sync_baselines(det.Label, c.InfoBlob)
+                    rec.sync_baselines(det.detector_type.Label, c.InfoBlob)
 
                 return rec
 
