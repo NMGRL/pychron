@@ -300,6 +300,15 @@ class DVCAnalysis(Analysis):
             if bd:
                 iso.baseline.unpack_data(format_blob(bd['blob']))
 
+        # loop thru keys to make sure none were missed this can happen when only loading baseline
+        if keys:
+            for k in keys:
+                bd = next((b for b in baselines if b['detector'] == k), None)
+                if bd:
+                    for iso in isotopes.itervalues():
+                        if iso.detector == k:
+                            iso.baseline.unpack_data(format_blob(bd['blob']))
+
         for sn in sniffs:
             isok = sn['isotope']
             if keys and isok not in keys:

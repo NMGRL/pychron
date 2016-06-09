@@ -179,8 +179,17 @@ class DiffEditor(BaseTraitsEditor):
         """
         recaller = self.recaller
 
+        ln = left.labnumber
+        aliquot = left.aliquot
+        if ln.startswith('b'):
+            aliquot = '-'.join(left.record_id.split('-')[1:])
+            ln = -1
+        elif ln.startswith('a'):
+            aliquot = '-'.join(left.record_id.split('-')[1:])
+            ln = -2
+
         # if recaller.connect():
-        return recaller.find_analysis(left.labnumber, left.aliquot,
+        return recaller.find_analysis(ln, aliquot,
                                       left.step)
 
     def _set_values(self, left, right, isotopes):
@@ -188,23 +197,23 @@ class DiffEditor(BaseTraitsEditor):
         pfunc = lambda x: lambda n: u'{} {}'.format(x, n)
 
         vs.append(Value(name='J',
-                        lvalue=nominal_value(left.j),
-                        rvalue=nominal_value(right.j)))
+                        lvalue=nominal_value(left.j or 0),
+                        rvalue=nominal_value(right.j or 0)))
         vs.append(Value(name=u'J {}'.format(PLUSMINUS_ONE_SIGMA),
-                        lvalue=std_dev(left.j),
-                        rvalue=std_dev(right.j)))
+                        lvalue=std_dev(left.j or 0),
+                        rvalue=std_dev(right.j or 0)))
         vs.append(Value(name='Age',
-                        lvalue=left.age,
-                        rvalue=right.age))
+                        lvalue=left.age or 0,
+                        rvalue=right.age or 0))
         vs.append(Value(name=u'Age {}'.format(PLUSMINUS_ONE_SIGMA),
-                        lvalue=left.age_err,
-                        rvalue=right.age_err))
+                        lvalue=left.age_err or 0,
+                        rvalue=right.age_err or 0))
         # vs.append(Value(name=u'\u00b1 w/o JEr',
         #                 lvalue=std_dev(left.uage_w_j_err),
         #                 rvalue=right.age_err_w_j))
         vs.append(Value(name='40Ar* %',
-                        lvalue=nominal_value(left.rad40_percent),
-                        rvalue=nominal_value(right.rad40_percent)))
+                        lvalue=nominal_value(left.rad40_percent or 0),
+                        rvalue=nominal_value(right.rad40_percent or 0)))
 
         for a in isotopes:
             iso = left.isotopes[a]
@@ -243,12 +252,12 @@ class DiffEditor(BaseTraitsEditor):
         rpr = right.production_ratios
         for k, v in left.production_ratios.iteritems():
             vs.append(Value(name=k, lvalue=nominal_value(v),
-                            rvalue=nominal_value(rpr[k])))
+                            rvalue=nominal_value(rpr.get(k, 0))))
 
         rifc = right.interference_corrections
         for k, v in left.interference_corrections.iteritems():
             vs.append(Value(name=k, lvalue=nominal_value(v),
-                            rvalue=nominal_value(rifc[k.lower()])))
+                            rvalue=nominal_value(rifc.get(k.lower(), 0))))
 
         # self.values = vs
         self.ovalues = vs[:]

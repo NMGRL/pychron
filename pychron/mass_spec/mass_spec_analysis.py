@@ -44,6 +44,13 @@ class Blob:
 
 class MassSpecAnalysis(Analysis):
     def _sync(self, obj):
+
+        self.j = ufloat(0, 0)
+        self.age = 0
+        self.age_err = 0
+        self.age_err_wo_j = 0
+        self.rad40_percent = ufloat(0, 0)
+
         if obj.araranalyses:
             arar = obj.araranalyses[-1]
             if arar:
@@ -94,20 +101,20 @@ class MassSpecAnalysis(Analysis):
             self.isotopes[key] = iso
 
     def sync_irradiation(self, irrad):
-        production = irrad.production
-        self.production_ratios['Ca_K'] = ufloat(production.CaOverKMultiplier,
-                                                production.CaOverKMultiplierEr)
-        self.production_ratios['Cl_K'] = ufloat(production.ClOverKMultiplier,
-                                                production.ClOverKMultiplierEr)
+        if irrad:
+            production = irrad.production
+            if production:
+                self.production_ratios['Ca_K'] = ufloat(production.CaOverKMultiplier,
+                                                        production.CaOverKMultiplierEr)
+                self.production_ratios['Cl_K'] = ufloat(production.ClOverKMultiplier,
+                                                        production.ClOverKMultiplierEr)
 
-        for k, _ in IRRADIATION_KEYS:
-            self.interference_corrections[k] = getattr(production, k.capitalize())
+                for k, _ in IRRADIATION_KEYS:
+                    self.interference_corrections[k] = getattr(production, k.capitalize())
 
     def sync_baselines(self, key, infoblob):
-        print key
         v, e = self._extract_average_baseline(infoblob)
         for iso in self.isotopes.itervalues():
-            print iso.detector, key
             if iso.detector == key:
                 iso.baseline.set_uvalue((v, e))
 
@@ -127,8 +134,6 @@ class MassSpecAnalysis(Analysis):
             params.append([mb.double() for i in xrange(4)])
             seg_err.append(mb.single())
 
-        print params
-        print seg_err
         v = params[0][0]
         e = seg_err[0]
 

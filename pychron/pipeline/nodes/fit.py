@@ -19,7 +19,6 @@ from traits.api import Bool, List, HasTraits, Str, Float, Instance
 # ============= standard library imports ========================
 from itertools import groupby
 # ============= local library imports  ==========================
-from uncertainties import nominal_value, std_dev
 from pychron.core.helpers.isotope_utils import sort_isotopes
 from pychron.core.progress import progress_loader
 from pychron.options.options_manager import BlanksOptionsManager, ICFactorOptionsManager, \
@@ -225,7 +224,7 @@ class FitIsotopeEvolutionNode(FitNode):
             else:
                 iso = next((i.baseline for i in isotopes.values() if i.detector == k), None)
 
-            i, e = nominal_value(iso.uvalue), std_dev(iso.uvalue)
+            i, e = iso.value, iso.error
             pe = e / i * 100
             goodness_threshold = po.goodness_threshold
             goodness = True

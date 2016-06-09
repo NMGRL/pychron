@@ -171,6 +171,8 @@ class BrowserTask(BaseBrowserTask):
         if editor.setup(left):
             editor.set_diff(left)
             self._open_editor(editor)
+        else:
+            self.warning_dialog('Failed to locate analysis {} in MassSpec database'.format(left.record_id))
         left.revert_use_stored_values()
 
     def create_dock_panes(self):

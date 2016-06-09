@@ -186,7 +186,7 @@ class IsotopicMeasurement(BaseMeasurement):
 
     _oerror = None
     _ovalue = None
-    _dirty = False
+    # _dirty = False
 
     # __slots__ = ['_fit', '_value', '_error', 'filter_outliers_dict',
     # 'include_baseline_error',
@@ -277,7 +277,7 @@ class IsotopicMeasurement(BaseMeasurement):
         self.filter_outliers_dict = {'filter_outliers': filter_outliers,
                                      'iterations': iterations,
                                      'std_devs': std_devs}
-        self._dirty = notify
+        # self._dirty = notify
 
     def attr_set(self, **kw):
         for k, v in kw.iteritems():
@@ -300,14 +300,18 @@ class IsotopicMeasurement(BaseMeasurement):
                               time_zero_offset=fit.time_zero_offset or 0,
                               error_type=fit.error_type or 'SEM',
                               include_baseline_error=fit.include_baseline_error or False)
-                if self._regressor:
-                    self._regressor.error_calc_type = self.error_type
+
+                self._regressor = None
+
+                # if self._regressor:
+                #     self._regressor.error_calc_type = self.error_type
+
                     # self.include_baseline_error = fit.include_baseline_error or False
 
                     # self._value = 0
                     # self._error = 0
-            if notify:
-                self._dirty = True
+            # if notify:
+            #     self._dirty = True
 
     def set_uvalue(self, v):
         if isinstance(v, tuple):
@@ -346,7 +350,7 @@ class IsotopicMeasurement(BaseMeasurement):
         # elif self.user_defined_error:
         #     return self._error
 
-        if not self.use_stored_value and not self.user_defined_value and self.xs.shape[0] > 1:
+        if not self.use_stored_value and not self.user_defined_error and self.xs.shape[0] > 1:
             v = self.regressor.predict_error(0)
             return v
         else:
