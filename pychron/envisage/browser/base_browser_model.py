@@ -182,6 +182,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     selection_persistence_name = 'browser_selection'
 
     _suppress_post_update = False
+    _suppress_load_labnumbers = False
 
     def make_records(self, ans):
         return self._make_records(ans)
@@ -416,11 +417,14 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             self.warning_dialog('Specify Analysis Types or disable Analysis Type Filtering')
             return []
 
+        sams = []
         with db.session_ctx():
             ls = self._retrieve_labnumbers()
-            self.debug('_retrieve_labnumbers n={}'.format(len(ls)))
-
-            sams = self._load_sample_record_views(ls)
+            if ls:
+                self.debug('_retrieve_labnumbers n={}'.format(len(ls)))
+                sams = self._load_sample_record_views(ls)
+            else:
+                self.debug('No labnumbers')
 
         return sams
 

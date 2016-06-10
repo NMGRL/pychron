@@ -81,7 +81,6 @@ class BrowserModel(BaseBrowserModel):
     is_activated = False
 
     _top_level_filter = None
-    _suppress_load_labnumbers = False
 
     def activated(self, force=False):
         self.activate_browser(force)

@@ -96,6 +96,7 @@ class IrradiationEditorPane(TraitsDockPane):
 
         project_grp = VGroup(UItem('projects',
                                    editor=FilterTabularEditor(editable=False,
+                                                              use_fuzzy=True,
                                                               selected='selected_projects',
                                                               adapter=ProjectAdapter(),
                                                               multi_select=True),

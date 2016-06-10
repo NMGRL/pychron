@@ -68,6 +68,8 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     note = Str
     weight = Float
 
+    _suppress_load_labnumbers = True
+
     def activated(self):
         if self.manager.verify_database_connection(inform=True):
             if self.db.connected:
@@ -343,14 +345,12 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     #                    self.selected_projects,
     #                    sam.material)
     #
-    # def _selected_projects_changed(self, old, new):
-    #     if new and self.project_enabled:
-    #         names = [ni.name for ni in new]
-    #         self.debug('selected projects={}'.format(names))
-    #
-    #         self._load_associated_samples(names)
-    #         self._selected_projects_change_hook(names)
-    #         # self.dump_browser_selection()
+    def _selected_projects_changed(self, old, new):
+        if new:
+            names = [ni.name for ni in new]
+            self.debug('selected projects={}'.format(names))
+
+            self._load_associated_samples(names)
 
     def _prompt_for_save(self):
         self.manager.push_changes()
