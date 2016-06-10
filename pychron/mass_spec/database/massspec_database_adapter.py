@@ -33,7 +33,7 @@ from pychron.mass_spec.database.massspec_orm import IsotopeResultsTable, \
     PreferencesTable, DatabaseVersionTable, FittypeTable, \
     BaselinesChangeableItemsTable, SampleLoadingTable, MachineTable, \
     AnalysisPositionTable, LoginSessionTable, RunScriptTable, \
-    IrradiationChronologyTable, IrradiationLevelTable, IrradiationProductionTable, ProjectTable, MaterialTable
+    IrradiationChronologyTable, IrradiationLevelTable, IrradiationProductionTable, ProjectTable, MaterialTable, PDPTable
 from pychron.database.core.database_adapter import DatabaseAdapter
 from pychron.database.core.functions import delete_one
 from pychron.pychron_constants import INTERFERENCE_KEYS
@@ -149,6 +149,13 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
     # ===============================================================================
     # getters
     # ===============================================================================
+    def get_pdp(self, isoid):
+        with self.session_ctx() as sess:
+            q = sess.query(PDPTable)
+            q = q.filter(PDPTable.IsotopeID == isoid)
+            q = q.order_by(PDPTable.LastSaved.desc())
+            return self._query_first(q)
+
     def get_baseline_changeable_item(self, bslnid):
         return self._retrieve_item(BaselinesChangeableItemsTable, bslnid, 'BslnID')
 

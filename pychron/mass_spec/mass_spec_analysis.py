@@ -64,20 +64,15 @@ class MassSpecAnalysis(Analysis):
         fo, fi, fs = 0, 0, 0
         if prefs:
             fo = prefs.DelOutliersAfterFit == 'true'
-            fi = prefs.NFilterIter
-            fs = prefs.OutlierSigmaFactor
+            fi = int(prefs.NFilterIter)
+            fs = int(prefs.OutlierSigmaFactor)
 
         for dbiso in obj.isotopes:
             r = dbiso.results[-1]
-            uv = r.Iso
-            ee = r.IsoEr
-
-            bv = r.Bkgd
-            be = r.BkgdEr
+            uv, ee = self._iso_value(r)
 
             key = dbiso.Label
             n = dbiso.NumCnts
-            # iso = Isotope(name=key, value=uv, error=ee, n=n)
             det = dbiso.detector
             iso = Isotope(key, det.detector_type.Label)
             iso.set_uvalue((uv, ee))
@@ -93,12 +88,17 @@ class MassSpecAnalysis(Analysis):
             iso.baseline.set_filter_outliers_dict()
             iso.baseline.n = dbiso.baseline.NumCnts
 
-            bsv = 0
-            bev = 0
-            iso.baseline.set_uvalue((bsv, bev))
+            blank = self._blank(r)
+            if blank:
+                iso.blank.set_uvalue(blank)
 
-            iso.blank.set_uvalue((bv, be))
             self.isotopes[key] = iso
+
+    def _blank(self, r):
+        return r.Bkgd, r.BkgdEr
+
+    def _iso_value(self, r):
+        return r.Iso, r.IsoEr
 
     def sync_irradiation(self, irrad):
         if irrad:
@@ -112,11 +112,22 @@ class MassSpecAnalysis(Analysis):
                 for k, _ in IRRADIATION_KEYS:
                     self.interference_corrections[k] = getattr(production, k.capitalize())
 
-    def sync_baselines(self, key, infoblob):
+    def sync_fn(self, key, pdpblob):
+        if pdpblob:
+            iso = self.isotopes[key]
+            iso.fn = iso.n - len(pdpblob.split('\n'))
+
+    def sync_baselines(self, key, infoblob, pdpblob):
+        fn = None
+        if pdpblob is not None:
+            fn = len(pdpblob.split('\n'))
+
         v, e = self._extract_average_baseline(infoblob)
         for iso in self.isotopes.itervalues():
             if iso.detector == key:
                 iso.baseline.set_uvalue((v, e))
+                if fn is not None:
+                    iso.baseline.fn = iso.baseline.n - fn
 
     # private
     def _extract_average_baseline(self, blob):
@@ -139,4 +150,11 @@ class MassSpecAnalysis(Analysis):
 
         return v, e
 
+
+class MassSpecBlank(MassSpecAnalysis):
+    def _blank(self, r):
+        return
+
+    def _iso_value(self, r):
+        return r.Bkgd, r.BkgdEr
 # ============= EOF =============================================

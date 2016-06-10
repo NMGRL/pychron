@@ -22,7 +22,7 @@
 import os
 
 from sqlalchemy import Column, Integer, Float, String, \
-    ForeignKey, DateTime, Date, BLOB, Enum
+    ForeignKey, DateTime, Date, BLOB, Enum, TIMESTAMP
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relation, relationship
 from sqlalchemy.sql.expression import func
@@ -158,6 +158,7 @@ class BaselinesChangeableItemsTable(Base):
     Fit = Column(Integer, ForeignKey('FitTypeTable.Fit'))
     DataReductionSessionID = Column(Integer)
     InfoBlob = Column(BLOB)
+    PDPBlob = Column(BLOB)
 
 
 class BaselinesTable(Base):
@@ -381,6 +382,13 @@ class MolecularWeightTable(Base):
     ID = Column(Integer, primary_key=True)
     Species = Column(String(40))
     AtomicWeight = Column(Float)
+
+
+class PDPTable(Base):
+    __tablename__ = 'PDPTable'
+    IsotopeID = Column(Integer, primary_key=True)
+    LastSaved = Column(TIMESTAMP)
+    PDPBlob = Column(BLOB)
 
 
 class PeakTimeTable(Base):

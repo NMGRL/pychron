@@ -33,7 +33,6 @@ class MeanRegressor(BaseRegressor):
             self.calculate_filtered_data()
 
     def calculate_outliers(self, nsigma=2):
-        print 'calculate outliers, {}'.format(len(self.clean_ys))
         res = abs(self.ys - self.mean)
         s = self.std
         return where(res > (s * nsigma))[0]

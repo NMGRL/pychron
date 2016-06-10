@@ -21,7 +21,7 @@ from traits.api import Instance
 # ============= local library imports  ==========================
 from pychron.mass_spec.database.massspec_database_adapter import MassSpecDatabaseAdapter
 from pychron.loggable import Loggable
-from pychron.mass_spec.mass_spec_analysis import MassSpecAnalysis
+from pychron.mass_spec.mass_spec_analysis import MassSpecAnalysis, MassSpecBlank
 
 
 class MassSpecRecaller(Loggable):
@@ -34,12 +34,20 @@ class MassSpecRecaller(Loggable):
         return self.db.connect()
 
     def find_analysis(self, labnumber, aliquot, step):
+
         db = self.db
         with db.session_ctx():
 
             dbrec = db.get_analysis(labnumber, aliquot, step)
             if dbrec:
-                rec = MassSpecAnalysis()
+                # need to handle blanks differently
+                # labnumber in mass spec for blanks is -1
+                if labnumber == -1:
+                    klass = MassSpecBlank
+                else:
+                    klass = MassSpecAnalysis
+
+                rec = klass()
                 rec.sync(dbrec)
                 irradpos = db.get_irradiation_position(dbrec.IrradPosition)
                 r = irradpos.IrradiationLevel
@@ -51,7 +59,11 @@ class MassSpecRecaller(Loggable):
                 for iso in dbrec.isotopes:
                     det = iso.detector
                     c = db.get_baseline_changeable_item(iso.baseline.BslnID)
-                    rec.sync_baselines(det.detector_type.Label, c.InfoBlob)
+                    rec.sync_baselines(det.detector_type.Label, c.InfoBlob, c.PDPBlob)
+
+                    c = db.get_pdp(iso.IsotopeID)
+                    if c:
+                        rec.sync_fn(iso.Label, c.PDPBlob)
 
                 return rec
 

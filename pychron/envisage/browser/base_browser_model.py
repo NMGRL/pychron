@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 from traits.api import List, Str, Bool, Any, Enum, Button, \
     Int, Property, cached_property, DelegatesTo, Date, Instance, HasTraits, Event, Float
+from traits.trait_types import BaseStr
 from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
 from datetime import timedelta, datetime
@@ -34,6 +35,14 @@ from pychron.envisage.browser.record_views import ProjectRecordView, LabnumberRe
 from pychron.core.ui.table_configurer import SampleTableConfigurer
 from pychron.persistence_loggable import PersistenceLoggable
 from pychron.paths import paths
+
+
+class IdentifierStr(BaseStr):
+    def validate(self, obj, name, value):
+        if len(value) > 2:
+            return value
+        else:
+            self.error(obj, name, value)
 
 
 def filter_func(new, attr=None, comp=None):
@@ -101,7 +110,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
     analysis_groups = List
 
-    identifier = Str
+    identifier = IdentifierStr(enter_set=True, auto_set=False)
 
     sample_filter = Str
 
