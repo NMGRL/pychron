@@ -69,7 +69,7 @@ class MassSpecAnalysis(Analysis):
 
         for dbiso in obj.isotopes:
             r = dbiso.results[-1]
-            uv, ee = self._iso_value(r)
+            uv, ee = self._intercept_value(r)
 
             key = dbiso.Label
             n = dbiso.NumCnts
@@ -97,7 +97,24 @@ class MassSpecAnalysis(Analysis):
     def _blank(self, r):
         return r.Bkgd, r.BkgdEr
 
-    def _iso_value(self, r):
+    def _intercept_value(self, r):
+        """
+
+        Iso,IsoEr is baseline/blank corrected
+
+        Intercept,InterceptEr is only baseline corrected
+        :param r:
+        :return:
+        """
+
+        return r.Intercept, r.InterceptEr
+
+    def _isotope_value(self, r):
+        """
+        see _intercept_value
+        :param r:
+        :return:
+        """
         return r.Iso, r.IsoEr
 
     def sync_irradiation(self, irrad):
@@ -155,6 +172,6 @@ class MassSpecBlank(MassSpecAnalysis):
     def _blank(self, r):
         return
 
-    def _iso_value(self, r):
+    def _intercept_value(self, r):
         return r.Bkgd, r.BkgdEr
 # ============= EOF =============================================
