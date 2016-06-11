@@ -89,9 +89,12 @@ class TabularKeyEvent(object):
 class UnselectTabularEditorHandler(Handler):
     refresh_name = Str('refresh_needed')
     selected_name = Str('selected')
+    multiselect = Bool(True)
 
     def unselect(self, info, obj):
-        setattr(obj, self.selected_name, [])
+        v = [] if self.multiselect else None
+
+        setattr(obj, self.selected_name, v)
         setattr(obj, self.refresh_name, True)
 
 

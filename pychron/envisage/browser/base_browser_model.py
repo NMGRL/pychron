@@ -104,6 +104,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     samples = List
     osamples = List
 
+    include_recent = True
     project_enabled = Bool(True)
     repository_enabled = Bool(True)
     principal_investigator_enabled = Bool(False)
@@ -118,7 +119,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
     selected_projects = Any
     selected_repositories = Any
-    selected_samples = Any
+    selected_samples = List
     selected_analysis_groups = Any
 
     dclicked_sample = Any
@@ -543,7 +544,33 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         load('experiments', self.repositories)
         load('samples', self.samples)
 
+    def _load_projects_for_principal_investigator(self):
+        ms = None
+        if self.mass_spectrometers_enabled:
+            ms = self.mass_spectrometer_includes
+
+        p_i = self.principal_investigator
+        self.debug('load projects for principal investigator= {}'.format(p_i))
+        db = self.db
+        with db.session_ctx():
+            ps = db.get_projects(principal_investigator=p_i,
+                                 mass_spectrometers=ms)
+
+            ps = self._make_project_records(ps, include_recent_first=True,
+                                            include_recent=True and self.include_recent)
+            old_selection = []
+            if self.selected_projects:
+                old_selection = [p.name for p in self.selected_projects]
+            self.projects = ps
+
+            if old_selection:
+                self.selected_projects = [p for p in ps if p.name in old_selection]
+
     # handlers
+    def _principal_investigator_changed(self, new):
+        if new:
+            self._load_projects_for_principal_investigator()
+
     def _identifier_changed(self, new):
         db = self.db
         if new:

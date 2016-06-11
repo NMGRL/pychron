@@ -70,30 +70,33 @@ class ChronologyPane(TraitsDockPane):
 class IrradiationEditorPane(TraitsDockPane):
     id = 'pychron.labnumber.editor'
     name = 'Editor'
-    labnumber_tabular_adapter = Instance(SampleAdapter, ())
+    sample_tabular_adapter = Instance(SampleAdapter, ())
 
     def traits_view(self):
-        self.labnumber_tabular_adapter.columns = [('Sample', 'name'),
-                                                  ('Material', 'material')]
-        tgrp = HGroup(VGroup(icon_button_editor('add_project_button', 'database_add',
-                                                tooltip='Add project'),
-                             show_border=True,
-                             label='Project'),
-                      VGroup(icon_button_editor('add_material_button', 'database_add',
-                                                tooltip='Add material'),
-                             show_border=True,
-                             label='Material'),
-                      VGroup(icon_button_editor('add_sample_button', 'database_add',
-                                                tooltip='Add sample'),
-                             show_border=True,
-                             label='Sample')),
+        self.sample_tabular_adapter.columns = [('Sample', 'name'),
+                                               ('Material', 'material')]
+        # tgrp = HGroup(VGroup(icon_button_editor('add_project_button', 'database_add',
+        #                                         tooltip='Add project'),
+        #                      show_border=True,
+        #                      label='Project'),
+        #               VGroup(icon_button_editor('add_material_button', 'database_add',
+        #                                         tooltip='Add material'),
+        #                      show_border=True,
+        #                      label='Material'),
+        #               VGroup(icon_button_editor('add_sample_button', 'database_add',
+        #                                         tooltip='Add sample'),
+        #                      show_border=True,
+        #                      label='Sample')),
         # icon_button_editor('generate_identifiers_button',
         #                    'table_lightning',
         #                    tooltip='Generate Identifiers for this irradiation'),
         # icon_button_editor('preview_generate_identifiers_button',
         #                    'document-preview',
         #                    tooltip='Preview identifiers generated for this irradiation level'))
-
+        pi_grp = VGroup(UItem('principal_investigator',
+                              editor=EnumEditor(name='principal_investigators')),
+                        show_border=True,
+                        label='Principal Investigator')
         project_grp = VGroup(UItem('projects',
                                    editor=FilterTabularEditor(editable=False,
                                                               use_fuzzy=True,
@@ -109,19 +112,21 @@ class IrradiationEditorPane(TraitsDockPane):
                                    UItem('sample_filter',
                                          editor=ComboboxEditor(name='sample_filter_values'),
                                          width=75),
-                                   icon_button_editor('edit_sample_button', 'database_edit',
-                                                      tooltip='Edit sample in database'),
-                                   icon_button_editor('add_sample_button', 'database_add',
-                                                      tooltip='Add sample to database')),
+                                   # icon_button_editor('edit_sample_button', 'database_edit',
+                                   #                    tooltip='Edit sample in database'),
+                                   # icon_button_editor('add_sample_button', 'database_add',
+                                   #                    tooltip='Add sample to database')
+                                   icon_button_editor('clear_sample_button', 'clear',
+                                                      tooltip='Clear selected sample')),
 
                             UItem('samples',
-                                  editor=TabularEditor(
-                                          adapter=self.labnumber_tabular_adapter,
-                                          editable=False,
-                                          selected='selected_samples',
-                                          multi_select=False,
-                                          column_clicked='column_clicked',
-                                          stretch_last_section=False),
+                                  editor=TabularEditor(adapter=self.sample_tabular_adapter,
+                                                       editable=False,
+                                                       selected='selected_samples',
+                                                       dclicked='dclicked',
+                                                       multi_select=True,
+                                                       column_clicked='column_clicked',
+                                                       stretch_last_section=False),
                                   width=75))
         jgrp = HGroup(UItem('j'), Label(PLUSMINUS_ONE_SIGMA), UItem('j_err'),
                       icon_button_editor('estimate_j_button', 'cog'),
@@ -133,9 +138,9 @@ class IrradiationEditorPane(TraitsDockPane):
                       Item('selection_freq', label='Freq'),
                       show_border=True,
                       label='Selection')
-        v = View(VSplit(VGroup(tgrp,
-                               HGroup(sgrp, jgrp),
+        v = View(VSplit(VGroup(HGroup(sgrp, jgrp),
                                ngrp,
+                               pi_grp,
                                project_grp),
                         sample_grp,
                         style_sheet=load_stylesheet('labnumber_entry')))
@@ -170,30 +175,30 @@ class IrradiationPane(TraitsDockPane):
 
     def traits_view(self):
         irrad = HGroup(
-                spacer(),
-                Item('irradiation',
-                     width=-150,
-                     editor=EnumEditor(name='irradiations')),
-                icon_button_editor('edit_irradiation_button', 'database_edit',
-                                   enabled_when='edit_irradiation_enabled',
-                                   tooltip='Edit irradiation'),
-                icon_button_editor('add_irradiation_button', 'database_add',
-                                   tooltip='Add irradiation'),
+            spacer(),
+            Item('irradiation',
+                 width=-150,
+                 editor=EnumEditor(name='irradiations')),
+            icon_button_editor('edit_irradiation_button', 'database_edit',
+                               enabled_when='edit_irradiation_enabled',
+                               tooltip='Edit irradiation'),
+            icon_button_editor('add_irradiation_button', 'database_add',
+                               tooltip='Add irradiation'),
             icon_button_editor('import_irradiation_button', 'database_go',
                                tooltip='Import irradiation'))
 
         level = HGroup(
-                spacer(),
-                Label('Level:'),
-                spacer(-23),
-                UItem('level',
-                      width=-150,
-                      editor=EnumEditor(name='levels')),
-                icon_button_editor('edit_level_button', 'database_edit',
-                                   tooltip='Edit level',
-                                   enabled_when='edit_level_enabled'),
-                icon_button_editor('add_level_button', 'database_add',
-                                   tooltip='Add level'))
+            spacer(),
+            Label('Level:'),
+            spacer(-23),
+            UItem('level',
+                  width=-150,
+                  editor=EnumEditor(name='levels')),
+            icon_button_editor('edit_level_button', 'database_edit',
+                               tooltip='Edit level',
+                               enabled_when='edit_level_enabled'),
+            icon_button_editor('add_level_button', 'database_add',
+                               tooltip='Add level'))
 
         v = View(VGroup(irrad, level))
         return v

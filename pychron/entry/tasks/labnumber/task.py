@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter, Tabbed
-from traits.api import on_trait_change, Button, Float, Str, Int, Bool
+from traits.api import on_trait_change, Button, Float, Str, Int, Bool, Event
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -37,13 +37,16 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     name = 'Labnumber'
     id = 'pychron.entry.irradiation.task'
 
-    add_sample_button = Button
-    add_material_button = Button
-    add_project_button = Button
+    # add_sample_button = Button
+    # add_material_button = Button
+    # add_project_button = Button
+    #
+    # edit_project_button = Button
+    # edit_sample_button = Button
 
-    edit_project_button = Button
-    edit_sample_button = Button
-
+    clear_sample_button = Button
+    refresh_needed = Event
+    dclicked = Event
     # generate_identifiers_button = Button
     # preview_generate_identifiers_button = Button
 
@@ -68,12 +71,14 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     note = Str
     weight = Float
 
+    include_recent = False
     _suppress_load_labnumbers = True
 
     def activated(self):
         if self.manager.verify_database_connection(inform=True):
             if self.db.connected:
                 self.manager.activated()
+                self.load_principal_investigators()
                 self.load_projects(include_recent=False)
 
     def get_igsns(self):
@@ -241,7 +246,7 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
 
     def create_dock_panes(self):
         iep = IrradiationEditorPane(model=self)
-        self.labnumber_tabular_adapter = iep.labnumber_tabular_adapter
+        self.labnumber_tabular_adapter = iep.sample_tabular_adapter
         return [
             IrradiationPane(model=self.manager),
             ChronologyPane(model=self.manager),
@@ -277,8 +282,9 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
 
     def _selected_samples_changed(self, new):
         if new:
+            ni = new[0]
             # self.manager.set_selected_attr(new.name, 'sample')
-            self.manager.set_selected_attrs((new.name, new.material, new.project),
+            self.manager.set_selected_attrs((ni.name, ni.material, ni.project),
                                             ('sample', 'material', 'project'))
 
     def _load_associated_samples(self, names=None):
@@ -296,6 +302,12 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
         self.osamples = sams
 
     # handlers
+    def _dclicked_fired(self):
+        self.selected_samples = []
+
+    def _clear_sample_button_fired(self):
+        self.selected_samples = []
+
     @on_trait_change('extractor:update_irradiations_needed')
     def _update_irradiations(self):
         self.manager.updated = True
@@ -345,6 +357,7 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     #                    self.selected_projects,
     #                    sam.material)
     #
+
     def _selected_projects_changed(self, old, new):
         if new:
             names = [ni.name for ni in new]
