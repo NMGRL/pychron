@@ -107,18 +107,12 @@ class IrradiationPDFWriter(BasePDFTableWriter):
         return p
 
     def _make_row(self, pos, canvas):
-        # ln = pos.identifier
-        # sample = ''
-        # identifier = ''
-        # if ln:
-        #     if ln.sample:
-        #         sample = ln.sample.name
-        #     identifier = ln.identifier
         r = Row()
         sample = pos.sample
         if sample:
             sample = sample.name
 
+        r.add_item(value='[ ]')
         r.add_item(value=pos.position)
         r.add_item(value=pos.identifier)
         r.add_item(value=sample)
