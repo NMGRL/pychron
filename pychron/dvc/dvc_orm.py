@@ -89,6 +89,7 @@ class RepositoryTbl(Base, BaseMixin):
 
         v = RepositoryRecordView()
         v.name = self.name
+        v.principal_investigator = self.principal_investigator or ''
         return v
 
 

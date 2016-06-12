@@ -90,13 +90,13 @@ class LabnumberAdapter(BrowserAdapter):
             # psenabled = isinstance(obj, FigureTask)
             return MenuManager(Action(name='Unselect', action='unselect_samples'),
                                # Action(name='Chronological View', action='on_chrono_view'),
-                               Action(name='Configure', action='configure_sample_table'),)
-                               # Action(name='Plot Selected (Grouped)',
-                               #        enabled=psenabled,
-                               #        action='plot_selected_grouped'),
-                               # Action(name='Plot Selected',
-                               #        enabled=psenabled,
-                               #        action='plot_selected'))
+                               Action(name='Configure', action='configure_sample_table'), )
+            # Action(name='Plot Selected (Grouped)',
+            #        enabled=psenabled,
+            #        action='plot_selected_grouped'),
+            # Action(name='Plot Selected',
+            #        enabled=psenabled,
+            #        action='plot_selected'))
 
 
 REVIEW_STATUS_ICONS = {'Default': icon('gray_ball'),
@@ -186,4 +186,5 @@ class InterpretedAgeAdapter(TabularAdapter):
     font = 'arial 10'
     name_width = 100
     identifier_width = 100
+
 # ============= EOF =============================================

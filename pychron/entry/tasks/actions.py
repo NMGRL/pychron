@@ -75,6 +75,12 @@ class DatabaseSaveAction(TaskAction):
     image = icon('database_save')
 
 
+class ClearSelectionAction(TaskAction):
+    name = 'Clear Selection'
+    image = icon('table_lightning')
+    method = 'clear_selection'
+
+
 class SavePDFAction(TaskAction):
     name = 'Save PDF'
     dname = 'Save PDF'
@@ -211,7 +217,6 @@ class GenerateIrradiationTableAction(TaskAction):
 
 
 class ImportIrradiationHolderAction(Action):
-
     name = 'Import Irradiation Holder'
     dname = 'Import Irradiation Holder'
 
@@ -236,4 +241,5 @@ class GetIGSNAction(TaskAction):
     name = 'Get IGSNs'
     dname = 'Get IGSNs'
     method = 'get_igsns'
+
 # ============= EOF =============================================

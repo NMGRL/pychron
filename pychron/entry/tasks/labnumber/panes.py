@@ -16,23 +16,33 @@
 
 # ============= enthought library imports =======================
 from enable.component_editor import ComponentEditor
+from pyface.action.menu_manager import MenuManager
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traits.api import Instance, Int
 from traitsui.api import View, Item, TabularEditor, VGroup, HGroup, \
     EnumEditor, UItem, Label, VSplit, TextEditor
+from traitsui.menu import Action
+from traitsui.tabular_adapter import TabularAdapter
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from traitsui.tabular_adapter import TabularAdapter
 from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.core.ui.qt.tabular_editors import FilterTabularEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.stylesheets import load_stylesheet
 from pychron.envisage.tasks.pane_helpers import spacer
 from pychron.entry.irradiated_position import IrradiatedPositionAdapter
-from pychron.envisage.browser.adapters import ProjectAdapter, SampleAdapter
+from pychron.envisage.browser.adapters import SampleAdapter, BrowserAdapter
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
+
+
+class ProjectAdapter(BrowserAdapter):
+    columns = [('Name', 'name'),
+               ('PI', 'principal_investigator')]
+
+    def get_menu(self, obj, trait, row, column):
+        return MenuManager(Action(name='Unselect', action='unselect_projects'))
 
 
 class LevelInfoPane(TraitsDockPane):
@@ -75,28 +85,10 @@ class IrradiationEditorPane(TraitsDockPane):
     def traits_view(self):
         self.sample_tabular_adapter.columns = [('Sample', 'name'),
                                                ('Material', 'material')]
-        # tgrp = HGroup(VGroup(icon_button_editor('add_project_button', 'database_add',
-        #                                         tooltip='Add project'),
-        #                      show_border=True,
-        #                      label='Project'),
-        #               VGroup(icon_button_editor('add_material_button', 'database_add',
-        #                                         tooltip='Add material'),
-        #                      show_border=True,
-        #                      label='Material'),
-        #               VGroup(icon_button_editor('add_sample_button', 'database_add',
-        #                                         tooltip='Add sample'),
-        #                      show_border=True,
-        #                      label='Sample')),
-        # icon_button_editor('generate_identifiers_button',
-        #                    'table_lightning',
-        #                    tooltip='Generate Identifiers for this irradiation'),
-        # icon_button_editor('preview_generate_identifiers_button',
-        #                    'document-preview',
-        #                    tooltip='Preview identifiers generated for this irradiation level'))
 
-        tgrp = HGroup(icon_button_editor('clear_button', 'clear',
-                                         enabled_when='selected',
-                                         tooltip='Clear contents of selected positions'))
+        # tgrp = HGroup(icon_button_editor('clear_button', 'table_lightning',
+        #                                  enabled_when='selected',
+        #                                  tooltip='Clear contents of selected positions'))
         pi_grp = VGroup(UItem('principal_investigator',
                               editor=EnumEditor(name='principal_investigators')),
                         show_border=True,
@@ -142,8 +134,7 @@ class IrradiationEditorPane(TraitsDockPane):
                       Item('selection_freq', label='Freq'),
                       show_border=True,
                       label='Selection')
-        v = View(VSplit(VGroup(tgrp,
-                               HGroup(sgrp, jgrp),
+        v = View(VSplit(VGroup(HGroup(sgrp, jgrp),
                                ngrp,
                                pi_grp,
                                project_grp),

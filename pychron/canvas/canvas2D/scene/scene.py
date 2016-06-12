@@ -70,6 +70,10 @@ class Scene(HasTraits):
                                   for ci in li.components
                                   if ci.scene_visible and ci.visible), bounds)
 
+    def request_layout(self):
+        for i in self.iteritems():
+            i.request_layout()
+
     def iteritems(self, exclude=None, klass=None):
         if exclude is None:
             exclude = tuple()

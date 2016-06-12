@@ -18,7 +18,7 @@
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter, Tabbed
 from traits.api import on_trait_change, Button, Float, Str, Int, Bool, Event, HasTraits
-from traitsui.api import View, Item, VGroup
+from traitsui.api import View, Item, VGroup, UItem, HGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -27,11 +27,18 @@ from pychron.envisage.browser.record_views import SampleRecordView
 from pychron.envisage.browser.base_browser_model import BaseBrowserModel
 from pychron.entry.labnumber_entry import LabnumberEntry
 from pychron.entry.tasks.actions import SavePDFAction, DatabaseSaveAction, PreviewGenerateIdentifiersAction, \
-    GenerateIdentifiersAction
+    GenerateIdentifiersAction, ClearSelectionAction
 from pychron.entry.tasks.labnumber.panes import LabnumbersPane, \
     IrradiationPane, IrradiationEditorPane, IrradiationCanvasPane, LevelInfoPane, ChronologyPane
 from pychron.envisage.tasks.base_task import BaseManagerTask
 from pychron.globals import globalv
+
+ATTRS = (('sample', ''),
+         ('material', ''),
+         ('project', ''),
+         ('weight', 0),
+         ('j', 0,),
+         ('j_err', 0))
 
 
 class ClearSelectionView(HasTraits):
@@ -42,23 +49,31 @@ class ClearSelectionView(HasTraits):
     j = Bool(True)
     j_err = Bool(True)
 
-    def attributes(self):
-        attrs = (('sample', ''),
-                 ('material', ''),
-                 ('project', ''),
-                 ('weight', 0),
-                 ('j', 0,),
-                 ('j_err', 0))
+    select_all = Button('Select All')
+    clear_all = Button('Clear All')
 
-        return [(a, v) for a, v in attrs if getattr(self, a)]
+    def _select_all_fired(self):
+        self._apply_all(True)
+
+    def _clear_all_fired(self):
+        self._apply_all(False)
+
+    def _apply_all(self, v):
+        for a, _ in ATTRS:
+            setattr(self, a, v)
+
+    def attributes(self):
+        return [(a, v) for a, v in ATTRS if getattr(self, a)]
 
     def traits_view(self):
-        v = View(VGroup(Item('sample'),
+        v = View(VGroup(HGroup(UItem('select_all'),
+                               UItem('clear_all')),
+                        VGroup(Item('sample'),
                         Item('material'),
                         Item('project'),
                         Item('weight'),
                         Item('j', label='J'),
-                        Item('j_err', label='J Err.')),
+                        Item('j_err', label='J Err.'))),
                  buttons=['OK', 'Cancel'],
                  kind='livemodal',
                  title='Clear Selection')
@@ -75,7 +90,7 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     #
     # edit_project_button = Button
     # edit_sample_button = Button
-    clear_button = Button
+    # clear_button = Button
     clear_sample_button = Button
     refresh_needed = Event
     dclicked = Event
@@ -88,11 +103,8 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
                  SToolBar(GenerateIdentifiersAction(),
                           PreviewGenerateIdentifiersAction(),
                           # ImportIrradiationLevelAction(),
-                          image_size=(16, 16))]
-    # SToolBar(GenerateLabnumbersAction(),
-    # PreviewGenerateLabnumbersAction(),
-    # ImportIrradiationLevelAction(),
-    # image_size=(16, 16))]
+                          image_size=(16, 16)),
+                 SToolBar(ClearSelectionAction())]
 
     invert_flag = Bool
     selection_freq = Int
@@ -112,6 +124,16 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
                 self.manager.activated()
                 self.load_principal_investigators()
                 self.load_projects(include_recent=False)
+
+    def clear_selection(self):
+        cs = ClearSelectionView()
+        info = cs.edit_traits()
+        if info.result:
+            for s in self.manager.selected:
+                for attr, value in cs.attributes():
+                    setattr(s, attr, value)
+
+            self.manager.refresh_table = True
 
     def get_igsns(self):
         self.info('Get IGSNs')
@@ -334,16 +356,6 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
         self.osamples = sams
 
     # handlers
-    def _clear_button_fired(self):
-        cs = ClearSelectionView()
-        info = cs.edit_traits()
-        if info.result:
-            for s in self.manager.selected:
-                for attr, value in cs.attributes():
-                    setattr(s, attr, value)
-
-            self.manager.refresh_table = True
-
     def _dclicked_fired(self):
         self.selected_samples = []
 

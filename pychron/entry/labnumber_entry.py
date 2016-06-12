@@ -312,8 +312,8 @@ class LabnumberEntry(DVCIrradiationable):
             #     i = IrradiationTemplate()
             #     i.make_template(p)
 
-        # loader = XLSIrradiationLoader()
-        # loader.make_template(p)
+            # loader = XLSIrradiationLoader()
+            # loader.make_template(p)
 
     # def import_irradiation_load_xls(self, p):
     #     self.warning_dialog('XLS Irradiation Import not currently available')
@@ -578,16 +578,37 @@ THIS CHANGE CANNOT BE UNDONE')
                     self.debug('extra irradiation position for this tray {}'.format(hi))
 
     def _sync_position(self, dbpos, ir):
+
+        cgen = ('#{:02x}{:02x}{:02x}'.format(*ci) for ci in ((194, 194, 194),
+                                                             (255, 255, 160),
+                                                             (255, 255, 0),
+                                                             (25, 230, 25)))
+
+        def set_color(ii, value):
+            if value:
+                ii.fill_color = next(cgen)
+
         if dbpos:
             if dbpos.sample:
-                ir.sample = dbpos.sample.name
-                ir.material = dbpos.sample.material.name
-                ir.project = dbpos.sample.project.name
-                ir.identifier = dbpos.identifier or ''
-                ir.hole = dbpos.position
-
                 item = self.canvas.scene.get_item(str(ir.hole))
-                item.fill = bool(dbpos.identifier)
+                item.fill = True
+
+                ir.sample = v = dbpos.sample.name
+                set_color(item, v)
+
+                if dbpos.sample.material:
+                    ir.material = v = dbpos.sample.material.name
+                    set_color(item, v)
+
+                if dbpos.sample.project:
+                    ir.project = v = dbpos.sample.project.name
+                    set_color(item, v)
+
+                ir.identifier = v = dbpos.identifier or ''
+                if v:
+                    set_color(item, v)
+
+                ir.hole = dbpos.position
 
                 j, lambda_k = self.dvc.meta_repo.get_flux(self.irradiation, self.level, ir.hole)
                 if j:
