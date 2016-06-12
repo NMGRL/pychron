@@ -218,6 +218,13 @@ class DiffEditor(BaseTraitsEditor):
                             lvalue=nominal_value(left.rad40_percent or 0),
                             rvalue=nominal_value(right.rad40_percent or 0)))
 
+            vs.append(Value(name='Rad4039',
+                            lvalue=nominal_value(left.uF),
+                            rvalue=nominal_value(right.rad4039)))
+            vs.append(Value(name=u'Rad4039 {}'.format(PLUSMINUS_ONE_SIGMA),
+                            lvalue=std_dev(left.uF),
+                            rvalue=std_dev(right.rad4039)))
+
         def filter_str(ii):
             fd = ii.filter_outliers_dict.get('filter_outliers')
             return 'yes' if fd else 'no'
@@ -230,11 +237,21 @@ class DiffEditor(BaseTraitsEditor):
             # mass spec only has baseline corrected intercepts
             # mass spec does not propagate baseline error
             i = iso.get_baseline_corrected_value(include_baseline_error=False)
-
-            vs.append(Value(name=a,
+            ri = riso.baseline_corrected
+            vs.append(Value(name=func('Bs Corrected'),
                             lvalue=nominal_value(i),
-                            rvalue=riso.value))
-            vs.append(Value(name=func(PLUSMINUS_ONE_SIGMA), lvalue=std_dev(i), rvalue=riso.error))
+                            rvalue=nominal_value(ri)))
+            vs.append(Value(name=func(PLUSMINUS_ONE_SIGMA), lvalue=std_dev(i), rvalue=std_dev(ri)))
+
+            # disc/ic but not decay
+            # i = iso.get_intensity()
+            i = iso.get_interference_corrected_value()
+
+            ri = iso.total_value
+            vs.append(Value(name=func('Total'),
+                            lvalue=nominal_value(i),
+                            rvalue=nominal_value(ri)))
+            vs.append(Value(name=func(u'Total {}'.format(PLUSMINUS_ONE_SIGMA)), lvalue=std_dev(i), rvalue=std_dev(ri)))
 
             vs.append(Value(name=func('N'), lvalue=iso.n, rvalue=riso.n))
             vs.append(Value(name=func('fN'), lvalue=iso.fn, rvalue=riso.fn))

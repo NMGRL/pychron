@@ -50,6 +50,7 @@ class MassSpecAnalysis(Analysis):
         self.age_err = 0
         self.age_err_wo_j = 0
         self.rad40_percent = ufloat(0, 0)
+        self.rad4039 = ufloat(0, 0)
 
         if obj.araranalyses:
             arar = obj.araranalyses[-1]
@@ -59,6 +60,7 @@ class MassSpecAnalysis(Analysis):
                 self.age_err = arar.ErrAge
                 self.age_err_wo_j = arar.ErrAgeWOErInJ
                 self.rad40_percent = ufloat(arar.PctRad, arar.PctRadEr)
+                self.rad4039 = ufloat(arar.Rad4039, arar.Rad4039Er)
 
         prefs = obj.changeable.preferences_set
         fo, fi, fs = 0, 0, 0
@@ -75,7 +77,12 @@ class MassSpecAnalysis(Analysis):
             n = dbiso.NumCnts
             det = dbiso.detector
             iso = Isotope(key, det.detector_type.Label)
-            iso.set_uvalue((uv, ee))
+            iso.baseline_corrected = ufloat(uv, ee)
+            tv, te = 0, 0
+            if arar:
+                tv, te = getattr(arar, 'Tot{}'.format(key)), getattr(arar, 'Tot{}Er'.format(key))
+            iso.total_value = ufloat(tv, te)
+            # iso.set_uvalue((uv, ee))
             iso.n = n
 
             iso.ic_factor = ufloat(det.ICFactor, det.ICFactorEr)
@@ -184,4 +191,5 @@ class MassSpecBlank(MassSpecAnalysis):
 
     def _intercept_value(self, r):
         return r.Bkgd, r.BkgdEr
+
 # ============= EOF =============================================
