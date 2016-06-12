@@ -84,25 +84,15 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     name = 'Labnumber'
     id = 'pychron.entry.irradiation.task'
 
-    # add_sample_button = Button
-    # add_material_button = Button
-    # add_project_button = Button
-    #
-    # edit_project_button = Button
-    # edit_sample_button = Button
-    # clear_button = Button
     clear_sample_button = Button
     refresh_needed = Event
     dclicked = Event
-    # generate_identifiers_button = Button
-    # preview_generate_identifiers_button = Button
 
     tool_bars = [SToolBar(SavePDFAction(),
                           DatabaseSaveAction(),
                           image_size=(16, 16)),
                  SToolBar(GenerateIdentifiersAction(),
                           PreviewGenerateIdentifiersAction(),
-                          # ImportIrradiationLevelAction(),
                           image_size=(16, 16)),
                  SToolBar(ClearSelectionAction())]
 

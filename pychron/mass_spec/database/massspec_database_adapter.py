@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+from sqlalchemy.exc import InvalidRequestError
 from traits.api import provides
 # =============standard library imports ========================
 import binascii
@@ -149,12 +150,16 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
     # ===============================================================================
     # getters
     # ===============================================================================
-    def get_latest_preferences(self, isoid):
+    def get_latest_preferences(self, isoid, key):
         with self.session_ctx() as sess:
             q = sess.query(PreferencesTable)
             q = q.join(AnalysesChangeableItemsTable)
             q = q.join(DataReductionSessionTable)
-            q = q.join(IsotopeTable)
+            try:
+                q = q.join(IsotopeTable)
+            except InvalidRequestError:
+                self.debug('no preferences for isotope={}'.format(key))
+                return
 
             q = q.filter(IsotopeTable.IsotopeID == isoid)
 
