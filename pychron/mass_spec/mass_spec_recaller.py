@@ -65,6 +65,14 @@ class MassSpecRecaller(Loggable):
                     if c:
                         rec.sync_fn(iso.Label, c.PDPBlob)
 
+                    prefs = db.get_latest_preferences(iso.IsotopeID)
+
+                    riso = rec.isotopes[iso.Label]
+                    rec.sync_filtering(riso, prefs)
+
+                    # prefs = db.get_latest_baseline_preferences(iso.baseline.BslnID)
+                    # rec.sync_filtering(riso.baseline, prefs)
+
                 return rec
 
 # ============= EOF =============================================

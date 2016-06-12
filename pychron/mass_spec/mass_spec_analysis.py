@@ -81,11 +81,11 @@ class MassSpecAnalysis(Analysis):
             iso.ic_factor = ufloat(det.ICFactor, det.ICFactorEr)
 
             iso.fit = r.fit.Label.lower() if r.fit else ''
-            iso.set_filter_outliers_dict(filter_outliers=fo, iterations=fi, std_devs=fs)
 
             iso.baseline = Baseline(key, det.detector_type.Label)
             iso.baseline.fit = 'average'
-            iso.baseline.set_filter_outliers_dict()
+            iso.baseline.set_filter_outliers_dict(filter_outliers=fo, iterations=fi, std_devs=fs)
+
             iso.baseline.n = dbiso.baseline.NumCnts
 
             blank = self._blank(r)
@@ -116,6 +116,16 @@ class MassSpecAnalysis(Analysis):
         :return:
         """
         return r.Iso, r.IsoEr
+
+    def sync_filtering(self, obj, prefs):
+        """
+        """
+        fo, fi, fs = 0, 0, 0
+        if prefs:
+            fo = prefs.DelOutliersAfterFit == 'true'
+            fi = int(prefs.NFilterIter)
+            fs = int(prefs.OutlierSigmaFactor)
+        obj.set_filter_outliers_dict(filter_outliers=fo, iterations=fi, std_devs=fs)
 
     def sync_irradiation(self, irrad):
         if irrad:

@@ -149,6 +149,20 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
     # ===============================================================================
     # getters
     # ===============================================================================
+    def get_latest_preferences(self, isoid):
+        with self.session_ctx() as sess:
+            q = sess.query(PreferencesTable)
+            q = q.join(AnalysesChangeableItemsTable)
+            q = q.join(DataReductionSessionTable)
+            q = q.join(IsotopeTable)
+
+            q = q.filter(IsotopeTable.IsotopeID == isoid)
+
+            q = q.order_by(DataReductionSessionTable.SessionDate.desc())
+            q = q.limit(1)
+
+            return self._query_first(q, verbose_query=True)
+
     def get_pdp(self, isoid):
         with self.session_ctx() as sess:
             q = sess.query(PDPTable)
