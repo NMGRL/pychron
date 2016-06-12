@@ -93,6 +93,10 @@ class IrradiationEditorPane(TraitsDockPane):
         # icon_button_editor('preview_generate_identifiers_button',
         #                    'document-preview',
         #                    tooltip='Preview identifiers generated for this irradiation level'))
+
+        tgrp = HGroup(icon_button_editor('clear_button', 'clear',
+                                         enabled_when='selected',
+                                         tooltip='Clear contents of selected positions'))
         pi_grp = VGroup(UItem('principal_investigator',
                               editor=EnumEditor(name='principal_investigators')),
                         show_border=True,
@@ -138,7 +142,8 @@ class IrradiationEditorPane(TraitsDockPane):
                       Item('selection_freq', label='Freq'),
                       show_border=True,
                       label='Selection')
-        v = View(VSplit(VGroup(HGroup(sgrp, jgrp),
+        v = View(VSplit(VGroup(tgrp,
+                               HGroup(sgrp, jgrp),
                                ngrp,
                                pi_grp,
                                project_grp),

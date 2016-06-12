@@ -17,7 +17,8 @@
 # ============= enthought library imports =======================
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter, Tabbed
-from traits.api import on_trait_change, Button, Float, Str, Int, Bool, Event
+from traits.api import on_trait_change, Button, Float, Str, Int, Bool, Event, HasTraits
+from traitsui.api import View, Item, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -33,6 +34,37 @@ from pychron.envisage.tasks.base_task import BaseManagerTask
 from pychron.globals import globalv
 
 
+class ClearSelectionView(HasTraits):
+    sample = Bool(True)
+    material = Bool(True)
+    weight = Bool(True)
+    project = Bool(True)
+    j = Bool(True)
+    j_err = Bool(True)
+
+    def attributes(self):
+        attrs = (('sample', ''),
+                 ('material', ''),
+                 ('project', ''),
+                 ('weight', 0),
+                 ('j', 0,),
+                 ('j_err', 0))
+
+        return [(a, v) for a, v in attrs if getattr(self, a)]
+
+    def traits_view(self):
+        v = View(VGroup(Item('sample'),
+                        Item('material'),
+                        Item('project'),
+                        Item('weight'),
+                        Item('j', label='J'),
+                        Item('j_err', label='J Err.')),
+                 buttons=['OK', 'Cancel'],
+                 kind='livemodal',
+                 title='Clear Selection')
+        return v
+
+
 class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     name = 'Labnumber'
     id = 'pychron.entry.irradiation.task'
@@ -43,7 +75,7 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     #
     # edit_project_button = Button
     # edit_sample_button = Button
-
+    clear_button = Button
     clear_sample_button = Button
     refresh_needed = Event
     dclicked = Event
@@ -229,17 +261,17 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
 
     def _default_layout_default(self):
         return TaskLayout(
-                left=Splitter(
-                        PaneItem('pychron.labnumber.irradiation'),
-                        Tabbed(
-                                # PaneItem('pychron.labnumber.extractor'),
-                                PaneItem('pychron.labnumber.editor')),
-                        orientation='vertical'),
-                right=Splitter(
-                        PaneItem('pychron.entry.level'),
-                        PaneItem('pychron.entry.chronology'),
-                        PaneItem('pychron.entry.irradiation_canvas'),
-                        orientation='vertical'))
+            left=Splitter(
+                PaneItem('pychron.labnumber.irradiation'),
+                Tabbed(
+                    # PaneItem('pychron.labnumber.extractor'),
+                    PaneItem('pychron.labnumber.editor')),
+                orientation='vertical'),
+            right=Splitter(
+                PaneItem('pychron.entry.level'),
+                PaneItem('pychron.entry.chronology'),
+                PaneItem('pychron.entry.irradiation_canvas'),
+                orientation='vertical'))
 
     def create_central_pane(self):
         return LabnumbersPane(model=self.manager)
@@ -302,6 +334,16 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
         self.osamples = sams
 
     # handlers
+    def _clear_button_fired(self):
+        cs = ClearSelectionView()
+        info = cs.edit_traits()
+        if info.result:
+            for s in self.manager.selected:
+                for attr, value in cs.attributes():
+                    setattr(s, attr, value)
+
+            self.manager.refresh_table = True
+
     def _dclicked_fired(self):
         self.selected_samples = []
 
