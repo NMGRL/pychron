@@ -154,7 +154,7 @@ class ArArAnalysisTable(Base):
     R3639Cor = doublecolumn()
     ErR3639 = doublecolumn()
     R3739Cor = doublecolumn()
-    ErR3739 = doublecolumn()
+    ErR3739Cor = doublecolumn()
     R3839Cor = doublecolumn()
     ErR3839 = doublecolumn()
     R4039Cor = doublecolumn()
