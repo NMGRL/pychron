@@ -81,7 +81,12 @@ class MassSpecAnalysis(Analysis):
             iso.baseline_corrected = ufloat(uv, ee)
             tv, te = 0, 0
             if arar:
-                tv, te = getattr(arar, 'Tot{}'.format(key)), getattr(arar, 'Tot{}Er'.format(key))
+                try:
+                    k = key[2:]
+                    tv, te = getattr(arar, 'Tot{}'.format(k)), getattr(arar, 'Tot{}Er'.format(k))
+                except AttributeError:
+                    pass
+
             iso.total_value = ufloat(tv, te)
             # iso.set_uvalue((uv, ee))
             iso.n = n
