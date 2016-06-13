@@ -272,7 +272,7 @@ class DVCAnalysis(Analysis):
             elif key == 'reviewed':
                 self.icfactor_reviewed = v
 
-    def load_raw_data(self, keys=None):
+    def load_raw_data(self, keys=None, n_only=False):
         def format_blob(blob):
             return base64.b64decode(blob)
 
@@ -293,12 +293,12 @@ class DVCAnalysis(Analysis):
             except KeyError:
                 continue
 
-            iso.unpack_data(format_blob(sd['blob']))
+            iso.unpack_data(format_blob(sd['blob']), n_only)
 
             det = sd['detector']
             bd = next((b for b in baselines if b['detector'] == det), None)
             if bd:
-                iso.baseline.unpack_data(format_blob(bd['blob']))
+                iso.baseline.unpack_data(format_blob(bd['blob']), n_only)
 
         # loop thru keys to make sure none were missed this can happen when only loading baseline
         if keys:
@@ -307,7 +307,7 @@ class DVCAnalysis(Analysis):
                 if bd:
                     for iso in isotopes.itervalues():
                         if iso.detector == k:
-                            iso.baseline.unpack_data(format_blob(bd['blob']))
+                            iso.baseline.unpack_data(format_blob(bd['blob']), n_only)
 
         for sn in sniffs:
             isok = sn['isotope']
@@ -318,7 +318,7 @@ class DVCAnalysis(Analysis):
                 iso = isotopes[isok]
             except KeyError:
                 continue
-            iso.sniff.unpack_data(format_blob(sn['blob']))
+            iso.sniff.unpack_data(format_blob(sn['blob']), n_only)
 
     def set_production(self, prod, r):
         self.production_name = prod

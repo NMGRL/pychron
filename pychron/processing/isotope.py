@@ -79,7 +79,7 @@ class BaseMeasurement(object):
             txt = hexlify(txt)
         return txt
 
-    def unpack_data(self, blob):
+    def unpack_data(self, blob, n_only=False):
         try:
             xs, ys = self._unpack_blob(blob)
         except (ValueError, TypeError, IndexError, AttributeError), e:
@@ -87,8 +87,12 @@ class BaseMeasurement(object):
             print e
             return
 
-        self.xs = array(xs)
-        self.ys = array(ys)
+        if n_only:
+            self.n = len(xs)
+        else:
+            self.xs = array(xs)
+            self.ys = array(ys)
+
         # print self.name, self.xs.shape, self.ys.shape
         # print self.name, self.ys
 
