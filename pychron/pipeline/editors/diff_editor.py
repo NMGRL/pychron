@@ -247,7 +247,7 @@ class DiffEditor(BaseTraitsEditor):
             # i = iso.get_intensity()
             i = iso.get_interference_corrected_value()
 
-            ri = iso.total_value
+            ri = riso.total_value
             vs.append(Value(name=func('Total'),
                             lvalue=nominal_value(i),
                             rvalue=nominal_value(ri)))
