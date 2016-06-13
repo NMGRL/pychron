@@ -167,7 +167,7 @@ class BrowserTask(BaseBrowserTask):
         from pychron.pipeline.editors.diff_editor import DiffEditor
         editor = DiffEditor(recaller=recaller)
         left.set_stored_value_states(True, save=True)
-        left.load_raw_data()
+        left.load_raw_data(n_only=True)
         if editor.setup(left):
             editor.set_diff(left)
             self._open_editor(editor)
