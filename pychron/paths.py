@@ -479,6 +479,11 @@ class Paths(object):
         self.series_template = join(self.pipeline_template_dir, 'series.yaml')
         build_directories()
 
+    def hidden_path(self, basename):
+        from pychron.globals import globalv
+        basename = '{}.{}'.format(basename, globalv.username)
+        return os.path.join(self.hidden_dir, basename)
+
     def write_defaults(self):
         if os.environ.get('TRAVIS_CI', 'False') == 'False' and os.environ.get('RTD', 'False') == 'False':
             self._write_default_files()

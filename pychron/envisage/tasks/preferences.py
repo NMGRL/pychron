@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traits.api import Directory, Bool, String, Float
+from traits.api import Directory, Bool, String, Float, Int
 from traitsui.api import View, Item, VGroup
 
 # ============= standard library imports ========================
@@ -77,6 +77,7 @@ class BrowserPreferences(BasePreferencesHelper):
     preferences_path = 'pychron.browser'
     recent_hours = Float
     reference_hours_padding = Float
+    max_history = Int
 
 
 class BrowserPreferencesPane(PreferencesPane):
@@ -89,7 +90,10 @@ class BrowserPreferencesPane(PreferencesPane):
                       tooltip='Number of hours to use for RECENT_... filtering'),
                  Item('reference_hours_padding',
                       label='References Padding (hrs)',
-                      tooltip='Padding in hours when finding associated references'))
+                      tooltip='Padding in hours when finding associated references'),
+                 Item('max_history', label='Max. Analysis Sets',
+                      tooltip='Maximum number of analysis sets to maintain')
+                 )
         return v
 
 # ============= EOF =============================================

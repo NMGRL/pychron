@@ -58,8 +58,13 @@ class SampleBrowserModel(BrowserModel):
     # def drop_factory(self, item):
     #     print 'dropadfs', item
     #     return item
+    def dump_browser(self):
+        super(SampleBrowserModel, self).dump_browser()
+        self.analysis_table.dump()
 
     def activated(self, force=False):
+        self.analysis_table.load()
+
         if not self.is_activated or force:
             self.load_browser_options()
             if self.sample_view_active:
@@ -150,9 +155,18 @@ class SampleBrowserModel(BrowserModel):
 
     def dump(self):
         self.time_view_model.dump_filter()
+        self.analysis_table.dump()
         super(SampleBrowserModel, self).dump()
 
     # handlers
+    def _analysis_set_changed(self, new):
+        self.debug('analysis set changed={}'.format(new))
+        ans = self.analysis_table.get_analysis_set(new)
+        with self.db.session_ctx():
+            ans = self.db.get_analyses_uuid([a[0] for a in ans])
+            xx = self._make_records(ans)
+            self.analysis_table.set_analyses(xx)
+
     def _find_references_button_fired(self):
         self.debug('find references button fired')
         if self.sample_view_active:
@@ -249,6 +263,10 @@ class SampleBrowserModel(BrowserModel):
         return TimeViewModel(db=self.db)
 
     def _analysis_table_default(self):
-        return AnalysisTable()
+        at = AnalysisTable()
+        at.load()
+        at.on_trait_change(self._analysis_set_changed, 'analysis_set')
+        bind_preference(at, 'max_history', 'pychron.browser.max_history')
+        return at
 
 # ============= EOF =============================================

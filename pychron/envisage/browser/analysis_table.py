@@ -16,13 +16,18 @@
 
 # ============= enthought library imports =======================
 from traits.api import List, Any, Str, Enum, Bool, Event, Property, cached_property, Instance, DelegatesTo, \
-    CStr
+    CStr, Int
 # ============= standard library imports ========================
+import json
+import os
+from collections import OrderedDict
+from datetime import datetime
 # ============= local library imports  ==========================
 from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.core.fuzzyfinder import fuzzyfinder
 from pychron.envisage.browser.adapters import AnalysisAdapter
 from pychron.core.ui.table_configurer import AnalysisTableConfigurer
+from pychron.paths import paths
 
 
 def sort_items(ans):
@@ -55,6 +60,48 @@ class AnalysisTable(ColumnSorterMixin):
     tabular_adapter = Instance(AnalysisAdapter)
     append_replace_enabled = Bool(True)
 
+    analysis_set = Str
+    analysis_set_names = List
+    _analysis_sets = None
+    max_history = Int
+
+    def __init__(self, *args, **kw):
+        super(AnalysisTable, self).__init__(*args, **kw)
+
+        self._analysis_sets = OrderedDict()
+
+    def load(self):
+        p = paths.hidden_path('analysis_sets')
+        if os.path.isfile(p):
+            with open(p, 'r') as rfile:
+                jd = json.load(rfile, object_pairs_hook=OrderedDict)
+                self._analysis_sets = jd
+                self.analysis_set_names = list(reversed(jd.keys()))
+
+    def dump(self):
+        p = paths.hidden_path('analysis_sets')
+        with open(p, 'w') as wfile:
+            json.dump(self._analysis_sets, wfile)
+
+    def add_analysis_set(self):
+        if self.analyses:
+            aset = [(a.uuid, a.record_id) for a in self.analyses]
+            if aset:
+                if len(aset) > 1:
+                    name = '{} -- {}'.format(aset[0][1], aset[-1][1])
+                else:
+                    name = aset[0][1]
+
+            name = '{} ({})'.format(name, datetime.now().strftime('%m/%d/%y'))
+            self._analysis_sets[name] = aset
+
+            if self.max_history:
+                while len(self._analysis_sets) > self.max_history:
+                    self._analysis_sets.popitem(last=False)
+
+    def get_analysis_set(self, key):
+        return self._analysis_sets[key]
+
     def set_tags(self, tag, items):
         for i in items:
             ai = next((a for a in self.oanalyses if a.uuid == i.uuid), None)
@@ -80,25 +127,15 @@ class AnalysisTable(ColumnSorterMixin):
             aa.extend(ans)
         else:
             aa = ans
-            # aa = sorted(aa, key=lambda x: x.timestampf)
-            # self.oanalyses = self.analyses = aa  # sorted(aa, key=lambda x: (x.identifier, x.aliquot, x.step))
-        # else:
-        #     ans = sorted(ans, key=lambda x: x.timestampf)
-        #     self.analyses = ans
-        #     self.oanalyses = ans
 
         self.oanalyses = self.analyses = sort_items(aa)
 
         self.calculate_dts(self.analyses)
-        # self._analysis_filter_parameter_changed(True)
+        self.add_analysis_set()
 
     def calculate_dts(self, ans):
         if ans and len(ans) > 1:
-            n = len(ans)
-            # st = time.time()
             self._python_dt(ans)
-            # et = (time.time() - st) * 1e6
-            # print 'python time: {:0.2f} n: {} avg: {:0.4f}'.format(et, n, et / n)
 
     def _python_dt(self, ans):
         ref = ans[0]
@@ -140,17 +177,6 @@ class AnalysisTable(ColumnSorterMixin):
 
     def _analysis_filter_comparator_changed(self):
         self._analysis_filter_changed(self.analysis_filter)
-
-    # def _analysis_filter_parameter_changed(self, new):
-    #     if new:
-    #         vs = []
-    #         p = self._get_analysis_filter_parameter()
-    #         for si in self.oanalyses:
-    #             v = getattr(si, p)
-    #             if v not in vs:
-    #                 vs.append(v)
-    #
-    #         self.analysis_filter_values = vs
 
     def _get_analysis_filter_parameter(self):
         p = self.analysis_filter_parameter
