@@ -66,7 +66,7 @@ class ValueTabularAdapter(TabularAdapter):
 
     def _get_percent_diff_text(self):
         v = self.item.percent_diff
-        return self._get_value_text(v, n=2)
+        return self._get_value_text(v, n=5)
 
     def _get_lvalue_text(self):
         v = self.item.lvalue
@@ -248,7 +248,10 @@ class DiffEditor(BaseTraitsEditor):
             # i = iso.get_interference_corrected_value()
 
             # baseline, blank corrected
-            i = iso.get_non_detector_corrected_value()
+            if iso.decay_corrected:
+                i = iso.decay_corrected
+            else:
+                i = iso.get_intensity()
 
             ri = riso.total_value
             vs.append(Value(name=func('Total'),
@@ -266,7 +269,7 @@ class DiffEditor(BaseTraitsEditor):
             vs.append(Value(name=func('Filter SD'), lvalue=iso.filter_outliers_dict.get('std_devs'),
                             rvalue=riso.filter_outliers_dict.get('std_devs')))
             vs.append(Value(name=func('IC'), lvalue=nominal_value(iso.ic_factor),
-                            rvalue=nominal_value(iso.ic_factor)))
+                            rvalue=nominal_value(riso.ic_factor)))
 
         for a in isotopes:
             func = pfunc(a)
