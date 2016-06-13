@@ -148,6 +148,25 @@ class ArArAnalysisTable(Base):
     PctRad = doublecolumn()
     PctRadEr = doublecolumn()
 
+    Rad4039 = doublecolumn()
+    Rad4039Er = doublecolumn()
+
+    R3639Cor = doublecolumn()
+    ErR3639 = doublecolumn()
+    R3739Cor = doublecolumn()
+    ErR3739 = doublecolumn()
+    R3839Cor = doublecolumn()
+    ErR3839 = doublecolumn()
+    R4039Cor = doublecolumn()
+    ErR4039 = doublecolumn()
+
+    ClOverK = doublecolumn()
+    ClOverKEr = doublecolumn()
+    CaOverK = doublecolumn()
+    CaOverKEr = doublecolumn()
+
+    Cl3839 = doublecolumn()
+
 
 class BaselinesChangeableItemsTable(Base):
     __tablename__ = 'BaselinesChangeableItemsTable'
