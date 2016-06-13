@@ -61,15 +61,18 @@ class IsotopeGroup(HasTraits):
 
         for i in self.iter_isotopes():
             i.use_stored_value = state
+            i.baseline.use_stored_value = state
 
     def revert_use_stored_values(self):
         if self._sv:
-            for i,v in zip(self.iter_isotopes(), self._sv):
-                i.use_stored_value = v
+            for i, v in zip(self.iter_isotopes(), self._sv):
+                i.use_stored_value = v[0]
+                i.baseline.use_stored_value = v[1]
 
     _sv = None
+
     def save_stored_value_state(self):
-        self._sv = [i.use_stored_value for i in self.iter_isotopes()]
+        self._sv = [(i.use_stored_value, i.baseline.use_stored_value) for i in self.iter_isotopes()]
 
     def iter_isotopes(self):
         return (self.isotopes[k] for k in self.isotope_keys)
@@ -224,8 +227,7 @@ class IsotopeGroup(HasTraits):
         else:
             for i in (iso, '{}{}'.format(iso, det)):
                 if i in isotopes:
-                    ii = isotopes[i]
-                    _append(ii)
+                    _append(isotopes[i])
                     return True
 
     def clear_baselines(self):

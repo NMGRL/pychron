@@ -245,7 +245,10 @@ class DiffEditor(BaseTraitsEditor):
 
             # disc/ic but not decay
             # i = iso.get_intensity()
-            i = iso.get_interference_corrected_value()
+            # i = iso.get_interference_corrected_value()
+
+            # baseline, blank corrected
+            i = iso.get_non_detector_corrected_value()
 
             ri = riso.total_value
             vs.append(Value(name=func('Total'),
