@@ -52,6 +52,7 @@ class MassSpecAnalysis(Analysis):
         self.rad40_percent = ufloat(0, 0)
         self.rad4039 = ufloat(0, 0)
 
+        arar = None
         if obj.araranalyses:
             arar = obj.araranalyses[-1]
             if arar:
