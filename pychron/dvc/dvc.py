@@ -171,8 +171,11 @@ class DVC(Loggable):
 
         x = datetime.now()
         now = time.mktime(x.timetuple())
+        if lambda_k:
+            isotope_group.arar_constants.lambda_k = lambda_k
+
         isotope_group.trait_set(j=j,
-                                lambda_k=lambda_k,
+                                # lambda_k=lambda_k,
                                 production_ratios=prod.to_dict(RATIO_KEYS),
                                 interference_corrections=prod.to_dict(INTERFERENCE_KEYS),
                                 chron_segments=cs.get_chron_segments(x),

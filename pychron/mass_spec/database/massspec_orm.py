@@ -424,6 +424,18 @@ class PreferencesTable(Base):
     DelOutliersAfterFit = Column(Enum)
     NFilterIter = Column(Integer)
     OutlierSigmaFactor = Column(Float)
+
+    Lambda40Kepsilon = doublecolumn()
+    Lambda40KepsilonEr = doublecolumn()
+    Lambda40KBeta = doublecolumn()
+    Lambda40KBetaEr = doublecolumn()
+    LambdaAr37 = doublecolumn()
+    LambdaAr39 = doublecolumn()
+    LambdaCl36 = doublecolumn()
+    LambdaAr37Er = doublecolumn()
+    LambdaAr39Er = doublecolumn()
+    LambdaCl36Er = doublecolumn()
+
     changeable_items = relationship('AnalysesChangeableItemsTable', backref='preferences_set')
 
 

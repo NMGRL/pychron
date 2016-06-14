@@ -236,6 +236,10 @@ class DVCAnalysis(Analysis):
                 i = self.isotopes[iso]
                 self._load_value_error(i, v)
 
+                for k in ('n', 'fn'):
+                    if k in iso:
+                        setattr(i, k, iso[k])
+
                 i.set_fit(v['fit'], notify=False)
                 i.set_filter_outliers_dict(filter_outliers=v.get('filter_outliers', False),
                                            iterations=v.get('iterations', 0),
@@ -271,6 +275,9 @@ class DVCAnalysis(Analysis):
                 self.set_ic_factor(key, v['value'] or 0, v['error'] or 0)
             elif key == 'reviewed':
                 self.icfactor_reviewed = v
+
+    def check_has_n(self):
+        return any((i._n is not None for i in self.iter_isotopes()))
 
     def load_raw_data(self, keys=None, n_only=False):
         def format_blob(blob):
@@ -366,6 +373,8 @@ class DVCAnalysis(Analysis):
         def update(d, i):
             fd = i.filter_outliers_dict
             d.update(fit=i.fit, value=float(i.value), error=float(i.error),
+                     n=i.n, fn=i.fn,
+                     include_baseline_error=i.include_baseline_error,
                      filter_outliers=fd.get('filter_outliers', False),
                      iterations=fd.get('iterations', 0),
                      std_devs=fd.get('std_devs', 0))

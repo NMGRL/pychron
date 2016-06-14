@@ -211,19 +211,24 @@ class DiffEditor(BaseTraitsEditor):
             vs.append(Value(name=u'Age {}'.format(PLUSMINUS_ONE_SIGMA),
                             lvalue=left.age_err or 0,
                             rvalue=right.age_err or 0))
-            # vs.append(Value(name=u'\u00b1 w/o JEr',
-            #                 lvalue=std_dev(left.uage_w_j_err),
-            #                 rvalue=right.age_err_w_j))
             vs.append(Value(name='40Ar* %',
                             lvalue=nominal_value(left.rad40_percent or 0),
                             rvalue=nominal_value(right.rad40_percent or 0)))
-
             vs.append(Value(name='Rad4039',
                             lvalue=nominal_value(left.uF),
                             rvalue=nominal_value(right.rad4039)))
             vs.append(Value(name=u'Rad4039 {}'.format(PLUSMINUS_ONE_SIGMA),
                             lvalue=std_dev(left.uF),
                             rvalue=std_dev(right.rad4039)))
+
+            constants = left.arar_constants
+            vv = [Value(name=n, lvalue=nominal_value(getattr(constants, k)),
+                        rvalue=nominal_value(getattr(right, k)))
+                  for n, k in (('Lambda K', 'lambda_k'),
+                               ('Lambda Ar37', 'lambda_Ar37'),
+                               ('Lambda Ar37', 'lambda_Ar37'),
+                               ('Lambda Cl36', 'lambda_Cl36'))]
+            vs.extend(vv)
 
         def filter_str(ii):
             fd = ii.filter_outliers_dict.get('filter_outliers')
@@ -243,14 +248,11 @@ class DiffEditor(BaseTraitsEditor):
                             rvalue=nominal_value(ri)))
             vs.append(Value(name=func(PLUSMINUS_ONE_SIGMA), lvalue=std_dev(i), rvalue=std_dev(ri)))
 
-            # disc/ic but not decay
-            # i = iso.get_intensity()
-            # i = iso.get_interference_corrected_value()
-
-            # baseline, blank corrected
             if iso.decay_corrected:
+                # baseline, blank corrected, ic_corrected, decay_corrected
                 i = iso.decay_corrected
             else:
+                # baseline, blank corrected, ic_corrected
                 i = iso.get_intensity()
 
             ri = riso.total_value
@@ -282,12 +284,13 @@ class DiffEditor(BaseTraitsEditor):
             vs.append(Value(name=func('Bs N'), lvalue=baseline.n, rvalue=rbaseline.n))
             vs.append(Value(name=func('Bs fN'), lvalue=baseline.fn, rvalue=rbaseline.fn))
 
-            vs.append(StrValue(name=func('Filter'), lvalue=filter_str(iso), rvalue=filter_str(iso)))
-            vs.append(Value(name=func('Filter Iter'), lvalue=baseline.filter_outliers_dict.get('iterations'),
-                            rvalue=rbaseline.filter_outliers_dict.get('iterations')))
-            vs.append(Value(name=func('Filter SD'), lvalue=baseline.filter_outliers_dict.get('std_devs'),
-                            rvalue=rbaseline.filter_outliers_dict.get('std_devs')))
-            # self.right_baselines[a] = baseline
+            fv = StrValue(name=func('Bs Filter'), lvalue=filter_str(iso), rvalue=filter_str(iso))
+            vs.append(fv)
+            if not (fv.lvalue == 'no' and fv.rvalue == 'no'):
+                vs.append(Value(name=func('Bs Filter Iter'), lvalue=baseline.filter_outliers_dict.get('iterations'),
+                                rvalue=rbaseline.filter_outliers_dict.get('iterations')))
+                vs.append(Value(name=func('Bs Filter SD'), lvalue=baseline.filter_outliers_dict.get('std_devs'),
+                                rvalue=rbaseline.filter_outliers_dict.get('std_devs')))
 
         if not self.is_blank:
             for a in isotopes:
