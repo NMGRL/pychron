@@ -127,8 +127,8 @@ class FluxItem(BaseEditItem):
 
     def __init__(self, item, *args, **kw):
         self.item = item
-        self.ovalue = j = nominal_value(item.j)
-        self.oerror = e = std_dev(item.j)
+        self.ovalue = j = nominal_value(item.j or 0)
+        self.oerror = e = std_dev(item.j or 0)
 
         self.trait_setq(value=j, error=e)
 
@@ -207,6 +207,9 @@ class AnalysisEditView(HasTraits):
     # private
     def _load_items(self):
         analysis = self.editor.analysis
+
+        is_blank = analysis.record_id.startswith('b')
+
         isos = analysis.isotopes
         ns = []
         bks = []
@@ -219,22 +222,24 @@ class AnalysisEditView(HasTraits):
 
             eiso = EditItem(iso)
             ns.append(eiso)
-
-            blank = EditItem(iso.blank)
-            bks.append(blank)
+            if not is_blank:
+                blank = EditItem(iso.blank)
+                bks.append(blank)
 
             baseline = BaselineEditItem(iso.baseline)
             bs.append(baseline)
 
-            ic = ICFactorEditItem(iso)
-            ics.append(ic)
+            if not is_blank:
+                ic = ICFactorEditItem(iso)
+                ics.append(ic)
 
         self.isotopes = ns
         self.blanks = bks
         self.baselines = bs
         self.ic_factors = ics
 
-        self.flux = FluxItem(analysis)
+        if not is_blank:
+            self.flux = FluxItem(analysis)
 
     def _set_ic_factor(self, det, v):
         isos = self.editor.analysis.isotopes
@@ -353,13 +358,15 @@ class AnalysisEditView(HasTraits):
                                  editor=TableEditor(
                                      sortable=False,
                                      columns=cols)),
-                           label='Blanks', show_border=True)
+                           label='Blanks', show_border=True,
+                           defined_when='blanks')
 
         icgrp = VGroup(UItem('ic_factors',
                              editor=TableEditor(
                                  sortable=False,
                                  columns=det_cols)),
-                       label='IC Factors', show_border=True)
+                       label='IC Factors', show_border=True,
+                       defined_when='ic_factors')
 
         bgrp = HGroup(icon_button_editor('revert_button',
                                          'arrow_undo',
@@ -377,6 +384,7 @@ class AnalysisEditView(HasTraits):
                           Label(PLUSMINUS),
                           UItem('object.flux.error'),
                           label='Flux (J)',
+                          defined_when='object.flux',
                           show_border=True)
         v = View(VGroup(Group(iso_grp, baseline_grp,
                               icgrp,
