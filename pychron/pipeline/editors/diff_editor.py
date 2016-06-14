@@ -76,9 +76,9 @@ class ValueTabularAdapter(TabularAdapter):
         v = self.item.rvalue
         return self._get_value_text(v)
 
-    def _get_value_text(self, v, n=8):
+    def _get_value_text(self, v, n=6):
         if isinstance(v, float):
-            v = floatfmt(v, n=n, use_scientific=True)
+            v = floatfmt(v, n=n, s=5, use_scientific=True)
         return v
 
     def _get_diff_text(self):
@@ -111,7 +111,7 @@ class Value(HasTraits):
     def _get_enabled(self):
         t = True
         d = self.percent_diff
-        if d !='NaN':
+        if d != 'NaN':
             t = abs(d) > DIFF_TOLERANCE_PERCENT
         return t
 
@@ -258,7 +258,8 @@ class DiffEditor(BaseTraitsEditor):
                 vs.append(Value(name=func('Total'),
                                 lvalue=nominal_value(i),
                                 rvalue=nominal_value(ri)))
-                vs.append(Value(name=func(u'Total {}'.format(PLUSMINUS_ONE_SIGMA)), lvalue=std_dev(i), rvalue=std_dev(ri)))
+                vs.append(
+                    Value(name=func(u'Total {}'.format(PLUSMINUS_ONE_SIGMA)), lvalue=std_dev(i), rvalue=std_dev(ri)))
 
             vs.append(Value(name=func('N'), lvalue=iso.n, rvalue=riso.n))
             vs.append(Value(name=func('fN'), lvalue=iso.fn, rvalue=riso.fn))

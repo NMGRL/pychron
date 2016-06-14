@@ -180,7 +180,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
             q = sess.query(BaselinesChangeableItemsTable)
             q = q.filter(BaselinesChangeableItemsTable.BslnID == bslnid)
             q = q.order_by(BaselinesChangeableItemsTable.LastSaved.desc())
-            return self._query_first(q, verbose_query=True)
+            return self._query_first(q, verbose_query=False)
 
     def get_material(self, name):
         return self._retrieve_item(MaterialTable, name, 'Material')
