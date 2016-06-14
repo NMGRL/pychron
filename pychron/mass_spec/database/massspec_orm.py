@@ -171,9 +171,7 @@ class ArArAnalysisTable(Base):
 class BaselinesChangeableItemsTable(Base):
     __tablename__ = 'BaselinesChangeableItemsTable'
     BslnID = Column(Integer, primary_key=True)
-    #    BslnID = Column(Integer, index=True)
-    #    BslnID = ForeignKey('baselinestable.BslnID')
-    #    BslnID = Column(Integer, ForeignKey('baselinestable.BslnID'), primary_key=True)
+    LastSaved = Column(TIMESTAMP)
     Fit = Column(Integer, ForeignKey('FitTypeTable.Fit'))
     DataReductionSessionID = Column(Integer)
     InfoBlob = Column(BLOB)
