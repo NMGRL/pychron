@@ -242,18 +242,19 @@ class DiffEditor(BaseTraitsEditor):
                             rvalue=nominal_value(ri)))
             vs.append(Value(name=func(PLUSMINUS_ONE_SIGMA), lvalue=std_dev(i), rvalue=std_dev(ri)))
 
-            if iso.decay_corrected:
-                # baseline, blank corrected, ic_corrected, decay_corrected
-                i = iso.decay_corrected
-            else:
-                # baseline, blank corrected, ic_corrected
-                i = iso.get_intensity()
+            if not self.is_blank:
+                if iso.decay_corrected:
+                    # baseline, blank corrected, ic_corrected, decay_corrected
+                    i = iso.decay_corrected
+                else:
+                    # baseline, blank corrected, ic_corrected
+                    i = iso.get_intensity()
 
-            ri = riso.total_value
-            vs.append(Value(name=func('Total'),
-                            lvalue=nominal_value(i),
-                            rvalue=nominal_value(ri)))
-            vs.append(Value(name=func(u'Total {}'.format(PLUSMINUS_ONE_SIGMA)), lvalue=std_dev(i), rvalue=std_dev(ri)))
+                ri = riso.total_value
+                vs.append(Value(name=func('Total'),
+                                lvalue=nominal_value(i),
+                                rvalue=nominal_value(ri)))
+                vs.append(Value(name=func(u'Total {}'.format(PLUSMINUS_ONE_SIGMA)), lvalue=std_dev(i), rvalue=std_dev(ri)))
 
             vs.append(Value(name=func('N'), lvalue=iso.n, rvalue=riso.n))
             vs.append(Value(name=func('fN'), lvalue=iso.fn, rvalue=riso.fn))
