@@ -28,7 +28,7 @@ from pychron.core.helpers.formatting import floatfmt
 from pychron.mass_spec.mass_spec_recaller import MassSpecRecaller
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
-DIFF_TOLERANCE = 1e-8
+DIFF_TOLERANCE_PERCENT = 0.01
 
 
 class ValueTabularAdapter(TabularAdapter):
@@ -78,21 +78,15 @@ class ValueTabularAdapter(TabularAdapter):
 
     def _get_value_text(self, v, n=8):
         if isinstance(v, float):
-            v = floatfmt(v, n=n)
+            v = floatfmt(v, n=n, use_scientific=True)
         return v
 
     def _get_diff_text(self):
         v = self.item.diff
         if isinstance(v, float):
-            if abs(v) < DIFF_TOLERANCE:
-                v = ''
-            else:
-                v = floatfmt(v, n=8)
+            v = floatfmt(v, n=8, use_scientific=True)
         elif isinstance(v, bool):
             v = '---' if v else ''
-
-        if not v:
-            v = ''
 
         return v
 
@@ -115,7 +109,7 @@ class Value(HasTraits):
         return self.lvalue - self.rvalue
 
     def _get_enabled(self):
-        return abs(self.diff) > DIFF_TOLERANCE
+        return abs(self.percent_diff) > DIFF_TOLERANCE_PERCENT
 
 
 class StrValue(Value):
