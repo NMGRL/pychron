@@ -28,6 +28,17 @@ from pychron.processing.isotope import Isotope, Baseline
 from pychron.pychron_constants import IRRADIATION_KEYS
 
 
+def get_fn(blob):
+    fn = None
+    if blob is not None:
+        ps = blob.strip().split('\n')
+        fn = len(ps)
+        if fn == 1 and ps[0] == '':
+            fn = 0
+
+    return fn
+
+
 class Blob:
     def __init__(self, v):
         self._buf = StringIO.StringIO(v)
@@ -159,12 +170,19 @@ class MassSpecAnalysis(Analysis):
     def sync_fn(self, key, pdpblob):
         if pdpblob:
             iso = self.isotopes[key]
-            iso.fn = iso.n - len(pdpblob.strip().split('\n'))
+            fn = get_fn(pdpblob)
+            if fn:
+                iso.fn = iso.n - fn
 
     def sync_baselines(self, key, infoblob, pdpblob):
-        fn = None
-        if pdpblob is not None:
-            fn = len(pdpblob.strip().split('\n'))
+        fn = get_fn(pdpblob)
+        # fn = None
+        # if pdpblob is not None:
+        # print 'blobl',pdpblob
+        # print 'stip',pdpblob.strip()
+        # print 'stip', map(ord, pdpblob.strip())
+        # print 'split', pdpblob.strip().split('\n')
+        # fn = len(pdpblob.strip().split('\n'))
 
         v, e = self._extract_average_baseline(infoblob)
         for iso in self.isotopes.itervalues():
