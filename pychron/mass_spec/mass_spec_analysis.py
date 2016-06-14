@@ -159,12 +159,12 @@ class MassSpecAnalysis(Analysis):
     def sync_fn(self, key, pdpblob):
         if pdpblob:
             iso = self.isotopes[key]
-            iso.fn = iso.n - len(pdpblob.split('\n'))
+            iso.fn = iso.n - len(pdpblob.strip().split('\n'))
 
     def sync_baselines(self, key, infoblob, pdpblob):
         fn = None
         if pdpblob is not None:
-            fn = len(pdpblob.split('\n'))
+            fn = len(pdpblob.strip().split('\n'))
 
         v, e = self._extract_average_baseline(infoblob)
         for iso in self.isotopes.itervalues():
