@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from traits.api import List, Any, Str, Enum, Bool, Event, Property, cached_property, Instance, DelegatesTo, \
-    CStr, Int
+    CStr, Int, Button
 # ============= standard library imports ========================
 import json
 import os
@@ -60,10 +60,12 @@ class AnalysisTable(ColumnSorterMixin):
     tabular_adapter = Instance(AnalysisAdapter)
     append_replace_enabled = Bool(True)
 
+    add_analysis_set_button = Button
     analysis_set = Str
     analysis_set_names = List
     _analysis_sets = None
     max_history = Int
+    suppress_load_analysis_set = False
 
     def __init__(self, *args, **kw):
         super(AnalysisTable, self).__init__(*args, **kw)
@@ -83,7 +85,7 @@ class AnalysisTable(ColumnSorterMixin):
         with open(p, 'w') as wfile:
             json.dump(self._analysis_sets, wfile)
 
-    def add_analysis_set(self):
+    def add_analysis_set(self, current=False):
         if self.analyses:
             aset = [(a.uuid, a.record_id) for a in self.analyses]
             if aset:
@@ -98,6 +100,7 @@ class AnalysisTable(ColumnSorterMixin):
             if self.max_history:
                 while len(self._analysis_sets) > self.max_history:
                     self._analysis_sets.popitem(last=False)
+            return name
 
     def get_analysis_set(self, key):
         return self._analysis_sets[key]
@@ -157,6 +160,16 @@ class AnalysisTable(ColumnSorterMixin):
         rsd.edit_traits()
 
     # handlers
+    def _add_analysis_set_button_fired(self):
+        name = self.add_analysis_set()
+        if name:
+            self.dump()
+            self.load()
+
+            self.suppress_load_analysis_set = True
+            self.analysis_set = name
+            self.suppress_load_analysis_set = False
+
     def _analyses_items_changed(self, old, new):
         if self.sort_suppress:
             return
