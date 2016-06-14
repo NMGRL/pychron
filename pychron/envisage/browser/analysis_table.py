@@ -85,9 +85,13 @@ class AnalysisTable(ColumnSorterMixin):
         with open(p, 'w') as wfile:
             json.dump(self._analysis_sets, wfile)
 
-    def add_analysis_set(self, current=False):
+    def add_analysis_set(self):
         if self.analyses:
-            aset = [(a.uuid, a.record_id) for a in self.analyses]
+            ans = self.selected
+            if not ans:
+                ans = self.analyses
+
+            aset = [(a.uuid, a.record_id) for a in ans]
             if aset:
                 if len(aset) > 1:
                     name = '{} -- {}'.format(aset[0][1], aset[-1][1])
