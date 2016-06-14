@@ -272,7 +272,8 @@ class DiffEditor(BaseTraitsEditor):
                             rvalue=riso.filter_outliers_dict.get('std_devs')))
             vs.append(Value(name=func('IC'), lvalue=nominal_value(iso.ic_factor),
                             rvalue=nominal_value(riso.ic_factor)))
-
+            vs.append(Value(name=func(u'IC {}'.format(PLUSMINUS_ONE_SIGMA)), lvalue=std_dev(iso.ic_factor),
+                            rvalue=std_dev(riso.ic_factor)))
         for a in isotopes:
             func = pfunc(a)
             baseline = left.isotopes[a].baseline
