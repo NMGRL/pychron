@@ -171,11 +171,10 @@ class DataCollector(Consoleable):
         return time.time() - self.starttime
 
     def _get_data(self, dets=None):
-        data = self.data_generator.next()
+        data = next(self.data_generator)
         if data:
             if dets:
-                data = zip(*[(k, s) for k, s in zip(*data)
-                             if k in dets])
+                data = zip(*[d for d in zip(*data) if d[0] in dets])
             self._data = data
             return data
 
@@ -219,7 +218,7 @@ class DataCollector(Consoleable):
         try:
             return signals[keys.index(det)]
         except ValueError:
-            if not det in self._warned_no_det:
+            if det not in self._warned_no_det:
                 self.warning('Detector {} is not available'.format(det))
                 self._warned_no_det.append(det)
                 self.canceled = True

@@ -325,7 +325,7 @@ class AutomatedRun(Loggable):
         if self.plot_panel:
             self.plot_panel.is_baseline = False
 
-        self.persister.build_tables(group, self._active_detectors)
+        self.persister.build_tables(group, self._active_detectors, ncounts)
 
         self.multi_collector.is_baseline = False
         self.multi_collector.fit_series_idx = fit_series
@@ -384,7 +384,7 @@ class AutomatedRun(Loggable):
 
         gn = 'baseline'
         self.debug('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Baseline')
-        self.persister.build_tables(gn, self._active_detectors)
+        self.persister.build_tables(gn, self._active_detectors, ncounts)
 
         ion = self.ion_optics_manager
 
@@ -2060,7 +2060,7 @@ anaylsis_type={}
 
         gn = 'sniff'
 
-        self.persister.build_tables(gn, self._active_detectors)
+        self.persister.build_tables(gn, self._active_detectors, ncounts)
         # mem_log('build tables')
 
         check_conditionals = False

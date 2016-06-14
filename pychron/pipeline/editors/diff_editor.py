@@ -109,7 +109,11 @@ class Value(HasTraits):
         return self.lvalue - self.rvalue
 
     def _get_enabled(self):
-        return abs(self.percent_diff) > DIFF_TOLERANCE_PERCENT
+        t = True
+        d = self.percent_diff
+        if d !='NaN':
+            t = abs(d) > DIFF_TOLERANCE_PERCENT
+        return t
 
 
 class StrValue(Value):

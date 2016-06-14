@@ -301,7 +301,14 @@ class OLSRegressor(BaseRegressor):
             return [0, 0]
 
     def _engine_factory(self, fy, X, check_integrity=True):
-        return OLS(fy, X)
+        if self._ols:
+            self._ols.exog = X
+            self._ols.endog = fy
+            self._ols.initialize()
+
+            return self._ols
+        else:
+            return OLS(fy, X)
 
     def _get_degree(self):
         return self._degree
@@ -346,50 +353,8 @@ class OLSRegressor(BaseRegressor):
         if xs is None:
             xs = self.clean_xs
 
-        cols = [pow(xs, i) for i in range(self.degree + 1)]
-        X = column_stack(cols)
-        return X
-
-        # @cached_property
-        # def _get_mswd(self):
-        #     self.valid_mswd = False
-        #     if self._degree == 1:
-        #         # a = self.intercept
-        #         # b = self.slope
-        #         coeffs = self._calculate_coefficients()
-        #         if not len(coeffs):
-        #             self.calculate()
-        #             coeffs = self._calculate_coefficients()
-        #
-        #         if len(coeffs):
-        #             # x = self.xs
-        #             # y = self.ys
-        #             #
-        #             # sx = self.xserr
-        #             # sy = self.yserr
-        #
-        #             # if not len(sx):
-        #             #     sx=zeros(self.n)
-        #             # if not len(sy):
-        #             #     sy=zeros(self.n)
-        #
-        #             # x=self._clean_array(x)
-        #             # y=self._clean_array(y)
-        #             # sx=self._clean_array(sx)
-        #             # sy=self._clean_array(sy)
-        #             x, y, sx, sy = self.clean_xs, self.clean_ys, self.clean_xserr, self.clean_yserr
-        #             if self._check_integrity(x, y) and \
-        #                     self._check_integrity(x, sx) and \
-        #                     self._check_integrity(x, sy):
-        #                 m = calculate_mswd2(x, y, sx, sy, coeffs[1], coeffs[0])
-        #                 self.valid_mswd = validate_mswd(m, len(ys), k=2)
-        #                 return m
-        #             else:
-        #                 return 'NaN'
-        #         else:
-        #             return 'NaN'
-        #     else:
-        #         return super(OLSRegressor, self)._get_mswd()
+        cols = [pow(xs, i) for i in xrange(self.degree + 1)]
+        return column_stack(cols)
 
 
 class PolynomialRegressor(OLSRegressor):
@@ -415,33 +380,6 @@ class MultipleLinearRegressor(OLSRegressor):
         if c == 2:
             xs = column_stack((xs, ones(r)))
             return xs
-
-            # def predict_error_matrix(self, x, error_calc=None):
-            #     """
-            #         predict the error in y using matrix math
-            #         draper and smith chapter 2.4 page 56
-            #
-            #         Xk'=(1, x, x**2...x)
-            #     """
-            #     if error_calc is None:
-            #         error_calc=self.error_calc_type
-            #
-            #     def calc_error(xi, sef):
-            #         Xk = self._get_X(xi).T
-            #         # Xk=column_stack((xs/, ones(r)))
-            #         covarM = matrix(self.var_covar)
-            #         varY_hat = (Xk.T * covarM * Xk)
-            #         # print varY_hat
-            #         # varY_hat = sum(diag(varY_hat))
-            #         if error_calc == 'SEM':
-            #             se = sef * sqrt(varY_hat)
-            #         else:
-            #             se = sqrt(sef ** 2 + sef ** 2 * varY_hat)
-            #
-            #         return se
-            #
-            #     sef = self.calculate_standard_error_fit()
-            #     return [calc_error(xi, sef) for xi in asarray(x)]
 
 
 if __name__ == '__main__':
