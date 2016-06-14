@@ -393,7 +393,9 @@ class HistoryView(DVCCommitView):
     def initialize(self, an):
         repo = self.repo
         cs = []
-        for a, b in (('TAG', 'tag'), ('ISOEVO', 'intercepts'),
+        for a, b in (('TAG', 'tag'),
+                     ('ISOEVO', 'intercepts'),
+                     ('ISOEVO', 'baselines'),
                      ('BLANKS', 'blanks'),
                      ('ICFactor', 'icfactors'),
                      ('IMPORT', ''),

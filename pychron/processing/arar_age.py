@@ -95,7 +95,7 @@ class ArArAge(IsotopeGroup):
 
     discrimination = None
 
-    lambda_k = None
+    # lambda_k = None
 
     # def __init__(self, *args, **kw):
     # HasTraits.__init__(self, *args, **kw)
@@ -398,7 +398,7 @@ class ArArAge(IsotopeGroup):
 
         arc = self.arar_constants
         age = age_equation(j, f, include_decay_error=include_decay_error,
-                           lambda_k=self.lambda_k,
+                           # lambda_k=self.lambda_k,
                            arar_constants=arc)
         # age = ufloat((1, 0.1))
         self.uage_w_j_err = age
@@ -412,7 +412,7 @@ class ArArAge(IsotopeGroup):
 
         j.std_dev = 0
         age = age_equation(j, f, include_decay_error=include_decay_error,
-                           lambda_k=self.lambda_k,
+                           # lambda_k=self.lambda_k,
                            arar_constants=arc)
 
         self.age = nominal_value(age)

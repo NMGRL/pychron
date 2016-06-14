@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 from traits.api import List, Str, Bool, Any, Enum, Button, \
     Int, Property, cached_property, DelegatesTo, Date, Instance, HasTraits, Event, Float
+from traits.trait_types import BaseStr
 from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
 from datetime import timedelta, datetime
@@ -34,6 +35,14 @@ from pychron.envisage.browser.record_views import ProjectRecordView, LabnumberRe
 from pychron.core.ui.table_configurer import SampleTableConfigurer
 from pychron.persistence_loggable import PersistenceLoggable
 from pychron.paths import paths
+
+
+class IdentifierStr(BaseStr):
+    def validate(self, obj, name, value):
+        if len(value) > 2:
+            return value
+        else:
+            self.error(obj, name, value)
 
 
 def filter_func(new, attr=None, comp=None):
@@ -95,13 +104,14 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     samples = List
     osamples = List
 
+    include_recent = True
     project_enabled = Bool(True)
     repository_enabled = Bool(True)
     principal_investigator_enabled = Bool(False)
 
     analysis_groups = List
 
-    identifier = Str
+    identifier = IdentifierStr(enter_set=True, auto_set=False)
 
     sample_filter = Str
 
@@ -109,7 +119,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
     selected_projects = Any
     selected_repositories = Any
-    selected_samples = Any
+    selected_samples = List
     selected_analysis_groups = Any
 
     dclicked_sample = Any
@@ -173,6 +183,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     selection_persistence_name = 'browser_selection'
 
     _suppress_post_update = False
+    _suppress_load_labnumbers = False
 
     def make_records(self, ans):
         return self._make_records(ans)
@@ -407,11 +418,14 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             self.warning_dialog('Specify Analysis Types or disable Analysis Type Filtering')
             return []
 
+        sams = []
         with db.session_ctx():
             ls = self._retrieve_labnumbers()
-            self.debug('_retrieve_labnumbers n={}'.format(len(ls)))
-
-            sams = self._load_sample_record_views(ls)
+            if ls:
+                self.debug('_retrieve_labnumbers n={}'.format(len(ls)))
+                sams = self._load_sample_record_views(ls)
+            else:
+                self.debug('No labnumbers')
 
         return sams
 
@@ -530,7 +544,33 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         load('experiments', self.repositories)
         load('samples', self.samples)
 
+    def _load_projects_for_principal_investigator(self):
+        ms = None
+        if self.mass_spectrometers_enabled:
+            ms = self.mass_spectrometer_includes
+
+        p_i = self.principal_investigator
+        self.debug('load projects for principal investigator= {}'.format(p_i))
+        db = self.db
+        with db.session_ctx():
+            ps = db.get_projects(principal_investigator=p_i,
+                                 mass_spectrometers=ms)
+
+            ps = self._make_project_records(ps, include_recent_first=True,
+                                            include_recent=True and self.include_recent)
+            old_selection = []
+            if self.selected_projects:
+                old_selection = [p.name for p in self.selected_projects]
+            self.projects = ps
+
+            if old_selection:
+                self.selected_projects = [p for p in ps if p.name in old_selection]
+
     # handlers
+    def _principal_investigator_changed(self, new):
+        if new:
+            self._load_projects_for_principal_investigator()
+
     def _identifier_changed(self, new):
         db = self.db
         if new:

@@ -52,6 +52,10 @@ class SceneCanvas(BaseDataCanvas):
                 li.visible = False
             self.request_redraw()
 
+    def update(self, *args, **kw):
+        if self.scene:
+            self.scene.request_layout()
+
     # private
     def _draw_underlay(self, gc, view_bounds=None, mode="normal"):
         if self.scene:
@@ -75,12 +79,12 @@ class SceneCanvas(BaseDataCanvas):
             gc.set_antialias(0)
             gc.set_line_join(JOIN_ROUND)
             offset = self.border_width
-            gc.move_to(self.x+offset, self.y+offset)
-            gc.line_to(self.x+offset, self.y2-offset)
-            gc.line_to(self.x2-offset, self.y2-offset)
-            gc.line_to(self.x2-offset, self.y+offset)
-            gc.line_to(self.x+offset, self.y+offset)
-            gc.line_to(self.x+offset, self.y2-offset)
+            gc.move_to(self.x + offset, self.y + offset)
+            gc.line_to(self.x + offset, self.y2 - offset)
+            gc.line_to(self.x2 - offset, self.y2 - offset)
+            gc.line_to(self.x2 - offset, self.y + offset)
+            gc.line_to(self.x + offset, self.y + offset)
+            gc.line_to(self.x + offset, self.y2 - offset)
             gc.close_path()
             gc.stroke_path()
 
@@ -95,4 +99,5 @@ class SceneCanvas(BaseDataCanvas):
     def _scene_default(self):
         if self.scene_klass:
             return self.scene_klass()
+
 # ============= EOF =============================================

@@ -61,13 +61,14 @@ class AddWorker(HasTraits):
 class AddSession(HasTraits):
     name = Str
     comment = lenstr(140)
+    title = Str('Add New Session')
 
     def traits_view(self):
         v = View(VGroup(Item('name', label='SessionName'),
                         VGroup(UItem('comment', style='custom'),
                                show_border=True,
                                label='Comment')),
-                 title='Add New Session',
+                 title=self.title,
                  kind='livemodal',
                  resizable=True,
                  buttons=['OK', 'Cancel'])

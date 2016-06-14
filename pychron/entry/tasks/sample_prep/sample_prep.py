@@ -19,13 +19,16 @@ from pyface.constant import OK
 from pyface.file_dialog import FileDialog
 from traits.api import HasTraits, Str, Bool, Property, Button, on_trait_change, List, \
     cached_property, Instance, Event, Date, Enum, Long
-from traitsui.api import View, UItem
+from traitsui.api import View, UItem, Item, EnumEditor
 # ============= standard library imports ========================
 import os
 import socket
 import paramiko
 # ============= local library imports  ==========================
 from pychron.dvc.dvc_irradiationable import DVCAble
+from pychron.entry.tasks.sample_prep.sample_locator import SampleLocator
+from pychron.paths import paths
+from pychron.persistence_loggable import PersistenceMixin
 
 DEBUG = False
 
@@ -50,6 +53,11 @@ class SampleRecord(HasTraits):
     material = Str
     grainsize = Str
     steps = List
+
+    def has_step(self, step):
+        for si in self.steps:
+            if getattr(si, step):
+                return True
 
 
 class PrepStepRecord(HasTraits):
@@ -92,7 +100,7 @@ class PrepStepRecord(HasTraits):
         self.edit_traits(view=v)
 
 
-class SamplePrep(DVCAble):
+class SamplePrep(DVCAble, PersistenceMixin):
     session = Str
     worker = Str
     sessions = Property(depends_on='worker, refresh_sessions')
@@ -117,14 +125,34 @@ class SamplePrep(DVCAble):
     add_session_button = Button
     add_worker_button = Button
     add_step_button = Button
+    edit_session_button = Button
 
     upload_image_button = Button
     selected_step = Instance(PrepStepRecord)
+
+    pattributes = ('worker', 'session', 'principal_investigator', 'project')
+    move_to_session_name = Str
+    move_to_sessions = List
+
+    fcrush = Bool
+    fsieve = Bool
+    fwash = Bool
+    facid = Bool
+    ffrantz = Bool
+    fheavy_liquid = Bool
+    fpick = Bool
+    fstatus = Enum('', 'Good', 'Bad', 'Use For Irradiation')
+
+    @property
+    def persistence_path(self):
+        return os.path.join(paths.hidden_dir, 'sample_prep')
 
     def activated(self):
 
         self._load_pis()
         self._load_workers()
+
+        self.load()
 
         if DEBUG:
             self.worker = self.workers[0]
@@ -135,9 +163,41 @@ class SamplePrep(DVCAble):
         self._load_session_samples()
 
     def prepare_destroy(self):
-        pass
+        self.dump()
+
+    def locate_sample(self):
+        locator = SampleLocator(dvc=self.dvc)
+        info = locator.edit_traits()
+        if info.result:
+            if locator.session:
+                self.worker = locator.session.worker_name
+                self.session = locator.session.name
+
+    def move_to_session(self):
+        nsession = self._get_new_session()
+        if nsession:
+            s = self.active_sample
+            sd = {'name': s.name, 'material': s.material, 'project': s.project}
+
+            self.dvc.move_sample_to_session(self.session, sd, nsession, self.worker)
+            self.active_sample = SampleRecord()
+            self._load_session_samples()
 
     # private
+    def _get_new_session(self):
+
+        self.move_to_sessions = [s for s in self.sessions if s != self.session]
+
+        v = View(Item('move_to_session_name',
+                      editor=EnumEditor(name='move_to_sessions')),
+                 title='Move to Session',
+                 buttons=['OK', 'Cancel'],
+                 resizable=True, kind='livemodal')
+
+        info = self.edit_traits(v)
+        if info.result:
+            return self.move_to_session_name
+
     def _add_session(self, obj, worker):
         self.dvc.add_sample_prep_session(obj.name, worker, obj.comment)
 
@@ -153,6 +213,7 @@ class SamplePrep(DVCAble):
             with self.dvc.session_ctx():
                 ss = self.dvc.get_sample_prep_samples(self.worker, self.session)
                 self.session_samples = [self._sample_record_factory(i) for i in ss]
+                self.osession_samples = self.session_samples
 
     def _load_workers(self):
         self.workers = self.dvc.get_sample_prep_worker_names()
@@ -206,6 +267,15 @@ class SamplePrep(DVCAble):
     #     return ims
 
     # handlers
+    @on_trait_change('fcrush, fsieve, fwash, facid, ffrantz, fheavy_liquid, fpick, fstatus')
+    def _handle_filter(self):
+        def test(si):
+            r = [si.has_step(f) for f in ('crush', 'sieve', 'wash', 'acid', 'heavy_liquid', 'pick', 'status')
+                 if getattr(self, 'f{}'.format(f))]
+            return all(r)
+
+        self.session_samples = [s for s in self.osession_samples if test(s)]
+
     def _active_sample_changed(self, new):
         if new:
             self._load_steps_for_sample(new)
@@ -228,6 +298,25 @@ class SamplePrep(DVCAble):
                 dvc.add_sample_prep_step(sa, self.worker, self.session, added=True)
 
             self._load_session_samples()
+
+    def _edit_session_button_fired(self):
+        oname = self.session
+        from pychron.entry.tasks.sample_prep.adder import AddSession
+        s = AddSession(title='Edit Selected Session')
+        with self.dvc.session_ctx():
+            obj = self.dvc.get_sample_prep_session(self.session, self.worker)
+            s.name = obj.name
+            s.comment = obj.comment
+
+        info = s.edit_traits()
+        if info.result:
+            kw = {'comment': s.comment}
+            if s.name != oname:
+                kw['name'] = s.name
+
+            self.dvc.update_sample_prep_session(oname, self.worker, **kw)
+            self.refresh_sessions = True
+            self.session = s.name
 
     def _add_session_button_fired(self):
         from pychron.entry.tasks.sample_prep.adder import AddSession

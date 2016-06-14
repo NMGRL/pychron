@@ -334,10 +334,10 @@ class MetaRepo(GitRepoManager):
             self.commit('Updated gains')
 
     def update_script(self, rootname, name, path_or_blob):
-        self._update_text(os.path.join('scripts', rootname), name, path_or_blob)
+        self._update_text(os.path.join('scripts', rootname.lower()), name, path_or_blob)
 
     def update_experiment_queue(self, rootname, name, path_or_blob):
-        self._update_text(os.path.join('experiments', rootname), name, path_or_blob)
+        self._update_text(os.path.join('experiments', rootname.lower()), name, path_or_blob)
 
     def update_level_production(self, irrad, name, prname):
         prname = prname.replace(' ', '_')

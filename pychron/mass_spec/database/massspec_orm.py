@@ -18,10 +18,11 @@
 # =============enthought library imports=======================
 
 # =============standard library imports ========================
+
 import os
 
 from sqlalchemy import Column, Integer, Float, String, \
-    ForeignKey, DateTime, Date, BLOB
+    ForeignKey, DateTime, Date, BLOB, Enum, TIMESTAMP
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relation, relationship
 from sqlalchemy.sql.expression import func
@@ -37,7 +38,7 @@ DBVERSION = float(os.environ.get('MassSpecDBVersion', 16.3))
 class AnalysesChangeableItemsTable(Base):
     __tablename__ = 'AnalysesChangeableItemsTable'
     ChangeableItemsID = Column(Integer, primary_key=True)
-    AnalysisID = Column(Integer, ForeignKey('AnalysesTable.AnalysisID'))
+    # AnalysisID = Column(Integer, ForeignKey('AnalysesTable.AnalysisID'))
     DataReductionSessionID = Column(Integer, ForeignKey('DataReductionSessionTable.DataReductionSessionID'))
     History = Column(String, default='')
     StatusReason = Column(Integer, default=0)
@@ -45,6 +46,7 @@ class AnalysesChangeableItemsTable(Base):
     SignalNormalizationFactor = Column(Float, default=1)
     PreferencesSetID = Column(Integer, ForeignKey('PreferencesTable.PreferencesSetID'))
     Comment = Column(String(255))
+    analyses = relationship('AnalysesTable', backref='changeable')
 
 
 class AnalysisPositionTable(Base):
@@ -91,7 +93,7 @@ class AnalysesTable(Base):
         RedundantUserID = Column(Integer, ForeignKey('UserTable.UserID'))
 
     SampleLoadingID = Column(Integer, ForeignKey('SampleLoadingTable.SampleLoadingID'))
-    ChangeableItemsID = Column(Integer, default=0)
+    ChangeableItemsID = Column(Integer, ForeignKey('AnalysesChangeableItemsTable.ChangeableItemsID'), default=0)
 
     LastSaved = Column(DateTime)
     RunDateTime = Column(DateTime)
@@ -110,9 +112,9 @@ class AnalysesTable(Base):
     isotopes = relation('IsotopeTable', backref='AnalysesTable')
     araranalyses = relation('ArArAnalysisTable')
     #    araranalyses = relation('ArArAnalysisTable', backref='AnalysesTable')
-    changeable = relationship('AnalysesChangeableItemsTable',
-                              backref='AnalysesTable',
-                              uselist=False)
+    # changeable = relationship('AnalysesChangeableItemsTable',
+    #                           backref='AnalysesTable',
+    #                           uselist=False)
     positions = relationship('AnalysisPositionTable')
     runscript = relationship('RunScriptTable', uselist=False)
 
@@ -146,6 +148,25 @@ class ArArAnalysisTable(Base):
     PctRad = doublecolumn()
     PctRadEr = doublecolumn()
 
+    Rad4039 = doublecolumn()
+    Rad4039Er = doublecolumn()
+
+    R3639Cor = doublecolumn()
+    ErR3639 = doublecolumn()
+    R3739Cor = doublecolumn()
+    ErR3739Cor = doublecolumn()
+    R3839Cor = doublecolumn()
+    ErR3839 = doublecolumn()
+    R4039Cor = doublecolumn()
+    ErR4039 = doublecolumn()
+
+    ClOverK = doublecolumn()
+    ClOverKEr = doublecolumn()
+    CaOverK = doublecolumn()
+    CaOverKEr = doublecolumn()
+
+    Cl3839 = doublecolumn()
+
 
 class BaselinesChangeableItemsTable(Base):
     __tablename__ = 'BaselinesChangeableItemsTable'
@@ -156,6 +177,7 @@ class BaselinesChangeableItemsTable(Base):
     Fit = Column(Integer, ForeignKey('FitTypeTable.Fit'))
     DataReductionSessionID = Column(Integer)
     InfoBlob = Column(BLOB)
+    PDPBlob = Column(BLOB)
 
 
 class BaselinesTable(Base):
@@ -381,6 +403,13 @@ class MolecularWeightTable(Base):
     AtomicWeight = Column(Float)
 
 
+class PDPTable(Base):
+    __tablename__ = 'PDPTable'
+    IsotopeID = Column(Integer, primary_key=True)
+    LastSaved = Column(TIMESTAMP)
+    PDPBlob = Column(BLOB)
+
+
 class PeakTimeTable(Base):
     __tablename__ = 'PeakTimeTable'
     Counter = Column(Integer, primary_key=True)
@@ -392,7 +421,22 @@ class PeakTimeTable(Base):
 class PreferencesTable(Base):
     __tablename__ = 'PreferencesTable'
     PreferencesSetID = Column(Integer, primary_key=True)
-    changeable_items = relationship('AnalysesChangeableItemsTable')
+    DelOutliersAfterFit = Column(Enum)
+    NFilterIter = Column(Integer)
+    OutlierSigmaFactor = Column(Float)
+
+    Lambda40Kepsilon = doublecolumn()
+    Lambda40KepsilonEr = doublecolumn()
+    Lambda40KBeta = doublecolumn()
+    Lambda40KBetaEr = doublecolumn()
+    LambdaAr37 = doublecolumn()
+    LambdaAr39 = doublecolumn()
+    LambdaCl36 = doublecolumn()
+    LambdaAr37Er = doublecolumn()
+    LambdaAr39Er = doublecolumn()
+    LambdaCl36Er = doublecolumn()
+
+    changeable_items = relationship('AnalysesChangeableItemsTable', backref='preferences_set')
 
 
 class ProjectTable(Base):

@@ -135,6 +135,12 @@ class ReductionAction(PipelineAction):
     pass
 
 
+class IsoEvolutionAction(PipelineAction):
+    name = 'Isotope Evolutions'
+    dname = 'Isotope Evolutions'
+    action = 'set_isotope_evolutions_template'
+
+
 class BlanksAction(PipelineAction):
     name = 'Blanks'
     dname = 'Blanks'

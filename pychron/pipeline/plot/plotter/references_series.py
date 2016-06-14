@@ -428,22 +428,20 @@ class ReferencesSeries(BaseSeries):
 
         update_meta_func = None
         if efit in ['preceding', 'bracketing interpolate', 'bracketing average']:
-            reg = InterpolationRegressor(xs=r_xs,
-                                         ys=r_ys,
-                                         yserr=r_es,
-                                         kind=efit)
-            scatter, _p = graph.new_series(r_xs, r_ys,
-                                           yerror=r_es,
-                                           type='scatter',
-                                           fit=False,
-                                           **kw)
-            update_meta_func = lambda a, b, c, d: self.update_interpolation_regressor(reg, a, b, c, d)
+            reg = InterpolationRegressor(xs=r_xs, ys=r_ys, yserr=r_es, kind=efit)
+            scatter, _p = graph.new_series(r_xs, r_ys, yerror=r_es, type='scatter', fit=False, **kw)
+
+            def update_meta_func(obj, b, c, d):
+                self.update_interpolation_regressor(po.name, reg, obj)
 
             self._add_error_bars(scatter, r_es, 'y', self.options.nsigma, True)
+
+            ffit = po.fit
         else:
+            ffit = '{}_{}'.format(po.fit, po.error_type)
             _, scatter, l = graph.new_series(r_xs, r_ys,
                                              yerror=ArrayDataSource(data=r_es),
-                                             fit='{}_{}'.format(po.fit, po.error_type),
+                                             fit=ffit,
                                              **kw)
             if hasattr(l, 'regressor'):
                 reg = l.regressor
@@ -460,7 +458,7 @@ class ReferencesSeries(BaseSeries):
                                     items=self.sorted_references)
         plot = self.graph.plots[pid]
         plot.isotope = po.name
-        plot.fit = '{}_{}'.format(po.fit, po.error_type)
+        plot.fit = ffit
 
         scatter.index.metadata['selections'] = [i for i, r in enumerate(self.sorted_references) if r.temp_selected]
         return reg, ymi, yma
@@ -468,11 +466,12 @@ class ReferencesSeries(BaseSeries):
     def _set_interpolated_values(self, iso, fit, ans, p_uys, p_ues):
         pass
 
-    def update_interpolation_regressor(self, reg, obj, name, old, new):
+    def update_interpolation_regressor(self, isotope, reg, obj):
         sel = self._filter_metadata_changes(obj, self.sorted_references)
         reg.user_excluded = sel
         key = 'Unknowns-predicted0'
         for plotobj in self.graph.plots:
-            self._set_values(plotobj, reg, key)
+            if plotobj.isotope == isotope:
+                self._set_values(plotobj, reg, key)
 
 # ============= EOF =============================================

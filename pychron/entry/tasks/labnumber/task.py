@@ -17,7 +17,8 @@
 # ============= enthought library imports =======================
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter, Tabbed
-from traits.api import on_trait_change, Button, Float, Str, Int, Bool
+from traits.api import on_trait_change, Button, Float, Str, Int, Bool, Event, HasTraits
+from traitsui.api import View, Item, VGroup, UItem, HGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -26,38 +27,74 @@ from pychron.envisage.browser.record_views import SampleRecordView
 from pychron.envisage.browser.base_browser_model import BaseBrowserModel
 from pychron.entry.labnumber_entry import LabnumberEntry
 from pychron.entry.tasks.actions import SavePDFAction, DatabaseSaveAction, PreviewGenerateIdentifiersAction, \
-    GenerateIdentifiersAction
+    GenerateIdentifiersAction, ClearSelectionAction
 from pychron.entry.tasks.labnumber.panes import LabnumbersPane, \
     IrradiationPane, IrradiationEditorPane, IrradiationCanvasPane, LevelInfoPane, ChronologyPane
 from pychron.envisage.tasks.base_task import BaseManagerTask
 from pychron.globals import globalv
+
+ATTRS = (('sample', ''),
+         ('material', ''),
+         ('project', ''),
+         ('weight', 0),
+         ('j', 0,),
+         ('j_err', 0))
+
+
+class ClearSelectionView(HasTraits):
+    sample = Bool(True)
+    material = Bool(True)
+    weight = Bool(True)
+    project = Bool(True)
+    j = Bool(True)
+    j_err = Bool(True)
+
+    select_all = Button('Select All')
+    clear_all = Button('Clear All')
+
+    def _select_all_fired(self):
+        self._apply_all(True)
+
+    def _clear_all_fired(self):
+        self._apply_all(False)
+
+    def _apply_all(self, v):
+        for a, _ in ATTRS:
+            setattr(self, a, v)
+
+    def attributes(self):
+        return [(a, v) for a, v in ATTRS if getattr(self, a)]
+
+    def traits_view(self):
+        v = View(VGroup(HGroup(UItem('select_all'),
+                               UItem('clear_all')),
+                        VGroup(Item('sample'),
+                        Item('material'),
+                        Item('project'),
+                        Item('weight'),
+                        Item('j', label='J'),
+                        Item('j_err', label='J Err.'))),
+                 buttons=['OK', 'Cancel'],
+                 kind='livemodal',
+                 title='Clear Selection')
+        return v
 
 
 class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     name = 'Labnumber'
     id = 'pychron.entry.irradiation.task'
 
-    add_sample_button = Button
-    add_material_button = Button
-    add_project_button = Button
-
-    edit_project_button = Button
-    edit_sample_button = Button
-
-    # generate_identifiers_button = Button
-    # preview_generate_identifiers_button = Button
+    clear_sample_button = Button
+    refresh_needed = Event
+    dclicked = Event
 
     tool_bars = [SToolBar(SavePDFAction(),
                           DatabaseSaveAction(),
                           image_size=(16, 16)),
                  SToolBar(GenerateIdentifiersAction(),
                           PreviewGenerateIdentifiersAction(),
-                          # ImportIrradiationLevelAction(),
-                          image_size=(16, 16))]
-    # SToolBar(GenerateLabnumbersAction(),
-    # PreviewGenerateLabnumbersAction(),
-    # ImportIrradiationLevelAction(),
-    # image_size=(16, 16))]
+                          image_size=(16, 16)),
+                 SToolBar(ClearSelectionAction())]
 
     invert_flag = Bool
     selection_freq = Int
@@ -68,11 +105,25 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     note = Str
     weight = Float
 
+    include_recent = False
+    _suppress_load_labnumbers = True
+
     def activated(self):
         if self.manager.verify_database_connection(inform=True):
             if self.db.connected:
                 self.manager.activated()
+                self.load_principal_investigators()
                 self.load_projects(include_recent=False)
+
+    def clear_selection(self):
+        cs = ClearSelectionView()
+        info = cs.edit_traits()
+        if info.result:
+            for s in self.manager.selected:
+                for attr, value in cs.attributes():
+                    setattr(s, attr, value)
+
+            self.manager.refresh_table = True
 
     def get_igsns(self):
         self.info('Get IGSNs')
@@ -222,24 +273,24 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
 
     def _default_layout_default(self):
         return TaskLayout(
-                left=Splitter(
-                        PaneItem('pychron.labnumber.irradiation'),
-                        Tabbed(
-                                # PaneItem('pychron.labnumber.extractor'),
-                                PaneItem('pychron.labnumber.editor')),
-                        orientation='vertical'),
-                right=Splitter(
-                        PaneItem('pychron.entry.level'),
-                        PaneItem('pychron.entry.chronology'),
-                        PaneItem('pychron.entry.irradiation_canvas'),
-                        orientation='vertical'))
+            left=Splitter(
+                PaneItem('pychron.labnumber.irradiation'),
+                Tabbed(
+                    # PaneItem('pychron.labnumber.extractor'),
+                    PaneItem('pychron.labnumber.editor')),
+                orientation='vertical'),
+            right=Splitter(
+                PaneItem('pychron.entry.level'),
+                PaneItem('pychron.entry.chronology'),
+                PaneItem('pychron.entry.irradiation_canvas'),
+                orientation='vertical'))
 
     def create_central_pane(self):
         return LabnumbersPane(model=self.manager)
 
     def create_dock_panes(self):
         iep = IrradiationEditorPane(model=self)
-        self.labnumber_tabular_adapter = iep.labnumber_tabular_adapter
+        self.labnumber_tabular_adapter = iep.sample_tabular_adapter
         return [
             IrradiationPane(model=self.manager),
             ChronologyPane(model=self.manager),
@@ -275,8 +326,9 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
 
     def _selected_samples_changed(self, new):
         if new:
+            ni = new[0]
             # self.manager.set_selected_attr(new.name, 'sample')
-            self.manager.set_selected_attrs((new.name, new.material, new.project),
+            self.manager.set_selected_attrs((ni.name, ni.material, ni.project),
                                             ('sample', 'material', 'project'))
 
     def _load_associated_samples(self, names=None):
@@ -294,6 +346,12 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
         self.osamples = sams
 
     # handlers
+    def _dclicked_fired(self):
+        self.selected_samples = []
+
+    def _clear_sample_button_fired(self):
+        self.selected_samples = []
+
     @on_trait_change('extractor:update_irradiations_needed')
     def _update_irradiations(self):
         self.manager.updated = True
@@ -343,14 +401,13 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     #                    self.selected_projects,
     #                    sam.material)
     #
-    # def _selected_projects_changed(self, old, new):
-    #     if new and self.project_enabled:
-    #         names = [ni.name for ni in new]
-    #         self.debug('selected projects={}'.format(names))
-    #
-    #         self._load_associated_samples(names)
-    #         self._selected_projects_change_hook(names)
-    #         # self.dump_browser_selection()
+
+    def _selected_projects_changed(self, old, new):
+        if new:
+            names = [ni.name for ni in new]
+            self.debug('selected projects={}'.format(names))
+
+            self._load_associated_samples(names)
 
     def _prompt_for_save(self):
         self.manager.push_changes()

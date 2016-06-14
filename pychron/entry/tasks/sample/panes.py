@@ -19,10 +19,10 @@ from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traits.api import Int, Property
 from traitsui.api import View, UItem, HGroup, VGroup, TabularEditor
+from traitsui.tabular_adapter import TabularAdapter
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.envisage.icon_button_editor import icon_button_editor

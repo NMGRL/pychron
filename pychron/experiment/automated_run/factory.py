@@ -30,6 +30,7 @@ from uncertainties import nominal_value
 from uncertainties import std_dev
 
 from pychron.core.helpers.iterfuncs import partition
+from pychron.core.helpers.strtools import camel_case
 from pychron.dvc.dvc_irradiationable import DVCAble
 from pychron.entry.entry_views.repository_entry import RepositoryIdentifierEntry
 from pychron.envisage.view_util import open_view
@@ -968,7 +969,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                 # convert labnumber (a, bg, or 10034 etc)
                 self.debug('load meta for {}'.format(labnumber))
                 ip = db.get_identifier(labnumber)
-                pos = 0
+
                 if ip:
                     pos = ip.position
                     # set sample and irrad info
@@ -982,22 +983,14 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                             irrad = ip.level.irradiation.name
                             self.repository_identifier = 'Irradiation-{}'.format(irrad)
                         elif project_name != 'REFERENCES':
-                            self.repository_identifier = project_name.replace(' ', '_').replace('/', '_')
-
-                            # if project_name.startswith('Irradiation-'):
-                            #     self.repository_identifier = project_name
-                            # else:
-                            #     project_name = project_name.replace(' ', '_').replace('/', '_')
-                            #     try:
-                            #         pi_name = project.principal_investigator.name
-                            #         pi_name = pi_name.replace(' ', '_').replace('/', '_')
-                            #     except AttributeError:
-                            #         self.debug('No principal investigator '
-                            #                    'specified for this project "{}". Using NMGRL'.format(project_name))
-                            #         pi_name = 'NMGRL'
-                            #
-                            #     self.repository_identifier = '{}_{}'.format(pi_name, project_name)
-
+                            repo = camel_case(project_name)
+                            self.repository_identifier = repo
+                            if not db.get_repository(repo):
+                                self.repository_identifier = ''
+                                if self.confirmation_dialog('Repository Identifier "{}" does not exist. Would you '
+                                                            'like to add it?'):
+                                    # this will set self.repository_identifier
+                                    self._add_repository_identifier_fired()
 
                     except AttributeError, e:
                         print e
@@ -1321,6 +1314,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             if a.do():
                 self.repository_identifier_dirty = True
                 self.repository_identifier = a.name
+                return True
         else:
             self.warning_dialog('DVC Plugin not enabled')
 

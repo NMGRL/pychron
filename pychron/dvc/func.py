@@ -49,7 +49,7 @@ def push_repositories(ps, remote=None):
     for p in ps:
         pp = os.path.join(paths.repository_dataset_dir, p)
         repo.open_repo(pp)
-        repo.push(remote)
+        repo.push(remote=remote)
 
 
 def get_review_status(record):

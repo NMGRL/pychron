@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+from sqlalchemy.exc import InvalidRequestError
 from traits.api import provides
 # =============standard library imports ========================
 import binascii
@@ -33,7 +34,7 @@ from pychron.mass_spec.database.massspec_orm import IsotopeResultsTable, \
     PreferencesTable, DatabaseVersionTable, FittypeTable, \
     BaselinesChangeableItemsTable, SampleLoadingTable, MachineTable, \
     AnalysisPositionTable, LoginSessionTable, RunScriptTable, \
-    IrradiationChronologyTable, IrradiationLevelTable, IrradiationProductionTable, ProjectTable, MaterialTable
+    IrradiationChronologyTable, IrradiationLevelTable, IrradiationProductionTable, ProjectTable, MaterialTable, PDPTable
 from pychron.database.core.database_adapter import DatabaseAdapter
 from pychron.database.core.functions import delete_one
 from pychron.pychron_constants import INTERFERENCE_KEYS
@@ -149,6 +150,34 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
     # ===============================================================================
     # getters
     # ===============================================================================
+    def get_latest_preferences(self, isoid, key):
+        with self.session_ctx() as sess:
+            q = sess.query(PreferencesTable)
+            q = q.join(AnalysesChangeableItemsTable)
+            q = q.join(DataReductionSessionTable)
+            try:
+                q = q.join(IsotopeTable)
+            except InvalidRequestError:
+                self.debug('no preferences for isotope={}'.format(key))
+                return
+
+            q = q.filter(IsotopeTable.IsotopeID == isoid)
+
+            q = q.order_by(DataReductionSessionTable.SessionDate.desc())
+            q = q.limit(1)
+
+            return self._query_first(q, verbose_query=True)
+
+    def get_pdp(self, isoid):
+        with self.session_ctx() as sess:
+            q = sess.query(PDPTable)
+            q = q.filter(PDPTable.IsotopeID == isoid)
+            q = q.order_by(PDPTable.LastSaved.desc())
+            return self._query_first(q)
+
+    def get_baseline_changeable_item(self, bslnid):
+        return self._retrieve_item(BaselinesChangeableItemsTable, bslnid, 'BslnID')
+
     def get_material(self, name):
         return self._retrieve_item(MaterialTable, name, 'Material')
 

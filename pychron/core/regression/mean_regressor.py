@@ -130,7 +130,7 @@ sem={}
         return s
 
     def make_equation(self):
-        return self.tostring()
+        return ''
 
     def predict_error(self, x, error_calc=None):
         if error_calc is None:

@@ -81,7 +81,6 @@ class BrowserModel(BaseBrowserModel):
     is_activated = False
 
     _top_level_filter = None
-    _suppress_load_labnumbers = False
 
     def activated(self, force=False):
         self.activate_browser(force)
@@ -129,10 +128,6 @@ class BrowserModel(BaseBrowserModel):
                 break
 
     # handlers
-    def _principal_investigator_changed(self, new):
-        if new:
-            self._load_projects_for_principal_investigator()
-
     def _irradiation_enabled_changed(self, new):
         if not new:
             self._top_level_filter = None
@@ -325,23 +320,6 @@ class BrowserModel(BaseBrowserModel):
                 self.irradiations = irrads
                 if irrads:
                     self.irradiation = irrads[0]
-
-    def _load_projects_for_principal_investigator(self):
-        ms = None
-        if self.mass_spectrometers_enabled:
-            ms = self.mass_spectrometer_includes
-
-        p_i = self.principal_investigator
-        self.debug('load projects for principal investigator= {}'.format(p_i))
-        db = self.db
-        with db.session_ctx():
-            ps = db.get_projects(principal_investigator=p_i,
-                                 mass_spectrometers=ms)
-
-            ps = self._make_project_records(ps, include_recent_first=True)
-            old_selection = [p.name for p in self.selected_projects]
-            self.projects = ps
-            self.selected_projects = [p for p in ps if p.name in old_selection]
 
     def _load_projects_for_irradiation(self):
         ms = None

@@ -307,6 +307,9 @@ class PipelineTask(BaseBrowserTask):
         else:
             self._set_action_template('FreezeProductionRatios')
 
+    def set_isotope_evolutions_template(self):
+        self._set_action_template('Iso Evo')
+
     def set_icfactor_template(self):
         self._set_action_template('ICFactor')
 

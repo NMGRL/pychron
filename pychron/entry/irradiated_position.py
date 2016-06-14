@@ -93,12 +93,12 @@ class IrradiatedPositionAdapter(TabularAdapter):
     identifier_width = Int(80)
     hole_width = Int(50)
     sample_width = Int(100)
-    project_width = Int(75)
-    material_width = Int(50)
+    project_width = Int(150)
+    material_width = Int(100)
     size_width = Int(50)
     weight_width = Int(50)
-    j_width = Int(100)
-    j_err_width = Int(100)
+    j_width = Int(75)
+    j_err_width = Int(75)
 
     font = 'arial 10'
 

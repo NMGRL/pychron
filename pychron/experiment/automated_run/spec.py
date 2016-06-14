@@ -344,7 +344,7 @@ class AutomatedRunSpec(HasTraits):
     def clear_step(self):
         self._step = -1
 
-    def tocopy(self):
+    def tocopy(self, verbose=False):
         traits = ['mass_spectrometer',
                   'extract_device',
                   'username',
@@ -387,6 +387,9 @@ class AutomatedRunSpec(HasTraits):
         if self.is_step_heat():
             traits.append('aliquot')
 
+        if verbose:
+            for t in traits:
+                print '{} ==> {}'.format(t, getattr(self, t))
         return self.clone_traits(traits)
 
     # ===============================================================================

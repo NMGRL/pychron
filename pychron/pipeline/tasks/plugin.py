@@ -31,7 +31,7 @@ from pychron.pipeline.tasks.actions import ConfigureRecallAction, IdeogramAction
     SeriesAction, BlanksAction, ICFactorAction, ResetFactoryDefaultsAction, VerticalFluxAction, \
     LastNAnalysesSeriesAction, \
     LastNHoursSeriesAction, LastMonthSeriesAction, LastWeekSeriesAction, LastDaySeriesAction, TimeViewBrowserAction, \
-    FluxAction, FreezeProductionRatios, InverseIsochronAction
+    FluxAction, FreezeProductionRatios, InverseIsochronAction, IsoEvolutionAction
 from pychron.pipeline.tasks.browser_task import BrowserTask
 from pychron.pipeline.tasks.preferences import PipelinePreferencesPane
 from pychron.pipeline.tasks.task import PipelineTask
@@ -146,6 +146,8 @@ class PipelinePlugin(BaseTaskPlugin):
 
         reduction_actions = [SchemaAddition(factory=reduction_group,
                                             path='MenuBar/data.menu'),
+                             SchemaAddition(factory=IsoEvolutionAction,
+                                            path=rg),
                              SchemaAddition(factory=BlanksAction,
                                             path=rg),
                              SchemaAddition(factory=ICFactorAction,

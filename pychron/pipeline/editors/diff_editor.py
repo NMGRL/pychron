@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from traits.api import Property, Instance, List, Either, Int, Float, HasTraits, \
-    Str, Dict, Bool
+    Str, Bool
 from traitsui.api import View, Item, UItem, VGroup, HGroup, spring
 from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
@@ -42,7 +42,7 @@ class ValueTabularAdapter(TabularAdapter):
     diff_width = Int(100)
     rvalue_width = Int(100)
     # name_width = Int(100)
-    name_width = Int(60)
+    name_width = Int(120)
 
     # name_text = Property
     lvalue_text = Property
@@ -66,7 +66,7 @@ class ValueTabularAdapter(TabularAdapter):
 
     def _get_percent_diff_text(self):
         v = self.item.percent_diff
-        return self._get_value_text(v, n=2)
+        return self._get_value_text(v, n=5)
 
     def _get_lvalue_text(self):
         v = self.item.lvalue
@@ -138,8 +138,8 @@ class DiffEditor(BaseTraitsEditor):
     recaller = Instance(MassSpecRecaller)
     selected_row = Int
 
-    left_baselines = Dict
-    right_baselines = Dict
+    # left_baselines = Dict
+    # right_baselines = Dict
     _right = None
     basename = Str
 
@@ -147,6 +147,7 @@ class DiffEditor(BaseTraitsEditor):
     adapter = None
 
     record_id = ''
+    is_blank = False
 
     def _diffs_only_changed(self, new):
         if new:
@@ -158,6 +159,8 @@ class DiffEditor(BaseTraitsEditor):
 
     def setup(self, left):
         self.record_id = left.record_id
+        self.is_blank = self.record_id.startswith('b')
+
         right = self._find_right(left)
         self.adapter = ValueTabularAdapter()
         if right:
@@ -179,72 +182,134 @@ class DiffEditor(BaseTraitsEditor):
         """
         recaller = self.recaller
 
-        # if recaller.connect():
-        return recaller.find_analysis(left.labnumber, left.aliquot,
+        ln = left.labnumber
+        aliquot = left.aliquot
+        if ln.startswith('b'):
+            aliquot = '-'.join(left.record_id.split('-')[1:])
+            ln = -1
+        elif ln.startswith('a'):
+            aliquot = '-'.join(left.record_id.split('-')[1:])
+            ln = -2
+
+        return recaller.find_analysis(ln, aliquot,
                                       left.step)
 
     def _set_values(self, left, right, isotopes):
         vs = []
-        pfunc = lambda x: lambda n: '{} {}'.format(x, n)
+        pfunc = lambda x: lambda n: u'{} {}'.format(x, n)
 
-        vs.append(Value(name='J',
-                        lvalue=nominal_value(left.j),
-                        rvalue=nominal_value(right.j)))
-        vs.append(Value(name=PLUSMINUS_ONE_SIGMA,
-                        lvalue=std_dev(left.j),
-                        rvalue=std_dev(right.j)))
-        vs.append(Value(name='Age',
-                        lvalue=left.age,
-                        rvalue=right.age))
-        vs.append(Value(name=PLUSMINUS_ONE_SIGMA,
-                        lvalue=left.age_err,
-                        rvalue=right.age_err))
-        # vs.append(Value(name=u'\u00b1 w/o JEr',
-        #                 lvalue=std_dev(left.uage_w_j_err),
-        #                 rvalue=right.age_err_w_j))
-        vs.append(Value(name='40Ar* %',
-                        lvalue=nominal_value(left.rad40_percent),
-                        rvalue=nominal_value(right.rad40_percent)))
+        if not self.is_blank:
+            vs.append(Value(name='J',
+                            lvalue=nominal_value(left.j or 0),
+                            rvalue=nominal_value(right.j or 0)))
+            vs.append(Value(name=u'J {}'.format(PLUSMINUS_ONE_SIGMA),
+                            lvalue=std_dev(left.j or 0),
+                            rvalue=std_dev(right.j or 0)))
+            vs.append(Value(name='Age',
+                            lvalue=left.age or 0,
+                            rvalue=right.age or 0))
+            vs.append(Value(name=u'Age {}'.format(PLUSMINUS_ONE_SIGMA),
+                            lvalue=left.age_err or 0,
+                            rvalue=right.age_err or 0))
+            vs.append(Value(name='40Ar* %',
+                            lvalue=nominal_value(left.rad40_percent or 0),
+                            rvalue=nominal_value(right.rad40_percent or 0)))
+            vs.append(Value(name='Rad4039',
+                            lvalue=nominal_value(left.uF),
+                            rvalue=nominal_value(right.rad4039)))
+            vs.append(Value(name=u'Rad4039 {}'.format(PLUSMINUS_ONE_SIGMA),
+                            lvalue=std_dev(left.uF),
+                            rvalue=std_dev(right.rad4039)))
+
+            constants = left.arar_constants
+            vv = [Value(name=n, lvalue=nominal_value(getattr(constants, k)),
+                        rvalue=nominal_value(getattr(right, k)))
+                  for n, k in (('Lambda K', 'lambda_k'),
+                               ('Lambda Ar37', 'lambda_Ar37'),
+                               ('Lambda Ar37', 'lambda_Ar37'),
+                               ('Lambda Cl36', 'lambda_Cl36'))]
+            vs.extend(vv)
+
+        def filter_str(ii):
+            fd = ii.filter_outliers_dict.get('filter_outliers')
+            return 'yes' if fd else 'no'
 
         for a in isotopes:
             iso = left.isotopes[a]
             riso = right.isotopes[a]
             func = pfunc(a)
 
-            vs.append(Value(name=a,
-                            lvalue=nominal_value(iso.get_intensity()),
-                            rvalue=riso.value))
-            vs.append(Value(name=PLUSMINUS_ONE_SIGMA, lvalue=iso.error, rvalue=riso.error))
+            # mass spec only has baseline corrected intercepts
+            # mass spec does not propagate baseline error
+            i = iso.get_baseline_corrected_value(include_baseline_error=False)
+            ri = riso.baseline_corrected
+            vs.append(Value(name=func('Bs Corrected'),
+                            lvalue=nominal_value(i),
+                            rvalue=nominal_value(ri)))
+            vs.append(Value(name=func(PLUSMINUS_ONE_SIGMA), lvalue=std_dev(i), rvalue=std_dev(ri)))
+
+            if iso.decay_corrected:
+                # baseline, blank corrected, ic_corrected, decay_corrected
+                i = iso.decay_corrected
+            else:
+                # baseline, blank corrected, ic_corrected
+                i = iso.get_intensity()
+
+            ri = riso.total_value
+            vs.append(Value(name=func('Total'),
+                            lvalue=nominal_value(i),
+                            rvalue=nominal_value(ri)))
+            vs.append(Value(name=func(u'Total {}'.format(PLUSMINUS_ONE_SIGMA)), lvalue=std_dev(i), rvalue=std_dev(ri)))
+
             vs.append(Value(name=func('N'), lvalue=iso.n, rvalue=riso.n))
-            vs.append(StrValue(name=func('Fit'), lvalue=iso.fit, rvalue=riso.fit))
+            vs.append(Value(name=func('fN'), lvalue=iso.fn, rvalue=riso.fn))
+
+            vs.append(StrValue(name=func('Fit'), lvalue=iso.fit.lower(), rvalue=riso.fit.lower()))
+            vs.append(StrValue(name=func('Filter'), lvalue=filter_str(iso), rvalue=filter_str(iso)))
+            vs.append(Value(name=func('Filter Iter'), lvalue=iso.filter_outliers_dict.get('iterations'),
+                            rvalue=riso.filter_outliers_dict.get('iterations')))
+            vs.append(Value(name=func('Filter SD'), lvalue=iso.filter_outliers_dict.get('std_devs'),
+                            rvalue=riso.filter_outliers_dict.get('std_devs')))
             vs.append(Value(name=func('IC'), lvalue=nominal_value(iso.ic_factor),
-                            rvalue=nominal_value(iso.ic_factor)))
+                            rvalue=nominal_value(riso.ic_factor)))
 
         for a in isotopes:
             func = pfunc(a)
-            iso = left.isotopes[a]
-            riso = right.isotopes[a]
-            vs.append(Value(name=func('Bs'), lvalue=iso.baseline.value, rvalue=riso.baseline.value))
-            vs.append(Value(name=PLUSMINUS_ONE_SIGMA, lvalue=iso.baseline.error, rvalue=riso.baseline.error))
-            vs.append(Value(name=func('Nbs'), lvalue=iso.baseline.n, rvalue=riso.baseline.n))
-            self.right_baselines[a] = iso.baseline
+            baseline = left.isotopes[a].baseline
+            rbaseline = right.isotopes[a].baseline
 
-        for a in isotopes:
-            func = pfunc(a)
-            iso = left.isotopes[a]
-            riso = right.isotopes[a]
-            vs.append(Value(name=func('Bl'), lvalue=iso.blank.value, rvalue=riso.blank.value))
-            vs.append(Value(name=PLUSMINUS_ONE_SIGMA, lvalue=iso.blank.error, rvalue=riso.blank.error))
+            vs.append(Value(name=func('Bs'), lvalue=baseline.value, rvalue=rbaseline.value))
+            vs.append(Value(name=func(u'Bs {}'.format(PLUSMINUS_ONE_SIGMA)), lvalue=baseline.error,
+                            rvalue=rbaseline.error))
+            vs.append(Value(name=func('Bs N'), lvalue=baseline.n, rvalue=rbaseline.n))
+            vs.append(Value(name=func('Bs fN'), lvalue=baseline.fn, rvalue=rbaseline.fn))
 
-        rpr = right.production_ratios
-        for k, v in left.production_ratios.iteritems():
-            vs.append(Value(name=k, lvalue=nominal_value(v),
-                            rvalue=nominal_value(rpr[k])))
+            fv = StrValue(name=func('Bs Filter'), lvalue=filter_str(iso), rvalue=filter_str(iso))
+            vs.append(fv)
+            if not (fv.lvalue == 'no' and fv.rvalue == 'no'):
+                vs.append(Value(name=func('Bs Filter Iter'), lvalue=baseline.filter_outliers_dict.get('iterations'),
+                                rvalue=rbaseline.filter_outliers_dict.get('iterations')))
+                vs.append(Value(name=func('Bs Filter SD'), lvalue=baseline.filter_outliers_dict.get('std_devs'),
+                                rvalue=rbaseline.filter_outliers_dict.get('std_devs')))
 
-        rifc = right.interference_corrections
-        for k, v in left.interference_corrections.iteritems():
-            vs.append(Value(name=k, lvalue=nominal_value(v),
-                            rvalue=nominal_value(rifc[k.lower()])))
+        if not self.is_blank:
+            for a in isotopes:
+                func = pfunc(a)
+                iso = left.isotopes[a]
+                riso = right.isotopes[a]
+                vs.append(Value(name=func('Blank'), lvalue=iso.blank.value, rvalue=riso.blank.value))
+                vs.append(Value(name=func(u'Blank {}'.format(PLUSMINUS_ONE_SIGMA)), lvalue=iso.blank.error,
+                                rvalue=riso.blank.error))
+
+            rpr = right.production_ratios
+            for k, v in left.production_ratios.iteritems():
+                vs.append(Value(name=k, lvalue=nominal_value(v),
+                                rvalue=nominal_value(rpr.get(k, 0))))
+
+            rifc = right.interference_corrections
+            for k, v in left.interference_corrections.iteritems():
+                vs.append(Value(name=k, lvalue=nominal_value(v),
+                                rvalue=nominal_value(rifc.get(k.lower(), 0))))
 
         # self.values = vs
         self.ovalues = vs[:]

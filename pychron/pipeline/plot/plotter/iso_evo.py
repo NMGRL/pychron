@@ -101,6 +101,7 @@ class IsoEvo(BaseArArFigure):
                               type='scatter',
                               plotid=i,
                               fit=iso.baseline.fit,
+                              filter_outliers_dict=iso.baseline.filter_outliers_dict,
                               color='black')
 
         xmi, xma = min_max(xmi, xma, xs)
