@@ -56,8 +56,7 @@ class ValueTabularAdapter(TabularAdapter):
     def get_bg_color(self, object, trait, row, column=0):
         color = 'white'
         if self.use_bg_color:
-            v = self.item.diff
-            if abs(v) > 1e-8:
+            if self.item.enabled:
                 color = '#FFCCCC'
         return color
 
@@ -223,6 +222,11 @@ class DiffEditor(BaseTraitsEditor):
                             lvalue=std_dev(left.uF),
                             rvalue=std_dev(right.rad4039)))
 
+            k = left.get_computed_value('k39')
+            ca = left.get_non_ar_isotope('ca37')
+
+            vs.append(Value(name='Ca37/K39', lvalue=nominal_value(ca/k),
+                            rvalue=nominal_value(right.r3739)))
             constants = left.arar_constants
             vv = [Value(name=n, lvalue=nominal_value(getattr(constants, k)),
                         rvalue=nominal_value(getattr(right, k)))

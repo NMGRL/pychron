@@ -73,6 +73,7 @@ class MassSpecAnalysis(Analysis):
                 self.age_err_wo_j = arar.ErrAgeWOErInJ
                 self.rad40_percent = ufloat(arar.PctRad, arar.PctRadEr)
                 self.rad4039 = ufloat(arar.Rad4039, arar.Rad4039Er)
+                self.r3739 = ufloat(arar.R3739Cor, arar.ErR3739Cor)
 
         prefs = obj.changeable.preferences_set
         fo, fi, fs = 0, 0, 0
