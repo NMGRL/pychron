@@ -206,9 +206,13 @@ class DiffEditor(BaseTraitsEditor):
             vs.append(Value(name='Age',
                             lvalue=left.age or 0,
                             rvalue=right.age or 0))
+            vs.append(Value(name=u'Age W/Jerr {}'.format(PLUSMINUS_ONE_SIGMA),
+                            lvalue=std_dev(left.uage_w_j_err) or 0,
+                            rvalue=right.age_err or 0))
             vs.append(Value(name=u'Age {}'.format(PLUSMINUS_ONE_SIGMA),
                             lvalue=left.age_err or 0,
-                            rvalue=right.age_err or 0))
+                            rvalue=right.age_err_wo_j or 0))
+
             vs.append(Value(name='40Ar* %',
                             lvalue=nominal_value(left.rad40_percent or 0),
                             rvalue=nominal_value(right.rad40_percent or 0)))
