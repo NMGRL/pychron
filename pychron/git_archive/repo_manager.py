@@ -655,6 +655,7 @@ class GitRepoManager(Loggable):
         repo.git.merge(src.commit)
 
     def commit(self, msg):
+        self.debug('commit message={}'.format(msg))
         index = self.index
         if index:
             index.commit(msg)

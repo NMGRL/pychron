@@ -265,6 +265,7 @@ class AnalysisEditView(HasTraits):
 
     # handlers
     def _save_button_fired(self):
+        print 'asdfasfasfd'
         model = self.editor.analysis
 
         runid = model.record_id
@@ -285,7 +286,7 @@ class AnalysisEditView(HasTraits):
                     if item.value != item.ovalue:
                         updated_values[name] = item.value
                         edited_items.append('{}.{}_value'.format(name, tag))
-                    if item.error != item.error:
+                    if item.error != item.oerror:
                         updated_errors[name] = item.error
                         edited_items.append('{}.{}_error'.format(name, tag))
 
