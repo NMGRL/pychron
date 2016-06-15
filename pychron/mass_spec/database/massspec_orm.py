@@ -109,8 +109,8 @@ class AnalysesTable(Base):
 
     PipettedIsotopes = Column(BLOB)
 
-    isotopes = relation('IsotopeTable', backref='AnalysesTable')
-    araranalyses = relation('ArArAnalysisTable')
+    isotopes = relationship('IsotopeTable', backref='AnalysesTable')
+    araranalyses = relationship('ArArAnalysisTable', order_by='asc(ArArAnalysisTable.LastSaved)')
     #    araranalyses = relation('ArArAnalysisTable', backref='AnalysesTable')
     # changeable = relationship('AnalysesChangeableItemsTable',
     #                           backref='AnalysesTable',
@@ -127,7 +127,7 @@ class ArArAnalysisTable(Base):
     __tablename__ = 'ArArAnalysisTable'
     #    AnalysisID = Column(Integer, primary_key=True)
     AnalysisID = Column(Integer, ForeignKey('AnalysesTable.AnalysisID'))
-    DataReductionSessionID = Column(Integer)
+    DataReductionSessionID = Column(Integer, primary_key=True)
     JVal = doublecolumn()  # Column(Float, default=0)
     JEr = doublecolumn()  # Column(Float, default=0)
     Tot40 = doublecolumn()
@@ -142,7 +142,7 @@ class ArArAnalysisTable(Base):
     Tot37Er = doublecolumn()
     Tot36Er = doublecolumn()
 
-    Age = doublecolumn(primary_key=True)
+    Age = doublecolumn()
     ErrAge = doublecolumn()
     ErrAgeWOErInJ = doublecolumn()
     PctRad = doublecolumn()
@@ -166,6 +166,7 @@ class ArArAnalysisTable(Base):
     CaOverKEr = doublecolumn()
 
     Cl3839 = doublecolumn()
+    LastSaved = Column(TIMESTAMP)
 
 
 class BaselinesChangeableItemsTable(Base):
