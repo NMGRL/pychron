@@ -265,7 +265,6 @@ class AnalysisEditView(HasTraits):
 
     # handlers
     def _save_button_fired(self):
-        print 'asdfasfasfd'
         model = self.editor.analysis
 
         runid = model.record_id
@@ -290,13 +289,15 @@ class AnalysisEditView(HasTraits):
                         updated_errors[name] = item.error
                         edited_items.append('{}.{}_error'.format(name, tag))
 
-            p = dvc.manual_edit(runid, repository_identifier,
-                                updated_values, updated_errors, modifier)
-            ps.append(p)
+            if updated_errors or updated_values:
+                p = dvc.manual_edit(runid, repository_identifier,
+                                    updated_values, updated_errors, modifier)
+                ps.append(p)
 
-        msg = '<MANUAL> {}'.format(','.join(edited_items))
-        dvc.commit_manual_edits(repository_identifier, ps, msg)
-        self._refresh_history()
+        if edited_items:
+            msg = '<MANUAL> {}'.format(','.join(edited_items))
+            dvc.commit_manual_edits(repository_identifier, ps, msg)
+            self._refresh_history()
 
     def _revert_original_button_fired(self):
         analysis = self.editor.analysis
