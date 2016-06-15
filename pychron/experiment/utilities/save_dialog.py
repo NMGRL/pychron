@@ -15,13 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Bool, BaseStr, Directory
+from traits.api import HasTraits, Bool, BaseStr, Directory, Int
 from traitsui.api import View, HGroup, VGroup, Item
 # ============= standard library imports ========================
 import re
 import os
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import add_extension
+from pychron.entry.entry_views.entry import SpacelessStr
 
 pascalcase_regex = re.compile(r'^[A-Z0-9]{1}\w*$')
 
@@ -34,19 +35,48 @@ class PascalCase(BaseStr):
             return value
 
 
-class ExperimentSaveDialog(HasTraits):
-    name = PascalCase()
+class BaseSaveDialog(HasTraits):
     root = Directory
-    use_current_exp = Bool
-
-    def _use_current_exp_changed(self, new):
-        if new:
-            self.name = 'CurrentExperiment'
 
     @property
     def path(self):
         if self.root and self.name:
             return os.path.join(self.root, add_extension(self.name, '.txt'))
+
+
+class IncrementalHeatTemplateSaveDialog(BaseSaveDialog):
+    fname = SpacelessStr()
+    n = Int
+
+    def get_path(self):
+        info = self.edit_traits()
+        if info.result:
+            return self.path
+
+    @property
+    def name(self):
+        return '{:02n}-{}'.format(self.n, self.fname)
+
+    def traits_view(self):
+        ngrp = HGroup(Item('fname',
+                           tooltip='No spaces in name. Name is automatically prefixed with the number of steps'))
+        dgrp = HGroup(Item('root', label='Directory'))
+        v = View(VGroup(ngrp, dgrp),
+                 kind='livemodal',
+                 width=400,
+                 title='Save Step Heat Template',
+                 buttons=['OK', 'Cancel'],
+                 resizable=True)
+        return v
+
+
+class ExperimentSaveDialog(BaseSaveDialog):
+    name = PascalCase()
+    use_current_exp = Bool
+
+    def _use_current_exp_changed(self, new):
+        if new:
+            self.name = 'CurrentExperiment'
 
     def traits_view(self):
         ngrp = HGroup(Item('name',
