@@ -20,9 +20,10 @@ from enable.base_tool import BaseTool
 from kiva.fonttools import Font
 from traits.api import Event, Instance
 
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.pipeline.plot.inspector_item import BaseInspectorItem
+
 
 def intersperse(m, delim):
     """
@@ -44,24 +45,29 @@ class InfoInspector(BaseTool):
     current_position = None
     current_screen = None
     use_pane = False
+    inspector_item = Event
+    inspector_item_klass = BaseInspectorItem
+    event_queue = None
 
     def normal_mouse_move(self, event):
         xy = event.x, event.y
         try:
             pos = self.component.hittest(xy)
-            event.window.set_pointer('cross')
+            # event.window.set_pointer('cross')
         except IndexError:
-            event.window.set_pointer('arrow')
+            # event.window.set_pointer('arrow')
             return
 
-        if isinstance(pos, tuple):
+        if isinstance(pos, (tuple, list)):
             self.current_position = pos
             self.current_screen = xy
             event.handled = True
         else:
-            event.window.set_pointer('arrow')
+            # event.window.set_pointer('arrow')
             self.current_position = None
             self.current_screen = None
+
+        self.event_queue[id(self)] = self.current_position is not None
 
         if self.use_pane:
             self._generate_inspector_event()
@@ -75,13 +81,23 @@ class InfoInspector(BaseTool):
         self.current_screen = None
         self.current_position = None
         self.metadata_changed = True
-        event.window.set_pointer('arrow')
+        # event.window.set_pointer('arrow')
 
-        # def normal_mouse_enter(self, event):
-        #     print self, event
-        #     event.window.set_pointer('arrow')
     def _generate_inspector_event(self):
-        pass
+        if self.current_position:
+            txt = '\n'.join(self.assemble_lines())
+        else:
+            txt = ''
+            if self.event_queue:
+                if not any((v for v in self.event_queue.itervalues())):
+                    txt = ''
+                else:
+                    txt = None
+
+        if txt or txt == '':
+            i = self.inspector_item_klass()
+            i.text = txt
+            self.inspector_item = i
 
 
 class InfoOverlay(AbstractOverlay):

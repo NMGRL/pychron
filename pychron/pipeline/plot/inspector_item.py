@@ -25,6 +25,7 @@ class BaseInspectorItem(HasTraits):
 
     def traits_view(self):
         v = View(UItem('text', style='custom',
+                       style_sheet='font-size: 10pt',
                        editor=TextEditor(read_only=True)))
         return v
 

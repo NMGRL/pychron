@@ -166,17 +166,15 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
     def add_tools(self, plot, scatter, line=None,
                   convert_index=None, add_inspector=True):
 
-        # add a regression inspector tool to the line
-        if line:
-            tool = RegressionInspectorTool(component=line)
-            overlay = RegressionInspectorOverlay(component=line,
-                                                 tool=tool)
-            line.tools.append(tool)
-            line.overlays.append(overlay)
-
-        # broadcaster = BroadcasterTool()
-        # scatter.tools.append(broadcaster)
         if add_inspector:
+            # add a regression inspector tool to the line
+            if line:
+                tool = RegressionInspectorTool(component=line)
+                overlay = RegressionInspectorOverlay(component=line,
+                                                     tool=tool)
+                line.tools.append(tool)
+                line.overlays.append(overlay)
+
             point_inspector = PointInspector(scatter,
                                              convert_index=convert_index or self.convert_index_func)
             pinspector_overlay = PointInspectorOverlay(component=scatter,
@@ -184,7 +182,6 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
 
             scatter.overlays.append(pinspector_overlay)
             scatter.tools.append(point_inspector)
-            # broadcaster.tools.append(point_inspector)
 
         rect_tool = RectSelectionTool(scatter)
         rect_overlay = RectSelectionOverlay(tool=rect_tool)

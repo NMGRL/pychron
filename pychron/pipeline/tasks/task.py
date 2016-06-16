@@ -456,10 +456,12 @@ class PipelineTask(BaseBrowserTask):
 
     # defaults
     def _default_layout_default(self):
-        return TaskLayout(left=Splitter(PaneItem('pychron.pipeline.pane',
+        return TaskLayout(left=Splitter(Splitter(PaneItem('pychron.pipeline.pane',
                                                  width=200),
                                         PaneItem('pychron.pipeline.analyses',
-                                                 width=200)))
+                                                 width=200)),
+                                        PaneItem('pychron.pipeline.inspector'),
+                                        orientation='vertical'))
 
     def _extra_actions_default(self):
         sas = (('MenuBar/data.menu', RunAction, {}),)

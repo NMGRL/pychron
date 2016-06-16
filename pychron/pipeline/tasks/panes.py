@@ -448,10 +448,11 @@ class AnalysesPane(TraitsDockPane):
 
 class InspectorPane(TraitsDockPane):
     name = 'Inspector'
-
+    id = 'pychron.pipeline.inspector'
     def traits_view(self):
         v = View(UItem('object.active_inspector_item', style='custom',
-                       editor=InstanceEditor()))
+                       editor=InstanceEditor()),
+                 )
         return v
 
 # ============= EOF =============================================

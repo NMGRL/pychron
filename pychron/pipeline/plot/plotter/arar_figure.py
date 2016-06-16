@@ -583,6 +583,7 @@ class BaseArArFigure(HasTraits, SelectionFigure):
     def _add_scatter_inspector(self,
                                # container,
                                scatter,
+                               inspector=None,
                                add_tool=True,
                                add_selection=True,
                                value_format=None,
@@ -603,28 +604,37 @@ class BaseArArFigure(HasTraits, SelectionFigure):
                 scatter.overlays.append(rect_overlay)
                 broadcaster.tools.append(rect_tool)
 
-            if value_format is None:
-                value_format = lambda x: '{:0.5f}'.format(x)
+            if inspector is None:
+                if value_format is None:
+                    value_format = lambda x: '{:0.5f}'.format(x)
 
-            if convert_index is None:
-                convert_index = lambda x: '{:0.3f}'.format(x)
+                if convert_index is None:
+                    convert_index = lambda x: '{:0.3f}'.format(x)
+                if items is None:
+                    items = self.sorted_analyses
+                inspector = AnalysisPointInspector(scatter,
+                                                   use_pane=True,
+                                                   analyses=items,
+                                                   convert_index=convert_index,
+                                                   index_tag=index_tag,
+                                                   index_attr=index_attr,
+                                                   value_format=value_format,
+                                                   additional_info=additional_info)
 
-            if items is None:
-                items = self.sorted_analyses
-            point_inspector = AnalysisPointInspector(scatter,
-                                                     use_pane=True,
-                                                     analyses=items,
-                                                     convert_index=convert_index,
-                                                     index_tag=index_tag,
-                                                     index_attr=index_attr,
-                                                     value_format=value_format,
-                                                     additional_info=additional_info)
+            if not isinstance(inspector, (list, tuple)):
+                inspector = (inspector,)
 
             # pinspector_overlay = PointInspectorOverlay(component=scatter,
             #                                            tool=point_inspector)
-            point_inspector.on_trait_change(self._handle_inspection, 'inspector_item')
-            # scatter.overlays.append(pinspector_overlay)
-            broadcaster.tools.append(point_inspector)
+            # print 'fff', inspector
+
+            event_queue = {}
+            for i in inspector:
+                i.event_queue = event_queue
+                i.on_trait_change(self._handle_inspection, 'inspector_item')
+                # scatter.overlays.append(pinspector_overlay)
+                broadcaster.tools.append(i)
+
             if update_meta_func is None:
                 update_meta_func = self.update_graph_metadata
             # u = lambda a, b, c, d: self.update_graph_metadata(a, b, c, d)
