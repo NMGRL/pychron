@@ -74,7 +74,7 @@ class MassSpecAnalysis(Analysis):
                 self.rad40_percent = ufloat(arar.PctRad, arar.PctRadEr)
                 self.rad4039 = ufloat(arar.Rad4039, arar.Rad4039Er)
                 self.r3739 = ufloat(arar.R3739Cor, arar.ErR3739Cor)
-                self.r
+                self.Cl3839 = ufloat(arar.Cl3839, 0)
                 self.kca = ufloat(arar.CaOverK, arar.CaOverKEr) ** -1
                 self.kcl = ufloat(arar.ClOverK, arar.ClOverKEr) ** -1
 
