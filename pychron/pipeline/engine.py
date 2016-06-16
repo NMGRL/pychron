@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 import time
 
-from traits.api import HasTraits, Str, Instance, List, Event, on_trait_change
+from traits.api import HasTraits, Str, Instance, List, Event, on_trait_change, Any
 
 # ============= standard library imports ========================
 import os
@@ -36,6 +36,7 @@ from pychron.pipeline.nodes.grouping import GroupingNode
 from pychron.pipeline.nodes.persist import PDFFigureNode, IsotopeEvolutionPersistNode, \
     BlanksPersistNode, ICFactorPersistNode, FluxPersistNode
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
+from pychron.pipeline.plot.inspector_item import BaseInspectorItem
 from pychron.pipeline.state import EngineState
 from pychron.pipeline.template import PipelineTemplate
 
@@ -127,6 +128,8 @@ class PipelineEngine(Loggable):
     selected = Instance(BaseNode, ())
     dclicked = Event
     active_editor = Event
+    active_inspector_item = Instance(BaseInspectorItem, ())
+    selected_editor = Any
 
     # unknowns = List
     # references = List
@@ -658,7 +661,9 @@ class PipelineEngine(Loggable):
         if isinstance(new, FigureNode):
             # self.show_group_colors = True
             if new.editor:
-                self.active_editor = new.editor
+                editor = new.editor
+                self.selected_editor = editor
+                self.active_editor = editor
 
     # _suppress_handle_unknowns = False
     # def _handle_unknowns(self, obj, name, new):
@@ -750,6 +755,10 @@ class PipelineEngine(Loggable):
     def _dclicked_changed(self, new):
         self.configure(new)
         # self.update_needed = True
+
+    @on_trait_change('selected_editor:figure_model:panels:[figures:[inspector_event]]')
+    def _handle_inspector_event(self, obj, name, old, new):
+        self.active_inspector_item = new
 
 # ============= EOF =============================================
 

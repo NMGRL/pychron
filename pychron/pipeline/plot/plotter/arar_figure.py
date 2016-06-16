@@ -40,7 +40,6 @@ from pychron.core.helpers.formatting import floatfmt, format_percent_error
 from pychron.graph.tools.rect_selection_tool import RectSelectionOverlay, \
     RectSelectionTool
 from pychron.graph.tools.analysis_inspector import AnalysisPointInspector
-from pychron.graph.tools.point_inspector import PointInspectorOverlay
 from pychron.pychron_constants import PLUSMINUS
 
 
@@ -88,6 +87,7 @@ class SelectionFigure(object):
 
 
 class BaseArArFigure(HasTraits, SelectionFigure):
+    inspector_event = Event
     analyses = Any
     sorted_analyses = Property(depends_on='analyses')
     analysis_group = Property(depends_on='analyses')
@@ -612,6 +612,7 @@ class BaseArArFigure(HasTraits, SelectionFigure):
             if items is None:
                 items = self.sorted_analyses
             point_inspector = AnalysisPointInspector(scatter,
+                                                     use_pane=True,
                                                      analyses=items,
                                                      convert_index=convert_index,
                                                      index_tag=index_tag,
@@ -619,15 +620,18 @@ class BaseArArFigure(HasTraits, SelectionFigure):
                                                      value_format=value_format,
                                                      additional_info=additional_info)
 
-            pinspector_overlay = PointInspectorOverlay(component=scatter,
-                                                       tool=point_inspector)
-
-            scatter.overlays.append(pinspector_overlay)
+            # pinspector_overlay = PointInspectorOverlay(component=scatter,
+            #                                            tool=point_inspector)
+            point_inspector.on_trait_change(self._handle_inspection, 'inspector_item')
+            # scatter.overlays.append(pinspector_overlay)
             broadcaster.tools.append(point_inspector)
             if update_meta_func is None:
                 update_meta_func = self.update_graph_metadata
             # u = lambda a, b, c, d: self.update_graph_metadata(a, b, c, d)
             scatter.index.on_trait_change(update_meta_func, 'metadata_changed')
+
+    def _handle_inspection(self, new):
+        self.inspector_event = new
 
     def update_graph_metadata(self, obj, name, old, new):
         pass

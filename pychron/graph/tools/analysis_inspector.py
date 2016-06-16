@@ -15,12 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import List, Callable
+from traits.api import List, Callable, Event
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.graph.tools.point_inspector import PointInspector
 
 from traitsui.menu import Action, Menu as MenuManager
+
+from pychron.pipeline.plot.inspector_item import AnalysisInspectorItem
 from pychron.pychron_constants import PLUSMINUS
 
 
@@ -31,6 +33,7 @@ class AnalysisPointInspector(PointInspector):
     _selected_indices = List
     index_tag = None
     single_point = False
+    inspector_item = Event
 
     def contextual_menu_contents(self):
         """
@@ -84,7 +87,13 @@ class AnalysisPointInspector(PointInspector):
         menu_manager.destroy()
         event.handled = True
 
+    def _generate_inspector_event(self):
+        i = AnalysisInspectorItem()
+        i.text = '\n'.join(self.assemble_lines())
+        self.inspector_item = i
+
     def assemble_lines(self):
+
         lines = []
         if self.current_position:
             inds = self.get_selected_index()

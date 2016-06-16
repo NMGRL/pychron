@@ -43,6 +43,7 @@ class InfoInspector(BaseTool):
     metadata_changed = Event
     current_position = None
     current_screen = None
+    use_pane = False
 
     def normal_mouse_move(self, event):
         xy = event.x, event.y
@@ -61,6 +62,10 @@ class InfoInspector(BaseTool):
             event.window.set_pointer('arrow')
             self.current_position = None
             self.current_screen = None
+
+        if self.use_pane:
+            self._generate_inspector_event()
+
         self.metadata_changed = True
 
     def assemble_lines(self):
@@ -75,6 +80,8 @@ class InfoInspector(BaseTool):
         # def normal_mouse_enter(self, event):
         #     print self, event
         #     event.window.set_pointer('arrow')
+    def _generate_inspector_event(self):
+        pass
 
 
 class InfoOverlay(AbstractOverlay):

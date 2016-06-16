@@ -18,7 +18,7 @@
 from pyface.action.menu_manager import MenuManager
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traits.api import Int, Property, List
-from traitsui.api import View, UItem, VGroup, EnumEditor
+from traitsui.api import View, UItem, VGroup, EnumEditor, InstanceEditor
 from traitsui.handler import Handler
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
@@ -303,6 +303,7 @@ class UnknownsAdapter(TabularAdapter):
     age_text = Property
     error_text = Property
     colors = List(colornames)
+
     # klass_text = Property
     # def _get_klass_text(self):
     # return self.item.__class__.__name__.split('.')[-1]
@@ -419,4 +420,13 @@ class AnalysesPane(TraitsDockPane):
                  handler=AnalysesPaneHandler())
         return v
 
-        # ============= EOF =============================================
+
+class InspectorPane(TraitsDockPane):
+    name = 'Inspector'
+
+    def traits_view(self):
+        v = View(UItem('object.active_inspector_item', style='custom',
+                       editor=InstanceEditor()))
+        return v
+
+# ============= EOF =============================================
