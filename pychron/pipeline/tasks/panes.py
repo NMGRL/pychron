@@ -24,8 +24,8 @@ from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 
 # ============= standard library imports ========================
-# ============= local library imports  ==========================
 from uncertainties import nominal_value, std_dev
+# ============= local library imports  ==========================
 from pychron.core.helpers.color_generators import colornames
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.ui.qt.tree_editor import PipelineEditor
@@ -41,8 +41,10 @@ from pychron.pipeline.nodes.find import FindFluxMonitorsNode
 from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode, FitICFactorNode, FitFluxNode
 from pychron.pipeline.nodes.grouping import GroupingNode
 from pychron.pipeline.nodes.persist import PDFNode, DVCPersistNode
+from pychron.pipeline.nodes.review import ReviewNode
 from pychron.pipeline.tasks.tree_node import SeriesTreeNode, PDFTreeNode, GroupingTreeNode, SpectrumTreeNode, \
-    IdeogramTreeNode, FilterTreeNode, DataTreeNode, DBSaveTreeNode, FindTreeNode, FitTreeNode, PipelineTreeNode
+    IdeogramTreeNode, FilterTreeNode, DataTreeNode, DBSaveTreeNode, FindTreeNode, FitTreeNode, PipelineTreeNode, \
+    ReviewTreeNode
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
 
@@ -68,10 +70,11 @@ class PipelineHandler(Handler):
     def disable(self, info, obj):
         self._toggle_enable(info, obj, False)
 
-    def _toggle_enable(self, info, obj, state):
-        obj.enabled = state
-        # info.object.run_needed = True
-        info.object.refresh_all_needed = True
+    def enable_permanent(self, info, obj):
+        self._toggle_permanent(info, obj, True)
+
+    def disable_permanent(self, info, obj):
+        self._toggle_permanent(info, obj, False)
 
     def toggle_skip_configure(self, info, obj):
         obj.skip_configure = not obj.skip_configure
@@ -88,6 +91,16 @@ class PipelineHandler(Handler):
     def move_down(self, info, obj):
         info.object.pipeline.move_down(obj)
         info.object.selected = obj
+
+    def _toggle_permanent(self, info, obj, state):
+        info.object.set_review_permanent(state)
+        self._toggle_enable(info, obj, state)
+
+    def _toggle_enable(self, info, obj, state):
+        obj.enabled = state
+        # info.object.run_needed = True
+        info.object.refresh_all_needed = True
+        info.object.update_needed = True
 
     @node_adder
     def add_pdf_figure(self, info, obj):
@@ -155,7 +168,7 @@ class PipelinePane(TraitsDockPane):
     id = 'pychron.pipeline.pane'
 
     def traits_view(self):
-        def menu_factory(*actions):
+        def enable_disable_menu_factory():
             return MenuManager(
                 Action(name='Enable',
                        action='enable',
@@ -163,33 +176,44 @@ class PipelinePane(TraitsDockPane):
                 Action(name='Disable',
                        action='disable',
                        visible_when='object.enabled'),
-                Action(name='Configure', action='configure'),
-                Action(name='Enable Auto Configure',
-                       action='toggle_skip_configure',
-                       visible_when='object.skip_configure'),
-                Action(name='Disable Auto Configure',
-                       action='toggle_skip_configure',
-                       visible_when='not object.skip_configure'),
-                Action(name='Move Up', action='move_up'),
-                Action(name='Move Down', action='move_down'),
-                Action(name='Delete', action='delete_node'),
-                *actions)
+                Action(name='Enable Permanent',
+                       action='enable_permanent',
+                       visible_when='not object.enabled'),
+                Action(name='Disable Permanent',
+                       action='disable_permanent',
+                       visible_when='object.enabled'))
+
+        def menu_factory(*actions):
+            return MenuManager(Action(name='Enable',
+                                      action='enable',
+                                      visible_when='not object.enabled'),
+                               Action(name='Disable',
+                                      action='disable',
+                                      visible_when='object.enabled'),
+                               Action(name='Configure', action='configure'),
+                               Action(name='Enable Auto Configure',
+                                      action='toggle_skip_configure',
+                                      visible_when='object.skip_configure'),
+                               Action(name='Disable Auto Configure',
+                                      action='toggle_skip_configure',
+                                      visible_when='not object.skip_configure'),
+                               Action(name='Move Up', action='move_up'),
+                               Action(name='Move Down', action='move_down'),
+                               Action(name='Delete', action='delete_node'),
+                               *actions)
 
         def add_menu_factory():
-            return MenuManager(
-                # Action(name='Add Analyses',
-                # action='add_analyses'),
-                Action(name='Add Grouping',
-                       action='add_grouping'),
-                Action(name='Add Filter',
-                       action='add_filter'),
-                Action(name='Add Ideogram',
-                       action='add_ideogram'),
-                Action(name='Add Spectrum',
-                       action='add_spectrum'),
-                Action(name='Add Series',
-                       action='add_series'),
-                name='Add')
+            return MenuManager(Action(name='Add Grouping',
+                                      action='add_grouping'),
+                               Action(name='Add Filter',
+                                      action='add_filter'),
+                               Action(name='Add Ideogram',
+                                      action='add_ideogram'),
+                               Action(name='Add Spectrum',
+                                      action='add_spectrum'),
+                               Action(name='Add Series',
+                                      action='add_series'),
+                               name='Add')
 
         def fit_menu_factory():
             return MenuManager(Action(name='Isotope Evolution',
@@ -258,6 +282,7 @@ class PipelinePane(TraitsDockPane):
                                        FitICFactorNode,
                                        FitBlanksNode,
                                        FitFluxNode], menu=ffind_menu_factory()),
+                 ReviewTreeNode(node_for=[ReviewNode], menu=enable_disable_menu_factory()),
                  PipelineTreeNode(node_for=[BaseNode], label='name')]
 
         # editor = TreeEditor(nodes=nodes,

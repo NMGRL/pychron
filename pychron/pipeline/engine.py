@@ -249,6 +249,25 @@ class PipelineEngine(Loggable):
     def get_experiment_ids(self):
         return self.pipeline.get_experiment_ids()
 
+    def set_review_permanent(self, state):
+        name = self.selected_pipeline_template
+        path, is_user_path = self._get_template_path(name)
+        if path:
+            with open(path, 'r') as rfile:
+                nodes = yaml.load(rfile)
+
+            for i, ni in enumerate(nodes):
+                klass = ni['klass']
+                if klass == 'ReviewNode':
+                    ni['enabled'] = state
+
+            with open(path, 'w') as wfile:
+                yaml.dump(nodes, wfile)
+
+            if is_user_path:
+                with open(path, 'r') as rfile:
+                    paths.update_manifest(name, rfile.read())
+
     # debugging
     def select_default(self):
         node = self.pipeline.nodes[0]
@@ -551,15 +570,7 @@ class PipelineEngine(Loggable):
     # private
     def _set_template(self, name):
         self.reset_event = True
-        pname = name.replace(' ', '_').lower()
-        pname = add_extension(pname, '.yaml')
-        path = os.path.join(paths.pipeline_template_dir, pname)
-        if not os.path.isfile(path):
-            path = os.path.join(paths.user_pipeline_template_dir, pname)
-            if not os.path.isfile(path):
-                self.warning('Invalid template name "{}". {} does not exist'.format(name, path))
-                return
-
+        path, _ = self._get_template_path(name)
         pt = PipelineTemplate(name, path)
         pt.render(self.application, self.pipeline,
                   self.browser_model,
@@ -568,6 +579,20 @@ class PipelineEngine(Loggable):
         self.update_detectors()
         if self.pipeline.nodes:
             self.selected = self.pipeline.nodes[0]
+
+    def _get_template_path(self, name):
+        pname = name.replace(' ', '_').lower()
+        pname = add_extension(pname, '.yaml')
+        path = os.path.join(paths.pipeline_template_dir, pname)
+        user_path = False
+        if not os.path.isfile(path):
+            path = os.path.join(paths.user_pipeline_template_dir, pname)
+            user_path = True
+            if not os.path.isfile(path):
+                self.warning('Invalid template name "{}". {} does not exist'.format(name, path))
+                return
+
+        return path, user_path
 
     def _load_predefined_templates(self):
         self.debug('load predefined templates')
