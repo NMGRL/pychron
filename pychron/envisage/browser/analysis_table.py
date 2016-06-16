@@ -141,7 +141,6 @@ class AnalysisTable(ColumnSorterMixin):
         self.oanalyses = self.analyses = sort_items(aa)
 
         self.calculate_dts(self.analyses)
-        self.add_analysis_set()
 
     def calculate_dts(self, ans):
         if ans and len(ans) > 1:

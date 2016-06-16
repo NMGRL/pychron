@@ -61,7 +61,7 @@ def extract_isochron_xy(analyses):
     return xx, yy
 
 
-def calculate_isochron(analyses, reg='NewYork'):
+def calculate_isochron(analyses, error_calc_kind, reg='NewYork'):
     ref = analyses[0]
     ans = [(ai.get_interference_corrected_value('Ar39'),
             ai.get_interference_corrected_value('Ar36'),
@@ -88,6 +88,9 @@ def calculate_isochron(analyses, reg='NewYork'):
     reg = isochron_regressor(xs, xerrs, ys, yerrs,
                              xds, xdes, xns, xnes, yns, ynes,
                              reg)
+
+    regx.error_calc_type = error_calc_kind
+    reg.error_calc_type = error_calc_kind
 
     xint = ufloat(regx.get_intercept(), regx.get_intercept_error())
     # xint = ufloat(reg.x_intercept, reg.x_intercept_error)

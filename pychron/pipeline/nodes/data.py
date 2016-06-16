@@ -93,6 +93,7 @@ class DataNode(DVCNode):
         info = browser_view.edit_traits(kind='livemodal')
 
         if info.result:
+            self.browser_model.add_analysis_set()
             self.browser_model.dump_browser()
 
             records = self.browser_model.get_analysis_records()
