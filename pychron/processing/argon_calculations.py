@@ -281,7 +281,6 @@ def interference_corrections(a40, a39, a38, a37, a36,
 
     pr = production_ratios
     k37 = ufloat(0, 1e-20)
-    # print 'aaaa', a40, a39
 
     if arar_constants.k3739_mode.lower() == 'normal' and not fixed_k3739:
         # iteratively calculate 37, 39
@@ -337,7 +336,7 @@ def calculate_atmospheric(a38, a36, k38, ca38, ca36, decay_time,
         cl38 = a38 - ar38atm - k38 - ca38
         cl36 = cl38 * m
         atm36 = a36 - ca36 - cl36
-    return atm36, cl36
+    return atm36, cl36, cl38
 
 
 def calculate_F(isotopes,
@@ -363,7 +362,7 @@ def calculate_F(isotopes,
 
     k37, k38, k39, ca36, ca37, ca38, ca39 = interference_corrections(a40, a39, a38, a37, a36,
                                                                      pr, arar_constants, fixed_k3739)
-    atm36, cl36 = calculate_atmospheric(a38, a36, k38, ca38, ca36,
+    atm36, cl36, cl38 = calculate_atmospheric(a38, a36, k38, ca38, ca36,
                                         decay_time,
                                         pr,
                                         arar_constants)
@@ -387,6 +386,7 @@ def calculate_F(isotopes,
                            ca39=ca39,
                            k38=k38,
                            ca38=ca38,
+                           cl38=cl38,
                            k37=k37,
                            ca37=ca37,
                            ca36=ca36,
