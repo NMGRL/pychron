@@ -286,6 +286,7 @@ class AutomatedRunPersister(BasePersister):
         :param grpname: str
         :return: function
         """
+        tables = {}
 
         def write_data(dets, x, keys, signals):
             # todo: test whether saving data to h5 in real time is expansive
@@ -303,9 +304,12 @@ class AutomatedRunPersister(BasePersister):
                             grp = '/{}'.format(grpname)
                         else:
                             grp = '/{}/{}'.format(grpname, det.isotope)
-                        # self.debug('get table {} /{}/{}'.format(k,grpname, det.isotope))
-                        # self.debug('get table {}/{}'.format(grp,k))
-                        t = dm.get_table(k, grp)
+
+                        tag = '{}/{}'.format(grp, k)
+                        if tag in tables:
+                            t = tables['tag']
+                        else:
+                            t = dm.get_table(k, grp)
 
                         nrow = t.row
                         nrow['time'] = x
@@ -317,7 +321,7 @@ class AutomatedRunPersister(BasePersister):
 
         return write_data
 
-    def build_tables(self, grpname, detectors):
+    def build_tables(self, grpname, detectors, n):
         """
         construct the hdf5 table structure
 
@@ -333,11 +337,11 @@ class AutomatedRunPersister(BasePersister):
                 iso = d.isotope
                 name = d.name
                 if grpname == 'baseline':
-                    dm.new_table('/{}'.format(grpname), name)
+                    dm.new_table('/{}'.format(grpname), name, n)
                     self.debug('add group {} table {}'.format(grpname, name))
                 else:
                     isogrp = dm.new_group(iso, parent='/{}'.format(grpname))
-                    dm.new_table(isogrp, name)
+                    dm.new_table(isogrp, name, n)
                     self.debug('add group {} table {}'.format(isogrp, name))
 
     def build_peak_hop_tables(self, grpname, hops):

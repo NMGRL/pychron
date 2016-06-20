@@ -351,6 +351,9 @@ class DVC(Loggable):
     #     return self._manual_edit(runid, experiment_identifier, values, errors, 'baselines')
 
     def manual_edit(self, runid, repository_identifier, values, errors, modifier):
+        self.debug('manual edit {} {} {}'.format(runid, repository_identifier, modifier))
+        self.debug('values {}'.format(values))
+        self.debug('errors {}'.format(errors))
         path = analysis_path(runid, repository_identifier, modifier=modifier)
         with open(path, 'r') as rfile:
             obj = json.load(rfile)

@@ -146,8 +146,12 @@ class BaseBrowserTask(BaseEditorTask):
         self.debug('Edit analysis data')
         if not self.has_active_editor():
             return
-        #
+
         editor = self.active_editor
+        if not isinstance(editor, RecallEditor):
+            self.warning_dialog('Active tab must be a Recall tab')
+            return
+
         if hasattr(editor, 'edit_view') and editor.edit_view:
             editor.edit_view.show()
         else:

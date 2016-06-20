@@ -35,7 +35,7 @@ from pychron.experiment.experiment_launch_history import update_launch_history
 from pychron.experiment.experimentor import Experimentor
 from pychron.experiment.queue.base_queue import extract_meta
 from pychron.experiment.tasks.experiment_editor import ExperimentEditor, UVExperimentEditor
-from pychron.experiment.utilities.experiment_save_dialog import ExperimentSaveDialog
+from pychron.experiment.utilities.save_dialog import ExperimentSaveDialog
 from pychron.experiment.utilities.identifier import convert_extract_device, is_special
 from pychron.furnace.ifurnace_manager import IFurnaceManager
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager

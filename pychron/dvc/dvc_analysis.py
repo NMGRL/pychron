@@ -236,10 +236,6 @@ class DVCAnalysis(Analysis):
                 i = self.isotopes[iso]
                 self._load_value_error(i, v)
 
-                for k in ('n', 'fn'):
-                    if k in iso:
-                        setattr(i, k, iso[k])
-
                 i.set_fit(v['fit'], notify=False)
                 i.set_filter_outliers_dict(filter_outliers=v.get('filter_outliers', False),
                                            iterations=v.get('iterations', 0),
@@ -257,6 +253,10 @@ class DVCAnalysis(Analysis):
             item.error = obj['manual_error']
         else:
             item.error = obj['error']
+
+        for k in ('n', 'fn'):
+            if k in obj:
+                setattr(item, k, obj[k])
 
     def _load_baselines(self, jd):
         for det, v in jd.iteritems():

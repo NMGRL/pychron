@@ -196,8 +196,10 @@ class BrowserSampleView(BaseBrowserSampleView):
         # def make_name(name):
         #     return 'object.analysis_table.{}'.format(name)
 
-        analysis_tools = VGroup(UItem('analysis_table.analysis_set',
-                                      editor=EnumEditor(name='analysis_table.analysis_set_names')),
+        analysis_tools = VGroup(HGroup(UItem('analysis_table.analysis_set',
+                                             editor=EnumEditor(name='analysis_table.analysis_set_names')),
+                                       icon_button_editor('analysis_table.add_analysis_set_button', 'add',
+                                                          tooltip='Add current analyses to an analysis set')),
                                 HGroup(UItem('analysis_table.analysis_filter_parameter',
                                              width=-90,
                                              editor=EnumEditor(name='analysis_table.analysis_filter_parameters')),

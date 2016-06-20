@@ -19,6 +19,8 @@
 # ============= local library imports  ==========================
 from numpy import Inf
 
+from pychron.graph.tools.point_inspector import PointInspector
+from pychron.graph.tools.regression_inspector import RegressionInspectorTool
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
 
 
@@ -61,33 +63,46 @@ class IsoEvo(BaseArArFigure):
         else:
             if self.show_sniff:
                 xs, ys = iso.sniff.xs, iso.sniff.ys
-                self.graph.new_series(xs, ys,
-                                      marker=p.marker,
-                                      marker_size=p.marker_size,
-                                      type='scatter',
-                                      plotid=i,
-                                      fit=None,
-                                      color='red')
+                scatter, _ = self.graph.new_series(xs, ys,
+                                                   marker=p.marker,
+                                                   marker_size=p.marker_size,
+                                                   type='scatter',
+                                                   plotid=i,
+                                                   fit=None,
+                                                   add_inspector=False,
+                                                   color='red')
+                psinspector = PointInspector(scatter, use_pane=True)
                 ymi, yma = min_max(ymi, yma, iso.sniff.ys)
                 xmi, xma = min_max(xmi, xma, iso.sniff.xs)
 
             xs = iso.xs
             ys = iso.ys
 
-            self.graph.new_series(xs, ys,
-                                  marker=p.marker,
-                                  marker_size=p.marker_size,
-                                  type='scatter',
-                                  plotid=i,
-                                  fit=iso.fit,
-                                  filter_outliers_dict=iso.filter_outliers_dict,
-                                  color='black')
+            plot, scatter, line = self.graph.new_series(xs, ys,
+                                                        marker=p.marker,
+                                                        marker_size=p.marker_size,
+                                                        type='scatter',
+                                                        plotid=i,
+                                                        fit=iso.fit,
+                                                        filter_outliers_dict=iso.filter_outliers_dict,
+                                                        color='black',
+                                                        add_inspector=False)
+
+            pinspector = PointInspector(scatter, use_pane=True)
+            linspector = RegressionInspectorTool(component=line, use_pane=True)
+            if psinspector:
+                inspectors = [linspector, pinspector, psinspector]
+            else:
+                inspectors = [linspector, pinspector]
+
             ymi, yma = min_max(ymi, yma, iso.ys)
             xmi, xma = min_max(xmi, xma, iso.xs)
 
             if self.show_baseline:
-                xma, xmi, yma, ymi = self._plot_baseline(i, iso, p, xma, xmi, yma, ymi)
+                xma, xmi, yma, ymi, ins = self._plot_baseline(i, iso, p, xma, xmi, yma, ymi)
+                inspectors.append(ins)
 
+            self._add_scatter_inspector(scatter, inspectors)
         self.graph.set_x_limits(min_=xmi, max_=xma * 1.05, plotid=i)
         self.graph.set_y_limits(min_=ymi, max_=yma, pad='0.05', plotid=i)
         self.graph.refresh()
@@ -95,17 +110,20 @@ class IsoEvo(BaseArArFigure):
     def _plot_baseline(self, i, iso, p, xma, xmi, yma, ymi):
         xs = iso.baseline.xs
         ys = iso.baseline.ys
-        self.graph.new_series(xs, ys,
-                              marker=p.marker,
-                              marker_size=p.marker_size,
-                              type='scatter',
-                              plotid=i,
-                              fit=iso.baseline.fit,
-                              filter_outliers_dict=iso.baseline.filter_outliers_dict,
-                              color='black')
+        scatter, _ = self.graph.new_series(xs, ys,
+                                           marker=p.marker,
+                                           marker_size=p.marker_size,
+                                           type='scatter',
+                                           plotid=i,
+                                           fit=iso.baseline.fit,
+                                           filter_outliers_dict=iso.baseline.filter_outliers_dict,
+                                           add_tools=False,
+                                           color='black')
+
+        pinspector = PointInspector(scatter, use_pane=True)
 
         xmi, xma = min_max(xmi, xma, xs)
         ymi, yma = min_max(ymi, yma, ys)
-        return xma, xmi, yma, ymi
+        return xma, xmi, yma, ymi, pinspector
 
 # ============= EOF =============================================

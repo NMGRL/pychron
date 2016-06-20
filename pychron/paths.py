@@ -20,8 +20,9 @@ Global path structure
 add a path verification function
 make sure directory exists and build if not
 """
-import os
-from os import path, mkdir
+import pickle
+from hashlib import md5
+from os import path, mkdir, environ
 
 from pychron.file_defaults import TASK_EXTENSION_DEFAULT, SIMPLE_UI_DEFAULT, \
     EDIT_UI_DEFAULT, IDENTIFIERS_DEFAULT
@@ -268,7 +269,7 @@ class Paths(object):
     def set_icon_search_path(self):
         ps = [self.icons, self.app_resources]
         if self.app_resources:
-            ps.append(os.path.join(self.app_resources, 'icons'))
+            ps.append(path.join(self.app_resources, 'icons'))
 
         self.icon_search_path = ps
 
@@ -479,13 +480,42 @@ class Paths(object):
         self.series_template = join(self.pipeline_template_dir, 'series.yaml')
         build_directories()
 
+    def set_template_manifest(self, files):
+        # open the manifest file to set the overwrite flag
+        manifest = self._get_manifest()
+        for item in files:
+            fn, t, o = item
+            txt = get_file_text(t)
+            h = md5(txt).hexdigest()
+            if fn in manifest and h == manifest[fn]:
+                item[2] = False
+
+            manifest[fn] = h
+
+        with open(paths.template_manifest_file, 'w') as wfile:
+            pickle.dump(manifest, wfile)
+
+        return files
+
+    def update_manifest(self, name, text):
+        manifest = self._get_manifest()
+        manifest[name] = md5(text).hexdigest()
+
+    def _get_manifest(self):
+        if path.isfile(paths.template_manifest_file):
+            with open(paths.template_manifest_file) as rfile:
+                manifest = pickle.load(rfile)
+        else:
+            manifest = {}
+        return manifest
+
     def hidden_path(self, basename):
         from pychron.globals import globalv
         basename = '{}.{}'.format(basename, globalv.username)
-        return os.path.join(self.hidden_dir, basename)
+        return path.join(self.hidden_dir, basename)
 
     def write_defaults(self):
-        if os.environ.get('TRAVIS_CI', 'False') == 'False' and os.environ.get('RTD', 'False') == 'False':
+        if environ.get('TRAVIS_CI', 'False') == 'False' and environ.get('RTD', 'False') == 'False':
             self._write_default_files()
 
     def reset_plot_factory_defaults(self):

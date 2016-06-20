@@ -191,19 +191,20 @@ class ExceptionHandler(Controller):
                                                                                      m.description, m.exctext)
 
     def traits_view(self):
-        v = View(VGroup(
-            UItem('helpstr',
-                  style='readonly'),
-            Item('title'),
-            HGroup(VGroup(UItem('labels', style='custom', editor=CheckListEditor(values=LABELS)),
-                          show_border=True, label='Labels (optional)'),
-                   VGroup(UItem('description', style='custom'), show_border=True,
-                          label='Description (optional)')),
-            UItem('exctext',
-                  style='custom',
-                  editor=TextEditor(read_only=True))),
-            title='Exception',
-            buttons=[SubmitAction, 'Cancel'])
+        v = View(VGroup(UItem('helpstr',
+                              style='readonly'),
+                        Item('title'),
+                        HGroup(VGroup(UItem('labels', style='custom',
+                                            editor=CheckListEditor(values=LABELS, cols=2)),
+                                      show_border=True, label='Labels (optional)',
+                                      scrollable=True),
+                               VGroup(UItem('description', style='custom'), show_border=True,
+                                      label='Description (optional)')),
+                        UItem('exctext',
+                              style='custom',
+                              editor=TextEditor(read_only=True))),
+                 title='Exception',
+                 buttons=[SubmitAction, 'Cancel'])
 
         return v
 

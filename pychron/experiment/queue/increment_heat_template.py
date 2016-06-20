@@ -15,8 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from pyface.constant import OK
-from pyface.file_dialog import FileDialog
 from traits.api import HasTraits, Float, Enum, List, Int, \
     File, Property, Button, on_trait_change, Any, Event, cached_property
 from traits.trait_errors import TraitError
@@ -26,10 +24,10 @@ from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
 import csv
 import os
-from hashlib import sha256
 # ============= local library imports  ==========================
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
+from pychron.experiment.utilities.save_dialog import IncrementalHeatTemplateSaveDialog
 from pychron.paths import paths
 from pychron.viewable import Viewable
 from pychron.pychron_constants import alphas
@@ -276,22 +274,6 @@ class BaseIncrementalHeatTemplate(Viewable):
     #             sims.append(ti)
     #     return sims
 
-    def _generate_name(self):
-        # get active steps
-        steps = [s for s in self.steps if s.is_valid]
-        n = len(steps)
-        first, last = steps[0], steps[-1]
-
-        h = sha256()
-        attrs = ('step_id', 'duration', 'cleanup', 'value', 'beam_diameter')
-        for s in steps:
-            for a in attrs:
-                if hasattr(s, a):
-                    h.update(str(getattr(s, a)))
-
-        d = h.hexdigest()
-        return '{}Step{}-{}_{}.txt'.format(n, first.value, last.value, d[:8])
-
     # ===============================================================================
     # handlers
     # ===============================================================================
@@ -330,16 +312,12 @@ class BaseIncrementalHeatTemplate(Viewable):
         #                                     'Are you sure you want to save this template?'.format(','.join(sims))):
         #         return
 
-        default_filename = self._generate_name()
+        steps = [s for s in self.steps if s.is_valid]
+        n = len(steps)
 
-        dlg = FileDialog(action='save as',
-                         default_filename=default_filename,
-                         default_directory=paths.incremental_heat_template_dir)
-        if dlg.open() == OK:
-            path = dlg.path
-            if not path.endswith('.txt'):
-                path = '{}.txt'.format(path)
-
+        dlg = IncrementalHeatTemplateSaveDialog(n=n, root=paths.incremental_heat_template_dir)
+        path = dlg.get_path()
+        if path:
             self.dump(path)
             self.path = path
             self.close_ui()

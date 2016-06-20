@@ -16,19 +16,88 @@
 
 # ============= enthought library imports =======================
 from traits.api import Property, Instance, List, Either, Int, Float, HasTraits, \
-    Str, Bool
+    Str, Bool, Button
 from traitsui.api import View, Item, UItem, VGroup, HGroup, spring
+from traitsui.editors.check_list_editor import CheckListEditor
 from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
-# ============= local library imports  ==========================
+import os
+import yaml
 from uncertainties import nominal_value, std_dev
+# ============= local library imports  ==========================
 from pychron.core.ui.tabular_editor import myTabularEditor
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 from pychron.core.helpers.formatting import floatfmt
 from pychron.mass_spec.mass_spec_recaller import MassSpecRecaller
+from pychron.paths import paths
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
-DIFF_TOLERANCE = 1e-8
+DIFF_TOLERANCE_PERCENT = 0.01
+
+DIFF_TAGS = ('J',
+             u'J {}'.format(PLUSMINUS_ONE_SIGMA),
+             'Age',
+             u'Age W/Jerr {}'.format(PLUSMINUS_ONE_SIGMA),
+             u'Age {}'.format(PLUSMINUS_ONE_SIGMA),
+             '40Ar* %',
+             'Rad4039',
+             u'Rad4039 {}'.format(PLUSMINUS_ONE_SIGMA),
+             'Ca37/K39',
+             'Ca/K',
+             'Cl38/K39',
+             'Cl/K',
+             'Lambda K',
+             'Lambda Ar37',
+             'Lambda Ar39',
+             'Lambda Cl36',
+
+             'Ar40 Total',
+             u'Ar40 Total'.format(PLUSMINUS_ONE_SIGMA),
+             'Ar40 Bs Corrected',
+             u'Ar40 Bs Corrected {}'.format(PLUSMINUS_ONE_SIGMA),
+             'Ar40 Blank',
+             u'Ar40 Blank {}'.format(PLUSMINUS_ONE_SIGMA),
+             'Ar40 N', 'Ar40 fN', 'Ar40 Fit', 'Ar40 Filter', 'Ar40 Filter Iter', 'Ar40 Filter SD', 'Ar40 IC',
+             u'Ar40 IC {}'.format(PLUSMINUS_ONE_SIGMA),
+
+             'Ar39 Total',
+             u'Ar39 Total'.format(PLUSMINUS_ONE_SIGMA),
+             'Ar39 Bs Corrected',
+             u'Ar39 Bs Corrected {}'.format(PLUSMINUS_ONE_SIGMA),
+             'Ar39 Blank',
+             u'Ar39 Blank {}'.format(PLUSMINUS_ONE_SIGMA),
+             'Ar39 N', 'Ar39 fN', 'Ar39 Fit', 'Ar39 Filter', 'Ar39 Filter Iter', 'Ar39 Filter SD', 'Ar39 IC',
+             u'Ar39 IC {}'.format(PLUSMINUS_ONE_SIGMA),
+
+             'Ar38 Total',
+             u'Ar38 Total'.format(PLUSMINUS_ONE_SIGMA),
+             'Ar38 Bs Corrected',
+             u'Ar38 Bs Corrected {}'.format(PLUSMINUS_ONE_SIGMA),
+             'Ar38 Blank',
+             u'Ar38 Blank {}'.format(PLUSMINUS_ONE_SIGMA),
+             'Ar38 N', 'Ar38 fN', 'Ar38 Fit', 'Ar38 Filter', 'Ar38 Filter Iter', 'Ar38 Filter SD', 'Ar38 IC',
+             u'Ar38 IC {}'.format(PLUSMINUS_ONE_SIGMA),
+
+             'Ar37 Total',
+             u'Ar37 Total'.format(PLUSMINUS_ONE_SIGMA),
+             'Ar37 Bs Corrected',
+             u'Ar37 Bs Corrected {}'.format(PLUSMINUS_ONE_SIGMA),
+             'Ar37 Blank',
+             u'Ar37 Blank {}'.format(PLUSMINUS_ONE_SIGMA),
+             'Ar37 N', 'Ar37 fN', 'Ar37 Fit', 'Ar37 Filter', 'Ar37 Filter Iter', 'Ar37 Filter SD', 'Ar37 IC',
+             u'Ar37 IC {}'.format(PLUSMINUS_ONE_SIGMA),
+
+             'Ar36 Total',
+             u'Ar36 Total'.format(PLUSMINUS_ONE_SIGMA),
+             'Ar36 Bs Corrected',
+             u'Ar36 Bs Corrected {}'.format(PLUSMINUS_ONE_SIGMA),
+             'Ar36 Blank',
+             u'Ar36 Blank {}'.format(PLUSMINUS_ONE_SIGMA),
+             'Ar36 N', 'Ar36 fN', 'Ar36 Fit', 'Ar36 Filter', 'Ar36 Filter Iter', 'Ar36 Filter SD', 'Ar36 IC',
+             u'Ar36 IC {}'.format(PLUSMINUS_ONE_SIGMA),
+             'K4039', 'K3839', 'K3739', 'Ca3937', 'Ca3837', 'Ca3637', 'Cl3638', 'Ca_K', 'Cl_K'
+             )
 
 
 class ValueTabularAdapter(TabularAdapter):
@@ -56,8 +125,7 @@ class ValueTabularAdapter(TabularAdapter):
     def get_bg_color(self, object, trait, row, column=0):
         color = 'white'
         if self.use_bg_color:
-            v = self.item.diff
-            if abs(v) > 1e-8:
+            if self.item.enabled:
                 color = '#FFCCCC'
         return color
 
@@ -76,23 +144,17 @@ class ValueTabularAdapter(TabularAdapter):
         v = self.item.rvalue
         return self._get_value_text(v)
 
-    def _get_value_text(self, v, n=8):
+    def _get_value_text(self, v, n=6):
         if isinstance(v, float):
-            v = floatfmt(v, n=n)
+            v = floatfmt(v, n=n, s=5, use_scientific=True)
         return v
 
     def _get_diff_text(self):
         v = self.item.diff
         if isinstance(v, float):
-            if abs(v) < DIFF_TOLERANCE:
-                v = ''
-            else:
-                v = floatfmt(v, n=8)
+            v = floatfmt(v, n=8, use_scientific=True)
         elif isinstance(v, bool):
             v = '---' if v else ''
-
-        if not v:
-            v = ''
 
         return v
 
@@ -115,7 +177,11 @@ class Value(HasTraits):
         return self.lvalue - self.rvalue
 
     def _get_enabled(self):
-        return abs(self.diff) > DIFF_TOLERANCE
+        t = True
+        d = self.percent_diff
+        if d != 'NaN':
+            t = abs(d) > DIFF_TOLERANCE_PERCENT
+        return t
 
 
 class StrValue(Value):
@@ -148,14 +214,10 @@ class DiffEditor(BaseTraitsEditor):
 
     record_id = ''
     is_blank = False
-
-    def _diffs_only_changed(self, new):
-        if new:
-            self.values = [vi for vi in self.ovalues if vi.enabled]
-            self.adapter.use_bg_color = False
-        else:
-            self.adapter.use_bg_color = True
-            self.values = self.ovalues
+    diff_tags = List
+    edit_configuration_button = Button
+    select_all_button = Button('Select All')
+    clear_all_button = Button('Clear All')
 
     def setup(self, left):
         self.record_id = left.record_id
@@ -208,9 +270,13 @@ class DiffEditor(BaseTraitsEditor):
             vs.append(Value(name='Age',
                             lvalue=left.age or 0,
                             rvalue=right.age or 0))
+            vs.append(Value(name=u'Age W/Jerr {}'.format(PLUSMINUS_ONE_SIGMA),
+                            lvalue=std_dev(left.uage_w_j_err) or 0,
+                            rvalue=right.age_err or 0))
             vs.append(Value(name=u'Age {}'.format(PLUSMINUS_ONE_SIGMA),
                             lvalue=left.age_err or 0,
-                            rvalue=right.age_err or 0))
+                            rvalue=right.age_err_wo_j or 0))
+
             vs.append(Value(name='40Ar* %',
                             lvalue=nominal_value(left.rad40_percent or 0),
                             rvalue=nominal_value(right.rad40_percent or 0)))
@@ -221,12 +287,26 @@ class DiffEditor(BaseTraitsEditor):
                             lvalue=std_dev(left.uF),
                             rvalue=std_dev(right.rad4039)))
 
+            k = left.get_computed_value('k39')
+            ca = left.get_non_ar_isotope('ca37')
+
+            vs.append(Value(name='Ca37/K39', lvalue=nominal_value(ca / k),
+                            rvalue=nominal_value(right.r3739)))
+            vs.append(Value(name='Ca/K', lvalue=nominal_value(left.kca) ** -1,
+                            rvalue=nominal_value(right.kca) ** -1))
+
+            cl = left.get_non_ar_isotope('cl38')
+            vs.append(Value(name='Cl38/K39', lvalue=nominal_value(cl / k),
+                            rvalue=nominal_value(right.Cl3839)))
+            vs.append(Value(name='Cl/K', lvalue=nominal_value(left.kcl) ** -1,
+                            rvalue=nominal_value(right.kcl) ** -1))
+
             constants = left.arar_constants
             vv = [Value(name=n, lvalue=nominal_value(getattr(constants, k)),
                         rvalue=nominal_value(getattr(right, k)))
                   for n, k in (('Lambda K', 'lambda_k'),
                                ('Lambda Ar37', 'lambda_Ar37'),
-                               ('Lambda Ar37', 'lambda_Ar37'),
+                               ('Lambda Ar39', 'lambda_Ar39'),
                                ('Lambda Cl36', 'lambda_Cl36'))]
             vs.extend(vv)
 
@@ -248,18 +328,20 @@ class DiffEditor(BaseTraitsEditor):
                             rvalue=nominal_value(ri)))
             vs.append(Value(name=func(PLUSMINUS_ONE_SIGMA), lvalue=std_dev(i), rvalue=std_dev(ri)))
 
-            if iso.decay_corrected:
-                # baseline, blank corrected, ic_corrected, decay_corrected
-                i = iso.decay_corrected
-            else:
-                # baseline, blank corrected, ic_corrected
-                i = iso.get_intensity()
+            if not self.is_blank:
+                if iso.decay_corrected:
+                    # baseline, blank corrected, ic_corrected, decay_corrected
+                    i = iso.decay_corrected
+                else:
+                    # baseline, blank corrected, ic_corrected
+                    i = iso.get_intensity()
 
-            ri = riso.total_value
-            vs.append(Value(name=func('Total'),
-                            lvalue=nominal_value(i),
-                            rvalue=nominal_value(ri)))
-            vs.append(Value(name=func(u'Total {}'.format(PLUSMINUS_ONE_SIGMA)), lvalue=std_dev(i), rvalue=std_dev(ri)))
+                ri = riso.total_value
+                vs.append(Value(name=func('Total'),
+                                lvalue=nominal_value(i),
+                                rvalue=nominal_value(ri)))
+                vs.append(
+                    Value(name=func(u'Total {}'.format(PLUSMINUS_ONE_SIGMA)), lvalue=std_dev(i), rvalue=std_dev(ri)))
 
             vs.append(Value(name=func('N'), lvalue=iso.n, rvalue=riso.n))
             vs.append(Value(name=func('fN'), lvalue=iso.fn, rvalue=riso.fn))
@@ -272,7 +354,8 @@ class DiffEditor(BaseTraitsEditor):
                             rvalue=riso.filter_outliers_dict.get('std_devs')))
             vs.append(Value(name=func('IC'), lvalue=nominal_value(iso.ic_factor),
                             rvalue=nominal_value(riso.ic_factor)))
-
+            vs.append(Value(name=func(u'IC {}'.format(PLUSMINUS_ONE_SIGMA)), lvalue=std_dev(iso.ic_factor),
+                            rvalue=std_dev(riso.ic_factor)))
         for a in isotopes:
             func = pfunc(a)
             baseline = left.isotopes[a].baseline
@@ -311,13 +394,67 @@ class DiffEditor(BaseTraitsEditor):
                 vs.append(Value(name=k, lvalue=nominal_value(v),
                                 rvalue=nominal_value(rifc.get(k.lower(), 0))))
 
-        # self.values = vs
-        self.ovalues = vs[:]
+        self.ovalues = vs
         self._diffs_only_changed(self.diffs_only)
+
+    def _get_configuration(self):
+        p = paths.hidden_path('diff_config')
+        if os.path.isfile(p):
+            with open(p, 'r') as rfile:
+                return yaml.load(rfile)
+
+    def _dump_configuration(self):
+        p = paths.hidden_path('diff_config')
+        with open(p, 'w') as wfile:
+            return yaml.dump(self.diff_tags, wfile)
+
+    def _edit_configuration_button_fired(self):
+        v = View(VGroup(HGroup(UItem('select_all_button'),
+                               UItem('clear_all_button')),
+                        UItem('diff_tags', style='custom',
+                              editor=CheckListEditor(values=DIFF_TAGS, cols=5))),
+                 kind='livemodal',
+                 buttons=['OK', 'Cancel'],
+                 title='Configure Diff')
+
+        cfg = self._get_configuration()
+        if cfg is None:
+            self._select_all_button_fired()
+        else:
+            self.diff_tags = cfg
+
+        info = self.edit_traits(v)
+        if info.result:
+            self._dump_configuration()
+            self._diffs_only_changed(self.diffs_only)
+
+    def _select_all_button_fired(self):
+        self.diff_tags = list(DIFF_TAGS)
+
+    def _clear_all_button_fired(self):
+        self.diff_tags = []
+
+    def _diffs_only_changed(self, new):
+        cfg = self._get_configuration()
+        ovs = self.ovalues
+        if cfg:
+            ovs = [vi for vi in self.ovalues if vi.name in cfg]
+
+        if new:
+            self.values = [vi for vi in ovs if vi.enabled]
+            self.adapter.use_bg_color = False
+        else:
+            self.adapter.use_bg_color = True
+            self.values = ovs
 
     def traits_view(self):
         v = View(VGroup(
-            HGroup(Item('diffs_only'), spring, UItem('record_id', style='readonly'), spring),
+            # HGroup(Item('diffs_only'), spring, UItem('record_id', style='readonly'), spring),
+            HGroup(Item('diffs_only'), icon_button_editor('edit_configuration_button', 'cog'),
+                   spring,
+                   UItem('record_id',
+                         style='readonly'),
+                   spring),
             UItem('values', editor=myTabularEditor(adapter=self.adapter,
                                                    editable=False,
                                                    selected_row='selected_row'))))

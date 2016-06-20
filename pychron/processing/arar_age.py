@@ -288,7 +288,7 @@ class ArArAge(IsotopeGroup):
 
     def _calculate_kcl(self):
         k = self.get_computed_value('k39')
-        cl = self.get_non_ar_isotope('cl36')
+        cl = self.get_non_ar_isotope('cl38')
 
         prs = self.production_ratios
         k_cl_pr = 1
@@ -304,7 +304,7 @@ class ArArAge(IsotopeGroup):
             self.kcl = ufloat(0, 0)
             if not self._kcl_warning:
                 self._kcl_warning = True
-                self.warning("cl36 is zero. can't calculated k/cl")
+                self.warning("cl38 is zero. can't calculated k/cl")
 
     def _assemble_ar_ar_isotopes(self):
         isotopes = self.isotopes

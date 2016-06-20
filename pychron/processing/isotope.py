@@ -147,10 +147,10 @@ class IsotopicMeasurement(BaseMeasurement):
 
     @property
     def fn(self):
-        if self._regressor:
-            n = self._regressor.clean_xs.shape[0]
-        elif self._fn is not None:
+        if self._fn is not None:
             n = self._fn
+        elif self._regressor:
+            n = self._regressor.clean_xs.shape[0]
         else:
             n = self.n
         return n

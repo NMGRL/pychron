@@ -40,7 +40,7 @@ def get_table(name, group, frame):
 class TableCTX(object):
     def __init__(self, p, t, g, complevel, mode):
         self._file = open_file(p, mode,
-                              filters=Filters(complevel=complevel))
+                               filters=Filters(complevel=complevel))
         self._t = t
         self._g = g
 
@@ -55,7 +55,7 @@ class TableCTX(object):
 class FileCTX(object):
     def __init__(self, parent, p, m, complevel):
         self._file = open_file(p, m,
-                              filters=Filters(complevel=complevel))
+                               filters=Filters(complevel=complevel))
         self._parent = parent
         self._parent._frame = self._file
 
@@ -153,14 +153,15 @@ class H5DataManager(DataManager):
 
         return grp
 
-    def new_table(self, group, table_name, table_style='TimeSeries'):
+    def new_table(self, group, table_name, n=None, table_style='TimeSeries'):
         """
             if table already exists return it otherwise create a new table
         """
         tab = self.get_table(table_name, group)
         if tab is None:
             tab = self._frame.create_table(group, table_name,
-                                          table_description_factory(table_style))
+                                           table_description_factory(table_style),
+                                           expectedrows=n or 10000)
 
         tab.flush()
         return tab
@@ -239,6 +240,7 @@ class H5DataManager(DataManager):
 
     def kill(self):
         self.close_file()
+
 
 if __name__ == '__main__':
     d = H5DataManager()

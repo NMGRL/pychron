@@ -37,7 +37,7 @@ from pychron.pipeline.state import EngineState
 from pychron.pipeline.tasks.actions import RunAction, SavePipelineTemplateAction, ResumeAction, ResetAction, \
     ConfigureRecallAction, TagAction, SetInterpretedAgeAction, ClearAction, SavePDFAction, SaveFigureAction, \
     SetInvalidAction, SetFilteringTagAction, TabularViewAction, EditAnalysisAction, RunFromAction
-from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane
+from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane, InspectorPane
 from pychron.envisage.browser.browser_task import BaseBrowserTask
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.tasks.select_repo import SelectExperimentIDView
@@ -117,7 +117,8 @@ class PipelineTask(BaseBrowserTask):
 
     def create_dock_panes(self):
         panes = [PipelinePane(model=self.engine),
-                 AnalysesPane(model=self.engine)]
+                 AnalysesPane(model=self.engine),
+                 InspectorPane(model=self.engine)]
         return panes
 
     # toolbar actions
@@ -455,10 +456,12 @@ class PipelineTask(BaseBrowserTask):
 
     # defaults
     def _default_layout_default(self):
-        return TaskLayout(left=Splitter(PaneItem('pychron.pipeline.pane',
+        return TaskLayout(left=Splitter(Splitter(PaneItem('pychron.pipeline.pane',
                                                  width=200),
                                         PaneItem('pychron.pipeline.analyses',
-                                                 width=200)))
+                                                 width=200)),
+                                        PaneItem('pychron.pipeline.inspector'),
+                                        orientation='vertical'))
 
     def _extra_actions_default(self):
         sas = (('MenuBar/data.menu', RunAction, {}),)

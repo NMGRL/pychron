@@ -28,6 +28,17 @@ from pychron.processing.isotope import Isotope, Baseline
 from pychron.pychron_constants import IRRADIATION_KEYS
 
 
+def get_fn(blob):
+    fn = None
+    if blob is not None:
+        ps = blob.strip().split('\n')
+        fn = len(ps)
+        if fn == 1 and ps[0] == '':
+            fn = 0
+
+    return fn
+
+
 class Blob:
     def __init__(self, v):
         self._buf = StringIO.StringIO(v)
@@ -62,6 +73,10 @@ class MassSpecAnalysis(Analysis):
                 self.age_err_wo_j = arar.ErrAgeWOErInJ
                 self.rad40_percent = ufloat(arar.PctRad, arar.PctRadEr)
                 self.rad4039 = ufloat(arar.Rad4039, arar.Rad4039Er)
+                self.r3739 = ufloat(arar.R3739Cor, arar.ErR3739Cor)
+                self.Cl3839 = ufloat(arar.Cl3839, 0)
+                self.kca = ufloat(arar.CaOverK, arar.CaOverKEr) ** -1
+                self.kcl = ufloat(arar.ClOverK, arar.ClOverKEr) ** -1
 
         prefs = obj.changeable.preferences_set
         fo, fi, fs = 0, 0, 0
@@ -159,12 +174,19 @@ class MassSpecAnalysis(Analysis):
     def sync_fn(self, key, pdpblob):
         if pdpblob:
             iso = self.isotopes[key]
-            iso.fn = iso.n - len(pdpblob.split('\n'))
+            fn = get_fn(pdpblob)
+            if fn:
+                iso.fn = iso.n - fn
 
     def sync_baselines(self, key, infoblob, pdpblob):
-        fn = None
-        if pdpblob is not None:
-            fn = len(pdpblob.split('\n'))
+        fn = get_fn(pdpblob)
+        # fn = None
+        # if pdpblob is not None:
+        # print 'blobl',pdpblob
+        # print 'stip',pdpblob.strip()
+        # print 'stip', map(ord, pdpblob.strip())
+        # print 'split', pdpblob.strip().split('\n')
+        # fn = len(pdpblob.strip().split('\n'))
 
         v, e = self._extract_average_baseline(infoblob)
         for iso in self.isotopes.itervalues():

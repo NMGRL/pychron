@@ -254,10 +254,10 @@ class AnalysisGroup(HasTraits):
         return self._calculate_mean(attr, use_weights=True, error_kind=error_kind)
 
     def get_isochron_data(self):
-        return calculate_isochron(list(self.clean_analyses()))
+        return calculate_isochron(list(self.clean_analyses()), self.isochron_age_error_kind)
 
     def _calculate_isochron_age(self):
-        args = calculate_isochron(list(self.clean_analyses()))
+        args = calculate_isochron(list(self.clean_analyses()), self.isochron_age_error_kind)
         if args:
             age = args[0]
             reg = args[1]

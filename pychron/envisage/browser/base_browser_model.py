@@ -733,6 +733,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             ats = self._analysis_include_types
             return map(str.lower, ats)
 
+    _warned = False
     def _get_db(self):
         if self.use_workspace:
             db = self.workspace.index_db
@@ -740,7 +741,9 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             db = self.application.get_service('pychron.dvc.dvc.DVC')
 
         if db is None:
-            self.warning_dialog('You need to enable the DVC plugin')
+            if not self._warned:
+                self.warning_dialog('You need to enable the DVC plugin')
+            self._warned = True
         else:
             return db
             # if to_bool(self.application.preferences.get('pychron.dvc.enabled')):

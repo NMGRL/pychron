@@ -21,15 +21,7 @@ from traitsui.tree_node import TreeNode
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.resources import icon
-#
-# class PipelineTreeNode(TreeNode):
-#     def get_status_color(self, obj):
-#         c = QColor('black')
-#         if obj.status == 'ran':
-#             c = QColor('green')
-#         elif obj.status == 'paused':
-#             c = QColor('orange')
-#         return c
+
 from pychron.pipeline.nodes import ReviewNode
 
 
@@ -39,9 +31,14 @@ class PipelineTreeNode(TreeNode):
 
     def get_background(self, obj):
         if isinstance(obj, ReviewNode):
-            c = QColor(Qt.cyan)
+            if not obj.enabled:
+                c = QColor('#ff8080')  # light red
+            else:
+                c = QColor(Qt.cyan)
         elif obj.skip_configure:
             c = QColor('#D05BFF')
+        elif not obj.enabled:
+            c = QColor('#ff8080')  # light red
         else:
             c = super(PipelineTreeNode, self).get_background(obj)
         return c
@@ -110,4 +107,7 @@ class FindTreeNode(PipelineTreeNode):
 class FitTreeNode(PipelineTreeNode):
     icon_name = 'lightning'
 
+
+class ReviewTreeNode(PipelineTreeNode):
+    pass
 # ============= EOF =============================================

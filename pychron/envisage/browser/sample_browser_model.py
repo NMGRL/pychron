@@ -158,8 +158,14 @@ class SampleBrowserModel(BrowserModel):
         self.analysis_table.dump()
         super(SampleBrowserModel, self).dump()
 
+    def add_analysis_set(self):
+        self.analysis_table.add_analysis_set()
+
     # handlers
     def _analysis_set_changed(self, new):
+        if self.analysis_table.suppress_load_analysis_set:
+            return
+
         self.debug('analysis set changed={}'.format(new))
         ans = self.analysis_table.get_analysis_set(new)
         with self.db.session_ctx():

@@ -16,12 +16,13 @@
 
 # ============= enthought library imports =======================
 from traits.api import List, Any, Str, Enum, Bool, Event, Property, cached_property, Instance, DelegatesTo, \
-    CStr, Int
+    CStr, Int, Button
 # ============= standard library imports ========================
 import json
 import os
 from collections import OrderedDict
 from datetime import datetime
+from hashlib import md5
 # ============= local library imports  ==========================
 from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.core.fuzzyfinder import fuzzyfinder
@@ -60,10 +61,12 @@ class AnalysisTable(ColumnSorterMixin):
     tabular_adapter = Instance(AnalysisAdapter)
     append_replace_enabled = Bool(True)
 
+    add_analysis_set_button = Button
     analysis_set = Str
     analysis_set_names = List
     _analysis_sets = None
     max_history = Int
+    suppress_load_analysis_set = False
 
     def __init__(self, *args, **kw):
         super(AnalysisTable, self).__init__(*args, **kw)
@@ -76,7 +79,7 @@ class AnalysisTable(ColumnSorterMixin):
             with open(p, 'r') as rfile:
                 jd = json.load(rfile, object_pairs_hook=OrderedDict)
                 self._analysis_sets = jd
-                self.analysis_set_names = list(reversed(jd.keys()))
+                self.analysis_set_names = list(reversed([ji[0] for ji in jd.values()]))
 
     def dump(self):
         p = paths.hidden_path('analysis_sets')
@@ -85,22 +88,29 @@ class AnalysisTable(ColumnSorterMixin):
 
     def add_analysis_set(self):
         if self.analyses:
-            aset = [(a.uuid, a.record_id) for a in self.analyses]
+            ans = self.selected
+            if not ans:
+                ans = self.analyses
+
+            aset = [(a.uuid, a.record_id) for a in ans]
             if aset:
                 if len(aset) > 1:
                     name = '{} -- {}'.format(aset[0][1], aset[-1][1])
                 else:
                     name = aset[0][1]
 
-            name = '{} ({})'.format(name, datetime.now().strftime('%m/%d/%y'))
-            self._analysis_sets[name] = aset
+            h = md5(''.join(sorted((ai[0] for ai in aset)))).hexdigest()
+            if h not in self._analysis_sets:
+                name = '{} ({})'.format(name, datetime.now().strftime('%m/%d/%y'))
+                self._analysis_sets[h] = (name, aset)
 
-            if self.max_history:
-                while len(self._analysis_sets) > self.max_history:
-                    self._analysis_sets.popitem(last=False)
+                if self.max_history:
+                    while len(self._analysis_sets) > self.max_history:
+                        self._analysis_sets.popitem(last=False)
+            return name
 
-    def get_analysis_set(self, key):
-        return self._analysis_sets[key]
+    def get_analysis_set(self, name):
+        return next((a[1] for a in self._analysis_sets.itervalues() if a[0] == name))
 
     def set_tags(self, tag, items):
         for i in items:
@@ -131,7 +141,6 @@ class AnalysisTable(ColumnSorterMixin):
         self.oanalyses = self.analyses = sort_items(aa)
 
         self.calculate_dts(self.analyses)
-        self.add_analysis_set()
 
     def calculate_dts(self, ans):
         if ans and len(ans) > 1:
@@ -157,6 +166,16 @@ class AnalysisTable(ColumnSorterMixin):
         rsd.edit_traits()
 
     # handlers
+    def _add_analysis_set_button_fired(self):
+        name = self.add_analysis_set()
+        if name:
+            self.dump()
+            self.load()
+
+            self.suppress_load_analysis_set = True
+            self.analysis_set = name
+            self.suppress_load_analysis_set = False
+
     def _analyses_items_changed(self, old, new):
         if self.sort_suppress:
             return

@@ -186,7 +186,6 @@ class BaseRegressor(HasTraits):
         return rmodel - es, rmodel + es
 
     def calculate_ci(self, rx, rmodel):
-
         cors = self.calculate_ci_error(rx)
         if rmodel is not None and cors is not None:
             if rmodel.shape[0] and cors.shape[0]:
