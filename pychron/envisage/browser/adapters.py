@@ -171,9 +171,7 @@ class AnalysisAdapter(BrowserAdapter):
         color = 'white'
         item = getattr(obj, trait)[row]
 
-        if item.is_plateau_step:
-            color = 'lightgreen'
-        elif item.delta_time > 1440:  # 24 hours
+        if item.delta_time > 1440:  # 24 hours
             color = '#76C1E2'
 
         return color

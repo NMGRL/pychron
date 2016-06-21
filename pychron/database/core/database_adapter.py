@@ -101,8 +101,9 @@ class SessionCTX(object):
                     self._parent.debug('$%$%$%$%$%$%$%$ commiting changes error:\n{}'.format(str(e)))
                 self._sess.rollback()
             finally:
-                self._sess.close()
-                del self._sess
+                self._sess.expire_on_commit = True
+                # self._sess.close()
+                # del self._sess
 
 
 class DatabaseAdapter(Loggable):
@@ -158,6 +159,7 @@ class DatabaseAdapter(Loggable):
     modified = False
     _trying_to_add = False
     _test_connection_enabled = True
+
     # def __init__(self, *args, **kw):
     #     super(DatabaseAdapter, self).__init__(*args, **kw)
 
@@ -420,14 +422,13 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
         return connected
 
     def test_version(self):
-        if self.version_func:
-            with self.session_ctx():
-                ver = getattr(self, self.version_func)()
-                ver = ver.version_num
-                aver = version.__alembic__
-                if ver != aver:
-                    return 'Database is out of data. Pychron ver={}, Database ver={}'.format(aver, ver)
-                    # @deprecated
+        with self.session_ctx():
+            ver = getattr(self, self.version_func)()
+            ver = ver.version_num
+            aver = version.__alembic__
+            if ver != aver:
+                return 'Database is out of data. Pychron ver={}, Database ver={}'.format(aver, ver)
+                # @deprecated
 
     # def _get_query(self, klass, join_table=None, filter_str=None, sess=None,
     #                     *args, **clause):
