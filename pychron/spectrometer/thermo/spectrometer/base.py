@@ -107,6 +107,9 @@ class ThermoSpectrometer(SpectrometerDevice):
     _debug_values = None
     _saved_integration = None
 
+    def reload_mftable(self):
+        self.magnet.reload_mftable()
+
     def get_detector_active(self, dname):
         """
         return True if dname in the list of intensity keys
@@ -128,13 +131,22 @@ class ThermoSpectrometer(SpectrometerDevice):
         all four measurements same then test fails
         :return:
         """
-        keys, prev = self.get_intensities()
+        ret, err = True, ''
+        keys, one = self.get_intensities()
         it = 0.1 if self.simulation else self.integration_time
-        for i in range(4):
+
+        time.sleep(it)
+        keys, two = self.get_intensities()
+
+        if all(one == two):
             time.sleep(it)
-            _, cur = self.get_intensities()
-            if all(prev == cur):
-                return True
+            keys, three = self.get_intensities()
+            if all(two == three):
+                time.sleep(it)
+                keys, four = self.get_intensities()
+                if all(three == four):
+                    ret = False
+        return ret, err
 
     def test_connection(self, force=True):
         """
@@ -145,7 +157,7 @@ class ThermoSpectrometer(SpectrometerDevice):
         :return: bool
         """
         self.info('testing connnection')
-        ret = False
+        ret, err = False, ''
         if not self.simulation:
             if force:
                 ret = self.ask('GetIntegrationTime', verbose=True) is not None
@@ -156,7 +168,7 @@ class ThermoSpectrometer(SpectrometerDevice):
 
         self._connection_status = ret
         self.microcontroller.set_simulation(not ret)
-        return ret
+        return ret, err
 
     def set_gains(self, history=None):
         """
@@ -166,12 +178,12 @@ class ThermoSpectrometer(SpectrometerDevice):
         """
         if history:
             self.debug(
-                    'setting gains to {}, user={}'.format(history.create_date,
-                                                          history.username))
+                'setting gains to {}, user={}'.format(history.create_date,
+                                                      history.username))
         for di in self.detectors:
             di.set_gain()
 
-        return {di.name:di.gain for di in self.detectors}
+        return {di.name: di.gain for di in self.detectors}
 
     def load_current_detector_gains(self):
         """
@@ -193,11 +205,11 @@ class ThermoSpectrometer(SpectrometerDevice):
                 try:
                     self.integration_time = float(resp)
                     self.info(
-                            'Integration Time {}'.format(self.integration_time))
+                        'Integration Time {}'.format(self.integration_time))
 
                 except (TypeError, ValueError, TraitError):
                     self.warning(
-                            'Invalid integration time. resp={}'.format(resp))
+                        'Invalid integration time. resp={}'.format(resp))
                     self.integration_time = DEFAULT_INTEGRATION_TIME
 
         return self.integration_time
@@ -293,11 +305,12 @@ class ThermoSpectrometer(SpectrometerDevice):
                 self.debug('cannot update detector "{}"'.format(detector))
             else:
                 det.isotope = isotope
-                index = self.detectors.index(det)
-
+                # index = self.detectors.index(det)
+                # index = self.detectors[det].index
+                index = det.index
                 nmass = int(isotope[2:])
-                for i, di in enumerate(self.detectors):
-                    mass = nmass - (i - index)
+                for di in self.detectors:
+                    mass = nmass - (di.index - index)
                     di.isotope = 'Ar{}'.format(mass)
 
     def get_deflection_word(self, keys):
@@ -371,15 +384,16 @@ class ThermoSpectrometer(SpectrometerDevice):
         load setupfiles/spectrometer/config.cfg file
         load magnet
         load deflections coefficients
+
         :return:
         """
         self.load_detectors()
 
         # load local configurations
         self.spectrometer_configurations = list_directory2(
-                paths.spectrometer_config_dir,
-                remove_extension=True,
-                extension='.cfg')
+            paths.spectrometer_config_dir,
+            remove_extension=True,
+            extension='.cfg')
 
         name = get_spectrometer_config_name()
         sc, _ = os.path.splitext(name)
@@ -413,8 +427,8 @@ class ThermoSpectrometer(SpectrometerDevice):
                 self.magnet.protected_detectors = ds
                 for di in ds:
                     self.info(
-                            'Making protection available for detector "{}"'.format(
-                                    di))
+                        'Making protection available for detector "{}"'.format(
+                            di))
 
         if config.has_section('Deflections'):
             if config.has_option('Deflections', 'max'):
@@ -446,8 +460,8 @@ class ThermoSpectrometer(SpectrometerDevice):
 
     def start(self):
         self.debug(
-                '********** Spectrometer start. send configuration: {}'.format(
-                        self.send_config_on_startup))
+            '********** Spectrometer start. send configuration: {}'.format(
+                self.send_config_on_startup))
         if self.send_config_on_startup:
             self.send_configuration(use_ramp=True)
 
@@ -458,12 +472,10 @@ class ThermoSpectrometer(SpectrometerDevice):
         :return:
         """
         config = self.get_configuration(
-                path=os.path.join(paths.spectrometer_dir, 'detectors.cfg'))
-        for name in config.sections():
+            path=os.path.join(paths.spectrometer_dir, 'detectors.cfg'))
+
+        for i, name in enumerate(config.sections()):
             # relative_position = self.config_get(config, name, 'relative_position', cast='float')
-            deflection_corrrection_sign = self.config_get(config, name,
-                                                          'deflection_correction_sign',
-                                                          cast='int')
 
             color = self.config_get(config, name, 'color', default='black')
             default_state = self.config_get(config, name, 'default_state',
@@ -474,10 +486,23 @@ class ThermoSpectrometer(SpectrometerDevice):
             pt = self.config_get(config, name, 'protection_threshold',
                                  default=None, optional=True, cast='float')
 
+            index = self.config_get(config, name, 'index', cast='int')
+            if index is None:
+                index = i
+
+            use_deflection = self.config_get(config, name, 'use_deflection', cast='boolean', optional=True)
+            if use_deflection is None:
+                use_deflection = True
+
+            deflection_correction_sign = 1
+            if use_deflection:
+                deflection_correction_sign = self.config_get(config, name, 'deflection_correction_sign', cast='int')
+
             self._add_detector(name=name,
-                               # relative_position=relative_position,
+                               index=index,
+                               use_deflection=use_deflection,
                                protection_threshold=pt,
-                               deflection_corrrection_sign=deflection_corrrection_sign,
+                               deflection_correction_sign=deflection_correction_sign,
                                color=color,
                                active=default_state,
                                isotope=isotope,
@@ -650,13 +675,11 @@ class ThermoSpectrometer(SpectrometerDevice):
     def _get_cached_config(self):
         if self._config is None:
             p = get_spectrometer_config_path()
-            # p = os.path.join(paths.spectrometer_dir, 'config.cfg')
             if not os.path.isfile(p):
-                self.warning(
-                        'Spectrometer configuration file {} not found'.format(
-                                p))
+                self.warning('Spectrometer configuration file {} not found'.format(p))
                 return
 
+            self.debug('caching configuration from {}'.format(p))
             config = self.get_configuration_writer(p)
             d = {}
             defl = {}
@@ -688,6 +711,9 @@ class ThermoSpectrometer(SpectrometerDevice):
                 for attr in ('mftable',):
                     if config.has_option(section, attr):
                         magnet[attr] = config.get(section, attr)
+
+            if 'hv' in d:
+                self.source.nominal_hv = d['hv']
 
             self._config = (d, defl, trap, magnet)
 
@@ -727,8 +753,8 @@ class ThermoSpectrometer(SpectrometerDevice):
                     self.set_parameter(cmd, v)
                 except KeyError:
                     self.debug(
-                            '$$$$$$$$$$ Not setting {}. Not in command_map'.format(
-                                    k))
+                        '$$$$$$$$$$ Not setting {}. Not in command_map'.format(
+                            k))
 
             # set the trap current
             v = trap.get('current')
@@ -759,7 +785,7 @@ class ThermoSpectrometer(SpectrometerDevice):
             if v - current >= tol:
                 if self.confirmation_dialog('Would you like to ramp up the '
                                             'Trap current from {} to {}'.format(
-                        current, v)):
+                    current, v)):
                     prog = open_progress(1)
 
                     def func(x):

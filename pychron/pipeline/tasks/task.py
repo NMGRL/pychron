@@ -26,7 +26,7 @@ import os
 from pychron.core.helpers.filetools import list_gits
 from pychron.core.pdf.save_pdf_dialog import save_pdf
 from pychron.dvc import dvc_dump
-from pychron.dvc.dvc import repository_has_staged, push_repositories
+from pychron.dvc.func import repository_has_staged
 from pychron.envisage.tasks.actions import ToggleFullWindowAction
 from pychron.globals import globalv
 from pychron.paths import paths
@@ -37,7 +37,7 @@ from pychron.pipeline.state import EngineState
 from pychron.pipeline.tasks.actions import RunAction, SavePipelineTemplateAction, ResumeAction, ResetAction, \
     ConfigureRecallAction, TagAction, SetInterpretedAgeAction, ClearAction, SavePDFAction, SaveFigureAction, \
     SetInvalidAction, SetFilteringTagAction, TabularViewAction, EditAnalysisAction, RunFromAction
-from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane
+from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane, InspectorPane
 from pychron.envisage.browser.browser_task import BaseBrowserTask
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.tasks.select_repo import SelectExperimentIDView
@@ -117,7 +117,8 @@ class PipelineTask(BaseBrowserTask):
 
     def create_dock_panes(self):
         panes = [PipelinePane(model=self.engine),
-                 AnalysesPane(model=self.engine)]
+                 AnalysesPane(model=self.engine),
+                 InspectorPane(model=self.engine)]
         return panes
 
     # toolbar actions
@@ -293,25 +294,52 @@ class PipelineTask(BaseBrowserTask):
             self.engine.save_pipeline_template(path)
 
     # action handlers
+    def freeze_flux(self):
+        ans = self._get_active_analyses()
+        if ans:
+            self.dvc.freeze_flux()
+        else:
+            self._set_action_template('FreezeFlux')
+
+    def freeze_production_ratios(self):
+        ans = self._get_active_analyses()
+        if ans:
+            self.dvc.freeze_production_ratios(ans)
+        else:
+            self._set_action_template('FreezeProductionRatios')
+
+    def set_isotope_evolutions_template(self):
+        self._set_action_template('Iso Evo')
+
+    def set_icfactor_template(self):
+        self._set_action_template('ICFactor')
+
+    def set_blanks_template(self):
+        self._set_action_template('Blanks')
+
+    def set_flux_template(self):
+        self._set_action_template('Flux')
+
     def set_ideogram_template(self):
-        self.engine.selected_pipeline_template = 'Ideogram'
-        self.run()
+        self._set_action_template('Ideogram')
 
     def set_spectrum_template(self):
-        self.engine.selected_pipeline_template = 'Spectrum'
-        self.run()
+        self._set_action_template('Spectrum')
 
     def set_isochron_template(self):
-        self.engine.selected_pipeline_template = 'Isochron'
-        self.run()
+        self._set_action_template('Isochron')
+
+    def set_inverse_isochron_template(self):
+        self._set_action_template('Inverse Isochron')
 
     def set_series_template(self):
-        self.engine.selected_pipeline_template = 'Series'
-        self.run()
+        self._set_action_template('Series')
 
     def set_vertical_flux_template(self):
-        self.engine.selected_pipeline_template = 'VerticalFlux'
-        self.run()
+        self._set_action_template('VerticalFlux')
+
+    def set_xy_scatter_template(self):
+        self._set_action_template('XYScatter')
 
     def set_last_n_analyses_template(self):
         self.engine.selected_pipeline_template = 'Series'
@@ -325,12 +353,6 @@ class PipelineTask(BaseBrowserTask):
             # set node.unknowns = unks
             node.set_last_n_analyses(n)
 
-            self.run()
-
-    def _set_last_nhours(self, n):
-        node = self.engine.get_unknowns_node()
-        if node:
-            node.set_last_n_hours_analyses(n)
             self.run()
 
     def set_last_n_hours_template(self):
@@ -352,6 +374,20 @@ class PipelineTask(BaseBrowserTask):
         self._set_last_nhours(24 * 7 * 30.5)
 
     # private
+    def _get_active_analyses(self):
+        if self.active_editor:
+            return self.active_editor.analyses
+
+    def _set_last_nhours(self, n):
+        node = self.engine.get_unknowns_node()
+        if node:
+            node.set_last_n_hours_analyses(n)
+            self.run()
+
+    def _set_action_template(self, name):
+        self.engine.selected_pipeline_template = name
+        self.run()
+
     def _make_save_figure_object(self, editor):
         po = editor.plotter_options
         plotter_options = po.to_dict()
@@ -420,10 +456,12 @@ class PipelineTask(BaseBrowserTask):
 
     # defaults
     def _default_layout_default(self):
-        return TaskLayout(left=Splitter(PaneItem('pychron.pipeline.pane',
+        return TaskLayout(left=Splitter(Splitter(PaneItem('pychron.pipeline.pane',
                                                  width=200),
                                         PaneItem('pychron.pipeline.analyses',
-                                                 width=200)))
+                                                 width=200)),
+                                        PaneItem('pychron.pipeline.inspector'),
+                                        orientation='vertical'))
 
     def _extra_actions_default(self):
         sas = (('MenuBar/data.menu', RunAction, {}),)
@@ -486,7 +524,7 @@ class PipelineTask(BaseBrowserTask):
                 m = 'You have changes to analyses. Would you like to share them?'
                 ret = self._handle_prompt_for_save(m, 'Share Changes')
                 if ret == 'save':
-                    push_repositories(changed)
+                    self.dvc.push_repositories(changed)
 
         return ret
 

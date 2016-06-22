@@ -15,8 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from itertools import groupby
-
 from envisage.ui.tasks.action.task_window_launch_group import TaskWindowLaunchAction
 from pyface.action.api import ActionItem, Group
 from pyface.confirmation_dialog import ConfirmationDialog
@@ -28,10 +26,9 @@ from pyface.tasks.task import Task
 from pyface.tasks.task_layout import TaskLayout
 from pyface.timer.do_later import do_later, do_after
 from traits.api import Any, on_trait_change, List, Unicode, DelegatesTo, Instance
-
-
-
 # ============= standard library imports ========================
+import os
+from itertools import groupby
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import add_extension, view_file
 from pychron.core.ui.gui import invoke_in_main_thread
@@ -43,6 +40,7 @@ from pychron.envisage.tasks.actions import GenericSaveAction, GenericSaveAsActio
     NoteAction, RestartAction, DocumentationAction, CopyPreferencesAction, SwitchUserAction, KeyBindingsAction, \
     ChangeLogAction, StartupTestsAction
 from pychron.loggable import Loggable
+from pychron.paths import paths
 
 
 class WindowGroup(Group):
@@ -166,8 +164,8 @@ class BaseTask(Task, Loggable, PreferenceMixin):
         if isinstance(p, str):
             if '.' in p:
                 for k in self.trait_names():
-                    v = getattr(self, k)
                     try:
+                        v = getattr(self, k)
                         if v.id == p:
                             p = v
                             break
@@ -437,9 +435,17 @@ class BaseExtractionLineTask(BaseManagerTask):
     canvas_pane = Instance('pychron.extraction_line.tasks.extraction_line_pane.CanvasDockPane')
 
     def _get_el_manager(self):
-        app = self.application
+        app = self.window.application
         man = app.get_service('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
         return man
+
+    # def activated(self):
+    #     super(BaseExtractionLineTask, self).activated()
+    #
+    #     app = self.window.application
+    #     man = app.get_service('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
+    #     if man:
+    #         man.start_status_monitor()
 
     def prepare_destroy(self):
         man = self._get_el_manager()
@@ -447,18 +453,20 @@ class BaseExtractionLineTask(BaseManagerTask):
             man.deactivate()
 
     def _add_canvas_pane(self, panes):
-        app = self.window.application
-        man = app.get_service('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
+        # app = self.window.application
+        # man = app.get_service('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
+        man = self._get_el_manager()
         if man:
             from pychron.extraction_line.tasks.extraction_line_pane import CanvasDockPane
-
-            self.canvas_pane = CanvasDockPane(canvas=man.new_canvas())
+            config = os.path.join(paths.canvas2D_dir, 'alt_config.xml')
+            self.canvas_pane = CanvasDockPane(canvas=man.new_canvas(config=config))
             panes.append(self.canvas_pane)
 
         return panes
 
     @on_trait_change('window:opened')
     def _window_opened(self):
+        self.debug('window opened')
         man = self._get_el_manager()
         if man:
             do_after(1000, man.activate)

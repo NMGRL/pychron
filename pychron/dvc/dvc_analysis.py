@@ -161,22 +161,32 @@ class DVCAnalysis(Analysis):
             if v is not None:
                 setattr(self, attr, v)
 
+        pd = jd.get('positions')
+        if pd:
+            ps = sorted(pd, key=lambda x: x['position'])
+            self.position = ','.join([str(pp['position']) for pp in ps])
+
+            self.xyz_position = ';'.join([','.join(map(str, (pp['x'], pp['y'], pp['z']))) for pp in ps if pp['x'] is
+                                          not None])
+
         if not self.extract_units:
             self.extract_units = 'W'
 
         jd = dvc_load(path)
         for attr in META_ATTRS:
             v = jd.get(attr)
+            self.debug('{}={}'.format(attr, v))
             if v is not None:
                 setattr(self, attr, v)
 
         if self.increment is not None:
             self.step = make_step(self.increment)
 
+        ts = jd['timestamp']
         try:
-            self.rundate = datetime.datetime.strptime(jd['timestamp'], '%Y-%m-%dT%H:%M:%S')
+            self.rundate = datetime.datetime.strptime(ts, '%Y-%m-%dT%H:%M:%S')
         except ValueError:
-            self.rundate = datetime.datetime.strptime(jd['timestamp'], '%Y-%m-%dT%H:%M:%S.%f')
+            self.rundate = datetime.datetime.strptime(ts, '%Y-%m-%dT%H:%M:%S.%f')
 
         self.collection_version = jd['collection_version']
         self._set_isotopes(jd)
@@ -244,6 +254,10 @@ class DVCAnalysis(Analysis):
         else:
             item.error = obj['error']
 
+        for k in ('n', 'fn'):
+            if k in obj:
+                setattr(item, k, obj[k])
+
     def _load_baselines(self, jd):
         for det, v in jd.iteritems():
             for iso in self.isotopes.itervalues():
@@ -258,11 +272,14 @@ class DVCAnalysis(Analysis):
     def _load_icfactors(self, jd):
         for key, v in jd.iteritems():
             if isinstance(v, dict):
-                self.set_ic_factor(key, v['value'], v['error'])
+                self.set_ic_factor(key, v['value'] or 0, v['error'] or 0)
             elif key == 'reviewed':
                 self.icfactor_reviewed = v
 
-    def load_raw_data(self, keys=None):
+    def check_has_n(self):
+        return any((i._n is not None for i in self.iter_isotopes()))
+
+    def load_raw_data(self, keys=None, n_only=False):
         def format_blob(blob):
             return base64.b64decode(blob)
 
@@ -283,12 +300,21 @@ class DVCAnalysis(Analysis):
             except KeyError:
                 continue
 
-            iso.unpack_data(format_blob(sd['blob']))
+            iso.unpack_data(format_blob(sd['blob']), n_only)
 
             det = sd['detector']
             bd = next((b for b in baselines if b['detector'] == det), None)
             if bd:
-                iso.baseline.unpack_data(format_blob(bd['blob']))
+                iso.baseline.unpack_data(format_blob(bd['blob']), n_only)
+
+        # loop thru keys to make sure none were missed this can happen when only loading baseline
+        if keys:
+            for k in keys:
+                bd = next((b for b in baselines if b['detector'] == k), None)
+                if bd:
+                    for iso in isotopes.itervalues():
+                        if iso.detector == k:
+                            iso.baseline.unpack_data(format_blob(bd['blob']), n_only)
 
         for sn in sniffs:
             isok = sn['isotope']
@@ -299,7 +325,7 @@ class DVCAnalysis(Analysis):
                 iso = isotopes[isok]
             except KeyError:
                 continue
-            iso.sniff.unpack_data(format_blob(sn['blob']))
+            iso.sniff.unpack_data(format_blob(sn['blob']), n_only)
 
     def set_production(self, prod, r):
         self.production_name = prod
@@ -307,6 +333,7 @@ class DVCAnalysis(Analysis):
         self.interference_corrections = r.to_dict(INTERFERENCE_KEYS)
 
     def set_chronology(self, chron):
+        self.debug('set chronology')
         analts = self.rundate
 
         convert_days = lambda x: x.total_seconds() / (60. * 60 * 24)
@@ -346,6 +373,8 @@ class DVCAnalysis(Analysis):
         def update(d, i):
             fd = i.filter_outliers_dict
             d.update(fit=i.fit, value=float(i.value), error=float(i.error),
+                     n=i.n, fn=i.fn,
+                     include_baseline_error=i.include_baseline_error,
                      filter_outliers=fd.get('filter_outliers', False),
                      iterations=fd.get('iterations', 0),
                      std_devs=fd.get('std_devs', 0))

@@ -16,10 +16,9 @@
 
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
-from datetime import datetime
 from traits.api import Instance, Bool, Int
-
 # ============= standard library imports ========================
+from datetime import datetime
 from threading import Thread, Lock
 import os
 import hashlib
@@ -109,14 +108,16 @@ class LabspyClient(Loggable):
         self.debug('Start Connection status timer')
         if self.application and self.use_connection_status:
             self.debug(
-                    'timer started period={}'.format(
-                        self.connection_status_period))
+                'timer started period={}'.format(
+                    self.connection_status_period))
 
             devs = self.application.get_services(ICoreDevice)
             if devs:
                 t = Thread(target=self._connection_status,
                            name='ConnectionStatus')
+                t.setDaemon(True)
                 t.start()
+
             else:
                 self.debug('No devices to check for connection status')
 
@@ -178,9 +179,9 @@ class LabspyClient(Loggable):
     def update_connection(self, ts, devname, com, addr, status, verbose=False):
         if verbose:
             self.debug(
-                    'Setting connection status for dev={},com={},addr={},status={}'.format(
-                            devname, com,
-                            addr, status))
+                'Setting connection status for dev={},com={},addr={},status={}'.format(
+                    devname, com,
+                    addr, status))
 
         appname, user = self.application.name.split('-')
         self.db.set_connection(ts,
@@ -204,17 +205,45 @@ class LabspyClient(Loggable):
     def add_run(self, run, exp):
         exp = self.db.get_experiment(self._generate_hid(exp))
         self.db.add_analysis(exp, self._run_dict(run))
+        ms = run.mass_spectrometer.capitalize()
+
+        config = self._get_configuration()
+
+        for name, units, atypes, value in config:
+            units = units or ''
+            if atypes[0] == 'all':
+                add = True
+            else:
+                add = run.analysis_type in atypes
+
+            if add:
+                args = []
+                if value == 'peak_center':
+                    value = 'get_reference_peakcenter_result'
+                elif '/' in value:
+                    args = (value,)
+                    value = 'get_ratio'
+
+                try:
+                    v = getattr(run, value)(*args)
+                except AttributeError:
+                    continue
+                    
+                self.db.add_measurement('{}Monitor'.format(ms), '{}{}'.format(ms, name), v, units)
 
     @auto_connect
     def add_measurement(self, dev, tag, val, unit):
         val = float(val)
         self.debug(
-                'adding measurement dev={} process={} value={} ({})'.format(dev,
-                                                                            tag,
-                                                                            val,
-                                                                            unit))
-        self.db.add_measurement(dev, tag, val, unit)
-        self._check_notifications(dev, tag, val, unit)
+            'adding measurement dev={} process={} value={} ({})'.format(dev,
+                                                                        tag,
+                                                                        val,
+                                                                        unit))
+        try:
+            self.db.add_measurement(dev, tag, val, unit)
+            self._check_notifications(dev, tag, val, unit)
+        except BaseException, e:
+            self.debug('failed adding measurement. {}'.format(e))
 
     def connect(self):
         self.warning('not connected to db {}'.format(self.db.url))
@@ -226,10 +255,38 @@ class LabspyClient(Loggable):
         with open(p, 'r') as rfile:
             return [NotificationTrigger(i) for i in yaml.load(rfile)]
 
+    # private
+    def _get_configuration(self):
+        """
+        eg;
+         config = [('PeakCenter', 'DAC (V)', 'peak_center', ('all',)),
+                   ('Ar40/Ar36', '', 'Ar40/Ar36', ('air',))]
+
+        -
+         - PeakCenter
+         - DAC (V)
+         -
+          - all
+        -
+         - Ar40/Ar36
+         -
+         -
+          - air
+
+        :return:
+        """
+        config = []
+        p = paths.labspy_client_config
+        if os.path.isfile(p):
+            with open(p, 'r') as rfile:
+                config = yaml.load(rfile)
+
+        return config
+
     def _check_notifications(self, dev, tag, val, unit):
         if not os.path.isfile(paths.notification_triggers):
             self.debug('no notification trigger file available. {}'.format(
-                    paths.notification_triggers))
+                paths.notification_triggers))
             return
 
         ns = []
@@ -241,7 +298,7 @@ class LabspyClient(Loggable):
         self.debug('notifications: {}'.format(ns))
         if ns:
             emailer = self.application.get_service(
-                    'pychron.social.email.emailer.Emailer')
+                'pychron.social.email.emailer.Emailer')
             if emailer:
                 for addrs, sub, message in ns:
                     emailer.send(addrs, sub, message)
@@ -297,6 +354,7 @@ if __name__ == '__main__':
     # from pychron.paths import paths
 
     paths.build('_dev')
+
 
     # def add_runs(c, e):
     # class Spec():

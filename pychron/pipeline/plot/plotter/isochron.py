@@ -110,10 +110,10 @@ class InverseIsochron(Isochron):
         # for si in self.sorted_analyses:
         # print si.record_id, si.group_id
 
-        omit = self._get_omitted(self.sorted_analyses)
-        # print 'iso omit', omit
-        if omit:
-            self._rebuild_iso(omit)
+            # omit = self._get_omitted(self.sorted_analyses)
+            # # print 'iso omit', omit
+            # if omit:
+            #     self._rebuild_iso(omit)
 
     # ===============================================================================
     # plotters
@@ -139,6 +139,8 @@ class InverseIsochron(Isochron):
         # age, reg, data = calculate_isochron(analyses)
         # except TypeError:
         # return
+        ec = self.options.error_calc_method
+        self.analysis_group.isochron_age_error_kind = ec
         data = self.analysis_group.get_isochron_data()
 
         _, reg, (xs, ys, xerrs, yerrs) = data
@@ -153,13 +155,20 @@ class InverseIsochron(Isochron):
         xtitle = u'{}Ar/{}Ar'.format(u39, u40)
         ytitle = u'{}Ar/{}Ar'.format(u36, u40)
 
-        xtitle = '39Ar/40Ar'
-        ytitle = '36Ar/40Ar'
+        # xtitle = '39Ar/40Ar'
+        # ytitle = '36Ar/40Ar'
+        xtitle = '<sup>39</sup>Ar/<sub>40</sup>Ar'
+        ytitle = '<sup>36</sup>Ar/<sub>40</sup>Ar'
         # for axis in (plot.x_axis, plot.y_axis):
         #     axis.title_font = 'courier 15'
 
-        graph.set_x_title(xtitle, plotid=pid)
-        graph.set_y_title(ytitle, plotid=pid)
+        # graph.set_x_title(xtitle, plotid=pid)
+        # graph.set_y_title(ytitle, plotid=pid)
+
+        # if '<sup>' in title or '<sub>' in title:
+        self._set_ml_title(ytitle, pid, 'y')
+        self._set_ml_title(xtitle, pid, 'x')
+
         p = graph.plots[pid]
         p.y_axis.title_spacing = 50
 
@@ -210,6 +219,8 @@ class InverseIsochron(Isochron):
         except IndexError:
             self.ymis.append(ymi)
             self.ymas.append(yma)
+
+        print 'isochron regressor error type {}'.format(reg.error_calc_type)
 
         lci, uci = reg.calculate_error_envelope(l.index.get_data())
         ee = ErrorEnvelopeOverlay(component=l,
@@ -355,10 +366,12 @@ class InverseIsochron(Isochron):
         label.request_redraw()
 
     def replot(self):
+
         # self.suppress = True
 
-        om = self._get_omitted(self.sorted_analyses)
-        self._rebuild_iso(om)
+        # om = self._get_omitted(self.sorted_analyses)
+
+        self._rebuild_iso([])
         # self.suppress = False
 
     def _rebuild_iso(self, sel):

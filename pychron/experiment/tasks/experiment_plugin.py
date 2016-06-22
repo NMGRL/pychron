@@ -36,7 +36,7 @@ from pychron.experiment.tasks.experiment_actions import NewExperimentQueueAction
     NewPatternAction, OpenPatternAction, ResetQueuesAction, OpenLastExperimentQueueAction, UndoAction, \
     QueueConditionalsAction, ConfigureEditorTableAction, SystemConditionalsAction, ResetSystemHealthAction, \
     OpenExperimentHistoryAction, LastAnalysisRecoveryAction, OpenCurrentExperimentQueueAction, \
-    SaveAsCurrentExperimentAction
+    SaveAsCurrentExperimentAction, SyncQueueAction
 
 
 class ExperimentPlugin(BaseTaskPlugin):
@@ -147,6 +147,8 @@ class ExperimentPlugin(BaseTaskPlugin):
                  [SchemaAddition(id='pychron.experiment.edit.deselect', factory=DeselectAction,
                                  path='MenuBar/Edit/experiment.group'),
                   SchemaAddition(id='pychron.experiment.edit.reset', factory=ResetQueuesAction,
+                                 path='MenuBar/Edit/experiment.group'),
+                  SchemaAddition(id='pychron.experiment.edit.sync', factory=SyncQueueAction,
                                  path='MenuBar/Edit/experiment.group'),
                   SchemaAddition(id='pychron.experiment.edit.undo', factory=UndoAction,
                                  path='MenuBar/Edit/experiment.group'),

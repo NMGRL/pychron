@@ -333,12 +333,13 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
     #        obj.on_trait_change(self._changed, '_changed', remove=True)
 
     def _record_view_factory(self, dbrecord):
-        if hasattr(self, 'record_view_klass'):
-            d = self.record_view_klass()
-            if d.create(dbrecord, fast_load=True):
-                return d
-        else:
-            return self.record_klass(_dbrecord=dbrecord)
+        return dbrecord.record_views
+        # if hasattr(self, 'record_view_klass'):
+        #     d = self.record_view_klass()
+        #     if d.create(dbrecord, fast_load=True):
+        #         return d
+        # else:
+        #     return self.record_klass(_dbrecord=dbrecord)
 
             # ===============================================================================
             # open window
@@ -553,15 +554,17 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
                          show_label=False,
                          height=0.75,
                          # width=600,
-                    ),
-                    Item('queries', show_label=False,
-                         style='custom',
-                         height=0.25,
-                         editor=ListEditor(mutable=False,
-                                           style='custom',
-                                           editor=InstanceEditor()),
-                         defined_when='style in ["normal","panel"]')),
-                button_grp),
+                    )),
+                #     Item('queries', show_label=False,
+                #          style='custom',
+                #          height=0.25,
+                #          editor=ListEditor(mutable=False,
+                #                            style='custom',
+                #                            editor=InstanceEditor()),
+                #          defined_when='style in ["normal","panel"]')),
+                # button_grp
+            ),
+            buttons=['OK','Cancel'],
             resizable=True,
             handler=SelectorHandler)
 

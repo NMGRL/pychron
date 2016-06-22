@@ -26,7 +26,11 @@ from traits.trait_errors import TraitError
 import yaml
 import os
 # ============= local library imports  ==========================
+from uncertainties import nominal_value
+from uncertainties import std_dev
+
 from pychron.core.helpers.iterfuncs import partition
+from pychron.core.helpers.strtools import camel_case
 from pychron.dvc.dvc_irradiationable import DVCAble
 from pychron.entry.entry_views.repository_entry import RepositoryIdentifierEntry
 from pychron.envisage.view_util import open_view
@@ -179,16 +183,14 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     db_refresh_needed = Event
     auto_save_needed = Event
 
-    _labnumber = String
     labnumbers = Property(depends_on='project, selected_level')
-
-    project = Any
-    projects = Property(depends_on='db, db_refresh_needed')
 
     repository_identifier = Str
     repository_identifiers = Property(depends_on='repository_identifier_dirty, db_refresh_needed')
     add_repository_identifier = Event
     repository_identifier_dirty = Event
+    set_repository_identifier_button = Event
+
 
     selected_irradiation = Str('Irradiation')
     irradiations = Property(depends_on='db, db_refresh_needed')
@@ -207,7 +209,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     _end_after = Bool(False)
 
     weight = Float
-    comment = Str
+    comment = String(auto_set=False, enter_set=True)
     auto_fill_comment = Bool
     comment_template = Str
     comment_templates = List
@@ -301,11 +303,14 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     # readonly
     # ===========================================================================
     sample = Str
-    irradiation = Str
+    project = Str
+    material = Str
+
+    display_irradiation = Str
     irrad_level = Str
     irrad_hole = Str
 
-    info_label = Property(depends_on='labnumber')
+    info_label = Property(depends_on='labnumber, display_irradiation, sample')
     extractable = Property(depends_on='labnumber')
 
     update_info_needed = Event
@@ -342,6 +347,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     _set_defaults = True
     _no_clear_labnumber = False
     _meta_cache = Dict
+    _suppress_special_labnumber_change = False
 
     def __init__(self, *args, **kw):
         bind_preference(self, 'use_name_prefix', 'pychron.pyscript.use_name_prefix')
@@ -536,25 +542,30 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                                           excludes=['position']))
         return arvs
 
-    def _make_irrad_level(self, ln):
+    def _make_irrad_level(self, ipos):
         il = ''
-        ipos = ln.irradiation_position
         if ipos is not None:
             level = ipos.level
-            irrad = level.irradiation
-            hole = ipos.position
-
-            self.irrad_hole = str(hole)
-            self.irrad_level = str(level.name)
+            if level:
+                irrad = level.irradiation
+                hole = ipos.position
+                irradname = irrad.name
+                self.irrad_hole = str(hole)
+                self.irrad_level = irrad_level = str(level.name)
+                if irradname == 'NoIrradiation':
+                    il = NULL_STR
+                else:
+                    il = '{} {}:{}'.format(irradname, level.name, hole)
+            else:
+                irradname = ''
+                irrad_level = ''
 
             self._no_clear_labnumber = True
-            self.selected_irradiation = irrad.name
-            self.selected_level = self.irrad_level
+            self.selected_irradiation = irradname
+            self.selected_level = irrad_level
             self._no_clear_labnumber = False
 
-            # self.trait_setq(selected_level=self.irrad_level, selected_irradiation=irrad.name)
-            il = '{} {}:{}'.format(irrad.name, level.name, hole)
-        return il
+        self.display_irradiation = il
 
     def _new_run(self, excludes=None, **kw):
 
@@ -583,9 +594,9 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                 'collection_time_zero_offset',
                 'pattern', 'beam_diameter',
                 'weight', 'comment',
-                'sample', 'irradiation',
+                'sample','project','material', 'username',
                 'ramp_duration',
-                'skip', 'mass_spectrometer', 'extract_device']
+                'skip', 'mass_spectrometer', 'extract_device', 'repository_identifier']
 
     def _set_run_values(self, arv, excludes=None):
         """
@@ -610,6 +621,10 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
             setattr(arv, sattr, v)
             setattr(arv, '_prev_{}'.format(sattr), v)
+
+        arv.irradiation = self.selected_irradiation
+        arv.irradiation_level = self.selected_level
+        arv.irradiation_position = int(self.irrad_hole)
 
         if self.aliquot:
             self.debug('setting user defined aliquot')
@@ -755,6 +770,11 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         self.debug('clear labnumber')
         if not self._no_clear_labnumber:
             self.labnumber = ''
+            self.display_irradiation = ''
+            self.sample = ''
+            self._suppress_special_labnumber_change=True
+            self.special_labnumber = 'Special Labnumber'
+            self._suppress_special_labnumber_change=False
 
     def _template_closed(self, obj, name, new):
         self.template = obj.name
@@ -839,38 +859,47 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             dont load if was unknown and now unknown
             this preserves the users changes
         """
-        # if new is special e.g bu-01-01
+        tag = new
         if '-' in new:
-            new = new.split('-')[0]
-        if '-' in old:
-            old = old.split('-')[0]
+            tag = new.split('-')[0]
 
-        if new in ANALYSIS_MAPPING or old in ANALYSIS_MAPPING or not old and new:
+        abit = tag in ANALYSIS_MAPPING
+        bbit = False
+        if not abit:
+            try:
+                int(tag)
+                bbit = True
+            except ValueError:
+                pass
+
+        if abit or bbit:  # or old in ANALYSIS_MAPPING or not old and new:
             # set default scripts
-            self._load_default_scripts(new)
+            self._load_default_scripts(tag, new)
 
-    def _load_default_scripts(self, labnumber):
+    def _load_default_scripts(self, labnumber_tag, labnumber):
 
         # if labnumber is int use key='U'
         try:
-            _ = int(labnumber)
-            labnumber = 'u'
+            _ = int(labnumber_tag)
+            labnumber_tag = 'u'
         except ValueError:
             pass
 
-        labnumber = str(labnumber).lower()
+        labnumber_tag = str(labnumber_tag).lower()
         if self._current_loaded_default_scripts_key == labnumber:
+            self.debug('Scripts for {} already loaded'.format(labnumber))
             return
 
-        self.debug('load default scripts for {}'.format(labnumber))
-        self._current_loaded_default_scripts_key = labnumber
+        self.debug('load default scripts for {}'.format(labnumber_tag))
 
+        self._current_loaded_default_scripts_key = None
         defaults = self._load_default_file()
         if defaults:
-            if labnumber in defaults:
-                default_scripts = defaults[labnumber]
+            if labnumber_tag in defaults:
+                self._current_loaded_default_scripts_key = labnumber
+                default_scripts = defaults[labnumber_tag]
                 keys = SCRIPT_KEYS
-                if labnumber == 'dg':
+                if labnumber_tag == 'dg':
                     keys = ['extraction']
 
                 # set options
@@ -880,7 +909,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                     new_script_name = default_scripts.get(skey) or ''
 
                     new_script_name = remove_file_extension(new_script_name)
-                    if labnumber in ('u', 'bu') and self.extract_device not in (NULL_STR, 'ExternalPipette'):
+                    if labnumber_tag in ('u', 'bu') and self.extract_device not in (NULL_STR, 'ExternalPipette'):
 
                         # the default value trumps pychron's
                         if self.extract_device:
@@ -891,7 +920,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                                 elif skey == 'post_equilibration':
                                     new_script_name = default_scripts.get(skey, 'pump_{}'.format(e))
 
-                    elif labnumber == 'dg':
+                    elif labnumber_tag == 'dg':
                         e = self.extract_device.split(' ')[1].lower()
                         new_script_name = '{}_{}'.format(e, new_script_name)
 
@@ -923,8 +952,13 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         if labnumber in self._meta_cache:
             self.debug('using cached meta values for {}'.format(labnumber))
             d = self._meta_cache[labnumber]
-            for attr in ('sample', 'irradiation', 'comment', 'repository_identifier'):
+            for attr in ('sample', 'comment', 'repository_identifier'):
                 setattr(self, attr, d[attr])
+
+            self.selected_irradiation = d['irradiation']
+            self.selected_level = d['irradiation_level']
+
+            self.display_irradiation = d['display_irradiation']
             return True
         else:
             # get a default repository_identifier
@@ -933,47 +967,52 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             db = self.get_database()
             with db.session_ctx():
                 # convert labnumber (a, bg, or 10034 etc)
-                self.debug('load meta')
-                ln = db.get_labnumber(labnumber)
-                if ln:
+                self.debug('load meta for {}'.format(labnumber))
+                ip = db.get_identifier(labnumber)
+
+                if ip:
+                    pos = ip.position
                     # set sample and irrad info
                     try:
-                        self.sample = ln.sample.name
+                        self.sample = ip.sample.name
                         d['sample'] = self.sample
 
-                        # project = ln.sample.project
-                        # print 'fff', project.name
-                        # if project.name == 'J-Curve':
-                        #     irrad = ln.irradiation_position.level.irradiation.name
-                        #     self.repository_identifier = 'Irradiation-{}'.format(irrad)
-                        # elif project.name != 'REFERENCES':
-                        #     project_name = project.name
-                        #     project_name = project_name.replace(' ', '_').replace('/', '_')
-                        #     try:
-                        #         pi_name = project.principal_investigators[0].name
-                        #         pi_name = pi_name.replace(' ', '_').replace('/', '_')
-                        #     except IndexError:
-                        #         self.debug('No principal investigator '
-                        #                    'specified for this project "{}". Using NMGRL'.format(project_name))
-                        #         pi_name = 'NMGRL'
-                        #
-                        #     self.repository_identifier = '{}_{}'.format(pi_name, project_name)
+                        project = ip.sample.project
+                        project_name = project.name
+                        if project_name == 'J-Curve':
+                            irrad = ip.level.irradiation.name
+                            self.repository_identifier = 'Irradiation-{}'.format(irrad)
+                        elif project_name != 'REFERENCES':
+                            repo = camel_case(project_name)
+                            self.repository_identifier = repo
+                            if not db.get_repository(repo):
+                                self.repository_identifier = ''
+                                if self.confirmation_dialog('Repository Identifier "{}" does not exist. Would you '
+                                                            'like to add it?'):
+                                    # this will set self.repository_identifier
+                                    self._add_repository_identifier_fired()
 
-                    except AttributeError:
-                        pass
+                    except AttributeError, e:
+                        print e
 
                     d['repository_identifier'] = self.repository_identifier
-                    self.irradiation = self._make_irrad_level(ln)
-                    d['irradiation'] = self.irradiation
 
+                    self._make_irrad_level(ip)
+                    d['irradiation'] = self.selected_irradiation
+                    d['irradiation_position'] = pos
+                    d['irradiation_level'] = self.selected_level
+
+                    d['display_irradiation'] = self.display_irradiation
                     if self.auto_fill_comment:
                         self._set_auto_comment()
                     d['comment'] = self.comment
                     self._meta_cache[labnumber] = d
                     return True
                 else:
-                    self.warning_dialog(
-                            '{} does not exist. Add using "Labnumber Entry" or "Utilities>>Import"'.format(labnumber))
+                    self.warning_dialog('{} does not exist.\n\n'
+                                        'Add using "Entry>>Labnumber"\n'
+                                        'or "Utilities>>Import"\n'
+                                        'or manually'.format(labnumber))
 
     def _load_labnumber_defaults(self, old, labnumber, special):
         self.debug('load labnumber defaults {} {}'.format(labnumber, special))
@@ -1069,7 +1108,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         self._position = pos
 
     def _get_info_label(self):
-        return '{} {} {}'.format(self.labnumber, self.irradiation, self.sample)
+        return '{} {} {}'.format(self.labnumber, self.display_irradiation, self.sample)
 
     def _validate_position(self, pos):
         if not pos.strip():
@@ -1191,20 +1230,23 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
     @cached_property
     def _get_flux(self):
-        return self._get_flux_from_db()
+        return self._get_flux_from_datastore()
 
     @cached_property
     def _get_flux_error(self):
-        return self._get_flux_from_db(attr='j_err')
+        return self._get_flux_from_datastore(attr='err')
 
-    def _get_flux_from_db(self, attr='j'):
+    def _get_flux_from_datastore(self, attr='j'):
         j = 0
 
         identifier = self.labnumber
         if not (self.suppress_meta or '-##-' in identifier):
             if identifier:
-                db = self.get_database()
-                j = db.get_flux_value(identifier, attr)
+                j = self.dvc.get_flux(self.selected_irradiation, self.selected_level, int(self.irrad_hole)) or 0
+                if attr == 'err':
+                    j = std_dev(j)
+                else:
+                    j = nominal_value(j)
 
         return j
 
@@ -1257,13 +1299,22 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             if self.extract_units == NULL_STR:
                 self.extract_units = self._default_extract_units
 
+    def _set_repository_identifier_button_fired(self):
+        self.debug('set repository identifier={}'.format(self.repository_identifier))
+        if self._selected_runs:
+            for si in self._selected_runs:
+                si.repository_identifier = self.repository_identifier
+            self.refresh_table_needed = True
+
     def _add_repository_identifier_fired(self):
         if self.dvc:
             a = RepositoryIdentifierEntry(dvc=self.dvc)
             a.available = self.dvc.get_repository_identifiers()
+            a.principal_investigators = self.dvc.get_principal_investigator_names()
             if a.do():
                 self.repository_identifier_dirty = True
                 self.repository_identifier = a.name
+                return True
         else:
             self.warning_dialog('DVC Plugin not enabled')
 
@@ -1426,11 +1477,19 @@ post_equilibration_script:name''')
             except ValueError:
                 special = True
 
+            if not special:
+                sname = 'Special Labnumber'
+            else:
+                tag = new.split('-')[0]
+                sname = ANALYSIS_MAPPING.get(tag, 'Special Labnumber')
+
+            self._suppress_special_labnumber_change = True
+            self.special_labnumber = sname
+            self._suppress_special_labnumber_change = False
+
             if self._load_labnumber_meta(new):
                 if self._set_defaults:
                     self._load_labnumber_defaults(old, new, special)
-                    # if not special:
-                    #     self.special_labnumber = 'Special Labnumber'
         else:
             self.sample = ''
 
@@ -1439,26 +1498,25 @@ post_equilibration_script:name''')
 
     def _selected_irradiation_changed(self):
         self._clear_labnumber()
+        self.selected_level = 'Level'
 
     def _selected_level_changed(self):
         self._clear_labnumber()
 
     def _special_labnumber_changed(self):
+        if self._suppress_special_labnumber_change:
+            return
+
         if self.special_labnumber not in ('Special Labnumber', LINE_STR, ''):
             ln = convert_special_name(self.special_labnumber)
             self.debug('special ln changed {}, {}'.format(self.special_labnumber, ln))
             if ln:
-                if ln in ('dg', 'pa'):
-                    pass
-                else:
-                    # ms,ed = self._mass_spectrometers, self._extract_devices
+                if ln not in ('dg', 'pa'):
                     msname = self.mass_spectrometer[0].capitalize()
-                    # edname = self.extract_device[0].capitalize()
 
                     if ln in SPECIAL_KEYS and not ln.startswith('bu'):
                         ln = make_standard_identifier(ln, '##', msname)
                     else:
-                        # msname = ms.name[0].capitalize()
                         edname = ''
                         ed = self.extract_device
                         if ed not in ('Extract Device', LINE_STR):
@@ -1583,8 +1641,8 @@ post_equilibration_script:name''')
 
     def _datahub_default(self):
         dh = Datahub()
+        dh.mainstore = self.application.get_service('pychron.dvc.dvc.DVC')
         dh.bind_preferences()
-        dh.secondary_connect()
         return dh
 
     @property

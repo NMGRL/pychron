@@ -73,10 +73,10 @@ class ManagerHandler(ViewableHandler):
 class AppHandler(ManagerHandler):
     def closed(self, info, isok):
         info.object.kill()
-        from pychron.displays.gdisplays import gLoggerDisplay, gWarningDisplay, gMessageDisplay
-        gLoggerDisplay.close_ui()
-        gWarningDisplay.close_ui()
-        gMessageDisplay.close_ui()
+        # from pychron.displays.gdisplays import gLoggerDisplay, gWarningDisplay, gMessageDisplay
+        # gLoggerDisplay.close_ui()
+        # gWarningDisplay.close_ui()
+        # gMessageDisplay.close_ui()
 
         return True
 

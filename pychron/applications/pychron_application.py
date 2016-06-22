@@ -96,6 +96,11 @@ class PychronApplication(BaseTasksApplication):
             self.dump_user_file()
 
         super(BaseTasksApplication, self).stop()
+        import threading
+        self.debug('------------------- Alive Threads -------------------')
+        for t in threading.enumerate():
+            self.debug(str(t))
+        self.debug('-----------------------------------------------------')
 
     def dump_user_file(self):
         self.debug('dumping user file')

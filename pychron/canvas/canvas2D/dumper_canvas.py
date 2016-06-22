@@ -22,13 +22,24 @@ from pychron.canvas.canvas2D.scene.dumper_scene import DumperScene
 
 
 class DumperCanvas(ExtractionLineCanvas2D):
+
+    def __init__(self, *args, **kw):
+        super(DumperCanvas, self).__init__(*args, **kw)
+
+        self.view_y_range = (-10, 20)
+        self.view_x_range = (-25, 10)
+
+    def update_switch_state(self, name, nstate, refresh=True, mode=None):
+        super(DumperCanvas, self).update_switch_state(name, nstate, refresh, mode)
+        self.set_item_state(name, nstate)
+
     def load_canvas_file(self, pathname, configpath, valvepath, canvas):
         self.scene.load(pathname, configpath, valvepath, canvas)
 
     def set_item_state(self, item_name, state):
         item = self.scene.get_item(item_name)
         if item:
-            item.state = state
+            item.set_state(state)
             self._select_hook(item)
             self.invalidate_and_redraw()
 

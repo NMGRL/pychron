@@ -32,13 +32,14 @@ PIPELINE_TEMPLATES = '''- Iso Evo
 - Flux
 - Ideogram
 - Spectrum
-- InverseIsochron
+- Inverse Isochron
 - Series
 - Analysis Table
 - Interpreted Age Table
 - Auto Ideogram
 - Diff
 - Vertical Flux
+- Xy Scatter
 '''
 
 IDENTIFIERS_DEFAULT = """
@@ -165,6 +166,7 @@ TASK_EXTENSION_DEFAULT = """
  actions:
   - pychron.experiment.edit.deselect, False
   - pychron.experiment.edit.reset, True
+  - pychron.experiment.edit.sync, True
   - pychron.experiment.edit.undo, False
   - pychron.experiment.edit.configure, False
 -
@@ -198,6 +200,8 @@ TASK_EXTENSION_DEFAULT = """
  plugin_id: pychron.entry.plugin
  actions:
   - pychron.entry1.labnumber_entry, True
+  - pychron.entry1.sample_entry, True
+  - pychron.entry1.sample_prep, True
   - pychron.entry1.generate_irradiation_table, False
   - pychron.entry1.import_irradiation_holder, False
   - pychron.entry1.sensitivity_entry, True
@@ -386,13 +390,16 @@ ICFACTOR = """
       denominator: CDD
       standard_ratio: 295.5
       analysis_type: Air
+- klass: ReviewNode
 - klass: ICFactorPersistNode
 """
 
 ISOEVO = """
 - klass: UnknownNode
 - klass: FitIsotopeEvolutionNode
+- klass: ReviewNode
 - klass: IsotopeEvolutionPersistNode
+  use_editor: False
 """
 
 BLANKS = """
@@ -402,6 +409,7 @@ BLANKS = """
   analysis_type: Blank Unknown
 - klass: ReferenceNode
 - klass: FitBlanksNode
+- klass: ReviewNode
 - klass: BlanksPersistNode
 """
 
@@ -413,8 +421,8 @@ IDEO = """- klass: UnknownNode
 - klass: IdeogramNode
 """
 
-ISOCHRON = """- klass: UnknownNode
-- klass: IsochronNode
+INVERSE_ISOCHRON = """- klass: UnknownNode
+- klass: InverseIsochronNode
 """
 
 SPEC = """- klass: UnknownNode
@@ -423,6 +431,10 @@ SPEC = """- klass: UnknownNode
 
 VERTICAL_FLUX = """- klass: FindVerticalFluxNode
 - klass: VerticalFluxNode
+"""
+
+XY_SCATTER = """- klass: UnknownNode
+- klass: XYScatterNode
 """
 
 ANALYSIS_TABLE = """- klass: UnknownNode
@@ -447,6 +459,21 @@ AUTO_IDEOGRAM = """- klass: ListenUnknownNode
 
 SERIES = """- klass: UnknownNode
 - klass: SeriesNode
+"""
+
+FLUX = """
+- klass: FindFluxMonitorsNode
+#  irradiation: NM-274
+#  level: E
+- klass: FluxMonitorsNode
+#- klass: GroupingNode
+#  key: Identifier
+#- klass: IdeogramNode
+#- klass: TableNode
+#- klass: ReviewNode
+- klass: FitFluxNode
+- klass: ReviewNode
+- klass: FluxPersistNode
 """
 # SYSTEM_HEALTH = '''
 # values:

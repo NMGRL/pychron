@@ -124,6 +124,7 @@ class LaserTrayCanvas(StageCanvas):
     crosshairs_radius = Range(0.0, 4.0, 1.0)
     crosshairs_offsetx = Float
     crosshairs_offsety = Float
+    show_hole = Bool(True)
 
     show_bounds_rect = Bool(True)
     transects = List
@@ -356,6 +357,9 @@ class LaserTrayCanvas(StageCanvas):
         sx, sy = self.get_stage_screen_position()
         return sx, sy
 
+    def get_current_hole(self):
+        return self.stage_manager.get_current_hole()
+
     def adjust_limits(self, mapper, val, delta=None):
         """
         """
@@ -401,6 +405,7 @@ class LaserTrayCanvas(StageCanvas):
 
         if pos:
             self.stage_manager.linear_move(*pos,
+                                           start_timer=True,
                                            check_moving=True,
                                            use_calibration=False)
             event.handled = True

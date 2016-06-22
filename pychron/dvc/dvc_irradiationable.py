@@ -31,6 +31,7 @@ class DVCAble(Loggable):
         else:
             db = self.iso_db_man.db
         return db
+    9
 
 
 class DVCIrradiationable(DVCAble):
@@ -42,7 +43,6 @@ class DVCIrradiationable(DVCAble):
 
     updated = Event
     _suppress_auto_select_irradiation = False
-
 
     def verify_database_connection(self, inform=True):
         # return self.dvc.initialize(inform)
@@ -78,7 +78,7 @@ class DVCIrradiationable(DVCAble):
             with db.session_ctx():
                 irrad = db.get_irradiation(self.irradiation)
                 if irrad:
-                    names = [li.name for li in irrad.levels]
+                    names = sorted([li.name for li in irrad.levels])
                     if names:
                         self.level = names[0]
                     return names

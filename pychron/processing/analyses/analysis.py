@@ -68,7 +68,7 @@ class CloseHandler(Handler):
         info.ui.control.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
 
 
-def show_evolutions_factory(record_id, isotopes, show_evo=True, show_sniff=False, show_baseline=False):
+def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibration=False, show_baseline=False):
     if WINDOW_CNT > 20:
         information(None, 'You have too many Isotope Evolution windows open. Close some before proceeding')
         return
@@ -99,7 +99,7 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_sniff=False
         g.add_axis_tool(p, p.y_axis)
 
         p.y_axis.title_spacing = 50
-        if show_sniff:
+        if show_equilibration:
             sniff = iso.sniff
             g.new_series(sniff.xs, sniff.ys,
                          type='scatter',
@@ -223,6 +223,13 @@ class Analysis(ArArAge):
     #     self.gains = {}
     #     self.blank_changes = []
     #     self.fit_changes = []
+    def get_baseline_corrected_signal_dict(self):
+        get = lambda iso: iso.get_baseline_corrected_value()
+        return self._get_isotope_dict(get)
+
+    def get_baseline_dict(self):
+        get = lambda iso: iso.baseline.uvalue
+        return self._get_isotope_dict(get)
 
     def get_ic_factor(self, det):
         iso = next((i for i in self.isotopes.itervalues() if i.detector == det), None)
@@ -274,9 +281,11 @@ class Analysis(ArArAge):
         #
         # self.temp_status = 1 if omit else 0
 
-    def show_isotope_evolutions(self, isotopes, **kw):
+    def show_isotope_evolutions(self, isotopes=None, **kw):
         if isotopes and isinstance(isotopes[0], (str, unicode)):
             isotopes = [self.isotopes[i] for i in isotopes]
+        else:
+            isotopes = self.isotopes.values()
 
         keys = [k.name for k in isotopes]
 
@@ -437,6 +446,13 @@ class Analysis(ArArAge):
     @property
     def temp_selected(self):
         return self.temp_status in ('omit', 'outlier', 'invalid')
+
+    def _get_isotope_dict(self, get):
+        d = dict()
+        for ki, v in self.isotopes.iteritems():
+            d[ki] = (v.detector, get(v))
+
+        return d
 
     def __str__(self):
         return '{}<{}>'.format(self.record_id, self.__class__.__name__)

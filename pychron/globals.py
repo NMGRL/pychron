@@ -86,6 +86,8 @@ class Globals(object):
     select_default_data = True
     run_pipeline = False
 
+    valve_debug = False
+
     dev_confirm_exit = True
     username = 'root'
     communication_simulation = False
@@ -97,6 +99,9 @@ class Globals(object):
 
     entry_labbook_debug = False
     entry_irradiation_import_from_file_debug = False
+
+    active_analyses = None
+    active_branch = None
 
     def build(self, ip):
 
@@ -124,6 +129,7 @@ class Globals(object):
 
                            ('figure_debug', to_bool),
                            ('browser_debug', to_bool),
+                           ('valve_debug', to_bool),
                            ('communication_simulation', to_bool),
                            ('dashboard_simulation', to_bool),
                            ('use_startup_tests', to_bool),

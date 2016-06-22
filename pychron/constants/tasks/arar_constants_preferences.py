@@ -289,7 +289,7 @@ class ArArConstantsPreferencesPane(PreferencesPane):
         items = [HGroup(Label(l), spring, UItem(v), UItem(e)) for l, v, e in vs]
         decay = VGroup(
             presets,
-            HGroup(Item('total_k_decay', style='readonly', label='Total Ar40K')),
+            HGroup(Item('total_k_decay', style='readonly', label='Total Ar40K/yr')),
             HGroup(spring, Label('Value'),
                    Spring(width=75, springy=False),
                    Label(PLUSMINUS_ONE_SIGMA),

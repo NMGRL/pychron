@@ -71,6 +71,9 @@ class DesignerExtractionLineCanvas2D(ExtractionLineCanvas2D):
         else:
             si.x, si.y = dx, dy
 
+        si.request_layout()
+        self.invalidate_and_redraw()
+
     def drag_left_up(self, event):
         self._set_normal_state(event)
 
@@ -95,8 +98,8 @@ class DesignerExtractionLineCanvas2D(ExtractionLineCanvas2D):
         item = self._over_item(event)
         if item is not None:
             event.window.set_pointer(self.select_pointer)
-            self.event_state = 'select'
             self.selected_item = item
+            self.event_state = 'select'
         else:
             event.window.set_pointer(self.normal_pointer)
             self.selected_item = None

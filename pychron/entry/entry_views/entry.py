@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from traits.api import List, Property, Str
+from traits.trait_types import BaseStr
 from traitsui.api import View, VGroup, UItem
 from traitsui.menu import Action
 # ============= standard library imports ========================
@@ -26,11 +27,20 @@ from pychron.dvc.dvc_irradiationable import DVCAble
 class OKButton(Action):
     name = 'OK'
     enabled_when = 'ok_enabled'
+
+
 STYLESHEET = 'QLabel {font-size: 14px; color: red}'
 
 
-class BaseEntry(DVCAble):
+class SpacelessStr(BaseStr):
+    def validate(self, object, name, value):
+        if isinstance(value, basestring) and ' ' not in value:
+            return value
 
+        self.error(object, name, value)
+
+
+class BaseEntry(DVCAble):
     value = Str
     available = List
     error_message = Str
@@ -54,7 +64,10 @@ class BaseEntry(DVCAble):
             if info.result:
                 db = self.get_database()
                 with db.session_ctx():
-                    if self._add_item():
+                    ret = self._add_item()
+                    if ret is None:
+                        return False
+                    elif ret:
                         return True
             else:
                 return False

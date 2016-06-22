@@ -16,9 +16,13 @@
 
 # ============= enthought library imports =======================
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traitsui.api import View
+from traits.api import Str
+from traitsui.api import View, FileEditor, VGroup, Item
+
 # ============= standard library imports ========================
+import os
 # ============= local library imports  ==========================
+from pychron.paths import paths
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
 
@@ -32,6 +36,35 @@ class NMGRLFurnacePreferencesPane(PreferencesPane):
 
     def traits_view(self):
         v = View()
+        return v
+
+
+class NMGRLFurnaceControlPreferences(BasePreferencesHelper):
+    preferences_path = 'pychron.nmgrlfurnace.control'
+
+    canvas_path = Str
+    canvas_config_path = Str
+    valves_path = Str
+
+
+class NMGRLFurnaceControlPreferencesPane(PreferencesPane):
+    category = 'NMGRL Furnace'
+    model_factory = NMGRLFurnaceControlPreferences
+
+    def traits_view(self):
+        p_grp = VGroup(Item('canvas_path',
+                            label='Canvas Path',
+                            editor=FileEditor(root_path=os.path.join(paths.canvas2D_dir, 'canvas.xml'))),
+                       Item('canvas_config_path',
+                            label='Config Path',
+                            editor=FileEditor()),
+                       Item('valves_path',
+                            label='Valves Path',
+                            editor=FileEditor(root_path=os.path.join(paths.extraction_line_dir,
+                                                                                    'valves.xml'))),
+                       show_border=True,
+                       label='Paths')
+        v = View(p_grp)
         return v
 
 # ============= EOF =============================================

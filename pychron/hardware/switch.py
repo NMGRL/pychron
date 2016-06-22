@@ -29,6 +29,7 @@ class BaseSwitch(Loggable):
     state = Bool(False)
     software_lock = Bool(False)
     enabled = Bool(True)
+    owner = Str
 
     def __init__(self, name, *args, **kw):
         """
@@ -47,17 +48,25 @@ class BaseSwitch(Loggable):
         pass
 
     def lock(self):
+        self.debug('Locking')
         self.software_lock = True
 
     def unlock(self):
+        self.debug('Unlocking')
         self.software_lock = False
 
     def get_hardware_state(self, **kw):
-        pass
+        return self.state
+
+    def get_hardware_indicator_state(self, **kw):
+        return self.state
 
 
 class ManualSwitch(BaseSwitch):
     prefix_name = 'MANUAL_SWITCH'
+
+    def state_str(self):
+        return '{}{}{}'.format(self.name, self.state)
 
     def set_open(self, *args, **kw):
         self.state = True
@@ -83,10 +92,23 @@ class Switch(BaseSwitch):
 
     settling_time = Float(0)
 
-    owner = Str
-
     def state_str(self):
         return '{}{}{}'.format(self.name, self.state, self.software_lock)
+
+    # def get_hardware_indicator_state(self, verbose=True):
+    #     result = None
+    #     if self.actuator is not None:
+    #         action = 'open' if self.state else 'closed'
+    #
+    #         result = self.actuator.get_indicator_state(self, action, verbose=verbose)
+    #         self.debug('Switch indicator state {}, {}'.format(result, 'Open' if result else 'Closed'))
+    #         if isinstance(result, bool):
+    #             self.set_state(result)
+    #         else:
+    #             self.debug('Get hardware indicator state err: {}'.format(result))
+    #             result = False
+    #
+    #     return result
 
     def get_hardware_state(self, verbose=True):
         """
@@ -94,6 +116,7 @@ class Switch(BaseSwitch):
         result = None
         if self.actuator is not None:
             result = self.actuator.get_channel_state(self, verbose=verbose)
+            # self.debug('Switch state {}, {}'.format(result, 'Open' if result else 'Closed'))
             if isinstance(result, bool):
                 self.set_state(result)
             else:
@@ -106,27 +129,27 @@ class Switch(BaseSwitch):
         if self.actuator:
             return self.actuator.get_lock_state(self)
 
-    def set_open(self, mode='normal'):
-        return self._actuate_state(self._open, mode, not self.state, True)
+    def set_open(self, mode='normal', force=False):
+        return self._actuate_state(self._open, mode, True, True, force)
 
-    def set_closed(self, mode='normal'):
-        return self._actuate_state(self._close, mode, self.state, False)
+    def set_closed(self, mode='normal', force=False):
+        return self._actuate_state(self._close, mode, True, False, force)
 
     # private
-    def _actuate_state(self, func, mode, cur, set_value):
+    def _actuate_state(self, func, mode, cur, set_value, force):
         """
             func: self._close, self._open
             mode: normal, client
             cur: bool, not self.state if open, self.state if close
             set_value: open-True, close-False
         """
-        self.info('actuate state mode={}'.format(mode))
+        self.info('actuate state mode={}, software_lock={}'.format(mode, self.software_lock))
         state_change = False
         success = True
         if self.software_lock:
             self._software_locked()
         else:
-            success = func(mode)
+            success = func(mode, force)
 
             if success:
                 if cur:
@@ -135,15 +158,15 @@ class Switch(BaseSwitch):
 
         return success, state_change
 
-    def _open(self, mode='normal'):
+    def _open(self, mode='normal', force=False):
         """
         """
-        return self._act(mode, 'open_channel', not self.state)
+        return self._act(mode, 'open_channel', not self.state or force)
 
-    def _close(self, mode='normal'):
+    def _close(self, mode='normal', force=False):
         """
         """
-        return self._act(mode, 'close_channel', self.state)
+        return self._act(mode, 'close_channel', self.state or force)
 
     def _act(self, mode, func, do_actuation):
         """
@@ -153,6 +176,7 @@ class Switch(BaseSwitch):
         :param do_actuation:
         :return:
         """
+        self.debug('doing actuation {} {} {}'.format(mode, func, do_actuation))
         r = True
         actuator = self.actuator
         if mode == 'debug':
@@ -163,10 +187,11 @@ class Switch(BaseSwitch):
             if mode.startswith('client'):
                 r = func(self)
             else:
-                if do_actuation:
-                    r = func(self)
-                else:
-                    r = True
+                r = func(self)
+                # if do_actuation:
+                #     r = func(self)
+                # else:
+                #     r = True
 
         if self.settling_time:
             time.sleep(self.settling_time)

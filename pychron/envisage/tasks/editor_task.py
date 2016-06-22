@@ -101,8 +101,11 @@ class BaseEditorTask(BaseManagerTask):
         """
         if self.active_editor:
             if not path:
-                if self.active_editor.path:
-                    path = self.active_editor.path
+                if hasattr(self.active_editor, 'path'):
+                    if self.active_editor.path:
+                        path = self.active_editor.path
+                else:
+                    return
 
             if not path:
                 path = self.save_file_dialog()
@@ -120,7 +123,8 @@ class BaseEditorTask(BaseManagerTask):
         df = self._generate_default_filename()
         if df:
             kw['default_filename'] = df
-        path = self.save_file_dialog(**kw)
+
+        path = self._get_save_path(**kw)
         if path:
             if self._save_file(path):
                 self.active_editor.path = path
@@ -132,6 +136,9 @@ class BaseEditorTask(BaseManagerTask):
             self.close_editor(e)
 
     # private
+    def _get_save_path(self, **kw):
+        return self.save_file_dialog(**kw)
+
     def _generate_default_filename(self):
         return
 

@@ -33,8 +33,9 @@ from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, \
     LoadHolderTbl, LoadPositionTbl, \
     MeasuredPositionTbl, ProductionTbl, VersionTbl, RepositoryAssociationTbl, \
     RepositoryTbl, AnalysisChangeTbl, \
-    InterpretedAgeTbl, InterpretedAgeSetTbl, PrincipalInvestigatorTbl
-from pychron.pychron_constants import ALPHAS, alpha_to_int
+    InterpretedAgeTbl, InterpretedAgeSetTbl, PrincipalInvestigatorTbl, SamplePrepWorkerTbl, SamplePrepSessionTbl, \
+    SamplePrepStepTbl, SamplePrepImageTbl, RestrictedNameTbl
+from pychron.pychron_constants import ALPHAS, alpha_to_int, NULL_STR
 
 
 class NewMassSpectrometerView(HasTraits):
@@ -132,6 +133,34 @@ class DVCDatabase(DatabaseAdapter):
     #                      omit_iso=v,
     #                      omit_series=v)
     #         return self._add_item(tag)
+    def check_restricted_name(self, name, category, check_principal_investigator=True):
+        """
+        return True is name is restricted
+
+        """
+        with self.session_ctx() as sess:
+            q = sess.query(RestrictedNameTbl)
+            q = q.filter(RestrictedNameTbl.name == name.upper())
+            q = q.filter(RestrictedNameTbl.category == category)
+
+            ret = bool(self._query_one(q))
+            if check_principal_investigator:
+                q = sess.query(PrincipalInvestigatorTbl)
+                lname = func.lower(PrincipalInvestigatorTbl.name)
+                name = name.lower()
+
+                q = q.filter(func.substring(lname, 2) == name)
+                q = q.filter(or_(lname == name))
+
+                pret = bool(self._query_one(q))
+                ret = pret or ret
+
+            return ret
+
+    def get_repository_analyses(self, repo):
+        with self.session_ctx():
+            r = self.get_repository(repo)
+            return [a.analysis for a in r.repository_associations]
 
     def get_analysis_info(self, li):
         with self.session_ctx():
@@ -187,6 +216,44 @@ class DVCDatabase(DatabaseAdapter):
                 # print ti, low, high, rs, refs
             # print 'refs', refs
             return [rii for ri in refs for rii in ri.record_views]
+
+    def get_blanks(self, ms=None, limit=100):
+        with self.session_ctx() as sess:
+            q = sess.query(AnalysisTbl)
+            q = q.filter(AnalysisTbl.analysis_type.like('blank%'))
+
+            if ms:
+                q = q.filter(func.lower(AnalysisTbl.mass_spectrometer) == ms.lower())
+            q = q.order_by(AnalysisTbl.timestamp.desc())
+            q = q.limit(limit)
+            return self._query_all(q)
+
+    def retrieve_blank(self, kind, ms, ed, last, repository):
+        self.debug('retrieve blank. kind={}, ms={}, '
+                   'ed={}, last={}, repository={}'.format(kind, ms, ed, last, repository))
+        with self.session_ctx() as sess:
+            q = sess.query(AnalysisTbl)
+
+            if repository:
+                q = q.join(RepositoryAssociationTbl)
+                q = q.join(RepositoryTbl)
+
+            if last:
+                q = q.filter(AnalysisTbl.analysis_type == 'blank_{}'.format(kind))
+            else:
+                q = q.filter(AnalysisTbl.analysis_type.startswith('blank'))
+
+            if ms:
+                q = q.filter(func.lower(AnalysisTbl.mass_spectrometer) == ms.lower())
+
+            if ed and ed not in ('Extract Device', NULL_STR) and kind == 'unknown':
+                q = q.filter(func.lower(AnalysisTbl.extract_device) == ed.lower())
+
+            if repository:
+                q = q.filter(RepositoryTbl.name == repository)
+
+            q = q.order_by(AnalysisTbl.timestamp.desc())
+            return self._query_one(q, verbose_query=True)
 
     # def get_analyses_data_range(self, low, high, atypes, exclude=None, exclude_uuids=None):
     #     with self.session_ctx() as sess:
@@ -266,34 +333,36 @@ class DVCDatabase(DatabaseAdapter):
             a = AnalysisChangeTbl(**kw)
             return self._add_item(a)
 
-    def add_repository_association(self, repo, analysis):
+    def add_repository_association(self, reponame, analysis):
         with self.session_ctx():
-            self.debug('add association {}'.format(repo))
-            repo = self.get_repository(repo)
-            e = RepositoryAssociationTbl()
-            e.repository = repo.name
-            e.analysis = analysis
-            return self._add_item(e)
+            self.debug('add association {}'.format(reponame))
+            repo = self.get_repository(reponame)
+            if repo is not None:
+                e = RepositoryAssociationTbl()
+                e.repository = repo.name
+                e.analysis = analysis
+                return self._add_item(e)
+            else:
+                self.warning('No repository named ="{}"'.format(reponame))
+                self.debug('adding to repo={} instead')
 
-    def add_material(self, name):
+    def add_material(self, name, grainsize=None):
         with self.session_ctx():
             a = self.get_material(name)
             if a is None:
-                a = MaterialTbl(name=name)
+                a = MaterialTbl(name=name, grainsize=grainsize)
                 a = self._add_item(a)
             return a
 
-    def add_sample(self, name, project, material):
+    def add_sample(self, name, project, material, grainsize=None):
         with self.session_ctx():
-            a = self.get_sample(name, project, material)
+            a = self.get_sample(name, project, material, grainsize)
             if a is None:
-                self.debug('ADDING SAMPLE {},{},{}'.format(name, project, material))
+                self.debug('Adding sample {},{},{}'.format(name, project, material))
                 a = SampleTbl(name=name)
                 a.project = self.get_project(project)
-                a.material = self.get_material(material)
+                a.material = self.get_material(material, grainsize)
                 a = self._add_item(a)
-            # else:
-            # self.debug('SAMPLE {},{} ALREADY EXISTS'.format(name,project))
             return a
 
     def add_extraction_device(self, name):
@@ -342,11 +411,12 @@ class DVCDatabase(DatabaseAdapter):
         with self.session_ctx():
             a = self.get_project(name, pi)
             if a is None:
+                self.debug('Adding project {} {}'.format(name, pi))
                 a = ProjectTbl(name=name)
                 if pi:
                     dbpi = self.get_principal_investigator(pi)
                     if dbpi:
-                        a.principal_investigator = dbpi
+                        a.principal_investigator = pi
 
                 a = self._add_item(a)
             return a
@@ -355,12 +425,16 @@ class DVCDatabase(DatabaseAdapter):
         with self.session_ctx():
             dbpos = self.get_irradiation_position(irrad, level, pos)
             if dbpos is None:
+                self.debug('Adding irradiation position {}{} {}'.format(irrad, level, pos))
                 a = IrradiationPositionTbl(position=pos, **kw)
                 if identifier:
                     a.identifier = str(identifier)
 
                 a.level = self.get_irradiation_level(irrad, level)
                 dbpos = self._add_item(a)
+            else:
+                self.debug('Irradiation position exists {}{} {}'.format(irrad, level, pos))
+
             return dbpos
 
     def add_load_position(self, ln, position, weight=0, note=''):
@@ -371,6 +445,10 @@ class DVCDatabase(DatabaseAdapter):
 
     def add_repository(self, name, principal_investigator, **kw):
         with self.session_ctx():
+            repo = self.get_repository(name)
+            if repo:
+                return repo
+
             principal_investigator = self.get_principal_investigator(principal_investigator)
             if not principal_investigator:
                 principal_investigator = self.add_principal_investigator(principal_investigator)
@@ -515,10 +593,10 @@ class DVCDatabase(DatabaseAdapter):
         """
         with self.session_ctx() as sess:
             if ln:
-                ln = self.get_identifier(ln)
-                if not ln:
+                dbln = self.get_identifier(ln)
+                if not dbln:
                     return
-                q = sess.query(AnalysisTbl.step)
+                q = sess.query(AnalysisTbl.increment)
                 q = q.join(IrradiationPositionTbl)
 
                 q = q.filter(IrradiationPositionTbl.identifier == ln)
@@ -527,8 +605,9 @@ class DVCDatabase(DatabaseAdapter):
                 q = q.order_by(AnalysisTbl.increment.desc())
                 result = self._query_one(q)
                 if result:
-                    step = result[0]
-                    return ALPHAS.index(step) if step else -1
+                    increment = result[0]
+                    return increment if increment is not None else -1
+                    # return ALPHAS.index(step) if step else -1
 
     def get_unique_analysis(self, ln, ai, step=None):
         #         sess = self.get_session()
@@ -600,7 +679,7 @@ class DVCDatabase(DatabaseAdapter):
         with self.session_ctx() as sess:
             q = sess.query(AnalysisTbl)
             q = q.filter(AnalysisTbl.uuid.in_(uuids))
-            return self._query_all(q, verbose_query=True)
+            return self._query_all(q, verbose_query=False)
 
     def get_analysis_runid(self, idn, aliquot, step=None):
         with self.session_ctx() as sess:
@@ -616,6 +695,17 @@ class DVCDatabase(DatabaseAdapter):
 
             q = q.filter(IrradiationPositionTbl.identifier == idn)
             return self._query_one(q)
+
+    def get_analysis_by_attr(self, **kw):
+        with self.session_ctx() as sess:
+            q = sess.query(AnalysisTbl)
+            for k, v in kw.iteritems():
+                try:
+                    q = q.filter(getattr(AnalysisTbl, k) == v)
+                except AttributeError:
+                    self.debug('Invalid AnalysisTbl column {}'.format(k))
+            q = q.order_by(AnalysisTbl.analysis_timestamp.desc())
+            return self._query_first(q)
 
     def get_database_version(self, **kw):
         with self.session_ctx() as sess:
@@ -993,22 +1083,30 @@ class DVCDatabase(DatabaseAdapter):
     def get_irradiation(self, name):
         return self._retrieve_item(IrradiationTbl, name)
 
-    def get_material(self, name):
-        return self._retrieve_item(MaterialTbl, name)
+    def get_material(self, name, grainsize=None):
+        if not isinstance(name, str) and not isinstance(name, unicode):
+            return name
 
-    def get_sample(self, name, project, material):
+        with self.session_ctx() as sess:
+            q = sess.query(MaterialTbl)
+            q = q.filter(MaterialTbl.name == name)
+            if grainsize:
+                q = q.filter(MaterialTbl.grainsize == grainsize)
+            return self._query_one(q)
+
+    def get_sample(self, name, project, material, grainsize=None):
         with self.session_ctx() as sess:
             q = sess.query(SampleTbl)
             q = q.join(ProjectTbl)
 
             project = self.get_project(project)
-            material = self.get_material(material)
+            material = self.get_material(material, grainsize)
 
             q = q.filter(SampleTbl.project == project)
             q = q.filter(SampleTbl.material == material)
             q = q.filter(SampleTbl.name == name)
 
-            return self._query_one(q)
+            return self._query_one(q, verbose_query=True)
 
     def get_last_identifier(self, sample=None):
         with self.session_ctx() as sess:
@@ -1063,12 +1161,6 @@ class DVCDatabase(DatabaseAdapter):
             return items[0]
 
     # multi getters
-    def get_principal_investigators(self, order=None, **kw):
-        if order:
-            order = getattr(PrincipalInvestigatorTbl.name, order)()
-
-        return self._retrieve_items(PrincipalInvestigatorTbl, order=order, **kw)
-
     def get_analyses(self, analysis_type=None, mass_spectrometer=None,
                      reverse_order=False):
         with self.session_ctx() as sess:
@@ -1142,16 +1234,28 @@ class DVCDatabase(DatabaseAdapter):
         return self._retrieve_items(UserTbl)
 
     def get_usernames(self):
-        with self.session_ctx():
-            users = self.get_users()
-            if users:
-                return [ui.name for ui in users]
+        return self._get_table_names(UserTbl)
 
     def get_project_names(self):
-        return self._get_table_names(ProjectTbl)
+        return self._get_table_names(ProjectTbl, use_distinct=ProjectTbl.name)
 
     def get_material_names(self):
-        return self._get_table_names(MaterialTbl)
+        return self._get_table_names(MaterialTbl, use_distinct=MaterialTbl.name)
+
+    def get_principal_investigator_names(self, *args, **kw):
+        return self._get_table_names(PrincipalInvestigatorTbl)
+
+    def get_principal_investigators(self, order=None, **kw):
+        if order:
+            order = getattr(PrincipalInvestigatorTbl.name, order)()
+
+        return self._retrieve_items(PrincipalInvestigatorTbl, order=order, **kw)
+
+    def get_grainsizes(self):
+        with self.session_ctx() as sess:
+            q = sess.query(distinct(MaterialTbl.grainsize))
+            gs = self._query_all(q)
+            return [g[0] for g in gs if g[0]]
 
     def get_samples(self, project=None, **kw):
         if project:
@@ -1255,7 +1359,7 @@ class DVCDatabase(DatabaseAdapter):
                         mass_spectrometers = (mass_spectrometers,)
                     q = q.filter(AnalysisTbl.mass_spectrometer.in_(mass_spectrometers))
 
-                if order:
+                if order is not None:
                     q = q.order_by(order)
 
                 ps = self._query_all(q)
@@ -1340,10 +1444,145 @@ class DVCDatabase(DatabaseAdapter):
             self._delete_item(name, name='tag')
             return True
 
-    # private
-    def _get_table_names(self, tbl):
+    # ============================================================
+    # Sample Prep
+    # ============================================================
+    # with self.session_ctx():
+    #     a = self.get_sample(name, project, material, grainsize)
+    #     if a is None:
+    #         self.debug('Adding sample {},{},{}'.format(name, project, material))
+    #         a = SampleTbl(name=name)
+    #         a.project = self.get_project(project)
+    #         a.material = self.get_material(material, grainsize)
+    #         a = self._add_item(a)
+    #     return a
+    def add_sample_prep_worker(self, name, fullname, email, phone, comment):
         with self.session_ctx():
-            names = self._retrieve_items(tbl)
-            return [ni.name for ni in names]
+            w = self.get_sample_prep_worker(name)
+            if w is None:
+                obj = SamplePrepWorkerTbl(name=name, fullname=fullname,
+                                          email=email, phone=phone, comment=comment)
+                self._add_item(obj)
+                return True
+
+    def update_sample_prep_session(self, name, worker, **kw):
+        with self.session_ctx():
+            s = self.get_sample_prep_session(name, worker)
+            if s:
+                for k, v in kw.iteritems():
+                    setattr(s, k, v)
+
+    def move_sample_to_session(self, current, sample, session, worker):
+        with self.session_ctx() as sess:
+            session = self.get_sample_prep_session(session, worker)
+            q = sess.query(SamplePrepStepTbl)
+            q = q.join(SamplePrepSessionTbl)
+            q = q.join(SampleTbl)
+
+            q = q.filter(SamplePrepSessionTbl.name == current)
+            q = q.filter(SamplePrepSessionTbl.worker_name == worker)
+            q = q.filter(SampleTbl.name == sample['name'])
+            q = q.filter(MaterialTbl.name == sample['material'])
+            q = q.filter(ProjectTbl.name == sample['project'])
+            ss = self._query_all(q)
+            for si in ss:
+                si.sessionID = session.id
+
+
+
+                # for s in samples:
+                #     sample = self.get_sample()
+                #
+
+    def add_sample_prep_session(self, name, worker, comment):
+        with self.session_ctx():
+            s = self.get_sample_prep_session(name, worker)
+            if s is None:
+                obj = SamplePrepSessionTbl(name=name, worker_name=worker,
+                                           comment=comment)
+                self._add_item(obj)
+                return True
+
+    def add_sample_prep_step(self, sampleargs, worker, session, **kw):
+        with self.session_ctx():
+            sample = self.get_sample(*sampleargs)
+            session = self.get_sample_prep_session(session, worker)
+            obj = SamplePrepStepTbl(**kw)
+            obj.sampleID = sample.id
+            obj.sessionID = session.id
+            self._add_item(obj)
+
+    def add_sample_prep_image(self, stepid, host, path):
+        with self.session_ctx():
+            obj = SamplePrepImageTbl(host=host,
+                                     path=path,
+                                     stepID=stepid)
+            self._add_item(obj)
+
+    def get_sample_prep_samples(self, worker, session):
+        with self.session_ctx() as sess:
+            q = sess.query(SampleTbl)
+            q = q.join(SamplePrepStepTbl)
+            q = q.join(SamplePrepSessionTbl)
+            q = q.filter(SamplePrepSessionTbl.name == session)
+            q = q.filter(SamplePrepSessionTbl.worker_name == worker)
+            return self._query_all(q)
+
+    def get_sample_prep_step_by_id(self, id):
+        return self._retrieve_item(SamplePrepStepTbl, id, 'id')
+
+    def get_sample_prep_session(self, name, worker):
+        return self._retrieve_item(SamplePrepSessionTbl, (name, worker), ('name', 'worker_name'))
+
+    def get_sample_prep_worker(self, name):
+        return self._retrieve_item(SamplePrepWorkerTbl, name)
+
+    def get_sample_prep_worker_names(self):
+        return self._get_table_names(SamplePrepWorkerTbl)
+
+    def get_sample_prep_session_names(self, worker):
+        with self.session_ctx() as sess:
+            q = sess.query(SamplePrepSessionTbl.name)
+            q = q.filter(SamplePrepSessionTbl.worker_name == worker)
+            return [i[0] for i in self._query_all(q)]
+
+    def get_sample_prep_sessions(self, sample):
+        with self.session_ctx() as sess:
+            q = sess.query(SamplePrepSessionTbl)
+            q = q.join(SamplePrepStepTbl)
+            q = q.join(SampleTbl)
+            q = q.filter(SampleTbl.name == sample)
+            return self._query_all(q)
+
+    def get_sample_prep_steps(self, worker, session, sample, project, material, grainsize):
+        with self.session_ctx() as sess:
+            q = sess.query(SamplePrepStepTbl)
+            q = q.join(SamplePrepSessionTbl)
+            q = q.join(SampleTbl)
+            q = q.join(ProjectTbl)
+            q = q.join(MaterialTbl)
+
+            q = q.filter(SamplePrepStepTbl.added.is_(None))
+            q = q.filter(SamplePrepSessionTbl.worker_name == worker)
+            q = q.filter(SamplePrepSessionTbl.name == session)
+            q = q.filter(SampleTbl.name == sample)
+            q = q.filter(ProjectTbl.name == project)
+            q = q.filter(MaterialTbl.name == material)
+            if grainsize:
+                q = q.filter(MaterialTbl.grainsize == grainsize)
+
+            return self._query_all(q)
+
+    # private
+    def _get_table_names(self, tbl, order='asc', use_distinct=False, **kw):
+        with self.session_ctx():
+            if order:
+                order = getattr(tbl.name, order)()
+
+            names = self._retrieve_items(tbl, order=order, distinct_=use_distinct, **kw)
+            if use_distinct:
+                return [ni[0] for ni in names]
+            else:
+                return [ni.name for ni in names or []]
 
 # ============= EOF =============================================

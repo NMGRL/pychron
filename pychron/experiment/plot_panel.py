@@ -197,6 +197,8 @@ class PlotPanel(Loggable):
                               **kw)
 
             plot.y_axis.title_spacing = 50
+            g.add_axis_tool(plot, plot.x_axis)
+            g.add_axis_tool(plot, plot.y_axis)
 
         return plot
 

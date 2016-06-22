@@ -90,12 +90,14 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
 
     def add_measurement(self, dev, name, value, unit):
         pinfo = self.get_process_info(dev, name)
-        if not pinfo:
-            pinfo = self.add_process_info(dev, name, unit)
-
-        measurement = Measurement(value=value)
-        measurement.process = pinfo
-        return self._add_item(measurement)
+        # if not pinfo:
+        #     pinfo = self.add_process_info(dev, name, unit)
+        if pinfo:
+            measurement = Measurement(value=value)
+            measurement.process = pinfo
+            return self._add_item(measurement)
+        else:
+            self.warning('ProcessInfo={} Device={} not available'.format(name, dev))
 
     def add_process_info(self, dev, name, unit):
         self.debug('add process info {} {} {}'.format(dev, name, unit))
@@ -139,8 +141,11 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
         return self._retrieve_item(Device, name, key='name')
 
     def get_process_info(self, dev, name):
-        dev = self.get_device(dev)
-        if dev:
-            return next((p for p in dev.processes if p.name == name), None)
+        with self.session_ctx() as sess:
+            q = sess.query(ProcessInfo)
+            q = q.join(Device)
+            q = q.filter(Device.name == dev)
+            q = q.filter(ProcessInfo.name == name)
+            return self._query_one(q)
 
 # ============= EOF =============================================

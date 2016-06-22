@@ -18,9 +18,10 @@
 from traits.api import Interface
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.iextraction_device import IExtractionDevice
 
 
-class IFurnaceManager(Interface):
+class IFurnaceManager(IExtractionDevice):
     def set_setpoint(self, v):
         pass
 

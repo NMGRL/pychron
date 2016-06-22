@@ -28,7 +28,7 @@ class Conflict(HasTraits):
     identifier = Str
     position = Str
     repository_identifier = Str
-    experiment_ids = Str
+    repository_ids = Str
     available_ids = List
 
 
@@ -47,7 +47,7 @@ class ConflictResolver(HasTraits):
                                            position=ai.position,
                                            repository_identifier=ai.repository_identifier,
                                            identifier=ai.identifier,
-                                           experiment_ids=','.join(exps),
+                                           repository_ids=','.join(exps),
                                            available_ids=self.available_ids))
 
     def traits_view(self):

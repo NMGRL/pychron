@@ -20,17 +20,15 @@ from envisage.ui.tasks.task_factory import TaskFactory
 from pyface.tasks.action.schema import SMenu, SGroup
 from pyface.tasks.action.schema_addition import SchemaAddition
 # ============= standard library imports ========================
-from hashlib import md5
-import os
-import pickle
 # ============= local library imports  ==========================
 from pychron.envisage.browser.interpreted_age_browser_model import InterpretedAgeBrowserModel
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
-from pychron.paths import paths, get_file_text
+from pychron.paths import paths
 from pychron.pipeline.tasks.actions import ConfigureRecallAction, IdeogramAction, IsochronAction, SpectrumAction, \
     SeriesAction, BlanksAction, ICFactorAction, ResetFactoryDefaultsAction, VerticalFluxAction, \
     LastNAnalysesSeriesAction, \
-    LastNHoursSeriesAction, LastMonthSeriesAction, LastWeekSeriesAction, LastDaySeriesAction, TimeViewBrowserAction
+    LastNHoursSeriesAction, LastMonthSeriesAction, LastWeekSeriesAction, LastDaySeriesAction, TimeViewBrowserAction, \
+    FluxAction, FreezeProductionRatios, InverseIsochronAction, IsoEvolutionAction
 from pychron.pipeline.tasks.browser_task import BrowserTask
 from pychron.pipeline.tasks.preferences import PipelinePreferencesPane
 from pychron.pipeline.tasks.task import PipelineTask
@@ -47,32 +45,16 @@ class PipelinePlugin(BaseTaskPlugin):
                  ['ideogram_template', 'IDEO', ov],
                  ['spectrum_template', 'SPEC', ov],
                  ['series_template', 'SERIES', ov],
-                 ['isochron_template', 'ISOCHRON', ov],
+                 ['inverse_isochron_template', 'INVERSE_ISOCHRON', ov],
                  ['csv_ideogram_template', 'CSV_IDEO', ov],
+                 ['flux_template', 'FLUX', ov],
                  ['vertical_flux_template', 'VERTICAL_FLUX', ov],
+                 ['xy_scatter_template', 'XY_SCATTER', ov],
                  ['analysis_table_template', 'ANALYSIS_TABLE', ov],
                  ['interpreted_age_table_template', 'INTERPRETED_AGE_TABLE', ov],
                  ['auto_ideogram_template', 'AUTO_IDEOGRAM', ov]]
 
-        # open the manifest file to set the overwrite flag
-        if os.path.isfile(paths.template_manifest_file):
-            with open(paths.template_manifest_file) as rfile:
-                manifest = pickle.load(rfile)
-        else:
-            manifest = {}
-
-        for item in files:
-            fn, t, o = item
-            txt = get_file_text(t)
-            h = md5(txt).hexdigest()
-            if fn in manifest and h == manifest[fn]:
-                item[2] = False
-
-            manifest[fn] = h
-
-        with open(paths.template_manifest_file, 'w') as wfile:
-            pickle.dump(manifest, wfile)
-
+        files = paths.set_template_manifest(files)
         return files
 
     def _pipeline_factory(self):
@@ -134,6 +116,8 @@ class PipelinePlugin(BaseTaskPlugin):
                                            path=pg),
                             SchemaAddition(factory=IsochronAction,
                                            path=pg),
+                            SchemaAddition(factory=InverseIsochronAction,
+                                           path=pg),
                             SchemaAddition(factory=SeriesAction,
                                            path=pg),
                             SchemaAddition(factory=VerticalFluxAction,
@@ -141,10 +125,17 @@ class PipelinePlugin(BaseTaskPlugin):
 
         reduction_actions = [SchemaAddition(factory=reduction_group,
                                             path='MenuBar/data.menu'),
+                             SchemaAddition(factory=IsoEvolutionAction,
+                                            path=rg),
                              SchemaAddition(factory=BlanksAction,
                                             path=rg),
                              SchemaAddition(factory=ICFactorAction,
+                                            path=rg),
+                             SchemaAddition(factory=FluxAction,
+                                            path=rg),
+                             SchemaAddition(factory=FreezeProductionRatios,
                                             path=rg)]
+
         help_actions = [SchemaAddition(factory=ResetFactoryDefaultsAction,
                                        path='MenuBar/help.menu')]
         configure_recall = SchemaAddition(factory=ConfigureRecallAction,

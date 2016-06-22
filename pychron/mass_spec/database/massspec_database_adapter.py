@@ -15,7 +15,8 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-
+from sqlalchemy.exc import InvalidRequestError
+from traits.api import provides
 # =============standard library imports ========================
 import binascii
 import math
@@ -24,6 +25,7 @@ from sqlalchemy.sql.expression import func, distinct
 from uncertainties import std_dev, nominal_value
 
 # =============local library imports  ==========================
+from pychron.entry.iimport_source import IImportSource
 from pychron.mass_spec.database.massspec_orm import IsotopeResultsTable, \
     AnalysesChangeableItemsTable, BaselinesTable, DetectorTable, \
     IsotopeTable, AnalysesTable, \
@@ -32,9 +34,10 @@ from pychron.mass_spec.database.massspec_orm import IsotopeResultsTable, \
     PreferencesTable, DatabaseVersionTable, FittypeTable, \
     BaselinesChangeableItemsTable, SampleLoadingTable, MachineTable, \
     AnalysisPositionTable, LoginSessionTable, RunScriptTable, \
-    IrradiationChronologyTable, IrradiationLevelTable, IrradiationProductionTable, ProjectTable, MaterialTable
+    IrradiationChronologyTable, IrradiationLevelTable, IrradiationProductionTable, ProjectTable, MaterialTable, PDPTable
 from pychron.database.core.database_adapter import DatabaseAdapter
 from pychron.database.core.functions import delete_one
+from pychron.pychron_constants import INTERFERENCE_KEYS
 
 
 class MissingAliquotPychronException(BaseException):
@@ -52,6 +55,7 @@ PR_KEYS = ('Ca3637', 'Ca3637Er',
            'CaOverKMultiplier', 'CaOverKMultiplierEr')
 
 
+@provides(IImportSource)
 class MassSpecDatabaseAdapter(DatabaseAdapter):
     # selector_klass = MassSpecSelector
     test_func = 'get_database_version'
@@ -77,10 +81,107 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
     #     from pychron.database.selectors.massspec_selector import MassSpecSelector
     #
     #     return MassSpecSelector
+    def get_import_spec(self, name):
+        from pychron.entry.import_spec import ImportSpec, Irradiation, Level, \
+            Sample, Project, Position, Production
+        spec = ImportSpec()
+
+        i = Irradiation()
+        i.name = name
+
+        spec.irradiation = i
+
+        with self.session_ctx():
+            chrons = self.get_chronology_by_irradname(name)
+            i.doses = [(1.0, ci.StartTime, ci.EndTime) for ci in chrons]
+
+            levels = self.get_irradiation_levels(name)
+            nlevels = []
+            for dbl in levels:
+                level = Level()
+                level.name = dbl.Level
+
+                prod = Production()
+                dbprod = dbl.production
+                prod.name = dbprod.Label.replace(' ', '_')
+
+                for attr in INTERFERENCE_KEYS:
+                    try:
+                        setattr(prod, attr, (getattr(dbprod, attr),
+                                             getattr(dbprod, '{}Er'.format(attr))))
+                    except AttributeError:
+                        pass
+
+                prod.Ca_K = (dbprod.CaOverKMultiplier, dbprod.CaOverKMultiplierEr)
+                prod.Cl_K = (dbprod.ClOverKMultiplier, dbprod.ClOverKMultiplierEr)
+                prod.Cl3638 = (dbprod.P36Cl38Cl, dbprod.P36Cl38ClEr)
+
+                level.production = prod
+                level.holder = dbl.SampleHolder
+
+                pos = []
+                for ip in self.get_irradiation_positions(name, level.name):
+                    dbsam = ip.sample
+                    s = Sample()
+                    s.name = dbsam.Sample
+                    s.material = ip.Material
+
+                    pp = Project()
+                    pp.name = ip.sample.project.Project
+                    pp.principal_investigator = ip.sample.project.PrincipalInvestigator
+                    s.project = pp
+
+                    p = Position()
+                    p.sample = s
+                    p.position = ip.HoleNumber
+                    p.identifier = ip.IrradPosition
+                    p.j = ip.J
+                    p.j_err = ip.JEr
+                    p.note = ip.Note
+                    p.weight = ip.Weight
+
+                    pos.append(p)
+                level.positions = pos
+                nlevels.append(level)
+
+            i.levels = nlevels
+        return spec
 
     # ===============================================================================
     # getters
     # ===============================================================================
+    def get_latest_preferences(self, isoid, key):
+        with self.session_ctx() as sess:
+            q = sess.query(PreferencesTable)
+            q = q.join(AnalysesChangeableItemsTable)
+            q = q.join(DataReductionSessionTable)
+            try:
+                q = q.join(IsotopeTable)
+            except InvalidRequestError:
+                self.debug('no preferences for isotope={}'.format(key))
+                return
+
+            q = q.filter(IsotopeTable.IsotopeID == isoid)
+
+            q = q.order_by(DataReductionSessionTable.SessionDate.desc())
+            q = q.limit(1)
+
+            return self._query_first(q, verbose_query=True)
+
+    def get_pdp(self, isoid):
+        with self.session_ctx() as sess:
+            q = sess.query(PDPTable)
+            q = q.filter(PDPTable.IsotopeID == isoid)
+            q = q.order_by(PDPTable.LastSaved.desc())
+            return self._query_first(q)
+
+    def get_baseline_changeable_item(self, bslnid):
+        with self.session_ctx() as sess:
+            q = sess.query(BaselinesChangeableItemsTable)
+            q = q.filter(BaselinesChangeableItemsTable.BslnID == bslnid)
+            q = q.order_by(BaselinesChangeableItemsTable.LastSaved.desc())
+            return self._query_first(q, verbose_query=False)
+
     def get_material(self, name):
         return self._retrieve_item(MaterialTable, name, 'Material')
 
@@ -150,7 +251,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
             q = sess.query(distinct(IrradiationLevelTable.IrradBaseID))
             vs = q.all()
             if vs:
-                vs = [vi[0] for vi in vs]
+                vs = sorted([vi[0] for vi in vs], reverse=True)
             return vs
 
     def get_analyses(self, **kw):
@@ -218,11 +319,12 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         return self._retrieve_item(AnalysesTable, rid, key='RID')
 
     def get_analysis(self, value, aliquot=None, step=None, **kw):
-        if value.startswith('a'):
-            value = -2
-        elif value.startswith('ba'):
-            value = -1
-        #        key = 'RID'
+        if isinstance(value, str):
+            if value.startswith('a'):
+                value = -2
+            elif value.startswith('ba'):
+                value = -1
+
         key = 'IrradPosition'
         if aliquot:
             if step:
@@ -669,6 +771,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
     def _add_analysis_position(self, analysis, pi, po):
         a = AnalysisPositionTable(Hole=pi, PositionOrder=po)
         analysis.positions.append(a)
+
 
 if __name__ == '__main__':
     from pychron.core.helpers.logger_setup import logging_setup

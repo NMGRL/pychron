@@ -35,12 +35,13 @@ from pychron.lasers.tasks.laser_actions import OpenPowerMapAction, OpenPatternAc
 from pychron.lasers.tasks.laser_calibration_task import LaserCalibrationTask
 
 
-def pattern_action(name, application, manager_name):
+def pattern_action(name, application, manager_name, lase=False):
     a = PatternAction(id='pattern.action.{}'.format(name),
                       name=name.capitalize(),
                       application=application,
                       manager_name=manager_name,
-                      pattern_path=os.path.join(paths.pattern_dir, name))
+                      pattern_path=os.path.join(paths.pattern_dir, name),
+                      lase=lase)
     return lambda: a
 
 
@@ -67,6 +68,7 @@ class CoreLaserPlugin(BaseTaskPlugin):
 class BaseLaserPlugin(BaseTaskPlugin):
     managers = List(contributes_to='pychron.hardware.managers')
     klass = None
+
     # name = None
 
     def _service_offers_default(self):
@@ -160,8 +162,8 @@ class FusionsPlugin(BaseLaserPlugin):
 
     def test_communication(self):
         man = self._get_manager()
-        c = man.test_connection()
-        return 'Passed' if c else 'Failed'
+        return man.test_connection()
+
 
     def _tasks_default(self):
         return [TaskFactory(id=self.id,
@@ -206,16 +208,27 @@ class FusionsPlugin(BaseLaserPlugin):
 
         actions = [SchemaAddition(factory=ShowMotionConfigureAction,
                                   path='MenuBar/laser.menu')]
+        lactions = []
         for f in list_directory2(paths.pattern_dir, extension='.lp', remove_extension=True):
             actions.append(SchemaAddition(id='pattern.{}'.format(f),
                                           factory=pattern_action(f, self.application, self.name),
                                           path='MenuBar/laser.menu/patterns.menu'))
+            lactions.append(SchemaAddition(id='pattern.lase.{}'.format(f),
+                                           factory=pattern_action(f, self.application, self.name, lase=True),
+                                           path='MenuBar/laser.menu/patterns.lase.menu'))
 
         if actions:
+
             actions.insert(0, SchemaAddition(id='patterns.menu',
                                              factory=lambda: SMenu(name='Execute Patterns', id='patterns.menu'),
                                              path='MenuBar/laser.menu'))
 
+            lactions.insert(0, SchemaAddition(id='patterns.lase.menu',
+                                              factory=lambda: SMenu(name='Execute and Lase Patterns',
+                                                                    id='patterns.lase.menu'),
+                                              path='MenuBar/laser.menu'))
+
+            exts.append(TaskExtension(actions=lactions))
             exts.append(TaskExtension(actions=actions))
         else:
             self.warning('no patterns scripts located in "{}"'.format(paths.pattern_dir))

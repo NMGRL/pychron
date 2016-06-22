@@ -15,3 +15,8 @@
 # ===============================================================================
 
 __version__ = '0.1'
+
+
+class ExtractionException(BaseException):
+    def __init__(self, m):
+        self._msg = m

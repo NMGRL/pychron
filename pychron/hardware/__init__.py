@@ -32,7 +32,8 @@ HW_PACKAGE_MAP = {
     'MicroIonController': 'pychron.hardware.gauges.granville_phillips.micro_ion_controller',
     'PychronMicroIonController': 'pychron.hardware.gauges.granville_phillips.pychron_micro_ion_controller',
     'QtegraMicroIonController': 'pychron.hardware.gauges.granville_phillips.pychron_micro_ion_controller',
-    'ArgusController': 'pychron.hardware.argus_controller',
+    'ArgusController': 'pychron.hardware.thermo_spectrometer_controller',
+    'HelixController':'pychron.hardware.thermo_spectrometer_controller',
     'FerrupsUPS': 'pychron.hardware.FerrupsUPS',
     'QtegraDevice': 'pychron.hardware.qtegra_device',
     'PidController': 'pychron.hardware.pid_controller',
@@ -53,3 +54,17 @@ HW_PACKAGE_MAP = {
     'NMGRLMagnetDumper': 'pychron.furnace.magnet_dumper'
     # 'ControlModule': 'pychron.hardware.fusions.vue_diode_control_module'
 }
+
+
+def get_float(default=None):
+    def dec(func):
+        def wrapper(*args, **kw):
+            t = func(*args, **kw)
+            try:
+                return float(t)
+            except (TypeError, ValueError):
+                return default
+
+        return wrapper
+
+    return dec

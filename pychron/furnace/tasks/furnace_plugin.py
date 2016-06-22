@@ -76,6 +76,7 @@ class BaseFurnacePlugin(BaseTaskPlugin):
 
     def _tasks_default(self):
         return [TaskFactory(name='Furnace',
+                            task_group='hardware',
                             factory=self._task_factory,
                             protocol=FurnaceTask)]
 
@@ -85,6 +86,14 @@ class NMGRLFurnacePlugin(BaseFurnacePlugin):
     id = 'pychron.furnace.nmgrl.plugin'
 
     klass = ('pychron.furnace.furnace_manager', 'NMGRLFurnaceManager')
+
+    def test_furnace_api(self):
+        man = self._get_manager()
+        return man.test_furnace_api()
+
+    def test_furnace_cam(self):
+        man = self._get_manager()
+        return man.test_furnace_cam()
 
     def _preferences_panes_default(self):
         return [NMGRLFurnacePreferencesPane]

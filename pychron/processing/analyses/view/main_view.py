@@ -40,7 +40,7 @@ class MainView(HasTraits):
     analysis_id = Str
     analysis_type = Str
 
-    isotopes = Dict
+    isotopes = List
     refresh_needed = Event
 
     computed_values = List
@@ -68,8 +68,8 @@ class MainView(HasTraits):
             self.refresh_needed = True
 
     def _load(self, an):
-        self.isotopes = an.isotopes
-        # self.isotopes = [an.isotopes[k] for k in an.isotope_keys]
+        # self.isotopes = an.isotopes
+        self.isotopes = [an.isotopes[k] for k in an.isotope_keys]
         self.load_computed(an)
         self.load_extraction(an)
         self.load_measurement(an, an)
@@ -83,7 +83,7 @@ class MainView(HasTraits):
     def load_measurement(self, an, ar):
 
         # j = self._get_j(an)
-        j = an.j
+        j = ar.j
         jf = 'NaN'
         if j is not None:
             jj = floatfmt(nominal_value(j), n=7, s=5)
@@ -189,9 +189,9 @@ class MainView(HasTraits):
                 self._load_corrected_values(an, new_list)
 
         elif self.analysis_type in ('air', 'blank_air', 'blank_unknown', 'blank_cocktail'):
-            self._load_air_computed(new_list)
+            self._load_air_computed(an, new_list)
         elif self.analysis_type == 'cocktail':
-            self._load_cocktail_computed(new_list)
+            self._load_cocktail_computed(an, new_list)
 
     # def _get_isotope(self, name):
     #     return next((iso for iso in self.isotopes if iso.name == name), None)
@@ -250,33 +250,43 @@ class MainView(HasTraits):
         return ufloat(0, 1e-20), 1
 
     def _update_ratios(self):
+        def get_iso(kk):
+            return next((v for v in self.isotopes if v.name == kk), None)
+
         for ci in self.computed_values:
             if not isinstance(ci, DetectorRatio):
                 continue
 
             nd = ci.detectors
             n, d = nd.split('/')
-            niso, diso = self.isotopes.get(n), self.isotopes.get(d)
-            noncorrected = self._get_non_corrected_ratio(niso, diso)
-            corrected, ic = self._get_corrected_ratio(niso, diso)
 
-            ci.trait_set(value=floatfmt(nominal_value(corrected)),
-                         error=floatfmt(std_dev(corrected)),
-                         noncorrected_value=nominal_value(noncorrected),
-                         noncorrected_error=std_dev(noncorrected),
-                         ic_factor=nominal_value(ic))
+            niso, diso = get_iso(n), get_iso(d)
+            if niso and diso:
+                noncorrected = self._get_non_corrected_ratio(niso, diso)
+                corrected, ic = self._get_corrected_ratio(niso, diso)
 
-    def _load_air_computed(self, new_list):
+                ci.trait_set(value=floatfmt(nominal_value(corrected)),
+                             error=floatfmt(std_dev(corrected)),
+                             noncorrected_value=nominal_value(noncorrected),
+                             noncorrected_error=std_dev(noncorrected),
+                             ic_factor=nominal_value(ic))
+
+    def _load_air_computed(self, an, new_list):
         if new_list:
-            ratios = [('40Ar/36Ar', 'Ar40/Ar36', 295.5), ('40Ar/38Ar', 'Ar40/Ar38', 1)]
+            c = an.arar_constants
+            ratios = [('40Ar/36Ar', 'Ar40/Ar36', nominal_value(c.atm4036)),
+                      ('40Ar/38Ar', 'Ar40/Ar38', nominal_value(c.atm4038))]
             cv = self._make_ratios(ratios)
             self.computed_values = cv
 
         self._update_ratios()
 
-    def _load_cocktail_computed(self, new_list):
+    def _load_cocktail_computed(self, an, new_list):
         if new_list:
-            ratios = [('40Ar/36Ar', 'Ar40/Ar36', 295.5), ('40Ar/39Ar', 'Ar40/Ar39', 1)]
+            c = an.arar_constants
+            ratios = [('40Ar/36Ar', 'Ar40/Ar36', nominal_value(c.atm4036)),
+                      ('40Ar/38Ar', 'Ar40/Ar38', nominal_value(c.atm4038)),
+                      ('40Ar/39Ar', 'Ar40/Ar39', 1)]
             cv = self._make_ratios(ratios)
             self.computed_values = cv
         else:
@@ -362,10 +372,10 @@ class MainView(HasTraits):
             for ci in self.computed_values:
                 attr = ci.tag
                 if attr == 'wo_j':
-                    ci.error = an.age_err_wo_j
+                    ci.error = an.age_err_wo_j or 0
                     ci.value = nominal_value(getattr(an, ci.value_tag))
                 elif attr == 'wo_irrad':
-                    ci.error = an.F_err_wo_irrad
+                    ci.error = an.F_err_wo_irrad or 0
                     ci.value = nominal_value(getattr(an, ci.value_tag))
                 else:
                     v = getattr(an, attr)

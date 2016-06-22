@@ -15,16 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import sys
-
+from pyface.ui.qt4.about_dialog import AboutDialog
+from traits.api import List, Str
+# ============= standard library imports ========================
 from PySide import QtGui, QtCore
 from PySide.QtGui import QPlainTextEdit
-from pyface.ui.qt4.about_dialog import AboutDialog
-from traits.api import List,Str
-
-
-# ============= standard library imports ========================
+import sys
 # ============= local library imports  ==========================
+
 _ABOUT_TEXT = '''
 <html>
   <body>
@@ -42,7 +40,7 @@ _ABOUT_TEXT = '''
   </body>
 </html>
 '''
-_FOOTER_TEXT='''
+_FOOTER_TEXT = '''
 <html>
   <body>
     <center>
@@ -58,11 +56,12 @@ _FOOTER_TEXT='''
   </body>
 </html>'''
 
+
 class myAboutDialog(AboutDialog):
-    changes=List
-    local_rev=Str
-    remote_rev=Str
-    version_info=Str
+    changes = List
+    local_rev = Str
+    remote_rev = Str
+    version_info = Str
 
     def _create_contents(self, parent):
         label = QtGui.QLabel()
@@ -77,7 +76,7 @@ class myAboutDialog(AboutDialog):
         self.title = "About %s" % title
 
         # Load the image to be displayed in the about box.
-        image = self.image.create_image()
+        # image = self.image.create_image()
         path = self.image.absolute_path
 
         # The additional strings.
@@ -101,8 +100,8 @@ class myAboutDialog(AboutDialog):
 
         buttons.connect(buttons, QtCore.SIGNAL('accepted()'), parent, QtCore.SLOT('accept()'))
 
-        revisions=self._create_revisions()
-        changes=self._create_changes()
+        revisions = self._create_revisions()
+        changes = self._create_changes()
         lay = QtGui.QVBoxLayout()
 
         lay.addWidget(label)
@@ -114,26 +113,23 @@ class myAboutDialog(AboutDialog):
         parent.setLayout(lay)
 
     def _create_revisions(self):
-        label=QtGui.QLabel()
+        label = QtGui.QLabel()
         label.setText('<b>Local=</b>{} <b>Remote=</b>{}'.format(self.local_rev, self.remote_rev))
         return label
 
     def _create_changes(self):
-        c=QPlainTextEdit()
+        c = QPlainTextEdit()
         c.setReadOnly(True)
-        txt=''
+        txt = ''
         for i in range(10):
-            for a,d,m in self.changes:
-                txt+='<p>{} {}</p><p><b><pre> {}</pre></b></p>'.format(a,d, m)
+            for a, d, m in self.changes:
+                txt += '<p>{} {}</p><p><b><pre> {}</pre></b></p>'.format(a, d, m)
 
         c.appendHtml(txt)
-        cur=c.textCursor()
+        cur = c.textCursor()
         cur.movePosition(QtGui.QTextCursor.Start)
         c.setTextCursor(cur)
         c.ensureCursorVisible()
         return c
 
-
 # ============= EOF =============================================
-
-

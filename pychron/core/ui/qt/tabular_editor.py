@@ -89,9 +89,12 @@ class TabularKeyEvent(object):
 class UnselectTabularEditorHandler(Handler):
     refresh_name = Str('refresh_needed')
     selected_name = Str('selected')
+    multiselect = Bool(True)
 
     def unselect(self, info, obj):
-        setattr(obj, self.selected_name, [])
+        v = [] if self.multiselect else None
+
+        setattr(obj, self.selected_name, v)
         setattr(obj, self.refresh_name, True)
 
 
@@ -304,10 +307,15 @@ class _TableView(TableView):
     # private
     def _copy(self):
         rows = sorted({ri.row() for ri in self.selectedIndexes()})
-        copy_object = [(ri, self._editor.value[ri]) for ri in rows]
+        copy_object = [(ri, self._editor.value[ri].tocopy()) for ri in rows]
         # copy_object = [ri.row(), self._editor.value[ri.row()]) for ri in self.selectedIndexes()]
         mt = self._editor.factory.mime_type
-        pdata = dumps(copy_object)
+        try:
+            pdata = dumps(copy_object)
+        except BaseException, e:
+            print 'tabular editor copy failed'
+            self._editor.value[rows[0]].tocopy(verbose=True)
+            return
 
         qmd = PyMimeData()
         qmd.MIME_TYPE = mt
@@ -342,12 +350,12 @@ class _TableView(TableView):
 
             self._cut_indices = None
 
-            paste_func = self.paste_func
-            if paste_func is None:
-                paste_func = lambda x: x.clone_traits()
+            # paste_func = self.paste_func
+            # if paste_func is None:
+            #     paste_func = lambda x: x.clone_traits()
 
             for ri, ci in reversed(items):
-                model.insertRow(idx, obj=paste_func(ci))
+                model.insertRow(idx, obj=ci)
 
     # def _paste(self):
     # selection = self.selectedIndexes()

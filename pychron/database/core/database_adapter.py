@@ -74,17 +74,19 @@ class SessionCTX(object):
 
         return self._sess
 
-    def __exit__(self, *args, **kw):
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type:
+            self._parent.warning('=========== Database exception =============')
+            self._parent.warning(exc_val)
+            self._parent.warning(traceback.format_tb(exc_tb))
+
         if self._parent:
             self._parent.sess_stack -= 1
             if not self._parent.sess_stack:
                 self._parent.sess = None
 
-        # print 'exit',self._commit, self._close_at_exit#, self._parent._sess_stack
-        # self._sess.flush()
         if self._close_at_exit:
             try:
-                # self._parent.debug('$%$%$%$%$%$%$%$ commit {}'.format(self._commit))
                 if self._commit:
                     self._sess.commit()
                     self._parent.post_commit()
@@ -93,7 +95,6 @@ class SessionCTX(object):
                         self._sess.rollback()
 
             except Exception, e:
-                # print 'exception commiting session: {}'.format(e)
                 traceback.print_exc()
 
                 if self._parent:
@@ -156,6 +157,7 @@ class DatabaseAdapter(Loggable):
 
     modified = False
     _trying_to_add = False
+    _test_connection_enabled = True
     # def __init__(self, *args, **kw):
     #     super(DatabaseAdapter, self).__init__(*args, **kw)
 
@@ -218,6 +220,7 @@ class DatabaseAdapter(Loggable):
         # self.session_factory = None
 
         if self.connection_parameters_changed:
+            self._test_connection_enabled = True
             force = True
 
         # print not self.isConnected() or force, self.connection_parameters_changed
@@ -243,10 +246,13 @@ class DatabaseAdapter(Loggable):
                     self.session_factory = sessionmaker(bind=engine, autoflush=self.autoflush)
                     # self.session_factory = scoped_session(sessionmaker(bind=engine, autoflush=self.autoflush))
                     if test:
-                        if self.test_func:
-                            self.connected = self._test_db_connection(version_warn)
+                        if not self._test_connection_enabled:
+                            warn = False
                         else:
-                            self.connected = True
+                            if self.test_func:
+                                self.connected = self._test_db_connection(version_warn)
+                            else:
+                                self.connected = True
                     else:
                         self.connected = True
 
@@ -397,9 +403,12 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
                             sys.exit()
 
                 connected = True
-            except Exception, e:
-                print 'exception', e
+            except OperationalError:
+                self.warning('Operational connection failed to {}'.format(self.url))
+                connected = False
+                self._test_connection_enabled = False
 
+            except Exception, e:
                 self.warning('connection failed to {}'.format(self.url))
                 connected = False
 

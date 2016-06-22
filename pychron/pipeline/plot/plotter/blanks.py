@@ -33,7 +33,7 @@ class Blanks(ReferencesSeries):
 
     def _get_reference_data(self, po):
         name = po.name
-        ys = [ai.isotopes[name].get_intensity() for ai in self.sorted_references]
+        ys = [ai.isotopes[name].get_baseline_corrected_value() for ai in self.sorted_references]
         return ys
 
     def _get_current_data(self, po):

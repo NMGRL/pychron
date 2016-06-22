@@ -49,7 +49,7 @@ def create_github_repo(name):
     org = Organization(ORG)
     if not org.has_repo(name):
         usr = os.environ.get('GITHUB_USER')
-        pwd = os.environ.get('GITHUB_PWD')
+        pwd = os.environ.get('GITHUB_PASSWORD')
         org.create_repo(name, usr, pwd)
 
 
@@ -156,7 +156,12 @@ class IsoDBTransfer(Loggable):
         self.debug('bulk import irradiation {}'.format(irradname))
         oruns = []
         ts, idxs = self._get_irradiation_timestamps(irradname, tol_hrs=tol_hrs)
+        print ts
         repository_identifier = 'Irradiation-{}'.format(irradname)
+
+        # add project
+        with self.dvc.db.session_ctx():
+            self.dvc.db.add_project(repository_identifier, creator)
 
         def filterfunc(x):
             a = x.labnumber.irradiation_position is None
@@ -203,7 +208,9 @@ class IsoDBTransfer(Loggable):
                     else:
                         self.debug('================= Do Export i: {} low: {} high: {}'.format(i, low, high))
                         self.debug('N runs: {}'.format(len(runs)))
-                        self.do_export([ai.record_id for ai in runs], repository_identifier, creator)
+                        self.do_export([ai.record_id for ai in runs],
+                                       repository_identifier, creator,
+                                       monitor_mapping=('FC-2', 'Sanidine', repository_identifier))
 
         return oruns
 
@@ -293,7 +300,6 @@ class IsoDBTransfer(Loggable):
                     if ai in oruns:
                         print p, o, ai
 
-
     def import_date_range(self, low, high, spectrometer, repository_identifier, creator):
         src = self.processor.db
         with src.session_ctx():
@@ -302,7 +308,7 @@ class IsoDBTransfer(Loggable):
             ais = [ai.record_id for ai in runs]
         self.do_export(ais, repository_identifier, creator)
 
-    def do_export(self, runs, repository_identifier, creator, create_repo=False):
+    def do_export(self, runs, repository_identifier, creator, create_repo=False, monitor_mapping=None):
 
         # self._init_src_dest()
         src = self.processor.db
@@ -327,7 +333,7 @@ class IsoDBTransfer(Loggable):
                     with dest.session_ctx() as sess:
                         st = time.time()
                         try:
-                            if self._transfer_analysis(a, repository_identifier):
+                            if self._transfer_analysis(a, repository_identifier, monitor_mapping=monitor_mapping):
                                 j += 1
                                 self.debug('{}/{} transfer time {:0.3f}'.format(j, total, time.time() - st))
                         except BaseException, e:
@@ -375,29 +381,33 @@ class IsoDBTransfer(Loggable):
 
         return repo
 
-    def _transfer_meta(self, dest, dban):
-        self.debug('transfer meta')
+    def _transfer_meta(self, dest, dban, monitor_mapping):
+        self.debug('transfer meta {}'.format(monitor_mapping))
 
         dblab = dban.labnumber
-        dbsam = dblab.sample
-        project = dbsam.project.name
-        project = project.replace('/', '_').replace('\\', '_')
+        if monitor_mapping is None:
+            dbsam = dblab.sample
+            project = dbsam.project.name
+            project_name = project.replace('/', '_').replace('\\', '_')
+            sample_name = dbsam.name
+            material_name = dbsam.material.name
+        else:
+            sample_name, material, project = monitor_mapping
 
-        sam = dest.get_sample(dbsam.name, project, dbsam.material.name)
+        sam = dest.get_sample(sample_name, project_name, material_name)
         if not sam:
-            mat = dbsam.material.name
-            if not dest.get_material(mat):
-                self.debug('add material {}'.format(mat))
-                dest.add_material(mat)
+            if not dest.get_material(material_name):
+                self.debug('add material {}'.format(material_name))
+                dest.add_material(material_name)
                 dest.flush()
 
-            if not dest.get_project(project):
-                self.debug('add project {}'.format(project))
-                dest.add_project(project)
+            if not dest.get_project(project_name):
+                self.debug('add project {}'.format(project_name))
+                dest.add_project(project_name)
                 dest.flush()
 
-            self.debug('add sample {}'.format(dbsam.name))
-            sam = dest.add_sample(dbsam.name, project, mat)
+            self.debug('add sample {}'.format(sample_name))
+            sam = dest.add_sample(sample_name, project_name, material_name)
             dest.flush()
 
         dbirradpos = dblab.irradiation_position
@@ -513,7 +523,7 @@ class IsoDBTransfer(Loggable):
 
         dest.commit()
 
-    def _transfer_analysis(self, rec, exp, overwrite=True):
+    def _transfer_analysis(self, rec, exp, overwrite=True, monitor_mapping=None):
         dest = self.dvc.db
         proc = self.processor
         src = proc.db
@@ -563,11 +573,10 @@ class IsoDBTransfer(Loggable):
             self.warning('Failed to make {}'.format(make_runid(idn, aliquot, step)))
             return
 
-        self._transfer_meta(dest, dban)
+        self._transfer_meta(dest, dban, monitor_mapping)
         # return
 
         dblab = dban.labnumber
-        dbsam = dblab.sample
 
         if dblab.irradiation_position:
             irrad = dblab.irradiation_position.level.irradiation.name
@@ -579,9 +588,6 @@ class IsoDBTransfer(Loggable):
             irradpos = self._get_irradpos(dest, irrad, level, dblab.identifier)
             # irrad, level, irradpos = '', '', 0
 
-        sample = dbsam.name
-        mat = dbsam.material.name
-        project = format_repository_identifier(dbsam.project.name)
         extraction = dban.extraction
         ms = dban.measurement.mass_spectrometer.name
         if not dest.get_mass_spectrometer(ms):
@@ -611,11 +617,19 @@ class IsoDBTransfer(Loggable):
                 dest.add_user(username)
                 dest.commit()
 
+        if monitor_mapping:
+            sample_name, material_name, project_name = monitor_mapping
+        else:
+            dbsam = dblab.sample
+            sample_name = dbsam.name
+            material_name = dbsam.material.name
+            project_name = format_repository_identifier(dbsam.project.name)
+
         rs = AutomatedRunSpec(labnumber=idn,
                               username=username,
-                              material=mat,
-                              project=project,
-                              sample=sample,
+                              material=material_name,
+                              project=project_name,
+                              sample=sample_name,
                               irradiation=irrad,
                               irradiation_level=level,
                               irradiation_position=irradpos,
@@ -699,24 +713,45 @@ if __name__ == '__main__':
     #     project = 'Irradiation-{}'.format(i)
     #     create_repo_for_existing_local(project, paths.repository_dataset_dir)
     #     commit_initial_import(project, paths.repository_dataset_dir)
-    # e.bulk_import_irradiation('NM-278', 'NMGRL', dry=False)
+    e.bulk_import_irradiation('NM-281', 'NMGRL', dry=False)
 
-    ps = ('Valles',
-          'RatonClayton',
-          'ZuniBandera',
-          'ValleyOfFire',
-          'Potrillo',
-          'RedHillQuemado',
-          'ZeroAge',
-          'Animas',
-          'BrazosCones',
-          'Jornada',
-          'Lucero',
-          'CatHills',
-          'SanFrancisco',
-          'AlbuquerqueVolcanoes')
+    # e.bulk_import_project('Cascades', 'Templeton', dry=False)
+    # fix_a_steps(e.dvc.db, 'Toba', paths.repository_dataset_dir)
+    # fix_a_steps(e.dvc.db, 'Lucero', paths.repository_dataset_dir)
+    # create_repo_for_existing_local('Cascades', paths.repository_dataset_dir)
+    # commit_initial_import('Cascades', paths.repository_dataset_dir)
 
-    e.find_project_overlaps(ps)
+    # import_j(e.processor.db, e.dvc.db, e.dvc.meta_repo, 'Toba')
+    # ps = ('Valles',
+    #       'RatonClayton',
+    #       'ZuniBandera',
+    #       'ValleyOfFire',
+    #       'Potrillo',
+    #       'RedHillQuemado',
+    #       'ZeroAge',
+    #       'Animas',
+    #       'BrazosCones',
+    #       'Jornada',
+    #       'Lucero',
+    #       'CatHills',
+    #       'SanFrancisco',
+    #       'AlbuquerqueVolcanoes',
+    #       'Irradiation-NM-264',
+    #       'Irradiation-NM-266',
+    #       'Irradiation-NM-267',
+    #       'Irradiation-NM-269',
+    #       'Irradiation-NM-270',
+    #       'Irradiation-NM-271',
+    #       'Irradiation-NM-272',
+    #       'Irradiation-NM-273',
+    #       'Irradiation-NM-274',
+    #       'Irradiation-NM-278',
+    #       'Irradiation-NM-281')
+    # for p in ps:
+    #     fix_import_commit(p, paths.repository_dataset_dir)
+
+        #
+        # e.find_project_overlaps(ps)
 
     # for project in ps:
     # print 'project={}'.format(project)

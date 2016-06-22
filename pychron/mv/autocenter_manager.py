@@ -35,8 +35,9 @@ class AutoCenterManager(MachineVisionManager):
     configure_button = Button('configure')
     use_autocenter = Bool
     use_hough_circle = Bool(False)
-    
+
     def calculate_new_center(self, cx, cy, offx, offy, dim=1.0,
+                             open_image=True,
                              alpha_enabled=True,
                              auto_close_image=True):
         frame = self.new_image_frame()
@@ -53,7 +54,8 @@ class AutoCenterManager(MachineVisionManager):
 
         frame = loc.crop(frame, cropdim, cropdim, offx, offy)
         im = self.new_image(frame, alpha_enabled=alpha_enabled)
-        view_image(im, auto_close=auto_close_image)
+        if open_image:
+            view_image(im, auto_close=auto_close_image)
 
         if self.use_hough_circle:
             dx, dy = loc.find_circle(im, frame, dim=dim * self.pxpermm)
@@ -71,7 +73,7 @@ class AutoCenterManager(MachineVisionManager):
             self.info('calculated deviation px={:n},{:n}, '
                       'mm={:0.3f},{:0.3f} ({})'.format(dx, dy, mdx, mdy,
                                                        self.pxpermm))
-            return cx + mdx, cy + mdy
+            return (cx + mdx, cy + mdy), frm
 
     # private
     def _get_locator(self):

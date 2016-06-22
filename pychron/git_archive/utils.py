@@ -21,6 +21,8 @@ from datetime import datetime
 import os
 from gitdb.util import hex_to_bin
 from git import Repo, Blob, Diff
+
+
 # ============= local library imports  ==========================
 
 
@@ -55,19 +57,34 @@ def from_gitlog(obj, path, tag):
     return g
 
 
+def gitlog(repo, branch=None, args=None, path=None):
+    cmd = []
+    if branch:
+        cmd.append(branch)
+
+    fmt = '%H|%cn|%ce|%ct|%s'
+    cmd.append('--pretty={}'.format(fmt))
+
+    if args:
+        cmd.extend(args)
+
+    if path:
+        cmd.extend(['--', path])
+    return repo.git.log(*cmd)
+
+
+def get_head_commit(repo):
+    txt = gitlog(repo, args=('-n', '1', 'HEAD'))
+    return from_gitlog(txt.strip(), '', '')
+
+
 def get_commits(repo, branch, path, tag, *args):
     if isinstance(repo, (str, unicode)):
         if not os.path.isdir(repo):
             return
         repo = Repo(repo)
 
-    fmt = '%H|%cn|%ce|%ct|%s'
-    cmd = [branch, '--pretty={}'.format(fmt)]
-    cmd.extend(args)
-    if path:
-        cmd.extend(['--', path])
-
-    txt = repo.git.log(*cmd)
+    txt = gitlog(repo, branch=branch, args=args, path=path)
 
     return [from_gitlog(l.strip(), path, tag) for l in txt.split('\n')] if txt else []
 

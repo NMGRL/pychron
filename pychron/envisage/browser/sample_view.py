@@ -150,7 +150,7 @@ class BaseBrowserSampleView(PaneModelView):
             #             style='custom',
             #             width=-1.0,
             #             visible_when='not filter_focus'),
-                HGroup(pi_grp, ms_grp, ln_grp),
+            HGroup(pi_grp, ms_grp, ln_grp),
             HGroup(project_grp, exp_grp, irrad_grp),
             analysis_type_group,
             date_grp)
@@ -196,10 +196,14 @@ class BrowserSampleView(BaseBrowserSampleView):
         # def make_name(name):
         #     return 'object.analysis_table.{}'.format(name)
 
-        analysis_tools = HGroup(UItem('analysis_table.analysis_filter_parameter',
-                                      width=-90,
-                                      editor=EnumEditor(name='analysis_table.analysis_filter_parameters')),
-                                UItem('analysis_table.analysis_filter'))
+        analysis_tools = VGroup(HGroup(UItem('analysis_table.analysis_set',
+                                             editor=EnumEditor(name='analysis_table.analysis_set_names')),
+                                       icon_button_editor('analysis_table.add_analysis_set_button', 'add',
+                                                          tooltip='Add current analyses to an analysis set')),
+                                HGroup(UItem('analysis_table.analysis_filter_parameter',
+                                             width=-90,
+                                             editor=EnumEditor(name='analysis_table.analysis_filter_parameters')),
+                                       UItem('analysis_table.analysis_filter')))
         # UItem(make_name('analysis_filter'),
         #       editor=ComboboxEditor(name=make_name('analysis_filter_values'))))
 

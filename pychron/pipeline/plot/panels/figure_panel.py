@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 
 from chaco.legend import Legend
-from traits.api import HasTraits, Any, List, Int, Str
+from traits.api import HasTraits, Any, List, Str
 # ============= standard library imports ========================
 from itertools import groupby
 from numpy import inf
@@ -38,7 +38,7 @@ class FigurePanel(HasTraits):
     _graph_klass = AnalysisStackedGraph
     _figure_klass = Any
 
-    plot_spacing = Int(5)
+    # plot_spacing = Int(0)
     meta = Any
     title = Str
     use_previous_limits = True
@@ -82,7 +82,7 @@ class FigurePanel(HasTraits):
         g = self._graph_klass(panel_height=200,
                               equi_stack=self.equi_stack,
                               container_dict=dict(padding=0,
-                                                  spacing=self.plot_spacing or po.plot_spacing,
+                                                  spacing=po.plot_spacing,
                                                   bgcolor=po.bgcolor))
 
         center, mi, ma = self._get_init_xlimits()

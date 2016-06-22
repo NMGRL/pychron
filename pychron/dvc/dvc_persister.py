@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Instance, Bool
+from traits.api import Instance, Bool, Str
 # ============= standard library imports ========================
 import base64
 import hashlib
@@ -23,6 +23,7 @@ import os
 import struct
 from datetime import datetime
 from uncertainties import std_dev, nominal_value
+from git.exc import GitCommandError
 # ============= local library imports  ==========================
 from pychron.dvc import dvc_dump
 from pychron.dvc.dvc_analysis import META_ATTRS, EXTRACTION_ATTRS, analysis_path, PATH_MODIFIERS
@@ -30,7 +31,7 @@ from pychron.experiment.automated_run.persistence import BasePersister
 from pychron.experiment.classifier.isotope_classifier import IsotopeClassifier
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths
-from pychron.pychron_constants import DVC_PROTOCOL
+from pychron.pychron_constants import DVC_PROTOCOL, LINE_STR, NULL_STR
 
 
 def format_repository_identifier(project):
@@ -53,6 +54,7 @@ class DVCPersister(BasePersister):
     use_isotope_classifier = Bool(False)
     isotope_classifier = Instance(IsotopeClassifier, ())
     stage_files = Bool(True)
+    default_principal_investigator = Str
 
     def per_spec_save(self, pr, repository_identifier=None, commit=False, msg_prefix=None):
         self.per_spec = pr
@@ -62,7 +64,7 @@ class DVCPersister(BasePersister):
 
         self.pre_extraction_save()
         self.pre_measurement_save()
-        self.post_extraction_save('', '', None)
+        self.post_extraction_save()
         self.post_measurement_save(commit=commit, msg_prefix=msg_prefix)
 
     def initialize(self, repository, pull=True):
@@ -87,21 +89,32 @@ class DVCPersister(BasePersister):
         remote = 'origin'
         if repo.has_remote(remote) and pull:
             self.info('pulling changes from repo: {}'.format(repository))
-            self.active_repository.pull(remote=remote)
+            self.active_repository.pull(remote=remote, use_progress=False)
 
     def pre_extraction_save(self):
         pass
 
-    def post_extraction_save(self, rblob, oblob, snapshots):
+    def post_extraction_save(self):
         p = self._make_path(modifier='extraction')
 
+        rblob = self.per_spec.response_blob
+        oblob = self.per_spec.output_blob
+        sblob = self.per_spec.setpoint_blob
+
         if rblob:
-            rblob = base64.b64encode(rblob[0])
+            rblob = base64.b64encode(rblob)
         if oblob:
-            oblob = base64.b64encode(oblob[0])
+            oblob = base64.b64encode(oblob)
+        if sblob:
+            sblob = base64.b64encode(sblob)
 
         obj = {'request': rblob,
-               'response': oblob}
+               'response': oblob,
+               'sblob': sblob}
+
+        pid = self.per_spec.pid
+        if pid:
+            obj['pid'] = pid
 
         for e in EXTRACTION_ATTRS:
             v = getattr(self.per_spec.run_spec, e)
@@ -115,7 +128,6 @@ class DVCPersister(BasePersister):
                     x, y = pp
                 elif len(pp) == 3:
                     x, y, z = pp
-
             else:
                 pos = pp
                 try:
@@ -128,6 +140,12 @@ class DVCPersister(BasePersister):
                     self.debug('no extraction position for {}'.format(pp))
             pd = {'x': x, 'y': y, 'z': z, 'position': pos, 'is_degas': self.per_spec.run_spec.identifier == 'dg'}
             ps.append(pd)
+
+        db = self.dvc.db
+        load_name = self.per_spec.load_name
+        with db.session_ctx():
+            for p in ps:
+                db.add_measured_position(load=load_name, **p)
 
         obj['positions'] = ps
         hexsha = self.dvc.get_meta_head()
@@ -150,6 +168,8 @@ class DVCPersister(BasePersister):
         :return:
         """
         self.debug('================= post measurement started')
+        ret = True
+
         # save spectrometer
         spec_sha = self._get_spectrometer_sha()
         spec_path = os.path.join(self.active_repository.path, '{}.json'.format(spec_sha))
@@ -165,6 +185,10 @@ class DVCPersister(BasePersister):
             timestamp = datetime.now()
         else:
             timestamp = self.per_spec.timestamp
+
+        # check repository identifier before saving
+        # will modify repository to NoRepo if repository_identifier does not exist
+        self._check_repository_identifier()
 
         self._save_analysis(timestamp)
 
@@ -187,28 +211,55 @@ class DVCPersister(BasePersister):
                     self.debug('not at valid file {}'.format(p))
 
             if commit:
-                self.active_repository.smart_pull(accept_their=True)
+                try:
+                    self.active_repository.smart_pull(accept_their=True)
 
-                # commit files
-                self.active_repository.commit('added analysis {}'.format(self.per_spec.run_spec.runid))
+                    # commit files
+                    self.active_repository.commit('<COLLECTION>')
+                    # self.active_repository.push()
+                    self.dvc.push_repository(self.active_repository)
 
-                # update meta
-                self.dvc.meta_pull(accept_our=True)
+                    # update meta
+                    self.dvc.meta_pull(accept_our=True)
 
-                self.dvc.meta_commit('repo updated for analysis {}'.format(self.per_spec.run_spec.runid))
+                    self.dvc.meta_commit('repo updated for analysis {}'.format(self.per_spec.run_spec.runid))
 
-                # push commit
-                self.dvc.meta_push()
+                    # push commit
+                    self.dvc.meta_push()
+                except GitCommandError, e:
+                    self.warning(e)
+                    if not self.confirmation_dialog('DVC/Git Failed. Do you want to continue the experiment?',
+                                                    timeout_ret=True,
+                                                    timeout=30):
+                        ret = False
 
         self.debug('================= post measurement finished')
+        return ret
 
     # private
+    def _check_repository_identifier(self):
+        repo_id = self.per_spec.run_spec.repository_identifier
+        db = self.dvc.db
+        with db.session_ctx():
+            repo = db.get_repository(repo_id)
+            if repo is None:
+                self.warning('No repository named ="{}" changing to NoRepo'.format(repo_id))
+                self.per_spec.run_spec.repository_identifier = 'NoRepo'
+                repo = db.get_repository('NoRepo')
+                if repo is None:
+                    db.add_repository('NoRepo', self.default_principal_investigator)
+
     def _save_analysis_db(self, timestamp):
         rs = self.per_spec.run_spec
         d = {k: getattr(rs, k) for k in ('uuid', 'analysis_type', 'aliquot',
-                                         'increment', 'mass_spectrometer',
-                                         'extract_device', 'weight', 'comment',
+                                         'increment', 'mass_spectrometer', 'weight', 'comment',
                                          'cleanup', 'duration', 'extract_value', 'extract_units')}
+
+        ed = self.per_spec.run_spec.extract_device
+        if ed in (None, '', NULL_STR, LINE_STR, 'Extract Device'):
+            d['extract_device'] = 'No Extract Device'
+        else:
+            d['extract_device'] = ed
 
         d['timestamp'] = timestamp
 
@@ -221,14 +272,16 @@ class DVCPersister(BasePersister):
             an = db.add_analysis(**d)
 
             # all associations are handled by the ExperimentExecutor._retroactive_experiment_identifiers
+            # *** _retroactive_experiment_identifiers is currently disabled ***
 
-            # # special associations are handled by the ExperimentExecutor._retroactive_experiment_identifiers
-            # if not is_special(rs.runid):
             if self.per_spec.use_repository_association:
                 db.add_repository_association(rs.repository_identifier, an)
 
+            self.debug('get identifier "{}"'.format(rs.identifier))
             pos = db.get_identifier(rs.identifier)
+            self.debug('setting analysis irradiation position={}'.format(pos))
             an.irradiation_position = pos
+
             t = self.per_spec.tag
 
             db.flush()
@@ -238,33 +291,6 @@ class DVCPersister(BasePersister):
 
             change = db.add_analysis_change(tag=t)
             an.change = change
-            # an.change.tag_item = dbtag
-            # self._save_measured_positions()
-
-    def _save_measured_positions(self):
-        dvc = self.dvc
-
-        load_name = self.per_spec.load_name
-        for i, pp in enumerate(self.per_spec.positions):
-            if isinstance(pp, tuple):
-                if len(pp) > 1:
-                    if len(pp) == 3:
-                        dvc.add_measured_position('', load_name, x=pp[0], y=pp[1], z=pp[2])
-                    else:
-                        dvc.add_measured_position('', load_name, x=pp[0], y=pp[1])
-                else:
-                    dvc.add_measured_position(pp[0], load_name)
-
-            else:
-                dbpos = dvc.add_measured_position(pp, load_name)
-                try:
-                    ep = self.per_spec.extraction_positions[i]
-                    dbpos.x = ep[0]
-                    dbpos.y = ep[1]
-                    if len(ep) == 3:
-                        dbpos.z = ep[2]
-                except IndexError:
-                    self.debug('no extraction position for {}'.format(pp))
 
     def _save_analysis(self, timestamp):
 
@@ -302,15 +328,17 @@ class DVCPersister(BasePersister):
                 dets[iso.detector] = {'deflection': self.per_spec.defl_dict.get(iso.detector),
                                       'gain': self.per_spec.gains.get(iso.detector)}
 
-                icfactors[iso.detector] = {'value': float(nominal_value(iso.ic_factor)),
-                                           'error': float(std_dev(iso.ic_factor)),
+                icfactors[iso.detector] = {'value': float(nominal_value(iso.ic_factor or 1)),
+                                           'error': float(std_dev(iso.ic_factor or 0)),
                                            'fit': 'default',
                                            'references': []}
                 cbaselines[iso.detector] = {'fit': iso.baseline.fit,
+                                            'filter_outliers_dict': iso.baseline.filter_outliers_dict,
                                             'value': float(nominal_value(iso.baseline.uvalue)),
                                             'error': float(std_dev(iso.baseline.uvalue))}
 
             intercepts[iso.name] = {'fit': iso.fit,
+                                    'filter_outliers_dict': iso.filter_outliers_dict,
                                     'value': float(nominal_value(iso.uvalue)),
                                     'error': float(std_dev(iso.uvalue))}
             blanks[iso.name] = {'fit': 'previous',
@@ -329,10 +357,13 @@ class DVCPersister(BasePersister):
         obj['detectors'] = dets
         obj['isotopes'] = isos
         obj['spec_sha'] = self._get_spectrometer_sha()
+        obj['intensity_scalar'] = self.per_spec.intensity_scalar
 
         # save the conditionals
-        obj['conditionals'] = [c.to_dict() for c in self.per_spec.conditionals]
-        obj['tripped_conditional'] = self.per_spec.tripped_conditional.result_dict()
+        obj['conditionals'] = [c.to_dict() for c in self.per_spec.conditionals] if \
+            self.per_spec.conditionals else None
+        obj['tripped_conditional'] = self.per_spec.tripped_conditional.result_dict() if \
+            self.per_spec.tripped_conditional else None
 
         # save the scripts
         ms = self.per_spec.run_spec.mass_spectrometer
@@ -343,8 +374,9 @@ class DVCPersister(BasePersister):
             obj[si] = name
 
         # save experiment
-        self.dvc.update_experiment_queue(ms, self.per_spec.experiment_queue_name,
-                                         self.per_spec.experiment_queue_blob)
+        self.debug('---------------- Experiment Queue saving disabled')
+        # self.dvc.update_experiment_queue(ms, self.per_spec.experiment_queue_name,
+        #                                  self.per_spec.experiment_queue_blob)
 
         hexsha = str(self.dvc.get_meta_head())
         obj['commit'] = hexsha
@@ -403,23 +435,37 @@ class DVCPersister(BasePersister):
 
         obj = {}
         if pc:
-            obj['reference_detector'] = pc.reference_detector
+            obj['reference_detector'] = pc.reference_detector.name
             obj['reference_isotope'] = pc.reference_isotope
-            if pc.result:
-                xs, ys, _mx, _my = pc.result
-                obj.update({'low_dac': xs[0],
-                            'center_dac': xs[1],
-                            'high_dac': xs[2],
-                            'low_signal': ys[0],
-                            'center_signal': ys[1],
-                            'high_signal': ys[2]})
+            fmt = '>ff'
+            obj['fmt'] = fmt
+            results = pc.get_results()
+            if results:
+                for result in results:
+                    obj[result.detector] = {'low_dac': result.low_dac,
+                                            'center_dac': result.center_dac,
+                                            'high_dac': result.high_dac,
+                                            'low_signal': result.low_signal,
+                                            'center_signal': result.center_signal,
+                                            'high_signal': result.high_signal,
+                                            'points': base64.b64encode(''.join([struct.pack(fmt, *di)
+                                                                                for di in result.points]))}
 
-            data = pc.get_data()
-            if data:
-                fmt = '>ff'
-                obj['fmt'] = fmt
-                for det, pts in data:
-                    obj[det] = base64.b64encode(''.join([struct.pack(fmt, *di) for di in pts]))
+            # if pc.result:
+            #     xs, ys, _mx, _my = pc.result
+            #     obj.update({'low_dac': xs[0],
+            #                 'center_dac': xs[1],
+            #                 'high_dac': xs[2],
+            #                 'low_signal': ys[0],
+            #                 'center_signal': ys[1],
+            #                 'high_signal': ys[2]})
+            #
+            # data = pc.get_data()
+            # if data:
+            #     fmt = '>ff'
+            #     obj['fmt'] = fmt
+            #     for det, pts in data:
+            #         obj[det] = base64.b64encode(''.join([struct.pack(fmt, *di) for di in pts]))
 
         dvc_dump(obj, p)
 
@@ -457,3 +503,30 @@ class DVCPersister(BasePersister):
         return spectrometer_sha(self.per_spec.spec_dict, self.per_spec.defl_dict, self.per_spec.gains)
 
 # ============= EOF =============================================
+        #         self._save_measured_positions()
+        #
+        #
+        # def _save_measured_positions(self):
+        #     dvc = self.dvc
+        #
+        #     load_name = self.per_spec.load_name
+        #     for i, pp in enumerate(self.per_spec.positions):
+        #         if isinstance(pp, tuple):
+        #             if len(pp) > 1:
+        #                 if len(pp) == 3:
+        #                     dvc.add_measured_position('', load_name, x=pp[0], y=pp[1], z=pp[2])
+        #                 else:
+        #                     dvc.add_measured_position('', load_name, x=pp[0], y=pp[1])
+        #             else:
+        #                 dvc.add_measured_position(pp[0], load_name)
+        #
+        #         else:
+        #             dbpos = dvc.add_measured_position(pp, load_name)
+        #             try:
+        #                 ep = self.per_spec.extraction_positions[i]
+        #                 dbpos.x = ep[0]
+        #                 dbpos.y = ep[1]
+        #                 if len(ep) == 3:
+        #                     dbpos.z = ep[2]
+        #             except IndexError:
+        #                 self.debug('no extraction position for {}'.format(pp))

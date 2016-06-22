@@ -21,9 +21,14 @@
 
 # ============= EOF =============================================
 
-def camel_case(name):
-    args = name.split('_')
-    return ''.join(map(str.capitalize, args))
+
+def camel_case(name, delimiters=None):
+    if delimiters is None:
+        delimiters = ('_', '/', ' ')
+    name = name.title()
+    for d in delimiters:
+        name = name.replace(d, '')
+    return name
 
 
 def to_list(a, delimiter=',', mapping=None):

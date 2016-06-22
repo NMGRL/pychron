@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from pyface.message_dialog import warning, information
+from pyface.message_dialog import information
 from traits.api import HasTraits, Str, Int, Bool, List, Event, Either, Float, on_trait_change
 from traitsui.api import View, UItem, VGroup, TabularEditor, HGroup, Item
 from traitsui.tabular_adapter import TabularAdapter
@@ -31,7 +31,7 @@ from pychron.dvc.tasks.panes import CommitAdapter
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.view_util import open_view
 from pychron.git_archive.repo_manager import isoformat_date
-from pychron.git_archive.utils import get_commits, get_diff
+from pychron.git_archive.utils import get_commits, get_diff, get_head_commit
 from pychron.paths import paths
 from pychron.pychron_constants import LIGHT_RED, PLUSMINUS_ONE_SIGMA, LIGHT_YELLOW
 
@@ -94,13 +94,13 @@ class DiffValue(HasTraits):
             self.match = True
 
 
-class DiffView(HasTraits):
+class BaseDiffView(HasTraits):
     ovalues = List
     values = List
     only_show_diff = Bool(True)
 
     def __init__(self, record_id, lh, rh, ld, rd, d, *args, **kw):
-        super(DiffView, self).__init__(*args, **kw)
+        super(BaseDiffView, self).__init__(*args, **kw)
 
         self.record_id = record_id
         aj = json.load(d[0].data_stream)
@@ -112,6 +112,16 @@ class DiffView(HasTraits):
     @on_trait_change('only_show_diff')
     def _handle_filter_values(self):
         self._filter_values()
+
+    def _diff_value_factory(self, aj, bj, t, k, name):
+        a = aj[name]
+        b = bj[name]
+        if isinstance(a, dict):
+            a = a[k]
+            b = b[k]
+
+        dv = DiffValue(t, a, b)
+        return dv
 
     def _filter_values(self):
         if self.only_show_diff:
@@ -130,40 +140,36 @@ class DiffView(HasTraits):
         return v
 
 
-class TagDiffView(DiffView):
-    base_title = 'Tag'
-
-    def _load_values(self, lh, rh, ld, rd, aj, bj):
-        self.ovalues = [DiffValue('ID', lh, rh, matchable=False),
-                        DiffValue('Date', ld, rd, matchable=False)] + [DiffValue(name, aj[name], bj[name]) for name in
-                                                                       ('name',)]
-
-
-class BlanksDiffView(DiffView):
-    base_title = 'Blanks'
-
-    def _load_values(self, lh, rh, ld, rd, aj, bj):
-        # print aj
-        # print bj
-        blanks = [DiffValue(t, aj[name][k], bj[name][k])
-                  for name in aj.keys()
-                  for t, k in ((name, 'value'), (PLUSMINUS_ONE_SIGMA, 'error'), ('Fit', 'fit'))]
-
-        self.ovalues = [DiffValue('ID', lh, rh, matchable=False),
-                        DiffValue('Date', ld, rd, matchable=False)] + blanks
+# class TagDiffView(BaseDiffView):
+#     base_title = 'Tag'
+#
+#     def _load_values(self, lh, rh, ld, rd, aj, bj):
+#         self.ovalues = [DiffValue('ID', lh, rh, matchable=False),
+#                         DiffValue('Date', ld, rd, matchable=False)] + [DiffValue(name, aj[name], bj[name]) for name in
+#                                                                        ('name',)]
 
 
-class ICFactorDiffView(BlanksDiffView):
-    base_title = 'ICFactor'
+# class BlanksDiffView(BaseDiffView):
+#     base_title = 'Blanks'
+#
+#     def _load_values(self, lh, rh, ld, rd, aj, bj):
+#         blanks = [self._diff_value_factory(aj, bj, t, k, name)
+#                   for name in aj.keys()
+#                   for t, k in ((name, 'value'), (PLUSMINUS_ONE_SIGMA, 'error'), ('Fit', 'fit'))]
+#
+#         self.ovalues = [DiffValue('ID', lh, rh, matchable=False),
+#                         DiffValue('Date', ld, rd, matchable=False)] + blanks
 
 
-class IsoEvoDiffView(BlanksDiffView):
-    base_title = 'Iso Evo'
+# class ICFactorDiffView(BlanksDiffView):
+#     base_title = 'ICFactor'
+#
+#
+# class IsoEvoDiffView(BlanksDiffView):
+#     base_title = 'Iso Evo'
 
 
-class ImportDiffView(DiffView):
-    base_title = 'Import'
-
+class DiffView(BaseDiffView):
     blanks = List
     icfactors = List
     tags = List
@@ -249,15 +255,17 @@ class ImportDiffView(DiffView):
                                show_border=True, label='Tags',
                                visible_when='tags')),
 
-                 title='{} Diff {}'.format(self.base_title, self.record_id),
+                 title='Diff {}'.format(self.record_id),
+                 # title='{} Diff {}'.format(self.base_title, self.record_id),
                  resizable=True,
                  width=500)
         return v
 
 
-VIEWS = {'TAG': TagDiffView, 'BLANKS': BlanksDiffView,
-         'ISOEVO': IsoEvoDiffView,
-         'ICFactor': ICFactorDiffView}
+# VIEWS = {'TAG': TagDiffView, 'BLANKS': BlanksDiffView,
+#          'ISOEVO': IsoEvoDiffView,
+#          'ICFactor': ICFactorDiffView,
+#          'COLLECTED': ImportDiffView}
 
 
 class DVCCommitView(HasTraits):
@@ -280,6 +288,7 @@ class DVCCommitView(HasTraits):
 
     def initialize(self, an):
         pass
+
     # def initialize(self, an):
     #     path = self._make_path(an)
     #
@@ -292,7 +301,7 @@ class DVCCommitView(HasTraits):
         if new:
             if len(new) == 1:
                 self.selected_lhs = new[0]
-                self.selected_rhs = 'HEAD'
+                self.selected_rhs = get_head_commit(self.repo)
             elif len(new) == 2:
                 a, b = new
                 self.selected_rhs = a if b == self.selected_lhs else b
@@ -310,69 +319,73 @@ class DVCCommitView(HasTraits):
 
     def _do_diff_fired(self):
         if self.selected_commits:
-            n = len(self.selected_commits)
+            # n = len(self.selected_commits)
+            # lhs = self.selected_lhs
+            # if n == 1:
+            #     rhsid = 'HEAD'
+            #     obj = self.repo.head.commit
+            #     rhsdate = isoformat_date(obj.committed_date)
+            # if lhs.tag == 'IMPORT':
+            #     diffs = []
+            #     for a in ('blanks', 'icfactors', 'tags', 'intercepts'):
+            #         p = analysis_path(self.record_id, self.repository_identifier, modifier=a)
+            #         dd = get_diff(self.repo, lhs.hexsha, 'HEAD', p)
+            #         if dd:
+            #             diffs.append((a, dd))
+            #     if diffs:
+            #         v = ImportDiffView(self.record_id, lhsid, rhsid, lhsdate, rhsdate)
+            #         for a, (aa, bb) in diffs:
+            #             func = getattr(v, 'set_{}'.format(a))
+            #             func(json.load(aa.data_stream),
+            #                  json.load(bb.data_stream))
+            #         v.finish()
+            #         open_view(v)
+            #
+            #     return
+            # else:
+            #     d = get_diff(self.repo, lhs.hexsha, 'HEAD', lhs.path)
+            #
+            # elif n == 2:
+            #     lhs = self.selected_lhs
+            #     rhs = self.selected_rhs
+            # else:
+            #     warning(None, 'Can only diff max of 2')
+            #     return
 
             lhs = self.selected_lhs
+            rhs = self.selected_rhs
 
             lhsid = lhs.hexsha[:8]
             lhsdate = isoformat_date(lhs.date)
-            if n == 1:
-                rhsid = 'HEAD'
-                obj = self.repo.head.commit
-                rhsdate = isoformat_date(obj.committed_date)
-                if lhs.tag == 'IMPORT':
-                    diffs = []
-                    for a in ('blanks', 'icfactors', 'tags', 'intercepts'):
-                        p = analysis_path(self.record_id, self.repository_identifier, modifier=a)
-                        dd = get_diff(self.repo, lhs.hexsha, 'HEAD', p)
-                        if dd:
-                            diffs.append((a, dd))
-                    if diffs:
-                        v = ImportDiffView(self.record_id, lhsid, rhsid, lhsdate, rhsdate)
-                        for a, (aa, bb) in diffs:
-                            func = getattr(v, 'set_{}'.format(a))
-                            func(json.load(aa.data_stream),
-                                 json.load(bb.data_stream))
-                        v.finish()
-                        open_view(v)
 
-                    return
-                else:
-                    d = get_diff(self.repo, lhs.hexsha, 'HEAD', lhs.path)
+            rhsid = rhs.hexsha[:8]
+            rhsdate = rhs.date.isoformat()
 
-            elif n == 2:
-                lhs = self.selected_lhs
-                rhs = self.selected_rhs
-                # lhs, rhs = self.selected_commits
-                if lhs.tag != rhs.tag:
-                    warning(None, 'Can only compare commits of the same type')
-                    return
+            diffs = []
+            for a in ('blanks', 'icfactors', 'tags', 'intercepts'):
+                p = analysis_path(self.record_id, self.repository_identifier, modifier=a)
+                dd = get_diff(self.repo, lhs.hexsha, rhs.hexsha, p)
+                if dd:
+                    diffs.append((a, dd))
 
-                rhsid = rhs.hexsha[:8]
-                rhsdate = rhs.date.isoformat()
-                d = get_diff(self.repo, lhs.hexsha, rhs.hexsha, rhs.path)
-
-            else:
-                warning(None, 'Can only diff max of 2')
-                return
-
-            if d:
-                # if lhs.tag=='TAG':
-                klass = VIEWS[lhs.tag]
-                v = klass(self.record_id, lhsid, rhsid, lhsdate, rhsdate, d)
-
+            if diffs:
+                v = DiffView(self.record_id, lhsid, rhsid, lhsdate, rhsdate)
+                for a, (aa, bb) in diffs:
+                    func = getattr(v, 'set_{}'.format(a))
+                    func(json.load(aa.data_stream),
+                         json.load(bb.data_stream))
+                v.finish()
                 open_view(v)
-                # v.edit_traits()
             else:
                 information(None, 'No Differences between {} and {}'.format(lhsid, rhsid))
 
     def traits_view(self):
         v = View(VGroup(
-                icon_button_editor('do_diff', 'edit_diff', tooltip='Make Diff between two commits'),
-                UItem('commits', editor=myTabularEditor(adapter=HistoryCommitAdapter(),
-                                                        multi_select=True,
-                                                        editable=False,
-                                                        selected='selected_commits'))))
+            icon_button_editor('do_diff', 'edit_diff', tooltip='Make Diff between two commits'),
+            UItem('commits', editor=myTabularEditor(adapter=HistoryCommitAdapter(),
+                                                    multi_select=True,
+                                                    editable=False,
+                                                    selected='selected_commits'))))
         return v
 
 
@@ -380,11 +393,14 @@ class HistoryView(DVCCommitView):
     def initialize(self, an):
         repo = self.repo
         cs = []
-        for a, b in (('TAG', 'tag'), ('ISOEVO', 'intercepts'),
+        for a, b in (('TAG', 'tag'),
+                     ('ISOEVO', 'intercepts'),
+                     ('ISOEVO', 'baselines'),
                      ('BLANKS', 'blanks'),
                      ('ICFactor', 'icfactors'),
                      ('IMPORT', ''),
-                     ('MANUAL', '')):
+                     ('MANUAL', ''),
+                     ('COLLECTION', '')):
             path = an.make_path(b)
             if path:
                 args = [repo, repo.active_branch.name, path, a]

@@ -33,7 +33,6 @@ import math
 # =============local library imports  ==========================
 from pychron.core.helpers.color_generators import colorname_generator as color_generator
 from pychron.core.helpers.filetools import add_extension
-from guide_overlay import GuideOverlay
 from pychron.graph.offset_plot_label import OffsetPlotLabel
 from tools.contextual_menu_tool import ContextualMenuTool
 from pychron.graph.context_menu_mixin import ContextMenuMixin
@@ -168,9 +167,9 @@ def container_factory(**kw):
     c = CONTAINERS.get(kind, VPlotContainer)
 
     options = dict(
-            bgcolor='white',
-            padding=5,
-            fill_padding=True)
+        bgcolor='white',
+        padding=5,
+        fill_padding=True)
 
     for k in options:
         if k not in kw.keys():
@@ -279,18 +278,16 @@ class Graph(ContextMenuMixin):
             return None or Plot with y_axis.title equal to iso
             if startswith is True title only has to start with iso
         """
+
+        txt = str(txt)
         if startswith:
             is_equal = lambda x: x.startswith(txt)
         else:
             is_equal = lambda x: x.__eq__(txt)
 
-        plot = None
         for po in self.plots:
             if is_equal(po.y_axis.title):
-                plot = po
-                break
-
-        return plot
+                return po
 
     def get_num_plots(self):
         """
@@ -757,16 +754,6 @@ class Graph(ContextMenuMixin):
             series = 'plot{}'.format(series)
         plot.delplot(series)
 
-    def add_guide(self, value, orientation='h', plotid=0, color=(0, 0, 0)):
-        """
-        """
-        plot = self.plots[plotid]
-
-        guide_overlay = GuideOverlay(component=plot,
-                                     value=value,
-                                     color=color)
-        plot.overlays.append(guide_overlay)
-
     def new_plot(self, add=True, **kw):
         """
         """
@@ -1057,30 +1044,28 @@ class Graph(ContextMenuMixin):
                                      color=color)
         plot.overlays.append(guide_overlay)
 
-    def add_vertical_rule(self, v, plotid=0, **kw):
-        """
-        """
+    def _add_rule(self, v, orientation, plotid=0, add_move_tool=False, **kw):
+
         if 'plot' in kw:
             plot = kw['plot']
         else:
             plot = self.plots[plotid]
 
-        from pychron.graph.guide_overlay import GuideOverlay
+        from pychron.graph.guide_overlay import GuideOverlay, GuideOverlayMoveTool
 
-        l = GuideOverlay(plot, value=v, orientation='v', **kw)
-
+        l = GuideOverlay(plot, value=v, orientation=orientation, **kw)
         plot.underlays.append(l)
+
+        if add_move_tool:
+            plot.tools.append(GuideOverlayMoveTool(overlay=l))
+
         return l
 
-    def add_horizontal_rule(self, v, plotid=0, **kw):
-        """
-        """
-        plot = self.plots[plotid]
-        from pychron.graph.guide_overlay import GuideOverlay
+    def add_vertical_rule(self, v, **kw):
+        return self._add_rule(v, 'v', **kw)
 
-        l = GuideOverlay(plot, value=v, **kw)
-        plot.underlays.append(l)
-        return l
+    def add_horizontal_rule(self, v, **kw):
+        return self._add_rule(v, 'h', **kw)
 
     def add_opposite_ticks(self, plotid=0, key=None):
         """
@@ -1409,7 +1394,7 @@ class Graph(ContextMenuMixin):
                     data = plot.data
                     for di in data.list_data():
                         if 'y' in di:
-                            ya = sorted(data.get_data[di])
+                            ya = sorted(data.get_data(di))
 
                             i = 0
                             try:

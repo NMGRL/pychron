@@ -104,6 +104,8 @@ class myProgressDialog(ProgressDialog):
     def _create_control(self, parent):
         control = super(myProgressDialog, self)._create_control(parent)
         control.resize(self.width, self.height)
+        if self.position:
+            control.move(*self.position)
         control.setWindowFlags(Qt.WindowStaysOnTopHint)
         return control
 

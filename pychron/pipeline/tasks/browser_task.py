@@ -23,6 +23,7 @@ from traits.api import Instance, Bool
 from datetime import datetime, timedelta
 # ============= local library imports  ==========================
 from pychron.envisage.browser.browser_task import BaseBrowserTask
+from pychron.envisage.browser.recall_editor import RecallEditor
 from pychron.envisage.browser.view import PaneBrowserView
 from pychron.envisage.tasks.actions import ToggleFullWindowAction
 from pychron.globals import globalv
@@ -148,23 +149,39 @@ class BrowserTask(BaseBrowserTask):
 
     # toolbar actions
     def diff_analysis(self):
-        self.debug('Edit analysis data')
+        self.debug('diff analysis')
         if not self.has_active_editor():
             return
 
-        recaller = self.application.get_service('pychron.mass_spec.mass_spec_recaller.MassSpecRecaller')
-        if recaller is None:
+        active_editor = self.active_editor
+        if not isinstance(active_editor, RecallEditor):
+            self.warning_dialog('Active tab must be a Recall tab')
             return
 
-        active_editor = self.active_editor
         left = active_editor.analysis
+
+        recaller = self.application.get_service('pychron.mass_spec.mass_spec_recaller.MassSpecRecaller')
+        if recaller is None:
+            self.warning_dialog('Could not access MassSpec database')
+            return
+
+        if not recaller.connect():
+            self.warning_dialog('Could not connect to MassSpec database. {}'.format(recaller.db.datasource_url))
+            return
 
         from pychron.pipeline.editors.diff_editor import DiffEditor
         editor = DiffEditor(recaller=recaller)
-        left.load_raw_data()
+        # left.set_stored_value_states(True, save=True)
+
+        if not left.check_has_n():
+            left.load_raw_data(n_only=True)
+
         if editor.setup(left):
             editor.set_diff(left)
             self._open_editor(editor)
+        else:
+            self.warning_dialog('Failed to locate analysis {} in MassSpec database'.format(left.record_id))
+        # left.revert_use_stored_values()
 
     def create_dock_panes(self):
         return [BrowserPane(model=self.browser_model)]

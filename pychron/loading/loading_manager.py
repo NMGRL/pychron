@@ -35,6 +35,7 @@ from pychron.canvas.canvas2D.scene.primitives.primitives import LoadIndicator
 from pychron.core.pdf.pdf_graphics_context import PdfPlotGraphicsContext
 from pychron.core.progress import progress_iterator
 from pychron.dvc.dvc_irradiationable import DVCIrradiationable
+from pychron.envisage.view_util import open_view
 from pychron.loading.loading_pdf_writer import LoadingPDFWriter
 from pychron.paths import paths
 
@@ -129,7 +130,7 @@ class LoadingManager(DVCIrradiationable):
     # table signal/events
     refresh_table = Event
     scroll_to_row = Int
-    selected_positions = Any
+    selected_positions = List
 
     load_name = Str
     loads = List
@@ -163,6 +164,8 @@ class LoadingManager(DVCIrradiationable):
     interaction_mode = Enum('Entry', 'Info', 'Edit')
     suppress_update = False
 
+    use_measured = Bool(False)
+
     def __init__(self, *args, **kw):
         super(LoadingManager, self).__init__(*args, **kw)
         self.dvc = self.application.get_service('pychron.dvc.dvc.DVC')
@@ -177,6 +180,25 @@ class LoadingManager(DVCIrradiationable):
         self.load_name = ''
         if self.canvas:
             self.canvas.clear_all()
+
+    def get_selection(self):
+        from pychron.loading.load_view_selection import LoadViewSelectionModel, LoadViewSelectionController
+
+        self.setup()
+        if self.loads:
+            self.use_measured = True
+            self.load_name = self.loads[-1]
+            oeditable = self.canvas.editable
+            self.canvas.editable = False
+            lvsm = LoadViewSelectionModel(manager=self)
+            lvc = LoadViewSelectionController(model=lvsm)
+            info = open_view(lvc)
+            self.canvas.editable = oeditable
+            self.use_measured = False
+            if info.result:
+                return lvsm.selected_positions
+        else:
+            self.warning_dialog('No Loads available')
 
     def load_load_by_name(self, loadtable, group_labnumbers=True):
 
@@ -212,9 +234,9 @@ class LoadingManager(DVCIrradiationable):
                     if item:
                         item.fill = True
                         item.add_labnumber_label(
-                                dbpos.identifier,
-                                # ox=-10, oy=-10,
-                                visible=self.show_labnumbers)
+                            dbpos.identifier,
+                            # ox=-10, oy=-10,
+                            visible=self.show_labnumbers)
 
                         oy = -10 if not self.show_labnumbers else -20
                         wt = '' if pi.weight is None else str(pi.weight)
@@ -248,9 +270,9 @@ class LoadingManager(DVCIrradiationable):
             c = self.canvas
             if not c:
                 c = LoadingCanvas(
-                        view_x_range=(-2, 2),
-                        view_y_range=(-2, 2),
-                        editable=editable)
+                    view_x_range=(-2, 2),
+                    view_y_range=(-2, 2),
+                    editable=editable)
 
             if lt and lt.holderName:
                 self.tray = lt.holderName
@@ -594,7 +616,7 @@ class LoadingManager(DVCIrradiationable):
                 return 'duplicate name'
             else:
                 self.info(
-                        'adding load {} {} to database'.format(nln, self.tray))
+                    'adding load {} {} to database'.format(nln, self.tray))
 
                 dbtray = db.get_load_holder(self.tray)
                 if dbtray is None:
@@ -829,14 +851,24 @@ class LoadingManager(DVCIrradiationable):
             return
 
         if not self.canvas.editable:
-            ps = self.canvas.get_selection()
-            pp = []
-            for p in ps:
-                po = next((ppp for ppp in self.positions if
-                           int(p.name) in ppp.positions))
-                pp.append(po)
+            if self.use_measured:
+                if new.measured_indicator:
+                    p = next((p for p in self.selected_positions if int(new.name) in p.positions), None)
+                    if p:
+                        self.selected_positions.remove(p)
+                    else:
+                        self.selected_positions.append(LoadPosition(positions=[int(new.name)],
+                                                                    labnumber=new.identifier))
+            else:
+                pp = []
+                ps = self.canvas.get_selection()
+                for p in ps:
+                    po = next((ppp for ppp in self.positions if
+                               int(p.name) in ppp.positions), None)
+                    if po:
+                        pp.append(po)
 
-            self.selected_positions = pp
+                self.selected_positions = pp
             return
 
         if not self.username:

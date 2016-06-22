@@ -145,7 +145,8 @@ class Experimentor(DVCIrradiationable):
                 if ln not in exclude)
 
     def _get_analysis_info(self, li):
-        return self.db.get_analysis_info(li)
+        db = self.get_database()
+        return db.get_analysis_info(li)
 
     def _set_analysis_metadata(self):
         cache = dict()
@@ -165,6 +166,7 @@ class Experimentor(DVCIrradiationable):
                 # is run in cache
                 if ln not in cache:
                     info = self._get_analysis_info(ln)
+                    self.debug('Info for {}={}'.format(ln, info))
                     if not info:
                         cache[ln] = dict(identifier_error=True)
                     else:
@@ -202,6 +204,10 @@ class Experimentor(DVCIrradiationable):
                 return True
         elif inform:
             self.warning_dialog('No Database available')
+
+    def get_analysis(self, **kw):
+        db = self.get_database()
+        return db.get_analysis_by_attr(**kw)
 
     # ===============================================================================
     # handlers
@@ -320,12 +326,7 @@ class Experimentor(DVCIrradiationable):
         e = ExperimentFactory(application=self.application,
                               dvc=self.dvc,
                               iso_db_man=self.iso_db_man,
-                              # dvc=self.dvc,
-                              # db=self.dvc.db,
                               default_mass_spectrometer=dms)
-
-        # if self.iso_db_manager:
-        #     e.db = self.iso_db_manager.db
         return e
 
 # ============= EOF =============================================

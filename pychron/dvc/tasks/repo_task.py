@@ -21,14 +21,13 @@ from pyface.tasks.task_layout import TaskLayout, PaneItem
 from traits.api import List, Str, Any
 
 # ============= standard library imports ========================
-from git import Repo
 import os
 # ============= local library imports  ==========================
-from pychron.core.progress import open_progress
 from pychron.dvc.tasks.actions import CloneAction, AddBranchAction, CheckoutBranchAction, PushAction, PullAction
 from pychron.dvc.tasks.panes import RepoCentralPane, SelectionPane
 from pychron.envisage.tasks.base_task import BaseTask
 # from pychron.git_archive.history import from_gitlog
+from pychron.git.hosts import IGitHost
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.git_archive.utils import get_commits
 from pychron.github import Organization
@@ -88,7 +87,7 @@ class ExperimentRepoTask(BaseTask):
             if info.result:
                 if a.url and a.name:
                     self._repo.create_remote(a.url, a.name)
-                    self._repo.push()
+                    self._repo.push(remote=a.name)
         else:
             self._repo.push()
 
@@ -102,12 +101,15 @@ class ExperimentRepoTask(BaseTask):
         path = os.path.join(root, name)
         if not os.path.isdir(path):
             self.debug('cloning repository {}'.format(name))
-            url = 'https://github.com/{}/{}.git'.format(self.organization, name)
-            prog = open_progress(n=3)
-            prog.change_message('Cloning repository {}'.format(url))
-            Repo.clone_from(url, path)
-            prog.change_message('Cloning Complete')
-            prog.close()
+            service = self.application.get_service(IGitHost)
+
+            service.clone_from(name, path, self.organization)
+            # url = 'https://github.com/{}/{}.git'.format(self.organization, name)
+            # prog = open_progress(n=3)
+            # prog.change_message('Cloning repository {}'.format(url))
+            # Repo.clone_from(url, path)
+            # prog.change_message('Cloning Complete')
+            # prog.close()
             self.refresh_local_names()
 
     def add_branch(self):

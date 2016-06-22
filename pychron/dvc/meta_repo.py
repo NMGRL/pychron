@@ -209,7 +209,7 @@ class Production(MetaObject):
         attrs = []
         for k, v in obj.iteritems():
             setattr(self, k, float(v[0]))
-            setattr(self, '{}_err'.format(k), float(v[0]))
+            setattr(self, '{}_err'.format(k), float(v[1]))
             attrs.append(k)
 
         self.attrs = attrs
@@ -218,19 +218,33 @@ class Production(MetaObject):
         if self.attrs is None:
             self.attrs = []
 
-        for k, v in d.iteritems():
-            setattr(self, k, v)
-            if not k.endswith('_err') and k not in self.attrs:
-                self.attrs.append(k)
+        if isinstance(d, dict):
+            for k, v in d.iteritems():
+                setattr(self, k, v)
+                if not k.endswith('_err') and k not in self.attrs:
+                    self.attrs.append(k)
+        else:
+            attrs = []
+            for k in INTERFERENCE_KEYS + RATIO_KEYS:
+                attrs.append(k)
+                v = getattr(d, k)
+                if v is None:
+                    v = (0, 0)
+                setattr(self, k, v[0])
+                setattr(self, '{}_err'.format(k), v[1])
+            self.attrs = attrs
 
     def to_dict(self, keys):
         return {t: ufloat(getattr(self, t), getattr(self, '{}_err'.format(t))) for t in keys}
 
-    def dump(self):
+    def dump(self, path=None):
+        if path is None:
+            path = self.path
+
         obj = {}
         for a in self.attrs:
             obj[a] = (getattr(self, a), getattr(self, '{}_err'.format(a)))
-        dvc_dump(obj, self.path)
+        dvc_dump(obj, path)
 
 
 class BaseHolder(MetaObject):
@@ -271,12 +285,10 @@ class Cached(object):
     def __call__(self, func):
         def wrapper(obj, name, *args, **kw):
             ret = None
-            # if kw.get('use_cache'):
-            if not hasattr(obj, '__cache__'):
+            if not hasattr(obj, '__cache__') or obj.__cache__ is None:
                 obj.__cache__ = {}
 
             cache = obj.__cache__[func] if func in obj.__cache__ else {}
-            clear = False
             if self.clear:
                 if getattr(obj, self.clear):
                     cache = {}
@@ -290,7 +302,6 @@ class Cached(object):
                 ret = func(obj, name, *args, **kw)
 
             cache[key] = ret
-            # obj.__cache__[key] = ret
             obj.__cache__[func] = cache
             return ret
 
@@ -303,34 +314,34 @@ cached = Cached
 class MetaRepo(GitRepoManager):
     clear_cache = Bool
 
-    # clear_gain_cache = Bool
-    # clear_production_cache = Bool
-    # clear_chronology_cache = Bool
-    # clear_irradiation_holder_cache = Bool
-    # clear_load_holder_cache = Bool
+    def get_molecular_weights(self):
+        p = os.path.join(paths.meta_root, 'molecular_weights.json')
+        return dvc_load(p)
 
-    # def __init__(self, path=None, *args, **kw):
-    #     super(MetaRepo, self).__init__(*args, **kw)
-    #     if path is None:
-    #         path = paths.meta_dir
-    #
-    #     paths.meta_dir = path
+    def update_molecular_weights(self, wts, commit=False):
+        p = os.path.join(paths.meta_root, 'molecular_weights.json')
+        dvc_dump(wts, p)
+        self.add(p, commit=commit)
+
+    def add_unstaged(self, *args, **kw):
+        super(MetaRepo, self).add_unstaged(self.path, **kw)
 
     def save_gains(self, ms, gains_dict):
         p = self._gain_path(ms)
-        # with open(p, 'w') as wfile:
         dvc_dump(gains_dict, p)
 
         if self.add_paths(p):
             self.commit('Updated gains')
 
     def update_script(self, rootname, name, path_or_blob):
-        self._update_text(os.path.join('scripts', rootname), name, path_or_blob)
+        self._update_text(os.path.join('scripts', rootname.lower()), name, path_or_blob)
 
     def update_experiment_queue(self, rootname, name, path_or_blob):
-        self._update_text(os.path.join('experiments', rootname), name, path_or_blob)
+        self._update_text(os.path.join('experiments', rootname.lower()), name, path_or_blob)
 
     def update_level_production(self, irrad, name, prname):
+        prname = prname.replace(' ', '_')
+
         src = os.path.join(paths.meta_root, 'productions', '{}.json'.format(prname))
         if os.path.isfile(src):
             dest = os.path.join(paths.meta_root, irrad, 'productions', '{}.json'.format(prname))
@@ -340,13 +351,14 @@ class MetaRepo(GitRepoManager):
         else:
             self.warning_dialog('Invalid production name'.format(prname))
 
-    def add_production_to_irradiation(self, irrad, name, params, add=True):
-        p = os.path.join(paths.meta_root, irrad, '{}.json'.format(name))
+    def add_production_to_irradiation(self, irrad, name, params, add=True, commit=False):
+        p = os.path.join(paths.meta_root, irrad, 'productions', '{}.json'.format(name))
         prod = Production(p)
+
         prod.update(params)
         prod.dump()
         if add:
-            self.add(p)
+            self.add(p, commit=commit)
 
     def add_production(self, irrad, name, obj, commit=False, add=True):
         p = self.get_production(irrad, name, force=True)
@@ -481,17 +493,29 @@ class MetaRepo(GitRepoManager):
         obj['z'] = z
         dvc_dump(obj, p)
 
-    def update_flux(self, irradiation, level, pos, identifier, j, e, decay, analyses, add=True):
+    def update_flux(self, irradiation, level, pos, identifier, j, e, decay=None, analyses=None, add=True):
+        if decay is None:
+            decay = {}
+        if analyses is None:
+            analyses = []
+
         p = self.get_level_path(irradiation, level)
         jd = dvc_load(p)
+        npos = {'position': pos, 'j': j, 'j_err': e,
+                'decay_constants': decay,
+                'identifier': identifier,
+                'analyses': [{'uuid': ai.uuid,
+                              'record_id': ai.record_id,
+                              'status': ai.is_omitted()}
+                             for ai in analyses]}
+        if jd:
+            added = any((ji['position'] == pos for ji in jd))
+            njd = [ji if ji['position'] != pos else npos for ji in jd]
+            if not added:
+                njd.append(npos)
 
-        njd = [ji if ji['position'] != pos else {'position': pos, 'j': j, 'j_err': e,
-                                                 'decay_constants': decay,
-                                                 'identifier': identifier,
-                                                 'analyses': [{'uuid': ai.uuid,
-                                                               'record_id': ai.record_id,
-                                                               'status': ai.is_omitted()}
-                                                              for ai in analyses]} for ji in jd]
+        else:
+            njd = [npos]
 
         dvc_dump(njd, p)
         if add:
@@ -541,12 +565,12 @@ class MetaRepo(GitRepoManager):
 
             pos = next((p for p in positions if p['position'] == position), None)
             if pos:
-                j, e = pos['j'], pos['j_err']
+                j, e = pos.get('j', 0), pos.get('j_err', 0)
                 dc = pos.get('decay_constants')
                 if dc:
-                    lambda_k = ufloat(dc['lambda_k_total'], dc['lambda_k_total_error'])
+                    lambda_k = ufloat(dc.get('lambda_k_total', 0), dc.get('lambda_k_total_error', 0))
 
-        return ufloat(j, e), lambda_k
+        return ufloat(j or 0, e or 0), lambda_k
 
     def get_gains(self, name):
         g = self.get_gain_obj(name)
@@ -578,8 +602,6 @@ class MetaRepo(GitRepoManager):
     @cached('clear_cache')
     def get_chronology(self, name, **kw):
         return irradiation_chronology(name)
-        # p = self._chron_name(name)
-        # return Chronology(p)
 
     @cached('clear_cache')
     def get_irradiation_holder_holes(self, name, **kw):
@@ -605,7 +627,6 @@ class MetaRepo(GitRepoManager):
             r_mkdir(root)
 
         p = os.path.join(root, name)
-        # action = 'updated' if os.path.isfile(p) else 'added'
         if os.path.isfile(path_or_blob):
             shutil.copyfile(path_or_blob, p)
         else:
@@ -613,10 +634,5 @@ class MetaRepo(GitRepoManager):
                 wfile.write(path_or_blob)
 
         self.add(p, commit=False)
-        # if self.has_staged():
-        # self.commit('updated {} {}'.format(tag, action, name))
-
-        # hexsha = self.shell('hash-object', '--path', p)
-        # return hexsha
 
 # ============= EOF =============================================

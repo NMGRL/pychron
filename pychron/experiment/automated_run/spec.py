@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from traits.api import Str, Int, Bool, Float, Property, \
-    Enum, on_trait_change, CStr, Long, HasTraits
+    Enum, on_trait_change, CStr, Long, HasTraits, Instance
 # ============= standard library imports ========================
 import hashlib
 from datetime import datetime
@@ -24,11 +24,11 @@ import uuid
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import remove_extension
 from pychron.core.helpers.logger_setup import new_logger
+from pychron.experiment.automated_run.result import AutomatedRunResult, AirResult, UnknownResult, BlankResult
 from pychron.experiment.utilities.identifier import get_analysis_type, make_rid, make_runid, is_special, \
     convert_extract_device
 from pychron.experiment.utilities.position_regex import XY_REGEX
 from pychron.pychron_constants import SCRIPT_KEYS, SCRIPT_NAMES, ALPHAS
-
 
 logger = new_logger('AutomatedRunSpec')
 
@@ -39,7 +39,7 @@ class AutomatedRunSpec(HasTraits):
         an AutomatedRun. the AutomatedRun does the actual work. ie extraction and measurement
     """
     run_klass = 'pychron.experiment.automated_run.automated_run.AutomatedRun'
-
+    result = Instance(AutomatedRunResult, ())
     state = Enum('not run', 'extraction',
                  'measurement', 'success',
                  'failed', 'truncated', 'canceled',
@@ -99,12 +99,11 @@ class AutomatedRunSpec(HasTraits):
     _min_ms_pumptime = Int
     conditionals = Str
     syn_extraction = Str
-
     collection_time_zero_offset = Float
+    repository_identifier = Str
 
     frequency_group = 0
     conflicts_checked = False
-    repository_identifier = Str
     identifier_error = Bool(False)
 
     executable = Property(depends_on='identifier_error, _executable')
@@ -127,10 +126,28 @@ class AutomatedRunSpec(HasTraits):
     material = Str
     data_reduction_tag = Str
 
+    branch = 'master'
+
     _estimated_duration = 0
     _changed = False
 
     _step_heat = False
+
+    def new_result(self, arun):
+        klass = AutomatedRunResult
+        if self.analysis_type == 'air':
+            klass = AirResult
+        elif self.analysis_type == 'unknown':
+            klass = UnknownResult
+        elif 'blank' in self.analysis_type:
+            klass = BlankResult
+
+        result = klass()
+        result.runid = self.runid
+        result.isotope_group = arun.isotope_group
+        result.tripped_conditional = arun.tripped_conditional
+
+        self.result = result
 
     def is_detector_ic(self):
         return self.analysis_type == 'detector_ic'
@@ -327,6 +344,54 @@ class AutomatedRunSpec(HasTraits):
     def clear_step(self):
         self._step = -1
 
+    def tocopy(self, verbose=False):
+        traits = ['mass_spectrometer',
+                  'extract_device',
+                  'username',
+                  'tray',
+                  'queue_conditionals_name',
+                  'labnumber',
+                  'user_defined_aliquot',
+                  'measurement_script',
+                  'post_measurement_script',
+                  'post_equilibration_script',
+                  'extraction_script',
+                  'script_options', 'use_cdd_warming',
+                  'extract_value',
+                  'extract_units',
+                  'position',
+                  'xyz_position',
+                  'duration',
+                  'cleanup',
+                  'pattern',
+                  'beam_diameter',
+                  'ramp_duration',
+                  'ramp_rate',
+                  'disable_between_positions',
+                  '_overlap',
+                  '_min_ms_pumptime',
+                  'conditionals',
+                  'syn_extraction',
+                  'collection_time_zero_offset',
+                  'repository_identifier',
+                  'weight',
+                  'comment',
+                  'project',
+                  'sample',
+                  'irradiation',
+                  'irradiation_level',
+                  'irradiation_position',
+                  'material',
+                  'data_reduction_tag']
+
+        if self.is_step_heat():
+            traits.append('aliquot')
+
+        if verbose:
+            for t in traits:
+                print '{} ==> {}'.format(t, getattr(self, t))
+        return self.clone_traits(traits)
+
     # ===============================================================================
     # handlers
     # ===============================================================================
@@ -339,7 +404,7 @@ post_equilibration_script, extraction_script, script_options, position, duration
             self._changed = True
 
     def _state_changed(self, old, new):
-        self.debug('state changed from {} to {}'.format(old, new))
+        logger.debug('state changed from {} to {}'.format(old, new))
 
     # ===============================================================================
     # property get/set
@@ -495,6 +560,5 @@ post_equilibration_script, extraction_script, script_options, position, duration
             md5.update(str(k))
             md5.update(str(v))
         return md5
-
 
 # ============= EOF =============================================

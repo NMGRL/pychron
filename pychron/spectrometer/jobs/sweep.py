@@ -77,13 +77,13 @@ class BaseSweep(SpectrometerTask):
         if 'line_width' not in kw:
             kw['line_width'] = 2
 
-        if kind=='scatter':
+        if kind == 'scatter':
             kw['type'] = 'scatter'
             kw['marker'] = 'circle'
-            kw['marker_size'] = 1
+            kw['marker_size'] = 1.5
 
         graph.new_series(**kw)
-        self._markup_idx+=1
+        self._markup_idx += 1
 
     def _test_sweep(self, s, e, step):
         forward = self._calc_step_values(s, e, step)
@@ -160,7 +160,7 @@ class BaseSweep(SpectrometerTask):
 
     def _step_intensity(self):
         spec = self.spectrometer
-        ds = [str(self.reference_detector)] + self.additional_detectors
+        ds = [str(self.reference_detector.name)] + self.additional_detectors
         intensity = spec.get_intensity(ds)
 
         return intensity

@@ -23,8 +23,7 @@ from logging.handlers import RotatingFileHandler
 
 # =============local library imports  =========================
 from pychron.paths import paths
-from pychron.core.helpers.filetools import list_directory
-from filetools import unique_path2
+from pychron.core.helpers.filetools import list_directory, unique_path2
 
 NAME_WIDTH = 40
 gFORMAT = '%(name)-{}s: %(asctime)s %(levelname)-9s (%(threadName)-10s) %(message)s'.format(NAME_WIDTH)

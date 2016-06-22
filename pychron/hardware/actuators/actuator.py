@@ -15,7 +15,6 @@
 # ===============================================================================
 
 
-
 # ============= enthought library imports =======================
 # from traits.api import HasTraits, on_trait_change, Str, Int, Float, Button
 # from traitsui.api import View, Item, Group, HGroup, VGroup
@@ -36,6 +35,7 @@ PACKAGES = dict(AgilentGPActuator='pychron.hardware.agilent.agilent_gp_actuator'
                 ArduinoGPActuator='pychron.hardware.arduino.arduino_gp_actuator',
                 QtegraGPActuator='pychron.hardware.actuators.qtegra_gp_actuator',
                 PychronGPActuator='pychron.hardware.actuators.pychron_gp_actuator',
+                NMGRLFurnaceActuator='pychron.hardware.actuators.nmgrl_furnace_actuator',
                 RPiGPIO='pychron.hardware.rpi_gpio')
 
 

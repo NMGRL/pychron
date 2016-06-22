@@ -67,7 +67,7 @@ class Handler(object):
         pass
 
     # private
-    def _recvall(self, recv):
+    def _recvall(self, recv, frame=None):
         """
         recv: callable that accepts 1 argument (datasize). should return a str
         """
@@ -81,7 +81,10 @@ class Handler(object):
 
         msg_len = 1
         nm = -1
-        frame = self.message_frame
+
+        if frame is None:
+            frame = self.message_frame
+
         if frame.message_len:
             msg_len = 0
             nm = frame.nmessage_len
@@ -98,6 +101,7 @@ class Handler(object):
             ss.append(s)
             if sum >= msg_len:
                 break
+
         data = ''.join(ss)
         data = data.strip()
         if frame.message_len:
@@ -126,9 +130,9 @@ class TCPHandler(Handler):
         self.sock.settimeout(timeout)
         self.sock.connect(addr)
 
-    def get_packet(self, cmd):
+    def get_packet(self, cmd, message_frame=None):
         try:
-            return self._recvall(self.sock.recv)
+            return self._recvall(self.sock.recv, frame=message_frame)
         except socket.timeout:
             return
 
@@ -147,7 +151,7 @@ class UDPHandler(Handler):
             timeout = 0.01
         self.sock.settimeout(timeout)
 
-    def get_packet(self, cmd):
+    def get_packet(self, cmd, **kw):
         def recv(ds):
             rx, _ = self.sock.recvfrom(ds)
             return rx
@@ -251,7 +255,8 @@ class EthernetCommunicator(Communicator):
             self.error_mode = True
             self.handler = None
 
-    def ask(self, cmd, retries=3, verbose=True, quiet=False, info=None, timeout=None, *args, **kw):
+    def ask(self, cmd, retries=3, verbose=True, quiet=False, info=None, timeout=None,
+            message_frame = None, delay=None, *args, **kw):
         """
 
         """
@@ -268,9 +273,9 @@ class EthernetCommunicator(Communicator):
             if self.error_mode:
                 retries = 2
 
-            re = 'ERROR: Connection refused: {}'.format(self.address)
+            re = 'ERROR: Connection refused: {}, timeout={}'.format(self.address, timeout)
             for _ in xrange(retries):
-                r = self._ask(cmd, timeout=timeout)
+                r = self._ask(cmd, timeout=timeout, message_frame=message_frame, delay=delay)
                 if r is not None:
                     break
                 else:
@@ -283,16 +288,21 @@ class EthernetCommunicator(Communicator):
             # else:
             #     self.error_mode = True
 
-                if self.use_end:
-                    # self.debug('ending connection. Handler: {}'.format(self.handler))
-                    if self.handler:
-                        self.handler.end()
-                    self._reset_connection()
+            if self.use_end:
+                # self.debug('ending connection. Handler: {}'.format(self.handler))
+                if self.handler:
+                    self.handler.end()
+                self._reset_connection()
 
             if verbose or self.verbose and not quiet:
                 self.log_response(cmd, re, info)
 
         return r
+
+    def reset(self):
+        if self.handler:
+            self.handler.end()
+        self._reset_connection()
 
     def read(self, *args, **kw):
         with self._lock:
@@ -315,7 +325,7 @@ class EthernetCommunicator(Communicator):
         self.handler = None
         self.error_mode = False
 
-    def _ask(self, cmd, timeout=None):
+    def _ask(self, cmd, timeout=None, message_frame=None, delay=None):
         if self.error_mode:
             self.handler = None
             timeout = 0.25
@@ -330,8 +340,12 @@ class EthernetCommunicator(Communicator):
 
         try:
             handler.send_packet(cmd)
+
+            if delay:
+                time.sleep(delay)
+
             try:
-                return handler.get_packet(cmd)
+                return handler.get_packet(cmd, message_frame=message_frame)
             except socket.error, e:
                 self.warning('ask. get packet. error: {} address: {}'.format(e, self.address))
                 self.error_mode = True

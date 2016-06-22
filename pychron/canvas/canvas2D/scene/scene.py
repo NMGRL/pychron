@@ -70,6 +70,10 @@ class Scene(HasTraits):
                                   for ci in li.components
                                   if ci.scene_visible and ci.visible), bounds)
 
+    def request_layout(self):
+        for i in self.iteritems():
+            i.request_layout()
+
     def iteritems(self, exclude=None, klass=None):
         if exclude is None:
             exclude = tuple()
@@ -209,6 +213,36 @@ class Scene(HasTraits):
 
     def _get_floats(self, elem, name):
         return map(float, elem.find(name).text.split(','))
+
+    def _get_translation(self, cp, elem, name='translation'):
+        x, y = elem.find(name).text.split(',')
+        try:
+            x = float(x)
+        except ValueError:
+            x = self._get_parameteric_translation(cp, x)
+
+        try:
+            y = float(y)
+        except ValueError:
+            y = self._get_parameteric_translation(cp, y)
+
+        return x, y
+
+    def _get_parameteric_translation(self, cp, tag):
+        v = 0
+        offset = 0
+        if '+' in tag:
+            tag, offset = tag.split('+')
+        elif '-' in tag:
+            tag, offset = tag.split('-')
+
+        offset = int(offset)
+        for p in cp.get_elements('param'):
+            if p.text.strip() == tag:
+                e = p.find('value')
+                v = e.text.strip()
+
+        return float(v) + offset
 
     def _make_color(self, c):
         if not isinstance(c, str):

@@ -15,20 +15,11 @@
 # ===============================================================================
 # ============= enthought library imports =======================
 from traits.api import Str
-from traits.trait_types import BaseStr
 from traitsui.api import Item, VGroup, UItem
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.entry.entry_views.entry import BaseEntry
-
-
-class SpacelessStr(BaseStr):
-    def validate(self, object, name, value):
-        if isinstance(value, basestring) and ' ' not in value:
-            return value
-
-        self.error(object, name, value)
+from pychron.entry.entry_views.entry import BaseEntry, SpacelessStr
 
 
 class ExperimentIdentifierEntry(BaseEntry):

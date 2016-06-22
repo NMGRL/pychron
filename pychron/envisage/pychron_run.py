@@ -14,8 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
+import sys
+
 from envisage.core_plugin import CorePlugin
 from pyface.message_dialog import warning
+
 # ============= standard library imports ========================
 import logging
 # ============= local library imports  ==========================
@@ -63,13 +66,17 @@ PACKAGE_DICT = dict(
     MassSpecPlugin='pychron.mass_spec.tasks.plugin',
     # SystemMonitorPlugin='pychron.system_monitor.tasks.system_monitor_plugin',
     DVCPlugin='pychron.dvc.tasks.dvc_plugin',
+    GitLabPlugin='pychron.git.tasks.gitlab_plugin',
+    GitHubPlugin='pychron.git.tasks.github_plugin',
     # WorkspacePlugin='pychron.workspace.tasks.workspace_plugin',
     LabBookPlugin='pychron.labbook.tasks.labbook_plugin',
     LabspyClientPlugin='pychron.labspy.tasks.plugin',
     UpdatePlugin='pychron.updater.tasks.update_plugin',
     ImagePlugin='pychron.image.tasks.image_plugin',
     NMGRLFurnacePlugin='pychron.furnace.tasks.furnace_plugin',
-    IGSNPlugin='pychron.repo.tasks.igsn_plugin'
+    NMGRLFurnaceControlPlugin='pychron.furnace.tasks.furnace_control_plugin',
+    IGSNPlugin='pychron.repo.tasks.igsn_plugin',
+    PsychoDramaPlugin='pychron.psychodrama.tasks.plugin'
 )
 
 
@@ -233,10 +240,7 @@ def launch(klass, user):
         gTraceDisplay.add_text(tb)
         gTraceDisplay.edit_traits(kind='livemodal')
 
-        # finally:
-
-        # os._exit(0)
-
-        # return
+    finally:
+        sys.exit(0)
 
 # ============= EOF ====================================

@@ -36,6 +36,7 @@ from pychron.options.options import BaseOptions, SubOptions
 from pychron.options.series import SeriesOptions
 from pychron.options.spectrum import SpectrumOptions
 from pychron.options.views import view
+from pychron.options.xy_scatter import XYScatterOptions
 from pychron.paths import paths
 
 
@@ -113,9 +114,10 @@ class OptionsManager(Loggable):
         # dump the default plotter options
         self.save_selection()
 
-        if self.selected:
-            obj = self.selected_options
-            name = self.selected
+        if name is None:
+            if self.selected:
+                obj = self.selected_options
+                name = self.selected
 
         with open(os.path.join(self.persistence_root, '{}.p'.format(name)), 'w') as wfile:
             pickle.dump(obj, wfile)
@@ -125,6 +127,9 @@ class OptionsManager(Loggable):
         p.load_factory_defaults(self._default_options_txt)
         self.save(name, p)
         self._load_names()
+
+        print self.names
+        print self.name
         self.selected = name
 
     def factory_default(self):
@@ -263,6 +268,11 @@ class FluxOptionsManager(FigureOptionsManager):
 class VerticalFluxOptionsManager(FigureOptionsManager):
     id = 'vertical_flux'
     options_klass = VerticalFluxOptions
+
+
+class XYScatterOptionsManager(FigureOptionsManager):
+    id = 'xy_scatter'
+    options_klass = XYScatterOptions
 
 
 class IdeogramOptionsManager(FigureOptionsManager):

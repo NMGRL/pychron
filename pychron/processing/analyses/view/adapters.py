@@ -41,6 +41,16 @@ def sigmaf(s):
     return u'{}({})'.format(SIGMA_1, s)
 
 
+def handle_error(func):
+    def wrapper(self, *args, **kw):
+        try:
+            return func(self, *args, **kw)
+        except ValueError:
+            return ''
+
+    return wrapper
+
+
 class BaseTabularAdapter(TabularAdapter):
     default_bg_color = '#F7F6D0'
     font = TABLE_FONT
@@ -203,65 +213,80 @@ class IntermediateTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
     intensity_error_width = eewidth
     intensity_percent_error_width = pwidth
 
+    @handle_error
     def _get_intercept_text(self):
         v = self.item.value
         return floatfmt(v, n=7)
 
+    @handle_error
     def _get_intercept_error_text(self):
         v = self.item.error
         return floatfmt(v, n=7)
 
+    @handle_error
     def _get_intercept_percent_error_text(self):
         v = self.item.uvalue
         return format_percent_error(nominal_value(v), std_dev(v))
 
+    @handle_error
     def _get_bs_corrected_text(self):
         v = self.item.get_baseline_corrected_value()
         return floatfmt(nominal_value(v), n=7)
 
+    @handle_error
     def _get_bs_corrected_error_text(self):
         v = self.item.get_baseline_corrected_value()
         return floatfmt(std_dev(v), n=7)
 
+    @handle_error
     def _get_bs_corrected_percent_error_text(self):
         v = self.item.get_baseline_corrected_value()
         return format_percent_error(v.nominal_value, v.std_dev)
 
     # ============================================================
+    @handle_error
     def _get_bs_bk_corrected_text(self):
         v = self.item.get_non_detector_corrected_value()
         return floatfmt(nominal_value(v), n=7)
 
+    @handle_error
     def _get_bs_bk_corrected_error_text(self):
         v = self.item.get_non_detector_corrected_value()
         return floatfmt(std_dev(v), n=7)
 
+    @handle_error
     def _get_bs_bk_corrected_percent_error_text(self):
         v = self.item.get_non_detector_corrected_value()
         return format_percent_error(v.nominal_value, v.std_dev)
 
     # ============================================================
+    @handle_error
     def _get_disc_corrected_text(self):
         v = self.item.get_disc_corrected_value()
         return floatfmt(nominal_value(v), n=7)
 
+    @handle_error
     def _get_disc_corrected_error_text(self):
         v = self.item.get_disc_corrected_value()
         return floatfmt(std_dev(v), n=7)
 
+    @handle_error
     def _get_disc_corrected_percent_error_text(self):
         v = self.item.get_disc_corrected_value()
         return format_percent_error(v.nominal_value, v.std_dev)
 
     # ============================================================
+    @handle_error
     def _get_interference_corrected_text(self):
         v = self.item.get_interference_corrected_value()
         return floatfmt(nominal_value(v), n=7)
 
+    @handle_error
     def _get_interference_corrected_error_text(self):
         v = self.item.get_interference_corrected_value()
         return floatfmt(std_dev(v), n=7)
 
+    @handle_error
     def _get_interference_corrected_percent_error_text(self):
         v = self.item.get_interference_corrected_value()
         return format_percent_error(v.nominal_value, v.std_dev)
@@ -349,7 +374,7 @@ class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
                                   action='show_isotope_evolution_with_baseline'),
                            Action(name='Show Baseline',
                                   action='show_baseline'),
-                           Action(name='Show Sniff',
+                           Action(name='Show Equilibration',
                                   action='show_sniff'),
                            Action(name='Show All',
                                   action='show_all'))
@@ -401,27 +426,31 @@ class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
             t = '#{}'.format(t)
         return t
 
-    def _get_base_value_text(self, *args, **kw):
+    def _get_base_value_text(self):
         return self._format('baseline', 'value', 'value')
 
-    def _get_base_error_text(self, *args, **kw):
+    def _get_base_error_text(self):
         return self._format('baseline', 'error', 'error')
 
-    def _get_blank_value_text(self, *args, **kw):
+    @handle_error
+    def _get_blank_value_text(self):
         return self._format('blank', 'value', 'value')
 
-    def _get_blank_error_text(self, *args, **kw):
+    @handle_error
+    def _get_blank_error_text(self):
         return self._format('blank', 'error', 'error')
 
-    def _get_baseline_percent_error_text(self, *args):
+    @handle_error
+    def _get_baseline_percent_error_text(self):
         b = self.item.baseline
         return format_percent_error(b.value, b.error)
 
-    def _get_blank_percent_error_text(self, *args):
+    def _get_blank_percent_error_text(self):
         b = self.item.blank
         return format_percent_error(b.value, b.error)
 
-    def _get_value_percent_error_text(self, *args):
+    @handle_error
+    def _get_value_percent_error_text(self):
         cv = self.item.get_non_detector_corrected_value()
         return format_percent_error(cv.nominal_value, cv.std_dev)
 

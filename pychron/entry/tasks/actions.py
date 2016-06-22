@@ -15,8 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-# from pyface.action.action import Action
-# from pyface.tasks.action.task_action import TaskAction
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.resources import icon
@@ -41,18 +39,6 @@ class AddFluxMonitorAction(Action):
         app = event.task.window.application
         s = app.get_service('pychron.entry.editors.flux_monitor_editor.FluxMonitorEditor')
         s.add_flux_monitor()
-
-
-class LabnumberEntryAction(Action):
-    name = 'Labnumber Entry'
-    dname = 'Labnumber Entry'
-    # accelerator = 'Ctrl+Shift+l'
-    id = 'pychron.labnumber_entry'
-
-    def perform(self, event):
-        pid = 'pychron.entry.irradiation.task'
-        app = event.task.window.application
-        app.get_task(pid)
 
 
 class SensitivityEntryAction(Action):
@@ -87,6 +73,12 @@ class DatabaseSaveAction(TaskAction):
     description = 'Save current changes to the database'
     method = 'save_to_db'
     image = icon('database_save')
+
+
+class ClearSelectionAction(TaskAction):
+    name = 'Clear Selection'
+    image = icon('table_lightning')
+    method = 'clear_selection'
 
 
 class SavePDFAction(TaskAction):
@@ -149,13 +141,36 @@ class ImportIrradiationFileAction(TaskAction):
                    'to generate a boilerplate irradiation template'
 
 
-class MakeIrradiationTemplateAction(TaskAction):
+class MakeIrradiationTemplateAction(Action):
     name = 'Irradiation Template'
     dname = 'Irradiation Template'
     image = icon('file_xls')
 
-    method = 'make_irradiation_load_template'
     ddescription = 'Make an Excel irradiation template that can be used to import irradiation information.'
+
+    def perform(self, event):
+        from pyface.file_dialog import FileDialog
+        dialog = FileDialog(action='save as', default_filename='IrradiationTemplate.xls')
+
+        from pyface.constant import OK
+        if dialog.open() == OK:
+            path = dialog.path
+            if path:
+                from pychron.core.helpers.filetools import add_extension
+                path = add_extension(path, '.xls')
+
+                from pychron.entry.loaders.irradiation_template import IrradiationTemplate
+                i = IrradiationTemplate()
+                i.make_template(path)
+
+                from pyface.confirmation_dialog import confirm
+                if confirm(None, 'Template saved to {}.\n\nWould you like to open the template?'):
+                    from pychron.core.helpers.filetools import view_file
+                    application = 'Microsoft Office 2011/Microsoft Excel'
+                    view_file(path, application=application)
+
+                    # from pyface.message_dialog import information
+                    # information(None, 'Template saved to {}'.format(path))
 
 
 class ImportSamplesAction(TaskAction):
@@ -202,7 +217,6 @@ class GenerateIrradiationTableAction(TaskAction):
 
 
 class ImportIrradiationHolderAction(Action):
-
     name = 'Import Irradiation Holder'
     dname = 'Import Irradiation Holder'
 
@@ -227,4 +241,5 @@ class GetIGSNAction(TaskAction):
     name = 'Get IGSNs'
     dname = 'Get IGSNs'
     method = 'get_igsns'
+
 # ============= EOF =============================================

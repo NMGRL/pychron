@@ -41,7 +41,7 @@ class ThermoMagnet(BaseMagnet, SpectrometerDevice):
     # ===============================================================================
     # ##positioning
     # ===============================================================================
-    def set_dac(self, v, verbose=True, settling_time=None):
+    def set_dac(self, v, verbose=True, settling_time=None, use_dac_changed=True):
         self.debug('setting magnet DAC')
         self.debug('current  : {:0.6f}'.format(self._dac))
         self.debug('requested: {:0.6f}'.format(v))
@@ -89,7 +89,8 @@ class ThermoMagnet(BaseMagnet, SpectrometerDevice):
         change = dv > 1e-7
         if change:
             self._dac = v
-            self.dac_changed = True
+            if use_dac_changed:
+                self.dac_changed = True
 
             et = time.time() - st
             if not self.simulation:

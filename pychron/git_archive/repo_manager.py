@@ -27,7 +27,7 @@ import shutil
 from cStringIO import StringIO
 from datetime import datetime
 from git.exc import GitCommandError
-from git import Repo, Diff
+from git import Repo, Diff, RemoteProgress
 # ============= local library imports  ==========================
 from pychron.core.codetools.inspection import caller
 from pychron.core.helpers.filetools import fileiter
@@ -35,6 +35,7 @@ from pychron.core.progress import open_progress
 from pychron.envisage.view_util import open_view
 from pychron.git_archive.diff_view import DiffView, DiffModel
 from pychron.git_archive.merge_view import MergeModel, MergeView
+from pychron.git_archive.utils import get_head_commit
 from pychron.git_archive.views import NewBranchView
 from pychron.loggable import Loggable
 from pychron.git_archive.commit import Commit
@@ -66,6 +67,26 @@ def isoformat_date(d):
 
 aregex = re.compile(r'\[ahead (?P<count>\d+)')
 bregex = re.compile(r'behind (?P<count>\d+)')
+
+
+class GitProgress(RemoteProgress):
+    message = None
+    _progress = None
+
+    def new_message_handler(self):
+        self._progress = open_progress(100)
+        return super(GitProgress, self).new_message_handler()
+
+    def update(self, op_code, cur_count, max_count=None, message=''):
+        if max_count:
+            self._progress.max = int(max_count) + 2
+            if message:
+                message = '{} -- {}'.format(self.message, message[2:])
+                self._progress.change_message(message, auto_increment=False)
+            self._progress.update(int(cur_count))
+
+        if op_code == 66:
+            self._progress.close()
 
 
 class GitRepoManager(Loggable):
@@ -200,31 +221,41 @@ class GitRepoManager(Loggable):
 
     @classmethod
     def clone_from(cls, url, path):
-        n = 150
-        prog = open_progress(n=n)
-        from threading import Event as TE, Thread
+        # n = 150
+        # from threading import Event as TE, Thread
+        # evt = TE()
+        # prog = open_progress(n=n)
+        # prog.change_message('Cloning repository {}'.format(url))
 
-        evt = TE()
-        prog.change_message('Cloning repository {}'.format(url))
+        rprogress = GitProgress()
+        rprogress.message = 'Cloning repository {}'.format(url)
+        # rprogress=None
+        try:
+            Repo.clone_from(url, path, progress=rprogress)
+        except GitCommandError, e:
+            print e
+            shutil.rmtree(path)
+            # def foo():
+            #     try:
+            #         Repo.clone_from(url, path, progress=rprogress)
+            #     except GitCommandError:
+            #         shutil.rmtree(path)
+            #
+            #     evt.set()
 
-        def foo():
-            Repo.clone_from(url, path)
-            evt.set()
-
-        t = Thread(target=foo)
-        t.start()
-        period = 0.1
-        while not evt.is_set():
-            st = time.time()
-            v = prog.get_value()
-            if v == n - 2:
-                prog.increase_max(50)
-                n += 50
-
-            prog.increment()
-            time.sleep(max(0, period - time.time() + st))
-
-        prog.close()
+            # t = Thread(target=foo)
+            # t.start()
+            # period = 0.1
+            # while not evt.is_set():
+            #     st = time.time()
+            #     # v = prog.get_value()
+            #     # if v == n - 2:
+            #     #     prog.increase_max(50)
+            #     #     n += 50
+            #     #
+            #     # prog.increment()
+            #     time.sleep(max(0, period - time.time() + st))
+            # prog.close()
 
     def clone(self, url, path):
         self._repo = Repo.clone_from(url, path)
@@ -329,6 +360,9 @@ class GitRepoManager(Loggable):
         # return index, patches
         #
 
+    def get_head_object(self):
+        return get_head_commit(self._repo)
+
     def get_head(self, commit=True, hexsha=True):
         head = self._repo
         if commit:
@@ -372,7 +406,9 @@ class GitRepoManager(Loggable):
         # return self._repo.git.log('--not', '--remotes', '--oneline')
         return self._repo.git.log('{}/{}..HEAD'.format(remote, branch), '--oneline')
 
-    def add_unstaged(self, root, add_all=False, extension=None, use_diff=False):
+    def add_unstaged(self, root=None, add_all=False, extension=None, use_diff=False):
+        if root is None:
+            root = self.path
 
         index = self.index
         def func(ps, extension):
@@ -500,7 +536,7 @@ class GitRepoManager(Loggable):
             if use_progress:
                 prog = open_progress(3,
                                      show_percent=False,
-                                     title='Pull Repository', close_at_end=False)
+                                     title='Pull Repository {}'.format(self.name), close_at_end=False)
                 prog.change_message('Fetching branch:"{}" from "{}"'.format(branch, remote))
             try:
                 self.fetch(remote)
@@ -526,7 +562,10 @@ class GitRepoManager(Loggable):
     def has_remote(self, remote='origin'):
         return bool(self._get_remote(remote))
 
-    def push(self, branch='master', remote='origin'):
+    def push(self, branch='master', remote=None):
+        if remote is None:
+            remote = 'origin'
+
         repo = self._repo
         rr = self._get_remote(remote)
         if rr:
@@ -585,6 +624,8 @@ class GitRepoManager(Loggable):
             if not quiet:
                 self.information_dialog('Up-to-date with {}'.format(remote))
 
+        return True
+
     def fetch(self, remote='origin'):
         return self._repo.git.fetch(remote)
 
@@ -614,6 +655,7 @@ class GitRepoManager(Loggable):
         repo.git.merge(src.commit)
 
     def commit(self, msg):
+        self.debug('commit message={}'.format(msg))
         index = self.index
         if index:
             index.commit(msg)

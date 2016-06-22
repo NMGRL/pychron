@@ -1,5 +1,7 @@
 Glossary
 =====================
+DVC
+    Data Version Control. A system for tracking all tracks to data
 
 Editor
     A tab within the editor area.

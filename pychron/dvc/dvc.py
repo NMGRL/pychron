@@ -14,15 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
-import glob
-
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import Instance, Str, Set, List, provides
 # ============= standard library imports ========================
 from math import isnan
 from datetime import datetime
-from uncertainties import nominal_value
-from uncertainties import std_dev
+from uncertainties import nominal_value, std_dev
 from git import Repo
 from itertools import groupby
 import shutil
@@ -39,77 +36,17 @@ from pychron.dvc.defaults import TRIGA, HOLDER_24_SPOKES, LASER221, LASER65
 from pychron.dvc.dvc_analysis import DVCAnalysis, repository_path, analysis_path, PATH_MODIFIERS, \
     AnalysisNotAnvailableError
 from pychron.dvc.dvc_database import DVCDatabase
-from pychron.dvc.meta_repo import MetaRepo
+from pychron.dvc.func import find_interpreted_age_path, GitSessionCTX, push_repositories
+from pychron.dvc.meta_repo import MetaRepo, Production
 from pychron.envisage.browser.record_views import InterpretedAgeRecordView
+from pychron.git.hosts import IGitHost, CredentialException
 from pychron.git_archive.repo_manager import GitRepoManager, format_date, get_repository_branch
-from pychron.github import Organization
+from pychron.globals import globalv
 from pychron.loggable import Loggable
-from pychron.paths import paths
+from pychron.paths import paths, r_mkdir
 from pychron.pychron_constants import RATIO_KEYS, INTERFERENCE_KEYS
 
 TESTSTR = {'blanks': 'auto update blanks', 'iso_evo': 'auto update iso_evo'}
-
-
-def repository_has_staged(ps):
-    if not hasattr(ps, '__iter__'):
-        ps = (ps,)
-
-    changed = []
-    repo = GitRepoManager()
-    for p in ps:
-        pp = os.path.join(paths.repository_dataset_dir, p)
-        repo.open_repo(pp)
-        if repo.has_unpushed_commits():
-            changed.append(p)
-
-    return changed
-
-
-def push_repositories(ps):
-    repo = GitRepoManager()
-    for p in ps:
-        pp = os.path.join(paths.repository_dataset_dir, p)
-        repo.open_repo(pp)
-        repo.push()
-
-
-def get_review_status(record):
-    ms = 0
-    for m in ('blanks', 'intercepts', 'icfactors'):
-        p = analysis_path(record.record_id, record.repository_identifier, modifier=m)
-        date = ''
-        with open(p, 'r') as rfile:
-            obj = json.load(rfile)
-            reviewed = obj.get('reviewed', False)
-            if reviewed:
-                dt = datetime.fromtimestamp(os.path.getmtime(p))
-                date = dt.strftime('%m/%d/%Y')
-                ms += 1
-
-        setattr(record, '{}_review_status'.format(m), (reviewed, date))
-
-    ret = 'Intermediate'  # intermediate
-    if not ms:
-        ret = 'Default'  # default
-    elif ms == 3:
-        ret = 'All'  # all
-
-    record.review_status = ret
-
-
-def find_interpreted_age_path(idn, repositories, prefixlen=3):
-    prefix = idn[:prefixlen]
-    suffix = '{}.ia.json'.format(idn[prefixlen:])
-
-    for e in repositories:
-        pathname = '{}/{}/{}/ia/{}'.format(paths.repository_dataset_dir, e, prefix, suffix)
-        ps = glob.glob(pathname)
-        if ps:
-            return ps[0]
-
-
-def make_remote_url(org, name):
-    return '{}/{}/{}.git'.format(paths.git_base_origin, org, name)
 
 
 class DVCException(BaseException):
@@ -154,31 +91,16 @@ class DVCInterpretedAge(InterpretedAge):
             setattr(self, a, obj[a])
 
 
-class GitSessionCTX(object):
-    def __init__(self, parent, repository_identifier, message):
-        self._parent = parent
-        self._repository_id = repository_identifier
-        self._message = message
-        self._parent.get_repository(repository_identifier)
-
-    def __enter__(self):
-        pass
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if exc_type is None:
-            if self._parent.is_dirty():
-                self._parent.repository_commit(self._repository_id, self._message)
-
-
 @provides(IDatastore)
 class DVC(Loggable):
+    """
+    main interface to DVC backend. Delegates responsibility to DVCDatabase and MetaRepo
+    """
     db = Instance('pychron.dvc.dvc_database.DVCDatabase')
     meta_repo = Instance('pychron.dvc.meta_repo.MetaRepo')
 
     meta_repo_name = Str
     organization = Str
-    github_user = Str
-    github_password = Str
     default_team = Str
 
     current_repository = Instance(GitRepoManager)
@@ -196,6 +118,11 @@ class DVC(Loggable):
 
     def initialize(self, inform=False):
         self.debug('Initialize DVC')
+
+        if not self.meta_repo_name:
+            self.warning_dialog('Need to specify Meta Repository name in Preferences')
+            return
+
         self.open_meta_repo()
 
         # update meta repo.
@@ -208,11 +135,13 @@ class DVC(Loggable):
     def open_meta_repo(self):
         mrepo = self.meta_repo
         root = os.path.join(paths.dvc_dir, self.meta_repo_name)
+        self.debug('open meta repo {}'.format(root))
         if os.path.isdir(os.path.join(root, '.git')):
             self.debug('Opening Meta Repo')
             mrepo.open_repo(root)
         else:
             url = self.make_url(self.meta_repo_name)
+            self.debug('cloning meta repo url={}'.format(url))
             path = os.path.join(paths.dvc_dir, self.meta_repo_name)
             self.meta_repo.clone(url, path)
 
@@ -227,29 +156,185 @@ class DVC(Loggable):
         else:
             self.meta_repo.push()
 
-    def load_analysis_backend(self, ln, arar_age):
+    def load_analysis_backend(self, ln, isotope_group):
         db = self.db
         with db.session_ctx():
             ip = db.get_identifier(ln)
             dblevel = ip.level
             irrad = dblevel.irradiation.name
             level = dblevel.name
-            prodname = dblevel.production.name
             pos = ip.position
 
-        j = self.meta_repo.get_flux(irrad, level, pos)
-        prod = self.meta_repo.get_production(prodname)
+        j, lambda_k = self.meta_repo.get_flux(irrad, level, pos)
+        prodname, prod = self.meta_repo.get_production(irrad, level)
         cs = self.meta_repo.get_chronology(irrad)
 
         x = datetime.now()
         now = time.mktime(x.timetuple())
-        arar_age.trait_set(j=j,
-                           production_ratios=prod.to_dict(RATIO_KEYS),
-                           interference_corrections=prod.to_dict(INTERFERENCE_KEYS),
-                           chron_segments=cs.get_chron_segments(x),
-                           irradiation_time=cs.irradiation_time,
-                           timestamp=now)
+        if lambda_k:
+            isotope_group.arar_constants.lambda_k = lambda_k
+
+        isotope_group.trait_set(j=j,
+                                # lambda_k=lambda_k,
+                                production_ratios=prod.to_dict(RATIO_KEYS),
+                                interference_corrections=prod.to_dict(INTERFERENCE_KEYS),
+                                chron_segments=cs.get_chron_segments(x),
+                                irradiation_time=cs.irradiation_time,
+                                timestamp=now)
         return True
+
+    def repository_db_sync(self, reponame):
+        repo = self._get_repository(reponame, as_current=False)
+        ps = []
+        with self.db.session_ctx():
+            ans = self.db.repository_analyses(reponame)
+            for ai in ans:
+                p = analysis_path(ai.record_id, reponame)
+                obj = dvc_load(p)
+
+                sample = None
+                project = None
+                material = None
+                changed = False
+                for attr, v in (('sample', sample),
+                                ('project', project),
+                                ('material', material)):
+                    if obj.get(attr) != v:
+                        obj[attr] = v
+                        changed = True
+
+                if changed:
+                    ps.append(p)
+                    dvc_dump(obj, p)
+
+            if ps:
+                repo.pull()
+                repo.add_paths(ps)
+                repo.commit('Synced repository with database {}'.format(self.db.datasource_url))
+                repo.push()
+
+    def repository_transfer(self, ans, dest):
+        def key(x):
+            return x.repository_identifier
+
+        destrepo = self._get_repository(dest, as_current=False)
+        for src, ais in groupby(sorted(ans, key=key), key=key):
+            with self.db.session_ctx():
+                repo = self._get_repository(src, as_current=False)
+                for ai in ais:
+                    ops, nps = self._transfer_analysis_to(dest, src, ai.runid)
+                    repo.add_paths(ops)
+                    destrepo.add_paths(nps)
+
+                    # update database
+                    dbai = self.db.get_analysis_uuid(ai.uuid)
+                    for ri in dbai.repository_associations:
+                        if ri.repository == src:
+                            ri.repository = dest
+
+            # commit src changes
+            repo.commit('Transferred analyses to {}'.format(dest))
+            dest.commit('Transferred analyses from {}'.format(src))
+
+    def _transfer_analysis_to(self, dest, src, rid):
+        p = analysis_path(rid, src)
+        np = analysis_path(rid, dest)
+
+        obj = dvc_load(p)
+        obj['repository_identifier'] = dest
+        dvc_dump(obj, p)
+
+        ops = [p]
+        nps = [np]
+
+        shutil.move(p, np)
+
+        for modifier in ('baselines', 'blanks', 'extraction',
+                         'intercepts', 'icfactors', 'peakcenter', '.data'):
+            p = analysis_path(rid, src, modifier=modifier)
+            np = analysis_path(rid, dest, modifier=modifier)
+            shutil.move(p, np)
+            ops.append(p)
+            nps.append(np)
+
+        return ops, nps
+
+    def get_flux(self, irrad, level, pos):
+        j, lambda_k = self.meta_repo.get_flux(irrad, level, pos)
+        return j
+
+    def freeze_flux(self, ans):
+        self.info('freeze flux')
+
+        def ai_gen():
+            key = lambda x: x.irradiation
+            lkey = lambda x: x.level
+            rkey = lambda x: x.repository_identifier
+
+            for irrad, ais in groupby(sorted(ans, key=key), key=key):
+                for level, ais in groupby(sorted(ais, key=lkey), key=lkey):
+                    p = self.get_level_path(irrad, level)
+                    obj = dvc_load(p)
+                    for repo, ais in groupby(sorted(ais, key=rkey), key=rkey):
+                        yield repo, irrad, level, {ai.irradiation_position: obj[ai.irradiation_position] for ai in ais}
+
+        added = []
+
+        def func(x, prog, i, n):
+            repo, irrad, level, d = x
+            if prog:
+                prog.change_message('Freezing Flux {}{} Repository={}'.format(irrad, level, repo))
+
+            root = os.path.join(paths.repository_dataset_dir, repo, 'flux', irrad)
+            r_mkdir(root)
+
+            p = os.path.join(root, level)
+            if os.path.isfile(p):
+                dd = dvc_load(p)
+                dd.update(d)
+
+            dvc_dump(d, p)
+            added.append((repo, p))
+
+        progress_loader(ai_gen(), func, threshold=1)
+
+        self._commit_freeze(added, '<FLUX_FREEZE>')
+
+    def freeze_production_ratios(self, ans):
+        self.info('freeze production ratios')
+
+        def ai_gen():
+            key = lambda x: x.irradiation
+            lkey = lambda x: x.level
+            for irrad, ais in groupby(sorted(ans, key=key), key=key):
+                for level, ais in groupby(sorted(ais, key=lkey), key=lkey):
+                    pr = self.meta_repo.get_production(irrad, level)
+                    for ai in ais:
+                        yield pr, ai
+
+        added = []
+
+        def func(x, prog, i, n):
+            pr, ai = x
+            if prog:
+                prog.change_message('Freezing Production {}'.format(ai.runid))
+
+            p = analysis_path(ai.runid, ai.repository_identifier, 'productions', mode='w')
+            pr.dump(path=p)
+            added.append((ai.repository_identifier, p))
+
+        progress_loader(ai_gen(), func, threshold=1)
+        self._commit_freeze(added, '<PR_FREEZE>')
+
+    def _commit_freeze(self, added, msg):
+        key = lambda x: x[0]
+        rr = sorted(added, key=key)
+        for repo, ps in groupby(rr, key=key):
+            rm = GitRepoManager()
+            rm.open_repo(repo, paths.repository_dataset_dir)
+            rm.add_paths(ps)
+            rm.smart_pull()
+            rm.commit(msg)
 
     # database
     # analysis manual edit
@@ -266,6 +351,9 @@ class DVC(Loggable):
     #     return self._manual_edit(runid, experiment_identifier, values, errors, 'baselines')
 
     def manual_edit(self, runid, repository_identifier, values, errors, modifier):
+        self.debug('manual edit {} {} {}'.format(runid, repository_identifier, modifier))
+        self.debug('values {}'.format(values))
+        self.debug('errors {}'.format(errors))
         path = analysis_path(runid, repository_identifier, modifier=modifier)
         with open(path, 'r') as rfile:
             obj = json.load(rfile)
@@ -393,27 +481,41 @@ class DVC(Loggable):
 
         return progress_loader(ias, func, step=25)
 
+    def get_analysis(self, uuid):
+        with self.db.session_ctx():
+            an = self.db.get_analysis_uuid(uuid)
+            if an:
+                # [rii for ri in refs for rii in ri.record_views]
+                return self.make_analyses(an.record_views)
+
+    def make_analysis(self, record, *args, **kw):
+        a = self.make_analyses((record,), *args, **kw)
+        if a:
+            return a[0]
+
     def make_analyses(self, records, calculate_f_only=False):
         if not records:
             return
 
+        globalv.active_analyses = records
         # load repositories
         exps = {r.repository_identifier for r in records}
-        if self.pulled_repositories:
-            exps = exps - self.pulled_repositories
+        # if self.pulled_repositories:
+        #     exps = exps - self.pulled_repositories
+        #
+        #     self.pulled_repositories.union(exps)
+        # else:
+        #     self.pulled_repositories = exps
 
-            self.pulled_repositories.union(exps)
-        else:
-            self.pulled_repositories = exps
+        for ei in exps:
+            self.sync_repo(ei)
 
         st = time.time()
 
         make_record = self._make_record
-        meta_repo = self.meta_repo
 
         def func(*args):
-            return make_record(meta_repo=meta_repo,
-                               calculate_f_only=calculate_f_only, *args)
+            return make_record(calculate_f_only=calculate_f_only, *args)
 
         ret = progress_loader(records, func, threshold=1, step=25)
         et = time.time() - st
@@ -421,21 +523,6 @@ class DVC(Loggable):
 
         self.debug('Make analysis time, total: {}, n: {}, average: {}'.format(et, n, et / float(n)))
         return ret
-
-    # adders db
-    # def add_analysis(self, **kw):
-    #     with self.db.session_ctx():
-    #         self.db.add_material(**kw)
-
-    # updaters
-    # def update_chronology(self, name, doses):
-    # self.meta_repo.update_chronology(name, doses)
-    #
-    # def update_scripts(self, name, path):
-    # self.meta_repo.update_scripts(name, path)
-    #
-    # def update_experiment_queue(self, name, path):
-    #     self.meta_repo.update_experiment_queue(name, path)
 
     # repositories
     def repository_add_paths(self, repository_identifier, paths):
@@ -448,39 +535,45 @@ class DVC(Loggable):
         repo.commit(msg)
 
     def remote_repositories(self, attributes=None):
-        org = self._organization_factory()
-        if attributes:
-            return org.repos(attributes)
+        rs = []
+        gs = self.application.get_services(IGitHost)
+        if gs:
+            for gi in gs:
+                ri = gi.get_repository_names(self.organization)
+                rs.extend(ri)
         else:
-            return org.repo_names
+            self.warning_dialog('GitLab or GitHub plugin is required')
+        return rs
 
-    def check_github_connection(self):
-        org = self._organization_factory()
-        try:
-            return org.info is not None
-        except BaseException:
-            pass
+    def check_githost_connection(self):
+        git_service = self.application.get_service(IGitHost)
+        return git_service.test_connection(self.organization)
 
     def make_url(self, name):
-        return make_remote_url(self.organization, name)
+        git_service = self.application.get_service(IGitHost)
+        return git_service.make_url(name, self.organization)
 
     def git_session_ctx(self, repository_identifier, message):
         return GitSessionCTX(self, repository_identifier, message)
 
-    def sync_repo(self, name):
+    def sync_repo(self, name, use_progress=True):
         """
         pull or clone an repo
 
         """
         root = os.path.join(paths.repository_dataset_dir, name)
         exists = os.path.isdir(os.path.join(root, '.git'))
+        self.debug('sync repository {}. exists={}'.format(name, exists))
 
         if exists:
             repo = self._get_repository(name)
-            repo.pull()
+            repo.pull(use_progress=use_progress)
         else:
-            url = self.make_url(name)
-            GitRepoManager.clone_from(url, root)
+            self.debug('getting repository from remote')
+            names = self.remote_repositories()
+            if name in names:
+                service = self.application.get_service(IGitHost)
+                service.clone_from(name, root, self.organization)
 
         return True
 
@@ -504,6 +597,16 @@ class DVC(Loggable):
                                    head.message)
         self.information_dialog(msg)
 
+    def push_repository(self, repo):
+        self.debug('push repository {}'.format(repo))
+        for gi in self.application.get_services(IGitHost):
+            self.debug('pushing to remote={}, url={}'.format(gi.default_remote_name, gi.remote_url))
+            repo.push(remote=gi.default_remote_name)
+
+    def push_repositories(self, changes):
+        for gi in self.application.get_services(IGitHost):
+            push_repositories(changes, gi.default_remote_name)
+
     # IDatastore
     def get_greatest_aliquot(self, identifier):
         return self.db.get_greatest_aliquot(identifier)
@@ -518,6 +621,9 @@ class DVC(Loggable):
         return self.db.connect(*args, **kw)
 
     # meta repo
+    def update_flux(self, *args, **kw):
+        self.meta_repo.update_flux(*args, **kw)
+
     def set_identifier(self, *args):
         self.meta_repo.set_identifier(*args)
 
@@ -526,7 +632,7 @@ class DVC(Loggable):
         self.meta_commit('updated chronology for {}'.format(name))
 
     def meta_pull(self, **kw):
-        self.meta_repo.smart_pull(**kw)
+        return self.meta_repo.smart_pull(**kw)
 
     def meta_push(self):
         self.meta_repo.push()
@@ -543,6 +649,9 @@ class DVC(Loggable):
             self.meta_repo.clear_cache = True
         else:
             self.debug('no changes to meta repo')
+
+    def add_production(self, irrad, name, prod):
+        self.meta_repo.add_production_to_irradiation(irrad, name, prod)
 
     # get
     def get_local_repositories(self):
@@ -601,52 +710,89 @@ class DVC(Loggable):
         db = self.db
         with db.session_ctx():
             dban = db.get_analysis_uuid(runspec.uuid)
-            for e in dban.repository_associations:
-                if e.repository == expid:
-                    break
+            if dban:
+                for e in dban.repository_associations:
+                    if e.repository == expid:
+                        break
+                else:
+                    db.add_repository_association(expid, dban)
+
+                src_expid = runspec.repository_identifier
+                if src_expid != expid:
+                    repo = self._get_repository(expid)
+
+                    for m in PATH_MODIFIERS:
+                        src = analysis_path(runspec.record_id, src_expid, modifier=m)
+                        dest = analysis_path(runspec.record_id, expid, modifier=m, mode='w')
+
+                        shutil.copyfile(src, dest)
+                        repo.add(dest, commit=False)
+                    repo.commit('added repository association')
             else:
-                db.add_repository_association(expid, dban)
-
-            src_expid = runspec.repository_identifier
-            if src_expid != expid:
-                repo = self._get_repository(expid)
-
-                for m in PATH_MODIFIERS:
-                    src = analysis_path(runspec.record_id, src_expid, modifier=m)
-                    dest = analysis_path(runspec.record_id, expid, modifier=m, mode='w')
-
-                    shutil.copyfile(src, dest)
-                    repo.add(dest, commit=False)
-                repo.commit('added repository association')
+                self.warning('{} not in the database {}'.format(runspec.runid, self.db.name))
 
     def add_measured_position(self, *args, **kw):
         with self.db.session_ctx():
             self.db.add_measured_position(*args, **kw)
 
-    def add_material(self, name):
-        with self.db.session_ctx():
-            self.db.add_material(name)
+    def add_material(self, name, grainsize=None):
+        db = self.db
+        added = False
+        with db.session_ctx():
+            if not db.get_material(name, grainsize):
+                added = True
+                db.add_material(name, grainsize)
 
-    def add_sample(self, name, project, material):
-        with self.db.session_ctx():
-            self.db.add_sample(name, project, material)
+        return added
 
-    def add_irradiation_position(self, irrad, level, pos, identifier=None):
-        with self.db.session_ctx():
-            dbip = self.db.add_irradiation_position(irrad, level, pos, identifier)
-            # self.db.commit()
+    def add_project(self, name, pi=None):
+        added = False
+        db = self.db
+        with db.session_ctx():
+            if not db.get_project(name, pi):
+                added = True
+                db.add_project(name, pi)
+        return added
 
-            self.meta_repo.add_position(irrad, level, pos)
-            return dbip
+    def add_sample(self, name, project, material, grainsize=None):
+        added = False
+        db = self.db
+        with db.session_ctx():
+            if not db.get_sample(name, project, material, grainsize):
+                added = True
+                db.add_sample(name, project, material, grainsize)
+        return added
 
-    def add_irradiation_level(self, name, irradiation, holder, production_name):
+    def add_principal_investigator(self, name):
+        added = False
+        db = self.db
+        with db.session_ctx():
+            if not db.get_principal_investigator(name):
+                db.add_principal_investigator(name)
+                added = True
+        return added
+
+    def add_irradiation_position(self, irrad, level, pos, identifier=None, **kw):
+        db = self.db
+        added = False
+        with db.session_ctx():
+            if not db.get_irradiation_position(irrad, level, pos):
+                db.add_irradiation_position(irrad, level, pos, identifier, **kw)
+                self.meta_repo.add_position(irrad, level, pos)
+                added = True
+        return added
+
+    def add_irradiation_level(self, name, irradiation, holder, production_name, **kw):
+        added = False
         with self.db.session_ctx():
-            self.db.add_irradiation_level(name, irradiation, holder, production_name)
-            # self.db.commit()
+            dblevel = self.get_irradiation_level(irradiation, name)
+            if dblevel is None:
+                added = True
+                self.db.add_irradiation_level(name, irradiation, holder, production_name, **kw)
 
         self.meta_repo.add_level(irradiation, name)
         self.meta_repo.update_level_production(irradiation, name, production_name)
-        return True
+        return added
 
     def clone_repository(self, identifier):
         root = os.path.join(paths.repository_dataset_dir, identifier)
@@ -657,29 +803,48 @@ class DVC(Loggable):
         else:
             self.debug('{} already exists'.format(identifier))
 
-    def add_repository(self, identifier, principal_investigator):
+    def add_repository(self, identifier, principal_investigator, inform=True):
         self.debug('trying to add repository identifier={}, pi={}'.format(identifier, principal_investigator))
-        org = self._organization_factory()
-        if identifier in org.repo_names:
-            self.warning_dialog('Repository "{}" already exists'.format(identifier))
+
+        root = os.path.join(paths.repository_dataset_dir, identifier)
+        if os.path.isdir(root):
+            self.debug('already a directory {}'.format(identifier))
+            return
+
+        names = self.remote_repositories()
+        if identifier in names:
+            # make sure also in the database
+            self.db.add_repository(identifier, principal_investigator)
+
+            if inform:
+                self.warning_dialog('Repository "{}" already exists'.format(identifier))
+            return True
+
         else:
-            root = os.path.join(paths.repository_dataset_dir, identifier)
-
             if os.path.isdir(root):
-                self.warning_dialog('{} already exists.'.format(root))
-            else:
-                self.info('Creating repository. {}'.format(identifier))
-                # with open('/Users/ross/Programming/githubauth.txt') as rfile:
-                #     usr = rfile.readline().strip()
-                #     pwd = rfile.readline().strip()
-
-                org.create_repo(identifier, self.github_user, self.github_password,
-                                auto_init=True)
-
-                # url = '{}/{}/{}.git'.format(paths.git_base_origin, self.organization, identifier)
-                Repo.clone_from(self.make_url(identifier), root)
                 self.db.add_repository(identifier, principal_investigator)
-                return True
+                if inform:
+                    self.warning_dialog('{} already exists.'.format(root))
+            else:
+                gs = self.application.get_services(IGitHost)
+                ret = False
+                for i, gi in enumerate(gs):
+                    self.info('Creating repository at {}. {}'.format(gi.name, identifier))
+
+                    if gi.create_repo(identifier, organization=self.organization, auto_init=True):
+                        ret = True
+                        if self.default_team:
+                            gi.set_team(self.default_team, self.organization, identifier,
+                                        permission='push')
+
+                        url = gi.make_url(identifier, self.organization)
+                        if i == 0:
+                            repo = Repo.clone_from(url, root)
+                            self.db.add_repository(identifier, principal_investigator)
+                        else:
+                            repo.create_remote(gi.default_remote_name or 'origin', url)
+
+                return ret
 
     def add_irradiation(self, name, doses=None, add_repo=False, principal_investigator=None):
         with self.db.session_ctx():
@@ -701,6 +866,8 @@ class DVC(Loggable):
 
         if add_repo and principal_investigator:
             self.add_repository('Irradiation-{}'.format(name), principal_investigator)
+
+        return True
 
     def add_load_holder(self, name, path_or_txt):
         with self.db.session_ctx():
@@ -729,12 +896,10 @@ class DVC(Loggable):
     def _load_repository(self, expid, prog, i, n):
         if prog:
             prog.change_message('Loading repository {}. {}/{}'.format(expid, i, n))
-            # repo = GitRepoManager()
-            # repo.open_repo(expid, root=paths.experiment_dataset_dir)
-
         self.sync_repo(expid)
 
-    def _make_record(self, record, prog, i, n, meta_repo=None, calculate_f=False, calculate_f_only=False):
+    def _make_record(self, record, prog, i, n, calculate_f_only=False):
+        meta_repo = self.meta_repo
         if prog:
             prog.change_message('Loading analysis {}. {}/{}'.format(record.record_id, i, n))
 
@@ -758,28 +923,41 @@ class DVC(Loggable):
         if isinstance(record, DVCAnalysis):
             a = record
         else:
+            self.debug('use_repo_suffix={} record_id={}'.format(record.use_repository_suffix, record.record_id))
             try:
-                a = DVCAnalysis(record.record_id, expid)
+                rid = record.record_id
+                if record.use_repository_suffix:
+                    rid = '-'.join(rid.split('-')[:-1])
+
+                a = DVCAnalysis(rid, expid)
             except AnalysisNotAnvailableError:
-                self.info('Analysis {} not available. Trying to clone repository "{}'.format(record.record_id, expid))
-                self.sync_repo(expid)
+                self.info('Analysis {} not available. Trying to clone repository "{}"'.format(rid, expid))
                 try:
-                    a = DVCAnalysis(record.record_id, expid)
+                    self.sync_repo(expid)
+                except CredentialException:
+                    self.warning_dialog('Invalid credentials for GitHub/GitLab')
+                    return
+
+                try:
+                    a = DVCAnalysis(rid, expid)
                 except AnalysisNotAnvailableError:
-                    self.warning_dialog('Analysis {} not in repository {}'.format(record.record_id, expid))
+                    self.warning_dialog('Analysis {} not in repository {}'.format(rid, expid))
                     return
 
             # get repository branch
             a.branch = get_repository_branch(os.path.join(paths.repository_dataset_dir, expid))
-
-            a.set_tag(record.tag)
-
+            # a.set_tag(record.tag)
+            self.debug('Irradiation {}'.format(a.irradiation))
             # load irradiation
             if a.irradiation and a.irradiation not in ('NoIrradiation',):
                 chronology = meta_repo.get_chronology(a.irradiation)
                 a.set_chronology(chronology)
 
-                pname, prod = meta_repo.get_production(a.irradiation, a.irradiation_level)
+                frozen_production = self._get_frozen_production(rid, a.repository_identifier)
+                if frozen_production:
+                    pname, prod = frozen_production.name, frozen_production
+                else:
+                    pname, prod = meta_repo.get_production(a.irradiation, a.irradiation_level)
                 a.set_production(pname, prod)
 
                 j, lambda_k = meta_repo.get_flux(record.irradiation, record.irradiation_level,
@@ -794,14 +972,16 @@ class DVC(Loggable):
                     a.calculate_age()
         return a
 
-    def _organization_factory(self):
-        org = Organization(self.organization,
-                           usr=self.github_user,
-                           pwd=self.github_password)
-        return org
+    def _get_frozen_production(self, rid, repo):
+        path = analysis_path(rid, repo, 'productions')
+        if path:
+            return Production(path)
 
-    def _get_repository(self, repository_identifier):
-        repo = self.current_repository
+    def _get_repository(self, repository_identifier, as_current=True):
+        repo = None
+        if as_current:
+            repo = self.current_repository
+
         path = repository_path(repository_identifier)
 
         if repo is None or repo.path != path:
@@ -809,14 +989,15 @@ class DVC(Loggable):
             repo = GitRepoManager()
             repo.path = path
             repo.open_repo(path)
-            self.current_repository = repo
+            if as_current:
+                self.current_repository = repo
 
         return repo
 
     def _bind_preferences(self):
 
         prefid = 'pychron.dvc'
-        for attr in ('meta_repo_name', 'organization', 'github_user', 'github_password', 'default_team'):
+        for attr in ('meta_repo_name', 'organization', 'default_team'):
             bind_preference(self, attr, '{}.{}'.format(prefid, attr))
 
         prefid = 'pychron.dvc.db'

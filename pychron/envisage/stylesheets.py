@@ -33,7 +33,7 @@ QGroupBox::title {subcontrol-origin: margin;
                   subcontrol-position: top left; /* position at the top center */
                   padding: 2 3px;}
 QComboBox {font-size: 14px}
-QLabel {font-size: 14px}
+QLabel {font-size: 15px}
 QToolBox::tab {font-size: 15px}
 QToolTip {font-size: 14px}''',
                        'labnumber_entry': '''QLineEdit {font-size: 10px}

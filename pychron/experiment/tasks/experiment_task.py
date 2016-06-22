@@ -35,14 +35,15 @@ from pychron.experiment.experiment_launch_history import update_launch_history
 from pychron.experiment.experimentor import Experimentor
 from pychron.experiment.queue.base_queue import extract_meta
 from pychron.experiment.tasks.experiment_editor import ExperimentEditor, UVExperimentEditor
-from pychron.experiment.tasks.experiment_panes import LoggerPane, ExplanationPane
+from pychron.experiment.utilities.save_dialog import ExperimentSaveDialog
 from pychron.experiment.utilities.identifier import convert_extract_device, is_special
+from pychron.furnace.ifurnace_manager import IFurnaceManager
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.paths import paths
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pychron_constants import SPECTROMETER_PROTOCOL
 from pychron.experiment.tasks.experiment_panes import ExperimentFactoryPane, StatsPane, \
-    ControlsPane, IsotopeEvolutionPane, ConnectionStatusPane
+    ControlsPane, IsotopeEvolutionPane, ConnectionStatusPane, LoggerPane, ExplanationPane
 from pychron.envisage.tasks.wait_pane import WaitPane
 
 
@@ -126,7 +127,7 @@ class ExperimentEditorTask(EditorTask):
 
             dnames = None
             spec = self.application.get_service(
-                    'pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager')
+                'pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager')
             if spec:
                 dnames = spec.spectrometer.detector_names
 
@@ -146,6 +147,40 @@ class ExperimentEditorTask(EditorTask):
         ex.end_at_run_completion = False
         ex.set_extract_state('')
 
+    def sync_queue(self):
+        """
+        sync queue to database
+        """
+        if not self.has_active_editor():
+            return
+        queue = self.active_editor.queue
+        ms = queue.mass_spectrometer
+        ed = queue.extract_device
+        for i, ai in enumerate(queue.automated_runs):
+            if ai.skip or ai.is_special():
+                continue
+
+            kw = {'identifier': ai.identifier, 'position': ai.position,
+                  'mass_spectrometer': ms,
+                  'extract_device': ed}
+            if ai.is_step_heat():
+                kw['aliquot'] = ai.aliquot
+                kw['extract_value'] = ai.extract_value
+
+            self.debug('checking {}/{}. attr={}'.format(i, ai.runid, kw))
+            aa = self.manager.get_analysis(**kw)
+            if aa is None:
+                self.debug('----- not found')
+                break
+
+        if i:
+            if i == len(queue.automated_runs) - 1:
+                self.information_dialog('All Analyses from this experiment have been run')
+            else:
+                queue.automated_runs = queue.automated_runs[i:]
+        else:
+            self.information_dialog('No Analyses from this experiment have been run')
+
     def _assemble_state_colors(self):
         colors = {}
         for c in ('success', 'extraction', 'measurement', 'canceled', 'truncated',
@@ -163,7 +198,7 @@ class ExperimentEditorTask(EditorTask):
             if manager.load():
                 self.manager.experiment_factory.activate(load_persistence=True)
 
-                editor = ExperimentEditor()
+                editor = ExperimentEditor(application=self.application)
                 editor.setup_tabular_adapters(self.bgcolor, self.even_bgcolor, self._assemble_state_colors())
                 editor.new_queue()
 
@@ -191,6 +226,14 @@ class ExperimentEditorTask(EditorTask):
         if self.use_notifications:
             self.notifier.close()
 
+        manager = self.application.get_service(IFurnaceManager)
+        if manager:
+            for window in self.application.windows:
+                if 'furnace' in window.active_task.id:
+                    break
+            else:
+                manager.stop_update()
+
             # del manager. fixes problem of multiple experiments being started
             # closed tasks were still receiving execute_event(s)
             # del self.manager
@@ -217,9 +260,13 @@ class ExperimentEditorTask(EditorTask):
         color_bind_preference(self, 'even_bgcolor', 'pychron.experiment.even_bg_color')
 
     def activated(self):
-
         self.bind_preferences()
         super(ExperimentEditorTask, self).activated()
+
+        manager = self.application.get_service(IFurnaceManager)
+        if manager:
+            manager.start_update()
+
 
     def create_dock_panes(self):
 
@@ -260,6 +307,11 @@ class ExperimentEditorTask(EditorTask):
 
         panes = self._add_canvas_pane(panes)
 
+        manager = self.application.get_service(IFurnaceManager)
+        if manager:
+            from pychron.experiment.tasks.experiment_panes import ExperimentFurnacePane
+            fpane = ExperimentFurnacePane(model=manager)
+            panes.append(fpane)
         # app = self.window.application
         # man = app.get_service('pychron.lasers.laser_managers.ilaser_manager.ILaserManager')
         # if man:
@@ -312,7 +364,7 @@ class ExperimentEditorTask(EditorTask):
             ps = name.split('.')
             nname = '{}.txt'.format('.'.join(ps[:-2]))
             msg = 'Rename {} as {}'.format(name, nname)
-            if self.confirmation_dialog(message=msg):
+            if self.confirmation_dialog(msg):
                 reopen_editor = True
                 npath = os.path.join(paths.experiment_dir, nname)
 
@@ -332,12 +384,14 @@ class ExperimentEditorTask(EditorTask):
 
             klass = UVExperimentEditor if is_uv else ExperimentEditor
             editor = klass(path=path,
+                           application=self.application,
                            automated_runs_editable=self.automated_runs_editable)
             editor.setup_tabular_adapters(self.bgcolor, self.even_bgcolor, self._assemble_state_colors())
             editor.new_queue(txt)
             self._open_editor(editor)
         else:
             self.debug('{} already open. using existing editor'.format(name))
+            editor.application = self.application
             self.activate_editor(editor)
 
         # loading queue editor set dirty
@@ -404,10 +458,17 @@ class ExperimentEditorTask(EditorTask):
             self.manager.reset_run_generator()
             return True
 
+    def _get_save_path(self, default_filename=None, **kw):
+        sd = ExperimentSaveDialog(root=paths.experiment_dir,
+                                  name=default_filename or '')
+        info = sd.edit_traits()
+        if info.result:
+            return sd.path
+
     def _generate_default_filename(self):
         name = self.active_editor.queue.load_name
         if name:
-            return 'Load {}.txt'.format(name)
+            return 'Load{}.txt'.format(name)
 
     def _publish_notification(self, run):
         if self.use_notifications:
@@ -735,15 +796,16 @@ class ExperimentEditorTask(EditorTask):
         plugin = ip.get_plugin('Experiment', category='general')
         mode = ip.get_parameter(plugin, 'mode')
 
-        experimentor = Experimentor(application=self.application, mode=mode)
-
         proto = 'pychron.database.isotope_database_manager.IsotopeDatabaseManager'
         iso_db_man = self.application.get_service(proto)
-        experimentor.iso_db_man = iso_db_man
+        # experimentor.iso_db_man = iso_db_man
 
         proto = 'pychron.dvc.dvc.DVC'
         dvc = self.application.get_service(proto)
-        experimentor.dvc = dvc
+        # experimentor.dvc = dvc
+
+        experimentor = Experimentor(application=self.application,
+                                    mode=mode, dvc=dvc, iso_db_man=iso_db_man)
 
         experimentor.executor.set_managers()
         experimentor.executor.bind_preferences()
@@ -768,21 +830,21 @@ class ExperimentEditorTask(EditorTask):
 
     def _default_layout_default(self):
         return TaskLayout(
-                left=Splitter(
-                        PaneItem('pychron.wait', height=100),
-                        Tabbed(
-                                PaneItem('pychron.experiment.factory'),
-                                PaneItem('pychron.experiment.isotope_evolution')),
-                        orientation='vertical'),
-                right=Splitter(
-                        Tabbed(
-                                PaneItem('pychron.experiment.stats'),
-                                PaneItem('pychron.console', height=425),
-                                PaneItem('pychron.experiment.explanation', height=425),
-                                PaneItem('pychron.experiment.connection_status')),
-                        PaneItem('pychron.extraction_line.canvas_dock'),
-                        orientation='vertical'),
-                top=PaneItem('pychron.experiment.controls'))
+            left=Splitter(
+                PaneItem('pychron.wait', height=100),
+                Tabbed(
+                    PaneItem('pychron.experiment.factory'),
+                    PaneItem('pychron.experiment.isotope_evolution')),
+                orientation='vertical'),
+            right=Splitter(
+                Tabbed(
+                    PaneItem('pychron.experiment.stats'),
+                    PaneItem('pychron.console', height=425),
+                    PaneItem('pychron.experiment.explanation', height=425),
+                    PaneItem('pychron.experiment.connection_status')),
+                PaneItem('pychron.extraction_line.canvas_dock'),
+                orientation='vertical'),
+            top=PaneItem('pychron.experiment.controls'))
 
         # ============= EOF =============================================
         # def _use_syslogger_changed(self):

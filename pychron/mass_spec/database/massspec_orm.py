@@ -18,10 +18,11 @@
 # =============enthought library imports=======================
 
 # =============standard library imports ========================
+
 import os
 
 from sqlalchemy import Column, Integer, Float, String, \
-    ForeignKey, DateTime, Date, BLOB
+    ForeignKey, DateTime, Date, BLOB, Enum, TIMESTAMP
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relation, relationship
 from sqlalchemy.sql.expression import func
@@ -37,14 +38,15 @@ DBVERSION = float(os.environ.get('MassSpecDBVersion', 16.3))
 class AnalysesChangeableItemsTable(Base):
     __tablename__ = 'AnalysesChangeableItemsTable'
     ChangeableItemsID = Column(Integer, primary_key=True)
-    AnalysisID = Column(Integer, ForeignKey('AnalysesTable.AnalysisID'))
-    DataReductionSessionID = Column(Integer, ForeignKey('datareductionsessiontable.DataReductionSessionID'))
+    # AnalysisID = Column(Integer, ForeignKey('AnalysesTable.AnalysisID'))
+    DataReductionSessionID = Column(Integer, ForeignKey('DataReductionSessionTable.DataReductionSessionID'))
     History = Column(String, default='')
     StatusReason = Column(Integer, default=0)
     StatusLevel = Column(Integer, default=0)
     SignalNormalizationFactor = Column(Float, default=1)
     PreferencesSetID = Column(Integer, ForeignKey('PreferencesTable.PreferencesSetID'))
     Comment = Column(String(255))
+    analyses = relationship('AnalysesTable', backref='changeable')
 
 
 class AnalysisPositionTable(Base):
@@ -90,8 +92,8 @@ class AnalysesTable(Base):
     if DBVERSION >= 16.3:
         RedundantUserID = Column(Integer, ForeignKey('UserTable.UserID'))
 
-    SampleLoadingID = Column(Integer, ForeignKey('sampleloadingtable.SampleLoadingID'))
-    ChangeableItemsID = Column(Integer, default=0)
+    SampleLoadingID = Column(Integer, ForeignKey('SampleLoadingTable.SampleLoadingID'))
+    ChangeableItemsID = Column(Integer, ForeignKey('AnalysesChangeableItemsTable.ChangeableItemsID'), default=0)
 
     LastSaved = Column(DateTime)
     RunDateTime = Column(DateTime)
@@ -107,12 +109,12 @@ class AnalysesTable(Base):
 
     PipettedIsotopes = Column(BLOB)
 
-    isotopes = relation('IsotopeTable', backref='AnalysesTable')
-    araranalyses = relation('ArArAnalysisTable')
+    isotopes = relationship('IsotopeTable', backref='AnalysesTable')
+    araranalyses = relationship('ArArAnalysisTable', order_by='asc(ArArAnalysisTable.LastSaved)')
     #    araranalyses = relation('ArArAnalysisTable', backref='AnalysesTable')
-    changeable = relationship('AnalysesChangeableItemsTable',
-                              backref='AnalysesTable',
-                              uselist=False)
+    # changeable = relationship('AnalysesChangeableItemsTable',
+    #                           backref='AnalysesTable',
+    #                           uselist=False)
     positions = relationship('AnalysisPositionTable')
     runscript = relationship('RunScriptTable', uselist=False)
 
@@ -125,7 +127,7 @@ class ArArAnalysisTable(Base):
     __tablename__ = 'ArArAnalysisTable'
     #    AnalysisID = Column(Integer, primary_key=True)
     AnalysisID = Column(Integer, ForeignKey('AnalysesTable.AnalysisID'))
-    DataReductionSessionID = Column(Integer)
+    DataReductionSessionID = Column(Integer, primary_key=True)
     JVal = doublecolumn()  # Column(Float, default=0)
     JEr = doublecolumn()  # Column(Float, default=0)
     Tot40 = doublecolumn()
@@ -140,26 +142,45 @@ class ArArAnalysisTable(Base):
     Tot37Er = doublecolumn()
     Tot36Er = doublecolumn()
 
-    Age = doublecolumn(primary_key=True)
+    Age = doublecolumn()
     ErrAge = doublecolumn()
     ErrAgeWOErInJ = doublecolumn()
     PctRad = doublecolumn()
     PctRadEr = doublecolumn()
 
+    Rad4039 = doublecolumn()
+    Rad4039Er = doublecolumn()
+
+    R3639Cor = doublecolumn()
+    ErR3639 = doublecolumn()
+    R3739Cor = doublecolumn()
+    ErR3739Cor = doublecolumn()
+    R3839Cor = doublecolumn()
+    ErR3839 = doublecolumn()
+    R4039Cor = doublecolumn()
+    ErR4039 = doublecolumn()
+
+    ClOverK = doublecolumn()
+    ClOverKEr = doublecolumn()
+    CaOverK = doublecolumn()
+    CaOverKEr = doublecolumn()
+
+    Cl3839 = doublecolumn()
+    LastSaved = Column(TIMESTAMP)
+
 
 class BaselinesChangeableItemsTable(Base):
-    __tablename__ = 'baselineschangeableitemstable'
+    __tablename__ = 'BaselinesChangeableItemsTable'
     BslnID = Column(Integer, primary_key=True)
-    #    BslnID = Column(Integer, index=True)
-    #    BslnID = ForeignKey('baselinestable.BslnID')
-    #    BslnID = Column(Integer, ForeignKey('baselinestable.BslnID'), primary_key=True)
-    Fit = Column(Integer, ForeignKey('fittypetable.Fit'))
+    LastSaved = Column(TIMESTAMP)
+    Fit = Column(Integer, ForeignKey('FitTypeTable.Fit'))
     DataReductionSessionID = Column(Integer)
     InfoBlob = Column(BLOB)
+    PDPBlob = Column(BLOB)
 
 
 class BaselinesTable(Base):
-    __tablename__ = 'baselinestable'
+    __tablename__ = 'BaselinesTable'
     BslnID = Column(Integer, primary_key=True)
     Label = Column(String(40))
     NumCnts = Column(Integer)
@@ -170,12 +191,12 @@ class BaselinesTable(Base):
 # changeable_item = relationship('baselineschangeableitemstable', uselist=False)
 
 class DatabaseVersionTable(Base):
-    __tablename__ = 'databaseversiontable'
+    __tablename__ = 'DatabaseVersionTable'
     Version = Column(Float, primary_key=True)
 
 
 class DataReductionSessionTable(Base):
-    __tablename__ = 'datareductionsessiontable'
+    __tablename__ = 'DataReductionSessionTable'
     DataReductionSessionID = Column(Integer, primary_key=True)
     SessionDate = Column(DateTime)
     # changeable_items = relationship('AnalysesChangeableItemsTable')
@@ -274,7 +295,7 @@ class IrradiationProductionTable(Base):
 
 
 class IrradiationChronologyTable(Base):
-    __tablename__ = 'irradiationchronologytable'
+    __tablename__ = 'IrradiationChronologyTable'
     IrradBaseID = Column(String(80), primary_key=True)
     StartTime = Column(DateTime, primary_key=True)
     EndTime = Column(DateTime, primary_key=True)
@@ -306,7 +327,7 @@ class IsotopeResultsTable(Base):
     BkgdDetTypeID = Column(Integer)
     PkHtChangePct = Column(Float)
     #    Fit = Column(Integer)
-    Fit = Column(Integer, ForeignKey('fittypetable.Fit'))
+    Fit = Column(Integer, ForeignKey('FitTypeTable.Fit'))
 
     GOF = Column(Float)
     # PeakScaleFactor = Column(Float)
@@ -325,7 +346,7 @@ class IsotopeTable(Base):
     NCyc = Column(Integer, nullable=True)
     # CycleStartIndexList
     # CycleStartIndexblob
-    BslnID = Column(Integer, ForeignKey('baselinestable.BslnID'))
+    BslnID = Column(Integer, ForeignKey('BaselinesTable.BslnID'))
     RatNumerator = Column(Integer, nullable=True)
     RatDenominator = Column(Integer, nullable=True)
     HallProbeAtStartOfRun = Column(Float, nullable=True)
@@ -338,7 +359,7 @@ class IsotopeTable(Base):
 
 
 class FittypeTable(Base):
-    __tablename__ = 'fittypetable'
+    __tablename__ = 'FitTypeTable'
     Fit = Column(Integer, primary_key=True)
     Label = Column(String(40))
     results = relationship('IsotopeResultsTable', backref='fit')
@@ -352,14 +373,14 @@ class FittypeTable(Base):
 class LoginSessionTable(Base):
     __tablename__ = 'LoginSessionTable'
     LoginSessionID = Column(Integer, primary_key=True)
-    SpecSysN = Column(Integer, ForeignKey('machinetable.SpecSysN'))
+    SpecSysN = Column(Integer, ForeignKey('MachineTable.SpecSysN'))
     analyses = relationship('AnalysesTable', backref='login_session')
     UserID = Column(Integer, default=1)
     SessionStart = Column(DateTime, default=func.now())
 
 
 class MachineTable(Base):
-    __tablename__ = 'machinetable'
+    __tablename__ = 'MachineTable'
     SpecSysN = Column(Integer, primary_key=True)
     Label = Column(String(80))
 
@@ -375,10 +396,17 @@ class MaterialTable(Base):
 
 
 class MolecularWeightTable(Base):
-    __tablename__ = 'molarweighttable'
+    __tablename__ = 'MolarWeightTable'
     ID = Column(Integer, primary_key=True)
     Species = Column(String(40))
     AtomicWeight = Column(Float)
+
+
+class PDPTable(Base):
+    __tablename__ = 'PDPTable'
+    IsotopeID = Column(Integer, primary_key=True)
+    LastSaved = Column(TIMESTAMP)
+    PDPBlob = Column(BLOB)
 
 
 class PeakTimeTable(Base):
@@ -392,14 +420,30 @@ class PeakTimeTable(Base):
 class PreferencesTable(Base):
     __tablename__ = 'PreferencesTable'
     PreferencesSetID = Column(Integer, primary_key=True)
-    changeable_items = relationship('AnalysesChangeableItemsTable')
+    DelOutliersAfterFit = Column(Enum)
+    NFilterIter = Column(Integer)
+    OutlierSigmaFactor = Column(Float)
+
+    Lambda40Kepsilon = doublecolumn()
+    Lambda40KepsilonEr = doublecolumn()
+    Lambda40KBeta = doublecolumn()
+    Lambda40KBetaEr = doublecolumn()
+    LambdaAr37 = doublecolumn()
+    LambdaAr39 = doublecolumn()
+    LambdaCl36 = doublecolumn()
+    LambdaAr37Er = doublecolumn()
+    LambdaAr39Er = doublecolumn()
+    LambdaCl36Er = doublecolumn()
+
+    changeable_items = relationship('AnalysesChangeableItemsTable', backref='preferences_set')
 
 
 class ProjectTable(Base):
-    __tablename__ = 'projecttable'
+    __tablename__ = 'ProjectTable'
     ProjectID = Column(Integer, primary_key=True)
     Project = Column(String(40))
     samples = relationship('SampleTable', backref='project')
+    PrincipalInvestigator = Column(String(80))
 
 
 class RunScriptTable(Base):
@@ -415,9 +459,9 @@ class SampleTable(Base):
     SampleID = Column(Integer, primary_key=True)
     Sample = Column(String(40))
 
-    # Project = Column(String(40))  # , ForeignKey('projecttable.Project'))
+    # Project = Column(String(40))  # , ForeignKey('ProjectTable.Project'))
     #    Project = relation('ProjectTable', backref = 'SampleTable')
-    ProjectID = Column(Integer, ForeignKey('projecttable.ProjectID'))
+    ProjectID = Column(Integer, ForeignKey('ProjectTable.ProjectID'))
     Note = Column(String(40), default='NULL')
     AlternateUserID = Column(String(40), default='NULL')
     CollectionDateTime = Column(DateTime, default=func.now())
@@ -432,7 +476,7 @@ class SampleTable(Base):
 
 
 class SampleLoadingTable(Base):
-    __tablename__ = 'sampleloadingtable'
+    __tablename__ = 'SampleLoadingTable'
     SampleLoadingID = Column(Integer, primary_key=True)
     SampleHolder = Column(String(40))
     SpecSysN = Column(Integer)

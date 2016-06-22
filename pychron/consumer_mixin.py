@@ -15,17 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-
+from traits.has_traits import HasTraits
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-
-# from pychron.core.ui.thread import Thread
 import time
 from Queue import Queue, Empty
 from threading import Thread
 
 
-class ConsumerMixin(object):
+class ConsumerMixin(HasTraits):
     _consumer_queue = None
     _should_consume = False
     _consume_func = None
@@ -35,8 +33,10 @@ class ConsumerMixin(object):
     _timeout = 0
     _delay = 0
 
-    def __init__(self, func=None, buftime=None, auto_start=True, main=False, timeout=None, delay=1):
-        self.setup_consumer(func, buftime, auto_start, main, timeout, delay)
+    # def __init__(self, func=None, buftime=None, auto_start=True, main=False, timeout=None, delay=1, *args, **kw):
+    #     super(ConsumerMixin, self).__init__(*args, **kw)
+    #
+    #     self.setup_consumer(func, buftime, auto_start, main, timeout, delay)
 
     def setup_consumer(self, func=None, buftime=None, auto_start=True, main=False, timeout=None, delay=1):
         self._delay = delay  # ms
@@ -46,7 +46,7 @@ class ConsumerMixin(object):
         self._consumer_queue = Queue()
         self._consumer = Thread(target=self._consume,
                                 args=(timeout,),
-                                name='consumer')
+                                name='consumer.{}'.format(self.__class__.__name__))
         self._timeout = timeout
         self._should_consume = True
         if auto_start:
@@ -68,7 +68,7 @@ class ConsumerMixin(object):
         if not self._consumer:
             self._consumer = Thread(target=self._consume,
                                     args=(self._timeout,),
-                                    name='consumer')
+                                    name='consumer.{}'.format(self.__class__.__name__))
         if not self._consumer.isAlive():
             self._consumer.setDaemon(1)
             self._consumer.start()

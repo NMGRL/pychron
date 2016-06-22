@@ -22,7 +22,7 @@ import re
 # ============= local library imports  ==========================
 # from pychron.processing.tasks.browser.browser_task import NCHARS
 # from pychron.database.records.isotope_record import GraphicalRecordView
-from pychron.dvc.dvc import get_review_status
+from pychron.dvc.func import get_review_status
 from pychron.envisage.browser.browser_model import BrowserModel
 from pychron.envisage.browser.find_references_config import FindReferencesConfigModel, FindReferencesConfigView
 from pychron.envisage.browser.analysis_table import AnalysisTable
@@ -44,7 +44,7 @@ class SampleBrowserModel(BrowserModel):
 
     def __init__(self, *args, **kw):
         super(SampleBrowserModel, self).__init__(*args, **kw)
-        prefid = 'pychron.browsing'
+        prefid = 'pychron.browser'
         bind_preference(self.search_criteria, 'recent_hours',
                         '{}.recent_hours'.format(prefid))
         bind_preference(self.search_criteria, 'reference_hours_padding',
@@ -58,8 +58,13 @@ class SampleBrowserModel(BrowserModel):
     # def drop_factory(self, item):
     #     print 'dropadfs', item
     #     return item
+    def dump_browser(self):
+        super(SampleBrowserModel, self).dump_browser()
+        self.analysis_table.dump()
 
     def activated(self, force=False):
+        self.analysis_table.load()
+
         if not self.is_activated or force:
             self.load_browser_options()
             if self.sample_view_active:
@@ -150,9 +155,24 @@ class SampleBrowserModel(BrowserModel):
 
     def dump(self):
         self.time_view_model.dump_filter()
+        self.analysis_table.dump()
         super(SampleBrowserModel, self).dump()
 
+    def add_analysis_set(self):
+        self.analysis_table.add_analysis_set()
+
     # handlers
+    def _analysis_set_changed(self, new):
+        if self.analysis_table.suppress_load_analysis_set:
+            return
+
+        self.debug('analysis set changed={}'.format(new))
+        ans = self.analysis_table.get_analysis_set(new)
+        with self.db.session_ctx():
+            ans = self.db.get_analyses_uuid([a[0] for a in ans])
+            xx = self._make_records(ans)
+            self.analysis_table.set_analyses(xx)
+
     def _find_references_button_fired(self):
         self.debug('find references button fired')
         if self.sample_view_active:
@@ -163,7 +183,7 @@ class SampleBrowserModel(BrowserModel):
         if not self.sample_view_active:
             self.time_view_model.load()
         else:
-            self.activate_sample_browser()
+            self.activate_browser()
 
         self.dump()
 
@@ -171,7 +191,6 @@ class SampleBrowserModel(BrowserModel):
         self.analysis_table.selected = []
 
         ans = []
-        uuids = []
         if new:
             at = self.analysis_table
             lim = at.limit
@@ -250,6 +269,10 @@ class SampleBrowserModel(BrowserModel):
         return TimeViewModel(db=self.db)
 
     def _analysis_table_default(self):
-        return AnalysisTable()
+        at = AnalysisTable()
+        at.load()
+        at.on_trait_change(self._analysis_set_changed, 'analysis_set')
+        bind_preference(at, 'max_history', 'pychron.browser.max_history')
+        return at
 
 # ============= EOF =============================================

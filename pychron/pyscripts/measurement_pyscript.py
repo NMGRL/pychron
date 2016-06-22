@@ -62,7 +62,6 @@ class MeasurementPyScript(ValvePyScript):
     _series_count = 0
     _baseline_series = None
 
-    _detectors = None
     _fit_series_count = 0
 
     def gosub(self, *args, **kw):
@@ -277,7 +276,7 @@ class MeasurementPyScript(ValvePyScript):
 
     @count_verbose_skip
     @command_register
-    def peak_hop(self, ncycles=5, hops=None, mftable='mftable', calc_time=False):
+    def peak_hop(self, ncycles=5, hops=None, mftable=None, calc_time=False):
         """
         Peak hop ion beams. Hops usually defined in a separate file.
         if mftable == 'ic_mftable' use the ic_mftable generated during detector intercalibration.
@@ -315,9 +314,9 @@ class MeasurementPyScript(ValvePyScript):
 
     @count_verbose_skip
     @command_register
-    def peak_center(self, detector='AX', isotope='Ar40',
+    def peak_center(self, detector=None, isotope=None,
                     integration_time=1.04, save=True, calc_time=False,
-                    directions='Increase'):
+                    directions='Increase', config_name='default'):
         """
         Calculate the peak center for ``isotope`` on ``detector``.
 
@@ -335,16 +334,15 @@ class MeasurementPyScript(ValvePyScript):
         self._automated_run_call('py_peak_center', detector=detector,
                                  isotope=isotope, integration_time=integration_time,
                                  directions=directions,
-                                 save=save)
+                                 save=save, config_name=config_name)
 
     @verbose_skip
     @command_register
     def get_intensity(self, name):
-        if self._detectors:
-            try:
-                return self._detectors[name]
-            except KeyError:
-                pass
+        v = self._automated_run_call('py_get_intensity', detector=name)
+
+        # ensure the script always gets a number
+        return 0 or v
 
     @verbose_skip
     @command_register
@@ -460,10 +458,7 @@ class MeasurementPyScript(ValvePyScript):
         peak_center = kw.get('peak_center', False)
 
         if dets:
-            self._detectors = dict()
             self._automated_run_call('py_activate_detectors', list(dets), peak_center=peak_center)
-            for di in list(dets):
-                self._detectors[di] = 0
 
     @verbose_skip
     @command_register
@@ -885,7 +880,6 @@ class MeasurementPyScript(ValvePyScript):
         self._series_count = 0
         self._fit_series_count = 0
         self._time_zero = None
-        self._detectors = None
 
         self.abbreviated_count_ratio = None
         self.ncounts = 0

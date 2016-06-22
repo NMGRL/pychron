@@ -146,8 +146,12 @@ class BaseBrowserTask(BaseEditorTask):
         self.debug('Edit analysis data')
         if not self.has_active_editor():
             return
-        #
+
         editor = self.active_editor
+        if not isinstance(editor, RecallEditor):
+            self.warning_dialog('Active tab must be a Recall tab')
+            return
+
         if hasattr(editor, 'edit_view') and editor.edit_view:
             editor.edit_view.show()
         else:
@@ -168,12 +172,17 @@ class BaseBrowserTask(BaseEditorTask):
 
             if open_copy is True, allow multiple instances of the same analysis
         """
-        self.debug('recalling records {}'.format(records))
-
         if not isinstance(records, (list, tuple)):
             records = [records]
         elif isinstance(records, tuple):
             records = list(records)
+
+        for ri in records:
+            try:
+                rid = ri.record_id
+            except AttributeError:
+                rid = ''
+            self.debug('recall {} {}'.format(rid, ri))
 
         if not open_copy:
             records = self._open_existing_recall_editors(records)

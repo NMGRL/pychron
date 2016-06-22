@@ -126,6 +126,9 @@ class Loggable(HasTraits):
 
         self.debug(traceback.format_exc())
 
+    def critical(self, msg):
+        self._log_('critical', msg)
+
     def debug(self, msg):
         self._log_('debug', msg)
 

@@ -21,6 +21,8 @@ from traits.api import List, Callable
 from pychron.graph.tools.point_inspector import PointInspector
 
 from traitsui.menu import Action, Menu as MenuManager
+
+from pychron.pipeline.plot.inspector_item import AnalysisInspectorItem
 from pychron.pychron_constants import PLUSMINUS
 
 
@@ -31,6 +33,7 @@ class AnalysisPointInspector(PointInspector):
     _selected_indices = List
     index_tag = None
     single_point = False
+    inspector_item_klass = AnalysisInspectorItem
 
     def contextual_menu_contents(self):
         """
@@ -85,6 +88,7 @@ class AnalysisPointInspector(PointInspector):
         event.handled = True
 
     def assemble_lines(self):
+
         lines = []
         if self.current_position:
             inds = self.get_selected_index()

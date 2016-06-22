@@ -127,8 +127,8 @@ class FluxItem(BaseEditItem):
 
     def __init__(self, item, *args, **kw):
         self.item = item
-        self.ovalue = j = nominal_value(item.j)
-        self.oerror = e = std_dev(item.j)
+        self.ovalue = j = nominal_value(item.j or 0)
+        self.oerror = e = std_dev(item.j or 0)
 
         self.trait_setq(value=j, error=e)
 
@@ -207,6 +207,9 @@ class AnalysisEditView(HasTraits):
     # private
     def _load_items(self):
         analysis = self.editor.analysis
+
+        is_blank = analysis.record_id.startswith('b')
+
         isos = analysis.isotopes
         ns = []
         bks = []
@@ -219,22 +222,24 @@ class AnalysisEditView(HasTraits):
 
             eiso = EditItem(iso)
             ns.append(eiso)
-
-            blank = EditItem(iso.blank)
-            bks.append(blank)
+            if not is_blank:
+                blank = EditItem(iso.blank)
+                bks.append(blank)
 
             baseline = BaselineEditItem(iso.baseline)
             bs.append(baseline)
 
-            ic = ICFactorEditItem(iso)
-            ics.append(ic)
+            if not is_blank:
+                ic = ICFactorEditItem(iso)
+                ics.append(ic)
 
         self.isotopes = ns
         self.blanks = bks
         self.baselines = bs
         self.ic_factors = ics
 
-        self.flux = FluxItem(analysis)
+        if not is_blank:
+            self.flux = FluxItem(analysis)
 
     def _set_ic_factor(self, det, v):
         isos = self.editor.analysis.isotopes
@@ -280,17 +285,19 @@ class AnalysisEditView(HasTraits):
                     if item.value != item.ovalue:
                         updated_values[name] = item.value
                         edited_items.append('{}.{}_value'.format(name, tag))
-                    if item.error != item.error:
+                    if item.error != item.oerror:
                         updated_errors[name] = item.error
                         edited_items.append('{}.{}_error'.format(name, tag))
 
-            p = dvc.manual_edit(runid, repository_identifier,
-                                updated_values, updated_errors, modifier)
-            ps.append(p)
+            if updated_errors or updated_values:
+                p = dvc.manual_edit(runid, repository_identifier,
+                                    updated_values, updated_errors, modifier)
+                ps.append(p)
 
-        msg = '<MANUAL> {}'.format(','.join(edited_items))
-        dvc.commit_manual_edits(repository_identifier, ps, msg)
-        self._refresh_history()
+        if edited_items:
+            msg = '<MANUAL> {}'.format(','.join(edited_items))
+            dvc.commit_manual_edits(repository_identifier, ps, msg)
+            self._refresh_history()
 
     def _revert_original_button_fired(self):
         analysis = self.editor.analysis
@@ -353,13 +360,15 @@ class AnalysisEditView(HasTraits):
                                  editor=TableEditor(
                                      sortable=False,
                                      columns=cols)),
-                           label='Blanks', show_border=True)
+                           label='Blanks', show_border=True,
+                           defined_when='blanks')
 
         icgrp = VGroup(UItem('ic_factors',
                              editor=TableEditor(
                                  sortable=False,
                                  columns=det_cols)),
-                       label='IC Factors', show_border=True)
+                       label='IC Factors', show_border=True,
+                       defined_when='ic_factors')
 
         bgrp = HGroup(icon_button_editor('revert_button',
                                          'arrow_undo',
@@ -377,6 +386,7 @@ class AnalysisEditView(HasTraits):
                           Label(PLUSMINUS),
                           UItem('object.flux.error'),
                           label='Flux (J)',
+                          defined_when='object.flux',
                           show_border=True)
         v = View(VGroup(Group(iso_grp, baseline_grp,
                               icgrp,
