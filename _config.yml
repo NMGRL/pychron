@@ -54,7 +54,7 @@ members:
   - name: Jake Ross, PhD
     position: Founder, Lead Developer
     text: Founder, Lead Developer for Pychron Labs, LLC
-    img: team01.jpg
+    img: ross.jpg
     social:
       - title: envelope #use for email address
         url: mailto:jross@nmbgmr.nmt.edu
@@ -63,14 +63,14 @@ members:
   - name: William McIntosh, PhD
     position: Director
     text: Director of NMGRL
-    img: team02.jpg
+    img: mcintosh.jpg
     social:
       - title: envelope #use for email address
         url: mailto:mcintosh@nmt.edu
   - name: Matt Heizler, PhD
     position: Director
     text: Director of NMGRL
-    img: team03.jpg
+    img: heizler.jpg
     social:
       - title: envelope #use for email address
         url: mailto:matt@nmt.edu
@@ -79,6 +79,10 @@ members:
 clients:
   - name: University of Manitoba
     img: uman.jpg
+  - name: New Mexico Bureau of Geology and Mineral Resources
+    img: bureau_logo_screen.png
+  - name: New Mexico Tech
+    img: nmtlogo-small.gif
 
 # Short text about your company. Shown in footer on every page and also separately on Home and Contact page.
 about: "New Mexico Geochronology Research Laboratory (NMGRL) is a world class Ar-Ar geochronology laboratory located at

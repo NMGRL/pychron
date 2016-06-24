@@ -5,10 +5,8 @@ author: Jake Ross
 comments: True
 categories: 
 - blog 
-- Sample
-- Sample Prep
-img: post03.jpg
-thumb: thumb03.jpg
+- DVC
+- Database
 ---
 
 <!--========================== Blog =========================-->
