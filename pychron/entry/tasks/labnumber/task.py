@@ -306,7 +306,7 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
         self.save()
 
     def save(self):
-        self.warning_dialog('Please use "Data -> Database Save" to save changes to the database')
+        self.save_to_db()
 
     def save_to_db(self):
         self.manager.save()

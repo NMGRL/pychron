@@ -451,6 +451,15 @@ class DVC(Loggable):
             ip.j = j
             ip.j_err = e
 
+    def remove_irradiation_position(self, irradiation, level, hole):
+        db = self.db
+        with db.session_ctx() as sess:
+            dbpos = db.get_irradiation_position(irradiation, level, hole)
+            if dbpos:
+                sess.delete(dbpos)
+
+        self.meta_repo.remove_irradiation_position(irradiation, level, hole)
+
     def find_interpreted_ages(self, identifiers, repositories):
         ias = []
         for idn in identifiers:
@@ -507,18 +516,21 @@ class DVC(Loggable):
         # else:
         #     self.pulled_repositories = exps
 
-        for ei in exps:
-            self.sync_repo(ei)
-
         st = time.time()
+        for ei in exps:
+            self.sync_repo(ei, use_progress=False)
 
         make_record = self._make_record
 
         def func(*args):
-            return make_record(calculate_f_only=calculate_f_only, *args)
+            t = time.time()
+            r = make_record(calculate_f_only=calculate_f_only, *args)
+            print 'make time {}'.format(time.time()-t)
+            return r
 
-        ret = progress_loader(records, func, threshold=1, step=25)
+        ret = progress_loader(records, func, threshold=25, step=25)
         et = time.time() - st
+
         n = len(records)
 
         self.debug('Make analysis time, total: {}, n: {}, average: {}'.format(et, n, et / float(n)))
@@ -901,6 +913,7 @@ class DVC(Loggable):
     def _make_record(self, record, prog, i, n, calculate_f_only=False):
         meta_repo = self.meta_repo
         if prog:
+            # this accounts for ~85% of the time!!!
             prog.change_message('Loading analysis {}. {}/{}'.format(record.record_id, i, n))
 
         expid = record.repository_identifier

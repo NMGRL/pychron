@@ -23,6 +23,7 @@ from pyface.tasks.action.schema_addition import SchemaAddition
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.entry.editors.flux_monitor_editor import FluxMonitorEditor
+from pychron.entry.tasks.ir.actions import IRAction
 from pychron.entry.tasks.labnumber.actions import LabnumberEntryAction
 from pychron.entry.tasks.preferences import LabnumberEntryPreferencesPane, SamplePrepPreferencesPane
 from pychron.entry.tasks.actions import MakeIrradiationBookPDFAction, MakeIrradiationTemplateAction, \
@@ -113,6 +114,8 @@ class EntryPlugin(BaseTaskPlugin):
                                  path=gpath),
                   SchemaAddition(id='pychron.entry1.sample_prep', factory=SamplePrepAction,
                                  path=gpath),
+                  SchemaAddition(id='pychron.entry1.ir', factory=IRAction,
+                                 path=gpath),
                   SchemaAddition(id='pychron.entry2.make_template', factory=MakeIrradiationTemplateAction,
                                  path=g2path),
                   SchemaAddition(id='pychron.entry1.generate_irradiation_table', factory=GenerateIrradiationTableAction,
@@ -138,7 +141,14 @@ class EntryPlugin(BaseTaskPlugin):
                             include_view_menu=False),
                 TaskFactory(id='pychron.entry.sample.prep.task',
                             factory=self._sample_prep_task_factory,
+                            include_view_menu=False),
+                TaskFactory(id='pychron.entry.ir.task',
+                            factory=self._ir_task_factory,
                             include_view_menu=False)]
+
+    def _ir_task_factory(self):
+        from pychron.entry.tasks.ir.task import IRTask
+        return IRTask()
 
     def _sample_prep_task_factory(self):
         from pychron.entry.tasks.sample_prep.task import SamplePrepTask

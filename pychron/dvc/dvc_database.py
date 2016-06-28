@@ -34,7 +34,7 @@ from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, \
     MeasuredPositionTbl, ProductionTbl, VersionTbl, RepositoryAssociationTbl, \
     RepositoryTbl, AnalysisChangeTbl, \
     InterpretedAgeTbl, InterpretedAgeSetTbl, PrincipalInvestigatorTbl, SamplePrepWorkerTbl, SamplePrepSessionTbl, \
-    SamplePrepStepTbl, SamplePrepImageTbl, RestrictedNameTbl
+    SamplePrepStepTbl, SamplePrepImageTbl, RestrictedNameTbl, IRTbl
 from pychron.pychron_constants import ALPHAS, alpha_to_int, NULL_STR
 
 
@@ -403,7 +403,7 @@ class DVCDatabase(DatabaseAdapter):
     def add_principal_investigator(self, name):
         pi = self.get_principal_investigator(name)
         if pi is None:
-            pi = PrincipalInvestigatorTbl(name=name)
+            pi = PrincipalInvestigatorTbl(last_name=name)
             pi = self._add_item(pi)
         return pi
 
@@ -454,7 +454,7 @@ class DVCDatabase(DatabaseAdapter):
                 principal_investigator = self.add_principal_investigator(principal_investigator)
                 self.flush()
 
-            a = RepositoryTbl(name=name, principal_investigator=principal_investigator.name, **kw)
+            a = RepositoryTbl(name=name, principal_investigator=principal_investigator, **kw)
             return self._add_item(a)
 
     def add_interpreted_age(self, **kw):
@@ -1069,7 +1069,7 @@ class DVCDatabase(DatabaseAdapter):
             return self._retrieve_item(ProjectTbl, name)
 
     def get_principal_investigator(self, name):
-        return self._retrieve_item(PrincipalInvestigatorTbl, name)
+        return self._retrieve_item(PrincipalInvestigatorTbl, name, key='last_name')
 
     def get_irradiation_level(self, irrad, name):
         with self.session_ctx() as sess:
@@ -1203,6 +1203,12 @@ class DVCDatabase(DatabaseAdapter):
             q = q.limit(limit)
             return [ni.identifier for ni in
                     self._query_all(q, verbose_query=True)]
+
+    def get_irs(self):
+        with self.session_ctx() as sess:
+            q = sess.query(IRTbl)
+            q = q.order_by(IRTbl.checkin_date.desc())
+            return self._query_all(q, verbose_query=True)
 
     def get_loads(self, names=None, exclude_archived=True, **kw):
         with self.session_ctx():

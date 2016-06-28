@@ -77,7 +77,7 @@ class InterpretedAgeSetTbl(Base, BaseMixin):
 
 class RepositoryTbl(Base, BaseMixin):
     name = Column(String(80), primary_key=True)
-    principal_investigator = Column(String(140), ForeignKey('PrincipalInvestigatorTbl.name'))
+    principal_investigator_id = Column(Integer, ForeignKey('PrincipalInvestigatorTbl.id'))
     # timestamp = Column(TIMESTAMP, default=func.now())
     # creator = stringcolumn(80)
 
@@ -245,7 +245,7 @@ class AnalysisTbl(Base, BaseMixin):
 
 class ProjectTbl(Base, NameMixin):
     id = primary_key()
-    principal_investigator = Column(String(140), ForeignKey('PrincipalInvestigatorTbl.name'))
+    principal_investigator_id = Column(Integer, ForeignKey('PrincipalInvestigatorTbl.id'))
 
     samples = relationship('SampleTbl', backref='project')
 
@@ -323,9 +323,19 @@ class ExtractDeviceTbl(Base, BaseMixin):
 
 
 class PrincipalInvestigatorTbl(Base, BaseMixin):
-    name = Column(String(140), primary_key=True)
+    id = primary_key()
     affiliation = stringcolumn(140)
     email = stringcolumn(140)
+    last_name = Column(String(140))
+    first_initial = Column(String(10))
+
+    projects = relationship('ProjectTbl', backref='principal_investigator')
+    repositories = relationship('RepositoryTbl', backref='principal_investigator')
+    irs = relationship('IRTbl', backref='principal_investigator')
+
+    @property
+    def name(self):
+        return '{},{}'.format(self.last_name, self.first_initial) if self.first_initial else self.last_name
 
     @property
     def record_view(self):
@@ -428,4 +438,14 @@ class RestrictedNameTbl(Base, BaseMixin):
     id = primary_key()
     name = stringcolumn()
     category = stringcolumn()
+
+
+# ======================== Lab Management ========================
+class IRTbl(Base, BaseMixin):
+    ir = primary_key(klass=String(32))
+    principal_investigator_id = Column(Integer, ForeignKey('PrincipalInvestigatorTbl.id'))
+    institution = Column(String(140))
+    checkin_date = Column(TIMESTAMP)
+    lab_contact = Column(String(140), ForeignKey('UserTbl.name'))
+
 # ============= EOF =============================================

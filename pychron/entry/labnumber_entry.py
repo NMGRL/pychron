@@ -399,6 +399,12 @@ class LabnumberEntry(DVCIrradiationable):
             prog = open_progress(n)
 
             for ir in self.irradiated_positions:
+                sam = ir.sample
+
+                if not sam:
+                    self.dvc.remove_irradiation_position(self.irradiation, self.level, ir.hole)
+                    continue
+
                 ln = ir.identifier
 
                 dbpos = db.get_irradiation_position(self.irradiation, self.level, ir.hole)
@@ -424,7 +430,6 @@ class LabnumberEntry(DVCIrradiationable):
                 dbpos.weight = float(ir.weight or 0)
                 dbpos.note = ir.note
 
-                sam = ir.sample
                 proj = ir.project
                 mat = ir.material
                 if proj:

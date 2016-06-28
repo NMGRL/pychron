@@ -493,6 +493,13 @@ class MetaRepo(GitRepoManager):
         obj['z'] = z
         dvc_dump(obj, p)
 
+    def remove_irradiation_position(self, irradiation, level, hole):
+        p = self.get_level_path(irradiation, level)
+        jd = dvc_load(p)
+        njd = [ji for ji in jd if not ji['position'] == hole]
+        dvc_dump(njd, p)
+        self.add(p, commit=False)
+
     def update_flux(self, irradiation, level, pos, identifier, j, e, decay=None, analyses=None, add=True):
         if decay is None:
             decay = {}

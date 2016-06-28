@@ -30,3 +30,4 @@ Pychron Develop Guide
   errors/el_errors
   errors/laser_errors
   updater
+  style_guide
