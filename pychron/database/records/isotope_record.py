@@ -67,50 +67,55 @@ def get_selected_history_item(sh, key):
 
 
 class DVCIsotopeRecordView:
-    __slots__ = ('is_plateau_step', 'extract_script_name',
-                 'meas_script_name', 'analysis_type', 'group_id', 'graph_id', 'identifier', 'labnumber', 'aliquot',
-                 'increment', 'step', 'tag', 'uuid', 'repository_identifier', 'use_repository_suffix', 'rundate',
-                 'timestampf',
-                 'delta_time', 'record_id', 'sample', 'project', 'irradiation_info', 'irradiation', 'irradiation_level',
-                 'irradiation_position_position', 'mass_spectrometer', 'extract_device', 'comment', 'review_status',
-                 'extract_value', 'cleanup', 'duration')
-
-    def __init__(self, *args, **kw):
+    # __slots__ = ('is_plateau_step', 'extract_script_name',
+    #              'meas_script_name', 'analysis_type', 'group_id', 'graph_id', 'identifier', 'labnumber', 'aliquot',
+    #              'increment', 'step', 'tag', 'uuid', 'repository_identifier', 'use_repository_suffix', 'rundate',
+    #              'timestampf',
+    #              'delta_time', 'record_id', 'sample', 'project', 'irradiation_info', 'irradiation', 'irradiation_level',
+    #              'irradiation_position_position', 'mass_spectrometer', 'extract_device', 'comment', 'review_status',
+    #              'extract_value', 'cleanup', 'duration')
+    #
+    def __init__(self, dbrecord, *args, **kw):
+        self._dbrecord = dbrecord
         self.is_plateau_step = False
-        self.extract_script_name = ''
-        self.meas_script_name = ''
-        self.analysis_type = ''
-        self.group_id = 0
-        self.graph_id = 0
-
-        self.identifier = ''
-        self.labnumber = ''
-        self.aliquot = 0
-        self.increment = -1
+        #     self.extract_script_name = ''
+        #     self.meas_script_name = ''
+        #     self.analysis_type = ''
+        #     self.group_id = 0
+        #     self.graph_id = 0
+        #
+        #     self.identifier = ''
+        #     self.labnumber = ''
+        #     self.aliquot = 0
+        #     self.increment = -1
         self.step = ''
-        self.tag = ''
-        self.uuid = ''
-        self.repository_identifier = ''
-        self.use_repository_suffix = False
-        self.rundate = ''
-        self.timestampf = 0
-        self.delta_time = 0
+        #     self.tag = ''
+        #     self.uuid = ''
+        #     self.repository_identifier = ''
+        #     self.use_repository_suffix = False
+        #     self.rundate = ''
+        #     self.timestampf = 0
+        #     self.delta_time = 0
         self.record_id = ''
-        self.sample = ''
-        self.project = ''
-        self.irradiation_info = ''
-        self.irradiation = ''
-        self.irradiation_level = ''
-        self.irradiation_position_position = ''
-        self.mass_spectrometer = ''
-        self.extract_device = ''
-        self.comment = ''
-
+        #     self.sample = ''
+        #     self.project = ''
+        #     self.irradiation_info = ''
+        #     self.irradiation = ''
+        #     self.irradiation_level = ''
+        #     self.irradiation_position_position = ''
+        #     self.mass_spectrometer = ''
+        #     self.extract_device = ''
+        #     self.comment = ''
+        #
         self.review_status = 0
 
-        self.extract_value = 0
-        self.cleanup = 0
-        self.duration = 0
+    #
+    #     self.extract_value = 0
+    #     self.cleanup = 0
+    #     self.duration = 0
+
+    def __getattr__(self, item):
+        return getattr(self._dbrecord, item)
 
     def init(self):
         if self.increment >= 0:

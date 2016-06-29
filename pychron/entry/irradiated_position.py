@@ -30,6 +30,8 @@ class BaseIrradiatedPosition(HasTraits):
     hole = Int
     alt_hole = Int
     project = Str
+    principal_investigator = Str
+
     j = Float(0)
     j_err = Float(0)
     pred_j = Float
@@ -82,6 +84,7 @@ class IrradiatedPositionAdapter(TabularAdapter):
         ('Hole', 'hole'),
         ('Identifier', 'identifier'),
         ('Sample', 'sample'),
+        ('PI', 'principal_investigator'),
         ('Project', 'project'),
         ('Material', 'material'),
         #               ('Size', 'size'),

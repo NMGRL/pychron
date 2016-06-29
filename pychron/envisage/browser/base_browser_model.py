@@ -443,7 +443,8 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
                            repositories=None,
                            make_records=True):
         db = self.db
-        with db.session_ctx():
+        with db.session_ctx() as sess:
+            sess.expire_on_commit = False
             if samples:
                 lns = [si.labnumber for si in samples]
                 self.debug('retrieving identifiers={}'.format(','.join(lns)))

@@ -143,6 +143,17 @@ class AnalysisTbl(Base, BaseMixin):
     _record_view = None
 
     @property
+    def is_plateau_step(self):
+        return
+    @property
+    def timestampf(self):
+        return make_timef(self.timestamp)
+
+    @property
+    def identifier(self):
+        return self.irradiation_position.identifier
+
+    @property
     def irradiation(self):
         return self.irradiation_position.level.irradiation.name
 
@@ -204,40 +215,47 @@ class AnalysisTbl(Base, BaseMixin):
             return self._make_record_view(self.repository_associations[0].repository)
 
     def _make_record_view(self, repo, use_suffix=False):
-        iv = DVCIsotopeRecordView()
-        iv.extract_script_name = self.extractionName
-        iv.meas_script_name = self.measurementName
-
-        irradpos = self.irradiation_position
-        iv.identifier = irradpos.identifier
-        iv.irradiation = irradpos.level.irradiation.name
-        iv.irradiation_level = irradpos.level.name
-        iv.irradiation_position_position = irradpos.position
-
-        iv.labnumber = iv.identifier
+        iv = DVCIsotopeRecordView(self)
         # iv.repository_ids = es = [e.repository for e in self.repository_associations]
         # if len(es) == 1:
         #     iv.repository_identifier = es[0]
         iv.repository_identifier = repo
         iv.use_repository_suffix = use_suffix
-
-        for tag in ('aliquot', 'increment', 'uuid',
-                    'extract_value', 'cleanup', 'duration',
-                    'mass_spectrometer',
-                    'extract_device',
-                    'rundate',
-                    'analysis_type', 'comment'):
-            setattr(iv, tag, getattr(self, tag))
-
-        if irradpos.sample:
-            iv.sample = irradpos.sample.name
-            if irradpos.sample.project:
-                iv.project = irradpos.sample.project.name
-
-        iv.timestampf = make_timef(self.timestamp)
-        iv.tag = self.change.tag
         iv.init()
         return iv
+        # iv.extract_script_name = self.extractionName
+        # iv.meas_script_name = self.measurementName
+        #
+        # irradpos = self.irradiation_position
+        # iv.identifier = irradpos.identifier
+        # iv.irradiation = irradpos.level.irradiation.name
+        # iv.irradiation_level = irradpos.level.name
+        # iv.irradiation_position_position = irradpos.position
+        #
+        # iv.labnumber = iv.identifier
+        # # iv.repository_ids = es = [e.repository for e in self.repository_associations]
+        # # if len(es) == 1:
+        # #     iv.repository_identifier = es[0]
+        # iv.repository_identifier = repo
+        # iv.use_repository_suffix = use_suffix
+        #
+        # for tag in ('aliquot', 'increment', 'uuid',
+        #             'extract_value', 'cleanup', 'duration',
+        #             'mass_spectrometer',
+        #             'extract_device',
+        #             'rundate',
+        #             'analysis_type', 'comment'):
+        #     setattr(iv, tag, getattr(self, tag))
+        #
+        # if irradpos.sample:
+        #     iv.sample = irradpos.sample.name
+        #     if irradpos.sample.project:
+        #         iv.project = irradpos.sample.project.name
+        #
+        # iv.timestampf = make_timef(self.timestamp)
+        # iv.tag = self.change.tag
+        # iv.init()
+        # return iv
 
         # self._record_view = iv
 
@@ -250,11 +268,18 @@ class ProjectTbl(Base, NameMixin):
 
     samples = relationship('SampleTbl', backref='project')
 
+    @property
+    def gname(self):
+        return '{} ({})'.format(self.name, self.principal_investigator) if self.principal_investigator else self.name
 
 class MaterialTbl(Base, NameMixin):
     id = primary_key()
     samples = relationship('SampleTbl', backref='material')
     grainsize = stringcolumn(80)
+
+    @property
+    def gname(self):
+        return '{} ({})'.format(self.name, self.grainsize) if self.grainsize else self.name
 
 
 class SampleTbl(Base, NameMixin):
