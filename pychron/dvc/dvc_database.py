@@ -1242,6 +1242,18 @@ class DVCDatabase(DatabaseAdapter):
     def get_material_names(self):
         return self._get_table_names(MaterialTbl, use_distinct=MaterialTbl.name)
 
+    def get_project_pnames(self):
+        with self.session_ctx() as sess:
+            q = sess.query(ProjectTbl)
+            ms = self._query_all(q)
+            return [mi.gname for mi in ms]
+
+    def get_material_gnames(self):
+        with self.session_ctx() as sess:
+            q = sess.query(MaterialTbl)
+            ms = self._query_all(q)
+            return [mi.gname for mi in ms]
+
     def get_principal_investigator_names(self, *args, **kw):
         return self._get_table_names(PrincipalInvestigatorTbl)
 
@@ -1256,6 +1268,15 @@ class DVCDatabase(DatabaseAdapter):
             q = sess.query(distinct(MaterialTbl.grainsize))
             gs = self._query_all(q)
             return [g[0] for g in gs if g[0]]
+
+    def get_sample_id(self, id):
+        return self._retrieve_item(SampleTbl, id, key='id')
+
+    def get_samples_by_name(self, name):
+        with self.session_ctx() as sess:
+            q = sess.query(SampleTbl)
+            q = q.filter(SampleTbl.name.like('%{}%'.format(name)))
+            return self._query_all(q, verbose_query=True)
 
     def get_samples(self, project=None, **kw):
         if project:

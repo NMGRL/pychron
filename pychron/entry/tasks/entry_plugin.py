@@ -31,7 +31,7 @@ from pychron.entry.tasks.actions import MakeIrradiationBookPDFAction, MakeIrradi
     ImportIrradiationHolderAction, ExportIrradiationAction, ImportIrradiationAction, \
     TransferJAction, ImportSamplesAction, ImportIrradiationFileAction, GetIGSNAction, GenerateIrradiationTableAction
 from pychron.entry.editors.molecular_weight_editor import MolecularWeightEditor
-from pychron.entry.tasks.sample.actions import SampleEntryAction
+from pychron.entry.tasks.sample.actions import SampleEntryAction, SampleEditAction
 from pychron.entry.tasks.sample_prep.actions import SamplePrepAction
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 
@@ -110,6 +110,8 @@ class EntryPlugin(BaseTaskPlugin):
                  [SchemaAddition(id='pychron.entry1.labnumber_entry', factory=LabnumberEntryAction,
                                  path=gpath, absolute_position='first'),
                   SchemaAddition(id='pychron.entry1.sample_entry', factory=SampleEntryAction,
+                                 path=gpath),
+                  SchemaAddition(id='pychron.entry1.sample_edit', factory=SampleEditAction,
                                  path=gpath),
                   SchemaAddition(id='pychron.entry1.sample_prep', factory=SamplePrepAction,
                                  path=gpath),
