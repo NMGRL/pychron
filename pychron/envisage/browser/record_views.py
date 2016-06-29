@@ -181,7 +181,6 @@ class NameView(HasTraits):
         return self.name
 
 
-
 class ProjectRecordView(RecordView, NameView):
     name = Str
     principal_investigator = Str
@@ -189,7 +188,8 @@ class ProjectRecordView(RecordView, NameView):
     def _create(self, dbrecord):
         if not isinstance(dbrecord, str):
             self.name = dbrecord.name
-            self.principal_investigator = dbrecord.principal_investigator or ''
+            if dbrecord.principal_investigator:
+                self.principal_investigator = dbrecord.principal_investigator.name
         else:
             self.name = dbrecord
 

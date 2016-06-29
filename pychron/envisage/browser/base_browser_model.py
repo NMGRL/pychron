@@ -567,9 +567,11 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
                 self.selected_projects = [p for p in ps if p.name in old_selection]
 
     # handlers
-    def _principal_investigator_changed(self, new):
-        if new:
-            self._load_projects_for_principal_investigator()
+    def _principal_investigator_changed(self):
+        self._load_projects_for_principal_investigator()
+
+    def _principal_investigator_enabled_changed(self):
+        self._load_projects_for_principal_investigator()
 
     def _identifier_changed(self, new):
         db = self.db
@@ -734,6 +736,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             return map(str.lower, ats)
 
     _warned = False
+
     def _get_db(self):
         if self.use_workspace:
             db = self.workspace.index_db

@@ -25,6 +25,7 @@ from traitsui.tabular_adapter import TabularAdapter
 # ============= local library imports  ==========================
 
 from pychron.core.ui.combobox_editor import ComboboxEditor
+from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.resources import icon
 
@@ -109,6 +110,19 @@ class SampleEditorPane(TraitsDockPane):
     id = 'pychron.entry.sample.editor'
     name = 'Editor'
 
+    help_str = '''
+<p>
+    <b>Principal Investigator</b><br/>
+    Good: Ross or Ross,J<br/>
+    <font color='red'>Bad: Jake Ross</font>
+</p>
+<p>
+    <b>Project</b>:<br/>
+    Good: ProjectName or IR100<br/>
+    <font color='red'>Bad: projectname or Project Name or IR #100</font>
+</p>
+
+'''
     def traits_view(self):
         pigrp = HGroup(UItem('principal_investigator',
                              editor=ComboboxEditor(name='principal_investigators')),
@@ -146,6 +160,7 @@ class SampleEditorPane(TraitsDockPane):
                         prgrp,
                         mgrp,
                         sgrp,
+                        CustomLabel('pane.help_str')
                         ))
         return v
 

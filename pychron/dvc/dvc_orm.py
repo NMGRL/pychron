@@ -77,7 +77,7 @@ class InterpretedAgeSetTbl(Base, BaseMixin):
 
 class RepositoryTbl(Base, BaseMixin):
     name = Column(String(80), primary_key=True)
-    principal_investigator_id = Column(Integer, ForeignKey('PrincipalInvestigatorTbl.id'))
+    principal_investigatorID = Column(Integer, ForeignKey('PrincipalInvestigatorTbl.id'))
     # timestamp = Column(TIMESTAMP, default=func.now())
     # creator = stringcolumn(80)
 
@@ -89,7 +89,8 @@ class RepositoryTbl(Base, BaseMixin):
 
         v = RepositoryRecordView()
         v.name = self.name
-        v.principal_investigator = self.principal_investigator or ''
+        if self.principal_investigator:
+            v.principal_investigator = self.principal_investigator.name
         return v
 
 
@@ -245,7 +246,7 @@ class AnalysisTbl(Base, BaseMixin):
 
 class ProjectTbl(Base, NameMixin):
     id = primary_key()
-    principal_investigator_id = Column(Integer, ForeignKey('PrincipalInvestigatorTbl.id'))
+    principal_investigatorID = Column(Integer, ForeignKey('PrincipalInvestigatorTbl.id'))
 
     samples = relationship('SampleTbl', backref='project')
 
@@ -443,7 +444,7 @@ class RestrictedNameTbl(Base, BaseMixin):
 # ======================== Lab Management ========================
 class IRTbl(Base, BaseMixin):
     ir = primary_key(klass=String(32))
-    principal_investigator_id = Column(Integer, ForeignKey('PrincipalInvestigatorTbl.id'))
+    principal_investigatorID = Column(Integer, ForeignKey('PrincipalInvestigatorTbl.id'))
     institution = Column(String(140))
     checkin_date = Column(TIMESTAMP)
     lab_contact = Column(String(140), ForeignKey('UserTbl.name'))

@@ -130,7 +130,7 @@ class BaseBrowserSampleView(PaneModelView):
         pi_grp = HGroup(UItem('principal_investigator_enabled'),
                         UItem('principal_investigator',
                               enabled_when='principal_investigator_enabled',
-                              editor=EnumEditor(name='principal_investigators')),
+                              editor=ComboboxEditor(name='principal_investigators')),
                         label='PIs', show_border=True)
 
         return pi_grp
