@@ -603,6 +603,8 @@ THIS CHANGE CANNOT BE UNDONE')
                 if dbpos.sample.project:
                     ir.project = v = dbpos.sample.project.name
                     set_color(item, v)
+                    if dbpos.sample.project.principal_investigator:
+                        ir.principal_investigator = dbpos.sample.project.principal_investigator
 
                 ir.identifier = v = dbpos.identifier or ''
                 if v:
