@@ -121,15 +121,13 @@ class SampleEditView(Controller):
     def traits_view(self):
         vv = View(VGroup(Item('name'),
                          Item('project', editor=EnumEditor(name='_projects')),
-                         Item('material', editor=EnumEditor(name='_materials')),
-                         Item('grainsize')))
+                         Item('material', editor=EnumEditor(name='_materials'))))
 
         cols = [ObjectColumn(name='id', editable=False, text_font='arial 10'),
                 ObjectColumn(name='name', editable=False, text_font='arial 10'),
                 ObjectColumn(name='project', editable=False, text_font='arial 10'),
-                ObjectColumn(name='material', editable=False, text_font='arial 10'),
-                ObjectColumn(name='grainsize', editable=False, text_font='arial 10'),
-                ]
+                ObjectColumn(name='material', editable=False, text_font='arial 10')]
+
         a = UItem('sample')
         b = UItem('samples', editor=TableEditor(columns=cols,
                                                 orientation='vertical',
