@@ -116,12 +116,15 @@ class BasePDFWriter(Loggable):
         """
         raise NotImplementedError
 
-    def _new_paragraph(self, t, s='Normal', **skw):
+    def _new_paragraph(self, t, s='Normal', klass=None, **skw):
+        if klass is None:
+            klass = Paragraph
+
         style = getSampleStyleSheet()[s]
         for k, v in skw.iteritems():
             setattr(style, k, v)
 
-        p = Paragraph(t, style)
+        p = klass(t, style)
         return p
 
     def _page_break(self):
@@ -177,6 +180,5 @@ class BasePDFWriter(Loggable):
 
     def _value(self, **kw):
         return lambda x: self._fmt_attr(x, key='nominal_value', **kw)
-
 
 # ============= EOF =============================================

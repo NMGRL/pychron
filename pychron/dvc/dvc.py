@@ -653,6 +653,9 @@ class DVC(Loggable):
     def add_production(self, irrad, name, prod):
         self.meta_repo.add_production_to_irradiation(irrad, name, prod)
 
+    def get_production(self, irrad, name):
+        return self.meta_repo.get_production(irrad, name)
+
     # get
     def get_local_repositories(self):
         return list_subdirectories(paths.repository_dataset_dir)

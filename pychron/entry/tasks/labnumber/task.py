@@ -258,9 +258,11 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
                                  default_massspec_connection=connection)
         info = es.edit_traits(kind='livemodal')
         if info.result:
-            from pychron.entry.export.export_util import do_export
-
-            do_export(self.manager, es.export_type, es.destination_dict, es.irradiations)
+            if not es.selected:
+                self.warning_dialog('Please select Irradiation(s) to export')
+            else:
+                from pychron.entry.export.export_util import do_export
+                do_export(self.manager.dvc, es.export_type, es.destination_dict, es.selected)
 
     def _manager_default(self):
         dvc = self.application.get_service('pychron.dvc.dvc.DVC')

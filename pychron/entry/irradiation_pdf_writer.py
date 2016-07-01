@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from reportlab.platypus import Paragraph
 from traits.api import Bool
 from traitsui.api import View, Item
 # ============= standard library imports ========================
@@ -30,6 +31,18 @@ from pychron.entry.editors.level_editor import load_holder_canvas
 from pychron.loading.component_flowable import ComponentFlowable
 from pychron.core.pdf.base_table_pdf_writer import BasePDFTableWriter
 from pychron.core.pdf.items import Row
+
+
+class RotatedParagraph(Paragraph):
+    rotation = 0
+
+    def draw(self):
+        self.canv.saveState()
+
+        self.canv.rotate(self.rotation)
+        self.canv.translate(-self.width/2.-100, -self.height)
+        Paragraph.draw(self)
+        self.canv.restoreState()
 
 
 class IrradiationPDFTableOptions(BasePDFOptions):
@@ -52,10 +65,44 @@ class IrradiationPDFWriter(BasePDFTableWriter):
     def _build(self, doc, irrad, *args, **kw):
         return self._make_levels(irrad)
 
+    def _make_summary(self, irrad):
+        fontsize = lambda x, f: '<font size={}>{}</font>'.format(f, x)
+
+        name = irrad.name
+        levels = ', '.join(sorted([li.name for li in irrad.levels]))
+
+        chron = irradiation_chronology(name)
+        dur = chron.total_duration_seconds
+        date = chron.start_date
+
+        # dur = 0
+        # if chron:
+        #     doses = chron.get_doses()
+        #     for pwr, st, en in doses:
+        #         dur += (en - st).total_seconds()
+        #     _, _, date = chron.get_doses(todatetime=False)[-1]
+
+        dur /= (60 * 60.)
+        date = 'Irradiation Date: {}'.format(date)
+        dur = 'Irradiation Duration: {:0.1f} hrs'.format(dur)
+
+        name = fontsize(name, 40)
+        # levels = fontsize(levels, 28)
+        # dur = fontsize(dur, 28)
+        txt = '<br/>'.join((name, levels, date, dur))
+        p = self._new_paragraph(txt,
+                                klass=RotatedParagraph,
+                                s='Title',
+                                textColor=colors.black,
+                                alignment=TA_CENTER)
+        p.rotation = 90
+        return p
+
     def _make_levels(self, irrad, progress=None):
-        flowables = []
         irradname = irrad.name
 
+        p = self._make_summary(irrad)
+        flowables = [p, self._page_break()]
         for level in sorted(irrad.levels, key=lambda x: x.name):
             if progress is not None:
                 progress.change_message('Making {}{}'.format(irradname, level.name))
@@ -63,9 +110,10 @@ class IrradiationPDFWriter(BasePDFTableWriter):
             c = self._make_canvas(level)
             fs = self._make_level_table(irrad, level, c)
             if c:
-                c = ComponentFlowable(c, bounds=(200, 200),
-                                      fixed_scale=True)
+                c = ComponentFlowable(c)
+                flowables.append(self._make_table_title(irrad, level))
                 flowables.append(c)
+                flowables.append(self._page_break())
 
             flowables.extend(fs)
 
@@ -74,13 +122,17 @@ class IrradiationPDFWriter(BasePDFTableWriter):
     def _make_level_table(self, irrad, level, c):
         rows = []
         flowables = []
-        flowables.append(self._make_table_title(irrad, level))
+        # flowables.append()
         row = Row()
-        for v in ('Pos.', 'L#', 'Sample', 'Note'):
+        row.add_item(span=-1, value=self._make_table_title(irrad, level), fontsize=18)
+        rows.append(row)
+
+        row = Row()
+        for v in ('', 'Pos.', 'L#', 'Sample', 'Project', 'PI', 'Note'):
             row.add_item(value=self._new_paragraph('<b>{}</b>'.format(v)))
         rows.append(row)
 
-        srows = sorted([self._make_row(pi, c) for pi in level.positions],
+        srows = sorted([self._make_row(pi, c) for pi in level.positions if pi.sample],
                        key=lambda x: x[0])
 
         rows.extend(srows)
@@ -102,20 +154,27 @@ class IrradiationPDFWriter(BasePDFTableWriter):
         return flowables
 
     def _make_table_title(self, irrad, level):
-        t = '{}{}'.format(irrad.name, level.name)
-        p = self._new_paragraph(t, s='Heading1')
+        t = '{}{} {}'.format(irrad.name, level.name, level.holder)
+        p = self._new_paragraph(t, s='Heading1', alignment=TA_CENTER)
         return p
 
     def _make_row(self, pos, canvas):
         r = Row()
         sample = pos.sample
+        project, pi = '', ''
         if sample:
+            project = sample.project.name
+            pi = sample.project.principal_investigator
             sample = sample.name
+            if sample == 'FC-2':
+                project, pi = '', ''
 
-        r.add_item(value='[ ]')
+        r.add_item(value='[  ]')
         r.add_item(value=pos.position)
         r.add_item(value=pos.identifier)
         r.add_item(value=sample)
+        r.add_item(value=project)
+        r.add_item(value=pi)
         r.add_item(value='')
 
         if sample:
