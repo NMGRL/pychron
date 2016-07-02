@@ -167,7 +167,8 @@ class MassSpecDatabaseImporter(Loggable):
                         mass_spectrometer = 'obama'
                     elif a.lower() == 'j':
                         mass_spectrometer = 'jan'
-
+                    elif a.lower() == 'f':
+                        mass_spectrometer = 'felix'
         else:
             mass_spectrometer = spec.mass_spectrometer.lower()
 
