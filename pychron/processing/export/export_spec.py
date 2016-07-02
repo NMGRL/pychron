@@ -60,8 +60,8 @@ class MassSpecExportSpec(Loggable):
     update_rundatetime = Bool
     is_peak_hop = Bool
     peak_hop_detector = 'CDD'
-    ic_factor_v = Float
-    ic_factor_e = Float
+    # ic_factor_v = Float
+    # ic_factor_e = Float
 
     irradiation = Str
     level = Str

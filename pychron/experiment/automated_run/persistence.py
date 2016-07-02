@@ -24,7 +24,6 @@ import os
 import struct
 import time
 import math
-from uncertainties import nominal_value, std_dev
 # ============= local library imports  ==========================
 # from pychron.core.codetools.file_log import file_log
 # from pychron.core.codetools.memory_usage import mem_log
@@ -954,7 +953,7 @@ class AutomatedRunPersister(BasePersister):
         # sf = dict(zip(dkeys, fb))
         # p = self._current_data_frame
 
-        ic = self.per_spec.isotope_group.get_ic_factor('CDD')
+        # ic = self.per_spec.isotope_group.get_ic_factor('CDD')
 
         exp = MassSpecExportSpec(runid=rid,
                                  runscript_name=self.per_spec.runscript_name,
@@ -967,8 +966,9 @@ class AutomatedRunPersister(BasePersister):
                                  # signal_intercepts=si,
                                  # signal_intercepts=self._processed_signals_dict,
                                  is_peak_hop=self.per_spec.save_as_peak_hop,
-                                 ic_factor_v=float(nominal_value(ic)),
-                                 ic_factor_e=float(std_dev(ic)))
+                                 # ic_factor_v=float(nominal_value(ic)),
+                                 # ic_factor_e=float(std_dev(ic))
+                                 )
         exp.load_record(self.per_spec.run_spec)
 
         return exp
