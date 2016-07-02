@@ -45,67 +45,17 @@ class BasePDFOptions(HasTraits, PersistenceMixin):
 
     def __init__(self, *args, **kw):
         self.persistence_path = os.path.join(paths.hidden_dir, self._persistence_name)
-        #     super(BasePDFOptions, self).__init__(*args, **kw)
-        #     self.load_yaml()
 
-        # def _get_persistence_path(self):
-        #     return os.path.join(paths.hidden_dir, '{}.{}'.format(self._persistence_name, globalv.username))
-
-        # def dump_yaml(self):
-        #     p = self.persistence_path
-        #     with open(p, 'w') as wfile:
-        #         yaml.dump(self.get_dump_dict(), wfile)
-        #
-        # def _get_dump_attrs(self):
-        #     return ('orientation', 'left_margin', 'right_margin',
-        #             'top_margin', 'bottom_margin', 'show_page_numbers',
-        #             'use_alternating_background')
-        #
-        # def get_dump_dict(self):
-        #     dd = {k: getattr(self, k) for k in self._get_dump_attrs()}
-        #     # d = dict(orientation=self.orientation,
-        #     # left_margin=self.left_margin,
-        #     # right_margin=self.right_margin,
-        #     # top_margin=self.top_margin,
-        #     # bottom_margin=self.bottom_margin)
-        #     dd['alternating_background'] = self.get_alternating_background()
-        #
-        #     return dd
-
-        # def set_alternating_background(self, t):
-        #     self.alternating_background = tuple(map(lambda x: int(x * 255), t))
-        #
-        # def get_alternating_background(self):
-        #     t = self.alternating_background.toTuple()[:3]
-        #     return map(lambda x: x / 255., t)
-
-        # def get_load_dict(self):
-        #     d = {}
-        #     p = self.persistence_path
-        #     if os.path.isfile(p):
-        #         with open(p, 'r') as rfile:
-        #             try:
-        #                 d = yaml.load(rfile)
-        #             except yaml.YAMLError:
-        #                 pass
-        #     return d
-        #
-        # def load_yaml(self):
-        #     d = self.get_load_dict()
-        #     for k, v in d.iteritems():
-        #         try:
-        #             setattr(self, k, v)
-        #         except TraitError:
-        #             pass
-        #
-        #     ab = d.get('use_alternating_background', False)
-        #     if ab:
-        #         self.set_alternating_background(d.get('alternating_background',
-        #                                               (0.7, 0.7, 0.7)))
-        #     self._load_yaml_hook(d)
-        #
-        # def _load_yaml_hook(self, d):
-        #     pass
+    def _get_layout_group(self):
+        layout_grp = Group(Item('orientation'),
+                           Item('left_margin'),
+                           Item('right_margin'),
+                           Item('top_margin'),
+                           Item('bottom_margin'),
+                           Item('show_page_numbers', label='Page Numbers'),
+                           show_border=True,
+                           label='layout')
+        return layout_grp
 
 
 class PDFTableOptions(BasePDFOptions):
@@ -152,8 +102,7 @@ class PDFTableOptions(BasePDFOptions):
 
     def get_dump_dict(self):
         d = super(PDFTableOptions, self).get_dump_dict()
-        d.update(dict(title=str(self.title),
-                      ))
+        d.update(dict(title=str(self.title)))
 
         return d
 
@@ -184,12 +133,7 @@ class PDFTableOptions(BasePDFOptions):
                           Item('alternating_background'),
                           label='Table')
 
-        layout_grp = Group(Item('orientation'),
-                           Item('left_margin'),
-                           Item('right_margin'),
-                           Item('top_margin'),
-                           Item('bottom_margin'),
-                           label='layout')
+        layout_grp = self._get_layout_grp()
 
         data_grp = Group(Item('link_sigmas', label='Link'),
                          Item('age_nsigma', label='Age NSigma'),

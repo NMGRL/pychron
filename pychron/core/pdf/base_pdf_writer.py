@@ -35,6 +35,8 @@ from pychron.core.pdf.options import BasePDFOptions
 
 
 class NumberedCanvas(canvas.Canvas):
+    page_number_format = None
+
     def __init__(self, *args, **kwargs):
         canvas.Canvas.__init__(self, *args, **kwargs)
         self._saved_page_states = []
@@ -53,9 +55,14 @@ class NumberedCanvas(canvas.Canvas):
         canvas.Canvas.save(self)
 
     def draw_page_number(self, page_count):
-        self.setFont("Helvetica", 7)
-        self.drawRightString(200 * mm, 20 * mm,
-                             "Page %d of %d" % (self._pageNumber, page_count))
+        self.setFont("Helvetica", 10)
+
+        fmt = self.page_number_format
+        try:
+            s = fmt.format(page=self._pageNumber, total=page_count)
+        except BaseException:
+            s = "Page %d of %d" % (self._pageNumber, page_count)
+        self.drawRightString(200 * mm, 20 * mm, s)
 
 
 class BasePDFWriter(Loggable):
@@ -65,7 +72,9 @@ class BasePDFWriter(Loggable):
     _options_klass = BasePDFOptions
 
     def _options_default(self):
-        return self._options_klass()
+        opt = self._options_klass()
+        opt.load()
+        return opt
 
     def _new_base_doc_template(self, path):
         pagesize = letter
@@ -104,6 +113,8 @@ class BasePDFWriter(Loggable):
             doc.addPageTemplates(ti)
 
         if self.options.show_page_numbers:
+            NumberedCanvas.page_number_format = self.options.page_number_format
+
             doc.build(flowables, canvasmaker=NumberedCanvas)
         else:
             doc.build(flowables)

@@ -171,13 +171,15 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
                     self.manager.save_tray_to_db(gm.srcpath, gm.name)
 
     def save_pdf(self):
-        p = '/Users/ross/Sandbox/irradiation.pdf'
-        # p=self.save_file_dialog()
+        if globalv.irradiation_pdf_debug:
+            p = '/Users/ross/Sandbox/irradiation.pdf'
+        else:
+            p = self.save_file_dialog()
 
-        self.debug('saving pdf to {}'.format(p))
-        # self.manager.make_labbook(p)
-        self.manager.save_pdf(p)
-        self.view_pdf(p)
+        if p:
+            self.debug('saving pdf to {}'.format(p))
+            self.manager.save_pdf(p)
+            self.view_pdf(p)
 
     def make_irradiation_book_pdf(self):
         if globalv.entry_labbook_debug:

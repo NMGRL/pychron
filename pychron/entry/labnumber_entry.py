@@ -263,7 +263,10 @@ class LabnumberEntry(DVCIrradiationable):
             irrad = db.get_irradiation(name)
             if irrad:
                 w = IrradiationPDFWriter()
-                w.build(out, irrad)
+                info = w.options.edit_traits(kind='livemodal')
+                if info.result:
+                    w.options.dump()
+                    w.build(out, irrad)
 
     def save(self):
         if self._validate_save():

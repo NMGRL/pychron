@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from reportlab.platypus import Paragraph
 from traits.api import Bool
-from traitsui.api import View, Item
+from traitsui.api import View
 # ============= standard library imports ========================
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER
@@ -40,7 +40,7 @@ class RotatedParagraph(Paragraph):
         self.canv.saveState()
 
         self.canv.rotate(self.rotation)
-        self.canv.translate(-self.width/2.-100, -self.height)
+        self.canv.translate(-self.width / 2. - 100, -self.height)
         Paragraph.draw(self)
         self.canv.restoreState()
 
@@ -49,7 +49,9 @@ class IrradiationPDFTableOptions(BasePDFOptions):
     _persistence_name = 'irradiation_pdf_table_options'
 
     def traits_view(self):
-        v = View(Item('orientation'),
+        layout_grp = self._get_layout_group()
+
+        v = View(layout_grp,
                  kind='livemodal',
                  buttons=['OK', 'Cancel'],
                  title='PDF Save Options',
@@ -63,6 +65,8 @@ class IrradiationPDFWriter(BasePDFTableWriter):
     _options_klass = IrradiationPDFTableOptions
 
     def _build(self, doc, irrad, *args, **kw):
+
+        self.options.page_number_format = '{} {{page:d}} - {{total:d}}'.format(irrad.name)
         return self._make_levels(irrad)
 
     def _make_summary(self, irrad):
@@ -90,12 +94,19 @@ class IrradiationPDFWriter(BasePDFTableWriter):
         # levels = fontsize(levels, 28)
         # dur = fontsize(dur, 28)
         txt = '<br/>'.join((name, levels, date, dur))
+
+        klass = Paragraph
+        rotation = 0
+        if self.options.orientation == 'landscape':
+            klass = RotatedParagraph
+            rotation = 90
+
         p = self._new_paragraph(txt,
-                                klass=RotatedParagraph,
+                                klass=klass,
                                 s='Title',
                                 textColor=colors.black,
                                 alignment=TA_CENTER)
-        p.rotation = 90
+        p.rotation = rotation
         return p
 
     def _make_levels(self, irrad, progress=None):
@@ -142,9 +153,12 @@ class IrradiationPDFWriter(BasePDFTableWriter):
         ts.add('LINEBELOW', (0, 1), (-1, -1), 1.0, colors.black)
 
         t = self._new_table(ts, rows)
-        t._argW[0] = 0.5 * inch
-        t._argW[1] = 1. * inch
-        t._argW[2] = 2 * inch
+        t.repeatRows = 2
+        t._argW[0] = 0.25 * inch
+        t._argW[1] = 0.5 * inch
+        t._argW[2] = 0.6 * inch
+        t._argW[3] = 1.5 * inch
+        t._argW[4] = 1.25 * inch
 
         flowables.append(t)
         if self.page_break_between_levels:
