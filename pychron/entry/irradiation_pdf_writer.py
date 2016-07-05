@@ -139,12 +139,22 @@ class IrradiationPDFWriter(BasePDFTableWriter):
         rows.append(row)
 
         row = Row()
-        for v in ('', 'Pos.', 'L#', 'Sample', 'Project', 'PI', 'Note'):
+        for v in ('', 'Pos.', 'L#', 'Sample', 'Material', 'Project', 'PI', 'Note'):
             row.add_item(value=self._new_paragraph('<b>{}</b>'.format(v)))
         rows.append(row)
 
-        srows = sorted([self._make_row(pi, c) for pi in level.positions if pi.sample],
-                       key=lambda x: x[0])
+        # srows = []
+        # pos = level.positions
+        # n = len(pos)
+        # # for i,p in enumerate(pos):
+        # #     if p.sample:
+        # #         srows.append(self._make_row(p, c))
+        # #     else:
+        # #         # check if the next
+        # #         for j in xrange(n-i):
+        # #             if
+
+        srows = sorted([self._make_row(pi, c) for pi in level.positions], key=lambda x: x[0])
 
         rows.extend(srows)
 
@@ -157,7 +167,8 @@ class IrradiationPDFWriter(BasePDFTableWriter):
         t._argW[0] = 0.25 * inch
         t._argW[1] = 0.5 * inch
         t._argW[2] = 0.6 * inch
-        t._argW[3] = 1.5 * inch
+        t._argW[3] = 1.25 * inch
+        t._argW[4] = 0.5 * inch
         t._argW[4] = 1.25 * inch
 
         flowables.append(t)
@@ -175,18 +186,21 @@ class IrradiationPDFWriter(BasePDFTableWriter):
     def _make_row(self, pos, canvas):
         r = Row()
         sample = pos.sample
-        project, pi = '', ''
+        project, pi, material = '', '', ''
         if sample:
+            if sample.material:
+                material = sample.material.name[:15]
             project = sample.project.name
             pi = sample.project.principal_investigator
             sample = sample.name
             if sample == 'FC-2':
-                project, pi = '', ''
+                project, pi, material = '', '', ''
 
         r.add_item(value='[  ]')
         r.add_item(value=pos.position)
-        r.add_item(value=pos.identifier)
-        r.add_item(value=sample)
+        r.add_item(value=pos.identifier or '')
+        r.add_item(value=sample or '')
+        r.add_item(value=material)
         r.add_item(value=project)
         r.add_item(value=pi)
         r.add_item(value='')
