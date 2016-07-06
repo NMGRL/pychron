@@ -167,7 +167,8 @@ class MassSpecDatabaseImporter(Loggable):
                         mass_spectrometer = 'obama'
                     elif a.lower() == 'j':
                         mass_spectrometer = 'jan'
-
+                    elif a.lower() == 'f':
+                        mass_spectrometer = 'felix'
         else:
             mass_spectrometer = spec.mass_spectrometer.lower()
 
@@ -387,9 +388,10 @@ class MassSpecDatabaseImporter(Loggable):
             else:
                 dbdet = db.add_detector(det, Label=det)
 
-            if det == 'CDD':
-                dbdet.ICFactor = spec.ic_factor_v
-                dbdet.ICFactorEr = spec.ic_factor_e
+            ic = spec.isotopes[iso].ic_factor
+            dbdet.ICFactor = float(nominal_value(ic))
+            dbdet.ICFactorEr = float(std_dev(ic))
+
         db.flush()
         n = spec.get_ncounts(iso)
         return db.add_isotope(analysis, dbdet, iso, NumCnts=n), dbdet

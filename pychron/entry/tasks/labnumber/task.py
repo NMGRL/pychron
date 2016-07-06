@@ -171,13 +171,15 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
                     self.manager.save_tray_to_db(gm.srcpath, gm.name)
 
     def save_pdf(self):
-        p = '/Users/ross/Sandbox/irradiation.pdf'
-        # p=self.save_file_dialog()
+        if globalv.irradiation_pdf_debug:
+            p = '/Users/ross/Sandbox/irradiation.pdf'
+        else:
+            p = self.save_file_dialog()
 
-        self.debug('saving pdf to {}'.format(p))
-        # self.manager.make_labbook(p)
-        self.manager.save_pdf(p)
-        self.view_pdf(p)
+        if p:
+            self.debug('saving pdf to {}'.format(p))
+            if self.manager.save_pdf(p):
+                self.view_pdf(p)
 
     def make_irradiation_book_pdf(self):
         if globalv.entry_labbook_debug:
@@ -258,9 +260,11 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
                                  default_massspec_connection=connection)
         info = es.edit_traits(kind='livemodal')
         if info.result:
-            from pychron.entry.export.export_util import do_export
-
-            do_export(self.manager, es.export_type, es.destination_dict, es.irradiations)
+            if not es.selected:
+                self.warning_dialog('Please select Irradiation(s) to export')
+            else:
+                from pychron.entry.export.export_util import do_export
+                do_export(self.manager.dvc, es.export_type, es.destination_dict, es.selected)
 
     def _manager_default(self):
         dvc = self.application.get_service('pychron.dvc.dvc.DVC')

@@ -263,7 +263,11 @@ class LabnumberEntry(DVCIrradiationable):
             irrad = db.get_irradiation(name)
             if irrad:
                 w = IrradiationPDFWriter()
-                w.build(out, irrad)
+                info = w.options.edit_traits(kind='livemodal')
+                if info.result:
+                    w.options.dump()
+                    w.build(out, irrad)
+                    return True
 
     def save(self):
         if self._validate_save():
@@ -608,6 +612,8 @@ THIS CHANGE CANNOT BE UNDONE')
                 if dbpos.sample.project:
                     ir.project = v = dbpos.sample.project.name
                     set_color(item, v)
+                    if dbpos.sample.project.principal_investigator:
+                        ir.principal_investigator = dbpos.sample.project.principal_investigator
 
                 ir.identifier = v = dbpos.identifier or ''
                 if v:

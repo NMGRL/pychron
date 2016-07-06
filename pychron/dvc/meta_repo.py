@@ -412,6 +412,7 @@ class MetaRepo(GitRepoManager):
             d['identifier'] = identifier
 
         dvc_dump(jd, p)
+        self.add(p, commit=False)
 
     def get_level_path(self, irrad, level):
         return os.path.join(paths.meta_root, irrad, '{}.json'.format(level))
