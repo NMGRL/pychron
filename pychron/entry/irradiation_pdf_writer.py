@@ -16,8 +16,8 @@
 
 # ============= enthought library imports =======================
 from reportlab.platypus import Paragraph
-from traits.api import Bool
-from traitsui.api import View
+from traits.api import Bool, Float
+from traitsui.api import View, VGroup, Tabbed, Item
 # ============= standard library imports ========================
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER
@@ -25,7 +25,7 @@ from reportlab.lib.units import inch
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.irradiation_canvas import IrradiationCanvas
 # from pychron.entry.level import load_holder_canvas
-from pychron.core.pdf.options import BasePDFOptions
+from pychron.core.pdf.options import BasePDFOptions, dumpable
 from pychron.dvc.meta_repo import irradiation_holder_holes, irradiation_chronology
 from pychron.entry.editors.level_editor import load_holder_canvas
 from pychron.loading.component_flowable import ComponentFlowable
@@ -46,12 +46,32 @@ class RotatedParagraph(Paragraph):
 
 
 class IrradiationPDFTableOptions(BasePDFOptions):
+    status_width = dumpable(Float(0.25))
+    position_width = dumpable(Float(0.5))
+    identifier_width = dumpable(Float(0.6))
+    sample_width = dumpable(Float(1.25))
+    material_width = dumpable(Float(0.5))
+    project_width = dumpable(Float(1.25))
     _persistence_name = 'irradiation_pdf_table_options'
+
+    def widths(self, units=inch):
+        return [getattr(self, '{}_width'.format(w)) * units for w in ('status', 'position', 'identifier', 'sample',
+                                                                     'material',
+                                                                     'project')]
 
     def traits_view(self):
         layout_grp = self._get_layout_group()
+        layout_grp.show_border = False
+        width_grp = VGroup(Item('status_width', label='Status (in)'),
+                           Item('position_width', label='Pos. (in)'),
+                           Item('identifier_width', label='L# (in)'),
+                           Item('sample_width', label='Sample (in)'),
+                           Item('material_width', label='Material (in)'),
+                           Item('project_width', label='Project (in)'),
+                           label='Column Widths')
 
-        v = View(layout_grp,
+        v = View(Tabbed(layout_grp,
+                        width_grp),
                  kind='livemodal',
                  buttons=['OK', 'Cancel'],
                  title='PDF Save Options',
@@ -131,28 +151,16 @@ class IrradiationPDFWriter(BasePDFTableWriter):
         return flowables, None
 
     def _make_level_table(self, irrad, level, c):
-        rows = []
-        flowables = []
-        # flowables.append()
+        # flowables = []
+
         row = Row()
         row.add_item(span=-1, value=self._make_table_title(irrad, level), fontsize=18)
-        rows.append(row)
+        rows = [row]
 
         row = Row()
         for v in ('', 'Pos.', 'L#', 'Sample', 'Material', 'Project', 'PI', 'Note'):
             row.add_item(value=self._new_paragraph('<b>{}</b>'.format(v)))
         rows.append(row)
-
-        # srows = []
-        # pos = level.positions
-        # n = len(pos)
-        # # for i,p in enumerate(pos):
-        # #     if p.sample:
-        # #         srows.append(self._make_row(p, c))
-        # #     else:
-        # #         # check if the next
-        # #         for j in xrange(n-i):
-        # #             if
 
         srows = sorted([self._make_row(pi, c) for pi in level.positions], key=lambda x: x[0])
 
@@ -162,16 +170,11 @@ class IrradiationPDFWriter(BasePDFTableWriter):
 
         ts.add('LINEBELOW', (0, 1), (-1, -1), 1.0, colors.black)
 
-        t = self._new_table(ts, rows)
+        cw = self.options.widths()
+        t = self._new_table(ts, rows, colWidths=cw)
         t.repeatRows = 2
-        t._argW[0] = 0.25 * inch
-        t._argW[1] = 0.5 * inch
-        t._argW[2] = 0.6 * inch
-        t._argW[3] = 1.25 * inch
-        t._argW[4] = 0.5 * inch
-        t._argW[4] = 1.25 * inch
 
-        flowables.append(t)
+        flowables = [t]
         if self.page_break_between_levels:
             flowables.append(self._page_break())
         else:

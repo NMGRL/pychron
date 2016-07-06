@@ -267,6 +267,7 @@ class LabnumberEntry(DVCIrradiationable):
                 if info.result:
                     w.options.dump()
                     w.build(out, irrad)
+                    return True
 
     def save(self):
         if self._validate_save():

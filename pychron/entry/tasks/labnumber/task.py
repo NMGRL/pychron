@@ -178,8 +178,8 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
 
         if p:
             self.debug('saving pdf to {}'.format(p))
-            self.manager.save_pdf(p)
-            self.view_pdf(p)
+            if self.manager.save_pdf(p):
+                self.view_pdf(p)
 
     def make_irradiation_book_pdf(self):
         if globalv.entry_labbook_debug:

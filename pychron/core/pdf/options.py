@@ -47,11 +47,14 @@ class BasePDFOptions(HasTraits, PersistenceMixin):
         self.persistence_path = os.path.join(paths.hidden_dir, self._persistence_name)
 
     def _get_layout_group(self):
+        margin_grp = VGroup(Item('left_margin', label='Left (in.)'),
+                           Item('right_margin', label='Right (in.)'),
+                           Item('top_margin', label='Top (in.)'),
+                           Item('bottom_margin', label='Bottom (in.)'),
+                            show_border=True, label='Margins')
+
         layout_grp = Group(Item('orientation'),
-                           Item('left_margin'),
-                           Item('right_margin'),
-                           Item('top_margin'),
-                           Item('bottom_margin'),
+                           margin_grp,
                            Item('show_page_numbers', label='Page Numbers'),
                            show_border=True,
                            label='layout')
