@@ -412,9 +412,9 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
     # ===============================================================================
     # adders
     # ===============================================================================
-    def add_project(self, name):
+    def add_project(self, name, **kw):
         with self.session_ctx():
-            obj = ProjectTable(Project=name)
+            obj = ProjectTable(Project=name, **kw)
             return self._add_item(obj)
 
     def add_material(self, name):

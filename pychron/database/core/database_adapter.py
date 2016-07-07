@@ -291,7 +291,8 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
         if self.sess:
             try:
                 self.sess.commit()
-            except:
+            except BaseException, e:
+                self.warning('Commit exception: {}'.format(e))
                 self.sess.rollback()
 
     def post_commit(self):

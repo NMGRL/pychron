@@ -97,6 +97,7 @@ class Globals(object):
     random_tip_enabled = True
     client_only_locking = True
 
+    irradiation_pdf_debug = False
     entry_labbook_debug = False
     entry_irradiation_import_from_file_debug = False
 
@@ -139,6 +140,7 @@ class Globals(object):
                            ('test_experiment_set', str),
                            ('system_monitor_debug', to_bool),
                            ('entry_labbook_debug', to_bool),
+                           ('irradiation_pdf_debug', to_bool),
                            ('entry_irradiation_import_from_file_debug', to_bool),
                            ('client_only_locking', to_bool)]:
             a = ip.get_global(attr)
