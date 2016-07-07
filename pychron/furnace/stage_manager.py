@@ -63,6 +63,9 @@ class BaseFurnaceStageManager(BaseStageManager):
         super(BaseFurnaceStageManager, self).__init__(*args, **kw)
         self.tray_calibration_manager.style = 'Linear'
 
+    def get_sample_states(self):
+        return [h.id for h in self.stage_map.sample_holes if h.analyzed]
+
 
 class NMGRLFurnaceStageManager(BaseFurnaceStageManager):
     feeder = Instance(Feeder)

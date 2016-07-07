@@ -250,6 +250,8 @@ class Paths(object):
     auto_ideogram_template = None
     series_template = None
 
+    furnace_sample_states = None
+
     def write_default_file(self, p, default, overwrite=False):
         return self._write_default_file(p, default, overwrite)
 
@@ -459,6 +461,7 @@ class Paths(object):
         self.notification_triggers = join(self.setup_dir, 'notification_triggers.yaml')
 
         self.furnace_firmware = join(self.setup_dir, 'furnace_firmware.yaml')
+        self.furnace_sample_states = join(self.hidden_dir, 'furnace_sample_states.yaml')
 
         # =======================================================================
         # pipeline templates

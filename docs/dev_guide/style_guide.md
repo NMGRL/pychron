@@ -58,7 +58,7 @@ import numpy as np
 ```
 
 
-- multiline list, dict, tuples
+- multiline list, dict, tuples. No orphaned opening or closing brackets
 
 ```
 x = [1,2,3,
@@ -69,6 +69,17 @@ d = {'a': 1,
      
 t= (1,2,
     3,4)
+```
+DO NOT WRITE
+
+```
+x=[
+   1,2,3
+   ]
+   
+d = {'a': 1,
+     'b': 2
+     }
 ```
 
 Pycharm Template

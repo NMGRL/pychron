@@ -15,7 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import shutil
+
+import yaml
 from traits.api import TraitError, Instance, Float, provides, Bool
+
 # ============= standard library imports ========================
 import os
 import time
@@ -111,6 +115,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         self.video_enabled = bool(self.camera.get_image_data())
 
         self.refresh_states()
+        self._load_sample_states()
         self.load_settings()
         self.start_update()
 
@@ -143,6 +148,9 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     def test_connection(self):
         self.info('testing connection')
         return self.test_furnace_api()
+
+    def clear_sample_states(self):
+        self._clear_sample_states()
 
     def refresh_states(self):
         self.switch_manager.load_indicator_states()
@@ -271,6 +279,8 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
                 time.sleep(1)
 
             self.stage_manager.set_sample_dumped()
+            self._dump_sample_states()
+
             self.magnets.denergize()
             time.sleep(5)
 
@@ -414,6 +424,39 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         return v
 
     # private
+    def _clear_sample_states(self):
+        self.debug('clear sample states')
+        self._backup_sample_states()
+        self._dump_sample_states(states=[])
+
+    def _load_sample_states(self):
+        self.debug('load sample states')
+        p = paths.furnace_sample_states
+        if os.path.isfile(p):
+            with open(p, 'r') as rfile:
+                states = yaml.load(rfile)
+
+                for si in states:
+                    hole = self.stage_map.get_hole(si)
+                    hole.analyzed = True
+
+    def _dump_sample_states(self, states=None):
+        if states is None:
+            states = self.stage_manager.get_sample_states()
+
+        self.debug('dump sample states')
+        p = paths.furnace_sample_states
+        with open(p, 'w') as wfile:
+            yaml.dump(states, wfile)
+
+    def _backup_sample_states(self):
+        if os.path.isfile(paths.furnace_sample_states):
+            root, base = os.path.split(paths.furnace_sample_states)
+            bp = os.path.join(root, '~{}'.format(base))
+            self.debug('backing up furnace sample states to {}'.format(bp))
+
+            shutil.copyfile(paths.furnace_sample_states, bp)
+
     def _handle_state(self, new):
         self.dumper_canvas.update_switch_state(*new)
 

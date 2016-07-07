@@ -20,13 +20,12 @@ from threading import Thread
 from enable.component_editor import ComponentEditor
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traits.api import Button, Bool, Str
-from traitsui.api import View, Item, Readonly, UItem, VGroup, HGroup, EnumEditor, spring, \
-    InstanceEditor, ButtonEditor, Tabbed
+from traitsui.api import View, Item, UItem, VGroup, HGroup, EnumEditor, spring, \
+    ButtonEditor, Tabbed
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 
-from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.core.ui.lcd_editor import LCDEditor
 from pychron.core.ui.led_editor import LEDEditor
 from pychron.core.ui.stage_component_editor import VideoComponentEditor
@@ -57,6 +56,8 @@ class ControlPane(TraitsDockPane):
     feeder_slew_positive = Button
     feeder_slew_negative = Button
     feeder_stop_button = Button
+
+    clear_sample_states_button = Button('Clear Dumped Samples')
 
     def _feeder_slew_positive_fired(self):
         self.model.stage_manager.feeder_slew(1)
@@ -111,6 +112,9 @@ class ControlPane(TraitsDockPane):
     def _refresh_states_button_fired(self):
         self.model.refresh_states()
 
+    def _clear_sample_states_button_fired(self):
+        self.model.clear_sample_states()
+
     def trait_context(self):
         return {'object': self.model,
                 'pane': self,
@@ -163,6 +167,7 @@ class ControlPane(TraitsDockPane):
                           UItem('pane.fire_magnets_button',
                                 enabled_when='not magnets_firing',
                                 tooltip='Execute the magnet sequence'),
+                          UItem('pane.clear_sample_states_button'),
                           show_border=True, label='Dump')
 
         d1 = VGroup(feeder_grp, funnel_grp, jitter_grp, dump_grp)
