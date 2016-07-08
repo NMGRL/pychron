@@ -259,6 +259,12 @@ class ExperimentEditor(BaseTraitsEditor):
             qi.executable = True
             qi.initialized = True
 
+            info = hec.check_runs_non_fatal(runs)
+            if info:
+                if not self.confirmation_dialog('There is a nonfatal issue.\n\n{}\n\n Are you sure you want to '
+                                                'continue?'.format(info)):
+                    break
+
             err = hec.check_runs(runs, test_all=True,
                                  test_scripts=True)
             if err:

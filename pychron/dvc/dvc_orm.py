@@ -269,8 +269,10 @@ class ProjectTbl(Base, NameMixin):
     samples = relationship('SampleTbl', backref='project')
 
     @property
-    def gname(self):
-        return '{} ({})'.format(self.name, self.principal_investigator) if self.principal_investigator else self.name
+    def pname(self):
+        return '{} ({})'.format(self.name, self.principal_investigator.name) if self.principal_investigator else \
+            self.name
+
 
 class MaterialTbl(Base, NameMixin):
     id = primary_key()

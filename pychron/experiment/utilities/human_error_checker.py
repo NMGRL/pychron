@@ -15,12 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+
 from pychron.experiment.utilities.identifier import get_analysis_type
 from pychron.loggable import Loggable
 
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+
 
 class HumanErrorChecker(Loggable):
     _extraction_line_required = False
@@ -41,6 +43,12 @@ class HumanErrorChecker(Loggable):
                             qi.mass_spectrometer in ('Spectrometer',):
                 msg = '"Spectrometer" is not set. Not saving experiment!'
                 return msg
+
+    def check_runs_non_fatal(self, runs):
+        for r in runs:
+            ret = self._check_run_non_fatal(r)
+            if ret:
+                return ret
 
     def check_runs(self, runs, test_all=False, inform=True,
                    test_scripts=False):
@@ -72,6 +80,14 @@ class HumanErrorChecker(Loggable):
     def check_run(self, run, inform=True, test=False):
         return self._check_run(run, inform, test)
 
+    def _check_run_non_fatal(self, run):
+        es = run.extraction_script
+        ed = run.extract_device
+        if run.extract_device and es:
+            ds = ed.split(' ')[1].lower()
+            if ds != es:
+                return 'Extraction script "{}" does not match the default "{}"'.format(es, ds)
+
     def _check_run(self, run, inform, test):
         if test:
             run.test_scripts(script_context=self._script_context,
@@ -84,6 +100,7 @@ class HumanErrorChecker(Loggable):
 
         ant = get_analysis_type(run.labnumber)
         if ant == 'unknown':
+
             for attr in ('duration', 'cleanup'):
                 err = self._check_attr(run, attr, inform)
                 if err is not None:
@@ -96,8 +113,8 @@ class HumanErrorChecker(Loggable):
             if run.overlap[0]:
                 if not run.post_measurement_script:
                     return 'post measurement script required for overlap'
-        #if ant in ('unknown', 'background') or ant.startswith('blank'):
-        #self._mass_spec_required = True
+        # if ant in ('unknown', 'background') or ant.startswith('blank'):
+        # self._mass_spec_required = True
 
         if run.extract_value or run.cleanup or run.duration:
             self._extraction_line_required = True

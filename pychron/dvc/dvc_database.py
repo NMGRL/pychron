@@ -1272,7 +1272,7 @@ class DVCDatabase(DatabaseAdapter):
         with self.session_ctx() as sess:
             q = sess.query(ProjectTbl)
             ms = self._query_all(q)
-            return [mi.gname for mi in ms]
+            return [mi.pname for mi in ms]
 
     def get_material_gnames(self):
         with self.session_ctx() as sess:

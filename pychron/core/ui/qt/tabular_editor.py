@@ -141,8 +141,8 @@ class _TableView(TableView):
 
     def __init__(self, editor, layout=None, *args, **kw):
         super(_TableView, self).__init__(editor, *args, **kw)
-        self.setItemDelegate(ItemDelegate(self))
 
+        # self.setItemDelegate(ItemDelegate(self))
         # self.setup_consumer(main=True)
         editor = self._editor
 
