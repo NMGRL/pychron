@@ -83,7 +83,7 @@ class AnalysisView(HasTraits):
 
     def show_iso_evolutions(self, show_evo=True, show_equilibration=False, show_baseline=False):
         isotopes = self.selected
-
+        print 'selected isootpes', isotopes
         self.model.show_isotope_evolutions(isotopes, show_evo=show_evo,
                                            show_equilibration=show_equilibration, show_baseline=show_baseline)
 

@@ -67,7 +67,8 @@ class InfoInspector(BaseTool):
             self.current_position = None
             self.current_screen = None
 
-        self.event_queue[id(self)] = self.current_position is not None
+        if self.event_queue is not None:
+            self.event_queue[id(self)] = self.current_position is not None
 
         if self.use_pane:
             self._generate_inspector_event()
