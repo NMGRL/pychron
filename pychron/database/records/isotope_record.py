@@ -89,7 +89,7 @@ class DVCIsotopeRecordView:
         #     self.aliquot = 0
         #     self.increment = -1
         self.step = ''
-        #     self.tag = ''
+        self.tag = ''
         #     self.uuid = ''
         #     self.repository_identifier = ''
         #     self.use_repository_suffix = False

@@ -147,6 +147,36 @@ class DVCDatabase(DatabaseAdapter):
     #                      omit_iso=v,
     #                      omit_series=v)
     #         return self._add_item(tag)
+
+    def search_analyses(self, sd, limit=500):
+
+        with self.session_ctx() as sess:
+            q = sess.query(AnalysisTbl)
+            for k, c, t in sd:
+                if k in 'spm':
+                    q = q.join(IrradiationPositionTbl)
+                    q = q.join(SampleTbl)
+                    if k == 's':
+                        column = SampleTbl.name
+                    elif k == 'p':
+                        column = ProjectTbl.name
+                        q = q.join(ProjectTbl)
+                    elif k == 'm':
+                        q = q.join(MaterialTbl)
+                        column = MaterialTbl.name
+                elif k == 't':
+                    column = AnalysisTbl.analysis_type
+
+                if c == ':':
+                    t = '%{}%'.format(t)
+                    q = q.filter(column.like(t))
+                elif c == ':=':
+                    q = q.filter(column == t)
+
+            if limit:
+                q = q.limit(limit)
+            return self._query_all(q)
+
     def check_restricted_name(self, name, category, check_principal_investigator=True):
         """
         return True is name is restricted
@@ -1089,7 +1119,7 @@ class DVCDatabase(DatabaseAdapter):
             q = principal_investigator_filter(q, name)
             return self._query_one(q)
 
-        # return self._retrieve_item(PrincipalInvestigatorTbl, name, key='last_name')
+            # return self._retrieve_item(PrincipalInvestigatorTbl, name, key='last_name')
 
     def get_irradiation_level(self, irrad, name):
         with self.session_ctx() as sess:

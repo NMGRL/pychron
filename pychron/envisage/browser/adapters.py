@@ -105,7 +105,7 @@ REVIEW_STATUS_ICONS = {'Default': icon('gray_ball'),
 
 
 class AnalysisAdapter(BrowserAdapter):
-    all_columns = [('Review Status', 'review_status'),
+    all_columns = [('Review', 'review_status'),
                    ('Run ID', 'record_id'),
                    ('Tag', 'tag'),
                    ('RunDate', 'rundate'),
@@ -127,9 +127,10 @@ class AnalysisAdapter(BrowserAdapter):
                ('Tag', 'tag'),
                ('Dt', 'delta_time')]
 
+    review_status_width = Int(50)
     review_status_image = Property
     review_status_text = Str('')
-    rundate_width = Int(120)
+    rundate_width = Int(125)
     delta_time_width = Int(65)
     delta_time_text = Property
     record_id_width = Int(70)
@@ -173,7 +174,8 @@ class AnalysisAdapter(BrowserAdapter):
 
         if item.delta_time > 1440:  # 24 hours
             color = '#76C1E2'
-
+        elif row % 2:
+            color = 'lightgray'
         return color
 
 

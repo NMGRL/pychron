@@ -15,19 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import pickle
-
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import String, Str, Property, Any, Float, Instance, Int, List, \
     cached_property, on_trait_change, Bool, Button, Event, Enum, Dict
-
-# ============= standard library imports ========================
 from traits.trait_errors import TraitError
+# ============= standard library imports ========================
+import pickle
 import yaml
 import os
+from uncertainties import nominal_value, std_dev
 # ============= local library imports  ==========================
-from uncertainties import nominal_value
-from uncertainties import std_dev
 
 from pychron.core.helpers.iterfuncs import partition
 from pychron.core.helpers.strtools import camel_case

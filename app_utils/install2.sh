@@ -11,6 +11,37 @@
 # the source code is stored in the Pychron support directory
 # a launcher script is created and copied to the desktop
 
+# =========== User Questions ==============
+default=NMGRL
+echo -n "Github organization [$default] >> "
+read go
+[ -z "$go" ] && go=$default
+
+default=nmgrluser
+echo -n "Github user name [$default] >> "
+read gu
+[ -z "$gu" ] && gu=$default
+
+echo -n "Github password for ${gu} >> "
+read gp
+
+default=16
+echo -n "MassSpec Database Version [$default] >> "
+read dbv
+[ -z "$dbv" ] && dbv=$default
+
+default=yes
+echo -n "Make a MacOSX application [$default] >> "
+read use_app_bundle
+[ -z "$use_app_bundle" ] && use_app_bundle=$default
+
+if [[ ${use_app_bundle} == "yes" ]]
+then
+  default=Pychron
+  echo -n "Application name [$default] >> "
+  read app_name
+  [ -z "$app_name" ] && app_name=$default
+fi
 
 # =========== Configuration ===============
 WORKING_DIR=~/pychron_install_wd
@@ -33,6 +64,8 @@ APPLICATION=pyview_debug
 PYCHRON_GIT_SOURCE_URL=https://github.com/NMGRL/pychron.git
 
 PYCHRON_PATH=${PYCHRONDATA_PREFIX}/src
+
+ICON_NAME=pyexperiment_icon.icns
 
 CONDA_REQ="statsmodels
 scikit-learn
@@ -166,6 +199,7 @@ else
 
     printf ${DVC_PREFS} > ${PYCHRONDATA_PREFIX}/preferences/dvc.ini
     printf ${INITIALIZATION} > ${PYCHRONDATA_PREFIX}/setupfiles/initialization.xml
+    printf ${STARTUP_TESTS} > ${PYCHRONDATA_PREFIX}/setupfiles/startup_tests.yaml
 fi
 
 # ========= Enthought directory ============
@@ -205,36 +239,42 @@ fi
 # ========== Launcher Script ===============
 touch ${LAUNCHER_SCRIPT_PATH}
 
+echo export GITHUB_ORGANIZATION=${go} >> ${LAUNCHER_SCRIPT_PATH}
+echo export GITHUB_USER=${gu} >> ${LAUNCHER_SCRIPT_PATH}
+echo export GITHUB_PASSWORD=${gp} >> ${LAUNCHER_SCRIPT_PATH}
+echo export MassSpecDBVersion=$dbv >> ${LAUNCHER_SCRIPT_PATH}
+
 echo ROOT=${PYCHRON_PATH} > ${LAUNCHER_SCRIPT_PATH}
 
 echo ENTRY_POINT=\$ROOT/launchers/${APPLICATION}.py >> ${LAUNCHER_SCRIPT_PATH}
 echo export PYTHONPATH=\$ROOT >> ${LAUNCHER_SCRIPT_PATH}
 
-default=NMGRL
-echo -n "Github organization [$default] >> "
-read go
-[ -z "$go" ] && go=$default
-
-default=nmgrluser
-echo -n "Github user name [$default] >> "
-read gu
-[ -z "$gu" ] && gu=$default
-
-echo -n "Github password for ${gu} >> "
-read gp
-
-default=16
-echo -n "MassSpec Database Version [$default] >> "
-read dbv
-[ -z "$dbv" ] && dbv=$default
-
-echo GITHUB_ORGANIZATION=${go} >> ${LAUNCHER_SCRIPT_PATH}
-echo GITHUB_USER=${gu} >> ${LAUNCHER_SCRIPT_PATH}
-echo GITHUB_PASSWORD=${gp} >> ${LAUNCHER_SCRIPT_PATH}
-
-echo MassSpecDBVersion=$dbv >> ${LAUNCHER_SCRIPT_PATH}
 echo ${MINICONDA_PREFIX}/envs/${CONDA_ENV}/bin/python \$ENTRY_POINT >> ${LAUNCHER_SCRIPT_PATH}
+if [[ ${use_app_bundle} == "1" ]]
+then
+  #  Create the app bundle
+  APPNAME=${app_name}
+  DIR="${APPNAME}.app/Contents/MacOS";
+  mkdir -p "${DIR}";
 
-chmod +x ${LAUNCHER_SCRIPT_PATH}
-cp ${LAUNCHER_SCRIPT_PATH} ~/Desktop/
+  cp "${LAUNCHER_SCRIPT_PATH}" "${DIR}/${APPNAME}";
+  chmod +x "${DIR}/${APPNAME}";
+
+  mkdir -p "${APPNAME}.app/Contents/Resources";
+
+  # write plist
+  PLIST="${APPNAME}.app/Contents/Info.plist"
+  touch ${PLIST}
+   printf "<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+<key>CFBundleIconFile</key><string>${ICON_NAME}</string>
+</dict>
+</plist>
+" > ${PYCHRONDATA_PREFIX}/preferences/dvc.ini
+  # copy info file
+else
+  chmod +x ${LAUNCHER_SCRIPT_PATH}
+  cp ${LAUNCHER_SCRIPT_PATH} ~/Desktop/
+fi
 # ============= EOF =============================================
