@@ -801,6 +801,7 @@ class DVCDatabase(DatabaseAdapter):
                                    exclude_invalid=True,
                                    verbose=False):
         with self.session_ctx() as sess:
+            sess.expire_on_commit = False
             q = sess.query(AnalysisTbl)
             if exclude_invalid:
                 q = q.join(AnalysisChangeTbl)
