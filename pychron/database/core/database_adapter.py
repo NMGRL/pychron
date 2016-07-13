@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-import traceback
 
 from traits.api import Password, Bool, Str, on_trait_change, Any, Property, cached_property
 # =============standard library imports ========================
@@ -37,73 +36,73 @@ from pychron import version
 ATTR_KEYS = ['kind', 'username', 'host', 'name', 'password']
 
 
-class SessionCTX(object):
-    """
-    Session Context Manager.
-    This object is rarely used directly. It is mostly called by ``DatabaseAdapter.session_ctx()``
-
-    - enter. initialize sess
-    - exit. nothing, commit, or rollback
-
-    """
-    _close_at_exit = True
-    _commit = True
-    _parent = None
-
-    def __init__(self, sess=None, commit=True, rollback=True, parent=None):
-        """
-        :param sess: existing Session object
-        :param commit: commit Session at exit
-        :param parent: DatabaseAdapter instance
-
-        """
-        self._sess = sess
-        self._commit = commit
-        self._rollback = rollback
-        self._parent = parent
-        if sess:
-            self._close_at_exit = False
-
-    def __enter__(self):
-        if self._parent:
-            if self._sess is None:
-                self._sess = self._parent.session_factory()
-
-            self._parent.sess_stack += 1
-            self._parent.sess = self._sess
-
-        return self._sess
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if exc_type:
-            self._parent.warning('=========== Database exception =============')
-            self._parent.warning(exc_val)
-            self._parent.warning(traceback.format_tb(exc_tb))
-
-        if self._parent:
-            self._parent.sess_stack -= 1
-            if not self._parent.sess_stack:
-                self._parent.sess = None
-
-        if self._close_at_exit:
-            try:
-                if self._commit:
-                    self._sess.commit()
-                    self._parent.post_commit()
-                else:
-                    if self._rollback:
-                        self._sess.rollback()
-
-            except Exception, e:
-                traceback.print_exc()
-
-                if self._parent:
-                    self._parent.debug('$%$%$%$%$%$%$%$ commiting changes error:\n{}'.format(str(e)))
-                self._sess.rollback()
-            finally:
-                self._sess.expire_on_commit = True
-                # self._sess.close()
-                # del self._sess
+# class SessionCTX(object):
+#     """
+#     Session Context Manager.
+#     This object is rarely used directly. It is mostly called by ``DatabaseAdapter.session_ctx()``
+#
+#     - enter. initialize sess
+#     - exit. nothing, commit, or rollback
+#
+#     """
+#     _close_at_exit = True
+#     _commit = True
+#     _parent = None
+#
+#     def __init__(self, sess=None, commit=True, rollback=True, parent=None):
+#         """
+#         :param sess: existing Session object
+#         :param commit: commit Session at exit
+#         :param parent: DatabaseAdapter instance
+#
+#         """
+#         self._sess = sess
+#         self._commit = commit
+#         self._rollback = rollback
+#         self._parent = parent
+#         if sess:
+#             self._close_at_exit = False
+#
+#     def __enter__(self):
+#         if self._parent:
+#             if self._sess is None:
+#                 self._sess = self._parent.session_factory()
+#
+#             self._parent.sess_stack += 1
+#             self._parent.sess = self._sess
+#
+#         return self._sess
+#
+#     def __exit__(self, exc_type, exc_val, exc_tb):
+#         if exc_type:
+#             self._parent.warning('=========== Database exception =============')
+#             self._parent.warning(exc_val)
+#             self._parent.warning(traceback.format_tb(exc_tb))
+#
+#         if self._parent:
+#             self._parent.sess_stack -= 1
+#             if not self._parent.sess_stack:
+#                 self._parent.sess = None
+#
+#         if self._close_at_exit:
+#             try:
+#                 if self._commit:
+#                     self._sess.commit()
+#                     self._parent.post_commit()
+#                 else:
+#                     if self._rollback:
+#                         self._sess.rollback()
+#
+#             except Exception, e:
+#                 traceback.print_exc()
+#
+#                 if self._parent:
+#                     self._parent.debug('$%$%$%$%$%$%$%$ commiting changes error:\n{}'.format(str(e)))
+#                 self._sess.rollback()
+#             finally:
+#                 self._sess.expire_on_commit = True
+#                 # self._sess.close()
+#                 # del self._sess
 
 
 class DatabaseAdapter(Loggable):
@@ -173,17 +172,25 @@ class DatabaseAdapter(Loggable):
         with self.session_ctx() as sess:
             metadata.create_all(sess.bind)
 
-    def session_ctx(self, sess=None, commit=True, rollback=True):
-        """
-        Make a new session context.
+    # def session_ctx(self, sess=None, commit=True, rollback=True):
+    #     """
+    #     Make a new session context.
+    #
+    #     :return: ``SessionCTX``
+    #     """
+    #     with self._session_lock:
+    #         if sess is None:
+    #             sess = self.sess
+    #         return SessionCTX(sess, parent=self, commit=commit, rollback=rollback)
 
-        :return: ``SessionCTX``
-        """
-        with self._session_lock:
-            if sess is None:
-                sess = self.sess
-            return SessionCTX(sess, parent=self, commit=commit, rollback=rollback)
+    def create_session(self):
+        if self.session_factory:
+            self.sess = self.session_factory()
 
+    def close_session(self):
+        if self.sess:
+            self.sess.close()
+            self.sess = None
     @property
     def enabled(self):
         return self.kind in ['mysql', 'sqlite', 'postgresql']
