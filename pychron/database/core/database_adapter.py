@@ -50,7 +50,7 @@ class SessionCTX(object):
     _commit = True
     _parent = None
 
-    def __init__(self, sess=None, commit=True, rollback=True, parent=None):
+    def __init__(self, sess=None, commit=True, rollback=False, parent=None):
         """
         :param sess: existing Session object
         :param commit: commit Session at exit
@@ -69,7 +69,7 @@ class SessionCTX(object):
             if self._sess is None:
                 self._sess = self._parent.session_factory()
 
-            self._parent.sess_stack += 1
+            # self._parent.sess_stack += 1
             self._parent.sess = self._sess
 
         return self._sess
@@ -80,10 +80,10 @@ class SessionCTX(object):
             self._parent.warning(exc_val)
             self._parent.warning(traceback.format_tb(exc_tb))
 
-        if self._parent:
-            self._parent.sess_stack -= 1
-            if not self._parent.sess_stack:
-                self._parent.sess = None
+        # if self._parent:
+        #     self._parent.sess_stack -= 1
+            # if not self._parent.sess_stack:
+            #     self._parent.sess = None
 
         if self._close_at_exit:
             try:
@@ -100,8 +100,8 @@ class SessionCTX(object):
                 if self._parent:
                     self._parent.debug('$%$%$%$%$%$%$%$ commiting changes error:\n{}'.format(str(e)))
                 self._sess.rollback()
-            finally:
-                self._sess.expire_on_commit = True
+            # finally:
+            #     self._sess.expire_on_commit = True
                 # self._sess.close()
                 # del self._sess
 
@@ -173,7 +173,7 @@ class DatabaseAdapter(Loggable):
         with self.session_ctx() as sess:
             metadata.create_all(sess.bind)
 
-    def session_ctx(self, sess=None, commit=True, rollback=True):
+    def session_ctx(self, sess=None, commit=True, rollback=False):
         """
         Make a new session context.
 
